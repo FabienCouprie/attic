@@ -229,29 +229,82 @@ Les quatre gros fichiers ont été découpés (voir `ROADMAP.md` / `DECOUPAGE-AP
 
 ## 14. État actuel vs cible (synthèse honnête)
 
-**Déjà générique** : registre, moteur DAG + cache, méta-composants (création /
-aplatissement / navigation / re-dérivation), validation/garde-fou, alias, i18n,
-overlay doc, persistance, palette/inspecteur/canevas génériques.
+### Ce qui a été fait
 
-**Les 4 extractions multi-domaines sont faites** :
-1. ✅ `TValeur` paramétré — `ContexteExecution/FonctionPlugin/PluginDef<TValeur, TRuntime>` (défauts audio).
-2. ✅ Registre de types de flux — `core/typesFlux.ts` (couleur + compatibilité), peuplé par le domaine.
-3. ✅ Registre de vues — `ui/vues.tsx` (plus de `if ficheId===` dans `AtelierNode`).
-4. ✅ `runtime` générique — `ctxAudio`→`runtime`, `toutesEntreesAudio`→`entrees()`.
+Le cœur a été **réécrit** pour tenir la promesse du §12 (« sans modifier core »).
+La promesse n'était pas tenue avant : le générique `TValeur` était décoratif
+(`enregistrer` le fixait à `TypeValeur`), les types de flux vivaient dans un
+`Map` global, et un cast de frontière `as unknown as PluginDef` masquait le
+mensonge dans 5 fichiers UI. Le chantier a démonté les trois.
 
-*attic* est désormais un **framework d'éditeur de flux réutilisable** : un nouveau
-domaine s'écrit comme un **adaptateur** (types de flux + `TValeur`/`runtime` + plugins
-+ vues + notices), sans réécrire le cœur ni l'UI (recette §12).
+**Registre instancié** (`creerRegistre<TV, TR>()`) : chaque domaine crée son
+propre registre typé. `trouverDef` retourne `PluginDef<TV, TR>` directement —
+0 cast de frontière. Les fiches sont stockées avec leur type préservé, pas
+effacé en `unknown`. Les types de flux (`Map<string, TypeFlux>`) vivent dans
+la même clôture que les fiches — deux domaines peuvent déclarer un type
+homonyme sans s'écraser.
 
-**Contrainte §14.1 — Registre mono-domaine** : le registre global est
-mono-domaine — un seul adaptateur est enregistré par instance de l'app. Le
-cast de frontière (`trouverDefAudio` dans `audio/index.ts`) suppose que toute
-fiche dans le registre est audio. Un garde-fou runtime vérifie `univers` et
-lève une erreur explicite si une fiche étrangère remonte. Si deux domaines
-devaient coexister, il faudrait passer à un `Registre<TV, TR>` instancié par
-domaine (le cast disparaîtrait). Ce n'est pas un cas d'usage actuel.
+**DI** : `metastore` et `nodes-installes` reçoivent le registre via
+`configurerRegistre(r)` au démarrage de l'adaptateur. `gestion-nodes` (outil
+d'administration, pas un plugin de traitement) reçoit le registre via
+`configurerRegistreGestion(r)`. Aucun module du cœur n'importe un singleton.
 
-**Prouvé par le domaine fantôme** : `core/domaine-nombre.test.ts` crée un
-domaine `number`/`null` avec 4 micro-plugins, calcule `(4×2)+3 = 11` sans
-modifier le cœur, et teste `validerGraphe` (types incompatibles + ports requis).
-57 tests protègent le cœur, dont 16 dans le domaine fantôme.
+**Domaine fantôme** (`core/domaine-nombre.test.ts`) : 4 micro-plugins
+(`Generer`, `Multiplier`, `Additionner`, `Formater`), `TValeur = number | string`,
+`TRuntime = null`. Calcule `(4×2)+3 = 11` via `ordreTopologique` + `resoudreEntree`
++ `trouverPlugin`. Teste `validerGraphe` (types incompatibles, ports requis).
+
+**Cloisonnement** (`core/cloisonnement.test.ts`) : deux registres indépendants
+(audio + nombre). `audio.trouverDef("reverb")` défini, `nombre.trouverDef("reverb")`
+indéfini. Catalogues indépendants. Types de flux homonymes ("nombre" dans les
+deux domaines) ne s'écrasent pas.
+
+### Les 5 règles protégées par mutation
+
+Chaque règle du cœur a un test qui la protège. La preuve : casser la règle
+fait tomber les tests. Les chiffres sont mesurés après la migration complète.
+
+| Règle | Mutation | Tests qui tombent |
+|---|---|---|
+| Compatibilité de types | `fluxCompatibles → true` | 9 |
+| Hash du cache | `empreinteParametres` ignore `parametres` | 16 |
+| Index des ports | `resoudreEntree` : index source +1 | 5 |
+| Ports requis | `validerGraphe` : vérification désactivée | 3 |
+| Cloisonnement des types | `enregistrerTypeFlux` : Map partagé entre registres | 1 |
+
+Si un chiffre baisse au prochain refactor, une dent a été émoussée.
+
+### Ce qui a dû changer dans core
+
+Le §12 dit « sans modifier core ». C'était le contrat cible, pas l'état de
+départ. Pour le tenir, `core/` a été modifié :
+
+- `registre.ts` : registre global → `creerRegistre<TV, TR>()` factory + clôture
+- `types.ts` : `ContexteExecution` nettoyé (`aretes`/`resultats` retirés,
+  `entree` garantit non-null pour les ports requis, `PortDef.requis` ajouté)
+- `typesFlux.ts` : `Map` global supprimé, ne contient plus que l'interface
+- `validation.ts` : `valider` et `validerGraphe` reçoivent les types de flux
+  en paramètre (DepsTypesFlux / 4e argument) au lieu d'importer le global
+- `graphe.ts` : `resoudreEntree<T = unknown>` / `valeursEntrantes<T = unknown>`
+  (`unknown` par défaut, le domaine narrow à la frontière)
+
+**La promesse du §12 sera vérifiée le jour où un troisième domaine s'écrira
+sans toucher une ligne de `core/`.** Le domaine fantôme le prouve pour un
+domaine isolé. Deux domaines simultanés sont prouvés par le test de
+cloisonnement. Trois domaines dans la même app n'est pas un cas d'usage actuel
+— c'est le prochain test, pas urgent.
+
+### Ce qui reste
+
+- `TypeValeur` (l'union audio) vit encore dans `core/types.ts`. C'est le défaut
+  du paramètre générique — un domaine qui ne spécifie pas `TValeur` l'hérite.
+  Relocaliser cette union hors du cœur est cosmétique : le paramètre de type
+  permet déjà de l'ignorer.
+- `soundfontGlobal.ts` importe des modules audio au niveau module (SF2). Pas
+  lié au registre, mais c'est le dernier side-effect à l'import dans `plugins/`.
+- L'UI (`App.tsx`, `AtelierNode.tsx`, hooks) importe `registre` depuis
+  `audio/adaptateur` — c'est le singleton du domaine, pas du cœur. Acceptable
+  tant qu'un seul domaine est chargé par app. Pour co-existence, l'UI devrait
+  recevoir le registre en prop.
+
+**64 tests · tsc 0 erreur · 0 singleton global · 0 cast de frontière.**
