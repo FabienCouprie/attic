@@ -1,26 +1,19 @@
-// core/registre.ts — Registre de plugins instancié par domaine.
+// core/registre.ts — Registre de plugins instancié et TYPÉ par domaine.
 //
-// `creerRegistre<TV, TR>()` retourne un objet avec les mêmes méthodes que
-// l'ancien registre global : enregistrer, trouverDef, trouverPlugin,
-// tousLesPlugins, desenregistrer. L'adaptateur de domaine est le seul à
-// appeler `enregistrer` — les modules de plugins exportent leurs fiches,
-// l'adaptateur les enregistre.
-//
-// Les fiches sont stockées effacées en `PluginDef<unknown, unknown>` (pas
-// `any`) : le domaine prouve le type à la frontière (cf. audio/index.ts).
+// `creerRegistre<TV, TR>()` retourne un registre où `trouverDef` renvoie
+// `PluginDef<TV, TR> | undefined` — sans cast. Le domaine prouve son type
+// à la construction, pas à chaque appel.
 import type { PluginDef, FonctionPlugin } from "./types";
 import { valider } from "./validation";
 
-export interface Registre {
-  enregistrer<TV, TR>(def: PluginDef<TV, TR>): void;
-  trouverDef(id: string): PluginDef<unknown, unknown> | undefined;
-  trouverPlugin(id: string): FonctionPlugin<unknown, unknown> | undefined;
-  tousLesPlugins(): PluginDef<unknown, unknown>[];
+export interface Registre<TV, TR> {
+  enregistrer(def: PluginDef<TV, TR>): void;
+  trouverDef(id: string): PluginDef<TV, TR> | undefined;
+  trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined;
+  tousLesPlugins(): PluginDef<TV, TR>[];
   desenregistrer(id: string): void;
 }
 
-// Migration d'identifiants : anciens id (workflows sauvegardés / ancien projet)
-// → id actuel. Permet de recharger un graphe qui référence un nœud renommé.
 const ALIAS: Record<string, string> = {
   "placer-son-zones": "placer-sons-zones",
   "dererverb": "dereverberation",
@@ -35,40 +28,39 @@ function resoudre(id: string): string {
   return ALIAS[id] ?? id;
 }
 
-export function creerRegistre(): Registre {
-  const plugins: PluginDef<unknown, unknown>[] = [];
-  const parId = new Map<string, PluginDef<unknown, unknown>>();
+export function creerRegistre<TV, TR>(): Registre<TV, TR> {
+  const plugins: PluginDef<TV, TR>[] = [];
+  const parId = new Map<string, PluginDef<TV, TR>>();
 
-  function enregistrer<TV, TR>(def: PluginDef<TV, TR>): void {
+  function enregistrer(def: PluginDef<TV, TR>): void {
     const { erreurs, avertissements } = valider(def);
     if (erreurs.length) {
       console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
       return;
     }
-    const erased = def as unknown as PluginDef<unknown, unknown>;
     const existant = parId.get(def.id);
     if (existant) {
       const idx = plugins.indexOf(existant);
-      if (idx >= 0) plugins[idx] = erased;
-      parId.set(def.id, erased);
+      if (idx >= 0) plugins[idx] = def;
+      parId.set(def.id, def);
       return;
     }
     if ((import.meta as any).env?.DEV && avertissements.length) {
       console.warn(`[attic] Plugin « ${def.id} » — documentation incomplète : ${avertissements.join(" ; ")}`);
     }
-    plugins.push(erased);
-    parId.set(def.id, erased);
+    plugins.push(def);
+    parId.set(def.id, def);
   }
 
-  function trouverPlugin(id: string): FonctionPlugin<unknown, unknown> | undefined {
+  function trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined {
     return parId.get(resoudre(id))?.executer;
   }
 
-  function trouverDef(id: string): PluginDef<unknown, unknown> | undefined {
+  function trouverDef(id: string): PluginDef<TV, TR> | undefined {
     return parId.get(resoudre(id));
   }
 
-  function tousLesPlugins(): PluginDef<unknown, unknown>[] {
+  function tousLesPlugins(): PluginDef<TV, TR>[] {
     return plugins;
   }
 

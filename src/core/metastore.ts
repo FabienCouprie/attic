@@ -3,14 +3,12 @@
 // catalogue et se rendre/relier comme n'importe quel nœud. À l'exécution, il est
 // aplati (cf. core/meta.ts), donc son `executer` n'est jamais réellement appelé.
 import type { MetaComposant } from "./meta";
-import type { PluginDef } from "./types";
+import type { PluginDef, TypeValeur } from "./types";
 import type { Registre } from "./registre";
 
 // DI : l'adaptateur de domaine configure le registre au démarrage.
-// Permet au metastore d'enregistrer/désenregistrer les fiches méta sans
-// dépendre d'un registre global.
-let registre: Registre | null = null;
-export function configurerRegistre(r: Registre): void { registre = r; }
+let registre: Registre<TypeValeur, AudioContext> | null = null;
+export function configurerRegistre(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
 
 const metas = new Map<string, MetaComposant>();
 

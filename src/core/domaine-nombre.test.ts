@@ -12,14 +12,14 @@ import type { NoeudG, AreteG } from "./meta";
 import type { PluginDef, FonctionPlugin, ContexteExecution } from "./types";
 
 // ── Domaine fantôme : registre propre (pas de pollution du registre audio) ──
-const registre = creerRegistre();
+const registre = creerRegistre<TValeur, TRuntime>();
 
 // ── Domaine fantôme : deux types de flux ──
 enregistrerTypeFlux({ id: "nombre", couleur: "#00FF00", libelle: "Nombre" });
 enregistrerTypeFlux({ id: "texte", couleur: "#FF6600", libelle: "Texte" });
 
-// ── TValeur = number, TRuntime = null ──
-type TValeur = number;
+// ── TValeur = number | string (union du domaine fantôme), TRuntime = null ──
+type TValeur = number | string;
 type TRuntime = null;
 
 // ── Micro-plugin 1 : Generer (paramètre valeur, pas d'entrée, sortie nombre) ──
@@ -49,7 +49,7 @@ const multiplierDef: PluginDef<TValeur, TRuntime> = {
   sorties: [{ nom: "X × facteur", type: "nombre" }],
   parametres: [{ nom: "facteur", type: "curseur", defaut: 1, plage: [-100, 100], doc: "Facteur multiplicatif" }],
   executer: async (ctx) => {
-    const x = ctx.entree(0);
+    const x = ctx.entree(0) as number;
     return { valeurs: [x * ctx.paramNombre("facteur", 1)] };
   },
 };
@@ -67,8 +67,8 @@ const additionnerDef: PluginDef<TValeur, TRuntime> = {
   sorties: [{ nom: "A + B", type: "nombre" }],
   parametres: [],
   executer: async (ctx) => {
-    const a = ctx.entree(0);
-    const b = ctx.entree(1);
+    const a = ctx.entree(0) as number;
+    const b = ctx.entree(1) as number;
     return { valeurs: [a + b] };
   },
 };
@@ -77,7 +77,7 @@ registre.enregistrer(additionnerDef);
 // ── Micro-plugin 4 : Formater (1 entrée texte, 1 sortie texte) ──
 // Sert uniquement à créer un port d'un AUTRE type que "nombre" pour tester
 // le refus de connexion illégale (nombre → texte).
-const formaterDef: PluginDef<string, TRuntime> = {
+const formaterDef: PluginDef<TValeur, TRuntime> = {
   id: "nombre:formater",
   nom: "Formater",
   univers: "Nombre",

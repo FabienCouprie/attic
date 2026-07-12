@@ -3,11 +3,11 @@
 // Au démarrage, recharge les nodes installés et les enregistre comme plugins.
 
 import type { Registre } from "./registre";
-import type { PluginDef, PortDef, ParametreDef } from "./types";
+import type { PluginDef, PortDef, ParametreDef, TypeValeur } from "./types";
 
 // DI : l'adaptateur configure le registre au démarrage.
-let registre: Registre | null = null;
-export function configurerRegistreNodes(r: Registre): void { registre = r; }
+let registre: Registre<TypeValeur, AudioContext> | null = null;
+export function configurerRegistreNodes(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
 
 const CLE = "attic-nodes-installes";
 

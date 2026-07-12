@@ -11,7 +11,7 @@ const fake = (id: string, over: Partial<PluginDef> = {}): PluginDef => ({
 
 describe("registre", () => {
   it("résout un ancien id via l'alias vers le plugin actuel", () => {
-    const r = creerRegistre();
+    const r = creerRegistre<any, any>();
     r.enregistrer(fake("dereverberation"));
     expect(r.trouverDef("dereverberation")?.id).toBe("dereverberation");
     expect(r.trouverDef("dererverb")?.id).toBe("dereverberation"); // alias
@@ -20,7 +20,7 @@ describe("registre", () => {
   });
 
   it("ignore les doublons d'id", () => {
-    const r = creerRegistre();
+    const r = creerRegistre<any, any>();
     r.enregistrer(fake("mon-plugin"));
     const avant = r.tousLesPlugins().length;
     r.enregistrer(fake("mon-plugin")); // doublon
@@ -28,7 +28,7 @@ describe("registre", () => {
   });
 
   it("rejette un plugin sans résumé (doc obligatoire)", () => {
-    const r = creerRegistre();
+    const r = creerRegistre<any, any>();
     const avant = r.tousLesPlugins().length;
     r.enregistrer(fake("sans-resume", { resume: "" }));
     expect(r.trouverDef("sans-resume")).toBeUndefined();

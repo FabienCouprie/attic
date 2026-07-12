@@ -17,7 +17,7 @@ import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
 import type { PluginDef } from "../../core";
 
-const trouverDef = (id: string): PluginDef | undefined => registre.trouverDef(id) as unknown as PluginDef | undefined;
+const trouverDef = (id: string) => registre.trouverDef(id);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;

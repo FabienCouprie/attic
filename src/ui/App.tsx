@@ -14,10 +14,8 @@ import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
 import type { PluginDef } from "../core";
 
-const trouverDef = (id: string): PluginDef | undefined =>
-  registre.trouverDef(id) as unknown as PluginDef | undefined;
-const tousLesPlugins = (): PluginDef[] =>
-  registre.tousLesPlugins() as unknown as PluginDef[];
+const trouverDef = (id: string) => registre.trouverDef(id);
+const tousLesPlugins = () => registre.tousLesPlugins();
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n } from "../i18n";
 

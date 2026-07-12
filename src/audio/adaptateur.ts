@@ -9,10 +9,11 @@
 import { creerRegistre, enregistrerTypeFlux } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerRegistreNodes } from "../core/nodes-installes";
+import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { toutesLesFiches } from "../plugins";
-import type { PluginDef, TypeValeur } from "../core";
+import type { TypeValeur } from "../core";
 
-const registre = creerRegistre();
+export const registre = creerRegistre<TypeValeur, AudioContext>();
 
 // Types de flux du domaine audio
 enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
@@ -23,11 +24,11 @@ enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {
-  registre.enregistrer(fiche as PluginDef<TypeValeur, AudioContext>);
+  registre.enregistrer(fiche);
 }
 
 // Configurer les modules du cœur avec ce registre
 configurerRegistreMeta(registre);
 configurerRegistreNodes(registre);
+configurerRegistreGestion(registre);
 
-export { registre };

@@ -2,14 +2,19 @@
 // exporte un node existant en .zip et importe un node depuis un .zip.
 // Permet de partager des nodes entre installations d'Attic.
 
-import type { PluginDef } from "../core";
+import type { PluginDef, Registre, TypeValeur } from "../core";
 import { avecDoc } from "./notices";
 import { installerNode } from "../core";
-import { registre } from "../audio/adaptateur";
+
+// Injection : l'adaptateur configure le registre au démarrage.
+// Ce plugin est un outil d'administration (export/import .zip) qui accède
+// au registre — ce n'est pas un plugin de traitement.
+let registre: Registre<TypeValeur, AudioContext> | null = null;
+export function configurerRegistreGestion(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
 
 // Récupère les 5 derniers plugins au moment de l'appel (pas au chargement du module)
 function getPluginsRecents(): string[] {
-  return registre.tousLesPlugins()
+  return registre!.tousLesPlugins()
     .filter((p) => !p.id.startsWith("__") && !p.id.startsWith("meta-") && !p.id.startsWith("frontiere"))
     .slice(-5)
     .map((p) => `${p.id} — ${p.nom}`);
@@ -41,7 +46,7 @@ export const fiches: PluginDef[] = ([
 
       // Mettre à jour la liste des nodes disponibles à chaque exécution
       const recents = getPluginsRecents();
-      const defGestion = registre.trouverDef("gestion-nodes");
+      const defGestion = registre!.trouverDef("gestion-nodes");
       if (defGestion && defGestion.parametres[1]) {
         defGestion.parametres[1].options = recents.length > 0 ? recents : ["(aucun node disponible)"];
         defGestion.parametres[1].optionsEn = recents.length > 0 ? recents : ["(no node available)"];
@@ -51,7 +56,7 @@ export const fiches: PluginDef[] = ([
         const selection = ctx.paramTexte("Node à exporter", "");
         const nodeId = selection.split(" — ")[0].trim();
         if (!nodeId || nodeId === "(aucun") return { valeurs: [], message: "Lancez une première fois pour peupler la liste, puis sélectionnez un node et relancez." };
-        const nodeDef = registre.trouverDef(nodeId);
+        const nodeDef = registre!.trouverDef(nodeId);
         if (!nodeDef) return { valeurs: [], message: `Node « ${nodeId} » introuvable.` };
 
         // Construire le manifest
