@@ -11,9 +11,9 @@ import {
   redériverMeta, frontieresPourEdition, renommerMeta,
   type NoeudG, type AreteG,
 } from "../../core";
-import { registreActif } from "../../core";
+import { registre } from "../../audio/adaptateur";
 import type { PluginDef } from "../../core";
-const trouverDef = (id: string): PluginDef | undefined => registreActif().trouverDef(id) as unknown as PluginDef | undefined;
+const trouverDef = (id: string): PluginDef | undefined => registre.trouverDef(id) as unknown as PluginDef | undefined;
 import { idUnique } from "../ids";
 
 // Typage souple : le code d'origine castait déjà tout en `unknown`/`any` pour passer

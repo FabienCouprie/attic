@@ -2,7 +2,8 @@
 // Rend le catalogue de métas PERMANENT sur la machine : ils survivent aux
 // redémarrages, sans dépendre d'un workflow exporté. Le cœur reste sans stockage
 // (cf. core/metastore : on s'abonne à surChangementMetas pour sauvegarder).
-import { tousLesMetas, enregistrerMeta, registreActif, type MetaComposant } from "../core";
+import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../core";
+import { registre } from "../audio/adaptateur";
 
 const CLE = "attic-metas";
 
@@ -48,7 +49,7 @@ export function chargerMetasLocaux(): number {
       if (!m?.id || !m?.nom || !Array.isArray(m.sousNoeuds)) continue;
       const valide = m.sousNoeuds.every((sn: any) => {
         const fid = sn?.data?.ficheId;
-        return typeof fid === "string" && (!!registreActif().trouverDef(fid) || idsPersistes.has(fid));
+        return typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid));
       });
       if (valide) { enregistrerMeta(m as MetaComposant); n++; }
     }

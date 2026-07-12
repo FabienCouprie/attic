@@ -9,17 +9,15 @@ import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
   estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta, registreActif } from "../core";
+  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta } from "../core";
+import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
-import type { PluginDef, TypeValeur } from "../core";
+import type { PluginDef } from "../core";
 
-// Cast de frontière : le registre retourne PluginDef<unknown, unknown>,
-// l'UI audio consomme PluginDef<TypeValeur, AudioContext>. Le registre est
-// mono-domaine (spec §14.1) — ce cast sera supprimé à l'étape 2 (registre typé).
 const trouverDef = (id: string): PluginDef | undefined =>
-  registreActif().trouverDef(id) as unknown as PluginDef | undefined;
+  registre.trouverDef(id) as unknown as PluginDef | undefined;
 const tousLesPlugins = (): PluginDef[] =>
-  registreActif().tousLesPlugins() as unknown as PluginDef[];
+  registre.tousLesPlugins() as unknown as PluginDef[];
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n } from "../i18n";
 
@@ -253,7 +251,7 @@ function Atelier() {
   }, [pile, rfInstance]);
 
   const [pluginsVersion, setPluginsVersion] = useState(0);
-  const plugins = useMemo(() => registreActif().tousLesPlugins() as PluginDef[], [pluginsVersion]);
+  const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
 
   // ── Chargement automatique de l'en-cours sauvegardé ──
   const enCoursCharge = useRef(false);

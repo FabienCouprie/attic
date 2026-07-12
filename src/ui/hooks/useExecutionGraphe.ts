@@ -8,14 +8,16 @@ import { useCallback } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, trouverMeta, registreActif,
+  aplatirGraphe, trouverMeta,
   ordreTopologique, ancetres, empreinteParametres, empreinteEntrees,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
+import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
 import type { PluginDef } from "../../core";
-const trouverDef = (id: string): PluginDef | undefined => registreActif().trouverDef(id) as unknown as PluginDef | undefined;
+
+const trouverDef = (id: string): PluginDef | undefined => registre.trouverDef(id) as unknown as PluginDef | undefined;
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -164,7 +166,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       for (const id of ordreFiltre.slice(i + 1)) cacheExec.current.delete(id);
       traitesCeRun.add(nodeId);
 
-      const fn = registreActif().trouverPlugin(node.data.ficheId as string);
+      const fn = registre.trouverPlugin(node.data.ficheId as string);
       if (!fn) { resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); continue; }
 
       try {

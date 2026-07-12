@@ -6,7 +6,7 @@
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
-import { creerRegistre, enregistrerTypeFlux, configurerRegistreActif } from "../core";
+import { creerRegistre, enregistrerTypeFlux } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerRegistreNodes } from "../core/nodes-installes";
 import { toutesLesFiches } from "../plugins";
@@ -27,7 +27,6 @@ for (const fiche of toutesLesFiches) {
 }
 
 // Configurer les modules du cœur avec ce registre
-configurerRegistreActif(registre);
 configurerRegistreMeta(registre);
 configurerRegistreNodes(registre);
 
