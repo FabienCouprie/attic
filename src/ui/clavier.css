@@ -1,0 +1,28 @@
+/* ── Clavier mélodie ── */
+.clavier { display: flex; flex-direction: column; }
+.clavier-controles {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-bottom: 1px solid var(--border-divider);
+}
+.clavier-controles button {
+  background: var(--bg-btn); border: 1px solid var(--border);
+  border-radius: 4px; padding: 3px 8px; font-size: 12px;
+  color: var(--text-title); cursor: pointer;
+}
+.clavier-controles button:hover { background: var(--bg-btn-hover); }
+.clavier-controles button.actif { background: #e44; color: #fff; }
+.clavier-nb { font-size: 11px; color: var(--text-secondary); }
+.clavier-octave { font-size: 10px; color: var(--text-tertiary); margin-left: auto; }
+.clavier-touches { overflow-x: auto; }
+.clavier-touches.avec-scroll { overflow-x: scroll; }
+.clavier-interieure { position: relative; }
+.clavier-blanche {
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 0 0 4px 4px; cursor: pointer;
+}
+.clavier-blanche.enfoncee { background: var(--accent); }
+.clavier-noire {
+  background: var(--text-title); border-radius: 0 0 3px 3px;
+  cursor: pointer; z-index: 2;
+}
+.clavier-noire.enfoncee { background: var(--accent); }

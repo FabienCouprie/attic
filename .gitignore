@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+release/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Vite temp
+vite-err.txt
+vite-out.txt
+
+# ONNX models (too large for git, distributed via extraResources)
+public/oonx/
+
+# User work files
+work/
+
+# Audio/MIDI collections (user data, not source code)
+music collection/
+soundbank/
+midi_bank/
+
+# Presets (user-generated, kept locally)
+presets/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+.env.*
+
+# Claude / opencode internal
+.claude/
+
+# Python path (user-specific, stored in userData at runtime)
+python-path.txt
+
+# Logs
+*.log
+npm-debug.log*

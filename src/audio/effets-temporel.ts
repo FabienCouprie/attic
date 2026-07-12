@@ -1,0 +1,413 @@
+// audio/effets-temporel.ts — Effets (issus du découpage de effets.ts).
+import { fft } from "./fft";
+import { parseMidi, writeMidi } from "midi-file";
+import type { StructureSF2 } from "./soundfont";
+import { chercherZoneInstrument } from "./soundfont";
+import { Mp3Encoder } from "lamejs";
+import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
+
+export function bouclerAudio(
+  entree: AudioBuffer,
+  dureeSec: number,
+  repetitions: number,
+  fonduMs: number
+): AudioBuffer {
+  const sampleRate = entree.sampleRate;
+  const longueurSegment = Math.max(1, Math.round(dureeSec * sampleRate));
+  const nbRepetitions = Math.max(1, Math.round(repetitions));
+  const fonduEch = Math.min(
+    Math.floor(longueurSegment / 2),
+    Math.max(0, Math.round((fonduMs / 1000) * sampleRate))
+  );
+
+  const resultat = new AudioBuffer({
+    numberOfChannels: entree.numberOfChannels,
+    length: longueurSegment * nbRepetitions,
+    sampleRate,
+  });
+
+  for (let c = 0; c < entree.numberOfChannels; c++) {
+    const src = entree.getChannelData(c);
+    const segment = new Float32Array(longueurSegment);
+    for (let i = 0; i < longueurSegment; i++) segment[i] = i < src.length ? src[i] : 0;
+
+    const dst = resultat.getChannelData(c);
+    for (let r = 0; r < nbRepetitions; r++) {
+      const offset = r * longueurSegment;
+      for (let i = 0; i < longueurSegment; i++) {
+        let echantillon = segment[i];
+        if (r > 0 && fonduEch > 0 && i < fonduEch) {
+          const poids = i / fonduEch;
+          const echantillonPrecedent = segment[longueurSegment - fonduEch + i];
+          echantillon = echantillonPrecedent * (1 - poids) + segment[i] * poids;
+        }
+        dst[offset + i] = echantillon;
+      }
+    }
+  }
+
+  return resultat;
+}
+
+
+
+export async function appliquerDelay(
+  entree: AudioBuffer,
+  tempsGaucheMs: number,
+  tempsDroitMs: number,
+  feedbackPct: number,
+  mixPct: number
+): Promise<AudioBuffer> {
+  const tl = Math.max(0.001, tempsGaucheMs) / 1000;
+  const tr = Math.max(0.001, tempsDroitMs) / 1000;
+  const feedback = Math.max(0, feedbackPct / 100);
+  const mix = Math.max(0, Math.min(1, mixPct / 100));
+  const dMax = Math.max(tl, tr);
+  const rep = feedback > 0.001 && feedback < 0.999 ? Math.ceil(Math.log(1e-4) / Math.log(feedback)) : feedback >= 0.999 ? 40 : 0;
+  const coda = Math.max(3, dMax * Math.min(rep, 40));
+  const duree = entree.duration + coda;
+  const offline = new OfflineAudioContext(2, Math.ceil(duree * entree.sampleRate), entree.sampleRate);
+
+  const source = offline.createBufferSource();
+  source.buffer = entree;
+
+  const dryG = offline.createGain();
+  dryG.gain.value = 1 - mix;
+  source.connect(dryG).connect(offline.destination);
+
+  const splitter = offline.createChannelSplitter(2);
+  const merger = offline.createChannelMerger(2);
+  source.connect(splitter);
+
+  function faireCanal(chan: number, dt: number) {
+    const delai = offline.createDelay(dMax + 1);
+    delai.delayTime.value = dt;
+    const fb = offline.createGain(); fb.gain.value = feedback;
+    const flt = offline.createBiquadFilter(); flt.type = "lowpass"; flt.frequency.value = 8000;
+    const wet = offline.createGain(); wet.gain.value = mix;
+    splitter.connect(delai, chan, 0);
+    delai.connect(flt).connect(fb).connect(delai);
+    flt.connect(wet).connect(merger, 0, chan);
+  }
+
+  faireCanal(0, tl);
+  faireCanal(1, tr);
+
+  merger.connect(offline.destination);
+  source.start(0);
+  return offline.startRendering();
+}
+
+
+
+export async function appliquerEchoPingPong(
+  entree: AudioBuffer,
+  tempsMs: number,
+  feedbackPct: number,
+  repartitionPct: number
+): Promise<AudioBuffer> {
+  const delai = Math.max(0.001, tempsMs) / 1000;
+  const feedback = Math.max(0, feedbackPct / 100);
+  const repetitions = feedback > 0.001 && feedback < 0.99 ? Math.ceil(Math.log(1e-4) / Math.log(feedback)) : feedback >= 0.99 ? 40 : 0;
+  const coda = Math.max(5, delai * Math.min(repetitions, 40));
+  const duree = entree.duration + coda;
+  const offline = new OfflineAudioContext(2, Math.ceil(duree * entree.sampleRate), entree.sampleRate);
+
+  const source = offline.createBufferSource();
+  source.buffer = entree;
+
+  // Dry
+  source.connect(offline.destination);
+
+  // Wet : delay → panner → destination + feedback
+  const delay = offline.createDelay(5);
+  delay.delayTime.value = delai;
+
+  const wetGain = offline.createGain();
+  wetGain.gain.value = 0.7;
+
+  const panner = offline.createStereoPanner();
+  const pannerGain = offline.createGain();
+  pannerGain.gain.value = Math.min(1, Math.max(0, repartitionPct / 100));
+
+  const feedbackGain = offline.createGain();
+  feedbackGain.gain.value = feedback;
+
+  // LFO : ondule sinusoïdale pour éviter les clics du carré ; la transition
+  // douce entre gauche et droite conserve l'effet ping-pong sans artefact.
+  const lfo = offline.createOscillator();
+  lfo.type = "triangle";
+  lfo.frequency.value = 1 / (2 * delai);
+
+  source.connect(wetGain);
+  wetGain.connect(delay);
+  delay.connect(panner);
+  panner.connect(offline.destination);
+  panner.connect(feedbackGain);
+  feedbackGain.connect(delay);
+
+  // La sortie du LFO (±1) est multipliée par pannerGain puis connectée à
+  // panner.pan (valeur nominale). Avec une onde triangle, la panoramique
+  // varie linéairement d'un extrême à l'autre, sans discontinuité.
+  lfo.connect(pannerGain);
+  pannerGain.connect(panner.pan);
+
+  source.start(0);
+  lfo.start(0);
+  return offline.startRendering();
+}
+
+
+
+export async function appliquerReverberation(
+  entree: AudioBuffer,
+  taille: number,
+  decaySec: number,
+  mix: number
+): Promise<AudioBuffer> {
+  const dureeImpulsion = 0.2 + (Math.max(0, Math.min(100, taille)) / 100) * 6;
+  const facteurDecay = Math.max(0.5, Math.min(8, decaySec));
+  const coda = dureeImpulsion + 1;
+  const duree = entree.duration + coda;
+  const offline = new OfflineAudioContext(
+    entree.numberOfChannels,
+    Math.ceil(duree * entree.sampleRate),
+    entree.sampleRate
+  );
+
+  const impulsion = offline.createBuffer(
+    entree.numberOfChannels,
+    Math.ceil(dureeImpulsion * entree.sampleRate),
+    entree.sampleRate
+  );
+  for (let c = 0; c < impulsion.numberOfChannels; c++) {
+    const donnees = impulsion.getChannelData(c);
+    for (let i = 0; i < donnees.length; i++) {
+      const t = i / donnees.length;
+      donnees[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, facteurDecay);
+    }
+  }
+
+  const source = offline.createBufferSource();
+  source.buffer = entree;
+
+  const convolueur = offline.createConvolver();
+  convolueur.buffer = impulsion;
+  convolueur.normalize = true;
+
+  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
+  const gainSec = offline.createGain();
+  gainSec.gain.value = 1 - mixVal;
+  const gainHumide = offline.createGain();
+  gainHumide.gain.value = mixVal;
+
+  source.connect(gainSec);
+  gainSec.connect(offline.destination);
+
+  source.connect(convolueur);
+  convolueur.connect(gainHumide);
+  gainHumide.connect(offline.destination);
+
+  source.start(0);
+  return offline.startRendering();
+}
+
+
+
+export function appliquerFondu(buffer: AudioBuffer, type: string, dureeSec: number): AudioBuffer {
+  const dureeEch = Math.max(1, Math.min(buffer.length, Math.round(dureeSec * buffer.sampleRate)));
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: buffer.sampleRate,
+  });
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    dst.set(src);
+
+    if (type === "Fermeture") {
+      const debut = buffer.length - dureeEch;
+      for (let i = 0; i < dureeEch; i++) {
+        const t = i / Math.max(1, dureeEch - 1);
+        const gain = 0.5 * (1 + Math.cos(Math.PI * t));
+        dst[debut + i] *= gain;
+      }
+    } else {
+      for (let i = 0; i < dureeEch; i++) {
+        const t = i / Math.max(1, dureeEch - 1);
+        const gain = 0.5 * (1 - Math.cos(Math.PI * t));
+        dst[i] *= gain;
+      }
+    }
+  }
+
+  return resultat;
+}
+
+// Amplificateur : gain fixe en dB appliqué uniformément. Les valeurs qui
+// dépassent ±1 seront écrêtées à la lecture/export (comme un ampli qui sature).
+
+
+export async function appliquerFlanger(
+  entree: AudioBuffer,
+  vitesse: number,
+  profondeur: number,
+  mix: number
+): Promise<AudioBuffer> {
+  const coda = 0.1;
+  const duree = entree.duration + coda;
+  const ctx = new OfflineAudioContext(entree.numberOfChannels, Math.ceil(duree * entree.sampleRate), entree.sampleRate);
+  const source = ctx.createBufferSource();
+  source.buffer = entree;
+  const sec = ctx.createGain();
+  sec.gain.value = 1 - mix;
+  const humide = ctx.createGain();
+  humide.gain.value = mix;
+  const delai = ctx.createDelay(0.02);
+  delai.delayTime.setValueAtTime(0.002, 0);
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = vitesse;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = Math.max(0.0001, profondeur / 1000);
+  lfo.connect(lfoGain);
+  lfoGain.connect(delai.delayTime);
+  source.connect(sec);
+  sec.connect(ctx.destination);
+  source.connect(delai);
+  delai.connect(humide);
+  humide.connect(ctx.destination);
+  source.start();
+  lfo.start();
+  return ctx.startRendering();
+}
+
+
+
+export async function appliquerChorus(
+  entree: AudioBuffer,
+  vitesse: number,
+  profondeur: number,
+  mix: number,
+): Promise<AudioBuffer> {
+  const sr = entree.sampleRate;
+  const nCh = Math.min(entree.numberOfChannels, 2);
+  const duree = entree.duration + 0.2;
+  const ctx = new OfflineAudioContext(nCh, Math.ceil(duree * sr), sr);
+  const source = ctx.createBufferSource();
+  source.buffer = entree;
+
+  const secGain = ctx.createGain();
+  secGain.gain.value = 1 - mix;
+  source.connect(secGain);
+  secGain.connect(ctx.destination);
+
+  const baseDelay = 0.025;
+  const profSec = profondeur / 1000;
+
+  for (let ch = 0; ch < nCh; ch++) {
+    const delai = ctx.createDelay(0.05);
+    delai.delayTime.value = baseDelay + ch * 0.004;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = vitesse * (1 + ch * 0.15);
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = profSec;
+    lfo.connect(lfoGain);
+    lfoGain.connect(delai.delayTime);
+    const wetGain = ctx.createGain();
+    wetGain.gain.value = mix * 0.4;
+    source.connect(delai);
+    delai.connect(wetGain);
+    wetGain.connect(ctx.destination);
+    lfo.start();
+  }
+
+  source.start();
+  return ctx.startRendering();
+}
+
+
+
+export async function appliquerReverbeProgressive(
+  entree: AudioBuffer,
+  taillePct: number,
+  debutPct: number,
+  finPct: number,
+  dureeFadeSec: number,
+): Promise<AudioBuffer> {
+  const dureeImpulsion = 0.5 + (Math.max(0, Math.min(100, taillePct)) / 100) * 3;
+  const coda = dureeImpulsion + 1;
+  const sr = entree.sampleRate;
+  const duree = entree.duration + coda;
+  const offline = new OfflineAudioContext(entree.numberOfChannels, Math.ceil(duree * sr), sr);
+
+  const impulsion = offline.createBuffer(entree.numberOfChannels, Math.ceil(dureeImpulsion * sr), sr);
+  for (let c = 0; c < impulsion.numberOfChannels; c++) {
+    const donnees = impulsion.getChannelData(c);
+    for (let i = 0; i < donnees.length; i++) {
+      const t = i / donnees.length;
+      donnees[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3);
+    }
+  }
+
+  const source = offline.createBufferSource();
+  source.buffer = entree;
+
+  const convolueur = offline.createConvolver();
+  convolueur.buffer = impulsion;
+  convolueur.normalize = true;
+
+  const debut = Math.max(0, Math.min(100, debutPct)) / 100;
+  const fin = Math.max(0, Math.min(100, finPct)) / 100;
+  const fade = Math.max(0.5, Math.min(duree, dureeFadeSec));
+
+  const gainSec = offline.createGain();
+  gainSec.gain.setValueAtTime(1 - debut, 0);
+  gainSec.gain.linearRampToValueAtTime(1 - fin, fade);
+
+  const gainHumide = offline.createGain();
+  gainHumide.gain.setValueAtTime(debut, 0);
+  gainHumide.gain.linearRampToValueAtTime(fin, fade);
+
+  source.connect(gainSec);
+  gainSec.connect(offline.destination);
+
+  source.connect(convolueur);
+  convolueur.connect(gainHumide);
+  gainHumide.connect(offline.destination);
+
+  source.start(0);
+  return offline.startRendering();
+}
+
+// ---------- Classificateur de genre audio ----------
+
+// ---------- Ring modulator ----------
+
+export function ringModulator(
+  buffer: AudioBuffer,
+  frequence: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: sr,
+  });
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < src.length; i++) {
+      const t = i / sr;
+      const porteuse = Math.sin(2 * Math.PI * frequence * t);
+      dst[i] = src[i] * (1 - mixVal) + src[i] * porteuse * mixVal;
+    }
+  }
+
+  return resultat;
+}
+

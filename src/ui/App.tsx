@@ -1,0 +1,694 @@
+// ui/App.tsx — Application principale
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import {
+  ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
+  useNodesState, useEdgesState,
+  type Node, type Edge, type Connection, type OnConnect,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+
+import { tousLesPlugins, trouverDef, trouverMeta,
+  estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
+  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta } from "../core";
+import type { PluginDef } from "../core";
+import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
+import { useI18n } from "../i18n";
+
+import { AtelierNode } from "./AtelierNode";
+import { idUnique } from "./ids";
+import { usePersistance } from "./hooks/usePersistance";
+import { useMetaComposants } from "./hooks/useMetaComposants";
+import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
+import { BarreOutils } from "./BarreOutils";
+import { Palette } from "./Palette";
+import { Inspector } from "./Inspector";
+import { AretePersonnalisee } from "./AretePersonnalisee";
+import "./atelier.css";
+import "./clavier.css";
+
+// Forcer l'enregistrement des plugins
+import { _plugins_loaded } from "../plugins";
+void _plugins_loaded;
+
+import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
+import { setGrapheRef } from "../audio/graphe-embarque";
+import { chargerNodesInstalles } from "../core";
+// Restaure les méta-composants persistés AVANT le premier rendu (donc avant que
+// la palette ne lise tousLesPlugins) : le catalogue de métas est ainsi permanent.
+chargerMetasLocaux();
+// Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.
+chargerNodesInstalles();
+
+// Diagnostic : vérifier que les plugins sont bien chargés
+const nbPlugins = tousLesPlugins().length;
+
+// ── Types ──
+
+interface DonneesNoeud {
+  ficheId: string;
+  parametres: Record<string, number | string>;
+  statut: string;
+  progression?: string;
+  audioResultatUrl?: string;
+  audioResultatNom?: string;
+  audioResultatMessage?: string;
+  audioFichier?: File;
+  midiFichier?: File;
+  midiFichierSortie?: File;
+  modeleFichier?: File;
+  enregistrementBlob?: Blob;
+  visualisationUrl?: string;
+  nomFichier?: string;
+  prioritaire?: boolean;
+  [key: string]: unknown;
+}
+
+type NoeudAtelier = Node<DonneesNoeud, "atelier">;
+
+const nodeTypes = { atelier: AtelierNode };
+const edgeTypes = { "arete-personnalisee": AretePersonnalisee };
+
+// ── Helpers ──
+
+function tailleDefaut(def: PluginDef): { width: number; height: number } {
+  const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
+  const nbParams = def.parametres.length;
+  let h = 118 + nbPorts * 26 + nbParams * 46 + 90;
+  if (def.id === "sortie-audio" || def.id === "sortie-midi") h += 20;
+  if (def.id === "generateur-musical") h = 380;
+  if (def.id === "clavier-melodie") return { width: 500, height: 260 };
+  if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
+  if (def.id === "analyseur-spectre") return { width: 420, height: 300 };
+  if (def.id === "spectrogramme") return { width: 420, height: 300 };
+  if (def.id === "oscillateur") return { width: 420, height: 340 };
+  if (def.id === "reponse-filtre") return { width: 420, height: 300 };
+  if (def.id === "noms-instruments") return { width: 300, height: 320 };
+  if (def.id === "styles-musicaux") return { width: 300, height: 320 };
+  if (def.id === "emotions") return { width: 300, height: 320 };
+  if (def.id === "tessitures-voix") return { width: 300, height: 320 };
+  if (def.id === "generateur-script-ia") return { width: 380, height: 400 };
+  if (def.id === "detecteur-accords") return { width: 320, height: 340 };
+  if (def.id === "vu-metre") return { width: 300, height: 260 };
+  if (def.id === "colorsynth") return { width: 280, height: 220 };
+  if (def.id === "generateur-pochette") return { width: 280, height: 340 };
+  if (def.id === "galerie-exposition") return { width: 280, height: 280 };
+  if (def.id === "gestion-nodes") return { width: 280, height: 220 };
+  if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };
+  if (def.id === "source-texte") return { width: 280, height: 200 };
+  if (def.id === "sortie-texte") return { width: 280, height: 250 };
+  if (def.id === "python-processor") return { width: 380, height: 300 };
+  if (def.id === "multi-reservoirs") return { width: 280, height: 420 };
+  if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
+  if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
+  if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
+  if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
+  if (def.id.startsWith("collection-")) return { width: 380, height: 280 };
+  if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
+  if (def.id === "classificateur-genre") return { width: 380, height: 300 };
+  return { width: 230, height: h };
+}
+
+// ── Application ──
+
+export default function App() {
+  return (
+    <ReactFlowProvider>
+      <Atelier />
+    </ReactFlowProvider>
+  );
+}
+
+type WorkflowState = { nom: string; nodes: NoeudAtelier[]; edges: Edge[]; viewport?: { x: number; y: number; zoom: number } };
+
+function Atelier() {
+  const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
+  const [onglets, setOnglets] = useState<string[]>(["wf-1"]);
+  const [actif, setActif] = useState("wf-1");
+  const [nodes, setNodes, onNodesChange] = useNodesState<NoeudAtelier>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [sel, setSel] = useState<NoeudAtelier | null>(null);
+  // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
+  // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
+  const [pile, setPile] = useState<{ metaId: string; nom: string }[]>([]);
+  const pileRef = useRef(pile);
+  pileRef.current = pile;
+  const grapheRacineRef = useRef<{ nodes: NoeudAtelier[]; edges: Edge[] } | null>(null);
+  const [enExecution, setEnExecution] = useState(false);
+  const enExecRef = useRef(false);
+  const noeudsRef = useRef(nodes);
+  const aretesRef = useRef(edges);
+  useEffect(() => {
+    noeudsRef.current = nodes;
+    aretesRef.current = edges;
+    enExecRef.current = enExecution;
+    setGrapheRef({ nodes, edges });
+  }, [nodes, edges, enExecution]);
+  const [rfInstance, setRfInstance] = useState<any>(null);
+
+  // Sauvegarde l'état actif avant de changer d'onglet
+  const sauvegarderActif = useCallback(() => {
+    setWorkflows((wfs) => ({ ...wfs, [actif]: { nom: `Workflow ${onglets.indexOf(actif) + 1}`, nodes, edges, viewport: rfInstance?.getViewport() } }));
+  }, [actif, nodes, edges, rfInstance, onglets]);
+
+  const changerOnglet = useCallback((id: string) => {
+    sauvegarderActif();
+    setActif(id);
+    const wf = workflows[id];
+    if (wf) {
+      setNodes(wf.nodes);
+      setEdges(wf.edges);
+      queueMicrotask(() => { if (wf.viewport && rfInstance) rfInstance.setViewport(wf.viewport); });
+    }
+  }, [sauvegarderActif, workflows, setNodes, setEdges, rfInstance]);
+
+  const nouvelOnglet = useCallback(() => {
+    sauvegarderActif();
+    const id = `wf-${onglets.length + 1}`;
+    setOnglets((o) => [...o, id]);
+    setWorkflows((wfs) => ({ ...wfs, [id]: { nom: `Workflow ${onglets.length + 1}`, nodes: [], edges: [] } }));
+    setActif(id);
+    setNodes([]);
+    setEdges([]);
+    cacheExec.current.clear();
+    setSel(null);
+  }, [sauvegarderActif, onglets, setNodes, setEdges]);
+
+  const fermerOnglet = useCallback((id: string) => {
+    if (onglets.length <= 1) return;
+    const idx = onglets.indexOf(id);
+    const nouveaux = onglets.filter((o) => o !== id);
+    setOnglets(nouveaux);
+    setWorkflows((wfs) => { const { [id]: _, ...rest } = wfs; return rest; });
+    if (id === actif) {
+      const suivant = nouveaux[Math.min(idx, nouveaux.length - 1)];
+      changerOnglet(suivant);
+    }
+  }, [onglets, actif, changerOnglet]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const lancerRef = useRef<any>(null);
+  const cacheExec = useRef<Map<string, any>>(new Map());
+  const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
+
+  const changerRepertoire = useCallback((r: string) => {
+    setRepertoire(r);
+    localStorage.setItem("attic-repertoire", r);
+  }, []);
+
+  // Persistance des méta-composants : sauvegarde locale à chaque changement
+  // (création, édition interne, import). Le chargement se fait au niveau module.
+  useEffect(() => surChangementMetas(sauvegarderMetasLocaux), []);
+
+  // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
+  // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur
+  // n'a pas choisi le sien (via l'icône « dossier » de la barre d'outils).
+  useEffect(() => {
+    if (repertoire) return;
+    (async () => {
+      const w = await (window as any).api?.obtenirRepertoireTravail?.();
+      if (w) setRepertoire(w);
+    })();
+    // Exécuté une seule fois au montage ; le garde interne évite d'écraser un choix.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [prioritaire, setPrioritaire] = useState<string | null>(null);
+  const prioritaireRef = useRef<string | null>(null);
+  prioritaireRef.current = prioritaire;
+  const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
+  const [sf2List, setSf2List] = useState<string[]>([]);
+  // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
+  const pressePapierRef = useRef<{ ficheId: string; parametres: Record<string, number | string>; width: number; height: number; data: Record<string, unknown> } | null>(null);
+
+  // Auto-load SF2 au démarrage
+  useEffect(() => {
+    (async () => {
+      const sf2 = await autoChargerSF2(repertoire);
+      if (sf2) setSf2NomState(sf2Nom());
+    })();
+  }, [repertoire]);
+
+  // Mettre à jour prioritaire sur les nœuds
+  useEffect(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, prioritaire: n.id === prioritaire } })));
+  }, [prioritaire, setNodes]);
+  const [theme, setTheme] = useState<"clair" | "black">("black");
+
+  useEffect(() => {
+    if (theme === "clair") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  // Recadre la vue à chaque navigation dans/hors d'un méta-composant.
+  useEffect(() => {
+    const t = setTimeout(() => rfInstance?.fitView?.({ duration: 200, padding: 0.2 }), 60);
+    return () => clearTimeout(t);
+  }, [pile, rfInstance]);
+
+  const [pluginsVersion, setPluginsVersion] = useState(0);
+  const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
+
+  // ── Chargement automatique de l'en-cours sauvegardé ──
+  const enCoursCharge = useRef(false);
+  useEffect(() => {
+    if (enCoursCharge.current) return;
+    enCoursCharge.current = true;
+    try {
+      const brut = localStorage.getItem("attic-encours");
+      if (!brut) return;
+      const data = JSON.parse(brut);
+      if (!data.nodes || !Array.isArray(data.nodes)) return;
+      const cbs = callbacksNoeud();
+      const nodesRestaures = data.nodes.map((n: any) => {
+        const def = trouverDef(n.data.ficheId);
+        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
+        return {
+          id: n.id, type: "atelier", position: n.position, width: n.width ?? width, height: n.height ?? height,
+          data: {
+            ficheId: n.data.ficheId,
+            parametres: n.data.parametres ?? {},
+            statut: "attente",
+            zonesSelectionnees: n.data.zonesSelectionnees,
+            onSupprimerNoeud: cbs.onSupprimerNoeud,
+            onReinitialiser: cbs.onReinitialiser,
+            onDefinirPrioritaire: cbs.onDefinirPrioritaire,
+            onChargerAudio: cbs.onChargerAudio,
+            onChargerMidi: cbs.onChargerMidi,
+            onChangerEnregistrement: cbs.onChangerEnregistrement,
+            onChangerParametre: cbs.onChangerParametre,
+            onChangerZones: cbs.onChangerZones,
+            onChargerIR: cbs.onChargerIR,
+          },
+        };
+      });
+      const couleurAudio = couleurFlux("audio");
+      const edgesRestaures = (data.edges ?? []).map((e: any) => ({
+        ...e, type: "arete-personnalisee",
+        style: { stroke: couleurFlux("audio"), strokeWidth: 2.5 },
+      }));
+      setNodes(nodesRestaures);
+      setEdges(edgesRestaures);
+      if (data.viewport && rfInstance) {
+        queueMicrotask(() => rfInstance.setViewport(data.viewport));
+      }
+    } catch (e) {
+      console.warn("[attic] Restauration de l'en-cours échouée", e);
+    }
+  }, [pluginsVersion]); // après chargement des plugins
+
+  // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
+  // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
+  // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
+  const { lancer, reinitialiserNoeud } = useExecutionGraphe({
+    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
+    edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
+    onGrapheGenere: (nodeId, spec) => {
+      setNodes((nds) => {
+        const baseX = noeudsRef.current.find((n) => n.id === nodeId)?.position?.x ?? 200;
+        const baseY = noeudsRef.current.find((n) => n.id === nodeId)?.position?.y ?? 200;
+        const cbs = callbacksNoeud();
+        const idsNouveaux: string[] = [];
+        const nouveauxNodes = spec.nodes.map((specNode, i) => {
+          const def = trouverDef(specNode.ficheId);
+          const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
+          const parametres: Record<string, number | string> = {};
+          if (def) for (const p of def.parametres) parametres[p.nom] = p.defaut;
+          const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
+          idsNouveaux.push(id);
+          return {
+            id, type: "atelier" as const,
+            position: { x: baseX + 250 + i * 260, y: baseY + 40 },
+            width, height,
+            data: {
+              ficheId: specNode.ficheId, parametres, statut: "attente",
+              onSupprimerNoeud: cbs.onSupprimerNoeud,
+              onReinitialiser: cbs.onReinitialiser,
+              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
+              onChargerAudio: cbs.onChargerAudio,
+              onChargerMidi: cbs.onChargerMidi,
+              onChangerEnregistrement: cbs.onChangerEnregistrement,
+              onChangerParametre: cbs.onChangerParametre,
+              onChangerZones: cbs.onChangerZones,
+              onChargerIR: cbs.onChargerIR,
+            },
+          };
+        });
+        // Créer les edges
+        const couleurAudio = couleurFlux("audio");
+        const nouveauxEdges = spec.edges.map((e, i) => ({
+          id: `e-prompt-${nodeId}-${i}`,
+          source: idsNouveaux[e.source],
+          target: idsNouveaux[e.target],
+          sourceHandle: "out:0",
+          targetHandle: "in:0",
+          type: "arete-personnalisee" as const,
+          style: { stroke: couleurAudio, strokeWidth: 2.5 },
+        }));
+        setEdges((eds) => [...eds, ...nouveauxEdges]);
+        return [...nds, ...nouveauxNodes];
+      });
+    },
+    onNodeInstalle: () => {
+      setPluginsVersion((v) => v + 1);
+    },
+  });
+  lancerRef.current = lancer;
+
+
+  // ── Ajouter / Supprimer ──
+  const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
+    const def = trouverDef(ficheId);
+    if (!def) return;
+    const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    const parametres: Record<string, number | string> = {};
+    for (const p of def.parametres) parametres[p.nom] = p.defaut;
+    const { width, height } = tailleDefaut(def);
+    setNodes((nds) => [...nds, {
+      id: idUnique(nds),
+      type: "atelier",
+      position,
+      width,
+      height,
+      data: {
+        ficheId, parametres, statut: "attente",
+        onSupprimerNoeud: (nid: string) => {
+          setNodes((nds2) => nds2.filter((n) => n.id !== nid));
+          setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
+          setSel((prev) => prev?.id === nid ? null : prev);
+        },
+        onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
+        onDefinirPrioritaire: (nid: string) => {
+          setPrioritaire(nid);
+          lancerRef.current(nid);
+        },
+        onChargerAudio: (nid: string, fichier: File) => {
+          cacheExec.current.delete(nid);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : n));
+        },
+        onChargerMidi: (nid: string, fichier: File) => {
+          cacheExec.current.delete(nid);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
+        },
+        onChangerEnregistrement: (nid: string, blob: Blob) => {
+          const url = URL.createObjectURL(blob);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
+        },
+        onChangerParametre: (nid: string, nom: string, val: number | string) => {
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
+        },
+        onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => {
+          cacheExec.current.delete(nid);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n));
+        },
+        onChargerIR: (nid: string, fichier: File) => {
+          cacheExec.current.delete(nid);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n));
+        },
+      },
+    }]);
+  }, [setNodes, setEdges, reinitialiserNoeud, setPrioritaire]);
+
+  // Callbacks standard attachés à tout nœud (réutilisés par grouper/dégrouper).
+  const callbacksNoeud = useCallback(() => ({
+    onSupprimerNoeud: (nid: string) => {
+      setNodes((nds2) => nds2.filter((n) => n.id !== nid));
+      setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
+      setSel((prev) => prev?.id === nid ? null : prev);
+    },
+    onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
+    onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
+    onChargerAudio: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : n)); },
+    onChargerMidi: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n)); },
+    onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
+    onChangerParametre: (nid: string, nom: string, val: number | string) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n)); },
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
+    onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); },
+  }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire]);
+
+  // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Ne pas intercepter si on tape dans un champ (textarea, input, select)
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "c" && sel) {
+        e.preventDefault();
+        const def = trouverDef(sel.data.ficheId as string);
+        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
+        pressePapierRef.current = {
+          ficheId: sel.data.ficheId as string,
+          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
+          width, height,
+          data: {},
+        };
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current) {
+        e.preventDefault();
+        const clip = pressePapierRef.current;
+        const def = trouverDef(clip.ficheId);
+        if (!def) return;
+        const cbs = callbacksNoeud();
+        setNodes((nds) => {
+          const nouvelId = idUnique(nds);
+          const position = {
+            x: (sel?.position?.x ?? 120) + 40 + Math.random() * 30,
+            y: (sel?.position?.y ?? 80) + 40 + Math.random() * 30,
+          };
+          return [...nds, {
+            id: nouvelId,
+            type: "atelier",
+            position,
+            width: clip.width,
+            height: clip.height,
+            data: {
+              ficheId: clip.ficheId,
+              parametres: { ...clip.parametres },
+              statut: "attente",
+              onSupprimerNoeud: cbs.onSupprimerNoeud,
+              onReinitialiser: cbs.onReinitialiser,
+              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
+              onChargerAudio: cbs.onChargerAudio,
+              onChargerMidi: cbs.onChargerMidi,
+              onChangerEnregistrement: cbs.onChangerEnregistrement,
+              onChangerParametre: cbs.onChangerParametre,
+              onChangerZones: cbs.onChangerZones,
+              onChargerIR: cbs.onChargerIR,
+            },
+          }];
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sel, callbacksNoeud, setNodes]);
+
+  // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
+  // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
+  const { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA } = useMetaComposants({
+    noeudsRef, aretesRef, pileRef, grapheRacineRef, cacheExec,
+    setNodes, setEdges, setPile, setSel, callbacksNoeud,
+  });
+
+  // ── Glisser-déposer ──
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const ficheId = e.dataTransfer.getData("application/attic-fiche-id");
+    if (!ficheId || !rfInstance || !wrapperRef.current) return;
+    const bounds = wrapperRef.current.getBoundingClientRect();
+    ajouterNoeud(ficheId, rfInstance.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top }));
+  }, [ajouterNoeud, rfInstance]);
+
+  const isValidConnection = useCallback((conn: Connection | Edge) => {
+    const source = noeudsRef.current.find((n) => n.id === conn.source);
+    const target = noeudsRef.current.find((n) => n.id === conn.target);
+    if (!source || !target || !conn.sourceHandle || !conn.targetHandle) return false;
+    // Un nœud-frontière accepte n'importe quel type (le port exposé hérite du
+    // type interne relié).
+    if (estFrontiere(source.data.ficheId as string) || estFrontiere(target.data.ficheId as string)) return true;
+    const defS = trouverDef(source.data.ficheId);
+    const defT = trouverDef(target.data.ficheId);
+    if (!defS || !defT) return false;
+    const si = parseInt(conn.sourceHandle.split(":")[1]);
+    const ti = parseInt(conn.targetHandle.split(":")[1]);
+    const typeS = defS.sorties[si]?.type;
+    const typeT = defT.entrees[ti]?.type;
+    if (!typeS || !typeT || !fluxCompatibles(typeS, typeT)) return false;
+    // Refuser une seconde connexion sur un port d'entrée non dynamique
+    // (sauf si le port est variadique — dynamique: true, ex. fusionneur/mélangeur)
+    const portTarget = defT.entrees[ti];
+    if (portTarget && !portTarget.dynamique) {
+      const dejaConnecte = aretesRef.current.some(
+        (e) => e.target === conn.target && e.targetHandle === conn.targetHandle
+      );
+      if (dejaConnecte) return false;
+    }
+    return true;
+  }, []);
+
+  const onConnect: OnConnect = useCallback((conn) => {
+    const defS = trouverDef(noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId ?? "");
+    const si = parseInt((conn.sourceHandle ?? "out:0").split(":")[1]);
+    const typeP = defS?.sorties[si]?.type ?? "audio";
+    const c = couleurFlux(typeP);
+    setEdges((eds) => [...eds, { ...conn, id: `e-${conn.source}-${conn.target}-${Date.now()}`, type: "arete-personnalisee", style: { stroke: c, strokeWidth: 2.5 } }]);
+  }, [setEdges]);
+
+  // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
+  const { exporter, importer } = usePersistance({
+    nodes, edges, setNodes, setEdges, rfInstance, repertoire,
+    sauvegarderContexteCourant, grapheRacineRef, setPile,
+    reinitialiserNoeud, setPrioritaire, lancerRef, cacheExec,
+  });
+
+  return (
+    <div className="attic-app">
+      <Palette
+        plugins={plugins.filter((p) => !estFrontiere(p.id))}
+        onAjouter={(id) => ajouterNoeud(id)}
+        onSupprimerMeta={(id) => {
+          const nom = trouverMeta(id)?.nom ?? id;
+          if (!window.confirm(`Supprimer le méta-composant « ${nom} » du catalogue ?`)) return;
+          // Retire aussi ses instances éventuelles du graphe courant (sinon nœuds orphelins).
+          const aRetirer = new Set(noeudsRef.current.filter((n) => n.data.ficheId === id).map((n) => n.id));
+          supprimerMeta(id);
+          setNodes((nds) => nds.filter((n) => !aRetirer.has(n.id)));
+          setEdges((eds) => eds.filter((e) => !aRetirer.has(e.source) && !aRetirer.has(e.target)));
+        }}
+      />
+      <div className="attic-canevas" ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
+        <BarreOutils
+          theme={theme} setTheme={setTheme}
+          enExecution={enExecution}
+          repertoire={repertoire}
+          onChoisirDossier={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.webkitdirectory = true;
+            input.onchange = (e: any) => {
+              const files = e.target.files;
+              if (files?.length) changerRepertoire(files[0].webkitRelativePath.split("/")[0]);
+            };
+            input.click();
+          }}            
+          onLancer={() => lancer()}
+          nbPlugins={nbPlugins}
+          sf2Nom={sf2NomState}
+          onChargerSF2={async (f) => {
+            await chargerSF2Globale(await f.arrayBuffer(), f.name);
+            setSf2NomState(f.name);
+            localStorage.setItem("attic-sf2-nom", f.name);
+          }}
+          onDetacher={() => {
+            if ((window as any).api) { (window as any).api.nouvelleFenetre?.(); }
+            else { window.open(location.href, '_blank', 'width=1400,height=900'); }
+          }}
+          onExporter={exporter}
+          onSauvegarder={() => {
+            try {
+              const data = {
+                nodes: nodes.map((n: any) => ({
+                  id: n.id, type: n.type, position: n.position, width: n.width, height: n.height,
+                  data: {
+                    ficheId: n.data.ficheId,
+                    parametres: n.data.parametres,
+                    zonesSelectionnees: n.data.zonesSelectionnees,
+                  },
+                })),
+                edges: edges.map((e: any) => ({
+                  id: e.id, source: e.source, target: e.target,
+                  sourceHandle: e.sourceHandle, targetHandle: e.targetHandle,
+                })),
+                viewport: rfInstance?.getViewport(),
+                date: new Date().toISOString(),
+              };
+              localStorage.setItem("attic-encours", JSON.stringify(data));
+              setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: "💾 En-cours sauvegardé" } } : null);
+              setTimeout(() => setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: undefined } } : null), 2000);
+            } catch (e) {
+              console.error("[attic] Sauvegarde échouée", e);
+            }
+          }}
+          onImporter={importer}
+          onNouvelOnglet={nouvelOnglet}
+        />
+        <div className="attic-onglets">
+          {onglets.map((id) => (
+            <span key={id} className={`attic-onglet ${id === actif ? "actif" : ""}`}
+              onClick={() => changerOnglet(id)}>
+              {id}
+              {onglets.length > 1 && (
+                <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet(id); }}>×</button>
+              )}
+            </span>
+          ))}
+          <button className="attic-onglet-ajouter" onClick={nouvelOnglet} title="Nouvel onglet">+</button>
+        </div>
+        <div className="attic-meta-actions">
+          {pile.length > 0 ? (
+            <>
+              <button onClick={() => ajouterNoeud(ID_ENTREE_FRONTIERE)} title="Ajouter une entrée exposée au méta-composant">➕ Entrée</button>
+              <button onClick={() => ajouterNoeud(ID_SORTIE_FRONTIERE)} title="Ajouter une sortie exposée au méta-composant">➕ Sortie</button>
+            </>
+          ) : (
+            <>
+              <button onClick={grouper} title="Regrouper les nœuds sélectionnés en un méta-composant (§3.8)">⊟ Grouper</button>
+              <button onClick={degrouper} title="Dégrouper le méta-composant sélectionné">⊞ Dégrouper</button>
+              <button onClick={renommer} title="Renommer le méta-composant sélectionné">✎ Renommer</button>
+            </>
+          )}
+        </div>
+        {pile.length > 0 && (
+          <div className="attic-filariane">
+            <button onClick={() => remonterA(-1)}>Atelier</button>
+            {pile.map((niv, i) => (
+              <span key={i}>
+                <span className="sep">›</span>
+                <button onClick={() => remonterA(i)} disabled={i === pile.length - 1}>{niv.nom}</button>
+              </span>
+            ))}
+          </div>
+        )}
+        <ReactFlow<NoeudAtelier>
+          nodes={nodes} edges={edges}
+          onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          isValidConnection={isValidConnection}
+          nodeTypes={nodeTypes} edgeTypes={edgeTypes}
+          onNodeClick={(_, n) => setSel(n)}
+          onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
+          onPaneClick={() => setSel(null)}
+          onInit={setRfInstance}
+          fitView deleteKeyCode={["Delete"]}
+        >
+          <Background />
+          <Controls />
+          <MiniMap pannable zoomable />
+        </ReactFlow>
+      </div>
+      <Inspector
+        noeud={nodes.find((n) => n.id === sel?.id) ?? null}
+        def={sel ? trouverDef(sel.data.ficheId) : undefined}
+        onChangerParametre={(nom, val) => {
+          if (!sel) return;
+          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
+          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: { ...prev.data.parametres, [nom]: val } } } : null);
+        }}
+        onChargerFichier={(key, fichier) => {
+          if (!sel) return;
+          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, [key]: fichier } } : n));
+        }}
+        onSupprimer={() => {
+          if (sel) {
+            setNodes((nds) => nds.filter((n) => n.id !== sel.id));
+            setEdges((eds) => eds.filter((e) => e.source !== sel.id && e.target !== sel.id));
+            setSel(null);
+          }
+        }}
+        onReinitialiser={() => {
+          if (sel) reinitialiserNoeud(sel.id);
+        }}
+      />
+    </div>
+  );
+}

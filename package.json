@@ -1,0 +1,77 @@
+{
+  "name": "attic",
+  "private": true,
+  "version": "1.0.0",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "build": "tsc -b && vite build",
+    "build:electron": "npm run build && electron-builder --win",
+    "publish:electron": "npm run build && electron-builder --win -p always",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint"
+  },
+  "build": {
+    "appId": "com.attic.audio",
+    "productName": "Attic",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/*.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "public/oonx",
+        "to": "oonx"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "anomalyco",
+      "repo": "attic"
+    }
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "@xyflow/react": "^12.11.2",
+    "adm-zip": "^0.6.0",
+    "electron-updater": "^6.8.9",
+    "lamejs": "^1.2.1",
+    "midi-file": "^1.2.4",
+    "onnxruntime-node": "^1.27.0",
+    "onnxruntime-web": "^1.21.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^35.2.1",
+    "electron-builder": "^26.0.12",
+    "oxlint": "^1.71.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vitest": "^3.1.1",
+    "wait-on": "^8.0.3"
+  }
+}
