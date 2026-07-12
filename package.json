@@ -44,7 +44,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "anomalyco",
+      "owner": "FabienCouprie",
       "repo": "attic"
     }
   },
