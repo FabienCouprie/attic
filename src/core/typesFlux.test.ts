@@ -1,36 +1,41 @@
 import { describe, it, expect } from "vitest";
-import { enregistrerTypeFlux, typeFlux, couleurFlux, fluxCompatibles } from "./typesFlux";
+import { creerRegistre } from "./registre";
 
 describe("typesFlux", () => {
-  it("enregistre et retrouve un type de flux", () => {
-    enregistrerTypeFlux({ id: "t-audio", couleur: "#2a9d8f", libelle: "Audio" });
-    expect(typeFlux("t-audio")?.couleur).toBe("#2a9d8f");
-    expect(couleurFlux("t-audio")).toBe("#2a9d8f");
+  it("enregistre et récupère un type de flux", () => {
+    const r = creerRegistre<any, any>();
+    r.enregistrerTypeFlux({ id: "t-audio", couleur: "#2a9d8f", libelle: "Audio" });
+    expect(r.typeFlux("t-audio")?.couleur).toBe("#2a9d8f");
+    expect(r.couleurFlux("t-audio")).toBe("#2a9d8f");
   });
 
-  it("renvoie une couleur neutre pour un type inconnu", () => {
-    expect(couleurFlux("type-jamais-vu")).toBe("#999");
+  it("couleurFlux retourne gris pour un type inconnu", () => {
+    const r = creerRegistre<any, any>();
+    expect(r.couleurFlux("type-jamais-vu")).toBe("#999");
   });
 
   it("compatibilité par défaut = égalité stricte des ids", () => {
-    enregistrerTypeFlux({ id: "t-midi", couleur: "#e9a13b" });
-    expect(fluxCompatibles("t-midi", "t-midi")).toBe(true);
-    expect(fluxCompatibles("t-midi", "t-audio")).toBe(false);
+    const r = creerRegistre<any, any>();
+    r.enregistrerTypeFlux({ id: "t-midi", couleur: "#e9a13b" });
+    expect(r.fluxCompatibles("t-midi", "t-midi")).toBe(true);
+    expect(r.fluxCompatibles("t-midi", "t-audio")).toBe(false);
   });
 
   it("un type inconnu n'est compatible qu'avec lui-même (fallback égalité)", () => {
-    expect(fluxCompatibles("x", "x")).toBe(true);
-    expect(fluxCompatibles("x", "y")).toBe(false);
+    const r = creerRegistre<any, any>();
+    expect(r.fluxCompatibles("x", "x")).toBe(true);
+    expect(r.fluxCompatibles("x", "y")).toBe(false);
   });
 
   it("respecte une règle de compatibilité personnalisée (domaine)", () => {
-    // Un type « stéréo » qui accepte aussi « mono » en entrée.
-    enregistrerTypeFlux({
-      id: "t-stereo", couleur: "#123456",
-      compatible: (cible) => cible === "t-stereo" || cible === "t-mono",
+    const r = creerRegistre<any, any>();
+    r.enregistrerTypeFlux({
+      id: "t-stereo",
+      couleur: "#fff",
+      compatible: (cible: string) => cible === "t-mono" || cible === "t-stereo",
     });
-    expect(fluxCompatibles("t-stereo", "t-mono")).toBe(true);
-    expect(fluxCompatibles("t-stereo", "t-stereo")).toBe(true);
-    expect(fluxCompatibles("t-stereo", "t-audio")).toBe(false);
+    expect(r.fluxCompatibles("t-stereo", "t-mono")).toBe(true);
+    expect(r.fluxCompatibles("t-stereo", "t-stereo")).toBe(true);
+    expect(r.fluxCompatibles("t-stereo", "t-audio")).toBe(false);
   });
 });

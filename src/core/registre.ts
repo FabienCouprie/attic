@@ -1,9 +1,13 @@
-// core/registre.ts — Registre de plugins instancié et TYPÉ par domaine.
+// core/registre.ts — Registre de plugins ET de types de flux, instancié et typé par domaine.
 //
-// `creerRegistre<TV, TR>()` retourne un registre où `trouverDef` renvoie
-// `PluginDef<TV, TR> | undefined` — sans cast. Le domaine prouve son type
-// à la construction, pas à chaque appel.
+// `creerRegistre<TV, TR>()` retourne un registre cloisonné contenant :
+//  - les fiches de plugins (Map par id)
+//  - les types de flux (Map par id)
+//
+// Deux registres sont étanches : un type de flux "nombre" dans le domaine
+// nombre n'écrase pas un type "nombre" dans un autre domaine.
 import type { PluginDef, FonctionPlugin } from "./types";
+import type { TypeFlux } from "./typesFlux";
 import { valider } from "./validation";
 
 export interface Registre<TV, TR> {
@@ -12,6 +16,11 @@ export interface Registre<TV, TR> {
   trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined;
   tousLesPlugins(): PluginDef<TV, TR>[];
   desenregistrer(id: string): void;
+  enregistrerTypeFlux(t: TypeFlux): void;
+  typeFlux(id: string): TypeFlux | undefined;
+  tousTypesFlux(): TypeFlux[];
+  couleurFlux(id: string): string;
+  fluxCompatibles(sourceId: string, cibleId: string): boolean;
 }
 
 const ALIAS: Record<string, string> = {
@@ -31,9 +40,10 @@ function resoudre(id: string): string {
 export function creerRegistre<TV, TR>(): Registre<TV, TR> {
   const plugins: PluginDef<TV, TR>[] = [];
   const parId = new Map<string, PluginDef<TV, TR>>();
+  const typesFlux = new Map<string, TypeFlux>();
 
   function enregistrer(def: PluginDef<TV, TR>): void {
-    const { erreurs, avertissements } = valider(def);
+    const { erreurs, avertissements } = valider(def, { typeFlux: (id: string) => typesFlux.get(id), fluxCompatibles });
     if (erreurs.length) {
       console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
       return;
@@ -72,5 +82,28 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     if (idx >= 0) plugins.splice(idx, 1);
   }
 
-  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, desenregistrer };
+  function enregistrerTypeFlux(t: TypeFlux): void {
+    typesFlux.set(t.id, t);
+  }
+
+  function typeFlux(id: string): TypeFlux | undefined {
+    return typesFlux.get(id);
+  }
+
+  function tousTypesFlux(): TypeFlux[] {
+    return [...typesFlux.values()];
+  }
+
+  function couleurFlux(id: string): string {
+    return typesFlux.get(id)?.couleur ?? "#999";
+  }
+
+  function fluxCompatibles(sourceId: string, cibleId: string): boolean {
+    const t = typesFlux.get(sourceId);
+    if (t?.compatible) return t.compatible(cibleId);
+    return sourceId === cibleId;
+  }
+
+  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, desenregistrer,
+    enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, fluxCompatibles };
 }

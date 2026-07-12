@@ -9,13 +9,15 @@ import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
   estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta } from "../core";
+  surChangementMetas, supprimerMeta } from "../core";
 import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
 import type { PluginDef } from "../core";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 const tousLesPlugins = () => registre.tousLesPlugins();
+const couleurFlux = (id: string) => registre.couleurFlux(id);
+const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n } from "../i18n";
 

@@ -115,6 +115,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       plat.noeuds,
       aretes as unknown as AreteG[],
       (ficheId) => trouverDef(ficheId),
+      registre.fluxCompatibles,
     );
     const noeudsEnErreur = new Set<string>();
     for (const [nodeId, msgs] of validation.noeudsAffectes) {

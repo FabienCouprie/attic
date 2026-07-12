@@ -7,13 +7,15 @@ import {
 } from "./graphe";
 import { aplatirGraphe, creerMeta, type NoeudG, type AreteG, type DefPorts } from "./meta";
 import { valider } from "./validation";
-import { enregistrerTypeFlux } from "./typesFlux";
+import { creerRegistre } from "./registre";
 import type { PluginDef } from "./types";
 
-// Enregistrer les types de flux de test (avant que valider ne les vérifie)
-enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f" });
-enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b" });
-enregistrerTypeFlux({ id: "controle", couleur: "#e8590c" });
+// Registre de test avec types de flux
+const r = creerRegistre<any, any>();
+r.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f" });
+r.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b" });
+r.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c" });
+const deps = { typeFlux: (id: string) => r.typeFlux(id), fluxCompatibles: (s: string, t: string) => r.fluxCompatibles(s, t) };
 
 const a = (source: string, target: string, sh = "out:0", th = "in:0"): AreteG =>
   ({ id: `${source}-${target}`, source, target, sourceHandle: sh, targetHandle: th });
@@ -109,12 +111,12 @@ describe("validation renforcée (Chantier A)", () => {
   it("rejette un plugin avec un type de port non enregistré", () => {
     const { erreurs } = valider(fakePlugin({
       entrees: [{ nom: "In", type: "type-inexistant" }],
-    }));
+    }), deps);
     expect(erreurs.some((e) => e.includes("type-inexistant"))).toBe(true);
   });
 
   it("accepte un plugin dont tous les types de ports sont enregistrés", () => {
-    const { erreurs } = valider(fakePlugin());
+    const { erreurs } = valider(fakePlugin(), deps);
     expect(erreurs.filter((e) => e.includes("type"))).toHaveLength(0);
   });
 
@@ -123,7 +125,7 @@ describe("validation renforcée (Chantier A)", () => {
     // directement, mais on vérifie que la validation passe pour un plugin correct
     const { erreurs } = valider(fakePlugin({
       parametres: [{ nom: "Gain", defaut: 5, doc: "doc" }],
-    }));
+    }), deps);
     expect(erreurs.filter((e) => e.includes("empreinteParametres"))).toHaveLength(0);
   });
 
@@ -136,7 +138,7 @@ describe("validation renforcée (Chantier A)", () => {
         { nom: "Mix", defaut: 0.5, doc: "doc" },
         { nom: "Label", defaut: "test", doc: "doc" },
       ],
-    }));
+    }), deps);
     expect(erreurs.filter((e) => e.includes("non capturé"))).toHaveLength(0);
   });
 });

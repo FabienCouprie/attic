@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
-import { estMeta, estFrontiere, couleurFlux } from "../core";
+import { estMeta, estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { PluginDef } from "../core";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
+const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
 import { vuesPourNoeud } from "./vues";
 

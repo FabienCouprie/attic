@@ -6,7 +6,7 @@
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
-import { creerRegistre, enregistrerTypeFlux } from "../core";
+import { creerRegistre } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerRegistreNodes } from "../core/nodes-installes";
 import { configurerRegistreGestion } from "../plugins/gestion-nodes";
@@ -15,12 +15,12 @@ import type { TypeValeur } from "../core";
 
 export const registre = creerRegistre<TypeValeur, AudioContext>();
 
-// Types de flux du domaine audio
-enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
-enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
-enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
-enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
-enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
+// Types de flux du domaine audio (dans le registre, pas dans un global)
+registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
+registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
+registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
+registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
+registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

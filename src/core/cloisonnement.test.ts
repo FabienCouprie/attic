@@ -1,24 +1,14 @@
 // core/cloisonnement.test.ts — Test de cloisonnement entre domaines.
 //
-// Prouve que deux registres instanciés sont étanches : un plugin audio
-// n'apparaît pas dans le registre nombre, et vice versa. C'est le test
-// qui était impossible à écrire avec le singleton global — il devient
-// possible avec creerRegistre<TV, TR>().
-//
-// Ce test vérifie aussi si les types de flux (core/typesFlux) sont cloisonnés
-// ou partagés. Si fluxCompatibles est global, deux domaines qui enregistrent
-// des types homonymes se marchent dessus — et le test le révèle.
+// Prouve que deux registres instanciés sont étanches : plugins ET types de flux.
+// C'est le test qui était impossible à écrire avec le singleton global.
 import { describe, it, expect } from "vitest";
 import { creerRegistre } from "./registre";
-import { enregistrerTypeFlux, fluxCompatibles, typeFlux } from "./typesFlux";
 import type { PluginDef, TypeValeur } from "./types";
-
-// ── Types de flux (enregistrer AVANT les plugins — valider() les vérifie) ──
-enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f" });
-enregistrerTypeFlux({ id: "nombre", couleur: "#00FF00" });
 
 // ── Domaine audio ──
 const audio = creerRegistre<TypeValeur, AudioContext>();
+audio.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f" });
 const reverb: PluginDef<TypeValeur, AudioContext> = {
   id: "reverb",
   nom: "Reverb",
@@ -34,6 +24,7 @@ audio.enregistrer(reverb);
 
 // ── Domaine nombre ──
 const nombre = creerRegistre<number, null>();
+nombre.enregistrerTypeFlux({ id: "nombre", couleur: "#00FF00" });
 const generer: PluginDef<number, null> = {
   id: "generer-nombre",
   nom: "Générer",
@@ -70,23 +61,23 @@ describe("cloisonnement entre domaines", () => {
     expect(audio.trouverPlugin("generer-nombre")).toBeUndefined();
   });
 
-  // ── Types de flux : test de cloisonnement ──
-  // Si fluxCompatibles est global (module partagé), ce test passe mais
-  // révèle que deux domaines partagent le même espace de types de flux.
-  // Ce n'est pas un bug aujourd'hui (un seul domaine par app), mais c'est
-  // le dernier singleton — documenté dans ARCHITECTURE.md §14.1.
+  it("deux domaines peuvent déclarer un type homonyme sans s'écraser", () => {
+    // Les deux domaines déclarent un type "nombre" — le dernier n'écrase pas le premier
+    audio.enregistrerTypeFlux({ id: "nombre", couleur: "#f00" });
+    nombre.enregistrerTypeFlux({ id: "nombre", couleur: "#0f0" });
+    expect(audio.couleurFlux("nombre")).toBe("#f00");
+    expect(nombre.couleurFlux("nombre")).toBe("#0f0");
+  });
 
-  it("fluxCompatibles est global (partagé entre domaines) — dernier singleton documenté", () => {
-    // Les types "audio" et "nombre" sont enregistrés dans le registre global
-    // de typesFlux. Les deux domaines y accèdent.
-    expect(typeFlux("audio")).toBeDefined();
-    expect(typeFlux("nombre")).toBeDefined();
+  it("fluxCompatibles est cloisonné : audio ne connaît pas nombre", () => {
+    expect(audio.fluxCompatibles("audio", "audio")).toBe(true);
+    expect(audio.fluxCompatibles("nombre", "nombre")).toBe(true); // fallback égalité stricte
+    expect(audio.fluxCompatibles("audio", "nombre")).toBe(false);
+  });
 
-    // fluxCompatibles est global : un domaine peut vérifier la compatibilité
-    // d'un type qu'il n'a pas enregistré.
-    expect(fluxCompatibles("audio", "audio")).toBe(true);
-    expect(fluxCompatibles("nombre", "nombre")).toBe(true);
-    expect(fluxCompatibles("audio", "nombre")).toBe(false);
-    expect(fluxCompatibles("nombre", "audio")).toBe(false);
+  it("fluxCompatibles du domaine nombre ne connaît pas audio", () => {
+    expect(nombre.fluxCompatibles("nombre", "nombre")).toBe(true);
+    expect(nombre.fluxCompatibles("audio", "audio")).toBe(true); // fallback égalité stricte
+    expect(nombre.fluxCompatibles("nombre", "audio")).toBe(false);
   });
 });

@@ -5,7 +5,6 @@
 // Si le moteur renvoie 11, le framework est officiellement baptisé.
 import { describe, it, expect } from "vitest";
 import { creerRegistre, type Registre } from "./registre";
-import { enregistrerTypeFlux, fluxCompatibles } from "./typesFlux";
 import { ordreTopologique, resoudreEntree, valeursEntrantes } from "./graphe";
 import { validerGraphe } from "./validation";
 import type { NoeudG, AreteG } from "./meta";
@@ -15,8 +14,8 @@ import type { PluginDef, FonctionPlugin, ContexteExecution } from "./types";
 const registre = creerRegistre<TValeur, TRuntime>();
 
 // ── Domaine fantôme : deux types de flux ──
-enregistrerTypeFlux({ id: "nombre", couleur: "#00FF00", libelle: "Nombre" });
-enregistrerTypeFlux({ id: "texte", couleur: "#FF6600", libelle: "Texte" });
+registre.enregistrerTypeFlux({ id: "nombre", couleur: "#00FF00", libelle: "Nombre" });
+registre.enregistrerTypeFlux({ id: "texte", couleur: "#FF6600", libelle: "Texte" });
 
 // ── TValeur = number | string (union du domaine fantôme), TRuntime = null ──
 type TValeur = number | string;
@@ -108,7 +107,7 @@ async function executerGraphe(
   const ids = noeuds.map((n) => n.id);
 
   // Garde-fou : valider les connexions et ports requis avant exécution
-  const validation = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+  const validation = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
   const noeudsEnErreur = new Set(validation.noeudsAffectes.keys());
 
   const ordre = ordreTopologique(ids, aretes).filter((id) => !noeudsEnErreur.has(id));
@@ -213,10 +212,10 @@ describe("baptême du framework — domaine nombre fantôme", () => {
   // ── Tests négatifs : refus de connexion illégale (trou bouché) ──
 
   it("fluxCompatibles refuse nombre → texte (types incompatibles)", () => {
-    expect(fluxCompatibles("nombre", "nombre")).toBe(true);
-    expect(fluxCompatibles("texte", "texte")).toBe(true);
-    expect(fluxCompatibles("nombre", "texte")).toBe(false);
-    expect(fluxCompatibles("texte", "nombre")).toBe(false);
+    expect(registre.fluxCompatibles("nombre", "nombre")).toBe(true);
+    expect(registre.fluxCompatibles("texte", "texte")).toBe(true);
+    expect(registre.fluxCompatibles("nombre", "texte")).toBe(false);
+    expect(registre.fluxCompatibles("texte", "nombre")).toBe(false);
   });
 
   it("le garde-fou de validation rejette un plugin avec un type non enregistré", () => {
@@ -241,7 +240,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
     ];
 
     // 1. validerGraphe détecte l'arête illégale
-    const validation = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const validation = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(validation.aretesInvalides).toHaveLength(1);
     expect(validation.noeudsAffectes.has("F")).toBe(true);
     expect(validation.noeudsAffectes.get("F")![0]).toContain("nombre → texte");
@@ -283,7 +282,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
     const aretes: AreteG[] = [
       { id: "e1", source: "G1", target: "F", sourceHandle: "out:0", targetHandle: "in:0" },
     ];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.aretesInvalides).toHaveLength(1);
     expect(res.aretesInvalides[0].source).toBe("G1");
     expect(res.noeudsAffectes.has("F")).toBe(true);
@@ -298,7 +297,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
     const aretes: AreteG[] = [
       { id: "e1", source: "G1", target: "M", sourceHandle: "out:0", targetHandle: "in:0" },
     ];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.aretesInvalides).toHaveLength(0);
     expect(res.noeudsAffectes.size).toBe(0);
   });
@@ -314,7 +313,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
       { id: "e1", source: "G1", target: "F1", sourceHandle: "out:0", targetHandle: "in:0" },
       { id: "e2", source: "G2", target: "F2", sourceHandle: "out:0", targetHandle: "in:0" },
     ];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.aretesInvalides).toHaveLength(2);
     expect(res.noeudsAffectes.has("F1")).toBe(true);
     expect(res.noeudsAffectes.has("F2")).toBe(true);
@@ -332,7 +331,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
       { id: "e2", source: "M", target: "A", sourceHandle: "out:0", targetHandle: "in:0" },
       { id: "e3", source: "G2", target: "A", sourceHandle: "out:0", targetHandle: "in:1" },
     ];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.aretesInvalides).toHaveLength(0);
     expect(res.noeudsAffectes.size).toBe(0);
   });
@@ -345,7 +344,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
       { id: "M", data: { ficheId: "nombre:multiplier", parametres: { facteur: 2 } } },
     ];
     const aretes: AreteG[] = [];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.noeudsAffectes.has("M")).toBe(true);
     expect(res.noeudsAffectes.get("M")![0]).toContain("non connectée");
   });
@@ -356,7 +355,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
       { id: "A", data: { ficheId: "nombre:additionner", parametres: {} } },
     ];
     const aretes: AreteG[] = [];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.noeudsAffectes.has("A")).toBe(true);
     const msgs = res.noeudsAffectes.get("A")!;
     expect(msgs.length).toBe(2);
@@ -370,7 +369,7 @@ describe("baptême du framework — domaine nombre fantôme", () => {
       { id: "G1", data: { ficheId: "nombre:generer", parametres: { valeur: 4 } } },
     ];
     const aretes: AreteG[] = [];
-    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id));
+    const res = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
     expect(res.noeudsAffectes.has("G1")).toBe(false);
   });
 
