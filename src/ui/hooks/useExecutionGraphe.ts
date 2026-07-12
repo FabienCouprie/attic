@@ -8,12 +8,14 @@ import { useCallback } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, trouverMeta, trouverPlugin, trouverDef,
+  aplatirGraphe, trouverMeta, registreActif,
   ordreTopologique, ancetres, empreinteParametres, empreinteEntrees,
-  resoudreEntree, valeursEntrantes,
+  resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { bufferVersWavBlob } from "../../audio";
+import type { PluginDef } from "../../core";
+const trouverDef = (id: string): PluginDef | undefined => registreActif().trouverDef(id) as unknown as PluginDef | undefined;
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -104,6 +106,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const aretes = plat.aretes as unknown as Edge[];
     const priorite = noeudPrioritaireId ?? prioritaireRef.current;
 
+    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
+    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
+    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
+    const validation = validerGraphe(
+      plat.noeuds,
+      aretes as unknown as AreteG[],
+      (ficheId) => trouverDef(ficheId),
+    );
+    const noeudsEnErreur = new Set<string>();
+    for (const [nodeId, msgs] of validation.noeudsAffectes) {
+      noeudsEnErreur.add(nodeId);
+      definirStatut(nodeId, "erreur", msgs[0]);
+    }
+
     // Topologie (logique pure testée — cf. core/graphe.ts)
     const aretesG = aretes as unknown as AreteG[];
     const ordonnees = ordreTopologique(nds.map((n) => n.id), aretesG);
@@ -113,7 +129,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
     }
 
-    for (const id of ordreFiltre) definirStatut(id, "attente");
+    for (const id of ordreFiltre) {
+      if (!noeudsEnErreur.has(id)) definirStatut(id, "attente");
+    }
 
     const ctx = obtenirAudio();
     const resultats = new Map<string, TypeValeur[]>();
@@ -122,10 +140,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
     for (let i = 0; i < ordreFiltre.length; i++) {
       const nodeId = ordreFiltre[i];
+      // Sauter les nœuds en erreur (connexion illégale) — déjà marqués « erreur »
+      if (noeudsEnErreur.has(nodeId)) continue;
       definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
       const node = nds.find((n) => n.id === nodeId);
       if (!node) {
-continue; }
+ continue; }
 
       const sourceReprocessee = aretes.some((a) => a.target === nodeId && traitesCeRun.has(a.source));
       const hashParams = empreinteParametres(node.data);
@@ -144,18 +164,16 @@ continue; }
       for (const id of ordreFiltre.slice(i + 1)) cacheExec.current.delete(id);
       traitesCeRun.add(nodeId);
 
-      const fn = trouverPlugin(node.data.ficheId as string);
+      const fn = registreActif().trouverPlugin(node.data.ficheId as string);
       if (!fn) { resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); continue; }
 
       try {
         const res = await fn({
           noeud: node,
-          aretes,
-          resultats,
           runtime: ctx,
           repertoireTravail: repertoire,
-          entree: (idx: number) => resoudreEntree(nodeId, idx, aretesG, resultats),
-          entrees: () => valeursEntrantes(nodeId, aretesG, resultats) as TypeValeur[],
+          entree: (idx: number) => resoudreEntree<TypeValeur>(nodeId, idx, aretesG, resultats) as TypeValeur,
+          entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
             return typeof p === "number" ? p : defaut;
@@ -166,7 +184,7 @@ continue; }
           },
           onProgress: (msg: string) => definirStatut(nodeId, "en_cours", msg),
         });
-        resultats.set(nodeId, res.valeurs);
+        resultats.set(nodeId, res.valeurs as TypeValeur[]);
         if (res.message) messages.set(nodeId, res.message);
         if ((res as any).erreur) {
           definirStatut(nodeId, "erreur", res.message);

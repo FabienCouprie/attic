@@ -1,7 +1,7 @@
 // plugins/tessitures.ts — Nœud « Tessitures de voix » : émet sur sa sortie
 // texte une collection de tessitures vocales, scindées hommes/femmes.
 // Bilingue FR/EN.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
@@ -78,7 +78,7 @@ export function construireListeTessitures(
   return { texte, total: noms.length };
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "tessitures-voix", nom: "Tessitures de voix", nomEn: "Vocal Ranges",
     univers: "Autres", famille: "Texte",
@@ -110,4 +110,4 @@ for (const def of [
       return { valeurs: [texte], message: `${total} tessitures${grpAff ? ` — ${grpAff}` : ""}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

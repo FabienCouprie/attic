@@ -4,7 +4,13 @@
 // aplati (cf. core/meta.ts), donc son `executer` n'est jamais réellement appelé.
 import type { MetaComposant } from "./meta";
 import type { PluginDef } from "./types";
-import { enregistrer, desenregistrer } from "./registre";
+import type { Registre } from "./registre";
+
+// DI : l'adaptateur de domaine configure le registre au démarrage.
+// Permet au metastore d'enregistrer/désenregistrer les fiches méta sans
+// dépendre d'un registre global.
+let registre: Registre | null = null;
+export function configurerRegistre(r: Registre): void { registre = r; }
 
 const metas = new Map<string, MetaComposant>();
 
@@ -44,14 +50,15 @@ export function enregistrerMeta(meta: MetaComposant): void {
     // Jamais appelé (le méta est aplati avant exécution) ; renvoie des sorties nulles par sûreté.
     executer: async () => ({ valeurs: meta.sorties.map(() => null), message: "Méta-composant (aplati à l'exécution)." }),
   };
-  enregistrer(def); // remplacement en place si le méta est mis à jour
+  if (!registre) { console.error("[attic] metastore : registre non configuré"); return; }
+  registre.enregistrer(def); // remplacement en place si le méta est mis à jour
   notifier();
 }
 
 // Retire un méta du registre (catalogue) et notifie (→ persistance mise à jour).
 export function supprimerMeta(id: string): void {
   if (!metas.delete(id)) return;
-  desenregistrer(id);
+  registre?.desenregistrer(id);
   notifier();
 }
 

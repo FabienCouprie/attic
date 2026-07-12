@@ -1,11 +1,11 @@
 // plugins/pochette.ts — Nœud « Générateur de pochette » : génère une pochette
 // d'album procédurale (canvas) depuis un prompt + titre + artiste.
 // Hors-ligne, instantané, sans GPU. Export PNG.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "generateur-pochette", nom: "Générateur de pochette", nomEn: "Cover Art Generator",
     univers: "Autres", famille: "Texte",
@@ -39,4 +39,4 @@ for (const def of [
       return { valeurs: [], message: `Pochette « ${titre} » · ${style} · ${prompt.slice(0, 30)}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

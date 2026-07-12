@@ -1,7 +1,7 @@
 // plugins/musicgen.ts — Nœud « Générateur IA MusicGen » : génère de la musique
 // depuis un prompt texte via Xenova/musicgen-small (Transformers.js, ONNX).
 // Le modèle tourne dans un Web Worker pour ne pas bloquer l'UI.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante } from "../i18n";
@@ -15,7 +15,7 @@ function getWorker(): Worker {
   return worker;
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "musicgen", nom: "Générateur IA MusicGen", nomEn: "MusicGen AI Generator",
     univers: "Entrées", famille: "Génération",
@@ -69,4 +69,4 @@ for (const def of [
       });
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

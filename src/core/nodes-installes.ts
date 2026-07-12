@@ -2,8 +2,12 @@
 // Persiste en localStorage (manifest + code) et sur disque (assets binaires via Electron).
 // Au démarrage, recharge les nodes installés et les enregistre comme plugins.
 
-import { enregistrer, trouverDef } from "./registre";
+import type { Registre } from "./registre";
 import type { PluginDef, PortDef, ParametreDef } from "./types";
+
+// DI : l'adaptateur configure le registre au démarrage.
+let registre: Registre | null = null;
+export function configurerRegistreNodes(r: Registre): void { registre = r; }
 
 const CLE = "attic-nodes-installes";
 
@@ -110,7 +114,8 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     executer: fn,
   };
 
-  enregistrer(def);
+  if (!registre) { console.error("[attic] nodes-installes : registre non configuré"); return; }
+  registre.enregistrer(def);
   console.log(`[attic] Node « ${m.id} » enregistré dans le registre ✓`);
 }
 

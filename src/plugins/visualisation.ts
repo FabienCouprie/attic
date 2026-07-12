@@ -3,11 +3,11 @@
 // représentation est calculée/dessinée par la VUE enregistrée (ui/vues.tsx).
 // Oscillateur pédagogique : générateur (synthèse additive band-limitée) dont la
 // vue montre l'onde ET son spectre (timbre ↔ harmoniques).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "analyseur-spectre", nom: "Analyseur de spectre", nomEn: "Spectrum Analyzer",
     univers: "Visualisation", famille: "Analyse",
@@ -191,4 +191,4 @@ for (const def of [
       return { valeurs: [a], message: "Palette de couleurs générée" };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

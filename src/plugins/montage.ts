@@ -1,5 +1,5 @@
 // plugins/montage.ts — Nœuds montage (issus du découpage de complements.ts).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import {
   decoderFichier, decoderBlob,
@@ -14,7 +14,7 @@ import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "echo-ping-pong", nom: "Echo Ping-Pong", nomEn: "Ping-Pong Echo", univers: "Traitement", famille: "Effets",
     resume: "Écho stéréo ping-pong.",
@@ -290,4 +290,4 @@ for (const def of [
       };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

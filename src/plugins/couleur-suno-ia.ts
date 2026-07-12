@@ -2,7 +2,7 @@
 // prend 1 ou 2 couleurs, utilise un LLM (DistilGPT-2) pour générer un script
 // Suno/Udio avec variabilité (graine aléatoire). Combine la psychologie des
 // couleurs (mapping statique) avec la créativité du LLM (génération textuelle).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { COULEURS, NOMS_COULEURS, profilCouleur, fusionnerProfils, profilVersScript } from "../audio";
@@ -18,7 +18,7 @@ function getWorker(): Worker {
 
 const COULEURS_EN = NOMS_COULEURS.map((c) => COULEURS[c].en);
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "couleur-suno-ia", nom: "Couleur → Suno IA", nomEn: "Color → Suno AI",
     univers: "Autres", famille: "Génération",
@@ -134,4 +134,4 @@ ${[...profil.styles.map((s: any) => s.en).map((s: string) => s.toLowerCase().rep
       };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

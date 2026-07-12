@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
-import { trouverDef, estMeta, estFrontiere, couleurFlux } from "../core";
+import { estMeta, estFrontiere, couleurFlux, registreActif } from "../core";
 import type { PluginDef } from "../core";
+
+const trouverDef = (id: string): PluginDef | undefined =>
+  registreActif().trouverDef(id) as unknown as PluginDef | undefined;
 import { useI18n } from "../i18n";
 import { vuesPourNoeud } from "./vues";
 

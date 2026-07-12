@@ -2,7 +2,7 @@
 // méta-composant dans sa vue interne (§3.8). Reliés à un port interne, ils
 // définissent une entrée/sortie exposée du méta. Jamais exécutés réellement
 // (retirés à la sauvegarde du sous-graphe) ; filtrés de la palette.
-import { enregistrer, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "../core";
+import { ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "../core";
 import type { PluginDef } from "../core";
 
 const defs: PluginDef[] = [
@@ -30,4 +30,4 @@ const defs: PluginDef[] = [
   },
 ];
 
-for (const def of defs) enregistrer(def);
+export const fiches: PluginDef[] = defs;

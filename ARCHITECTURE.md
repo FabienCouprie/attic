@@ -241,6 +241,17 @@ overlay doc, persistance, palette/inspecteur/canevas génériques.
 
 *attic* est désormais un **framework d'éditeur de flux réutilisable** : un nouveau
 domaine s'écrit comme un **adaptateur** (types de flux + `TValeur`/`runtime` + plugins
-+ vues + notices), sans réécrire le cœur ni l'UI (recette §12). Polish restant
-(non bloquant) : relocaliser physiquement l'union `TypeValeur` hors du cœur ;
-prouver le découplage avec un 2ᵉ domaine minimal.
++ vues + notices), sans réécrire le cœur ni l'UI (recette §12).
+
+**Contrainte §14.1 — Registre mono-domaine** : le registre global est
+mono-domaine — un seul adaptateur est enregistré par instance de l'app. Le
+cast de frontière (`trouverDefAudio` dans `audio/index.ts`) suppose que toute
+fiche dans le registre est audio. Un garde-fou runtime vérifie `univers` et
+lève une erreur explicite si une fiche étrangère remonte. Si deux domaines
+devaient coexister, il faudrait passer à un `Registre<TV, TR>` instancié par
+domaine (le cast disparaîtrait). Ce n'est pas un cas d'usage actuel.
+
+**Prouvé par le domaine fantôme** : `core/domaine-nombre.test.ts` crée un
+domaine `number`/`null` avec 4 micro-plugins, calcule `(4×2)+3 = 11` sans
+modifier le cœur, et teste `validerGraphe` (types incompatibles + ports requis).
+57 tests protègent le cœur, dont 16 dans le domaine fantôme.

@@ -27,3 +27,5 @@ export * from "./evolution";
 export * from "./multi-reservoir";
 export * from "./graphe-embarque";
 export * from "./formants";
+
+export { registre } from "./adaptateur";

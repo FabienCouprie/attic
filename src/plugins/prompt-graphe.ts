@@ -1,10 +1,9 @@
 // plugins/prompt-graphe.ts — Nœud « Prompt → graphe » : parse un prompt texte
 // en langage naturel et génère un graphe de nodes correspondant sur le canevas.
 // Utilise un parser de règles par mots-clés (pas d'IA lourde).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
-import { tousLesPlugins } from "../core";
 
 interface SpecNode {
   ficheId: string;
@@ -143,7 +142,7 @@ function parserPrompt(prompt: string): { nodes: SpecNode[]; edges: SpecEdge[] } 
   return { nodes, edges };
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "prompt-vers-graphe", nom: "Prompt → graphe", nomEn: "Prompt → graph",
     univers: "Autres", famille: "Texte",
@@ -174,4 +173,4 @@ for (const def of [
       return { valeurs: [chainDesc], message: `${nodes.length} nodes · ${edges.length} connexions\n${chainDesc}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

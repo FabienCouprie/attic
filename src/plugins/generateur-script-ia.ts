@@ -2,7 +2,7 @@
 // combine aléatoirement des instruments, styles, émotions et tessitures de
 // voix reçus en entrée texte pour produire un prompt/script pour un applicatif
 // IA tel que Suno. Bilingue FR/EN.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
@@ -87,7 +87,7 @@ function construireScript(
   return lignes.join("\n");
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "generateur-script-ia", nom: "Générateur de script IA", nomEn: "AI Script Generator",
     univers: "Autres", famille: "Texte",
@@ -142,4 +142,4 @@ for (const def of [
       return { valeurs: [script], message: `${fr ? "Script généré" : "Script generated"} (${source})` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

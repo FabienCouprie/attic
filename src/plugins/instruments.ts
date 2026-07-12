@@ -1,7 +1,7 @@
 // plugins/instruments.ts — Nœud « Noms d'instruments » : émet sur sa sortie texte
 // une longue liste de noms d'instruments de musique, filtrable par famille.
 // Bilingue : les noms suivent la langue de l'app (FR/EN). Rangé dans « Autres ».
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
@@ -103,7 +103,7 @@ export function construireListeInstruments(
   return { texte, total: noms.length };
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "noms-instruments", nom: "Noms d'instruments", nomEn: "Instrument Names",
     univers: "Autres", famille: "Texte",
@@ -135,4 +135,4 @@ for (const def of [
       return { valeurs: [texte], message: `${total} instruments${famAff ? ` — ${famAff}` : ""}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

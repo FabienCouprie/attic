@@ -7,10 +7,13 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  creerMeta, enregistrerMeta, trouverMeta, trouverDef, indexPort,
+  creerMeta, enregistrerMeta, trouverMeta, indexPort,
   redériverMeta, frontieresPourEdition, renommerMeta,
   type NoeudG, type AreteG,
 } from "../../core";
+import { registreActif } from "../../core";
+import type { PluginDef } from "../../core";
+const trouverDef = (id: string): PluginDef | undefined => registreActif().trouverDef(id) as unknown as PluginDef | undefined;
 import { idUnique } from "../ids";
 
 // Typage souple : le code d'origine castait déjà tout en `unknown`/`any` pour passer

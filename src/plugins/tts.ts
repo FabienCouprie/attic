@@ -2,7 +2,7 @@
 // Deux modèles : SpeechT5 (Microsoft, anglais haute qualité) et MMS-TTS (Meta, multilingue).
 // Le texte provient d'une entrée texte (port bleu) — branchez un node « Source de texte ».
 // La synthèse tourne dans un Web Worker pour ne pas bloquer l'UI.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
@@ -41,7 +41,7 @@ const LANGUES_MMS: Record<string, string> = {
   "Russe": "Xenova/mms-tts-rus",
 };
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "tts-speecht5", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
     univers: "Entrées", famille: "Text to Speech",
@@ -121,4 +121,4 @@ for (const def of [
       });
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

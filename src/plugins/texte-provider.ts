@@ -1,11 +1,11 @@
 // plugins/texte-provider.ts — Nœud « Source de texte » : émet un texte saisi
 // par l'utilisateur sur sa sortie texte (port bleu). Utile comme source pour
 // les nodes de synthèse vocale, les scripts IA, etc.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "source-texte", nom: "Entrée texte", nomEn: "Text Input",
     univers: "Entrées", famille: "Text to Speech",
@@ -23,4 +23,4 @@ for (const def of [
       return { valeurs: [texte], message: `${texte.length} caractères` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

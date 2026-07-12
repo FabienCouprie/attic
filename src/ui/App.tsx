@@ -7,10 +7,19 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { tousLesPlugins, trouverDef, trouverMeta,
+import { trouverMeta,
   estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta } from "../core";
-import type { PluginDef } from "../core";
+  couleurFlux, fluxCompatibles, surChangementMetas, supprimerMeta, registreActif } from "../core";
+import "../audio/adaptateur";
+import type { PluginDef, TypeValeur } from "../core";
+
+// Cast de frontière : le registre retourne PluginDef<unknown, unknown>,
+// l'UI audio consomme PluginDef<TypeValeur, AudioContext>. Le registre est
+// mono-domaine (spec §14.1) — ce cast sera supprimé à l'étape 2 (registre typé).
+const trouverDef = (id: string): PluginDef | undefined =>
+  registreActif().trouverDef(id) as unknown as PluginDef | undefined;
+const tousLesPlugins = (): PluginDef[] =>
+  registreActif().tousLesPlugins() as unknown as PluginDef[];
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n } from "../i18n";
 
@@ -27,8 +36,7 @@ import "./atelier.css";
 import "./clavier.css";
 
 // Forcer l'enregistrement des plugins
-import { _plugins_loaded } from "../plugins";
-void _plugins_loaded;
+import "../audio/adaptateur";
 
 import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
 import { setGrapheRef } from "../audio/graphe-embarque";
@@ -40,7 +48,7 @@ chargerMetasLocaux();
 chargerNodesInstalles();
 
 // Diagnostic : vérifier que les plugins sont bien chargés
-const nbPlugins = tousLesPlugins().length;
+const nbPlugins = tousLesPlugins().length; console.log("[attic] Plugins charg�s:", nbPlugins);
 
 // ── Types ──
 
@@ -245,7 +253,7 @@ function Atelier() {
   }, [pile, rfInstance]);
 
   const [pluginsVersion, setPluginsVersion] = useState(0);
-  const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
+  const plugins = useMemo(() => registreActif().tousLesPlugins() as PluginDef[], [pluginsVersion]);
 
   // ── Chargement automatique de l'en-cours sauvegardé ──
   const enCoursCharge = useRef(false);

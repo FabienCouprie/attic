@@ -14,6 +14,11 @@ export class ErreurBoundary extends Component<Props, State> {
           <h2>Erreur</h2>
           <pre>{this.state.erreur.message}</pre>
           <pre style={{ fontSize: 11, marginTop: 16, opacity: 0.6 }}>{this.state.erreur.stack}</pre>
+          <button
+            onClick={() => this.setState({ erreur: null })}
+            style={{ marginTop: 20, padding: "8px 16px", fontSize: 13, cursor: "pointer",
+              border: "1px solid #e44", borderRadius: 4, background: "transparent", color: "#e44" }}
+          >Réessayer</button>
         </div>
       );
     }

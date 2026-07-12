@@ -1,7 +1,7 @@
 // plugins/styles-musicaux.ts — Nœud « Styles musicaux » : émet sur sa sortie
 // texte une large collection de styles musicaux, filtrable par catégorie.
 // Bilingue : les noms suivent la langue de l'app (FR/EN). Rangé dans « Autres ».
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
@@ -148,7 +148,7 @@ export function construireListeStyles(
   return { texte, total: noms.length };
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "styles-musicaux", nom: "Styles musicaux", nomEn: "Musical Styles",
     univers: "Autres", famille: "Texte",
@@ -180,4 +180,4 @@ for (const def of [
       return { valeurs: [texte], message: `${total} styles${catAff ? ` — ${catAff}` : ""}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

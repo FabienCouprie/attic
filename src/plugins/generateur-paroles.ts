@@ -2,7 +2,7 @@
 // génère des paroles de chanson structurées (couplets, refrain, pont) à partir
 // d'un thème, d'une émotion et d'une clé, sans IA — par templates + tirage
 // aléatoire dans des dictionnaires de mots. Instantané, hors-ligne, reproductible.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { langueCourante } from "../i18n";
@@ -127,7 +127,7 @@ function genererParoles(
   return resultat.trim();
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "generateur-paroles", nom: "Générateur de paroles", nomEn: "Lyrics Generator",
     univers: "Autres", famille: "Texte",
@@ -171,4 +171,4 @@ for (const def of [
       };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

@@ -1,5 +1,5 @@
 // plugins/entrees.ts — Nœuds d'entrée
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { decoderFichier, decoderBlob } from "../audio";
@@ -114,4 +114,4 @@ const entrees: PluginDef[] = [
   },
 ];
 
-for (const def of entrees) enregistrer(avecDoc(def));
+export const fiches: PluginDef[] = entrees.map(avecDoc) as PluginDef[];

@@ -1,5 +1,5 @@
 // plugins/effets.ts — Nœuds d'effets audio
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import {
@@ -30,7 +30,7 @@ function effet(slug: string, nom: string, nomEn: string, resume: string, resumeE
       ...(p.plage ? { plage: p.plage } : {}),
       ...(p.pas ? { pas: p.pas } : {}),
     })),
-    async executer(ctx) {
+    async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
       const args = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
@@ -49,7 +49,7 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx) {
+    async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
       return { valeurs: [await fn(audio)] };
@@ -57,7 +57,7 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
   };
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
     [param("Temps G", 250, "Time L", "ms", "Délai canal gauche.", "Left channel delay."), param("Temps D", 375, "Time R", "ms", "Délai canal droit.", "Right channel delay."), param("Feedback", 40, "Feedback", "%", "Quantité de signal réinjecté.", "Amount of signal fed back."), param("Mix", 35, "Mix", "%", "Équilibre signal original / delay.", "Dry/wet balance.")],
     (a,tg,td,fb,mix) => appliquerDelay(a, tg, td, fb, mix)),
@@ -103,7 +103,7 @@ for (const def of [
       { nom: "Atténuation", nomEn: "Attenuation", plage: [0, 80], pas: 1, defaut: 40, unite: "dB",
         doc: "Atténuation maximale du plancher. Gate = niveau de coupure ; Expandeur = limite d'atténuation.", docEn: "Maximum floor attenuation. Gate = cut level; Expander = attenuation limit." },
     ],
-    async executer(ctx) {
+    async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
       const mode = ctx.paramTexte("Mode", "Gate") === "Expandeur" ? "expandeur" : "gate";
@@ -467,4 +467,4 @@ for (const def of [
       return { valeurs: [resultat], message: `${avant}s avant + ${apres}s après · total ${resultat.duration.toFixed(1)}s` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

@@ -1,20 +1,20 @@
 // plugins/gestion-nodes.ts — Nœud « Gestionnaire de nodes » :
 // exporte un node existant en .zip et importe un node depuis un .zip.
 // Permet de partager des nodes entre installations d'Attic.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
-import { trouverDef, installerNode, tousLesPlugins } from "../core";
+import { installerNode, registreActif } from "../core";
 
 // Récupère les 5 derniers plugins au moment de l'appel (pas au chargement du module)
 function getPluginsRecents(): string[] {
-  return tousLesPlugins()
+  return registreActif().tousLesPlugins()
     .filter((p) => !p.id.startsWith("__") && !p.id.startsWith("meta-") && !p.id.startsWith("frontiere"))
     .slice(-5)
     .map((p) => `${p.id} — ${p.nom}`);
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "gestion-nodes", nom: "Gestionnaire de nodes", nomEn: "Node Manager",
     univers: "Nouvelles fonctionnalités", famille: "Installation",
@@ -40,7 +40,7 @@ for (const def of [
 
       // Mettre à jour la liste des nodes disponibles à chaque exécution
       const recents = getPluginsRecents();
-      const defGestion = trouverDef("gestion-nodes");
+      const defGestion = registreActif().trouverDef("gestion-nodes");
       if (defGestion && defGestion.parametres[1]) {
         defGestion.parametres[1].options = recents.length > 0 ? recents : ["(aucun node disponible)"];
         defGestion.parametres[1].optionsEn = recents.length > 0 ? recents : ["(no node available)"];
@@ -50,7 +50,7 @@ for (const def of [
         const selection = ctx.paramTexte("Node à exporter", "");
         const nodeId = selection.split(" — ")[0].trim();
         if (!nodeId || nodeId === "(aucun") return { valeurs: [], message: "Lancez une première fois pour peupler la liste, puis sélectionnez un node et relancez." };
-        const nodeDef = trouverDef(nodeId);
+        const nodeDef = registreActif().trouverDef(nodeId);
         if (!nodeDef) return { valeurs: [], message: `Node « ${nodeId} » introuvable.` };
 
         // Construire le manifest
@@ -172,4 +172,4 @@ for (const def of [
       }
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

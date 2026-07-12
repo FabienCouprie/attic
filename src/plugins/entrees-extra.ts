@@ -1,5 +1,5 @@
 // plugins/entrees-extra.ts — Nœuds entrees-extra (issus du découpage de complements.ts).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import {
   decoderFichier, decoderBlob,
@@ -14,7 +14,7 @@ import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "entree-micro", nom: "Entrée micro", nomEn: "Mic input", univers: "Entrées", famille: "Audio",
     resume: "Transmet l'enregistrement micro.",
@@ -62,4 +62,4 @@ for (const def of [
   },
 
   // ── Effets ──
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

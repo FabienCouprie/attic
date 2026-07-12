@@ -2,7 +2,7 @@
 // 1. GPT-2 Paroles : génération par IA (anglais, GPT-2 small)
 // 2. Réservoir textuel : émergence par réseau de neurones aléatoires
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { mulberry32 } from "../audio";
@@ -115,7 +115,7 @@ function genererTexteReservoir(
   return texte.trim();
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "gpt2-paroles", nom: "DistilGPT-2 Paroles", nomEn: "DistilGPT-2 Lyrics",
     univers: "Autres", famille: "Texte",
@@ -301,4 +301,4 @@ for (const def of [
       };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

@@ -3,7 +3,7 @@
 // L'audio provient d'une entrée audio (port vert) — branchez un node « Entrée audio »
 // ou un enregistrement. Le texte est émis sur la sortie texte (port bleu).
 // La transcription tourne dans un Web Worker.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
@@ -60,7 +60,7 @@ const LANGUES_WHISPER: Record<string, string> = {
   "Coréen": "ko",
 };
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "whisper-en", nom: "Whisper (Anglais)", nomEn: "Whisper (English)",
     univers: "Sorties", famille: "Speech to Text",
@@ -136,4 +136,4 @@ for (const def of [
       });
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

@@ -1,7 +1,7 @@
 // plugins/galerie-exposition.ts — Nœud « Galerie d'exposition » :
 // génère une galerie HTML visuelle avec pochettes procédurales par piste,
 // lecteurs intégrés, métadonnées et design vitrine. Exposable sur le web ou en local.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
@@ -129,7 +129,7 @@ ${cards}
 </html>`;
 }
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "galerie-exposition", nom: "Galerie d'exposition", nomEn: "Exhibition Gallery",
     univers: "Collections", famille: "Export",
@@ -217,4 +217,4 @@ for (const def of [
       return { valeurs: [], message: `Galerie générée : ${dossierSortie}/index.html\n${pistes.length} pistes · ${nbCopies} MP3 copiés dans mp3/ · ${htmlOk ? "HTML écrit ✓" : "HTML échec ✗"}` };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

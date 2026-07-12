@@ -1,5 +1,5 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import {
   decoderFichier, decoderBlob,
@@ -14,7 +14,7 @@ import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "visualiseur-forme-onde", nom: "Visualiseur", nomEn: "Waveform Viewer", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche la forme d'onde du signal avec zoom et barre de défilement.",
@@ -82,4 +82,4 @@ for (const def of [
   },
 
   // ── IA ──
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

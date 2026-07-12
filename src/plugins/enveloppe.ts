@@ -1,10 +1,10 @@
 // plugins/enveloppe.ts — Modeleur d'enveloppe ADSR.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { appliquerADSR } from "../audio";
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "enveloppe-adsr", nom: "Enveloppe ADSR", nomEn: "ADSR Envelope",
     univers: "Traitement", famille: "Effets",
@@ -35,4 +35,4 @@ for (const def of [
       return { valeurs: [out] };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

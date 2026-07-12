@@ -2,7 +2,7 @@
 // éditeur de code Python avec coloration syntaxique légère.
 // L'audio d'entrée est converti en WAV temporaire, le script Python
 // le traite et produit un WAV de sortie.
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
@@ -128,7 +128,7 @@ with wave.open(output_path, 'wb') as w:
 print(f"Traité: {len(audio)} samples, {channels} canaux")
 `;
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "python-processor", nom: "Python Processor", nomEn: "Python Processor",
     univers: "Nouvelles fonctionnalités", famille: "Génération",
@@ -261,4 +261,4 @@ for (const def of [
       return { valeurs: [sorties[0], sorties[1], sorties[2]], message: msg };
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

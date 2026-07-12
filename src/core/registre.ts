@@ -1,8 +1,23 @@
-// core/registre.ts — Registre global des plugins
+// core/registre.ts — Registre de plugins instancié par domaine.
+//
+// `creerRegistre<TV, TR>()` retourne un objet avec les mêmes méthodes que
+// l'ancien registre global : enregistrer, trouverDef, trouverPlugin,
+// tousLesPlugins, desenregistrer. L'adaptateur de domaine est le seul à
+// appeler `enregistrer` — les modules de plugins exportent leurs fiches,
+// l'adaptateur les enregistre.
+//
+// Les fiches sont stockées effacées en `PluginDef<unknown, unknown>` (pas
+// `any`) : le domaine prouve le type à la frontière (cf. audio/index.ts).
 import type { PluginDef, FonctionPlugin } from "./types";
+import { valider } from "./validation";
 
-const plugins: PluginDef[] = [];
-const parId = new Map<string, PluginDef>();
+export interface Registre {
+  enregistrer<TV, TR>(def: PluginDef<TV, TR>): void;
+  trouverDef(id: string): PluginDef<unknown, unknown> | undefined;
+  trouverPlugin(id: string): FonctionPlugin<unknown, unknown> | undefined;
+  tousLesPlugins(): PluginDef<unknown, unknown>[];
+  desenregistrer(id: string): void;
+}
 
 // Migration d'identifiants : anciens id (workflows sauvegardés / ancien projet)
 // → id actuel. Permet de recharger un graphe qui référence un nœud renommé.
@@ -20,65 +35,50 @@ function resoudre(id: string): string {
   return ALIAS[id] ?? id;
 }
 
-// Contrôle qu'une fiche est complète (cf. spec §3.9 : documentation obligatoire).
-// Les erreurs bloquent la présence au catalogue ; les avertissements signalent
-// une documentation incomplète sans casser l'application.
-function valider(def: PluginDef): { erreurs: string[]; avertissements: string[] } {
-  const erreurs: string[] = [];
-  const avertissements: string[] = [];
-  if (!def.id) erreurs.push("id manquant");
-  if (!def.nom) erreurs.push("nom manquant");
-  if (!def.resume) erreurs.push("résumé manquant");
-  if (typeof def.executer !== "function") erreurs.push("fonction executer manquante");
-  if (!def.notice) avertissements.push("notice absente");
-  for (const p of def.parametres ?? []) {
-    if (!p.doc && !p.docEn) avertissements.push(`paramètre « ${p.nom} » sans documentation`);
+export function creerRegistre(): Registre {
+  const plugins: PluginDef<unknown, unknown>[] = [];
+  const parId = new Map<string, PluginDef<unknown, unknown>>();
+
+  function enregistrer<TV, TR>(def: PluginDef<TV, TR>): void {
+    const { erreurs, avertissements } = valider(def);
+    if (erreurs.length) {
+      console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
+      return;
+    }
+    const erased = def as unknown as PluginDef<unknown, unknown>;
+    const existant = parId.get(def.id);
+    if (existant) {
+      const idx = plugins.indexOf(existant);
+      if (idx >= 0) plugins[idx] = erased;
+      parId.set(def.id, erased);
+      return;
+    }
+    if ((import.meta as any).env?.DEV && avertissements.length) {
+      console.warn(`[attic] Plugin « ${def.id} » — documentation incomplète : ${avertissements.join(" ; ")}`);
+    }
+    plugins.push(erased);
+    parId.set(def.id, erased);
   }
-  return { erreurs, avertissements };
-}
 
-export function enregistrer(def: PluginDef): void {
-  const { erreurs, avertissements } = valider(def);
-  if (erreurs.length) {
-    console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
-    return;
+  function trouverPlugin(id: string): FonctionPlugin<unknown, unknown> | undefined {
+    return parId.get(resoudre(id))?.executer;
   }
-  const existant = parId.get(def.id);
-  if (existant) {
-    // Remplacement en place : même id déjà présent. Couvre le rechargement à
-    // chaud (Vite HMR ré-exécute les modules de plugins) sans dupliquer l'entrée
-    // dans la palette ni spammer la console. En production, un seul enregistrement
-    // par id a lieu de toute façon.
-    const idx = plugins.indexOf(existant);
-    if (idx >= 0) plugins[idx] = def;
-    parId.set(def.id, def);
-    return;
+
+  function trouverDef(id: string): PluginDef<unknown, unknown> | undefined {
+    return parId.get(resoudre(id));
   }
-  if ((import.meta as any).env?.DEV && avertissements.length) {
-    console.warn(`[attic] Plugin « ${def.id} » — documentation incomplète : ${avertissements.join(" ; ")}`);
+
+  function tousLesPlugins(): PluginDef<unknown, unknown>[] {
+    return plugins;
   }
-  plugins.push(def);
-  parId.set(def.id, def);
-}
 
-// Résolution alias-consciente : accepte un id actuel ou un ancien id.
-export function trouverPlugin(id: string): FonctionPlugin | undefined {
-  return parId.get(resoudre(id))?.executer;
-}
+  function desenregistrer(id: string): void {
+    const def = parId.get(id);
+    if (!def) return;
+    parId.delete(id);
+    const idx = plugins.indexOf(def);
+    if (idx >= 0) plugins.splice(idx, 1);
+  }
 
-export function trouverDef(id: string): PluginDef | undefined {
-  return parId.get(resoudre(id));
-}
-
-export function tousLesPlugins(): PluginDef[] {
-  return plugins;
-}
-
-// Retire une fiche du catalogue (utilisé pour supprimer un méta-composant).
-export function desenregistrer(id: string): void {
-  const def = parId.get(id);
-  if (!def) return;
-  parId.delete(id);
-  const idx = plugins.indexOf(def);
-  if (idx >= 0) plugins.splice(idx, 1);
+  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, desenregistrer };
 }

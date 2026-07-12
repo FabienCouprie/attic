@@ -60,7 +60,7 @@ export function empreinteParametres(data: Record<string, unknown>): string {
 
 // Résout la valeur branchée sur l'entrée `index` d'un nœud, depuis les arêtes et
 // la table des résultats déjà calculés. Renvoie null si l'entrée n'est pas connectée.
-export function resoudreEntree<T>(
+export function resoudreEntree<T = unknown>(
   nodeId: string, index: number, aretes: AreteG[], resultats: Map<string, T[]>,
 ): T | null {
   const arc = aretes.find((a) => a.target === nodeId && parseInt((a.targetHandle ?? "in:-1").split(":")[1]) === index);
@@ -71,7 +71,7 @@ export function resoudreEntree<T>(
 
 // Toutes les valeurs branchées en entrée d'un nœud (dans l'ordre des arêtes),
 // null pour les sources non encore calculées. Base des entrées variadiques.
-export function valeursEntrantes<T>(
+export function valeursEntrantes<T = unknown>(
   nodeId: string, aretes: AreteG[], resultats: Map<string, T[]>,
 ): (T | null)[] {
   return aretes.filter((a) => a.target === nodeId).map((a) => {

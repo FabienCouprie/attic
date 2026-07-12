@@ -1,7 +1,7 @@
 // plugins/traduction.ts — Deux nodes de traduction dans « Autres » :
 // 1. Traduction Whisper : texte → TTS interne → Whisper translate → texte anglais
 // 2. OPUS-MT : texte → texte multilingue (paires de langues, modèle léger)
-import { enregistrer } from "../core";
+
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
@@ -49,7 +49,7 @@ const Paires_OPUS: { id: string; nom: string; nomEn: string; model: string }[] =
   { id: "en-hi", nom: "Anglais → Hindi", nomEn: "English → Hindi", model: "Xenova/opus-mt-en-hi" },
 ];
 
-for (const def of [
+export const fiches: PluginDef[] = ([
   {
     id: "traduction-whisper", nom: "Traduction Whisper", nomEn: "Whisper Translation",
     univers: "Autres", famille: "Texte",
@@ -149,4 +149,4 @@ for (const def of [
       });
     },
   },
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as PluginDef[]).map(avecDoc);

@@ -6,6 +6,7 @@ import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../../core";
 import { serialiserMeta } from "../metasLocaux";
+import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -33,6 +34,26 @@ export function usePersistance(o: OptionsPersistance) {
   const exporter = useCallback(async () => {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
+
+    // ── Détection des pertes de données (Chantier B) ──
+    const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
+    for (const n of racine.nodes) {
+      const champsPurges = detecterPertes(n.data as Record<string, unknown>);
+      if (champsPurges.length > 0) {
+        pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
+      }
+    }
+    if (pertes.length > 0) {
+      const rapport = formaterRapportPertes(pertes);
+      console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
+      // Alerte utilisateur — non bloquante, informative
+      const nbChamps = pertes.reduce((s, p) => s + p.champs.length, 0);
+      const message = pertes.length <= 3
+        ? `Export : ${nbChamps} donnée(s) non-sérialisable(s) purgée(s) :\n\n${rapport}\n\nLes fichiers audio, blobs et buffers ne sont pas inclus dans le JSON.`
+        : `Export : ${nbChamps} donnée(s) non-sérialisable(s) purgée(s) dans ${pertes.length} nœuds.\n\nLes fichiers audio, blobs et buffers ne sont pas inclus dans le JSON.`;
+      if (typeof alert !== "undefined") alert(message);
+    }
+
     const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
       id, type, position, width, height,
       data: {
