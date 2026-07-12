@@ -44,8 +44,12 @@ Desktop.ini
 # Claude / opencode internal
 .claude/
 
-# Python path (user-specific, stored in userData at runtime)
+# Python temp files
+[object Promise]/
 python-path.txt
+
+# Stray npm wrapper
+npm
 
 # Logs
 *.log
