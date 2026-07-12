@@ -15,6 +15,9 @@ vite-out.txt
 # ONNX models (too large for git, distributed via extraResources)
 public/oonx/
 
+# SoundFont files (binary assets, user-provided)
+public/sf2/
+
 # User work files
 work/
 
