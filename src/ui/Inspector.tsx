@@ -105,7 +105,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
 
       {/* Enregistreur / entrée micro : bouton d'enregistrement dans l'inspecteur */}
       {def.id === "enregistreur-audio" || def.id === "entree-micro" ? (
-        <EnregistreurInspecteur noeud={noeud} onEnregistrer={onEnregistrer} />
+        <EnregistreurInspecteur noeud={noeud} onEnregistrer={onEnregistrer} onChangerParametre={onChangerParametre} />
       ) : null}
 
       <div className="inspecteur-actions">
@@ -116,7 +116,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
   );
 }
 
-function EnregistreurInspecteur({ noeud, onEnregistrer }: { noeud: { id: string; data: Record<string, unknown> }; onEnregistrer?: (id: string, blob: Blob) => void }) {
+function EnregistreurInspecteur({ noeud, onEnregistrer, onChangerParametre }: { noeud: { id: string; data: Record<string, unknown> }; onEnregistrer?: (id: string, blob: Blob) => void; onChangerParametre?: (nom: string, val: number | string) => void }) {
   const { t } = useI18n();
   const [enRegistrant, setEnRegistrant] = useState(false);
   const [duree, setDuree] = useState(0);
@@ -175,7 +175,7 @@ function EnregistreurInspecteur({ noeud, onEnregistrer }: { noeud: { id: string;
         <div style={{ marginTop: 8 }}>
           <div className="inspecteur-param-ligne"><label>{t("btn.device")}</label></div>
           <select className="attic-node-select" value={String(params?.["Périphérique"] ?? "")}
-            onChange={(e) => { if (params) params["Périphérique"] = e.target.value; }}>
+            onChange={(e) => onChangerParametre?.("Périphérique", e.target.value)}>
             {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
           </select>
         </div>
