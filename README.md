@@ -113,4 +113,4 @@ electron/
 
 ## License
 
-Private project.
+MIT — see [LICENSE](LICENSE)
