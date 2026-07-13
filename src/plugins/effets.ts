@@ -467,4 +467,45 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [resultat], message: `${avant}s avant + ${apres}s après · total ${resultat.duration.toFixed(1)}s` };
     },
   },
+  {
+    id: "tremolo", nom: "Tremolo", nomEn: "Tremolo", univers: "Traitement", famille: "Effets",
+    resume: "Modulation d'amplitude (variations de volume périodiques).",
+    resumeEn: "Amplitude modulation (periodic volume variations).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Fréquence de la modulation (vibrations par seconde).", docEn: "Modulation rate (vibrations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Intensité de la modulation (0% = aucun effet, 100% = volume coupé complètement).", docEn: "Modulation depth (0% = no effect, 100% = volume fully cut)." },
+      { nom: "Forme", nomEn: "Shape", type: "choix", options: ["Sinus", "Carré", "Triangle", "Sawtooth"],
+        optionsEn: ["Sine", "Square", "Triangle", "Sawtooth"], defaut: "Sinus",
+        doc: "Forme de l'onde de modulation.", docEn: "LFO waveform shape." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const freq = ctx.paramNombre("Fréquence", 5);
+      const depth = ctx.paramNombre("Profondeur", 50) / 100;
+      const forme = ctx.paramTexte("Forme", "Sinus");
+      const sr = a.sampleRate;
+      const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: a.length, sampleRate: sr });
+      for (let c = 0; c < a.numberOfChannels; c++) {
+        const src = a.getChannelData(c);
+        const dst = resultat.getChannelData(c);
+        for (let i = 0; i < a.length; i++) {
+          const t = i / sr;
+          const phase = 2 * Math.PI * freq * t;
+          let lfo: number;
+          if (forme === "Carré" || forme === "Square") lfo = Math.sin(phase) >= 0 ? 1 : -1;
+          else if (forme === "Triangle") lfo = 2 * Math.abs(2 * (freq * t - Math.floor(freq * t + 0.5))) - 1;
+          else if (forme === "Sawtooth") lfo = 2 * (freq * t - Math.floor(freq * t)) - 1;
+          else lfo = Math.sin(phase);
+          const gain = 1 - depth * (1 - lfo) / 2;
+          dst[i] = src[i] * gain;
+        }
+      }
+      return { valeurs: [resultat] };
+    },
+  },
 ] as PluginDef[]).map(avecDoc);

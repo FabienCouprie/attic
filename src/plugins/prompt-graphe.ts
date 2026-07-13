@@ -71,6 +71,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "amplificateur", mots: ["normalize", "normaliser", "gain"], category: "effet" },
   { ficheId: "shift-formants", mots: ["formant", "formant shift", "conversion vocale", "voice conversion", "homme femme"], category: "effet" },
   { ficheId: "ajouter-silence", mots: ["silence", "ajouter silence", "add silence"], category: "effet" },
+  { ficheId: "tremolo", mots: ["tremolo"], category: "effet" },
   { ficheId: "simple-boucle", mots: ["boucle", "loop", "répéter"], category: "effet" },
   { ficheId: "aligneur-piste", mots: ["aligner", "align", "aligneur"], category: "effet" },
   { ficheId: "analyseur-spectre", mots: ["spectre", "spectrum", "fft", "analyseur"], category: "analyse" },
