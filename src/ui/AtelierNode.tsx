@@ -70,23 +70,19 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
-    // updateNodeInternals au montage (une fois) pour que React Flow lise
-    // la position réelle des handles dans les ports.
-    const timer = setTimeout(() => updateNodeInternals(id), 50);
-    // ResizeObserver en continu pour les nodes redimensionnables.
-    const hasResizer = el.querySelector(".react-flow__resize-control") !== null;
-    if (!hasResizer) return () => clearTimeout(timer);
-    let lastW = 0, lastH = 0;
+    // ResizeObserver sur tous les nodes : recalcule les handles quand la
+    // hauteur change (chargement de fichier, apparition de lecteur, etc.).
+    // Le guard sur la hauteur évite les recalculs inutiles.
+    let lastH = 0;
     const obs = new ResizeObserver(() => {
-      const w = el.offsetWidth;
       const h = el.offsetHeight;
-      if (w === lastW && h === lastH) return;
-      lastW = w; lastH = h;
+      if (h === lastH) return;
+      lastH = h;
       requestAnimationFrame(() => updateNodeInternals(id));
     });
-    lastW = el.offsetWidth; lastH = el.offsetHeight;
+    lastH = el.offsetHeight;
     obs.observe(el);
-    return () => { clearTimeout(timer); obs.disconnect(); };
+    return () => obs.disconnect();
   }, [id, updateNodeInternals]);
 
   const nodeEstMeta = estMeta(data.ficheId as string);
