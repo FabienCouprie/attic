@@ -79,9 +79,7 @@ const edgeTypes = { "arete-personnalisee": AretePersonnalisee };
 function tailleDefaut(def: PluginDef): { width: number; height: number } {
   const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
   const nbParams = def.parametres.length;
-  let h = 118 + nbPorts * 26 + nbParams * 46 + 90;
-  if (def.id === "sortie-audio" || def.id === "sortie-midi") h += 20;
-  if (def.id === "generateur-musical") h = 380;
+  let w = 260;
   if (def.id === "clavier-melodie") return { width: 500, height: 260 };
   if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
   if (def.id === "analyseur-spectre") return { width: 420, height: 300 };
@@ -111,7 +109,10 @@ function tailleDefaut(def: PluginDef): { width: number; height: number } {
   if (def.id.startsWith("collection-")) return { width: 380, height: 280 };
   if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
   if (def.id === "classificateur-genre") return { width: 380, height: 300 };
-  return { width: 230, height: h };
+  if (def.id === "multi-reservoirs") return { width: 280, height: 420 };
+  // Nodes standard : largeur fixe, hauteur = contenu réel (en-tête + ports + statut)
+  void nbParams; void w;
+  return { width: 240, height: nbPorts * 22 + 96 };
 }
 
 // ── Application ──
@@ -666,6 +667,9 @@ function Atelier() {
           onPaneClick={() => setSel(null)}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
+          panOnDrag={true}
+          selectionOnDrag={false}
+          selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {
             const ids = new Set(deletedNodes.map((n) => n.id));
             setEdges((eds) => eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)));

@@ -36,6 +36,10 @@
         "to": "sf2"
       },
       {
+        "from": "music collection",
+        "to": "music collection"
+      },
+      {
         "from": "THIRD_PARTY.md",
         "to": "THIRD_PARTY.md"
       }
@@ -48,7 +52,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true
     },
     "publish": {
       "provider": "github",

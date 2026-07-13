@@ -202,7 +202,13 @@ ipcMain.handle("dossier:choisir", async () => {
 // --- IPC : lister les fichiers audio d'un dossier ---
 ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
   try {
-    const fichiers = fs.readdirSync(cheminDossier);
+    // En production, résoudre les chemins relatifs vers resourcesPath
+    let chemin = cheminDossier;
+    if (!path.isAbsolute(chemin)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      chemin = path.join(base, chemin);
+    }
+    const fichiers = fs.readdirSync(chemin);
     const audios = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma", ".mid", ".midi"];
     const resultats = [];
     for (const f of fichiers) {
