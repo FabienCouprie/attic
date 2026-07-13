@@ -70,10 +70,15 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
+    let lastW = 0, lastH = 0;
     const obs = new ResizeObserver(() => {
-      // Délai pour laisser le DOM se mettre à jour avant de recalculer les handles
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      if (w === lastW && h === lastH) return;
+      lastW = w; lastH = h;
       requestAnimationFrame(() => updateNodeInternals(id));
     });
+    lastW = el.offsetWidth; lastH = el.offsetHeight;
     obs.observe(el);
     return () => obs.disconnect();
   }, [id, updateNodeInternals]);
