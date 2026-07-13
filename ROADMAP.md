@@ -1,174 +1,174 @@
 # Attic — Roadmap
 
-Suivi du reste à faire, priorisé. Voir aussi `ARCHITECTURE.md` (spec technique du
-framework) et `Atelier-Specification.md` (spec conceptuelle §3).
+Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (technical spec of
+the framework) and `Atelier-Specification.md` (conceptual spec §3).
 
-État vérifié en continu : **tsc 0 erreur · 26 tests unitaires · build OK**.
+Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
 
 ---
 
-## ✅ Fait (session 2026-07)
+## ✅ Done (session 2026-07)
 
-### Séparation IA
-- ✅ **Séparateur IA 6-stem** — Demucs 6s (258 MB, `public/oonx/htdemucs_6s.onnx`) ajouté. 6 pistes : batterie, basse, autre, voix, guitare, piano. Par défaut.
-- ✅ **MDX-Net corrigé** — modèle `UVR_MDXNET_9482` (29.7 MB) téléchargé et câblé. Les 3 modèles sont embarqués.
-- ✅ **`extraResources`** — modèles ONNX livrés hors asar via `electron-builder` (`process.resourcesPath/oonx/`). Pas de duplication dans `dist/`.
+### AI separation
+- ✅ **6-stem AI separator** — Demucs 6s (258 MB, `public/oonx/htdemucs_6s.onnx`) added. 6 stems: drums, bass, other, vocals, guitar, piano. Default.
+- ✅ **MDX-Net fixed** — `UVR_MDXNET_9482` model (29.7 MB) downloaded and wired. The 3 models are embedded.
+- ✅ **`extraResources`** — ONNX models delivered outside asar via `electron-builder` (`process.resourcesPath/oonx/`). No duplication in `dist/`.
 
-### Effets
-- ✅ **Réverbération à convolution (IR)** — `reverbe-convolution` : IR synthétique (5 types : Room/Hall/Plate/Spring/Cathédrale, pre-delay, damping, decay, mix) + chargement IR externe (WAV).
-- ✅ **Bitcrusher** — quantification (1-16 bits) + sous-échantillonnage (1-44 kHz) + mix.
-- ✅ **Gate/Expandeur** — 2 modes, seuil, ratio, attaque, relâchement, atténuation plancher.
-- ✅ **De-esser** — compression dynamique des sibilances (sidechain passe-bande 5-9 kHz).
-- ✅ **Ring modulator** — multiplication par porteuse sinusoïdale (1-8000 Hz), sidebands.
+### Effects
+- ✅ **Convolution reverb (IR)** — `reverbe-convolution`: synthetic IR (5 types: Room/Hall/Plate/Spring/Cathedral, pre-delay, damping, decay, mix) + external IR loading (WAV).
+- ✅ **Bitcrusher** — quantization (1-16 bits) + downsampling (1-44 kHz) + mix.
+- ✅ **Gate/Expander** — 2 modes, threshold, ratio, attack, release, floor attenuation.
+- ✅ **De-esser** — dynamic compression of sibilance (bandpass sidechain 5-9 kHz).
+- ✅ **Ring modulator** — multiplication by sinusoidal carrier (1-8000 Hz), sidebands.
 
-### Générateurs
-- ✅ **Séquenceur mélodique** — grille piano-roll 13 rangées × 8/16/32 pas, 5 gammes, 4 timbres, clé/octave/tempo/swing.
-- ✅ **Générateur de fréquence** — saisie Hz ou note (A4, C#5, Bb3), 4 formes d'onde, fondu anti-clic.
-- ✅ **Métronome** — clic régulier 40-240 BPM, 6 signatures, 3 timbres (Clic/Woodblock/Bip), accentuation.
-- ✅ **VU-mètre / LUFS** — bargraphes RMS, Peak, True Peak (dBTP), LUFS (K-weighting ITU-R BS.1770) + crest factor + LRA. Vue canvas.
-- ✅ **Réservoir neuronal** — générateur par réseau de neurones aléatoires (Reservoir Computing, inspiré Allendia/EVY). 16 paramètres (neurones, connectivité, mémoire, spectre, gamme, graine, etc.). Aucun entraînement, aucun modèle, JS pur.
+### Generators
+- ✅ **Melodic sequencer** — piano-roll grid 13 rows × 8/16/32 steps, 5 scales, 4 timbres, key/octave/tempo/swing.
+- ✅ **Frequency generator** — Hz or note input (A4, C#5, Bb3), 4 waveforms, anti-click fade.
+- ✅ **Metronome** — regular click 40-240 BPM, 6 time signatures, 3 timbres (Click/Woodblock/Beep), accentuation.
+- ✅ **VU-meter / LUFS** — RMS, Peak, True Peak (dBTP), LUFS (K-weighting ITU-R BS.1770) bargraphs + crest factor + LRA. Canvas view.
+- ✅ **Neural reservoir** — generator via random neural network (Reservoir Computing, inspired by Allendia/EVY). 16 parameters (neurons, connectivity, memory, spectrum, scale, seed, etc.). No training, no model, pure JS.
 
 ### MIDI
-- ✅ **Arpégiateur MIDI** — 5 directions (Up/Down/UpDown/DownUp/Random), motifs intra-accord, 5 vitesses, 1-4 octaves, durée note réglable.
-- ✅ **Transposeur/Quantiseur MIDI** — transposition ±24 demi-tons, quantisation (1/4 à 1/32 + triplets), option quantifier fins.
-- ✅ **Détecteur d'accords** — chromagramme fenêtré + templates (10 types d'accords), progression avec horodatage. Vue intégrée.
-- ✅ **Lecteur MIDI** — ajout d'une sortie MIDI (port orange) pour chaîner vers l'arpégiateur/transposeur.
+- ✅ **MIDI arpeggiator** — 5 directions (Up/Down/UpDown/DownUp/Random), intra-chord patterns, 5 speeds, 1-4 octaves, adjustable note duration.
+- ✅ **MIDI transposer/quantizer** — transposition ±24 semitones, quantization (1/4 to 1/32 + triplets), fine quantize option.
+- ✅ **Chord detector** — windowed chromagram + templates (10 chord types), progression with timestamps. Integrated view.
+- ✅ **MIDI player** — added a MIDI output (orange port) to chain to the arpeggiator/transposer.
 
-### IA générative (Transformers.js + ONNX)
-- ✅ **MusicGen** — génération de musique depuis un prompt texte (`Xenova/musicgen-small`, Web Worker, auto-download HuggingFace).
-- ✅ **SpeechT5 TTS** — synthèse vocale anglais, 7 voix (CMU Arctic embeddings).
-- ✅ **MMS-TTS Multilingue** — 10 langues (Meta MMS, un modèle par langue).
-- ✅ **Whisper (Anglais)** — transcription vocale ASR (`whisper-base.en`, ~75 MB).
-- ✅ **Whisper (Multilingue)** — 99 langues + option traduction vers anglais (`whisper-large-v2`, ~1.5 GB).
-- ✅ **Traduction Whisper** — texte → TTS → Whisper translate → texte anglais (chaîne interne).
-- ✅ **Traduction OPUS-MT** — 18 paires de langues texte→texte (modèles légers ~30 MB).
+### Generative AI (Transformers.js + ONNX)
+- ✅ **MusicGen** — music generation from a text prompt (`Xenova/musicgen-small`, Web Worker, auto-download HuggingFace).
+- ✅ **SpeechT5 TTS** — English speech synthesis, 7 voices (CMU Arctic embeddings).
+- ✅ **MMS-TTS Multilingual** — 10 languages (Meta MMS, one model per language).
+- ✅ **Whisper (English)** — vocal ASR transcription (`whisper-base.en`, ~75 MB).
+- ✅ **Whisper (Multilingual)** — 99 languages + translate-to-English option (`whisper-large-v2`, ~1.5 GB).
+- ✅ **Whisper translation** — text → TTS → Whisper translate → English text (internal chain).
+- ✅ **OPUS-MT translation** — 18 text→text language pairs (lightweight models ~30 MB).
 
-### Collections de données
-- ✅ **Styles musicaux** — 200+ styles par 11 catégories (Rock/Métal/Pop/Électronique/Hip-Hop/Jazz/Blues-Soul-Funk/Country-Folk/Reggae-Latin/Classique/World).
-- ✅ **Émotions** — 160+ émotions par 8 catégories (Joie/Tristesse/Colère/Peur/Amour/Surprise/Dégoût/Mixte).
-- ✅ **Tessitures de voix** — 31 tessitures par 3 groupes (Hommes/Femmes/Enfants), avec plages en notes.
+### Data collections
+- ✅ **Musical styles** — 200+ styles across 11 categories (Rock/Metal/Pop/Electronic/Hip-Hop/Jazz/Blues-Soul-Funk/Country-Folk/Reggae-Latin/Classical/World).
+- ✅ **Emotions** — 160+ emotions across 8 categories (Joy/Sadness/Anger/Fear/Love/Surprise/Disgust/Mixed).
+- ✅ **Voice ranges** — 31 ranges across 3 groups (Men/Women/Children), with note ranges.
 
-### Outils IA
-- ✅ **Générateur de script IA** — combine aléatoirement instruments + styles + émotions + tessitures → prompt structuré pour Suno/Udio.
-- ✅ **Combinaison de couleurs** — 1 ou 2 couleurs → script IA musical (psychologie des couleurs + synesthésie). 11 couleurs, fusion de profils.
-- ✅ **Source de texte** — saisie texte sur le nœud (textarea redimensionnable, min 35 caractères), sortie port bleu.
+### AI tools
+- ✅ **AI script generator** — randomly combines instruments + styles + emotions + voice ranges → structured prompt for Suno/Udio.
+- ✅ **Color combination** — 1 or 2 colors → musical AI script (color psychology + synesthesia). 11 colors, profile fusion.
+- ✅ **Text source** — text input on the node (resizable textarea, min 35 characters), blue port output.
 
 ### i18n
-- ✅ **`optionsEn`** — ajout du champ `optionsEn?: string[]` à `ParametreDef` pour traduire les dropdowns bilingues.
-- ✅ **Famille « Text to Speech » / « Speech to Text »** — ajoutées au dictionnaire i18n.
-- ✅ **Tri alphabétique** des nodes dans chaque famille du catalogue.
+- ✅ **`optionsEn`** — added `optionsEn?: string[]` field to `ParametreDef` to translate bilingual dropdowns.
+- ✅ **"Text to Speech" / "Speech to Text" family** — added to the i18n dictionary.
+- ✅ **Alphabetical sorting** of nodes within each catalog family.
 
-### UI / robustesse
-- ✅ **Copier/coller de nœuds** — Ctrl+C / Ctrl+V, nouvel id + callbacks re-créés.
-- ✅ **Fix : suppression de nœud** — `setSel(null)` quand le nœud supprimé était sélectionné (inspector ne reste plus planté).
-- ✅ **Fix : reset `scriptGenere`** — le reset du nœud efface maintenant `scriptGenere` (champ texte).
-- ✅ **Fix : chevauchement CSS** — boutons Grouper/Dégrouper déplacés à gauche sous la barre d'outils.
-- ✅ **Palette : tri alphabétique** des nodes par nom affiché dans chaque famille.
-
----
-
-## 1. Vision « Studio pédagogique »
-
-### 1.1 Parcours guidés interactifs
-Workflows pré-construits embarqués (`presets/`) avec annotations pédagogiques sur le canevas :
-- « Comment fonctionne un compresseur ? »
-- « La chaîne du mixage » : EQ → Compresseur → Reverb → Limiteur
-- « Synthèse soustractive » avec tutoriel interactif
-- Exercices (« changez le seuil et écoutez la différence »)
-
-### 1.2 Comparateur pédagogique A/B
-Version enrichie du comparateur A/B : affichage **simultané** des deux formes d'onde/spectres côte à côte + **diff spectral** (fréquences qui diffèrent en rouge).
-
-### 1.3 Annotateur de forme d'onde
-Marqueurs textuels sur la forme d'onde (« refrain », « couplet », « solo ») — persistés avec le graphe. Un parcours peut pré-annoter un extrait et poser des questions.
+### UI / robustness
+- ✅ **Copy/paste nodes** — Ctrl+C / Ctrl+V, new id + callbacks re-created.
+- ✅ **Fix: node deletion** — `setSel(null)` when the deleted node was selected (inspector no longer stuck).
+- ✅ **Fix: reset `scriptGenere`** — node reset now clears `scriptGenere` (text field).
+- ✅ **Fix: CSS overlap** — Group/Ungroup buttons moved to the left under the toolbar.
+- ✅ **Palette: alphabetical sorting** of nodes by display name within each family.
 
 ---
 
-## 2. Vision « Atelier IA créatif »
+## 1. "Educational studio" vision
 
-### 2.1 Réservoir neuronal MIDI
-Version MIDI du réservoir — génère des fichiers MIDI branchables sur Transposeur/Quantiseur, Arpégiateur ou Sortie MIDI. Permet de chaîner plusieurs réservoirs.
+### 1.1 Interactive guided tours
+Embedded pre-built workflows (`presets/`) with educational annotations on the canvas:
+- "How does a compressor work?"
+- "The mixing chain": EQ → Compressor → Reverb → Limiter
+- "Subtractive synthesis" with interactive tutorial
+- Exercises ("change the threshold and listen to the difference")
 
-### 2.2 Multi-réservoirs en réseau
-Un node qui connecte plusieurs réservoirs en parallèle/série (mélodie, basse, harmonie, rythme). Chaque réservoir « écoute » les autres via une entrée de contrôle → émergence polyphonique.
+### 1.2 Educational A/B comparator
+Enriched version of the A/B comparator: **simultaneous** display of the two waveforms/spectra side by side + **spectral diff** (differing frequencies in red).
 
-### 2.3 Évolution génétique de réservoirs
-Un méta-node qui fait évoluer une population de réservoirs : mutation aléatoire des poids/paramètres, sélection par l'utilisateur (j'aime / j'aime pas), croisement. Après quelques générations, le réservoir s'adapte au goût. Pas d'entraînement — de la sélection naturelle.
+### 1.3 Waveform annotator
+Textual markers on the waveform ("chorus", "verse", "solo") — persisted with the graph. A tour can pre-annotate an excerpt and ask questions.
+
+---
+
+## 2. "Creative AI workshop" vision
+
+### 2.1 MIDI neural reservoir
+MIDI version of the reservoir — generates MIDI files that can be plugged into Transposer/Quantizer, Arpeggiator or MIDI Output. Allows chaining multiple reservoirs.
+
+### 2.2 Multi-reservoir network
+A node that connects multiple reservoirs in parallel/series (melody, bass, harmony, rhythm). Each reservoir "listens" to the others via a control input → polyphonic emergence.
+
+### 2.3 Genetic evolution of reservoirs
+A meta-node that evolves a population of reservoirs: random mutation of weights/parameters, user selection (like / dislike), crossover. After a few generations, the reservoir adapts to taste. No training — natural selection.
 
 ### 2.4 ColorSynth
-L'inverse du node « Combinaison de couleurs » : écoute le signal audio et déduit une palette de couleurs. Spectre → espace colorimétrique (basses = chaud, aigus = froid). Vue canvas. Pédagogique : « voir » le timbre.
+The inverse of the "Color combination" node: listens to the audio signal and deduces a color palette. Spectrum → color space (bass = warm, treble = cold). Canvas view. Educational: "seeing" the timbre.
 
-### 2.5 Prompt musical → graphe
-Un node qui prend un prompt texte (« un delay stéréo avec feedback court sur une réverbération hall ») et génère le graphe correspondant en reliant automatiquement les nodes. Parser de règles mots-clés → plugins + connexions. Magique pour la découverte.
-
----
-
-## 3. Vision « Laboratoire multi-domaines »
-
-### 3.1 Domaine image (proof of concept)
-Un adaptateur image minimal pour prouver la règle d'or :
-- Types de flux : `image` (rouge), `masque` (jaune)
-- Nodes : Charger image, Flou gaussien, Seuil, Convolution 3×3, Composition alpha, Aperçu image
-- Vues : `<canvas>` dans le node
-- Même cœur, même palette, même inspecteur, même persistance
-- **Objectif** : prouver que « livrer un nouveau domaine = fournir un adaptateur, sans modifier core ni UI »
-
-### 3.2 Domaine données/ETL
-- Types de flux : `table` (vert), `schéma` (orange)
-- Nodes : Charger CSV, Filtrer, Agrégation, Jointure, Exporter
-- Vues : mini-tableau dans le node
-
-### 3.3 Visualiseur cross-domaine
-Un node générique qui affiche n'importe quel type de flux (audio = forme d'onde, image = pixels, table = lignes/colonnes). Démontre la neutralité du cœur.
+### 2.5 Musical prompt → graph
+A node that takes a text prompt ("a stereo delay with short feedback over a hall reverb") and generates the corresponding graph by automatically connecting the nodes. Keyword-rules parser → plugins + connections. Magical for discovery.
 
 ---
 
-## 4. Vision « Plateforme collaborative »
+## 3. "Multi-domain laboratory" vision
 
-### 4.1 Galerie de presets communautaires
-Une page web ou un node « Importer depuis la galerie » listant des graphes partagés. Description, tags, preview audio. Import en un clic. Stockage sur HuggingFace ou GitHub (fichiers JSON).
+### 3.1 Image domain (proof of concept)
+A minimal image adapter to prove the golden rule:
+- Flow types: `image` (red), `mask` (yellow)
+- Nodes: Load image, Gaussian blur, Threshold, 3×3 Convolution, Alpha compositing, Image preview
+- Views: `<canvas>` inside the node
+- Same core, same palette, same inspector, same persistence
+- **Goal**: prove that "delivering a new domain = providing an adapter, without modifying core or UI"
 
-### 4.2 Export audio + graphe embarqué
-Le graphe qui a produit un WAV/MP3 est embarqué dans les métadonnées (chunk `INFO` du WAV ou tag ID3 du MP3). Importer le fichier audio dans Attic récupère le graphe — reproduction exacte.
+### 3.2 Data/ETL domain
+- Flow types: `table` (green), `schema` (orange)
+- Nodes: Load CSV, Filter, Aggregation, Join, Export
+- Views: mini-table inside the node
+
+### 3.3 Cross-domain viewer
+A generic node that displays any flow type (audio = waveform, image = pixels, table = rows/columns). Demonstrates the neutrality of the core.
+
+---
+
+## 4. "Collaborative platform" vision
+
+### 4.1 Community presets gallery
+A web page or an "Import from gallery" node listing shared graphs. Description, tags, audio preview. One-click import. Storage on HuggingFace or GitHub (JSON files).
+
+### 4.2 Audio export + embedded graph
+The graph that produced a WAV/MP3 is embedded in the metadata (WAV `INFO` chunk or MP3 ID3 tag). Importing the audio file into Attic recovers the graph — exact reproduction.
 
 ### 4.3 Plugin system (user-defined nodes)
-Créer son propre node sans coder : définir entrées/sorties/paramètres via UI, écrire `executer` en JS dans un éditeur intégré, enregistré dynamiquement (localStorage, exportable JSON).
+Create your own node without coding: define inputs/outputs/parameters via UI, write `executer` in JS in an integrated editor, registered dynamically (localStorage, exportable as JSON).
 
 ### 4.4 Live coding / performance mode
-Mode plein écran : palette repliée, contrôles macro (molettes), MIDI learn (assigner un contrôleur à un paramètre), exécution continue. Le musicien « joue » le graphe.
+Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign a controller to a parameter), continuous execution. The musician "plays" the graph.
 
 ---
 
-## 5. Robustesse & raffinements (transverse)
+## 5. Robustness & refinements (cross-cutting)
 
-| # | Tâche | Priorité |
+| # | Task | Priority |
 |---|---|---|
-| 1 | **Ids de port stables** (au lieu d'index positionnels) — réindexation casse les arêtes | Haute |
-| 2 | **`lienExterne?`** dans `PluginDef` (« pour aller plus loin ») + rendu dans la notice | Moyenne |
-| 3 | **Persistance des fichiers** en base64 dans le JSON | Moyenne |
-| 4 | **Relocaliser `TypeValeur`** hors du cœur vers le domaine audio | Basse |
-| 5 | **Sous-diviser** `audio/generation.ts` (889 l.), `audio/analyse.ts` (820 l.) | Basse |
-| 6 | **Éclater** `ui/vues.tsx` en `ui/vues/*.tsx` (un fichier par vue) | Basse |
-| 7 | **Compatibilité** `compatible` pour sous-typage stéréo/mono | Basse |
+| 1 | **Stable port IDs** (instead of positional indices) — re-indexing breaks edges | High |
+| 2 | **`lienExterne?`** in `PluginDef` ("to go further") + rendered in the notice | Medium |
+| 3 | **File persistence** as base64 in the JSON | Medium |
+| 4 | **Relocate `TypeValeur`** out of the core into the audio domain | Low |
+| 5 | **Split** `audio/generation.ts` (889 lines), `audio/analyse.ts` (820 lines) | Low |
+| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) | Low |
+| 7 | **`compatible` compatibility** for stereo/mono subtyping | Low |
 
 ---
 
-## Ordre suggéré
+## Suggested order
 
-| # | Tâche | Effort | Valeur |
+| # | Task | Effort | Value |
 |---|---|---|---|
-| 2.1 | Réservoir MIDI | Faible | Forte — débloque le chaînage |
-| 1.1 | Parcours guidés | Moyen | Forte — pédagogique = mission |
-| 3.1 | Domaine image | Moyen | Stratégique — prouve le framework |
-| 4.3 | Plugin user-defined | Moyen | Forte — extensible sans coder |
-| 2.5 | Prompt → graphe | Faible | Magique — découverte |
-| 2.3 | Évolution génétique | Moyen | Unique — aucune autre app fait ça |
-| 4.4 | Live mode | Élevé | Forte pour la performance |
-| 4.2 | Graphe embarqué | Faible | Élégant — reproductibilité |
-| 2.2 | Multi-réservoirs | Moyen | Unique — émergence polyphonique |
-| 2.4 | ColorSynth | Faible | Pédagogique — voir le son |
-| 4.1 | Galerie communautaire | Élevé | Long terme |
-| 1.2 | A/B pédagogique | Faible | Pédagogique |
-| 1.3 | Annotateur | Faible | Pédagogique |
-| 3.2 | Domaine ETL | Élevé | Stratégique mais moins urgent |
-| 3.3 | Visualiseur cross | Moyen | Technique |
+| 2.1 | MIDI reservoir | Low | High — unlocks chaining |
+| 1.1 | Guided tours | Medium | High — educational = mission |
+| 3.1 | Image domain | Medium | Strategic — proves the framework |
+| 4.3 | User-defined plugin | Medium | High — extensible without coding |
+| 2.5 | Prompt → graph | Low | Magical — discovery |
+| 2.3 | Genetic evolution | Medium | Unique — no other app does this |
+| 4.4 | Live mode | High | High for performance |
+| 4.2 | Embedded graph | Low | Elegant — reproducibility |
+| 2.2 | Multi-reservoirs | Medium | Unique — polyphonic emergence |
+| 2.4 | ColorSynth | Low | Educational — seeing sound |
+| 4.1 | Community gallery | High | Long term |
+| 1.2 | Educational A/B | Low | Educational |
+| 1.3 | Annotator | Low | Educational |
+| 3.2 | ETL domain | High | Strategic but less urgent |
+| 3.3 | Cross viewer | Medium | Technical |

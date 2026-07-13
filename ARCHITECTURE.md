@@ -1,76 +1,76 @@
-# Atelier — Spécification technique du framework
+# Atelier — Framework Technical Specification
 
-> Spec **technique** dérivée du projet *attic* (éditeur audio nodal), pensée pour
-> être **réappliquée à d'autres domaines** (image, données/ETL, ML, shaders,
-> IoT, ou tout outil pédagogique de « flux de données »).
+> **Technical** spec derived from the *attic* project (nodal audio editor), designed
+> to be **reapplied to other domains** (image, data/ETL, ML, shaders,
+> IoT, or any pedagogical "data flow" tool).
 >
-> Complète la spec **conceptuelle** (`Atelier-Specification.md §3` : blocs, ports
-> typés, entrées dynamiques, catalogue, inspecteur, états d'exécution,
-> méta-composants, documentation obligatoire), qui reste **indépendante du domaine**.
+> Completes the **conceptual** spec (`Atelier-Specification.md §3`: blocks, typed
+> ports, dynamic inputs, catalog, inspector, execution states,
+> meta-components, mandatory documentation), which remains **domain-independent**.
 >
-> Chaque section distingue **[Actuel]** (ce que fait attic aujourd'hui) et
-> **[Cible]** (la généralisation proposée pour d'autres domaines).
+> Each section distinguishes **[Current]** (what attic does today) and
+> **[Target]** (the proposed generalization for other domains).
 
 ---
 
-## 1. Objet & principe
+## 1. Purpose & principle
 
-Un **éditeur de graphe de flux** : l'utilisateur pose des **blocs** (nœuds) sur un
-canevas, relie leurs **ports typés**, règle leurs **paramètres**, puis exécute le
-graphe. Chaque bloc est un **plugin** autonome décrit par une **fiche** (`PluginDef`)
-et une fonction `executer(ctx)`. Un moteur DAG évalue le graphe.
+A **flow graph editor**: the user places **blocks** (nodes) on a
+canvas, connects their **typed ports**, adjusts their **parameters**, then runs the
+graph. Each block is an autonomous **plugin** described by a **sheet** (`PluginDef`)
+and an `executer(ctx)` function. A DAG engine evaluates the graph.
 
-Invariants transverses (valables tous domaines) :
-- **Ports typés & colorés** : une connexion n'est permise que si les types sont compatibles.
-- **Documentation de premier ordre** : tout bloc a résumé + notice ; tout paramètre a une info-bulle. Bilingue. Un garde-fou refuse un bloc sous-documenté.
-- **Exécution déterministe & mise en cache** par empreinte (paramètres + entrées).
-- **Composition** : des sous-graphes s'encapsulent en **méta-composants** réutilisables.
-- **Persistance** : le graphe (et ses méta-composants) se sérialise en JSON.
+Cross-cutting invariants (valid for all domains):
+- **Typed & colored ports**: a connection is only allowed if the types are compatible.
+- **First-class documentation**: every block has a summary + notice; every parameter has a tooltip. Bilingual. A guard rejects an under-documented block.
+- **Deterministic execution & caching** by fingerprint (parameters + inputs).
+- **Composition**: sub-graphs are encapsulated as reusable **meta-components**.
+- **Persistence**: the graph (and its meta-components) serializes to JSON.
 
 ---
 
-## 2. Architecture en couches
+## 2. Layered architecture
 
-| Couche | Rôle | Dépend du domaine ? |
+| Layer | Role | Domain-dependent? |
 |---|---|---|
-| **`core`** | registre, moteur DAG, méta-composants, validation, i18n, overlay doc | **Non** |
-| **Adaptateur de domaine** | types de flux, types de valeurs, plugins, vues, aperçu | **Oui** |
-| **`ui` (coquille)** | palette, canevas, inspecteur, fil d'Ariane, nœud générique | Générique, piloté par des registres |
+| **`core`** | registry, DAG engine, meta-components, validation, i18n, doc overlay | **No** |
+| **Domain adapter** | flow types, value types, plugins, views, preview | **Yes** |
+| **`ui` (shell)** | palette, canvas, inspector, breadcrumb, generic node | Generic, driven by registries |
 
-**Règle d'or** : *livrer un nouveau domaine = fournir un adaptateur (types + plugins + vues), sans modifier `core` ni la coquille `ui`.*
+**Golden rule**: *shipping a new domain = providing an adapter (types + plugins + views), without modifying `core` or the `ui` shell.*
 
-[Actuel] `core/*` est déjà agnostique. Les couplages résiduels à extraire :
-1. `TypeValeur` (union figée `AudioBuffer|Float32Array|File|…`) dans `core/types.ts` ;
-2. les types de ports (`"audio"|"midi"|"controle"|"texte"`) + couleurs codés en dur ;
-3. ~18 branches `if (ficheId === …)` dans `ui/AtelierNode.tsx` (rendu spécifique) ;
-4. `ctxAudio` / `toutesEntreesAudio()` dans le contexte d'exécution.
+[Current] `core/*` is already agnostic. The residual couplings to extract:
+1. `TypeValeur` (fixed union `AudioBuffer|Float32Array|File|…`) in `core/types.ts`;
+2. port types (`"audio"|"midi"|"controle"|"texte"`) + colors hardcoded;
+3. ~18 `if (ficheId === …)` branches in `ui/AtelierNode.tsx` (specific rendering);
+4. `ctxAudio` / `toutesEntreesAudio()` in the execution context.
 
 ---
 
-## 3. Contrat de plugin (`PluginDef`)
+## 3. Plugin contract (`PluginDef`)
 
-Unité de base. Une fiche décrit **tout** ce qu'un bloc expose.
+Base unit. A sheet describes **everything** a block exposes.
 
 ```ts
 interface PluginDef<TValeur = unknown> {
-  id: string;                 // identifiant stable, kebab-case
+  id: string;                 // stable identifier, kebab-case
   nom: string; nomEn?: string;
-  univers: string; famille: string;   // taxonomie catalogue (2 niveaux)
-  resume: string; resumeEn?: string;  // phrase toujours visible
-  notice?: string; noticeEn?: string; // « en savoir plus »
+  univers: string; famille: string;   // catalog taxonomy (2 levels)
+  resume: string; resumeEn?: string;  // sentence always visible
+  notice?: string; noticeEn?: string; // "learn more"
   entrees: PortDef[]; sorties: PortDef[];
   parametres: ParametreDef[];
   executer: (ctx: ContexteExecution<TValeur>) => Promise<ResultatExec<TValeur>>;
-  vue?: string;               // [Cible] id de vue personnalisée (registre de vues)
-  alias?: string[];           // [Cible] anciens id (migration) — actuellement map centrale
+  vue?: string;               // [Target] custom view id (view registry)
+  alias?: string[];           // [Target] old ids (migration) — currently central map
   etiquettes?: string[];
 }
 
 interface PortDef {
   nom: string; nomEn?: string;
-  type: string;               // id de type de flux (voir §4)
-  sousType?: string;          // ex. "stereo" | "mono"
-  dynamique?: boolean;        // entrée variadique (bouton « + »)
+  type: string;               // flow type id (see §4)
+  sousType?: string;          // e.g. "stereo" | "mono"
+  dynamique?: boolean;        // variadic input ("+" button)
 }
 
 interface ParametreDef {
@@ -78,233 +78,233 @@ interface ParametreDef {
   type?: "choix" | "curseur" | "texte" | "dossier";
   options?: string[]; plage?: [number, number]; pas?: number;
   defaut: string | number; unite?: string;
-  doc?: string; docEn?: string;   // info-bulle (obligatoire in fine, cf. §7)
+  doc?: string; docEn?: string;   // tooltip (mandatory in the end, see §7)
 }
 ```
 
-Le contrat est **domaine-neutre** : seuls le contenu des ports (`type`), la nature
-des `parametres` et le corps de `executer` sont spécifiques.
+The contract is **domain-neutral**: only the port content (`type`), the nature of
+the `parametres` and the body of `executer` are specific.
 
 ---
 
-## 4. Types de flux & de valeurs
+## 4. Flow types & value types
 
-### 4.1 Types de flux (les couleurs des ports) — ✅ registre
-[Fait] **Registre de types de flux** (`core/typesFlux.ts`), peuplé par l'adaptateur
-(`plugins/typesFlux.ts` pour l'audio) :
+### 4.1 Flow types (port colors) — ✅ registry
+[Done] **Flow type registry** (`core/typesFlux.ts`), populated by the adapter
+(`plugins/typesFlux.ts` for audio):
 ```ts
 interface TypeFlux {
   id: string; couleur: string; libelle?: string;
-  compatible?: (cibleId: string) => boolean; // défaut : égalité d'id
+  compatible?: (cibleId: string) => boolean; // default: id equality
 }
 ```
-`PortDef.type` est un **id opaque**. La couleur des ports (`couleurFlux(id)`) et la
-validation de connexion (`fluxCompatibles(source, cible)`) interrogent le registre —
-plus aucune union figée dans le cœur ni l'UI. Le domaine audio déclare
-`audio / midi / controle / texte / fichier` ; un domaine « image » déclarerait
-p.ex. `image / masque / nombre / courbe`.
+`PortDef.type` is an **opaque id**. Port color (`couleurFlux(id)`) and connection
+validation (`fluxCompatibles(source, cible)`) query the registry — no more fixed
+union in the core or UI. The audio domain declares
+`audio / midi / controle / texte / fichier`; an "image" domain would declare
+e.g. `image / masque / nombre / courbe`.
 
-### 4.2 Types de valeurs (ce qui circule) — ✅ paramétré
-[Fait] Le cœur est **générique sur `TValeur`** : `ContexteExecution<TValeur, TRuntime>`,
-`FonctionPlugin<…>`, `PluginDef<…>`. Le cœur ne manipule les valeurs que de façon
-opaque (sortie → entrée) ; seuls les plugins les interprètent. Les paramètres ont une
-**valeur par défaut** (`TypeValeur` audio / `AudioContext`) pour que les plugins
-existants restent inchangés ; un adaptateur fournit son propre `TValeur`.
-Reste (polish) : déplacer l'union `TypeValeur` hors de `core` vers le domaine audio.
+### 4.2 Value types (what flows) — ✅ parameterized
+[Done] The core is **generic over `TValeur`**: `ContexteExecution<TValeur, TRuntime>`,
+`FonctionPlugin<…>`, `PluginDef<…>`. The core only manipulates values opaquely
+(output → input); only plugins interpret them. The parameters have a **default
+value** (audio `TypeValeur` / `AudioContext`) so existing plugins remain unchanged;
+an adapter provides its own `TValeur`.
+Remaining (polish): move the `TypeValeur` union out of `core` into the audio domain.
 
 ---
 
-## 5. Contexte d'exécution (`ctx`) — ✅ agnostique
+## 5. Execution context (`ctx`) — ✅ agnostic
 
-Passé à chaque `executer`. Interface désormais **domaine-neutre** :
+Passed to each `executer`. Interface now **domain-neutral**:
 
 ```ts
 interface ContexteExecution<TValeur = TypeValeur, TRuntime = AudioContext> {
   noeud: { id: string; data: Record<string, unknown> };
   aretes: Arete[];
   resultats: Map<string, TValeur[]>;
-  entree: (index: number) => TValeur;      // valeur branchée sur l'entrée i
-  entrees: () => TValeur[];                 // toutes les entrées (filtrage = ressort du domaine)
+  entree: (index: number) => TValeur;      // value connected to input i
+  entrees: () => TValeur[];                 // all inputs (filtering = domain's responsibility)
   paramNombre: (nom: string, defaut: number) => number;
   paramTexte:  (nom: string, defaut: string) => string;
   onProgress: (msg: string) => void;
-  runtime: TRuntime;         // contexte domaine (audio : AudioContext)
-  repertoireTravail: string; // I/O optionnelle
+  runtime: TRuntime;         // domain context (audio: AudioContext)
+  repertoireTravail: string; // optional I/O
 }
 ```
-[Fait] `ctxAudio` → `runtime` (opaque, fourni par l'hôte) ; `toutesEntreesAudio(): AudioBuffer[]`
-→ `entrees(): TValeur[]` générique — les plugins audio filtrent eux-mêmes
+[Done] `ctxAudio` → `runtime` (opaque, provided by the host); `toutesEntreesAudio(): AudioBuffer[]`
+→ generic `entrees(): TValeur[]` — audio plugins filter themselves
 (`ctx.entrees().filter(v => v instanceof AudioBuffer)`).
 
-`executer` renvoie `{ valeurs: TValeur[]; message?: string }` — un tableau parallèle
-aux `sorties` de la fiche.
+`executer` returns `{ valeurs: TValeur[]; message?: string }` — a parallel array
+to the sheet's `sorties`.
 
 ---
 
-## 6. Moteur d'exécution (`core/engine` + boucle `lancer`)
+## 6. Execution engine (`core/engine` + `lancer` loop)
 
-1. **Tri topologique** du DAG (Kahn) ; option « priorité » = n'exécuter que les ancêtres d'un nœud cible.
-2. **Exécution par niveaux** (parallélisme : nœuds indépendants d'un même niveau en `Promise.all`).
-3. **Cache par nœud**, invalidé par une **empreinte** `hash(paramètres) + hash(sources entrantes)` ; réutilisé si inchangé et amont non retraité.
-4. **Résolution des entrées** : `entree(i)` lit `resultats[source][indexSortie]` via les handles d'arête (`in:i` / `out:j`).
-5. **Erreurs bavardes** : toute exception d'un `executer` est capturée, journalisée (`console.error`) et remontée en message sur le nœud (statut `erreur`).
+1. **Topological sort** of the DAG (Kahn); "priority" option = only run ancestors of a target node.
+2. **Level-by-level execution** (parallelism: independent nodes of the same level in `Promise.all`).
+3. **Per-node cache**, invalidated by a **fingerprint** `hash(parametres) + hash(incoming sources)`; reused if unchanged and upstream not reprocessed.
+4. **Input resolution**: `entree(i)` reads `resultats[source][indexSortie]` via edge handles (`in:i` / `out:j`).
+5. **Verbose errors**: any exception from an `executer` is caught, logged (`console.error`) and surfaced as a message on the node (`erreur` status).
 
-Statuts par nœud : `attente | en_cours | termine | erreur` (spec §3.6).
+Per-node statuses: `attente | en_cours | termine | erreur` (spec §3.6).
 
 ---
 
 ## 7. Documentation & i18n (overlay)
 
-- **Contenu séparé du code** : `plugins/notices.ts` mappe `id → notice` et `nomParam → doc`, appliqué à l'enregistrement (`avecDoc`). Idem noms/labels EN. → la doc se relit/traduit en un seul endroit, sans toucher aux fiches.
-- **Deux niveaux** (§3.9) : résumé toujours visible + notice « en savoir plus » repliable ; info-bulle « ? » par paramètre. Bilingue partout (nœud du canevas **et** inspecteur).
-- **i18n** : dictionnaire clé→{fr,en} + toggle global.
+- **Content separated from code**: `plugins/notices.ts` maps `id → notice` and `nomParam → doc`, applied at registration (`avecDoc`). Same for EN names/labels. → docs are reviewed/translated in one place, without touching the sheets.
+- **Two levels** (§3.9): always-visible summary + collapsible "learn more" notice; "?" tooltip per parameter. Bilingual everywhere (canvas node **and** inspector).
+- **i18n**: key→{fr,en} dictionary + global toggle.
 
 ---
 
-## 8. Méta-composants (sous-graphes, §3.8)
+## 8. Meta-components (sub-graphs, §3.8)
 
-- **Encapsuler** une sélection en un méta-nœud ; **ports exposés = arêtes frontière** (type hérité du port interne) ; sortie interne à fan-out mutualisée.
-- **Catalogue** : le méta est enregistré comme plugin (réutilisable, relié comme tout nœud).
-- **Exécution par aplatissement** : `aplatirGraphe` remplace récursivement les méta-nœuds par leur intérieur (ids préfixés) avant le moteur → moteur inchangé, imbrication gérée.
-- **Édition** : double-clic → ouvre l'intérieur (fil d'Ariane) ; des **nœuds-frontière** matérialisent les ports exposés ; à la sauvegarde, `redériverMeta` reconstruit les ports depuis les frontières (types hérités, index stables).
-- **Persistance** : les définitions de méta sont sérialisées avec le graphe.
+- **Encapsulate** a selection into a meta-node; **exposed ports = boundary edges** (type inherited from the internal port); internal output with shared fan-out.
+- **Catalog**: the meta is registered as a plugin (reusable, wired like any node).
+- **Flattening execution**: `aplatirGraphe` recursively replaces meta-nodes with their interior (prefixed ids) before the engine → engine unchanged, nesting handled.
+- **Editing**: double-click → opens the interior (breadcrumb); **boundary nodes** materialize the exposed ports; on save, `redériverMeta` rebuilds the ports from the boundaries (inherited types, stable indexes).
+- **Persistence**: meta definitions are serialized with the graph.
 
-Logique **pure et testée** dans `core/meta.ts` (créer / aplatir / re-dériver).
-
----
-
-## 9. Persistance
-
-`{ nodes, edges, metas, viewport }` en JSON. Sérialisation qui **retire les objets non-JSON** (fichiers, blobs) — seules les métadonnées/paramètres sont conservés ; les fichiers sont à recharger. À l'import : ré-enregistrer les `metas` **avant** de reconstruire les nœuds (résolution des méta-nœuds).
+**Pure and tested** logic in `core/meta.ts` (create / flatten / re-derive).
 
 ---
 
-## 10. Qualité — garde-fou du registre
+## 9. Persistence
 
-`enregistrer(def)` applique `valider(def)` :
-- **Erreurs bloquantes** (non enregistré) : `id`/`nom`/`resume`/`executer` manquant.
-- **Avertissements** (dev) : notice absente, paramètre sans doc.
-- **Dédup** : même `id` → remplacement en place (compatible rechargement à chaud, pas de doublon palette).
-- **Alias** : table centrale d'anciens id → id actuel (migration des graphes sauvegardés).
+`{ nodes, edges, metas, viewport }` in JSON. Serialization that **strips non-JSON objects** (files, blobs) — only metadata/parameters are kept; files must be reloaded. On import: re-register the `metas` **before** rebuilding the nodes (meta-node resolution).
 
 ---
 
-## 11. Registre de vues (extension UI) — ✅ fait
+## 10. Quality — registry guard
 
-[Fait] Les ~18 branches `if (ficheId === …)` ont été extraites d'`ui/AtelierNode.tsx`
-(520 → 163 l.) vers un **registre** `ui/vues.tsx` : `{ id/predicate → composant, position
-avant|après }`. `AtelierNode` est une coquille générique qui résout les vues d'un nœud
-(`vuesPourNoeud(ficheId, position)`) et leur passe `{ data, onChanger… }`. Uploader,
-enregistreur, sélecteur SoundFont, clavier, export, forme d'onde sont des **vues
-enregistrées par le domaine**. → Découple l'UI du domaine **et** fournit le point
-d'extension aux autres domaines (image→canvas, données→grille, etc.).
+`enregistrer(def)` applies `valider(def)`:
+- **Blocking errors** (not registered): missing `id`/`nom`/`resume`/`executer`.
+- **Warnings** (dev): missing notice, parameter without doc.
+- **Dedup**: same `id` → in-place replacement (compatible with hot reload, no palette duplicate).
+- **Alias**: central table of old id → current id (migration of saved graphs).
 
 ---
 
-## 12. Recette : instancier un nouveau domaine
+## 11. View registry (UI extension) — ✅ done
 
-1. Définir les **types de flux** (`TypeFlux[]`) + couleurs.
-2. Définir le type **`TValeur`** du domaine et le **`runtime`** du contexte.
-3. Écrire les **plugins** (`PluginDef<TValeur>` + `executer`), rangés par univers/famille.
-4. Fournir les **notices/labels** (overlay) — le garde-fou impose la doc.
-5. Enregistrer les **vues** personnalisées (aperçus, éditeurs inline) au registre de vues.
-6. Choisir la **convention d'aperçu** (lecteur audio / canvas image / grille de données…).
-
-**Exemple (traitement d'image)** : flux `image | masque | nombre` ; `TValeur = ImageBitmap | Float32Array | number` ; plugins `Flou`, `Seuil`, `Composer`, `Convolution` ; vue « aperçu » = `<canvas>` ; aperçu final = image téléchargeable. Le cœur, la palette, l'inspecteur, les méta-composants, la doc et la persistance **restent identiques**.
+[Done] The ~18 `if (ficheId === …)` branches were extracted from `ui/AtelierNode.tsx`
+(520 → 163 lines) into a **registry** `ui/vues.tsx`: `{ id/predicate → component, position
+before|after }`. `AtelierNode` is a generic shell that resolves a node's views
+(`vuesPourNoeud(ficheId, position)`) and passes them `{ data, onChanger… }`. Uploader,
+recorder, SoundFont selector, keyboard, export, waveform are **views registered by the
+domain**. → Decouples the UI from the domain **and** provides the extension point for
+other domains (image→canvas, data→grid, etc.).
 
 ---
 
-## 13. Maintenabilité — dette résorbée
+## 12. Recipe: instantiating a new domain
 
-Les quatre gros fichiers ont été découpés (voir `ROADMAP.md` / `DECOUPAGE-APP.md`) :
+1. Define the **flow types** (`TypeFlux[]`) + colors.
+2. Define the domain's **`TValeur`** type and the context's **`runtime`**.
+3. Write the **plugins** (`PluginDef<TValeur>` + `executer`), organized by universe/family.
+4. Provide the **notices/labels** (overlay) — the guard mandates docs.
+5. Register custom **views** (previews, inline editors) in the view registry.
+6. Choose the **preview convention** (audio player / image canvas / data grid…).
 
-| Fichier d'origine | Avant | Après |
+**Example (image processing)**: flows `image | masque | nombre`; `TValeur = ImageBitmap | Float32Array | number`; plugins `Flou`, `Seuil`, `Composer`, `Convolution`; "preview" view = `<canvas>`; final preview = downloadable image. The core, palette, inspector, meta-components, docs and persistence **remain identical**.
+
+---
+
+## 13. Maintainability — debt absorbed
+
+The four large files were split up (see `ROADMAP.md` / `DECOUPAGE-APP.md`):
+
+| Original file | Before | After |
 |---|---|---|
-| `audio/_audio_backup.ts` | 3474 l. | → 7 modules `audio/*` (io, effets-*, generation, midi, analyse) |
-| `ui/App.tsx` | 839 l. | **437 l.** + 3 hooks `ui/hooks/*` (persistance, méta, exécution) |
-| `plugins/complements.ts` | 664 l. | → 6 fichiers par famille (`generateurs`, `montage`, `collections`…) |
-| `ui/AtelierNode.tsx` | 520 l. | **163 l.** (coquille) + registre `ui/vues.tsx` (§11) |
+| `audio/_audio_backup.ts` | 3474 lines | → 7 modules `audio/*` (io, effets-*, generation, midi, analyse) |
+| `ui/App.tsx` | 839 lines | **437 lines** + 3 hooks `ui/hooks/*` (persistence, meta, execution) |
+| `plugins/complements.ts` | 664 lines | → 6 files per family (`generateurs`, `montage`, `collections`…) |
+| `ui/AtelierNode.tsx` | 520 lines | **163 lines** (shell) + registry `ui/vues.tsx` (§11) |
 
 ---
 
-## 14. État actuel vs cible (synthèse honnête)
+## 14. Current state vs target (honest summary)
 
-### Ce qui a été fait
+### What has been done
 
-Le cœur a été **réécrit** pour tenir la promesse du §12 (« sans modifier core »).
-La promesse n'était pas tenue avant : le générique `TValeur` était décoratif
-(`enregistrer` le fixait à `TypeValeur`), les types de flux vivaient dans un
-`Map` global, et un cast de frontière `as unknown as PluginDef` masquait le
-mensonge dans 5 fichiers UI. Le chantier a démonté les trois.
+The core has been **rewritten** to uphold the §12 promise ("without modifying core").
+The promise was not upheld before: the `TValeur` generic was decorative
+(`enregistrer` fixed it to `TypeValeur`), flow types lived in a global `Map`,
+and a boundary cast `as unknown as PluginDef` hid the lie in 5 UI files. The
+work dismantled all three.
 
-**Registre instancié** (`creerRegistre<TV, TR>()`) : chaque domaine crée son
-propre registre typé. `trouverDef` retourne `PluginDef<TV, TR>` directement —
-0 cast de frontière. Les fiches sont stockées avec leur type préservé, pas
-effacé en `unknown`. Les types de flux (`Map<string, TypeFlux>`) vivent dans
-la même clôture que les fiches — deux domaines peuvent déclarer un type
-homonyme sans s'écraser.
+**Instantiated registry** (`creerRegistre<TV, TR>()`): each domain creates its
+own typed registry. `trouverDef` returns `PluginDef<TV, TR>` directly —
+0 boundary casts. Sheets are stored with their type preserved, not erased to
+`unknown`. Flow types (`Map<string, TypeFlux>`) live in the same closure as
+the sheets — two domains can declare a homonymous type without clobbering
+each other.
 
-**DI** : `metastore` et `nodes-installes` reçoivent le registre via
-`configurerRegistre(r)` au démarrage de l'adaptateur. `gestion-nodes` (outil
-d'administration, pas un plugin de traitement) reçoit le registre via
-`configurerRegistreGestion(r)`. Aucun module du cœur n'importe un singleton.
+**DI**: `metastore` and `nodes-installes` receive the registry via
+`configurerRegistre(r)` at adapter startup. `gestion-nodes` (administration
+tool, not a processing plugin) receives the registry via
+`configurerRegistreGestion(r)`. No core module imports a singleton.
 
-**Domaine fantôme** (`core/domaine-nombre.test.ts`) : 4 micro-plugins
+**Phantom domain** (`core/domaine-nombre.test.ts`): 4 micro-plugins
 (`Generer`, `Multiplier`, `Additionner`, `Formater`), `TValeur = number | string`,
-`TRuntime = null`. Calcule `(4×2)+3 = 11` via `ordreTopologique` + `resoudreEntree`
-+ `trouverPlugin`. Teste `validerGraphe` (types incompatibles, ports requis).
+`TRuntime = null`. Computes `(4×2)+3 = 11` via `ordreTopologique` + `resoudreEntree`
++ `trouverPlugin`. Tests `validerGraphe` (incompatible types, required ports).
 
-**Cloisonnement** (`core/cloisonnement.test.ts`) : deux registres indépendants
-(audio + nombre). `audio.trouverDef("reverb")` défini, `nombre.trouverDef("reverb")`
-indéfini. Catalogues indépendants. Types de flux homonymes ("nombre" dans les
-deux domaines) ne s'écrasent pas.
+**Compartmentalization** (`core/cloisonnement.test.ts`): two independent
+registries (audio + number). `audio.trouverDef("reverb")` defined, `nombre.trouverDef("reverb")`
+undefined. Independent catalogs. Homonymous flow types ("nombre" in both
+domains) do not clobber each other.
 
-### Les 5 règles protégées par mutation
+### The 5 rules protected by mutation
 
-Chaque règle du cœur a un test qui la protège. La preuve : casser la règle
-fait tomber les tests. Les chiffres sont mesurés après la migration complète.
+Each core rule has a test that protects it. The proof: breaking the rule
+makes the tests fail. The figures are measured after the full migration.
 
-| Règle | Mutation | Tests qui tombent |
+| Rule | Mutation | Tests that fail |
 |---|---|---|
-| Compatibilité de types | `fluxCompatibles → true` | 9 |
-| Hash du cache | `empreinteParametres` ignore `parametres` | 16 |
-| Index des ports | `resoudreEntree` : index source +1 | 5 |
-| Ports requis | `validerGraphe` : vérification désactivée | 3 |
-| Cloisonnement des types | `enregistrerTypeFlux` : Map partagé entre registres | 1 |
+| Type compatibility | `fluxCompatibles → true` | 9 |
+| Cache hash | `empreinteParametres` ignores `parametres` | 16 |
+| Port indexes | `resoudreEntree`: source index +1 | 5 |
+| Required ports | `validerGraphe`: check disabled | 3 |
+| Type compartmentalization | `enregistrerTypeFlux`: Map shared between registries | 1 |
 
-Si un chiffre baisse au prochain refactor, une dent a été émoussée.
+If a figure drops at the next refactor, a tooth has been blunted.
 
-### Ce qui a dû changer dans core
+### What had to change in core
 
-Le §12 dit « sans modifier core ». C'était le contrat cible, pas l'état de
-départ. Pour le tenir, `core/` a été modifié :
+§12 says "without modifying core". That was the target contract, not the
+starting state. To uphold it, `core/` was modified:
 
-- `registre.ts` : registre global → `creerRegistre<TV, TR>()` factory + clôture
-- `types.ts` : `ContexteExecution` nettoyé (`aretes`/`resultats` retirés,
-  `entree` garantit non-null pour les ports requis, `PortDef.requis` ajouté)
-- `typesFlux.ts` : `Map` global supprimé, ne contient plus que l'interface
-- `validation.ts` : `valider` et `validerGraphe` reçoivent les types de flux
-  en paramètre (DepsTypesFlux / 4e argument) au lieu d'importer le global
-- `graphe.ts` : `resoudreEntree<T = unknown>` / `valeursEntrantes<T = unknown>`
-  (`unknown` par défaut, le domaine narrow à la frontière)
+- `registre.ts`: global registry → `creerRegistre<TV, TR>()` factory + closure
+- `types.ts`: `ContexteExecution` cleaned up (`aretes`/`resultats` removed,
+  `entree` guaranteed non-null for required ports, `PortDef.requis` added)
+- `typesFlux.ts`: global `Map` removed, only contains the interface
+- `validation.ts`: `valider` and `validerGraphe` receive flow types as a
+  parameter (DepsTypesFlux / 4th argument) instead of importing the global
+- `graphe.ts`: `resoudreEntree<T = unknown>` / `valeursEntrantes<T = unknown>`
+  (`unknown` by default, the domain narrows at the boundary)
 
-**La promesse du §12 sera vérifiée le jour où un troisième domaine s'écrira
-sans toucher une ligne de `core/`.** Le domaine fantôme le prouve pour un
-domaine isolé. Deux domaines simultanés sont prouvés par le test de
-cloisonnement. Trois domaines dans la même app n'est pas un cas d'usage actuel
-— c'est le prochain test, pas urgent.
+**The §12 promise will be verified the day a third domain is written
+without touching a line of `core/`.** The phantom domain proves it for an
+isolated domain. Two simultaneous domains are proven by the
+compartmentalization test. Three domains in the same app is not a current use
+case — it's the next test, not urgent.
 
-### Ce qui reste
+### What remains
 
-- `TypeValeur` (l'union audio) vit encore dans `core/types.ts`. C'est le défaut
-  du paramètre générique — un domaine qui ne spécifie pas `TValeur` l'hérite.
-  Relocaliser cette union hors du cœur est cosmétique : le paramètre de type
-  permet déjà de l'ignorer.
-- `soundfontGlobal.ts` importe des modules audio au niveau module (SF2). Pas
-  lié au registre, mais c'est le dernier side-effect à l'import dans `plugins/`.
-- L'UI (`App.tsx`, `AtelierNode.tsx`, hooks) importe `registre` depuis
-  `audio/adaptateur` — c'est le singleton du domaine, pas du cœur. Acceptable
-  tant qu'un seul domaine est chargé par app. Pour co-existence, l'UI devrait
-  recevoir le registre en prop.
+- `TypeValeur` (the audio union) still lives in `core/types.ts`. It's the
+  default of the generic parameter — a domain that doesn't specify `TValeur`
+  inherits it. Relocating this union out of the core is cosmetic: the type
+  parameter already lets you ignore it.
+- `soundfontGlobal.ts` imports audio modules at the module level (SF2). Not
+  related to the registry, but it's the last import side-effect in `plugins/`.
+- The UI (`App.tsx`, `AtelierNode.tsx`, hooks) imports `registre` from
+  `audio/adaptateur` — that's the domain singleton, not the core's. Acceptable
+  as long as a single domain is loaded per app. For co-existence, the UI should
+  receive the registry as a prop.
 
-**64 tests · tsc 0 erreur · 0 singleton global · 0 cast de frontière.**
+**64 tests · tsc 0 errors · 0 global singleton · 0 boundary casts.**

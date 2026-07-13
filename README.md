@@ -108,8 +108,9 @@ electron/
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Technical framework spec
 - [`ROADMAP.md`](ROADMAP.md) — Project roadmap (4 visions)
-- [`CAHIER-EXERCICES.md`](CAHIER-EXERCICES.md) — 176 exercises in 22 categories
-- [`AJOUTER-UN-NODE.md`](AJOUTER-UN-NODE.md) — How to add a new plugin node
+- [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — 176 exercises in 22 categories
+- [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
+- [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — App.tsx decomposition report
 
 ## License
 
