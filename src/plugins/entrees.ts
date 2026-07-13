@@ -38,7 +38,7 @@ const entrees: PluginDef[] = [
     resume: "Transmet un enregistrement micro comme source audio.",
     resumeEn: "Passes a microphone recording as audio source.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [{ nom: "Périphérique", type: "texte", defaut: "" }],
+    parametres: [],
     async executer(ctx) {
       const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
       if (!blob) return { valeurs: [null], message: "Aucun enregistrement." };

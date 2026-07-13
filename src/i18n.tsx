@@ -31,6 +31,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.record": { fr: "Enregistrer", en: "Record" },
   "btn.rerecord": { fr: "Réenregistrer", en: "Re-record" },
   "btn.stop": { fr: "Arrêter", en: "Stop" },
+  "btn.device": { fr: "Périphérique", en: "Device" },
   "btn.detacher": { fr: "Détacher", en: "Detach" },
   "statut.attente": { fr: "En attente", en: "Waiting" },
   "statut.en_cours": { fr: "En cours", en: "Running" },

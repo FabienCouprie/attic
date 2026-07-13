@@ -171,12 +171,14 @@ function EnregistreurInspecteur({ noeud, onEnregistrer }: { noeud: { id: string;
           <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
         </>
       )}
-      {!enRegistrant && peripheriques.length > 1 && (
-        <select className="attic-node-select" value={String(params?.["Périphérique"] ?? "")}
-          onChange={(e) => { if (params) params["Périphérique"] = e.target.value; }}
-          style={{ marginTop: 4 }}>
-          {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
-        </select>
+      {peripheriques.length > 0 && !enRegistrant && (
+        <div style={{ marginTop: 8 }}>
+          <div className="inspecteur-param-ligne"><label>{t("btn.device")}</label></div>
+          <select className="attic-node-select" value={String(params?.["Périphérique"] ?? "")}
+            onChange={(e) => { if (params) params["Périphérique"] = e.target.value; }}>
+            {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
+          </select>
+        </div>
       )}
     </div>
   );

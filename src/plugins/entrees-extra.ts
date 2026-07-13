@@ -19,7 +19,7 @@ export const fiches: PluginDef[] = ([
     id: "entree-micro", nom: "Entrée micro", nomEn: "Mic input", univers: "Entrées", famille: "Audio",
     resume: "Transmet l'enregistrement micro.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Périphérique", type: "texte", defaut: "" }],
+    parametres: [],
     async executer(ctx: any) {
       const blob = ctx.noeud.data.enregistrementBlob;
       if (!blob) return { valeurs: [null], message: "Aucun enregistrement." };
