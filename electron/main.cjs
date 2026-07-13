@@ -591,7 +591,6 @@ ipcMain.handle("python:executer", async (_event, options) => {
         } else {
           resolve({ ok: true, stdout, stderr });
         }
-        }
       });
     });
     return result;
