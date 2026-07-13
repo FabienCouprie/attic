@@ -508,4 +508,193 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [resultat] };
     },
   },
+  {
+    id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
+    resume: "Étirement extrême avec randomisation de phase (effet ambiant/cosmique).",
+    resumeEn: "Extreme stretch with phase randomization (ambient/cosmic effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Étirement", nomEn: "Stretch", type: "curseur", plage: [2, 100], pas: 0.5, defaut: 10, unite: "x",
+        doc: "Facteur d'étirement (2x = subtil, 100x = nuage cosmique).", docEn: "Stretch factor (2x = subtle, 100x = cosmic cloud)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { paulstretch } = await import("../audio");
+      const facteur = ctx.paramNombre("Étirement", 10);
+      return { valeurs: [paulstretch(a, facteur)], message: `Étirement ${facteur}x · ${a.duration.toFixed(1)}s → ${(a.duration * facteur).toFixed(1)}s` };
+    },
+  },
+  {
+    id: "etirement-glissant", nom: "Étirement glissant", nomEn: "Slide Stretch", univers: "Traitement", famille: "Effets",
+    resume: "Étirement dont le facteur varie progressivement du début à la fin.",
+    resumeEn: "Time-stretch with a factor that gradually changes from start to end.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Début", nomEn: "Start", type: "curseur", plage: [0.25, 4], pas: 0.05, defaut: 1, unite: "x",
+        doc: "Facteur d'étirement au début (0.25 = accéléré 4x, 1 = normal, 4 = ralenti 4x).", docEn: "Stretch factor at the start (0.25 = 4x faster, 1 = normal, 4 = 4x slower)." },
+      { nom: "Fin", nomEn: "End", type: "curseur", plage: [0.25, 4], pas: 0.05, defaut: 2, unite: "x",
+        doc: "Facteur d'étirement à la fin.", docEn: "Stretch factor at the end." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { etirementGlissant } = await import("../audio");
+      const debut = ctx.paramNombre("Début", 1);
+      const fin = ctx.paramNombre("Fin", 2);
+      return { valeurs: [etirementGlissant(a, debut, fin)], message: `${debut}x → ${fin}x · ${a.duration.toFixed(1)}s → ${(a.duration * (debut + fin) / 2).toFixed(1)}s` };
+    },
+  },
+  {
+    id: "spatialisation-stereo", nom: "Spatialisation stéréo", nomEn: "Stereo Spatialization", univers: "Traitement", famille: "Effets",
+    resume: "Positionne le son dans l'espace stéréo (gauche/droite).",
+    resumeEn: "Positions the sound in stereo space (left/right).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Position", nomEn: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Position stéréo (-100% = gauche, 0% = centre, 100% = droite).", docEn: "Stereo position (-100% = left, 0% = center, 100% = right)." },
+      { nom: "Largeur", nomEn: "Width", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Largeur de l'effet spatial (0% = mono, 100% = spatialisation pleine).", docEn: "Spatial width (0% = mono, 100% = full spatialization)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { spatialiserStereo } = await import("../audio");
+      const pos = ctx.paramNombre("Position", 0) / 100;
+      const larg = ctx.paramNombre("Largeur", 100) / 100;
+      return { valeurs: [await spatialiserStereo(a, pos, larg)] };
+    },
+  },
+  {
+    id: "auto-pan", nom: "Auto-pan", nomEn: "Auto-pan", univers: "Traitement", famille: "Effets",
+    resume: "Balayage automatique gauche/droite (panoramique animé).",
+    resumeEn: "Automatic left/right sweep (animated panning).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 2, unite: "Hz",
+        doc: "Vitesse du balayage (allers-retours par seconde).", docEn: "Sweep speed (round trips per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Amplitude du balayage (0% = fixe, 100% = gauche extrême à droite extrême).", docEn: "Sweep depth (0% = static, 100% = extreme left to extreme right)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { autoPan } = await import("../audio");
+      const freq = ctx.paramNombre("Fréquence", 2);
+      const depth = ctx.paramNombre("Profondeur", 80);
+      return { valeurs: [await autoPan(a, freq, depth)] };
+    },
+  },
+  {
+    id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
+    resume: "Filtre passe-bande modulé (effet pédale wah).",
+    resumeEn: "Modulated bandpass filter (wah pedal effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 2, unite: "Hz",
+        doc: "Vitesse de la modulation (balayages par seconde).", docEn: "Modulation speed (sweeps per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Amplitude du balayage en fréquence (0% = fixe, 100% = wah complet).", docEn: "Frequency sweep range (0% = static, 100% = full wah)." },
+      { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 5, unite: "Q",
+        doc: "Résonance du filtre (Q élevé = wah prononcé, Q faible = doux).", docEn: "Filter resonance (high Q = pronounced wah, low Q = gentle)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Mix entre signal original et effet (100% = wah seulement).", docEn: "Mix between dry and wet signal (100% = wah only)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { wahwah } = await import("../audio");
+      return { valeurs: [wahwah(a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100), ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100))] };
+    },
+  },
+  {
+    id: "phaser", nom: "Phaser", nomEn: "Phaser", univers: "Traitement", famille: "Effets",
+    resume: "Filtres passe-tout en cascade modulés par LFO (effet planant).",
+    resumeEn: "All-pass filter cascade modulated by LFO (sweeping effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 0.5, unite: "Hz",
+        doc: "Vitesse de la modulation (balayages par seconde).", docEn: "Modulation speed (sweeps per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Amplitude du balayage en fréquence.", docEn: "Frequency sweep range." },
+      { nom: "Étages", nomEn: "Stages", type: "curseur", plage: [2, 8], pas: 1, defaut: 4,
+        doc: "Nombre d'étages passe-tout (plus = effet plus prononcé).", docEn: "Number of all-pass stages (more = stronger effect)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Mix entre signal original et effet.", docEn: "Mix between dry and wet signal." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { phaser } = await import("../audio");
+      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50))] };
+    },
+  },
+  {
+    id: "vibrato", nom: "Vibrato", nomEn: "Vibrato", univers: "Traitement", famille: "Effets",
+    resume: "Modulation de hauteur par LFO (oscillation de la note).",
+    resumeEn: "Pitch modulation by LFO (note oscillation).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Vitesse de la modulation (oscillations par seconde).", docEn: "Modulation speed (oscillations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Amplitude de la modulation de hauteur (0% = aucun, 100% = ±2 demi-tons).", docEn: "Pitch modulation depth (0% = none, 100% = ±2 semitones)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { vibrato } = await import("../audio");
+      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50))] };
+    },
+  },
+  {
+    id: "octaver", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
+    resume: "Ajoute une octave supérieure et/ou inférieure.",
+    resumeEn: "Adds an upper and/or lower octave.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Octave sup", nomEn: "Octave up", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Niveau de l'octave supérieure (doublement de fréquence).", docEn: "Upper octave level (frequency doubling)." },
+      { nom: "Octave inf", nomEn: "Octave down", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Niveau de l'octave inférieure (demi-fréquence).", docEn: "Lower octave level (half frequency)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Niveau du signal original (100% = signal original à fond).", docEn: "Dry signal level (100% = full dry signal)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { octaver } = await import("../audio");
+      return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), ctx.paramNombre("Mix", 50))] };
+    },
+  },
+  {
+    id: "chopper", nom: "Chopper", nomEn: "Chopper", univers: "Traitement", famille: "Effets",
+    resume: "Gate rythmique qui coupe le son périodiquement (effet stutter/DJ).",
+    resumeEn: "Rhythmic gate that chops the sound periodically (stutter/DJ effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "Hz",
+        doc: "Vitesse de coupe (coups par seconde).", docEn: "Chop speed (cuts per second)." },
+      { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
+        doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
+      { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
+        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const { chopper } = await import("../audio");
+      const typeStr = ctx.paramTexte("Type", "Dur");
+      return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
+    },
+  },
 ] as PluginDef[]).map(avecDoc);
