@@ -70,11 +70,12 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
-    // Le ResizeObserver n'est utile que pour les nodes redimensionnables
-    // (NodeResizer). Pour les autres, les handles sont en CSS (top: 50% dans
-    // le port) et ne dépendent pas de la hauteur du node.
+    // updateNodeInternals au montage (une fois) pour que React Flow lise
+    // la position réelle des handles dans les ports.
+    const timer = setTimeout(() => updateNodeInternals(id), 50);
+    // ResizeObserver en continu pour les nodes redimensionnables.
     const hasResizer = el.querySelector(".react-flow__resize-control") !== null;
-    if (!hasResizer) return;
+    if (!hasResizer) return () => clearTimeout(timer);
     let lastW = 0, lastH = 0;
     const obs = new ResizeObserver(() => {
       const w = el.offsetWidth;
@@ -85,7 +86,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     });
     lastW = el.offsetWidth; lastH = el.offsetHeight;
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => { clearTimeout(timer); obs.disconnect(); };
   }, [id, updateNodeInternals]);
 
   const nodeEstMeta = estMeta(data.ficheId as string);
