@@ -31,6 +31,8 @@ const ALIAS: Record<string, string> = {
   "boite-a-rythmes": "boite-rythmes",
   "variateur-vitesse": "changement-tempo",
   "filtre": "reponse-filtre",
+  "boucle": "simple-boucle",
+  "fusionneur": "melangeur",
 };
 
 function resoudre(id: string): string {

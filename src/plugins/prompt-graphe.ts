@@ -72,7 +72,6 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "shift-formants", mots: ["formant", "formant shift", "conversion vocale", "voice conversion", "homme femme"], category: "effet" },
   { ficheId: "ajouter-silence", mots: ["silence", "ajouter silence", "add silence"], category: "effet" },
   { ficheId: "tremolo", mots: ["tremolo"], category: "effet" },
-  { ficheId: "paulstretch", mots: ["paulstretch", "paul stretch", "stretch extreme", "étirement extrême", "ambiant", "cosmic", "cosmique"], category: "effet" },
   { ficheId: "etirement-glissant", mots: ["étirement glissant", "slide stretch", "glissant", "ralenti progressif", "accélération progressive"], category: "effet" },
   { ficheId: "spatialisation-stereo", mots: ["spatialisation", "spatialization", "panoramique", "panner", "position stéréo", "stereo position"], category: "effet" },
   { ficheId: "auto-pan", mots: ["auto-pan", "auto pan", "autopan", "balayage stéréo", "stereo sweep", "pan animé"], category: "effet" },

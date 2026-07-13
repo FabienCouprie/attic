@@ -167,25 +167,9 @@ export const fiches: PluginDef[] = ([
   effet("fondu", "Fondu", "Fade", "Fondu entrée/sortie.", "Fade in/out.",
     [param("Entrée", 0.5, "In", "s", "Durée du fondu d'entrée.", "Fade-in duration."), param("Sortie", 0.5, "Out", "s", "Durée du fondu de sortie.", "Fade-out duration.")],
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),
-  effet("boucle", "Simple boucle", "Simple Loop", "Répète l'audio N fois.", "Repeats audio N times.",
-    [param("Nombre", 2, "Count", "", "Nombre de répétitions.", "Number of repetitions.")],
-    (a,nb) => bouclerAudio(a, a.duration, nb, 5)),
   effet("extraire-zone", "Extraire une zone", "Extract Zone", "Extrait une portion avec fondu.", "Extracts a portion with fade.",
     [param("Début", 0, "Start", "s", "Début de la zone à extraire.", "Start of the extracted zone."), param("Durée", 5, "Duration", "s", "Durée de la zone extraite.", "Duration of the extracted zone."), param("Fondu", 5, "Fade", "ms", "Durée du fondu aux bords.", "Crossfade duration at edges.")],
     (a,debut,duree) => extraireZone(a, debut, Math.min(duree, a.duration - debut))),
-  {
-    id: "fusionneur", nom: "Fusionneur", nomEn: "Merger", univers: "Traitement", famille: "Montage",
-    resume: "Fusionne plusieurs pistes en une seule.",
-    resumeEn: "Merges multiple tracks into one.",
-    entrees: [{ nom: "Piste", type: "audio", dynamique: true }],
-    sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [],
-    async executer(ctx: any) {
-      const buffers = ctx.entrees().filter((v: any) => v instanceof AudioBuffer);
-      if (buffers.length < 2) return { valeurs: [null], message: "≥ 2 entrées requises." };
-      return { valeurs: [await melangerPistes(buffers, 0)] };
-    },
-  },
   {
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",
@@ -443,9 +427,9 @@ export const fiches: PluginDef[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Avant", nomEn: "Before", plage: [0, 60], pas: 0.1, defaut: 1, unite: "s",
+      { nom: "Avant", nomEn: "Before", plage: [0, 240], pas: 0.1, defaut: 1, unite: "s",
         doc: "Silence ajouté au début de la piste (en secondes).", docEn: "Silence added at the beginning of the track (in seconds)." },
-      { nom: "Après", nomEn: "After", plage: [0, 60], pas: 0.1, defaut: 1, unite: "s",
+      { nom: "Après", nomEn: "After", plage: [0, 240], pas: 0.1, defaut: 1, unite: "s",
         doc: "Silence ajouté à la fin de la piste (en secondes).", docEn: "Silence added at the end of the track (in seconds)." },
     ],
     async executer(ctx: any) {
@@ -506,24 +490,6 @@ export const fiches: PluginDef[] = ([
         }
       }
       return { valeurs: [resultat] };
-    },
-  },
-  {
-    id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
-    resume: "Étirement extrême avec randomisation de phase (effet ambiant/cosmique).",
-    resumeEn: "Extreme stretch with phase randomization (ambient/cosmic effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [
-      { nom: "Étirement", nomEn: "Stretch", type: "curseur", plage: [2, 100], pas: 0.5, defaut: 10, unite: "x",
-        doc: "Facteur d'étirement (2x = subtil, 100x = nuage cosmique).", docEn: "Stretch factor (2x = subtle, 100x = cosmic cloud)." },
-    ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
-      const { paulstretch } = await import("../audio");
-      const facteur = ctx.paramNombre("Étirement", 10);
-      return { valeurs: [paulstretch(a, facteur)], message: `Étirement ${facteur}x · ${a.duration.toFixed(1)}s → ${(a.duration * facteur).toFixed(1)}s` };
     },
   },
   {

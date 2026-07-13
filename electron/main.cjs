@@ -214,7 +214,7 @@ ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
     for (const f of fichiers) {
       const ext = path.extname(f).toLowerCase();
       if (audios.includes(ext)) {
-        resultats.push({ nom: f, chemin: path.join(cheminDossier, f) });
+        resultats.push({ nom: f, chemin: path.join(chemin, f) });
       }
     }
     resultats.sort((a, b) => a.nom.localeCompare(b.nom));
@@ -227,7 +227,12 @@ ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
 // --- IPC : lire un fichier audio et retourner son buffer ---
 ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
   try {
-    const buf = fs.readFileSync(cheminFichier);
+    let chemin = cheminFichier;
+    if (!path.isAbsolute(chemin)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      chemin = path.join(base, chemin);
+    }
+    const buf = fs.readFileSync(chemin);
     const ext = path.extname(cheminFichier).toLowerCase();
     const mime = ext === ".mp3" ? "audio/mpeg" : ext === ".ogg" ? "audio/ogg" : "audio/wav";
     return { url: `data:${mime};base64,${buf.toString("base64")}`, donnees: buf, nom: path.basename(cheminFichier) };
@@ -582,9 +587,10 @@ ipcMain.handle("python:executer", async (_event, options) => {
         // Nettoyer le script temporaire
         try { fs.unlinkSync(scriptPath); } catch {}
         if (err) {
-          resolve({ ok: false, erreur: stderr || err.message, stdout });
+          resolve({ ok: false, erreur: stderr || err.message, stdout, python: CHEMIN_PYTHON });
         } else {
           resolve({ ok: true, stdout, stderr });
+        }
         }
       });
     });
@@ -595,8 +601,13 @@ ipcMain.handle("python:executer", async (_event, options) => {
 });
 
 // --- IPC : Lire un fichier binaire par chemin (sans dialogue) ---
-ipcMain.handle("fichier:lire-binaire", async (_event, chemin) => {
+ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
   try {
+    let chemin = cheminRelatif;
+    if (!path.isAbsolute(chemin)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      chemin = path.join(base, chemin);
+    }
     if (!fs.existsSync(chemin)) return null;
     const buf = fs.readFileSync(chemin);
     return { donnees: buf, nom: path.basename(chemin) };
@@ -606,8 +617,13 @@ ipcMain.handle("fichier:lire-binaire", async (_event, chemin) => {
 });
 
 // --- IPC : Lire un fichier texte par chemin ---
-ipcMain.handle("fichier:lire-texte", async (_event, chemin) => {
+ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
   try {
+    let chemin = cheminRelatif;
+    if (!path.isAbsolute(chemin)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      chemin = path.join(base, chemin);
+    }
     if (!fs.existsSync(chemin)) return null;
     return fs.readFileSync(chemin, "utf-8");
   } catch {

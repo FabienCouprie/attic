@@ -134,7 +134,11 @@ export const fiches: PluginDef[] = ([
     univers: "Nouvelles fonctionnalités", famille: "Génération",
     resume: "Éditeur de code Python avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Python code editor with syntax highlighting for audio processing.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", type: "texte" }],
+    entrees: [
+      { nom: "Audio", type: "audio", requis: false },
+      { nom: "MIDI", type: "midi", requis: false },
+      { nom: "Texte", type: "texte", requis: false },
+    ],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", type: "texte" }],
     parametres: [
       { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT,
@@ -216,7 +220,8 @@ export const fiches: PluginDef[] = ([
       if (midiPath) { try { await api.supprimerFichier(midiPath); } catch {} }
 
       if (!result.ok) {
-        return { valeurs: [null, null, null], erreur: true, message: `Erreur Python:\n${result.erreur || result.stderr || "inconnue"}` };
+        const pyInfo = result.python ? `\nPython: ${result.python}` : "";
+        return { valeurs: [null, null, null], erreur: true, message: `Erreur Python:\n${result.erreur || result.stderr || "inconnue"}${pyInfo}` };
       }
 
       // Lire les sorties (via IPC — fetch file:// est bloqué par Electron)

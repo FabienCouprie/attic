@@ -37,11 +37,13 @@ import "./clavier.css";
 import "../audio/adaptateur";
 
 import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
+import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { chargerNodesInstalles } from "../core";
 // Restaure les méta-composants persistés AVANT le premier rendu (donc avant que
 // la palette ne lise tousLesPlugins) : le catalogue de métas est ainsi permanent.
 chargerMetasLocaux();
+installerMetasExemples();
 // Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.
 chargerNodesInstalles();
 
