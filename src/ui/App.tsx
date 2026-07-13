@@ -154,45 +154,27 @@ function Atelier() {
   }, [nodes, edges, enExecution]);
   const [rfInstance, setRfInstance] = useState<any>(null);
 
-  // Sauvegarde l'état actif avant de changer d'onglet
-  const sauvegarderActif = useCallback(() => {
-    setWorkflows((wfs) => ({ ...wfs, [actif]: { nom: `Workflow ${onglets.indexOf(actif) + 1}`, nodes, edges, viewport: rfInstance?.getViewport() } }));
-  }, [actif, nodes, edges, rfInstance, onglets]);
-
-  const changerOnglet = useCallback((id: string) => {
-    sauvegarderActif();
-    setActif(id);
-    const wf = workflows[id];
-    if (wf) {
-      setNodes(wf.nodes);
-      setEdges(wf.edges);
-      queueMicrotask(() => { if (wf.viewport && rfInstance) rfInstance.setViewport(wf.viewport); });
-    }
-  }, [sauvegarderActif, workflows, setNodes, setEdges, rfInstance]);
-
+  // Un seul onglet wf-1. Le bouton × vide le canevas.
   const nouvelOnglet = useCallback(() => {
-    sauvegarderActif();
-    const id = `wf-${onglets.length + 1}`;
-    setOnglets((o) => [...o, id]);
-    setWorkflows((wfs) => ({ ...wfs, [id]: { nom: `Workflow ${onglets.length + 1}`, nodes: [], edges: [] } }));
-    setActif(id);
     setNodes([]);
     setEdges([]);
     cacheExec.current.clear();
     setSel(null);
-  }, [sauvegarderActif, onglets, setNodes, setEdges]);
+    setPile([]);
+    grapheRacineRef.current = null;
+  }, [setNodes, setEdges]);
 
   const fermerOnglet = useCallback((id: string) => {
-    if (onglets.length <= 1) return;
-    const idx = onglets.indexOf(id);
-    const nouveaux = onglets.filter((o) => o !== id);
-    setOnglets(nouveaux);
-    setWorkflows((wfs) => { const { [id]: _, ...rest } = wfs; return rest; });
-    if (id === actif) {
-      const suivant = nouveaux[Math.min(idx, nouveaux.length - 1)];
-      changerOnglet(suivant);
-    }
-  }, [onglets, actif, changerOnglet]);
+    void id;
+    setNodes([]);
+    setEdges([]);
+    cacheExec.current.clear();
+    setSel(null);
+    setPile([]);
+    grapheRacineRef.current = null;
+  }, [setNodes, setEdges]);
+
+  const changerOnglet = useCallback((id: string) => { void id; }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lancerRef = useRef<any>(null);
@@ -622,16 +604,9 @@ function Atelier() {
           onNouvelOnglet={nouvelOnglet}
         />
         <div className="attic-onglets">
-          {onglets.map((id) => (
-            <span key={id} className={`attic-onglet ${id === actif ? "actif" : ""}`}
-              onClick={() => changerOnglet(id)}>
-              {id}
-              {onglets.length > 1 && (
-                <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet(id); }}>×</button>
-              )}
-            </span>
-          ))}
-          <button className="attic-onglet-ajouter" onClick={nouvelOnglet} title="Nouvel onglet">+</button>
+          <span className="attic-onglet actif">
+            <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet("wf-1"); }} title="Nouveau workflow (vider le canevas)">✕</button>
+          </span>
         </div>
         <div className="attic-meta-actions">
           {pile.length > 0 ? (

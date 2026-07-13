@@ -24,7 +24,7 @@ export const fiches: PluginDef[] = ([
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur" },
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], defaut: "pop", docEn: "Style determines the chord progression." },
+      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], defaut: "pop", docEn: "Style determines the chord progression." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I", docEn: "Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée par accord", nomEn: "Chord duration", plage: [1,8], pas: 1, defaut: 2, unite: "temps", docEn: "Duration per chord in beats." },
@@ -82,7 +82,7 @@ export const fiches: PluginDef[] = ([
     resumeEn: "Generates fractal music.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], defaut:"Triade M" },
+      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M" },
       { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10" },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
@@ -102,7 +102,7 @@ export const fiches: PluginDef[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], defaut:"Rock" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Custom"], defaut:"Rock" },
       { nom:"Code personnalisé", nomEn:"Custom code", type:"texte", defaut:"" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
