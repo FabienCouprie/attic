@@ -44,14 +44,24 @@ export function chargerMetasLocaux(): number {
     const liste = JSON.parse(brut);
     if (!Array.isArray(liste)) return 0;
     const idsPersistes = new Set(liste.map((m: any) => m?.id));
+    const valides: any[] = [];
     let n = 0;
     for (const m of liste) {
       if (!m?.id || !m?.nom || !Array.isArray(m.sousNoeuds)) continue;
-      const valide = m.sousNoeuds.every((sn: any) => {
+      const invalide = m.sousNoeuds.filter((sn: any) => {
         const fid = sn?.data?.ficheId;
-        return typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid));
+        return !(typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid)));
       });
-      if (valide) { enregistrerMeta(m as MetaComposant); n++; }
+      if (invalide.length === 0) {
+        enregistrerMeta(m as MetaComposant);
+        n++;
+        valides.push(m);
+      } else {
+        console.warn(`[attic] Méta « ${m.id} » non restauré : sous-nœud(s) inconnu(s) : ${invalide.map((s: any) => s?.data?.ficheId).join(", ")}`);
+      }
+    }
+    if (valides.length !== liste.length) {
+      localStorage.setItem(CLE, JSON.stringify(valides.map(serialiserMeta)));
     }
     return n;
   } catch { return 0; }

@@ -698,6 +698,10 @@ function Atelier() {
         onReinitialiser={() => {
           if (sel) reinitialiserNoeud(sel.id);
         }}
+        onEnregistrer={(id, blob) => {
+          const url = URL.createObjectURL(blob);
+          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
+        }}
       />
     </div>
   );

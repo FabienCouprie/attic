@@ -1,5 +1,5 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { PluginDef } from "../core";
 import { useI18n } from "../i18n";
 
@@ -10,9 +10,10 @@ interface Props {
   onChargerFichier: (key: string, fichier: File) => void;
   onSupprimer: () => void;
   onReinitialiser: () => void;
+  onEnregistrer?: (id: string, blob: Blob) => void;
 }
 
-export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser }: Props) {
+export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
   const [noticeOuverte, setNoticeOuverte] = useState(true);
@@ -102,10 +103,81 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         );
       })}
 
+      {/* Enregistreur / entrée micro : bouton d'enregistrement dans l'inspecteur */}
+      {def.id === "enregistreur-audio" || def.id === "entree-micro" ? (
+        <EnregistreurInspecteur noeud={noeud} onEnregistrer={onEnregistrer} />
+      ) : null}
+
       <div className="inspecteur-actions">
         <button onClick={onReinitialiser} title="Réinitialiser">↺</button>
         <button className="danger" onClick={onSupprimer} title="Supprimer">×</button>
       </div>
+    </div>
+  );
+}
+
+function EnregistreurInspecteur({ noeud, onEnregistrer }: { noeud: { id: string; data: Record<string, unknown> }; onEnregistrer?: (id: string, blob: Blob) => void }) {
+  const { t } = useI18n();
+  const [enRegistrant, setEnRegistrant] = useState(false);
+  const [duree, setDuree] = useState(0);
+  const [peripheriques, setPeripheriques] = useState<MediaDeviceInfo[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const params = noeud.data.parametres as Record<string, string | number> | undefined;
+
+  useEffect(() => {
+    navigator.mediaDevices?.enumerateDevices().then((d) => setPeripheriques(d.filter((x) => x.kind === "audioinput")));
+  }, []);
+
+  const demarrer = async () => {
+    const deviceId = params?.["Périphérique"] as string | undefined;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: deviceId ? { deviceId: { exact: deviceId } } : true });
+    const mr = new MediaRecorder(stream);
+    mediaRecorderRef.current = mr;
+    const morceaux: Blob[] = [];
+    mr.ondataavailable = (e) => { if (e.data.size > 0) morceaux.push(e.data); };
+    mr.onstop = () => {
+      const blob = new Blob(morceaux, { type: "audio/webm" });
+      onEnregistrer?.(noeud.id, blob);
+      stream.getTracks().forEach((tk) => tk.stop());
+      setEnRegistrant(false);
+    };
+    mr.start();
+    setEnRegistrant(true);
+    setDuree(0);
+    timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
+  };
+
+  const arreter = () => {
+    mediaRecorderRef.current?.stop();
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const enregistrementUrl = noeud.data.enregistrementUrl as string | undefined;
+
+  return (
+    <div className="inspecteur-param">
+      <div className="inspecteur-param-ligne"><label>{t("btn.record")}</label></div>
+      {!enRegistrant && <button className="attic-node-btn-record" onClick={demarrer}>● {t("btn.record")}</button>}
+      {enRegistrant && (
+        <>
+          <div className="attic-node-rec-indicator"><span className="attic-node-rec-pulse" /> {duree}s</div>
+          <button className="attic-node-btn-stop" onClick={arreter}>■ {t("btn.stop")}</button>
+        </>
+      )}
+      {enregistrementUrl && !enRegistrant && (
+        <>
+          <audio className="attic-node-audio" controls src={enregistrementUrl} style={{ marginTop: 8 }} />
+          <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
+        </>
+      )}
+      {!enRegistrant && peripheriques.length > 1 && (
+        <select className="attic-node-select" value={String(params?.["Périphérique"] ?? "")}
+          onChange={(e) => { if (params) params["Périphérique"] = e.target.value; }}
+          style={{ marginTop: 4 }}>
+          {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
+        </select>
+      )}
     </div>
   );
 }

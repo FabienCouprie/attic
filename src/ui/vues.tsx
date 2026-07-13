@@ -957,7 +957,8 @@ interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; p
 const parId = (...ids: string[]) => (f: string) => ids.includes(f);
 
 const REGISTRE: EntreeRegistre[] = [
-  { correspond: parId("enregistreur-audio", "entree-micro"), vue: VueEnregistreur, position: "avant" },
+  // Enregistreur et entrée micro : la logique d'enregistrement est dans l'inspecteur,
+  // pas dans une vue avant (évite le décalage du handle de sortie).
   { correspond: parId("visualiseur-forme-onde", "selecteur-multi-zones"), vue: VueFormeOnde, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },
   { correspond: parId("spectrogramme"), vue: VueSpectrogramme, position: "avant" },
