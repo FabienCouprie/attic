@@ -142,7 +142,7 @@ export const fiches: PluginDef[] = ([
     [param("Tempo (%)", 100, "Tempo (%)", "%", "Tempo cible. 100=normal, 50=moitié, 200=double.", "Target tempo. 100=normal, 50=half, 200=double.", [25, 400], 5), param("Fenêtre", 50, "Window", "ms", "Taille de la fenêtre d'analyse.", "Analysis window size.")],
     (a,t) => changerTempo(a, t)),
   effet("changement-tonalite", "Changement de tonalité", "Pitch Shift", "Pitch-shift.", "Pitch shift.",
-    [param("Demi-tons", 2, "Semitones", "", "Transposition en demi-tons.", "Transposition in semitones.")],
+    [param("Demi-tons", 2, "Semitones", "", "Transposition en demi-tons.", "Transposition in semitones.", [-24, 24], 1)],
     (a,d) => changerTonalite(a, d)),
   effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 3 bandes.", "3-band equalizer.",
     [param("Basses", 0, "Bass", "dB", "Gain des basses fréquences.", "Low frequency gain."), param("Médiums", 0, "Mid", "dB", "Gain des fréquences médiums.", "Mid frequency gain."), param("Aigus", 0, "Treble", "dB", "Gain des hautes fréquences.", "High frequency gain.")],
