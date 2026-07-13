@@ -8,10 +8,8 @@ import {
   fusionnerPistes, bouclerAudio,
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
-  bufferVersMp3Blob, analyserMidi, rendreAvecSF2,
+  bufferVersMp3Blob,
 } from "../audio";
-import { parseMidi } from "midi-file";
-import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: PluginDef[] = ([
@@ -37,27 +35,6 @@ export const fiches: PluginDef[] = ([
       if (!f) return { valeurs: [null], message: "Aucun fichier." };
       const buf = await decoderFichier(f, ctx.runtime);
       return { valeurs: [buf] };
-    },
-  },
-  {
-    id: "chargeur-soundfont", nom: "Chargeur SoundFont", nomEn: "SoundFont Loader", univers: "Entrées", famille: "Audio",
-    resume: "Joue un fichier MIDI avec un SoundFont.",
-    resumeEn: "Plays a MIDI file using a SoundFont.",
-    noticeEn: "Load a MIDI file and play it through the global SoundFont. Select an instrument from the dropdown. The SoundFont is loaded via the top bar.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Volume", nomEn: "Volume", plage:[0,100], defaut:80, unite:"%", docEn: "Output volume." }],
-    async executer(ctx: any) {
-      const sf2 = sf2Chargee();
-      if (!sf2) return { valeurs:[null], message:"SoundFont non chargé (barre du haut)." };
-      const midi = ctx.noeud.data.midiFichier as File|undefined;
-      if (!midi) return { valeurs:[null], message:"Chargez un MIDI (.mid)." };
-      const vol = ctx.paramNombre("Volume",80);
-      const bytes = new Uint8Array(await midi.arrayBuffer());
-      const { notes } = analyserMidi(parseMidi(bytes));
-      if (!notes.length) return { valeurs:[null], message:"Aucune note dans le MIDI." };
-      const adapt = notes.map((n:any)=>({note:n.note,velocite:n.velociete,debut:n.debut,fin:n.fin}));
-      const idx = (ctx.noeud.data as any).sf2InstrumentIdx as number|undefined;
-      return { valeurs:[rendreAvecSF2(sf2, adapt, vol, idx)], message:`SF2 — ${notes.length} notes` };
     },
   },
 

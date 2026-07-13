@@ -30,6 +30,14 @@
       {
         "from": "public/oonx",
         "to": "oonx"
+      },
+      {
+        "from": "public/sf2",
+        "to": "sf2"
+      },
+      {
+        "from": "THIRD_PARTY.md",
+        "to": "THIRD_PARTY.md"
       }
     ],
     "win": {
