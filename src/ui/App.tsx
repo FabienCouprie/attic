@@ -666,6 +666,10 @@ function Atelier() {
           onPaneClick={() => setSel(null)}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
+          onNodesDelete={(deletedNodes) => {
+            const ids = new Set(deletedNodes.map((n) => n.id));
+            setEdges((eds) => eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)));
+          }}
         >
           <Background />
           <Controls />

@@ -143,11 +143,19 @@ export function reechantillonnerVers(buffer: AudioBuffer, ratio: number, longueu
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < longueurCible; i++) {
       const positionSource = i * ratio;
-      const indexBas = Math.floor(positionSource);
-      const frac = positionSource - indexBas;
-      const echA = indexBas < src.length ? src[indexBas] : 0;
-      const echB = indexBas + 1 < src.length ? src[indexBas + 1] : 0;
-      dst[i] = echA + (echB - echA) * frac;
+      const idx = Math.floor(positionSource);
+      const frac = positionSource - idx;
+      // Interpolation cubique Catmull-Rom (4 points) — beaucoup plus lisse que linéaire
+      const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
+      const p1 = idx < src.length ? src[idx] : 0;
+      const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
+      const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
+      const half = 0.5;
+      const a = -half * p0 + half * p2;
+      const b = p0 - 2.5 * p1 + 2 * p2 - half * p3;
+      const c2 = -half * p0 + half * p2;
+      dst[i] = ((half * p0 - 1.5 * p1 + 1.5 * p2 - half * p3) * frac + c2) * frac * frac
+             + (a * frac + b) * frac + p1;
     }
   }
   return resultat;
