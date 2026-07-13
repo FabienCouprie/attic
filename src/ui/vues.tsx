@@ -156,6 +156,7 @@ function VueExplorateur({ id, data }: VueProps) {
             <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>Aucun fichier audio.</div>
           )}
           {audioLocale && !data.audioUrl && <audio className="attic-node-audio" controls src={audioLocale} />}
+          {data.audioResultatUrl && <audio className="attic-node-audio" controls src={data.audioResultatUrl} />}
         </>
       )}
     </div>
