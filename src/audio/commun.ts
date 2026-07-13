@@ -145,17 +145,18 @@ export function reechantillonnerVers(buffer: AudioBuffer, ratio: number, longueu
       const positionSource = i * ratio;
       const idx = Math.floor(positionSource);
       const frac = positionSource - idx;
-      // Interpolation cubique Catmull-Rom (4 points) — beaucoup plus lisse que linéaire
+      // Interpolation cubique Catmull-Rom (4 points)
       const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
       const p1 = idx < src.length ? src[idx] : 0;
       const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
       const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
-      const half = 0.5;
-      const a = -half * p0 + half * p2;
-      const b = p0 - 2.5 * p1 + 2 * p2 - half * p3;
-      const c2 = -half * p0 + half * p2;
-      dst[i] = ((half * p0 - 1.5 * p1 + 1.5 * p2 - half * p3) * frac + c2) * frac * frac
-             + (a * frac + b) * frac + p1;
+      const t = frac;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      dst[i] = p1
+             + 0.5 * (p2 - p0) * t
+             + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
+             + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
     }
   }
   return resultat;
