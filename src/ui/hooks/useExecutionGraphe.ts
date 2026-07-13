@@ -48,9 +48,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     return audioCtxRef.current;
   }
 
-  const definirStatut = (id: string, statut: string, progression?: string) => {
+  const definirStatut = (nodeId: string, statut: string, progression?: string) => {
     setNodes((nds) =>
-      nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, statut, progression } } : n))
+      nds.map((n) => {
+        if (n.id !== nodeId) return n;
+        // Ne recréer l'objet que si le statut a réellement changé
+        if (n.data.statut === statut && n.data.progression === progression) return n;
+        return { ...n, data: { ...n.data, statut, progression } };
+      })
     );
   };
 

@@ -239,7 +239,6 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border-radius: 14px; min-width: 200px; font-size: 13px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.3) inset;
   position: relative;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .attic-node:has(.react-flow__resize-control) { height: 100%; }
 .attic-node.selected {

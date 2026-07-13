@@ -70,6 +70,11 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
+    // Le ResizeObserver n'est utile que pour les nodes redimensionnables
+    // (NodeResizer). Pour les autres, les handles sont en CSS (top: 50% dans
+    // le port) et ne dépendent pas de la hauteur du node.
+    const hasResizer = el.querySelector(".react-flow__resize-control") !== null;
+    if (!hasResizer) return;
     let lastW = 0, lastH = 0;
     const obs = new ResizeObserver(() => {
       const w = el.offsetWidth;
