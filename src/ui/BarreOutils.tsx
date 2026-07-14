@@ -164,9 +164,18 @@ export function BarreOutils(props: Props) {
         </span>
       )}
       {maj && maj.statut === "disponible" && (
-        <span style={{ fontSize: 11, color: "#e9b949", marginRight: 8, userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
+        <button
+          onClick={() => (window as any).api?.majTelecharger?.()}
+          style={{
+            fontSize: 11, marginRight: 8, cursor: "pointer",
+            border: "1px solid #e9b949", borderRadius: 4,
+            background: "rgba(233,185,73,0.15)", color: "#e9b949",
+            padding: "2px 8px",
+          }}
+          title={t("maj.disponible")}
+        >
           ↓ v{maj.version}
-        </span>
+        </button>
       )}
       {maj && maj.statut === "telechargement" && (
         <span style={{ fontSize: 11, color: "#4c6ef5", marginRight: 8, userSelect: "none" }}>

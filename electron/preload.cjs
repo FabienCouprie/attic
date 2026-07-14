@@ -60,6 +60,7 @@ contextBridge.exposeInMainWorld("api", {
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),
+  majTelecharger: () => ipcRenderer.invoke("maj:telecharger"),
   majEvenement: (callback) => ipcRenderer.on("maj:info", (_e, info) => callback(info)),
   majSauvegarderBackup: (data) => ipcRenderer.invoke("maj:sauvegarder-backup", data),
   majRestaurerBackupSync: () => ipcRenderer.sendSync("maj:restaurer-backup-sync"),

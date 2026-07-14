@@ -775,7 +775,7 @@ ipcMain.handle("fichier:supprimer", async (_event, chemin) => {
 let infoMaj = { disponible: false, version: "", notes: "", progression: 0, statut: "" };
 
 if (autoUpdater) {
-  autoUpdater.autoDownload = true;
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on("checking-for-update", () => {
@@ -801,7 +801,7 @@ if (autoUpdater) {
     // Sauvegarder les métas et l'en-cours avant l'installation
     try {
       const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-      const backup: any = {};
+      const backup = {};
       // Le renderer ne peut pas écrire directement dans userData,
       // mais on peut sauvegarder le localStorage via le main process
       // en demandant au renderer de nous l'envoyer
@@ -853,6 +853,16 @@ ipcMain.handle("maj:installer-relancer", async () => {
   }
 });
 
+ipcMain.handle("maj:telecharger", async () => {
+  if (autoUpdater) {
+    try {
+      await autoUpdater.downloadUpdate();
+    } catch (e) {
+      console.error("[attic] Téléchargement erreur:", e);
+    }
+  }
+});
+
 // Sauvegarde des données avant mise à jour
 ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
   try {
@@ -884,10 +894,7 @@ app.whenReady().then(() => {
   // Supprimer le menu par défaut d'Electron (Edit, View, etc.)
   Menu.setApplicationMenu(null);
   creerFenetre();
-  // Vérifier les mises à jour au démarrage (en production uniquement)
-  if (autoUpdater) {
-    setTimeout(() => autoUpdater.checkForUpdates(), 3000);
-  }
+  // Ne pas vérifier automatiquement au démarrage — l'utilisateur clique sur le bouton horloge
 });
 
 app.on("window-all-closed", () => {
