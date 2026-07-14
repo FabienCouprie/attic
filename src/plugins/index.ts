@@ -34,6 +34,7 @@ import { fiches as f_generateur_paroles } from "./generateur-paroles";
 import { fiches as f_galerie_exposition } from "./galerie-exposition";
 import { fiches as f_gestion_nodes } from "./gestion-nodes";
 import { fiches as f_python_processor } from "./python-processor";
+import { fiches as f_julia_processor } from "./julia-processor";
 import { fiches as f_frontiere } from "./frontiere";
 import { fiches as f_couleur_suno_ia } from "./couleur-suno-ia";
 
@@ -69,6 +70,7 @@ export const toutesLesFiches: PluginDef[] = [
   ...f_galerie_exposition,
   ...f_gestion_nodes,
   ...f_python_processor,
+  ...f_julia_processor,
   ...f_frontiere,
   ...f_couleur_suno_ia,
 ];

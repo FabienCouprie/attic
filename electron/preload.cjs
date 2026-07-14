@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld("api", {
   pythonExecuter: (options) => ipcRenderer.invoke("python:executer", options),
   pythonDefinirChemin: (chemin) => ipcRenderer.invoke("python:definir-chemin", chemin),
   pythonChoisirExecutable: () => ipcRenderer.invoke("python:choisir-executable"),
+
+  juliaInfo: () => ipcRenderer.invoke("julia:info"),
+  juliaExecuter: (options) => ipcRenderer.invoke("julia:executer", options),
+  juliaDefinirChemin: (chemin) => ipcRenderer.invoke("julia:definir-chemin", chemin),
+  juliaChoisirExecutable: () => ipcRenderer.invoke("julia:choisir-executable"),
   lireBinaire: (chemin) => ipcRenderer.invoke("fichier:lire-binaire", chemin),
   lireTexte: (chemin) => ipcRenderer.invoke("fichier:lire-texte", chemin),
   supprimerFichier: (chemin) => ipcRenderer.invoke("fichier:supprimer", chemin),

@@ -43,14 +43,27 @@ export function BarreOutils(props: Props) {
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
-  const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string } | null>(null);
+  const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
+  const [verifEnCours, setVerifEnCours] = useState(false);
 
   useEffect(() => {
     const api = (window as any).api;
     if (!api?.majEvenement) return;
-    api.majEvenement((info: any) => setMaj(info));
+    api.majEvenement((info: any) => { setMaj(info); setVerifEnCours(false); });
     api.majInfo?.().then((info: any) => { if (info) setMaj(info); });
   }, []);
+
+  const verifierMaj = async () => {
+    const api = (window as any).api;
+    if (!api?.majVerifier) return;
+    setVerifEnCours(true);
+    setMaj({ disponible: false, version: "", progression: 0, statut: "verification" });
+    try {
+      const result = await api.majVerifier();
+      if (result) setMaj(result);
+    } catch {}
+    setVerifEnCours(false);
+  };
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -113,12 +126,31 @@ export function BarreOutils(props: Props) {
         )}
       </div>
       <span className="attic-spacer" />
-      <button className="attic-btn-icon" title={t("maj.verification")} onClick={() => (window as any).api?.majVerifier?.()}
+      <button className="attic-btn-icon" title={t("maj.verification")} onClick={verifierMaj}
         style={{ width: 28, height: 28 }}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M8 1v6l4 2" /><circle cx="8" cy="8" r="7" />
-        </svg>
+        {verifEnCours ? (
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>…</span>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M8 1v6l4 2" /><circle cx="8" cy="8" r="7" />
+          </svg>
+        )}
       </button>
+      {maj && maj.statut === "verification" && (
+        <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>
+          {t("maj.verification")}
+        </span>
+      )}
+      {maj && maj.statut === "a-jour" && (
+        <span style={{ fontSize: 11, color: "#2a9d8f", marginRight: 8, userSelect: "none" }}>
+          ✓ {t("maj.a-jour")}
+        </span>
+      )}
+      {maj && maj.statut === "erreur" && (
+        <span style={{ fontSize: 11, color: "#e44", marginRight: 8, userSelect: "none" }} title={maj.notes || ""}>
+          ✗ {t("maj.erreur")}
+        </span>
+      )}
       {maj && maj.statut === "disponible" && (
         <span style={{ fontSize: 11, color: "#e9b949", marginRight: 8, userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
           ↓ v{maj.version}
@@ -143,7 +175,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.2</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.3</span>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
         {enExecution ? "…" : t("btn.lancer")}

@@ -27,6 +27,7 @@ import { construireListeStyles } from "../plugins/styles-musicaux";
 import { construireListeEmotions } from "../plugins/emotions";
 import { construireListeTessitures } from "../plugins/tessitures";
 import { tokenizePython } from "../plugins/python-processor";
+import { tokenizeJulia } from "../plugins/julia-processor";
 import { COULEURS } from "../audio";
 import type { PluginDef } from "../core";
 import type { DonneesNoeud } from "./AtelierNode";
@@ -787,6 +788,152 @@ function VuePythonProcessor({ id, data }: VueProps) {
   );
 }
 
+// ── Julia Processor (éditeur de code avec coloration syntaxique) ──
+function VueJuliaProcessor({ id, data }: VueProps) {
+  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const code = String(data.parametres?.["Code"] ?? "");
+  const [editCode, setEditCode] = useState(code);
+  const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+  const gutterRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    const api = (window as any).api;
+    if (api?.juliaInfo) {
+      api.juliaInfo().then((info: any) => setPyInfo(info));
+    }
+  }, []);
+
+  const configurerPath = async () => {
+    const api = (window as any).api;
+    if (!api?.juliaChoisirExecutable) return;
+    const chemin = await api.juliaChoisirExecutable();
+    if (!chemin) return;
+    const result = await api.juliaDefinirChemin(chemin);
+    if (result?.ok) {
+      setPyInfo({ disponible: true, chemin: result.chemin, version: result.version });
+    } else {
+      alert(`Erreur: ${result?.erreur || "chemin invalide"}`);
+    }
+  };
+
+  const gutterRef2 = useRef<HTMLPreElement>(null);
+
+  const onScroll = () => {
+    if (taRef.current && preRef.current) {
+      preRef.current.scrollTop = taRef.current.scrollTop;
+      preRef.current.scrollLeft = taRef.current.scrollLeft;
+    }
+    if (taRef.current && gutterRef2.current) {
+      gutterRef2.current.scrollTop = taRef.current.scrollTop;
+    }
+  };
+
+  const tokens = editCode ? tokenizeJulia(editCode) : [];
+  const colorMap: Record<string, string> = {
+    keyword: "#569cd6",
+    string: "#ce9178",
+    comment: "#6a9955",
+    number: "#b5cea8",
+    ident: "#d4d4d4",
+    type: "#4ec9b0",
+    op: "#d4d4d4",
+  };
+
+  return (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px", height: "100%", display: "flex", flexDirection: "column" }}>
+      <NodeResizer minWidth={350} minHeight={200} />
+      <div style={{ fontSize: 10, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{
+          width: 8, height: 8, borderRadius: "50%",
+          background: pyInfo?.disponible ? "#2a9d8f" : "#e76f51",
+        }} />
+        <span style={{ color: pyInfo?.disponible ? "#2a9d8f" : "#e76f51" }}>
+          {pyInfo?.disponible ? `Julia: ${pyInfo.version}` : "Julia non détecté"}
+        </span>
+        <span style={{ flex: 1 }} />
+        <button
+          onClick={(e) => { e.stopPropagation(); configurerPath(); }}
+          style={{
+            fontSize: 10, padding: "2px 8px", cursor: "pointer",
+            border: "1px solid var(--border, #333)", borderRadius: 4,
+            background: "transparent", color: "var(--text-secondary)",
+          }}
+          title="Configurer le chemin de l'exécutable Julia"
+        >⚙ Configurer</button>
+      </div>
+      <div style={{ position: "relative", fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace", fontSize: 12, lineHeight: 1.5, display: "flex", flex: 1, minHeight: 0 }}>
+        <pre
+          ref={gutterRef2}
+          aria-hidden="true"
+          style={{
+            margin: 0, padding: "8px 4px 8px 8px", overflow: "hidden",
+            background: "#1a1a1e", borderRadius: "4px 0 0 4px", textAlign: "right",
+            color: "#555", userSelect: "none", minWidth: 36, flexShrink: 0,
+            minHeight: 0,
+            whiteSpace: "pre", tabSize: 4,
+          }}
+        >
+          {editCode.split("\n").map((_, i) => `${i + 1}\n`).join("").trimEnd()}
+        </pre>
+        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+          <pre
+            ref={preRef}
+            aria-hidden="true"
+            style={{
+              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+              margin: 0, padding: "8px", overflow: "auto",
+              background: "#1e1e1e", borderRadius: "0 4px 4px 0", pointerEvents: "none",
+              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+            }}
+          >
+            {tokens.map((t: { text: string; type: string }, i: number) => (
+              <span key={i} style={{ color: colorMap[t.type] || "#d4d4d4" }}>{t.text}</span>
+            ))}
+          </pre>
+          <textarea
+            ref={taRef}
+            value={editCode}
+            onChange={(e) => {
+              setEditCode(e.target.value);
+              d.onChangerParametre?.(id, "Code", e.target.value);
+            }}
+            onScroll={onScroll}
+            spellCheck={false}
+            style={{
+              position: "relative", width: "100%", height: "100%",
+              margin: 0, padding: "8px", border: "1px solid #333", borderLeft: "none", borderRadius: "0 4px 4px 0",
+              background: "transparent", color: "transparent",
+              caretColor: "#fff", resize: "none", outline: "none",
+              fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
+              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Tab") {
+                e.preventDefault();
+                const ta = e.currentTarget;
+                const start = ta.selectionStart;
+                const end = ta.selectionEnd;
+                const newCode = editCode.slice(0, start) + "    " + editCode.slice(end);
+                setEditCode(newCode);
+                d.onChangerParametre?.(id, "Code", newCode);
+                requestAnimationFrame(() => {
+                  ta.selectionStart = ta.selectionEnd = start + 4;
+                });
+              }
+            }}
+          />
+        </div>
+      </div>
+      <div style={{ fontSize: 10, marginTop: 4, color: "var(--text-muted)", background: "var(--bg-surface)", padding: "2px 4px", borderRadius: "0 0 6px 6px" }}>
+        {editCode.split("\n").length} lignes · WAV.jl requis
+      </div>
+    </div>
+  );
+}
+
 // ── Gestionnaire de nodes (instructions + statut) ──
 function VueGestionNodes({ data }: VueProps) {
   const { t } = useI18n();
@@ -978,6 +1125,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
+  { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },

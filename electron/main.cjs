@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -81,6 +81,48 @@ function detecterPython() {
   }
 }
 detecterPython();
+
+// ─── Détection de l'exécuteur Julia (centralisée) ───
+let CHEMIN_JULIA = null;
+
+function chercherJuliaEnregistre() {
+  try {
+    const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
+    if (fs.existsSync(dataPath)) {
+      const p = fs.readFileSync(dataPath, "utf-8").trim();
+      if (p && fs.existsSync(p)) return p;
+    }
+  } catch {}
+  return null;
+}
+
+function detecterJulia() {
+  const sauvegarde = chercherJuliaEnregistre();
+  if (sauvegarde) { CHEMIN_JULIA = sauvegarde; return; }
+
+  if (process.env.ATTIC_JULIA && fs.existsSync(process.env.ATTIC_JULIA)) {
+    CHEMIN_JULIA = process.env.ATTIC_JULIA;
+    return;
+  }
+
+  // Chemins connus Windows
+  const cheminsConnus = process.platform === "win32" ? [
+    "C:\\Julia\\bin\\julia.exe",
+    path.join(process.env.LOCALAPPDATA || "", "Programs", "Julia", "bin", "julia.exe"),
+    path.join(process.env.APPDATA || "", "Julia", "bin", "julia.exe"),
+  ] : [];
+
+  for (const c of cheminsConnus) {
+    if (c && fs.existsSync(c)) { CHEMIN_JULIA = c; return; }
+  }
+
+  // PATH
+  try {
+    execSync("julia --version", { stdio: "pipe", timeout: 3000 });
+    CHEMIN_JULIA = "julia";
+  } catch {}
+}
+detecterJulia();
 
 let fenetre = null;
 
@@ -617,6 +659,77 @@ ipcMain.handle("python:executer", async (_event, options) => {
   }
 });
 
+// ─── IPC Julia ───
+ipcMain.handle("julia:info", async () => {
+  return {
+    disponible: !!CHEMIN_JULIA,
+    chemin: CHEMIN_JULIA,
+    version: CHEMIN_JULIA ? execSync(`${CHEMIN_JULIA} --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() : null,
+  };
+});
+
+ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
+  try {
+    if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
+    execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 });
+    CHEMIN_JULIA = chemin;
+    const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
+    fs.writeFileSync(dataPath, chemin, "utf-8");
+    return { ok: true, chemin, version: execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() };
+  } catch (err) {
+    return { ok: false, erreur: String(err?.message || err) };
+  }
+});
+
+ipcMain.handle("julia:choisir-executable", async () => {
+  const resultat = await dialog.showOpenDialog(fenetre, {
+    title: "Sélectionner l'exécutable Julia",
+    filters: [{ name: "Julia", extensions: ["exe"] }],
+    properties: ["openFile"],
+  });
+  if (resultat.canceled || !resultat.filePaths.length) return null;
+  return resultat.filePaths[0];
+});
+
+ipcMain.handle("julia:executer", async (_event, options) => {
+  if (!CHEMIN_JULIA) {
+    return { ok: false, erreur: "Julia n'est pas installé ou introuvable. Définissez la variable d'environnement ATTIC_JULIA ou installez Julia." };
+  }
+  try {
+    const scriptPath = path.join(app.getPath("temp"), `attic-script-${Date.now()}.jl`);
+    fs.writeFileSync(scriptPath, options.code, "utf-8");
+
+    const args = [scriptPath];
+    const env = {
+      ...process.env,
+      ...(options.env || {}),
+    };
+    if (options.inputs) {
+      for (const inp of options.inputs) {
+        args.push(inp.path);
+      }
+    }
+
+    const result = await new Promise((resolve) => {
+      execFile(CHEMIN_JULIA, args, {
+        env,
+        timeout: options.timeout || 30000,
+        maxBuffer: 10 * 1024 * 1024,
+      }, (err, stdout, stderr) => {
+        try { fs.unlinkSync(scriptPath); } catch {}
+        if (err) {
+          resolve({ ok: false, erreur: stderr || err.message, stdout, python: CHEMIN_JULIA });
+        } else {
+          resolve({ ok: true, stdout, stderr });
+        }
+      });
+    });
+    return result;
+  } catch (err) {
+    return { ok: false, erreur: String(err?.message || err) };
+  }
+});
+
 // --- IPC : Lire un fichier binaire par chemin (sans dialogue) ---
 ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
   try {
@@ -703,9 +816,22 @@ function envoyerInfoMaj() {
 ipcMain.handle("maj:verifier", async () => {
   if (!autoUpdater) return { disponible: false, statut: "indisponible" };
   try {
-    await autoUpdater.checkForUpdates();
+    infoMaj = { disponible: false, version: "", notes: "", progression: 0, statut: "verification" };
+    envoyerInfoMaj();
+    const result = await autoUpdater.checkForUpdates();
+    // checkForUpdates retourne UpdateCheckResult si update disponible
+    if (result && result.updateInfo) {
+      infoMaj = { disponible: true, version: result.updateInfo.version, notes: "", progression: 0, statut: "disponible" };
+      envoyerInfoMaj();
+      return infoMaj;
+    }
+    infoMaj.statut = "a-jour";
+    envoyerInfoMaj();
     return infoMaj;
   } catch (e) {
+    infoMaj.statut = "erreur";
+    infoMaj.notes = String(e?.message || e);
+    envoyerInfoMaj();
     return { disponible: false, statut: "erreur", notes: String(e?.message || e) };
   }
 });
@@ -719,6 +845,8 @@ ipcMain.handle("maj:installer-relancer", async () => {
 });
 
 app.whenReady().then(() => {
+  // Supprimer le menu par défaut d'Electron (Edit, View, etc.)
+  Menu.setApplicationMenu(null);
   creerFenetre();
   // Vérifier les mises à jour au démarrage (en production uniquement)
   if (autoUpdater) {
