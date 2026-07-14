@@ -101,10 +101,10 @@ function creerFenetre() {
   // Content-Security-Policy : unsafe-eval requis pour le chargement dynamique
   // de nodes installés (new Function). unsafe-inline pour les vues canvas/inline.
   const csp = [
-    "default-src 'self'",
+    "default-src 'self' display-capture",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
     "style-src 'self' 'unsafe-inline'",
-    "media-src 'self' blob: data:",
+    "media-src 'self' blob: data: stream:",
     "img-src 'self' blob: data:",
     "worker-src 'self' blob:",
     "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co blob: data:",
@@ -135,6 +135,24 @@ function creerFenetre() {
     }
     fenetre.loadFile(cheminDist);
   }
+
+  // Autoriser getDisplayMedia (capture système audio)
+  fenetre.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === "media" || permission === "display-capture" || permission === "audioCapture");
+  });
+
+  // Fournir les sources desktopCapturer pour capture système audio
+  ipcMain.handle("capture:systeme-audio", async () => {
+    try {
+      const { desktopCapturer } = require("electron");
+      const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
+      if (!sources) return [];
+      return sources.map((s) => ({ id: s.id, name: s.name }));
+    } catch (e) {
+      console.error("[attic] capture:systeme-audio erreur:", e);
+      return [];
+    }
+  });
 }
 
 // --- IPC : enregistrer un fichier (dialogue + écriture) ---

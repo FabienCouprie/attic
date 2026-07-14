@@ -47,6 +47,19 @@ const entrees: PluginDef[] = [
     },
   },
   {
+    id: "capture-systeme-audio", nom: "Capture système audio", nomEn: "System Audio Capture", univers: "Entrées", famille: "Audio",
+    resume: "Capture le son du système (autre application, navigateur, etc.).",
+    resumeEn: "Captures system audio (other app, browser, etc.).",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [],
+    async executer(ctx) {
+      const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
+      if (!blob) return { valeurs: [null], message: "Aucune capture. Cliquez sur Enregistrer dans l'inspecteur." };
+      const buffer = await decoderBlob(blob, ctx.runtime);
+      return { valeurs: [buffer] };
+    },
+  },
+  {
     id: "generateur-musical", nom: "Générateur musical", nomEn: "Music Generator", univers: "Entrées", famille: "Génération",
     resume: "Génère une composition multi-pistes à partir d'un script descriptif.",
     resumeEn: "Generates a multi-track composition from a descriptive script.",

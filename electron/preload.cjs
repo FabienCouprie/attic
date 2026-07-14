@@ -50,6 +50,8 @@ contextBridge.exposeInMainWorld("api", {
 
   nouvelleFenetre: () => ipcRenderer.invoke("nouvelle-fenetre"),
 
+  captureSources: () => ipcRenderer.invoke("capture:systeme-audio"),
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),

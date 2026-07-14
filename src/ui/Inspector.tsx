@@ -108,6 +108,10 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         <EnregistreurInspecteur noeud={noeud} onEnregistrer={onEnregistrer} onChangerParametre={onChangerParametre} />
       ) : null}
 
+      {def.id === "capture-systeme-audio" ? (
+        <CaptureSystemeInspecteur noeud={noeud} onEnregistrer={onEnregistrer} />
+      ) : null}
+
       {/* Sampler MIDI : chargement de l'échantillon audio */}
       {def.id === "sampler-midi" ? (
         <div className="inspecteur-param">
@@ -206,6 +210,121 @@ function EnregistreurInspecteur({ noeud, onEnregistrer, onChangerParametre }: { 
             {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
           </select>
         </div>
+      )}
+    </div>
+  );
+}
+
+function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: string; data: Record<string, unknown> }; onEnregistrer?: (id: string, blob: Blob) => void }) {
+  const { t } = useI18n();
+  const [enRegistrant, setEnRegistrant] = useState(false);
+  const [duree, setDuree] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const demarrer = async () => {
+    try {
+      const api = (window as any).api;
+      // En Electron : utiliser desktopCapturer via IPC
+      if (api?.captureSources) {
+        const sources = await api.captureSources();
+        if (!sources || sources.length === 0) {
+          alert("Aucune source de capture disponible.");
+          return;
+        }
+        // Utiliser getDisplayMedia avec l'ID de la première source (écran)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            mandatory: {
+              chromeMediaSource: "desktop",
+            },
+          } as any,
+          video: {
+            mandatory: {
+              chromeMediaSource: "desktop",
+              chromeMediaSourceId: sources[0].id,
+              minWidth: 1, maxWidth: 1, minHeight: 1, maxHeight: 1,
+            },
+          } as any,
+        });
+        stream.getVideoTracks().forEach((t) => t.stop());
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length === 0) {
+          alert("Aucun flux audio capturé. Vérifiez que l'audio système est disponible.");
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        const audioStream = new MediaStream(audioTracks);
+        const mr = new MediaRecorder(audioStream);
+        mediaRecorderRef.current = mr;
+        const morceaux: Blob[] = [];
+        mr.ondataavailable = (e) => { if (e.data.size > 0) morceaux.push(e.data); };
+        mr.onstop = () => {
+          const blob = new Blob(morceaux, { type: "audio/webm" });
+          onEnregistrer?.(noeud.id, blob);
+          audioStream.getTracks().forEach((t) => t.stop());
+          setEnRegistrant(false);
+        };
+        mr.start();
+        setEnRegistrant(true);
+        setDuree(0);
+        timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
+        return;
+      }
+      // Mode navigateur : getDisplayMedia standard
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true,
+      });
+      stream.getVideoTracks().forEach((t) => t.stop());
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        alert("Aucun flux audio capturé. Sélectionnez une source avec audio dans la boîte de dialogue.");
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      const audioStream = new MediaStream(audioTracks);
+      const mr = new MediaRecorder(audioStream);
+      mediaRecorderRef.current = mr;
+      const morceaux: Blob[] = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) morceaux.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(morceaux, { type: "audio/webm" });
+        onEnregistrer?.(noeud.id, blob);
+        audioStream.getTracks().forEach((t) => t.stop());
+        setEnRegistrant(false);
+      };
+      mr.start();
+      setEnRegistrant(true);
+      setDuree(0);
+      timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
+    } catch (e) {
+      alert("Capture annulée ou non supportée.");
+    }
+  };
+
+  const arreter = () => {
+    mediaRecorderRef.current?.stop();
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const enregistrementUrl = noeud.data.enregistrementUrl as string | undefined;
+
+  return (
+    <div className="inspecteur-param">
+      <div className="inspecteur-param-ligne"><label>{t("btn.record")}</label></div>
+      {!enRegistrant && <button className="attic-node-btn-record" onClick={demarrer}>● {t("btn.record")}</button>}
+      {enRegistrant && (
+        <>
+          <div className="attic-node-rec-indicator"><span className="attic-node-rec-pulse" /> {duree}s</div>
+          <button className="attic-node-btn-stop" onClick={arreter}>■ {t("btn.stop")}</button>
+        </>
+      )}
+      {enregistrementUrl && !enRegistrant && (
+        <>
+          <audio className="attic-node-audio" controls src={enregistrementUrl} style={{ marginTop: 8 }} />
+          <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
+        </>
       )}
     </div>
   );

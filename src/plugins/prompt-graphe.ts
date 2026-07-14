@@ -39,6 +39,7 @@ interface EntreeDictionnaire {
 const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] = [
   { ficheId: "entree-audio", mots: ["entrée audio", "audio input", "fichier audio", "load audio", "charger audio"], category: "source" },
   { ficheId: "enregistreur-audio", mots: ["enregistreur", "micro", "recorder", "microphone"], category: "source" },
+  { ficheId: "capture-systeme-audio", mots: ["capture système", "system audio", "capture audio", "what you hear", "loopback"], category: "source" },
   { ficheId: "generateur-bruit", mots: ["bruit", "noise"], category: "source" },
   { ficheId: "generateur-frequence", mots: ["oscillateur", "sinus", "sine", "tone", "tonalité", "fréquence pure", "générateur de fréquence"], category: "source" },
   { ficheId: "metronome", mots: ["métronome", "metronome", "click track"], category: "source" },
