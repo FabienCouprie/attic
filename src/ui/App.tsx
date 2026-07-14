@@ -142,6 +142,7 @@ export default function App() {
 type WorkflowState = { nom: string; nodes: NoeudAtelier[]; edges: Edge[]; viewport?: { x: number; y: number; zoom: number } };
 
 function Atelier() {
+  const { t } = useI18n();
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
   const [onglets, setOnglets] = useState<string[]>(["wf-1"]);
   const [actif, setActif] = useState("wf-1");
@@ -669,21 +670,20 @@ function Atelier() {
         <div className="attic-meta-actions">
           {pile.length > 0 ? (
             <>
-              <button onClick={() => ajouterNoeud(ID_ENTREE_FRONTIERE)} title="Ajouter une entrée exposée au méta-composant">➕ Entrée</button>
-              <button onClick={() => ajouterNoeud(ID_SORTIE_FRONTIERE)} title="Ajouter une sortie exposée au méta-composant">➕ Sortie</button>
+              <button onClick={() => ajouterNoeud(ID_ENTREE_FRONTIERE)} title={t("meta.ajoutEntree")}>➕ {t("meta.entree")}</button>
+              <button onClick={() => ajouterNoeud(ID_SORTIE_FRONTIERE)} title={t("meta.ajoutSortie")}>➕ {t("meta.sortie")}</button>
             </>
           ) : (
             <>
-              <button onClick={grouper} title="Regrouper les nœuds sélectionnés en un méta-composant (§3.8)">⊟ Grouper</button>
-              <button onClick={degrouper} title="Dégrouper le méta-composant sélectionné">⊞ Dégrouper</button>
-              <button onClick={renommer} title="Renommer le méta-composant sélectionné">✎ Renommer</button>
+              <button onClick={grouper} title={t("meta.grouperTitle")}>⊟ {t("meta.grouper")}</button>
+              <button onClick={degrouper} title={t("meta.degrouperTitle")}>⊞ {t("meta.degrouper")}</button>
+              <button onClick={renommer} title={t("meta.renommerTitle")}>✎ {t("meta.renommer")}</button>
             </>
           )}
         </div>
         {pile.length > 0 && (
           <div className="attic-filariane">
-            <button onClick={() => remonterA(-1)}>Atelier</button>
-            {pile.map((niv, i) => (
+            <button onClick={() => remonterA(-1)}>{t("meta.atelier")}</button>            {pile.map((niv, i) => (
               <span key={i}>
                 <span className="sep">›</span>
                 <button onClick={() => remonterA(i)} disabled={i === pile.length - 1}>{niv.nom}</button>

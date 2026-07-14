@@ -102,6 +102,17 @@ const DICO: Record<string, Record<Langue, string>> = {
   "maj.verification": { fr: "Vérifier les mises à jour", en: "Check for updates" },
   "maj.erreur": { fr: "Erreur de mise à jour", en: "Update error" },
   "maj.indisponible": { fr: "Mises à jour indisponibles (mode dev)", en: "Updates unavailable (dev mode)" },
+  "meta.grouper": { fr: "Grouper", en: "Group" },
+  "meta.grouperTitle": { fr: "Regrouper les nœuds sélectionnés en un méta-composant", en: "Group selected nodes into a meta-component" },
+  "meta.degrouper": { fr: "Dégrouper", en: "Ungroup" },
+  "meta.degrouperTitle": { fr: "Dégrouper le méta-composant sélectionné", en: "Ungroup the selected meta-component" },
+  "meta.renommer": { fr: "Renommer", en: "Rename" },
+  "meta.renommerTitle": { fr: "Renommer le méta-composant sélectionné", en: "Rename the selected meta-component" },
+  "meta.entree": { fr: "Entrée", en: "Input" },
+  "meta.ajoutEntree": { fr: "Ajouter une entrée exposée au méta-composant", en: "Add an exposed input to the meta-component" },
+  "meta.sortie": { fr: "Sortie", en: "Output" },
+  "meta.ajoutSortie": { fr: "Ajouter une sortie exposée au méta-composant", en: "Add an exposed output to the meta-component" },
+  "meta.atelier": { fr: "Atelier", en: "Workshop" },
 };
 
 interface I18nContextType {
