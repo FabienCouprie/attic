@@ -667,7 +667,7 @@ function Atelier() {
         }}
         onChargerFichier={(key, fichier) => {
           if (!sel) return;
-          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, [key]: fichier } } : n));
+          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, [key]: fichier, audioNom: fichier.name } } : n));
         }}
         onSupprimer={() => {
           if (sel) {

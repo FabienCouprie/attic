@@ -33,6 +33,7 @@ const ALIAS: Record<string, string> = {
   "filtre": "reponse-filtre",
   "boucle": "simple-boucle",
   "fusionneur": "melangeur",
+  "entree-micro": "enregistreur-audio",
 };
 
 function resoudre(id: string): string {

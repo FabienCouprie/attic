@@ -14,17 +14,6 @@ import { avecDoc } from "./notices";
 
 export const fiches: PluginDef[] = ([
   {
-    id: "entree-micro", nom: "Entrée micro", nomEn: "Mic input", univers: "Entrées", famille: "Audio",
-    resume: "Transmet l'enregistrement micro.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [],
-    async executer(ctx: any) {
-      const blob = ctx.noeud.data.enregistrementBlob;
-      if (!blob) return { valeurs: [null], message: "Aucun enregistrement." };
-      return { valeurs: [await decoderBlob(blob, ctx.runtime)] };
-    },
-  },
-  {
     id: "explorateur-musique", nom: "Explorateur musique", nomEn: "Music explorer", univers: "Entrées", famille: "Audio",
     resume: "Charge un fichier audio depuis l'explorateur.",
     resumeEn: "Loads an audio file from the explorer.",

@@ -287,14 +287,6 @@ function VueExport({ data }: VueProps) {
         onChange={(e) => { setNomFichierLocal(e.target.value); (data as { nomFichier?: string }).nomFichier = e.target.value; }} />
       {data.audioResultatUrl ? (
         <>
-          {data.ficheId === "convertisseur-audio" && mp3Url ? (
-            <a className="attic-node-fichier-btn" href={mp3Url} download={nomOu("sortie.mp3")}>⬇ MP3</a>
-          ) : (
-            <a className="attic-node-fichier-btn" href={data.audioResultatUrl}
-              download={nomOu((data.audioResultatNom as string) || "sortie.wav")}>
-              ⬇ {data.ficheId === "convertisseur-mp3-wav" ? "WAV" : t("export.telecharger").replace("⬇ ", "") + " (.wav)"}
-            </a>
-          )}
           {data.midiFichierSortie && (
             <a className="attic-node-fichier-btn" href="#" onClick={(e) => {
               e.preventDefault();
@@ -302,7 +294,7 @@ function VueExport({ data }: VueProps) {
               const a = document.createElement("a"); a.href = u; a.download = nomOu("sortie") + ".mid"; a.click(); URL.revokeObjectURL(u);
             }}>⬇ MIDI ({(data.midiFichierSortie as unknown as File).size.toLocaleString()} o)</a>
           )}
-          {api && (
+          {api ? (
             <button className="attic-node-fichier-btn" onClick={async () => {
               const rep = await fetch(data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl!);
               const buf = await rep.arrayBuffer();
@@ -313,6 +305,11 @@ function VueExport({ data }: VueProps) {
                 buffer: buf,
               });
             }}>💾 {t("export.sauvegarder").replace("💾 ", "")}</button>
+          ) : (
+            <a className="attic-node-fichier-btn" href={data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl}
+              download={nomOu((data.audioResultatNom as string) || "sortie.wav")}>
+              💾 {t("export.sauvegarder").replace("💾 ", "")}
+            </a>
           )}
         </>
       ) : (
@@ -989,7 +986,6 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
   { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "avant" },
-  { correspond: parId("couleur-suno-ia"), vue: VueCouleurSunoIA, position: "avant" },
   { correspond: (f) => f.startsWith("collection-"), vue: VueCollections, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },

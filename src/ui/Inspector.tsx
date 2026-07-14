@@ -104,8 +104,23 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
       })}
 
       {/* Enregistreur / entrée micro : bouton d'enregistrement dans l'inspecteur */}
-      {def.id === "enregistreur-audio" || def.id === "entree-micro" ? (
+      {def.id === "enregistreur-audio" ? (
         <EnregistreurInspecteur noeud={noeud} onEnregistrer={onEnregistrer} onChangerParametre={onChangerParametre} />
+      ) : null}
+
+      {/* Sampler MIDI : chargement de l'échantillon audio */}
+      {def.id === "sampler-midi" ? (
+        <div className="inspecteur-param">
+          <div className="inspecteur-param-ligne"><label>Échantillon</label></div>
+          <label className="attic-node-fichier-btn" style={{ cursor: "pointer", display: "inline-flex" }}>
+            {noeud.data.audioNom ? `🎵 ${String(noeud.data.audioNom)}` : "Charger un échantillon…"}
+            <input type="file" accept=".wav,.mp3,.ogg,.flac,.m4a" hidden onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onChargerFichier("audioFichier", f);
+              e.target.value = "";
+            }} />
+          </label>
+        </div>
       ) : null}
 
       <div className="inspecteur-actions">
@@ -126,7 +141,19 @@ function EnregistreurInspecteur({ noeud, onEnregistrer, onChangerParametre }: { 
   const params = noeud.data.parametres as Record<string, string | number> | undefined;
 
   useEffect(() => {
-    navigator.mediaDevices?.enumerateDevices().then((d) => setPeripheriques(d.filter((x) => x.kind === "audioinput")));
+    // Demander la permission d'abord, puis lister les périphériques
+    // (les labels ne sont disponibles qu'après autorisation)
+    navigator.mediaDevices?.getUserMedia({ audio: true }).then((stream) => {
+      stream.getTracks().forEach((t) => t.stop());
+      return navigator.mediaDevices?.enumerateDevices();
+    }).then((d) => {
+      if (d) setPeripheriques(d.filter((x) => x.kind === "audioinput"));
+    }).catch(() => {
+      // Permission refusée : lister quand même (labels vides)
+      navigator.mediaDevices?.enumerateDevices().then((d) => {
+        if (d) setPeripheriques(d.filter((x) => x.kind === "audioinput"));
+      });
+    });
   }, []);
 
   const demarrer = async () => {

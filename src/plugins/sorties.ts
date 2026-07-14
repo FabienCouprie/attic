@@ -65,4 +65,23 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [buffer, midi] };
     },
   },
+  {
+    id: "point-ecoute-midi", nom: "Point d'écoute MIDI", nomEn: "MIDI Listening Point", univers: "Sorties", famille: "Écoute",
+    resume: "Auditionne le MIDI sans interrompre la chaîne.",
+    resumeEn: "Auditions the MIDI without interrupting the chain.",
+    entrees: [{ nom: "MIDI", type: "midi", requis: false }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", docEn: "Synthesis engine." },
+      { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
+    ],
+    async executer(ctx: any) {
+      const midi = ctx.entree(0);
+      if (!(midi instanceof File)) return { valeurs: [null, null], message: "Aucun MIDI." };
+      const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") as "FM/Oscillateurs" | "SoundFont";
+      const volume = ctx.paramNombre("Volume", 80);
+      const buffer = await rendreMidi(midi, mode, volume);
+      return { valeurs: [buffer, midi] };
+    },
+  },
 ] as PluginDef[]).map(avecDoc);

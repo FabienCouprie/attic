@@ -137,7 +137,7 @@ export const fiches: PluginDef[] = ([
     id: "sampler-personnalise", nom: "Sampler personnalisé", nomEn: "Custom Sampler", univers: "Entrées", famille: "Génération",
     resume: "Joue un échantillon audio comme un instrument mélodique.",
     resumeEn: "Plays an audio sample as a melodic instrument.",
-    entrees: [{ nom: "Échantillon", nomEn: "Sample", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do" },
@@ -154,22 +154,15 @@ export const fiches: PluginDef[] = ([
         sample = await decoderFichier(f, ctx.runtime);
         dureeAuto = sample.duration;
       } else {
-        const a = ctx.entree(0);
-        if (a instanceof AudioBuffer) {
-          sample = a;
-          dureeAuto = sample.duration;
-        } else {
-          const rep = await fetch("/soundbank/waterdrop.mp3");
-          if (rep.ok) { sample = await decoderBlob(await rep.blob(), ctx.runtime); dureeAuto = sample.duration; }
-          else { return { valeurs:[null], message:"Glissez un fichier ou branchez une source audio." }; }
-        }
+        const rep = await fetch("/soundbank/waterdrop.mp3");
+        if (rep.ok) { sample = await decoderBlob(await rep.blob(), ctx.runtime); dureeAuto = sample.duration; }
+        else { return { valeurs:[null], message:"Glissez un fichier audio sur le node." }; }
       }
       const cle = ctx.paramTexte("Clé","Do");
       const gamme = ctx.paramTexte("Gamme","Majeur");
       const tempo = ctx.paramNombre("Tempo",100);
       const dAuto = dureeAuto ?? sample.duration ?? 4;
-      const c = ctx.entree(1) as { debut?: number; duree?: number } | null;
-      const d = (c && typeof c.duree === "number") ? c.duree : Math.min(dAuto, ctx.paramNombre("Durée", 30));
+      const d = Math.min(dAuto, ctx.paramNombre("Durée", 30));
       const notes: { note: number; velocite: number; debut: number; fin: number }[] = [];
       const decalage = ({Do:0,"Do#":1,Ré:2,"Mi♭":3,Mi:4,Fa:5,"Fa#":6,Sol:7,"Sol#":8,La:9,"Si♭":10,Si:11} as Record<string,number>)[cle]??0;
       const deg = ({Majeur:[0,2,4,5,7,9,11],"Mineur naturel":[0,2,3,5,7,8,10],"Mineur harmonique":[0,2,3,5,7,8,11],"Pentatonique majeure":[0,2,4,7,9],"Pentatonique mineure":[0,3,5,7,10]} as Record<string,number[]>)[gamme]??[0,2,4,5,7,9,11];
@@ -610,6 +603,34 @@ export const fiches: PluginDef[] = ([
       ctx.onProgress("Génération multi-réservoirs…");
       const { buffer, details } = genererMultiReservoir(config);
       return { valeurs: [buffer], message: `${details} · graine ${config.graine > 0 ? config.graine : "auto"}` };
+    },
+  },
+  {
+    id: "sampler-midi", nom: "Sampler MIDI", nomEn: "MIDI Sampler", univers: "Traitement", famille: "Effets",
+    resume: "Joue les notes MIDI entrantes avec un échantillon audio chargé dans l'inspecteur.",
+    resumeEn: "Plays incoming MIDI notes with an audio sample loaded from the inspector.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume de sortie.", docEn: "Output volume." },
+      { nom: "Note référence", nomEn: "Reference note", plage: [21, 108], pas: 1, defaut: 60,
+        doc: "Note MIDI correspondant à la hauteur d'origine de l'échantillon (60 = Do central).", docEn: "MIDI note matching the original pitch of the sample (60 = middle C)." },
+    ],
+    async executer(ctx: any) {
+      const midiFile = ctx.entree(0);
+      if (!(midiFile instanceof File)) return { valeurs: [null, null], message: "Branchez un source MIDI." };
+      const audioFichier = ctx.noeud.data.audioFichier as File | undefined;
+      if (!audioFichier) return { valeurs: [null, midiFile], message: "Chargez un échantillon audio dans l'inspecteur." };
+      const sample = await decoderFichier(audioFichier, ctx.runtime);
+      const bytes = new Uint8Array(await midiFile.arrayBuffer());
+      const { notes } = analyserMidi(parseMidi(bytes));
+      if (!notes.length) return { valeurs: [null, midiFile], message: "Aucune note dans le MIDI." };
+      const vol = ctx.paramNombre("Volume", 80);
+      const noteRef = ctx.paramNombre("Note référence", 60);
+      const adapt = notes.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      const buf = rendreAvecEchantillon(adapt, sample, vol, noteRef);
+      return { valeurs: [buf, midiFile], message: `${notes.length} notes · échantillon ${audioFichier.name}` };
     },
   },
 ] as PluginDef[]).map(avecDoc);

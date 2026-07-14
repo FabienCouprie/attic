@@ -20,7 +20,7 @@ const COULEURS_EN = NOMS_COULEURS.map((c) => COULEURS[c].en);
 
 export const fiches: PluginDef[] = ([
   {
-    id: "couleur-suno-ia", nom: "Couleur → Suno IA", nomEn: "Color → Suno AI",
+    id: "couleur-suno-ia", nom: "Couleur → Son IA", nomEn: "Color → Sound AI",
     univers: "Autres", famille: "Génération",
     resume: "Génère un script Suno/Udio par IA depuis 1 ou 2 couleurs avec variabilité.",
     resumeEn: "Generates a Suno/Udio script via AI from 1 or 2 colors with variability.",

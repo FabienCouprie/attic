@@ -47,6 +47,8 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "reservoir-musical", mots: ["réservoir", "reservoir", "neural", "neuronal"], category: "source" },
   { ficheId: "reservoir-midi", mots: ["réservoir midi", "reservoir midi", "neural midi"], category: "source" },
   { ficheId: "multi-reservoirs", mots: ["multi-réservoir", "multi reservoir", "polyphonique"], category: "source" },
+  { ficheId: "sampler-midi", mots: ["sampler midi", "midi sampler", "échantillon midi", "sample midi"], category: "effet" },
+  { ficheId: "point-ecoute-midi", mots: ["point écoute midi", "midi listening", "écoute midi"], category: "sortie" },
   { ficheId: "musicgen", mots: ["musicgen", "ia music", "ai music", "text to music"], category: "source" },
   { ficheId: "source-texte", mots: ["entrée texte", "text input", "source texte", "text source"], category: "source" },
   { ficheId: "generateur-paroles", mots: ["générateur de paroles", "lyrics generator", "paroles", "lyrics"], category: "source" },
