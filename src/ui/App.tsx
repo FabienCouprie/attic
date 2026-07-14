@@ -208,7 +208,27 @@ function Atelier() {
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
   const [sf2List, setSf2List] = useState<string[]>([]);
   // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
+  // Historique pour undo (Ctrl+Z).
   const pressePapierRef = useRef<{ ficheId: string; parametres: Record<string, number | string>; width: number; height: number; data: Record<string, unknown> } | null>(null);
+  const historiqueRef = useRef<{ nodes: any[]; edges: any[] }[]>([]);
+  const MAX_HISTORIQUE = 50;
+
+  const pushHistorique = useCallback(() => {
+    historiqueRef.current.push({
+      nodes: JSON.parse(JSON.stringify(nodes.map((n) => ({ ...n, data: { ...n.data } })))),
+      edges: JSON.parse(JSON.stringify(edges)),
+    });
+    if (historiqueRef.current.length > MAX_HISTORIQUE) historiqueRef.current.shift();
+  }, [nodes, edges]);
+
+  const undo = useCallback(() => {
+    const prev = historiqueRef.current.pop();
+    if (!prev) return;
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+    setSel(null);
+    cacheExec.current.clear();
+  }, [setNodes, setEdges]);
 
   // Auto-load SF2 au démarrage
   useEffect(() => {
@@ -362,6 +382,7 @@ function Atelier() {
       data: {
         ficheId, parametres, statut: "attente",
         onSupprimerNoeud: (nid: string) => {
+          pushHistorique();
           setNodes((nds2) => nds2.filter((n) => n.id !== nid));
           setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
           setSel((prev) => prev?.id === nid ? null : prev);
@@ -401,6 +422,7 @@ function Atelier() {
   // Callbacks standard attachés à tout nœud (réutilisés par grouper/dégrouper).
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
+      pushHistorique();
       setNodes((nds2) => nds2.filter((n) => n.id !== nid));
       setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
       setSel((prev) => prev?.id === nid ? null : prev);
@@ -432,6 +454,24 @@ function Atelier() {
           width, height,
           data: {},
         };
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "x" && sel) {
+        e.preventDefault();
+        const def = trouverDef(sel.data.ficheId as string);
+        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
+        pressePapierRef.current = {
+          ficheId: sel.data.ficheId as string,
+          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
+          width, height,
+          data: {},
+        };
+        // Sauvegarder pour undo puis supprimer
+        pushHistorique();
+        const sid = sel.id;
+        setNodes((nds) => nds.filter((n) => n.id !== sid));
+        setEdges((eds) => eds.filter((e2) => e2.source !== sid && e2.target !== sid));
+        setSel(null);
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current) {
@@ -469,10 +509,15 @@ function Atelier() {
           }];
         });
       }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        undo();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sel, callbacksNoeud, setNodes]);
+  }, [sel, callbacksNoeud, setNodes, undo]);
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
@@ -518,12 +563,13 @@ function Atelier() {
   }, []);
 
   const onConnect: OnConnect = useCallback((conn) => {
+    pushHistorique();
     const defS = trouverDef(noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId ?? "");
     const si = parseInt((conn.sourceHandle ?? "out:0").split(":")[1]);
     const typeP = defS?.sorties[si]?.type ?? "audio";
     const c = couleurFlux(typeP);
     setEdges((eds) => [...eds, { ...conn, id: `e-${conn.source}-${conn.target}-${Date.now()}`, type: "arete-personnalisee", style: { stroke: c, strokeWidth: 2.5 } }]);
-  }, [setEdges]);
+  }, [setEdges, pushHistorique]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
   const { exporter, importer } = usePersistance({
@@ -648,6 +694,7 @@ function Atelier() {
           selectionOnDrag={false}
           selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {
+            pushHistorique();
             const ids = new Set(deletedNodes.map((n) => n.id));
             setEdges((eds) => eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)));
           }}

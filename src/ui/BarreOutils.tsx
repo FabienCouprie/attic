@@ -113,6 +113,12 @@ export function BarreOutils(props: Props) {
         )}
       </div>
       <span className="attic-spacer" />
+      <button className="attic-btn-icon" title={t("maj.verification")} onClick={() => (window as any).api?.majVerifier?.()}
+        style={{ width: 28, height: 28 }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M8 1v6l4 2" /><circle cx="8" cy="8" r="7" />
+        </svg>
+      </button>
       {maj && maj.statut === "disponible" && (
         <span style={{ fontSize: 11, color: "#e9b949", marginRight: 8, userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
           ↓ v{maj.version}
@@ -137,7 +143,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.1</span>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
         {enExecution ? "…" : t("btn.lancer")}

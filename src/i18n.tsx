@@ -99,7 +99,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "maj.pret": { fr: "Mise à jour prête — relancer pour installer", en: "Update ready — restart to install" },
   "maj.relancer": { fr: "Relancer", en: "Restart" },
   "maj.a-jour": { fr: "À jour", en: "Up to date" },
-  "maj.verification": { fr: "Vérification…", en: "Checking…" },
+  "maj.verification": { fr: "Vérifier les mises à jour", en: "Check for updates" },
   "maj.erreur": { fr: "Erreur de mise à jour", en: "Update error" },
   "maj.indisponible": { fr: "Mises à jour indisponibles (mode dev)", en: "Updates unavailable (dev mode)" },
 };
