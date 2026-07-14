@@ -1,0 +1,124 @@
+# File Line Count
+
+Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
+
+| File | Lines |
+|---|---|
+| src/audio/accords.ts | 171 |
+| src/audio/adaptateur.ts | 29 |
+| src/audio/analyse.ts | 711 |
+| src/audio/batterie.ts | 118 |
+| src/audio/bruit.ts | 41 |
+| src/audio/commun.ts | 157 |
+| src/audio/convolution.ts | 156 |
+| src/audio/couleurs.ts | 269 |
+| src/audio/effets-dynamique.ts | 448 |
+| src/audio/effets-montage.ts | 240 |
+| src/audio/effets-spectral.ts | 346 |
+| src/audio/effets-temporel.ts | 386 |
+| src/audio/enveloppe.ts | 33 |
+| src/audio/evolution.ts | 151 |
+| src/audio/fft.test.ts | 35 |
+| src/audio/fft.ts | 41 |
+| src/audio/formants.ts | 165 |
+| src/audio/generation.ts | 743 |
+| src/audio/graphe-embarque.ts | 46 |
+| src/audio/index.ts | 29 |
+| src/audio/io.ts | 250 |
+| src/audio/melodie.ts | 119 |
+| src/audio/midi.ts | 650 |
+| src/audio/multi-reservoir.ts | 211 |
+| src/audio/reservoir.ts | 243 |
+| src/audio/soundfont.ts | 224 |
+| src/audio/vumetre.ts | 120 |
+| **audio/ total** | **5,715** |
+| src/core/cache.test.ts | 208 |
+| src/core/cloisonnement.test.ts | 74 |
+| src/core/domaine-nombre.test.ts | 350 |
+| src/core/graphe.test.ts | 57 |
+| src/core/graphe.ts | 75 |
+| src/core/index.ts | 17 |
+| src/core/meta.test.ts | 144 |
+| src/core/meta.ts | 256 |
+| src/core/metastore.ts | 63 |
+| src/core/nodes-installes.ts | 125 |
+| src/core/pertes.ts | 67 |
+| src/core/registre.test.ts | 33 |
+| src/core/registre.ts | 97 |
+| src/core/types.ts | 81 |
+| src/core/typesFlux.test.ts | 36 |
+| src/core/typesFlux.ts | 10 |
+| src/core/validation.ts | 113 |
+| **core/ total** | **1,896** |
+| src/i18n.tsx | 137 |
+| src/ia.ts | 412 |
+| src/main.tsx | 8 |
+| src/shims.d.ts | 2 |
+| **root total** | **559** |
+| src/plugins/analyse.ts | 120 |
+| src/plugins/collections.ts | 146 |
+| src/plugins/couleur-suno-ia.ts | 120 |
+| src/plugins/effets.ts | 660 |
+| src/plugins/emotions.ts | 144 |
+| src/plugins/entrees.ts | 124 |
+| src/plugins/entrees-extra.ts | 28 |
+| src/plugins/enveloppe.ts | 36 |
+| src/plugins/frontiere.ts | 31 |
+| src/plugins/galerie-exposition.ts | 201 |
+| src/plugins/generateur-paroles.ts | 157 |
+| src/plugins/generateurs.ts | 626 |
+| src/plugins/generateur-script-ia.ts | 130 |
+| src/plugins/gestion-nodes.ts | 158 |
+| src/plugins/index.ts | 72 |
+| src/plugins/instruments.ts | 131 |
+| src/plugins/meta-exemples.ts | 67 |
+| src/plugins/montage.ts | 281 |
+| src/plugins/musicgen.ts | 66 |
+| src/plugins/notices.ts | 191 |
+| src/plugins/pochette.ts | 40 |
+| src/plugins/prompt-graphe.ts | 226 |
+| src/plugins/python-processor.ts | 239 |
+| src/plugins/separation.ts | 93 |
+| src/plugins/sequenceurs.ts | 114 |
+| src/plugins/sortie-conversion.ts | 82 |
+| src/plugins/sorties.ts | 85 |
+| src/plugins/sortie-texte.ts | 20 |
+| src/plugins/soundfontGlobal.ts | 74 |
+| src/plugins/speech-to-text.ts | 132 |
+| src/plugins/styles-musicaux.ts | 176 |
+| src/plugins/tessitures.ts | 105 |
+| src/plugins/texte-provider.ts | 24 |
+| src/plugins/textgen.ts | 280 |
+| src/plugins/traduction.ts | 142 |
+| src/plugins/tts.ts | 118 |
+| src/plugins/typesFlux.ts | 3 |
+| src/plugins/visualisation.ts | 190 |
+| **plugins/ total** | **4,945** |
+| src/ui/App.tsx | 647 |
+| src/ui/AretePersonnalisee.tsx | 8 |
+| src/ui/atelier.css | 460 |
+| src/ui/AtelierNode.tsx | 169 |
+| src/ui/BarreOutils.tsx | 141 |
+| src/ui/clavier.css | 28 |
+| src/ui/ColorSynth.tsx | 181 |
+| src/ui/EnveloppeADSR.tsx | 70 |
+| src/ui/ErreurBoundary.tsx | 25 |
+| src/ui/FormeOnde.tsx | 436 |
+| src/ui/hooks/useExecutionGraphe.ts | 270 |
+| src/ui/hooks/useMetaComposants.ts | 170 |
+| src/ui/hooks/usePersistance.ts | 160 |
+| src/ui/ids.ts | 10 |
+| src/ui/Inspector.tsx | 310 |
+| src/ui/metasLocaux.ts | 64 |
+| src/ui/OscilloVue.tsx | 119 |
+| src/ui/Palette.tsx | 102 |
+| src/ui/PochetteGen.tsx | 245 |
+| src/ui/ReponseFiltre.tsx | 99 |
+| src/ui/SequenceurBatterie.tsx | 44 |
+| src/ui/SequenceurMelodique.tsx | 57 |
+| src/ui/Spectre.tsx | 221 |
+| src/ui/Spectrogramme.tsx | 112 |
+| src/ui/vues.tsx | 952 |
+| src/ui/VuMetre.tsx | 145 |
+| **ui/ total** | **5,476** |
+| **Grand total** | **18,591** |
