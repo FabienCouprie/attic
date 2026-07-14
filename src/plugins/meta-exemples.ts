@@ -7,8 +7,6 @@ import { enregistrerMeta, tousLesMetas } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { MetaComposant } from "../core";
 
-const CLE_LANCEMENT = "attic-metas-exemples-installes";
-
 const synthetiseurSoustractif: MetaComposant = {
   id: "meta-synth-soustractif",
   nom: "Synthétiseur soustractif",
@@ -55,7 +53,7 @@ const synthetiseurSoustractif: MetaComposant = {
 };
 
 export function installerMetasExemples(): void {
-  // Réinstaller si : pas encore fait OU si les métas ont été perdus (mise à jour)
+  // Réinstaller si le méta-exemple n'est pas présent dans le registre
   const metasExistants = tousLesMetas();
   const exemplePresent = metasExistants.some((m) => m.id === synthetiseurSoustractif.id);
   if (exemplePresent) return;
@@ -69,6 +67,5 @@ export function installerMetasExemples(): void {
   }
 
   enregistrerMeta(synthetiseurSoustractif);
-  localStorage.setItem(CLE_LANCEMENT, "1");
   console.log("[attic] Méta exemple « Synthétiseur soustractif » installé");
 }

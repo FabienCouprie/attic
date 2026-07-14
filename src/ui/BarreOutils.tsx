@@ -196,7 +196,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.4</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.5</span>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
         {enExecution ? "…" : t("btn.lancer")}

@@ -891,10 +891,26 @@ ipcMain.on("maj:restaurer-backup-sync", (event) => {
 });
 
 app.whenReady().then(() => {
-  // Supprimer le menu par défaut d'Electron (Edit, View, etc.)
   Menu.setApplicationMenu(null);
   creerFenetre();
-  // Ne pas vérifier automatiquement au démarrage — l'utilisateur clique sur le bouton horloge
+  if (DEV && fenetre) {
+    fenetre.webContents.openDevTools({ mode: "detach" });
+  }
+  // F12 pour ouvrir/fermer les devTools (le menu par défaut qui le permettait a été supprimé)
+  app.on("web-contents-created", (_e, contents) => {
+    contents.on("before-input-event", (event, input) => {
+      if (input.key === "F12") {
+        if (fenetre && !fenetre.isDestroyed()) {
+          if (fenetre.webContents.isDevToolsOpened()) {
+            fenetre.webContents.closeDevTools();
+          } else {
+            fenetre.webContents.openDevTools({ mode: "detach" });
+          }
+          event.preventDefault();
+        }
+      }
+    });
+  });
 });
 
 app.on("window-all-closed", () => {

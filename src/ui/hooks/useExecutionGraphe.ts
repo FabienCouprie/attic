@@ -141,6 +141,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!noeudsEnErreur.has(id)) definirStatut(id, "attente");
     }
 
+    // Marquer les méta-nœuds visibles comme "en_cours"
+    for (const n of noeudsRef.current) {
+      const meta = trouverMeta(n.data.ficheId as string);
+      if (meta && !noeudsEnErreur.has(n.id)) {
+        console.log(`[attic] Méta « ${n.data.ficheId} » (id=${n.id}) -> en_cours`);
+        definirStatut(n.id, "en_cours");
+      }
+    }
+
     const ctx = obtenirAudio();
     const resultats = new Map<string, TypeValeur[]>();
     const messages = new Map<string, string>();
@@ -231,6 +240,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
         const grapheExport = (n.data as any)?._grapheExport as string | undefined;
         const url = audio ? URL.createObjectURL(bufferVersWavBlob(audio, grapheExport)) : undefined;
+        // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
+        if (meta) {
+          const aResultat = valsSafe.some((v) => v != null);
+          if (!aResultat && !messages.has(n.id)) {
+            // Les nœuds internes n'ont pas encore produit de résultat
+            // → garder le statut "en_cours" (défini plus haut)
+            return n;
+          }
+        }
         return {
           ...n,
           data: {
