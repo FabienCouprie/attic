@@ -3,7 +3,7 @@
 // Au premier lancement, ces métas sont enregistrés dans le registre et
 // persistés en localStorage. L'utilisateur les voit dans la palette dès le
 // démarrage, sans avoir à les créer.
-import { enregistrerMeta } from "../core";
+import { enregistrerMeta, tousLesMetas } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { MetaComposant } from "../core";
 
@@ -55,9 +55,10 @@ const synthetiseurSoustractif: MetaComposant = {
 };
 
 export function installerMetasExemples(): void {
-  // Ne faire qu'une seule fois (au premier lancement)
-  if (localStorage.getItem(CLE_LANCEMENT)) return;
-  localStorage.setItem(CLE_LANCEMENT, "1");
+  // Réinstaller si : pas encore fait OU si les métas ont été perdus (mise à jour)
+  const metasExistants = tousLesMetas();
+  const exemplePresent = metasExistants.some((m) => m.id === synthetiseurSoustractif.id);
+  if (exemplePresent) return;
 
   // Vérifier que les sous-nodes existent dans le registre
   const ficheIds = synthetiseurSoustractif.sousNoeuds.map((n) => n.data.ficheId);
@@ -68,5 +69,6 @@ export function installerMetasExemples(): void {
   }
 
   enregistrerMeta(synthetiseurSoustractif);
+  localStorage.setItem(CLE_LANCEMENT, "1");
   console.log("[attic] Méta exemple « Synthétiseur soustractif » installé");
 }

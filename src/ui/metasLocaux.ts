@@ -40,9 +40,13 @@ export function sauvegarderMetasLocaux(): void {
 export function chargerMetasLocaux(): number {
   try {
     const brut = localStorage.getItem(CLE);
-    if (!brut) return 0;
+    if (!brut) {
+      console.log("[attic] chargerMetasLocaux: aucun méta en localStorage");
+      return 0;
+    }
     const liste = JSON.parse(brut);
     if (!Array.isArray(liste)) return 0;
+    console.log(`[attic] chargerMetasLocaux: ${liste.length} méta(s) trouvé(s) en localStorage`);
     const idsPersistes = new Set(liste.map((m: any) => m?.id));
     const valides: any[] = [];
     let n = 0;
@@ -50,7 +54,9 @@ export function chargerMetasLocaux(): number {
       if (!m?.id || !m?.nom || !Array.isArray(m.sousNoeuds)) continue;
       const invalide = m.sousNoeuds.filter((sn: any) => {
         const fid = sn?.data?.ficheId;
-        return !(typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid)));
+        const connu = typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid));
+        if (!connu) console.warn(`[attic] chargerMetasLocaux: ficheId « ${fid} » non trouvé dans le registre`);
+        return !connu;
       });
       if (invalide.length === 0) {
         enregistrerMeta(m as MetaComposant);

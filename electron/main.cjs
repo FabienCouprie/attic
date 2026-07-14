@@ -798,6 +798,15 @@ if (autoUpdater) {
   autoUpdater.on("update-downloaded", (info) => {
     infoMaj.statut = "pret";
     infoMaj.version = info.version;
+    // Sauvegarder les métas et l'en-cours avant l'installation
+    try {
+      const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
+      const backup: any = {};
+      // Le renderer ne peut pas écrire directement dans userData,
+      // mais on peut sauvegarder le localStorage via le main process
+      // en demandant au renderer de nous l'envoyer
+      fenetre?.webContents.send("maj:backup-demande");
+    } catch {}
     envoyerInfoMaj();
   });
   autoUpdater.on("error", (err) => {
@@ -841,6 +850,33 @@ ipcMain.handle("maj:info", async () => infoMaj);
 ipcMain.handle("maj:installer-relancer", async () => {
   if (autoUpdater) {
     autoUpdater.quitAndInstall();
+  }
+});
+
+// Sauvegarde des données avant mise à jour
+ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
+  try {
+    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
+    fs.writeFileSync(dataPath, JSON.stringify(data), "utf-8");
+    console.log("[attic] Backup sauvegardé:", dataPath);
+    return true;
+  } catch (e) {
+    console.error("[attic] Backup échoué:", e);
+    return false;
+  }
+});
+
+// Restauration des données après mise à jour (synchrone)
+ipcMain.on("maj:restaurer-backup-sync", (event) => {
+  try {
+    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
+    if (!fs.existsSync(dataPath)) { event.returnValue = null; return; }
+    const data = fs.readFileSync(dataPath, "utf-8");
+    fs.unlinkSync(dataPath);
+    console.log("[attic] Backup restauré (sync)");
+    event.returnValue = JSON.parse(data);
+  } catch {
+    event.returnValue = null;
   }
 });
 

@@ -40,8 +40,20 @@ import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { chargerNodesInstalles } from "../core";
-// Restaure les méta-composants persistés AVANT le premier rendu (donc avant que
-// la palette ne lise tousLesPlugins) : le catalogue de métas est ainsi permanent.
+// Restaure les données de backup si on vient d'une mise à jour (synchrone)
+const api0 = (window as any).api;
+if (api0?.majRestaurerBackupSync) {
+  const backup = api0.majRestaurerBackupSync();
+  if (backup) {
+    console.log("[attic] Restauration backup post-mise-à-jour");
+    if (backup.metas) localStorage.setItem("attic-metas", backup.metas);
+    if (backup.encours) localStorage.setItem("attic-encours", backup.encours);
+    if (backup.lang) localStorage.setItem("attic-lang", backup.lang);
+    if (backup.nodesInstalles) localStorage.setItem("attic-nodes-installes", backup.nodesInstalles);
+  }
+}
+const nbPluginsAvant = tousLesPlugins().length;
+console.log(`[attic] Plugins avant chargerMetasLocaux: ${nbPluginsAvant}`);
 chargerMetasLocaux();
 installerMetasExemples();
 // Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.

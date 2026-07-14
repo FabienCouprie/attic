@@ -51,6 +51,18 @@ export function BarreOutils(props: Props) {
     if (!api?.majEvenement) return;
     api.majEvenement((info: any) => { setMaj(info); setVerifEnCours(false); });
     api.majInfo?.().then((info: any) => { if (info) setMaj(info); });
+    // Quand une mise à jour est téléchargée, sauvegarder les données
+    if (api?.majBackupDemande) {
+      api.majBackupDemande(() => {
+        const backup = {
+          metas: localStorage.getItem("attic-metas"),
+          encours: localStorage.getItem("attic-encours"),
+          lang: localStorage.getItem("attic-lang"),
+          nodesInstalles: localStorage.getItem("attic-nodes-installes"),
+        };
+        api.majSauvegarderBackup?.(backup);
+      });
+    }
   }, []);
 
   const verifierMaj = async () => {
@@ -175,7 +187,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.3</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.0.4</span>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
         {enExecution ? "…" : t("btn.lancer")}
