@@ -8,7 +8,7 @@ Nodal audio processing framework with AI integration. Build audio processing gra
 
   2 - To obtain a reusable framework (UI + core) for other use cases.
 
-It was built by dialing the whimsicality up to eleven, intentionally blending serious features with utterly improbable ones to stress-test the robustness and flexibility of the underlying framework. It is designed to be a creativity assistant, allowing you to chain together elements in two clicks that would normally be highly difficult to connect."
+It was built by dialing the whimsicality up to eleven, intentionally blending serious features with utterly improbable ones to stress-test the robustness and flexibility of the underlying framework. It is designed to be a creativity assistant, allowing you to chain together elements in two clicks that would normally be difficult to connect."
 
 ## Features
 
