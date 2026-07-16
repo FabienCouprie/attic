@@ -19,7 +19,9 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
   - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 10 languages)
   - GPT-2 / OPUS-MT — lyrics generation + translation (18 language pairs)
   - Demucs 6-stem / MDX-Net — AI source separation (drums, bass, vocals, guitar, piano, other)
-- **Python Processor node** — write custom audio/MIDI/text processing in Python (numpy + wave), executed via detected Python installation
+  - Ollama — local LLMs (Llama, Qwen, Mistral…) for text/lyrics generation via a local Ollama server
+- **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio; powers the "LLM composer" workflow (Ollama → Text→MIDI), shipped as the built-in "Compositeur IA" meta-example
+- **Python / Julia Processor nodes** — write custom audio/MIDI/text processing in Python (numpy + wave) or Julia, executed via a detected local install
 - **Bilingual UI** (FR/EN) with React 19 + @xyflow/react
 - **Node import/export** — package custom nodes as `.zip` (manifest + executer + notice + dependencies), persisted in localStorage
 - **Metacomponents** — encapsulate sub-graphs as reusable nodes
@@ -114,6 +116,7 @@ electron/
 
 ## Documentation
 
+- [`CHANGELOG.md`](CHANGELOG.md) — Release notes per version
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Technical framework spec
 - [`ROADMAP.md`](ROADMAP.md) — Project roadmap (4 visions)
 - [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — 176 exercises in 22 categories
