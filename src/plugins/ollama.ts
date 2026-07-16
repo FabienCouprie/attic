@@ -18,7 +18,11 @@ async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: opts.model, prompt: opts.prompt, stream: false, options: opts.options || {} }),
     });
-    if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };
+    if (!r.ok) {
+      let detail = "";
+      try { const b = await r.json(); if (b && b.error) detail = ` — ${b.error}`; } catch { /* corps non-JSON */ }
+      return { erreur: `Ollama HTTP ${r.status}${detail}` };
+    }
     const d = await r.json();
     return { reponse: d.response ?? "" };
   } catch (e) {

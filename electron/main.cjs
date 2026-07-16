@@ -756,7 +756,13 @@ ipcMain.handle("ollama:generer", async (_event, options) => {
       signal: ctrl.signal,
     });
     clearTimeout(timer);
-    if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };
+    if (!r.ok) {
+      // Remonter le message d'Ollama (ex. « model "llama3.2" not found, try
+      // pulling it first » sur un 404) au lieu d'un simple code HTTP.
+      let detail = "";
+      try { const b = await r.json(); if (b && b.error) detail = ` — ${b.error}`; } catch {}
+      return { erreur: `Ollama HTTP ${r.status}${detail}` };
+    }
     const data = await r.json();
     return { reponse: data.response ?? "" };
   } catch (e) {
