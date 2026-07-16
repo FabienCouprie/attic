@@ -35,6 +35,16 @@ export function usePersistance(o: OptionsPersistance) {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
 
+    // ── Garde anti-perte : exporter un canevas vide alors que des métas existent ──
+    // est presque toujours une erreur (c'est ainsi qu'un workflow perd ses nœuds :
+    // le fichier ne garde que le catalogue de métas). Confirmer avant d'exporter.
+    const metasActuels = tousLesMetas();
+    if (racine.nodes.length === 0 && metasActuels.length > 0) {
+      const ok = typeof confirm === "undefined" ||
+        confirm(`Le canevas est vide mais ${metasActuels.length} méta-composant(s) existent.\n\nExporter quand même ? Le fichier ne contiendra AUCUN nœud de canevas.`);
+      if (!ok) return;
+    }
+
     // ── Détection des pertes de données (Chantier B) ──
     const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
     for (const n of racine.nodes) {
@@ -120,9 +130,28 @@ export function usePersistance(o: OptionsPersistance) {
     } else {
       return;
     }
-    const json = JSON.parse(texte);
-    // Ré-enregistrer les méta-composants AVANT de reconstruire les nœuds.
-    for (const m of (json.metas || [])) enregistrerMeta(m as MetaComposant);
+    let json: any;
+    try {
+      json = JSON.parse(texte);
+    } catch (e) {
+      console.error("[attic] Import : JSON invalide", e);
+      if (typeof alert !== "undefined") alert("Import échoué : fichier JSON invalide ou corrompu. Le canevas n'a pas été modifié.");
+      return;
+    }
+    // Fichier sans nœud de canevas mais avec des métas : le canevas sera vide (les
+    // métas ne sont que des définitions de catalogue). Prévenir pour qu'un canevas
+    // vide ne soit pas pris pour un échec d'import (cf. workflow aux nœuds perdus).
+    const nbNoeuds = Array.isArray(json.nodes) ? json.nodes.length : 0;
+    const nbMetas = Array.isArray(json.metas) ? json.metas.length : 0;
+    if (nbNoeuds === 0 && nbMetas > 0 && typeof alert !== "undefined") {
+      alert(`Ce fichier ne contient aucun nœud de canevas (${nbMetas} méta-composant(s) ajouté(s) au catalogue).\n\nLe canevas restera vide : les nœuds de ce workflow n'ont pas été sauvegardés dans le fichier.`);
+    }
+    // Ré-enregistrer les méta-composants AVANT de reconstruire les nœuds. Un méta
+    // défaillant ne doit pas interrompre tout l'import (les autres + les nœuds passent).
+    for (const m of (json.metas || [])) {
+      try { enregistrerMeta(m as MetaComposant); }
+      catch (e) { console.error(`[attic] Import : méta « ${(m as any)?.id} » non enregistré`, e); }
+    }
     // On repart à la racine (fin d'une éventuelle navigation dans un méta).
     o.setPile([]);
     o.grapheRacineRef.current = null;

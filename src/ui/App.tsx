@@ -636,8 +636,23 @@ function Atelier() {
           onExporter={exporter}
           onSauvegarder={() => {
             try {
+              // Sauver le contexte courant : grapheRacineRef contient alors le graphe
+              // RACINE même si l'on est descendu dans un méta-composant. Sinon on
+              // écrasait la sauvegarde du canevas avec l'intérieur du méta affiché.
+              sauvegarderContexteCourant();
+              const racine = grapheRacineRef.current ?? { nodes, edges };
+              // Garde anti-perte : ne pas écraser une sauvegarde non-vide par un
+              // canevas vide (crash/restauration laissant la racine vide).
+              if (racine.nodes.length === 0) {
+                let ancienNonVide = false;
+                try {
+                  const a = localStorage.getItem("attic-encours");
+                  ancienNonVide = !!a && Array.isArray(JSON.parse(a).nodes) && JSON.parse(a).nodes.length > 0;
+                } catch { /* sauvegarde illisible : on laisse écraser */ }
+                if (ancienNonVide && !window.confirm("Le canevas est vide. Écraser la sauvegarde existante (non vide) ?")) return;
+              }
               const data = {
-                nodes: nodes.map((n: any) => ({
+                nodes: racine.nodes.map((n: any) => ({
                   id: n.id, type: n.type, position: n.position, width: n.width, height: n.height,
                   data: {
                     ficheId: n.data.ficheId,
@@ -645,7 +660,7 @@ function Atelier() {
                     zonesSelectionnees: n.data.zonesSelectionnees,
                   },
                 })),
-                edges: edges.map((e: any) => ({
+                edges: racine.edges.map((e: any) => ({
                   id: e.id, source: e.source, target: e.target,
                   sourceHandle: e.sourceHandle, targetHandle: e.targetHandle,
                 })),
