@@ -149,7 +149,7 @@ function creerFenetre() {
     "media-src 'self' blob: data: stream:",
     "img-src 'self' blob: data:",
     "worker-src 'self' blob:",
-    "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co blob: data:",
+    "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co http://127.0.0.1:11434 http://localhost:11434 blob: data:",
   ].join("; ");
 
   // Injecter la CSP via onHeadersReceived (intercepte toutes les réponses)
@@ -727,6 +727,50 @@ ipcMain.handle("julia:executer", async (_event, options) => {
     return result;
   } catch (err) {
     return { ok: false, erreur: String(err?.message || err) };
+  }
+});
+
+// --- IPC : Ollama (LLM local) ---
+// Proxy vers le serveur Ollama local (port 11434) depuis le main process : évite
+// la CSP et le CORS du renderer. fetch global (Node 18+ via Electron).
+const OLLAMA_BASE = process.env.ATTIC_OLLAMA_URL || "http://127.0.0.1:11434";
+function erreurOllama(e) {
+  const s = String(e?.cause?.code || e?.message || e);
+  if (e?.name === "AbortError") return "Délai dépassé";
+  if (/ECONNREFUSED|ENOTFOUND|fetch failed/i.test(s)) return "Serveur Ollama injoignable sur :11434 (lancez « ollama serve »).";
+  return s;
+}
+ipcMain.handle("ollama:generer", async (_event, options) => {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), options?.timeout || 120000);
+    const r = await fetch(`${OLLAMA_BASE}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: options?.model || "llama3.2",
+        prompt: options?.prompt || "",
+        stream: false,
+        options: options?.options || {},
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };
+    const data = await r.json();
+    return { reponse: data.response ?? "" };
+  } catch (e) {
+    return { erreur: erreurOllama(e) };
+  }
+});
+ipcMain.handle("ollama:modeles", async () => {
+  try {
+    const r = await fetch(`${OLLAMA_BASE}/api/tags`);
+    if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };
+    const data = await r.json();
+    return { modeles: (data.models || []).map((m) => m.name) };
+  } catch (e) {
+    return { erreur: erreurOllama(e) };
   }
 });
 

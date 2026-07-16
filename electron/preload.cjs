@@ -39,6 +39,10 @@ contextBridge.exposeInMainWorld("api", {
   juliaExecuter: (options) => ipcRenderer.invoke("julia:executer", options),
   juliaDefinirChemin: (chemin) => ipcRenderer.invoke("julia:definir-chemin", chemin),
   juliaChoisirExecutable: () => ipcRenderer.invoke("julia:choisir-executable"),
+
+  // Ollama (LLM local) — appelé côté main pour éviter CSP/CORS du renderer.
+  ollamaGenerer: (options) => ipcRenderer.invoke("ollama:generer", options),
+  ollamaModeles: () => ipcRenderer.invoke("ollama:modeles"),
   lireBinaire: (chemin) => ipcRenderer.invoke("fichier:lire-binaire", chemin),
   lireTexte: (chemin) => ipcRenderer.invoke("fichier:lire-texte", chemin),
   supprimerFichier: (chemin) => ipcRenderer.invoke("fichier:supprimer", chemin),

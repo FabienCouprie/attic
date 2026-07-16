@@ -37,6 +37,7 @@ import { fiches as f_python_processor } from "./python-processor";
 import { fiches as f_julia_processor } from "./julia-processor";
 import { fiches as f_frontiere } from "./frontiere";
 import { fiches as f_couleur_suno_ia } from "./couleur-suno-ia";
+import { fiches as f_ollama } from "./ollama";
 
 export const toutesLesFiches: PluginDef[] = [
   ...f_entrees,
@@ -73,4 +74,5 @@ export const toutesLesFiches: PluginDef[] = [
   ...f_julia_processor,
   ...f_frontiere,
   ...f_couleur_suno_ia,
+  ...f_ollama,
 ];
