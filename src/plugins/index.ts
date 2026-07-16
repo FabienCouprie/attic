@@ -38,6 +38,7 @@ import { fiches as f_julia_processor } from "./julia-processor";
 import { fiches as f_frontiere } from "./frontiere";
 import { fiches as f_couleur_suno_ia } from "./couleur-suno-ia";
 import { fiches as f_ollama } from "./ollama";
+import { fiches as f_texte_vers_midi } from "./texte-vers-midi";
 
 export const toutesLesFiches: PluginDef[] = [
   ...f_entrees,
@@ -75,4 +76,5 @@ export const toutesLesFiches: PluginDef[] = [
   ...f_frontiere,
   ...f_couleur_suno_ia,
   ...f_ollama,
+  ...f_texte_vers_midi,
 ];
