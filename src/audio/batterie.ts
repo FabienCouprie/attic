@@ -122,5 +122,19 @@ export async function rendreSequenceurBatterie(
     if (grille[4]?.[s]) jouerClap(t);
   }
 
-  return offline.startRendering();
+  const rendu = await offline.startRendering();
+  // Renvoie exactement la longueur musicale du motif (sans les 0,4 s de silence
+  // de fin) pour un bouclage sans couture. La queue de décroissance du dernier
+  // son (qui déborde) est repliée sur le début → continuité au point de bouclage,
+  // pas de clic ni d'espace vide à chaque itération.
+  const barLen = Math.round(totalPas * stepDur * sr);
+  if (barLen >= rendu.length) return rendu;
+  const out = new AudioBuffer({ numberOfChannels: rendu.numberOfChannels, length: barLen, sampleRate: sr });
+  for (let c = 0; c < rendu.numberOfChannels; c++) {
+    const src = rendu.getChannelData(c);
+    const dst = out.getChannelData(c);
+    dst.set(src.subarray(0, barLen));
+    for (let i = barLen; i < src.length; i++) dst[i - barLen] += src[i]; // repli de la queue
+  }
+  return out;
 }

@@ -132,5 +132,17 @@ export async function rendreSequenceurMelodique(
     }
   }
 
-  return offline.startRendering();
+  const rendu = await offline.startRendering();
+  // Longueur musicale exacte (sans les 0,5 s de silence de fin) + repli de la
+  // queue de décroissance sur le début → bouclage sans couture (cf. batterie).
+  const barLen = Math.round(totalPas * stepDur * sr);
+  if (barLen >= rendu.length) return rendu;
+  const out = new AudioBuffer({ numberOfChannels: rendu.numberOfChannels, length: barLen, sampleRate: sr });
+  for (let c = 0; c < rendu.numberOfChannels; c++) {
+    const src = rendu.getChannelData(c);
+    const dst = out.getChannelData(c);
+    dst.set(src.subarray(0, barLen));
+    for (let i = barLen; i < src.length; i++) dst[i - barLen] += src[i];
+  }
+  return out;
 }
