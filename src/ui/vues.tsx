@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
+import { copierTexte } from "./copier";
 import { FormeOnde } from "./FormeOnde";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
@@ -993,10 +994,15 @@ function VueCouleurSunoIA({ data }: VueProps) {
         )}
       </div>
       {texte ? (
-        <div style={{
-          maxHeight: 160, overflowY: "auto", fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap",
-          background: "#0d1117", borderRadius: 4, padding: "6px 8px", color: "var(--texte, #cbd5e1)",
-        }}>{texte}</div>
+        <div style={{ position: "relative" }}>
+          <button className="attic-node-copy-btn nodrag" title={t("btn.copier")}
+            onClick={(e) => { e.stopPropagation(); copierTexte(texte); }}
+            style={{ position: "absolute", top: 4, right: 4, zIndex: 1 }}>⧉</button>
+          <div style={{
+            maxHeight: 160, overflowY: "auto", fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap",
+            background: "#0d1117", borderRadius: 4, padding: "6px 22px 6px 8px", color: "var(--texte, #cbd5e1)",
+          }}>{texte}</div>
+        </div>
       ) : (
         <div style={{ fontSize: 11, opacity: 0.5, padding: "4px" }}>{t("export.avantLancer")}</div>
       )}
