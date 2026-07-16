@@ -10,9 +10,9 @@ const COULEURS: Record<string, string> = {
   Autres: "#fab005",
 };
 
-interface Props { plugins: PluginDef[]; onAjouter: (id: string) => void; onSupprimerMeta?: (id: string) => void }
+interface Props { plugins: PluginDef[]; onSupprimerMeta?: (id: string) => void }
 
-export function Palette({ plugins, onAjouter, onSupprimerMeta }: Props) {
+export function Palette({ plugins, onSupprimerMeta }: Props) {
   const [q, setQ] = useState("");
   const { t, lang } = useI18n();
 
@@ -87,9 +87,8 @@ export function Palette({ plugins, onAjouter, onSupprimerMeta }: Props) {
                     <span className="palette-compteur">{fg.defs.length}</span>
                   </div>
                   {ouvert(cle) && fg.defs.map((def) => (
-                    <div key={def.id} className="palette-composant" draggable
+                    <div key={def.id} className="palette-composant" draggable style={{ cursor: "grab" }}
                       onDragStart={(e) => { e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
-                      onClick={() => onAjouter(def.id)}
                       title={def.resume}
                     >
                       <span className="palette-composant-puce" style={{ background: COULEURS[g.univers] ?? "#999" }} />

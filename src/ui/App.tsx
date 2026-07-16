@@ -595,7 +595,6 @@ function Atelier() {
     <div className="attic-app">
       <Palette
         plugins={plugins.filter((p) => !estFrontiere(p.id))}
-        onAjouter={(id) => ajouterNoeud(id)}
         onSupprimerMeta={(id) => {
           const nom = trouverMeta(id)?.nom ?? id;
           if (!window.confirm(`Supprimer le méta-composant « ${nom} » du catalogue ?`)) return;
