@@ -212,6 +212,28 @@ export const fiches: PluginDef[] = ([
       return { valeurs:[out], message: `${reps} × ${a.duration.toFixed(2)}s = ${out.duration.toFixed(2)}s` };
     },
   },
+  {
+    id: "boucle-x3", nom: "Boucle ×3 (test)", nomEn: "Loop ×3 (test)", univers: "Traitement", famille: "Montage",
+    resume: "Répète l'entrée exactement 3 fois, sans aucun paramètre (diagnostic).",
+    resumeEn: "Repeats the input exactly 3 times, with no parameters (diagnostic).",
+    notice: "Concaténation pure : sortie = 3 × durée d'entrée, sans fondu ni paramètre. Confirme que la longueur d'une boucle ne dépend que de l'entrée — si le total dépasse 3×4 s, l'entrée fait déjà plus de 4 s (padding MP3, réverb/délai en amont).",
+    noticeEn: "Pure concatenation: output = 3 × input duration, no crossfade, no parameters. Confirms a loop's length depends only on the input — if the total exceeds 3×4 s, the input is already longer than 4 s (MP3 padding, upstream reverb/delay).",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const N = 3;
+      const out = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: a.length * N, sampleRate: a.sampleRate });
+      for (let c = 0; c < a.numberOfChannels; c++) {
+        const src = a.getChannelData(c);
+        const dst = out.getChannelData(c);
+        for (let r = 0; r < N; r++) dst.set(src, r * a.length);
+      }
+      return { valeurs: [out], message: `${N} × ${a.duration.toFixed(2)}s = ${out.duration.toFixed(2)}s` };
+    },
+  },
 
   // ── Générateurs ──
   {
