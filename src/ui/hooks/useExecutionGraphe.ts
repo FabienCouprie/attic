@@ -132,9 +132,22 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const ordonnees = ordreTopologique(nds.map((n) => n.id), aretesG);
     let ordreFiltre = ordonnees;
     if (priorite) {
-      const anc = ancetres(priorite, aretesG);
+      // Si le nœud prioritaire est un méta, il n'existe pas dans le graphe aplati
+      // (il est expansé) : cibler ses nœuds de sortie internes aplatis, sinon
+      // `ancetres` ne renvoie que lui-même et rien ne s'exécute.
+      let cibles = [priorite];
+      const noeudPrio = noeudsRef.current.find((n) => n.id === priorite);
+      const metaPrio = noeudPrio && trouverMeta((noeudPrio.data as { ficheId?: string }).ficheId as string);
+      if (metaPrio) cibles = (metaPrio.mapSorties as { noeudInterne: string }[]).map((m) => `${priorite}::${m.noeudInterne}`);
+      const anc = new Set<string>();
+      for (const c of cibles) for (const a of ancetres(c, aretesG)) anc.add(a);
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
     }
+    // Un méta est « dans le périmètre » du run ssi au moins un de ses nœuds internes
+    // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
+    // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
+    // « erreur », donnant l'illusion d'un run global.
+    const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
 
     for (const id of ordreFiltre) {
       if (!noeudsEnErreur.has(id)) definirStatut(id, "attente");
@@ -143,8 +156,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Marquer les méta-nœuds visibles comme "en_cours"
     for (const n of noeudsRef.current) {
       const meta = trouverMeta(n.data.ficheId as string);
-      if (meta && !noeudsEnErreur.has(n.id)) {
-        console.log(`[attic] Méta « ${n.data.ficheId} » (id=${n.id}) -> en_cours`);
+      if (meta && !noeudsEnErreur.has(n.id) && estMetaEnScope(n.id)) {
         definirStatut(n.id, "en_cours");
       }
     }
@@ -226,6 +238,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     setNodes((nds) =>
       nds.map((n) => {
         const meta = trouverMeta(n.data.ficheId as string);
+        // Méta hors du périmètre du run (branche non exécutée) : ne pas y toucher —
+        // il garde son statut précédent au lieu de passer « en cours »/« erreur ».
+        if (meta && !estMetaEnScope(n.id)) return n;
         // Pour un méta-nœud, on récupère les résultats de ses nœuds internes
         // aplatis (préfixés par l'id du méta-nœud) via ses ports de sortie exposés.
         const vals = meta
@@ -327,7 +342,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
       console.error("lancer error", e);
     } finally {
       setEnExecution(false);
-      if (prioritaire) setPrioritaire(null);
+      // Lire la valeur LIVE (pas la closure, périmée quand onDefinirPrioritaire vient
+      // de la fixer) pour toujours effacer la priorité après le run — sinon le run
+      // global suivant reste filtré sur l'ancien nœud prioritaire.
+      if (prioritaireRef.current) setPrioritaire(null);
     }
   }, [prioritaire, repertoire]);
 
