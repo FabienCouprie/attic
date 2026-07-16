@@ -204,7 +204,12 @@ export const fiches: PluginDef[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null], message:"Aucune entrée." };
-      return { valeurs:[bouclerAudio(a, a.duration, ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Fondu", 10))] };
+      const reps = ctx.paramNombre("Répétitions", 4);
+      const out = bouclerAudio(a, a.duration, reps, ctx.paramNombre("Fondu", 10));
+      // Rend visible la durée réelle de l'entrée : si le total dépasse reps×4 s,
+      // c'est que l'entrée fait déjà plus de 4 s (padding MP3, réverb/délai amont…),
+      // pas la boucle — qui produit exactement reps × durée d'entrée.
+      return { valeurs:[out], message: `${reps} × ${a.duration.toFixed(2)}s = ${out.duration.toFixed(2)}s` };
     },
   },
 
