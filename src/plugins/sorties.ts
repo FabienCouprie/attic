@@ -2,7 +2,7 @@
 
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
-import { rendreMidi, rendreMidiDepuisBytes, analyserMidi } from "../audio";
+import { rendreMidi } from "../audio";
 
 export const fiches: PluginDef[] = ([
   {

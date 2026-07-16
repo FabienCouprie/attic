@@ -1,11 +1,7 @@
 // audio/generation.ts — Extrait de l'ancien monolithe DSP.
-import { fft } from "./fft";
 import type { NoteEvenement } from "./midi";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
-import { Mp3Encoder } from "lamejs";
-import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
+import { writeMidi } from "midi-file";
+import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 
 const MOTIFS_PREDEFINIS: Record<string, number[]> = {
   "Triade M": [0, 4, 7],
@@ -603,16 +599,6 @@ function traduireCle(nom: string): number {
 }
 
 
-function dureeVersNom(v: number): string {
-  if (v >= 2) return "Ronde";
-  if (v >= 1.5) return "Blanche pointée";
-  if (v >= 1) return "Blanche";
-  if (v >= 0.75) return "Noire pointée";
-  if (v >= 0.5) return "Noire";
-  if (v >= 0.375) return "Croche pointée";
-  return "Croche";
-}
-
 
 export async function genererDepuisScript(script: string): Promise<{ midiBytes: Uint8Array; description: string }> {
   const lignes = script.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
@@ -637,8 +623,6 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const instr1 = INSTRUMENTS_GM[cfg["instrument1"] || cfg["instr1"]] ?? (estMineur ? 1 : 0);
   const instr2 = INSTRUMENTS_GM[cfg["instrument2"] || cfg["instr2"]] ?? 33;
   const instr3 = INSTRUMENTS_GM[cfg["instrument3"] || cfg["instr3"]] ?? 12;
-  const instr4Nom = cfg["instrument4"] || cfg["instr4"] || "Batterie (GM)";
-
   let dureeSec = 30;
   const dureeCfg = cfg["duree"] || cfg["duration"];
   if (dureeCfg) { const nb = parseFloat(dureeCfg); if (!isNaN(nb)) dureeSec = Math.max(4, Math.min(300, nb)); }
@@ -718,7 +702,6 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     return sorted;
   }
 
-  const tempsFin = secEnTicks(dureeSec + 1);
   const metaEvents = [
     { deltaTime: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },
     { deltaTime: 0, type: "timeSignature", numerator: 4, denominator: 4 },
@@ -773,7 +756,6 @@ export function genererAccords(
   const microsecParBeat = (60 / tempo) * 1_000_000;
   function secEnTicks(sec: number): number { return Math.round((sec / 60) * tempo * tpm); }
 
-  const notesMelPad: number[] = [0, 2, 4, 7, 9, 7, 4, 0];
   const pisteAccords: any[] = [
     { deltaTime: 0, type: "programChange", channel: 0, programNumber: estMineur ? 1 : 0 },
   ];

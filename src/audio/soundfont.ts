@@ -43,20 +43,12 @@ function lireUint8(v: DataView, pos: number): number {
   return v.getUint8(pos);
 }
 
-function lireInt16(v: DataView, pos: number): number {
-  return v.getInt16(pos, true);
-}
-
 function lireUint16(v: DataView, pos: number): number {
   return v.getUint16(pos, true);
 }
 
 function lireUint32(v: DataView, pos: number): number {
   return v.getUint32(pos, true);
-}
-
-function lireInt32(v: DataView, pos: number): number {
-  return v.getInt32(pos, true);
 }
 
 function lireInt8(v: DataView, pos: number): number {

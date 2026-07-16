@@ -10,7 +10,7 @@ export default defineConfig({
       // Les modèles .onnx sont livrés via extraResources (electron-builder),
       // pas dans dist/ — on les retire du bundle pour éviter de dupliquer ~450 MB.
     },
-    writeBundle(_opts, bundle) {
+    writeBundle(_opts, _bundle) {
       // Vite copie public/ → dist/ automatiquement ; on supprime oonx/ après.
       const fs = require('fs');
       const path = require('path');

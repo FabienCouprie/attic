@@ -1,11 +1,7 @@
 // audio/analyse.ts — Extrait de l'ancien monolithe DSP.
 import { fft } from "./fft";
 import type { NoteEvenement } from "./midi";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
-import { Mp3Encoder } from "lamejs";
-import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
+import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
 
 
 
@@ -88,7 +84,6 @@ export function transcrireMono(
     const duree = tFin - tDebut;
     if (duree < 0.04) continue;
 
-    const debutEch = Math.round(tDebut * sr);
     const milieuEch = Math.round(((tDebut + tFin) / 2) * sr);
     const analyseDebut = Math.max(0, milieuEch - tailleFFT / 2);
     const pic = trouverPicFFT(mono, analyseDebut, tailleFFT, sr, fenetre);
@@ -245,14 +240,6 @@ function meilleureCorrelation(chroma: number[], profil: number[]): { shift: numb
     }
   }
   return { shift: bestShift, corr: bestCorr };
-}
-
-
-function nomTonalite(shiftMaj: number, corrMaj: number, shiftMin: number, corrMin: number): { nom: string; confiance: number } {
-  if (corrMaj >= corrMin) {
-    return { nom: `${NOMS_NOTES[shiftMaj]} majeur`, confiance: corrMaj / 60 };
-  }
-  return { nom: `${NOMS_NOTES[shiftMin]} mineur`, confiance: corrMin / 60 };
 }
 
 
@@ -639,7 +626,6 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
     let sMag = 0, sFreq = 0;
     let rMag = 0; const rThresh = 0.85;
     let geoMean = 0, ariMean = 0;
-    let zcr = 0;
     for (let b = 1; b < nbBinsS; b++) {
       const mag = Math.sqrt(re[b] * re[b] + im[b] * im[b]);
       const freq = (b * srC) / fftS;
@@ -653,8 +639,6 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
       const magD = Math.max(mag, 1e-10);
       geoMean += Math.log(magD); ariMean += magD;
       if (b > 0) {
-        const prevMag = Math.sqrt(re[b - 1] * re[b - 1] + im[b - 1] * im[b - 1]);
-        const diff = mag - prevMag;
         if (freq <= 250) sumBasse += mag;
         else if (freq <= 2000) sumMid += mag;
         else sumAigue += mag;
@@ -677,9 +661,8 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   const std = (a: number[]) => { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
 
   const centM = mean(centroides), centS = std(centroides);
-  const rolM = mean(rolloffs);
   const flatM = mean(flatness);
-  const zcrM = mean(zcrVals), zcrS = std(zcrVals);
+  const zcrM = mean(zcrVals);
   const rmsM = mean(Array.from(env));
 
   // Énergie par bande
@@ -738,7 +721,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
     .map(([genre, score]) => ({ genre, score }))
     .sort((a, b) => b.score - a.score);
   const scTotal = scSorted.reduce((s, v) => s + v.score, 0);
-  const topGenres = scSorted.slice(0, 5).map((s) => ({
+  const _topGenres = scSorted.slice(0, 5).map((s) => ({
     genre: s.genre,
     confiance: scTotal > 0 ? s.score / scTotal : 0,
   }));

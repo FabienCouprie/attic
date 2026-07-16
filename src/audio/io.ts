@@ -1,10 +1,5 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
-import { fft } from "./fft";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
 import { Mp3Encoder } from "lamejs";
-import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
   const donnees = await fichier.arrayBuffer();

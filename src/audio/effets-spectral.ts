@@ -1,10 +1,5 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
-import { fft } from "./fft";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
-import { Mp3Encoder } from "lamejs";
-import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
+import { etirerDuree, reechantillonnerVers } from "./commun";
 
 export function changerTempo(buffer: AudioBuffer, vitessePct: number): AudioBuffer {
   const facteur = 100 / Math.max(1, vitessePct);
@@ -320,7 +315,6 @@ export function octaver(
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
     let lastZero = 0;
-    let phase = 0;
     let infCount = 0;
 
     for (let i = 0; i < buffer.length; i++) {
@@ -328,7 +322,6 @@ export function octaver(
 
       if (mixSup > 0) {
         if (i > 0 && src[i - 1] <= 0 && src[i] > 0) {
-          phase = 0;
           lastZero = i;
         }
         const halfPeriod = i - lastZero;

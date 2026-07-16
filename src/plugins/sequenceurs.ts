@@ -4,7 +4,7 @@ import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 import { rendreSequenceurBatterie, decoderMotif } from "../audio";
 import {
-  rendreSequenceurMelodique, decoderMotifMelodique, encoderMotifMelodique,
+  rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
 } from "../audio";
 

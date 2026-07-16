@@ -208,7 +208,7 @@ export function profilCouleur(nom: string): ProfilMusical | null {
   return COULEURS[nom]?.profil ?? null;
 }
 
-export function fusionnerProfils(p1: ProfilMusical, p2: ProfilMusical, nom1: string, nom2: string): ProfilMusical {
+export function fusionnerProfils(p1: ProfilMusical, p2: ProfilMusical, _nom1: string, _nom2: string): ProfilMusical {
   const pick = <T>(a: T, b: T): T => Math.random() < 0.5 ? a : b;
   const mergeArr = <T>(a: T[], b: T[]): T[] => {
     const set = new Set<string>();

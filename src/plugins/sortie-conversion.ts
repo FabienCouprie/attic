@@ -1,17 +1,7 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
 import type { PluginDef } from "../core";
-import {
-  decoderFichier, decoderBlob,
-  appliquerEchoPingPong, appliquerReverbeProgressive,
-  extraireZone, reinsererZone, melangerPistes, placerSonSurZones,
-  fusionnerPistes, bouclerAudio,
-  genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
-  genererAccords, rendreAvecEchantillon,
-  bufferVersMp3Blob, analyserMidi, rendreAvecSF2,
-} from "../audio";
-import { parseMidi } from "midi-file";
-import { sf2Chargee } from "./soundfontGlobal";
+import { bufferVersMp3Blob } from "../audio";
 import { avecDoc } from "./notices";
 
 export const fiches: PluginDef[] = ([
@@ -44,7 +34,7 @@ export const fiches: PluginDef[] = ([
         const blob = await bufferVersMp3Blob(a, qualite, graphe);
         if ((ctx.noeud.data as any).mp3Url) URL.revokeObjectURL((ctx.noeud.data as any).mp3Url);
         (ctx.noeud.data as any).mp3Url = URL.createObjectURL(blob);
-      } catch (e: any) {
+      } catch {
         // MP3 encoding failed — pass through audio anyway
       }
       return { valeurs: [a, { debut: 0, duree: a.duration }] };

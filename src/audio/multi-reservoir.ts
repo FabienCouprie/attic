@@ -6,7 +6,7 @@
 // Inspiré d'Allendia/EVY : aucun entraînement, aucun dataset. Les motifs
 // émergent de l'interaction entre réseaux aléatoires.
 
-import { genererReservoirMusical, rendreReservoirAudio, type ConfigReservoir, type NoteGeneree, mulberry32 } from "./reservoir";
+import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -38,12 +38,6 @@ export interface ConfigMultiReservoir {
 
   // Influence croisée (0 = indépendants, 1 = forte influence)
   influence: number;
-}
-
-interface RoleReservoir {
-  nom: string;
-  config: ConfigReservoir;
-  notes: NoteGeneree[];
 }
 
 export function genererMultiReservoir(config: ConfigMultiReservoir): { notes: NoteGeneree[]; buffer: AudioBuffer; details: string } {

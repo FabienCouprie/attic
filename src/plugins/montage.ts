@@ -2,16 +2,10 @@
 
 import type { PluginDef } from "../core";
 import {
-  decoderFichier, decoderBlob,
   appliquerEchoPingPong, appliquerReverbeProgressive,
-  extraireZone, reinsererZone, melangerPistes, placerSonSurZones,
+  reinsererZone, melangerPistes, placerSonSurZones,
   fusionnerPistes, bouclerAudio,
-  genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
-  genererAccords, rendreAvecEchantillon,
-  bufferVersMp3Blob, analyserMidi, rendreAvecSF2,
 } from "../audio";
-import { parseMidi } from "midi-file";
-import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: PluginDef[] = ([

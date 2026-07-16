@@ -15,7 +15,6 @@ import {
 } from "../../core";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
-import type { PluginDef } from "../../core";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 
@@ -39,7 +38,7 @@ export interface OptionsExecution {
 export function useExecutionGraphe(o: OptionsExecution) {
   const {
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
-    edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
+    setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere, onNodeInstalle,
   } = o;
 
@@ -210,8 +209,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
           definirStatut(nodeId, "termine");
         }
       } catch (e: any) {
+        // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
+        // ET remontée sur le nœud (statut « erreur » + message).
+        console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
         resultats.set(nodeId, [null]);
-        definirStatut(nodeId, "erreur");
+        definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
       }
     }
 

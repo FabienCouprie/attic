@@ -5,7 +5,6 @@
 
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
-import { langueCourante } from "../i18n";
 
 // PRNG déterministe
 function mulberry32(graine: number): () => number {
@@ -21,16 +20,6 @@ function mulberry32(graine: number): () => number {
 
 function piocher<T>(arr: T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)];
-}
-
-function piocherN<T>(arr: T[], n: number, rng: () => number): T[] {
-  const copie = [...arr];
-  const resultat: T[] = [];
-  for (let i = 0; i < n && copie.length > 0; i++) {
-    const idx = Math.floor(rng() * copie.length);
-    resultat.push(copie.splice(idx, 1)[0]);
-  }
-  return resultat;
 }
 
 // Dictionnaires de mots par catégorie (FR + EN)
@@ -106,7 +95,6 @@ function genererParoles(
   d.sujets = [...d.sujets, themeMot];
   d.emotions = [...d.emotions, emotionMot];
 
-  const fr = langue === "fr";
   const sections = new Set<string>();
   let resultat = "";
 

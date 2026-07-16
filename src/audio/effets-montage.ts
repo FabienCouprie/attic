@@ -1,10 +1,5 @@
 // audio/effets-montage.ts — Effets (issus du découpage de effets.ts).
-import { fft } from "./fft";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
-import { Mp3Encoder } from "lamejs";
-import { DEMI_TONS_CLE, frequenceDeNoteMidi, type PositionZone, TAILLE_FFT, SAUT_FFT, creerFenetreHann, etirerDuree, reechantillonnerVers, type TrameFFT, tramesDepuisBuffer, TAILLE_FFT_HAUTEUR, SAUT_ANALYSE_HAUTEUR } from "./commun";
+import { type PositionZone } from "./commun";
 
 export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: number): AudioBuffer {
   const debutEch = Math.max(0, Math.min(buffer.length, Math.floor(debutSec * buffer.sampleRate)));

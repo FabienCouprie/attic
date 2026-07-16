@@ -24,7 +24,7 @@ function prefilterK(samples: Float32Array, sr: number): Float32Array {
   const b10 = (1 + a1 * tan1) / (1 + tan1);
   const b11 = -2 * Math.cos(w1) / (1 + tan1);
   const b12 = (1 - a1 * tan1) / (1 + tan1);
-  const a10 = 1, a11 = b11, a12 = (1 - tan1) / (1 + tan1);
+  const a11 = b11, a12 = (1 - tan1) / (1 + tan1);
 
   // Stage 2: high-pass ~ 38 Hz
   const f2 = 38;
@@ -33,7 +33,7 @@ function prefilterK(samples: Float32Array, sr: number): Float32Array {
   const b20 = 1 / (1 + tan2);
   const b21 = -2 * b20;
   const b22 = b20;
-  const a20 = 1, a21 = -2 * Math.cos(w2) / (1 + tan2), a22 = (1 - tan2) / (1 + tan2);
+  const a21 = -2 * Math.cos(w2) / (1 + tan2), a22 = (1 - tan2) / (1 + tan2);
 
   const out = new Float32Array(samples.length);
   let x1 = 0, x2 = 0, y1 = 0, y2 = 0; // stage 1

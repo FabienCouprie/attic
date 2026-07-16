@@ -358,7 +358,7 @@ ipcMain.handle("mp3:extraire-pochette", async (_event, cheminFichier) => {
           while (mimeEnd < pos + 80 && buf[mimeEnd] !== 0) mimeEnd++;
           const mime = buf.toString("ascii", pos, mimeEnd);
           pos = mimeEnd + 1;
-          const picType = buf[pos]; pos++;
+          pos++;
           // Description (null-terminated, encoding-dependent)
           if (encoding === 1 || encoding === 2) {
             // UTF-16: null-terminated with 2 bytes
@@ -423,7 +423,7 @@ ipcMain.handle("telecharger:url", async (_event, urlStr) => {
   try {
     const url = new UrlModele(urlStr);
     const mod = url.protocol === "https:" ? https : http;
-    return await new Promise((resolve, reject) => {
+    return await new Promise((resolve) => {
       mod.get(url, (res) => {
         const chunks = [];
         res.on("data", (c) => chunks.push(c));
@@ -629,7 +629,7 @@ ipcMain.handle("python:executer", async (_event, options) => {
     const args = [scriptPath];
     const env = {
       ...process.env,
-      ...(options.env || {}),
+      ...options.env,
     };
     // Passer les chemins d'entrée comme arguments
     if (options.inputs) {
@@ -702,7 +702,7 @@ ipcMain.handle("julia:executer", async (_event, options) => {
     const args = [scriptPath];
     const env = {
       ...process.env,
-      ...(options.env || {}),
+      ...options.env,
     };
     if (options.inputs) {
       for (const inp of options.inputs) {
@@ -800,8 +800,6 @@ if (autoUpdater) {
     infoMaj.version = info.version;
     // Sauvegarder les métas et l'en-cours avant l'installation
     try {
-      const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-      const backup = {};
       // Le renderer ne peut pas écrire directement dans userData,
       // mais on peut sauvegarder le localStorage via le main process
       // en demandant au renderer de nous l'envoyer

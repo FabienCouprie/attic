@@ -3,12 +3,9 @@
 import type { PluginDef } from "../core";
 import {
   decoderFichier, decoderBlob,
-  appliquerEchoPingPong, appliquerReverbeProgressive,
-  extraireZone, reinsererZone, melangerPistes, placerSonSurZones,
-  fusionnerPistes, bouclerAudio,
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
-  bufferVersMp3Blob, analyserMidi, rendreAvecSF2, genererBruit,
+  analyserMidi, rendreAvecSF2, genererBruit,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";

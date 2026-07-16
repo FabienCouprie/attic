@@ -298,7 +298,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
       setEnRegistrant(true);
       setDuree(0);
       timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
-    } catch (e) {
+    } catch {
       alert("Capture annulée ou non supportée.");
     }
   };

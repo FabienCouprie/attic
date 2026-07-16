@@ -321,7 +321,7 @@ function VueExport({ data }: VueProps) {
 }
 
 // ── Clavier mélodie (instrument jouable + enregistrement de séquence) ──
-function ClavierMelodie({ id, data }: VueProps) {
+function ClavierMelodie({ id }: VueProps) {
   const OCTAVE_DEPART = 3, NB_OCTAVES = 5, BLANCHES_PAR_OCT = 7;
   const totalBlanches = NB_OCTAVES * BLANCHES_PAR_OCT;
   const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
@@ -796,7 +796,6 @@ function VueJuliaProcessor({ id, data }: VueProps) {
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
-  const gutterRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     const api = (window as any).api;
@@ -936,7 +935,6 @@ function VueJuliaProcessor({ id, data }: VueProps) {
 
 // ── Gestionnaire de nodes (instructions + statut) ──
 function VueGestionNodes({ data }: VueProps) {
-  const { t } = useI18n();
   const p = data.parametres ?? {};
   const action = String(p["Action"] ?? "Exporter");
   const message = data.audioResultatMessage ?? "";

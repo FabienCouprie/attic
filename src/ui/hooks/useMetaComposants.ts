@@ -12,7 +12,6 @@ import {
   type NoeudG, type AreteG,
 } from "../../core";
 import { registre } from "../../audio/adaptateur";
-import type { PluginDef } from "../../core";
 const trouverDef = (id: string) => registre.trouverDef(id);
 import { idUnique } from "../ids";
 

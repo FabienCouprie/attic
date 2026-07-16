@@ -1,9 +1,5 @@
 // audio/commun.ts — Extrait de l'ancien monolithe DSP.
 import { fft } from "./fft";
-import { parseMidi, writeMidi } from "midi-file";
-import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
-import { Mp3Encoder } from "lamejs";
 
 export const DEMI_TONS_CLE: Record<string, number> = {
   Do: 0,

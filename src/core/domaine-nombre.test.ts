@@ -4,7 +4,7 @@
 // /core. Trois micro-plugins, un graphe, et l'assertion : (4 × 2) + 3 = 11.
 // Si le moteur renvoie 11, le framework est officiellement baptisé.
 import { describe, it, expect } from "vitest";
-import { creerRegistre, type Registre } from "./registre";
+import { creerRegistre } from "./registre";
 import { ordreTopologique, resoudreEntree, valeursEntrantes } from "./graphe";
 import { validerGraphe } from "./validation";
 import type { NoeudG, AreteG } from "./meta";

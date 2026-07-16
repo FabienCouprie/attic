@@ -26,7 +26,7 @@ export function serialiserGraphe(): string | null {
     nodes: grapheRef.nodes.map((n) => ({
       id: n.id,
       ficheId: n.data?.ficheId ?? "",
-      parametres: { ...(n.data?.parametres ?? {}) },
+      parametres: { ...n.data?.parametres },
       position: { x: n.position?.x ?? 0, y: n.position?.y ?? 0 },
     })),
     edges: grapheRef.edges.map((e) => ({

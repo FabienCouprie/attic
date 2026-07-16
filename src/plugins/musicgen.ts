@@ -4,7 +4,6 @@
 
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
-import { langueCourante } from "../i18n";
 
 let worker: Worker | null = null;
 
@@ -35,7 +34,6 @@ export const fiches: PluginDef[] = ([
         docEn: "Prompt conditioning strength. Higher = follows prompt more but less creative." },
     ],
     async executer(ctx: any) {
-      const langue = langueCourante();
       const promptEntree = ctx.entree(0);
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree

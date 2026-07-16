@@ -1,15 +1,7 @@
 // plugins/entrees-extra.ts — Nœuds entrees-extra (issus du découpage de complements.ts).
 
 import type { PluginDef } from "../core";
-import {
-  decoderFichier, decoderBlob,
-  appliquerEchoPingPong, appliquerReverbeProgressive,
-  extraireZone, reinsererZone, melangerPistes, placerSonSurZones,
-  fusionnerPistes, bouclerAudio,
-  genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
-  genererAccords, rendreAvecEchantillon,
-  bufferVersMp3Blob,
-} from "../audio";
+import { decoderFichier } from "../audio";
 import { avecDoc } from "./notices";
 
 export const fiches: PluginDef[] = ([
