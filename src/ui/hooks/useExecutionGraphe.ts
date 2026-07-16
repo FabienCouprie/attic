@@ -177,7 +177,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
         continue;
       }
 
-      for (const id of ordreFiltre.slice(i + 1)) cacheExec.current.delete(id);
+      // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
+      // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
+      // elles suivent ce nœud dans l'ordre linéaire sans en dépendre. La
+      // réexécution des vrais descendants est déjà assurée par `sourceReprocessee`
+      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les nœuds
+      // dont une entrée réelle a été recalculée ce run.
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
