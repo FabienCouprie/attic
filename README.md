@@ -28,7 +28,7 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 - **Save/load** — serializes graph + metacomponents to JSON
 - **Prompt-to-graph** — type a keyword, get a pre-wired graph (55 keywords)
 - **Auto-update** via electron-updater (GitHub Releases)
-- **176 exercises** in 22 categories (`CAHIER-EXERCICES.md`)
+- **176 exercises** in 22 categories ([`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md))
 
 ## Architecture
 
