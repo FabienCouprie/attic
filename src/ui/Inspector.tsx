@@ -96,7 +96,13 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                 <input type="range" min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
                   value={Number(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, Number(e.target.value))} />
               )}
-              <span>{params[p.nom] ?? p.defaut}{p.unite ? ` ${p.unite}` : ""}</span>
+              {/* Saisie numérique directe : permet une valeur exacte (ex. 0, 3.0 s)
+                  que le curseur seul rend difficile à atteindre sur une large plage. */}
+              <input type="number" className="inspecteur-num" style={{ width: 62 }}
+                min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
+                value={Number(params[p.nom] ?? p.defaut)}
+                onChange={(e) => { const v = Number(e.target.value); if (e.target.value !== "" && !Number.isNaN(v)) onChangerParametre(p.nom, v); }} />
+              {p.unite ? <span className="inspecteur-unite">{p.unite}</span> : null}
             </div>
           )}
         </div>

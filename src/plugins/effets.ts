@@ -79,7 +79,7 @@ export const fiches: PluginDef[] = ([
     [param("Mix", 40, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.8, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 5, "Depth", "ms", "Amplitude du détimbrage.", "Detuning depth in ms.")],
     (a,mix,v,p) => appliquerChorus(a, v, p, mix/100)),
   effet("compresseur", "Compresseur", "Compressor", "Compresseur feed-forward.", "Feed-forward compressor.",
-    [param("Seuil", -20, "Threshold", "dB", "Niveau au-dessus duquel la compression s'active.", "Level above which compression engages."), param("Ratio", 4, "Ratio", "∶1", "Taux de compression.", "Compression ratio."), param("Attaque", 5, "Attack", "ms", "Temps de réaction du compresseur.", "Compressor attack time."), param("Relâchement", 100, "Release", "ms", "Temps de retour au gain normal.", "Compressor release time."), param("Gain", 0, "Gain", "dB", "Gain de sortie (make-up gain).", "Output makeup gain.")],
+    [param("Seuil", -20, "Threshold", "dB", "Niveau au-dessus duquel la compression s'active.", "Level above which compression engages.", [-60, 0], 1), param("Ratio", 4, "Ratio", "∶1", "Taux de compression.", "Compression ratio.", [1, 20], 0.5), param("Attaque", 5, "Attack", "ms", "Temps de réaction du compresseur.", "Compressor attack time.", [0, 200], 1), param("Relâchement", 100, "Release", "ms", "Temps de retour au gain normal.", "Compressor release time.", [5, 1000], 5), param("Gain", 0, "Gain", "dB", "Gain de sortie (make-up gain).", "Output makeup gain.", [-12, 24], 1)],
     (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain)),
   {
     id: "gate-expandeur", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
@@ -129,7 +129,7 @@ export const fiches: PluginDef[] = ([
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],
     (a,freq,mix) => ringModulator(a, freq, mix)),
   effet("normaliseur", "Normaliseur", "Normalizer", "Normalisation de niveau.", "Level normalization.",
-    [param("Niveau", -3, "Level", "dB", "Niveau cible en dB (crête).", "Target peak level in dB.")],
+    [param("Niveau", -3, "Level", "dB", "Niveau cible en dB (crête).", "Target peak level in dB.", [-40, 0], 0.5)],
     (a,niveau) => normaliser(a, niveau)),
   effet("suppression-clics", "Suppression de clics", "Click Removal", "Détection et suppression de clicks.", "Click detection and removal.",
     [param("Seuil", 5, "Threshold", "×", "Sensibilité de détection (multiple de la dérivée médiane). Plus élevé = moins sensible (détecte seulement les gros clics). Plus bas = plus sensible.", "Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive.", [1, 50], 1),
