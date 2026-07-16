@@ -250,10 +250,27 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
         if (meta) {
           const aResultat = valsSafe.some((v) => v != null);
-          if (!aResultat && !messages.has(n.id)) {
-            // Les nœuds internes n'ont pas encore produit de résultat
-            // → garder le statut "en_cours" (défini plus haut)
-            return n;
+          if (meta.sorties.length > 0 && !aResultat && !messages.has(n.id)) {
+            // Le run est terminé et le méta n'a rien produit sur ses sorties : sa
+            // chaîne interne a échoué. Marquer « erreur » — surtout PAS le laisser
+            // « en_cours » (le run est fini, la branche ne tourne plus). Corrige le
+            // méta figé « en cours » quand une branche parallèle n'aboutit pas alors
+            // que l'aval (mixeur) est « terminé ».
+            // On identifie en plus le premier nœud interne (ordre topo) resté sans
+            // résultat — la cause de l'échec, souvent une entrée manquante (fichier
+            // audio non sérialisé à la sauvegarde) — pour l'afficher sans ouvrir le méta.
+            const prefixe = `${n.id}::`;
+            let fautif = "";
+            for (const fid of ordreFiltre) {
+              if (!fid.startsWith(prefixe)) continue;
+              const r = resultats.get(fid);
+              if (!r || r.every((v) => v == null)) {
+                fautif = ((plat.noeuds.find((pn) => pn.id === fid)?.data as { ficheId?: string })?.ficheId) ?? "";
+                break;
+              }
+            }
+            return { ...n, data: { ...n.data, statut: "erreur" as const,
+              audioResultatMessage: fautif ? `Branche en échec : « ${fautif} » sans résultat (entrée manquante ?)` : "Branche en échec (aucun résultat)" } };
           }
         }
         return {
