@@ -15,6 +15,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
+// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
+// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
+function libererWorker(): void {
+  if (worker) { worker.terminate(); worker = null; }
+}
+
 // Embeddings de voix SpeechT5 (CMU Arctic — 7 locuteurs différents).
 const BASE_VOIX = "https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors-extracted/resolve/main";
 const VOIX_SPEECHT5 = [
@@ -67,12 +74,12 @@ export const fiches: PluginDef[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             const buf = new AudioBuffer({ numberOfChannels: 1, length: msg.length, sampleRate: msg.sampleRate });
             buf.getChannelData(0).set(msg.data);
             resolve({ valeurs: [buf], message: `SpeechT5 · ${texte.slice(0, 40)}${texte.length > 40 ? "…" : ""}` });
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve({ valeurs: [null], erreur: true, message: `Erreur TTS : ${msg.msg}` });
           }
         };
@@ -107,12 +114,12 @@ export const fiches: PluginDef[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             const buf = new AudioBuffer({ numberOfChannels: 1, length: msg.length, sampleRate: msg.sampleRate });
             buf.getChannelData(0).set(msg.data);
             resolve({ valeurs: [buf], message: `MMS-TTS · ${langue} · ${texte.slice(0, 40)}${texte.length > 40 ? "…" : ""}` });
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve({ valeurs: [null], erreur: true, message: `Erreur TTS : ${msg.msg}` });
           }
         };

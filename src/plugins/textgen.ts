@@ -16,6 +16,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
+// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
+// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
+function libererWorker(): void {
+  if (worker) { worker.terminate(); worker = null; }
+}
+
 // ─── Réservoir textuel ───
 // Un réseau de neurones aléatoires génère du texte par émergence :
 // les activations sont mappées vers des lettres/mots. Aucun entraînement.
@@ -151,10 +158,10 @@ export const fiches: PluginDef[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve({ valeurs: [msg.text], message: `GPT-2 · ${msg.text.length} caractères` });
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve({ valeurs: [null], erreur: true, message: `Erreur GPT-2 : ${msg.msg}` });
           }
         };
@@ -244,10 +251,10 @@ export const fiches: PluginDef[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve(msg.text);
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve(null);
           }
         };

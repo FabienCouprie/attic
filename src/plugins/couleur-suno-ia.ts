@@ -16,6 +16,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
+// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
+// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
+function libererWorker(): void {
+  if (worker) { worker.terminate(); worker = null; }
+}
+
 const COULEURS_EN = NOMS_COULEURS.map((c) => COULEURS[c].en);
 
 export const fiches: PluginDef[] = ([
@@ -86,10 +93,10 @@ Write a single creative Suno prompt paragraph:`;
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve(msg.text);
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve(null);
           }
         };

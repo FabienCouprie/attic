@@ -27,6 +27,15 @@ function getOpusWorker(modelId: string): Worker {
   return opusWorkers.get(modelId)!;
 }
 
+// Libère les workers IA (et leurs modèles résidents en WASM) après usage —
+// évite d'accumuler TTS + ASR + OPUS en mémoire sur un même run (saturation).
+function libererTtsWorker(): void { if (ttsWorker) { ttsWorker.terminate(); ttsWorker = null; } }
+function libererAsrWorker(): void { if (asrWorker) { asrWorker.terminate(); asrWorker = null; } }
+function libererOpusWorker(modelId: string): void {
+  const w = opusWorkers.get(modelId);
+  if (w) { w.terminate(); opusWorkers.delete(modelId); }
+}
+
 // Paires de langues OPUS-MT disponibles (modèles légers ~30 MB chacun)
 const Paires_OPUS: { id: string; nom: string; nomEn: string; model: string }[] = [
   { id: "fr-en", nom: "Français → Anglais", nomEn: "French → English", model: "Xenova/opus-mt-fr-en" },
@@ -88,8 +97,8 @@ export const fiches: PluginDef[] = ([
       const audioData = await new Promise<{ data: Float32Array; sampleRate: number } | null>((resolve) => {
         const onMsg = (e: MessageEvent) => {
           const msg = e.data;
-          if (msg.type === "done") { ttsW.removeEventListener("message", onMsg); resolve({ data: msg.data, sampleRate: msg.sampleRate }); }
-          else if (msg.type === "error") { ttsW.removeEventListener("message", onMsg); resolve(null); }
+          if (msg.type === "done") { libererTtsWorker(); resolve({ data: msg.data, sampleRate: msg.sampleRate }); }
+          else if (msg.type === "error") { libererTtsWorker(); resolve(null); }
         };
         ttsW.addEventListener("message", onMsg);
         ttsW.postMessage({ text: texte, modelId: ttsModel, speakerUrl });
@@ -102,8 +111,8 @@ export const fiches: PluginDef[] = ([
       const traduit = await new Promise<string | null>((resolve) => {
         const onMsg = (e: MessageEvent) => {
           const msg = e.data;
-          if (msg.type === "done") { asrW.removeEventListener("message", onMsg); resolve(msg.text); }
-          else if (msg.type === "error") { asrW.removeEventListener("message", onMsg); resolve(null); }
+          if (msg.type === "done") { libererAsrWorker(); resolve(msg.text); }
+          else if (msg.type === "error") { libererAsrWorker(); resolve(null); }
         };
         asrW.addEventListener("message", onMsg);
         asrW.postMessage({ audioData: audioData.data, sampleRate: audioData.sampleRate, modelId: "Xenova/whisper-large-v2", translate: true });
@@ -137,10 +146,10 @@ export const fiches: PluginDef[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererOpusWorker(paire.model);
             resolve({ valeurs: [msg.text], message: `${paire.nom} : ${msg.text.slice(0, 60)}${msg.text.length > 60 ? "…" : ""}` });
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererOpusWorker(paire.model);
             resolve({ valeurs: [null], erreur: true, message: `Erreur OPUS-MT : ${msg.msg}` });
           }
         };

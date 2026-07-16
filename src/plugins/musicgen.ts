@@ -14,6 +14,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
+// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
+// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
+function libererWorker(): void {
+  if (worker) { worker.terminate(); worker = null; }
+}
+
 export const fiches: PluginDef[] = ([
   {
     id: "musicgen", nom: "Générateur IA MusicGen", nomEn: "MusicGen AI Generator",
@@ -51,14 +58,14 @@ export const fiches: PluginDef[] = ([
           if (msg.type === "progress") {
             ctx.onProgress(msg.msg);
           } else if (msg.type === "done") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             const sr = msg.sampleRate;
             const data = msg.data;
             const buf = new AudioBuffer({ numberOfChannels: 1, length: data.length, sampleRate: sr });
             buf.getChannelData(0).set(data);
             resolve({ valeurs: [buf], message: `MusicGen · ${duree}s · "${prompt.slice(0, 40)}${prompt.length > 40 ? "…" : ""}"` });
           } else if (msg.type === "error") {
-            w.removeEventListener("message", onMessage);
+            libererWorker();
             resolve({ valeurs: [null], erreur: true, message: `Erreur MusicGen : ${msg.msg}` });
           }
         };
