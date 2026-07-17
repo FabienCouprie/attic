@@ -232,7 +232,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
         });
         resultats.set(nodeId, res.valeurs as TypeValeur[]);
         if (res.message) messages.set(nodeId, res.message);
-        if ((res as any).erreur) {
+        // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
+        // (entrée manquante, pas assez d'entrées, fichier absent…) : le marquer
+        // « erreur » (et donc le propager) au lieu de « terminé ». Sinon un
+        // mixer/endpoint en aval « aboutit » alors qu'aucun résultat n'a été
+        // produit — la branche n'a rien donné mais le workflow paraît réussi.
+        const aDesSorties = (trouverDef(node.data.ficheId as string)?.sorties.length ?? 0) > 0;
+        const toutNul = Array.isArray(res.valeurs) && res.valeurs.length > 0 && (res.valeurs as unknown[]).every((v) => v == null);
+        if ((res as any).erreur || (aDesSorties && toutNul)) {
           noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
         } else {
