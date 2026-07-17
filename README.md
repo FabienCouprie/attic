@@ -70,6 +70,8 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full technical spec.
 
 - Node.js 18+ (tested with v24.18.0)
 - Python 3.x (optional, for the Python Processor node)
+- Julia (optional, for the Julia Processor node)
+- Ollama (optional, for the LLM Ollama node)
 
 ### Install
 
