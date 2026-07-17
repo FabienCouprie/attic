@@ -30,18 +30,7 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
 - **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
-- **176 exercises** in 22 categories (`EXERCISE-WORKBOOK.md`)
-- **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio
-- **Python / Julia Processor nodes** — write custom audio/MIDI/text processing in Python (numpy + wave) or Julia, executed via a detected local install
-- **Bilingual UI** (FR/EN) with React 19 + @xyflow/react
-- **Node import/export** — package custom nodes as `.zip` (manifest + executer + notice + dependencies), persisted in localStorage
-- **Metacomponents** — encapsulate sub-graphs as reusable nodes
-- **Save/load** — serializes graph + metacomponents to JSON
-- **Prompt-to-graph** — type a keyword, get a pre-wired graph (55+ keywords)
-- **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
-- **System audio capture** — record audio from other applications
-- **Embedded subtractive synthesizer** meta-component example
-- **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
+- **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 - **176 exercises** in 22 categories ([`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md))
 
 ## Architecture
