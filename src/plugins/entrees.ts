@@ -13,7 +13,7 @@ const entrees: PluginDef[] = [
     parametres: [],
     async executer(ctx) {
       const fichier = ctx.noeud.data.audioFichier as File | undefined;
-      if (!fichier) return { valeurs: [null], message: "Aucun fichier chargé." };
+      if (!fichier) return { valeurs: [null], erreur: true, message: "Aucun fichier chargé." };
       const buffer = await decoderFichier(fichier, ctx.runtime);
       // Détecter un graphe embarqué dans les métadonnées du fichier
       try {
@@ -41,7 +41,7 @@ const entrees: PluginDef[] = [
     parametres: [],
     async executer(ctx) {
       const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
-      if (!blob) return { valeurs: [null], message: "Aucun enregistrement." };
+      if (!blob) return { valeurs: [null], erreur: true, message: "Aucun enregistrement." };
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
@@ -54,7 +54,7 @@ const entrees: PluginDef[] = [
     parametres: [],
     async executer(ctx) {
       const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
-      if (!blob) return { valeurs: [null], message: "Aucune capture. Cliquez sur Enregistrer dans l'inspecteur." };
+      if (!blob) return { valeurs: [null], erreur: true, message: "Aucune capture. Cliquez sur Enregistrer dans l'inspecteur." };
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
