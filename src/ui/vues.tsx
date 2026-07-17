@@ -645,6 +645,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+  const syncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Vérifier Python au montage
   useEffect(() => {
@@ -652,6 +653,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
     if (api?.pythonInfo) {
       api.pythonInfo().then((info: any) => setPyInfo(info));
     }
+    return () => { if (syncRef.current) clearTimeout(syncRef.current); };
   }, []);
 
   // Configurer le chemin Python
@@ -749,11 +751,18 @@ function VuePythonProcessor({ id, data }: VueProps) {
           </pre>
           <textarea
             ref={taRef}
+            className="nodrag nowheel"
             value={editCode}
             onChange={(e) => {
-              setEditCode(e.target.value);
-              d.onChangerParametre?.(id, "Code", e.target.value);
+              const v = e.target.value;
+              setEditCode(v);
+              // Synchro DIFFÉRÉE vers l'état global : sinon chaque frappe déclenche un
+              // setNodes → re-render de tout le canevas (lag, frappes perdues, curseur
+              // qui saute). On sync après 400 ms d'inactivité, et à la sortie (onBlur).
+              if (syncRef.current) clearTimeout(syncRef.current);
+              syncRef.current = setTimeout(() => d.onChangerParametre?.(id, "Code", v), 400);
             }}
+            onBlur={() => { if (syncRef.current) clearTimeout(syncRef.current); d.onChangerParametre?.(id, "Code", editCode); }}
             onScroll={onScroll}
             spellCheck={false}
             style={{
@@ -764,8 +773,11 @@ function VuePythonProcessor({ id, data }: VueProps) {
               fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
               whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
             }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
+              e.stopPropagation();
               if (e.key === "Tab") {
                 e.preventDefault();
                 const ta = e.currentTarget;
@@ -773,6 +785,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
                 const end = ta.selectionEnd;
                 const newCode = editCode.slice(0, start) + "    " + editCode.slice(end);
                 setEditCode(newCode);
+                if (syncRef.current) clearTimeout(syncRef.current);
                 d.onChangerParametre?.(id, "Code", newCode);
                 requestAnimationFrame(() => {
                   ta.selectionStart = ta.selectionEnd = start + 4;
@@ -797,12 +810,14 @@ function VueJuliaProcessor({ id, data }: VueProps) {
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+  const syncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const api = (window as any).api;
     if (api?.juliaInfo) {
       api.juliaInfo().then((info: any) => setPyInfo(info));
     }
+    return () => { if (syncRef.current) clearTimeout(syncRef.current); };
   }, []);
 
   const configurerPath = async () => {
@@ -894,11 +909,18 @@ function VueJuliaProcessor({ id, data }: VueProps) {
           </pre>
           <textarea
             ref={taRef}
+            className="nodrag nowheel"
             value={editCode}
             onChange={(e) => {
-              setEditCode(e.target.value);
-              d.onChangerParametre?.(id, "Code", e.target.value);
+              const v = e.target.value;
+              setEditCode(v);
+              // Synchro DIFFÉRÉE vers l'état global : sinon chaque frappe déclenche un
+              // setNodes → re-render de tout le canevas (lag, frappes perdues, curseur
+              // qui saute). On sync après 400 ms d'inactivité, et à la sortie (onBlur).
+              if (syncRef.current) clearTimeout(syncRef.current);
+              syncRef.current = setTimeout(() => d.onChangerParametre?.(id, "Code", v), 400);
             }}
+            onBlur={() => { if (syncRef.current) clearTimeout(syncRef.current); d.onChangerParametre?.(id, "Code", editCode); }}
             onScroll={onScroll}
             spellCheck={false}
             style={{
@@ -909,8 +931,11 @@ function VueJuliaProcessor({ id, data }: VueProps) {
               fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
               whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
             }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
+              e.stopPropagation();
               if (e.key === "Tab") {
                 e.preventDefault();
                 const ta = e.currentTarget;
@@ -918,6 +943,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
                 const end = ta.selectionEnd;
                 const newCode = editCode.slice(0, start) + "    " + editCode.slice(end);
                 setEditCode(newCode);
+                if (syncRef.current) clearTimeout(syncRef.current);
                 d.onChangerParametre?.(id, "Code", newCode);
                 requestAnimationFrame(() => {
                   ta.selectionStart = ta.selectionEnd = start + 4;
