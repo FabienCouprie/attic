@@ -170,6 +170,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const nodeId = ordreFiltre[i];
       // Sauter les nœuds en erreur (connexion illégale) — déjà marqués « erreur »
       if (noeudsEnErreur.has(nodeId)) continue;
+      // ── Propagation d'erreur ──
+      // Si une entrée de ce nœud provient d'un nœud en erreur (validation OU échec
+      // d'exécution), il ne peut pas produire un résultat correct : le marquer en
+      // erreur au lieu de « réussir » silencieusement avec une entrée manquante —
+      // cas d'un mixer/joiner de terminaison en aval de branches parallèles dont
+      // une a échoué. L'ordre topologique garantit que la source est déjà traitée.
+      const entreeFautive = aretesG.find((a) => a.target === nodeId && noeudsEnErreur.has(a.source));
+      if (entreeFautive) {
+        noeudsEnErreur.add(nodeId);
+        resultats.set(nodeId, [null]);
+        definirStatut(nodeId, "erreur", `entrée en erreur : ${entreeFautive.source}`);
+        continue;
+      }
       definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
       const node = nds.find((n) => n.id === nodeId);
       if (!node) {
@@ -198,7 +211,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
-      if (!fn) { resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); continue; }
+      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); continue; }
 
       try {
         const res = await fn({
@@ -220,6 +233,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         resultats.set(nodeId, res.valeurs as TypeValeur[]);
         if (res.message) messages.set(nodeId, res.message);
         if ((res as any).erreur) {
+          noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
         } else {
           cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree });
@@ -229,6 +243,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
         // ET remontée sur le nœud (statut « erreur » + message).
         console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
+        noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
         definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
       }
