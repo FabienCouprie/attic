@@ -476,3 +476,27 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border: 1px solid var(--border); border-radius: 3px;
   padding: 3px 6px; color: var(--text-title); outline: none;
 }
+
+/* ── React Flow controls & minimap (dark theme) ── */
+[data-theme="black"] .react-flow__controls {
+  background: var(--bg-surface);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+[data-theme="black"] .react-flow__controls-button {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-divider);
+  color: var(--text-secondary);
+  fill: var(--text-secondary);
+}
+[data-theme="black"] .react-flow__controls-button:hover {
+  background: var(--bg-btn-hover);
+}
+[data-theme="black"] .react-flow__minimap {
+  background: var(--bg-surface-alt);
+  border-radius: 6px;
+}
+[data-theme="black"] .react-flow__attribution {
+  background: transparent;
+  color: var(--text-muted);
+}

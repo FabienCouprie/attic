@@ -12,22 +12,36 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 
 ## Features
 
-- **70+ plugin nodes** — effects, generators, AI models, collections, separation, visualization
+- **90+ plugin nodes** — effects, generators, AI models, collections, separation, visualization
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper — speech-to-text (English + multilingual, 99 languages)
   - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 10 languages)
   - GPT-2 / OPUS-MT — lyrics generation + translation (18 language pairs)
   - Demucs 6-stem / MDX-Net — AI source separation (drums, bass, vocals, guitar, piano, other)
-  - Ollama — local LLMs (Llama, Qwen, Mistral…) for text/lyrics generation via a local Ollama server
-- **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio; powers the "LLM composer" workflow (Ollama → Text→MIDI), shipped as the built-in "Compositeur IA" meta-example
+  - Ollama — local LLMs (Qwen3, Llama, Mistral…) for text/lyrics generation via a local Ollama server
+- **Python Processor** and **Julia Processor** nodes — custom audio/MIDI/text processing in Python or Julia
+- **Bilingual UI** (FR/EN) with React 19 + @xyflow/react
+- **Node import/export** — package custom nodes as `.zip`, share between installations
+- **Metacomponents** — encapsulate sub-graphs as reusable nodes
+- **Save/load** — serializes graph + metacomponents to JSON
+- **Prompt-to-graph** — type a keyword, get a pre-wired graph (55+ keywords)
+- **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
+- **System audio capture** — record audio from other applications
+- **Embedded subtractive synthesizer** meta-component example
+- **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
+- **176 exercises** in 22 categories (`EXERCISE-WORKBOOK.md`)
+- **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio
 - **Python / Julia Processor nodes** — write custom audio/MIDI/text processing in Python (numpy + wave) or Julia, executed via a detected local install
 - **Bilingual UI** (FR/EN) with React 19 + @xyflow/react
 - **Node import/export** — package custom nodes as `.zip` (manifest + executer + notice + dependencies), persisted in localStorage
 - **Metacomponents** — encapsulate sub-graphs as reusable nodes
 - **Save/load** — serializes graph + metacomponents to JSON
-- **Prompt-to-graph** — type a keyword, get a pre-wired graph (55 keywords)
-- **Auto-update** via electron-updater (GitHub Releases)
+- **Prompt-to-graph** — type a keyword, get a pre-wired graph (55+ keywords)
+- **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
+- **System audio capture** — record audio from other applications
+- **Embedded subtractive synthesizer** meta-component example
+- **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
 - **176 exercises** in 22 categories ([`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md))
 
 ## Architecture

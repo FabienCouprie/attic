@@ -7,16 +7,22 @@
 import type { PluginDef } from "../core";
 import { avecDoc } from "./notices";
 
-interface OptsOllama { model: string; prompt: string; options?: Record<string, unknown>; timeout?: number }
+interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number }
 interface RepOllama { reponse?: string; erreur?: string }
 
 async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
   const api = (window as unknown as { api?: { ollamaGenerer?: (o: OptsOllama) => Promise<RepOllama> } }).api;
   if (api?.ollamaGenerer) return api.ollamaGenerer(opts); // Electron : passe par le main
   try {
-    const r = await fetch("http://127.0.0.1:11434/api/generate", {
+    const r = await fetch("http://127.0.0.1:11434/api/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: opts.model, prompt: opts.prompt, stream: false, options: opts.options || {} }),
+      body: JSON.stringify({
+        model: opts.model,
+        messages: [{ role: "user", content: opts.prompt }],
+        stream: false,
+        think: opts.thinking || false,
+        options: opts.options || {},
+      }),
     });
     if (!r.ok) {
       let detail = "";
@@ -24,7 +30,7 @@ async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
       return { erreur: `Ollama HTTP ${r.status}${detail}` };
     }
     const d = await r.json();
-    return { reponse: d.response ?? "" };
+    return { reponse: d?.message?.content ?? d?.response ?? "" };
   } catch (e) {
     return { erreur: `Serveur Ollama injoignable sur :11434 (lancez « ollama serve ») — ${(e as Error)?.message || e}` };
   }
@@ -41,18 +47,18 @@ export const fiches: PluginDef[] = ([
     entrees: [{ nom: "Texte", type: "texte", requis: false }],
     sorties: [{ nom: "Texte", type: "texte" }],
     parametres: [
-      { nom: "Modèle", nomEn: "Model", type: "texte", defaut: "llama3.2",
-        doc: "Nom du modèle Ollama installé (voir « ollama list »). Ex : llama3.2, qwen2.5, mistral, phi3.",
-        docEn: "Installed Ollama model name (see « ollama list »). E.g. llama3.2, qwen2.5, mistral, phi3." },
+      { nom: "Modèle", nomEn: "Model", type: "texte", defaut: "qwen3:4b",
+        doc: "Nom du modèle Ollama installé (voir « ollama list »). Ex : llama3.2, qwen3:4b, mistral, phi3.",
+        docEn: "Installed Ollama model name (see « ollama list »). E.g. llama3.2, qwen3:4b, mistral, phi3." },
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write the lyrics of a short song about the sea and freedom.",
         doc: "Instruction envoyée au modèle. Ignoré si une entrée texte est connectée.",
         docEn: "Instruction sent to the model. Ignored if a text input is connected." },
       { nom: "Température", nomEn: "Temperature", plage: [0, 2], pas: 0.1, defaut: 0.8,
         doc: "Créativité. Élevée = plus varié/aléatoire ; basse = plus déterministe.",
         docEn: "Creativity. High = more varied/random; low = more deterministic." },
-      { nom: "Max tokens", nomEn: "Max tokens", plage: [32, 2048], pas: 32, defaut: 300,
-        doc: "Longueur maximale de la réponse (num_predict).",
-        docEn: "Maximum response length (num_predict)." },
+      { nom: "Max tokens", nomEn: "Max tokens", plage: [32, 8192], pas: 32, defaut: 4096,
+        doc: "Longueur maximale de la réponse (num_predict). Les modèles avec thinking (Qwen3) ont besoin de plus de tokens.",
+        docEn: "Maximum response length (num_predict). Models with thinking mode (Qwen3) need more tokens." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -62,11 +68,11 @@ export const fiches: PluginDef[] = ([
       ctx.onProgress(`Ollama · ${model}…`);
       const res = await ollamaGenerer({
         model, prompt,
-        options: { temperature: ctx.paramNombre("Température", 0.8), num_predict: ctx.paramNombre("Max tokens", 300) },
+        options: { temperature: ctx.paramNombre("Température", 0.8), num_predict: ctx.paramNombre("Max tokens", 4096) },
       });
       if (res.erreur) return { valeurs: [null], erreur: true, message: `Ollama : ${res.erreur}` };
       const texte = (res.reponse || "").trim();
-      if (!texte) return { valeurs: [null], erreur: true, message: "Réponse vide d'Ollama." };
+      if (!texte) return { valeurs: [null], erreur: true, message: "Réponse vide d'Ollama. Vérifiez le modèle et le serveur." };
       return { valeurs: [texte], message: texte };
     },
   },

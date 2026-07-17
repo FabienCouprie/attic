@@ -744,27 +744,55 @@ ipcMain.handle("ollama:generer", async (_event, options) => {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), options?.timeout || 120000);
-    const r = await fetch(`${OLLAMA_BASE}/api/generate`, {
+    // Use /api/chat endpoint (more reliable for newer models like qwen3)
+    const r = await fetch(`${OLLAMA_BASE}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: options?.model || "llama3.2",
-        prompt: options?.prompt || "",
+        messages: [{ role: "user", content: options?.prompt || "" }],
         stream: false,
+        think: false,
         options: options?.options || {},
       }),
       signal: ctrl.signal,
     });
     clearTimeout(timer);
     if (!r.ok) {
-      // Remonter le message d'Ollama (ex. « model "llama3.2" not found, try
-      // pulling it first » sur un 404) au lieu d'un simple code HTTP.
       let detail = "";
       try { const b = await r.json(); if (b && b.error) detail = ` — ${b.error}`; } catch {}
       return { erreur: `Ollama HTTP ${r.status}${detail}` };
     }
     const data = await r.json();
-    return { reponse: data.response ?? "" };
+    console.log("[attic] Ollama response:", JSON.stringify(data).slice(0, 500));
+    // Qwen3 and similar models put reasoning in message.thinking and answer in message.content
+    // If content is empty, use thinking as fallback
+    const content = (data && data.message && data.message.content) || "";
+    const thinking = (data && data.message && data.message.thinking) || "";
+    let reponse = content;
+    const thinkEnd = content.indexOf("</think>");
+    
+    if (options && options.thinking) {
+      // Node thinking : retourner le raisonnement
+      if (thinkEnd !== -1) {
+        reponse = content.slice(0, thinkEnd).replace(/<\/?think>/g, "").trim();
+      } else if (thinking && thinking.trim()) {
+        reponse = thinking.trim();
+      } else {
+        // Pas de tag : tout est du thinking
+        reponse = content.replace(/<\/?think>/g, "").trim();
+      }
+    } else {
+      // Node normal : retourner la reponse (apres  si present
+      if (thinkEnd !== -1) {
+        reponse = content.slice(thinkEnd + 8).trim();
+      } else {
+        reponse = content.replace(/<\/?think>/g, "").trim();
+      }
+    }
+    
+    if (!reponse) reponse = content.trim() || (data && data.response) || "";
+    return { reponse };
   } catch (e) {
     return { erreur: erreurOllama(e) };
   }

@@ -997,7 +997,7 @@ function VueCouleurSunoIA({ data }: VueProps) {
         <div style={{ position: "relative" }}>
           <button className="attic-node-copy-btn nodrag" title={t("btn.copier")}
             onClick={(e) => { e.stopPropagation(); copierTexte(texte); }}
-            style={{ position: "absolute", top: 4, right: 4, zIndex: 1 }}>⧉</button>
+            style={{ position: "absolute", top: 4, right: 20, zIndex: 1 }}>⧉</button>
           <div style={{
             maxHeight: 160, overflowY: "auto", fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap",
             background: "#0d1117", borderRadius: 4, padding: "6px 22px 6px 8px", color: "var(--texte, #cbd5e1)",

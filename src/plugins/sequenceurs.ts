@@ -91,7 +91,7 @@ export const fiches: PluginDef[] = ([
         doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid." },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure." },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
         doc: "Motif encodé (édité par la grille du nœud) : 13 rangées (du grave au aigu) de pas séparées par « | ».",

@@ -72,7 +72,7 @@ export const fiches: PluginDef[] = ([
     parametres: [
       {
         nom: "Forme", nomEn: "Waveform", type: "choix",
-        options: ["Sinus", "Carré", "Dent de scie", "Triangle"], defaut: "Sinus",
+        options: ["Sinus", "Carré", "Dent de scie", "Triangle"], optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"], defaut: "Sinus",
         doc: "Forme d'onde. Sinus = une seule fréquence. Carré/Triangle = harmoniques impaires. Dent de scie = toutes les harmoniques.",
         docEn: "Waveform. Sine = a single frequency. Square/Triangle = odd harmonics. Sawtooth = all harmonics.",
       },

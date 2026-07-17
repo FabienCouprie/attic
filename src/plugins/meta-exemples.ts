@@ -52,66 +52,12 @@ const synthetiseurSoustractif: MetaComposant = {
   ],
 };
 
-// Prompt cadrant le LLM pour qu'il sorte pile le format lu par « Texte → MIDI ».
-const PROMPT_COMPOSITEUR = `You are a music composer. Output ONLY notes in this EXACT format, nothing else (no explanation, no markdown, no code fences):
-- optional first line: TEMPO <bpm>
-- then one line per note: <NOTE><OCTAVE> <DURATION_IN_BEATS> [VELOCITY]
-- chord: join notes with +   e.g.  C4+E4+G4 1
-- rest: "rest <duration>"
-Example:
-TEMPO 120
-C4 0.5
-E4 0.5
-G4 1
-rest 0.5
-C4+E4+G4 2
-
-Now compose a cheerful 8-bar melody in C major.`;
-
-// Chaîne « LLM compositeur » : Ollama génère la notation → Texte→MIDI la rend
-// (audio + MIDI). Sorties exposées : Audio et MIDI. Double-cliquer pour changer
-// le prompt / le modèle Ollama.
-const compositeurIA: MetaComposant = {
-  id: "meta-compositeur-ia",
-  nom: "Compositeur IA (Ollama)",
-  entrees: [],
-  sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
-  mapEntrees: [],
-  mapSorties: [{ noeudInterne: "n2", portIndex: 0 }, { noeudInterne: "n2", portIndex: 1 }],
-  sousNoeuds: [
-    {
-      id: "n1",
-      position: { x: -180, y: 120 },
-      width: 300,
-      height: 260,
-      data: {
-        ficheId: "ollama-llm",
-        parametres: { Modèle: "llama3.2", Prompt: PROMPT_COMPOSITEUR, Température: 0.8, "Max tokens": 300 },
-      },
-    },
-    {
-      id: "n2",
-      position: { x: 220, y: 120 },
-      width: 300,
-      height: 260,
-      data: {
-        ficheId: "texte-vers-midi",
-        parametres: { Synthèse: "FM/Oscillateurs", Volume: 80, Tempo: 120 },
-      },
-    },
-  ],
-  sousAretes: [
-    { id: "e-n1-n2", source: "n1", target: "n2", sourceHandle: "out:0", targetHandle: "in:0" },
-  ],
-};
-
-const EXEMPLES: MetaComposant[] = [synthetiseurSoustractif, compositeurIA];
+const EXEMPLES: MetaComposant[] = [synthetiseurSoustractif];
 
 export function installerMetasExemples(): void {
   const presents = new Set(tousLesMetas().map((m) => m.id));
   for (const meta of EXEMPLES) {
-    if (presents.has(meta.id)) continue; // déjà installé (ou restauré depuis localStorage)
-    // N'installer que si tous les sous-nodes existent dans le registre.
+    if (presents.has(meta.id)) continue;
     const tousPresents = meta.sousNoeuds.every((n) => registre.trouverDef(n.data.ficheId) !== undefined);
     if (!tousPresents) {
       console.warn(`[attic] Méta exemple « ${meta.nom} » non installé : fiche(s) manquante(s)`);
