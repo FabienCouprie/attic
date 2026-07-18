@@ -166,6 +166,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
 
+    // Retour visuel IMMÉDIAT sur le méta propriétaire d'un nœud interne en échec.
+    // Sans ça le méta garde son « en cours » (posé en amont) jusqu'à la passe
+    // finale — qui n'arrive qu'à la toute fin du run, voire jamais si une autre
+    // branche est très lente : le méta semble alors tourner normalement alors que
+    // sa chaîne interne a déjà échoué. `expansions` relie un id aplati au
+    // méta-nœud visible d'origine.
+    const marquerMetaEnEchec = (idAplati: string, detail?: string) => {
+      const proprio = plat.expansions.get(idAplati);
+      if (proprio && proprio !== idAplati) {
+        definirStatut(proprio, "erreur", detail ? `branche en échec : ${detail}` : "branche en échec");
+      }
+    };
+
     for (let i = 0; i < ordreFiltre.length; i++) {
       const nodeId = ordreFiltre[i];
       // Sauter les nœuds en erreur (connexion illégale) — déjà marqués « erreur »
@@ -181,6 +194,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
         definirStatut(nodeId, "erreur", `entrée en erreur : ${entreeFautive.source}`);
+        marquerMetaEnEchec(nodeId);
         continue;
       }
       definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
@@ -211,7 +225,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
-      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); continue; }
+      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       try {
         const res = await fn({
@@ -242,6 +256,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         if ((res as any).erreur || (aDesSorties && toutNul)) {
           noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
+          marquerMetaEnEchec(nodeId, node.data.ficheId as string);
         } else {
           cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree });
           definirStatut(nodeId, "termine");
@@ -253,6 +268,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
         definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
+        marquerMetaEnEchec(nodeId, node.data.ficheId as string);
       }
     }
 
