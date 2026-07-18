@@ -2,10 +2,9 @@
 
 export type StatutExecution = "attente" | "en_cours" | "termine" | "erreur";
 
-// Valeur transportée sur les arêtes. `TypeValeur` est le type PAR DÉFAUT du
-// framework (actuellement teinté audio). Le cœur ne manipule les valeurs que de
+// Valeur transportée sur les arêtes. Le cœur ne manipule les valeurs que de
 // façon opaque : un autre domaine fournit son propre type via le paramètre
-// `TValeur` des contrats génériques ci-dessous, sans toucher au cœur (§1 roadmap).
+// `TValeur` des contrats génériques ci-dessous, sans toucher au cœur.
 // Union de valeurs du domaine AUDIO. Elle vit encore dans le cœur uniquement
 // parce que `core/metastore.ts` et `core/nodes-installes.ts` sont mono-domaine
 // (hypothèse assumée « un domaine par process » — cf. ARCHITECTURE.md §14).
@@ -16,9 +15,10 @@ export type StatutExecution = "attente" | "en_cours" | "termine" | "erreur";
 export type TypeValeur = AudioBuffer | Float32Array | File | string | { debut: number; duree: number } | null;
 
 // Contexte d'exécution passé à chaque plugin. Générique sur :
-//  - `TValeur`  : le type des valeurs sur les arêtes (défaut : audio) ;
-//  - `TRuntime` : l'environnement d'exécution opaque du domaine (défaut :
-//    AudioContext du Web Audio). Le cœur ne l'utilise jamais, il le transmet.
+//  - `TValeur`  : le type des valeurs sur les arêtes, propre au domaine ;
+//  - `TRuntime` : l'environnement d'exécution opaque du domaine (AudioContext
+//    côté audio, `null` côté domaine nombre). Le cœur ne l'utilise jamais, il
+//    le transmet tel quel au plugin.
 //
 // `aretes` et `resultats` ne sont PAS dans le contrat : ce sont des détails
 // internes du moteur. Les plugins accèdent aux valeurs via `entree()` et
