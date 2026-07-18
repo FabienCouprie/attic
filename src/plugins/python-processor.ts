@@ -163,7 +163,11 @@ export const fiches: FicheAudio[] = ([
       const code = ctx.paramTexte("Code", CODE_DEFAUT);
       const timeout = ctx.paramNombre("Timeout", 30);
 
-      const tmpDir = (window as any).api?.obtenirRepertoireTravail?.() || "work";
+      // `obtenirRepertoireTravail` est un ipcRenderer.invoke : il rend une Promise.
+      // Sans await, tmpDir valait « [object Promise] » et TOUS les chemins d'E/S
+      // étaient invalides — le script s'exécutait mais ses sorties étaient illisibles.
+      const tmpDir = await (window as any).api?.obtenirRepertoireTravail?.();
+      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
 
       // Préparer le WAV d'entrée (argv[1])
       let inputPath: string | null = null;
@@ -261,9 +265,19 @@ export const fiches: FicheAudio[] = ([
       if (sorties[0]) parts.push("audio OK");
       if (sorties[1]) parts.push("MIDI OK");
       if (sorties[2]) parts.push("texte OK");
-      const msg = `Python ${parts.join(" · ") || "exécuté"}${result.stdout?.trim() ? ` · ${result.stdout.trim().slice(0, 80)}` : ""}`;
+      const stdout = result.stdout?.trim() ? ` · ${result.stdout.trim().slice(0, 80)}` : "";
 
-      return { valeurs: [sorties[0], sorties[1], sorties[2]], message: msg };
+      // Le script a tourné mais n'a produit AUCUNE sortie lisible : c'est un échec,
+      // pas un succès. Sans ce test, le nœud affichait « Python exécuté · … » avec
+      // le stdout du script alors qu'il ne transmettait rien en aval.
+      if (!parts.length) {
+        return {
+          valeurs: [null, null, null], erreur: true,
+          message: `Python a tourné mais n'a écrit aucune sortie lisible.\nLe script doit écrire dans ATTIC_OUTPUT_PATH (.wav), ATTIC_OUTPUT_MIDI (.mid) ou ATTIC_OUTPUT_TEXT (.txt).\nDossier de travail : ${tmpDir}${stdout}`,
+        };
+      }
+
+      return { valeurs: [sorties[0], sorties[1], sorties[2]], message: `Python ${parts.join(" · ")}${stdout}` };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

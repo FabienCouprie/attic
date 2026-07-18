@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -138,6 +138,16 @@ function creerFenetre() {
       nodeIntegration: false,
       devTools: true,
     },
+  });
+
+  // Les liens externes (favoris « Banque de son », `<a target="_blank">`) doivent
+  // s'ouvrir dans le NAVIGATEUR du système, pas dans une fenêtre Electron : sinon
+  // les téléchargements atterrissent dans une fenêtre sans gestionnaire de
+  // téléchargement au lieu du dossier Téléchargements de Windows. En dev, l'app
+  // tourne déjà dans un vrai navigateur, d'où le « ça marche en dev seulement ».
+  fenetre.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url);
+    return { action: "deny" };
   });
 
   // Content-Security-Policy : unsafe-eval requis pour le chargement dynamique
@@ -447,14 +457,22 @@ ipcMain.handle("dossier:music-projet", () => {
 // <projet>/work en dev, <dossier de l'exécutable>/work en version packagée.
 // C'est le répertoire par défaut des dialogues d'export/import.
 ipcMain.handle("dossier:travail-defaut", () => {
-  try {
-    const base = app.isPackaged ? path.dirname(app.getPath("exe")) : path.resolve(__dirname, "..");
-    const dossier = path.join(base, "work");
-    if (!fs.existsSync(dossier)) fs.mkdirSync(dossier, { recursive: true });
-    return dossier;
-  } catch {
-    return null;
+  // En packagé, le dossier de l'exécutable est souvent C:\Program Files\… : y
+  // créer « work » exige les droits administrateur et échouait silencieusement,
+  // laissant les scripts Python/Julia sans nulle part où écrire leurs sorties.
+  // On tente donc l'emplacement historique, puis on se rabat sur userData.
+  const candidats = app.isPackaged
+    ? [path.join(path.dirname(app.getPath("exe")), "work"), path.join(app.getPath("userData"), "work")]
+    : [path.join(path.resolve(__dirname, ".."), "work")];
+  for (const dossier of candidats) {
+    try {
+      fs.mkdirSync(dossier, { recursive: true });
+      fs.accessSync(dossier, fs.constants.W_OK); // existe ≠ inscriptible
+      return dossier;
+    } catch { /* candidat suivant */ }
   }
+  console.error("[attic] Aucun répertoire de travail inscriptible parmi :", candidats);
+  return null;
 });
 
 ipcMain.handle("nouvelle-fenetre", async () => {
@@ -736,7 +754,7 @@ ipcMain.handle("julia:executer", async (_event, options) => {
 const OLLAMA_BASE = process.env.ATTIC_OLLAMA_URL || "http://127.0.0.1:11434";
 function erreurOllama(e) {
   const s = String(e?.cause?.code || e?.message || e);
-  if (e?.name === "AbortError") return "Délai dépassé";
+  if (e?.name === "AbortError") return "Délai dépassé — le premier appel doit charger le modèle en mémoire (plusieurs minutes pour un gros modèle). Augmentez « Délai max » sur le nœud.";
   if (/ECONNREFUSED|ENOTFOUND|fetch failed/i.test(s)) return "Serveur Ollama injoignable sur :11434 (lancez « ollama serve »).";
   return s;
 }

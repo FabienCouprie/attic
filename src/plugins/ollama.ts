@@ -59,6 +59,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Max tokens", nomEn: "Max tokens", plage: [32, 8192], pas: 32, defaut: 4096,
         doc: "Longueur maximale de la réponse (num_predict). Les modèles avec thinking (Qwen3) ont besoin de plus de tokens.",
         docEn: "Maximum response length (num_predict). Models with thinking mode (Qwen3) need more tokens." },
+      { nom: "Délai max", nomEn: "Timeout", plage: [30, 1800], pas: 30, defaut: 600, unite: "s",
+        doc: "Délai avant abandon. Le PREMIER appel à un modèle doit le charger en mémoire : comptez plusieurs minutes pour un gros modèle (Qwen3.6 = 24 Go). Les appels suivants sont bien plus rapides tant que le modèle reste résident.",
+        docEn: "Timeout before aborting. The FIRST call to a model must load it into memory: allow several minutes for a large model (Qwen3.6 = 24 GB). Subsequent calls are much faster while the model stays resident." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -69,6 +72,7 @@ export const fiches: FicheAudio[] = ([
       const res = await ollamaGenerer({
         model, prompt,
         options: { temperature: ctx.paramNombre("Température", 0.8), num_predict: ctx.paramNombre("Max tokens", 4096) },
+        timeout: ctx.paramNombre("Délai max", 600) * 1000,
       });
       if (res.erreur) return { valeurs: [null], erreur: true, message: `Ollama : ${res.erreur}` };
       const texte = (res.reponse || "").trim();

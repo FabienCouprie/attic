@@ -137,7 +137,10 @@ export const fiches: FicheAudio[] = ([
       const code = ctx.paramTexte("Code", CODE_DEFAUT);
       const timeout = ctx.paramNombre("Timeout", 30);
 
-      const tmpDir = (window as any).api?.obtenirRepertoireTravail?.() || "work";
+      // Voir python-processor : sans await, tmpDir vaut « [object Promise] » et
+      // tous les chemins d'entrée/sortie sont invalides.
+      const tmpDir = await (window as any).api?.obtenirRepertoireTravail?.();
+      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
 
       let inputPath: string | null = null;
       if (audio instanceof AudioBuffer) {
@@ -212,7 +215,21 @@ export const fiches: FicheAudio[] = ([
       try { await api.supprimerFichier(outputMidiPath); } catch {}
       try { await api.supprimerFichier(outputTextPath); } catch {}
 
-      return { valeurs: sorties, message: result.stdout?.trim() || undefined };
+      // Même contrat que python-processor : le script a pu tourner sans écrire
+      // aucune sortie lisible — c'est un échec, pas un succès silencieux.
+      const stdout = result.stdout?.trim() ? ` · ${result.stdout.trim().slice(0, 80)}` : "";
+      const parts: string[] = [];
+      if (sorties[0]) parts.push("audio OK");
+      if (sorties[1]) parts.push("MIDI OK");
+      if (sorties[2]) parts.push("texte OK");
+      if (!parts.length) {
+        return {
+          valeurs: [null, null, null], erreur: true,
+          message: `Julia a tourné mais n'a écrit aucune sortie lisible.\nLe script doit écrire dans ATTIC_OUTPUT_PATH (.wav), ATTIC_OUTPUT_MIDI (.mid) ou ATTIC_OUTPUT_TEXT (.txt).\nDossier de travail : ${tmpDir}${stdout}`,
+        };
+      }
+
+      return { valeurs: sorties, message: `Julia ${parts.join(" · ")}${stdout}` };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

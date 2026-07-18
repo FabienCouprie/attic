@@ -741,8 +741,8 @@ function VuePythonProcessor({ id, data }: VueProps) {
             style={{
               position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
               margin: 0, padding: "8px", overflow: "auto",
-              background: "#1e1e1e", borderRadius: "0 4px 4px 0", pointerEvents: "none",
-              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+              background: "#1e1e1e", border: "1px solid transparent", borderLeft: "none", borderRadius: "0 4px 4px 0", pointerEvents: "none",
+              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
             }}
           >
             {tokens.map((t: { text: string; type: string }, i: number) => (
@@ -771,7 +771,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
               background: "transparent", color: "transparent",
               caretColor: "#fff", resize: "none", outline: "none",
               fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
-              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
             }}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
@@ -899,8 +899,8 @@ function VueJuliaProcessor({ id, data }: VueProps) {
             style={{
               position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
               margin: 0, padding: "8px", overflow: "auto",
-              background: "#1e1e1e", borderRadius: "0 4px 4px 0", pointerEvents: "none",
-              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+              background: "#1e1e1e", border: "1px solid transparent", borderLeft: "none", borderRadius: "0 4px 4px 0", pointerEvents: "none",
+              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
             }}
           >
             {tokens.map((t: { text: string; type: string }, i: number) => (
@@ -929,7 +929,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
               background: "transparent", color: "transparent",
               caretColor: "#fff", resize: "none", outline: "none",
               fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
-              whiteSpace: "pre-wrap", wordBreak: "break-word", tabSize: 4,
+              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
             }}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
