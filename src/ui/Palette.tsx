@@ -1,6 +1,6 @@
 // ui/Palette.tsx — Catalogue des nœuds
 import { useMemo, useState } from "react";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n } from "../i18n";
 
 const COULEURS: Record<string, string> = {
@@ -10,13 +10,13 @@ const COULEURS: Record<string, string> = {
   Autres: "#fab005",
 };
 
-interface Props { plugins: PluginDef[]; onSupprimerMeta?: (id: string) => void }
+interface Props { plugins: FicheAudio[]; onSupprimerMeta?: (id: string) => void }
 
 export function Palette({ plugins, onSupprimerMeta }: Props) {
   const [q, setQ] = useState("");
   const { t, lang } = useI18n();
 
-  function nomDef(def: PluginDef) { return lang === "en" && def.nomEn ? def.nomEn : def.nom; }
+  function nomDef(def: FicheAudio) { return lang === "en" && def.nomEn ? def.nomEn : def.nom; }
 
   const filtres = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -32,7 +32,7 @@ export function Palette({ plugins, onSupprimerMeta }: Props) {
   }, [q, plugins]);
 
   const groupes = useMemo(() => {
-    const map = new Map<string, Map<string, PluginDef[]>>();
+    const map = new Map<string, Map<string, FicheAudio[]>>();
     for (const p of filtres) {
       if (!map.has(p.univers)) map.set(p.univers, new Map());
       const fam = map.get(p.univers)!;

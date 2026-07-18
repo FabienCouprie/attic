@@ -1,10 +1,10 @@
 // plugins/sorties.ts — Nœuds de sortie
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { rendreMidi } from "../audio";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "sortie-audio", nom: "Sortie audio", nomEn: "Audio output", univers: "Sorties", famille: "Écoute",
     resume: "Point d'écoute final. Joue le signal reçu et permet l'export.",
@@ -84,4 +84,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [buffer, midi] };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

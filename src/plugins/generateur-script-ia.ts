@@ -3,7 +3,7 @@
 // voix reçus en entrée texte pour produire un prompt/script pour un applicatif
 // IA tel que Suno. Bilingue FR/EN.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
 
@@ -87,7 +87,7 @@ function construireScript(
   return lignes.join("\n");
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "generateur-script-ia", nom: "Générateur de script IA", nomEn: "AI Script Generator",
     univers: "Autres", famille: "Texte",
@@ -142,4 +142,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [script], message: `${fr ? "Script généré" : "Script generated"} (${source})` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

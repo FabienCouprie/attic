@@ -3,7 +3,7 @@
 // 2. Réservoir textuel : émergence par réseau de neurones aléatoires
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { mulberry32 } from "../audio";
 
@@ -122,7 +122,7 @@ function genererTexteReservoir(
   return texte.trim();
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "gpt2-paroles", nom: "DistilGPT-2 Paroles", nomEn: "DistilGPT-2 Lyrics",
     univers: "Autres", famille: "Texte",
@@ -308,4 +308,4 @@ export const fiches: PluginDef[] = ([
       };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

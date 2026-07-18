@@ -1,6 +1,6 @@
 // plugins/generateurs.ts — Nœuds generateurs (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import {
   decoderFichier, decoderBlob,
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
@@ -11,7 +11,7 @@ import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "generateur-accords", nom: "Générateur d'accords", nomEn: "Chord Generator", univers: "Entrées", famille: "Génération",
     resume: "Génère une progression d'accords.",
@@ -630,4 +630,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [buf, midiFile], message: `${notes.length} notes · échantillon ${audioFichier.name}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

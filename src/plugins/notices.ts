@@ -2,7 +2,7 @@
 // Complète les fiches en « notice » (texte long, un clic) et en documentation
 // de paramètres, de façon centralisée. Appliqué à l'enregistrement via
 // `avecDoc(def)` : n'écrase jamais une doc déjà présente sur la fiche.
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 
 type Bilingue = { fr: string; en: string };
 
@@ -183,7 +183,7 @@ const PARAMS_EN: Record<string, string> = {
   "Synthèse": "Synthesis",
 };
 
-export function avecDoc(def: PluginDef): PluginDef {
+export function avecDoc(def: FicheAudio): FicheAudio {
   const n = NOTICES[def.id];
   if (n && !def.notice) { def.notice = n.fr; def.noticeEn = n.en; }
   if (!def.nomEn && NOMS_EN[def.id]) def.nomEn = NOMS_EN[def.id];

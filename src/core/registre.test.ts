@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { creerRegistre } from "./registre";
 import type { PluginDef } from "./types";
 
-const fake = (id: string, over: Partial<PluginDef> = {}): PluginDef => ({
+const fake = (id: string, over: Partial<PluginDef<any, any>> = {}): PluginDef<any, any> => ({
   id, nom: id, univers: "Test", famille: "Test", resume: "résumé",
   entrees: [], sorties: [], parametres: [],
   executer: async () => ({ valeurs: [] }),

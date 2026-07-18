@@ -4,7 +4,7 @@
 // direct en mode web/dev. Attic ne télécharge aucun modèle — c'est Ollama qui
 // gère téléchargement, cache et exécution (hors du renderer → pas de saturation
 // mémoire WASM, cf. modèles Transformers.js).
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number }
@@ -36,7 +36,7 @@ async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
   }
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "ollama-llm", nom: "LLM Ollama", nomEn: "Ollama LLM",
     univers: "Autres", famille: "Texte",
@@ -76,4 +76,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: texte };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

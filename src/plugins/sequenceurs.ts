@@ -1,6 +1,6 @@
 // plugins/sequenceurs.ts — Séquenceurs (motifs édités à la grille).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { rendreSequenceurBatterie, decoderMotif } from "../audio";
 import {
@@ -35,7 +35,7 @@ const MOTIF_MELO_DEFAUT = [
   "0000000000000000", // rangée 12 (aigu)
 ].join("|");
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "sequenceur-batterie", nom: "Séquenceur de batterie", nomEn: "Drum Sequencer",
     univers: "Entrées", famille: "Génération",
@@ -115,4 +115,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [buf], message: `${nbPas} pas · ${mesures} mesure(s) · ${tempo} BPM · ${notes} note(s) · ${noteBas}–${noteHaut}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

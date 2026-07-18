@@ -8,7 +8,7 @@
 // des alias supplémentaires (synonymes, abréviations) que le registre ne porte
 // pas.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { registre } from "../audio/adaptateur";
 
@@ -217,7 +217,7 @@ function parserPrompt(prompt: string): { nodes: SpecNode[]; edges: SpecEdge[] } 
   return { nodes, edges };
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "prompt-vers-graphe", nom: "Prompt → graphe", nomEn: "Prompt → graph",
     univers: "Autres", famille: "Texte",
@@ -246,4 +246,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [chainDesc], message: `${nodes.length} nodes · ${edges.length} connexions\n${chainDesc}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

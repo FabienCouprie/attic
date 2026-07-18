@@ -2,7 +2,8 @@
 // exporte un node existant en .zip et importe un node depuis un .zip.
 // Permet de partager des nodes entre installations d'Attic.
 
-import type { PluginDef, Registre, TypeValeur } from "../core";
+import type { Registre, TypeValeur } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { installerNode } from "../core";
 
@@ -20,7 +21,7 @@ function getPluginsRecents(): string[] {
     .map((p) => `${p.id} — ${p.nom}`);
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "gestion-nodes", nom: "Gestionnaire de nodes", nomEn: "Node Manager",
     univers: "Nouvelles fonctionnalités", famille: "Installation",
@@ -178,4 +179,4 @@ export const fiches: PluginDef[] = ([
       }
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

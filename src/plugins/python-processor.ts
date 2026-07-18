@@ -3,7 +3,7 @@
 // L'audio d'entrée est converti en WAV temporaire, le script Python
 // le traite et produit un WAV de sortie.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 
@@ -128,7 +128,7 @@ with wave.open(output_path, 'wb') as w:
 print(f"Traité: {len(audio)} samples, {channels} canaux")
 `;
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "python-processor", nom: "Python Processor", nomEn: "Python Processor",
     univers: "Nouvelles fonctionnalités", famille: "Génération",
@@ -266,4 +266,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [sorties[0], sorties[1], sorties[2]], message: msg };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

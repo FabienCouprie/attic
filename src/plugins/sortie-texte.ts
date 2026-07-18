@@ -1,10 +1,10 @@
 // plugins/sortie-texte.ts — Nœud « Sortie texte » : affiche et permet de
 // télécharger/coller le texte reçu sur son entrée (port bleu).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "sortie-texte", nom: "Sortie texte", nomEn: "Text Output",
     univers: "Sorties", famille: "Écoute",
@@ -19,4 +19,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: texte };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

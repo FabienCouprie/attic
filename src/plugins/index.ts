@@ -1,7 +1,7 @@
 // plugins/index.ts — Re-exporte les fiches de tous les plugins du domaine audio.
 // L'adaptateur (audio/adaptateur.ts) importe ces fiches et les enregistre dans
 // le registre. Aucun side-effect à l'import — les modules ne font qu'exporter.
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 
 import { fiches as f_entrees } from "./entrees";
 import { fiches as f_effets } from "./effets";
@@ -40,7 +40,7 @@ import { fiches as f_couleur_suno_ia } from "./couleur-suno-ia";
 import { fiches as f_ollama } from "./ollama";
 import { fiches as f_texte_vers_midi } from "./texte-vers-midi";
 
-export const toutesLesFiches: PluginDef[] = [
+export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
   ...f_effets,
   ...f_analyse,

@@ -254,6 +254,22 @@ tool, not a processing plugin) receives the registry via
 `TRuntime = null`. Computes `(4×2)+3 = 11` via `ordreTopologique` + `resoudreEntree`
 + `trouverPlugin`. Tests `validerGraphe` (incompatible types, required ports).
 
+**No default generic** (`core/types.ts`): `PluginDef`, `ContexteExecution` and
+`FonctionPlugin` take `<TValeur, TRuntime>` with **no default**. A new domain
+therefore *cannot* silently bind to the audio union — the compiler forces it to
+name its own value and runtime types, exactly as `domaine-nombre.test.ts` does.
+The audio domain declares its aliases once in `audio/types-domaine.ts`
+(`FicheAudio`, `ContexteAudio`, `FonctionAudio`, `ValeurAudio`, `RuntimeAudio`);
+plugins and UI use those, never `PluginDef` bare.
+
+**Accepted debt — one domain per process.** `TypeValeur` still lives in
+`core/types.ts`, and `core/metastore.ts` / `core/nodes-installes.ts` pin
+`PluginDef<TypeValeur, AudioContext>`. Likewise `AtelierNode`'s `DEFS_CACHE`
+and the non-namespaced `attic-metas` / `attic-nodes-installes` localStorage
+keys are process-global. Running two *different* domains inside one process
+would require namespacing all four; running one domain per process (the actual
+use case) is unaffected.
+
 **Compartmentalization** (`core/cloisonnement.test.ts`): two independent
 registries (audio + number). `audio.trouverDef("reverb")` defined, `nombre.trouverDef("reverb")`
 undefined. Independent catalogs. Homonymous flow types ("nombre" in both

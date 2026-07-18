@@ -1,11 +1,11 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n } from "../i18n";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
-  def: PluginDef | undefined;
+  def: FicheAudio | undefined;
   onChangerParametre: (nom: string, val: number | string) => void;
   onChargerFichier: (key: string, fichier: File) => void;
   onSupprimer: () => void;

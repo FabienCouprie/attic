@@ -4,10 +4,10 @@
 // Oscillateur pédagogique : générateur (synthèse additive band-limitée) dont la
 // vue montre l'onde ET son spectre (timbre ↔ harmoniques).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "analyseur-spectre", nom: "Analyseur de spectre", nomEn: "Spectrum Analyzer",
     univers: "Visualisation", famille: "Analyse",
@@ -191,4 +191,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [a], message: "Palette de couleurs générée" };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

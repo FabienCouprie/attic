@@ -10,7 +10,7 @@
 //   rest 0.5            ← silence
 //   C4+E4+G4 1          ← accord (notes séparées par +)
 // Les lignes vides et celles commençant par # ou // sont ignorées.
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreMidi, type NoteEvenement } from "../audio";
 
@@ -54,7 +54,7 @@ function parserNotation(texte: string, tempoInitial: number): { notes: NoteEvene
 
 const EXEMPLE = "TEMPO 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "texte-vers-midi", nom: "Texte → MIDI", nomEn: "Text → MIDI",
     univers: "Entrées", famille: "Génération",
@@ -88,4 +88,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [audio, midiFichier], message: `${notes.length} note(s) · ${tempo} BPM · ${audio.duration.toFixed(1)}s` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

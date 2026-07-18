@@ -2,7 +2,7 @@
 // génère une galerie HTML visuelle avec pochettes procédurales par piste,
 // lecteurs intégrés, métadonnées et design vitrine. Exposable sur le web ou en local.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 // Couleurs déduites du nom de piste (même logique que le générateur de pochette)
@@ -129,7 +129,7 @@ ${cards}
 </html>`;
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "galerie-exposition", nom: "Galerie d'exposition", nomEn: "Exhibition Gallery",
     univers: "Collections", famille: "Export",
@@ -217,4 +217,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [], message: `Galerie générée : ${dossierSortie}/index.html\n${pistes.length} pistes · ${nbCopies} MP3 copiés dans mp3/ · ${htmlOk ? "HTML écrit ✓" : "HTML échec ✗"}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

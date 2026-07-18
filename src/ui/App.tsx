@@ -12,7 +12,7 @@ import { trouverMeta,
   surChangementMetas, supprimerMeta } from "../core";
 import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 const tousLesPlugins = () => registre.tousLesPlugins();
@@ -90,7 +90,7 @@ const edgeTypes = { "arete-personnalisee": AretePersonnalisee };
 
 // ── Helpers ──
 
-function tailleDefaut(def: PluginDef): { width: number; height: number } {
+function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
   const nbParams = def.parametres.length;
   let w = 260;

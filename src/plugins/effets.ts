@@ -1,6 +1,6 @@
 // plugins/effets.ts — Nœuds d'effets audio
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import {
   appliquerDelay, appliquerReverberation, appliquerDistorsion,
@@ -19,7 +19,7 @@ import {
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
 
-function effet(slug: string, nom: string, nomEn: string, resume: string, resumeEn: string, parametres: ParamEffet[], fn: FnEffet): PluginDef {
+function effet(slug: string, nom: string, nomEn: string, resume: string, resumeEn: string, parametres: ParamEffet[], fn: FnEffet): FicheAudio {
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
@@ -43,7 +43,7 @@ function param(nom: string, defaut: number, nomEn?: string, unite?: string, doc?
   return { nom, defaut, nomEn, unite, doc, docEn, plage, pas };
 }
 
-function simple(slug: string, nom: string, nomEn: string, resume: string, resumeEn: string, fn: (a: AudioBuffer) => AudioBuffer | Promise<AudioBuffer>): PluginDef {
+function simple(slug: string, nom: string, nomEn: string, resume: string, resumeEn: string, fn: (a: AudioBuffer) => AudioBuffer | Promise<AudioBuffer>): FicheAudio {
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -57,7 +57,7 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
   };
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
     [param("Temps G", 250, "Time L", "ms", "Délai canal gauche.", "Left channel delay."), param("Temps D", 375, "Time R", "ms", "Délai canal droit.", "Right channel delay."), param("Feedback", 40, "Feedback", "%", "Quantité de signal réinjecté.", "Amount of signal fed back."), param("Mix", 35, "Mix", "%", "Équilibre signal original / delay.", "Dry/wet balance.")],
     (a,tg,td,fb,mix) => appliquerDelay(a, tg, td, fb, mix)),
@@ -663,4 +663,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

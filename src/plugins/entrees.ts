@@ -1,10 +1,10 @@
 // plugins/entrees.ts — Nœuds d'entrée
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { decoderFichier, decoderBlob } from "../audio";
 
-const entrees: PluginDef[] = [
+const entrees: FicheAudio[] = [
   {
     id: "entree-audio", nom: "Entrée audio", nomEn: "Audio input", univers: "Entrées", famille: "Audio",
     resume: "Charge un fichier audio et le transmet sur sa sortie.",
@@ -127,4 +127,4 @@ const entrees: PluginDef[] = [
   },
 ];
 
-export const fiches: PluginDef[] = entrees.map(avecDoc) as PluginDef[];
+export const fiches: FicheAudio[] = entrees.map(avecDoc) as FicheAudio[];

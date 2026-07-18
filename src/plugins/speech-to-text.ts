@@ -4,7 +4,7 @@
 // ou un enregistrement. Le texte est émis sur la sortie texte (port bleu).
 // La transcription tourne dans un Web Worker.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 let worker: Worker | null = null;
@@ -67,7 +67,7 @@ const LANGUES_WHISPER: Record<string, string> = {
   "Coréen": "ko",
 };
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "whisper-en", nom: "Whisper (Anglais)", nomEn: "Whisper (English)",
     univers: "Sorties", famille: "Speech to Text",
@@ -143,4 +143,4 @@ export const fiches: PluginDef[] = ([
       });
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

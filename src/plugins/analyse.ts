@@ -1,11 +1,11 @@
 // plugins/analyse.ts — Nœuds d'analyse
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte } from "../audio";
 import { langueCourante } from "../i18n";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "analyse-audio", nom: "Analyse audio", univers: "Visualisation", famille: "Analyse",
     resume: "Analyse tempo, tonalité, type chanson/instrumental.",
@@ -119,4 +119,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [audio], message: `${texte}\n\n${resume}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

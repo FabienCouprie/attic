@@ -30,13 +30,13 @@ import { construireListeTessitures } from "../plugins/tessitures";
 import { tokenizePython } from "../plugins/python-processor";
 import { tokenizeJulia } from "../plugins/julia-processor";
 import { COULEURS } from "../audio";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import type { DonneesNoeud } from "./AtelierNode";
 
 export interface VueProps {
   id: string;
   data: DonneesNoeud;
-  def?: PluginDef;
+  def?: FicheAudio;
 }
 
 // ── Enregistreur micro ──

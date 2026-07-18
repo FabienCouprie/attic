@@ -2,10 +2,10 @@
 // par l'utilisateur sur sa sortie texte (port bleu). Utile comme source pour
 // les nodes de synthèse vocale, les scripts IA, etc.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "source-texte", nom: "Entrée texte", nomEn: "Text Input",
     univers: "Entrées", famille: "Text to Speech",
@@ -23,4 +23,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: `${texte.length} caractères` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

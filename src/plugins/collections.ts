@@ -1,9 +1,9 @@
 // plugins/collections.ts — Nœuds collections (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "collection-vers-mp3", nom: "Conversion WAV→MP3", nomEn: "WAV→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers audio en MP3.",
@@ -134,4 +134,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs:[null], message:`Terminé : ${ok} converti(s)${err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : ""}.` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

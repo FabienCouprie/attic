@@ -95,7 +95,7 @@ describe("cache d'exécution — empreinteEntrees", () => {
 });
 
 describe("validation renforcée (Chantier A)", () => {
-  const fakePlugin = (over: Partial<PluginDef> = {}): PluginDef => ({
+  const fakePlugin = (over: Partial<PluginDef<any, any>> = {}): PluginDef<any, any> => ({
     id: "test-plugin",
     nom: "Test",
     univers: "Test",

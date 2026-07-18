@@ -2,7 +2,7 @@
 // 1. Traduction Whisper : texte → TTS interne → Whisper translate → texte anglais
 // 2. OPUS-MT : texte → texte multilingue (paires de langues, modèle léger)
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 let ttsWorker: Worker | null = null;
@@ -58,7 +58,7 @@ const Paires_OPUS: { id: string; nom: string; nomEn: string; model: string }[] =
   { id: "en-hi", nom: "Anglais → Hindi", nomEn: "English → Hindi", model: "Xenova/opus-mt-en-hi" },
 ];
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "traduction-whisper", nom: "Traduction Whisper", nomEn: "Whisper Translation",
     univers: "Autres", famille: "Texte",
@@ -158,4 +158,4 @@ export const fiches: PluginDef[] = ([
       });
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

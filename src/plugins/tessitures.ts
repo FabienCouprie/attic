@@ -2,7 +2,7 @@
 // texte une collection de tessitures vocales, scindées hommes/femmes.
 // Bilingue FR/EN.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
 
@@ -78,7 +78,7 @@ export function construireListeTessitures(
   return { texte, total: noms.length };
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "tessitures-voix", nom: "Tessitures de voix", nomEn: "Vocal Ranges",
     univers: "Autres", famille: "Texte",
@@ -110,4 +110,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: `${total} tessitures${grpAff ? ` — ${grpAff}` : ""}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

@@ -3,9 +3,9 @@
 // définissent une entrée/sortie exposée du méta. Jamais exécutés réellement
 // (retirés à la sauvegarde du sous-graphe) ; filtrés de la palette.
 import { ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "../core";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 
-const defs: PluginDef[] = [
+const defs: FicheAudio[] = [
   {
     id: ID_ENTREE_FRONTIERE, nom: "▸ Entrée exposée", nomEn: "▸ Exposed input",
     univers: "Méta-composants", famille: "Frontière",
@@ -30,4 +30,4 @@ const defs: PluginDef[] = [
   },
 ];
 
-export const fiches: PluginDef[] = defs;
+export const fiches: FicheAudio[] = defs;

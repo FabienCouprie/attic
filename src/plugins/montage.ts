@@ -1,6 +1,6 @@
 // plugins/montage.ts — Nœuds montage (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import {
   appliquerEchoPingPong, appliquerReverbeProgressive,
   reinsererZone, melangerPistes, placerSonSurZones,
@@ -8,7 +8,7 @@ import {
 } from "../audio";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "echo-ping-pong", nom: "Echo Ping-Pong", nomEn: "Ping-Pong Echo", univers: "Traitement", famille: "Effets",
     resume: "Écho stéréo ping-pong.",
@@ -289,4 +289,4 @@ export const fiches: PluginDef[] = ([
       };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

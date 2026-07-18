@@ -2,7 +2,7 @@
 // une longue liste de noms d'instruments de musique, filtrable par famille.
 // Bilingue : les noms suivent la langue de l'app (FR/EN). Rangé dans « Autres ».
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
 
@@ -103,7 +103,7 @@ export function construireListeInstruments(
   return { texte, total: noms.length };
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "noms-instruments", nom: "Noms d'instruments", nomEn: "Instrument Names",
     univers: "Autres", famille: "Texte",
@@ -135,4 +135,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: `${total} instruments${famAff ? ` — ${famAff}` : ""}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

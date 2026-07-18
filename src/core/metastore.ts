@@ -35,7 +35,7 @@ export function estMeta(id: string): boolean {
 
 export function enregistrerMeta(meta: MetaComposant): void {
   metas.set(meta.id, meta);
-  const def: PluginDef = {
+  const def: PluginDef<TypeValeur, AudioContext> = {
     id: meta.id,
     nom: meta.nom,
     univers: "Méta-composants",

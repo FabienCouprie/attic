@@ -3,7 +3,7 @@
 // d'un thème, d'une émotion et d'une clé, sans IA — par templates + tirage
 // aléatoire dans des dictionnaires de mots. Instantané, hors-ligne, reproductible.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 // PRNG déterministe
@@ -115,7 +115,7 @@ function genererParoles(
   return resultat.trim();
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "generateur-paroles", nom: "Générateur de paroles", nomEn: "Lyrics Generator",
     univers: "Autres", famille: "Texte",
@@ -159,4 +159,4 @@ export const fiches: PluginDef[] = ([
       };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

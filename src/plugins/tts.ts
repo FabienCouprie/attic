@@ -3,7 +3,7 @@
 // Le texte provient d'une entrée texte (port bleu) — branchez un node « Source de texte ».
 // La synthèse tourne dans un Web Worker pour ne pas bloquer l'UI.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 let worker: Worker | null = null;
@@ -48,7 +48,7 @@ const LANGUES_MMS: Record<string, string> = {
   "Russe": "Xenova/mms-tts-rus",
 };
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "tts-speecht5", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
     univers: "Entrées", famille: "Text to Speech",
@@ -128,4 +128,4 @@ export const fiches: PluginDef[] = ([
       });
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

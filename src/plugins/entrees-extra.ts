@@ -1,10 +1,10 @@
 // plugins/entrees-extra.ts — Nœuds entrees-extra (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { decoderFichier } from "../audio";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "explorateur-musique", nom: "Explorateur musique", nomEn: "Music explorer", univers: "Entrées", famille: "Audio",
     resume: "Charge un fichier audio depuis l'explorateur.",
@@ -20,4 +20,4 @@ export const fiches: PluginDef[] = ([
   },
 
   // ── Effets ──
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

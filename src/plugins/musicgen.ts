@@ -2,7 +2,7 @@
 // depuis un prompt texte via Xenova/musicgen-small (Transformers.js, ONNX).
 // Le modèle tourne dans un Web Worker pour ne pas bloquer l'UI.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
 let worker: Worker | null = null;
@@ -21,7 +21,7 @@ function libererWorker(): void {
   if (worker) { worker.terminate(); worker = null; }
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "musicgen", nom: "Générateur IA MusicGen", nomEn: "MusicGen AI Generator",
     univers: "Entrées", famille: "Génération",
@@ -74,4 +74,4 @@ export const fiches: PluginDef[] = ([
       });
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

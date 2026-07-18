@@ -98,7 +98,7 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     return;
   }
 
-  const def: PluginDef = {
+  const def: PluginDef<TypeValeur, AudioContext> = {
     id: m.id,
     nom: m.nom,
     nomEn: m.nomEn,

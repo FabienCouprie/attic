@@ -1,9 +1,9 @@
 // plugins/separation.ts — Nœuds separation (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "separateur-ia", nom: "Séparateur IA", nomEn: "AI Separator", univers: "Traitement", famille: "Effets",
     resume: "Sépare les sources audio via IA (Demucs 4/6 stems, MDX-Net).",
@@ -84,4 +84,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs:[null, null, r.autre, r.voix, null, null], message:"Séparé : voix + instrumental" };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

@@ -1,10 +1,10 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersMp3Blob } from "../audio";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "visualiseur-forme-onde", nom: "Visualiseur", nomEn: "Waveform Viewer", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche la forme d'onde du signal avec zoom et barre de défilement.",
@@ -72,4 +72,4 @@ export const fiches: PluginDef[] = ([
   },
 
   // ── IA ──
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

@@ -1,7 +1,7 @@
 // plugins/emotions.ts — Nœud « Émotions » : émet sur sa sortie texte une
 // collection d'émotions humaines, filtrable par catégorie. Bilingue FR/EN.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue } from "../i18n";
 
@@ -116,7 +116,7 @@ export function construireListeEmotions(
   return { texte, total: noms.length };
 }
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "emotions", nom: "Émotions", nomEn: "Emotions",
     univers: "Autres", famille: "Texte",
@@ -148,4 +148,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [texte], message: `${total} émotions${catAff ? ` — ${catAff}` : ""}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

@@ -2,10 +2,10 @@
 // d'album procédurale (canvas) depuis un prompt + titre + artiste.
 // Hors-ligne, instantané, sans GPU. Export PNG.
 
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 
-export const fiches: PluginDef[] = ([
+export const fiches: FicheAudio[] = ([
   {
     id: "generateur-pochette", nom: "Générateur de pochette", nomEn: "Cover Art Generator",
     univers: "Autres", famille: "Texte",
@@ -39,4 +39,4 @@ export const fiches: PluginDef[] = ([
       return { valeurs: [], message: `Pochette « ${titre} » · ${style} · ${prompt.slice(0, 30)}` };
     },
   },
-] as PluginDef[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

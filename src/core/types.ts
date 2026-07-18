@@ -6,6 +6,13 @@ export type StatutExecution = "attente" | "en_cours" | "termine" | "erreur";
 // framework (actuellement teinté audio). Le cœur ne manipule les valeurs que de
 // façon opaque : un autre domaine fournit son propre type via le paramètre
 // `TValeur` des contrats génériques ci-dessous, sans toucher au cœur (§1 roadmap).
+// Union de valeurs du domaine AUDIO. Elle vit encore dans le cœur uniquement
+// parce que `core/metastore.ts` et `core/nodes-installes.ts` sont mono-domaine
+// (hypothèse assumée « un domaine par process » — cf. ARCHITECTURE.md §14).
+// Un NOUVEAU domaine ne doit PAS l'utiliser : il déclare sa propre union et la
+// passe en paramètre générique (les contrats ci-dessous n'ont plus de défaut,
+// donc le compilateur l'y oblige). Côté audio, utiliser `FicheAudio` /
+// `ValeurAudio` de `audio/types-domaine.ts` plutôt que ce type directement.
 export type TypeValeur = AudioBuffer | Float32Array | File | string | { debut: number; duree: number } | null;
 
 // Contexte d'exécution passé à chaque plugin. Générique sur :
@@ -17,7 +24,7 @@ export type TypeValeur = AudioBuffer | Float32Array | File | string | { debut: n
 // internes du moteur. Les plugins accèdent aux valeurs via `entree()` et
 // `entrees()`. Le cœur garantit que `entree(idx)` est non-null pour les ports
 // obligatoires (validation avant exécution — cf. validerGraphe).
-export interface ContexteExecution<TValeur = TypeValeur, TRuntime = AudioContext> {
+export interface ContexteExecution<TValeur, TRuntime> {
   noeud: { id: string; data: Record<string, unknown> };
   runtime: TRuntime;
   repertoireTravail: string;
@@ -34,7 +41,7 @@ export interface ContexteExecution<TValeur = TypeValeur, TRuntime = AudioContext
   onProgress: (msg: string) => void;
 }
 
-export type FonctionPlugin<TValeur = TypeValeur, TRuntime = AudioContext> = (ctx: ContexteExecution<TValeur, TRuntime>) => Promise<{
+export type FonctionPlugin<TValeur, TRuntime> = (ctx: ContexteExecution<TValeur, TRuntime>) => Promise<{
   valeurs: TValeur[];
   message?: string;
   mp3Url?: string;
@@ -70,7 +77,10 @@ export interface ParametreDef {
   docEn?: string;
 }
 
-export interface PluginDef<TValeur = TypeValeur, TRuntime = AudioContext> {
+// PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et
+// son runtime. C'est ce qui empêche un nouveau domaine de se lier silencieusement
+// à l'union audio (cf. TypeValeur ci-dessus).
+export interface PluginDef<TValeur, TRuntime> {
   id: string;
   nom: string;
   nomEn?: string;

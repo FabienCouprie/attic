@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
-import type { PluginDef } from "../core";
+import type { FicheAudio } from "../audio/types-domaine";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 const couleurFlux = (id: string) => registre.couleurFlux(id);
@@ -36,8 +36,8 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 // La couleur d'un port vient désormais du registre de types de flux du domaine
 // (core/typesFlux) : type inconnu ⇒ gris neutre. Voir couleurFlux().
 
-const DEFS_CACHE = new Map<string, PluginDef>();
-function getDef(ficheId: string): PluginDef | undefined {
+const DEFS_CACHE = new Map<string, FicheAudio>();
+function getDef(ficheId: string): FicheAudio | undefined {
   if (DEFS_CACHE.has(ficheId)) return DEFS_CACHE.get(ficheId);
   const def = trouverDef(ficheId);
   if (def) DEFS_CACHE.set(ficheId, def);
