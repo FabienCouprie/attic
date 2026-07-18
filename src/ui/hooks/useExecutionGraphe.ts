@@ -207,8 +207,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const monHashEntree = empreinteEntrees(nodeId, aretesG);
       const entreeCache = cacheExec.current.get(nodeId);
 
-      // Certains nodes (sans sortie, avec I/O fichiers) ne doivent jamais être cachés
-      const jamaisCache = node.data.ficheId === "galerie-exposition";
+      // Certains nodes (sans sortie, avec I/O fichiers) ne doivent jamais être
+      // cachés — la fiche le déclare, le moteur ne connaît aucun id en dur.
+      const jamaisCache = trouverDef(node.data.ficheId as string)?.jamaisCache === true;
 
       if (!jamaisCache && !sourceReprocessee && entreeCache && entreeCache.hashParams === hashParams && entreeCache.hashEntree === monHashEntree) {
         resultats.set(nodeId, entreeCache.valeurs);
@@ -287,12 +288,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
               return resultats.get(`${n.id}::${m.noeudInterne}`)?.[m.portIndex] ?? null;
             })
           : resultats.get(n.id);
-        if ((!vals || vals.length === 0) && n.data.ficheId !== "entree-audio" && !messages.has(n.id)) return n;
-        if (n.data.ficheId === "entree-audio") return n;
+        const defNode = trouverDef(n.data.ficheId as string);
+        if ((!vals || vals.length === 0) && !messages.has(n.id)) return n;
+        // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
+        if (defNode?.affichageAutonome) return n;
         const valsSafe = vals ?? [];
         // Ne pas créer de lecteur audio générique pour les nodes multi-sorties audio
         // (ex: séparateur IA) — chaque sortie a son propre lecteur via les ports.
-        const defNode = trouverDef(n.data.ficheId as string);
         const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
         const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
         const fichier = valsSafe.find((v): v is File => v instanceof File);

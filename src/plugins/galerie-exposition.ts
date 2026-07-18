@@ -137,6 +137,9 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a visual HTML gallery with procedural cover art from a directory of MP3 files.",
     entrees: [],
     sorties: [],
+    // Écrit une galerie sur le disque et dépend du contenu d'un répertoire :
+    // ni les paramètres ni les entrées ne capturent cet état externe.
+    jamaisCache: true,
     parametres: [
       { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Ma galerie",
         doc: "Titre affiché en haut de la galerie.", docEn: "Title displayed at the top of the gallery." },

@@ -95,4 +95,20 @@ export interface PluginDef<TValeur, TRuntime> {
   parametres: ParametreDef[];
   executer: FonctionPlugin<TValeur, TRuntime>;
   etiquettes?: string[];
+
+  // ── Indices pour le moteur ──
+  // Agnostiques du domaine : ils décrivent un COMPORTEMENT du nœud, pas son
+  // identité. Ils existent pour que le moteur n'ait jamais à tester un id de
+  // plugin en dur (cf. ARCHITECTURE.md §12 : « sans modifier core »).
+
+  // Ne jamais réutiliser un résultat mis en cache. Pour les nœuds à effet de
+  // bord dont le résultat dépend d'un état externe (disque, réseau) que les
+  // empreintes de paramètres et d'entrées ne capturent pas. Défaut : false.
+  jamaisCache?: boolean;
+
+  // Le nœud gère lui-même son affichage à partir de son `data` (typiquement une
+  // source qui montre le média chargé). Le moteur ne matérialise alors pas ses
+  // valeurs de sortie dans les champs d'affichage, pour ne pas écraser cet état.
+  // Défaut : false.
+  affichageAutonome?: boolean;
 }
