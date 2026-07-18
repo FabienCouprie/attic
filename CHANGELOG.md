@@ -16,12 +16,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   one of its inner nodes fails, instead of running on "as if nothing happened".
   Distinct from the 1.1.0 parallel-branch fix, which was about cache
   invalidation, not error propagation.
-- **Python and Julia processors are writable again.** Rebuilt as a shared
-  **uncontrolled** editor (`ui/EditeurCode.tsx`): React no longer touches the
-  text after mount, so re-renders can no longer scramble keystrokes (letters
-  landing before the last letter, doubled letters, displaced caret). Syntax
-  highlight and line numbers are updated imperatively; native undo/copy/paste
-  work; verified with real keystrokes across a mid-typing canvas re-render.
+- **Python and Julia code editing moved to an overlay window.** Two in-node
+  attempts failed: a controlled textarea let canvas re-renders scramble
+  keystrokes, and an uncontrolled transparent textarea layered over the
+  highlighted `<pre>` depended on pixel-perfect layer alignment inside the
+  zoomed (`transform: scale`) canvas — caret one step ahead, wrong mouse
+  selection, letters landing before the last letter. The node now shows a
+  read-only syntax-highlighted preview; clicking it opens a plain, visible
+  textarea in a fixed overlay outside the canvas (no transformed ancestor —
+  the whole bug class is gone by construction). Native caret, selection,
+  undo, copy/paste. Verified: click-to-caret exact (index 12/12), typed text
+  inserted at the click point, double-click selects the right word, sync back
+  to the node on close/blur/400 ms debounce, Escape closes.
 - **Python and Julia processors actually produce output.** `obtenirRepertoireTravail()`
   returns a Promise and was used without `await`: every I/O path was
   `[object Promise]/…`, so scripts ran but their outputs were unreadable — the
