@@ -204,11 +204,18 @@ export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: n
 
 
 
+// Défauts recalibrés (2026-07-18) : avec memoireSec = 1, la mémoire de crête
+// décroissait de 60 dB/s — PLUS VITE qu'une traîne de réverb réelle (20 à
+// 50 dB/s selon le RT60). Le rapport magnitude/crête restait donc ≈ 1 et le
+// gain valait 1 partout : l'effet était un passe-plat exact (mesuré :
+// réduction de traîne = 1,00). À 3 s (20 dB/s), une traîne typique passe
+// sous la crête mémorisée et se fait atténuer ; un son tenu (orgue) garde
+// sa crête et reste intact. Seuil relevé à 50 % (−6 dB) en cohérence.
 export function dererverberer(
   entree: AudioBuffer,
   force: number,
-  seuil: number = 30,
-  memoireSec: number = 1,
+  seuil: number = 50,
+  memoireSec: number = 3,
 ): AudioBuffer {
   const fenetre = creerFenetreHann(TAILLE_FFT);
   const nbBins = TAILLE_FFT / 2 + 1;

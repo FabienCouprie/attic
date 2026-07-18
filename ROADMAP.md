@@ -67,6 +67,53 @@ Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
 
 ---
 
+## Proposals recorded 2026-07-18 (open)
+
+Proposals made during the 2026-07 sessions, decided or discussed with the user,
+not yet implemented. Recorded here so they survive the conversation.
+
+### Features
+- **Second local LLM node (Qwen 2.5 or similar via Ollama)** — a SEPARATE
+  component, not a replacement for the existing DistilGPT-2 lyrics node
+  (user decision). Same IPC path as the Ollama node; mostly a fiche + prompt work.
+- **Text-export node** — writes a text input to a `.txt` file (counterpart of
+  the audio/MIDI export nodes). Small; from the 2026-07-16 punch-list.
+- **Black theme reinforcement pass** — audit remaining light-gray surfaces and
+  hard-coded colors; from the punch-list, untouched.
+- **Extra i18n pass on parameter items** — some parameter names/docs and
+  dropdown options still lack `nomEn`/`optionsEn`; from the punch-list.
+
+### Architecture (from the risk-table review, 2026-07-17)
+- **UI shell decoupling (“item 3”)** — the 5 files that import `registre` from
+  `audio/adaptateur` (App, AtelierNode, useExecutionGraphe, useMetaComposants,
+  metasLocaux) switch to a single injection point (`ui/registre-actif.ts`)
+  configured by the composition root; includes clearing/namespacing
+  `AtelierNode`'s module-global `DEFS_CACHE`. See PORTING-A-DOMAIN.md §6.a.
+- **Domain-provided result materialisation** — `useExecutionGraphe` still
+  sniffs domain types (`instanceof AudioBuffer/File`, `bufferVersWavBlob`,
+  `type === "audio"`) to build node display state. The adapter should provide
+  `materialiser(vals, def, data)` / `liberer(data)` instead. See
+  PORTING-A-DOMAIN.md §6.b. Prerequisite for a clean second domain in the UI.
+
+### Storage / ops (from the 2026-07-18 model-cache investigation)
+- **File-based AI-model cache** — HuggingFace models currently live in
+  Chromium Cache Storage, which is (a) split per origin — dev
+  (`localhost:5173`) and packaged (`file://`) each download their own 1.5 GB
+  copy — and (b) evictable under quota pressure for the unengaged `file://`
+  origin (observed 2026-07-18: packaged bucket recreated, 1.1 GB
+  re-downloaded, while the dev bucket survived). Durable fix: transformers.js
+  `env.useCustomCache` backed by plain files in `userData/modeles-ia` served
+  through a custom Electron protocol (`attic-cache://`), shared by both dev
+  and packaged. Mitigations already in place: explicit `persistent-storage`
+  permission grant + boot-time `persisted()`/`estimate()` logging.
+- **Build ops** — `electron-builder` fails intermittently with `EPERM` renaming
+  `win-unpacked.tmp` (antivirus scans the freshly extracted Electron binaries
+  inside the rename window). Durable fix on the machine: exclude
+  `E:\attic\release` from real-time scanning. Workaround: retry after a few
+  seconds.
+
+---
+
 ## 1. "Educational studio" vision
 
 ### 1.1 Interactive guided tours

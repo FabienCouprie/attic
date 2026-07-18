@@ -16,10 +16,54 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   one of its inner nodes fails, instead of running on "as if nothing happened".
   Distinct from the 1.1.0 parallel-branch fix, which was about cache
   invalidation, not error propagation.
-- **Python and Julia processors are writable again.** Typed text no longer lands
-  away from the caret and mouse selection now selects what you point at: the
-  editors debounce their global sync and are isolated from React Flow's
-  pointer/key handling. Copy, cut, paste and Ctrl+Z work.
+- **Python and Julia processors are writable again.** Rebuilt as a shared
+  **uncontrolled** editor (`ui/EditeurCode.tsx`): React no longer touches the
+  text after mount, so re-renders can no longer scramble keystrokes (letters
+  landing before the last letter, doubled letters, displaced caret). Syntax
+  highlight and line numbers are updated imperatively; native undo/copy/paste
+  work; verified with real keystrokes across a mid-typing canvas re-render.
+- **Python and Julia processors actually produce output.** `obtenirRepertoireTravail()`
+  returns a Promise and was used without `await`: every I/O path was
+  `[object Promise]/…`, so scripts ran but their outputs were unreadable — the
+  node then showed "Python exécuté · <stdout>" while transmitting nothing.
+  Fixed the `await`, made the packaged work dir fall back to `userData/work`
+  (creating it under `C:\Program Files` silently failed), and a run that
+  produces no readable output is now reported as an **error** naming the
+  expected `ATTIC_OUTPUT_*` variables and the work directory.
+- **Phaser was inaudible** (measured: output ≈ input, 1.6% deviation). The
+  all-pass coefficient had an inverted sign, placing the phase transition near
+  20 kHz instead of the swept 200–2000 Hz band. Now produces moving notches
+  (measured).
+- **Octaver was inoperative.** The "octave up" phase trick never triggered
+  (constant 0.5) and "octave down" added the signal every other sample
+  (Nyquist modulation). Rewritten with classic analog-pedal techniques:
+  full-wave rectification + DC blocker (up), polarity flip every other period
+  (down). Energy at 2f and f/2 verified by measurement; docs now explain the
+  two sliders (one per added voice).
+- **Dereverb was an exact pass-through** (measured tail reduction: none). Its
+  peak memory decayed at 60 dB/s — faster than any real reverb tail — so the
+  gate never engaged. Recalibrated (20 dB/s, −6 dB knee): tails are now
+  attenuated while sustained notes survive (measured).
+- **Bookmark downloads in the packaged app** — sound-bank links opened inside
+  an Electron window with no download handling; they now open in the system
+  browser (`setWindowOpenHandler` + `shell.openExternal`).
+- **Ollama "Délai dépassé"** — the node passed no timeout (120 s default),
+  which a cold-loading large model (Qwen 3.6 = 24 GB) always exceeded. New
+  "Délai max" parameter (default 600 s) and an error message explaining the
+  first-call model load.
+- **Inspector number fields are clamped** to the parameter's range and step on
+  blur — it was possible to type nonsense values (0 bits, out-of-range dB)
+  that the DSP silently corrected while the UI displayed them.
+- **AI-model cache resilience** — the packaged app (`file://` origin) had its
+  Cache Storage bucket evicted under quota pressure, forcing model
+  re-downloads after an update. `persistent-storage` is now granted explicitly
+  and the boot log reports `persisted()` state and cache usage/quota. (The
+  durable file-based cache is recorded in ROADMAP.)
+- **Effects measurement bench** (`audio/effets-verification.test.ts`) —
+  normalizer, compressor, bitcrusher, phaser, octaver and dereverb are now
+  locked by 12 signal-level assertions (an effect regressing to a pass-through
+  fails the suite). Compressor and normalizer were verified conform to their
+  documented behavior (threshold/ratio/makeup, exact peak target).
 
 ### Changed
 - **The engine no longer tests plugin ids.** `useExecutionGraphe` special-cased

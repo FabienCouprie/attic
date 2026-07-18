@@ -10,7 +10,16 @@ import App from "./ui/App";
 // En Electron, la permission est généralement accordée sans invite utilisateur.
 if (navigator.storage?.persist) {
   navigator.storage.persist()
-    .then((accorde) => console.log(`[attic] Stockage persistant : ${accorde ? "accordé" : "refusé"}`))
+    .then(async (accorde) => {
+      // Diagnostic complet : « accordé » au sens de la requête, état réellement
+      // persisté, et poids du cache — pour savoir, à la prochaine perte de
+      // modèles, si c'est une éviction de quota (cf. main.cjs, permission
+      // persistent-storage) ou autre chose.
+      const persiste = await navigator.storage.persisted?.().catch(() => undefined);
+      const est = await navigator.storage.estimate?.().catch(() => undefined);
+      const mo = (n?: number) => n == null ? "?" : `${Math.round(n / 1048576)} Mo`;
+      console.log(`[attic] Stockage persistant : ${accorde ? "accordé" : "refusé"} (persisted=${persiste}) — usage ${mo(est?.usage)} / quota ${mo(est?.quota)}`);
+    })
     .catch(() => { /* API indisponible : on ignore, le cache reste best-effort */ });
 }
 

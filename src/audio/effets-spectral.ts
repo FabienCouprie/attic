@@ -248,7 +248,11 @@ export function phaser(
       const fc = 200 + 1800 * (1 + lfo * depth) / 2;
       const w0 = 2 * Math.PI * fc / sr;
       const tanW0 = Math.tan(w0 / 2);
-      const a = (1 - tanW0) / (1 + tanW0);
+      // Coefficient passe-tout du 1er ordre dont la transition de phase (90°)
+      // est à fc : a = (tan−1)/(tan+1), NÉGATIF pour fc ≪ Nyquist. Le signe
+      // inverse (1−tan)/(1+tan) place la transition près de Nyquist — le
+      // balayage du LFO devenait inaudible (sortie ≈ entrée, mesuré à 1,6 %).
+      const a = (tanW0 - 1) / (tanW0 + 1);
 
       let signal = src[i];
       for (let s = 0; s < nbEtages; s++) {
@@ -298,48 +302,50 @@ export function vibrato(
   return resultat;
 }
 
-// Octaver : ajoute une octave supérieure et/ou inférieure.
+// Octaver : ajoute une voix à l'octave supérieure et/ou inférieure.
+// Techniques monophoniques classiques des pédales analogiques :
+//  - octave SUP : redressement double alternance (|x| double la fréquence),
+//    débarrassé de sa composante continue par un bloqueur DC à un pôle ;
+//  - octave INF : polarité inversée une période sur deux (compteur de passages
+//    à zéro montants) — le produit x·(±1) contient la fondamentale f/2.
+// L'ancienne version était inopérante : la « phase locale » du haut valait
+// constamment 0,5 (jamais de retournement) et le bas ajoutait le signal un
+// échantillon sur deux — une modulation à Nyquist, pas une octave grave.
 export function octaver(
   buffer: AudioBuffer,
   octaveSup: number,
   octaveInf: number,
   mix: number,
 ): AudioBuffer {
-  const sr = buffer.sampleRate;
-  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
-  const mixSup = Math.max(0, Math.min(100, octaveSup)) / 100;
-  const mixInf = Math.max(0, Math.min(100, octaveInf)) / 100;
-  const mixDry = 1 - Math.max(0, Math.min(1, mix / 100));
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
+  const nivSup = Math.max(0, Math.min(100, octaveSup)) / 100;
+  const nivInf = Math.max(0, Math.min(100, octaveInf)) / 100;
+  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
-    let lastZero = 0;
-    let infCount = 0;
+    let rectPrec = 0;   // bloqueur DC de la voix haute
+    let dcEtat = 0;
+    let polarite = 1;   // voix basse : ±1, bascule une période sur deux
+    let prec = 0;
 
     for (let i = 0; i < buffer.length; i++) {
-      let output = src[i] * mixDry;
+      const x = src[i];
 
-      if (mixSup > 0) {
-        if (i > 0 && src[i - 1] <= 0 && src[i] > 0) {
-          lastZero = i;
-        }
-        const halfPeriod = i - lastZero;
-        const periodEstimate = halfPeriod * 2;
-        if (periodEstimate > 0) {
-          const localPhase = ((i - lastZero) % periodEstimate) / periodEstimate;
-          output += src[i] * mixSup * (localPhase > 0.5 ? -1 : 1);
-        }
-      }
+      // Voix haute : |x| → bloqueur DC (y = x − x₁ + R·y₁). ×2 compense la
+      // perte d'amplitude du redressement (composante 2f d'un |sin| ≈ 0,42).
+      const rect = Math.abs(x);
+      const hp = rect - rectPrec + 0.995 * dcEtat;
+      rectPrec = rect;
+      dcEtat = hp;
 
-      if (mixInf > 0) {
-        if (infCount % 2 === 0) {
-          output += src[i] * mixInf;
-        }
-        infCount++;
-      }
+      // Voix basse : bascule de polarité à chaque passage à zéro montant.
+      if (prec <= 0 && x > 0) polarite = -polarite;
+      prec = x;
 
-      dst[i] = output;
+      const voix = hp * 2 * nivSup + x * polarite * nivInf;
+      dst[i] = x * (1 - mixVal) + voix * mixVal;
     }
   }
   return resultat;

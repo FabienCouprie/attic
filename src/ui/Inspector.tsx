@@ -101,7 +101,25 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               <input type="number" className="inspecteur-num" style={{ width: 62 }}
                 min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
                 value={Number(params[p.nom] ?? p.defaut)}
-                onChange={(e) => { const v = Number(e.target.value); if (e.target.value !== "" && !Number.isNaN(v)) onChangerParametre(p.nom, v); }} />
+                onChange={(e) => {
+                  // Les attributs min/max HTML n'empêchent PAS de taper une valeur
+                  // hors plage (0 bit, valeur négative…) : on borne nous-mêmes.
+                  const v = Number(e.target.value);
+                  if (e.target.value === "" || Number.isNaN(v)) return;
+                  const [mn, mx] = p.plage ?? [0, 100];
+                  onChangerParametre(p.nom, Math.min(mx, Math.max(mn, v)));
+                }}
+                onBlur={(e) => {
+                  // À la sortie du champ, on aligne aussi sur le pas du paramètre
+                  // (un « Bits » à 3,7 n'a pas de sens). Pendant la frappe, on ne
+                  // le fait pas — sinon impossible de taper « 12 » chiffre à chiffre.
+                  const v = Number(e.target.value);
+                  if (e.target.value === "" || Number.isNaN(v)) return;
+                  const [mn, mx] = p.plage ?? [0, 100];
+                  const pas = p.pas ?? 1;
+                  const cale = Math.min(mx, Math.max(mn, Math.round((v - mn) / pas) * pas + mn));
+                  onChangerParametre(p.nom, cale);
+                }} />
               {p.unite ? <span className="inspecteur-unite">{p.unite}</span> : null}
             </div>
           )}

@@ -173,6 +173,17 @@ function creerFenetre() {
     callback({ responseHeaders: headers });
   });
 
+  // Accorde EXPLICITEMENT « persistent-storage » (et les autres permissions,
+  // comme le fait Electron par défaut). Enjeu : les modèles IA HuggingFace
+  // vivent dans le Cache Storage de l'origine file:// — une origine sans
+  // « site engagement » que Chromium évince EN PREMIER sous pression de
+  // quota si elle n'est pas marquée persistante. Constaté le 18/07/2026 :
+  // compartiment CacheStorage de l'app packagée recréé (1,1 Go retéléchargés)
+  // pendant que celui du dev (localhost:5173) survivait.
+  session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => {
+    callback(true);
+  });
+
   // Supprimer le warning de sécurité Electron en mode dev (unsafe-eval est intentionnel)
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 

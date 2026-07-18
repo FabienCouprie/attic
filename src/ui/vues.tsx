@@ -12,6 +12,7 @@ import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { copierTexte } from "./copier";
+import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
@@ -638,14 +639,15 @@ function VueDetecteurAccords({ data }: VueProps) {
 }
 
 // ── Python Processor (éditeur de code avec coloration syntaxique) ──
+const COULEURS_PYTHON: Record<string, string> = {
+  keyword: "#569cd6", string: "#ce9178", comment: "#6a9955",
+  number: "#b5cea8", ident: "#d4d4d4", plain: "#d4d4d4",
+};
+
 function VuePythonProcessor({ id, data }: VueProps) {
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const code = String(data.parametres?.["Code"] ?? "");
-  const [editCode, setEditCode] = useState(code);
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
-  const syncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Vérifier Python au montage
   useEffect(() => {
@@ -653,7 +655,6 @@ function VuePythonProcessor({ id, data }: VueProps) {
     if (api?.pythonInfo) {
       api.pythonInfo().then((info: any) => setPyInfo(info));
     }
-    return () => { if (syncRef.current) clearTimeout(syncRef.current); };
   }, []);
 
   // Configurer le chemin Python
@@ -668,30 +669,6 @@ function VuePythonProcessor({ id, data }: VueProps) {
     } else {
       alert(`Erreur: ${result?.erreur || "chemin invalide"}`);
     }
-  };
-
-  const gutterRef = useRef<HTMLPreElement>(null);
-
-  // Sync scroll textarea → pre + gutter
-  const onScroll = () => {
-    if (taRef.current && preRef.current) {
-      preRef.current.scrollTop = taRef.current.scrollTop;
-      preRef.current.scrollLeft = taRef.current.scrollLeft;
-    }
-    if (taRef.current && gutterRef.current) {
-      gutterRef.current.scrollTop = taRef.current.scrollTop;
-    }
-  };
-
-  // Coloration
-  const tokens = editCode ? tokenizePython(editCode) : [];
-  const colorMap: Record<string, string> = {
-    keyword: "#569cd6",
-    string: "#ce9178",
-    comment: "#6a9955",
-    number: "#b5cea8",
-    ident: "#d4d4d4",
-    plain: "#d4d4d4",
   };
 
   return (
@@ -717,107 +694,30 @@ function VuePythonProcessor({ id, data }: VueProps) {
           title="Configurer le chemin de l'exécutable Python"
         >⚙ Configurer</button>
       </div>
-      {/* Éditeur de code avec numérotation de lignes */}
-      <div style={{ position: "relative", fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace", fontSize: 12, lineHeight: 1.5, display: "flex", flex: 1, minHeight: 0 }}>
-        {/* Numéros de ligne */}
-        <pre
-          ref={gutterRef}
-          aria-hidden="true"
-          style={{
-            margin: 0, padding: "8px 4px 8px 8px", overflow: "hidden",
-            background: "#1a1a1e", borderRadius: "4px 0 0 4px", textAlign: "right",
-            color: "#555", userSelect: "none", minWidth: 36, flexShrink: 0,
-            minHeight: 0,
-            whiteSpace: "pre", tabSize: 4,
-          }}
-        >
-          {editCode.split("\n").map((_, i) => `${i + 1}\n`).join("").trimEnd()}
-        </pre>
-        {/* Zone de code (coloration + textarea) */}
-        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-          <pre
-            ref={preRef}
-            aria-hidden="true"
-            style={{
-              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-              margin: 0, padding: "8px", overflow: "auto",
-              background: "#1e1e1e", border: "1px solid transparent", borderLeft: "none", borderRadius: "0 4px 4px 0", pointerEvents: "none",
-              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
-            }}
-          >
-            {tokens.map((t: { text: string; type: string }, i: number) => (
-              <span key={i} style={{ color: colorMap[t.type] || "#d4d4d4" }}>{t.text}</span>
-            ))}
-          </pre>
-          <textarea
-            ref={taRef}
-            className="nodrag nowheel"
-            value={editCode}
-            onChange={(e) => {
-              const v = e.target.value;
-              setEditCode(v);
-              // Synchro DIFFÉRÉE vers l'état global : sinon chaque frappe déclenche un
-              // setNodes → re-render de tout le canevas (lag, frappes perdues, curseur
-              // qui saute). On sync après 400 ms d'inactivité, et à la sortie (onBlur).
-              if (syncRef.current) clearTimeout(syncRef.current);
-              syncRef.current = setTimeout(() => d.onChangerParametre?.(id, "Code", v), 400);
-            }}
-            onBlur={() => { if (syncRef.current) clearTimeout(syncRef.current); d.onChangerParametre?.(id, "Code", editCode); }}
-            onScroll={onScroll}
-            spellCheck={false}
-            style={{
-              position: "relative", width: "100%", height: "100%",
-              margin: 0, padding: "8px", border: "1px solid #333", borderLeft: "none", borderRadius: "0 4px 4px 0",
-              background: "transparent", color: "transparent",
-              caretColor: "#fff", resize: "none", outline: "none",
-              fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
-              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Tab") {
-                e.preventDefault();
-                const ta = e.currentTarget;
-                const start = ta.selectionStart;
-                const end = ta.selectionEnd;
-                const newCode = editCode.slice(0, start) + "    " + editCode.slice(end);
-                setEditCode(newCode);
-                if (syncRef.current) clearTimeout(syncRef.current);
-                d.onChangerParametre?.(id, "Code", newCode);
-                requestAnimationFrame(() => {
-                  ta.selectionStart = ta.selectionEnd = start + 4;
-                });
-              }
-            }}
-          />
-        </div>
-      </div>
-      <div style={{ fontSize: 10, marginTop: 4, color: "var(--text-muted)", background: "var(--bg-surface)", padding: "2px 4px", borderRadius: "0 0 6px 6px" }}>
-        {editCode.split("\n").length} lignes · numpy + wave requis
-      </div>
+      {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
+      <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
+        onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
+        suffixePied="· numpy + wave requis" />
     </div>
   );
 }
 
 // ── Julia Processor (éditeur de code avec coloration syntaxique) ──
+const COULEURS_JULIA: Record<string, string> = {
+  keyword: "#569cd6", string: "#ce9178", comment: "#6a9955",
+  number: "#b5cea8", ident: "#d4d4d4", type: "#4ec9b0", op: "#d4d4d4",
+};
+
 function VueJuliaProcessor({ id, data }: VueProps) {
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const code = String(data.parametres?.["Code"] ?? "");
-  const [editCode, setEditCode] = useState(code);
-  const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
-  const syncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [jlInfo, setJlInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
 
   useEffect(() => {
     const api = (window as any).api;
     if (api?.juliaInfo) {
-      api.juliaInfo().then((info: any) => setPyInfo(info));
+      api.juliaInfo().then((info: any) => setJlInfo(info));
     }
-    return () => { if (syncRef.current) clearTimeout(syncRef.current); };
   }, []);
 
   const configurerPath = async () => {
@@ -827,33 +727,10 @@ function VueJuliaProcessor({ id, data }: VueProps) {
     if (!chemin) return;
     const result = await api.juliaDefinirChemin(chemin);
     if (result?.ok) {
-      setPyInfo({ disponible: true, chemin: result.chemin, version: result.version });
+      setJlInfo({ disponible: true, chemin: result.chemin, version: result.version });
     } else {
       alert(`Erreur: ${result?.erreur || "chemin invalide"}`);
     }
-  };
-
-  const gutterRef2 = useRef<HTMLPreElement>(null);
-
-  const onScroll = () => {
-    if (taRef.current && preRef.current) {
-      preRef.current.scrollTop = taRef.current.scrollTop;
-      preRef.current.scrollLeft = taRef.current.scrollLeft;
-    }
-    if (taRef.current && gutterRef2.current) {
-      gutterRef2.current.scrollTop = taRef.current.scrollTop;
-    }
-  };
-
-  const tokens = editCode ? tokenizeJulia(editCode) : [];
-  const colorMap: Record<string, string> = {
-    keyword: "#569cd6",
-    string: "#ce9178",
-    comment: "#6a9955",
-    number: "#b5cea8",
-    ident: "#d4d4d4",
-    type: "#4ec9b0",
-    op: "#d4d4d4",
   };
 
   return (
@@ -862,10 +739,10 @@ function VueJuliaProcessor({ id, data }: VueProps) {
       <div style={{ fontSize: 10, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
         <span style={{
           width: 8, height: 8, borderRadius: "50%",
-          background: pyInfo?.disponible ? "#2a9d8f" : "#e76f51",
+          background: jlInfo?.disponible ? "#2a9d8f" : "#e76f51",
         }} />
-        <span style={{ color: pyInfo?.disponible ? "#2a9d8f" : "#e76f51" }}>
-          {pyInfo?.disponible ? `Julia: ${pyInfo.version}` : "Julia non détecté"}
+        <span style={{ color: jlInfo?.disponible ? "#2a9d8f" : "#e76f51" }}>
+          {jlInfo?.disponible ? `Julia: ${jlInfo.version}` : "Julia non détecté"}
         </span>
         <span style={{ flex: 1 }} />
         <button
@@ -878,84 +755,10 @@ function VueJuliaProcessor({ id, data }: VueProps) {
           title="Configurer le chemin de l'exécutable Julia"
         >⚙ Configurer</button>
       </div>
-      <div style={{ position: "relative", fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace", fontSize: 12, lineHeight: 1.5, display: "flex", flex: 1, minHeight: 0 }}>
-        <pre
-          ref={gutterRef2}
-          aria-hidden="true"
-          style={{
-            margin: 0, padding: "8px 4px 8px 8px", overflow: "hidden",
-            background: "#1a1a1e", borderRadius: "4px 0 0 4px", textAlign: "right",
-            color: "#555", userSelect: "none", minWidth: 36, flexShrink: 0,
-            minHeight: 0,
-            whiteSpace: "pre", tabSize: 4,
-          }}
-        >
-          {editCode.split("\n").map((_, i) => `${i + 1}\n`).join("").trimEnd()}
-        </pre>
-        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-          <pre
-            ref={preRef}
-            aria-hidden="true"
-            style={{
-              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-              margin: 0, padding: "8px", overflow: "auto",
-              background: "#1e1e1e", border: "1px solid transparent", borderLeft: "none", borderRadius: "0 4px 4px 0", pointerEvents: "none",
-              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
-            }}
-          >
-            {tokens.map((t: { text: string; type: string }, i: number) => (
-              <span key={i} style={{ color: colorMap[t.type] || "#d4d4d4" }}>{t.text}</span>
-            ))}
-          </pre>
-          <textarea
-            ref={taRef}
-            className="nodrag nowheel"
-            value={editCode}
-            onChange={(e) => {
-              const v = e.target.value;
-              setEditCode(v);
-              // Synchro DIFFÉRÉE vers l'état global : sinon chaque frappe déclenche un
-              // setNodes → re-render de tout le canevas (lag, frappes perdues, curseur
-              // qui saute). On sync après 400 ms d'inactivité, et à la sortie (onBlur).
-              if (syncRef.current) clearTimeout(syncRef.current);
-              syncRef.current = setTimeout(() => d.onChangerParametre?.(id, "Code", v), 400);
-            }}
-            onBlur={() => { if (syncRef.current) clearTimeout(syncRef.current); d.onChangerParametre?.(id, "Code", editCode); }}
-            onScroll={onScroll}
-            spellCheck={false}
-            style={{
-              position: "relative", width: "100%", height: "100%",
-              margin: 0, padding: "8px", border: "1px solid #333", borderLeft: "none", borderRadius: "0 4px 4px 0",
-              background: "transparent", color: "transparent",
-              caretColor: "#fff", resize: "none", outline: "none",
-              fontFamily: "inherit", fontSize: "inherit", lineHeight: "inherit",
-              whiteSpace: "pre", overflowWrap: "normal", tabSize: 4,
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Tab") {
-                e.preventDefault();
-                const ta = e.currentTarget;
-                const start = ta.selectionStart;
-                const end = ta.selectionEnd;
-                const newCode = editCode.slice(0, start) + "    " + editCode.slice(end);
-                setEditCode(newCode);
-                if (syncRef.current) clearTimeout(syncRef.current);
-                d.onChangerParametre?.(id, "Code", newCode);
-                requestAnimationFrame(() => {
-                  ta.selectionStart = ta.selectionEnd = start + 4;
-                });
-              }
-            }}
-          />
-        </div>
-      </div>
-      <div style={{ fontSize: 10, marginTop: 4, color: "var(--text-muted)", background: "var(--bg-surface)", padding: "2px 4px", borderRadius: "0 0 6px 6px" }}>
-        {editCode.split("\n").length} lignes · WAV.jl requis
-      </div>
+      {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
+      <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
+        onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
+        suffixePied="· WAV.jl requis" />
     </div>
   );
 }

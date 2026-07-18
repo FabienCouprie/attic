@@ -90,7 +90,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], defaut: "Gate",
-        doc: "Gate = coupe le signal sous le seuil (atténuation fixe vers le plancher). Expandeur = atténue渐进ment le signal sous le seuil selon le ratio (compresseur inversé).",
+        doc: "Gate = coupe le signal sous le seuil (atténuation fixe vers le plancher). Expandeur = atténue progressivement le signal sous le seuil selon le ratio (compresseur inversé).",
         docEn: "Gate = cuts signal below threshold (fixed attenuation to floor). Expander = gradually attenuates signal below threshold by ratio (reverse compressor)." },
       { nom: "Seuil", nomEn: "Threshold", plage: [-80, 0], pas: 1, defaut: -40, unite: "dB",
         doc: "Niveau en dessous duquel le gate/expandeur s'active.", docEn: "Level below which the gate/expander engages." },
@@ -624,15 +624,17 @@ export const fiches: FicheAudio[] = ([
     id: "octaver", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
     resume: "Ajoute une octave supérieure et/ou inférieure.",
     resumeEn: "Adds an upper and/or lower octave.",
+    notice: "Génère jusqu'à DEUX voix supplémentaires — d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. Mettez l'un des deux à 0 pour n'ajouter qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
+    noticeEn: "Generates up to TWO extra voices — hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Set either to 0 to add a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Octave sup", nomEn: "Octave up", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Niveau de l'octave supérieure (doublement de fréquence).", docEn: "Upper octave level (frequency doubling)." },
+        doc: "Volume de la voix ajoutée une octave AU-DESSUS (fréquence doublée par redressement).", docEn: "Volume of the added voice one octave ABOVE (frequency doubled by rectification)." },
       { nom: "Octave inf", nomEn: "Octave down", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Niveau de l'octave inférieure (demi-fréquence).", docEn: "Lower octave level (half frequency)." },
+        doc: "Volume de la voix ajoutée une octave EN DESSOUS (période doublée par inversion de polarité).", docEn: "Volume of the added voice one octave BELOW (period doubled by polarity flipping)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Niveau du signal original (100% = signal original à fond).", docEn: "Dry signal level (100% = full dry signal)." },
+        doc: "Équilibre original / voix ajoutées. 0 % = original seul, 100 % = octaves seules.", docEn: "Dry / added-voices balance. 0% = dry only, 100% = octaves only." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
