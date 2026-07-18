@@ -2,7 +2,7 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.1.1] — unreleased
+## [1.1.1] — 2026-07-18
 
 ### Fixed
 - **A failed branch now fails the workflow.** A workflow could report "terminé"
