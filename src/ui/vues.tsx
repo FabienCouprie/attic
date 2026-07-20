@@ -14,6 +14,7 @@ import { useI18n } from "../i18n";
 import { copierTexte } from "./copier";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
+import { SelecteurMultiZones } from "./SelecteurMultiZones";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
@@ -85,12 +86,22 @@ function VueEnregistreur({ id, data }: VueProps) {
   );
 }
 
-// ── Forme d'onde / sélecteur multi-zones ──
-function VueFormeOnde({ id, data }: VueProps) {
+// ── Forme d'onde (WaveSurfer.js) ──
+function VueFormeOnde({ data }: VueProps) {
   return (
     <FormeOnde
       audioUrl={data.audioResultatUrl}
-      multi={data.ficheId === "selecteur-multi-zones"}
+      multi={false}
+      zones={[]}
+    />
+  );
+}
+
+// ── Sélecteur multi-zones (canvas natif) ──
+function VueSelecteurMultiZones({ id, data }: VueProps) {
+  return (
+    <SelecteurMultiZones
+      audioUrl={data.audioResultatUrl}
       zones={data.zonesSelectionnees ?? []}
       onZonesChange={(z) => data.onChangerZones?.(id, z)}
     />
@@ -986,7 +997,8 @@ const parId = (...ids: string[]) => (f: string) => ids.includes(f);
 const REGISTRE: EntreeRegistre[] = [
   // Enregistreur et entrée micro : la logique d'enregistrement est dans l'inspecteur,
   // pas dans une vue avant (évite le décalage du handle de sortie).
-  { correspond: parId("visualiseur-forme-onde", "selecteur-multi-zones"), vue: VueFormeOnde, position: "avant" },
+  { correspond: parId("visualiseur-forme-onde"), vue: VueFormeOnde, position: "avant" },
+  { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },
   { correspond: parId("spectrogramme"), vue: VueSpectrogramme, position: "avant" },
   { correspond: parId("oscillateur"), vue: VueOscillo, position: "avant" },
