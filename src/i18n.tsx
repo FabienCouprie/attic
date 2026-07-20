@@ -65,6 +65,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Conversion": { fr: "Conversion", en: "Conversion" },
   "famille.Export": { fr: "Export", en: "Export" },
   "famille.Installation": { fr: "Installation", en: "Installation" },
+  "famille.Théorie": { fr: "Théorie", en: "Theory" },
   "inspecteur.vide": { fr: "Sélectionnez un bloc", en: "Select a block" },
   "inspecteur.savoirPlus": { fr: "En savoir plus", en: "Learn more" },
   "inspecteur.savoirMoins": { fr: "Réduire", en: "Show less" },

@@ -45,7 +45,7 @@ function progressionSuggest(type: "major" | "minor"): string {
 export const fiches: FicheAudio[] = ([
   {
     id: "tonal-accord", nom: "Accord", nomEn: "Chord",
-    univers: "Traitement", famille: "Montage",
+    univers: "Autres", famille: "Théorie",
     resume: "Détecte le nom d'un accord à partir de ses notes.",
     resumeEn: "Detects the chord name from its notes.",
     entrees: [{ nom: "Notes", type: "texte", requis: false }],
@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "tonal-gamme", nom: "Gamme", nomEn: "Scale",
-    univers: "Traitement", famille: "Montage",
+    univers: "Autres", famille: "Théorie",
     resume: "Liste les notes d'une gamme à partir d'une tonalité et d'un type.",
     resumeEn: "Lists the notes of a scale from a tonic and a scale type.",
     entrees: [{ nom: "Tonalité", type: "texte", requis: false }],
@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "tonal-transposer", nom: "Transposer", nomEn: "Transpose",
-    univers: "Traitement", famille: "Montage",
+    univers: "Autres", famille: "Théorie",
     resume: "Transpose une note ou un accord d'un intervalle donné.",
     resumeEn: "Transposes a note or chord by a given interval.",
     entrees: [{ nom: "Note", type: "texte", requis: false }],
@@ -120,7 +120,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "tonal-progression", nom: "Progression", nomEn: "Progression",
-    univers: "Traitement", famille: "Montage",
+    univers: "Autres", famille: "Théorie",
     resume: "Génère une progression d'accords à partir d'une tonalité et de chiffres romains.",
     resumeEn: "Generates a chord progression from a key and roman numerals.",
     entrees: [{ nom: "Tonalité", type: "texte", requis: false }],
