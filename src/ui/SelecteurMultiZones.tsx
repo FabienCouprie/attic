@@ -3,6 +3,7 @@
 // zoom fluide (molette + slider). Utilisé uniquement par « selecteur-multi-zones ».
 import { useRef, useState, useEffect, useCallback } from "react";
 import { NodeResizer } from "@xyflow/react";
+import { useI18n } from "../i18n";
 
 export type Zone = { debut: number; duree: number };
 
@@ -20,6 +21,7 @@ function formatTemps(sec: number): string {
 }
 
 export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);  const containerRef = useRef<HTMLDivElement>(null);
   const [buffer, setBuffer] = useState<AudioBuffer | null>(null);
   const [chargement, setChargement] = useState(false);
@@ -346,9 +348,9 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
   return (
     <div className="attic-node-onde nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <NodeResizer minWidth={300} minHeight={200} />
-      {chargement && <div className="attic-node-onde-attente">Chargement…</div>}
+      {chargement && <div className="attic-node-onde-attente">{t("onde.chargement")}</div>}
       {!buffer && !chargement && (
-        <div className="attic-node-onde-attente">Connectez une source audio et lancez l'exécution.</div>
+        <div className="attic-node-onde-attente">{t("onde.connecterAudio")}</div>
       )}
       <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
         <canvas
@@ -427,7 +429,7 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
         <div className="attic-node-onde-infos">
           <span>{selAffichee.duree > 0
             ? `${selAffichee.debut.toFixed(2)}s → ${(selAffichee.debut + selAffichee.duree).toFixed(2)}s (${selAffichee.duree.toFixed(2)}s)`
-            : "Glissez pour définir une zone"}</span>
+            : t("zones.glisser")}</span>
           <span>{buffer.duration.toFixed(1)}s · {zoomPct}% zoom</span>
         </div>
       )}
@@ -444,14 +446,14 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
             className="attic-node-zones-ajouter"
             onClick={(e) => { e.stopPropagation(); ajouterZone(); }}
             disabled={selAffichee.duree <= 0.001}
-            title="Mémoriser la zone sélectionnée"
-          >➕ Ajouter la zone</button>
+            title={t("zones.memoriser")}
+          >➕ {t("zones.ajouter")}</button>
           <div className="attic-node-zones-liste">
-            {zones.length === 0 && <span className="attic-node-zones-vide">Aucune zone mémorisée</span>}
+            {zones.length === 0 && <span className="attic-node-zones-vide">{t("zones.aucune")}</span>}
             {zones.map((z, i) => (
               <span key={i} className="attic-node-zones-item">
                 {z.debut.toFixed(2)}s → {(z.debut + z.duree).toFixed(2)}s
-                <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title="Retirer">×</button>
+                <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title={t("zones.retirer")}>×</button>
               </span>
             ))}
           </div>
