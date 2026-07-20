@@ -6,7 +6,7 @@ import {
   appliquerDelay, appliquerReverberation, appliquerDistorsion,
   appliquerFlanger, appliquerChorus, compresser, normaliser,
   appliquerFiltre, supprimerClics, reduireBruit, calculerProfilBruit,
-  dererverberer, changerTempo, changerTonalite, equaliser,
+  dererverberer, changerTempo, changerTonalite, glissandoTonalite, equaliser,
   inverserAudio, echangerCanaux, extraireCentreCote,
   appliquerFondu,
   extraireZone,
@@ -14,6 +14,9 @@ import {
   gateExpandeur,
   deEsser,
   ringModulator,
+  appliquerPaulstretch,
+  appliquerFormuleEchantillons,
+  appliquerFormuleSpectrale,
 } from "../audio";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
@@ -144,6 +147,78 @@ export const fiches: FicheAudio[] = ([
   effet("changement-tonalite", "Changement de tonalité", "Pitch Shift", "Pitch-shift.", "Pitch shift.",
     [param("Demi-tons", 2, "Semitones", "", "Transposition en demi-tons.", "Transposition in semitones.", [-24, 24], 1)],
     (a,d) => changerTonalite(a, d)),
+  effet("glissando-tonalite", "Glissando de tonalité", "Pitch Glissando", "Pitch-shift glissant d'une tonalité à une autre.", "Pitch glissando from one pitch to another.",
+    [param("Début", 0, "Start", "st", "Hauteur de départ en demi-tons.", "Start pitch in semitones.", [-24, 24], 0.5),
+     param("Fin", 12, "End", "st", "Hauteur d'arrivée en demi-tons.", "End pitch in semitones.", [-24, 24], 0.5)],
+    (a,debut,fin) => glissandoTonalite(a, debut, fin)),
+  effet("paulstretch", "Paulstretch", "Paulstretch", "Étirement extrême par randomisation des phases (stéréo).", "Extreme phase-randomization time-stretch (stereo).",
+    [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", "Stretch factor. 1 = no effect, 8 = 8× longer.", [1, 100], 1),
+     param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", "STFT window size in seconds. Large = smooth texture, small = more transients.", [0.01, 1], 0.01)],
+    (a, stretch, fenetre) => appliquerPaulstretch(a, stretch, fenetre)),
+  {
+    id: "formule-echantillons", nom: "Formule sur échantillons", nomEn: "Sample Formula",
+    univers: "Traitement", famille: "Effets",
+    resume: "Applique une expression mathématique à chaque échantillon du signal.",
+    resumeEn: "Applies a mathematical expression to each sample of the signal.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440) + x",
+        doc: "Expression mathématique donnant la valeur de sortie de chaque échantillon. Variables : x (valeur actuelle), t (temps en secondes), i (index de l'échantillon), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
+        docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate)." },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440) + x");
+      const volume = ctx.paramNombre("Volume", 80);
+      try {
+        const out = appliquerFormuleEchantillons(audio, formule);
+        const vol = Math.max(0, Math.min(1, volume / 100));
+        if (vol !== 1) {
+          for (let c = 0; c < out.numberOfChannels; c++) {
+            const d = out.getChannelData(c);
+            for (let i = 0; i < d.length; i++) d[i] *= vol;
+          }
+        }
+        return { valeurs: [out], message: `Formule appliquée : ${formule}` };
+      } catch (e: any) {
+        return { valeurs: [null], message: `Erreur formule : ${e?.message ?? e}` };
+      }
+    },
+  },
+  {
+    id: "formule-spectrale", nom: "Formule spectrale", nomEn: "Spectral Formula",
+    univers: "Traitement", famille: "Effets",
+    resume: "Modifie le spectre du signal par des expressions mathématiques sur magnitude et phase.",
+    resumeEn: "Modifies the signal spectrum by mathematical expressions on magnitude and phase.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Magnitude", nomEn: "Magnitude", type: "texte", defaut: "mag * 2",
+        doc: "Expression pour la magnitude de chaque bin spectral. Variables : mag, phase, freq (Hz), bin, N (taille FFT), sr.",
+        docEn: "Expression for the magnitude of each spectral bin. Variables: mag, phase, freq (Hz), bin, N (FFT size), sr." },
+      { nom: "Phase", nomEn: "Phase", type: "texte", defaut: "",
+        doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Variables : mag, phase, freq, bin, N, sr.",
+        docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Variables: mag, phase, freq, bin, N, sr." },
+      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+        doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      const formuleMag = ctx.paramTexte("Magnitude", "mag * 2");
+      const formulePhase = ctx.paramTexte("Phase", "");
+      const fftSize = ctx.paramNombre("FFT", 2048);
+      try {
+        const out = appliquerFormuleSpectrale(audio, formuleMag, formulePhase, fftSize);
+        return { valeurs: [out], message: "Formule spectrale appliquée" };
+      } catch (e: any) {
+        return { valeurs: [null], message: `Erreur formule spectrale : ${e?.message ?? e}` };
+      }
+    },
+  },
   effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 3 bandes.", "3-band equalizer.",
     [param("Basses", 0, "Bass", "dB", "Gain des basses fréquences.", "Low frequency gain."), param("Médiums", 0, "Mid", "dB", "Gain des fréquences médiums.", "Mid frequency gain."), param("Aigus", 0, "Treble", "dB", "Gain des hautes fréquences.", "High frequency gain.")],
     (a,b,m,ag) => equaliser(a, b, m, ag)),
@@ -167,9 +242,25 @@ export const fiches: FicheAudio[] = ([
   effet("fondu", "Fondu", "Fade", "Fondu entrée/sortie.", "Fade in/out.",
     [param("Entrée", 0.5, "In", "s", "Durée du fondu d'entrée.", "Fade-in duration."), param("Sortie", 0.5, "Out", "s", "Durée du fondu de sortie.", "Fade-out duration.")],
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),
-  effet("extraire-zone", "Extraire une zone", "Extract Zone", "Extrait une portion avec fondu.", "Extracts a portion with fade.",
-    [param("Début", 0, "Start", "s", "Début de la zone à extraire.", "Start of the extracted zone."), param("Durée", 5, "Duration", "s", "Durée de la zone extraite.", "Duration of the extracted zone."), param("Fondu", 5, "Fade", "ms", "Durée du fondu aux bords.", "Crossfade duration at edges.")],
-    (a,debut,duree) => extraireZone(a, debut, Math.min(duree, a.duration - debut))),
+  {
+    id: "extraire-zone", nom: "Extraire une zone", nomEn: "Extract Zone", univers: "Traitement", famille: "Montage",
+    resume: "Extrait une portion avec fondu.",
+    resumeEn: "Extracts a portion with fade.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Début", nomEn: "Start", plage: [0, 600], pas: 0.1, defaut: 0, unite: "s", doc: "Début de la zone à extraire.", docEn: "Start of the extracted zone." },
+      { nom: "Durée", nomEn: "Duration", plage: [0.1, 600], pas: 0.1, defaut: 5, unite: "s", doc: "Durée de la zone extraite.", docEn: "Duration of the extracted zone." },
+      { nom: "Fondu", nomEn: "Fade", plage: [0, 100], pas: 1, defaut: 5, unite: "ms", doc: "Durée du fondu aux bords.", docEn: "Crossfade duration at edges." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      const debut = ctx.paramNombre("Début", 0);
+      const duree = ctx.paramNombre("Durée", 5);
+      return { valeurs: [extraireZone(a, debut, Math.min(duree, a.duration - debut))] };
+    },
+  },
   {
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",

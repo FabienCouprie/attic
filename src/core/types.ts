@@ -41,10 +41,19 @@ export interface ContexteExecution<TValeur, TRuntime> {
   onProgress: (msg: string) => void;
 }
 
+// CONTRAT D'ÉCHEC (résumé — détail dans PORTING-A-DOMAIN.md §4) :
+//  - un plugin qui échoue DOIT poser `erreur: true` (seul porteur d'un message
+//    exploitable) ;
+//  - filet du moteur : une sortie entièrement nulle sur un nœud qui a des ports
+//    de sortie est traitée comme un échec, SAUF si la fiche déclare
+//    `sortieNullePermise` (cf. PluginDef) ;
+//  - l'erreur se propage transitivement à toute la descendance.
 export type FonctionPlugin<TValeur, TRuntime> = (ctx: ContexteExecution<TValeur, TRuntime>) => Promise<{
   valeurs: TValeur[];
   message?: string;
   mp3Url?: string;
+  // Échec déclaré. Ne pas compter sur le filet « tout-null » : lui seul ne
+  // fournit aucun message, et un nœud sans port de sortie n'est pas couvert.
   erreur?: boolean;
 }>;
 
@@ -66,7 +75,7 @@ export interface PortDef {
 export interface ParametreDef {
   nom: string;
   nomEn?: string;
-  type?: "choix" | "curseur" | "texte" | "dossier";
+  type?: "choix" | "curseur" | "texte" | "dossier" | "nombre";
   options?: string[];
   optionsEn?: string[];
   plage?: [number, number];
@@ -111,4 +120,10 @@ export interface PluginDef<TValeur, TRuntime> {
   // valeurs de sortie dans les champs d'affichage, pour ne pas écraser cet état.
   // Défaut : false.
   affichageAutonome?: boolean;
+
+  // Une sortie entièrement nulle est un RÉSULTAT VALIDE pour ce nœud (ex. un
+  // transcripteur qui n'a rien détecté, un nœud-frontière). Sans ce drapeau, le
+  // filet du moteur traite « tout-null sur un nœud à sorties » comme un échec
+  // (cf. FonctionPlugin). Défaut : false.
+  sortieNullePermise?: boolean;
 }

@@ -24,6 +24,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.changer.midi": { fr: "Changer…", en: "Change…" },
   "btn.charger.onnx": { fr: "Charger modèle ONNX…", en: "Load ONNX…" },
   "btn.charger.ir": { fr: "Charger IR…", en: "Load IR…" },
+  "btn.charger.pd": { fr: "Charger patch Pd…", en: "Load Pd patch…" },
+  "btn.changer.pd": { fr: "Changer…", en: "Change…" },
   "btn.copier": { fr: "Copier le texte", en: "Copy text" },
   "evolution.jaime": { fr: "J'aime", en: "Like" },
   "evolution.jaimePas": { fr: "J'aime pas", en: "Dislike" },

@@ -105,7 +105,7 @@ println("Traité: $(size(audio, 1)) samples, $channels canaux")
 export const fiches: FicheAudio[] = ([
   {
     id: "julia-processor", nom: "Julia Processor", nomEn: "Julia Processor",
-    univers: "Nouvelles fonctionnalités", famille: "Génération",
+    univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Julia avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Julia code editor with syntax highlighting for audio processing.",
     entrees: [
@@ -137,9 +137,11 @@ export const fiches: FicheAudio[] = ([
       const code = ctx.paramTexte("Code", CODE_DEFAUT);
       const timeout = ctx.paramNombre("Timeout", 30);
 
-      // Voir python-processor : sans await, tmpDir vaut « [object Promise] » et
-      // tous les chemins d'entrée/sortie sont invalides.
-      const tmpDir = await (window as any).api?.obtenirRepertoireTravail?.();
+      // Le contexte porte déjà le répertoire de travail (configurable par
+      // l'utilisateur) : l'honorer d'abord, ne re-demander le défaut au main
+      // que s'il est vide. Voir python-processor pour l'await obligatoire.
+      const tmpDir = (typeof ctx.repertoireTravail === "string" && ctx.repertoireTravail.trim())
+        || await (window as any).api?.obtenirRepertoireTravail?.();
       if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
 
       let inputPath: string | null = null;
@@ -168,7 +170,10 @@ export const fiches: FicheAudio[] = ([
 
       const result = await api.juliaExecuter({
         code,
-        inputs: [{ path: inputPath }, ...(midiPath ? [{ path: midiPath }] : [])],
+        // Ne JAMAIS pousser un chemin null : main.cjs fait args.push(inp.path)
+        // et execFile lève ERR_INVALID_ARG_TYPE sur un argument non-string —
+        // un run MIDI/texte seul (sans audio) plantait ici.
+        inputs: [...(inputPath ? [{ path: inputPath }] : []), ...(midiPath ? [{ path: midiPath }] : [])],
         timeout: timeout * 1000,
         env: {
           ATTIC_OUTPUT_PATH: outputPath,

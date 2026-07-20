@@ -27,5 +27,7 @@ export * from "./evolution";
 export * from "./multi-reservoir";
 export * from "./graphe-embarque";
 export * from "./formants";
+export * from "./math-formules";
+export * from "./tone-synths";
 
 export { registre } from "./adaptateur";

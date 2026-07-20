@@ -13,6 +13,53 @@ interface Props {
   onEnregistrer?: (id: string, blob: Blob) => void;
 }
 
+// Borne à la plage du paramètre et cale sur son pas. Utilisé par le champ
+// numérique (au blur) ET le curseur Hz logarithmique (dont 10^x n'est jamais
+// naturellement un multiple du pas).
+function calerParametre(p: { plage?: [number, number]; pas?: number }, v: number): number {
+  const [mn, mx] = p.plage ?? [0, 100];
+  const pas = p.pas ?? 1;
+  return Math.min(mx, Math.max(mn, Math.round((v - mn) / pas) * pas + mn));
+}
+
+// Champ de saisie numérique directe. La frappe vit dans un état LOCAL : un
+// clamp « live » sur un champ contrôlé rendait impossible la saisie chiffre à
+// chiffre de toute valeur dont le préfixe est sous le minimum (taper « 1200 »
+// dans une plage [30,1800] snapait à 30 dès le « 1 »). On ne propage en cours
+// de frappe que les valeurs déjà dans la plage ; le blur borne, cale et vide
+// l'état local.
+function ChampNombre({ p, valeur, onChanger }: {
+  p: { plage?: [number, number]; pas?: number };
+  valeur: number;
+  onChanger: (v: number) => void;
+}) {
+  const [saisie, setSaisie] = useState<string | null>(null);
+  const [mn, mx] = p.plage ?? [0, 100];
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <input ref={ref} type="number" className="inspecteur-num" style={{ width: 62 }}
+      min={mn} max={mx} step={p.pas ?? 1}
+      value={saisie ?? String(valeur)}
+      onChange={(e) => {
+        setSaisie(e.target.value);
+        const v = Number(e.target.value);
+        if (e.target.value !== "" && !Number.isNaN(v) && v >= mn && v <= mx) onChanger(v);
+      }}
+      onBlur={(e) => {
+        const v = Number(e.target.value);
+        setSaisie(null);
+        if (e.target.value === "" || Number.isNaN(v)) return;
+        onChanger(calerParametre(p, v));
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          ref.current?.blur();
+        }
+      }} />
+  );
+}
+
 export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
@@ -70,8 +117,11 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               })}
             </select>
           ) : p.type === "texte" ? (
-            <input type="text" defaultValue={String(params[p.nom] ?? p.defaut)} key={`${noeud.id}-${p.nom}`}
-              onChange={(e) => onChangerParametre(p.nom, e.target.value)} />
+            <textarea
+              value={String(params[p.nom] ?? p.defaut)}
+              rows={2}
+              onChange={(e) => onChangerParametre(p.nom, e.target.value)}
+            />
           ) : p.type === "dossier" ? (
             <div style={{display:"flex", gap:4}}>
               <input type="text" value={String(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, e.target.value)} style={{flex:1}} />
@@ -91,35 +141,15 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                   max={Math.log10((p.plage ?? [0,100])[1])}
                   step={p.pas ? p.pas / 1000 : 0.01}
                   value={Math.log10(Math.max(1, Number(params[p.nom] ?? p.defaut)))}
-                  onChange={(e) => onChangerParametre(p.nom, Math.round(Math.pow(10, Number(e.target.value))))} />
+                  onChange={(e) => onChangerParametre(p.nom, calerParametre(p, Math.pow(10, Number(e.target.value))))} />
               ) : (
                 <input type="range" min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
                   value={Number(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, Number(e.target.value))} />
               )}
               {/* Saisie numérique directe : permet une valeur exacte (ex. 0, 3.0 s)
                   que le curseur seul rend difficile à atteindre sur une large plage. */}
-              <input type="number" className="inspecteur-num" style={{ width: 62 }}
-                min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
-                value={Number(params[p.nom] ?? p.defaut)}
-                onChange={(e) => {
-                  // Les attributs min/max HTML n'empêchent PAS de taper une valeur
-                  // hors plage (0 bit, valeur négative…) : on borne nous-mêmes.
-                  const v = Number(e.target.value);
-                  if (e.target.value === "" || Number.isNaN(v)) return;
-                  const [mn, mx] = p.plage ?? [0, 100];
-                  onChangerParametre(p.nom, Math.min(mx, Math.max(mn, v)));
-                }}
-                onBlur={(e) => {
-                  // À la sortie du champ, on aligne aussi sur le pas du paramètre
-                  // (un « Bits » à 3,7 n'a pas de sens). Pendant la frappe, on ne
-                  // le fait pas — sinon impossible de taper « 12 » chiffre à chiffre.
-                  const v = Number(e.target.value);
-                  if (e.target.value === "" || Number.isNaN(v)) return;
-                  const [mn, mx] = p.plage ?? [0, 100];
-                  const pas = p.pas ?? 1;
-                  const cale = Math.min(mx, Math.max(mn, Math.round((v - mn) / pas) * pas + mn));
-                  onChangerParametre(p.nom, cale);
-                }} />
+              <ChampNombre p={p} valeur={Number(params[p.nom] ?? p.defaut)}
+                onChanger={(v) => onChangerParametre(p.nom, v)} />
               {p.unite ? <span className="inspecteur-unite">{p.unite}</span> : null}
             </div>
           )}

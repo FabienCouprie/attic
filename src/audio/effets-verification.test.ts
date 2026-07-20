@@ -191,7 +191,7 @@ describe("dererverberer", () => {
     const burstApres = rms(s, Math.floor(0.02 * SR), Math.floor(0.09 * SR));
     const reductionTraine = traineApres / Math.max(1e-9, traineAvant);
     const reductionBurst = burstApres / Math.max(1e-9, burstAvant);
-    expect(reductionTraine).toBeLessThan(0.7);              // au moins −3 dB sur la traîne
+    expect(reductionTraine).toBeLessThan(0.5);              // au moins −6 dB sur la traîne
     expect(reductionBurst).toBeGreaterThan(0.5);            // le corps du son survit
     expect(reductionTraine).toBeLessThan(reductionBurst);   // et la traîne est plus touchée
   });

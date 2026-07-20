@@ -6,6 +6,7 @@ const http = require("http");
 const { execSync, execFile } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
+const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 
@@ -159,7 +160,7 @@ function creerFenetre() {
     "media-src 'self' blob: data: stream:",
     "img-src 'self' blob: data:",
     "worker-src 'self' blob:",
-    "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co http://127.0.0.1:11434 http://localhost:11434 blob: data:",
+    "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:",
   ].join("; ");
 
   // Injecter la CSP via onHeadersReceived (intercepte toutes les réponses)
@@ -171,17 +172,6 @@ function creerFenetre() {
     delete headers["content-security-policy"];
     headers["Content-Security-Policy"] = [csp];
     callback({ responseHeaders: headers });
-  });
-
-  // Accorde EXPLICITEMENT « persistent-storage » (et les autres permissions,
-  // comme le fait Electron par défaut). Enjeu : les modèles IA HuggingFace
-  // vivent dans le Cache Storage de l'origine file:// — une origine sans
-  // « site engagement » que Chromium évince EN PREMIER sous pression de
-  // quota si elle n'est pas marquée persistante. Constaté le 18/07/2026 :
-  // compartiment CacheStorage de l'app packagée recréé (1,1 Go retéléchargés)
-  // pendant que celui du dev (localhost:5173) survivait.
-  session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => {
-    callback(true);
   });
 
   // Supprimer le warning de sécurité Electron en mode dev (unsafe-eval est intentionnel)
@@ -199,9 +189,19 @@ function creerFenetre() {
     fenetre.loadFile(cheminDist);
   }
 
-  // Autoriser getDisplayMedia (capture système audio)
+  // GESTIONNAIRE DE PERMISSIONS UNIQUE — liste d'autorisation explicite.
+  // Ne pas en installer un second ailleurs : setPermissionRequestHandler
+  // REMPLACE le précédent (le dernier gagne), et webContents.session EST la
+  // session par défaut. Une première tentative en deux handlers laissait
+  // celui-ci écraser un accord de « persistent-storage » posé plus haut —
+  // neutralisant la protection anti-éviction du cache de modèles IA.
+  const PERMISSIONS_ACCORDEES = new Set([
+    "media", "display-capture", "audioCapture",     // micro + capture système
+    "persistent-storage",                           // cache modèles HuggingFace (main.tsx)
+    "clipboard-read", "clipboard-sanitized-write",  // bouton copier (ui/copier.ts)
+  ]);
   fenetre.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
-    callback(permission === "media" || permission === "display-capture" || permission === "audioCapture");
+    callback(PERMISSIONS_ACCORDEES.has(permission));
   });
 
   // Fournir les sources desktopCapturer pour capture système audio
@@ -439,24 +439,80 @@ ipcMain.handle("demucs:separer", async (_event, options) => {
   }
 });
 
+// --- IPC : Stable Audio 3 text-to-audio (process principal, onnxruntime-node) ---
+ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
+  try {
+    const { prompt, seconds, steps, seed, modelPath: cheminExplicite } = options;
+    let modelDir = cheminExplicite;
+    if (!modelDir) {
+      const cible = "stable-audio-3-small-music";
+      const candidats = [
+        path.join(__dirname, "..", "public", "oonx", cible),
+        path.join(__dirname, "..", "dist", "oonx", cible),
+        path.join(process.resourcesPath || "", "oonx", cible),
+      ];
+      modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
+    } else if (!path.isAbsolute(modelDir)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      modelDir = path.join(base, modelDir);
+    }
+    if (!modelDir || !fs.existsSync(modelDir)) {
+      return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
+    }
+    const result = await genererStableAudio3({ prompt, seconds, steps, seed, modelDir });
+    return { ok: true, ...result };
+  } catch (err) {
+    console.error("[attic] stable-audio-3:generer erreur:", err);
+    return { ok: false, erreur: String(err && err.message ? err.message : err) };
+  }
+});
+
 // --- IPC : télécharger le contenu d'une URL (via Node.js, sans CORS) ---
+function telechargerRedirections(url, profondeur = 0) {
+  return new Promise((resolve) => {
+    if (profondeur > 5) {
+      return resolve({ erreur: "Trop de redirections" });
+    }
+    const mod = url.protocol === "https:" ? https : http;
+    const req = mod.get(url, { headers: { "User-Agent": "Attic/1.0" } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const suivante = new UrlModele(res.headers.location, url);
+        return resolve(telechargerRedirections(suivante, profondeur + 1));
+      }
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => resolve({ donnees: Buffer.concat(chunks), statut: res.statusCode }));
+    });
+    req.on("error", (err) => resolve({ erreur: err.message }));
+  });
+}
 ipcMain.handle("telecharger:url", async (_event, urlStr) => {
   try {
     const url = new UrlModele(urlStr);
-    const mod = url.protocol === "https:" ? https : http;
-    return await new Promise((resolve) => {
-      mod.get(url, (res) => {
-        const chunks = [];
-        res.on("data", (c) => chunks.push(c));
-        res.on("end", () => resolve({ donnees: Buffer.concat(chunks), statut: res.statusCode }));
-      }).on("error", (err) => resolve({ erreur: err.message }));
-    });
+    return await telechargerRedirections(url, 0);
   } catch (err) {
     return { erreur: String(err) };
   }
 });
 
 ipcMain.handle("app:quitter", () => app.quit());
+
+// Ouvre la documentation embarquée (dossier `doc` inclus dans extraResources).
+// En packagé : resources/doc/index.html ; en dev : <projet>/doc/index.html.
+ipcMain.handle("doc:ouvrir", async () => {
+  const candidats = app.isPackaged
+    ? [path.join(process.resourcesPath, "doc", "index.html")]
+    : [path.join(path.resolve(__dirname, ".."), "doc", "index.html")];
+  for (const c of candidats) {
+    if (fs.existsSync(c)) {
+      // Ouvre dans le navigateur système (ou l'application par défaut pour .html)
+      const resultat = await shell.openPath(c);
+      if (resultat) console.error("[attic] doc:ouvrir erreur :", resultat);
+      return { ok: resultat === "", chemin: c };
+    }
+  }
+  return { ok: false, erreur: "Documentation embarquée introuvable." };
+});
 
 // Retourne le chemin <projet>/Music s'il existe, sinon null.
 ipcMain.handle("dossier:music-projet", () => {
@@ -478,7 +534,13 @@ ipcMain.handle("dossier:travail-defaut", () => {
   for (const dossier of candidats) {
     try {
       fs.mkdirSync(dossier, { recursive: true });
-      fs.accessSync(dossier, fs.constants.W_OK); // existe ≠ inscriptible
+      // Sonde d'écriture RÉELLE : accessSync(W_OK) ne consulte pas les ACL sous
+      // Windows (il ne reflète que l'attribut lecture-seule, ignoré pour les
+      // dossiers) — un work/ pré-existant dans Program Files passait le test
+      // alors que toute écriture échouait ensuite.
+      const temoin = path.join(dossier, `.attic-sonde-${Date.now()}`);
+      fs.writeFileSync(temoin, "");
+      fs.unlinkSync(temoin);
       return dossier;
     } catch { /* candidat suivant */ }
   }
@@ -660,10 +722,11 @@ ipcMain.handle("python:executer", async (_event, options) => {
       ...process.env,
       ...options.env,
     };
-    // Passer les chemins d'entrée comme arguments
+    // Passer les chemins d'entrée comme arguments (garde défensif : un path
+    // null/non-string ferait planter execFile avec ERR_INVALID_ARG_TYPE).
     if (options.inputs) {
       for (const inp of options.inputs) {
-        args.push(inp.path);
+        if (inp.path && typeof inp.path === "string") args.push(inp.path);
       }
     }
 
@@ -733,9 +796,10 @@ ipcMain.handle("julia:executer", async (_event, options) => {
       ...process.env,
       ...options.env,
     };
+    // Garde défensif identique à python:executer (path null interdit pour execFile).
     if (options.inputs) {
       for (const inp of options.inputs) {
-        args.push(inp.path);
+        if (inp.path && typeof inp.path === "string") args.push(inp.path);
       }
     }
 

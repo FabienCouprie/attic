@@ -15,6 +15,9 @@ const defs: FicheAudio[] = [
     noticeEn: "Inside a meta-component, connect this block to an inner node's input: it creates an exposed input on the meta. Type is inherited from the connected port.",
     entrees: [], sorties: [{ nom: "Entrée", type: "audio" }],
     parametres: [],
+    // L'exécuteur renvoie [null] PAR CONSTRUCTION (marqueur de port, pas un
+    // producteur) : le filet « tout-null = échec » ne doit pas s'appliquer.
+    sortieNullePermise: true,
     executer: async () => ({ valeurs: [null] }),
   },
   {

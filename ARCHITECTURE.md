@@ -35,9 +35,12 @@ Cross-cutting invariants (valid for all domains):
 |---|---|---|
 | **`core`** | registry, DAG engine, meta-components, validation, i18n, doc overlay | **No** |
 | **Domain adapter** | flow types, value types, plugins, views, preview | **Yes** |
+| **Build-time domain config** | Vite plugins, resolve aliases, optimizeDeps rules, worker build fixes | **Yes** |
 | **`ui` (shell)** | palette, canvas, inspector, breadcrumb, generic node | Generic, driven by registries |
 
 **Golden rule**: *shipping a new domain = providing an adapter (types + plugins + views), without modifying `core` or the `ui` shell.*
+
+> **Build-time exception.** Vite plugins, resolve aliases, and dependency-optimization rules (`optimizeDeps`) are not runtime plugins, therefore they are not registered in the core registry. They are domain-specific and must live in the domain adapter (e.g. `src/audio/build-plugins.ts`). The root `vite.config.ts` imports them, keeping the build entry point domain-neutral.
 
 [Current] `core/*` is already agnostic. The residual couplings to extract:
 1. `TypeValeur` (fixed union `AudioBuffer|Float32Array|File|…`) in `core/types.ts`;

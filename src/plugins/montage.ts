@@ -194,18 +194,18 @@ export const fiches: FicheAudio[] = ([
     id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Effets",
     resume: "Répète l'intégralité du signal un nombre de fois donné.",
     resumeEn: "Repeats the whole signal a given number of times.",
-    notice: "Rejoue toute l'entrée « Répétitions » fois à la suite. Un court fondu enchaîné à chaque raccord adoucit la jonction et limite le clic audible.",
-    noticeEn: "Replays the whole input « Repeats » times in a row. A short crossfade at each join smooths the transition and limits audible clicks.",
+    notice: "Rejoue toute l'entrée « Répétitions » fois à la suite. Le paramètre Fondu permet d'adoucir chaque jonction ; à 0 ms le raccord est sec.",
+    noticeEn: "Replays the whole input « Repeats » times in a row. The Fade parameter can smooth each join; at 0 ms the join is hard.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Répétitions", nomEn: "Repeats", plage: [1,32], pas: 1, defaut: 4, doc: "Nombre de fois où l'entrée est rejouée à la suite.", docEn: "Number of times the input is replayed in a row." },
-      { nom: "Fondu", nomEn: "Fade", plage: [0,100], defaut: 10, unite: "ms", doc: "Fondu enchaîné à chaque raccord entre deux répétitions.", docEn: "Crossfade at each join between two repetitions." },
+      { nom: "Fondu", nomEn: "Fade", plage: [0,100], defaut: 0, unite: "ms", doc: "Fondu enchaîné à chaque raccord entre deux répétitions. 0 = pas de fondu (raccord sec).", docEn: "Crossfade at each join between two repetitions. 0 = no crossfade (hard join)." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null], message:"Aucune entrée." };
       const reps = ctx.paramNombre("Répétitions", 4);
-      const out = bouclerAudio(a, a.duration, reps, ctx.paramNombre("Fondu", 10));
+      const out = bouclerAudio(a, a.duration, reps, ctx.paramNombre("Fondu", 0));
       // Rend visible la durée réelle de l'entrée : si le total dépasse reps×4 s,
       // c'est que l'entrée fait déjà plus de 4 s (padding MP3, réverb/délai amont…),
       // pas la boucle — qui produit exactement reps × durée d'entrée.

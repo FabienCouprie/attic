@@ -16,13 +16,6 @@ function getWorker(): Worker {
   return worker;
 }
 
-// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
-// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
-// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
-function libererWorker(): void {
-  if (worker) { worker.terminate(); worker = null; }
-}
-
 // ─── Réservoir textuel ───
 // Un réseau de neurones aléatoires génère du texte par émergence :
 // les activations sont mappées vers des lettres/mots. Aucun entraînement.
@@ -158,10 +151,10 @@ export const fiches: FicheAudio[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+
             resolve({ valeurs: [msg.text], message: `GPT-2 · ${msg.text.length} caractères` });
           } else if (msg.type === "error") {
-            libererWorker();
+
             resolve({ valeurs: [null], erreur: true, message: `Erreur GPT-2 : ${msg.msg}` });
           }
         };
@@ -215,6 +208,54 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
+    id: "qwen2.5-lyrics", nom: "Qwen2.5-0.5B Lyrics", nomEn: "Qwen2.5-0.5B Lyrics",
+    univers: "Autres", famille: "Texte",
+    resume: "Génère des paroles de chanson par IA avec le modèle Qwen2.5-0.5B (multilingue).",
+    resumeEn: "Generates song lyrics via AI using the Qwen2.5-0.5B model (multilingual).",
+    entrees: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", type: "texte" }],
+    parametres: [
+      { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:",
+        doc: "Prompt d'amorçage. L'anglais donne les meilleurs résultats, mais le modèle supporte plusieurs langues.",
+        docEn: "Seed prompt. English works best, but the model supports several languages." },
+      { nom: "Longueur", nomEn: "Length", plage: [30, 300], pas: 10, defaut: 120, unite: " tokens",
+        doc: "Nombre maximum de tokens générés.", docEn: "Maximum number of generated tokens." },
+      { nom: "Créativité", nomEn: "Temperature", plage: [0.1, 1.5], pas: 0.1, defaut: 0.9,
+        doc: "Température. Élevée = plus créatif ; basse = plus prévisible.", docEn: "Temperature. High = more creative; low = more predictable." },
+      { nom: "Anti-répétition", nomEn: "Repetition penalty", plage: [1.0, 2.0], pas: 0.1, defaut: 1.3,
+        doc: "Pénalité de répétition. Élevée = évite de répéter les mêmes phrases.", docEn: "Repetition penalty. High = avoids repeating the same phrases." },
+    ],
+    async executer(ctx: any) {
+      const promptEntree = ctx.entree(0);
+      const prompt = typeof promptEntree === "string" && promptEntree.trim()
+        ? promptEntree
+        : ctx.paramTexte("Prompt", "Write a song about love and rain:");
+      const maxTokens = ctx.paramNombre("Longueur", 120);
+      const temperature = ctx.paramNombre("Créativité", 0.9);
+      const repPenalty = ctx.paramNombre("Anti-répétition", 1.3);
+      const w = getWorker();
+      return new Promise((resolve) => {
+        const onMessage = (e: MessageEvent) => {
+          const msg = e.data;
+          if (msg.type === "progress") ctx.onProgress(msg.msg);
+          else if (msg.type === "done") {
+
+            resolve({ valeurs: [msg.text], message: `Qwen2.5 · ${msg.text.length} caractères` });
+          } else if (msg.type === "error") {
+
+            resolve({ valeurs: [null], erreur: true, message: `Erreur Qwen2.5 : ${msg.msg}` });
+          }
+        };
+        w.addEventListener("message", onMessage);
+        const messages = [
+          { role: "system", content: "You are a creative songwriter. Write original, evocative song lyrics based on the user's request." },
+          { role: "user", content: prompt },
+        ];
+        w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });
+      });
+    },
+  },
+  {
     id: "nllb-paroles", nom: "Paroles multilingues (IA)", nomEn: "Multilingual Lyrics (AI)",
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles en anglais via DistilGPT-2 puis les traduit dans la langue choisie.",
@@ -251,10 +292,10 @@ export const fiches: FicheAudio[] = ([
           const msg = e.data;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+
             resolve(msg.text);
           } else if (msg.type === "error") {
-            libererWorker();
+
             resolve(null);
           }
         };

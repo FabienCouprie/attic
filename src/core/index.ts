@@ -11,6 +11,7 @@ export { valider, validerGraphe } from "./validation";
 export type { ResultatValidationGraphe } from "./validation";
 export { detecterPertes, formaterRapportPertes } from "./pertes";
 export type { ChampPurge } from "./pertes";
+export { estResultatEnErreur } from "./execution";
 export type {
   TypeValeur, ContexteExecution, FonctionPlugin,
   PortDef, ParametreDef, PluginDef,

@@ -131,7 +131,7 @@ print(f"Traité: {len(audio)} samples, {channels} canaux")
 export const fiches: FicheAudio[] = ([
   {
     id: "python-processor", nom: "Python Processor", nomEn: "Python Processor",
-    univers: "Nouvelles fonctionnalités", famille: "Génération",
+    univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Python avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Python code editor with syntax highlighting for audio processing.",
     entrees: [
@@ -163,10 +163,13 @@ export const fiches: FicheAudio[] = ([
       const code = ctx.paramTexte("Code", CODE_DEFAUT);
       const timeout = ctx.paramNombre("Timeout", 30);
 
-      // `obtenirRepertoireTravail` est un ipcRenderer.invoke : il rend une Promise.
-      // Sans await, tmpDir valait « [object Promise] » et TOUS les chemins d'E/S
-      // étaient invalides — le script s'exécutait mais ses sorties étaient illisibles.
-      const tmpDir = await (window as any).api?.obtenirRepertoireTravail?.();
+      // Le contexte porte déjà le répertoire de travail (configurable par
+      // l'utilisateur) : l'honorer d'abord, ne re-demander le défaut au main que
+      // s'il est vide. NB : `obtenirRepertoireTravail` est un ipcRenderer.invoke,
+      // donc une Promise — sans await, tmpDir vaudrait « [object Promise] » et
+      // tous les chemins d'E/S seraient invalides (bug historique).
+      const tmpDir = (typeof ctx.repertoireTravail === "string" && ctx.repertoireTravail.trim())
+        || await (window as any).api?.obtenirRepertoireTravail?.();
       if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
 
       // Préparer le WAV d'entrée (argv[1])

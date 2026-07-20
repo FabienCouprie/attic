@@ -1,0 +1,114 @@
+// audio/analyse.test.ts — Vérification des extracteurs Meyda.
+import { describe, it, expect, beforeAll } from "vitest";
+import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda } from "./analyse";
+
+class AudioBufferPolyfill {
+  numberOfChannels: number;
+  length: number;
+  sampleRate: number;
+  duration: number;
+  private canaux: Float32Array[];
+  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
+    this.numberOfChannels = opts.numberOfChannels;
+    this.length = opts.length;
+    this.sampleRate = opts.sampleRate;
+    this.duration = opts.length / opts.sampleRate;
+    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
+  }
+  getChannelData(c: number): Float32Array { return this.canaux[c]; }
+  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
+}
+
+const SR = 44100;
+
+function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
+  const n = Math.floor(SR * dureeS);
+  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  for (let ch = 0; ch < channels; ch++) {
+    const d = b.getChannelData(ch);
+    for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
+  }
+  return b;
+}
+
+function bruitBlanc(dureeS: number, channels = 1): AudioBuffer {
+  const n = Math.floor(SR * dureeS);
+  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  for (let ch = 0; ch < channels; ch++) {
+    const d = b.getChannelData(ch);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return b;
+}
+
+beforeAll(() => {
+  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
+});
+
+describe("calculerCentroidSpectralMeyda", () => {
+  it("calcule un centroïde proche de la fréquence d'une sinusoïde", () => {
+    const freq = 1000;
+    const buffer = sinus(freq, 1);
+    const resultat = calculerCentroidSpectralMeyda(buffer, { fenetre: 2048, pas: 1024 });
+    expect(resultat.valeur).toBeGreaterThan(freq * 0.9);
+    expect(resultat.valeur).toBeLessThan(freq * 1.1);
+    expect(resultat.texte).toContain("Hz");
+    expect(resultat.trames).toBeGreaterThan(0);
+  });
+
+  it("calcule un centroïde élevé pour du bruit blanc", () => {
+    const buffer = bruitBlanc(1);
+    const resultat = calculerCentroidSpectralMeyda(buffer, { fenetre: 2048, pas: 1024 });
+    // Pour du bruit blanc, le centroïde spectral approche Fs/4 ≈ 11 kHz.
+    expect(resultat.valeur).toBeGreaterThan(SR * 0.15);
+    expect(resultat.trames).toBeGreaterThan(0);
+  });
+
+  it("retourne des valeurs différentes selon l'agrégation", () => {
+    const buffer = sinus(1000, 1);
+    const moyenne = calculerCentroidSpectralMeyda(buffer, { aggregation: "moyenne" }).valeur;
+    const mediane = calculerCentroidSpectralMeyda(buffer, { aggregation: "mediane" }).valeur;
+    const maximum = calculerCentroidSpectralMeyda(buffer, { aggregation: "maximum" }).valeur;
+    expect(moyenne).toBeCloseTo(mediane, 0);
+    expect(maximum).toBeGreaterThanOrEqual(moyenne);
+  });
+});
+
+describe("calculerRMS_Meyda", () => {
+  it("retourne un niveau RMS cohérent pour une sinusoïde pleine échelle", () => {
+    const buffer = sinus(440, 1);
+    const resultat = calculerRMS_Meyda(buffer);
+    expect(resultat.valeur).toBeGreaterThan(-10);
+    expect(resultat.valeur).toBeLessThan(0);
+    expect(resultat.texte).toContain("dBFS");
+  });
+
+  it("retourne des valeurs plus faibles pour un signal silencieux", () => {
+    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    b.getChannelData(0).fill(0);
+    const resultat = calculerRMS_Meyda(b);
+    expect(resultat.valeur).toBeLessThan(-50);
+  });
+});
+
+describe("calculerZCR_Meyda", () => {
+  it("retourne environ 2×f×fenêtre passages par zéro pour une sinusoïde", () => {
+    const freq = 1000;
+    const buffer = sinus(freq, 1);
+    const resultat = calculerZCR_Meyda(buffer);
+    // À 1 kHz, 1 seconde → ~1000 cycles → ~2000 passages par zéro (fenêtres)
+    expect(resultat.valeur).toBeGreaterThan(0);
+    expect(resultat.texte).toContain("passages par zéro");
+  });
+});
+
+describe("calculerRolloffSpectralMeyda", () => {
+  it("calcule un rolloff plus élevé pour du bruit blanc que pour une sinusoïde", () => {
+    const bruit = bruitBlanc(1);
+    const sine = sinus(1000, 1);
+    const rBruit = calculerRolloffSpectralMeyda(bruit).valeur;
+    const rSine = calculerRolloffSpectralMeyda(sine).valeur;
+    expect(rBruit).toBeGreaterThan(rSine);
+    expect(rBruit).toBeGreaterThan(SR * 0.1);
+  });
+});

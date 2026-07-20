@@ -241,6 +241,37 @@ function VueUploadIR({ id, data }: VueProps) {
   );
 }
 
+// ── Chargement d'un patch Pure Data ──
+function VueUploadPd({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const d = data as {
+    pureDataFichier?: File;
+    pureDataNom?: string;
+    onChangerParametre?: (id: string, nom: string, v: string | number) => void;
+  };
+  return (
+    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <label className="attic-node-fichier-btn">
+        {d.pureDataNom ? t("btn.changer.pd") : t("btn.charger.pd")}
+        <input
+          type="file"
+          accept=".pd"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) {
+              d.pureDataFichier = f;
+              d.pureDataNom = f.name;
+              d.onChangerParametre?.(id, "Patch", `${f.name}@${f.lastModified}`);
+            }
+          }}
+        />
+      </label>
+      {d.pureDataNom && <div className="attic-node-fichier-nom">{d.pureDataNom}</div>}
+    </div>
+  );
+}
+
 // ── Paramètres inline des collections (sélecteurs de dossier) ──
 function VueCollections({ id, data, def }: VueProps) {
   const { lang } = useI18n();
@@ -697,7 +728,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied="· numpy + wave requis" titre="Python Processor" />
+        suffixePied="numpy + wave requis" titre="Python Processor" />
     </div>
   );
 }
@@ -758,7 +789,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied="· WAV.jl requis" titre="Julia Processor" />
+        suffixePied="WAV.jl requis" titre="Julia Processor" />
     </div>
   );
 }
@@ -875,6 +906,25 @@ function VueGalerieExposition({ data }: VueProps) {
   );
 }
 
+// ── VexFlow (aperçu SVG de portée, tablature, grille d'accords) ──
+function VueVexFlow({ data }: VueProps) {
+  const { t } = useI18n();
+  const svg = data.audioResultatMessage ?? "";
+  const isSvg = svg.trim().startsWith("<svg");
+  if (!isSvg) {
+    return (
+      <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px" }}>
+        <div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+      <div style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
+  );
+}
+
 // ── Générateur de pochette (canvas procédural) ──
 function VuePochette({ data }: VueProps) {
   const p = data.parametres ?? {};
@@ -955,6 +1005,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("vu-metre"), vue: VueVuMetre, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
+  { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
@@ -967,6 +1018,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
   { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "avant" },
+  { correspond: parId("pure-data"), vue: VueUploadPd, position: "avant" },
   { correspond: (f) => f.startsWith("collection-"), vue: VueCollections, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },

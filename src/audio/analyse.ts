@@ -2,9 +2,14 @@
 import { fft } from "./fft";
 import type { NoteEvenement } from "./midi";
 import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
+import Meyda from "meyda";
 
+const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
 
-
+function tailleFenetreSuivante(n: number): number {
+  for (const taille of FENETRES_PUISSANCE_2) if (taille >= n) return taille;
+  return FENETRES_PUISSANCE_2[FENETRES_PUISSANCE_2.length - 1];
+}
 
 function trouverPicFFT(
   mono: Float64Array | Float32Array,
@@ -98,6 +103,137 @@ export function transcrireMono(
   return notes;
 }
 
+
+export interface OptionsCentroidSpectral {
+  fenetre?: number;
+  pas?: number;
+  aggregation?: "moyenne" | "mediane" | "maximum";
+}
+
+export interface ResultatCentroidSpectral {
+  valeur: number;
+  texte: string;
+  trames: number;
+}
+
+export type MeydaFeatureSimple =
+  | "rms"
+  | "zcr"
+  | "spectralCentroid"
+  | "spectralRolloff"
+  | "spectralFlatness"
+  | "spectralSpread"
+  | "energy";
+
+export function extraireValeursMeyda(
+  buffer: AudioBuffer,
+  feature: MeydaFeatureSimple,
+  options: OptionsCentroidSpectral = {},
+): number[] {
+  const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
+  const pas = Math.max(64, options.pas || Math.floor(fenetre / 2));
+  const sr = buffer.sampleRate;
+  const nCh = buffer.numberOfChannels;
+  const length = buffer.length;
+  const mono = new Float32Array(length);
+  for (let c = 0; c < nCh; c++) {
+    const ch = buffer.getChannelData(c);
+    for (let i = 0; i < length; i++) mono[i] += ch[i] / nCh;
+  }
+
+  Meyda.sampleRate = sr;
+  Meyda.bufferSize = fenetre;
+  Meyda.windowingFunction = "hanning";
+
+  const valeurs: number[] = [];
+  for (let debut = 0; debut + fenetre <= length; debut += pas) {
+    const frame = mono.slice(debut, debut + fenetre);
+    const features = Meyda.extract(feature, frame);
+    const val = typeof features === "number" ? features : (features as any)?.[feature];
+    if (typeof val === "number" && Number.isFinite(val)) valeurs.push(val);
+  }
+  return valeurs;
+}
+
+export function agregerValeurs(
+  valeurs: number[],
+  aggregation: OptionsCentroidSpectral["aggregation"] = "moyenne",
+): number {
+  if (valeurs.length === 0) return 0;
+  switch (aggregation) {
+    case "mediane": {
+      const sorted = [...valeurs].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    case "maximum":
+      return Math.max(...valeurs);
+    case "moyenne":
+    default:
+      return valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+  }
+}
+
+export function calculerCentroidSpectralMeyda(
+  buffer: AudioBuffer,
+  options: OptionsCentroidSpectral = {},
+): ResultatCentroidSpectral {
+  const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
+  const facteurHz = buffer.sampleRate / fenetre;
+  const valeurs = extraireValeursMeyda(buffer, "spectralCentroid", options).map((v) => v * facteurHz);
+  const aggregation = options.aggregation || "moyenne";
+  if (valeurs.length === 0) {
+    return { valeur: 0, texte: "Centroïde spectral : non calculable", trames: 0 };
+  }
+  const valeur = agregerValeurs(valeurs, aggregation);
+  const texte = `Centroïde spectral : ${valeur.toFixed(1)} Hz (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  return { valeur, texte, trames: valeurs.length };
+}
+
+export function calculerRMS_Meyda(
+  buffer: AudioBuffer,
+  options: OptionsCentroidSpectral = {},
+): ResultatCentroidSpectral {
+  const valeurs = extraireValeursMeyda(buffer, "rms", options);
+  const aggregation = options.aggregation || "moyenne";
+  if (valeurs.length === 0) {
+    return { valeur: -Infinity, texte: "RMS : non calculable", trames: 0 };
+  }
+  const rms = agregerValeurs(valeurs, aggregation);
+  const db = 20 * Math.log10(rms + 1e-10);
+  const texte = `RMS : ${db.toFixed(1)} dBFS (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  return { valeur: db, texte, trames: valeurs.length };
+}
+
+export function calculerZCR_Meyda(
+  buffer: AudioBuffer,
+  options: OptionsCentroidSpectral = {},
+): ResultatCentroidSpectral {
+  const valeurs = extraireValeursMeyda(buffer, "zcr", options);
+  const aggregation = options.aggregation || "moyenne";
+  if (valeurs.length === 0) {
+    return { valeur: 0, texte: "ZCR : non calculable", trames: 0 };
+  }
+  const valeur = agregerValeurs(valeurs, aggregation);
+  const texte = `ZCR : ${valeur.toFixed(0)} passages par zéro (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  return { valeur, texte, trames: valeurs.length };
+}
+
+export function calculerRolloffSpectralMeyda(
+  buffer: AudioBuffer,
+  options: OptionsCentroidSpectral = {},
+): ResultatCentroidSpectral {
+  const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
+  const facteurHz = buffer.sampleRate / fenetre;
+  const valeurs = extraireValeursMeyda(buffer, "spectralRolloff", options).map((v) => v * facteurHz);
+  const aggregation = options.aggregation || "moyenne";
+  if (valeurs.length === 0) {
+    return { valeur: 0, texte: "Rolloff spectral : non calculable", trames: 0 };
+  }
+  const valeur = agregerValeurs(valeurs, aggregation);
+  const texte = `Rolloff spectral : ${valeur.toFixed(1)} Hz (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  return { valeur, texte, trames: valeurs.length };
+}
 
 export async function transcrirePolyphonique(
   buffer: AudioBuffer,

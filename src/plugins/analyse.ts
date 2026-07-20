@@ -2,8 +2,42 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte } from "../audio";
+import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante } from "../i18n";
+
+function noeudMeyda(
+  id: string,
+  nom: string,
+  nomEn: string,
+  resume: string,
+  resumeEn: string,
+  nomSortie: string,
+  fn: (audio: AudioBuffer, options: OptionsCentroidSpectral) => ResultatCentroidSpectral,
+): FicheAudio {
+  return {
+    id, nom, nomEn, univers: "Visualisation", famille: "Analyse",
+    resume, resumeEn,
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: nomSortie, type: "texte" }],
+    parametres: [
+      { nom: "Fenêtre", nomEn: "Window", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+        doc: "Taille de la fenêtre d'analyse (arrondie à la puissance de 2 supérieure).", docEn: "Analysis window size (rounded up to the next power of 2)." },
+      { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.",
+        doc: "Décalage entre deux fenêtres d'analyse.", docEn: "Hop size between analysis frames." },
+      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], defaut: "Moyenne",
+        doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: "Aucune entrée audio." };
+      const fenetre = ctx.paramNombre("Fenêtre", 2048);
+      const pas = ctx.paramNombre("Pas", 1024);
+      const aggregation = ctx.paramTexte("Agrégation", "Moyenne") as OptionsCentroidSpectral["aggregation"];
+      const resultat = fn(audio, { fenetre, pas, aggregation });
+      return { valeurs: [audio, resultat.texte], message: resultat.texte };
+    },
+  };
+}
 
 export const fiches: FicheAudio[] = ([
   {
@@ -57,6 +91,26 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [audio, descr], message: `${genres[0].genre} ${Math.round(genres[0].confiance*100)}% · ${source}` };
     },
   },
+  noeudMeyda(
+    "centroide-spectral", "Centroïde spectral (Meyda)", "Spectral Centroid (Meyda)",
+    "Calcule le centroïde spectral du signal avec la bibliothèque Meyda.",
+    "Computes the spectral centroid of the signal using the Meyda library.",
+    "Centroïde", calculerCentroidSpectralMeyda),
+  noeudMeyda(
+    "rms-meyda", "RMS (Meyda)", "RMS (Meyda)",
+    "Calcule le niveau RMS moyen du signal en dBFS avec Meyda.",
+    "Computes the average RMS level of the signal in dBFS using Meyda.",
+    "RMS", calculerRMS_Meyda),
+  noeudMeyda(
+    "zcr-meyda", "ZCR (Meyda)", "ZCR (Meyda)",
+    "Compte les passages par zéro par fenêtre avec Meyda.",
+    "Counts zero crossings per frame using Meyda.",
+    "ZCR", calculerZCR_Meyda),
+  noeudMeyda(
+    "rolloff-spectral-meyda", "Rolloff spectral (Meyda)", "Spectral Rolloff (Meyda)",
+    "Calcule la fréquence de rolloff spectral avec Meyda.",
+    "Computes the spectral rolloff frequency using Meyda.",
+    "Rolloff", calculerRolloffSpectralMeyda),
   {
     id: "transcripteur-midi", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Sorties", famille: "Écoute",
     resume: "Transcrit un signal audio en notes MIDI.",
@@ -64,6 +118,9 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "Transcribes an audio signal into MIDI notes. FFT mono or Basic Pitch ONNX polyphonic.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "MIDI", type: "midi" }],
+    // « Aucune note détectée » est un résultat valide (le nœud a bien tourné) :
+    // ne pas le convertir en échec via le filet « tout-null ».
+    sortieNullePermise: true,
     parametres: [
       { nom: "Méthode", nomEn: "Method", type: "choix", options: ["Monophonique (FFT)","Polyphonique (Basic Pitch ONNX)"], defaut: "Monophonique (FFT)", docEn: "Transcription algorithm." },
       { nom: "Seuil onset", nomEn: "Onset threshold", plage: [1,50], defaut: 10, unite: "%", docEn: "Note attack detection sensitivity." },

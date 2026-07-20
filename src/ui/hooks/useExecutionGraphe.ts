@@ -13,6 +13,7 @@ import {
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
+import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
 
@@ -197,7 +198,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
         marquerMetaEnEchec(nodeId);
         continue;
       }
-      definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
       const node = nds.find((n) => n.id === nodeId);
       if (!node) {
  continue; }
@@ -216,6 +216,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
         definirStatut(nodeId, "termine");
         continue;
       }
+
+      // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
+      // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
+      // donnait l'impression que le modèle Qwen redémarrait inutilement.
+      definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
 
       // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
@@ -252,9 +257,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // « erreur » (et donc le propager) au lieu de « terminé ». Sinon un
         // mixer/endpoint en aval « aboutit » alors qu'aucun résultat n'a été
         // produit — la branche n'a rien donné mais le workflow paraît réussi.
-        const aDesSorties = (trouverDef(node.data.ficheId as string)?.sorties.length ?? 0) > 0;
-        const toutNul = Array.isArray(res.valeurs) && res.valeurs.length > 0 && (res.valeurs as unknown[]).every((v) => v == null);
-        if ((res as any).erreur || (aDesSorties && toutNul)) {
+        // …SAUF si la fiche déclare qu'une sortie nulle est un résultat valide
+        // (sortieNullePermise) : « aucune note détectée » d'un transcripteur ou
+        // un nœud-frontière ne sont pas des échecs.
+        const defRes = trouverDef(node.data.ficheId as string);
+        if (estResultatEnErreur(defRes, res as { valeurs: TypeValeur[]; erreur?: boolean })) {
           noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);

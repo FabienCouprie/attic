@@ -6,6 +6,7 @@ import {
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
+  genererAudioFormule,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
@@ -276,6 +277,42 @@ export const fiches: FicheAudio[] = ([
 
       const noteAff = saisie === "Note" ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
       return { valeurs: [buf], message: `${noteAff} · ${forme} · ${duree.toFixed(1)}s` };
+    },
+  },
+  {
+    id: "generateur-audio-mathematique", nom: "Générateur audio mathématique", nomEn: "Mathematical Audio Generator",
+    univers: "Entrées", famille: "Génération",
+    resume: "Génère un signal audio à partir d'une expression mathématique.",
+    resumeEn: "Generates an audio signal from a mathematical expression.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440)",
+        doc: "Expression mathématique donnant la valeur de l'échantillon. Variables disponibles : t (temps en s), i (index), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
+        docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate)." },
+      { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
+        doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
+      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], defaut: "Stéréo",
+        doc: "Nombre de canaux de sortie.", docEn: "Number of output channels." },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
+    ],
+    async executer(ctx: any) {
+      const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440)");
+      const duree = ctx.paramNombre("Durée", 2);
+      const channels = ctx.paramTexte("Canaux", "Stéréo") === "Mono" ? 1 : 2;
+      const volume = ctx.paramNombre("Volume", 80);
+      try {
+        const buf = genererAudioFormule(formule, duree, 44100, channels);
+        const vol = Math.max(0, Math.min(1, volume / 100));
+        if (vol !== 1) {
+          for (let c = 0; c < buf.numberOfChannels; c++) {
+            const d = buf.getChannelData(c);
+            for (let i = 0; i < d.length; i++) d[i] *= vol;
+          }
+        }
+        return { valeurs: [buf], message: `${formule} · ${buf.duration.toFixed(1)}s` };
+      } catch (e: any) {
+        return { valeurs: [null], message: `Erreur formule : ${e?.message ?? e}` };
+      }
     },
   },
   {

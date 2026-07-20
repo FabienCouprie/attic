@@ -40,6 +40,14 @@
         "to": "music collection"
       },
       {
+        "from": "doc",
+        "to": "doc"
+      },
+      {
+        "from": "TERMS_OF_USE.txt",
+        "to": "TERMS_OF_USE.txt"
+      },
+      {
         "from": "THIRD_PARTY.md",
         "to": "THIRD_PARTY.md"
       }
@@ -53,7 +61,9 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "perMachine": true
+      "perMachine": true,
+      "license": "TERMS_OF_USE.txt",
+      "include": "build/installer.nsh"
     },
     "publish": {
       "provider": "github",
@@ -63,15 +73,26 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
+    "@magenta/music": "^1.23.1",
     "@xyflow/react": "^12.11.2",
     "adm-zip": "^0.6.0",
     "electron-updater": "^6.8.9",
     "lamejs": "^1.2.1",
+    "libpd-wasm": "^0.1.6",
+    "mathjs": "^15.2.0",
+    "meyda": "^5.6.3",
     "midi-file": "^1.2.4",
     "onnxruntime-node": "^1.27.0",
     "onnxruntime-web": "^1.21.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "resonance-audio": "^1.0.0",
+    "soundtouchjs": "^0.3.0",
+    "time-stretch": "^1.2.1",
+    "tone": "^14.9.17",
+    "tonal": "^6.4.3",
+    "vexflow": "^4.2.5",
+    "wavesurfer.js": "^7.12.11"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
@@ -81,6 +102,8 @@
     "cross-env": "^7.0.3",
     "electron": "^35.2.1",
     "electron-builder": "^26.0.12",
+    "jsdom": "^29.1.1",
+    "node-web-audio-api": "^2.0.0",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",

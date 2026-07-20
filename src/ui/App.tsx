@@ -21,7 +21,6 @@ const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t)
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n } from "../i18n";
 
-import { AtelierNode } from "./AtelierNode";
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
@@ -29,7 +28,7 @@ import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
-import { AretePersonnalisee } from "./AretePersonnalisee";
+import { nodeTypes, edgeTypes } from "./reactflowTypes";
 import "./atelier.css";
 import "./clavier.css";
 
@@ -85,8 +84,8 @@ interface DonneesNoeud {
 
 type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 
-const nodeTypes = { atelier: AtelierNode };
-const edgeTypes = { "arete-personnalisee": AretePersonnalisee };
+// nodeTypes/edgeTypes sont définis dans reactflowTypes.ts (hors du cycle HMR
+// d'App.tsx) pour éviter l'avertissement React Flow #002.
 
 // ── Helpers ──
 

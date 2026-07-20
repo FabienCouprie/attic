@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld("api", {
   cheminFichier: (fichier) => webUtils.getPathForFile(fichier),
 
   separerDemucs: (options) => ipcRenderer.invoke("demucs:separer", options),
+  genererStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:generer", options),
 
   sauvegarderFichier: (options) => ipcRenderer.invoke("fichier:sauvegarder", options),
 
@@ -58,6 +59,8 @@ contextBridge.exposeInMainWorld("api", {
   quitter: () => ipcRenderer.invoke("app:quitter"),
 
   nouvelleFenetre: () => ipcRenderer.invoke("nouvelle-fenetre"),
+
+  ouvrirDoc: () => ipcRenderer.invoke("doc:ouvrir"),
 
   captureSources: () => ipcRenderer.invoke("capture:systeme-audio"),
 

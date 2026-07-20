@@ -138,7 +138,7 @@ export function creerMeta(
   // Position du méta-nœud : barycentre de la sélection.
   const cx = interne.reduce((s, n) => s + (n.position?.x ?? 0), 0) / Math.max(1, interne.length);
   const cy = interne.reduce((s, n) => s + (n.position?.y ?? 0), 0) / Math.max(1, interne.length);
-  const noeudMeta: NoeudG = { id: metaNoeudId, type: "atelier", position: { x: cx, y: cy }, data: { ficheId: metaId, parametres: {} } };
+  const noeudMeta: NoeudG = { id: metaNoeudId, type: "atelier", position: { x: cx, y: cy }, data: { ficheId: metaId, nom, parametres: {} } };
 
   const nouveauxNoeuds = [...externe, noeudMeta];
   return { meta, noeudMeta, nouveauxNoeuds, nouvellesAretes };

@@ -49,6 +49,13 @@ const ALIAS: Record<string, string> = {
 
 Check the plugin file for imports that are no longer used after the deletion (functions from `../audio`, `midi-file`, etc.). Remove them to avoid build warnings.
 
+### 6.5. Check build-time dependencies (Vite plugins / worker fixes)
+
+Build plugins, resolve aliases, and dependency-optimization rules (`optimizeDeps`) are **not** in the runtime plugin registry. They live in the domain adapter, e.g. `src/audio/build-plugins.ts`.
+
+- If the node used a Web Worker (e.g. `src/workers/magenta-worker.ts`), do not delete the worker file unless it is no longer used by any other node.
+- If the node was the last consumer of a domain-specific build fix (worker plugin, resolve alias, optimizeDeps entry, `.onnx` cleanup), remove the corresponding entry from `src/audio/build-plugins.ts`.
+
 ### 7. Remove the default size entry (if any)
 
 If the node has a custom size in `tailleDefaut()` in `src/ui/App.tsx`, delete the line:

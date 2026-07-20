@@ -8,6 +8,11 @@ import { creerFenetreHann } from "./commun";
 
 const NOMS_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+// Profils Krumhansl–Kessler simplifiés (classe 0 = tonique). Utilisés pour
+// l'estimation de la tonalité globale d'un morceau.
+const PROFIL_MAJEUR = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+const PROFIL_MINEUR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+
 // Templates d'accords : vecteurs binaires de 12 éléments (classes de hauteur).
 // Index 0 = fondamentale. Chaque template indique quelles notes appartiennent à
 // l'accord (1 = présente, 0 = absente).
@@ -193,4 +198,63 @@ export function accordsVersTexte(accords: AccordDetecte[], langue: "fr" | "en"):
     return `${nom} (${a.duree.toFixed(1)}s${conf > 0 ? `, ${conf}%` : ""})`;
   });
   return lignes.join("\n");
+}
+
+export interface TonaliteEstimee {
+  nom: string;
+  type: "major" | "minor";
+  confiance: number;
+}
+
+// Estime la tonalité globale d'un morceau par comparaison du chromagramme moyen
+// avec les profils Krumhansl–Kessler (majeur / mineur). Teste les 12 toniques.
+export function estimerTonalite(buffer: AudioBuffer): TonaliteEstimee {
+  const sr = buffer.sampleRate;
+  const nCh = buffer.numberOfChannels;
+  const length = buffer.length;
+
+  const mono = new Float64Array(length);
+  for (let c = 0; c < nCh; c++) {
+    const ch = buffer.getChannelData(c);
+    for (let i = 0; i < length; i++) mono[i] += ch[i] / nCh;
+  }
+
+  const fftTaille = 8192;
+  const hop = fftTaille / 4;
+  const nbFenetres = Math.max(1, Math.floor((length - fftTaille) / hop));
+  const chromaGlobal = new Float64Array(12);
+
+  for (let f = 0; f < nbFenetres; f++) {
+    const chroma = chromaFenetre(mono, f * hop, fftTaille, sr);
+    for (let i = 0; i < 12; i++) chromaGlobal[i] += chroma[i];
+  }
+
+  const max = Math.max(...chromaGlobal, 1e-10);
+  const chromaNorm: number[] = Array.from(chromaGlobal).map((v) => v / max);
+
+  let bestScore = -Infinity;
+  let bestTonic = 0;
+  let bestType: "major" | "minor" = "major";
+
+  for (let tonic = 0; tonic < 12; tonic++) {
+    const maj = correlerProfil(chromaNorm, PROFIL_MAJEUR, tonic);
+    const min = correlerProfil(chromaNorm, PROFIL_MINEUR, tonic);
+    if (maj > bestScore) { bestScore = maj; bestTonic = tonic; bestType = "major"; }
+    if (min > bestScore) { bestScore = min; bestScore = min; bestTonic = tonic; bestType = "minor"; }
+  }
+
+  return { nom: `${NOMS_NOTES[bestTonic]} ${bestType}`, type: bestType, confiance: bestScore };
+}
+
+function correlerProfil(chroma: number[], profil: number[], decalage: number): number {
+  let num = 0, den1 = 0, den2 = 0;
+  for (let i = 0; i < 12; i++) {
+    const v = chroma[i];
+    const p = profil[(i - decalage + 12) % 12];
+    num += v * p;
+    den1 += v * v;
+    den2 += p * p;
+  }
+  if (den1 === 0 || den2 === 0) return -1;
+  return num / Math.sqrt(den1 * den2);
 }

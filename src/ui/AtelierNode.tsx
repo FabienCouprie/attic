@@ -50,7 +50,10 @@ function getDef(ficheId: string): FicheAudio | undefined {
 export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const def = getDef(data.ficheId);
   const { t, lang } = useI18n();
-  const nom = (lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? data.ficheId;
+  const nodeEstMeta = estMeta(data.ficheId as string);
+  const nom = (nodeEstMeta && typeof data.nom === "string" && data.nom.trim())
+    ? data.nom
+    : ((lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? data.ficheId);
   const [docOpen, setDocOpen] = useState(false);
   const statutClasse = data.statut === "en_cours" ? "en-cours" : data.statut === "termine" ? "termine" : data.statut === "erreur" ? "erreur" : "attente";
   const statutLabel = data.statut === "termine" ? t("statut.termine") : data.statut === "en_cours" ? (data.progression ?? t("statut.en_cours")) : data.statut === "erreur" ? t("statut.erreur") : t("statut.attente");
@@ -86,7 +89,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     return () => obs.disconnect();
   }, [id, updateNodeInternals]);
 
-  const nodeEstMeta = estMeta(data.ficheId as string);
+
   const nodeEstFrontiere = estFrontiere(data.ficheId as string);
   const vuesAvant = vuesPourNoeud(data.ficheId, "avant");
   const vuesApres = vuesPourNoeud(data.ficheId, "apres");

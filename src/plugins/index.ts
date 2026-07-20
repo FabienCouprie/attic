@@ -39,6 +39,16 @@ import { fiches as f_frontiere } from "./frontiere";
 import { fiches as f_couleur_suno_ia } from "./couleur-suno-ia";
 import { fiches as f_ollama } from "./ollama";
 import { fiches as f_texte_vers_midi } from "./texte-vers-midi";
+import { fiches as f_tonal } from "./tonal";
+import { fiches as f_vexflow } from "./vexflow";
+import { fiches as f_soundtouch } from "./soundtouch";
+import { fiches as f_tone_synths } from "./tone-synths";
+import { fiches as f_phase_vocoder } from "./phase-vocoder";
+import { fiches as f_resonance } from "./resonance";
+import { fiches as f_ddsp } from "./ddsp";
+import { fiches as f_stable_audio_3 } from "./stable-audio-3";
+import { fiches as f_magenta } from "./magenta";
+import { fiches as f_pure_data } from "./pure-data";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -77,4 +87,14 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_couleur_suno_ia,
   ...f_ollama,
   ...f_texte_vers_midi,
+  ...f_tonal,
+  ...f_vexflow,
+  ...f_soundtouch,
+  ...f_tone_synths,
+  ...f_phase_vocoder,
+  ...f_resonance,
+  ...f_ddsp,
+  ...f_stable_audio_3,
+  ...f_magenta,
+  ...f_pure_data,
 ];

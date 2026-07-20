@@ -163,13 +163,24 @@ export function useMetaComposants(o: OptionsMeta) {
       const nom = input.value.trim();
       if (nom) {
         renommerMeta(meta.id, nom);
-        o.setNodes((nds: any[]) => nds.map((n) => n.id === cible.id ? { ...n, data: { ...n.data } } : n));
+        o.setNodes((nds: any[]) => nds.map((n) => n.id === cible.id ? { ...n, data: { ...n.data, nom } } : n));
       }
       overlay.remove();
       input.remove();
     };
-    overlay.onclick = valider;
-    input.onkeydown = (e) => { if (e.key === "Enter") valider(); if (e.key === "Escape") { overlay.remove(); input.remove(); } };
+    const annuler = () => {
+      overlay.remove();
+      input.remove();
+    };
+    // Empêcher un clic dans la zone de saisie de valider immédiatement via l'overlay.
+    const stopPropagation = (e: Event) => { e.stopPropagation(); };
+    input.addEventListener("mousedown", stopPropagation);
+    input.addEventListener("click", stopPropagation);
+    overlay.addEventListener("click", valider);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") valider();
+      if (e.key === "Escape") annuler();
+    });
     document.body.appendChild(overlay);
     document.body.appendChild(input);
     input.focus();

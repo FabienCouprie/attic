@@ -1,5 +1,14 @@
 // audio/effets-temporel.ts — Effets (issus du découpage de effets.ts).
 import { etirerDuree } from "./commun";
+import { fft } from "./fft";
+import { normaliser } from "./effets-dynamique";
+
+const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
+
+function tailleFenetreSuivante(n: number): number {
+  for (const taille of FENETRES_PUISSANCE_2) if (taille >= n) return taille;
+  return FENETRES_PUISSANCE_2[FENETRES_PUISSANCE_2.length - 1];
+}
 
 export function bouclerAudio(
   entree: AudioBuffer,
@@ -454,4 +463,100 @@ export function etirementGlissant(buffer: AudioBuffer, facteurDebut: number, fac
   }
 
   return resultat;
+}
+
+// Paulstretch : étirement extrême par STFT avec phases aléatoires.
+// Basé sur l'algorithme de Paul Nasca (paulstretch_stereo.py).
+export function appliquerPaulstretch(
+  buffer: AudioBuffer,
+  stretch: number,
+  windowSizeSeconds: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const nCh = buffer.numberOfChannels;
+  const len = buffer.length;
+  const stretchFactor = Math.max(1, stretch);
+  let windowSize = Math.max(16, Math.round(windowSizeSeconds * sr));
+  windowSize = Math.floor(windowSize / 2) * 2;
+  windowSize = tailleFenetreSuivante(windowSize);
+  const half = windowSize / 2;
+  const displace = half / stretchFactor;
+
+  // Fondu de sortie sur les 50 derniers ms pour éviter un coup de queue abrupt.
+  const fadeEnd = Math.min(len, Math.max(16, Math.round(0.05 * sr)));
+
+  const outputFrames = Math.max(1, Math.ceil(len / displace));
+  const outputLength = outputFrames * half;
+  const resultat = new AudioBuffer({ numberOfChannels: nCh, length: outputLength, sampleRate: sr });
+
+  // Fenêtre type "pow" utilisée par paulstretch_stereo.py.
+  const fenetre = new Float64Array(windowSize);
+  for (let i = 0; i < windowSize; i++) {
+    const x = (2 * i) / (windowSize - 1) - 1;
+    fenetre[i] = Math.pow(1 - x * x, 1.25);
+  }
+
+  for (let c = 0; c < nCh; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    const srcCopy = new Float32Array(src);
+    for (let i = 0; i < fadeEnd; i++) {
+      srcCopy[len - fadeEnd + i] *= (fadeEnd - i) / fadeEnd;
+    }
+
+    const oldBuf = new Float64Array(windowSize);
+    let startPos = 0;
+    let frame = 0;
+
+    while (startPos < len) {
+      const istart = Math.floor(startPos);
+      const buf = new Float64Array(windowSize);
+      for (let i = 0; i < windowSize; i++) {
+        const idx = istart + i;
+        if (idx < len) buf[i] = srcCopy[idx] * fenetre[i];
+      }
+
+      const re = buf;
+      const im = new Float64Array(windowSize);
+      fft(re, im, false);
+
+      // Randomisation des phases tout en conservant la symétrie hermitienne
+      // (sinon la sortie n'est pas réelle).
+      const mags: number[] = new Array(half + 1);
+      for (let k = 0; k <= half; k++) {
+        mags[k] = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+      }
+      re[0] = mags[0];
+      im[0] = 0;
+      re[half] = mags[half] * (Math.random() > 0.5 ? 1 : -1);
+      im[half] = 0;
+      for (let k = 1; k < half; k++) {
+        const theta = Math.random() * 2 * Math.PI;
+        const cos = Math.cos(theta);
+        const sin = Math.sin(theta);
+        const mag = mags[k];
+        re[k] = mag * cos;
+        im[k] = mag * sin;
+        re[windowSize - k] = mag * cos;
+        im[windowSize - k] = -mag * sin;
+      }
+
+      fft(re, im, true);
+      for (let i = 0; i < windowSize; i++) {
+        re[i] *= fenetre[i];
+      }
+
+      const offset = frame * half;
+      for (let i = 0; i < half && offset + i < outputLength; i++) {
+        dst[offset + i] = re[i] + oldBuf[half + i];
+      }
+      oldBuf.set(re);
+
+      startPos += displace;
+      frame++;
+    }
+  }
+
+  // Normalisation douce pour éviter les dépassements sans monter artificiellement le bruit.
+  return normaliser(resultat, -3);
 }

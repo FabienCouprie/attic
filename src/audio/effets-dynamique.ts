@@ -211,11 +211,15 @@ export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: n
 // réduction de traîne = 1,00). À 3 s (20 dB/s), une traîne typique passe
 // sous la crête mémorisée et se fait atténuer ; un son tenu (orgue) garde
 // sa crête et reste intact. Seuil relevé à 50 % (−6 dB) en cohérence.
+// Ajustement 2026-07-19 : mémoire portée à 5 s pour rester au-dessus des
+// réverbérations longues (RT60 jusqu'à ~3 s). Ainsi le rapport magnitude/crête
+// descend suffisamment pour que la traîne soit atténuée, sans toucher aux
+// notes tenues proches de la crête.
 export function dererverberer(
   entree: AudioBuffer,
   force: number,
   seuil: number = 50,
-  memoireSec: number = 3,
+  memoireSec: number = 5,
 ): AudioBuffer {
   const fenetre = creerFenetreHann(TAILLE_FFT);
   const nbBins = TAILLE_FFT / 2 + 1;
