@@ -33,7 +33,7 @@ const MOTS: Record<string, Record<string, string[]>> = {
     lieux: ["dans la nuit", "sous la pluie", "au bord de la mer", "dans la ville", "sous les étoiles", "au bout du chemin", "dans le vent", "près du feu", "loin d'ici", "dans le silence", "au lever du jour", "au crépuscule", "dans les rues", "sur la colline", "dans le brouillard"],
     emotions: ["l'amour", "la peur", "la colère", "la tristesse", "la joie", "l'espoir", "le regret", "la nostalgie", "le désir", "la liberté", "le doute", "la foi", "la douleur", "la paix", "la passion"],
     connectors: ["et", "mais", "puis", "quand", "où", "comme", "sans", "avec", "pour", "dans"],
-  },
+ },
   en: {
     sujets: ["I", "you", "she", "he", "we", "the time", "the night", "the wind", "the rain", "the fire", "love", "the sky", "the sea", "the road", "the city", "the dream", "silence", "the heart", "the shadow", "the light"],
     verbes: ["sings", "dances", "cries", "laughs", "runs", "falls", "flies", "shines", "leaves", "stays", "searches", "finds", "loses", "keeps", "forgets", "remembers", "waits", "escapes", "burns", "fades"],
@@ -42,7 +42,7 @@ const MOTS: Record<string, Record<string, string[]>> = {
     lieux: ["in the night", "in the rain", "by the sea", "in the city", "under the stars", "at the end of the road", "in the wind", "by the fire", "far from here", "in silence", "at dawn", "at dusk", "in the streets", "on the hill", "in the fog"],
     emotions: ["love", "fear", "anger", "sorrow", "joy", "hope", "regret", "nostalgia", "desire", "freedom", "doubt", "faith", "pain", "peace", "passion"],
     connectors: ["and", "but", "then", "when", "where", "like", "without", "with", "for", "in"],
-  },
+ },
 };
 
 // Modèles de lignes (placeholders: S=sujet, V=verbe, O=objet, A=adjectif, L=lieu, E=émotion, C=connecteur)
@@ -123,7 +123,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Génère des paroles de chanson structurées (couplets, refrain, pont) sans IA.",
     resumeEn: "Generates structured song lyrics (verse, chorus, bridge) without AI.",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Thème", nomEn: "Theme", type: "texte", defaut: "l'amour",
         doc: "Thème principal de la chanson (ex : l'amour, la mer, la liberté).",
@@ -158,6 +158,6 @@ export const fiches: FicheAudio[] = ([
         valeurs: [paroles],
         message: traduire("msg.var_0_graine_var_1_var_2_lignes", langue === "fr" ? "Paroles générées" : "Lyrics generated", graineAff, paroles.split("\n").length),
       };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

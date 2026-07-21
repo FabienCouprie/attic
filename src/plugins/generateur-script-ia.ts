@@ -94,12 +94,12 @@ export const fiches: FicheAudio[] = ([
     resume: "Génère un prompt pour une IA musicale (Suno, Udio…) en combinant aléatoirement instruments, styles, émotions et tessitures.",
     resumeEn: "Generates a prompt for a music AI (Suno, Udio…) by randomly combining instruments, styles, emotions and vocal ranges.",
     entrees: [
-      { nom: "Instruments", type: "texte" },
-      { nom: "Styles", type: "texte" },
-      { nom: "Émotions", type: "texte" },
-      { nom: "Tessitures", type: "texte" },
+      { nom: "Instruments", nomEn: "Instruments", type: "texte" },
+      { nom: "Styles", nomEn: "Styles", type: "texte" },
+      { nom: "Émotions", nomEn: "Emotions", type: "texte" },
+      { nom: "Tessitures", nomEn: "Tessituras", type: "texte" },
     ],
-    sorties: [{ nom: "Script", type: "texte" }],
+    sorties: [{ nom: "Script", nomEn: "Script", type: "texte" }],
     parametres: [
       { nom: "Instruments", nomEn: "Instruments", plage: [0, 10], pas: 1, defaut: 3, unite: "",
         doc: "Nombre d'instruments à piocher aléatoirement dans l'entrée.", docEn: "Number of instruments to randomly pick from the input." },
@@ -140,6 +140,6 @@ export const fiches: FicheAudio[] = ([
       const source = parties.length > 0 ? parties.join(" · ") : (fr ? "entrées vides — utilisez les valeurs par défaut" : "empty inputs — using defaults");
 
       return { valeurs: [script], message: traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source) };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

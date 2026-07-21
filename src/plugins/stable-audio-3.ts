@@ -15,34 +15,34 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère de la musique stéréo à partir d’un prompt texte via Stable Audio 3 (ONNX).",
     resumeEn: "Generates stereo music from a text prompt using Stable Audio 3 (ONNX).",
-    entrees: [{ nom: "Prompt", type: "texte", requis: false }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", requis: false }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       {
         nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "A rhythmic electronic loop with deep bass and crisp drums",
         doc: "Description textuelle de la musique à générer (en anglais pour de meilleurs résultats).",
         docEn: "Text description of the music to generate (English for best results).", defautEn: "A rhythmic electronic loop with deep bass and crisp drums",
-      },
+     },
       {
         nom: "Durée", nomEn: "Duration", type: "curseur", plage: [3, 30], pas: 1, defaut: 10, unite: "s",
         doc: "Durée de l’audio généré (secondes). Le modèle ajoute 6 s de marge interne.",
         docEn: "Duration of the generated audio (seconds). The model adds 6 s of internal headroom.",
-      },
+     },
       {
         nom: "Étapes", nomEn: "Steps", type: "curseur", plage: [1, 20], pas: 1, defaut: 8,
         doc: "Nombre d’étapes du sampler ping-pong. 8 = compromis qualité/vitesse.",
         docEn: "Number of ping-pong sampler steps. 8 = quality/speed sweet spot.",
-      },
+     },
       {
         nom: "Graine", nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
         doc: "Graine aléatoire. -1 = aléatoire.",
         docEn: "Random seed. -1 = random.",
-      },
+     },
       {
         nom: "Chemin modèle", nomEn: "Model path", type: "texte", defaut: "",
         doc: "Chemin absolu ou relatif du bundle Stable Audio 3 (vide = modèle embarqué public/oonx/stable-audio-3-small-music).",
         docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music).", defautEn: "",
-      },
+     },
     ],
     async executer(ctx: any) {
       const api = typeof window !== "undefined" ? (window as any).api : null;
@@ -81,6 +81,6 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_stable_audio_3_var_0", err?.message ?? err) };
       }
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

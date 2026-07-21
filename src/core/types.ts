@@ -63,6 +63,7 @@ export interface PortDef {
   // (spec §3.2) ; un autre domaine peut en déclarer d'autres. La couleur et la
   // compatibilité de connexion sont portées par le registre, plus par le cœur.
   nom: string;
+  nomEn?: string;
   type: string;
   sousType?: "stereo" | "mono";
   dynamique?: boolean;

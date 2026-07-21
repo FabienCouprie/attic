@@ -39,7 +39,7 @@ function effet(slug: string, nom: string, nomEn: string, resume: string, resumeE
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const args = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
       return { valeurs: [await fn(audio, ...args)] };
-    },
+   },
   };
 }
 
@@ -57,7 +57,7 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [await fn(audio)] };
-    },
+   },
   };
 }
 
@@ -118,8 +118,8 @@ export const fiches: FicheAudio[] = ([
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
       return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expandeur" ? ` · ratio ${ratio}:1` : "") };
-    },
-  },
+   },
+ },
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
     [param("Fréquence", 7000, "Frequency", "Hz", "Fréquence centrale de la bande cible (sibilances : 5-9 kHz).", "Center frequency of the target band (sibilances: 5-9 kHz).", [2000, 12000], 100),
      param("Largeur", 2000, "Width", "Hz", "Largeur de la bande cible (Q = fréquence/largeur).", "Width of the target band (Q = frequency/width).", [200, 6000], 100),
@@ -187,8 +187,8 @@ export const fiches: FicheAudio[] = ([
       } catch (e: any) {
         return { valeurs: [null], message: traduire("msg.erreur_formule_var_0", e?.message ?? e) };
       }
-    },
-  },
+   },
+ },
   {
     id: "formule-spectrale", nom: "Formule spectrale", nomEn: "Spectral Formula",
     univers: "Traitement", famille: "Effets",
@@ -218,8 +218,8 @@ export const fiches: FicheAudio[] = ([
       } catch (e: any) {
         return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
       }
-    },
-  },
+   },
+ },
   effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 3 bandes.", "3-band equalizer.",
     [param("Basses", 0, "Bass", "dB", "Gain des basses fréquences.", "Low frequency gain."), param("Médiums", 0, "Mid", "dB", "Gain des fréquences médiums.", "Mid frequency gain."), param("Aigus", 0, "Treble", "dB", "Gain des hautes fréquences.", "High frequency gain.")],
     (a,b,m,ag) => equaliser(a, b, m, ag)),
@@ -260,13 +260,13 @@ export const fiches: FicheAudio[] = ([
       const debut = ctx.paramNombre("Début", 0);
       const duree = ctx.paramNombre("Durée", 5);
       return { valeurs: [extraireZone(a, debut, Math.min(duree, a.duration - debut))] };
-    },
-  },
+   },
+ },
   {
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",
     resumeEn: "Spectral noise subtraction.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", nomEn: "Profile", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom: "Réduction", defaut: 70, nomEn: "Reduction" }],
     async executer(ctx: any) {
@@ -276,21 +276,21 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.branchez_audio_profil_n_ud_profil_de_bruit") };
       const reduction = ctx.paramNombre("Réduction", 70) / 100;
       return { valeurs: [await reduireBruit(audio, profil, reduction)] };
-    },
-  },
+   },
+ },
   {
     id: "profil-bruit", nom: "Profil de bruit", nomEn: "Noise Profile", univers: "Traitement", famille: "Effets",
     resume: "Capture le profil spectral d'un bruit.",
     resumeEn: "Captures the spectral profile of a noise.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Profil", type: "controle" }],
+    sorties: [{ nom: "Profil", nomEn: "Profile", type: "controle" }],
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [await calculerProfilBruit(audio)] };
-    },
-  },
+   },
+ },
   {
     id: "reponse-filtre", nom: "Filtre + réponse", nomEn: "Filter + Response",
     univers: "Traitement", famille: "Effets",
@@ -316,8 +316,8 @@ export const fiches: FicheAudio[] = ([
       const q = ctx.paramNombre("Résonance", 0.7);
       const map: Record<string, BiquadFilterType> = { "Passe-bas": "lowpass", "Passe-haut": "highpass", "Passe-bande": "bandpass", "Coupe-bande": "notch" };
       return { valeurs: [await appliquerFiltre(a, map[type] ?? "lowpass", freq, q)] };
-    },
-  },
+   },
+ },
   {
     id: "reverbe-convolution", nom: "Réverbération à convolution (IR)", nomEn: "Convolution Reverb (IR)", univers: "Traitement", famille: "Effets",
     resume: "Réverbération à convolution avec IR synthétique (paramétrable) ou fichier IR externe.",
@@ -368,8 +368,8 @@ export const fiches: FicheAudio[] = ([
       ctx.onProgress(traduire("progress.convolution"));
       const r = await reverberationConvolution(a, irBuffer, mix);
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
-    },
-  },
+   },
+ },
   {
     id: "transposeur-quantiseur-midi", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
     univers: "Traitement", famille: "Effets",
@@ -405,8 +405,8 @@ export const fiches: FicheAudio[] = ([
       if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
       if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
-    },
-  },
+   },
+ },
   {
     id: "arpegiateur-midi", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
@@ -451,15 +451,15 @@ export const fiches: FicheAudio[] = ([
       const dureeNote = ctx.paramNombre("Durée note", 50);
       const nouvFichier = await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote);
       return { valeurs: [nouvFichier], message: traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves) };
-    },
-  },
+   },
+ },
   {
     id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
     resume: "Ajuste une piste à la longueur d'une référence (silence ou fade).",
     resumeEn: "Aligns a track to a reference length (silence or fade).",
-    entrees: [{ nom: "Référence", type: "audio" }, { nom: "Piste", type: "audio" }],
-    sorties: [{ nom: "Référence", type: "audio" }, { nom: "Piste alignée", type: "audio" }],
+    entrees: [{ nom: "Référence", nomEn: "Reference", type: "audio" }, { nom: "Piste", nomEn: "Track", type: "audio" }],
+    sorties: [{ nom: "Référence", nomEn: "Reference", type: "audio" }, { nom: "Piste alignée", nomEn: "Aligned track", type: "audio" }],
     parametres: [
       { nom: "Position", nomEn: "Position", type: "choix",
         options: ["Avant", "Après"], optionsEn: ["Before", "After"],
@@ -481,8 +481,8 @@ export const fiches: FicheAudio[] = ([
       else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "avant" ? "d'ouverture" : "de fermeture"}`;
       else msg = "Pistes de même longueur — aucune modification";
       return { valeurs: [refOut, pisteOut], message: msg };
-    },
-  },
+   },
+ },
   {
     id: "shift-formants", nom: "Shift formants", nomEn: "Formant Shift",
     univers: "Traitement", famille: "Effets",
@@ -509,8 +509,8 @@ export const fiches: FicheAudio[] = ([
       const pitchInfo = pitch !== 0 ? `pitch ${pitch > 0 ? "+" : ""}${pitch}½-ton` : "pitch inchangé";
       const formantInfo = formantRatio !== 1 ? `formants ${Math.round(formantRatio * 100)}%` : "formants inchangés";
       return { valeurs: [r], message: traduire("msg.var_0_var_1_2", pitchInfo, formantInfo) };
-    },
-  },
+   },
+ },
   {
     id: "ajouter-silence", nom: "Ajouter silence", nomEn: "Add Silence",
     univers: "Traitement", famille: "Montage",
@@ -541,8 +541,8 @@ export const fiches: FicheAudio[] = ([
         dst.set(src, debutEch);
       }
       return { valeurs: [resultat], message: traduire("msg.var_0_s_avant_var_1_s_apr_s_total_var_2_s", avant, apres, resultat.duration.toFixed(1)) };
-    },
-  },
+   },
+ },
   {
     id: "tremolo", nom: "Tremolo", nomEn: "Tremolo", univers: "Traitement", famille: "Effets",
     resume: "Modulation d'amplitude (variations de volume périodiques).",
@@ -582,8 +582,8 @@ export const fiches: FicheAudio[] = ([
         }
       }
       return { valeurs: [resultat] };
-    },
-  },
+   },
+ },
   {
     id: "etirement-glissant", nom: "Étirement glissant", nomEn: "Slide Stretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement dont le facteur varie progressivement du début à la fin.",
@@ -603,8 +603,8 @@ export const fiches: FicheAudio[] = ([
       const debut = ctx.paramNombre("Début", 1);
       const fin = ctx.paramNombre("Fin", 2);
       return { valeurs: [etirementGlissant(a, debut, fin)], message: traduire("msg.var_0_x_var_1_x_var_2_s_var_3_s", debut, fin, a.duration.toFixed(1), (a.duration * (debut + fin) / 2).toFixed(1)) };
-    },
-  },
+   },
+ },
   {
     id: "spatialisation-stereo", nom: "Spatialisation stéréo", nomEn: "Stereo Spatialization", univers: "Traitement", famille: "Effets",
     resume: "Positionne le son dans l'espace stéréo (gauche/droite).",
@@ -624,8 +624,8 @@ export const fiches: FicheAudio[] = ([
       const pos = ctx.paramNombre("Position", 0) / 100;
       const larg = ctx.paramNombre("Largeur", 100) / 100;
       return { valeurs: [await spatialiserStereo(a, pos, larg)] };
-    },
-  },
+   },
+ },
   {
     id: "auto-pan", nom: "Auto-pan", nomEn: "Auto-pan", univers: "Traitement", famille: "Effets",
     resume: "Balayage automatique gauche/droite (panoramique animé).",
@@ -645,8 +645,8 @@ export const fiches: FicheAudio[] = ([
       const freq = ctx.paramNombre("Fréquence", 2);
       const depth = ctx.paramNombre("Profondeur", 80);
       return { valeurs: [await autoPan(a, freq, depth)] };
-    },
-  },
+   },
+ },
   {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     resume: "Filtre passe-bande modulé (effet pédale wah).",
@@ -668,8 +668,8 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { wahwah } = await import("../audio");
       return { valeurs: [wahwah(a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100), ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100))] };
-    },
-  },
+   },
+ },
   {
     id: "phaser", nom: "Phaser", nomEn: "Phaser", univers: "Traitement", famille: "Effets",
     resume: "Filtres passe-tout en cascade modulés par LFO (effet planant).",
@@ -691,8 +691,8 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { phaser } = await import("../audio");
       return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50))] };
-    },
-  },
+   },
+ },
   {
     id: "vibrato", nom: "Vibrato", nomEn: "Vibrato", univers: "Traitement", famille: "Effets",
     resume: "Modulation de hauteur par LFO (oscillation de la note).",
@@ -710,8 +710,8 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { vibrato } = await import("../audio");
       return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50))] };
-    },
-  },
+   },
+ },
   {
     id: "octaver", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
     resume: "Ajoute une octave supérieure et/ou inférieure.",
@@ -733,8 +733,8 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { octaver } = await import("../audio");
       return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), ctx.paramNombre("Mix", 50))] };
-    },
-  },
+   },
+ },
   {
     id: "chopper", nom: "Chopper", nomEn: "Chopper", univers: "Traitement", famille: "Effets",
     resume: "Gate rythmique qui coupe le son périodiquement (effet stutter/DJ).",
@@ -755,6 +755,6 @@ export const fiches: FicheAudio[] = ([
       const { chopper } = await import("../audio");
       const typeStr = ctx.paramTexte("Type", "Dur");
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

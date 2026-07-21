@@ -152,7 +152,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
               <div key={hid} className="attic-node-port" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
                 <Handle type="target" position={Position.Left} id={hid}
                   style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-surface)" }} />
-                <span className="attic-node-port-label">{p.nom}</span>
+                <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
                 {survolPort === hid && (
                   <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
                 )}
@@ -167,7 +167,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
             const c = couleurFlux(p.type);
             return (
               <div key={hid} className="attic-node-port sortie" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
-                <span className="attic-node-port-label">{p.nom}</span>
+                <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
                 {survolPort === hid && (
                   <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
                 )}

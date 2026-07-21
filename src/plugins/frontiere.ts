@@ -13,13 +13,13 @@ const defs: FicheAudio[] = [
     resumeEn: "Exposed input point of a meta-component.",
     notice: "À l'intérieur d'un méta-composant, reliez ce bloc à l'entrée d'un nœud interne : cela crée une entrée exposée sur le méta. Le type est hérité du port relié.",
     noticeEn: "Inside a meta-component, connect this block to an inner node's input: it creates an exposed input on the meta. Type is inherited from the connected port.",
-    entrees: [], sorties: [{ nom: "Entrée", type: "audio" }],
+    entrees: [], sorties: [{ nom: "Entrée", nomEn: "Input", type: "audio" }],
     parametres: [],
     // L'exécuteur renvoie [null] PAR CONSTRUCTION (marqueur de port, pas un
     // producteur) : le filet « tout-null = échec » ne doit pas s'appliquer.
     sortieNullePermise: true,
     executer: async () => ({ valeurs: [null] }),
-  },
+ },
   {
     id: ID_SORTIE_FRONTIERE, nom: "Sortie exposée ◂", nomEn: "Exposed output ◂",
     univers: "Méta-composants", famille: "Frontière",
@@ -27,10 +27,10 @@ const defs: FicheAudio[] = [
     resumeEn: "Exposed output point of a meta-component.",
     notice: "À l'intérieur d'un méta-composant, reliez la sortie d'un nœud interne à ce bloc : cela crée une sortie exposée sur le méta. Le type est hérité du port relié.",
     noticeEn: "Inside a meta-component, connect an inner node's output to this block: it creates an exposed output on the meta. Type is inherited from the connected port.",
-    entrees: [{ nom: "Sortie", type: "audio" }], sorties: [],
+    entrees: [{ nom: "Sortie", nomEn: "Output", type: "audio" }], sorties: [],
     parametres: [],
     executer: async () => ({ valeurs: [] }),
-  },
+ },
 ];
 
 export const fiches: FicheAudio[] = defs;

@@ -85,7 +85,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Émet en texte une collection de tessitures vocales (hommes, femmes, enfants).",
     resumeEn: "Outputs a collection of vocal ranges as text (men, women, children).",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       {
         nom: "Groupe", nomEn: "Group", type: "choix",
@@ -93,14 +93,14 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["All", ...GROUPES_TESSITURES.map((g) => GROUPES_TESSITURES_LABEL[g]?.en ?? g)],
         defaut: "Toutes",
         doc: "Filtre la liste par groupe : hommes, femmes ou enfants.", docEn: "Filters the list by group: men, women or children.", defautEn: "All",
-      },
+     },
       {
         nom: "Format", nomEn: "Format", type: "choix",
         options: ["Virgule", "Retour ligne", "Puces"],
         optionsEn: ["Comma", "Newline", "Bullets"],
         defaut: "Virgule",
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
-      },
+     },
     ],
     async executer(ctx: any) {
       const langue = langueCourante();
@@ -108,6 +108,6 @@ export const fiches: FicheAudio[] = ([
       const { texte, total } = construireListeTessitures(grp, ctx.paramTexte("Format", "Virgule"), langue);
       const grpAff = grp === "Toutes" ? "" : (GROUPES_TESSITURES_LABEL[grp]?.[langue] ?? grp);
       return { valeurs: [texte], message: traduire("msg.var_0_tessitures_var_1", total, grpAff ? ` — ${grpAff}` : "") };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

@@ -35,7 +35,7 @@ function noeudMeyda(
       const aggregation = ctx.paramTexte("Agrégation", "Moyenne") as OptionsCentroidSpectral["aggregation"];
       const resultat = fn(audio, { fenetre, pas, aggregation });
       return { valeurs: [audio, resultat.texte], message: resultat.texte };
-    },
+   },
   };
 }
 
@@ -43,20 +43,20 @@ export const fiches: FicheAudio[] = ([
   {
     id: "analyse-audio", nom: "Analyse audio", univers: "Visualisation", famille: "Analyse",
     resume: "Analyse tempo, tonalité, type chanson/instrumental.",
-    entrees: [{ nom: "Piste", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", type: "texte" }],
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const resultat = analyserAudio(audio);
       return { valeurs: [audio, resultat.description] };
-    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
-  },
+   }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
+ },
   {
     id: "lecteur-analyse", nom: "Lecteur d'analyse", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche le résultat d'une analyse et permet l'écoute.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", type: "texte" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
@@ -64,8 +64,8 @@ export const fiches: FicheAudio[] = ([
       const texte = ctx.entree(1);
       if (typeof texte !== "string") return { valeurs: [null], message: traduire("msg.branchez_la_sortie_analyse") };
       return { valeurs: [audioIn instanceof AudioBuffer ? audioIn : null], message: texte };
-    }, nomEn: "Analysis Player", resumeEn: "Displays an analysis result and allows listening.",
-  },
+   }, nomEn: "Analysis Player", resumeEn: "Displays an analysis result and allows listening.",
+ },
   {
     id: "classificateur-genre", nom: "Classificateur de genre", univers: "Visualisation", famille: "Analyse",
     resume: "Identifie le genre musical d'un morceau via IA ou heuristiques.",
@@ -89,8 +89,8 @@ export const fiches: FicheAudio[] = ([
       const descr = genres[0].description || genres.map((g: any) => `${g.genre} (${Math.round(g.confiance*100)}%)`).join(" · ");
       const source = genres[0].description?.includes("modèle ONNX") ? "ONNX" : "heuristique";
       return { valeurs: [audio, descr], message: traduire("msg.var_0_var_1_var_2", genres[0].genre, Math.round(genres[0].confiance*100), source) };
-    }, nomEn: "Genre Classifier", resumeEn: "Identifies the musical genre of a song via AI or heuristics.",
-  },
+   }, nomEn: "Genre Classifier", resumeEn: "Identifies the musical genre of a song via AI or heuristics.",
+ },
   noeudMeyda(
     "centroide-spectral", "Centroïde spectral (Meyda)", "Spectral Centroid (Meyda)",
     "Calcule le centroïde spectral du signal avec la bibliothèque Meyda.",
@@ -149,8 +149,8 @@ export const fiches: FicheAudio[] = ([
       if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };
       const fichier = notesVersFichierMidi(notes, tempo);
       return { valeurs: [fichier], message: traduire("msg.midi_var_0_notes_transcrites", notes.length) };
-    },
-  },
+   },
+ },
   {
     id: "detecteur-accords", nom: "Détecteur d'accords", nomEn: "Chord Detector", univers: "Visualisation", famille: "Analyse",
     resume: "Détecte la progression d'accords dans le signal audio.",
@@ -174,6 +174,6 @@ export const fiches: FicheAudio[] = ([
       const fr = langue === "fr";
       const resume = `${accords.length} ${fr ? "accords" : "chords"} · ${accords.map((a: any) => a.nomEn.split(" ").pop()).filter((v: string, i: number, arr: string[]) => arr.indexOf(v) === i).slice(0, 5).join(" → ")}`;
       return { valeurs: [audio], message: traduire("msg.var_0_var_1", texte, resume) };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

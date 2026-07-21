@@ -28,7 +28,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Génère de la musique depuis un prompt texte (IA, Transformers.js).",
     resumeEn: "Generates music from a text prompt (AI, Transformers.js).",
-    entrees: [{ nom: "Prompt", type: "texte" }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "A happy upbeat pop song with electric guitars",
@@ -73,6 +73,6 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ prompt, maxTokens, guidanceScale: guidance });
       });
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

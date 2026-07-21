@@ -11,7 +11,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Point d'écoute final. Joue le signal reçu et permet l'export.",
     resumeEn: "Final output. Plays the received signal and enables export.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Durée", type: "controle" }],
+    sorties: [{ nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 100, unite: "%" },
     ],
@@ -27,14 +27,14 @@ export const fiches: FicheAudio[] = ([
         for (let i = 0; i < audio.length; i++) dst[i] = src[i] * g;
       }
       return { valeurs: [buf, { debut: 0, duree: buf.duration }] };
-    },
-  },
+   },
+ },
   {
     id: "sortie-midi", nom: "Sortie MIDI", nomEn: "MIDI output", univers: "Sorties", famille: "Écoute",
     resume: "Reçoit un fichier MIDI, le synthétise en audio et le transmet.",
     resumeEn: "Receives a MIDI file, synthesizes it to audio and passes it along.",
     entrees: [{ nom: "MIDI", type: "midi" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
@@ -46,8 +46,8 @@ export const fiches: FicheAudio[] = ([
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(fichier, mode, volume);
       return { valeurs: [buffer, fichier, { debut: 0, duree: buffer.duration }] };
-    },
-  },
+   },
+ },
   {
     id: "lecteur-midi", nom: "Lecteur MIDI", nomEn: "MIDI Player", univers: "Entrées", famille: "Audio",
     resume: "Lit un fichier MIDI depuis l'inspecteur et le synthétise + transmet le MIDI.",
@@ -64,8 +64,8 @@ export const fiches: FicheAudio[] = ([
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(midi, mode, volume);
       return { valeurs: [buffer, midi] };
-    },
-  },
+   },
+ },
   {
     id: "point-ecoute-midi", nom: "Point d'écoute MIDI", nomEn: "MIDI Listening Point", univers: "Sorties", famille: "Écoute",
     resume: "Auditionne le MIDI sans interrompre la chaîne.",
@@ -83,6 +83,6 @@ export const fiches: FicheAudio[] = ([
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(midi, mode, volume);
       return { valeurs: [buffer, midi] };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

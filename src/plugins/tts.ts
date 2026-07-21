@@ -55,7 +55,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Text to Speech",
     resume: "Synthèse vocale haute qualité (Microsoft SpeechT5, anglais).",
     resumeEn: "High-quality text-to-speech (Microsoft SpeechT5, English).",
-    entrees: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Voix", nomEn: "Voice", type: "choix",
@@ -87,14 +87,14 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url });
       });
-    },
-  },
+   },
+ },
   {
     id: "tts-mms", nom: "MMS-TTS Multilingue", nomEn: "MMS-TTS Multilingual",
     univers: "Entrées", famille: "Text to Speech",
     resume: "Synthèse vocale multilingue (Meta MMS, 10+ langues).",
     resumeEn: "Multilingual text-to-speech (Meta MMS, 10+ languages).",
-    entrees: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
@@ -127,6 +127,6 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ text: texte, modelId });
       });
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

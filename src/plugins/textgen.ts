@@ -122,8 +122,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles de chanson ou poésie par IA (GPT-2, anglais).",
     resumeEn: "Generates song lyrics or poetry via AI (GPT-2, English).",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:\n",
         doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats). Ex : « Write a song about the ocean: »",
@@ -162,15 +162,15 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });
       });
-    },
-  },
+   },
+ },
   {
     id: "reservoir-textuel", nom: "Réservoir textuel", nomEn: "Text Reservoir",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par réseau de neurones aléatoires (émergence, aucun entraînement).",
     resumeEn: "Generates text via random neural networks (emergence, no training).",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Neurones", nomEn: "Neurons", plage: [5, 50], pas: 1, defaut: 15,
         doc: "Nombre de neurones. Peu = mots courts/répétitifs ; beaucoup = mots complexes.",
@@ -206,15 +206,15 @@ export const fiches: FicheAudio[] = ([
       const texte = genererTexteReservoir(graine, neurones, connectivite, memoire, nbMots, alphabet, seedWord);
       const graineUtilisee = graine > 0 ? graine : "auto";
       return { valeurs: [texte], message: traduire("msg.var_0_mots_graine_var_1", texte.split(" ").length, graineUtilisee) };
-    },
-  },
+   },
+ },
   {
     id: "qwen2.5-lyrics", nom: "Qwen2.5-0.5B Lyrics", nomEn: "Qwen2.5-0.5B Lyrics",
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles de chanson par IA avec le modèle Qwen2.5-0.5B (multilingue).",
     resumeEn: "Generates song lyrics via AI using the Qwen2.5-0.5B model (multilingual).",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:",
         doc: "Prompt d'amorçage. L'anglais donne les meilleurs résultats, mais le modèle supporte plusieurs langues.",
@@ -254,15 +254,15 @@ export const fiches: FicheAudio[] = ([
         ];
         w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });
       });
-    },
-  },
+   },
+ },
   {
     id: "nllb-paroles", nom: "Paroles multilingues (IA)", nomEn: "Multilingual Lyrics (AI)",
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles en anglais via DistilGPT-2 puis les traduit dans la langue choisie.",
     resumeEn: "Generates lyrics in English via DistilGPT-2 then translates them to the chosen language.",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about the sea and freedom:\n",
         doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats).", docEn: "Seed prompt (English for best results).", defautEn: "Write a song about the sea and freedom:\n" },
@@ -348,6 +348,6 @@ export const fiches: FicheAudio[] = ([
         valeurs: [texteTraduit],
         message: traduire("msg.paroles_en_var_0_var_1_caract_res", langueCible, texteTraduit.length),
       };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

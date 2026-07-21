@@ -23,8 +23,8 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
       return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps",250), ctx.paramNombre("Feedback",35), ctx.paramNombre("Pan",80))] };
-    },
-  },
+   },
+ },
   {
     id: "reverb-progressive", nom: "Reverb Progressive", nomEn: "Progressive Reverb", univers: "Traitement", famille: "Effets",
     resume: "Réverbération progressive (dry→wet).",
@@ -41,8 +41,8 @@ export const fiches: FicheAudio[] = ([
       const fondu = ctx.paramNombre("Fondu", 0);
       const d = fondu > 0 ? fondu : a.duration;
       return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d)] };
-    },
-  },
+   },
+ },
   {
     id: "amplificateur", nom: "Amplificateur", univers: "Traitement", famille: "Effets",
     resume: "Amplification/atténuation du signal.",
@@ -54,14 +54,14 @@ export const fiches: FicheAudio[] = ([
       const r = new AudioBuffer({numberOfChannels:a.numberOfChannels,length:a.length,sampleRate:a.sampleRate});
       for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*g; }
       return { valeurs:[r] };
-    }, nomEn: "Amplifier", resumeEn: "Amplification/ attenuation of the signal.",
-  },
+   }, nomEn: "Amplifier", resumeEn: "Amplification/ attenuation of the signal.",
+ },
 
   // ── Montage ──
   {
     id: "reinserer-zone", nom: "Réinsérer une zone", univers: "Traitement", famille: "Montage",
     resume: "Réinsère une zone traitée dans la piste originale.",
-    entrees: [{ nom: "Piste", type: "audio" }, { nom: "Zone traitée", type: "audio" }, { nom: "Position", type: "controle" }],
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Position", nomEn: "Position", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom:"Fondu", plage:[0,100], defaut:15, unite:"ms", nomEn: "Fade" }],
     async executer(ctx: any) {
@@ -71,24 +71,24 @@ export const fiches: FicheAudio[] = ([
       if (!pos || typeof pos !== "object" || !("debut" in pos)) return { valeurs:[null], message:traduire("msg.position_non_connect_e") };
       const fondu = ctx.paramNombre("Fondu",15)/1000;
       return { valeurs:[reinsererZone(piste, zone, (pos as any).debut, fondu)] };
-    }, nomEn: "Reinsert Zone", resumeEn: "Reinserts a treated zone into the original track.",
-  },
+   }, nomEn: "Reinsert Zone", resumeEn: "Reinserts a treated zone into the original track.",
+ },
   {
     id: "selecteur-multi-zones", nom: "Sélecteur multi-zones", nomEn: "Multi-Zone Selector", univers: "Traitement", famille: "Montage",
     resume: "Sélectionne plusieurs zones audio et les transmet en liste.",
     resumeEn: "Selects multiple audio zones and passes them as a list.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", type: "controle" }, { nom: "Durée", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null] };
       return { valeurs:[a, (ctx.noeud.data as any).zonesSelectionnees ?? [], { debut: 0, duree: a.duration }] };
-    },
-  },
+   },
+ },
   {
     id: "masque-zones", nom: "Masque de zones", nomEn: "Zone Mask", univers: "Traitement", famille: "Montage",
     resume: "Selon l'option, supprime le son sur les zones sélectionnées ou ne conserve qu'elles.",
     resumeEn: "Depending on the option, mutes the selected zones or keeps only them.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Action", nomEn: "Action", type: "choix",
@@ -139,8 +139,8 @@ export const fiches: FicheAudio[] = ([
         for (let i = 0; i < len; i++) o[i] = s[i] * g[i];
       }
       return { valeurs: [out], message: traduire("msg.var_0_var_1_zone_s", garder ? "Conservé" : "Supprimé", zones.length) };
-    },
-  },
+   },
+ },
   {
     id: "placer-sons-zones", nom: "Placer un son sur zones", nomEn: "Place sound on zones", univers: "Traitement", famille: "Montage",
     resume: "Insère une copie d'un son au centre de chaque zone, sur une piste de durée donnée.",
@@ -162,19 +162,19 @@ export const fiches: FicheAudio[] = ([
       if (!Array.isArray(zones)) return { valeurs:[null], message:traduire("msg.branchez_le_s_lecteur_multi_zones") };
       if (!zones.length) return { valeurs:[null], message:traduire("msg.aucune_zone_placer") };
       return { valeurs:[placerSonSurZones(son, (duree as any).duree, zones as any)] };
-    },
-  },
+   },
+ },
   {
     id: "melangeur", nom: "Mélangeur", univers: "Traitement", famille: "Montage",
     resume: "Mélange plusieurs pistes avec niveaux réglables.",
-    entrees: [{ nom: "Piste", type: "audio", dynamique: true }], sorties: [{ nom: "Audio", type: "audio" }],
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio", dynamique: true }], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
       const bufs = ctx.entrees().filter((v: any) => v instanceof AudioBuffer);
       if (bufs.length < 2) return { valeurs:[null], message:traduire("msg.2_entr_es") };
       return { valeurs:[await melangerPistes(bufs, 0)] };
-    }, nomEn: "Mixer", resumeEn: "Mixes several tracks with adjustable levels.",
-  },
+   }, nomEn: "Mixer", resumeEn: "Mixes several tracks with adjustable levels.",
+ },
   {
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",
     resume: "Place deux pistes l'une après l'autre avec un fondu enchaîné.",
@@ -190,8 +190,8 @@ export const fiches: FicheAudio[] = ([
       const p1 = ctx.entree(0), p2 = ctx.entree(1);
       if (!(p1 instanceof AudioBuffer) || !(p2 instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.branchez_deux_pistes") };
       return { valeurs:[await fusionnerPistes(p1, p2, ctx.paramNombre("Chevauchement", 2))] };
-    },
-  },
+   },
+ },
   {
     id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Effets",
     resume: "Répète l'intégralité du signal un nombre de fois donné.",
@@ -212,8 +212,8 @@ export const fiches: FicheAudio[] = ([
       // c'est que l'entrée fait déjà plus de 4 s (padding MP3, réverb/délai amont…),
       // pas la boucle — qui produit exactement reps × durée d'entrée.
       return { valeurs:[out], message: traduire("msg.var_0_var_1_s_var_2_s", reps, a.duration.toFixed(2), out.duration.toFixed(2)) };
-    },
-  },
+   },
+ },
 
   // ── Générateurs ──
   {
@@ -223,14 +223,14 @@ export const fiches: FicheAudio[] = ([
     notice: "Produit une position début=0 / durée=longueur utilisable par les blocs qui acceptent une entrée de contrôle.",
     noticeEn: "Produces a start=0 / duration=length position usable by nodes that accept a control input.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [a, { debut: 0, duree: a.duration }] };
-    },
-  },
+   },
+ },
 
   // ── Visualisation + Convertisseur ──
 
@@ -240,7 +240,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Montage",
     resume: "Extrait la zone temporelle exacte depuis le sélecteur multi-zones.",
     resumeEn: "Extracts the exact time zone from the multi-zone selector.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Zone", nomEn: "Zone", plage: [1, 100], pas: 1, defaut: 1,
@@ -289,6 +289,6 @@ export const fiches: FicheAudio[] = ([
         valeurs: [resultat],
         message: traduire("msg.zone_var_0_var_1_extraite_var_2_s_var_3_var_4_s", numZone + 1, zones.length, zone.duree.toFixed(2), (debutEch / sr).toFixed(2), (finEch / sr).toFixed(2)),
       };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

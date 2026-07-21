@@ -235,8 +235,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère un graphe de nodes depuis un prompt texte en langage naturel.",
     resumeEn: "Generates a node graph from a natural language text prompt.",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "delay stéréo avec feedback sur une réverbération hall, puis compresseur et sortie audio",
         doc: "Description en langage naturel du graphe à générer. Le parser reconnaît automatiquement tous les nodes installés (noms, synonymes, alias). Les nouveaux nodes (installés via .zip ou méta-composants) sont reconnus sans redémarrage.",
@@ -256,6 +256,6 @@ export const fiches: FicheAudio[] = ([
       const labels = nodes.map((n) => n.label);
       const chainDesc = labels.join(" → ");
       return { valeurs: [chainDesc], message: traduire("msg.var_0_nodes_var_1_connexions_var_2", nodes.length, edges.length, chainDesc) };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

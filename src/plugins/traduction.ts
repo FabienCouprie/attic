@@ -65,8 +65,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Traduit un texte de n'importe quelle langue vers l'anglais (via TTS + Whisper).",
     resumeEn: "Translates text from any language to English (via TTS + Whisper).",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Langue TTS", nomEn: "TTS Language", type: "choix",
         options: ["Auto", "Anglais", "Français", "Espagnol", "Allemand", "Italien", "Portugais", "Néerlandais", "Roumain", "Polonais", "Russe"],
@@ -120,15 +120,15 @@ export const fiches: FicheAudio[] = ([
       });
       if (!traduit) return { valeurs: [null], message: traduire("msg.chec_de_la_traduction_whisper") };
       return { valeurs: [traduit], message: traduire("msg.traduit_var_0_en_var_1_var_2", langueTTS, traduit.slice(0, 60), traduit.length > 60 ? "…" : "") };
-    },
-  },
+   },
+ },
   {
     id: "traduction-opus", nom: "Traduction OPUS-MT", nomEn: "OPUS-MT Translation",
     univers: "Autres", famille: "Texte",
     resume: "Traduit un texte entre paires de langues (OPUS-MT, modèle léger).",
     resumeEn: "Translates text between language pairs (OPUS-MT, lightweight model).",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Paire", nomEn: "Pair", type: "choix",
         options: Paires_OPUS.map((p) => p.id), optionsEn: Paires_OPUS.map((p) => p.nomEn),
@@ -157,6 +157,6 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ text: texte, modelId: paire.model });
       });
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

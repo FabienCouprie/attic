@@ -49,8 +49,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Théorie",
     resume: "Détecte le nom d'un accord à partir de ses notes.",
     resumeEn: "Detects the chord name from its notes.",
-    entrees: [{ nom: "Notes", type: "texte", requis: false }],
-    sorties: [{ nom: "Nom", type: "texte" }],
+    entrees: [{ nom: "Notes", nomEn: "Notes", type: "texte", requis: false }],
+    sorties: [{ nom: "Nom", nomEn: "Name", type: "texte" }],
     parametres: [
       { nom: "Notes", nomEn: "Notes", type: "texte", defaut: "C E G",
         doc: "Notes de l'accord séparées par des espaces (ex : C E G, F A C E).",
@@ -66,15 +66,15 @@ export const fiches: FicheAudio[] = ([
       const symbole = detectes.length > 0 ? detectes[0] : null;
       const resultat = symbole ? (Chord.get(symbole).name || symbole) : "Accord inconnu";
       return { valeurs: [resultat], message: resultat };
-    },
-  },
+   },
+ },
   {
     id: "tonal-gamme", nom: "Gamme", nomEn: "Scale",
     univers: "Autres", famille: "Théorie",
     resume: "Liste les notes d'une gamme à partir d'une tonalité et d'un type.",
     resumeEn: "Lists the notes of a scale from a tonic and a scale type.",
-    entrees: [{ nom: "Tonalité", type: "texte", requis: false }],
-    sorties: [{ nom: "Notes", type: "texte" }],
+    entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
+    sorties: [{ nom: "Notes", nomEn: "Notes", type: "texte" }],
     parametres: [
       { nom: "Tonalité", nomEn: "Tonic", type: "texte", defaut: "C",
         doc: "Tonalité de départ (ex : C, D#, F#).",
@@ -92,15 +92,15 @@ export const fiches: FicheAudio[] = ([
       if (!gamme.notes.length) return { valeurs: [null], message: traduire("msg.tonalit_invalide") };
       const resultat = gamme.notes.join(" ");
       return { valeurs: [resultat], message: resultat };
-    },
-  },
+   },
+ },
   {
     id: "tonal-transposer", nom: "Transposer", nomEn: "Transpose",
     univers: "Autres", famille: "Théorie",
     resume: "Transpose une note ou un accord d'un intervalle donné.",
     resumeEn: "Transposes a note or chord by a given interval.",
     entrees: [{ nom: "Note", type: "texte", requis: false }],
-    sorties: [{ nom: "Transposé", type: "texte" }],
+    sorties: [{ nom: "Transposé", nomEn: "Transposed", type: "texte" }],
     parametres: [
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "C4",
         doc: "Note à transposer (ex : C4, D#3, F#5).",
@@ -117,15 +117,15 @@ export const fiches: FicheAudio[] = ([
       const transposee = Note.transpose(note, intervalle);
       if (!transposee) return { valeurs: [null], message: traduire("msg.transposition_impossible") };
       return { valeurs: [transposee], message: transposee };
-    },
-  },
+   },
+ },
   {
     id: "tonal-progression", nom: "Progression", nomEn: "Progression",
     univers: "Autres", famille: "Théorie",
     resume: "Génère une progression d'accords à partir d'une tonalité et de chiffres romains.",
     resumeEn: "Generates a chord progression from a key and roman numerals.",
-    entrees: [{ nom: "Tonalité", type: "texte", requis: false }],
-    sorties: [{ nom: "Accords", type: "texte" }],
+    entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
+    sorties: [{ nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la progression (ex : C, G, Dm, F#).",
@@ -143,15 +143,15 @@ export const fiches: FicheAudio[] = ([
       const accords = Progression.fromRomanNumerals(tonic, numerals);
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
-    },
-  },
+   },
+ },
   {
     id: "tonal-grille", nom: "Grille d'accords", nomEn: "Chord Grid",
     univers: "Traitement", famille: "Génération",
     resume: "Génère un accompagnement complet au format texte-vers-midi.",
     resumeEn: "Generates a full accompaniment in text-to-MIDI format.",
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
-    sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", type: "texte" }],
+    sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la grille (ex : C, G, Dm, F#).",
@@ -205,15 +205,15 @@ export const fiches: FicheAudio[] = ([
       const notation = lignes.join("\n");
       const listeAccords = accords.join(" ");
       return { valeurs: [notation, listeAccords], message: traduire("msg.var_0_accords_var_1_var_2_bpm", accords.length, mode, tempo) };
-    },
-  },
+   },
+ },
   {
     id: "tonal-analyse", nom: "Analyse harmonique", nomEn: "Harmonic Analysis",
     univers: "Traitement", famille: "Analyse",
     resume: "Détecte la tonalité d'un morceau et suggère une progression.",
     resumeEn: "Detects the key of a song and suggests a chord progression.",
     entrees: [{ nom: "Audio", type: "audio", requis: true }],
-    sorties: [{ nom: "Tonalité", type: "texte" }, { nom: "Progression", type: "texte" }, { nom: "Accords détectés", type: "texte" }],
+    sorties: [{ nom: "Tonalité", nomEn: "Key", type: "texte" }, { nom: "Progression", type: "texte" }, { nom: "Accords détectés", nomEn: "Detected chords", type: "texte" }],
     parametres: [
       { nom: "Style", nomEn: "Style", type: "choix", options: ["Pop", "Jazz", "Blues"], optionsEn: ["Pop", "Jazz", "Blues"], defaut: "Pop",
         doc: "Style de la progression suggérée.", docEn: "Suggested progression style.", defautEn: "Pop" },
@@ -234,6 +234,6 @@ export const fiches: FicheAudio[] = ([
         valeurs: [`${tonalite.nom} (${Math.round(tonalite.confiance * 100)}%)`, prog, accordsTexte],
         message: traduire("msg.tonalit_var_0_var_1_accord_s_d_tect_s", tonalite.nom, accords.length),
       };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

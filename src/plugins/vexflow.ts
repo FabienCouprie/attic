@@ -180,8 +180,8 @@ export const fiches: FicheAudio[] = ([
       const svg = genererPortee(notation, clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       return { valeurs: [null], message: svg };
-    },
-  },
+   },
+ },
   {
     id: "vexflow-tab", nom: "Tablature VexFlow", nomEn: "VexFlow Tab",
     univers: "Visualisation", famille: "Notation",
@@ -209,14 +209,14 @@ export const fiches: FicheAudio[] = ([
       const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       return { valeurs: [null], message: svg };
-    },
-  },
+   },
+ },
   {
     id: "vexflow-grille", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
     resumeEn: "Displays a chord chart from a list of symbols.",
-    entrees: [{ nom: "Accords", type: "texte", requis: false }],
+    entrees: [{ nom: "Accords", nomEn: "Chords", type: "texte", requis: false }],
     sorties: [{ nom: "SVG", type: "texte" }],
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "C Am F G",
@@ -245,8 +245,8 @@ export const fiches: FicheAudio[] = ([
       const svg = genererGrille(accords, mpl, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_accord_valide") };
       return { valeurs: [null], message: svg };
-    },
-  },
+   },
+ },
   {
     id: "vexflow-partition", nom: "Partition VexFlow", nomEn: "VexFlow Score",
     univers: "Visualisation", famille: "Notation",
@@ -278,6 +278,6 @@ export const fiches: FicheAudio[] = ([
       const svg = genererPartition(progression, tonic, clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_progression_valide") };
       return { valeurs: [null], message: svg };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

@@ -155,7 +155,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Émet en texte une large collection de styles musicaux par catégorie.",
     resumeEn: "Outputs a large collection of musical styles by category as text.",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       {
         nom: "Catégorie", nomEn: "Category", type: "choix",
@@ -163,14 +163,14 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["All", ...CATEGORIES_STYLES.map((c) => CATEGORIES_LABEL[c]?.en ?? c)],
         defaut: "Toutes",
         doc: "Filtre la liste par catégorie de styles musicaux.", docEn: "Filters the list by musical style category.", defautEn: "All",
-      },
+     },
       {
         nom: "Format", nomEn: "Format", type: "choix",
         options: ["Virgule", "Retour ligne", "Puces"],
         optionsEn: ["Comma", "Newline", "Bullets"],
         defaut: "Virgule",
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
-      },
+     },
     ],
     async executer(ctx: any) {
       const langue = langueCourante();
@@ -178,6 +178,6 @@ export const fiches: FicheAudio[] = ([
       const { texte, total } = construireListeStyles(cat, ctx.paramTexte("Format", "Virgule"), langue);
       const catAff = cat === "Toutes" ? "" : (CATEGORIES_LABEL[cat]?.[langue] ?? cat);
       return { valeurs: [texte], message: traduire("msg.var_0_styles_var_1", total, catAff ? ` — ${catAff}` : "") };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

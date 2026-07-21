@@ -33,7 +33,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Génère un script Suno/Udio par IA depuis 1 ou 2 couleurs avec variabilité.",
     resumeEn: "Generates a Suno/Udio script via AI from 1 or 2 colors with variability.",
     entrees: [],
-    sorties: [{ nom: "Script", type: "texte" }],
+    sorties: [{ nom: "Script", nomEn: "Script", type: "texte" }],
     parametres: [
       { nom: "Couleur 1", nomEn: "Color 1", type: "choix",
         options: NOMS_COULEURS, optionsEn: COULEURS_EN,
@@ -140,6 +140,6 @@ ${[...profil.styles.map((s: any) => s.en).map((s: string) => s.toLowerCase().rep
         valeurs: [scriptFinal],
         message: traduire("msg.script_g_n_r_var_0_graine_var_1_var_2_caract_res", couleursLabel.join(" + "), graine, scriptFinal.length),
       };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

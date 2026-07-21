@@ -22,20 +22,20 @@ export const fiches: FicheAudio[] = ([
         options: ["1024", "2048", "4096", "8192"], defaut: "4096",
         doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle).",
         docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution).", optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"], defautEn: "Sawtooth",
-      },
+     },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
         options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique",
         doc: "Échelle de l'axe des fréquences. Logarithmique = proche de la perception de la hauteur (octaves régulières) ; linéaire = fréquences réparties uniformément.",
         docEn: "Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
-      },
+     },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       return { valeurs: [a] };
-    },
-  },
+   },
+ },
   {
     id: "spectrogramme", nom: "Spectrogramme", nomEn: "Spectrogram",
     univers: "Visualisation", famille: "Analyse",
@@ -49,20 +49,20 @@ export const fiches: FicheAudio[] = ([
         options: ["512", "1024", "2048", "4096"], defaut: "1024",
         doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence).",
         docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).", optionsEn: ["512", "Sine", "Square", "Sawtooth"], defautEn: "Sine",
-      },
+     },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
         options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique",
         doc: "Échelle de l'axe vertical des fréquences (log = proche de la perception).",
         docEn: "Vertical frequency axis scale (log = close to perception).", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
-      },
+     },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       return { valeurs: [a] };
-    },
-  },
+   },
+ },
   {
     id: "oscillateur", nom: "Oscillateur", nomEn: "Oscillator",
     univers: "Entrées", famille: "Génération",
@@ -76,7 +76,7 @@ export const fiches: FicheAudio[] = ([
         options: ["Sinus", "Carré", "Dent de scie", "Triangle"], optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"], defaut: "Sinus",
         doc: "Forme d'onde. Sinus = une seule fréquence. Carré/Triangle = harmoniques impaires. Dent de scie = toutes les harmoniques.",
         docEn: "Waveform. Sine = a single frequency. Square/Triangle = odd harmonics. Sawtooth = all harmonics.", defautEn: "Sine",
-      },
+     },
       { nom: "Fréquence", nomEn: "Frequency", plage: [20, 4000], pas: 1, defaut: 220, unite: "Hz",
         doc: "Hauteur du son (fondamentale), en hertz.", docEn: "Pitch (fundamental), in hertz." },
       { nom: "Durée", nomEn: "Duration", plage: [0.2, 5], pas: 0.1, defaut: 1.5, unite: "s",
@@ -116,14 +116,14 @@ export const fiches: FicheAudio[] = ([
       for (let i = 0; i < nf; i++) { const g = i / nf; d[i] *= g; d[len - 1 - i] *= g; }
 
       return { valeurs: [buf], message: traduire("msg.var_0_var_1_hz_var_2_harmonique_s", forme, freq, harmoniques.length) };
-    },
-  },
+   },
+ },
   {
     id: "comparateur-ab", nom: "Comparateur A/B", nomEn: "A/B Comparator",
     univers: "Sorties", famille: "Écoute",
     resume: "Compare deux signaux à niveau égalisé ; bascule l'écoute A/B.",
     resumeEn: "Compares two signals at matched level; toggles A/B listening.",
-    entrees: [{ nom: "A", type: "audio" }, { nom: "B", type: "audio" }],
+    entrees: [{ nom: "A", nomEn: "A", type: "audio" }, { nom: "B", nomEn: "B", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Écoute", nomEn: "Listen", type: "choix", options: ["A", "B"], defaut: "A",
@@ -159,8 +159,8 @@ export const fiches: FicheAudio[] = ([
       }
       const dB = (p: number) => (p > 0 ? `${(20 * Math.log10(p)).toFixed(1)} dB` : "−∞");
       return { valeurs: [out], message: traduire("msg.coute_var_0_a_var_1_b_var_2_var_3", sel, dB(pA), dB(pB), align ? " · égalisés" : "") };
-    },
-  },
+   },
+ },
   {
     id: "vu-metre", nom: "VU-mètre / LUFS", nomEn: "VU-meter / LUFS",
     univers: "Visualisation", famille: "Analyse",
@@ -176,8 +176,8 @@ export const fiches: FicheAudio[] = ([
       const m = mesurerNiveau(a);
       const rapport = `RMS: ${m.rmsDb.toFixed(1)} dBFS\nPeak: ${m.peakDb.toFixed(1)} dBFS\nTrue Peak: ${m.vraiPicDb.toFixed(1)} dBTP\nLUFS: ${m.lufs.toFixed(1)}\nCrest: ${m.crestFactorDb.toFixed(1)} dB\nLRA: ${m.plageDynamiqueDb.toFixed(1)} dB\nLUFS max: ${m.lufsMax > -119 ? m.lufsMax.toFixed(1) : "—"}\nLUFS min: ${m.lufsMin > -119 ? m.lufsMin.toFixed(1) : "—"}`;
       return { valeurs: [a, rapport], message: traduire("msg.rms_var_0_db_peak_var_1_db_lufs_var_2", m.rmsDb.toFixed(1), m.peakDb.toFixed(1), m.lufs.toFixed(1)) };
-    },
-  },
+   },
+ },
   {
     id: "colorsynth", nom: "ColorSynth", nomEn: "ColorSynth",
     univers: "Visualisation", famille: "Analyse",
@@ -190,6 +190,6 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [a], message: traduire("msg.palette_de_couleurs_g_n_r_e") };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

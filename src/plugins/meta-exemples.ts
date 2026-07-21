@@ -12,7 +12,7 @@ const synthetiseurSoustractif: MetaComposant = {
   nom: "Synthétiseur soustractif",
   nomEn: "Subtractive Synthesizer",
   entrees: [],
-  sorties: [{ nom: "Out 1", type: "audio" }],
+  sorties: [{ nom: "Out 1", nomEn: "Out 1", type: "audio" }],
   mapEntrees: [],
   mapSorties: [{ noeudInterne: "noeud-3", portIndex: 0 }],
   sousNoeuds: [
@@ -24,8 +24,8 @@ const synthetiseurSoustractif: MetaComposant = {
       data: {
         ficheId: "oscillateur",
         parametres: { Forme: "Dent de scie", Fréquence: 110, Durée: 1.5, Volume: 80 },
-      },
-    },
+     },
+   },
     {
       id: "noeud-2",
       position: { x: 70, y: 140 },
@@ -34,8 +34,8 @@ const synthetiseurSoustractif: MetaComposant = {
       data: {
         ficheId: "reponse-filtre",
         parametres: { Type: "passe-bas", Fréquence: 600, Q: 4 },
-      },
-    },
+     },
+   },
     {
       id: "noeud-3",
       position: { x: 280, y: 140 },
@@ -44,8 +44,8 @@ const synthetiseurSoustractif: MetaComposant = {
       data: {
         ficheId: "enveloppe-adsr",
         parametres: { Attaque: 5, Déclin: 250, Maintien: 30, Relâchement: 400 },
-      },
-    },
+     },
+   },
   ],
   sousAretes: [
     { id: "e-1-2", source: "noeud-1", target: "noeud-2", sourceHandle: "out:0", targetHandle: "in:0" },

@@ -11,13 +11,13 @@ export const fiches: FicheAudio[] = ([
     univers: "Sorties", famille: "Écoute",
     resume: "Affiche le texte reçu et permet de le copier ou télécharger.",
     resumeEn: "Displays received text and allows copying or downloading.",
-    entrees: [{ nom: "Texte", type: "texte" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [],
     async executer(ctx: any) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.aucun_texte_en_entr_e") };
       return { valeurs: [texte], message: texte };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

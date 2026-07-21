@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Transcription vocale en anglais (OpenAI Whisper base).",
     resumeEn: "English speech recognition (OpenAI Whisper base).",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
@@ -97,15 +97,15 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-base.en" });
       });
-    },
-  },
+   },
+ },
   {
     id: "whisper-multilingue", nom: "Whisper (Multilingue)", nomEn: "Whisper (Multilingual)",
     univers: "Sorties", famille: "Speech to Text",
     resume: "Transcription vocale multilingue (OpenAI Whisper, 99 langues).",
     resumeEn: "Multilingual speech recognition (OpenAI Whisper, 99 languages).",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
         options: Object.keys(LANGUES_WHISPER),
@@ -142,6 +142,6 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-large-v2", language: langCode, translate: translateToEnglish });
       });
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

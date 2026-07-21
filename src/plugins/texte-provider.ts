@@ -13,7 +13,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Émet un texte saisi par l'utilisateur sur sa sortie texte.",
     resumeEn: "Outputs user-entered text on its text output.",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Texte", nomEn: "Text", type: "texte", defaut: "Bonjour, ceci est un texte de test.",
         doc: "Texte à émettre. Sera transmis sur la sortie texte (port bleu).",
@@ -22,6 +22,6 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const texte = ctx.paramTexte("Texte", "Bonjour, ceci est un texte de test.");
       return { valeurs: [texte], message: traduire("msg.var_0_caract_res", texte.length) };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

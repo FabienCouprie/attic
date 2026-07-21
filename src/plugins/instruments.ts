@@ -110,7 +110,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Émet en texte une longue liste de noms d'instruments de musique.",
     resumeEn: "Outputs a long list of musical instrument names as text.",
     entrees: [],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       {
         nom: "Famille", nomEn: "Family", type: "choix",
@@ -118,14 +118,14 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["All", ...FAMILLES_INSTRUMENTS.map((f) => FAMILLES_LABEL[f]?.en ?? f)],
         defaut: "Toutes",
         doc: "Filtre la liste par famille d'instruments.", docEn: "Filters the list by instrument family.", defautEn: "All",
-      },
+     },
       {
         nom: "Format", nomEn: "Format", type: "choix",
         options: ["Virgule", "Retour ligne", "Puces"],
         optionsEn: ["Comma", "Newline", "Bullets"],
         defaut: "Virgule",
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
-      },
+     },
     ],
     async executer(ctx: any) {
       const langue = langueCourante();
@@ -133,6 +133,6 @@ export const fiches: FicheAudio[] = ([
       const { texte, total } = construireListeInstruments(fam, ctx.paramTexte("Format", "Virgule"), langue);
       const famAff = fam === "Toutes" ? "" : (FAMILLES_LABEL[fam]?.[langue] ?? fam);
       return { valeurs: [texte], message: traduire("msg.var_0_instruments_var_1", total, famAff ? ` — ${famAff}` : "") };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

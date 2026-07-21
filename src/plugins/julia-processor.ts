@@ -112,9 +112,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", requis: false },
       { nom: "MIDI", type: "midi", requis: false },
-      { nom: "Texte", type: "texte", requis: false },
+      { nom: "Texte", nomEn: "Text", type: "texte", requis: false },
     ],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT,
         doc: "Code Julia à exécuter. Variables : ARGS[2] = WAV d'entrée, ENV[\"ATTIC_OUTPUT_PATH\"] = WAV de sortie, ENV[\"ATTIC_SAMPLE_RATE\"], ENV[\"ATTIC_CHANNELS\"]. Nécessite le package WAV.jl.",
@@ -183,7 +183,7 @@ export const fiches: FicheAudio[] = ([
           ATTIC_TEXT_INPUT: inputText || "",
           ATTIC_SAMPLE_RATE: String(audio instanceof AudioBuffer ? audio.sampleRate : 44100),
           ATTIC_CHANNELS: String(audio instanceof AudioBuffer ? audio.numberOfChannels : 2),
-        },
+       },
       });
 
       if (inputPath) { try { await api.supprimerFichier(inputPath); } catch {} }
@@ -236,6 +236,6 @@ export const fiches: FicheAudio[] = ([
       }
 
       return { valeurs: sorties, message: traduire("msg.julia_var_0_var_1", parts.join(" · "), stdout) };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);

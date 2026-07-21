@@ -64,19 +64,19 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité du sampling. 0 = déterministe, 1 = créatif, >1 = imprévisible.",
         docEn: "Sampling creativity. 0 = deterministic, 1 = creative, >1 = unpredictable."
-      },
+     },
       {
         nom: "Tempo", nomEn: "Tempo", type: "curseur",
         plage: [60, 200], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo du fichier MIDI généré.",
         docEn: "Tempo of the generated MIDI file."
-      },
+     },
       {
         nom: "Mesures", nomEn: "Bars", type: "curseur",
         plage: [1, 8], pas: 1, defaut: 2,
         doc: "Nombre de mesures générées. Le modèle produit des blocs de 2 mesures concaténés.",
         docEn: "Number of bars generated. The model produces and concatenates 2-bar chunks."
-      },
+     },
     ],
     async executer(ctx: any) {
       try {
@@ -88,9 +88,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_drums_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-continuation",
     nom: "Magenta Continuation",
@@ -107,13 +107,13 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité de la continuation.",
         docEn: "Continuation creativity."
-      },
+     },
       {
         nom: "Pas à générer", nomEn: "Steps to generate", type: "curseur",
         plage: [16, 128], pas: 1, defaut: 32,
         doc: "Nombre de pas générés (1 mesure 4/4 = 16 pas).",
         docEn: "Number of steps to generate (1 bar 4/4 = 16 steps)."
-      },
+     },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["1/4", "1/8", "1/16", "1/32"],
@@ -121,7 +121,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "1/16",
         doc: "Résolution de quantification de la mélodie d’entrée avant continuation.",
         docEn: "Quantization resolution applied to the input melody before continuation.", defautEn: "1/16"
-      },
+     },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
@@ -139,9 +139,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_continuation_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-improvisation",
     nom: "Magenta Improvisation",
@@ -158,19 +158,19 @@ export const fiches: FicheAudio[] = ([
         plage: [1, 30], pas: 0.5, defaut: 8, unite: "s",
         doc: "Durée de l’improvisation en secondes.",
         docEn: "Improvisation duration in seconds."
-      },
+     },
       {
         nom: "Tempo", nomEn: "Tempo", type: "curseur",
         plage: [60, 200], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo du fichier MIDI généré.",
         docEn: "Tempo of the generated MIDI file."
-      },
+     },
       {
         nom: "Température", nomEn: "Temperature", type: "curseur",
         plage: [0, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité de l’échantillonnage (0 = argmax, 1 = standard, >1 = aléatoire).",
         docEn: "Sampling creativity (0 = argmax, 1 = standard, >1 = random)."
-      },
+     },
       {
         nom: "Mode", nomEn: "Mode", type: "choix",
         options: MODES,
@@ -178,13 +178,13 @@ export const fiches: FicheAudio[] = ([
         defaut: "Aléatoire",
         doc: "Séquence des boutons Piano Genie (0-7). Aléatoire = boutons aléatoires, Marche = dérive, Montant/Descendant/Arpège = motifs.",
         docEn: "Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns.", defautEn: "Random"
-      },
+     },
       {
         nom: "Graine", nomEn: "Seed", type: "curseur",
         plage: [0, 1000], pas: 1, defaut: 0,
         doc: "Graine pour le générateur aléatoire. 0 = aléatoire à chaque exécution.",
         docEn: "Random seed. 0 = random on every run."
-      },
+     },
     ],
     async executer(ctx: any) {
       try {
@@ -198,9 +198,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-generer-melodie",
     nom: "Magenta Générer mélodie",
@@ -217,13 +217,13 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité de la génération.",
         docEn: "Generation creativity."
-      },
+     },
       {
         nom: "Pas à générer", nomEn: "Steps to generate", type: "curseur",
         plage: [16, 128], pas: 1, defaut: 32,
         doc: "Nombre de pas générés après le seed MIDI.",
         docEn: "Number of steps generated after the MIDI seed."
-      },
+     },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["1/4", "1/8", "1/16", "1/32"],
@@ -231,7 +231,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "1/16",
         doc: "Résolution de quantification du seed MIDI avant génération.",
         docEn: "Quantization resolution applied to the MIDI seed before generation.", defautEn: "1/16"
-      },
+     },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
@@ -249,9 +249,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_m_lodie_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-interpoler-midi",
     nom: "Magenta Interpoler MIDI",
@@ -271,19 +271,19 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité de l’interpolation.",
         docEn: "Interpolation creativity."
-      },
+     },
       {
         nom: "Interpolations", nomEn: "Interpolations", type: "curseur",
         plage: [3, 11], pas: 2, defaut: 5,
         doc: "Nombre de pas d’interpolation entre les deux MIDI (impair conseillé).",
         docEn: "Number of interpolation steps between the two MIDI files (odd recommended)."
-      },
+     },
       {
         nom: "Position", nomEn: "Position", type: "curseur",
         plage: [0, 1], pas: 0.05, defaut: 0.5,
         doc: "Position de l’intermédiaire entre MIDI A (0) et MIDI B (1).",
         docEn: "Position of the intermediate between MIDI A (0) and MIDI B (1)."
-      },
+     },
     ],
     async executer(ctx: any) {
       const file1 = ctx.entree(0);
@@ -300,9 +300,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_interpolation_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-generer-batterie",
     nom: "Magenta Générer batterie",
@@ -311,7 +311,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Magenta",
     resume: "Génère une boucle de batterie avec MusicVAE. Un seed MIDI en option peut orienter le style.",
     resumeEn: "Generates a drum loop with MusicVAE. An optional MIDI seed can guide the style.",
-    entrees: [{ nom: "MIDI (optionnel)", type: "midi", requis: false }],
+    entrees: [{ nom: "MIDI (optionnel)", nomEn: "MIDI (optional)", type: "midi", requis: false }],
     sorties: [{ nom: "MIDI", type: "midi" }],
     parametres: [
       {
@@ -319,25 +319,25 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 1.5], pas: 0.05, defaut: 1.0,
         doc: "Créativité du sampling.",
         docEn: "Sampling creativity."
-      },
+     },
       {
         nom: "Tempo", nomEn: "Tempo", type: "curseur",
         plage: [60, 200], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo du fichier MIDI généré.",
         docEn: "Tempo of the generated MIDI file."
-      },
+     },
       {
         nom: "Mesures", nomEn: "Bars", type: "curseur",
         plage: [1, 8], pas: 1, defaut: 2,
         doc: "Nombre de mesures générées (ignoré si un seed est branché).",
         docEn: "Number of bars generated (ignored when a seed is connected)."
-      },
+     },
       {
         nom: "Similarité", nomEn: "Similarity", type: "curseur",
         plage: [0, 1], pas: 0.05, defaut: 0.5,
         doc: "Ressemblance avec le seed MIDI (0 = aléatoire, 1 = proche du seed).",
         docEn: "Resemblance to the MIDI seed (0 = random, 1 = close to the seed)."
-      },
+     },
     ],
     async executer(ctx: any) {
       try {
@@ -355,9 +355,9 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_batterie_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
   {
     id: "magenta-humaniser-groove",
     nom: "Magenta Humaniser groove",
@@ -374,7 +374,7 @@ export const fiches: FicheAudio[] = ([
         plage: [0, 1.5], pas: 0.05, defaut: 0.5,
         doc: "Quantité de variation appliquée (0 = peu, 1.5 = très expressif).",
         docEn: "Amount of variation applied (0 = little, 1.5 = very expressive)."
-      },
+     },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["1/4", "1/8", "1/16", "1/32"],
@@ -382,7 +382,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "1/16",
         doc: "Résolution de quantification du pattern d’entrée.",
         docEn: "Quantization resolution of the input pattern.", defautEn: "1/16"
-      },
+     },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
@@ -399,7 +399,7 @@ export const fiches: FicheAudio[] = ([
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_humaniser_groove_var_0", err.message ?? err) };
       }
-    },
+   },
     jamaisCache: true,
-  },
+ },
 ] as FicheAudio[]).map(avecDoc);

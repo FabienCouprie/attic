@@ -45,8 +45,8 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates text via a local Ollama model (Llama, Qwen, Mistral…).",
     notice: "Interroge un serveur Ollama local (port 11434). Installez Ollama (ollama.com), lancez « ollama serve », puis tirez un modèle : « ollama pull llama3.2 » ou « ollama pull qwen2.5 ». Le prompt vient du paramètre, ou de l'entrée texte si elle est connectée. Attic ne télécharge aucun modèle — tout est géré par Ollama, hors du renderer.",
     noticeEn: "Queries a local Ollama server (port 11434). Install Ollama (ollama.com), run « ollama serve », then pull a model: « ollama pull llama3.2 » or « ollama pull qwen2.5 ». The prompt comes from the parameter, or from the text input if connected. Attic downloads no model — Ollama manages everything, outside the renderer.",
-    entrees: [{ nom: "Texte", type: "texte", requis: false }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Modèle", nomEn: "Model", type: "texte", defaut: "qwen3:4b",
         doc: "Nom du modèle Ollama installé (voir « ollama list »). Ex : llama3.2, qwen3:4b, mistral, phi3.",
@@ -79,6 +79,6 @@ export const fiches: FicheAudio[] = ([
       const texte = (res.reponse || "").trim();
       if (!texte) return { valeurs: [null], erreur: true, message: traduire("msg.r_ponse_vide_d_ollama_rifiez_le_mod_le_et_le_serveur") };
       return { valeurs: [texte], message: texte };
-    },
-  },
+   },
+ },
 ] as FicheAudio[]).map(avecDoc);
