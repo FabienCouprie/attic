@@ -110,6 +110,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_ddsp_var_0", err.message ?? err) };
       }
     },
-    jamaisCache: true,
   },
 ] as FicheAudio[]).map(avecDoc);
