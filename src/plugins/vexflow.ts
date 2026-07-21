@@ -6,6 +6,7 @@
 // résultat pour être affiché par la vue VexFlow dans le canevas.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Progression } from "tonal";
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
@@ -161,9 +162,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: "C4/q D4/8 E4/8 F4/q G4/q",
         doc: "Notes à afficher. Format : note/octave/durée (ex : C4/q, D4/8, F#4/q, C4+E4+G4/q).",
-        docEn: "Notes to display. Format: note/octave/duration (e.g. C4/q, D4/8, F#4/q, C4+E4+G4/q)." },
+        docEn: "Notes to display. Format: note/octave/duration (e.g. C4/q, D4/8, F#4/q, C4+E4+G4/q).", defautEn: "C4/q D4/8 E4/8 F4/q G4/q" },
       { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
-        doc: "Clé de la portée.", docEn: "Staff clef." },
+        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
@@ -177,7 +178,7 @@ export const fiches: FicheAudio[] = ([
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererPortee(notation, clef, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: "Aucune note valide." };
+      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       return { valeurs: [null], message: svg };
     },
   },
@@ -191,9 +192,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tablature", nomEn: "Tablature", type: "texte", defaut: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q",
         doc: "Tablature à afficher. Format : corde-fret/durée (ex : 6-3/q = corde 6, fret 3, noire).",
-        docEn: "Tablature to display. Format: string-fret/duration (e.g. 6-3/q = 6th string, 3rd fret, quarter note)." },
+        docEn: "Tablature to display. Format: string-fret/duration (e.g. 6-3/q = 6th string, 3rd fret, quarter note).", defautEn: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q" },
       { nom: "Accordage", nomEn: "Tuning", type: "choix", options: ["Guitare standard", "Ukulélé", "Basse"], optionsEn: ["Standard guitar", "Ukulele", "Bass"], defaut: "Guitare standard",
-        doc: "Accordage affiché en titre (la notation reste en corde-fret).", docEn: "Tuning displayed in title (notation remains string-fret)." },
+        doc: "Accordage affiché en titre (la notation reste en corde-fret).", docEn: "Tuning displayed in title (notation remains string-fret).", defautEn: "Standard guitar" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
@@ -206,7 +207,7 @@ export const fiches: FicheAudio[] = ([
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: "Aucune note valide." };
+      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       return { valeurs: [null], message: svg };
     },
   },
@@ -220,9 +221,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "C Am F G",
         doc: "Accords à afficher, séparés par des espaces. Accepte aussi une progression en chiffres romains si une tonalité est renseignée.",
-        docEn: "Chords to display, separated by spaces. Also accepts a roman numeral progression if a key is set." },
+        docEn: "Chords to display, separated by spaces. Also accepts a roman numeral progression if a key is set.", defautEn: "C Am F G" },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité pour interpréter une progression en chiffres romains.", docEn: "Key to interpret a roman numeral progression." },
+        doc: "Tonalité pour interpréter une progression en chiffres romains.", docEn: "Key to interpret a roman numeral progression.", defautEn: "1/4" },
       { nom: "Mesures par ligne", nomEn: "Measures per line", plage: [1, 8], pas: 1, defaut: 4,
         doc: "Nombre de mesures par ligne.", docEn: "Number of measures per line." },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
@@ -242,7 +243,7 @@ export const fiches: FicheAudio[] = ([
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 200);
       const svg = genererGrille(accords, mpl, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: "Aucun accord valide." };
+      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_accord_valide") };
       return { valeurs: [null], message: svg };
     },
   },
@@ -256,11 +257,11 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains ou en symboles d'accords (ex : C Am F G).",
-        docEn: "Roman numeral progression or chord symbols (e.g. C Am F G)." },
+        docEn: "Roman numeral progression or chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la progression.", docEn: "Progression key." },
+        doc: "Tonalité de la progression.", docEn: "Progression key.", defautEn: "1/4" },
       { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
-        doc: "Clé de la portée.", docEn: "Staff clef." },
+        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
@@ -275,7 +276,7 @@ export const fiches: FicheAudio[] = ([
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererPartition(progression, tonic, clef, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: "Aucune progression valide." };
+      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_progression_valide") };
       return { valeurs: [null], message: svg };
     },
   },

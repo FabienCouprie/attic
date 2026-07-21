@@ -1,5 +1,6 @@
 // plugins/pure-data.ts — Nœud d'exécution d'un patch Pure Data (.pd).
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -22,7 +23,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["vanilla", "cyclone", "else", "full"],
         defaut: "vanilla",
         doc: "Ensemble d'objets Pd disponibles pour le patch. vanilla = objets de base, cyclone/else = objets externes courants, full = tout.",
-        docEn: "Set of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything.",
+        docEn: "Set of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything.", defautEn: "vanilla",
       },
       {
         nom: "Canaux sortie",
@@ -43,7 +44,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["yes", "no"],
         defaut: "oui",
         doc: "Envoie un bang à l'objet [loadbang] au démarrage de l'audio.",
-        docEn: "Send a bang to the [loadbang] object when audio starts.",
+        docEn: "Send a bang to the [loadbang] object when audio starts.", defautEn: "yes",
       },
       {
         nom: "Patch",
@@ -51,23 +52,23 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "",
         doc: "Identifiant du patch chargé (mis à jour automatiquement par le sélecteur de fichier). Sert à invalider le cache quand le fichier change.",
-        docEn: "Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes.",
+        docEn: "Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes.", defautEn: "",
       },
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
       if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null], erreur: true, message: "Aucune entrée audio." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
       }
 
       const fichier = ctx.noeud.data.pureDataFichier as File | undefined;
       if (!fichier) {
-        return { valeurs: [null], erreur: true, message: "Aucun patch Pure Data chargé." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucun_patch_pure_data_charg") };
       }
 
       const patchSource = await fichier.text();
       if (!patchSource.trim()) {
-        return { valeurs: [null], erreur: true, message: "Patch Pure Data vide." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.patch_pure_data_vide") };
       }
 
       const packages = ctx.paramTexte("Bibliothèques", "vanilla");
@@ -81,9 +82,9 @@ export const fiches: FicheAudio[] = ([
           outputChannels,
           bangOnStart,
         });
-        return { valeurs: [out], message: `Pure Data · ${fichier.name}` };
+        return { valeurs: [out], message: traduire("msg.pure_data_var_0", fichier.name) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Pure Data : ${err?.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_pure_data_var_0", err?.message ?? err) };
       }
     },
   },

@@ -2,6 +2,7 @@
 // Tonal : MIT licence — ajouté dans THIRD_PARTY.md.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Scale, Note, Progression } from "tonal";
 import { estimerTonalite, detecterAccords } from "../audio/accords";
@@ -53,14 +54,14 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Notes", nomEn: "Notes", type: "texte", defaut: "C E G",
         doc: "Notes de l'accord séparées par des espaces (ex : C E G, F A C E).",
-        docEn: "Chord notes separated by spaces (e.g. C E G, F A C E)." },
+        docEn: "Chord notes separated by spaces (e.g. C E G, F A C E).", defautEn: "C E G" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
       const notesTexte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notes", "C E G");
       const notes = parserNotes(notesTexte);
-      if (notes.length === 0) return { valeurs: [null], message: "Aucune note fournie." };
+      if (notes.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_fournie") };
       const detectes = Chord.detect(notes);
       const symbole = detectes.length > 0 ? detectes[0] : null;
       const resultat = symbole ? (Chord.get(symbole).name || symbole) : "Accord inconnu";
@@ -77,10 +78,10 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Tonic", type: "texte", defaut: "C",
         doc: "Tonalité de départ (ex : C, D#, F#).",
-        docEn: "Starting tonic (e.g. C, D#, F#)." },
+        docEn: "Starting tonic (e.g. C, D#, F#).", defautEn: "1/4" },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
         doc: "Type de gamme.",
-        docEn: "Scale type." },
+        docEn: "Scale type.", optionsEn: ["Block", "Arpeggio", "dorian", "mixolydian", "lydian", "phrygian", "Local"], defautEn: "major" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -88,7 +89,7 @@ export const fiches: FicheAudio[] = ([
         || ctx.paramTexte("Tonalité", "C");
       const type = ctx.paramTexte("Type", "major");
       const gamme = Scale.get(`${tonic} ${type}`);
-      if (!gamme.notes.length) return { valeurs: [null], message: "Tonalité invalide." };
+      if (!gamme.notes.length) return { valeurs: [null], message: traduire("msg.tonalit_invalide") };
       const resultat = gamme.notes.join(" ");
       return { valeurs: [resultat], message: resultat };
     },
@@ -103,10 +104,10 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "C4",
         doc: "Note à transposer (ex : C4, D#3, F#5).",
-        docEn: "Note to transpose (e.g. C4, D#3, F#5)." },
+        docEn: "Note to transpose (e.g. C4, D#3, F#5).", defautEn: "C4" },
       { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defaut: "2M",
         doc: "Intervalle de transposition (2M = ton, 3m = tierce mineure, 3M = tierce majeure, etc.).",
-        docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.)." },
+        docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.).", optionsEn: ["1P", "2m", "2M", "3 m", "3M", "4P", "4A", "5P", "6 m", "6M", "7 m", "7M", "8P"], defautEn: "2M" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -114,7 +115,7 @@ export const fiches: FicheAudio[] = ([
         || ctx.paramTexte("Note", "C4");
       const intervalle = ctx.paramTexte("Intervalle", "2M");
       const transposee = Note.transpose(note, intervalle);
-      if (!transposee) return { valeurs: [null], message: "Transposition impossible." };
+      if (!transposee) return { valeurs: [null], message: traduire("msg.transposition_impossible") };
       return { valeurs: [transposee], message: transposee };
     },
   },
@@ -128,10 +129,10 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la progression (ex : C, G, Dm, F#).",
-        docEn: "Progression key (e.g. C, G, Dm, F#)." },
+        docEn: "Progression key (e.g. C, G, Dm, F#).", defautEn: "1/4" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains (ex : I V vi IV, ii V I).",
-        docEn: "Roman numeral progression (e.g. I V vi IV, ii V I)." },
+        docEn: "Roman numeral progression (e.g. I V vi IV, ii V I).", defautEn: "I V vi IV" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -154,10 +155,10 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la grille (ex : C, G, Dm, F#).",
-        docEn: "Grid key (e.g. C, G, Dm, F#)." },
+        docEn: "Grid key (e.g. C, G, Dm, F#).", defautEn: "1/4" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains. Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
-        docEn: "Roman numeral progression. Also accepts a space-separated list of chord symbols (e.g. C Am F G)." },
+        docEn: "Roman numeral progression. Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t",
@@ -166,7 +167,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Octave de base des accords.", docEn: "Base octave for chords." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], defaut: "Bloc",
         doc: "Bloc joue toutes les notes simultanément, Arpège les décline en croches.",
-        docEn: "Block plays all notes at once, Arpeggio plays them as eighth notes." },
+        docEn: "Block plays all notes at once, Arpeggio plays them as eighth notes.", defautEn: "Block" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -183,7 +184,7 @@ export const fiches: FicheAudio[] = ([
       const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {
-        return { valeurs: [null, null], erreur: true, message: "Progression invalide." };
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.progression_invalide") };
       }
 
       const lignes: string[] = [`TEMPO ${tempo}`];
@@ -203,7 +204,7 @@ export const fiches: FicheAudio[] = ([
 
       const notation = lignes.join("\n");
       const listeAccords = accords.join(" ");
-      return { valeurs: [notation, listeAccords], message: `${accords.length} accords · ${mode} · ${tempo} BPM` };
+      return { valeurs: [notation, listeAccords], message: traduire("msg.var_0_accords_var_1_var_2_bpm", accords.length, mode, tempo) };
     },
   },
   {
@@ -215,12 +216,12 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Tonalité", type: "texte" }, { nom: "Progression", type: "texte" }, { nom: "Accords détectés", type: "texte" }],
     parametres: [
       { nom: "Style", nomEn: "Style", type: "choix", options: ["Pop", "Jazz", "Blues"], optionsEn: ["Pop", "Jazz", "Blues"], defaut: "Pop",
-        doc: "Style de la progression suggérée.", docEn: "Suggested progression style." },
+        doc: "Style de la progression suggérée.", docEn: "Suggested progression style.", defautEn: "Pop" },
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
       if (!buffer || !(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], erreur: true, message: "Aucun audio connecté." };
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_audio_connect") };
       }
       const tonalite = estimerTonalite(buffer);
       const accords = detecterAccords(buffer, 0.5);
@@ -231,7 +232,7 @@ export const fiches: FicheAudio[] = ([
       const accordsTexte = accords.map((a) => `${a.nomEn} (${a.duree.toFixed(1)}s)`).join("\n");
       return {
         valeurs: [`${tonalite.nom} (${Math.round(tonalite.confiance * 100)}%)`, prog, accordsTexte],
-        message: `Tonalité : ${tonalite.nom} · ${accords.length} accord(s) détecté(s)`,
+        message: traduire("msg.tonalit_var_0_var_1_accord_s_d_tect_s", tonalite.nom, accords.length),
       };
     },
   },

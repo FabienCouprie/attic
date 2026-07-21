@@ -1,6 +1,7 @@
 // plugins/generateurs.ts — Nœuds generateurs (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import {
   decoderFichier, decoderBlob,
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
@@ -20,10 +21,10 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "Produces a sequence of chords based on the key, scale and genre. Each chord is voiced across 3 octaves with arpeggiation.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur" },
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], defaut: "pop", docEn: "Style determines the chord progression." },
-      { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I", docEn: "Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV." },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "minor"], defautEn: "major" },
+      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], defaut: "pop", docEn: "Style determines the chord progression.", defautEn: "pop" },
+      { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I", docEn: "Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV.", defautEn: "I-IV-V-I" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée par accord", nomEn: "Chord duration", plage: [1,8], pas: 1, defaut: 2, unite: "temps", docEn: "Duration per chord in beats." },
       { nom: "Nombre d'accords", nomEn: "Chord count", plage: [2,32], pas: 1, defaut: 8, docEn: "Total number of chords." },
@@ -52,10 +53,10 @@ export const fiches: FicheAudio[] = ([
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];
           }
         }
-        return { valeurs:[master], message:`${description}\n── SoundFont` };
+        return { valeurs:[master], message:traduire("msg.var_0_soundfont", description) };
       }
       const { rendreMidiDepuisBytes } = await import("../audio");
-      return { valeurs:[await rendreMidiDepuisBytes(midiBytes,"FM/Oscillateurs",vol)], message:`${description}\n── FM` };
+      return { valeurs:[await rendreMidiDepuisBytes(midiBytes,"FM/Oscillateurs",vol)], message:traduire("msg.var_0_fm", description) };
     },
   },
   {
@@ -64,9 +65,9 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a random melody.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur" },
-      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
+      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["Click", "Woodblock", "6/8"], defautEn: "Click" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
     ],
@@ -80,14 +81,14 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates fractal music.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M" },
-      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10" },
+      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
+      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0.3.7.10" },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur" },
-      { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
+      { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
     ],
     async executer(ctx: any) {
       return { valeurs: [await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),ctx.paramNombre("Tempo",80),ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"))] };
@@ -100,8 +101,8 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Custom"], defaut:"Rock" },
-      { nom:"Code personnalisé", nomEn:"Custom code", type:"texte", defaut:"" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Custom"], defaut:"Rock", defautEn: "Rock" },
+      { nom:"Code personnalisé", nomEn:"Custom code", type:"texte", defaut:"", defautEn: "" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
@@ -117,17 +118,17 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Plays a keyboard-recorded sequence.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["FM/Oscillateurs","SoundFont"], defaut:"FM/Oscillateurs" },
+      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["FM/Oscillateurs","SoundFont"], defaut:"FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
       const notes = ctx.noeud.data.sequenceNotes;
-      if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:"Aucune séquence." };
+      if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
       try {
         const { rendreSequence } = await import("../audio");
         return { valeurs: [await rendreSequence(notes as any, ctx.paramTexte("Synthèse","FM/Oscillateurs") as any, ctx.paramNombre("Volume",80))] };
       } catch (e: any) {
-        return { valeurs:[null], message: "Erreur synthèse: " + (e?.message ?? e) };
+        return { valeurs:[null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },
   },
@@ -138,8 +139,8 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Durée", nomEn:"Duration", plage:[1,60], defaut:4, unite:"s" },
       { nom:"Note référence", nomEn:"Reference note", plage:[21,108], defaut:60, docEn:"MIDI note for the original pitch of the sample." },
@@ -154,7 +155,7 @@ export const fiches: FicheAudio[] = ([
       } else {
         const rep = await fetch("/soundbank/waterdrop.mp3");
         if (rep.ok) { sample = await decoderBlob(await rep.blob(), ctx.runtime); dureeAuto = sample.duration; }
-        else { return { valeurs:[null], message:"Glissez un fichier audio sur le node." }; }
+        else { return { valeurs:[null], message:traduire("msg.glissez_un_fichier_audio_sur_le_node") }; }
       }
       const cle = ctx.paramTexte("Clé","Do");
       const gamme = ctx.paramTexte("Gamme","Majeur");
@@ -182,9 +183,9 @@ export const fiches: FicheAudio[] = ([
       const noteRef = ctx.paramNombre("Note référence", 60);
       try {
         const buf = rendreAvecEchantillon(notes, sample, 80, noteRef);
-        return { valeurs: [buf], message: "OK — " + notes.length + " notes, " + buf.duration.toFixed(1) + "s" };
+        return { valeurs: [buf], message: traduire("msg.ok_var_0_notes_var_1_s", notes.length, buf.duration.toFixed(1)) };
       } catch (e: any) {
-        return { valeurs:[null], message: "Erreur rendu: " + (e?.message ?? e) };
+        return { valeurs:[null], message: traduire("msg.erreur_rendu_var_0", e?.message ?? e) };
       }
     },
   },
@@ -197,14 +198,14 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Type", nomEn: "Type", type: "choix", options: ["Blanc", "Rose", "Brownien"], defaut: "Blanc",
         doc: "Blanc = toutes les fréquences à niveau égal (spectre plat). Rose = −3 dB/octave (perçu équilibré). Brownien = −6 dB/octave (grave, sourd). Branchez sur l'Analyseur de spectre pour voir la différence.",
-        docEn: "White = all frequencies at equal level (flat spectrum). Pink = −3 dB/octave (perceptually balanced). Brownian = −6 dB/octave (dark, muffled). Connect to the Spectrum Analyzer to see the difference." },
+        docEn: "White = all frequencies at equal level (flat spectrum). Pink = −3 dB/octave (perceptually balanced). Brownian = −6 dB/octave (dark, muffled). Connect to the Spectrum Analyzer to see the difference.", optionsEn: ["White", "Pink", "Brownian"], defautEn: "White" },
       { nom: "Durée", nomEn: "Duration", plage: [0.2, 10], pas: 0.1, defaut: 2, unite: "s" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const type = ctx.paramTexte("Type", "Blanc");
       const buf = genererBruit(type, ctx.paramNombre("Durée", 2), ctx.paramNombre("Volume", 80));
-      return { valeurs: [buf], message: `Bruit ${type.toLowerCase()} · ${buf.duration.toFixed(1)}s` };
+      return { valeurs: [buf], message: traduire("msg.bruit_var_0_var_1_s", type.toLowerCase(), buf.duration.toFixed(1)) };
     },
   },
   {
@@ -217,16 +218,16 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Saisie", nomEn: "Input", type: "choix", options: ["Fréquence (Hz)", "Note"], optionsEn: ["Frequency (Hz)", "Note"], defaut: "Fréquence (Hz)",
         doc: "Mode de saisie : en Hz (ex. 440) ou en note musicale (ex. A4, C#5).",
-        docEn: "Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5)." },
+        docEn: "Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5).", defautEn: "Frequency (Hz)" },
       { nom: "Fréquence", nomEn: "Frequency", plage: [20, 20000], pas: 1, defaut: 440, unite: "Hz",
         doc: "Fréquence en Hertz (utilisé si « Saisie » = Fréquence). 440 = La3 de référence.",
         docEn: "Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A4",
         doc: "Note musicale (utilisé si « Saisie » = Note). Format : lettre + altération + octave, ex. C4, F#5, Bb3.",
-        docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. C4, F#5, Bb3." },
+        docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. C4, F#5, Bb3.", defautEn: "A4" },
       { nom: "Forme", nomEn: "Waveform", type: "choix", options: ["Sinus", "Carré", "Scie", "Triangle"], optionsEn: ["Sine", "Square", "Saw", "Triangle"], defaut: "Sinus",
         doc: "Forme d'onde. Sinus = pur (une seule fréquence) ; Carré = harmoniques impaires ; Scie = toutes les harmoniques ; Triangle = harmoniques impaires douces.",
-        docEn: "Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics." },
+        docEn: "Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics.", defautEn: "Sine" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
@@ -237,7 +238,7 @@ export const fiches: FicheAudio[] = ([
       if (saisie === "Note") {
         const noteStr = ctx.paramTexte("Note", "A4");
         const m = noteStr.match(/^([A-G])(#|b)?(-?\d+)$/);
-        if (!m) return { valeurs: [null], message: `Note invalide : ${noteStr} (format : A4, C#5, Bb3)` };
+        if (!m) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
         const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
         let pc = tbl[m[1]] ?? 9;
         if (m[2] === "#") pc += 1; else if (m[2] === "b") pc -= 1;
@@ -276,7 +277,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       const noteAff = saisie === "Note" ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
-      return { valeurs: [buf], message: `${noteAff} · ${forme} · ${duree.toFixed(1)}s` };
+      return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, forme, duree.toFixed(1)) };
     },
   },
   {
@@ -288,11 +289,11 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440)",
         doc: "Expression mathématique donnant la valeur de l'échantillon. Variables disponibles : t (temps en s), i (index), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
-        docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate)." },
+        docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * ft * 440)" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
       { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], defaut: "Stéréo",
-        doc: "Nombre de canaux de sortie.", docEn: "Number of output channels." },
+        doc: "Nombre de canaux de sortie.", docEn: "Number of output channels.", defautEn: "Stereo" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -309,9 +310,9 @@ export const fiches: FicheAudio[] = ([
             for (let i = 0; i < d.length; i++) d[i] *= vol;
           }
         }
-        return { valeurs: [buf], message: `${formule} · ${buf.duration.toFixed(1)}s` };
+        return { valeurs: [buf], message: traduire("msg.var_0_var_1_s", formule, buf.duration.toFixed(1)) };
       } catch (e: any) {
-        return { valeurs: [null], message: `Erreur formule : ${e?.message ?? e}` };
+        return { valeurs: [null], message: traduire("msg.erreur_formule_var_0", e?.message ?? e) };
       }
     },
   },
@@ -327,13 +328,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Signature", nomEn: "Time signature", type: "choix",
         options: ["4/4", "3/4", "2/4", "6/8", "5/4", "7/8"], defaut: "4/4",
-        doc: "Signature rythmique. Le premier temps de chaque mesure est accentué.", docEn: "Time signature. The first beat of each bar is accented." },
+        doc: "Signature rythmique. Le premier temps de chaque mesure est accentué.", docEn: "Time signature. The first beat of each bar is accented.", optionsEn: ["Click", "Woodblock", "Beep", "6/8", "5/4", "7/8"], defautEn: "Click" },
       { nom: "Durée", nomEn: "Duration", plage: [1, 60], pas: 1, defaut: 10, unite: "s",
         doc: "Durée totale du métronome.", docEn: "Total duration of the metronome." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
         options: ["Clic", "Woodblock", "Bip"], optionsEn: ["Click", "Woodblock", "Beep"], defaut: "Clic",
         doc: "Son du clic. Clic = transitoire court ; Woodblock = résonance bois ; Bip = sinus bref.",
-        docEn: "Click sound. Click = short transient; Woodblock = woody resonance; Beep = brief sine." },
+        docEn: "Click sound. Click = short transient; Woodblock = woody resonance; Beep = brief sine.", defautEn: "Click" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -403,7 +404,7 @@ export const fiches: FicheAudio[] = ([
 
       const nbBeats = beat;
       const nbMesures = Math.floor(nbBeats / beatsParMesure);
-      return { valeurs: [buf], message: `${tempo} BPM · ${sig} · ${nbMesures} mesure(s) · ${nbBeats} temps` };
+      return { valeurs: [buf], message: traduire("msg.var_0_bpm_var_1_var_2_mesure_s_var_3_temps", tempo, sig, nbMesures, nbBeats) };
     },
   },
   {
@@ -427,19 +428,19 @@ export const fiches: FicheAudio[] = ([
         doc: "Rayon spectral du réseau. <100% = stable (converge) ; >100% = chaotique (diverge). 90% = sweet spot mélodique.",
         docEn: "Network spectral radius. <100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot." },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"], defaut: "majeur",
-        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes." },
+        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes.", optionsEn: ["Major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatic"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth." },
+        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
-        doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform." },
+        doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Probabilité de produire une note à chaque pas. Élevée = mélodie dense ; faible = mélodie éparse.", docEn: "Probability of producing a note at each step. High = dense melody; low = sparse melody." },
       { nom: "Répétition", nomEn: "Repetition", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
@@ -473,12 +474,12 @@ export const fiches: FicheAudio[] = ([
         repetition: ctx.paramNombre("Répétition", 25) / 100,
         silence: ctx.paramNombre("Silence", 10) / 100,
       };
-      ctx.onProgress("Génération du réservoir neuronal…");
+      ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_neuronal"));
       const { notes, graineUtilisee } = genererReservoirMusical(config);
-      ctx.onProgress("Rendu audio…");
+      ctx.onProgress(traduire("progress.rendu_audio"));
       const buf = rendreReservoirAudio(notes, config);
       const nbNotes = notes.filter((n: any) => !n.silence).length;
-      return { valeurs: [buf], message: `${config.taille} neurones · ${nbNotes} notes · graine ${graineUtilisee} · ${config.mesures} mes.` };
+      return { valeurs: [buf], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
     },
   },
   {
@@ -502,15 +503,15 @@ export const fiches: FicheAudio[] = ([
         doc: "Rayon spectral du réseau. <100% = stable (converge) ; >100% = chaotique (diverge). 90% = sweet spot mélodique.",
         docEn: "Network spectral radius. <100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot." },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"], defaut: "majeur",
-        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes." },
+        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes.", optionsEn: ["Major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatic"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth." },
+        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
       { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
@@ -546,15 +547,15 @@ export const fiches: FicheAudio[] = ([
         repetition: ctx.paramNombre("Répétition", 25) / 100,
         silence: ctx.paramNombre("Silence", 10) / 100,
       };
-      ctx.onProgress("Génération du réservoir neuronal…");
+      ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_neuronal"));
       const { notes, graineUtilisee } = genererReservoirMusical(config);
       const notesJouees = notes.filter((n: any) => !n.silence);
-      if (notesJouees.length === 0) return { valeurs: [null], message: "Aucune note générée." };
+      if (notesJouees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_g_n_r_e") };
       const fichier = notesVersFichierMidi(
         notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
         config.tempo,
       );
-      return { valeurs: [fichier], message: `${config.taille} neurones · ${notesJouees.length} notes · graine ${graineUtilisee}` };
+      return { valeurs: [fichier], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2", config.taille, notesJouees.length, graineUtilisee) };
     },
   },
   {
@@ -566,17 +567,17 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"], defaut: "majeur",
-        doc: "Gamme utilisée pour mapper les activations vers des notes.", docEn: "Scale used to map activations to notes." },
+        doc: "Gamme utilisée pour mapper les activations vers des notes.", docEn: "Scale used to map activations to notes.", optionsEn: ["Major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth." },
+        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
-        doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform." },
+        doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution).", docEn: "Random seed (0 = new network each run)." },
@@ -634,9 +635,9 @@ export const fiches: FicheAudio[] = ([
         rythmeDensite: ctx.paramNombre("Rythme densité", 50),
         influence: ctx.paramNombre("Influence", 50) / 100,
       };
-      ctx.onProgress("Génération multi-réservoirs…");
+      ctx.onProgress(traduire("progress.g_n_ration_multi_r_servoirs"));
       const { buffer, details } = genererMultiReservoir(config);
-      return { valeurs: [buffer], message: `${details} · graine ${config.graine > 0 ? config.graine : "auto"}` };
+      return { valeurs: [buffer], message: traduire("msg.var_0_graine_var_1", details, config.graine > 0 ? config.graine : "auto") };
     },
   },
   {
@@ -653,18 +654,18 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const midiFile = ctx.entree(0);
-      if (!(midiFile instanceof File)) return { valeurs: [null, null], message: "Branchez un source MIDI." };
+      if (!(midiFile instanceof File)) return { valeurs: [null, null], message: traduire("msg.branchez_un_source_midi") };
       const audioFichier = ctx.noeud.data.audioFichier as File | undefined;
-      if (!audioFichier) return { valeurs: [null, midiFile], message: "Chargez un échantillon audio dans l'inspecteur." };
+      if (!audioFichier) return { valeurs: [null, midiFile], message: traduire("msg.chargez_un_chantillon_audio_dans_l_inspecteur") };
       const sample = await decoderFichier(audioFichier, ctx.runtime);
       const bytes = new Uint8Array(await midiFile.arrayBuffer());
       const { notes } = analyserMidi(parseMidi(bytes));
-      if (!notes.length) return { valeurs: [null, midiFile], message: "Aucune note dans le MIDI." };
+      if (!notes.length) return { valeurs: [null, midiFile], message: traduire("msg.aucune_note_dans_le_midi") };
       const vol = ctx.paramNombre("Volume", 80);
       const noteRef = ctx.paramNombre("Note référence", 60);
       const adapt = notes.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
       const buf = rendreAvecEchantillon(adapt, sample, vol, noteRef);
-      return { valeurs: [buf, midiFile], message: `${notes.length} notes · échantillon ${audioFichier.name}` };
+      return { valeurs: [buf, midiFile], message: traduire("msg.var_0_notes_chantillon_var_1", notes.length, audioFichier.name) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

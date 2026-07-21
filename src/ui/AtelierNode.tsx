@@ -99,7 +99,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
       {/* En-tête */}
       <div className="attic-node-entete">
         <span className="attic-node-nom">
-          {nodeEstMeta && <span className="attic-node-badge-meta" title="Méta-composant — double-cliquez pour ouvrir l'intérieur">⤢</span>}
+          {nodeEstMeta && <span className="attic-node-badge-meta" title={t("meta.badgeTitle")}>⤢</span>}
           {nom}
         </span>
         <span className="attic-node-actions">

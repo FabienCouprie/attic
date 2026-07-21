@@ -529,6 +529,7 @@ export async function rendreSequence(
 // Grilles de quantification en divisions par beat.
 const GRILLES: Record<string, number> = {
   "Aucune": 0,
+  "None": 0,
   "1/4": 1,
   "1/8": 2,
   "1/16": 4,

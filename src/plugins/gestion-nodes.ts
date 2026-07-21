@@ -3,6 +3,7 @@
 // Permet de partager des nodes entre installations d'Attic.
 
 import type { Registre, TypeValeur } from "../core";
+import { traduire } from "../i18n";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { installerNode } from "../core";
@@ -34,12 +35,12 @@ export const fiches: FicheAudio[] = ([
         options: ["Exporter", "Importer"], optionsEn: ["Export", "Import"],
         defaut: "Exporter",
         doc: "Exporter = créer un .zip d'un node existant. Importer = installer un node depuis un .zip.",
-        docEn: "Export = create a .zip of an existing node. Import = install a node from a .zip." },
+        docEn: "Export = create a .zip of an existing node. Import = install a node from a .zip.", defautEn: "Export" },
       { nom: "Node à exporter", nomEn: "Node to export", type: "choix",
         options: [], optionsEn: [],
         defaut: "",
         doc: "Sélectionnez le node à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
-        docEn: "Select the node to export from the 5 most recently created. The list updates on each run." },
+        docEn: "Select the node to export from the 5 most recently created. The list updates on each run.", defautEn: "" },
     ],
     async executer(ctx: any) {
       const action = ctx.paramTexte("Action", "Exporter");
@@ -56,9 +57,9 @@ export const fiches: FicheAudio[] = ([
       if (action === "Exporter") {
         const selection = ctx.paramTexte("Node à exporter", "");
         const nodeId = selection.split(" — ")[0].trim();
-        if (!nodeId || nodeId === "(aucun") return { valeurs: [], message: "Lancez une première fois pour peupler la liste, puis sélectionnez un node et relancez." };
+        if (!nodeId || nodeId === "(aucun") return { valeurs: [], message: traduire("msg.lancez_une_premi_re_fois_pour_peupler_la_liste_puis_s_lectio") };
         const nodeDef = registre!.trouverDef(nodeId);
-        if (!nodeDef) return { valeurs: [], message: `Node « ${nodeId} » introuvable.` };
+        if (!nodeDef) return { valeurs: [], message: traduire("msg.node_var_0_introuvable", nodeId) };
 
         // Construire le manifest
         const manifest = {
@@ -106,12 +107,12 @@ export const fiches: FicheAudio[] = ([
         }
 
         if (!api?.sauvegarderNodeZip || !api?.exporterNodeZip) {
-          return { valeurs: [], message: `⚠ Mode web — l'export .zip nécessite Electron.\nNode « ${nodeId} » · ${manifest.dependencies.length} dépendance(s) : ${manifest.dependencies.join(", ") || "aucune"}` };
+          return { valeurs: [], message: traduire("msg.mode_web_l_export_zip_n_cessite_electron_node_var_0_var_1_d_", nodeId, manifest.dependencies.length, manifest.dependencies.join(", ") || "aucune") };
         }
 
-        ctx.onProgress("Génération du .zip…");
+        ctx.onProgress(traduire("progress.g_n_ration_du_zip"));
         const outputPath = await api.sauvegarderNodeZip({ defaultPath: `${nodeId}.zip` });
-        if (!outputPath) return { valeurs: [], message: "Export annulé." };
+        if (!outputPath) return { valeurs: [], message: traduire("msg.export_annul") };
 
         let assetsDir = null;
         if (api.cheminAssetsNode) assetsDir = await api.cheminAssetsNode(nodeId);
@@ -127,19 +128,19 @@ export const fiches: FicheAudio[] = ([
 
         if (res?.ok) {
           const depsInfo = manifest.dependencies.length > 0 ? manifest.dependencies.join(", ") : "aucune (code autonome)";
-          return { valeurs: [], message: `✓ Node « ${nodeId} » exporté\n📁 ${res.path}\n📦 ${manifest.dependencies.length} dépendance(s) : ${depsInfo}` };
+          return { valeurs: [], message: traduire("msg.node_var_0_export_var_1_var_2_d_pendance_s_var_3", nodeId, res.path, manifest.dependencies.length, depsInfo) };
         } else {
-          return { valeurs: [], message: `✗ Échec export : ${res?.erreur || "erreur inconnue"}` };
+          return { valeurs: [], message: traduire("msg.chec_export_var_0", res?.erreur || "erreur inconnue") };
         }
 
       } else {
         // Importer
         if (!api?.importerNodeZip) {
-          return { valeurs: [], message: "L'import nécessite Electron." };
+          return { valeurs: [], message: traduire("msg.l_import_n_cessite_electron") };
         }
 
         // Sélectionner le fichier zip via dialogue Electron
-        ctx.onProgress("Sélection du fichier .zip…");
+        ctx.onProgress(traduire("progress.s_lection_du_fichier_zip"));
         let zipPath: string | null = null;
         if (api.selectionnerNodeZip) {
           zipPath = await api.selectionnerNodeZip();
@@ -152,18 +153,18 @@ export const fiches: FicheAudio[] = ([
             input.onchange = () => resolve(input.files?.[0] ?? null);
             input.click();
           });
-          if (!fichier) return { valeurs: [], message: "Import annulé." };
+          if (!fichier) return { valeurs: [], message: traduire("msg.import_annul") };
           zipPath = api.cheminFichier ? api.cheminFichier(fichier) : null;
         }
 
-        if (!zipPath) return { valeurs: [], message: "Import annulé." };
+        if (!zipPath) return { valeurs: [], message: traduire("msg.import_annul") };
 
-        ctx.onProgress("Décompression du .zip…");
+        ctx.onProgress(traduire("progress.d_compression_du_zip"));
         const res = await api.importerNodeZip(zipPath);
-        if (!res?.ok) return { valeurs: [], message: `✗ Échec import : ${res?.erreur || "erreur inconnue"}` };
+        if (!res?.ok) return { valeurs: [], message: traduire("msg.chec_import_var_0", res?.erreur || "erreur inconnue") };
 
         // Installer le node
-        ctx.onProgress("Installation du node…");
+        ctx.onProgress(traduire("progress.installation_du_node"));
         installerNode({
           manifest: res.manifest,
           executerCode: res.executerCode,
@@ -175,7 +176,7 @@ export const fiches: FicheAudio[] = ([
         // Signaler à l'UI de rafraîchir la palette
         (ctx.noeud.data as any)._nodeInstalle = true;
 
-        return { valeurs: [], message: `✓ Node « ${res.manifest.id} » installé\n${res.manifest.nom} · ${res.manifest.univers}/${res.manifest.famille}\n📦 ${res.dependencies?.length || 0} dépendance(s) : ${(res.dependencies || []).join(", ") || "aucune"}` };
+        return { valeurs: [], message: traduire("msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_", res.manifest.id, res.manifest.nom, res.manifest.univers, res.manifest.famille, res.dependencies?.length || 0, (res.dependencies || []).join(", ") || "aucune") };
       }
     },
   },

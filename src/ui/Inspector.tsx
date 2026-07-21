@@ -1,7 +1,7 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
-import { useI18n } from "../i18n";
+import { useI18n, defautParametre } from "../i18n";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -101,6 +101,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         // Cacher conditionnellement certains paramètres selon la valeur d'un autre
         if (def.id === "gestion-nodes" && p.nom === "Node à exporter" && params["Action"] === "Importer") return null;
         const docP = lang === "en" && p.docEn ? p.docEn : p.doc;
+        const defautP = defautParametre(p, lang);
         const isOpen = docsOuverts.has(p.nom);
         return (
         <div key={p.nom} className="inspecteur-param">
@@ -110,7 +111,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           </div>
           {isOpen && docP && <p className="inspecteur-param-doc">{docP}</p>}
           {p.type === "choix" && p.options ? (
-            <select value={String(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
+            <select value={String(params[p.nom] ?? defautP)} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
               {p.options.map((o, i) => {
                 const label = lang === "en" && p.optionsEn?.[i] ? p.optionsEn[i] : o;
                 return <option key={o} value={o}>{label}</option>;
@@ -118,20 +119,20 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             </select>
           ) : p.type === "texte" ? (
             <textarea
-              value={String(params[p.nom] ?? p.defaut)}
+              value={String(params[p.nom] ?? defautP)}
               rows={2}
               onChange={(e) => onChangerParametre(p.nom, e.target.value)}
             />
           ) : p.type === "dossier" ? (
             <div style={{display:"flex", gap:4}}>
-              <input type="text" value={String(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, e.target.value)} style={{flex:1}} />
+              <input type="text" value={String(params[p.nom] ?? defautP)} onChange={(e) => onChangerParametre(p.nom, e.target.value)} style={{flex:1}} />
               <button onClick={async () => {
                 const api = (window as any).api;
                 if (api?.choisirDossier) {
                   const d = await api.choisirDossier();
                   if (d) onChangerParametre(p.nom, d);
                 }
-              }} title="Parcourir…" style={{ padding: "2px 6px", cursor: "pointer" }}>…</button>
+              }} title={t("btn.parcourir")} style={{ padding: "2px 6px", cursor: "pointer" }}>…</button>
             </div>
           ) : (
             <div className="inspecteur-range">
@@ -140,15 +141,15 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                   min={Math.log10(Math.max(1, (p.plage ?? [0,100])[0]))}
                   max={Math.log10((p.plage ?? [0,100])[1])}
                   step={p.pas ? p.pas / 1000 : 0.01}
-                  value={Math.log10(Math.max(1, Number(params[p.nom] ?? p.defaut)))}
+                  value={Math.log10(Math.max(1, Number(params[p.nom] ?? defautP)))}
                   onChange={(e) => onChangerParametre(p.nom, calerParametre(p, Math.pow(10, Number(e.target.value))))} />
               ) : (
                 <input type="range" min={(p.plage ?? [0,100])[0]} max={(p.plage ?? [0,100])[1]} step={p.pas ?? 1}
-                  value={Number(params[p.nom] ?? p.defaut)} onChange={(e) => onChangerParametre(p.nom, Number(e.target.value))} />
+                  value={Number(params[p.nom] ?? defautP)} onChange={(e) => onChangerParametre(p.nom, Number(e.target.value))} />
               )}
               {/* Saisie numérique directe : permet une valeur exacte (ex. 0, 3.0 s)
                   que le curseur seul rend difficile à atteindre sur une large plage. */}
-              <ChampNombre p={p} valeur={Number(params[p.nom] ?? p.defaut)}
+              <ChampNombre p={p} valeur={Number(params[p.nom] ?? defautP)}
                 onChanger={(v) => onChangerParametre(p.nom, v)} />
               {p.unite ? <span className="inspecteur-unite">{p.unite}</span> : null}
             </div>
@@ -169,9 +170,9 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
       {/* Sampler MIDI : chargement de l'échantillon audio */}
       {def.id === "sampler-midi" ? (
         <div className="inspecteur-param">
-          <div className="inspecteur-param-ligne"><label>Échantillon</label></div>
+          <div className="inspecteur-param-ligne"><label>{t("inspecteur.echantillon")}</label></div>
           <label className="attic-node-fichier-btn" style={{ cursor: "pointer", display: "inline-flex" }}>
-            {noeud.data.audioNom ? `🎵 ${String(noeud.data.audioNom)}` : "Charger un échantillon…"}
+            {noeud.data.audioNom ? `🎵 ${String(noeud.data.audioNom)}` : t("btn.chargerEchantillon")}
             <input type="file" accept=".wav,.mp3,.ogg,.flac,.m4a" hidden onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) onChargerFichier("audioFichier", f);
@@ -182,8 +183,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
       ) : null}
 
       <div className="inspecteur-actions">
-        <button onClick={onReinitialiser} title="Réinitialiser">↺</button>
-        <button className="danger" onClick={onSupprimer} title="Supprimer">×</button>
+        <button onClick={onReinitialiser} title={t("btn.reinitialiser")}>↺</button>
+        <button className="danger" onClick={onSupprimer} title={t("btn.supprimer")}>×</button>
       </div>
     </div>
   );
@@ -283,7 +284,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
       if (api?.captureSources) {
         const sources = await api.captureSources();
         if (!sources || sources.length === 0) {
-          alert("Aucune source de capture disponible.");
+          alert(t("msg.captureAucuneSource"));
           return;
         }
         // Utiliser getDisplayMedia avec l'ID de la première source (écran)
@@ -304,7 +305,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
         stream.getVideoTracks().forEach((t) => t.stop());
         const audioTracks = stream.getAudioTracks();
         if (audioTracks.length === 0) {
-          alert("Aucun flux audio capturé. Vérifiez que l'audio système est disponible.");
+          alert(t("msg.captureAucunFlux"));
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
@@ -333,7 +334,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
       stream.getVideoTracks().forEach((t) => t.stop());
       const audioTracks = stream.getAudioTracks();
       if (audioTracks.length === 0) {
-        alert("Aucun flux audio capturé. Sélectionnez une source avec audio dans la boîte de dialogue.");
+          alert(t("msg.captureSelectionnerAudio"));
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
@@ -353,7 +354,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
       setDuree(0);
       timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
     } catch {
-      alert("Capture annulée ou non supportée.");
+      alert(t("msg.captureAnnulee"));
     }
   };
 

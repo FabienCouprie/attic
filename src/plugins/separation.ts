@@ -1,6 +1,7 @@
 // plugins/separation.ts — Nœuds separation (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -15,21 +16,21 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom:"Modèle", nomEn:"Model", type:"choix", options:["Demucs 6s","Demucs (HT)","MDX-Net"], optionsEn:["Demucs 6s","Demucs (HT)","MDX-Net"], defaut:"Demucs 6s",
         doc:"Architecture de séparation. Demucs (HT) = 4 pistes, Demucs 6s = 6 pistes (+ guitare + piano), MDX-Net = voix/instrumental.",
-        docEn:"Separation architecture. Demucs (HT) = 4 stems, Demucs 6s = 6 stems (+ guitar + piano), MDX-Net = vocals/instrumental." },
-      { nom:"URL du modèle", nomEn:"Model URL", type:"texte", defaut:"", doc:"URL d'un modèle .onnx. Vide = modèle par défaut du dossier public/oonx/.", docEn:"URL of an .onnx model. Empty = default model from public/oonx/." },
+        docEn:"Separation architecture. Demucs (HT) = 4 stems, Demucs 6s = 6 stems (+ guitar + piano), MDX-Net = vocals/instrumental.", defautEn: "Demucs 6s" },
+      { nom:"URL du modèle", nomEn:"Model URL", type:"texte", defaut:"", doc:"URL d'un modèle .onnx. Vide = modèle par défaut du dossier public/oonx/.", docEn:"URL of an .onnx model. Empty = default model from public/oonx/.", defautEn: "" },
     ],
     async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null,null,null,null], message:"Aucune entrée." };
+      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null,null,null,null], message:traduire("msg.aucune_entr_e") };
       const modele = ctx.paramTexte("Modèle","Demucs (HT)");
       const api = (window as any).api;
       const nulls6 = [null,null,null,null,null,null];
 
       // ── Demucs 4-stem (natif) ──
       if (modele === "Demucs (HT)") {
-        if (!api?.separerDemucs) return { valeurs:nulls6, message:"Demucs nécessite l'application de bureau." };
+        if (!api?.separerDemucs) return { valeurs:nulls6, message:traduire("msg.demucs_n_cessite_l_application_de_bureau") };
         const canaux: Float32Array[] = [];
         for (let ch = 0; ch < a.numberOfChannels; ch++) canaux.push(a.getChannelData(ch));
-        ctx.onProgress("Séparation Demucs 4-stem (natif)…");
+        ctx.onProgress(traduire("progress.s_paration_demucs_4_stem_natif"));
         const rep = await api.separerDemucs({ utiliserModeleEmbarque: true, canaux });
         if (!rep?.ok) return { valeurs:nulls6, message: rep?.erreur || "Échec Demucs." };
         const versBuffer = (st: [Float32Array, Float32Array] | null): AudioBuffer | null => {
@@ -40,15 +41,15 @@ export const fiches: FicheAudio[] = ([
           return buf;
         };
         const s = rep.stems;
-        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), null, null], message: "Séparé : 4 pistes (batterie, basse, autre, voix)" };
+        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), null, null], message: traduire("msg.s_par_4_pistes_batterie_basse_autre_voix") };
       }
 
       // ── Demucs 6-stem (natif) ──
       if (modele === "Demucs 6s") {
-        if (!api?.separerDemucs) return { valeurs:nulls6, message:"Demucs 6s nécessite l'application de bureau." };
+        if (!api?.separerDemucs) return { valeurs:nulls6, message:traduire("msg.demucs_6s_n_cessite_l_application_de_bureau") };
         const canaux: Float32Array[] = [];
         for (let ch = 0; ch < a.numberOfChannels; ch++) canaux.push(a.getChannelData(ch));
-        ctx.onProgress("Séparation Demucs 6-stem (natif)…");
+        ctx.onProgress(traduire("progress.s_paration_demucs_6_stem_natif"));
         const rep = await api.separerDemucs({ utiliserModeleEmbarque: true, canaux, modele6s: true });
         if (!rep?.ok) return { valeurs:nulls6, message: rep?.erreur || "Échec Demucs 6s." };
         const versBuffer = (st: [Float32Array, Float32Array] | null): AudioBuffer | null => {
@@ -59,7 +60,7 @@ export const fiches: FicheAudio[] = ([
           return buf;
         };
         const s = rep.stems;
-        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), versBuffer(s.guitare), versBuffer(s.piano)], message: "Séparé : 6 pistes (batterie, basse, autre, voix, guitare, piano)" };
+        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), versBuffer(s.guitare), versBuffer(s.piano)], message: traduire("msg.s_par_6_pistes_batterie_basse_autre_voix_guitare_piano") };
       }
 
       // ── MDX-Net : chemin renderer WASM (modèle plus léger) ──
@@ -70,18 +71,18 @@ export const fiches: FicheAudio[] = ([
       if (fichier) {
         octets = await fichier.arrayBuffer();
       } else if (url) {
-        ctx.onProgress("Chargement du modèle…");
-        octets = await telechargerDepuisUrl(url, (p: number) => ctx.onProgress(`Modèle ${Math.round(p)}%`));
+        ctx.onProgress(traduire("progress.chargement_du_mod_le"));
+        octets = await telechargerDepuisUrl(url, (p: number) => ctx.onProgress(traduire("progress.mod_le_var_0", Math.round(p))));
       } else {
-        ctx.onProgress("Chargement du modèle MDX embarqué…");
+        ctx.onProgress(traduire("progress.chargement_du_mod_le_mdx_embarqu"));
         const reponse = await fetch("oonx/modele-separation.onnx");
         if (reponse.ok) octets = await reponse.arrayBuffer();
       }
-      if (!octets) return { valeurs:nulls6, message:"Modèle MDX non disponible." };
-      ctx.onProgress("Préparation de la session…");
+      if (!octets) return { valeurs:nulls6, message:traduire("msg.mod_le_mdx_non_disponible") };
+      ctx.onProgress(traduire("progress.pr_paration_de_la_session"));
       const session = await preparerSession(octets, "Auto", modele);
-      const r = await separerAvecSession(a, session, (p: number) => ctx.onProgress(`Séparation ${Math.round(p)}%`), "mdx");
-      return { valeurs:[null, null, r.autre, r.voix, null, null], message:"Séparé : voix + instrumental" };
+      const r = await separerAvecSession(a, session, (p: number) => ctx.onProgress(traduire("progress.s_paration_var_0", Math.round(p))), "mdx");
+      return { valeurs:[null, null, r.autre, r.voix, null, null], message:traduire("msg.s_par_voix_instrumental") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

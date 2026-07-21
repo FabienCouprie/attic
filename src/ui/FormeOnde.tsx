@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { NodeResizer } from "@xyflow/react";
 import WaveSurfer from "wavesurfer.js";
+import { useI18n } from "../i18n";
 
 export type Zone = { debut: number; duree: number };
 
@@ -21,6 +22,7 @@ function formatTemps(sec: number): string {
 }
 
 export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
+  const { t } = useI18n();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const waveRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -305,9 +307,9 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
   return (
     <div className="attic-node-onde nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <NodeResizer minWidth={300} minHeight={multi ? 200 : 120} />
-      {chargement && <div className="attic-node-onde-attente">Chargement…</div>}
+      {chargement && <div className="attic-node-onde-attente">{t("onde.chargement")}</div>}
       {!audioUrl && !chargement && (
-        <div className="attic-node-onde-attente">Connectez une source audio et lancez l'exécution.</div>
+        <div className="attic-node-onde-attente">{t("onde.connecterAudio")}</div>
       )}
       <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
         <div
@@ -379,7 +381,7 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
         {multi ? (
           <span>{selAffichee.duree > 0
             ? `${selAffichee.debut.toFixed(2)}s → ${(selAffichee.debut + selAffichee.duree).toFixed(2)}s (${selAffichee.duree.toFixed(2)}s)`
-            : "Glissez pour définir une zone"}</span>
+            : t("zones.glisser")}</span>
         ) : <span />}
         <span>{dureeTotale.toFixed(1)}s · {zoomPct}% zoom</span>
       </div>
@@ -395,14 +397,14 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
             className="attic-node-zones-ajouter"
             onClick={(e) => { e.stopPropagation(); ajouterZone(); }}
             disabled={selAffichee.duree <= 0.001}
-            title="Mémoriser la zone sélectionnée"
-          >➕ Ajouter la zone</button>
+            title={t("zones.memoriser")}
+          >➕ {t("zones.ajouter")}</button>
           <div className="attic-node-zones-liste">
-            {zones.length === 0 && <span className="attic-node-zones-vide">Aucune zone mémorisée</span>}
+            {zones.length === 0 && <span className="attic-node-zones-vide">{t("zones.aucune")}</span>}
             {zones.map((z, i) => (
               <span key={i} className="attic-node-zones-item">
                 {z.debut.toFixed(2)}s → {(z.debut + z.duree).toFixed(2)}s
-                <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title="Retirer">×</button>
+                <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title={t("zones.retirer")}>×</button>
               </span>
             ))}
           </div>

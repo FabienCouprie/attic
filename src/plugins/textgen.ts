@@ -4,6 +4,7 @@
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { mulberry32 } from "../audio";
 
@@ -126,7 +127,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:\n",
         doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats). Ex : « Write a song about the ocean: »",
-        docEn: "Seed prompt (English for best results). E.g. « Write a song about the ocean: »" },
+        docEn: "Seed prompt (English for best results). E.g. « Write a song about the ocean: »", defautEn: "Write a song about love andrain:\n" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 300], pas: 10, defaut: 100, unite: " tokens",
         doc: "Nombre maximum de tokens générés (~0.75 mot/token).",
         docEn: "Maximum number of generated tokens (~0.75 word/token)." },
@@ -152,10 +153,10 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
 
-            resolve({ valeurs: [msg.text], message: `GPT-2 · ${msg.text.length} caractères` });
+            resolve({ valeurs: [msg.text], message: traduire("msg.gpt_2_var_0_caract_res", msg.text.length) });
           } else if (msg.type === "error") {
 
-            resolve({ valeurs: [null], erreur: true, message: `Erreur GPT-2 : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_gpt_2_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
@@ -186,9 +187,9 @@ export const fiches: FicheAudio[] = ([
         options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
         optionsEn: ["Full (a-z)", "Vowels-first", "French (a-z + accents)"],
         defaut: "abcdefghijklmnopqrstuvwxyz",
-        doc: "Alphabet utilisé pour la génération.", docEn: "Alphabet used for generation." },
+        doc: "Alphabet utilisé pour la génération.", docEn: "Alphabet used for generation.", defautEn: "Full (a-z)" },
       { nom: "Mot amorce", nomEn: "Seed word", type: "texte", defaut: "",
-        doc: "Mot de départ (optionnel).", docEn: "Starting word (optional)." },
+        doc: "Mot de départ (optionnel).", docEn: "Starting word (optional).", defautEn: "" },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution).",
         docEn: "Random seed (0 = new network each run)." },
@@ -201,10 +202,10 @@ export const fiches: FicheAudio[] = ([
       const nbMots = ctx.paramNombre("Mots", 20);
       const alphabet = ctx.paramTexte("Alphabet", "abcdefghijklmnopqrstuvwxyz");
       const seedWord = ctx.paramTexte("Mot amorce", "");
-      ctx.onProgress("Génération du réservoir textuel…");
+      ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_textuel"));
       const texte = genererTexteReservoir(graine, neurones, connectivite, memoire, nbMots, alphabet, seedWord);
       const graineUtilisee = graine > 0 ? graine : "auto";
-      return { valeurs: [texte], message: `${texte.split(" ").length} mots · graine ${graineUtilisee}` };
+      return { valeurs: [texte], message: traduire("msg.var_0_mots_graine_var_1", texte.split(" ").length, graineUtilisee) };
     },
   },
   {
@@ -217,7 +218,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:",
         doc: "Prompt d'amorçage. L'anglais donne les meilleurs résultats, mais le modèle supporte plusieurs langues.",
-        docEn: "Seed prompt. English works best, but the model supports several languages." },
+        docEn: "Seed prompt. English works best, but the model supports several languages.", defautEn: "Write a song about love andrain:" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 300], pas: 10, defaut: 120, unite: " tokens",
         doc: "Nombre maximum de tokens générés.", docEn: "Maximum number of generated tokens." },
       { nom: "Créativité", nomEn: "Temperature", plage: [0.1, 1.5], pas: 0.1, defaut: 0.9,
@@ -240,10 +241,10 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
 
-            resolve({ valeurs: [msg.text], message: `Qwen2.5 · ${msg.text.length} caractères` });
+            resolve({ valeurs: [msg.text], message: traduire("msg.qwen2_5_var_0_caract_res", msg.text.length) });
           } else if (msg.type === "error") {
 
-            resolve({ valeurs: [null], erreur: true, message: `Erreur Qwen2.5 : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_qwen2_5_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
@@ -264,12 +265,12 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Texte", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about the sea and freedom:\n",
-        doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats).", docEn: "Seed prompt (English for best results)." },
+        doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats).", docEn: "Seed prompt (English for best results).", defautEn: "Write a song about the sea and freedom:\n" },
       { nom: "Langue cible", nomEn: "Target language", type: "choix",
         options: ["Français", "Espagnol", "Allemand", "Italien", "Portugais", "Russe", "Japonais", "Chinois", "Arabe", "Hindi"],
         optionsEn: ["French", "Spanish", "German", "Italian", "Portuguese", "Russian", "Japanese", "Chinese", "Arabic", "Hindi"],
         defaut: "Français",
-        doc: "Langue de traduction. Les paroles sont générées en anglais puis traduites.", docEn: "Translation language. Lyrics are generated in English then translated." },
+        doc: "Langue de traduction. Les paroles sont générées en anglais puis traduites.", docEn: "Translation language. Lyrics are generated in English then translated.", defautEn: "French" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 200], pas: 10, defaut: 80, unite: " tokens",
         doc: "Nombre maximum de tokens générés.", docEn: "Maximum number of generated tokens." },
       { nom: "Créativité", nomEn: "Temperature", plage: [0.1, 1.5], pas: 0.1, defaut: 0.9,
@@ -286,7 +287,7 @@ export const fiches: FicheAudio[] = ([
       const w = getWorker();
 
       // Étape 1 : générer en anglais via DistilGPT-2
-      ctx.onProgress("Génération des paroles (anglais)…");
+      ctx.onProgress(traduire("progress.g_n_ration_des_paroles_anglais"));
       const texteEn = await new Promise<string | null>((resolve) => {
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
@@ -304,7 +305,7 @@ export const fiches: FicheAudio[] = ([
       });
 
       if (!texteEn || texteEn.length < 10) {
-        return { valeurs: [null], erreur: true, message: "Échec génération DistilGPT-2" };
+        return { valeurs: [null], erreur: true, message: traduire("msg.chec_g_n_ration_distilgpt_2") };
       }
 
       // Étape 2 : traduire via OPUS-MT (worker opus-worker)
@@ -316,10 +317,10 @@ export const fiches: FicheAudio[] = ([
       };
       const modelTrad = pairesEn[langueCible];
       if (!modelTrad) {
-        return { valeurs: [texteEn], message: `Paroles (anglais, pas de traduction disponible pour ${langueCible})` };
+        return { valeurs: [texteEn], message: traduire("msg.paroles_anglais_pas_de_traduction_disponible_pour_var_0", langueCible) };
       }
 
-      ctx.onProgress(`Traduction vers ${langueCible}…`);
+      ctx.onProgress(traduire("progress.traduction_vers_var_0", langueCible));
       const opusW = new Worker(new URL("../workers/opus-worker.js", import.meta.url), { type: "module" });
       const texteTraduit = await new Promise<string | null>((resolve) => {
         const onMessage = (e: MessageEvent) => {
@@ -340,12 +341,12 @@ export const fiches: FicheAudio[] = ([
       });
 
       if (!texteTraduit) {
-        return { valeurs: [texteEn], message: `Paroles (anglais — traduction échouée)` };
+        return { valeurs: [texteEn], message: traduire("msg.paroles_anglais_traduction_chou_e") };
       }
 
       return {
         valeurs: [texteTraduit],
-        message: `Paroles en ${langueCible} · ${texteTraduit.length} caractères`,
+        message: traduire("msg.paroles_en_var_0_var_1_caract_res", langueCible, texteTraduit.length),
       };
     },
   },

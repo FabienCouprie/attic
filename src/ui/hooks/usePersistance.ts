@@ -7,6 +7,7 @@ import type { Edge } from "@xyflow/react";
 import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../../core";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
+import { useI18n } from "../../i18n";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -23,7 +24,7 @@ export interface OptionsPersistance {
   repertoire: string;
   sauvegarderContexteCourant: () => void;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
-  setPile: (p: { metaId: string; nom: string }[]) => void;
+  setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
   reinitialiserNoeud: (id: string) => void;
   setPrioritaire: (id: string | null) => void;
   lancerRef: MutableRefObject<any>;
@@ -31,6 +32,7 @@ export interface OptionsPersistance {
 }
 
 export function usePersistance(o: OptionsPersistance) {
+  const { t } = useI18n();
   const exporter = useCallback(async () => {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
@@ -40,8 +42,9 @@ export function usePersistance(o: OptionsPersistance) {
     // le fichier ne garde que le catalogue de métas). Confirmer avant d'exporter.
     const metasActuels = tousLesMetas();
     if (racine.nodes.length === 0 && metasActuels.length > 0) {
-      const ok = typeof confirm === "undefined" ||
-        confirm(`Le canevas est vide mais ${metasActuels.length} méta-composant(s) existent.\n\nExporter quand même ? Le fichier ne contiendra AUCUN nœud de canevas.`);
+      const msg = t("persistance.confirmExportVide")
+        .replace("{nb}", String(metasActuels.length));
+      const ok = typeof confirm === "undefined" || confirm(msg);
       if (!ok) return;
     }
 
@@ -59,8 +62,8 @@ export function usePersistance(o: OptionsPersistance) {
       // Alerte utilisateur — non bloquante, informative
       const nbChamps = pertes.reduce((s, p) => s + p.champs.length, 0);
       const message = pertes.length <= 3
-        ? `Export : ${nbChamps} donnée(s) non-sérialisable(s) purgée(s) :\n\n${rapport}\n\nLes fichiers audio, blobs et buffers ne sont pas inclus dans le JSON.`
-        : `Export : ${nbChamps} donnée(s) non-sérialisable(s) purgée(s) dans ${pertes.length} nœuds.\n\nLes fichiers audio, blobs et buffers ne sont pas inclus dans le JSON.`;
+        ? t("persistance.exportPertesDetail").replace("{nb}", String(nbChamps)).replace("{rapport}", rapport)
+        : t("persistance.exportPertesResume").replace("{nb}", String(nbChamps)).replace("{nodes}", String(pertes.length));
       if (typeof alert !== "undefined") alert(message);
     }
 
@@ -135,7 +138,7 @@ export function usePersistance(o: OptionsPersistance) {
       json = JSON.parse(texte);
     } catch (e) {
       console.error("[attic] Import : JSON invalide", e);
-      if (typeof alert !== "undefined") alert("Import échoué : fichier JSON invalide ou corrompu. Le canevas n'a pas été modifié.");
+      if (typeof alert !== "undefined") alert(t("persistance.importInvalide"));
       return;
     }
     // Fichier sans nœud de canevas mais avec des métas : le canevas sera vide (les
@@ -144,7 +147,7 @@ export function usePersistance(o: OptionsPersistance) {
     const nbNoeuds = Array.isArray(json.nodes) ? json.nodes.length : 0;
     const nbMetas = Array.isArray(json.metas) ? json.metas.length : 0;
     if (nbNoeuds === 0 && nbMetas > 0 && typeof alert !== "undefined") {
-      alert(`Ce fichier ne contient aucun nœud de canevas (${nbMetas} méta-composant(s) ajouté(s) au catalogue).\n\nLe canevas restera vide : les nœuds de ce workflow n'ont pas été sauvegardés dans le fichier.`);
+      alert(t("persistance.importSansNoeuds").replace("{nb}", String(nbMetas)));
     }
     // Ré-enregistrer les méta-composants AVANT de reconstruire les nœuds. Un méta
     // défaillant ne doit pas interrompre tout l'import (les autres + les nœuds passent).

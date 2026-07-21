@@ -1,6 +1,7 @@
 // plugins/collections.ts — Nœuds collections (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -10,18 +11,18 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Converts a folder of audio files to MP3.",
     entrees: [], sorties: [],
     parametres: [
-      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "" },
-      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "" },
+      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
+      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:"Electron requis." };
+      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:"Configurez les dossiers." };
+      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".wav",".wave",".ogg"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
-      if (!cibles.length) return { valeurs:[null], message:"Aucun .wav/.ogg trouvé." };
+      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_wav_ogg_trouv") };
       const qualite = ctx.paramNombre("Qualité",192);
       let ok = 0, err = 0;
       const errs: string[] = [];
@@ -44,7 +45,7 @@ export const fiches: FicheAudio[] = ([
           errs.push(f.nom + ": " + (e?.message ?? String(e)));
         }
       }
-      return { valeurs:[null], message:`Terminé : ${ok} converti(s)${err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : ""}.` };
+      return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
   },
   {
@@ -53,17 +54,17 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Converts a folder of MP3 files to WAV.",
     entrees: [], sorties: [],
     parametres: [
-      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "" },
-      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "" },
+      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
+      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:"Electron requis." };
+      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:"Configurez les dossiers." };
+      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => f.chemin.toLowerCase().endsWith(".mp3"));
-      if (!cibles.length) return { valeurs:[null], message:"Aucun .mp3 trouvé." };
+      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mp3_trouv") };
       let ok = 0, err = 0;
       const errs: string[] = [];
       for (const f of cibles) {
@@ -85,7 +86,7 @@ export const fiches: FicheAudio[] = ([
           ctx.onProgress?.(f.nom + " > " + (e?.message ?? String(e)));
         }
       }
-      return { valeurs:[null], message:`Terminé : ${ok} converti(s)${err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : ""}.` };
+      return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
   },
   {
@@ -94,20 +95,20 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Converts a folder of MIDI files to MP3.",
     entrees: [], sorties: [],
     parametres: [
-      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "" },
-      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs" },
+      { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
+      { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:"Electron requis." };
+      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:"Configurez les dossiers." };
+      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".mid",".midi"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
-      if (!cibles.length) return { valeurs:[null], message:"Aucun .mid trouvé." };
+      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mid_trouv") };
       const mode = ctx.paramTexte("Synthèse","FM/Oscillateurs") as "FM/Oscillateurs"|"SoundFont";
       const vol = ctx.paramNombre("Volume",80);
       const qualite = ctx.paramNombre("Qualité",192);
@@ -131,7 +132,7 @@ export const fiches: FicheAudio[] = ([
           errs.push(f.nom + ": " + (e?.message ?? String(e)));
         }
       }
-      return { valeurs:[null], message:`Terminé : ${ok} converti(s)${err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : ""}.` };
+      return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

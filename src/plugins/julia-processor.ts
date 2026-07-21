@@ -3,6 +3,7 @@
 // Même architecture que le Python Processor.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 
@@ -124,11 +125,11 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const api = (window as any).api;
-      if (!api?.juliaInfo) return { valeurs: [null, null, null], message: "Nécessite Electron." };
+      if (!api?.juliaInfo) return { valeurs: [null, null, null], message: traduire("msg.n_cessite_electron") };
 
       const info = await api.juliaInfo();
       if (!info.disponible) {
-        return { valeurs: [null, null, null], erreur: true, message: `Julia non trouvé. Cliquez sur ⚙ Configurer dans le node.` };
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.julia_non_trouv_cliquez_sur_configurer_dans_le_node") };
       }
 
       const audio = ctx.entree(0);
@@ -142,7 +143,7 @@ export const fiches: FicheAudio[] = ([
       // que s'il est vide. Voir python-processor pour l'await obligatoire.
       const tmpDir = (typeof ctx.repertoireTravail === "string" && ctx.repertoireTravail.trim())
         || await (window as any).api?.obtenirRepertoireTravail?.();
-      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
+      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_r_pertoire_de_travail_inscriptible_droits_insuffisants") };
 
       let inputPath: string | null = null;
       if (audio instanceof AudioBuffer) {
@@ -190,7 +191,7 @@ export const fiches: FicheAudio[] = ([
 
       if (!result.ok) {
         const pyInfo = result.python ? `\nJulia: ${result.python}` : "";
-        return { valeurs: [null, null, null], erreur: true, message: `Erreur Julia:\n${result.erreur || result.stderr || "inconnue"}${pyInfo}` };
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.erreur_julia_var_0_var_1", result.erreur || result.stderr || "inconnue", pyInfo) };
       }
 
       const sorties: [AudioBuffer | null, File | null, string | null] = [null, null, null];
@@ -230,11 +231,11 @@ export const fiches: FicheAudio[] = ([
       if (!parts.length) {
         return {
           valeurs: [null, null, null], erreur: true,
-          message: `Julia a tourné mais n'a écrit aucune sortie lisible.\nLe script doit écrire dans ATTIC_OUTPUT_PATH (.wav), ATTIC_OUTPUT_MIDI (.mid) ou ATTIC_OUTPUT_TEXT (.txt).\nDossier de travail : ${tmpDir}${stdout}`,
+          message: traduire("msg.julia_a_tourn_mais_n_a_crit_aucune_sortie_lisible_le_script_", tmpDir, stdout),
         };
       }
 
-      return { valeurs: sorties, message: `Julia ${parts.join(" · ")}${stdout}` };
+      return { valeurs: sorties, message: traduire("msg.julia_var_0_var_1", parts.join(" · "), stdout) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

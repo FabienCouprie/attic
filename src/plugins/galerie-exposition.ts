@@ -3,6 +3,7 @@
 // lecteurs intégrés, métadonnées et design vitrine. Exposable sur le web ou en local.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 // Couleurs déduites du nom de piste (même logique que le générateur de pochette)
@@ -142,13 +143,13 @@ export const fiches: FicheAudio[] = ([
     jamaisCache: true,
     parametres: [
       { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Ma galerie",
-        doc: "Titre affiché en haut de la galerie.", docEn: "Title displayed at the top of the gallery." },
+        doc: "Titre affiché en haut de la galerie.", docEn: "Title displayed at the top of the gallery.", defautEn: "My gallery" },
       { nom: "Répertoire MP3", nomEn: "MP3 directory", type: "dossier", defaut: "",
         doc: "Chemin du répertoire contenant les fichiers MP3 (uniquement des .mp3).",
-        docEn: "Path to the directory containing MP3 files (.mp3 only)." },
+        docEn: "Path to the directory containing MP3 files (.mp3 only).", defautEn: "" },
       { nom: "Répertoire de sortie", nomEn: "Output directory", type: "dossier", defaut: "",
         doc: "Répertoire où générer la galerie (index.html + MP3 copiés).",
-        docEn: "Directory where to generate the gallery (index.html + copied MP3s)." },
+        docEn: "Directory where to generate the gallery (index.html + copied MP3s).", defautEn: "" },
       { nom: "Graine visuelle", nomEn: "Visual seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine pour les pochettes procédurales (0 = aléatoire). Même graine = mêmes pochettes.",
         docEn: "Seed for procedural cover art (0 = random). Same seed = same covers." },
@@ -159,16 +160,16 @@ export const fiches: FicheAudio[] = ([
       const sortieDir = ctx.paramTexte("Répertoire de sortie", "");
       const graine = ctx.paramNombre("Graine visuelle", 0) || Math.floor(Math.random() * 99999) + 1;
 
-      if (!repertoire) return { valeurs: [], message: "Aucun répertoire MP3 spécifié." };
-      if (!sortieDir) return { valeurs: [], message: "Aucun répertoire de sortie spécifié." };
+      if (!repertoire) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_mp3_sp_cifi") };
+      if (!sortieDir) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
 
       const api = (window as any).api;
-      if (!api?.lireDossier) return { valeurs: [], message: "Nécessite Electron." };
+      if (!api?.lireDossier) return { valeurs: [], message: traduire("msg.n_cessite_electron") };
 
-      ctx.onProgress("Lecture du répertoire…");
+      ctx.onProgress(traduire("progress.lecture_du_r_pertoire"));
       let fichiers: { nom: string; chemin: string }[] = (await api.lireDossier(repertoire)) ?? [];
       fichiers = fichiers.filter((f: any) => f.nom.toLowerCase().endsWith(".mp3"));
-      if (fichiers.length === 0) return { valeurs: [], message: `Aucun MP3 dans : ${repertoire}` };
+      if (fichiers.length === 0) return { valeurs: [], message: traduire("msg.aucun_mp3_dans_var_0", repertoire) };
 
       const pistes = fichiers.map((f: any, i: number) => {
         const safeNom = f.nom.replace(/[/\\]/g, "_").replace(/^\.+/, "");
@@ -179,13 +180,13 @@ export const fiches: FicheAudio[] = ([
         };
       });
 
-      ctx.onProgress("Génération de la galerie…");
+      ctx.onProgress(traduire("progress.g_n_ration_de_la_galerie"));
 
       // Extraire les pochettes intégrées des MP3 (si disponibles)
       const pochettes: { [nom: string]: string } = {}; // nom → data URL
       if (api.extrairePochetteMp3) {
         for (let i = 0; i < fichiers.length; i++) {
-          if (i % 10 === 0) ctx.onProgress(`Pochettes ${i}/${fichiers.length}…`);
+          if (i % 10 === 0) ctx.onProgress(traduire("progress.pochettes_var_0_var_1", i, fichiers.length));
           try {
             const res = await api.extrairePochetteMp3(fichiers[i].chemin);
             if (res?.ok && res?.data) {
@@ -206,7 +207,7 @@ export const fiches: FicheAudio[] = ([
       let nbCopies = 0;
       if (api.copierFichier) {
         for (let i = 0; i < fichiers.length; i++) {
-          ctx.onProgress(`Copie MP3 ${i + 1}/${fichiers.length}…`);
+          ctx.onProgress(traduire("progress.copie_mp3_var_0_var_1", i + 1, fichiers.length));
           const safeNom = fichiers[i].nom.replace(/[/\\]/g, "_").replace(/^\.+/, "");
           const res = await api.copierFichier(fichiers[i].chemin, `${dossierMp3}/${safeNom}`);
           if (res) nbCopies++;
@@ -217,7 +218,7 @@ export const fiches: FicheAudio[] = ([
       (ctx.noeud.data as any)._galerieHTML = html;
       (ctx.noeud.data as any)._galeriePistes = pistes;
 
-      return { valeurs: [], message: `Galerie générée : ${dossierSortie}/index.html\n${pistes.length} pistes · ${nbCopies} MP3 copiés dans mp3/ · ${htmlOk ? "HTML écrit ✓" : "HTML échec ✗"}` };
+      return { valeurs: [], message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

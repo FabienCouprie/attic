@@ -3,6 +3,7 @@
 // pas séparées par « | », chaque pas « 1 » (actif) ou « 0 ». La grille lit/écrit
 // cette chaîne via onChange → le nœud la stocke en paramètre (persisté).
 import type { CSSProperties } from "react";
+import { useI18n } from "../i18n";
 import { decoderMotif, encoderMotif } from "../audio";
 
 const PISTES = [
@@ -14,6 +15,7 @@ const PISTES = [
 ];
 
 export function SequenceurBatterie({ motif, nbPas, onChange }: { motif: string; nbPas: number; onChange: (m: string) => void }) {
+  const { t } = useI18n();
   const grille = decoderMotif(motif, PISTES.length, nbPas);
   const basculer = (r: number, c: number) => {
     const g = grille.map((x) => x.slice());
@@ -37,7 +39,7 @@ export function SequenceurBatterie({ motif, nbPas, onChange }: { motif: string; 
           <span style={{ width: 46, fontSize: 10, color: p.coul, flexShrink: 0, fontWeight: 600 }}>{p.nom}</span>
           <div style={{ display: "flex", flex: 1, gap: 2 }}>
             {grille[r].map((actif, c) => (
-              <button key={c} title={`Pas ${c + 1}`} style={cell(actif, p.coul, c % 4 === 0 && c > 0)}
+              <button key={c} title={`${t("seq.pas")} ${c + 1}`} style={cell(actif, p.coul, c % 4 === 0 && c > 0)}
                 onClick={(e) => { e.stopPropagation(); basculer(r, c); }} />
             ))}
           </div>

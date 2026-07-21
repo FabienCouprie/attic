@@ -1,5 +1,6 @@
 // plugins/resonance.ts — Nœud de spatialisation 3D via Resonance Audio.
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { appliquerResonanceAudio } from "../audio/effets-spectral";
 
@@ -77,13 +78,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: MATERIALS,
         defaut: "plaster-smooth",
         doc: "Matériau appliqué aux six parois de la pièce.",
-        docEn: "Material applied to the six room surfaces.",
+        docEn: "Material applied to the six room surfaces.", defautEn: "plaster-smooth",
       },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: "Aucune entrée audio." };
+        return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       }
       const sourceX = ctx.paramNombre("Source X", 2);
       const sourceY = ctx.paramNombre("Source Y", 0);
@@ -103,9 +104,9 @@ export const fiches: FicheAudio[] = ([
           roomDepth,
           roomMaterial,
         );
-        return { valeurs: [out], message: `Resonance Audio · ${audio.numberOfChannels}→2 canaux` };
+        return { valeurs: [out], message: traduire("msg.resonance_audio_var_0_2_canaux", audio.numberOfChannels) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Resonance Audio : ${err?.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_resonance_audio_var_0", err?.message ?? err) };
       }
     },
   },

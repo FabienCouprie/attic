@@ -81,6 +81,7 @@ export interface ParametreDef {
   plage?: [number, number];
   pas?: number;
   defaut: string | number;
+  defautEn?: string;
   unite?: string;
   doc?: string;
   docEn?: string;

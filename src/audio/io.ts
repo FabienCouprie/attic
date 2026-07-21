@@ -1,5 +1,6 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
 import { Mp3Encoder } from "lamejs";
+import { traduire } from "../i18n";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
   const donnees = await fichier.arrayBuffer();
@@ -245,7 +246,7 @@ export async function bufferVersOggBlob(buffer: AudioBuffer): Promise<Blob> {
   for (const mt of mimeTypes) {
     if (MediaRecorder.isTypeSupported(mt)) { mime = mt; break; }
   }
-  if (!mime) throw new Error("Aucun format OGG/opus supporté");
+  if (!mime) throw new Error(traduire("msg.aucun_format_ogg_opus_support"));
 
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
   const dest = ctx.createMediaStreamDestination();

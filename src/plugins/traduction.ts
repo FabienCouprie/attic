@@ -3,6 +3,7 @@
 // 2. OPUS-MT : texte → texte multilingue (paires de langues, modèle léger)
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 let ttsWorker: Worker | null = null;
@@ -72,15 +73,15 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Romanian", "Polish", "Russian"],
         defaut: "Auto",
         doc: "Langue du texte d'entrée (pour le TTS intermédiaire). « Auto » = anglais par défaut.",
-        docEn: "Language of the input text (for the intermediate TTS). « Auto » = English default." },
+        docEn: "Language of the input text (for the intermediate TTS). « Auto » = English default.", defautEn: "Auto" },
     ],
     async executer(ctx: any) {
       const texte = ctx.entree(0);
-      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: "Branchez un texte (port bleu)." };
-      if (texte.trim().length < 35) return { valeurs: [null], message: "Texte trop court (min 35 caractères)." };
+      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
+      if (texte.trim().length < 35) return { valeurs: [null], message: traduire("msg.texte_trop_court_min_35_caract_res") };
 
       // Étape 1 : TTS (texte → audio)
-      ctx.onProgress("Synthèse vocale intermédiaire…");
+      ctx.onProgress(traduire("progress.synth_se_vocale_interm_diaire"));
       const ttsW = getTtsWorker();
       const langueTTS = ctx.paramTexte("Langue TTS", "Auto");
       const ttsModels: Record<string, string> = {
@@ -103,10 +104,10 @@ export const fiches: FicheAudio[] = ([
         ttsW.addEventListener("message", onMsg);
         ttsW.postMessage({ text: texte, modelId: ttsModel, speakerUrl });
       });
-      if (!audioData) return { valeurs: [null], message: "Échec du TTS intermédiaire." };
+      if (!audioData) return { valeurs: [null], message: traduire("msg.chec_du_tts_interm_diaire") };
 
       // Étape 2 : Whisper translate (audio → texte anglais)
-      ctx.onProgress("Traduction Whisper…");
+      ctx.onProgress(traduire("progress.traduction_whisper"));
       const asrW = getAsrWorker();
       const traduit = await new Promise<string | null>((resolve) => {
         const onMsg = (e: MessageEvent) => {
@@ -117,8 +118,8 @@ export const fiches: FicheAudio[] = ([
         asrW.addEventListener("message", onMsg);
         asrW.postMessage({ audioData: audioData.data, sampleRate: audioData.sampleRate, modelId: "Xenova/whisper-large-v2", translate: true });
       });
-      if (!traduit) return { valeurs: [null], message: "Échec de la traduction Whisper." };
-      return { valeurs: [traduit], message: `Traduit (${langueTTS} → EN) : ${traduit.slice(0, 60)}${traduit.length > 60 ? "…" : ""}` };
+      if (!traduit) return { valeurs: [null], message: traduire("msg.chec_de_la_traduction_whisper") };
+      return { valeurs: [traduit], message: traduire("msg.traduit_var_0_en_var_1_var_2", langueTTS, traduit.slice(0, 60), traduit.length > 60 ? "…" : "") };
     },
   },
   {
@@ -133,11 +134,11 @@ export const fiches: FicheAudio[] = ([
         options: Paires_OPUS.map((p) => p.id), optionsEn: Paires_OPUS.map((p) => p.nomEn),
         defaut: "fr-en",
         doc: "Paire de langues source → cible. Chaque paire utilise un modèle OPUS-MT dédié (~30 MB).",
-        docEn: "Source → target language pair. Each pair uses a dedicated OPUS-MT model (~30 MB)." },
+        docEn: "Source → target language pair. Each pair uses a dedicated OPUS-MT model (~30 MB).", defautEn: "fr-en" },
     ],
     async executer(ctx: any) {
       const texte = ctx.entree(0);
-      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: "Branchez un texte (port bleu)." };
+      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const paireId = ctx.paramTexte("Paire", "fr-en");
       const paire = Paires_OPUS.find((p) => p.id === paireId) ?? Paires_OPUS[0];
       const w = getOpusWorker(paire.model);
@@ -147,10 +148,10 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
             libererOpusWorker(paire.model);
-            resolve({ valeurs: [msg.text], message: `${paire.nom} : ${msg.text.slice(0, 60)}${msg.text.length > 60 ? "…" : ""}` });
+            resolve({ valeurs: [msg.text], message: traduire("msg.var_0_var_1_var_2_2", paire.nom, msg.text.slice(0, 60), msg.text.length > 60 ? "…" : "") });
           } else if (msg.type === "error") {
             libererOpusWorker(paire.model);
-            resolve({ valeurs: [null], erreur: true, message: `Erreur OPUS-MT : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_opus_mt_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);

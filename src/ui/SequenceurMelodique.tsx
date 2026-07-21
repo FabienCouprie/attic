@@ -3,6 +3,7 @@
 // (du grave au aigu) de pas séparées par « | ». La grille affiche les rangées
 // inversées (aigu en haut, grave en bas, comme un piano-roll).
 import type { CSSProperties } from "react";
+import { useI18n } from "../i18n";
 import {
   decoderMotifMelodique, encoderMotifMelodique, NB_RANGEES_MELO, nomNotePourRangee,
 } from "../audio";
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function SequenceurMelodique({ motif, nbPas, cle, gamme, octave, onChange }: Props) {
+  const { t } = useI18n();
   const grille = decoderMotifMelodique(motif, NB_RANGEES_MELO, nbPas);
 
   const basculer = (r: number, c: number) => {
@@ -51,7 +53,7 @@ export function SequenceurMelodique({ motif, nbPas, cle, gamme, octave, onChange
             }}>{nom}</span>
             <div style={{ display: "flex", flex: 1, gap: 2 }}>
               {row.map((actif, c) => (
-                <button key={c} title={`${nom} · pas ${c + 1}`} style={cellule(actif, c % 4 === 0 && c > 0)}
+                <button key={c} title={`${nom} · ${t("seq.pas")} ${c + 1}`} style={cellule(actif, c % 4 === 0 && c > 0)}
                   onClick={(e) => { e.stopPropagation(); basculer(rangee, c); }} />
               ))}
             </div>

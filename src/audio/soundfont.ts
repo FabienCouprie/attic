@@ -1,3 +1,5 @@
+import { traduire } from "../i18n";
+
 export interface EchantillonSF2 {
   nom: string;
   debut: number;
@@ -105,7 +107,7 @@ const GEN_SAMPLE_MODES = 54;
 export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   const v = new DataView(buffer);
   if (lireQuatreCc(v, 0) !== "RIFF" || lireQuatreCc(v, 8) !== "sfbk") {
-    throw new Error("Format SoundFont invalide (RIFF/sfbk manquant).");
+    throw new Error(traduire("msg.format_soundfont_invalide"));
   }
   const tailleFichier = lireUint32(v, 4);
   const limite = Math.min(buffer.byteLength, 12 + tailleFichier);
@@ -113,18 +115,18 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   const sdta = chercherList(v, 12, limite, "sdta");
   const pdta = chercherList(v, 12, limite, "pdta");
 
-  if (!sdta || !pdta) throw new Error("Chunks sdta/pdta introuvables.");
+  if (!sdta || !pdta) throw new Error(traduire("msg.chunks_sdta_pdta_introuvables"));
 
   // --- Sample data ---
   const smplChunk = chercherSousChunk(v, sdta.pos, sdta.pos + sdta.taille, "smpl");
-  if (!smplChunk) throw new Error("Chunk smpl introuvable.");
+  if (!smplChunk) throw new Error(traduire("msg.chunk_smpl_introuvable"));
   const nbSamples = Math.floor(smplChunk.taille / 2);
-  if (smplChunk.pos & 1) throw new Error("Chunk smpl mal aligné (position impaire).");
+  if (smplChunk.pos & 1) throw new Error(traduire("msg.chunk_smpl_mal_align"));
   const smpl = new Int16Array(buffer, smplChunk.pos, nbSamples);
 
   // --- Sample headers (shdr) ---
   const shdrChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "shdr");
-  if (!shdrChunk) throw new Error("Chunk shdr introuvable.");
+  if (!shdrChunk) throw new Error(traduire("msg.chunk_shdr_introuvable"));
   const nbEchantillons = Math.floor(shdrChunk.taille / 96) - 1; // last record is terminator
   const echantillons: EchantillonSF2[] = [];
   for (let i = 0; i < nbEchantillons; i++) {
@@ -146,7 +148,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   const ibagChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "ibag");
   const igenChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "igen");
 
-  if (!instChunk || !ibagChunk || !igenChunk) throw new Error("Chunks pdta manquants (inst/ibag/igen).");
+  if (!instChunk || !ibagChunk || !igenChunk) throw new Error(traduire("msg.chunks_pdta_manquants"));
 
   const nbInstruments = Math.floor(instChunk.taille / 22) - 1;
   const nbIbag = Math.floor(ibagChunk.taille / 4);
@@ -202,7 +204,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
 
   // --- Preset headers (phdr) ---
   const phdrChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "phdr");
-  if (!phdrChunk) throw new Error("Chunk phdr introuvable.");
+  if (!phdrChunk) throw new Error(traduire("msg.chunk_phdr_introuvable"));
 
   const nbPresets = Math.floor(phdrChunk.taille / 38) - 1;
   const presets: PresetSF2[] = [];

@@ -11,6 +11,7 @@
 //   C4+E4+G4 1          ← accord (notes séparées par +)
 // Les lignes vides et celles commençant par # ou // sont ignorées.
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreMidi, type NoteEvenement } from "../audio";
 
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Default tempo (beats → seconds). A « TEMPO n » line in the text overrides it." },
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs", "SoundFont"],
         optionsEn: ["FM/Oscillators", "SoundFont"], defaut: "FM/Oscillateurs",
-        doc: "Moteur de rendu audio du MIDI.", docEn: "Audio rendering engine for the MIDI." },
+        doc: "Moteur de rendu audio du MIDI.", docEn: "Audio rendering engine for the MIDI.", defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio synthétisé.", docEn: "Synthesized audio volume." },
     ],
@@ -81,11 +82,11 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const texte = (typeof entree === "string" && entree.trim()) ? entree : ctx.paramTexte("Notation", EXEMPLE);
       const { notes, tempo } = parserNotation(texte, ctx.paramNombre("Tempo", 120));
-      if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: "Aucune note reconnue. Format attendu : « C4 0.5 » par ligne." };
+      if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne") };
       const midiFichier = notesVersFichierMidi(notes, tempo);
       const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") === "SoundFont" ? "SoundFont" : "FM/Oscillateurs";
       const audio = await rendreMidi(midiFichier, mode, ctx.paramNombre("Volume", 80));
-      return { valeurs: [audio, midiFichier], message: `${notes.length} note(s) · ${tempo} BPM · ${audio.duration.toFixed(1)}s` };
+      return { valeurs: [audio, midiFichier], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempo, audio.duration.toFixed(1)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

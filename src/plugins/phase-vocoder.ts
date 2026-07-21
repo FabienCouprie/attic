@@ -5,6 +5,7 @@
 // temporels (WSOLA) et aux nœuds natifs de changement de tempo / tonalité.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { vocoder, pitchShift } from "time-stretch";
 
@@ -50,12 +51,12 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: "Aucun audio connecté." };
+      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
       const tempo = ctx.paramNombre("Tempo", 1);
-      if (tempo <= 0) return { valeurs: [null], erreur: true, message: "Le tempo doit être positif." };
+      if (tempo <= 0) return { valeurs: [null], erreur: true, message: traduire("msg.le_tempo_doit_tre_positif") };
       const factor = 1 / tempo;
       const out = appliquerVocoder(buffer, factor);
-      return { valeurs: [out], message: `Tempo x${tempo.toFixed(2)} · ${out.duration.toFixed(1)}s` };
+      return { valeurs: [out], message: traduire("msg.tempo_x_var_0_var_1_s", tempo.toFixed(2), out.duration.toFixed(1)) };
     },
   },
   {
@@ -72,11 +73,11 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: "Aucun audio connecté." };
+      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
       const semi = ctx.paramNombre("Tonalité", 0);
       const out = appliquerPitchShift(buffer, semi);
       const signe = semi >= 0 ? "+" : "";
-      return { valeurs: [out], message: `Tonalité ${signe}${semi.toFixed(1)} st · ${out.duration.toFixed(1)}s` };
+      return { valeurs: [out], message: traduire("msg.tonalit_var_0_var_1_st_var_2_s", signe, semi.toFixed(1), out.duration.toFixed(1)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

@@ -5,6 +5,7 @@
 // pré-entraîné pour resynthétiser le signal avec le timbre d’un instrument.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { withElectronFetch } from "./electronFetch";
 
@@ -92,21 +93,21 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Violin", "Flute", "Tenor saxophone", "Trumpet"],
         defaut: "Violon",
         doc: "Instrument cible du transfert de timbre. Le modèle se télécharge au premier usage (~3-4 MB).",
-        docEn: "Target instrument for the timbre transfer. The model downloads on first use (~3-4 MB)." },
+        docEn: "Target instrument for the timbre transfer. The model downloads on first use (~3-4 MB).", defautEn: "Violin" },
       { nom: "URL modèle", nomEn: "Model URL", type: "texte", defaut: "",
         doc: "URL personnalisée d’un checkpoint DDSP. Si renseignée, elle remplace l’instrument choisi.",
-        docEn: "Custom URL of a DDSP checkpoint. If set, it overrides the selected instrument." },
+        docEn: "Custom URL of a DDSP checkpoint. If set, it overrides the selected instrument.", defautEn: "" },
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: "Aucun audio connecté." };
+      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
       const instrument = ctx.paramTexte("Instrument", "Violon");
       const customUrl = ctx.paramTexte("URL modèle", "");
       try {
         const out = await appliquerDDSP(buffer, instrument, customUrl);
-        return { valeurs: [out], message: `Timbre DDSP · ${instrument} · ${out.duration.toFixed(1)}s · ${OUTPUT_SR} Hz` };
+        return { valeurs: [out], message: traduire("msg.timbre_ddsp_var_0_var_1_s_var_2_hz", instrument, out.duration.toFixed(1), OUTPUT_SR) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur DDSP : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_ddsp_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,

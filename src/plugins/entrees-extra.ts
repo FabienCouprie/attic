@@ -1,6 +1,7 @@
 // plugins/entrees-extra.ts — Nœuds entrees-extra (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { decoderFichier } from "../audio";
 import { avecDoc } from "./notices";
 
@@ -10,10 +11,10 @@ export const fiches: FicheAudio[] = ([
     resume: "Charge un fichier audio depuis l'explorateur.",
     resumeEn: "Loads an audio file from the explorer.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Chemin", nomEn: "Path", type: "texte", defaut: "music collection", docEn: "Directory to scan, relative to project folder." }],
+    parametres: [{ nom: "Chemin", nomEn: "Path", type: "texte", defaut: "music collection", docEn: "Directory to scan, relative to project folder.", defautEn: "music collection" }],
     async executer(ctx: any) {
       const f = ctx.noeud.data.audioFichier;
-      if (!f) return { valeurs: [null], message: "Aucun fichier." };
+      if (!f) return { valeurs: [null], message: traduire("msg.aucun_fichier") };
       const buf = await decoderFichier(f, ctx.runtime);
       return { valeurs: [buf] };
     },

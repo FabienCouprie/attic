@@ -5,7 +5,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue } from "../i18n";
+import { langueCourante, type Langue, traduire } from "../i18n";;
 
 function decouperEntree(valeur: unknown): string[] {
   if (typeof valeur !== "string" || !valeur.trim()) return [];
@@ -139,7 +139,7 @@ export const fiches: FicheAudio[] = ([
       if (tessitures.length > 0) parties.push(`${tessitures.length} ${fr ? "tess." : "voc."}`);
       const source = parties.length > 0 ? parties.join(" · ") : (fr ? "entrées vides — utilisez les valeurs par défaut" : "empty inputs — using defaults");
 
-      return { valeurs: [script], message: `${fr ? "Script généré" : "Script generated"} (${source})` };
+      return { valeurs: [script], message: traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

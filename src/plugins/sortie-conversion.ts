@@ -1,6 +1,7 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { bufferVersMp3Blob } from "../audio";
 import { avecDoc } from "./notices";
 
@@ -26,7 +27,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       try {
         const qualite = ctx.paramNombre("Qualité", 192);
         const { serialiserGraphe } = await import("../audio/graphe-embarque");
@@ -49,7 +50,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const { serialiserGraphe } = await import("../audio/graphe-embarque");
       const graphe = serialiserGraphe() ?? undefined;
       // Le graphe est embarqué dans le WAV téléchargé via la vue d'export
@@ -66,7 +67,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée connectée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_connect_e") };
       return { valeurs: [a] };
     },
   },

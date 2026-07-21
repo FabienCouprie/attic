@@ -3,6 +3,7 @@
 // Le modèle tourne dans un Web Worker pour ne pas bloquer l'UI.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 let worker: Worker | null = null;
@@ -32,7 +33,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "A happy upbeat pop song with electric guitars",
         doc: "Description textuelle de la musique à générer (en anglais pour de meilleurs résultats).",
-        docEn: "Text description of the music to generate (English for best results)." },
+        docEn: "Text description of the music to generate (English for best results).", defautEn: "A happy upbeat pop song with electric guitars" },
       { nom: "Durée", nomEn: "Duration", plage: [3, 30], pas: 1, defaut: 10, unite: "s",
         doc: "Durée maximale de la génération (approximative — 150 tokens/s à 32 kHz).",
         docEn: "Maximum generation duration (approximate — 150 tokens/s at 32 kHz)." },
@@ -63,10 +64,10 @@ export const fiches: FicheAudio[] = ([
             const data = msg.data;
             const buf = new AudioBuffer({ numberOfChannels: 1, length: data.length, sampleRate: sr });
             buf.getChannelData(0).set(data);
-            resolve({ valeurs: [buf], message: `MusicGen · ${duree}s · "${prompt.slice(0, 40)}${prompt.length > 40 ? "…" : ""}"` });
+            resolve({ valeurs: [buf], message: traduire("msg.musicgen_var_0_s_var_1_var_2", duree, prompt.slice(0, 40), prompt.length > 40 ? "…" : "") });
           } else if (msg.type === "error") {
             libererWorker();
-            resolve({ valeurs: [null], erreur: true, message: `Erreur MusicGen : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_musicgen_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);

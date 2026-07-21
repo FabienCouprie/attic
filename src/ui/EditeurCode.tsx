@@ -15,6 +15,7 @@
 // copier/coller et Ctrl+Z sont ceux, natifs, d'un textarea nu.
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "../i18n";
 
 export type Token = { text: string; type: string };
 
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePied, titre }: Props) {
+  const { t } = useI18n();
   const [ouvert, setOuvert] = useState(false);
   // Nombre de lignes AFFICHÉ dans la gouttière de la modale — état React :
   // la modale vit hors canevas, un re-render par frappe y est sans enjeu.
@@ -86,7 +88,7 @@ export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePi
   const apercu = (
     <div
       className="nodrag nowheel"
-      title="Cliquer pour éditer le code"
+      title={t("code.editerTitle")}
       onClick={(e) => { e.stopPropagation(); setNbLignesModale(nbLignes); setOuvert(true); }}
       onPointerDown={(e) => e.stopPropagation()}
       style={{
@@ -108,7 +110,7 @@ export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePi
         position: "absolute", top: 6, right: 10, fontSize: 10,
         padding: "2px 8px", borderRadius: 4, border: "1px solid #444",
         background: "rgba(30,30,30,0.9)", color: "#bbb", pointerEvents: "none",
-      }}>✎ Éditer</span>
+      }}>✎ {t("code.editer")}</span>
     </div>
   );
 
@@ -150,7 +152,7 @@ export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePi
               border: "1px solid #444", borderRadius: 4,
               background: "#2a9d8f", color: "#fff",
             }}
-          >Fermer (Échap)</button>
+          >{t("code.fermer")}</button>
         </div>
         {/* Gouttière + zone de code. La gouttière est une colonne SÉPARÉE (pas
             un calque superposé) : l'alignement ne demande que la même fonte et
@@ -208,7 +210,7 @@ export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePi
     <>
       {apercu}
       <div style={{ fontSize: 10, marginTop: 4, color: "var(--text-muted)", background: "var(--bg-surface)", padding: "2px 4px", borderRadius: "0 0 6px 6px" }}>
-        {nbLignes} lignes · {suffixePied}
+        {nbLignes} {t("code.lignes")} · {suffixePied}
       </div>
       {modal}
     </>

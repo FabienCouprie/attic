@@ -1,6 +1,7 @@
 // plugins/entrees.ts — Nœuds d'entrée
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { decoderFichier, decoderBlob } from "../audio";
 
@@ -16,7 +17,7 @@ const entrees: FicheAudio[] = [
     parametres: [],
     async executer(ctx) {
       const fichier = ctx.noeud.data.audioFichier as File | undefined;
-      if (!fichier) return { valeurs: [null], erreur: true, message: "Aucun fichier chargé." };
+      if (!fichier) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_charg") };
       const buffer = await decoderFichier(fichier, ctx.runtime);
       // Détecter un graphe embarqué dans les métadonnées du fichier
       try {
@@ -29,7 +30,7 @@ const entrees: FicheAudio[] = [
           const graphe = deserialiserGraphe?.(grapheJson);
           if (graphe) {
             (ctx.noeud.data as any)._grapheEmbarque = graphe;
-            return { valeurs: [buffer], message: `Graphe embarqué détecté ! ${graphe.nodes.length} nodes · ${graphe.edges.length} connexions` };
+            return { valeurs: [buffer], message: traduire("msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions", graphe.nodes.length, graphe.edges.length) };
           }
         }
       } catch {}
@@ -44,7 +45,7 @@ const entrees: FicheAudio[] = [
     parametres: [],
     async executer(ctx) {
       const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
-      if (!blob) return { valeurs: [null], erreur: true, message: "Aucun enregistrement." };
+      if (!blob) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_enregistrement") };
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
@@ -57,7 +58,7 @@ const entrees: FicheAudio[] = [
     parametres: [],
     async executer(ctx) {
       const blob = ctx.noeud.data.enregistrementBlob as Blob | undefined;
-      if (!blob) return { valeurs: [null], erreur: true, message: "Aucune capture. Cliquez sur Enregistrer dans l'inspecteur." };
+      if (!blob) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_capture_cliquez_sur_enregistrer_dans_l_inspecteur") };
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
@@ -70,16 +71,16 @@ const entrees: FicheAudio[] = [
     noticeEn: "Script: genre=pop, tempo=120, cle=C, gamme=majeur, duree=30",
     entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop" },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur" },
+      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "minor"], defautEn: "major" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée", nomEn: "Duration", plage: [4,120], defaut: 30, unite: "s" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
-      { nom: "Instrument 1", nomEn: "Instrument 1", type: "choix", options: ["Piano","Piano électrique","Guitare acoustique","Guitare électrique","Orgue","Clavecin","Vibraphone","Marimba","Cordes","Pad"], defaut: "Piano", docEn: "Layer 1 — chords." },
-      { nom: "Instrument 2", nomEn: "Instrument 2", type: "choix", options: ["Basse fretless","Basse acoustique","Basse électrique","Synth bass","Contrebasse","Basse slap"], defaut: "Basse fretless", docEn: "Layer 2 — bass." },
-      { nom: "Instrument 3", nomEn: "Instrument 3", type: "choix", options: ["Marimba","Flûte","Trompette","Sax alto","Guitare nylon","Violon","Lead synth","Boîte à musique","Xylophone","Cordes"], defaut: "Marimba", docEn: "Layer 3 — melody." },
-      { nom: "Instrument 4", nomEn: "Instrument 4", type: "choix", options: ["Batterie (GM)","Batterie (électro)","Batterie (jazz)"], defaut: "Batterie (GM)", docEn: "Layer 4 — drums (channel 9)." },
+      { nom: "Instrument 1", nomEn: "Instrument 1", type: "choix", options: ["Piano","Piano électrique","Guitare acoustique","Guitare électrique","Orgue","Clavecin","Vibraphone","Marimba","Cordes","Pad"], defaut: "Piano", docEn: "Layer 1 — chords.", optionsEn: ["Piano", "Electric piano", "Acoustic guitar", "Electric guitar", "Organ", "Harpsichord", "Vibraphone", "Marimba", "Cords", "Pad"], defautEn: "Piano" },
+      { nom: "Instrument 2", nomEn: "Instrument 2", type: "choix", options: ["Basse fretless","Basse acoustique","Basse électrique","Synth bass","Contrebasse","Basse slap"], defaut: "Basse fretless", docEn: "Layer 2 — bass.", optionsEn: ["Fretless bass", "Acoustic bass", "Electric bass", "Synth bass", "Double bass", "Slap bass"], defautEn: "Fretless bass" },
+      { nom: "Instrument 3", nomEn: "Instrument 3", type: "choix", options: ["Marimba","Flûte","Trompette","Sax alto","Guitare nylon","Violon","Lead synth","Boîte à musique","Xylophone","Cordes"], defaut: "Marimba", docEn: "Layer 3 — melody.", optionsEn: ["Marimba", "Flute", "Trumpet", "Sax alto", "Nylon guitar", "Violin", "Lead synth", "Music box", "Xylophone", "Cords"], defautEn: "Marimba" },
+      { nom: "Instrument 4", nomEn: "Instrument 4", type: "choix", options: ["Batterie (GM)","Batterie (électro)","Batterie (jazz)"], defaut: "Batterie (GM)", docEn: "Layer 4 — drums (channel 9).", optionsEn: ["Drum kit (GM)", "Drum kit (electro)", "Drum kit (jazz)"], defautEn: "Drum kit (GM)" },
     ],
     async executer(ctx) {
       const genre = ctx.paramTexte("Genre", "pop");
@@ -93,7 +94,7 @@ const entrees: FicheAudio[] = [
       const instr3 = ctx.paramTexte("Instrument 3", "Marimba");
       const instr4 = ctx.paramTexte("Instrument 4", "Batterie (GM)");
 
-      ctx.onProgress("Génération du script…");
+      ctx.onProgress(traduire("progress.g_n_ration_du_script"));
       const { genererDepuisScript, analyserMidi, rendreMidiDepuisBytes, rendreAvecSF2 } = await import("../audio");
       const { sf2Chargee } = await import("./soundfontGlobal");
 
@@ -102,7 +103,7 @@ const entrees: FicheAudio[] = [
 
       const sf2 = sf2Chargee();
       if (sf2) {
-        ctx.onProgress("Rendu SoundFont…");
+        ctx.onProgress(traduire("progress.rendu_soundfont"));
         const { parseMidi } = await import("midi-file");
         const parsed = parseMidi(midiBytes);
         const { notes, canauxInstrument } = analyserMidi(parsed);
@@ -121,11 +122,11 @@ const entrees: FicheAudio[] = [
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];
           }
         }
-        return { valeurs: [master], message: `${description}\n── Rendu : SoundFont` };
+        return { valeurs: [master], message: traduire("msg.var_0_rendu_soundfont", description) };
       }
-      ctx.onProgress("Rendu FM…");
+      ctx.onProgress(traduire("progress.rendu_fm"));
       const buffer = await rendreMidiDepuisBytes(midiBytes, "FM/Oscillateurs", volume);
-      return { valeurs: [buffer], message: `${description}\n── Rendu : FM` };
+      return { valeurs: [buffer], message: traduire("msg.var_0_rendu_fm", description) };
     },
   },
 ];

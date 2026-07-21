@@ -3,6 +3,7 @@
 // bloquer le thread principal.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { MODES, MODES_EN } from "./magenta-helpers";
 
@@ -83,9 +84,9 @@ export const fiches: FicheAudio[] = ([
         const tempo = ctx.paramNombre("Tempo", 120);
         const bars = ctx.paramNombre("Mesures", 2);
         const file = await runMagentaFile(ctx, "drums", { temperature, bars, tempo });
-        return { valeurs: [file], message: `Magenta Drums · ${bars} mesures · ${tempo} BPM` };
+        return { valeurs: [file], message: traduire("msg.magenta_drums_var_0_mesures_var_1_bpm", bars, tempo) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Drums : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_drums_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -119,13 +120,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["1/4", "1/8", "1/16", "1/32"],
         defaut: "1/16",
         doc: "Résolution de quantification de la mélodie d’entrée avant continuation.",
-        docEn: "Quantization resolution applied to the input melody before continuation."
+        docEn: "Quantization resolution applied to the input melody before continuation.", defautEn: "1/16"
       },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
-        return { valeurs: [null], erreur: true, message: "Aucun fichier MIDI en entrée." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
       try {
         const temperature = ctx.paramNombre("Température", 1.0);
@@ -134,9 +135,9 @@ export const fiches: FicheAudio[] = ([
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
         const out = await runMagentaFile(ctx, "continuation", { file, steps, temperature, spq });
-        return { valeurs: [out], message: `Magenta Continuation · +${steps} pas` };
+        return { valeurs: [out], message: traduire("msg.magenta_continuation_var_0_pas", steps) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Continuation : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_continuation_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -176,7 +177,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: MODES_EN,
         defaut: "Aléatoire",
         doc: "Séquence des boutons Piano Genie (0-7). Aléatoire = boutons aléatoires, Marche = dérive, Montant/Descendant/Arpège = motifs.",
-        docEn: "Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns."
+        docEn: "Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns.", defautEn: "Random"
       },
       {
         nom: "Graine", nomEn: "Seed", type: "curseur",
@@ -193,9 +194,9 @@ export const fiches: FicheAudio[] = ([
         const mode = ctx.paramTexte("Mode", "Aléatoire");
         const seed = ctx.paramNombre("Graine", 0);
         const file = await runMagentaFile(ctx, "improvisation", { duree, tempo, temperature, mode, seed });
-        return { valeurs: [file], message: `Magenta Improvisation · ${duree}s · ${mode} · ${tempo} BPM` };
+        return { valeurs: [file], message: traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, mode, tempo) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Improvisation : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -229,13 +230,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["1/4", "1/8", "1/16", "1/32"],
         defaut: "1/16",
         doc: "Résolution de quantification du seed MIDI avant génération.",
-        docEn: "Quantization resolution applied to the MIDI seed before generation."
+        docEn: "Quantization resolution applied to the MIDI seed before generation.", defautEn: "1/16"
       },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
-        return { valeurs: [null], erreur: true, message: "Aucun fichier MIDI en entrée." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
       try {
         const temperature = ctx.paramNombre("Température", 1.0);
@@ -244,9 +245,9 @@ export const fiches: FicheAudio[] = ([
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
         const out = await runMagentaFile(ctx, "melody", { file, steps, temperature, spq });
-        return { valeurs: [out], message: `Magenta Générer mélodie · +${steps} pas` };
+        return { valeurs: [out], message: traduire("msg.magenta_g_n_rer_m_lodie_var_0_pas", steps) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Générer mélodie : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_m_lodie_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -288,16 +289,16 @@ export const fiches: FicheAudio[] = ([
       const file1 = ctx.entree(0);
       const file2 = ctx.entree(1);
       if (!(file1 instanceof File) || !(file2 instanceof File)) {
-        return { valeurs: [null], erreur: true, message: "Deux fichiers MIDI sont requis." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.deux_fichiers_midi_sont_requis") };
       }
       try {
         const temperature = ctx.paramNombre("Température", 1.0);
         const numInterps = ctx.paramNombre("Interpolations", 5);
         const position = ctx.paramNombre("Position", 0.5);
         const out = await runMagentaFile(ctx, "interpolation", { file1, file2, numInterps, temperature, position });
-        return { valeurs: [out], message: `Magenta Interpolation · position ${position.toFixed(2)}` };
+        return { valeurs: [out], message: traduire("msg.magenta_interpolation_position_var_0", position.toFixed(2)) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Interpolation : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_interpolation_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -350,9 +351,9 @@ export const fiches: FicheAudio[] = ([
           ? { file, temperature, bars, tempo, similarity }
           : { temperature, bars, tempo };
         const out = await runMagentaFile(ctx, type, payload);
-        return { valeurs: [out], message: `Magenta Générer batterie · ${file instanceof File ? "variation" : "aléatoire"} · ${tempo} BPM` };
+        return { valeurs: [out], message: traduire("msg.magenta_g_n_rer_batterie_var_0_var_1_bpm", file instanceof File ? "variation" : "aléatoire", tempo) };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Générer batterie : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_batterie_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,
@@ -380,13 +381,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["1/4", "1/8", "1/16", "1/32"],
         defaut: "1/16",
         doc: "Résolution de quantification du pattern d’entrée.",
-        docEn: "Quantization resolution of the input pattern."
+        docEn: "Quantization resolution of the input pattern.", defautEn: "1/16"
       },
     ],
     async executer(ctx: any) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
-        return { valeurs: [null], erreur: true, message: "Aucun fichier MIDI en entrée." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
       try {
         const temperature = ctx.paramNombre("Température", 0.5);
@@ -394,9 +395,9 @@ export const fiches: FicheAudio[] = ([
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
         const out = await runMagentaFile(ctx, "humanize", { file, temperature, spq });
-        return { valeurs: [out], message: "Magenta Humaniser groove" };
+        return { valeurs: [out], message: traduire("msg.magenta_humaniser_groove") };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Magenta Humaniser groove : ${err.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_humaniser_groove_var_0", err.message ?? err) };
       }
     },
     jamaisCache: true,

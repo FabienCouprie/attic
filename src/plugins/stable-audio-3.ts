@@ -3,6 +3,7 @@
 // décodeur) tourne dans le process principal pour éviter les limites mémoire
 // du WASM et charger les fichiers depuis le disque.
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -20,7 +21,7 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "A rhythmic electronic loop with deep bass and crisp drums",
         doc: "Description textuelle de la musique à générer (en anglais pour de meilleurs résultats).",
-        docEn: "Text description of the music to generate (English for best results).",
+        docEn: "Text description of the music to generate (English for best results).", defautEn: "A rhythmic electronic loop with deep bass and crisp drums",
       },
       {
         nom: "Durée", nomEn: "Duration", type: "curseur", plage: [3, 30], pas: 1, defaut: 10, unite: "s",
@@ -40,13 +41,13 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Chemin modèle", nomEn: "Model path", type: "texte", defaut: "",
         doc: "Chemin absolu ou relatif du bundle Stable Audio 3 (vide = modèle embarqué public/oonx/stable-audio-3-small-music).",
-        docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music).",
+        docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music).", defautEn: "",
       },
     ],
     async executer(ctx: any) {
       const api = typeof window !== "undefined" ? (window as any).api : null;
       if (!api?.genererStableAudio3) {
-        return { valeurs: [null], erreur: true, message: "Stable Audio 3 nécessite l’application de bureau." };
+        return { valeurs: [null], erreur: true, message: traduire("msg.stable_audio_3_n_cessite_l_application_de_bureau") };
       }
 
       const promptEntree = ctx.entree(0);
@@ -59,26 +60,26 @@ export const fiches: FicheAudio[] = ([
       if (seed < 0) seed = Math.floor(Math.random() * 1_000_000);
       const modelPath = ctx.paramTexte("Chemin modèle", "");
 
-      ctx.onProgress("Génération Stable Audio 3 en cours (cela peut prendre plusieurs minutes)…");
+      ctx.onProgress(traduire("progress.g_n_ration_stable_audio_3_en_cours_cela_peut_prendre_plusieu"));
 
       try {
         const rep = await api.genererStableAudio3({ prompt, seconds, steps, seed, modelPath });
         if (!rep?.ok) {
-          return { valeurs: [null], erreur: true, message: `Erreur Stable Audio 3 : ${rep?.erreur ?? "inconnue"}` };
+          return { valeurs: [null], erreur: true, message: traduire("msg.erreur_stable_audio_3_var_0", rep?.erreur ?? "inconnue") };
         }
         const length = rep.left?.length ?? 0;
         if (length === 0) {
-          return { valeurs: [null], erreur: true, message: "Stable Audio 3 a retourné un audio vide." };
+          return { valeurs: [null], erreur: true, message: traduire("msg.stable_audio_3_a_retourn_un_audio_vide") };
         }
         const buf = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: rep.sampleRate });
         buf.copyToChannel(new Float32Array(rep.left), 0);
         buf.copyToChannel(new Float32Array(rep.right), 1);
         return {
           valeurs: [buf],
-          message: `Stable Audio 3 · ${seconds}s · ${steps} étapes · seed ${seed}`,
+          message: traduire("msg.stable_audio_3_var_0_s_var_1_tapes_seed_var_2", seconds, steps, seed),
         };
       } catch (err: any) {
-        return { valeurs: [null], erreur: true, message: `Erreur Stable Audio 3 : ${err?.message ?? err}` };
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_stable_audio_3_var_0", err?.message ?? err) };
       }
     },
   },

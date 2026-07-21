@@ -2,6 +2,7 @@
 // Haute résolution (DPR), gradient de remplissage, grille nette, police système.
 import { useRef, useState, useEffect, useCallback } from "react";
 import { fft } from "../audio/fft";
+import { useI18n } from "../i18n";
 
 interface Props {
   audioUrl?: string;
@@ -49,6 +50,7 @@ function fmtHz(f: number): string {
 }
 
 export function SpectreFFT({ audioUrl, tailleFFT, log }: Props) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [buffer, setBuffer] = useState<AudioBuffer | null>(null);
@@ -225,9 +227,9 @@ export function SpectreFFT({ audioUrl, tailleFFT, log }: Props) {
 
   return (
     <div className="attic-node-onde nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      {chargement && <div className="attic-node-onde-attente">Analyse…</div>}
+      {chargement && <div className="attic-node-onde-attente">{t("onde.analyse")}</div>}
       {!buffer && !chargement && (
-        <div className="attic-node-onde-attente">Connectez une source audio et lancez l'exécution.</div>
+        <div className="attic-node-onde-attente">{t("onde.connecterAudio")}</div>
       )}
       <div ref={containerRef} style={{ width: "100%" }}>
         <canvas ref={canvasRef} style={{ display: "block", borderRadius: 4 }} />

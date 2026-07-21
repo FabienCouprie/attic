@@ -4,6 +4,7 @@
 // couleurs (mapping statique) avec la créativité du LLM (génération textuelle).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { COULEURS, NOMS_COULEURS, profilCouleur, fusionnerProfils, profilVersScript } from "../audio";
 
@@ -38,12 +39,12 @@ export const fiches: FicheAudio[] = ([
         options: NOMS_COULEURS, optionsEn: COULEURS_EN,
         defaut: "Bleu",
         doc: "Première couleur (mapping psychologique → émotion, mode, tempo, instruments, styles).",
-        docEn: "First color (psychological mapping → emotion, mode, tempo, instruments, styles)." },
+        docEn: "First color (psychological mapping → emotion, mode, tempo, instruments, styles).", defautEn: "Blue" },
       { nom: "Couleur 2", nomEn: "Color 2", type: "choix",
         options: ["(aucune)", ...NOMS_COULEURS], optionsEn: ["(none)", ...COULEURS_EN],
         defaut: "(aucune)",
         doc: "Seconde couleur facultative. Si présente, les profils sont fusionnés.",
-        docEn: "Optional second color. If present, profiles are fused." },
+        docEn: "Optional second color. If present, profiles are fused.", defautEn: "(none)" },
       { nom: "Variabilité", nomEn: "Variability", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Contrôle la variabilité des scripts générés. Élevée = le LLM est plus créatif ; basse = reste proche du template.",
         docEn: "Controls variability of generated scripts. High = LLM is more creative; low = stays close to template." },
@@ -59,13 +60,13 @@ export const fiches: FicheAudio[] = ([
 
       // 1. Construire le profil musical depuis les couleurs
       const p1 = profilCouleur(c1Nom);
-      if (!p1) return { valeurs: [null], message: `Couleur 1 inconnue : ${c1Nom}` };
+      if (!p1) return { valeurs: [null], message: traduire("msg.couleur_1_inconnue_var_0", c1Nom) };
 
       let profil;
       let couleursLabel: string[];
       if (c2Nom && c2Nom !== "(aucune)" && COULEURS[c2Nom]) {
         const p2 = profilCouleur(c2Nom);
-        if (!p2) return { valeurs: [null], message: `Couleur 2 inconnue : ${c2Nom}` };
+        if (!p2) return { valeurs: [null], message: traduire("msg.couleur_2_inconnue_var_0", c2Nom) };
         profil = fusionnerProfils(p1, p2, c1Nom, c2Nom);
         couleursLabel = [COULEURS[c1Nom].en, COULEURS[c2Nom].en];
       } else {
@@ -86,7 +87,7 @@ ${scriptBase}
 Write a single creative Suno prompt paragraph:`;
 
       // 4. Appeler le LLM (DistilGPT-2) via le worker
-      ctx.onProgress("Génération du script IA…");
+      ctx.onProgress(traduire("progress.g_n_ration_du_script_ia"));
       const w = getWorker();
       const llmText = await new Promise<string | null>((resolve) => {
         const onMessage = (e: MessageEvent) => {
@@ -137,7 +138,7 @@ ${[...profil.styles.map((s: any) => s.en).map((s: string) => s.toLowerCase().rep
 
       return {
         valeurs: [scriptFinal],
-        message: `Script généré · ${couleursLabel.join(" + ")} · graine ${graine} · ${scriptFinal.length} caractères`,
+        message: traduire("msg.script_g_n_r_var_0_graine_var_1_var_2_caract_res", couleursLabel.join(" + "), graine, scriptFinal.length),
       };
     },
   },

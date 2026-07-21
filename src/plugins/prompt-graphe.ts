@@ -9,6 +9,7 @@
 // pas.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { registre } from "../audio/adaptateur";
 
@@ -239,7 +240,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "delay stéréo avec feedback sur une réverbération hall, puis compresseur et sortie audio",
         doc: "Description en langage naturel du graphe à générer. Le parser reconnaît automatiquement tous les nodes installés (noms, synonymes, alias). Les nouveaux nodes (installés via .zip ou méta-composants) sont reconnus sans redémarrage.",
-        docEn: "Natural language description of the graph to generate. The parser automatically recognizes all installed nodes (names, synonyms, aliases). Newly installed nodes (.zip or meta-components) are recognized without restart." },
+        docEn: "Natural language description of the graph to generate. The parser automatically recognizes all installed nodes (names, synonyms, aliases). Newly installed nodes (.zip or meta-components) are recognized without restart.", defautEn: "stereo delay with feedback on hall reverberation, then compressor and audio output" },
     ],
     async executer(ctx: any) {
       const promptEntree = ctx.entree(0);
@@ -254,7 +255,7 @@ export const fiches: FicheAudio[] = ([
 
       const labels = nodes.map((n) => n.label);
       const chainDesc = labels.join(" → ");
-      return { valeurs: [chainDesc], message: `${nodes.length} nodes · ${edges.length} connexions\n${chainDesc}` };
+      return { valeurs: [chainDesc], message: traduire("msg.var_0_nodes_var_1_connexions_var_2", nodes.length, edges.length, chainDesc) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

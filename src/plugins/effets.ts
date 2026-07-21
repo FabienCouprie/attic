@@ -1,6 +1,7 @@
 // plugins/effets.ts — Nœuds d'effets audio
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   appliquerDelay, appliquerReverberation, appliquerDistorsion,
@@ -35,7 +36,7 @@ function effet(slug: string, nom: string, nomEn: string, resume: string, resumeE
     })),
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const args = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
       return { valeurs: [await fn(audio, ...args)] };
     },
@@ -54,7 +55,7 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [await fn(audio)] };
     },
   };
@@ -94,7 +95,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], defaut: "Gate",
         doc: "Gate = coupe le signal sous le seuil (atténuation fixe vers le plancher). Expandeur = atténue progressivement le signal sous le seuil selon le ratio (compresseur inversé).",
-        docEn: "Gate = cuts signal below threshold (fixed attenuation to floor). Expander = gradually attenuates signal below threshold by ratio (reverse compressor)." },
+        docEn: "Gate = cuts signal below threshold (fixed attenuation to floor). Expander = gradually attenuates signal below threshold by ratio (reverse compressor).", defautEn: "Gate" },
       { nom: "Seuil", nomEn: "Threshold", plage: [-80, 0], pas: 1, defaut: -40, unite: "dB",
         doc: "Niveau en dessous duquel le gate/expandeur s'active.", docEn: "Level below which the gate/expander engages." },
       { nom: "Ratio", nomEn: "Ratio", plage: [1, 20], pas: 0.5, defaut: 4, unite: "∶1",
@@ -108,7 +109,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const mode = ctx.paramTexte("Mode", "Gate") === "Expandeur" ? "expandeur" : "gate";
       const seuil = ctx.paramNombre("Seuil", -40);
       const ratio = ctx.paramNombre("Ratio", 4);
@@ -116,7 +117,7 @@ export const fiches: FicheAudio[] = ([
       const relachement = ctx.paramNombre("Relâchement", 100);
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
-      return { valeurs: [r], message: `${mode === "gate" ? "Gate" : "Expandeur"} · seuil ${seuil} dB${mode === "expandeur" ? ` · ratio ${ratio}:1` : ""}` };
+      return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expandeur" ? ` · ratio ${ratio}:1` : "") };
     },
   },
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
@@ -165,12 +166,12 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440) + x",
         doc: "Expression mathématique donnant la valeur de sortie de chaque échantillon. Variables : x (valeur actuelle), t (temps en secondes), i (index de l'échantillon), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
-        docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate)." },
+        docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * ft * 440) + x" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440) + x");
       const volume = ctx.paramNombre("Volume", 80);
       try {
@@ -182,9 +183,9 @@ export const fiches: FicheAudio[] = ([
             for (let i = 0; i < d.length; i++) d[i] *= vol;
           }
         }
-        return { valeurs: [out], message: `Formule appliquée : ${formule}` };
+        return { valeurs: [out], message: traduire("msg.formule_appliqu_e_var_0", formule) };
       } catch (e: any) {
-        return { valeurs: [null], message: `Erreur formule : ${e?.message ?? e}` };
+        return { valeurs: [null], message: traduire("msg.erreur_formule_var_0", e?.message ?? e) };
       }
     },
   },
@@ -198,24 +199,24 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Magnitude", nomEn: "Magnitude", type: "texte", defaut: "mag * 2",
         doc: "Expression pour la magnitude de chaque bin spectral. Variables : mag, phase, freq (Hz), bin, N (taille FFT), sr.",
-        docEn: "Expression for the magnitude of each spectral bin. Variables: mag, phase, freq (Hz), bin, N (FFT size), sr." },
+        docEn: "Expression for the magnitude of each spectral bin. Variables: mag, phase, freq (Hz), bin, N (FFT size), sr.", defautEn: "mag * 2" },
       { nom: "Phase", nomEn: "Phase", type: "texte", defaut: "",
         doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Variables : mag, phase, freq, bin, N, sr.",
-        docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Variables: mag, phase, freq, bin, N, sr." },
+        docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Variables: mag, phase, freq, bin, N, sr.", defautEn: "" },
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const formuleMag = ctx.paramTexte("Magnitude", "mag * 2");
       const formulePhase = ctx.paramTexte("Phase", "");
       const fftSize = ctx.paramNombre("FFT", 2048);
       try {
         const out = appliquerFormuleSpectrale(audio, formuleMag, formulePhase, fftSize);
-        return { valeurs: [out], message: "Formule spectrale appliquée" };
+        return { valeurs: [out], message: traduire("msg.formule_spectrale_appliqu_e") };
       } catch (e: any) {
-        return { valeurs: [null], message: `Erreur formule spectrale : ${e?.message ?? e}` };
+        return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
       }
     },
   },
@@ -255,7 +256,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const debut = ctx.paramNombre("Début", 0);
       const duree = ctx.paramNombre("Durée", 5);
       return { valeurs: [extraireZone(a, debut, Math.min(duree, a.duration - debut))] };
@@ -267,12 +268,12 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Spectral noise subtraction.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Réduction", defaut: 70 }],
+    parametres: [{ nom: "Réduction", defaut: 70, nomEn: "Reduction" }],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       const profil = ctx.entree(1);
       if (!(audio instanceof AudioBuffer) || !(profil instanceof Float32Array))
-        return { valeurs: [null], message: "Branchez audio + profil (nœud Profil de bruit)." };
+        return { valeurs: [null], message: traduire("msg.branchez_audio_profil_n_ud_profil_de_bruit") };
       const reduction = ctx.paramNombre("Réduction", 70) / 100;
       return { valeurs: [await reduireBruit(audio, profil, reduction)] };
     },
@@ -286,7 +287,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [await calculerProfilBruit(audio)] };
     },
   },
@@ -301,7 +302,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Type", nomEn: "Type", type: "choix",
         options: ["Passe-bas", "Passe-haut", "Passe-bande", "Coupe-bande"], defaut: "Passe-bas",
         doc: "Type de filtre. Passe-bas laisse passer les graves, passe-haut les aigus, passe-bande une bande, coupe-bande retire une bande.",
-        docEn: "Filter type. Lowpass passes lows, highpass passes highs, bandpass keeps a band, notch removes a band." },
+        docEn: "Filter type. Lowpass passes lows, highpass passes highs, bandpass keeps a band, notch removes a band.", optionsEn: ["Lowpass", "Highpass", "Bandpass", "Notch"], defautEn: "Lowpass" },
       { nom: "Fréquence de coupure", nomEn: "Cutoff", plage: [20, 20000], pas: 1, defaut: 1000, unite: "Hz",
         doc: "Fréquence charnière du filtre (coupure ou centre de bande).", docEn: "Filter hinge frequency (cutoff or band center)." },
       { nom: "Résonance", nomEn: "Resonance", plage: [0.5, 12], pas: 0.1, defaut: 0.7, unite: "Q",
@@ -309,7 +310,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const type = ctx.paramTexte("Type", "Passe-bas");
       const freq = ctx.paramNombre("Fréquence de coupure", 1000);
       const q = ctx.paramNombre("Résonance", 0.7);
@@ -327,7 +328,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Type", nomEn: "Type", type: "choix",
         options: ["Room", "Hall", "Plate", "Spring", "Cathédrale"], defaut: "Hall",
         doc: "Room = petite pièce (courte, dense). Hall = grand espace (longue queue). Plate = réverbération métallique (dense, linéaire). Spring = ressort (caractéristique, oscillant). Cathédrale = très long, spectral.",
-        docEn: "Room = small room (short, dense). Hall = large space (long tail). Plate = metallic reverb (dense, linear). Spring = spring reverb (characteristic, oscillating). Cathedral = very long, spectral." },
+        docEn: "Room = small room (short, dense). Hall = large space (long tail). Plate = metallic reverb (dense, linear). Spring = spring reverb (characteristic, oscillating). Cathedral = very long, spectral.", optionsEn: ["Room", "Hall", "Plate", "Spring", "Cathedral"], defautEn: "Hall" },
       { nom: "Taille", nomEn: "Size", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Taille de l'espace simulé. Affecte la durée et la densité des réflexions.",
         docEn: "Size of the simulated space. Affects reflection duration and density." },
@@ -346,17 +347,17 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const { reverberationConvolution, genererIR } = await import("../audio");
       const mix = ctx.paramNombre("Mix", 50);
       let irBuffer: AudioBuffer;
       const fichier = ctx.noeud.data.irFichier as File | undefined;
       if (fichier) {
         const { decoderFichier } = await import("../audio");
-        ctx.onProgress("Décodage de l'IR…");
+        ctx.onProgress(traduire("progress.d_codage_de_l_ir"));
         irBuffer = await decoderFichier(fichier, ctx.runtime);
       } else {
-        ctx.onProgress("Génération de l'IR…");
+        ctx.onProgress(traduire("progress.g_n_ration_de_l_ir"));
         const type = ctx.paramTexte("Type", "Hall");
         const taille = ctx.paramNombre("Taille", 50);
         const decay = ctx.paramNombre("Decay", 2);
@@ -364,9 +365,9 @@ export const fiches: FicheAudio[] = ([
         const damping = ctx.paramNombre("Damping", 30);
         irBuffer = genererIR(type, taille, decay, preDelay, damping, a.sampleRate);
       }
-      ctx.onProgress("Convolution…");
+      ctx.onProgress(traduire("progress.convolution"));
       const r = await reverberationConvolution(a, irBuffer, mix);
-      return { valeurs: [r], message: `Réverbération à convolution (IR : ${irBuffer.duration.toFixed(1)} s)` };
+      return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
     },
   },
   {
@@ -385,25 +386,25 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["None", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
         defaut: "1/16",
         doc: "Grille de quantification des départs de notes. Aligner les notes sur la grille rythmique choisie.",
-        docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid." },
+        docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid.", defautEn: "1/16" },
       { nom: "Quantifier fins", nomEn: "Quantize ends", type: "choix",
         options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
-        docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes)." },
+        docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
     ],
     async executer(ctx: any) {
       const { transposerQuantifierMidi } = await import("../audio");
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null], message: "Aucun fichier MIDI en entrée." };
+      if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
       const quantifierFin = ctx.paramTexte("Quantifier fins", "Non") === "Oui";
       const nouvFichier = await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin);
       const msgs: string[] = [];
-      if (demiTons !== 0) msgs.push(`${demiTons > 0 ? "+" : ""}${demiTons} ½-ton${Math.abs(demiTons) > 1 ? "s" : ""}`);
-      if (grille !== "Aucune") msgs.push(`quant. ${grille}${quantifierFin ? " +fins" : ""}`);
-      return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : "Aucune modification" };
+      if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
+      if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
+      return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
     },
   },
   {
@@ -419,19 +420,19 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Up", "Down", "UpDown", "DownUp", "Random"],
         defaut: "Montant",
         doc: "Ordre de lecture des notes de l'accord. Up = du grave à l'aigu ; Down = de l'aigu au grave ; UpDown = aller-retour ; Random = ordre aléatoire.",
-        docEn: "Order in which chord notes are played. Up = low to high ; Down = high to low ; UpDown = back and forth ; Random = random order." },
+        docEn: "Order in which chord notes are played. Up = low to high ; Down = high to low ; UpDown = back and forth ; Random = random order.", defautEn: "Up" },
       { nom: "Motif", nomEn: "Pattern", type: "choix",
         options: ["Droit", "1232", "12321", "1321", "1213"],
         optionsEn: ["Straight", "1232", "12321", "1321", "1213"],
         defaut: "Droit",
         doc: "Motif de répétition intra-accord (1=note basse, 2=médium, 3=haute). « Droit » = joue les notes dans l'ordre de la direction.",
-        docEn: "Intra-chord repetition pattern (1=low note, 2=mid, 3=high). « Straight » = plays notes in the direction order." },
+        docEn: "Intra-chord repetition pattern (1=low note, 2=mid, 3=high). « Straight » = plays notes in the direction order.", defautEn: "Straight" },
       { nom: "Vitesse", nomEn: "Speed", type: "choix",
         options: ["1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
         optionsEn: ["1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
         defaut: "1/16",
         doc: "Vitesse de l'arpège (division du temps).",
-        docEn: "Arpeggio speed (time division)." },
+        docEn: "Arpeggio speed (time division).", defautEn: "1/16" },
       { nom: "Octaves", nomEn: "Octaves", plage: [1, 4], pas: 1, defaut: 1,
         doc: "Nombre d'octaves sur lesquelles l'arpège se déploie (chaque octave ajoute +12 demi-tons).",
         docEn: "Number of octaves the arpeggio spans (each octave adds +12 semitones)." },
@@ -442,14 +443,14 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const { arpegerMidi } = await import("../audio");
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null], message: "Aucun fichier MIDI en entrée." };
+      if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const direction = ctx.paramTexte("Direction", "Montant");
       const motif = ctx.paramTexte("Motif", "Droit");
       const vitesse = ctx.paramTexte("Vitesse", "1/16");
       const octaves = Math.round(ctx.paramNombre("Octaves", 1));
       const dureeNote = ctx.paramNombre("Durée note", 50);
       const nouvFichier = await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote);
-      return { valeurs: [nouvFichier], message: `Arpège ${direction} · ${vitesse} · ${octaves} oct.` };
+      return { valeurs: [nouvFichier], message: traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves) };
     },
   },
   {
@@ -464,13 +465,13 @@ export const fiches: FicheAudio[] = ([
         options: ["Avant", "Après"], optionsEn: ["Before", "After"],
         defaut: "Après",
         doc: "Où ajuster la différence. Si la piste est trop courte : ajoute du silence au début (« Avant ») ou à la fin (« Après »). Si trop longue : fade d'ouverture (« Avant », garde le début) ou fade de fermeture (« Après », garde la fin).",
-        docEn: "Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end)." },
+        docEn: "Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end).", defautEn: "After" },
     ],
     async executer(ctx: any) {
       const ref = ctx.entree(0);
       const piste = ctx.entree(1);
-      if (!(ref instanceof AudioBuffer)) return { valeurs: [null, null], message: "Branchez une référence (entrée 1)." };
-      if (!(piste instanceof AudioBuffer)) return { valeurs: [ref, null], message: "Branchez une piste à aligner (entrée 2)." };
+      if (!(ref instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.branchez_une_r_f_rence_entr_e_1") };
+      if (!(piste instanceof AudioBuffer)) return { valeurs: [ref, null], message: traduire("msg.branchez_une_piste_aligner_entr_e_2") };
       const { alignerPiste } = await import("../audio");
       const position = ctx.paramTexte("Position", "Après") === "Avant" ? "avant" : "apres";
       const [refOut, pisteOut] = alignerPiste(ref, piste, position);
@@ -499,15 +500,15 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { shiftFormants } = await import("../audio");
       const pitch = ctx.paramNombre("Hauteur", 0);
       const formantRatio = ctx.paramNombre("Formants", 100) / 100;
-      ctx.onProgress("Analyse LPC…");
+      ctx.onProgress(traduire("progress.analyse_lpc"));
       const r = shiftFormants(a, pitch, formantRatio);
       const pitchInfo = pitch !== 0 ? `pitch ${pitch > 0 ? "+" : ""}${pitch}½-ton` : "pitch inchangé";
       const formantInfo = formantRatio !== 1 ? `formants ${Math.round(formantRatio * 100)}%` : "formants inchangés";
-      return { valeurs: [r], message: `${pitchInfo} · ${formantInfo}` };
+      return { valeurs: [r], message: traduire("msg.var_0_var_1_2", pitchInfo, formantInfo) };
     },
   },
   {
@@ -525,10 +526,10 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const avant = Math.max(0, ctx.paramNombre("Avant", 1));
       const apres = Math.max(0, ctx.paramNombre("Après", 1));
-      if (avant === 0 && apres === 0) return { valeurs: [a], message: "Aucun silence à ajouter." };
+      if (avant === 0 && apres === 0) return { valeurs: [a], message: traduire("msg.aucun_silence_ajouter") };
       const sr = a.sampleRate;
       const debutEch = Math.round(avant * sr);
       const finEch = Math.round(apres * sr);
@@ -539,7 +540,7 @@ export const fiches: FicheAudio[] = ([
         const dst = resultat.getChannelData(c);
         dst.set(src, debutEch);
       }
-      return { valeurs: [resultat], message: `${avant}s avant + ${apres}s après · total ${resultat.duration.toFixed(1)}s` };
+      return { valeurs: [resultat], message: traduire("msg.var_0_s_avant_var_1_s_apr_s_total_var_2_s", avant, apres, resultat.duration.toFixed(1)) };
     },
   },
   {
@@ -555,11 +556,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Intensité de la modulation (0% = aucun effet, 100% = volume coupé complètement).", docEn: "Modulation depth (0% = no effect, 100% = volume fully cut)." },
       { nom: "Forme", nomEn: "Shape", type: "choix", options: ["Sinus", "Carré", "Triangle", "Sawtooth"],
         optionsEn: ["Sine", "Square", "Triangle", "Sawtooth"], defaut: "Sinus",
-        doc: "Forme de l'onde de modulation.", docEn: "LFO waveform shape." },
+        doc: "Forme de l'onde de modulation.", docEn: "LFO waveform shape.", defautEn: "Sine" },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const freq = ctx.paramNombre("Fréquence", 5);
       const depth = ctx.paramNombre("Profondeur", 50) / 100;
       const forme = ctx.paramTexte("Forme", "Sinus");
@@ -597,11 +598,11 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { etirementGlissant } = await import("../audio");
       const debut = ctx.paramNombre("Début", 1);
       const fin = ctx.paramNombre("Fin", 2);
-      return { valeurs: [etirementGlissant(a, debut, fin)], message: `${debut}x → ${fin}x · ${a.duration.toFixed(1)}s → ${(a.duration * (debut + fin) / 2).toFixed(1)}s` };
+      return { valeurs: [etirementGlissant(a, debut, fin)], message: traduire("msg.var_0_x_var_1_x_var_2_s_var_3_s", debut, fin, a.duration.toFixed(1), (a.duration * (debut + fin) / 2).toFixed(1)) };
     },
   },
   {
@@ -618,7 +619,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { spatialiserStereo } = await import("../audio");
       const pos = ctx.paramNombre("Position", 0) / 100;
       const larg = ctx.paramNombre("Largeur", 100) / 100;
@@ -639,7 +640,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { autoPan } = await import("../audio");
       const freq = ctx.paramNombre("Fréquence", 2);
       const depth = ctx.paramNombre("Profondeur", 80);
@@ -664,7 +665,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { wahwah } = await import("../audio");
       return { valeurs: [wahwah(a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100), ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100))] };
     },
@@ -687,7 +688,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { phaser } = await import("../audio");
       return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50))] };
     },
@@ -706,7 +707,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { vibrato } = await import("../audio");
       return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50))] };
     },
@@ -729,7 +730,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { octaver } = await import("../audio");
       return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), ctx.paramNombre("Mix", 50))] };
     },
@@ -746,11 +747,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
         doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
-        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition." },
+        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { chopper } = await import("../audio");
       const typeStr = ctx.paramTexte("Type", "Dur");
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };

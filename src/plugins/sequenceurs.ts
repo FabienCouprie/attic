@@ -1,6 +1,7 @@
 // plugins/sequenceurs.ts — Séquenceurs (motifs édités à la grille).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreSequenceurBatterie, decoderMotif } from "../audio";
 import {
@@ -46,7 +47,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM" },
       { nom: "Nombre de pas", nomEn: "Steps", type: "choix", options: ["8", "16", "32"], defaut: "16",
-        doc: "Nombre de pas par mesure (résolution rythmique).", docEn: "Steps per bar (rhythmic resolution)." },
+        doc: "Nombre de pas par mesure (résolution rythmique).", docEn: "Steps per bar (rhythmic resolution).", optionsEn: ["Triangle", "Square", "Saw"], defautEn: "Square" },
       { nom: "Swing", nomEn: "Swing", plage: [0, 60], defaut: 0, unite: "%",
         doc: "Décale légèrement les contretemps pour un groove ternaire.", docEn: "Slightly delays off-beats for a shuffle groove." },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,
@@ -65,7 +66,7 @@ export const fiches: FicheAudio[] = ([
       const grille = decoderMotif(ctx.paramTexte("Motif", MOTIF_DEFAUT), 5, nbPas);
       const buf = await rendreSequenceurBatterie(grille, tempo, nbPas, swing, mesures, volume);
       const frappes = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
-      return { valeurs: [buf], message: `${nbPas} pas · ${mesures} mesure(s) · ${tempo} BPM · ${frappes} frappe(s)` };
+      return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes) };
     },
   },
   {
@@ -79,20 +80,20 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Nombre de pas", nomEn: "Steps", type: "choix", options: ["8", "16", "32"], defaut: "16",
-        doc: "Nombre de pas par mesure (résolution rythmique).", docEn: "Steps per bar (rhythmic resolution)." },
+        doc: "Nombre de pas par mesure (résolution rythmique).", docEn: "Steps per bar (rhythmic resolution).", optionsEn: ["Triangle", "Square", "Saw"], defautEn: "Square" },
       { nom: "Swing", nomEn: "Swing", plage: [0, 60], defaut: 0, unite: "%",
         doc: "Décale légèrement les contretemps pour un groove ternaire.", docEn: "Slightly delays off-beats for a shuffle groove." },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"], defaut: "majeur",
-        doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid." },
+        doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid.", optionsEn: ["Major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
-        doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure." },
+        doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure.", defautEn: "Triangle" },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
         doc: "Motif encodé (édité par la grille du nœud) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
         docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
@@ -112,7 +113,7 @@ export const fiches: FicheAudio[] = ([
       const notes = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
       const noteBas = nomNotePourRangee(0, cle, gamme, octave);
       const noteHaut = nomNotePourRangee(NB_RANGEES_MELO - 1, cle, gamme, octave);
-      return { valeurs: [buf], message: `${nbPas} pas · ${mesures} mesure(s) · ${tempo} BPM · ${notes} note(s) · ${noteBas}–${noteHaut}` };
+      return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, notes, noteBas, noteHaut) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

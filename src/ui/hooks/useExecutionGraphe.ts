@@ -16,6 +16,7 @@ import {
 import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
+import { useI18n, defautParametre } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 
@@ -37,6 +38,7 @@ export interface OptionsExecution {
 }
 
 export function useExecutionGraphe(o: OptionsExecution) {
+  const { t, lang } = useI18n();
   const {
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
@@ -176,7 +178,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const marquerMetaEnEchec = (idAplati: string, detail?: string) => {
       const proprio = plat.expansions.get(idAplati);
       if (proprio && proprio !== idAplati) {
-        definirStatut(proprio, "erreur", detail ? `branche en échec : ${detail}` : "branche en échec");
+        definirStatut(proprio, "erreur", detail ? t("execution.brancheEnEchecDetail").replace("{detail}", detail) : t("execution.brancheEnEchec"));
       }
     };
 
@@ -194,7 +196,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (entreeFautive) {
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
-        definirStatut(nodeId, "erreur", `entrée en erreur : ${entreeFautive.source}`);
+        definirStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", entreeFautive.source));
         marquerMetaEnEchec(nodeId);
         continue;
       }
@@ -220,7 +222,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
       // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
       // donnait l'impression que le modèle Qwen redémarrait inutilement.
-      definirStatut(nodeId, "en_cours", `etape ${i + 1}/${ordreFiltre.length}`);
+      definirStatut(nodeId, "en_cours", t("execution.etape").replace("{i}", String(i + 1)).replace("{total}", String(ordreFiltre.length)));
 
       // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
@@ -242,11 +244,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
           entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            return typeof p === "number" ? p : defaut;
+            if (typeof p === "number") return p;
+            const def = trouverDef(node.data.ficheId as string);
+            const pDef = def?.parametres.find((p) => p.nom === nom);
+            const defautEff = typeof pDef?.defautEn === "number" ? pDef.defautEn : defaut;
+            return defautEff;
           },
           paramTexte: (nom: string, defaut: string) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            return typeof p === "string" ? p : defaut;
+            if (typeof p === "string") return p;
+            const def = trouverDef(node.data.ficheId as string);
+            const pDef = def?.parametres.find((p) => p.nom === nom);
+            const defautEff = typeof pDef?.defautEn === "string" ? pDef.defautEn : defaut;
+            return defautEff;
           },
           onProgress: (msg: string) => definirStatut(nodeId, "en_cours", msg),
         });
@@ -332,7 +342,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
               }
             }
             return { ...n, data: { ...n.data, statut: "erreur" as const,
-              audioResultatMessage: fautif ? `Branche en échec : « ${fautif} » sans résultat (entrée manquante ?)` : "Branche en échec (aucun résultat)" } };
+              audioResultatMessage: fautif
+                ? t("execution.brancheEchecSansResultat").replace("{fautif}", fautif)
+                : t("execution.brancheEchecAucunResultat") } };
           }
         }
         return {
@@ -341,7 +353,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
             ...n.data,
             audioResultatUrl: url ?? undefined,
             audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
-            audioResultatMessage: messages.get(n.id) ?? (meta && audio ? "Terminé" : undefined),
+            audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
             scriptGenere: texte ?? undefined,
             midiFichierSortie: (fichier instanceof File && fichier.type.includes("midi")) ? fichier : undefined,
             ...(meta ? { statut: "termine" as const } : {}),
@@ -394,7 +406,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // global suivant reste filtré sur l'ancien nœud prioritaire.
       if (prioritaireRef.current) setPrioritaire(null);
     }
-  }, [prioritaire, repertoire]);
+  }, [prioritaire, repertoire, t]);
 
   return { lancer, reinitialiserNoeud };
 }

@@ -1,6 +1,7 @@
 // plugins/tone-synths.ts — Nœuds instruments pilotés par Tone.js.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import {
   genererMembraneSynth,
   genererMetalSynth,
@@ -28,7 +29,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C2",
         doc: "Note de base du kick (ex. C2, A1). Plus la note est grave, plus le kick est gros.",
-        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick.",
+        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick.", defautEn: "C2",
       },
       {
         nom: "Durée",
@@ -116,13 +117,13 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer],
-          message: `Kick ${note} — ${buffer.duration.toFixed(2)}s`,
+          message: traduire("msg.kick_var_0_var_1_s", note, buffer.duration.toFixed(2)),
         };
       } catch (e: any) {
         return {
           valeurs: [null],
           erreur: true,
-          message: `Erreur MembraneSynth : ${e?.message ?? e}`,
+          message: traduire("msg.erreur_membranesynth_var_0", e?.message ?? e),
         };
       }
     },
@@ -144,7 +145,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C5",
         doc: "Note de base (ex. C5, G5). Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche.",
-        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell.",
+        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell.", defautEn: "C5",
       },
       {
         nom: "Durée",
@@ -263,13 +264,13 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer],
-          message: `Metal ${note} — ${buffer.duration.toFixed(2)}s`,
+          message: traduire("msg.metal_var_0_var_1_s", note, buffer.duration.toFixed(2)),
         };
       } catch (e: any) {
         return {
           valeurs: [null],
           erreur: true,
-          message: `Erreur MetalSynth : ${e?.message ?? e}`,
+          message: traduire("msg.erreur_metalsynth_var_0", e?.message ?? e),
         };
       }
     },
@@ -291,7 +292,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C4,E4,G4",
         doc: "Notes de l'accord, séparées par des virgules (ex. C4,E4,G4).",
-        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4).",
+        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4).", defautEn: "C4,E4,G4",
       },
       {
         nom: "Durée par note",
@@ -321,7 +322,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["sine", "square", "sawtooth", "triangle"],
         defaut: "triangle",
         doc: "Forme d'onde des oscillateurs.",
-        docEn: "Oscillator waveform.",
+        docEn: "Oscillator waveform.", defautEn: "triangle",
       },
       {
         nom: "Attack",
@@ -384,13 +385,13 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer],
-          message: `Accord ${notes.join("+")} — ${buffer.duration.toFixed(2)}s`,
+          message: traduire("msg.accord_var_0_var_1_s", notes.join("+"), buffer.duration.toFixed(2)),
         };
       } catch (e: any) {
         return {
           valeurs: [null],
           erreur: true,
-          message: `Erreur PolySynth : ${e?.message ?? e}`,
+          message: traduire("msg.erreur_polysynth_var_0", e?.message ?? e),
         };
       }
     },
@@ -412,13 +413,13 @@ export const fiches: FicheAudio[] = ([
         type: "choix",
         options: ["FM", "AM"],
         optionsEn: ["FM", "AM"],
-        defaut: "FM",
+        defaut: "FM", defautEn: "FM",
       },
       {
         nom: "Note",
         nomEn: "Note",
         type: "texte",
-        defaut: "C4",
+        defaut: "C4", defautEn: "C4",
       },
       {
         nom: "Durée",
@@ -522,13 +523,13 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer],
-          message: `${mode} ${note} — ${buffer.duration.toFixed(2)}s`,
+          message: traduire("msg.var_0_var_1_var_2_s_2", mode, note, buffer.duration.toFixed(2)),
         };
       } catch (e: any) {
         return {
           valeurs: [null],
           erreur: true,
-          message: `Erreur ${mode}Synth : ${e?.message ?? e}`,
+          message: traduire("msg.erreur_var_0_synth_var_1", mode, e?.message ?? e),
         };
       }
     },
@@ -550,7 +551,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C4",
         doc: "Note de corde pincée (ex. C4, G3).",
-        docEn: "Plucked string note (e.g. C4, G3).",
+        docEn: "Plucked string note (e.g. C4, G3).", defautEn: "C4",
       },
       {
         nom: "Durée",
@@ -636,13 +637,13 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer],
-          message: `Pluck ${note} — ${buffer.duration.toFixed(2)}s`,
+          message: traduire("msg.pluck_var_0_var_1_s", note, buffer.duration.toFixed(2)),
         };
       } catch (e: any) {
         return {
           valeurs: [null],
           erreur: true,
-          message: `Erreur PluckSynth : ${e?.message ?? e}`,
+          message: traduire("msg.erreur_plucksynth_var_0", e?.message ?? e),
         };
       }
     },

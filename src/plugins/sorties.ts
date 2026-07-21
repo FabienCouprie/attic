@@ -1,6 +1,7 @@
 // plugins/sorties.ts — Nœuds de sortie
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreMidi } from "../audio";
 
@@ -16,7 +17,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: "Aucune entrée." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const vol = ctx.paramNombre("Volume", 100);
       if (vol >= 100) return { valeurs: [audio, { debut: 0, duree: audio.duration }] };
       const buf = new AudioBuffer({ numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate });
@@ -35,12 +36,12 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI", type: "midi" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", type: "controle" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: "Aucun fichier MIDI." };
+      if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi") };
       const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") as "FM/Oscillateurs" | "SoundFont";
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(fichier, mode, volume);
@@ -53,12 +54,12 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Loads a MIDI file from the inspector, synthesizes it and passes the MIDI along.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", docEn: "Synthesis engine. FM = local, SoundFont = remote." },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", docEn: "Synthesis engine. FM = local, SoundFont = remote.", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const midi = ctx.noeud.data.midiFichier as File | undefined;
-      if (!midi) return { valeurs: [null, null], message: "Chargez un fichier MIDI." };
+      if (!midi) return { valeurs: [null, null], message: traduire("msg.chargez_un_fichier_midi") };
       const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") as "FM/Oscillateurs" | "SoundFont";
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(midi, mode, volume);
@@ -72,12 +73,12 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI", type: "midi", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", docEn: "Synthesis engine." },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", docEn: "Synthesis engine.", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const midi = ctx.entree(0);
-      if (!(midi instanceof File)) return { valeurs: [null, null], message: "Aucun MIDI." };
+      if (!(midi instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
       const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") as "FM/Oscillateurs" | "SoundFont";
       const volume = ctx.paramNombre("Volume", 80);
       const buffer = await rendreMidi(midi, mode, volume);

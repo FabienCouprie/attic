@@ -3,8 +3,38 @@ import { fft } from "./fft";
 import type { NoteEvenement } from "./midi";
 import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
 import Meyda from "meyda";
+import { langueCourante, traduire } from "../i18n";
 
 const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
+
+function normaliserAggregation(valeur: string): OptionsCentroidSpectral["aggregation"] {
+  switch (valeur.toLowerCase()) {
+    case "average": return "moyenne";
+    case "median": return "mediane";
+    case "maximum": return "maximum";
+    default: return valeur as OptionsCentroidSpectral["aggregation"];
+  }
+}
+
+function traduireAggregation(valeur: string): string {
+  const map: Record<string, string> = {
+    "moyenne": "analyse.aggregation_moyenne",
+    "mediane": "analyse.aggregation_mediane",
+    "maximum": "analyse.aggregation_maximum",
+    "average": "analyse.aggregation_moyenne",
+    "median": "analyse.aggregation_mediane",
+  };
+  return map[valeur.toLowerCase()] ? traduire(map[valeur.toLowerCase()]) : valeur;
+}
+
+function traduireType(valeur: string): string {
+  const map: Record<string, string> = {
+    "chanson": "analyse.chanson",
+    "instrumental": "analyse.instrumental",
+    "incertain": "analyse.incertain",
+  };
+  return map[valeur] ? traduire(map[valeur]) : valeur;
+}
 
 function tailleFenetreSuivante(n: number): number {
   for (const taille of FENETRES_PUISSANCE_2) if (taille >= n) return taille;
@@ -181,12 +211,14 @@ export function calculerCentroidSpectralMeyda(
   const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
   const facteurHz = buffer.sampleRate / fenetre;
   const valeurs = extraireValeursMeyda(buffer, "spectralCentroid", options).map((v) => v * facteurHz);
-  const aggregation = options.aggregation || "moyenne";
+  const aggregation = normaliserAggregation(options.aggregation || "moyenne");
+  const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
-    return { valeur: 0, texte: "Centroïde spectral : non calculable", trames: 0 };
+    return { valeur: 0, texte: traduire("analyse.non_calculable", traduire("analyse.centroide_spectral_label")), trames: 0 };
   }
+
   const valeur = agregerValeurs(valeurs, aggregation);
-  const texte = `Centroïde spectral : ${valeur.toFixed(1)} Hz (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  const texte = traduire("analyse.centroide_spectral", valeur.toFixed(1), aggLabel, valeurs.length);
   return { valeur, texte, trames: valeurs.length };
 }
 
@@ -195,13 +227,14 @@ export function calculerRMS_Meyda(
   options: OptionsCentroidSpectral = {},
 ): ResultatCentroidSpectral {
   const valeurs = extraireValeursMeyda(buffer, "rms", options);
-  const aggregation = options.aggregation || "moyenne";
+  const aggregation = normaliserAggregation(options.aggregation || "moyenne");
+  const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
-    return { valeur: -Infinity, texte: "RMS : non calculable", trames: 0 };
+    return { valeur: -Infinity, texte: traduire("analyse.non_calculable", traduire("analyse.rms_label")), trames: 0 };
   }
   const rms = agregerValeurs(valeurs, aggregation);
   const db = 20 * Math.log10(rms + 1e-10);
-  const texte = `RMS : ${db.toFixed(1)} dBFS (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  const texte = traduire("analyse.rms", db.toFixed(1), aggLabel, valeurs.length);
   return { valeur: db, texte, trames: valeurs.length };
 }
 
@@ -210,12 +243,13 @@ export function calculerZCR_Meyda(
   options: OptionsCentroidSpectral = {},
 ): ResultatCentroidSpectral {
   const valeurs = extraireValeursMeyda(buffer, "zcr", options);
-  const aggregation = options.aggregation || "moyenne";
+  const aggregation = normaliserAggregation(options.aggregation || "moyenne");
+  const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
-    return { valeur: 0, texte: "ZCR : non calculable", trames: 0 };
+    return { valeur: 0, texte: traduire("analyse.non_calculable", traduire("analyse.zcr_label")), trames: 0 };
   }
   const valeur = agregerValeurs(valeurs, aggregation);
-  const texte = `ZCR : ${valeur.toFixed(0)} passages par zéro (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  const texte = traduire("analyse.zcr", valeur.toFixed(0), aggLabel, valeurs.length);
   return { valeur, texte, trames: valeurs.length };
 }
 
@@ -226,12 +260,13 @@ export function calculerRolloffSpectralMeyda(
   const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
   const facteurHz = buffer.sampleRate / fenetre;
   const valeurs = extraireValeursMeyda(buffer, "spectralRolloff", options).map((v) => v * facteurHz);
-  const aggregation = options.aggregation || "moyenne";
+  const aggregation = normaliserAggregation(options.aggregation || "moyenne");
+  const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
-    return { valeur: 0, texte: "Rolloff spectral : non calculable", trames: 0 };
+    return { valeur: 0, texte: traduire("analyse.non_calculable", traduire("analyse.rolloff_spectral_label")), trames: 0 };
   }
   const valeur = agregerValeurs(valeurs, aggregation);
-  const texte = `Rolloff spectral : ${valeur.toFixed(1)} Hz (Meyda, ${aggregation}, ${valeurs.length} trames)`;
+  const texte = traduire("analyse.rolloff_spectral", valeur.toFixed(1), aggLabel, valeurs.length);
   return { valeur, texte, trames: valeurs.length };
 }
 
@@ -444,14 +479,15 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   }
   const t2 = tempoParAutocorr(flux, hopFlux);
 
-  lignes.push(`── Tempo ──`);
-  lignes.push(`  RMS + autocorrélation : ${t1.bpm} BPM (conf. ${(t1.corr * 100).toFixed(0)}%)`);
-  lignes.push(`  Flux spectral + autocorr. : ${t2.bpm} BPM (conf. ${(t2.corr * 100).toFixed(0)}%)`);
+  lignes.push(traduire("analyse.tempo"));
+  lignes.push(traduire("analyse.rms_autocorr", t1.bpm, (t1.corr * 100).toFixed(0)));
+  lignes.push(traduire("analyse.flux_autocorr", t2.bpm, (t2.corr * 100).toFixed(0)));
 
   const accords = t1.bpm && t2.bpm && Math.abs(t1.bpm - t2.bpm) <= 10;
   const meilleur = t1.corr >= t2.corr ? t1 : t2;
   const tempoFinal = accords ? Math.round((t1.bpm + t2.bpm) / 2) : meilleur.bpm;
-  lignes.push(`  → Retenu : ${tempoFinal} BPM${accords ? " (accord entre méthodes)" : " (méthode la plus confiante)"}`);
+  const suffix = accords ? traduire("analyse.accord_methodes") : traduire("analyse.methode_plus_confiante");
+  lignes.push(traduire("analyse.retenu", tempoFinal, suffix));
 
   // ────── TONALITÉ ──────
   const chroma = chromagramme(mono, sampleRate);
@@ -460,12 +496,12 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
     const m = meilleureCorrelation(chroma, profilMaj);
     const n = meilleureCorrelation(chroma, profilMin);
     const r = m.corr >= n.corr
-      ? `${NOMS_NOTES[m.shift]} majeur (${(m.corr / 60 * 100).toFixed(0)}%)`
-      : `${NOMS_NOTES[n.shift]} mineur (${(n.corr / 60 * 100).toFixed(0)}%)`;
-    return `${etiquette} : ${r}`;
+      ? `${traduire("analyse.nom_majeur", NOMS_NOTES[m.shift])} (${(m.corr / 60 * 100).toFixed(0)}%)`
+      : `${traduire("analyse.nom_mineur", NOMS_NOTES[n.shift])} (${(n.corr / 60 * 100).toFixed(0)}%)`;
+    return traduire("analyse.profil", etiquette, r);
   }
 
-  lignes.push(`── Tonalité ──`);
+  lignes.push(traduire("analyse.tonalite"));
   const kkGlobal = evaluerProfil(KK_MAJOR, KK_MINOR, "Krumhansl-Kessler");
   const tpGlobal = evaluerProfil(TEMP_MAJOR, TEMP_MINOR, "Temperley");
   lignes.push(`  ${kkGlobal}`);
@@ -476,11 +512,11 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   const { shift: sMajTP, corr: cMajTP } = meilleureCorrelation(chroma, TEMP_MAJOR);
   const { shift: sMinTP, corr: cMinTP } = meilleureCorrelation(chroma, TEMP_MINOR);
   const bestKK = cMajKK >= cMinKK
-    ? { nom: `${NOMS_NOTES[sMajKK]} majeur`, conf: cMajKK }
-    : { nom: `${NOMS_NOTES[sMinKK]} mineur`, conf: cMinKK };
+    ? { nom: `${NOMS_NOTES[sMajKK]} majeur`, conf: cMajKK, mineur: false }
+    : { nom: `${NOMS_NOTES[sMinKK]} mineur`, conf: cMinKK, mineur: true };
   const bestTP = cMajTP >= cMinTP
-    ? { nom: `${NOMS_NOTES[sMajTP]} majeur`, conf: cMajTP }
-    : { nom: `${NOMS_NOTES[sMinTP]} mineur`, conf: cMinTP };
+    ? { nom: `${NOMS_NOTES[sMajTP]} majeur`, conf: cMajTP, mineur: false }
+    : { nom: `${NOMS_NOTES[sMinTP]} mineur`, conf: cMinTP, mineur: true };
   const principale = bestKK.conf >= bestTP.conf ? bestKK : bestTP;
 
   // Analyse par moitiés avec les deux profils
@@ -488,23 +524,26 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   const chroma1 = chromagramme(mono.slice(0, moitie), sampleRate);
   const chroma2 = chromagramme(mono.slice(moitie), sampleRate);
 
-  function proﬁlerMoitie(chr: number[], label: string): string[] {
+  function profilermoitie(chr: number[], label: string): string[] {
     const mk = meilleureCorrelation(chr, KK_MAJOR);
     const nk = meilleureCorrelation(chr, KK_MINOR);
     const kk = mk.corr >= nk.corr
-      ? `${NOMS_NOTES[mk.shift]} majeur`
-      : `${NOMS_NOTES[nk.shift]} mineur`;
+      ? traduire("analyse.nom_majeur", NOMS_NOTES[mk.shift])
+      : traduire("analyse.nom_mineur", NOMS_NOTES[nk.shift]);
     const mt = meilleureCorrelation(chr, TEMP_MAJOR);
     const nt = meilleureCorrelation(chr, TEMP_MINOR);
     const tp = mt.corr >= nt.corr
-      ? `${NOMS_NOTES[mt.shift]} majeur`
-      : `${NOMS_NOTES[nt.shift]} mineur`;
-    return [`  K-K    ${label} : ${kk}`, `  Temp.  ${label} : ${tp}`];
+      ? traduire("analyse.nom_majeur", NOMS_NOTES[mt.shift])
+      : traduire("analyse.nom_mineur", NOMS_NOTES[nt.shift]);
+    return [
+      traduire("analyse.profil", `${traduire("analyse.kk")}    ${label}`, kk),
+      traduire("analyse.profil", `${traduire("analyse.temp")}  ${label}`, tp),
+    ];
   }
 
-  lignes.push(`  Par moitiés :`);
-  lignes.push(...proﬁlerMoitie(chroma1, `0–${(duree / 2).toFixed(1)}s`));
-  lignes.push(...proﬁlerMoitie(chroma2, `${(duree / 2).toFixed(1)}–${duree.toFixed(1)}s`));
+  lignes.push(traduire("analyse.par_moitiers"));
+  lignes.push(...profilermoitie(chroma1, `0–${(duree / 2).toFixed(1)}s`));
+  lignes.push(...profilermoitie(chroma2, `${(duree / 2).toFixed(1)}–${duree.toFixed(1)}s`));
 
   // ────── SONG VS INSTRUMENTAL ──────
   const fftSI = 2048;
@@ -558,21 +597,21 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   const v2 = classer(ecZCR, 0.08, 0.04);
   const v3 = classer(ecBand, 0.2, 0.1);
 
-  lignes.push(`── Type ──`);
-  lignes.push(`  Centroïde spectral (σ=${ecCent.toFixed(0)} Hz) : ${v1}`);
-  lignes.push(`  Taux ZCR (σ=${ecZCR.toFixed(4)}) : ${v2}`);
-  lignes.push(`  Énergie 300–3000 Hz (σ=${ecBand.toFixed(3)}) : ${v3}`);
+  lignes.push(traduire("analyse.type"));
+  lignes.push(traduire("analyse.centroide", ecCent.toFixed(0), traduireType(v1)));
+  lignes.push(traduire("analyse.zcr_taux", ecZCR.toFixed(4), traduireType(v2)));
+  lignes.push(traduire("analyse.energie_300_3000", ecBand.toFixed(3), traduireType(v3)));
 
   const votesChanson = [v1, v2, v3].filter((v) => v === "chanson").length;
   const votesInstru = [v1, v2, v3].filter((v) => v === "instrumental").length;
   const songVsInstrumental: "chanson" | "instrumental" | "incertain" =
     votesChanson >= 2 ? "chanson" : votesInstru >= 2 ? "instrumental" : "incertain";
-  lignes.push(`  → Verdict (vote majoritaire) : ${songVsInstrumental}`);
+  lignes.push(traduire("analyse.verdict", traduireType(songVsInstrumental)));
 
   return {
     tempo: tempoFinal,
     tempoConfiance: Math.min(1, meilleur.corr * 20),
-    tonalites: [{ debut: 0, fin: duree, tonalite: `${principale.nom} (K-K: ${kkGlobal.split(" : ")[1]}, Temp: ${tpGlobal.split(" : ")[1]})`, confiance: principale.conf }],
+    tonalites: [{ debut: 0, fin: duree, tonalite: `${traduire(principale.mineur ? "analyse.nom_mineur" : "analyse.nom_majeur", principale.nom.split(" ")[0])} (K-K: ${kkGlobal.split(" : ")[1]}, Temp: ${tpGlobal.split(" : ")[1]})`, confiance: principale.conf }],
     songVsInstrumental,
     description: lignes.join("\n"),
   };
@@ -863,19 +902,21 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   }));
 
   // ── Description textuelle ──
+  const isMineur = cle.includes("mineur");
+  const noteCle = cle.split(" ")[0];
   const descr: string[] = [];
-  descr.push("── Caractéristiques ──");
-  descr.push(`Tempo : ${tFinal > 0 ? `${tFinal} BPM` : "non détecté"}`);
-  descr.push(`Tonalité : ${cle} (conf. ${confCle}%)`);
-  descr.push(`Énergie RMS : ${(rmsM * 1000).toFixed(0)}‰`);
-  descr.push(`Centroïde spectral : ${centM.toFixed(0)} Hz (σ=${centS.toFixed(0)})`);
-  descr.push(`ZCR moyen : ${(zcrM * 100).toFixed(1)}%`);
-  descr.push(`Platitude spectrale : ${(flatM * 100).toFixed(0)}%`);
+  descr.push(traduire("analyse.caracteristiques"));
+  descr.push(traduire("analyse.tempo_label", tFinal > 0 ? `${tFinal} BPM` : traduire("analyse.non_detecte")));
+  descr.push(traduire("analyse.tonalite_label", traduire(isMineur ? "analyse.nom_mineur" : "analyse.nom_majeur", noteCle), confCle));
+  descr.push(traduire("analyse.energie_rms", (rmsM * 1000).toFixed(0)));
+  descr.push(traduire("analyse.centroide_label", centM.toFixed(0), centS.toFixed(0)));
+  descr.push(traduire("analyse.zcr_moyen", (zcrM * 100).toFixed(1)));
+  descr.push(traduire("analyse.platitude", (flatM * 100).toFixed(0)));
   descr.push("");
-  descr.push("── Répartition spectrale ──");
-  descr.push(`Graves (<250 Hz) : ${(eBasse * 100).toFixed(0)}%`);
-  descr.push(`Médiums (250–2000 Hz) : ${(eMid * 100).toFixed(0)}%`);
-  descr.push(`Aigus (>2000 Hz) : ${(eAigue * 100).toFixed(0)}%`);
+  descr.push(traduire("analyse.repartition"));
+  descr.push(traduire("analyse.graves", (eBasse * 100).toFixed(0)));
+  descr.push(traduire("analyse.mediums", (eMid * 100).toFixed(0)));
+  descr.push(traduire("analyse.aigus", (eAigue * 100).toFixed(0)));
 
   // ── Essai ONNX pour les étiquettes de genre ──
   const tailleF = 2048, hopM = 512, nM = 128;
@@ -917,7 +958,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   if (genresOnnx && genresOnnx.length > 0) {
     genres = genresOnnx.map((g) => ({ genre: g.genre, confiance: g.score }));
     descr.push("");
-    descr.push("── Genres (modèle ONNX) ──");
+    descr.push(traduire("msg.genres_modele_onnx"));
     descr.push(genres.slice(0, 3).map((g) => `${g.genre} (${Math.round(g.confiance * 100)}%)`).join(" · "));
   } else {
     const scSorted = Object.entries(scoresGenre).map(([g, s]) => ({ genre: g, score: s })).sort((a, b) => b.score - a.score);
@@ -925,14 +966,14 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
     genres = scSorted.slice(0, 5).map((s) => ({ genre: s.genre, confiance: scTotal > 0 ? s.score / scTotal : 0 }));
     descr.push("");
     if (modeleBuffer && erreurOnnx) {
-      descr.push("── Genres (ONNX échoué) ──");
-      descr.push(`Erreur : ${erreurOnnx}`);
+      descr.push(traduire("msg.genres_onnx_echou"));
+      descr.push(traduire("msg.erreur_var_0", erreurOnnx));
     }
-    descr.push("── Genres (heuristiques) ──");
+    descr.push(traduire("msg.genres_heuristiques"));
     descr.push(genres.map((g) => `${g.genre} (${Math.round(g.confiance * 100)}%)`).join(" · "));
   }
 
-  return [{ genre: genres[0]?.genre || "inconnu", confiance: genres[0]?.confiance || 0, description: descr.join("\n") }];
+  return [{ genre: genres[0]?.genre || traduire("msg.inconnu"), confiance: genres[0]?.confiance || 0, description: descr.join("\n") }];
 }
 
 // ─── Générateur musical par script descriptif ───

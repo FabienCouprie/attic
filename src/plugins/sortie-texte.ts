@@ -2,6 +2,7 @@
 // télécharger/coller le texte reçu sur son entrée (port bleu).
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -15,7 +16,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [],
     async executer(ctx: any) {
       const texte = ctx.entree(0);
-      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: "Aucun texte en entrée." };
+      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.aucun_texte_en_entr_e") };
       return { valeurs: [texte], message: texte };
     },
   },

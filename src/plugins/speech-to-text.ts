@@ -5,6 +5,7 @@
 // La transcription tourne dans un Web Worker.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 let worker: Worker | null = null;
@@ -78,7 +79,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
       const w = getWorker();
       return new Promise((resolve) => {
@@ -87,10 +88,10 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
             libererWorker();
-            resolve({ valeurs: [msg.text], message: `Transcrit : ${msg.text.slice(0, 60)}${msg.text.length > 60 ? "…" : ""}` });
+            resolve({ valeurs: [msg.text], message: traduire("msg.transcrit_var_0_var_1", msg.text.slice(0, 60), msg.text.length > 60 ? "…" : "") });
           } else if (msg.type === "error") {
             libererWorker();
-            resolve({ valeurs: [null], erreur: true, message: `Erreur Whisper : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_whisper_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
@@ -111,18 +112,18 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Chinese", "Arabic", "Hindi", "Korean"],
         defaut: "Auto",
         doc: "Langue du discours à transcrire. « Auto » = détection automatique.",
-        docEn: "Language of the speech to transcribe. « Auto » = automatic detection." },
+        docEn: "Language of the speech to transcribe. « Auto » = automatic detection.", defautEn: "Auto" },
       { nom: "Traduire", nomEn: "Translate", type: "choix",
         options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
         defaut: "Non",
         doc: "Si « Oui », traduit le discours en anglais au lieu de le transcrire dans sa langue d'origine.",
-        docEn: "If « Yes », translates the speech to English instead of transcribing in its original language." },
+        docEn: "If « Yes », translates the speech to English instead of transcribing in its original language.", defautEn: "No" },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée audio." };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const langue = ctx.paramTexte("Langue", "Auto");
-      const traduire = ctx.paramTexte("Traduire", "Non") === "Oui";
+      const translateToEnglish = ctx.paramTexte("Traduire", "Non") === "Oui";
       const langCode = LANGUES_WHISPER[langue] || undefined;
       const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
       const w = getWorker();
@@ -132,14 +133,14 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
             libererWorker();
-            resolve({ valeurs: [msg.text], message: `Transcrit (${langue}${traduire ? " → EN" : ""}) : ${msg.text.slice(0, 60)}${msg.text.length > 60 ? "…" : ""}` });
+            resolve({ valeurs: [msg.text], message: traduire("msg.transcrit_var_0_var_1_var_2_var_3", langue, translateToEnglish ? " → EN" : "", msg.text.slice(0, 60), msg.text.length > 60 ? "…" : "") });
           } else if (msg.type === "error") {
             libererWorker();
-            resolve({ valeurs: [null], erreur: true, message: `Erreur Whisper : ${msg.msg}` });
+            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_whisper_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-large-v2", language: langCode, translate: traduire });
+        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-large-v2", language: langCode, translate: translateToEnglish });
       });
     },
   },

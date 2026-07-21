@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
-import { useI18n } from "../i18n";
+import { useI18n, defautParametre } from "../i18n";
 import { copierTexte } from "./copier";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
@@ -124,6 +124,7 @@ function VueUploadAudio({ id, data }: VueProps) {
 
 // ── Explorateur de musique (Electron) ──
 function VueExplorateur({ id, data }: VueProps) {
+  const { t } = useI18n();
   const [fichiersMusique, setFichiersMusique] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargementMusique, setChargementMusique] = useState(false);
   const [audioLocale, setAudioLocale] = useState<string | null>(null);
@@ -131,7 +132,7 @@ function VueExplorateur({ id, data }: VueProps) {
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()}>
       {!api ? (
-        <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>Electron uniquement.</div>
+        <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.electronUniquement")}</div>
       ) : (
         <>
           <div style={{ display: "flex", gap: 4 }}>
@@ -144,7 +145,7 @@ function VueExplorateur({ id, data }: VueProps) {
             }}>
               ⟳ /{String(data.parametres?.["Chemin"] || "music collection")}
             </button>
-            <button className="attic-node-fichier-btn" title="Choisir un dossier" onClick={async () => {
+            <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
               const dossier = await api?.choisirDossier();
               if (dossier) { data.parametres!["Chemin"] = dossier; data.onChangerParametre?.(id, "Chemin", dossier); }
             }}>
@@ -167,7 +168,7 @@ function VueExplorateur({ id, data }: VueProps) {
             </select>
           )}
           {fichiersMusique && fichiersMusique.length === 0 && (
-            <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>Aucun fichier audio.</div>
+            <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.aucunFichierAudio")}</div>
           )}
           {audioLocale && !data.audioUrl && <audio className="attic-node-audio" controls src={audioLocale} />}
           {data.audioResultatUrl && <audio className="attic-node-audio" controls src={data.audioResultatUrl} />}
@@ -285,16 +286,18 @@ function VueUploadPd({ id, data }: VueProps) {
 
 // ── Paramètres inline des collections (sélecteurs de dossier) ──
 function VueCollections({ id, data, def }: VueProps) {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   if (!def || def.parametres.length === 0) return null;
   return (
     <div className="attic-node-params" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      {def.parametres.map((p) => (
+      {def.parametres.map((p) => {
+        const defautP = defautParametre(p, lang);
+        return (
         <div key={p.nom} className="attic-node-param">
           <label>{lang === "en" && p.nomEn ? p.nomEn : p.nom}</label>
           {p.type === "dossier" ? (
             <div style={{ display: "flex", gap: 4 }}>
-              <input type="text" value={String(data.parametres?.[p.nom] ?? p.defaut)} onChange={(e) => data.onChangerParametre?.(id, p.nom, e.target.value)}
+              <input type="text" value={String(data.parametres?.[p.nom] ?? defautP)} onChange={(e) => data.onChangerParametre?.(id, p.nom, e.target.value)}
                 style={{ flex: 1, fontSize: 11, background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 3, padding: "2px 4px", color: "var(--text-title)" }} />
               <button onClick={async () => {
                 const api = (window as { api?: any }).api;
@@ -307,13 +310,14 @@ function VueCollections({ id, data, def }: VueProps) {
                   inp.onchange = () => { const f = inp.files?.[0]; if (f) data.onChangerParametre?.(id, p.nom, (f as { path?: string }).path ?? f.name); };
                   inp.click();
                 }
-              }} className="attic-node-fichier-btn" title="Parcourir…">…</button>
+              }} className="attic-node-fichier-btn" title={t("btn.parcourir")}>…</button>
             </div>
           ) : (
-            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{data.parametres?.[p.nom] ?? p.defaut}{p.unite ? ` ${p.unite}` : ""}</span>
+            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{data.parametres?.[p.nom] ?? defautP}{p.unite ? ` ${p.unite}` : ""}</span>
           )}
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 }
@@ -366,6 +370,7 @@ function VueExport({ data }: VueProps) {
 
 // ── Clavier mélodie (instrument jouable + enregistrement de séquence) ──
 function ClavierMelodie({ id }: VueProps) {
+  const { t } = useI18n();
   const OCTAVE_DEPART = 3, NB_OCTAVES = 5, BLANCHES_PAR_OCT = 7;
   const totalBlanches = NB_OCTAVES * BLANCHES_PAR_OCT;
   const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
@@ -435,11 +440,11 @@ function ClavierMelodie({ id }: VueProps) {
     <div className="clavier" ref={contRef} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <NodeResizer minWidth={350} minHeight={220} />
       <div className="clavier-controles">
-        <button className={enReg ? "actif" : ""} onClick={demarrerEnreg} disabled={enReg}>⏺ Enreg.</button>
-        <button onClick={arreterEnreg} disabled={!enReg}>⏹ Arrêter</button>
-        <button onClick={rejouer} disabled={seq.length === 0 || enReg}>▶ Rejouer</button>
-        <button onClick={effacer}>🗑 Effacer</button>
-        <span className="clavier-nb">{seq.length} note{seq.length > 1 ? "s" : ""}</span>
+        <button className={enReg ? "actif" : ""} onClick={demarrerEnreg} disabled={enReg}>⏺ {t("clavier.enreg")}</button>
+        <button onClick={arreterEnreg} disabled={!enReg}>⏹ {t("clavier.arreter")}</button>
+        <button onClick={rejouer} disabled={seq.length === 0 || enReg}>▶ {t("clavier.rejouer")}</button>
+        <button onClick={effacer}>🗑 {t("clavier.effacer")}</button>
+        <span className="clavier-nb">{seq.length} {t("clavier.notes")}</span>
         <span className="clavier-octave">←↑→ {nomNote(octaveClavier * 12)}–{nomNote(octaveClavier * 12 + 11)}</span>
       </div>
       <div className={"clavier-touches" + (larg > 0 && totalWidth > larg ? " avec-scroll" : "")}
@@ -687,6 +692,7 @@ const COULEURS_PYTHON: Record<string, string> = {
 };
 
 function VuePythonProcessor({ id, data }: VueProps) {
+  const { t } = useI18n();
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const code = String(data.parametres?.["Code"] ?? "");
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
@@ -709,7 +715,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
     if (result?.ok) {
       setPyInfo({ disponible: true, chemin: result.chemin, version: result.version });
     } else {
-      alert(`Erreur: ${result?.erreur || "chemin invalide"}`);
+      alert(`${t("msg.erreur")}: ${result?.erreur || t("msg.cheminInvalide")}`);
     }
   };
 
@@ -723,7 +729,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
           background: pyInfo?.disponible ? "#2a9d8f" : "#e76f51",
         }} />
         <span style={{ color: pyInfo?.disponible ? "#2a9d8f" : "#e76f51" }}>
-          {pyInfo?.disponible ? `Python: ${pyInfo.version}` : "Python non détecté"}
+          {pyInfo?.disponible ? `Python: ${pyInfo.version}` : t("python.nonDetecte")}
         </span>
         <span style={{ flex: 1 }} />
         <button
@@ -733,13 +739,13 @@ function VuePythonProcessor({ id, data }: VueProps) {
             border: "1px solid var(--border, #333)", borderRadius: 4,
             background: "transparent", color: "var(--text-secondary)",
           }}
-          title="Configurer le chemin de l'exécutable Python"
-        >⚙ Configurer</button>
+          title={t("python.configurerChemin")}
+        >⚙ {t("btn.configurer")}</button>
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied="numpy + wave requis" titre="Python Processor" />
+        suffixePied={t("python.requis")} titre={t("python.titre")} />
     </div>
   );
 }
@@ -751,6 +757,7 @@ const COULEURS_JULIA: Record<string, string> = {
 };
 
 function VueJuliaProcessor({ id, data }: VueProps) {
+  const { t } = useI18n();
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const code = String(data.parametres?.["Code"] ?? "");
   const [jlInfo, setJlInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
@@ -771,7 +778,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
     if (result?.ok) {
       setJlInfo({ disponible: true, chemin: result.chemin, version: result.version });
     } else {
-      alert(`Erreur: ${result?.erreur || "chemin invalide"}`);
+      alert(`${t("msg.erreur")}: ${result?.erreur || t("msg.cheminInvalide")}`);
     }
   };
 
@@ -784,7 +791,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
           background: jlInfo?.disponible ? "#2a9d8f" : "#e76f51",
         }} />
         <span style={{ color: jlInfo?.disponible ? "#2a9d8f" : "#e76f51" }}>
-          {jlInfo?.disponible ? `Julia: ${jlInfo.version}` : "Julia non détecté"}
+          {jlInfo?.disponible ? `Julia: ${jlInfo.version}` : t("julia.nonDetecte")}
         </span>
         <span style={{ flex: 1 }} />
         <button
@@ -794,13 +801,13 @@ function VueJuliaProcessor({ id, data }: VueProps) {
             border: "1px solid var(--border, #333)", borderRadius: 4,
             background: "transparent", color: "var(--text-secondary)",
           }}
-          title="Configurer le chemin de l'exécutable Julia"
-        >⚙ Configurer</button>
+          title={t("julia.configurerChemin")}
+        >⚙ {t("btn.configurer")}</button>
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied="WAV.jl requis" titre="Julia Processor" />
+        suffixePied={t("julia.requis")} titre={t("julia.titre")} />
     </div>
   );
 }

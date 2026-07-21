@@ -3,6 +3,7 @@
 // Hors-ligne, instantané, sans GPU. Export PNG.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -16,17 +17,17 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "dark ambient night mysterious",
         doc: "Description du style (couleurs déduites des mots-clés : feu/rouge, eau/bleu, nature/vert, nuit/noir, jour/jaune, rêve/violet, terre/marron…).",
-        docEn: "Style description (colors derived from keywords: fire/red, water/blue, nature/green, night/black, day/yellow, dream/purple, earth/brown…)." },
+        docEn: "Style description (colors derived from keywords: fire/red, water/blue, nature/green, night/black, day/yellow, dream/purple, earth/brown…).", defautEn: "dark ambient night mysterious" },
       { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Album",
-        doc: "Titre de l'album (inséré dans l'image).", docEn: "Album title (inserted in the image)." },
+        doc: "Titre de l'album (inséré dans l'image).", docEn: "Album title (inserted in the image).", defautEn: "Album" },
       { nom: "Artiste", nomEn: "Artist", type: "texte", defaut: "",
-        doc: "Nom de l'artiste (inséré sous le titre).", docEn: "Artist name (inserted below the title)." },
+        doc: "Nom de l'artiste (inséré sous le titre).", docEn: "Artist name (inserted below the title).", defautEn: "" },
       { nom: "Style", nomEn: "Style", type: "choix",
         options: ["minimaliste", "geometrique", "vagues", "grain", "concentrique", "bauhaus"],
         optionsEn: ["Minimalist", "Geometric", "Waves", "Grain", "Concentric", "Bauhaus"],
         defaut: "bauhaus",
         doc: "Style visuel. Minimaliste = dégradé simple ; Géométrique = grille de formes ; Vagues = couches superposées ; Grain = texture bruitée ; Concentrique = cercles ; Bauhaus = formes primaires.",
-        docEn: "Visual style. Minimalist = simple gradient; Geometric = shape grid; Waves = layered waves; Grain = noisy texture; Concentric = circles; Bauhaus = primary shapes." },
+        docEn: "Visual style. Minimalist = simple gradient; Geometric = shape grid; Waves = layered waves; Grain = noisy texture; Concentric = circles; Bauhaus = primary shapes.", defautEn: "bauhaus" },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle à chaque exécution). Même graine = même pochette.",
         docEn: "Random seed (0 = new each run). Same seed = same cover." },
@@ -36,7 +37,7 @@ export const fiches: FicheAudio[] = ([
       const titre = ctx.paramTexte("Titre", "Album");
       const style = ctx.paramTexte("Style", "bauhaus");
       const prompt = ctx.paramTexte("Prompt", "dark ambient night mysterious");
-      return { valeurs: [], message: `Pochette « ${titre} » · ${style} · ${prompt.slice(0, 30)}` };
+      return { valeurs: [], message: traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

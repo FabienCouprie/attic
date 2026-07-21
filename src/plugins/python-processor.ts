@@ -4,6 +4,7 @@
 // le traite et produit un WAV de sortie.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 
@@ -150,11 +151,11 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const api = (window as any).api;
-      if (!api?.pythonInfo) return { valeurs: [null, null, null], message: "Nécessite Electron." };
+      if (!api?.pythonInfo) return { valeurs: [null, null, null], message: traduire("msg.n_cessite_electron") };
 
       const info = await api.pythonInfo();
       if (!info.disponible) {
-        return { valeurs: [null, null, null], erreur: true, message: `Python non trouvé. Cliquez sur ⚙ Configurer dans le node.` };
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.python_non_trouv_cliquez_sur_configurer_dans_le_node") };
       }
 
       const audio = ctx.entree(0);
@@ -170,7 +171,7 @@ export const fiches: FicheAudio[] = ([
       // tous les chemins d'E/S seraient invalides (bug historique).
       const tmpDir = (typeof ctx.repertoireTravail === "string" && ctx.repertoireTravail.trim())
         || await (window as any).api?.obtenirRepertoireTravail?.();
-      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: "Aucun répertoire de travail inscriptible (droits insuffisants ?)." };
+      if (!tmpDir) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_r_pertoire_de_travail_inscriptible_droits_insuffisants") };
 
       // Préparer le WAV d'entrée (argv[1])
       let inputPath: string | null = null;
@@ -200,7 +201,7 @@ export const fiches: FicheAudio[] = ([
       const outputMidiPath = `${tmpDir}/python_output_${Date.now()}.mid`;
       const outputTextPath = `${tmpDir}/python_output_${Date.now()}.txt`;
 
-      ctx.onProgress("Exécution du script Python…");
+      ctx.onProgress(traduire("progress.ex_cution_du_script_python"));
       const inputs: { path: string }[] = [];
       if (inputPath) inputs.push({ path: inputPath });
       if (midiPath) inputs.push({ path: midiPath });
@@ -228,7 +229,7 @@ export const fiches: FicheAudio[] = ([
 
       if (!result.ok) {
         const pyInfo = result.python ? `\nPython: ${result.python}` : "";
-        return { valeurs: [null, null, null], erreur: true, message: `Erreur Python:\n${result.erreur || result.stderr || "inconnue"}${pyInfo}` };
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.erreur_python_var_0_var_1", result.erreur || result.stderr || "inconnue", pyInfo) };
       }
 
       // Lire les sorties (via IPC — fetch file:// est bloqué par Electron)
@@ -276,11 +277,11 @@ export const fiches: FicheAudio[] = ([
       if (!parts.length) {
         return {
           valeurs: [null, null, null], erreur: true,
-          message: `Python a tourné mais n'a écrit aucune sortie lisible.\nLe script doit écrire dans ATTIC_OUTPUT_PATH (.wav), ATTIC_OUTPUT_MIDI (.mid) ou ATTIC_OUTPUT_TEXT (.txt).\nDossier de travail : ${tmpDir}${stdout}`,
+          message: traduire("msg.python_a_tourn_mais_n_a_crit_aucune_sortie_lisible_le_script", tmpDir, stdout),
         };
       }
 
-      return { valeurs: [sorties[0], sorties[1], sorties[2]], message: `Python ${parts.join(" · ")}${stdout}` };
+      return { valeurs: [sorties[0], sorties[1], sorties[2]], message: traduire("msg.python_var_0_var_1", parts.join(" · "), stdout) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

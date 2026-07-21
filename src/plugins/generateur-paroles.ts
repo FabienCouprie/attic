@@ -4,6 +4,7 @@
 // aléatoire dans des dictionnaires de mots. Instantané, hors-ligne, reproductible.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 // PRNG déterministe
@@ -126,14 +127,14 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Thème", nomEn: "Theme", type: "texte", defaut: "l'amour",
         doc: "Thème principal de la chanson (ex : l'amour, la mer, la liberté).",
-        docEn: "Main theme of the song (e.g. love, the sea, freedom)." },
+        docEn: "Main theme of the song (e.g. love, the sea, freedom).", defautEn: "Love" },
       { nom: "Émotion", nomEn: "Emotion", type: "texte", defaut: "l'espoir",
         doc: "Émotion dominante (ex : l'espoir, la tristesse, la colère).",
-        docEn: "Dominant emotion (e.g. hope, sadness, anger)." },
+        docEn: "Dominant emotion (e.g. hope, sadness, anger).", defautEn: "hope" },
       { nom: "Langue", nomEn: "Language", type: "choix",
         options: ["Français", "English"], optionsEn: ["Français", "English"],
         defaut: "Français",
-        doc: "Langue des paroles générées.", docEn: "Language of generated lyrics." },
+        doc: "Langue des paroles générées.", docEn: "Language of generated lyrics.", defautEn: "French" },
       { nom: "Lignes/section", nomEn: "Lines/section", plage: [2, 8], pas: 1, defaut: 4,
         doc: "Nombre de lignes par section (couplet, refrain).",
         docEn: "Number of lines per section (verse, chorus)." },
@@ -149,13 +150,13 @@ export const fiches: FicheAudio[] = ([
       const nbLignes = ctx.paramNombre("Lignes/section", 4);
       const graine = ctx.paramNombre("Graine", 0) || Math.floor(Math.random() * 99999) + 1;
 
-      ctx.onProgress("Génération des paroles…");
+      ctx.onProgress(traduire("progress.g_n_ration_des_paroles"));
       const paroles = genererParoles(theme, emotion, langue as "fr" | "en", graine, nbLignes);
       const graineAff = graine > 0 ? graine : "auto";
 
       return {
         valeurs: [paroles],
-        message: `${langue === "fr" ? "Paroles générées" : "Lyrics generated"} · graine ${graineAff} · ${paroles.split("\n").length} lignes`,
+        message: traduire("msg.var_0_graine_var_1_var_2_lignes", langue === "fr" ? "Paroles générées" : "Lyrics generated", graineAff, paroles.split("\n").length),
       };
     },
   },

@@ -1,6 +1,7 @@
 // plugins/enveloppe.ts — Modeleur d'enveloppe ADSR.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { appliquerADSR } from "../audio";
 
@@ -24,7 +25,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Connectez une source audio." };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       const out = appliquerADSR(
         a,
         ctx.paramNombre("Attaque", 10),

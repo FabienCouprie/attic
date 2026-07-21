@@ -19,7 +19,7 @@ const tousLesPlugins = () => registre.tousLesPlugins();
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
-import { useI18n } from "../i18n";
+import { useI18n, defautParametre } from "../i18n";
 
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
@@ -141,7 +141,7 @@ export default function App() {
 type WorkflowState = { nom: string; nodes: NoeudAtelier[]; edges: Edge[]; viewport?: { x: number; y: number; zoom: number } };
 
 function Atelier() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
   const [onglets, setOnglets] = useState<string[]>(["wf-1"]);
   const [actif, setActif] = useState("wf-1");
@@ -150,7 +150,7 @@ function Atelier() {
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
   // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
   // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
-  const [pile, setPile] = useState<{ metaId: string; nom: string }[]>([]);
+  const [pile, setPile] = useState<{ metaId: string; nom: string; nomEn?: string }[]>([]);
   const pileRef = useRef(pile);
   pileRef.current = pile;
   const grapheRacineRef = useRef<{ nodes: NoeudAtelier[]; edges: Edge[] } | null>(null);
@@ -334,7 +334,7 @@ function Atelier() {
           const def = trouverDef(specNode.ficheId);
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
-          if (def) for (const p of def.parametres) parametres[p.nom] = p.defaut;
+          if (def) for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
           return {
@@ -383,7 +383,7 @@ function Atelier() {
     if (!def) return;
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
-    for (const p of def.parametres) parametres[p.nom] = p.defaut;
+    for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {
       id: idUnique(nds),
@@ -595,8 +595,9 @@ function Atelier() {
       <Palette
         plugins={plugins.filter((p) => !estFrontiere(p.id))}
         onSupprimerMeta={(id) => {
-          const nom = trouverMeta(id)?.nom ?? id;
-          if (!window.confirm(`Supprimer le méta-composant « ${nom} » du catalogue ?`)) return;
+          const meta = trouverMeta(id);
+          const nom = (lang === "en" && meta?.nomEn ? meta.nomEn : meta?.nom) ?? id;
+          if (!window.confirm(t("meta.confirmSupprimerCatalogue").replace("{nom}", nom))) return;
           // Retire aussi ses instances éventuelles du graphe courant (sinon nœuds orphelins).
           const aRetirer = new Set(noeudsRef.current.filter((n) => n.data.ficheId === id).map((n) => n.id));
           supprimerMeta(id);
@@ -647,7 +648,7 @@ function Atelier() {
                   const a = localStorage.getItem("attic-encours");
                   ancienNonVide = !!a && Array.isArray(JSON.parse(a).nodes) && JSON.parse(a).nodes.length > 0;
                 } catch { /* sauvegarde illisible : on laisse écraser */ }
-                if (ancienNonVide && !window.confirm("Le canevas est vide. Écraser la sauvegarde existante (non vide) ?")) return;
+                if (ancienNonVide && !window.confirm(t("msg.confirmEcraserSauvegarde"))) return;
               }
               const data = {
                 nodes: racine.nodes.map((n: any) => ({
@@ -666,7 +667,7 @@ function Atelier() {
                 date: new Date().toISOString(),
               };
               localStorage.setItem("attic-encours", JSON.stringify(data));
-              setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: "💾 En-cours sauvegardé" } } : null);
+              setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: t("msg.enCoursSauvegarde") } } : null);
               setTimeout(() => setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: undefined } } : null), 2000);
             } catch (e) {
               console.error("[attic] Sauvegarde échouée", e);
@@ -677,7 +678,7 @@ function Atelier() {
         />
         <div className="attic-onglets">
           <span className="attic-onglet actif">
-            <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet("wf-1"); }} title="Nouveau workflow (vider le canevas)">✕</button>
+            <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet("wf-1"); }} title={t("workflow.nouveauTitre")}>✕</button>
           </span>
         </div>
         <div className="attic-meta-actions">
@@ -699,7 +700,7 @@ function Atelier() {
             <button onClick={() => remonterA(-1)}>{t("meta.atelier")}</button>            {pile.map((niv, i) => (
               <span key={i}>
                 <span className="sep">›</span>
-                <button onClick={() => remonterA(i)} disabled={i === pile.length - 1}>{niv.nom}</button>
+                <button onClick={() => remonterA(i)} disabled={i === pile.length - 1}>{lang === "en" && niv.nomEn ? niv.nomEn : niv.nom}</button>
               </span>
             ))}
           </div>

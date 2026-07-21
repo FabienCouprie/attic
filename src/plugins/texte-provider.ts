@@ -3,6 +3,7 @@
 // les nodes de synthèse vocale, les scripts IA, etc.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -16,11 +17,11 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Texte", nomEn: "Text", type: "texte", defaut: "Bonjour, ceci est un texte de test.",
         doc: "Texte à émettre. Sera transmis sur la sortie texte (port bleu).",
-        docEn: "Text to output. Will be sent on the text output (blue port)." },
+        docEn: "Text to output. Will be sent on the text output (blue port).", defautEn: "Hello, this is a test text." },
     ],
     async executer(ctx: any) {
       const texte = ctx.paramTexte("Texte", "Bonjour, ceci est un texte de test.");
-      return { valeurs: [texte], message: `${texte.length} caractères` };
+      return { valeurs: [texte], message: traduire("msg.var_0_caract_res", texte.length) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

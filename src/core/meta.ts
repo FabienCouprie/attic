@@ -28,6 +28,7 @@ export interface PortInterne { noeudInterne: string; portIndex: number }
 export interface MetaComposant {
   id: string;
   nom: string;
+  nomEn?: string;
   entrees: PortDef[];
   sorties: PortDef[];
   mapEntrees: PortInterne[]; // parallèle à entrees

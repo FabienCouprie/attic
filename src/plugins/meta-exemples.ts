@@ -10,6 +10,7 @@ import type { MetaComposant } from "../core";
 const synthetiseurSoustractif: MetaComposant = {
   id: "meta-synth-soustractif",
   nom: "Synthétiseur soustractif",
+  nomEn: "Subtractive Synthesizer",
   entrees: [],
   sorties: [{ nom: "Out 1", type: "audio" }],
   mapEntrees: [],

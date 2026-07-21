@@ -14,6 +14,7 @@ import {
 import { registre } from "../../audio/adaptateur";
 const trouverDef = (id: string) => registre.trouverDef(id);
 import { idUnique } from "../ids";
+import { useI18n } from "../../i18n";
 
 // Typage souple : le code d'origine castait déjà tout en `unknown`/`any` pour passer
 // entre les nœuds React-Flow et les nœuds « purs » du cœur. On n'y touche pas.
@@ -34,19 +35,20 @@ export interface OptionsMeta {
 }
 
 export function useMetaComposants(o: OptionsMeta) {
+  const { t } = useI18n();
   const compteurMeta = useRef(0);
 
   // ── Regrouper la sélection en un méta-composant ──
   const grouper = useCallback(() => {
     const selNodes = o.noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
-    if (selNodes.length < 2) { window.alert("Sélectionnez au moins deux nœuds à grouper (cadre de sélection ou Maj+clic)."); return; }
+    if (selNodes.length < 2) { window.alert(t("meta.grouperSelection")); return; }
     const selection = new Set(selNodes.map((n) => n.id));
     const num = ++compteurMeta.current;
     const metaId = `meta-${Date.now().toString(36)}-${num}`;
     const metaNoeudId = idUnique(o.noeudsRef.current);
     let cpt = 0;
     const { meta, noeudMeta, nouvellesAretes } = creerMeta(
-      metaId, metaNoeudId, `Groupe ${num}`, selection,
+      metaId, metaNoeudId, `${t("meta.groupe")} ${num}`, selection,
       o.noeudsRef.current as unknown as NoeudG[],
       o.aretesRef.current as unknown as AreteG[],
       (fid) => trouverDef(fid),
@@ -59,12 +61,12 @@ export function useMetaComposants(o: OptionsMeta) {
     o.setEdges(nouvellesAretes as unknown as Edge[]);
     o.cacheExec.current.clear();
     o.setSel(null);
-  }, [o]);
+  }, [o, t]);
 
   // ── Dégrouper le méta-composant sélectionné ──
   const degrouper = useCallback(() => {
     const cible = o.noeudsRef.current.find((n) => (n as { selected?: boolean }).selected && trouverMeta(n.data.ficheId as string));
-    if (!cible) { window.alert("Sélectionnez un méta-composant à dégrouper."); return; }
+    if (!cible) { window.alert(t("meta.degrouperSelection")); return; }
     const meta = trouverMeta(cible.data.ficheId as string)!;
     const prefixe = `${cible.id}::`;
     const cb = o.callbacksNoeud();
@@ -82,7 +84,7 @@ export function useMetaComposants(o: OptionsMeta) {
     o.setEdges(nouvellesA as unknown as Edge[]);
     o.cacheExec.current.clear();
     o.setSel(null);
-  }, [o]);
+  }, [o, t]);
 
   // ── Navigation : sauver le contexte courant (racine ou méta du sommet de pile) ──
   const sauvegarderContexteCourant = useCallback(() => {
@@ -126,7 +128,7 @@ export function useMetaComposants(o: OptionsMeta) {
     if (!meta) return;
     sauvegarderContexteCourant();
     chargerContexteMeta(metaId);
-    o.setPile((p) => [...p, { metaId, nom: meta.nom }]);
+    o.setPile((p) => [...p, { metaId, nom: meta.nom, nomEn: meta.nomEn }]);
   }, [sauvegarderContexteCourant, chargerContexteMeta, o]);
 
   // Remonte le fil d'Ariane à un niveau donné (-1 = racine).
@@ -146,7 +148,7 @@ export function useMetaComposants(o: OptionsMeta) {
   const renommer = useCallback(() => {
     const cible = o.noeudsRef.current.find((n) => (n as { selected?: boolean }).selected && trouverMeta(n.data.ficheId as string));
     if (!cible) {
-      window.alert("Sélectionnez un méta-composant à renommer.");
+      window.alert(t("meta.renommerSelection"));
       return;
     }
     const meta = trouverMeta(cible.data.ficheId as string);
@@ -156,7 +158,7 @@ export function useMetaComposants(o: OptionsMeta) {
     input.type = "text";
     input.value = meta.nom;
     input.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:12px 20px;font-size:16px;border:2px solid #2a9d8f;border-radius:8px;background:#1a1a2e;color:#fff;z-index:99999;outline:none;width:300px;";
-    input.placeholder = "Nouveau nom…";
+    input.placeholder = t("meta.nouveauNom");
     const overlay = document.createElement("div");
     overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99998;";
     const valider = () => {
@@ -185,7 +187,7 @@ export function useMetaComposants(o: OptionsMeta) {
     document.body.appendChild(input);
     input.focus();
     input.select();
-  }, [o]);
+  }, [o, t]);
 
   return { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA };
 }

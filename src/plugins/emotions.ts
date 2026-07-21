@@ -3,7 +3,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue } from "../i18n";
+import { langueCourante, type Langue, traduire } from "../i18n";;
 
 type Emotion = { fr: string; en: string };
 
@@ -130,14 +130,14 @@ export const fiches: FicheAudio[] = ([
         options: ["Toutes", ...CATEGORIES_EMOTIONS],
         optionsEn: ["All", ...CATEGORIES_EMOTIONS.map((c) => CATEGORIES_EMOTIONS_LABEL[c]?.en ?? c)],
         defaut: "Toutes",
-        doc: "Filtre la liste par catégorie d'émotions.", docEn: "Filters the list by emotion category.",
+        doc: "Filtre la liste par catégorie d'émotions.", docEn: "Filters the list by emotion category.", defautEn: "All",
       },
       {
         nom: "Format", nomEn: "Format", type: "choix",
         options: ["Virgule", "Retour ligne", "Puces"],
         optionsEn: ["Comma", "Newline", "Bullets"],
         defaut: "Virgule",
-        doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.",
+        doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
       },
     ],
     async executer(ctx: any) {
@@ -145,7 +145,7 @@ export const fiches: FicheAudio[] = ([
       const cat = ctx.paramTexte("Catégorie", "Toutes");
       const { texte, total } = construireListeEmotions(cat, ctx.paramTexte("Format", "Virgule"), langue);
       const catAff = cat === "Toutes" ? "" : (CATEGORIES_EMOTIONS_LABEL[cat]?.[langue] ?? cat);
-      return { valeurs: [texte], message: `${total} émotions${catAff ? ` — ${catAff}` : ""}` };
+      return { valeurs: [texte], message: traduire("msg.var_0_motions_var_1", total, catAff ? ` — ${catAff}` : "") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);
