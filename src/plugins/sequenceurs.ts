@@ -3,7 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { rendreSequenceurBatterie, decoderMotif } from "../audio";
+import { rendreSequenceurBatterie, decoderMotif, notesVersFichierMidi } from "../audio";
 import {
   rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Programme une mélodie sur une grille piano-roll pas-à-pas (synthèse).",
     resumeEn: "Programs a melody on a step-by-step piano-roll grid (synthesized).",
     entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
@@ -109,11 +109,12 @@ export const fiches: FicheAudio[] = ([
       const octave = ctx.paramNombre("Octave", 3);
       const timbre = ctx.paramTexte("Timbre", "Triangle");
       const grille = decoderMotifMelodique(ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT), NB_RANGEES_MELO, nbPas);
-      const buf = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
-      const notes = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
+      const { audio, notes } = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
+      const noteCount = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
       const noteBas = nomNotePourRangee(0, cle, gamme, octave);
       const noteHaut = nomNotePourRangee(NB_RANGEES_MELO - 1, cle, gamme, octave);
-      return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, notes, noteBas, noteHaut) };
+      const midiFile = notesVersFichierMidi(notes, tempo);
+      return { valeurs: [audio, midiFile], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

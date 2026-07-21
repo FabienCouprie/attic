@@ -40,7 +40,7 @@ export async function genererMusiqueFractale(
   cle: string,
   gamme: string,
   timbre: string
-): Promise<AudioBuffer> {
+): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const sampleRate = 44100;
   const pMax = Math.min(profondeur, 6);
   const motif = typeMotif === "Personnalisé"
@@ -60,6 +60,7 @@ export async function genererMusiqueFractale(
   const totalNotes = notesMidi.length;
   const dureeTotale = totalNotes * dureeNote;
   const offline = new OfflineAudioContext(2, Math.max(1, Math.ceil(dureeTotale * sampleRate)), sampleRate);
+  const notes: NoteEvenement[] = [];
 
   const formesOsc: Record<string, OscillatorType> = { Douce: "triangle", Brillante: "sawtooth", Percutante: "square" };
   const typeOsc = formesOsc[timbre] ?? "triangle";
@@ -92,9 +93,11 @@ export async function genererMusiqueFractale(
     gain.connect(offline.destination);
     osc.start(debut);
     osc.stop(fin + 0.01);
+    notes.push({ note: midiSnappe, velocite: 100, debut, fin });
   }
 
-  return offline.startRendering();
+  const audio = await offline.startRendering();
+  return { audio, notes };
 }
 
 // --- Génération mélodique aléatoire ---------------------------------------
@@ -115,7 +118,7 @@ export async function genererMelodieAleatoire(
   signature: string,
   tempoBpm: number,
   nbMesures: number
-): Promise<AudioBuffer> {
+): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const decalage = DEMI_TONS_CLE[cle] ?? 0;
   const degres = DEGRES_GAMME[gamme] ?? DEGRES_GAMME["Majeur"];
   const [tempsParMesureTexte, uniteBattementTexte] = signature.split("/");
@@ -129,6 +132,7 @@ export async function genererMelodieAleatoire(
   const sampleRate = 44100;
   const dureeTotale = nbBattements * dureeBattement + 1;
   const offline = new OfflineAudioContext(2, Math.ceil(dureeTotale * sampleRate), sampleRate);
+  const notes: NoteEvenement[] = [];
 
   const noteCentrale = 60; // Do central
   let tempsCourant = 0;
@@ -147,6 +151,7 @@ export async function genererMelodieAleatoire(
         const frequence = frequenceDeNoteMidi(midi);
 
         const debut = tempsCourant + s * dureeNote;
+        const fin = debut + dureeNote;
         const attaque = 0.01;
         const relache = Math.min(0.08, dureeNote * 0.3);
 
@@ -164,13 +169,15 @@ export async function genererMelodieAleatoire(
         gain.connect(offline.destination);
         osc.start(debut);
         osc.stop(debut + dureeNote + 0.02);
+        notes.push({ note: midi, velocite: 80 + Math.floor(Math.random() * 40), debut, fin });
       }
     }
 
     tempsCourant += dureeBattement;
   }
 
-  return offline.startRendering();
+  const audio = await offline.startRendering();
+  return { audio, notes };
 }
 
 

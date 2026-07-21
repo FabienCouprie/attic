@@ -7,7 +7,7 @@ import {
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
-  genererAudioFormule,
+  genererAudioFormule, notesVersFichierMidi,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
@@ -63,7 +63,7 @@ export const fiches: FicheAudio[] = ([
     id: "melodie-aleatoire", nom: "Mélodie aléatoire", nomEn: "Random Melody", univers: "Entrées", famille: "Génération",
     resume: "Génère une mélodie aléatoire.",
     resumeEn: "Generates a random melody.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
@@ -72,14 +72,17 @@ export const fiches: FicheAudio[] = ([
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),ctx.paramNombre("Tempo",100),ctx.paramNombre("Mesures",4))] };
+      const tempo = ctx.paramNombre("Tempo",100);
+      const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4));
+      const midiFile = notesVersFichierMidi(notes, tempo);
+      return { valeurs: [audio, midiFile] };
     },
   },
   {
     id: "generateur-fractal", nom: "Musique fractale", nomEn: "Fractal Music", univers: "Entrées", famille: "Génération",
     resume: "Génère de la musique fractale.",
     resumeEn: "Generates fractal music.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
       { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0.3.7.10" },
@@ -91,7 +94,10 @@ export const fiches: FicheAudio[] = ([
       { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),ctx.paramNombre("Tempo",80),ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"))] };
+      const tempo = ctx.paramNombre("Tempo",80);
+      const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
+      const midiFile = notesVersFichierMidi(notes, tempo);
+      return { valeurs: [audio, midiFile] };
     },
   },
   {

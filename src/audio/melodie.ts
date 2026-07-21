@@ -4,6 +4,8 @@
 // (oscillateur + enveloppe). Le motif est encodé comme celui du séquenceur de
 // batterie : lignes séparées par « | », chaque pas « 1 »/« 0 ».
 
+import type { NoteEvenement } from "./midi";
+
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
 const GAMMES: Record<string, number[]> = {
@@ -78,13 +80,14 @@ export async function rendreSequenceurMelodique(
   swing: number,
   mesures: number,
   volume: number,
-): Promise<AudioBuffer> {
+): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const sr = 44100;
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
   const totalPas = Math.max(1, mesures) * nbPas;
   const duree = totalPas * stepDur + 0.5;
   const offline = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
   const v = Math.max(0, Math.min(1, volume / 100));
+  const notes: NoteEvenement[] = [];
 
   const typeOsc: OscillatorType = timbre === "Carré" ? "square"
     : timbre === "Scie" ? "sawtooth"
@@ -128,6 +131,7 @@ export async function rendreSequenceurMelodique(
       if (grille[r]?.[s]) {
         const midi = noteMidiPourRangee(r, cle, gamme, octave);
         jouerNote(midi, t, stepDur);
+        notes.push({ note: midi, velocite: 100, debut: t, fin: t + stepDur * 0.9 });
       }
     }
   }
@@ -136,7 +140,7 @@ export async function rendreSequenceurMelodique(
   // Longueur musicale exacte (sans les 0,5 s de silence de fin) + repli de la
   // queue de décroissance sur le début → bouclage sans couture (cf. batterie).
   const barLen = Math.round(totalPas * stepDur * sr);
-  if (barLen >= rendu.length) return rendu;
+  if (barLen >= rendu.length) return { audio: rendu, notes };
   const out = new AudioBuffer({ numberOfChannels: rendu.numberOfChannels, length: barLen, sampleRate: sr });
   for (let c = 0; c < rendu.numberOfChannels; c++) {
     const src = rendu.getChannelData(c);
@@ -144,5 +148,5 @@ export async function rendreSequenceurMelodique(
     dst.set(src.subarray(0, barLen));
     for (let i = barLen; i < src.length; i++) dst[i - barLen] += src[i];
   }
-  return out;
+  return { audio: out, notes };
 }
