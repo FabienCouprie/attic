@@ -50,6 +50,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 80,
         unite: "%",
+        doc: "Niveau de sortie du son.",
+        docEn: "Output level of the sound.",
       },
       {
         nom: "Pitch decay",
@@ -166,6 +168,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 80,
         unite: "%",
+        doc: "Niveau de sortie du son.",
+        docEn: "Output level of the sound.",
       },
       {
         nom: "Harmonicity",
@@ -217,6 +221,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.001,
         defaut: 0.001,
         unite: "s",
+        doc: "Temps de montée de l'enveloppe (0 = instantané).",
+        docEn: "Envelope attack time (0 = instantaneous).",
       },
       {
         nom: "Decay",
@@ -226,6 +232,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 1.4,
         unite: "s",
+        doc: "Temps de déclin de l'enveloppe jusqu'au niveau de sustain.",
+        docEn: "Envelope decay time to the sustain level.",
       },
       {
         nom: "Release",
@@ -235,6 +243,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.2,
         unite: "s",
+        doc: "Temps de retour au silence après la fin de la note.",
+        docEn: "Envelope release time after the note ends.",
       },
     ],
     async executer(ctx: any) {
@@ -313,6 +323,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 80,
         unite: "%",
+        doc: "Niveau de sortie du son.",
+        docEn: "Output level of the sound.",
       },
       {
         nom: "Forme d'onde",
@@ -332,6 +344,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.001,
         defaut: 0.01,
         unite: "s",
+        doc: "Temps de montée de l'enveloppe (0 = instantané).",
+        docEn: "Envelope attack time (0 = instantaneous).",
       },
       {
         nom: "Decay",
@@ -341,6 +355,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.1,
         unite: "s",
+        doc: "Temps de déclin de l'enveloppe jusqu'au niveau de sustain.",
+        docEn: "Envelope decay time to the sustain level.",
       },
       {
         nom: "Sustain",
@@ -350,6 +366,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.3,
         unite: "niveau",
+        doc: "Niveau de maintien de l'enveloppe (0 = silence, 1 = maximum).",
+        docEn: "Envelope sustain level (0 = silence, 1 = maximum).",
       },
       {
         nom: "Release",
@@ -359,6 +377,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 1,
         unite: "s",
+        doc: "Temps de retour au silence après la fin de la note.",
+        docEn: "Envelope release time after the note ends.",
       },
     ],
     async executer(ctx: any) {
@@ -414,12 +434,16 @@ export const fiches: FicheAudio[] = ([
         options: ["FM", "AM"],
         optionsEn: ["FM", "AM"],
         defaut: "FM", defautEn: "FM",
+        doc: "Type de modulation : FM (fréquence) ou AM (amplitude).",
+        docEn: "Modulation type: FM (frequency) or AM (amplitude).",
       },
       {
         nom: "Note",
         nomEn: "Note",
         type: "texte",
         defaut: "C4", defautEn: "C4",
+        doc: "Note à jouer (ex. C4, G5).",
+        docEn: "Note to play (e.g. C4, G5).",
       },
       {
         nom: "Durée",
@@ -429,6 +453,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.1,
         defaut: 1.5,
         unite: "s",
+        doc: "Durée totale du buffer généré.",
+        docEn: "Total duration of the generated buffer.",
       },
       {
         nom: "Volume",
@@ -438,6 +464,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 80,
         unite: "%",
+        doc: "Niveau de sortie du son.",
+        docEn: "Output level of the sound.",
       },
       {
         nom: "Harmonicity",
@@ -467,6 +495,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.001,
         defaut: 0.01,
         unite: "s",
+        doc: "Temps de montée de l'enveloppe (0 = instantané).",
+        docEn: "Envelope attack time (0 = instantaneous).",
       },
       {
         nom: "Decay",
@@ -476,6 +506,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.1,
         unite: "s",
+        doc: "Temps de déclin de l'enveloppe jusqu'au niveau de sustain.",
+        docEn: "Envelope decay time to the sustain level.",
       },
       {
         nom: "Sustain",
@@ -485,6 +517,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.3,
         unite: "niveau",
+        doc: "Niveau de maintien de l'enveloppe (0 = silence, 1 = maximum).",
+        docEn: "Envelope sustain level (0 = silence, 1 = maximum).",
       },
       {
         nom: "Release",
@@ -494,6 +528,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.5,
         unite: "s",
+        doc: "Temps de retour au silence après la fin de la note.",
+        docEn: "Envelope release time after the note ends.",
       },
     ],
     async executer(ctx: any) {
@@ -572,6 +608,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 80,
         unite: "%",
+        doc: "Niveau de sortie du son.",
+        docEn: "Output level of the sound.",
       },
       {
         nom: "Attack noise",

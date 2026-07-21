@@ -143,26 +143,28 @@ export const fiches: FicheAudio[] = ([
  },
   {
     id: "placer-sons-zones", nom: "Placer un son sur zones", nomEn: "Place sound on zones", univers: "Traitement", famille: "Montage",
-    resume: "Insère une copie d'un son au centre de chaque zone, sur une piste de durée donnée.",
-    resumeEn: "Inserts a copy of a sound at the center of each zone, on a track of the given duration.",
+    resume: "Insère une copie d'un son au centre de chaque zone sur une piste cible, ou sur une piste silencieuse de la durée fournie.",
+    resumeEn: "Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration.",
     entrees: [
-      { nom: "Son", nomEn: "Sound", type: "audio", dynamique: true },
+      { nom: "Son", nomEn: "Sound", type: "audio" },
       { nom: "Zones", nomEn: "Zones", type: "controle" },
-      { nom: "Durée", nomEn: "Duration", type: "controle" },
+      { nom: "Durée", nomEn: "Duration", type: "controle", requis: false },
+      { nom: "Piste", nomEn: "Track", type: "audio", requis: false },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
-      const sons = ctx.entrees().filter((v: any) => v instanceof AudioBuffer);
-      if (sons.length === 0) return { valeurs:[null], message:traduire("msg.son_non_connect") };
-      const son = sons.length === 1 ? sons[0] : await melangerPistes(sons, 0);
+      const son = ctx.entree(0);
       const zones = ctx.entree(1);
       const duree = ctx.entree(2);
-      if (!duree || typeof duree !== "object" || !("duree" in duree)) return { valeurs:[null], message:traduire("msg.branchez_une_dur_e_extraire_dur_e") };
+      const piste = ctx.entree(3);
+      if (!(son instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.son_non_connect") };
       if (!Array.isArray(zones)) return { valeurs:[null], message:traduire("msg.branchez_le_s_lecteur_multi_zones") };
       if (!zones.length) return { valeurs:[null], message:traduire("msg.aucune_zone_placer") };
-      return { valeurs:[placerSonSurZones(son, (duree as any).duree, zones as any)] };
-   },
+      const dureeTotaleSec = piste instanceof AudioBuffer ? piste.duration : (duree && typeof duree === "object" && "duree" in duree ? (duree as any).duree : null);
+      if (typeof dureeTotaleSec !== "number" || dureeTotaleSec <= 0) return { valeurs:[null], message:traduire("msg.branchez_une_piste_ou_duree") };
+      return { valeurs:[await placerSonSurZones(son, dureeTotaleSec, zones as any, piste instanceof AudioBuffer ? piste : undefined)] };
+    },
  },
   {
     id: "melangeur", nom: "Mélangeur", univers: "Traitement", famille: "Montage",

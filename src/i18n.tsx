@@ -251,6 +251,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_var_1_zone_s": { fr: "{__VAR_0__} {__VAR_1__} zone(s)", en: "{__VAR_0__} {__VAR_1__} zone(s)" },
   "msg.son_non_connect": { fr: "Son non connecté.", en: "Unconnected sound." },
   "msg.branchez_une_dur_e_extraire_dur_e": { fr: "Branchez une Durée (Extraire durée).", en: "Connect a Duration (Extract duration)." },
+  "msg.branchez_une_piste_ou_duree": { fr: "Branchez une piste cible ou une durée.", en: "Connect a target track or a duration." },
   "msg.branchez_le_s_lecteur_multi_zones": { fr: "Branchez le Sélecteur multi-zones.", en: "Connect the Multizone Selector." },
   "msg.aucune_zone_placer": { fr: "Aucune zone à placer.", en: "No area to place." },
   "msg.2_entr_es": { fr: "≥ 2 entrées.", en: "≥ 2 entries." },

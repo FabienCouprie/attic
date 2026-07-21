@@ -17,26 +17,49 @@ export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: nu
   return resultat;
 }
 
-// Génère une piste silencieuse de `dureeTotaleSec` secondes dans laquelle une
-// copie du son `son` est mixée, centrée sur le milieu de chaque zone (debut +
-// duree/2). Les chevauchements s'additionnent, les débordements sont coupés aux
-// bords. Sortie stéréo, à la fréquence d'échantillonnage du son.
+// Place une copie du son `son` au centre de chaque zone, sur une piste cible
+// `piste` si elle est fournie, ou sur une piste silencieuse de `dureeTotaleSec`
+// secondes. Les chevauchements s'additionnent, les débordements sont coupés aux
+// bords.
 
+async function resamplerVers(
+  buffer: AudioBuffer,
+  sampleRate: number,
+  numberOfChannels: number,
+): Promise<AudioBuffer> {
+  if (buffer.sampleRate === sampleRate && buffer.numberOfChannels === numberOfChannels) {
+    return buffer;
+  }
+  const offline = new OfflineAudioContext(numberOfChannels, Math.ceil(buffer.duration * sampleRate), sampleRate);
+  const source = offline.createBufferSource();
+  source.buffer = buffer;
+  source.connect(offline.destination);
+  source.start(0);
+  return offline.startRendering();
+}
 
-export function placerSonSurZones(
+export async function placerSonSurZones(
   son: AudioBuffer,
   dureeTotaleSec: number,
-  zones: PositionZone[]
-): AudioBuffer {
-  const sampleRate = son.sampleRate;
-  const longueurSortie = Math.max(1, Math.round(dureeTotaleSec * sampleRate));
-  const resultat = new AudioBuffer({ numberOfChannels: 2, length: longueurSortie, sampleRate });
-  const sonLen = son.length;
+  zones: PositionZone[],
+  piste?: AudioBuffer,
+): Promise<AudioBuffer> {
+  const sampleRate = piste?.sampleRate ?? son.sampleRate;
+  const nbCanaux = piste?.numberOfChannels ?? 2;
+  const longueurSortie = piste?.length ?? Math.max(1, Math.round(dureeTotaleSec * sampleRate));
+  const resultat = new AudioBuffer({ numberOfChannels: nbCanaux, length: longueurSortie, sampleRate });
+  if (piste) {
+    for (let c = 0; c < nbCanaux; c++) {
+      resultat.getChannelData(c).set(piste.getChannelData(c));
+    }
+  }
+  const sonResample = await resamplerVers(son, sampleRate, nbCanaux);
+  const sonLen = sonResample.length;
   for (const zone of zones) {
     const centreSec = zone.debut + zone.duree / 2;
     const debutEch = Math.round(centreSec * sampleRate - sonLen / 2);
-    for (let c = 0; c < 2; c++) {
-      const src = son.getChannelData(c % son.numberOfChannels);
+    for (let c = 0; c < nbCanaux; c++) {
+      const src = sonResample.getChannelData(c % sonResample.numberOfChannels);
       const dst = resultat.getChannelData(c);
       for (let i = 0; i < sonLen; i++) {
         const pos = debutEch + i;
