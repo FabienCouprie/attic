@@ -245,10 +245,10 @@ export const fiches: FicheAudio[] = ([
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),
   {
     id: "extraire-zone", nom: "Extraire une zone", nomEn: "Extract Zone", univers: "Traitement", famille: "Montage",
-    resume: "Extrait une portion avec fondu.",
-    resumeEn: "Extracts a portion with fade.",
+    resume: "Extrait une portion avec fondu et renvoie l'objet Zone.",
+    resumeEn: "Extracts a portion with fade and returns the Zone object.",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
     parametres: [
       { nom: "Début", nomEn: "Start", plage: [0, 600], pas: 0.1, defaut: 0, unite: "s", doc: "Début de la zone à extraire.", docEn: "Start of the extracted zone." },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 600], pas: 0.1, defaut: 5, unite: "s", doc: "Durée de la zone extraite.", docEn: "Duration of the extracted zone." },
@@ -256,12 +256,13 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const debut = ctx.paramNombre("Début", 0);
-      const duree = ctx.paramNombre("Durée", 5);
-      return { valeurs: [extraireZone(a, debut, Math.min(duree, a.duration - debut))] };
+      const duree = Math.min(ctx.paramNombre("Durée", 5), a.duration - debut);
+      const zone = { debut, duree };
+      return { valeurs: [extraireZone(a, debut, duree), zone] };
    },
- },
+  },
   {
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",

@@ -61,18 +61,18 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reinserer-zone", nom: "Réinsérer une zone", univers: "Traitement", famille: "Montage",
     resume: "Réinsère une zone traitée dans la piste originale.",
-    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Position", nomEn: "Position", type: "controle" }],
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom:"Fondu", plage:[0,100], defaut:15, unite:"ms", nomEn: "Fade" }],
     async executer(ctx: any) {
-      const piste = ctx.entree(0), zone = ctx.entree(1), pos = ctx.entree(2);
+      const piste = ctx.entree(0), zoneTraitee = ctx.entree(1), zoneOrigine = ctx.entree(2);
       if (!(piste instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.piste_non_connect_e") };
-      if (!(zone instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.zone_non_connect_e") };
-      if (!pos || typeof pos !== "object" || !("debut" in pos)) return { valeurs:[null], message:traduire("msg.position_non_connect_e") };
+      if (!(zoneTraitee instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.zone_non_connect_e") };
+      if (!zoneOrigine || typeof zoneOrigine !== "object" || !("debut" in zoneOrigine)) return { valeurs:[null], message:traduire("msg.zone_non_connect_e") };
       const fondu = ctx.paramNombre("Fondu",15)/1000;
-      return { valeurs:[reinsererZone(piste, zone, (pos as any).debut, fondu)] };
+      return { valeurs:[reinsererZone(piste, zoneTraitee, (zoneOrigine as any).debut, fondu)] };
    }, nomEn: "Reinsert Zone", resumeEn: "Reinserts a treated zone into the original track.",
- },
+  },
   {
     id: "selecteur-multi-zones", nom: "Sélecteur multi-zones", nomEn: "Multi-Zone Selector", univers: "Traitement", famille: "Montage",
     resume: "Sélectionne plusieurs zones audio et les transmet en liste.",
@@ -243,7 +243,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Extrait la zone temporelle exacte depuis le sélecteur multi-zones.",
     resumeEn: "Extracts the exact time zone from the multi-zone selector.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
     parametres: [
       { nom: "Zone", nomEn: "Zone", plage: [1, 100], pas: 1, defaut: 1,
         doc: "Numéro de la zone à extraire (1 = première zone sélectionnée dans le sélecteur multi-zones).",
@@ -254,16 +254,16 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const a = ctx.entree(0);
       const z = ctx.entree(1);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.connectez_une_source_audio") };
       const zones = (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
-      if (zones.length === 0) return { valeurs: [null], message: traduire("msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones") };
+      if (zones.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones") };
       const numZone = Math.max(1, Math.min(zones.length, Math.round(ctx.paramNombre("Zone", 1)))) - 1;
       const zone = zones[numZone];
       const sr = a.sampleRate;
       const debutEch = Math.max(0, Math.floor(zone.debut * sr));
       const finEch = Math.min(a.length, Math.ceil((zone.debut + zone.duree) * sr));
       const longueur = finEch - debutEch;
-      if (longueur <= 0) return { valeurs: [null], message: traduire("msg.zone_vide") };
+      if (longueur <= 0) return { valeurs: [null, null], message: traduire("msg.zone_vide") };
 
       const fonduEch = Math.min(Math.floor(longueur / 2), Math.round((ctx.paramNombre("Fondu", 5) / 1000) * sr));
       const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: longueur, sampleRate: sr });
@@ -288,7 +288,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       return {
-        valeurs: [resultat],
+        valeurs: [resultat, zone],
         message: traduire("msg.zone_var_0_var_1_extraite_var_2_s_var_3_var_4_s", numZone + 1, zones.length, zone.duree.toFixed(2), (debutEch / sr).toFixed(2), (finEch / sr).toFixed(2)),
       };
    },

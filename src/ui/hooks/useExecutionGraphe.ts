@@ -90,6 +90,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           audioResultatMessage: undefined,
           scriptGenere: undefined,
           mp3Url: undefined,
+          zonesSelectionnees: undefined,
         },
       };
     }));

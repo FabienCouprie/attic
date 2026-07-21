@@ -562,26 +562,27 @@ function Atelier() {
     const typeS = defS.sorties[si]?.type;
     const typeT = defT.entrees[ti]?.type;
     if (!typeS || !typeT || !fluxCompatibles(typeS, typeT)) return false;
-    // Refuser une seconde connexion sur un port d'entrée non dynamique
-    // (sauf si le port est variadique — dynamique: true, ex. fusionneur/mélangeur)
-    const portTarget = defT.entrees[ti];
-    if (portTarget && !portTarget.dynamique) {
-      const dejaConnecte = aretesRef.current.some(
-        (e) => e.target === conn.target && e.targetHandle === conn.targetHandle
-      );
-      if (dejaConnecte) return false;
-    }
     return true;
-  }, []);
+  }, [trouverDef, fluxCompatibles]);
 
   const onConnect: OnConnect = useCallback((conn) => {
+    if (!conn.sourceHandle || !conn.targetHandle) return;
     pushHistorique();
     const defS = trouverDef(noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId ?? "");
-    const si = parseInt((conn.sourceHandle ?? "out:0").split(":")[1]);
+    const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
+    const si = parseInt(conn.sourceHandle.split(":")[1]);
+    const ti = parseInt(conn.targetHandle.split(":")[1]);
     const typeP = defS?.sorties[si]?.type ?? "audio";
+    const portTarget = defT?.entrees[ti];
     const c = couleurFlux(typeP);
-    setEdges((eds) => [...eds, { ...conn, id: `e-${conn.source}-${conn.target}-${Date.now()}`, type: "arete-personnalisee", style: { stroke: c, strokeWidth: 2.5 } }]);
-  }, [setEdges, pushHistorique]);
+    setEdges((eds) => {
+      // Remplacer une connexion existante sur un port d'entrée non dynamique.
+      const nettoyees = portTarget && !portTarget.dynamique
+        ? eds.filter((e) => !(e.target === conn.target && e.targetHandle === conn.targetHandle))
+        : eds;
+      return [...nettoyees, { ...conn, id: `e-${conn.source}-${conn.target}-${Date.now()}`, type: "arete-personnalisee", style: { stroke: c, strokeWidth: 2.5 } }];
+    });
+  }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
   const { exporter, importer } = usePersistance({

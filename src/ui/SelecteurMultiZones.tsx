@@ -39,7 +39,22 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
 
   // Décodage
   useEffect(() => {
-    if (!audioUrl) { setBuffer(null); return; }
+    if (!audioUrl) {
+      setBuffer(null);
+      selectionRef.current = { debut: 0, duree: 0 };
+      setSelAffichee({ debut: 0, duree: 0 });
+      setZoomPct(100);
+      scrollRef.current = 0;
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (ctx) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      return;
+    }
     let annule = false;
     setChargement(true);
     (async () => {
