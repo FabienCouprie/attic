@@ -147,17 +147,17 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration.",
     entrees: [
       { nom: "Son", nomEn: "Sound", type: "audio" },
+      { nom: "Piste", nomEn: "Track", type: "audio", requis: false },
       { nom: "Zones", nomEn: "Zones", type: "controle" },
       { nom: "Durée", nomEn: "Duration", type: "controle", requis: false },
-      { nom: "Piste", nomEn: "Track", type: "audio", requis: false },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
       const son = ctx.entree(0);
-      const zones = ctx.entree(1);
-      const duree = ctx.entree(2);
-      const piste = ctx.entree(3);
+      const piste = ctx.entree(1);
+      const zones = ctx.entree(2);
+      const duree = ctx.entree(3);
       if (!(son instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.son_non_connect") };
       if (!Array.isArray(zones)) return { valeurs:[null], message:traduire("msg.branchez_le_s_lecteur_multi_zones") };
       if (!zones.length) return { valeurs:[null], message:traduire("msg.aucune_zone_placer") };
@@ -165,7 +165,7 @@ export const fiches: FicheAudio[] = ([
       if (typeof dureeTotaleSec !== "number" || dureeTotaleSec <= 0) return { valeurs:[null], message:traduire("msg.branchez_une_piste_ou_duree") };
       return { valeurs:[await placerSonSurZones(son, dureeTotaleSec, zones as any, piste instanceof AudioBuffer ? piste : undefined)] };
     },
- },
+  },
   {
     id: "melangeur", nom: "Mélangeur", univers: "Traitement", famille: "Montage",
     resume: "Mélange plusieurs pistes avec niveaux réglables.",
