@@ -122,8 +122,16 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
       {vuesAvant.map((Vue, i) => <Vue key={`av-${i}`} id={id} data={data} def={def} />)}
 
       {/* Lecteur + message (générique) — masqué si une vue custom gère déjà l'audio */}
-      {data.audioResultatUrl && vuesAvant.length === 0 && <div className="attic-node-player"><audio className="attic-node-audio" controls src={data.audioResultatUrl} /></div>}
-      {!data.audioResultatUrl && data.audioUrl && vuesAvant.length === 0 && <div className="attic-node-player"><audio className="attic-node-audio" controls src={data.audioUrl} /></div>}
+      {data.audioResultatUrl && vuesAvant.length === 0 && (
+        <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
+          <audio className="attic-node-audio nodrag" controls src={data.audioResultatUrl} />
+        </div>
+      )}
+      {!data.audioResultatUrl && data.audioUrl && vuesAvant.length === 0 && (
+        <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
+          <audio className="attic-node-audio nodrag" controls src={data.audioUrl} />
+        </div>
+      )}
       {data.audioResultatMessage && (
         <div className="attic-node-message">
           <button
