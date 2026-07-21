@@ -160,7 +160,8 @@ export function useMetaComposants(o: OptionsMeta) {
     input.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:12px 20px;font-size:16px;border:2px solid #2a9d8f;border-radius:8px;background:#1a1a2e;color:#fff;z-index:99999;outline:none;width:300px;";
     input.placeholder = t("meta.nouveauNom");
     const overlay = document.createElement("div");
-    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99998;";
+    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99998;display:flex;align-items:center;justify-content:center;";
+    overlay.appendChild(input);
     const valider = () => {
       const nom = input.value.trim();
       if (nom) {
@@ -168,25 +169,26 @@ export function useMetaComposants(o: OptionsMeta) {
         o.setNodes((nds: any[]) => nds.map((n) => n.id === cible.id ? { ...n, data: { ...n.data, nom } } : n));
       }
       overlay.remove();
-      input.remove();
     };
     const annuler = () => {
       overlay.remove();
-      input.remove();
     };
-    // Empêcher un clic dans la zone de saisie de valider immédiatement via l'overlay.
-    const stopPropagation = (e: Event) => { e.stopPropagation(); };
-    input.addEventListener("mousedown", stopPropagation);
-    input.addEventListener("click", stopPropagation);
-    overlay.addEventListener("click", valider);
+    // Valider seulement si on clique sur l'overlay (pas sur l'input).
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) valider();
+    });
     input.addEventListener("keydown", (e) => {
+      e.stopPropagation();
       if (e.key === "Enter") valider();
       if (e.key === "Escape") annuler();
     });
+    input.addEventListener("mousedown", (e) => e.stopPropagation());
     document.body.appendChild(overlay);
-    document.body.appendChild(input);
-    input.focus();
-    input.select();
+    // Focus différé pour être sûr que l'input est dans le DOM et au-dessus de tout.
+    requestAnimationFrame(() => {
+      input.focus();
+      input.select();
+    });
   }, [o, t]);
 
   return { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA };
