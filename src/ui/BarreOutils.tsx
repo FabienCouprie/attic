@@ -202,7 +202,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.1</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.1.2</span>
       <button
         className="attic-btn-icon"
         title={t("btn.resumeAudio")}
