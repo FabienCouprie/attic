@@ -7,6 +7,7 @@ const { execSync, execFile } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
+const { genererSongsee } = require("./songsee.cjs");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 
@@ -939,6 +940,17 @@ ipcMain.handle("fichier:supprimer", async (_event, chemin) => {
     return true;
   } catch {
     return false;
+  }
+});
+
+// --- IPC : Générer une visualisation Songsee depuis un fichier audio ---
+ipcMain.handle("songsee:generer", async (_event, { cheminEntree, options }) => {
+  try {
+    const result = await genererSongsee(cheminEntree, options);
+    return { ok: true, ...result };
+  } catch (err) {
+    console.error("[attic] songsee:generer a échoué :", err);
+    return { ok: false, erreur: err?.message || String(err) };
   }
 });
 

@@ -25,6 +25,7 @@ import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
+import { SongseeVue } from "./Songsee";
 import { construireListeInstruments } from "../plugins/instruments";
 import { construireListeStyles } from "../plugins/styles-musicaux";
 import { construireListeEmotions } from "../plugins/emotions";
@@ -957,6 +958,11 @@ function VuePochette({ data }: VueProps) {
   );
 }
 
+// ── Songsee (image de visualisation audio) ──
+function VueSongsee({ data }: VueProps) {
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} />;
+}
+
 // ── ColorSynth (spectre → palette de couleurs) ──
 function VueColorSynth({ data }: VueProps) {
   return <ColorSynth audioUrl={data.audioResultatUrl} />;
@@ -1024,6 +1030,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("vu-metre"), vue: VueVuMetre, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
+  { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },

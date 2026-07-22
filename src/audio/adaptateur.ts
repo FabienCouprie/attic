@@ -16,11 +16,12 @@ import type { TypeValeur } from "../core";
 export const registre = creerRegistre<TypeValeur, AudioContext>();
 
 // Types de flux du domaine audio (dans le registre, pas dans un global)
-registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
-registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
-registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
-registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
-registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
+  registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
+  registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
+  registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
+  registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
+  registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
+  registre.enregistrerTypeFlux({ id: "image", couleur: "#d63384", libelle: "Image" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

@@ -19,6 +19,8 @@ export type DonneesNoeud = {
   modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;
   enregistrementBlob?: Blob; enregistrementUrl?: string;
   prioritaire?: boolean;
+  imageResultatUrl?: string;
+  imageResultatFile?: File;
   onDefinirPrioritaire?: (id: string) => void;
   onReinitialiser?: (id: string) => void;
   onSupprimerNoeud?: (id: string) => void;

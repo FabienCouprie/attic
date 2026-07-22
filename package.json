@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "download:songsee": "node scripts/download-songsee.js",
     "lint": "oxlint"
   },
   "build": {
@@ -34,6 +35,10 @@
       {
         "from": "public/sf2",
         "to": "sf2"
+      },
+      {
+        "from": "bin/songsee",
+        "to": "bin/songsee"
       },
       {
         "from": "music collection",

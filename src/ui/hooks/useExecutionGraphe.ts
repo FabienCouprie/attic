@@ -82,6 +82,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!ids.has(n.id)) return n;
       if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
       if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
+      if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
       return {
         ...n,
         data: {
@@ -94,6 +95,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
           audioResultatMessage: undefined,
           scriptGenere: undefined,
           mp3Url: undefined,
+          imageResultatUrl: undefined,
+          imageResultatFile: undefined,
           zonesSelectionnees: undefined,
         },
       };
@@ -320,6 +323,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
         const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
         const fichier = valsSafe.find((v): v is File => v instanceof File);
+        const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg") ? fichier : null;
+        const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
         const texte = valsSafe.find((v): v is string => typeof v === "string");
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
         const grapheExport = (n.data as any)?._grapheExport as string | undefined;
@@ -336,6 +341,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);
+        }
+        // Même logique pour l'image (Songsee, etc.) : réutilise l'URL si le File est identique.
+        let imageUrl: string | undefined;
+        if (imageFile) {
+          if (imageFile === n.data.imageResultatFile && n.data.imageResultatUrl) {
+            imageUrl = n.data.imageResultatUrl;
+          } else {
+            if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
+            imageUrl = URL.createObjectURL(imageFile);
+          }
+        } else if (n.data.imageResultatUrl) {
+          URL.revokeObjectURL(n.data.imageResultatUrl);
         }
         // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
         if (meta) {
@@ -374,7 +391,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
             audioResultatBuffer: audio ?? undefined,
             audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
             scriptGenere: texte ?? undefined,
-            midiFichierSortie: (fichier instanceof File && fichier.type.includes("midi")) ? fichier : undefined,
+            midiFichierSortie: midiFile ?? undefined,
+            imageResultatUrl: imageUrl ?? undefined,
+            imageResultatFile: imageFile ?? undefined,
             ...(meta ? { statut: "termine" as const } : {}),
           },
         };
