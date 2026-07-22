@@ -14,6 +14,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreMidi, type NoteEvenement } from "../audio";
+import { sf2Chargee } from "./soundfontGlobal";
 
 const DEMI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -72,9 +73,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo par défaut (temps → secondes). Une ligne « TEMPO n » dans le texte le remplace.",
         docEn: "Default tempo (beats → seconds). A « TEMPO n » line in the text overrides it." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs", "SoundFont"],
-        optionsEn: ["FM/Oscillators", "SoundFont"], defaut: "FM/Oscillateurs",
-        doc: "Moteur de rendu audio du MIDI.", docEn: "Audio rendering engine for the MIDI.", defautEn: "FM/Oscillators" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
+        optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples.", defautEn: "Auto" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio synthétisé.", docEn: "Synthesized audio volume." },
     ],
@@ -84,8 +86,9 @@ export const fiches: FicheAudio[] = ([
       const { notes, tempo } = parserNotation(texte, ctx.paramNombre("Tempo", 120));
       if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne") };
       const midiFichier = notesVersFichierMidi(notes, tempo);
-      const mode = ctx.paramTexte("Synthèse", "FM/Oscillateurs") === "SoundFont" ? "SoundFont" : "FM/Oscillateurs";
-      const audio = await rendreMidi(midiFichier, mode, ctx.paramNombre("Volume", 80));
+      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const audio = await rendreMidi(midiFichier, modeRendu, ctx.paramNombre("Volume", 80));
       return { valeurs: [audio, midiFichier], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempo, audio.duration.toFixed(1)) };
    },
  },

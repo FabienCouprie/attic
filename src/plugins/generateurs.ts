@@ -7,7 +7,7 @@ import {
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
-  genererAudioFormule, notesVersFichierMidi,
+  genererAudioFormule, notesVersFichierMidi, rendreSequence,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee } from "./soundfontGlobal";
@@ -67,15 +67,24 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
-      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["Click", "Woodblock", "6/8"], defautEn: "Click" },
+      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["Click", "Woodblock", "6/8"], defautEn: "4/4" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
+      { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
+      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo",100);
       const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4));
       const midiFile = notesVersFichierMidi(notes, tempo);
-      return { valeurs: [audio, midiFile] };
+      const volume = ctx.paramNombre("Volume",80);
+      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+        ? await rendreSequence(notes, "SoundFont", volume)
+        : audio;
+      return { valeurs: [audioFinal, midiFile] };
     },
   },
   {
@@ -92,12 +101,21 @@ export const fiches: FicheAudio[] = ([
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["Rock", "Four-on-the-floor", "Funk", "Hip-hop", "Jazz", "Reggae", "Samba", "House", "Techno", "Drum & Bass", "Trap", "Disco"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
       { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
+      { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
+      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo",80);
       const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
       const midiFile = notesVersFichierMidi(notes, tempo);
-      return { valeurs: [audio, midiFile] };
+      const volume = ctx.paramNombre("Volume",80);
+      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+        ? await rendreSequence(notes, "SoundFont", volume)
+        : audio;
+      return { valeurs: [audioFinal, midiFile] };
     },
   },
   {
@@ -124,15 +142,18 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Plays a keyboard-recorded sequence.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["FM/Oscillateurs","SoundFont"], defaut:"FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
+      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
       const notes = ctx.noeud.data.sequenceNotes;
       if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
       try {
-        const { rendreSequence } = await import("../audio");
-        return { valeurs: [await rendreSequence(notes as any, ctx.paramTexte("Synthèse","FM/Oscillateurs") as any, ctx.paramNombre("Volume",80))] };
+        const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+        const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+        return { valeurs: [await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80))] };
       } catch (e: any) {
         return { valeurs:[null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }

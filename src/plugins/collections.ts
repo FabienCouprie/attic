@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { sf2Chargee } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -97,7 +98,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
       { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["FM/Oscillateurs","SoundFont"], defaut: "FM/Oscillateurs", optionsEn: ["FM/Oscillators", "SoundFont"], defautEn: "FM/Oscillators" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
@@ -109,7 +112,8 @@ export const fiches: FicheAudio[] = ([
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".mid",".midi"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
       if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mid_trouv") };
-      const mode = ctx.paramTexte("Synthèse","FM/Oscillateurs") as "FM/Oscillateurs"|"SoundFont";
+      const mode = ctx.paramTexte("Synthèse","Automatique") as "Automatique"|"FM/Oscillateurs"|"SoundFont";
+      const modeRendu: "FM/Oscillateurs"|"SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const vol = ctx.paramNombre("Volume",80);
       const qualite = ctx.paramNombre("Qualité",192);
       let ok = 0, err = 0;
@@ -121,7 +125,7 @@ export const fiches: FicheAudio[] = ([
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
           const { rendreMidiDepuisBytes } = await import("../audio");
-          const buf = await rendreMidiDepuisBytes(new Uint8Array(ab), mode, vol);
+          const buf = await rendreMidiDepuisBytes(new Uint8Array(ab), modeRendu, vol);
           const { bufferVersMp3Blob } = await import("../audio");
           const blob = await bufferVersMp3Blob(buf, qualite);
           const arr = await blob.arrayBuffer();

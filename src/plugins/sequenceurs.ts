@@ -3,11 +3,12 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { rendreSequenceurBatterie, decoderMotif, notesVersFichierMidi } from "../audio";
+import { rendreSequenceurBatterie, decoderMotif, notesVersFichierMidi, rendreSequence } from "../audio";
 import {
   rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
 } from "../audio";
+import { sf2Chargee } from "./soundfontGlobal";
 
 // Motif par défaut (16 pas) : kick sur les temps, snare sur 2 et 4, charley en croches.
 const MOTIF_DEFAUT = [
@@ -94,6 +95,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure.", defautEn: "Triangle" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
         doc: "Motif encodé (édité par la grille du nœud) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
         docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
@@ -108,13 +112,17 @@ export const fiches: FicheAudio[] = ([
       const gamme = ctx.paramTexte("Gamme", "majeur");
       const octave = ctx.paramNombre("Octave", 3);
       const timbre = ctx.paramTexte("Timbre", "Triangle");
+      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
       const grille = decoderMotifMelodique(ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT), NB_RANGEES_MELO, nbPas);
       const { audio, notes } = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
       const noteCount = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
       const noteBas = nomNotePourRangee(0, cle, gamme, octave);
       const noteHaut = nomNotePourRangee(NB_RANGEES_MELO - 1, cle, gamme, octave);
       const midiFile = notesVersFichierMidi(notes, tempo);
-      return { valeurs: [audio, midiFile], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
+      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+        ? await rendreSequence(notes, "SoundFont", volume)
+        : audio;
+      return { valeurs: [audioFinal, midiFile], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);
