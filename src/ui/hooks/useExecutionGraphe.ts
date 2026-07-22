@@ -45,8 +45,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
     onGrapheGenere, onNodeInstalle,
   } = o;
 
-  function obtenirAudio() {
+  async function obtenirAudio() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    if (audioCtxRef.current.state === "suspended") {
+      try { await audioCtxRef.current.resume(); } catch { /* ignore */ }
+    }
     return audioCtxRef.current;
   }
 
@@ -165,7 +168,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     }
 
-    const ctx = obtenirAudio();
+    const ctx = await obtenirAudio();
     const resultats = new Map<string, TypeValeur[]>();
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
