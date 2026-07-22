@@ -28,10 +28,9 @@ function nettoyer(chemin) {
 
 function argsSongsee(opts) {
   const a = [];
-  if (opts.viz && opts.viz !== "all") {
-    const liste = Array.isArray(opts.viz) ? opts.viz.join(",") : String(opts.viz);
-    a.push("--viz", liste);
-  }
+  const viz = opts.viz ? String(opts.viz).toLowerCase() : "all";
+  const liste = viz === "all" ? VIZS.join(",") : (Array.isArray(opts.viz) ? opts.viz.join(",") : viz);
+  a.push("--viz", liste);
   if (opts.palette) a.push("--style", opts.palette);
   if (opts.width) a.push("--width", String(opts.width));
   if (opts.height) a.push("--height", String(opts.height));
