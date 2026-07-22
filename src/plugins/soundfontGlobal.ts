@@ -34,7 +34,15 @@ export async function chargerSF2DepuisChemin(
   try {
     const resultat = await lireFichier(chemin);
     if (!resultat) return null;
-    return chargerSF2Globale(resultat.donnees, resultat.nom);
+    const donnees = resultat.donnees;
+    if (donnees.length < 1024) return null;
+    const riff = String.fromCharCode(donnees[0], donnees[1], donnees[2], donnees[3]);
+    const sfbk = String.fromCharCode(donnees[8], donnees[9], donnees[10], donnees[11]);
+    if (riff !== "RIFF" || sfbk !== "sfbk") {
+      console.warn(`[attic] ${chemin} n'est pas un fichier SF2 valide (RIFF/sfbk manquant)`);
+      return null;
+    }
+    return await chargerSF2Globale(donnees, resultat.nom);
   } catch {
     return null;
   }
@@ -45,8 +53,16 @@ export async function chargerSF2DepuisUrl(url: string): Promise<StructureSF2 | n
     const rep = await fetch(url);
     if (!rep.ok) return null;
     const buf = await rep.arrayBuffer();
+    if (buf.byteLength < 1024) return null;
+    const v = new DataView(buf);
+    const riff = String.fromCharCode(v.getUint8(0), v.getUint8(1), v.getUint8(2), v.getUint8(3));
+    const sfbk = String.fromCharCode(v.getUint8(8), v.getUint8(9), v.getUint8(10), v.getUint8(11));
+    if (riff !== "RIFF" || sfbk !== "sfbk") {
+      console.warn(`[attic] ${url} n'est pas un fichier SF2 valide (RIFF/sfbk manquant)`);
+      return null;
+    }
     const nom = url.split("/").pop() || "soundfont.sf2";
-    return chargerSF2Globale(buf, nom);
+    return await chargerSF2Globale(buf, nom);
   } catch {
     return null;
   }
