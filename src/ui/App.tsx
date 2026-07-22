@@ -246,7 +246,10 @@ function Atelier() {
   useEffect(() => {
     (async () => {
       const sf2 = await autoChargerSF2(repertoire);
-      if (sf2) setSf2NomState(sf2Nom());
+      if (sf2) {
+        setSf2NomState(sf2Nom());
+        cacheExec.current.clear();
+      }
     })();
   }, [repertoire]);
 
@@ -629,6 +632,7 @@ function Atelier() {
               await chargerSF2Globale(await f.arrayBuffer(), f.name);
               setSf2NomState(f.name);
               localStorage.setItem("attic-sf2-nom", f.name);
+              cacheExec.current.clear();
             } catch (e: any) {
               console.error("[attic] Échec chargement SF2 :", e);
               window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
