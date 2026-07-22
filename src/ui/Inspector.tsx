@@ -111,12 +111,22 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           </div>
           {isOpen && docP && <p className="inspecteur-param-doc">{docP}</p>}
           {p.type === "choix" && p.options ? (
-            <select value={String(params[p.nom] ?? defautP)} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
-              {p.options.map((o, i) => {
-                const label = lang === "en" && p.optionsEn?.[i] ? p.optionsEn[i] : o;
-                return <option key={o} value={o}>{label}</option>;
-              })}
-            </select>
+            (() => {
+              const raw = String(params[p.nom] ?? defautP);
+              const valeur = p.options.includes(raw)
+                ? raw
+                : (p.optionsEn?.indexOf(raw) ?? -1) >= 0
+                ? p.options[p.optionsEn!.indexOf(raw)]
+                : p.options[0] ?? raw;
+              return (
+                <select value={valeur} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
+                  {p.options.map((o, i) => {
+                    const label = lang === "en" && p.optionsEn?.[i] ? p.optionsEn[i] : o;
+                    return <option key={o} value={o}>{label}</option>;
+                  })}
+                </select>
+              );
+            })()
           ) : p.type === "texte" ? (
             <textarea
               value={String(params[p.nom] ?? defautP)}
