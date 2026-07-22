@@ -10,7 +10,7 @@ import {
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
 } from "../audio";
 import { parseMidi } from "midi-file";
-import { sf2Chargee } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4));
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
       console.log(`[attic] Mélodie aléatoire : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
       const audioFinal = useSf2
@@ -116,7 +116,7 @@ export const fiches: FicheAudio[] = ([
       const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
       console.log(`[attic] Musique fractale : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
       const audioFinal = useSf2
@@ -160,7 +160,7 @@ export const fiches: FicheAudio[] = ([
       const notes = ctx.noeud.data.sequenceNotes;
       if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
       try {
-        const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+        const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
         const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
         console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
         const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80));

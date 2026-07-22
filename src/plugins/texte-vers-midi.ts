@@ -14,7 +14,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreMidi, type NoteEvenement } from "../audio";
-import { sf2Chargee } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
 
 const DEMI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -86,7 +86,7 @@ export const fiches: FicheAudio[] = ([
       const { notes, tempo } = parserNotation(texte, ctx.paramNombre("Tempo", 120));
       if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne") };
       const midiFichier = notesVersFichierMidi(notes, tempo);
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const audio = await rendreMidi(midiFichier, modeRendu, ctx.paramNombre("Volume", 80));
       return { valeurs: [audio, midiFichier], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempo, audio.duration.toFixed(1)) };

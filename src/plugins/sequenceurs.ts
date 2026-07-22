@@ -8,7 +8,7 @@ import {
   rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
 } from "../audio";
-import { sf2Chargee } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
 
 // Motif par défaut (16 pas) : kick sur les temps, snare sur 2 et 4, charley en croches.
 const MOTIF_DEFAUT = [
@@ -113,7 +113,7 @@ export const fiches: FicheAudio[] = ([
       const gamme = ctx.paramTexte("Gamme", "majeur");
       const octave = ctx.paramNombre("Octave", 3);
       const timbre = ctx.paramTexte("Timbre", "Triangle");
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const grille = decoderMotifMelodique(ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT), NB_RANGEES_MELO, nbPas);
       const { audio, notes } = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
       const noteCount = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);

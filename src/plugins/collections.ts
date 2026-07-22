@@ -3,7 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { sf2Chargee } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".mid",".midi"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
       if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mid_trouv") };
-      const mode = ctx.paramTexte("Synthèse","Automatique") as "Automatique"|"FM/Oscillateurs"|"SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse","Automatique"));
       const modeRendu: "FM/Oscillateurs"|"SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const vol = ctx.paramNombre("Volume",80);
       const qualite = ctx.paramNombre("Qualité",192);

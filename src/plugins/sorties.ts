@@ -4,7 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreMidi } from "../audio";
-import { sf2Chargee } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi") };
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(fichier, modeRendu, volume);
@@ -66,13 +66,13 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const midi = ctx.noeud.data.midiFichier as File | undefined;
       if (!midi) return { valeurs: [null, null], message: traduire("msg.chargez_un_fichier_midi") };
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(midi, modeRendu, volume);
       return { valeurs: [buffer, midi] };
    },
- },
+  },
   {
     id: "point-ecoute-midi", nom: "Point d'écoute MIDI", nomEn: "MIDI Listening Point", univers: "Sorties", famille: "Écoute",
     resume: "Auditionne le MIDI sans interrompre la chaîne.",
@@ -89,7 +89,7 @@ export const fiches: FicheAudio[] = ([
       console.log("[attic] Point d'écoute MIDI : exécution démarrée");
       const midi = ctx.entree(0);
       if (!(midi instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
-      const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       console.log(`[attic] Point d'écoute MIDI : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}`);

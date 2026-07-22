@@ -15,6 +15,14 @@ export function sf2Nom(): string {
   return g.__attic_sf2_nom__ ?? "";
 }
 
+export function normaliserModeSynthèse(valeur: string): "Automatique" | "FM/Oscillateurs" | "SoundFont" {
+  const v = valeur.trim();
+  if (v === "SoundFont") return "SoundFont";
+  if (v === "FM/Oscillators" || v === "FM/Oscillateurs") return "FM/Oscillateurs";
+  if (v === "Auto" || v === "Automatique") return "Automatique";
+  return "Automatique";
+}
+
 export async function chargerSF2Globale(
   source: ArrayBuffer | Uint8Array,
   nom: string
