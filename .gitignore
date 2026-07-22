@@ -18,6 +18,10 @@ public/oonx/
 # SoundFont files (binary assets, user-provided)
 public/sf2/
 
+# Songsee binary (built locally, too large for git)
+bin/songsee/songsee.exe
+bin/songsee/songsee
+
 # User work files
 work/
 
