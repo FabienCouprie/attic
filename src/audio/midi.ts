@@ -3,6 +3,7 @@ import { decoderAudioUrl } from "./io";
 import { parseMidi, writeMidi } from "midi-file";
 import type { StructureSF2 } from "./soundfont";
 import { chercherZoneInstrument } from "./soundfont";
+import { sf2Chargee } from "../plugins/soundfontGlobal";
 
 export interface NoteMidi {
   note: number;
@@ -352,6 +353,11 @@ export async function rendreMidiDepuisBytes(
   const vol = Math.max(0, Math.min(1, volume / 100));
 
   if (mode === "SoundFont") {
+    const sf2Global = sf2Chargee();
+    if (sf2Global) {
+      const notesEvenements: NoteEvenement[] = notes.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      return rendreAvecSF2(sf2Global, notesEvenements, volume);
+    }
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
     const notesParProg = new Map<number, NoteMidi[]>();
     for (const n of notes) {
@@ -441,6 +447,10 @@ export async function rendreSequence(
   const vol = Math.max(0, Math.min(1, volume / 100));
 
   if (mode === "SoundFont") {
+    const sf2Global = sf2Chargee();
+    if (sf2Global) {
+      return rendreAvecSF2(sf2Global, notes, volume, instrument ?? undefined);
+    }
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * 44100), 44100);
     const notesMidi: NoteMidi[] = notes.map((n) => ({
       ...n,
