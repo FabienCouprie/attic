@@ -1,6 +1,7 @@
 // audio/attracteurs.ts — Moteur de rendu d'attracteurs étranges / IFS.
-// Génère des images (File) à partir d'attracteurs classiques : Lorenz,
-// Rössler, Hénon, Ikeda, fougère de Barnsley, triangle de Sierpiński.
+// Génère des images (File) et du son (AudioBuffer) à partir d'attracteurs
+// classiques : Lorenz, Rössler, Hénon, Ikeda, fougère de Barnsley,
+// triangle de Sierpiński.
 
 export type TypeAttracteur = "lorenz" | "rossler" | "henon" | "ikeda" | "barnsley" | "sierpinski";
 
@@ -26,6 +27,21 @@ export interface OptionsAttracteur {
   projection: "xy" | "xz" | "yz" | "3d-shadow";
   graine?: number;
 }
+
+export interface OptionsAudio {
+  duree: number; // secondes
+  frequenceBase: number; // Hz
+  plageDemiTons: number; // ± demi-tons
+  decimation: number; // utiliser 1 point sur N
+  volume: number; // 0–100
+}
+
+export interface ResultatAttracteur {
+  image: File;
+  audio: AudioBuffer;
+}
+
+const SAMPLE_RATE = 44100;
 
 // Générateur congruentiel linéaire simple et déterministe.
 function creerRng(graine: number) {
@@ -169,7 +185,7 @@ function* itererAttracteur(type: TypeAttracteur, iterations: number, rng: () => 
   }
 }
 
-interface BoundingBox { minX: number; maxX: number; minY: number; maxY: number; }
+interface BoundingBox { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number; }
 
 function projecter(point: Point3D, projection: OptionsAttracteur["projection"]): { x: number; y: number } {
   switch (projection) {
@@ -186,49 +202,50 @@ function projecter(point: Point3D, projection: OptionsAttracteur["projection"]):
   }
 }
 
-function calculerHistogramme(
-  type: TypeAttracteur,
-  iterations: number,
-  width: number,
-  height: number,
-  projection: OptionsAttracteur["projection"],
-  graine: number
-): { histogramme: Float32Array; max: number; bbox: BoundingBox } {
-  const rng = creerRng(graine);
-
-  // Première passe : déterminer la bounding box.
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  let compteur = 0;
+function collecterPoints(type: TypeAttracteur, iterations: number, rng: () => number): Point3D[] {
+  const points: Point3D[] = [];
   for (const p of itererAttracteur(type, iterations, rng)) {
+    if (isFinite(p.x) && isFinite(p.y) && isFinite(p.z)) points.push(p);
+  }
+  return points;
+}
+
+function calculerBoundingBox(points: Point3D[], projection: OptionsAttracteur["projection"]): BoundingBox {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const p of points) {
     const proj = projecter(p, projection);
-    if (!isFinite(proj.x) || !isFinite(proj.y)) continue;
     minX = Math.min(minX, proj.x);
     maxX = Math.max(maxX, proj.x);
     minY = Math.min(minY, proj.y);
     maxY = Math.max(maxY, proj.y);
-    compteur++;
+    minZ = Math.min(minZ, p.z);
+    maxZ = Math.max(maxZ, p.z);
   }
-
-  if (compteur === 0 || !isFinite(minX)) {
-    minX = -1; maxX = 1; minY = -1; maxY = 1;
-  }
-
-  // Marge pour ne pas couper les bords.
+  if (!isFinite(minX)) { minX = -1; maxX = 1; minY = -1; maxY = 1; minZ = -1; maxZ = 1; }
   const marge = 0.05;
   const dx = maxX - minX || 1;
   const dy = maxY - minY || 1;
-  minX -= dx * marge; maxX += dx * marge;
-  minY -= dy * marge; maxY += dy * marge;
+  const dz = maxZ - minZ || 1;
+  return {
+    minX: minX - dx * marge, maxX: maxX + dx * marge,
+    minY: minY - dy * marge, maxY: maxY + dy * marge,
+    minZ: minZ - dz * marge, maxZ: maxZ + dz * marge,
+  };
+}
 
+function calculerHistogramme(
+  points: Point3D[],
+  width: number,
+  height: number,
+  projection: OptionsAttracteur["projection"],
+  bbox: BoundingBox
+): { histogramme: Float32Array; max: number } {
   const histogramme = new Float32Array(width * height);
   let max = 0;
-
-  // Deuxième passe : accumuler.
-  for (const p of itererAttracteur(type, iterations, creerRng(graine))) {
+  for (const p of points) {
     const proj = projecter(p, projection);
-    if (!isFinite(proj.x) || !isFinite(proj.y)) continue;
-    const nx = (proj.x - minX) / (maxX - minX);
-    const ny = (proj.y - minY) / (maxY - minY);
+    const nx = (proj.x - bbox.minX) / (bbox.maxX - bbox.minX);
+    const ny = (proj.y - bbox.minY) / (bbox.maxY - bbox.minY);
     const px = Math.floor(nx * (width - 1));
     const py = Math.floor((1 - ny) * (height - 1));
     if (px >= 0 && px < width && py >= 0 && py < height) {
@@ -237,8 +254,7 @@ function calculerHistogramme(
       if (histogramme[idx] > max) max = histogramme[idx];
     }
   }
-
-  return { histogramme, max, bbox: { minX, maxX, minY, maxY } };
+  return { histogramme, max };
 }
 
 function fileDepuisCanvas(canvas: HTMLCanvasElement, format: "png" | "jpeg", nom: string): Promise<File> {
@@ -259,33 +275,21 @@ function fileDepuisCanvas(canvas: HTMLCanvasElement, format: "png" | "jpeg", nom
   });
 }
 
-export async function rendreAttracteurImage(
-  options: OptionsAttracteur,
-  format: "png" | "jpeg" = "png"
-): Promise<File> {
-  const {
-    type,
-    iterations: iterationsBrut,
-    width,
-    height,
-    palette,
-    exposure,
-    gamma,
-    projection,
-    graine = 42,
-  } = options;
-
-  const iterations = Math.max(1000, Math.min(2_000_000, Math.round(iterationsBrut)));
-
-  const { histogramme, max } = calculerHistogramme(type, iterations, width, height, projection, graine);
-
+function rendreHistogrammeSurCanvas(
+  histogramme: Float32Array,
+  max: number,
+  width: number,
+  height: number,
+  palette: string,
+  exposure: number,
+  gamma: number
+): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d", { willReadFrequently: false });
   if (!ctx) throw new Error("Impossible d'obtenir le contexte 2D du canvas");
 
-  // Fond noir.
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
@@ -316,14 +320,118 @@ export async function rendreAttracteurImage(
   }
 
   ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
 
+export function sonifierPoints(
+  points: Point3D[],
+  bbox: BoundingBox,
+  options: OptionsAudio
+): AudioBuffer {
+  const {
+    duree,
+    frequenceBase,
+    plageDemiTons,
+    decimation,
+    volume,
+  } = options;
+
+  const nbEchantillons = Math.max(1, Math.floor(duree * SAMPLE_RATE));
+  const ctx = new OfflineAudioContext(2, nbEchantillons, SAMPLE_RATE);
+  const buffer = ctx.createBuffer(2, nbEchantillons, SAMPLE_RATE);
+  const gauche = buffer.getChannelData(0);
+  const droite = buffer.getChannelData(1);
+
+  const vol = Math.max(0, Math.min(1, volume / 100)) * 0.25;
+  const pointsUtilisables = points.filter((p) => isFinite(p.x) && isFinite(p.y) && isFinite(p.z));
+  if (pointsUtilisables.length === 0) return buffer;
+
+  const dx = bbox.maxX - bbox.minX || 1;
+  const dy = bbox.maxY - bbox.minY || 1;
+  const dz = bbox.maxZ - bbox.minZ || 1;
+
+  const ratio = Math.max(1, Math.floor(pointsUtilisables.length / (nbEchantillons * decimation)));
+  let phaseG = 0, phaseD = 0;
+
+  for (let i = 0; i < nbEchantillons; i++) {
+    const idx = Math.min(pointsUtilisables.length - 1, Math.floor(i * ratio * decimation));
+    const p = pointsUtilisables[idx];
+    const nx = (p.x - bbox.minX) / dx;
+    const ny = (p.y - bbox.minY) / dy;
+    const nz = (p.z - bbox.minZ) / dz;
+
+    // x contrôle la fréquence du canal gauche, y du canal droit, z l'amplitude.
+    const freqG = frequenceBase * 2 ** ((nx - 0.5) * plageDemiTons / 12);
+    const freqD = frequenceBase * 2 ** ((ny - 0.5) * plageDemiTons / 12);
+    const amp = vol * (0.3 + 0.7 * nz);
+
+    const incG = (freqG / SAMPLE_RATE) * 2 * Math.PI;
+    const incD = (freqD / SAMPLE_RATE) * 2 * Math.PI;
+    phaseG += incG;
+    phaseD += incD;
+    gauche[i] = Math.sin(phaseG) * amp;
+    droite[i] = Math.sin(phaseD) * amp;
+  }
+
+  // Petit fondu d'entrée/sortie pour éviter les clics.
+  const fade = Math.min(nbEchantillons, Math.floor(SAMPLE_RATE * 0.01));
+  for (let i = 0; i < fade; i++) {
+    const f = i / fade;
+    gauche[i] *= f;
+    droite[i] *= f;
+    gauche[nbEchantillons - 1 - i] *= f;
+    droite[nbEchantillons - 1 - i] *= f;
+  }
+
+  return buffer;
+}
+
+export async function rendreAttracteurImageEtAudio(
+  options: OptionsAttracteur,
+  audioOptions: OptionsAudio,
+  format: "png" | "jpeg" = "png"
+): Promise<ResultatAttracteur> {
+  const {
+    type,
+    iterations: iterationsBrut,
+    width,
+    height,
+    palette,
+    exposure,
+    gamma,
+    projection,
+    graine = 42,
+  } = options;
+
+  const iterations = Math.max(1000, Math.min(2_000_000, Math.round(iterationsBrut)));
+  const rng = creerRng(graine);
+  const points = collecterPoints(type, iterations, rng);
+  const bbox = calculerBoundingBox(points, projection);
+  const { histogramme, max } = calculerHistogramme(points, width, height, projection, bbox);
+
+  const canvas = rendreHistogrammeSurCanvas(histogramme, max, width, height, palette, exposure, gamma);
   const ext = format === "png" ? "png" : "jpg";
   const nom = `attracteur-${type}-${palette}.${ext}`;
-  return fileDepuisCanvas(canvas, format, nom);
+  const image = await fileDepuisCanvas(canvas, format, nom);
+  const audio = sonifierPoints(points, bbox, audioOptions);
+
+  return { image, audio };
+}
+
+export async function rendreAttracteurImage(
+  options: OptionsAttracteur,
+  format: "png" | "jpeg" = "png"
+): Promise<File> {
+  const { image } = await rendreAttracteurImageEtAudio(
+    options,
+    { duree: 1, frequenceBase: 220, plageDemiTons: 24, decimation: 100, volume: 0 },
+    format
+  );
+  return image;
 }
 
 // Exposé pour les tests et les sonifications futures.
-export { calculerHistogramme, itererAttracteur, projecter, creerRng, PALETTES, interpolerCouleur };
+export { calculerHistogramme, itererAttracteur, projecter, creerRng, PALETTES, interpolerCouleur, collecterPoints, calculerBoundingBox };
 
 export function canvasDisponible(): boolean {
   try {

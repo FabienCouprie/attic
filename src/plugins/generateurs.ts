@@ -8,7 +8,7 @@ import {
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
-  rendreAttracteurImage, normaliserTypeAttracteur,
+  rendreAttracteurImage, rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -129,9 +129,9 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "attracteur-ifs", nom: "Attracteur / IFS", nomEn: "Attractor / IFS", univers: "Visualisation", famille: "Analyse",
-    resume: "Rend un attracteur chaotique ou un IFS en image.",
-    resumeEn: "Renders a chaotic attractor or IFS as an image.",
-    entrees: [], sorties: [{ nom: "Image", type: "image" }],
+    resume: "Rend un attracteur chaotique ou un IFS en image + audio.",
+    resumeEn: "Renders a chaotic attractor or IFS as image + audio.",
+    entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Attracteur", nomEn: "Attractor", type: "choix", options: ["Lorenz", "Rössler", "Hénon", "Ikeda", "Barnsley", "Sierpiński"], optionsEn: ["Lorenz", "Rossler", "Henon", "Ikeda", "Barnsley", "Sierpinski"], defaut: "Lorenz", defautEn: "Lorenz" },
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [10000, 1000000], pas: 1000, defaut: 200000, unite: "pts" },
@@ -143,27 +143,45 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1 },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42 },
       { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], optionsEn: ["PNG", "JPEG"], defaut: "PNG", defautEn: "PNG" },
+      { nom: "Durée audio", nomEn: "Audio duration", type: "nombre", plage: [1, 30], pas: 0.5, defaut: 4, unite: "s" },
+      { nom: "Fréquence base", nomEn: "Base frequency", type: "nombre", plage: [20, 2000], pas: 1, defaut: 220, unite: "Hz" },
+      { nom: "Plage hauteur", nomEn: "Pitch range", type: "nombre", plage: [0, 48], pas: 1, defaut: 24, unite: "demi-tons" },
+      { nom: "Décimation audio", nomEn: "Audio decimation", type: "nombre", plage: [1, 100], pas: 1, defaut: 1, unite: "pts/éch" },
+      { nom: "Volume audio", nomEn: "Audio volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const type = ctx.paramTexte("Attracteur", "Lorenz");
       const typeNormalise = normaliserTypeAttracteur(type);
       if (!typeNormalise) {
-        return { valeurs: [null], message: `${type}: type d'attracteur inconnu` };
+        return { valeurs: [null, null], message: `${type}: type d'attracteur inconnu` };
       }
       const projection = ctx.paramTexte("Projection", "XY").toLowerCase().replace(/\s+/g, "-");
       const projectionValide = ["xy", "xz", "yz", "3d-shadow"].includes(projection) ? projection as any : "xy";
-      const image = await rendreAttracteurImage({
-        type: typeNormalise,
-        iterations: ctx.paramNombre("Itérations", 200000),
-        width: Math.round(ctx.paramNombre("Largeur", 1024)),
-        height: Math.round(ctx.paramNombre("Hauteur", 1024)),
-        palette: ctx.paramTexte("Palette", "classic"),
-        projection: projectionValide,
-        exposure: ctx.paramNombre("Exposition", 1.5),
-        gamma: ctx.paramNombre("Gamma", 1),
-        graine: ctx.paramNombre("Graine", 42),
-      }, ctx.paramTexte("Format", "PNG").toLowerCase() as any);
-      return { valeurs: [image], message: traduire("msg.attracteur.termine", type, `${image.size.toLocaleString()} o`) };
+      const { image, audio } = await rendreAttracteurImageEtAudio(
+        {
+          type: typeNormalise,
+          iterations: ctx.paramNombre("Itérations", 200000),
+          width: Math.round(ctx.paramNombre("Largeur", 1024)),
+          height: Math.round(ctx.paramNombre("Hauteur", 1024)),
+          palette: ctx.paramTexte("Palette", "classic"),
+          projection: projectionValide,
+          exposure: ctx.paramNombre("Exposition", 1.5),
+          gamma: ctx.paramNombre("Gamma", 1),
+          graine: ctx.paramNombre("Graine", 42),
+        },
+        {
+          duree: ctx.paramNombre("Durée audio", 4),
+          frequenceBase: ctx.paramNombre("Fréquence base", 220),
+          plageDemiTons: ctx.paramNombre("Plage hauteur", 24),
+          decimation: Math.max(1, Math.round(ctx.paramNombre("Décimation audio", 1))),
+          volume: ctx.paramNombre("Volume audio", 80),
+        },
+        ctx.paramTexte("Format", "PNG").toLowerCase() as any
+      );
+      return {
+        valeurs: [image, audio],
+        message: traduire("msg.attracteur.termine", type, `${image.size.toLocaleString()} o · ${audio.duration.toFixed(1)} s`),
+      };
     },
   },
   {
