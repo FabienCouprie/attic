@@ -21,6 +21,12 @@ included in Attic.
 |---|---|---|
 | `FluidR3_GM.sf2` | MIT | Copyright (c) 2000-2002, 2008 Frank Wen — FluidR3 General MIDI SoundFont |
 
+### External Binaries
+
+| Binary | License | Copyright |
+|---|---|---|
+| `songsee` (CLI) | MIT | Copyright (c) Peter Steinberger / openclaw — Spectrogram/visualization CLI (https://github.com/openclaw/songsee) |
+
 ## Dependencies (npm)
 
 | Package | License | Copyright |
