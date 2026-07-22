@@ -625,9 +625,14 @@ function Atelier() {
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
           onChargerSF2={async (f) => {
-            await chargerSF2Globale(await f.arrayBuffer(), f.name);
-            setSf2NomState(f.name);
-            localStorage.setItem("attic-sf2-nom", f.name);
+            try {
+              await chargerSF2Globale(await f.arrayBuffer(), f.name);
+              setSf2NomState(f.name);
+              localStorage.setItem("attic-sf2-nom", f.name);
+            } catch (e: any) {
+              console.error("[attic] Échec chargement SF2 :", e);
+              window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
+            }
           }}
           onDetacher={() => {
             if ((window as any).api) { (window as any).api.nouvelleFenetre?.(); }

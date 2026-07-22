@@ -23,6 +23,7 @@ export async function chargerSF2Globale(
   const sf2 = analyserSF2(buf);
   g.__attic_sf2__ = sf2;
   g.__attic_sf2_nom__ = nom;
+  console.log(`[attic] SF2 global chargé : ${nom} (${sf2.instruments.length} instruments, ${sf2.echantillons.length} échantillons)`);
   return sf2;
 }
 

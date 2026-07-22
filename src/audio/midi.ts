@@ -355,9 +355,11 @@ export async function rendreMidiDepuisBytes(
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
     if (sf2Global) {
+      console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
       const notesEvenements: NoteEvenement[] = notes.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
       return rendreAvecSF2(sf2Global, notesEvenements, volume);
     }
+    console.warn("[attic] rendreMidiDepuisBytes en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
     const notesParProg = new Map<number, NoteMidi[]>();
     for (const n of notes) {
@@ -449,8 +451,10 @@ export async function rendreSequence(
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
     if (sf2Global) {
+      console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
       return rendreAvecSF2(sf2Global, notes, volume, instrument ?? undefined);
     }
+    console.warn("[attic] rendreSequence en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * 44100), 44100);
     const notesMidi: NoteMidi[] = notes.map((n) => ({
       ...n,
