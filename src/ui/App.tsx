@@ -624,7 +624,10 @@ function Atelier() {
             };
             input.click();
           }}            
-          onLancer={() => lancer()}
+          onLancer={async () => {
+            await lancer();
+            rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
+          }}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
           onChargerSF2={async (f) => {
