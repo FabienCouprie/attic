@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "download:songsee": "node scripts/download-songsee.js",
+    "download:songsee": "node scripts/download-songsee.cjs",
     "lint": "oxlint"
   },
   "build": {

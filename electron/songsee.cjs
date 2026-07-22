@@ -11,10 +11,13 @@ const FORMATS = ["jpeg", "png"];
 
 function cheminBinaire() {
   const nom = process.platform === "win32" ? "songsee.exe" : "songsee";
-  // 1. Binaire embarqué dans les ressources
+  // 1. Binaire embarqué dans les ressources (packaging Electron)
   const embarque = path.join(process.resourcesPath, "bin", "songsee", nom);
   if (fs.existsSync(embarque)) return embarque;
-  // 2. Fallback : PATH
+  // 2. Dossier du projet en dev (electron/ → .. → bin/songsee)
+  const dev = path.resolve(__dirname, "..", "bin", "songsee", nom);
+  if (fs.existsSync(dev)) return dev;
+  // 3. Fallback : PATH
   return nom;
 }
 
