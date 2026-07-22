@@ -79,6 +79,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "msg.songsee.generation": { fr: "Génération de la visualisation Songsee…", en: "Generating Songsee visualization…" },
   "msg.songsee.erreur": { fr: "La visualisation Songsee a échoué.", en: "Songsee visualization failed." },
   "msg.songsee.termine": { fr: "Visualisation Songsee prête : {0} / {1} ({2}).", en: "Songsee visualization ready: {0} / {1} ({2})." },
+  "msg.attracteur.termine": { fr: "Attracteur {0} rendu ({1}).", en: "Attractor {0} rendered ({1})." },
   "msg.connecter.image": { fr: "Connectez une image.", en: "Connect an image." },
   "msg.export_image.ecriture_impossible": { fr: "Impossible d'écrire l'image sur disque.", en: "Unable to write the image to disk." },
   "msg.export_image.termine": { fr: "Image sauvegardée : {0}", en: "Image saved: {0}" },

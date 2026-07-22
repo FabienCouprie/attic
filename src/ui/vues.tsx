@@ -963,6 +963,11 @@ function VueSongsee({ data }: VueProps) {
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} />;
 }
 
+// ── Attracteur / IFS (image générée) ──
+function VueAttracteurIFS({ data }: VueProps) {
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} />;
+}
+
 // ── ColorSynth (spectre → palette de couleurs) ──
 function VueColorSynth({ data }: VueProps) {
   return <ColorSynth audioUrl={data.audioResultatUrl} />;
@@ -1031,6 +1036,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
   { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
+  { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },

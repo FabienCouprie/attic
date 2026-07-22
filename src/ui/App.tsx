@@ -108,6 +108,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "vu-metre") return { width: 300, height: 260 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 280, height: 340 };
+  if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
   if (def.id === "galerie-exposition") return { width: 280, height: 280 };
   if (def.id === "gestion-nodes") return { width: 280, height: 220 };
   if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };

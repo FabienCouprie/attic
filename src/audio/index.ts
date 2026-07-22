@@ -29,5 +29,6 @@ export * from "./graphe-embarque";
 export * from "./formants";
 export * from "./math-formules";
 export * from "./tone-synths";
+export * from "./attracteurs";
 
 export { registre } from "./adaptateur";

@@ -8,6 +8,7 @@ import {
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
+  rendreAttracteurImage, normaliserTypeAttracteur,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -124,6 +125,45 @@ export const fiches: FicheAudio[] = ([
         : audio;
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFile] };
+    },
+  },
+  {
+    id: "attracteur-ifs", nom: "Attracteur / IFS", nomEn: "Attractor / IFS", univers: "Visualisation", famille: "Analyse",
+    resume: "Rend un attracteur chaotique ou un IFS en image.",
+    resumeEn: "Renders a chaotic attractor or IFS as an image.",
+    entrees: [], sorties: [{ nom: "Image", type: "image" }],
+    parametres: [
+      { nom: "Attracteur", nomEn: "Attractor", type: "choix", options: ["Lorenz", "Rössler", "Hénon", "Ikeda", "Barnsley", "Sierpiński"], optionsEn: ["Lorenz", "Rossler", "Henon", "Ikeda", "Barnsley", "Sierpinski"], defaut: "Lorenz", defautEn: "Lorenz" },
+      { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [10000, 1000000], pas: 1000, defaut: 200000, unite: "pts" },
+      { nom: "Largeur", nomEn: "Width", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px" },
+      { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px" },
+      { nom: "Palette", nomEn: "Palette", type: "choix", options: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defaut: "classic", optionsEn: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defautEn: "classic" },
+      { nom: "Projection", nomEn: "Projection", type: "choix", options: ["XY", "XZ", "YZ", "3D shadow"], optionsEn: ["XY", "XZ", "YZ", "3D shadow"], defaut: "XY", defautEn: "XY" },
+      { nom: "Exposition", nomEn: "Exposure", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1.5 },
+      { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1 },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42 },
+      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], optionsEn: ["PNG", "JPEG"], defaut: "PNG", defautEn: "PNG" },
+    ],
+    async executer(ctx: any) {
+      const type = ctx.paramTexte("Attracteur", "Lorenz");
+      const typeNormalise = normaliserTypeAttracteur(type);
+      if (!typeNormalise) {
+        return { valeurs: [null], message: `${type}: type d'attracteur inconnu` };
+      }
+      const projection = ctx.paramTexte("Projection", "XY").toLowerCase().replace(/\s+/g, "-");
+      const projectionValide = ["xy", "xz", "yz", "3d-shadow"].includes(projection) ? projection as any : "xy";
+      const image = await rendreAttracteurImage({
+        type: typeNormalise,
+        iterations: ctx.paramNombre("Itérations", 200000),
+        width: Math.round(ctx.paramNombre("Largeur", 1024)),
+        height: Math.round(ctx.paramNombre("Hauteur", 1024)),
+        palette: ctx.paramTexte("Palette", "classic"),
+        projection: projectionValide,
+        exposure: ctx.paramNombre("Exposition", 1.5),
+        gamma: ctx.paramNombre("Gamma", 1),
+        graine: ctx.paramNombre("Graine", 42),
+      }, ctx.paramTexte("Format", "PNG").toLowerCase() as any);
+      return { valeurs: [image], message: traduire("msg.attracteur.termine", type, `${image.size.toLocaleString()} o`) };
     },
   },
   {
