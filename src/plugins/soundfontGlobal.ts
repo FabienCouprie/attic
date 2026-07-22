@@ -1,14 +1,18 @@
 import { analyserSF2, type StructureSF2 } from "../audio/soundfont";
 
-let sf2DataCache: StructureSF2 | null = null;
-let sf2NomCache: string = "";
+type GlobalAttic = typeof globalThis & {
+  __attic_sf2__?: StructureSF2 | null;
+  __attic_sf2_nom__?: string;
+};
+
+const g = globalThis as GlobalAttic;
 
 export function sf2Chargee(): StructureSF2 | null {
-  return sf2DataCache;
+  return g.__attic_sf2__ ?? null;
 }
 
 export function sf2Nom(): string {
-  return sf2NomCache;
+  return g.__attic_sf2_nom__ ?? "";
 }
 
 export async function chargerSF2Globale(
@@ -16,9 +20,10 @@ export async function chargerSF2Globale(
   nom: string
 ): Promise<StructureSF2> {
   const buf = (source instanceof ArrayBuffer ? source : source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength)) as ArrayBuffer;
-  sf2DataCache = analyserSF2(buf);
-  sf2NomCache = nom;
-  return sf2DataCache;
+  const sf2 = analyserSF2(buf);
+  g.__attic_sf2__ = sf2;
+  g.__attic_sf2_nom__ = nom;
+  return sf2;
 }
 
 export async function chargerSF2DepuisChemin(
@@ -47,7 +52,8 @@ export async function chargerSF2DepuisUrl(url: string): Promise<StructureSF2 | n
 }
 
 export async function autoChargerSF2(repertoireTravail?: string): Promise<StructureSF2 | null> {
-  if (sf2DataCache) return sf2DataCache;
+  const existant = sf2Chargee();
+  if (existant) return existant;
 
   const dernierNom = localStorage.getItem("attic-sf2-nom");
 
