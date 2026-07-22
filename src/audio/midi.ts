@@ -356,8 +356,25 @@ export async function rendreMidiDepuisBytes(
     const sf2Global = sf2Chargee();
     if (sf2Global) {
       console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
-      const notesEvenements: NoteEvenement[] = notes.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
-      return rendreAvecSF2(sf2Global, notesEvenements, volume);
+      const sr = 44100;
+      const duree = Math.max(dureeTotale, 0.5);
+      const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
+      const canaux = [...new Set(notes.map((n) => n.canal))].sort((a, b) => a - b);
+      for (const canal of canaux) {
+        const nc = notes.filter((n) => n.canal === canal);
+        if (!nc.length) continue;
+        const prog = canauxInstrument.get(canal) ?? 0;
+        const idx = prog < sf2Global.instruments.length ? prog : undefined;
+        const nomInst = idx !== undefined ? sf2Global.instruments[idx]?.nom : "(auto)";
+        console.log(`[attic] rendreMidiDepuisBytes canal ${canal} → programme ${prog} → instrument SF2 ${idx ?? "auto"} "${nomInst ?? "?"}" (${nc.length} notes)`);
+        const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        const layer = rendreAvecSF2(sf2Global, an, volume, idx);
+        for (let i = 0; i < master.length && i < layer.length; i++) {
+          master.getChannelData(0)[i] += layer.getChannelData(0)[i];
+          master.getChannelData(1)[i] += layer.getChannelData(1)[i];
+        }
+      }
+      return master;
     }
     console.warn("[attic] rendreMidiDepuisBytes en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
@@ -451,8 +468,10 @@ export async function rendreSequence(
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
     if (sf2Global) {
-      console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
-      return rendreAvecSF2(sf2Global, notes, volume, instrument ?? undefined);
+      const idx = instrument ?? 0;
+      const nomInst = sf2Global.instruments[idx]?.nom ?? "?";
+      console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, instrument ${idx} "${nomInst}" (${notes.length} notes)`);
+      return rendreAvecSF2(sf2Global, notes, volume, idx);
     }
     console.warn("[attic] rendreSequence en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
     const ctx = new OfflineAudioContext(2, Math.ceil(duree * 44100), 44100);
