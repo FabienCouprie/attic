@@ -90,6 +90,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           progression: undefined,
           audioResultatUrl: undefined,
           audioResultatNom: undefined,
+          audioResultatBuffer: undefined,
           audioResultatMessage: undefined,
           scriptGenere: undefined,
           mp3Url: undefined,
@@ -322,7 +323,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const texte = valsSafe.find((v): v is string => typeof v === "string");
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
         const grapheExport = (n.data as any)?._grapheExport as string | undefined;
-        const url = audio ? URL.createObjectURL(bufferVersWavBlob(audio, grapheExport)) : undefined;
+        // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
+        // démonter/remonter le lecteur à chaque run (cache) et empêche le
+        // rechargement gris/0:00 sur les nœuds déjà terminés.
+        let url: string | undefined;
+        if (audio) {
+          if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
+            url = n.data.audioResultatUrl;
+          } else {
+            if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
+            url = URL.createObjectURL(bufferVersWavBlob(audio, grapheExport));
+          }
+        } else if (n.data.audioResultatUrl) {
+          URL.revokeObjectURL(n.data.audioResultatUrl);
+        }
         // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
         if (meta) {
           const aResultat = valsSafe.some((v) => v != null);
@@ -357,6 +371,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
             ...n.data,
             audioResultatUrl: url ?? undefined,
             audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
+            audioResultatBuffer: audio ?? undefined,
             audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
             scriptGenere: texte ?? undefined,
             midiFichierSortie: (fichier instanceof File && fichier.type.includes("midi")) ? fichier : undefined,
