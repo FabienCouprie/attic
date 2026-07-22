@@ -9,6 +9,7 @@ import {
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
   rendreAttracteurImage, rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
+  genererRythmeCantor,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -200,6 +201,39 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramTexte("Code personnalisé",""),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
+    },
+  },
+  {
+    id: "rythme-cantor", nom: "Rythme de Cantor", nomEn: "Cantor Rhythm", univers: "Entrées", famille: "Génération",
+    resume: "Génère une groove rythmique auto-similaire par récursion sur une grille de pas.",
+    resumeEn: "Generates a self-similar rhythmic groove by recursively removing beats from a grid.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM" },
+      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3 },
+      { nom: "Subdivision", nomEn: "Subdivision", type: "choix", options: ["3", "5", "7"], optionsEn: ["3", "5", "7"], defaut: "3", defautEn: "3" },
+      { nom: "Partie retirée", nomEn: "Removed part", type: "choix", options: ["Centre", "Gauche", "Droite", "Aléatoire"], optionsEn: ["Center", "Left", "Right", "Random"], defaut: "Centre", defautEn: "Center" },
+      { nom: "Instrument", nomEn: "Instrument", type: "choix", options: ["Kick", "Caisse claire", "Charley", "Tous"], optionsEn: ["Kick", "Snare", "Hi-hat", "All"], defaut: "Tous", defautEn: "All" },
+      { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2 },
+      { nom: "Swing", nomEn: "Swing", type: "nombre", plage: [0, 100], defaut: 0, unite: "%" },
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%" },
+    ],
+    async executer(ctx: any) {
+      const partie = ctx.paramTexte("Partie retirée", "Centre").toLowerCase() as any;
+      const partieValide = ["centre", "gauche", "droite", "aleatoire"].includes(partie) ? partie : "centre";
+      const subdivision = parseInt(ctx.paramTexte("Subdivision", "3"), 10);
+      const subdivisionValide = [3, 5, 7].includes(subdivision) ? subdivision : 3;
+      const buffer = await genererRythmeCantor(
+        ctx.paramNombre("Tempo", 120),
+        ctx.paramNombre("Profondeur", 3),
+        subdivisionValide,
+        partieValide,
+        ctx.paramNombre("Mesures", 2),
+        ctx.paramTexte("Instrument", "Tous") as any,
+        ctx.paramNombre("Volume", 80),
+        ctx.paramNombre("Swing", 0),
+      );
+      return { valeurs: [buffer], message: `${buffer.duration.toFixed(1)} s · grille Cantor` };
     },
   },
   {
