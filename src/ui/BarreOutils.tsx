@@ -7,6 +7,7 @@ interface Props {
   enExecution: boolean;
   repertoire: string; onChoisirDossier: () => void;
   onLancer: () => void;
+  onResumeAudio: () => Promise<void>;
   onExporter: () => void;
   onImporter: (f?: File) => void;
   onNouvelOnglet: () => void;
@@ -39,12 +40,13 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onExporter, onImporter, onNouvelOnglet, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onResumeAudio, onExporter, onImporter, onNouvelOnglet, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
   const [verifEnCours, setVerifEnCours] = useState(false);
+  const [etatAudio, setEtatAudio] = useState<string>("");
 
   useEffect(() => {
     const api = (window as any).api;
@@ -201,6 +203,29 @@ export function BarreOutils(props: Props) {
         </button>
       )}
       <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.1</span>
+      <button
+        className="attic-btn-icon"
+        title={t("btn.resumeAudio")}
+        onClick={async () => {
+          try {
+            await onResumeAudio();
+            setEtatAudio("✓");
+            setTimeout(() => setEtatAudio(""), 1200);
+          } catch (e: any) {
+            setEtatAudio("✗");
+            setTimeout(() => setEtatAudio(""), 2000);
+          }
+        }}
+      >
+        {etatAudio ? (
+          <span style={{ fontSize: 12, color: etatAudio === "✓" ? "#2a9d8f" : "#e44" }}>{etatAudio}</span>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M4 9V7h2.5l3.5-2.5v7L6.5 9H4z" />
+            <path d="M12 5a3 3 0 010 6" />
+          </svg>
+        )}
+      </button>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
         {enExecution ? "…" : t("btn.lancer")}

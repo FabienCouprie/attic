@@ -9,6 +9,7 @@ const LANG_KEY = "attic-lang";
 const DICO: Record<string, Record<Langue, string>> = {
   "app.title": { fr: "Attic", en: "Attic" },
   "btn.lancer": { fr: "Lancer", en: "Run" },
+  "btn.resumeAudio": { fr: "Réactiver l'audio", en: "Resume audio" },
   "btn.nouveau": { fr: "Nouveau", en: "New" },
   "btn.exporter": { fr: "Exporter", en: "Export" },
   "btn.sauvegarder": { fr: "Sauvegarder l'en-cours", en: "Save work-in-progress" },

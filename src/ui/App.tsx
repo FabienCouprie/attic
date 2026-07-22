@@ -189,6 +189,12 @@ function Atelier() {
   const changerOnglet = useCallback((id: string) => { void id; }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const resumeAudio = useCallback(async () => {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    if (audioCtxRef.current.state === "suspended") {
+      await audioCtxRef.current.resume();
+    }
+  }, []);
   const lancerRef = useRef<any>(null);
   const cacheExec = useRef<Map<string, any>>(new Map());
   const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
@@ -628,6 +634,7 @@ function Atelier() {
             await lancer();
             rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
           }}
+          onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
           onChargerSF2={async (f) => {
