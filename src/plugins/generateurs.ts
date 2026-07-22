@@ -76,14 +76,18 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
     ],
     async executer(ctx: any) {
+      console.log("[attic] Mélodie aléatoire : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",100);
       const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4));
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
-      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+      const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+      console.log(`[attic] Mélodie aléatoire : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+      const audioFinal = useSf2
         ? await rendreSequence(notes, "SoundFont", volume)
         : audio;
+      console.log(`[attic] Mélodie aléatoire : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFile] };
     },
   },
@@ -107,14 +111,18 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
     ],
     async executer(ctx: any) {
+      console.log("[attic] Musique fractale : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",80);
       const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
-      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+      const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+      console.log(`[attic] Musique fractale : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+      const audioFinal = useSf2
         ? await rendreSequence(notes, "SoundFont", volume)
         : audio;
+      console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFile] };
     },
   },
@@ -148,13 +156,18 @@ export const fiches: FicheAudio[] = ([
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
+      console.log("[attic] Clavier mélodie : exécution démarrée");
       const notes = ctx.noeud.data.sequenceNotes;
       if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
       try {
         const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
         const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
-        return { valeurs: [await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80))] };
+        console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+        const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80));
+        console.log(`[attic] Clavier mélodie : buffer rendu, durée=${buf?.duration ?? 0}`);
+        return { valeurs: [buf] };
       } catch (e: any) {
+        console.error("[attic] Clavier mélodie : erreur", e);
         return { valeurs:[null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },

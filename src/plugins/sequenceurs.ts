@@ -103,6 +103,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
     ],
     async executer(ctx: any) {
+      console.log("[attic] Séquenceur mélodique : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo", 120);
       const nbPas = parseInt(ctx.paramTexte("Nombre de pas", "16"), 10) || 16;
       const swing = ctx.paramNombre("Swing", 0);
@@ -119,9 +120,12 @@ export const fiches: FicheAudio[] = ([
       const noteBas = nomNotePourRangee(0, cle, gamme, octave);
       const noteHaut = nomNotePourRangee(NB_RANGEES_MELO - 1, cle, gamme, octave);
       const midiFile = notesVersFichierMidi(notes, tempo);
-      const audioFinal = (mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()))
+      const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+      console.log(`[attic] Séquenceur mélodique : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+      const audioFinal = useSf2
         ? await rendreSequence(notes, "SoundFont", volume)
         : audio;
+      console.log(`[attic] Séquenceur mélodique : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFile], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
     },
   },

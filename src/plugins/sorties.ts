@@ -86,12 +86,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
+      console.log("[attic] Point d'écoute MIDI : exécution démarrée");
       const midi = ctx.entree(0);
       if (!(midi instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
       const mode = ctx.paramTexte("Synthèse", "Automatique") as "Automatique" | "FM/Oscillateurs" | "SoundFont";
       const volume = ctx.paramNombre("Volume", 80);
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      console.log(`[attic] Point d'écoute MIDI : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}`);
       const buffer = await rendreMidi(midi, modeRendu, volume);
+      console.log(`[attic] Point d'écoute MIDI : buffer rendu, durée=${buffer.duration}`);
       return { valeurs: [buffer, midi] };
    },
  },
