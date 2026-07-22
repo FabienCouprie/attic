@@ -50,6 +50,7 @@ import { fiches as f_stable_audio_3 } from "./stable-audio-3";
 import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
+import { fiches as f_image_export } from "./image-export";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -99,4 +100,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_magenta,
   ...f_pure_data,
   ...f_songsee,
+  ...f_image_export,
 ];
