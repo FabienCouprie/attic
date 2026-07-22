@@ -991,8 +991,10 @@ if (autoUpdater) {
     envoyerInfoMaj();
   });
   autoUpdater.on("error", (err) => {
+    const msg = String(err?.message || err);
+    console.error("[attic] Auto-updater error:", err);
     infoMaj.statut = "erreur";
-    infoMaj.notes = String(err?.message || err);
+    infoMaj.notes = msg;
     envoyerInfoMaj();
   });
 }
