@@ -10,6 +10,7 @@ import {
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
   rendreAttracteurImage, rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
+  genererMusiqueMandelbrot,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -126,6 +127,58 @@ export const fiches: FicheAudio[] = ([
         : audio;
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFile] };
+    },
+  },
+  {
+    id: "mappeur-mandelbrot", nom: "Mappeur Mandelbrot", nomEn: "Mandelbrot Mapper", univers: "Entrées", famille: "Génération",
+    resume: "Génère une mélodie depuis l'ensemble de Mandelbrot.",
+    resumeEn: "Generates a melody from the Mandelbrot set.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Centre X", nomEn: "Center X", type: "nombre", plage: [-2.5, 1], pas: 0.01, defaut: -0.5 },
+      { nom: "Centre Y", nomEn: "Center Y", type: "nombre", plage: [-1.5, 1.5], pas: 0.01, defaut: 0 },
+      { nom: "Zoom", nomEn: "Zoom", type: "nombre", plage: [0.1, 100], pas: 0.1, defaut: 1 },
+      { nom: "Itérations max", nomEn: "Max iterations", type: "nombre", plage: [50, 2000], pas: 10, defaut: 200 },
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Escape time", "Dwell", "Octave"], optionsEn: ["Escape time", "Dwell", "Octave"], defaut: "Escape time", defautEn: "Escape time" },
+      { nom: "Notes", nomEn: "Notes", type: "nombre", plage: [8, 256], pas: 1, defaut: 32, unite: "notes" },
+      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s" },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM" },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure","Chromatique"], defaut: "Majeur", optionsEn: ["Major","Natural minor","Harmonic minor","Major pentatonic","Minor pentatonic","Chromatic"], defautEn: "Major" },
+      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4 },
+      { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1 },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft" },
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%" },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42 },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+    ],
+    async executer(ctx: any) {
+      const cx = ctx.paramNombre("Centre X", -0.5);
+      const cy = ctx.paramNombre("Centre Y", 0);
+      const zoom = ctx.paramNombre("Zoom", 1);
+      const width = 3.5 / Math.max(0.1, zoom);
+      const height = 2.5 / Math.max(0.1, zoom);
+      const { audio, midiFile } = await genererMusiqueMandelbrot({
+        xMin: cx - width / 2,
+        xMax: cx + width / 2,
+        yMin: cy - height / 2,
+        yMax: cy + height / 2,
+        maxIter: ctx.paramNombre("Itérations max", 200),
+        mode: ctx.paramTexte("Mode", "Escape time").toLowerCase().split(" ")[0] as any,
+        nbNotes: ctx.paramNombre("Notes", 32),
+        dureeNote: ctx.paramNombre("Durée note", 0.25),
+        tempo: ctx.paramNombre("Tempo", 100),
+        cle: ctx.paramTexte("Clé", "Do"),
+        gamme: ctx.paramTexte("Gamme", "Majeur"),
+        octaveBase: ctx.paramNombre("Octave", 4) * 12,
+        sensibilite: ctx.paramNombre("Sensibilité", 1),
+        timbre: ctx.paramTexte("Timbre", "Douce") as any,
+        volume: ctx.paramNombre("Volume", 80),
+        graine: ctx.paramNombre("Graine", 42),
+      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
     },
   },
   {
