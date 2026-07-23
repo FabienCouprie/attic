@@ -83,4 +83,21 @@ describe("reverb fractale", () => {
     expect(sortie.duration).toBeGreaterThan(entree.duration);
     expect(bufferNonSilencieux(sortie)).toBe(true);
   });
+
+  it("convolue une entrée stéréo en conservant 2 canaux", async () => {
+    const entree = new AudioBuffer({ numberOfChannels: 2, length: 44100, sampleRate: 44100 });
+    entree.getChannelData(0)[0] = 1;
+    entree.getChannelData(1)[0] = 1;
+    const sortie = await reverberationFractale(entree, {
+      decay: 0.5,
+      preDelay: 10,
+      densite: 3,
+      gainDecay: 0.7,
+      damping: 20,
+      diffusion: 0.5,
+      graine: 42,
+    }, 50);
+    expect(sortie.numberOfChannels).toBe(2);
+    expect(bufferNonSilencieux(sortie)).toBe(true);
+  });
 });

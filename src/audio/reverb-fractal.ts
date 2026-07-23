@@ -12,6 +12,7 @@ export interface OptionsReverbFractal {
   diffusion: number; // 0..100%, étalement stéréo
   graine: number;
   sampleRate?: number;
+  channels?: number; // 1 ou 2
 }
 
 interface Reflexion {
@@ -60,6 +61,7 @@ function poussiereCantor(
 
 export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
   const sr = options.sampleRate ?? 44100;
+  const channels = Math.max(1, Math.min(2, options.channels ?? 2));
   const decay = Math.max(0.1, Math.min(20, options.decay));
   const preDelay = Math.max(0, Math.round((options.preDelay / 1000) * sr));
   const profondeur = Math.max(1, Math.min(8, Math.round(options.densite)));
@@ -69,7 +71,7 @@ export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
   const rng = creerRng(options.graine ?? 42);
 
   const longueur = Math.max(1, Math.ceil((preDelay / sr + decay) * sr));
-  const buf = new AudioBuffer({ numberOfChannels: 2, length: longueur, sampleRate: sr });
+  const buf = new AudioBuffer({ numberOfChannels: channels, length: longueur, sampleRate: sr });
 
   const reflexions: Reflexion[] = [];
   const dureeSamples = Math.ceil(decay * sr);
@@ -79,12 +81,12 @@ export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
   reflexions.push({ sample: 0, gain: 1.0, pan: 0.5 });
 
   // Build IR from reflections.
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = buf.getChannelData(ch);
     for (const ref of reflexions) {
       const pos = preDelay + ref.sample;
       if (pos >= 0 && pos < longueur) {
-        const pan = ch === 0 ? 1 - ref.pan : ref.pan;
+        const pan = channels === 1 ? 0.5 : (ch === 0 ? 1 - ref.pan : ref.pan);
         d[pos] += ref.gain * pan;
       }
     }
@@ -93,7 +95,7 @@ export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
   // Apply damping (low-pass 1-pole) to simulate air/material absorption.
   const freqCut = 20000 - damping * 17000;
   const alpha = Math.exp(-2 * Math.PI * freqCut / sr);
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = buf.getChannelData(ch);
     let precedent = 0;
     for (let i = preDelay; i < longueur; i++) {
@@ -104,7 +106,7 @@ export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
 
   // Normalize.
   let pic = 1e-9;
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = buf.getChannelData(ch);
     for (let i = 0; i < longueur; i++) {
       const v = Math.abs(d[i]);
@@ -112,7 +114,7 @@ export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
     }
   }
   const g = 0.95 / pic;
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = buf.getChannelData(ch);
     for (let i = 0; i < longueur; i++) d[i] *= g;
   }
@@ -125,12 +127,12 @@ export async function reverberationFractale(
   options: OptionsReverbFractal,
   mixPct: number,
 ): Promise<AudioBuffer> {
-  const ir = genererIRFractal(options);
+  const sr = entree.sampleRate;
+  const nCh = Math.min(entree.numberOfChannels, 2);
+  const ir = genererIRFractal({ ...options, sampleRate: sr, channels: nCh });
   const mix = Math.max(0, Math.min(100, mixPct)) / 100;
   const coda = ir.duration + 0.5;
   const duree = entree.duration + coda;
-  const sr = entree.sampleRate;
-  const nCh = Math.min(entree.numberOfChannels, 2);
 
   const offline = new OfflineAudioContext(nCh, Math.ceil(duree * sr), sr);
   const source = offline.createBufferSource();
