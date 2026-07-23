@@ -32,5 +32,6 @@ export * from "./tone-synths";
 export * from "./attracteurs";
 export * from "./mandelbrot";
 export * from "./koch";
+export * from "./reverb-fractal";
 
 export { registre } from "./adaptateur";
