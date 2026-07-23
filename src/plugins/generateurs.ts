@@ -12,6 +12,7 @@ import {
   genererRythmeCantor,
   genererMusiqueMandelbrot,
   genererArpegeKoch,
+  rendreSpectrogrammeFractal,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -220,6 +221,50 @@ export const fiches: FicheAudio[] = ([
         volume: ctx.paramNombre("Volume", 80),
       }, ctx.paramTexte("Synthèse", "Automatique") as any);
       return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
+    },
+  },
+  {
+    id: "spectrogramme-fractal", nom: "Spectrogramme fractal", nomEn: "Fractal Spectrogram", univers: "Entrées", famille: "Génération",
+    resume: "Génère un spectrogramme fractal et son audio associé.",
+    resumeEn: "Generates a fractal spectrogram and its associated audio.",
+    entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.5, 30], pas: 0.5, defaut: 4, unite: "s" },
+      { nom: "FFT", nomEn: "FFT", type: "choix", options: ["512", "1024", "2048", "4096"], defaut: "2048", optionsEn: ["512", "1024", "2048", "4096"], defautEn: "2048" },
+      { nom: "Octaves", nomEn: "Octaves", type: "nombre", plage: [1, 8], pas: 1, defaut: 4, doc: "Nombre d'octaves de bruit fractal.", docEn: "Number of fractal noise octaves." },
+      { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
+      { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic" },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42 },
+      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], defaut: "PNG", optionsEn: ["PNG", "JPEG"], defautEn: "PNG" },
+    ],
+    async executer(ctx: any) {
+      const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
+      const { audio, image } = await rendreSpectrogrammeFractal({
+        duree: ctx.paramNombre("Durée", 4),
+        fftSize,
+        octaves: ctx.paramNombre("Octaves", 4),
+        roughness: ctx.paramNombre("Rugosité", 0.5),
+        forme: ctx.paramTexte("Échelle", "Logarithmique").toLowerCase() as any,
+        graine: ctx.paramNombre("Graine", 42),
+      });
+      const fmt = ctx.paramTexte("Format", "PNG");
+      if (image && fmt === "JPEG") {
+        // Convert PNG to JPEG by re-encoding via canvas.
+        const url = URL.createObjectURL(image);
+        const img = new Image();
+        img.src = url;
+        await new Promise((res) => { img.onload = res; });
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const c = canvas.getContext("2d");
+        c?.drawImage(img, 0, 0);
+        const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.92));
+        URL.revokeObjectURL(url);
+        const jpeg = blob ? new File([blob], "spectrogramme-fractal.jpg", { type: "image/jpeg" }) : image;
+        return { valeurs: [jpeg, audio], message: `Spectrogramme fractal · ${audio.duration.toFixed(1)} s` };
+      }
+      return { valeurs: [image ?? null, audio], message: `Spectrogramme fractal · ${audio.duration.toFixed(1)} s` };
     },
   },
   {

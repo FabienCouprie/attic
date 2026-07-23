@@ -33,5 +33,6 @@ export * from "./attracteurs";
 export * from "./mandelbrot";
 export * from "./koch";
 export * from "./reverb-fractal";
+export * from "./spectrogramme-fractal";
 
 export { registre } from "./adaptateur";
