@@ -11,6 +11,7 @@ import {
   rendreAttracteurImage, rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
   genererMusiqueMandelbrot,
+  genererArpegeKoch,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
@@ -179,6 +180,46 @@ export const fiches: FicheAudio[] = ([
         graine: ctx.paramNombre("Graine", 42),
       }, ctx.paramTexte("Synthèse", "Automatique") as any);
       return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
+    },
+  },
+  {
+    id: "arpege-koch", nom: "Arpège flocon de Koch", nomEn: "Koch Snowflake Arpeggiator", univers: "Entrées", famille: "Génération",
+    resume: "Génère un arpège polyrythmique depuis le flocon de Koch.",
+    resumeEn: "Generates a polyrhythmic arpeggio from the Koch snowflake.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure","Chromatique"], defaut: "Majeur", optionsEn: ["Major","Natural minor","Harmonic minor","Major pentatonic","Minor pentatonic","Chromatic"], defautEn: "Major" },
+      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4 },
+      { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major" },
+      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de subdivisions récursives du flocon de Koch.", docEn: "Number of recursive subdivisions of the Koch snowflake." },
+      { nom: "Direction", nomEn: "Direction", type: "choix", options: ["alternée","extérieure","intérieure"], defaut: "alternée", optionsEn: ["alternating","outward","inward"], defautEn: "alternating", doc: "Sens des pics de Koch sur chaque voix.", docEn: "Direction of the Koch peaks on each voice." },
+      { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [1, 12], pas: 1, defaut: 3, unite: "demi-tons", docEn: "Height of the Koch bump in semitones.", doc: "Hauteur du pic de Koch en demi-tons." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM" },
+      { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2, unite: "mesures" },
+      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s" },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft" },
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+    ],
+    async executer(ctx: any) {
+      const { audio, midiFile } = await genererArpegeKoch({
+        cle: ctx.paramTexte("Clé", "Do"),
+        gamme: ctx.paramTexte("Gamme", "Majeur"),
+        octave: ctx.paramNombre("Octave", 4),
+        accord: ctx.paramTexte("Accord", "Majeur") as any,
+        profondeur: ctx.paramNombre("Profondeur", 3),
+        direction: ctx.paramTexte("Direction", "alternée") as any,
+        hauteur: ctx.paramNombre("Hauteur", 3),
+        tempo: ctx.paramNombre("Tempo", 100),
+        mesures: ctx.paramNombre("Mesures", 2),
+        dureeNote: ctx.paramNombre("Durée note", 0.25),
+        timbre: ctx.paramTexte("Timbre", "Douce") as any,
+        volume: ctx.paramNombre("Volume", 80),
+      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
     },
   },
   {

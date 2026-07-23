@@ -31,5 +31,6 @@ export * from "./math-formules";
 export * from "./tone-synths";
 export * from "./attracteurs";
 export * from "./mandelbrot";
+export * from "./koch";
 
 export { registre } from "./adaptateur";
