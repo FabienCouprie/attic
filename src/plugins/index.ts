@@ -51,6 +51,9 @@ import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
 import { fiches as f_image_export } from "./image-export";
+import { fiches as f_image_rendu } from "./image-rendu";
+import { fiches as f_pixeltone } from "./pixeltone";
+import { fiches as f_entree_image } from "./entree-image";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -101,4 +104,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_pure_data,
   ...f_songsee,
   ...f_image_export,
+  ...f_image_rendu,
+  ...f_pixeltone,
+  ...f_entree_image,
 ];

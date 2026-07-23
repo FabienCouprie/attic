@@ -123,6 +123,20 @@ function VueUploadAudio({ id, data }: VueProps) {
   );
 }
 
+// ── Chargement d'un fichier image ──
+function VueUploadImage({ id, data }: VueProps) {
+  const { t } = useI18n();
+  return (
+    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <label className="attic-node-fichier-btn">
+        {data.imageNom ? t("btn.changer.image") : t("btn.charger.image")}
+        <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerImage?.(id, f); }} />
+      </label>
+      {data.imageNom && <div className="attic-node-fichier-nom">{data.imageNom}</div>}
+    </div>
+  );
+}
+
 // ── Explorateur de musique (Electron) ──
 function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
@@ -960,12 +974,20 @@ function VuePochette({ data }: VueProps) {
 
 // ── Songsee (image de visualisation audio) ──
 function VueSongsee({ data }: VueProps) {
-  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} />;
+  const { t } = useI18n();
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.audio")} />;
 }
 
 // ── Attracteur / IFS (image générée) ──
 function VueAttracteurIFS({ data }: VueProps) {
-  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} />;
+  const { t } = useI18n();
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
+}
+
+// ── Rendu image (affiche une image reçue) ──
+function VueRenduImage({ data }: VueProps) {
+  const { t } = useI18n();
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
 }
 
 // ── ColorSynth (spectre → palette de couleurs) ──
@@ -1037,6 +1059,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
   { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
+  { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
@@ -1044,6 +1067,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
+  { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
+  { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },

@@ -74,6 +74,7 @@ export function usePersistance(o: OptionsPersistance) {
         parametres: data.parametres,
         audioNom: data.audioNom,
         midiNom: data.midiNom,
+        imageNom: data.imageNom,
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
       },
@@ -177,6 +178,9 @@ export function usePersistance(o: OptionsPersistance) {
         },
         onChargerMidi: (nid: string, fichier: File) => {
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, midiFichier: fichier, midiNom: fichier.name } } : nd));
+        },
+        onChargerImage: (nid: string, fichier: File) => {
+          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, imageFichier: fichier, imageNom: fichier.name } } : nd));
         },
         onChangerEnregistrement: (nid: string, blob: Blob) => {
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, enregistrementBlob: blob, enregistrementUrl: URL.createObjectURL(blob) } } : nd));

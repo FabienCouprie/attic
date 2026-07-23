@@ -6,9 +6,10 @@ import { useI18n } from "../i18n";
 interface Props {
   fichier?: File;
   url?: string;
+  message?: string;
 }
 
-export function SongseeVue({ fichier, url }: Props) {
+export function SongseeVue({ fichier, url, message }: Props) {
   const { t } = useI18n();
   const [src, setSrc] = useState<string | null>(url ?? null);
   const [chargement, setChargement] = useState(false);
@@ -23,7 +24,7 @@ export function SongseeVue({ fichier, url }: Props) {
   }, [fichier, url]);
 
   if (chargement) return <div className="attic-node-onde-attente">{t("onde.chargement")}</div>;
-  if (!src) return <div className="attic-node-onde-attente">{t("msg.connecter.audio")}</div>;
+  if (!src) return <div className="attic-node-onde-attente">{message || t("msg.connecter.image")}</div>;
 
   return (
     <div className="attic-node-songsee nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%" }}>

@@ -118,6 +118,8 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 280, height: 340 };
   if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
+  if (def.id === "rendu-image") return { width: 320, height: 320 };
+  if (def.id === "entree-image") return { width: 320, height: 320 };
   if (def.id === "galerie-exposition") return { width: 280, height: 280 };
   if (def.id === "gestion-nodes") return { width: 280, height: 220 };
   if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };
@@ -315,6 +317,7 @@ function Atelier() {
             onDefinirPrioritaire: cbs.onDefinirPrioritaire,
             onChargerAudio: cbs.onChargerAudio,
             onChargerMidi: cbs.onChargerMidi,
+            onChargerImage: cbs.onChargerImage,
             onChangerEnregistrement: cbs.onChangerEnregistrement,
             onChangerParametre: cbs.onChangerParametre,
             onChangerZones: cbs.onChangerZones,
@@ -366,6 +369,7 @@ function Atelier() {
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
               onChargerAudio: cbs.onChargerAudio,
               onChargerMidi: cbs.onChargerMidi,
+              onChargerImage: cbs.onChargerImage,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,
@@ -432,6 +436,10 @@ function Atelier() {
           cacheExec.current.delete(nid);
           setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
         },
+        onChargerImage: (nid: string, fichier: File) => {
+          cacheExec.current.delete(nid);
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, imageFichier: fichier, imageNom: fichier.name } } : n));
+        },
         onChangerEnregistrement: (nid: string, blob: Blob) => {
           const url = URL.createObjectURL(blob);
           setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
@@ -463,6 +471,7 @@ function Atelier() {
     onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
     onChargerAudio: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : n)); },
     onChargerMidi: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n)); },
+    onChargerImage: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, imageFichier: fichier, imageNom: fichier.name } } : n)); },
     onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n)); },
     onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
@@ -533,6 +542,7 @@ function Atelier() {
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
               onChargerAudio: cbs.onChargerAudio,
               onChargerMidi: cbs.onChargerMidi,
+              onChargerImage: cbs.onChargerImage,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,

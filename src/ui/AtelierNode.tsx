@@ -18,6 +18,7 @@ export type DonneesNoeud = {
   midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
   modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;
   enregistrementBlob?: Blob; enregistrementUrl?: string;
+  imageFichier?: File; imageNom?: string;
   prioritaire?: boolean;
   imageResultatUrl?: string;
   imageResultatFile?: File;
@@ -26,6 +27,7 @@ export type DonneesNoeud = {
   onSupprimerNoeud?: (id: string) => void;
   onChargerAudio?: (id: string, fichier: File) => void;
   onChargerMidi?: (id: string, fichier: File) => void;
+  onChargerImage?: (id: string, fichier: File) => void;
   onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   zonesSelectionnees?: { debut: number; duree: number }[];
   onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;

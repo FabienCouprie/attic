@@ -39,6 +39,7 @@ interface EntreeDictionnaire {
 // resumeEn) est indexé automatiquement depuis le registre.
 const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] = [
   { ficheId: "entree-audio", mots: ["entrée audio", "audio input", "fichier audio", "load audio", "charger audio"], category: "source" },
+  { ficheId: "entree-image", mots: ["entrée image", "image input", "fichier image", "load image", "charger image", "image file"], category: "source" },
   { ficheId: "enregistreur-audio", mots: ["enregistreur", "micro", "recorder", "microphone"], category: "source" },
   { ficheId: "capture-systeme-audio", mots: ["capture système", "system audio", "capture audio", "what you hear", "loopback"], category: "source" },
   { ficheId: "generateur-bruit", mots: ["bruit", "noise"], category: "source" },
