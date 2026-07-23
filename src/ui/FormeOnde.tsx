@@ -171,9 +171,12 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
       ctx.strokeStyle = "rgba(255,255,255,0.15)";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, hauteur); ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      const label = pasGrille >= 1 ? `${tt.toFixed(0)}s` : `${tt.toFixed(pasGrille < 0.1 ? 2 : 1)}s`;
-      ctx.fillText(label, x + 4, 3);
+      // Labels temporels uniquement en mode multi-zone (sélecteur)
+      if (multi) {
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        const label = pasGrille >= 1 ? `${tt.toFixed(0)}s` : `${tt.toFixed(pasGrille < 0.1 ? 2 : 1)}s`;
+        ctx.fillText(label, x + 4, 3);
+      }
     }
 
     // Ligne centrale
