@@ -12,7 +12,7 @@ export const fiches: FicheAudio[] = ([
     notice: "Sépare une piste en stems. Demucs (HT) = 4 pistes (batterie, basse, autre, voix). Demucs 6s = 6 pistes (batterie, basse, autre, voix, guitare, piano). MDX-Net = voix + instrumental. Les modèles par défaut sont embarqués (public/oonx/) et chargés automatiquement. Vous pouvez aussi charger votre propre .onnx via le bouton du nœud ou renseigner une URL.",
     noticeEn: "Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, other, vocals). Demucs 6s = 6 stems (drums, bass, other, vocals, guitar, piano). MDX-Net = vocals + instrumental. Default models are bundled (public/oonx/) and loaded automatically. You may also load your own .onnx via the node button or provide a URL.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Batterie", nomEn: "Drums", type: "audio" },{ nom: "Basse", type: "audio" },{ nom: "Autre", type: "audio" },{ nom: "Voix", type: "audio" },{ nom: "Guitare", type: "audio" },{ nom: "Piano", type: "audio" }],
+    sorties: [{ nom: "Batterie", nomEn: "Drums", type: "audio" },{ nom: "Basse", nomEn: "Bass", type: "audio" },{ nom: "Autre", nomEn: "Other", type: "audio" },{ nom: "Voix", nomEn: "Vocals", type: "audio" },{ nom: "Guitare", nomEn: "Guitar", type: "audio" },{ nom: "Piano", nomEn: "Piano", type: "audio" }],
     parametres: [
       { nom:"Modèle", nomEn:"Model", type:"choix", options:["Demucs 6s","Demucs (HT)","MDX-Net"], optionsEn:["Demucs 6s","Demucs (HT)","MDX-Net"], defaut:"Demucs 6s",
         doc:"Architecture de séparation. Demucs (HT) = 4 pistes, Demucs 6s = 6 pistes (+ guitare + piano), MDX-Net = voix/instrumental.",

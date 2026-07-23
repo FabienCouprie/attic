@@ -89,6 +89,15 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 
 // ── Helpers ──
 
+function couleurArete(nodes: any[], source: string, sourceHandle: string): string {
+  const node = nodes.find((n) => n.id === source);
+  const ficheId = node?.data?.ficheId;
+  const def = ficheId ? trouverDef(ficheId) : undefined;
+  const idx = parseInt(sourceHandle.split(":")[1] ?? "0", 10);
+  const type = def?.sorties[idx]?.type ?? "audio";
+  return couleurFlux(type);
+}
+
 function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
   const nbParams = def.parametres.length;
@@ -313,10 +322,9 @@ function Atelier() {
           },
         };
       });
-      const couleurAudio = couleurFlux("audio");
       const edgesRestaures = (data.edges ?? []).map((e: any) => ({
         ...e, type: "arete-personnalisee",
-        style: { stroke: couleurFlux("audio"), strokeWidth: 2.5 },
+        style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },
       }));
       setNodes(nodesRestaures);
       setEdges(edgesRestaures);
@@ -366,16 +374,18 @@ function Atelier() {
           };
         });
         // Créer les edges
-        const couleurAudio = couleurFlux("audio");
-        const nouveauxEdges = spec.edges.map((e, i) => ({
-          id: `e-prompt-${nodeId}-${i}`,
-          source: idsNouveaux[e.source],
-          target: idsNouveaux[e.target],
-          sourceHandle: "out:0",
-          targetHandle: "in:0",
-          type: "arete-personnalisee" as const,
-          style: { stroke: couleurAudio, strokeWidth: 2.5 },
-        }));
+        const nouveauxEdges = spec.edges.map((e, i) => {
+          const srcId = idsNouveaux[e.source];
+          return {
+            id: `e-prompt-${nodeId}-${i}`,
+            source: srcId,
+            target: idsNouveaux[e.target],
+            sourceHandle: "out:0",
+            targetHandle: "in:0",
+            type: "arete-personnalisee" as const,
+            style: { stroke: couleurArete(nouveauxNodes, srcId, "out:0"), strokeWidth: 2.5 },
+          };
+        });
         setEdges((eds) => [...eds, ...nouveauxEdges]);
         return [...nds, ...nouveauxNodes];
       });
@@ -578,13 +588,10 @@ function Atelier() {
   const onConnect: OnConnect = useCallback((conn) => {
     if (!conn.sourceHandle || !conn.targetHandle) return;
     pushHistorique();
-    const defS = trouverDef(noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId ?? "");
     const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
-    const si = parseInt(conn.sourceHandle.split(":")[1]);
     const ti = parseInt(conn.targetHandle.split(":")[1]);
-    const typeP = defS?.sorties[si]?.type ?? "audio";
     const portTarget = defT?.entrees[ti];
-    const c = couleurFlux(typeP);
+    const c = couleurArete(noeudsRef.current, conn.source, conn.sourceHandle);
     setEdges((eds) => {
       // Remplacer une connexion existante sur un port d'entrée non dynamique.
       const nettoyees = portTarget && !portTarget.dynamique
