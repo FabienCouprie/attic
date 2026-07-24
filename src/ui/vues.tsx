@@ -1031,11 +1031,34 @@ function VueSourceTexte({ id, data }: VueProps) {
 }
 
 // ── Carte sonore (ville fictive + points cliquables) ──
-function VueCarteSonore({ data }: VueProps) {
+function VueCarteSonore({ id, data }: VueProps) {
   const { t } = useI18n();
   const [lecture, setLecture] = useState<{ src: string; nom: string } | null>(null);
   const [chargement, setChargement] = useState<string | null>(null);
+  const [cheminLocal, setCheminLocal] = useState(String(data.parametres?.["Chemin"] ?? "music collection"));
   const carte = (data as any)._carteSonore as CarteSonore | undefined;
+
+  function mettreAJourChemin(valeur: string) {
+    setCheminLocal(valeur);
+    data.onChangerParametre?.(id, "Chemin", valeur);
+  }
+
+  async function choisirDossier() {
+    const api = (window as any).api;
+    if (api?.choisirDossier) {
+      const d = await api.choisirDossier();
+      if (d) mettreAJourChemin(d);
+    } else {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      (inp as { webkitdirectory?: boolean }).webkitdirectory = true;
+      inp.onchange = () => {
+        const f = inp.files?.[0];
+        if (f) mettreAJourChemin((f as { path?: string }).path ?? f.name);
+      };
+      inp.click();
+    }
+  }
 
   async function jouer(point: PointSonore) {
     const api = (window as any).api;
@@ -1051,24 +1074,33 @@ function VueCarteSonore({ data }: VueProps) {
     }
   }
 
-  if (!carte) {
-    return (
-      <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
-        {t("export.avantLancer")}
-      </div>
-    );
-  }
-
-  const pathRiver = carte.riviere.length > 0
+  const pathRiver = carte && carte.riviere.length > 0
     ? `M ${carte.riviere[0].x} ${carte.riviere[0].y} ` + carte.riviere.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" ")
     : "";
 
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      <svg
-        viewBox={`0 0 ${carte.width} ${carte.height}`}
-        style={{ width: "100%", height: "auto", borderRadius: 6, background: "#e8e4dc", display: "block" }}
-      >
+      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+        <input
+          type="text"
+          value={cheminLocal}
+          onChange={(e) => mettreAJourChemin(e.target.value)}
+          style={{ flex: 1, fontSize: 11, background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 3, padding: "2px 4px", color: "var(--text-title)" }}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button className="attic-node-fichier-btn" title={t("btn.parcourir")} onClick={choisirDossier}>
+          {t("btn.parcourir")}
+        </button>
+      </div>
+      {!carte ? (
+        <div style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
+          {t("export.avantLancer")}
+        </div>
+      ) : (
+        <svg
+          viewBox={`0 0 ${carte.width} ${carte.height}`}
+          style={{ width: "100%", height: "auto", borderRadius: 6, background: "#e8e4dc", display: "block" }}
+        >
         <rect x={0} y={0} width={carte.width} height={carte.height} fill="#f0ece3" />
         {carte.espacesVerts.map((e, i) => (
           <ellipse key={`v${i}`} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} fill="#b8d8a8" stroke="#8cb87a" strokeWidth={1} />
@@ -1091,6 +1123,7 @@ function VueCarteSonore({ data }: VueProps) {
           </g>
         ))}
       </svg>
+      )}
       {chargement && <div style={{ fontSize: 11, marginTop: 4, color: "var(--text-secondary)" }}>▶ {chargement}…</div>}
       {lecture && (
         <div style={{ marginTop: 6 }}>
