@@ -1,9 +1,10 @@
 // audio/midi.ts — Extrait de l'ancien monolithe DSP.
-import { decoderAudioUrl } from "./io";
+
 import { parseMidi, writeMidi } from "midi-file";
 import type { StructureSF2 } from "./soundfont";
 import { chercherZoneInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
+import { traduire } from "../i18n";
 
 export interface NoteMidi {
   note: number;
@@ -87,17 +88,6 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   }
 
   return { notes, dureeTotale: dureeMax + 1, canauxInstrument };
-}
-
-
-function nomVersNote(nom: string): number {
-  const tbl: Record<string, number> = {
-    C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6,
-    G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11,
-  };
-  const m = nom.match(/^([A-G]#?b?)(-?\d+)$/);
-  if (!m) return 69;
-  return (tbl[m[1]] ?? 0) + (parseInt(m[2]) + 1) * 12;
 }
 
 
@@ -202,112 +192,6 @@ function normaliserBuffer(buffer: AudioBuffer, ceiling = 1): void {
 }
 
 
-async function chargerSoundFont(id: string): Promise<Record<string, string>> {
-  const url = `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${id}-mp3.js`;
-  const reponse = await fetch(url);
-  const texte = await reponse.text();
-  const debut = texte.indexOf("{");
-  const fin = texte.lastIndexOf("}");
-  return JSON.parse(texte.slice(debut, fin + 1));
-}
-
-
-function trouverEchantillon(note: number, echantillons: Record<string, string>): { note: number; url: string } {
-  const noms = Object.keys(echantillons);
-  let meilleur = noms[0];
-  let meilleureDiff = Math.abs(nomVersNote(meilleur) - note);
-  for (const nom of noms) {
-    const diff = Math.abs(nomVersNote(nom) - note);
-    if (diff < meilleureDiff) { meilleureDiff = diff; meilleur = nom; }
-  }
-  return { note: nomVersNote(meilleur), url: echantillons[meilleur] };
-}
-
-
-async function rendreSoundFont(
-  ctx: OfflineAudioContext,
-  notes: NoteMidi[],
-  volume: number,
-  echantillons: Record<string, string>,
-) {
-  const vol = Math.max(0, Math.min(2, volume / 50));
-  const cache = new Map<string, AudioBuffer>();
-  const audioCtx = new AudioContext();
-
-  for (const n of notes) {
-    const duree = n.fin - n.debut;
-    if (duree <= 0) continue;
-
-    const echant = trouverEchantillon(n.note, echantillons);
-    const cleCache = echant.note.toString();
-    let buf = cache.get(cleCache);
-    if (!buf) {
-      try {
-        buf = await decoderAudioUrl(echant.url, audioCtx);
-        cache.set(cleCache, buf);
-      } catch {
-        continue;
-      }
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buf;
-    source.playbackRate.value = 2 ** ((n.note - echant.note) / 12);
-
-    const env = ctx.createGain();
-    const gain = (n.velociete / 127) * vol * 0.8;
-    const a = 0.004;
-    const r = 0.04;
-    const fin = n.debut + duree;
-
-    env.gain.setValueAtTime(0, n.debut);
-    env.gain.linearRampToValueAtTime(gain, n.debut + a);
-    env.gain.setValueAtTime(gain, fin - r);
-    env.gain.linearRampToValueAtTime(0, fin);
-
-    source.connect(env);
-    env.connect(ctx.destination);
-    source.start(n.debut);
-    source.stop(fin);
-  }
-
-  audioCtx.close();
-}
-
-
-function gmProgrammeVersSfId(programme: number): string {
-  const tbl: Record<number, string> = {
-    0: "acoustic_grand_piano", 1: "bright_acoustic_piano", 2: "electric_grand_piano",
-    3: "honkytonk_piano", 4: "electric_piano_1", 5: "electric_piano_2", 6: "harpsichord", 7: "clavinet",
-    8: "celesta", 9: "glockenspiel", 10: "music_box", 11: "vibraphone", 12: "marimba", 13: "xylophone",
-    14: "tubular_bells", 15: "dulcimer", 16: "drawbar_organ", 17: "percussive_organ", 18: "rock_organ",
-    19: "church_organ", 20: "reed_organ", 21: "accordion", 22: "harmonica", 23: "tango_accordion",
-    24: "acoustic_guitar_nylon", 25: "acoustic_guitar_steel", 26: "electric_guitar_jazz",
-    27: "electric_guitar_clean", 28: "electric_guitar_muted", 29: "overdriven_guitar",
-    30: "distortion_guitar", 31: "guitar_harmonics", 32: "acoustic_bass", 33: "electric_bass_finger",
-    34: "electric_bass_pick", 35: "fretless_bass", 36: "slap_bass_1", 37: "slap_bass_2",
-    38: "synth_bass_1", 39: "synth_bass_2", 40: "violin", 41: "viola", 42: "cello", 43: "contrabass",
-    44: "tremolo_strings", 45: "pizzicato_strings", 46: "orchestral_harp", 47: "timpani",
-    48: "string_ensemble_1", 49: "string_ensemble_2", 50: "synth_strings_1", 51: "synth_strings_2",
-    52: "choir_aahs", 53: "voice_oohs", 54: "synth_voice", 55: "orchestra_hit", 56: "trumpet",
-    57: "trombone", 58: "tuba", 59: "muted_trumpet", 60: "french_horn", 61: "brass_section",
-    62: "synth_brass_1", 63: "synth_brass_2", 64: "soprano_sax", 65: "alto_sax", 66: "tenor_sax",
-    67: "baritone_sax", 68: "oboe", 69: "english_horn", 70: "bassoon", 71: "clarinet", 72: "piccolo",
-    73: "flute", 74: "recorder", 75: "pan_flute", 76: "blown_bottle", 77: "shakuhachi", 78: "whistle",
-    79: "ocarina", 80: "lead_1_square", 81: "lead_2_sawtooth", 82: "lead_3_calliope", 83: "lead_4_chiff",
-    84: "lead_5_charang", 85: "lead_6_voice", 86: "lead_7_fifths", 87: "lead_8_bass_lead",
-    88: "pad_1_new_age", 89: "pad_2_warm", 90: "pad_3_polysynth", 91: "pad_4_choir", 92: "pad_5_bowed",
-    93: "pad_6_metallic", 94: "pad_7_halo", 95: "pad_8_sweep", 96: "fx_1_rain", 97: "fx_2_soundtrack",
-    98: "fx_3_crystal", 99: "fx_4_atmosphere", 100: "fx_5_brightness", 101: "fx_6_goblins",
-    102: "fx_7_echoes", 103: "fx_8_scifi", 104: "sitar", 105: "banjo", 106: "shamisen", 107: "koto",
-    108: "kalimba", 109: "bag_pipe", 110: "fiddle", 111: "shanai", 112: "tinkle_bell", 113: "agogo",
-    114: "steel_drums", 115: "woodblock", 116: "taiko_drum", 117: "melodic_tom", 118: "synth_drum",
-    119: "reverse_cymbal", 120: "guitar_fret_noise", 121: "breath_noise", 122: "seashore",
-    123: "bird_tweet", 124: "telephone_ring", 125: "helicopter", 126: "applause", 127: "gunshot",
-  };
-  return tbl[programme] ?? "acoustic_grand_piano";
-}
-
 
 export function notesVersFichierMidi(notes: NoteEvenement[], tempoBpm: number): File {
   const tpm = 480;
@@ -375,11 +259,13 @@ export async function rendreMidiDepuisBytes(
 
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
-    if (sf2Global) {
-      console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
-      const sr = 44100;
-      const duree = Math.max(dureeTotale, 0.5);
-      const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
+    if (!sf2Global) {
+      throw new Error(traduire("msg.sf2.non.charge"));
+    }
+    console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
+    const sr = 44100;
+    const duree = Math.max(dureeTotale, 0.5);
+    const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
       const canaux = [...new Set(notes.map((n) => n.canal))].sort((a, b) => a - b);
       for (const canal of canaux) {
         const nc = notes.filter((n) => n.canal === canal);
@@ -398,33 +284,7 @@ export async function rendreMidiDepuisBytes(
       normaliserBuffer(master);
       return master;
     }
-    console.warn("[attic] rendreMidiDepuisBytes en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
-    const ctx = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
-    const notesParProg = new Map<number, NoteMidi[]>();
-    for (const n of notes) {
-      const prog = canauxInstrument.get(n.canal) ?? 0;
-      if (!notesParProg.has(prog)) notesParProg.set(prog, []);
-      notesParProg.get(prog)!.push(n);
-    }
-    const cacheSf = new Map<string, Record<string, string>>();
-    for (const [prog, notesGroupe] of notesParProg) {
-      const sfId = gmProgrammeVersSfId(prog);
-      let echantillons = cacheSf.get(sfId);
-      if (!echantillons) {
-        try {
-          echantillons = await chargerSoundFont(sfId);
-          cacheSf.set(sfId, echantillons);
-        } catch {
-          try {
-            echantillons = cacheSf.get("acoustic_grand_piano") ?? await chargerSoundFont("acoustic_grand_piano");
-            cacheSf.set("acoustic_grand_piano", echantillons);
-          } catch { continue; }
-        }
-      }
-      await rendreSoundFont(ctx, notesGroupe, vol * 100, echantillons);
-    }
-    return ctx.startRendering();
-  }
+
 
   // FM mode : écriture directe dans le buffer, sans nœuds Web Audio
   const length = Math.ceil(duree * sr);
@@ -489,40 +349,13 @@ export async function rendreSequence(
 
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
-    if (sf2Global) {
-      const idx = instrument ?? 0;
-      const nomInst = sf2Global.instruments[idx]?.nom ?? "?";
-      console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, instrument ${idx} "${nomInst}" (${notes.length} notes)`);
-      return rendreAvecSF2(sf2Global, notes, volume, idx);
+    if (!sf2Global) {
+      throw new Error(traduire("msg.sf2.non.charge"));
     }
-    console.warn("[attic] rendreSequence en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
-    const ctx = new OfflineAudioContext(2, Math.ceil(duree * 44100), 44100);
-    const notesMidi: NoteMidi[] = notes.map((n) => ({
-      ...n,
-      velociete: n.velocite,
-      canal: 0,
-    }));
-    const notesParProg = new Map<number, NoteMidi[]>();
-    const prog = instrument ?? 0;
-    notesParProg.set(prog, notesMidi);
-    const cacheSf = new Map<string, Record<string, string>>();
-    for (const [p, notesGroupe] of notesParProg) {
-      const sfId = gmProgrammeVersSfId(p);
-      let echantillons = cacheSf.get(sfId);
-      if (!echantillons) {
-        try {
-          echantillons = await chargerSoundFont(sfId);
-          cacheSf.set(sfId, echantillons);
-        } catch {
-          try {
-            echantillons = cacheSf.get("acoustic_grand_piano") ?? await chargerSoundFont("acoustic_grand_piano");
-            cacheSf.set("acoustic_grand_piano", echantillons);
-          } catch { continue; }
-        }
-      }
-      await rendreSoundFont(ctx, notesGroupe, vol * 100, echantillons);
-    }
-    return ctx.startRendering();
+    const idx = instrument ?? 0;
+    const nomInst = sf2Global.instruments[idx]?.nom ?? "?";
+    console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, instrument ${idx} "${nomInst}" (${notes.length} notes)`);
+    return rendreAvecSF2(sf2Global, notes, volume, idx);
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing

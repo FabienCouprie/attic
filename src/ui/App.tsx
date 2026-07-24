@@ -70,6 +70,7 @@ interface DonneesNoeud {
   progression?: string;
   audioResultatUrl?: string;
   audioResultatNom?: string;
+  audioResultatBuffer?: AudioBuffer;
   audioResultatMessage?: string;
   audioFichier?: File;
   midiFichier?: File;
@@ -79,6 +80,8 @@ interface DonneesNoeud {
   visualisationUrl?: string;
   nomFichier?: string;
   prioritaire?: boolean;
+  imageResultatUrl?: string;
+  imageResultatFile?: File;
   [key: string]: unknown;
 }
 
@@ -773,7 +776,18 @@ function Atelier() {
         def={sel ? trouverDef(sel.data.ficheId) : undefined}
         onChangerParametre={(nom, val) => {
           if (!sel) return;
-          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
+          cacheExec.current.delete(sel.id);
+          setNodes((nds) => nds.map((n) => {
+            if (n.id !== sel.id) return n;
+            const next = { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } };
+            if (n.data.audioResultatUrl) {
+              URL.revokeObjectURL(n.data.audioResultatUrl);
+              next.data.audioResultatUrl = undefined;
+              next.data.audioResultatNom = undefined;
+              next.data.audioResultatBuffer = undefined;
+            }
+            return next;
+          }));
           setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: { ...prev.data.parametres, [nom]: val } } } : null);
         }}
         onChargerFichier={(key, fichier) => {

@@ -16,10 +16,10 @@ export function sf2Nom(): string {
 }
 
 export function normaliserModeSynthèse(valeur: string): "Automatique" | "FM/Oscillateurs" | "SoundFont" {
-  const v = valeur.trim();
-  if (v === "SoundFont") return "SoundFont";
-  if (v === "FM/Oscillators" || v === "FM/Oscillateurs") return "FM/Oscillateurs";
-  if (v === "Auto" || v === "Automatique") return "Automatique";
+  const v = valeur.trim().toLowerCase();
+  if (v === "soundfont" || v === "sound font") return "SoundFont";
+  if (v === "fm/oscillators" || v === "fm/oscillateurs") return "FM/Oscillateurs";
+  if (v === "auto" || v === "automatique") return "Automatique";
   return "Automatique";
 }
 
