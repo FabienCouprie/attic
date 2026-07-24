@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue, traduire } from "../i18n";;
+import { langueCourante, type Langue, traduire } from "../i18n";
 
 type Tessiture = { fr: string; en: string; grave: number; aigu: number };
 
@@ -66,7 +66,8 @@ function freqVersNote(hz: number): string {
 export function construireListeTessitures(
   groupe: string, format: string, langue: Langue,
 ): { texte: string; total: number } {
-  const liste = groupe && groupe !== "Toutes" ? (TESSITURES[groupe] ?? []) : Object.values(TESSITURES).flat();
+  const grp = groupe === "All" ? "Toutes" : groupe;
+  const liste = grp && grp !== "Toutes" ? (TESSITURES[grp] ?? []) : Object.values(TESSITURES).flat();
   const noms = liste.map((t) => {
     const nom = langue === "en" ? t.en : t.fr;
     return `${nom} (${freqVersNote(t.grave)}–${freqVersNote(t.aigu)})`;

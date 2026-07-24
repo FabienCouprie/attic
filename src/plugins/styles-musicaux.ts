@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue, traduire } from "../i18n";;
+import { langueCourante, type Langue, traduire } from "../i18n";
 
 type Style = { fr: string; en: string };
 
@@ -139,7 +139,8 @@ export const CATEGORIES_LABEL: Record<string, Record<Langue, string>> = {
 export function construireListeStyles(
   categorie: string, format: string, langue: Langue,
 ): { texte: string; total: number } {
-  const liste = categorie && categorie !== "Toutes" ? (STYLES[categorie] ?? []) : Object.values(STYLES).flat();
+  const cat = categorie === "All" ? "Toutes" : categorie;
+  const liste = cat && cat !== "Toutes" ? (STYLES[cat] ?? []) : Object.values(STYLES).flat();
   const noms = liste.map((s) => (langue === "en" ? s.en : s.fr));
   let texte: string;
   if (format === "Retour ligne") texte = noms.join("\n");

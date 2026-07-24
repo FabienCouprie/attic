@@ -3,7 +3,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue, traduire } from "../i18n";;
+import { langueCourante, type Langue, traduire } from "../i18n";
 
 type Emotion = { fr: string; en: string };
 
@@ -107,7 +107,8 @@ export const CATEGORIES_EMOTIONS_LABEL: Record<string, Record<Langue, string>> =
 export function construireListeEmotions(
   categorie: string, format: string, langue: Langue,
 ): { texte: string; total: number } {
-  const liste = categorie && categorie !== "Toutes" ? (EMOTIONS[categorie] ?? []) : Object.values(EMOTIONS).flat();
+  const cat = categorie === "All" ? "Toutes" : categorie;
+  const liste = cat && cat !== "Toutes" ? (EMOTIONS[cat] ?? []) : Object.values(EMOTIONS).flat();
   const noms = liste.map((e) => (langue === "en" ? e.en : e.fr));
   let texte: string;
   if (format === "Retour ligne") texte = noms.join("\n");

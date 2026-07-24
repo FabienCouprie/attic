@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { langueCourante, type Langue, traduire } from "../i18n";;
+import { langueCourante, type Langue, traduire } from "../i18n";
 
 type Instr = { fr: string; en: string };
 
@@ -94,7 +94,8 @@ export const FAMILLES_LABEL: Record<string, Record<Langue, string>> = {
 export function construireListeInstruments(
   famille: string, format: string, langue: Langue,
 ): { texte: string; total: number } {
-  const liste = famille && famille !== "Toutes" ? (INSTRUMENTS[famille] ?? []) : Object.values(INSTRUMENTS).flat();
+  const fam = famille === "All" ? "Toutes" : famille;
+  const liste = fam && fam !== "Toutes" ? (INSTRUMENTS[fam] ?? []) : Object.values(INSTRUMENTS).flat();
   const noms = liste.map((i) => (langue === "en" ? i.en : i.fr));
   let texte: string;
   if (format === "Retour ligne") texte = noms.join("\n");
