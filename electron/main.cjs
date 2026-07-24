@@ -613,38 +613,24 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     const fichiers = {};
     const resolvedNodesDir = path.resolve(nodesDir);
     for (const entry of entries) {
-      const entryPath = entry.entryName;
+      const entryName = entry.entryName;
       if (entry.isDirectory) continue;
 
-      // Protection contre le Zip Slip : rejeter les entrées invalides ou qui sortent de nodesDir
-      const normalizedEntryPath = entryPath.replace(/\\/g, "/");
-      const pathSegments = normalizedEntryPath.split("/").filter(Boolean);
-      if (
-        !normalizedEntryPath ||
-        path.isAbsolute(normalizedEntryPath) ||
-        pathSegments.includes("..")
-      ) {
-        console.warn(`[attic] node:importer-zip entrée ignorée (chemin invalide): ${entryPath}`);
+      // Protection contre le Zip Slip : s'assurer que l'entrée reste dans nodesDir
+      const targetPath = path.resolve(nodesDir, entryName);
+      const relativePath = path.relative(resolvedNodesDir, targetPath);
+      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+        console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${entryName}`);
         continue;
       }
 
-      const targetPath = path.join(nodesDir, normalizedEntryPath);
-      const resolvedTargetPath = path.resolve(targetPath);
-      if (
-        resolvedTargetPath !== resolvedNodesDir &&
-        !resolvedTargetPath.startsWith(resolvedNodesDir + path.sep)
-      ) {
-        console.warn(`[attic] node:importer-zip entrée ignorée (hors dossier cible): ${entryPath}`);
-        continue;
-      }
-
-      const targetDir = path.dirname(resolvedTargetPath);
+      const targetDir = path.dirname(targetPath);
       if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
       entry.getData(); // force read
       fs.writeFileSync(targetPath, entry.getData());
       // Lire le contenu des fichiers texte pour le retourner
-      if (entryPath === "manifest.json" || entryPath === "executer.js" || entryPath === "notice.json" || entryPath === "dependencies.json") {
-        fichiers[entryPath] = entry.getData().toString("utf-8");
+      if (entryName === "manifest.json" || entryName === "executer.js" || entryName === "notice.json" || entryName === "dependencies.json") {
+        fichiers[entryName] = entry.getData().toString("utf-8");
       }
     }
 
