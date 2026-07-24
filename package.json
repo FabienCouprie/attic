@@ -65,7 +65,7 @@
     ],
     "win": {
       "target": [
-        "nsis-web"
+        "nsis"
       ],
       "icon": null
     },

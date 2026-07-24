@@ -9,8 +9,9 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - Fixed CodeQL Zip Slip alert in `node:importer-zip`.
 
 ### Changed
-- Windows installer switched to **nsis-web** — the small installer downloads the ~2 GB package instead of embedding it.
+- Windows installer is a **standalone NSIS installer** (~1.4 GB) containing the full application.
 - Updated NSIS toolset to **3.12**.
+- Removed duplicate `dist/oonx` and `dist/sf2` files from the packaged app to bring the installer under the 2 GB GitHub asset limit.
 
 ## [1.2.3] — 2026-07-24
 
