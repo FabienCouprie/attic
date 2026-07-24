@@ -178,7 +178,27 @@ export function rendreAvecSF2(
     }
   }
 
+  normaliserBuffer(resultat);
   return resultat;
+}
+
+
+function normaliserBuffer(buffer: AudioBuffer, ceiling = 1): void {
+  let peak = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const ch = buffer.getChannelData(c);
+    for (let i = 0; i < ch.length; i++) {
+      const a = Math.abs(ch[i]);
+      if (a > peak) peak = a;
+    }
+  }
+  if (peak > ceiling) {
+    const s = ceiling / peak;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const ch = buffer.getChannelData(c);
+      for (let i = 0; i < ch.length; i++) ch[i] *= s;
+    }
+  }
 }
 
 
@@ -375,6 +395,7 @@ export async function rendreMidiDepuisBytes(
           master.getChannelData(1)[i] += layer.getChannelData(1)[i];
         }
       }
+      normaliserBuffer(master);
       return master;
     }
     console.warn("[attic] rendreMidiDepuisBytes en mode SoundFont mais aucun SF2 global chargé ; fallback FluidR3_GM.");
