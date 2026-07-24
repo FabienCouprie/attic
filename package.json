@@ -23,6 +23,9 @@
     "directories": {
       "output": "release"
     },
+    "toolsets": {
+      "nsis": "1.2.1"
+    },
     "compression": "maximum",
     "files": [
       "dist/**/*",
@@ -60,7 +63,7 @@
     ],
     "win": {
       "target": [
-        "nsis"
+        "nsis-web"
       ],
       "icon": null
     },
