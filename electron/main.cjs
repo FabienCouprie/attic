@@ -147,6 +147,12 @@ function creerFenetre() {
   // les téléchargements atterrissent dans une fenêtre sans gestionnaire de
   // téléchargement au lieu du dossier Téléchargements de Windows. En dev, l'app
   // tourne déjà dans un vrai navigateur, d'où le « ça marche en dev seulement ».
+  //
+  // Mitigation GHSA-f3pv-wv63-48x8 (CVE-2026-34765) : ce handler ne crée jamais
+  // de fenêtre enfant et n'accorde jamais de webPreferences élevées. Tous les
+  // window.open() sont refusés ({ action: "deny" }). De plus nodeIntegration est
+  // désactivé et contextIsolation est activé. L'application n'est donc pas
+  // affectée par l'alerte même si la version d'Electron est vulnérable.
   fenetre.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url);
     return { action: "deny" };
