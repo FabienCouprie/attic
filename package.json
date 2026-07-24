@@ -119,6 +119,9 @@
   },
   "overrides": {
     "adm-zip": "^0.6.0",
-    "sharp": "^0.35.3"
+    "minimist": "^1.2.8",
+    "protobufjs": "^7.6.5",
+    "sharp": "^0.35.3",
+    "static-eval": "^2.1.1"
   }
 }
