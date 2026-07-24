@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("api", {
 
   ecrireFichier: (chemin, buffer) => ipcRenderer.invoke("fichier:ecrire", { chemin, buffer }),
   copierFichier: (source, cible) => ipcRenderer.invoke("fichier:copier", { source, cible }),
+  ouvrirChemin: (chemin) => ipcRenderer.invoke("fichier:ouvrir-chemin", chemin),
   extrairePochetteMp3: (chemin) => ipcRenderer.invoke("mp3:extraire-pochette", chemin),
   exporterNodeZip: (options) => ipcRenderer.invoke("node:exporter-zip", options),
   importerNodeZip: (zipPath) => ipcRenderer.invoke("node:importer-zip", zipPath),

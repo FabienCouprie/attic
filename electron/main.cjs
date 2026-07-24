@@ -350,6 +350,16 @@ ipcMain.handle("fichier:copier", async (_event, { source, cible }) => {
   }
 });
 
+// --- IPC : ouvrir un chemin dans l'application par défaut (navigateur pour .html) ---
+ipcMain.handle("fichier:ouvrir-chemin", async (_event, chemin) => {
+  try {
+    const resultat = await shell.openPath(chemin);
+    return { ok: resultat === "", erreur: resultat || undefined };
+  } catch (err) {
+    return { ok: false, erreur: err?.message || String(err) };
+  }
+});
+
 // --- IPC : extraire l'image (pochette) d'un fichier MP3 (tag ID3 APIC) ---
 ipcMain.handle("mp3:extraire-pochette", async (_event, cheminFichier) => {
   try {
@@ -498,21 +508,16 @@ ipcMain.handle("telecharger:url", async (_event, urlStr) => {
 
 ipcMain.handle("app:quitter", () => app.quit());
 
-// Ouvre la documentation embarquée (dossier `doc` inclus dans extraResources).
-// En packagé : resources/doc/index.html ; en dev : <projet>/doc/index.html.
+// Ouvre la documentation en ligne dans le navigateur par défaut.
+const URL_DOC = "https://github.com/FabienCouprie/attic/wiki";
 ipcMain.handle("doc:ouvrir", async () => {
-  const candidats = app.isPackaged
-    ? [path.join(process.resourcesPath, "doc", "index.html")]
-    : [path.join(path.resolve(__dirname, ".."), "doc", "index.html")];
-  for (const c of candidats) {
-    if (fs.existsSync(c)) {
-      // Ouvre dans le navigateur système (ou l'application par défaut pour .html)
-      const resultat = await shell.openPath(c);
-      if (resultat) console.error("[attic] doc:ouvrir erreur :", resultat);
-      return { ok: resultat === "", chemin: c };
-    }
+  try {
+    await shell.openExternal(URL_DOC);
+    return { ok: true, url: URL_DOC };
+  } catch (err) {
+    console.error("[attic] doc:ouvrir erreur :", err);
+    return { ok: false, erreur: String(err) };
   }
-  return { ok: false, erreur: "Documentation embarquée introuvable." };
 });
 
 // Retourne le chemin <projet>/Music s'il existe, sinon null.

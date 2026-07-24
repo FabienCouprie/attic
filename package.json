@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.2.3",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -23,10 +23,14 @@
     "directories": {
       "output": "release"
     },
+    "compression": "maximum",
     "files": [
       "dist/**/*",
       "electron/*.cjs",
-      "package.json"
+      "package.json",
+      "!**/*.dylib",
+      "!**/*.so",
+      "!**/*.so.*"
     ],
     "extraResources": [
       {
@@ -44,10 +48,6 @@
       {
         "from": "music collection",
         "to": "music collection"
-      },
-      {
-        "from": "doc",
-        "to": "doc"
       },
       {
         "from": "TERMS_OF_USE.txt",

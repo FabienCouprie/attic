@@ -1030,106 +1030,46 @@ function VueSourceTexte({ id, data }: VueProps) {
   );
 }
 
-// ── Carte sonore (ville fictive + points cliquables) ──
-function VueCarteSonore({ id, data }: VueProps) {
+// ── Carte sonore (génère un HTML ouvrable dans le navigateur par défaut) ──
+function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
-  const [lecture, setLecture] = useState<{ src: string; nom: string } | null>(null);
-  const [chargement, setChargement] = useState<string | null>(null);
-  const [cheminLocal, setCheminLocal] = useState(String(data.parametres?.["Chemin"] ?? "music collection"));
-  const carte = (data as any)._carteSonore as CarteSonore | undefined;
+  const [erreur, setErreur] = useState<string | null>(null);
+  const htmlPath = (data as any)._carteHtmlPath as string | undefined;
+  const htmlUrl = (data as any)._carteHtmlUrl as string | undefined;
+  const message = data.audioResultatMessage ?? "";
 
-  function mettreAJourChemin(valeur: string) {
-    setCheminLocal(valeur);
-    data.onChangerParametre?.(id, "Chemin", valeur);
-  }
-
-  async function choisirDossier() {
+  async function ouvrirDansNavigateur() {
+    if (!htmlPath) return;
+    setErreur(null);
     const api = (window as any).api;
-    if (api?.choisirDossier) {
-      const d = await api.choisirDossier();
-      if (d) mettreAJourChemin(d);
-    } else {
-      const inp = document.createElement("input");
-      inp.type = "file";
-      (inp as { webkitdirectory?: boolean }).webkitdirectory = true;
-      inp.onchange = () => {
-        const f = inp.files?.[0];
-        if (f) mettreAJourChemin((f as { path?: string }).path ?? f.name);
-      };
-      inp.click();
+    if (!api?.ouvrirChemin) {
+      setErreur(t("msg.n_cessite_electron"));
+      return;
     }
+    const res = await api.ouvrirChemin(htmlPath);
+    if (!res?.ok) setErreur(res?.erreur || t("msg.erreur_ouverture"));
   }
-
-  async function jouer(point: PointSonore) {
-    const api = (window as any).api;
-    if (!api?.lireFichierAudio) return;
-    setChargement(point.nom);
-    try {
-      const res = await api.lireFichierAudio(point.chemin);
-      if (res?.url) {
-        setLecture({ src: res.url, nom: point.nom });
-      }
-    } finally {
-      setChargement(null);
-    }
-  }
-
-  const pathRiver = carte && carte.riviere.length > 0
-    ? `M ${carte.riviere[0].x} ${carte.riviere[0].y} ` + carte.riviere.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" ")
-    : "";
 
   return (
-    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-        <input
-          type="text"
-          value={cheminLocal}
-          onChange={(e) => mettreAJourChemin(e.target.value)}
-          style={{ flex: 1, fontSize: 11, background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 3, padding: "2px 4px", color: "var(--text-title)" }}
-          onClick={(e) => e.stopPropagation()}
-        />
-        <button className="attic-node-fichier-btn" title={t("btn.parcourir")} onClick={choisirDossier}>
-          {t("btn.parcourir")}
-        </button>
-      </div>
-      {!carte ? (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px", minWidth: 220 }}>
+      {!htmlPath ? (
         <div style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
           {t("export.avantLancer")}
         </div>
       ) : (
-        <svg
-          viewBox={`0 0 ${carte.width} ${carte.height}`}
-          style={{ width: "100%", height: "auto", borderRadius: 6, background: "#e8e4dc", display: "block" }}
-        >
-        <rect x={0} y={0} width={carte.width} height={carte.height} fill="#f0ece3" />
-        {carte.espacesVerts.map((e, i) => (
-          <ellipse key={`v${i}`} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} fill="#b8d8a8" stroke="#8cb87a" strokeWidth={1} />
-        ))}
-        {carte.batiments.map((b, i) => (
-          <rect key={`b${i}`} x={b.x} y={b.y} width={b.w} height={b.h} fill={b.couleur} stroke="#8a8279" strokeWidth={1} />
-        ))}
-        {pathRiver && (
-          <path d={pathRiver} fill="none" stroke="#7fb3d5" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
-        )}
-        {carte.routes.map((r, i) => (
-          <line key={`r${i}`} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke="#9ca3af" strokeWidth={r.epaisseur} />
-        ))}
-        {carte.points.map((p, i) => (
-          <g key={`p${i}`} style={{ cursor: "pointer" }} onClick={() => jouer(p)}>
-            <circle cx={p.x} cy={p.y} r={8} fill={p.couleur} stroke="#fff" strokeWidth={2} />
-            <text x={p.x} y={p.y - 12} textAnchor="middle" fontSize={10} fill="#333" fontWeight={700}>
-              {p.nom.length > 18 ? p.nom.slice(0, 16) + "…" : p.nom}
-            </text>
-          </g>
-        ))}
-      </svg>
-      )}
-      {chargement && <div style={{ fontSize: 11, marginTop: 4, color: "var(--text-secondary)" }}>▶ {chargement}…</div>}
-      {lecture && (
-        <div style={{ marginTop: 6 }}>
-          <div style={{ fontSize: 10, marginBottom: 2, color: "var(--text-secondary)" }}>{lecture.nom}</div>
-          <audio className="attic-node-audio" controls autoPlay src={lecture.src} onEnded={() => setLecture(null)} />
-        </div>
+        <>
+          <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%", marginBottom: 6 }} onClick={ouvrirDansNavigateur}>
+            🌐 {t("btn.ouvrir_navigateur")}
+          </button>
+          {htmlUrl && (
+            <a href={htmlUrl} download="carte-sonore.html" className="attic-node-fichier-btn" style={{ display: "block", textAlign: "center", textDecoration: "none", marginBottom: 6 }}>
+              ⬇ {t("btn.telecharger_html")}
+            </a>
+          )}
+          <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all" }}>{htmlPath}</div>
+          {message && <div style={{ fontSize: 10, marginTop: 6, color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{message}</div>}
+          {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
+        </>
       )}
     </div>
   );

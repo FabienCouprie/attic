@@ -2,6 +2,19 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.3] — 2026-07-24
+
+### Added
+- **Sound Map city redesign** — denser buildings, districts, parks, water, street labels and a legend.
+- **Voice Changer** node with Chipmunk, Monster, Robot, Phone, Alien, Helium and Ghost presets.
+- **Random Slice** node for rearranging audio fragments.
+- **Echo** node with ping-pong delay (Time, Feedback, Spread).
+
+### Changed
+- **Documentation** is now hosted on the GitHub wiki: `https://github.com/FabienCouprie/attic/wiki`. The top toolbar icon opens the wiki instead of the bundled docs.
+- Removed bundled `doc/` folder from packaged resources.
+- **Sound Map** map size increased to 1400×900 and points limit raised to 200.
+
 ## [1.1.1] — 2026-07-18
 
 ### Fixed

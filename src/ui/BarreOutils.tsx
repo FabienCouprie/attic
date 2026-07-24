@@ -139,7 +139,7 @@ export function BarreOutils(props: Props) {
           </div>
         )}
       </div>
-      {/* 📖 Documentation embarquée */}
+      {/* 📖 Documentation en ligne (GitHub wiki) */}
       <button className="attic-btn-icon" title={t("btn.doc")} onClick={async () => { const res = await (window as any).api?.ouvrirDoc?.(); if (!res?.ok) alert(t("msg.docIntrouvable")); }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 2h5a3 3 0 013 3v9a2 2 0 00-2-2H2V2z"/><path d="M14 2h-4a3 3 0 00-3 3v9a2 2 0 012 2h5V2z"/></svg>
       </button>
