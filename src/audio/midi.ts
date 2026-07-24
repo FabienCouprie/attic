@@ -135,7 +135,8 @@ export function rendreAvecSF2(
     if (srcLen < 2) continue;
 
     const noteDiff = n.note - ech.noteOriginale + ech.correction / 100;
-    const ratio = 2 ** (noteDiff / 12);
+    const sampleRate = ech.taux || sr;
+    const ratio = (sampleRate / sr) * (2 ** (noteDiff / 12));
     const gain = (n.velocite / 127) * vol * 0.8;
 
     const debutEch = Math.max(0, Math.floor(n.debut * sr));
