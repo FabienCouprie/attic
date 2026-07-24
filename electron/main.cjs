@@ -615,14 +615,30 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     for (const entry of entries) {
       const entryPath = entry.entryName;
       if (entry.isDirectory) continue;
-      // Protection contre le Zip Slip : rejeter les entrées qui sortent de nodesDir
-      const resolvedTarget = path.resolve(nodesDir, entryPath);
-      if (resolvedTarget !== resolvedNodesDir && !resolvedTarget.startsWith(resolvedNodesDir + path.sep)) {
-        console.warn(`[attic] node:importer-zip: entrée rejetée (zip slip) : ${entryPath}`);
+
+      // Protection contre le Zip Slip : rejeter les entrées invalides ou qui sortent de nodesDir
+      const normalizedEntryPath = entryPath.replace(/\\/g, "/");
+      const pathSegments = normalizedEntryPath.split("/").filter(Boolean);
+      if (
+        !normalizedEntryPath ||
+        path.isAbsolute(normalizedEntryPath) ||
+        pathSegments.includes("..")
+      ) {
+        console.warn(`[attic] node:importer-zip entrée ignorée (chemin invalide): ${entryPath}`);
         continue;
       }
-      const targetPath = path.join(nodesDir, entryPath);
-      const targetDir = path.dirname(targetPath);
+
+      const targetPath = path.join(nodesDir, normalizedEntryPath);
+      const resolvedTargetPath = path.resolve(targetPath);
+      if (
+        resolvedTargetPath !== resolvedNodesDir &&
+        !resolvedTargetPath.startsWith(resolvedNodesDir + path.sep)
+      ) {
+        console.warn(`[attic] node:importer-zip entrée ignorée (hors dossier cible): ${entryPath}`);
+        continue;
+      }
+
+      const targetDir = path.dirname(resolvedTargetPath);
       if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
       entry.getData(); // force read
       fs.writeFileSync(targetPath, entry.getData());
