@@ -29,6 +29,8 @@
     "compression": "maximum",
     "files": [
       "dist/**/*",
+      "!dist/oonx/**/*",
+      "!dist/sf2/**/*",
       "electron/*.cjs",
       "package.json",
       "!**/*.dylib",
