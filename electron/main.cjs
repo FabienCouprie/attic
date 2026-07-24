@@ -626,8 +626,8 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
 
       const targetDir = path.dirname(targetPath);
       if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-      entry.getData(); // force read
-      fs.writeFileSync(targetPath, entry.getData());
+      const entryData = entry.getData(); // force read
+      fs.writeFileSync(resolvedTargetPath, entryData);
       // Lire le contenu des fichiers texte pour le retourner
       if (entryName === "manifest.json" || entryName === "executer.js" || entryName === "notice.json" || entryName === "dependencies.json") {
         fichiers[entryName] = entry.getData().toString("utf-8");
