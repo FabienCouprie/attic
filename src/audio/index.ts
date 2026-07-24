@@ -36,5 +36,6 @@ export * from "./reverb-fractal";
 export * from "./spectrogramme-fractal";
 export * from "./pixeltone";
 export * from "./voice-changer";
+export * from "./random-slice";
 
 export { registre } from "./adaptateur";

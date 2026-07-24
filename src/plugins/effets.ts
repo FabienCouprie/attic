@@ -19,8 +19,9 @@ import {
   appliquerFormuleEchantillons,
   appliquerFormuleSpectrale,
   reverberationFractale,
-  appliquerEchoPingPong,
-  appliquerVoiceChanger,
+   appliquerEchoPingPong,
+   appliquerVoiceChanger,
+   appliquerDecoupeAleatoire,
 } from "../audio";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
@@ -802,6 +803,36 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const effet = ctx.paramTexte("Effet", "Chipmunk");
       return { valeurs: [await appliquerVoiceChanger(a, effet)], message: `Voice Changer · ${effet}` };
+   },
+  },
+  {
+    id: "decoupe-aleatoire", nom: "Découpe aléatoire", nomEn: "Random Slice", univers: "Traitement", famille: "Effets",
+    resume: "Découpe une piste en parts égales et les réarrange (ordre aléatoire, original ou inverse).",
+    resumeEn: "Slices a track into equal parts and rearranges them (random, original or reverse order).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Parts", nomEn: "Parts", type: "curseur", plage: [2, 64], pas: 1, defaut: 8,
+        doc: "Nombre de tranches égales dans lesquelles la piste est découpée.", docEn: "Number of equal slices the track is cut into." },
+      { nom: "Crossfade", nomEn: "Crossfade", type: "curseur", plage: [0, 100], pas: 1, defaut: 5, unite: "ms",
+        doc: "Durée du fondu enchaîné entre les tranches pour éviter les clics.", docEn: "Crossfade duration between slices to avoid clicks." },
+      { nom: "Mode", nomEn: "Mode", type: "choix",
+        options: ["Random", "Original", "Reverse"],
+        optionsEn: ["Random", "Original", "Reverse"],
+        defaut: "Random",
+        doc: "Ordre de réarrangement : aléatoire, original ou inversé.", docEn: "Rearrangement order: random, original or reversed." },
+      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 9999], pas: 1, defaut: 0,
+        doc: "Graine aléatoire (0 = nouvel ordre à chaque exécution). Même graine = même découpe.", docEn: "Random seed (0 = new order each run). Same seed = same slice order." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const parts = ctx.paramNombre("Parts", 8);
+      const crossfade = ctx.paramNombre("Crossfade", 5);
+      const mode = ctx.paramTexte("Mode", "Random");
+      const graine = ctx.paramNombre("Graine", 0);
+      const out = appliquerDecoupeAleatoire(a, parts, crossfade, mode, graine);
+      return { valeurs: [out], message: `Découpe aléatoire · ${mode}` };
    },
   },
 ] as FicheAudio[]).map(avecDoc);

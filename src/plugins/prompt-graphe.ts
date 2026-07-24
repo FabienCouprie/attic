@@ -92,6 +92,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "chopper", mots: ["chopper", "chop", "stutter", "gate rythmique", "rhythmic gate", "tremolo extrême"], category: "effet" },
   { ficheId: "echo", mots: ["echo", "delay", "répétition", "ping pong", "ping-pong"], category: "effet" },
   { ficheId: "voice-changer", mots: ["voice changer", "changer voix", "modifier voix", "chipmunk", "robot voice", "monster voice"], category: "effet" },
+  { ficheId: "decoupe-aleatoire", mots: ["découpe aléatoire", "random slice", "slice", "rearrange", "réarranger", "découper", "tranches", "remix slices"], category: "effet" },
   { ficheId: "simple-boucle", mots: ["boucle", "loop", "répéter"], category: "effet" },
   { ficheId: "pure-data", mots: ["pure data", "pd", "patch", "libpd"], category: "effet" },
   { ficheId: "aligneur-piste", mots: ["aligner", "align", "aligneur"], category: "effet" },
