@@ -19,6 +19,8 @@ import {
   appliquerFormuleEchantillons,
   appliquerFormuleSpectrale,
   reverberationFractale,
+  appliquerEchoPingPong,
+  appliquerVoiceChanger,
 } from "../audio";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
@@ -761,5 +763,45 @@ export const fiches: FicheAudio[] = ([
       const typeStr = ctx.paramTexte("Type", "Dur");
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
    },
- },
+  },
+  {
+    id: "echo", nom: "Echo", nomEn: "Echo", univers: "Traitement", famille: "Effets",
+    resume: "Delay/écho ping-pong avec feedback.",
+    resumeEn: "Ping-pong delay/echo with feedback.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Temps", nomEn: "Time", type: "curseur", plage: [50, 2000], pas: 10, defaut: 350, unite: "ms",
+        doc: "Temps de retard entre chaque répétition.", docEn: "Delay time between repetitions." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Quantité de signal réinjectée dans le délai (plus = plus de répétitions).", docEn: "Amount of signal fed back into the delay (more = more repetitions)." },
+      { nom: "Répartition", nomEn: "Spread", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Largeur stéréo de l'écho (0% = mono, 100% = balayage gauche/droite maximum).", docEn: "Stereo width of the echo (0% = mono, 100% = maximum left/right sweep)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Répartition", 50))] };
+   },
+  },
+  {
+    id: "voice-changer", nom: "Voice Changer", nomEn: "Voice Changer", univers: "Traitement", famille: "Effets",
+    resume: "Transforme une voix avec des effets prédéfinis : chipmunk, monstre, robot, téléphone, alien, hélium, fantôme.",
+    resumeEn: "Transforms a voice with preset effects: chipmunk, monster, robot, phone, alien, helium, ghost.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Effet", nomEn: "Effect", type: "choix",
+        options: ["Chipmunk", "Monster", "Robot", "Phone", "Alien", "Helium", "Ghost"],
+        optionsEn: ["Chipmunk", "Monster", "Robot", "Phone", "Alien", "Helium", "Ghost"],
+        defaut: "Chipmunk",
+        doc: "Type de transformation vocale.", docEn: "Voice transformation preset." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const effet = ctx.paramTexte("Effet", "Chipmunk");
+      return { valeurs: [await appliquerVoiceChanger(a, effet)], message: `Voice Changer · ${effet}` };
+   },
+  },
 ] as FicheAudio[]).map(avecDoc);
