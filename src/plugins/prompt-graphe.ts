@@ -126,6 +126,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "couleur-suno-ia", mots: ["couleur suno", "color suno", "couleur ia"], category: "texte" },
   { ficheId: "generateur-pochette", mots: ["pochette", "cover", "album cover"], category: "texte" },
   { ficheId: "galerie-exposition", mots: ["galerie", "gallery", "exposition"], category: "texte" },
+  { ficheId: "carte-sonore", mots: ["carte sonore", "sound map", "carte ville", "city map", "sons sur carte", "carte interactive"], category: "texte" },
 ];
 
 // Map des catégories par univers (pour les nodes non présents dans ALIAS_MANUELS)

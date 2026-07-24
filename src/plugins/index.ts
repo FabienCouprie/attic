@@ -54,6 +54,7 @@ import { fiches as f_image_export } from "./image-export";
 import { fiches as f_image_rendu } from "./image-rendu";
 import { fiches as f_pixeltone } from "./pixeltone";
 import { fiches as f_entree_image } from "./entree-image";
+import { fiches as f_carte_sonore } from "./carte-sonore";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -107,4 +108,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_image_rendu,
   ...f_pixeltone,
   ...f_entree_image,
+  ...f_carte_sonore,
 ];

@@ -26,6 +26,7 @@ import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
 import { SongseeVue } from "./Songsee";
+import type { CarteSonore, PointSonore } from "../plugins/carte-sonore";
 import { construireListeInstruments } from "../plugins/instruments";
 import { construireListeStyles } from "../plugins/styles-musicaux";
 import { construireListeEmotions } from "../plugins/emotions";
@@ -1029,6 +1030,78 @@ function VueSourceTexte({ id, data }: VueProps) {
   );
 }
 
+// ── Carte sonore (ville fictive + points cliquables) ──
+function VueCarteSonore({ data }: VueProps) {
+  const { t } = useI18n();
+  const [lecture, setLecture] = useState<{ src: string; nom: string } | null>(null);
+  const [chargement, setChargement] = useState<string | null>(null);
+  const carte = (data as any)._carteSonore as CarteSonore | undefined;
+
+  async function jouer(point: PointSonore) {
+    const api = (window as any).api;
+    if (!api?.lireFichierAudio) return;
+    setChargement(point.nom);
+    try {
+      const res = await api.lireFichierAudio(point.chemin);
+      if (res?.url) {
+        setLecture({ src: res.url, nom: point.nom });
+      }
+    } finally {
+      setChargement(null);
+    }
+  }
+
+  if (!carte) {
+    return (
+      <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
+        {t("export.avantLancer")}
+      </div>
+    );
+  }
+
+  const pathRiver = carte.riviere.length > 0
+    ? `M ${carte.riviere[0].x} ${carte.riviere[0].y} ` + carte.riviere.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" ")
+    : "";
+
+  return (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+      <svg
+        viewBox={`0 0 ${carte.width} ${carte.height}`}
+        style={{ width: "100%", height: "auto", borderRadius: 6, background: "#e8e4dc", display: "block" }}
+      >
+        <rect x={0} y={0} width={carte.width} height={carte.height} fill="#f0ece3" />
+        {carte.espacesVerts.map((e, i) => (
+          <ellipse key={`v${i}`} cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} fill="#b8d8a8" stroke="#8cb87a" strokeWidth={1} />
+        ))}
+        {carte.batiments.map((b, i) => (
+          <rect key={`b${i}`} x={b.x} y={b.y} width={b.w} height={b.h} fill={b.couleur} stroke="#8a8279" strokeWidth={1} />
+        ))}
+        {pathRiver && (
+          <path d={pathRiver} fill="none" stroke="#7fb3d5" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+        )}
+        {carte.routes.map((r, i) => (
+          <line key={`r${i}`} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke="#9ca3af" strokeWidth={r.epaisseur} />
+        ))}
+        {carte.points.map((p, i) => (
+          <g key={`p${i}`} style={{ cursor: "pointer" }} onClick={() => jouer(p)}>
+            <circle cx={p.x} cy={p.y} r={8} fill={p.couleur} stroke="#fff" strokeWidth={2} />
+            <text x={p.x} y={p.y - 12} textAnchor="middle" fontSize={10} fill="#333" fontWeight={700}>
+              {p.nom.length > 18 ? p.nom.slice(0, 16) + "…" : p.nom}
+            </text>
+          </g>
+        ))}
+      </svg>
+      {chargement && <div style={{ fontSize: 11, marginTop: 4, color: "var(--text-secondary)" }}>▶ {chargement}…</div>}
+      {lecture && (
+        <div style={{ marginTop: 6 }}>
+          <div style={{ fontSize: 10, marginBottom: 2, color: "var(--text-secondary)" }}>{lecture.nom}</div>
+          <audio className="attic-node-audio" controls autoPlay src={lecture.src} onEnded={() => setLecture(null)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Registre : id (ou prédicat) → vue(s), position relative au lecteur ──
 type Vue = (props: VueProps) => ReactNode;
 interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; position: "avant" | "apres"; }
@@ -1062,6 +1135,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
+  { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
