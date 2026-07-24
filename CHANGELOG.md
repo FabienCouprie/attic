@@ -2,6 +2,16 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.4] — 2026-07-24
+
+### Security
+- Patched dependency vulnerabilities: `electron`, `adm-zip`, `sharp`, `protobufjs`, `minimist`, `static-eval`.
+- Fixed CodeQL Zip Slip alert in `node:importer-zip`.
+
+### Changed
+- Windows installer switched to **nsis-web** — the small installer downloads the ~2 GB package instead of embedding it.
+- Updated NSIS toolset to **3.12**.
+
 ## [1.2.3] — 2026-07-24
 
 ### Added
