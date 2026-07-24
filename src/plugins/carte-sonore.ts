@@ -171,7 +171,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [],
     parametres: [
-      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "music collection", defautEn: "music collection",
+      { nom: "Chemin", nomEn: "Path", type: "dossier", defaut: "music collection", defautEn: "music collection",
         doc: "Dossier à scanner, relatif au projet.", docEn: "Folder to scan, relative to project root." },
       { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 9999], pas: 1, defaut: 0,
         doc: "Graine de la ville (0 = carte différente à chaque exécution).", docEn: "City seed (0 = new city each run)." },
