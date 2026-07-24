@@ -611,9 +611,16 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     // Extraire tous les fichiers
     const entries = zip.getEntries();
     const fichiers = {};
+    const resolvedNodesDir = path.resolve(nodesDir);
     for (const entry of entries) {
       const entryPath = entry.entryName;
       if (entry.isDirectory) continue;
+      // Protection contre le Zip Slip : rejeter les entrées qui sortent de nodesDir
+      const resolvedTarget = path.resolve(nodesDir, entryPath);
+      if (resolvedTarget !== resolvedNodesDir && !resolvedTarget.startsWith(resolvedNodesDir + path.sep)) {
+        console.warn(`[attic] node:importer-zip: entrée rejetée (zip slip) : ${entryPath}`);
+        continue;
+      }
       const targetPath = path.join(nodesDir, entryPath);
       const targetDir = path.dirname(targetPath);
       if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
