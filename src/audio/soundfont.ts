@@ -18,6 +18,9 @@ export interface ZoneInstrument {
   velMax: number;
   echantillonId: number;
   boucleActive: boolean;
+  rootKey?: number;
+  coarseTune?: number;
+  fineTune?: number;
 }
 
 export interface InstrumentSF2 {
@@ -101,8 +104,11 @@ function chercherList(v: DataView, pos: number, limite: number, id: string): { p
 // GenOper types used in SF2
 const GEN_KEY_RANGE = 43;
 const GEN_VEL_RANGE = 44;
+const GEN_COARSE_TUNE = 51;
+const GEN_FINE_TUNE = 52;
 const GEN_SAMPLE_ID = 53;
 const GEN_SAMPLE_MODES = 54;
+const GEN_OVERRIDING_ROOT_KEY = 58;
 
 export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   const v = new DataView(buffer);
@@ -175,6 +181,9 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let velMin = 0, velMax = 127;
       let echantillonId = -1;
       let boucleActive = false;
+      let rootKey: number | undefined;
+      let coarseTune = 0;
+      let fineTune = 0;
 
       for (let gi = genDebut; gi < Math.min(genFin, nbIgen); gi++) {
         const genBase = igenChunk.pos + gi * 4;
@@ -191,11 +200,17 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
           echantillonId = valeur;
         } else if (type === GEN_SAMPLE_MODES) {
           boucleActive = ((valeur & 0x01) !== 0);
+        } else if (type === GEN_OVERRIDING_ROOT_KEY) {
+          rootKey = valeur & 0x7F;
+        } else if (type === GEN_COARSE_TUNE) {
+          coarseTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
+        } else if (type === GEN_FINE_TUNE) {
+          fineTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         }
       }
 
       if (echantillonId >= 0 && echantillonId < nbEchantillons) {
-        zones.push({ noteMin, noteMax, velMin, velMax, echantillonId, boucleActive });
+        zones.push({ noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune });
       }
     }
 
@@ -224,6 +239,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
 
 export function chercherZoneInstrument(sf: StructureSF2, noteMidi: number, velocite: number, instrumentIdx?: number): {
   echantillon: EchantillonSF2;
+  zone: ZoneInstrument;
   donnees: Int16Array;
   debutSample: number;
   finSample: number;
@@ -242,6 +258,7 @@ export function chercherZoneInstrument(sf: StructureSF2, noteMidi: number, veloc
         if (!ech || ech.debut >= ech.fin) continue;
         return {
           echantillon: ech,
+          zone,
           donnees: sf.smpl,
           debutSample: ech.debut,
           finSample: ech.fin,

@@ -114,17 +114,19 @@ export function rendreAvecSF2(
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
 
-    const zone = chercherZoneInstrument(sf, n.note, n.velocite, instrumentIdx);
-    if (!zone) continue;
+    const match = chercherZoneInstrument(sf, n.note, n.velocite, instrumentIdx);
+    if (!match) continue;
 
-    const ech = zone.echantillon;
-    const donnees = zone.donnees;
-    const srcDebut = zone.debutSample;
-    const srcFin = zone.finSample;
+    const ech = match.echantillon;
+    const zone = match.zone;
+    const donnees = match.donnees;
+    const srcDebut = match.debutSample;
+    const srcFin = match.finSample;
     const srcLen = srcFin - srcDebut;
     if (srcLen < 2) continue;
 
-    const noteDiff = n.note - ech.noteOriginale + ech.correction / 100;
+    const rootNote = zone.rootKey ?? ech.noteOriginale;
+    const noteDiff = n.note - rootNote + (zone.coarseTune ?? 0) + (ech.correction + (zone.fineTune ?? 0)) / 100;
     const sampleRate = ech.taux || sr;
     const ratio = (sampleRate / sr) * (2 ** (noteDiff / 12));
     const gain = (n.velocite / 127) * vol * 0.8;
@@ -132,7 +134,7 @@ export function rendreAvecSF2(
     const debutEch = Math.max(0, Math.floor(n.debut * sr));
     const nbEchantJoues = Math.floor(Math.min(dureeNote, srcLen / ratio) * sr);
 
-    const boucleActive = ech.debutBoucle < ech.finBoucle && ech.finBoucle > 0;
+    const boucleActive = zone.boucleActive && ech.debutBoucle < ech.finBoucle && ech.finBoucle > 0;
     const debutBoucle = (ech.debutBoucle - ech.debut);
     const finBoucle = (ech.finBoucle - ech.debut);
     const longueurBoucle = finBoucle - debutBoucle;
