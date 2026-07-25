@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure Electron binary is present
+        run: node node_modules/electron/install.js
+
       - name: Build and publish to GitHub release
         run: npm run publish:electron
         env:
