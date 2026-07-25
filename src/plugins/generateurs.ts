@@ -8,7 +8,7 @@ import {
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence,
-  rendreAttracteurImage, rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
+  rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
   genererMusiqueMandelbrot,
   genererArpegeKoch,

@@ -73,7 +73,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
   function toggleDoc(nom: string) {
     setDocsOuverts((prev) => {
       const n = new Set(prev);
-      n.has(nom) ? n.delete(nom) : n.add(nom);
+      if (n.has(nom)) n.delete(nom);
+      else n.add(nom);
       return n;
     });
   }

@@ -26,7 +26,6 @@ import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
 import { SongseeVue } from "./Songsee";
-import type { CarteSonore, PointSonore } from "../plugins/carte-sonore";
 import { construireListeInstruments } from "../plugins/instruments";
 import { construireListeStyles } from "../plugins/styles-musicaux";
 import { construireListeEmotions } from "../plugins/emotions";
@@ -41,51 +40,6 @@ export interface VueProps {
   id: string;
   data: DonneesNoeud;
   def?: FicheAudio;
-}
-
-// ── Enregistreur micro ──
-function VueEnregistreur({ id, data }: VueProps) {
-  const { t } = useI18n();
-  const [enRegistrant, setEnRegistrant] = useState(false);
-  const [dureeEnreg, setDureeEnreg] = useState(0);
-  const [peripheriques, setPeripheriques] = useState<MediaDeviceInfo[]>([]);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  useEffect(() => { navigator.mediaDevices?.enumerateDevices().then((d) => setPeripheriques(d.filter((x) => x.kind === "audioinput"))); }, []);
-  const demarrer = async () => {
-    const deviceId = data.parametres?.["Périphérique"] as string | undefined;
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: deviceId ? { deviceId: { exact: deviceId } } : true });
-    const mr = new MediaRecorder(stream);
-    mediaRecorderRef.current = mr;
-    const morceaux: Blob[] = [];
-    mr.ondataavailable = (e) => { if (e.data.size > 0) morceaux.push(e.data); };
-    mr.onstop = () => {
-      const blob = new Blob(morceaux, { type: "audio/webm" });
-      data.enregistrementBlob = blob;
-      data.enregistrementUrl = URL.createObjectURL(blob);
-      (data as { onChangerEnregistrement?: (id: string, b: Blob) => void }).onChangerEnregistrement?.(id, blob);
-      stream.getTracks().forEach((tk) => tk.stop());
-      setEnRegistrant(false);
-    };
-    mr.start();
-    setEnRegistrant(true);
-    setDureeEnreg(0);
-    timerRef.current = setInterval(() => setDureeEnreg((d) => d + 1), 1000);
-  };
-  const arreter = () => { mediaRecorderRef.current?.stop(); if (timerRef.current) clearInterval(timerRef.current); };
-  return (
-    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      {!enRegistrant && <button className="attic-node-btn-record" onClick={demarrer}>● {t("btn.record")}</button>}
-      {enRegistrant && <><div className="attic-node-rec-indicator"><span className="attic-node-rec-pulse" /> {dureeEnreg}s</div><button className="attic-node-btn-stop" onClick={arreter}>■ {t("btn.stop")}</button></>}
-      {data.enregistrementUrl && !enRegistrant && <><audio className="attic-node-audio" controls src={data.enregistrementUrl} /><button className="attic-node-btn-record" onClick={demarrer}>● {t("btn.rerecord")}</button></>}
-      {!enRegistrant && peripheriques.length > 1 && (
-        <select className="attic-node-select" value={String(data.parametres?.["Périphérique"] ?? "")}
-          onChange={(e) => { data.parametres!["Périphérique"] = e.target.value; }}>
-          {peripheriques.map((p) => <option key={p.deviceId} value={p.deviceId}>{p.label || p.deviceId.slice(0, 8)}</option>)}
-        </select>
-      )}
-    </div>
-  );
 }
 
 // ── Forme d'onde (WaveSurfer.js) ──

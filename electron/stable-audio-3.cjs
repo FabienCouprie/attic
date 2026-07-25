@@ -104,8 +104,8 @@ function tokenize(tokenizer, prompt) {
   const encoded = tokenizer.encode(prompt, { max_length: TEXT_LENGTH, truncation: true, padding: true });
   const ids = encoded.ids;
   const attentionMask = encoded.attention_mask;
-  const inputIds = new Array(TEXT_LENGTH).fill(0n);
-  const mask = new Array(TEXT_LENGTH).fill(0n);
+  const inputIds = Array.from({ length: TEXT_LENGTH }, () => 0n);
+  const mask = Array.from({ length: TEXT_LENGTH }, () => 0n);
   for (let i = 0; i < Math.min(ids.length, TEXT_LENGTH); i++) {
     inputIds[i] = BigInt(ids[i]);
     mask[i] = BigInt(attentionMask[i]);

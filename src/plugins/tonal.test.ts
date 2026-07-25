@@ -33,14 +33,6 @@ class AudioBufferPolyfill {
 
 const SR = 44100;
 
-function sinus(freq: number, dureeS: number, amplitude = 1): AudioBuffer {
-  const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
-  const d = b.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / SR);
-  return b;
-}
-
 function gammeC(dureeS: number): AudioBuffer {
   const n = Math.floor(SR * dureeS);
   const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });

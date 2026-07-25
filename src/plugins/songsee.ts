@@ -8,7 +8,6 @@ import { avecDoc } from "./notices";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
 const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
-const FORMATS = ["jpeg", "png"];
 
 export const fiches: FicheAudio[] = ([
   {
