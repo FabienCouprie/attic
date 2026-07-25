@@ -2,6 +2,24 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.6] — 2026-07-25
+
+### Security
+- **Added `SECURITY.md`** — supported versions, reporting channels (GitHub Security Advisories + `atticofsound@free.fr`), disclosure policy and acknowledgments.
+- **Added CI workflow** (`Lint, build and test`) and set it as a required status check on the `master` branch.
+- **Added automated release workflow** that builds and publishes the Windows installer using the native `GITHUB_TOKEN`.
+- **Removed the placeholder SLSA workflow** that did not perform actual provenance generation.
+- **Enabled Dependabot alerts and automated security fixes** on the repository.
+- **Enabled secret scanning push protection** to block accidental secret commits.
+- **Enforced branch protection on `master`** — pull requests required, CI status check required, admin rules enforced, no force pushes or deletions.
+
+### Changed
+- **Audio players in nodes now use a light beige tint** instead of the default white controls.
+
+### Fixed
+- **Electron IPC handlers are now registered once globally** (`capture:systeme-audio`, permission handler, CSP header) so opening a second window no longer throws a duplicate-handler error.
+- **Added missing documentation for the `Chemin` parameter** in `entree-audio` and `lecteur-midi`.
+
 ## [1.2.5] — 2026-07-25
 
 ### Changed
