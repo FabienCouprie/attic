@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, desktopCapturer } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -126,6 +126,33 @@ function detecterJulia() {
 }
 detecterJulia();
 
+// Supprimer le warning de sécurité Electron en mode dev (unsafe-eval est intentionnel)
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+
+// Content-Security-Policy : unsafe-eval requis pour le chargement dynamique
+// de nodes installés (new Function). unsafe-inline pour les vues canvas/inline.
+const CSP = [
+  "default-src 'self' display-capture",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "media-src 'self' blob: data: stream:",
+  "img-src 'self' blob: data:",
+  "worker-src 'self' blob:",
+  "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:",
+].join("; ");
+
+// GESTIONNAIRE DE PERMISSIONS UNIQUE — liste d'autorisation explicite.
+// Ne pas en installer un second ailleurs : setPermissionRequestHandler
+// REMPLACE le précédent (le dernier gagne), et webContents.session EST la
+// session par défaut. Une première tentative en deux handlers laissait
+// celui-ci écraser un accord de « persistent-storage » posé plus haut —
+// neutralisant la protection anti-éviction du cache de modèles IA.
+const PERMISSIONS_ACCORDEES = new Set([
+  "media", "display-capture", "audioCapture",     // micro + capture système
+  "persistent-storage",                           // cache modèles HuggingFace (main.tsx)
+  "clipboard-read", "clipboard-sanitized-write",  // bouton copier (ui/copier.ts)
+]);
+
 let fenetre = null;
 
 function creerFenetre() {
@@ -158,32 +185,6 @@ function creerFenetre() {
     return { action: "deny" };
   });
 
-  // Content-Security-Policy : unsafe-eval requis pour le chargement dynamique
-  // de nodes installés (new Function). unsafe-inline pour les vues canvas/inline.
-  const csp = [
-    "default-src 'self' display-capture",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
-    "style-src 'self' 'unsafe-inline'",
-    "media-src 'self' blob: data: stream:",
-    "img-src 'self' blob: data:",
-    "worker-src 'self' blob:",
-    "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:",
-  ].join("; ");
-
-  // Injecter la CSP via onHeadersReceived (intercepte toutes les réponses)
-  const { session } = require("electron");
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    const headers = details.responseHeaders || {};
-    // Retirer une CSP existante pour éviter les doublons
-    delete headers["Content-Security-Policy"];
-    delete headers["content-security-policy"];
-    headers["Content-Security-Policy"] = [csp];
-    callback({ responseHeaders: headers });
-  });
-
-  // Supprimer le warning de sécurité Electron en mode dev (unsafe-eval est intentionnel)
-  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
-
   if (DEV) {
     fenetre.loadURL("http://localhost:5173");
     // fenetre.webContents.openDevTools({ mode: "detach" });
@@ -195,35 +196,19 @@ function creerFenetre() {
     }
     fenetre.loadFile(cheminDist);
   }
-
-  // GESTIONNAIRE DE PERMISSIONS UNIQUE — liste d'autorisation explicite.
-  // Ne pas en installer un second ailleurs : setPermissionRequestHandler
-  // REMPLACE le précédent (le dernier gagne), et webContents.session EST la
-  // session par défaut. Une première tentative en deux handlers laissait
-  // celui-ci écraser un accord de « persistent-storage » posé plus haut —
-  // neutralisant la protection anti-éviction du cache de modèles IA.
-  const PERMISSIONS_ACCORDEES = new Set([
-    "media", "display-capture", "audioCapture",     // micro + capture système
-    "persistent-storage",                           // cache modèles HuggingFace (main.tsx)
-    "clipboard-read", "clipboard-sanitized-write",  // bouton copier (ui/copier.ts)
-  ]);
-  fenetre.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
-    callback(PERMISSIONS_ACCORDEES.has(permission));
-  });
-
-  // Fournir les sources desktopCapturer pour capture système audio
-  ipcMain.handle("capture:systeme-audio", async () => {
-    try {
-      const { desktopCapturer } = require("electron");
-      const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
-      if (!sources) return [];
-      return sources.map((s) => ({ id: s.id, name: s.name }));
-    } catch (e) {
-      console.error("[attic] capture:systeme-audio erreur:", e);
-      return [];
-    }
-  });
 }
+
+// --- IPC : sources desktopCapturer pour capture système audio ---
+ipcMain.handle("capture:systeme-audio", async () => {
+  try {
+    const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
+    if (!sources) return [];
+    return sources.map((s) => ({ id: s.id, name: s.name }));
+  } catch (e) {
+    console.error("[attic] capture:systeme-audio erreur:", e);
+    return [];
+  }
+});
 
 // --- IPC : enregistrer un fichier (dialogue + écriture) ---
 ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
@@ -1095,6 +1080,22 @@ ipcMain.on("maj:restaurer-backup-sync", (event) => {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+
+  // Configuration globale de la session (une seule fois, indépendamment du nombre
+  // de fenêtres) pour éviter les handlers en double et les CSP multiples.
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const headers = details.responseHeaders || {};
+    // Retirer une CSP existante pour éviter les doublons
+    delete headers["Content-Security-Policy"];
+    delete headers["content-security-policy"];
+    headers["Content-Security-Policy"] = [CSP];
+    callback({ responseHeaders: headers });
+  });
+
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(PERMISSIONS_ACCORDEES.has(permission));
+  });
+
   creerFenetre();
   if (DEV && fenetre) {
     fenetre.webContents.openDevTools({ mode: "detach" });
