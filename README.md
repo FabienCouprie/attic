@@ -84,11 +84,24 @@ npm run build:electron  # Full Electron app (NSIS installer for Windows)
 
 ### Publish a release
 
+The recommended way is to push a semver tag; the GitHub Actions workflow handles the build and upload automatically:
+
 ```bash
-GH_TOKEN=your_token npm run publish:electron
+git checkout master
+git pull origin master
+npm version patch   # or minor / major — updates package.json and creates a tag
+git push origin master --follow-tags
 ```
 
-This builds the app and uploads the installer + `latest.yml` to GitHub Releases. Users with the app installed will receive the update automatically.
+The workflow `.github/workflows/release.yml` uses the native `GITHUB_TOKEN` (no personal token needed) and uploads the installer + `latest.yml` to GitHub Releases.
+
+For local testing only (not recommended for production releases):
+
+```bash
+npm run build:electron
+```
+
+If you still have an old `GH_TOKEN` classic personal access token used for previous releases, revoke it at https://github.com/settings/tokens.
 
 ### Tests & Lint
 
