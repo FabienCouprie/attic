@@ -139,6 +139,14 @@ electron/
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — App.tsx decomposition report
 
+## Releasing
+
+Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workflows/release.yml`), which builds and publishes the Windows installer.
+
+The bundled AI models (`public/oonx`) and SoundFont (`public/sf2`) are **not stored in Git**. They are packaged as `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. The workflow downloads and extracts this archive before building.
+
+If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release.
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
