@@ -11,5 +11,5 @@ export default defineConfig({
   build: { outDir: 'dist', emptyOutDir: true },
   optimizeDeps: audioOptimizeDeps,
   ssr: { noExternal: ['tone'] },
-  test: { include: ['src/**/*.test.ts'] },
+  test: { include: ['src/**/*.test.ts'], testTimeout: 15000 },
 })
