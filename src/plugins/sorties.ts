@@ -58,7 +58,9 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Loads a MIDI file from the inspector, synthesizes it and passes the MIDI along.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true },
+      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true,
+        doc: "Chemin du fichier MIDI chargé depuis l'inspecteur.",
+        docEn: "Path of the MIDI file loaded from the inspector." },
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
