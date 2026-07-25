@@ -15,7 +15,9 @@ const entrees: FicheAudio[] = [
     // le moteur ne doit pas écraser cet affichage avec le rendu de sa sortie.
     affichageAutonome: true,
     parametres: [
-      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true },
+      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true,
+        doc: "Chemin du fichier audio chargé depuis l'inspecteur.",
+        docEn: "Path of the audio file loaded from the inspector." },
     ],
     async executer(ctx) {
       const fichier = ctx.noeud.data.audioFichier as File | undefined;
