@@ -321,9 +321,16 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   padding: 1px 5px; margin-left: 4px; opacity: 0.5;
 }
 .attic-node-copy-btn:hover { opacity: 1; color: var(--text-title); }
-.attic-node-audio { width: 100%; max-width: 100%; margin: 0; display: block; }
+.attic-node-audio {
+  width: 100%; max-width: 100%; margin: 0; display: block;
+  border-radius: 6px;
+  background-color: #f5f0e6;
+  filter: sepia(0.1) saturate(0.95);
+}
+.attic-node-audio::-webkit-media-controls-panel {
+  background-color: #f5f0e6;
+}
 .attic-node-player { padding: 4px 8px; overflow: hidden; }
-.attic-node-audio { width: 100%; max-width: 100%; display: block; }
 
 /* ── Forme d'onde / sélecteur multi-zones ── */
 .attic-node-onde { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; }

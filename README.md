@@ -31,7 +31,6 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 - **Embedded subtractive synthesizer** meta-component example
 - **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
-- **176 exercises** in 22 categories ([`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md))
 
 ## Architecture
 
@@ -137,7 +136,6 @@ electron/
 - [`CHANGELOG.md`](CHANGELOG.md) — Release notes per version
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Technical framework spec
 - [`ROADMAP.md`](ROADMAP.md) — Project roadmap (4 visions)
-- [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — 176 exercises in 22 categories
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — App.tsx decomposition report
 

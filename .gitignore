@@ -75,3 +75,7 @@ build/
 
 # Duplicate terms file (TERMS_OF_USE.txt is the source)
 TERMS_OF_USE.md
+
+# Generated / internal docs (not distributed)
+COMPONENTS.md
+EXERCISE-WORKBOOK.md
