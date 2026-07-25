@@ -3,7 +3,7 @@ import { fft } from "./fft";
 import type { NoteEvenement } from "./midi";
 import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
 import Meyda from "meyda";
-import { langueCourante, traduire } from "../i18n";
+import { traduire } from "../i18n";
 
 const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
 
@@ -381,7 +381,7 @@ function chromagramme(donnees: Float32Array, sampleRate: number): number[] {
   const fenetre = creerFenetreHann(fftTaille);
   const trames = tramesDepuisBuffer(donnees, fftTaille, saut, fenetre);
   const nbBins = fftTaille / 2 + 1;
-  const chroma = new Array(12).fill(0);
+  const chroma = Array.from({ length: 12 }, () => 0);
 
   for (const trame of trames) {
     for (let bin = 1; bin < nbBins; bin++) {

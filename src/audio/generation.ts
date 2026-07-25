@@ -340,10 +340,10 @@ const PATRONS_RYTHME: Record<string, { signatures: string[]; positions: Record<s
 
 function decoderPatronTexte(code: string, totalPas: number): { kick: boolean[]; snare: boolean[]; hat: boolean[]; hatOuvert: boolean[] } {
   const pas = code.replace(/\s/g, "").split("");
-  const kick = new Array(totalPas).fill(false);
-  const snare = new Array(totalPas).fill(false);
-  const hat = new Array(totalPas).fill(false);
-  const hatOuvert = new Array(totalPas).fill(false);
+  const kick = Array.from({ length: totalPas }, () => false);
+  const snare = Array.from({ length: totalPas }, () => false);
+  const hat = Array.from({ length: totalPas }, () => false);
+  const hatOuvert = Array.from({ length: totalPas }, () => false);
   for (let i = 0; i < totalPas; i++) {
     const c = i < pas.length ? pas[i] : ".";
     kick[i] = c === "K" || c === "T" || c === "H" || c === "X";
@@ -402,10 +402,10 @@ export async function genererBoiteRythmes(
     } else {
       patron = genererPatronDefaut(tempsParMesure, uniteBattement);
     }
-    const kick = new Array(totalPas).fill(false);
-    const snare = new Array(totalPas).fill(false);
-    const hat = new Array(totalPas).fill(false);
-    const hatOuvert = new Array(totalPas).fill(false);
+    const kick = Array.from({ length: totalPas }, () => false);
+    const snare = Array.from({ length: totalPas }, () => false);
+    const hat = Array.from({ length: totalPas }, () => false);
+    const hatOuvert = Array.from({ length: totalPas }, () => false);
     for (let m = 0; m < mesures; m++) {
       const decalage = m * pasMesure;
       for (const p of patron.kick) kick[decalage + p] = true;

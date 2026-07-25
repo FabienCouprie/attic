@@ -153,13 +153,8 @@ export default function App() {
   );
 }
 
-type WorkflowState = { nom: string; nodes: NoeudAtelier[]; edges: Edge[]; viewport?: { x: number; y: number; zoom: number } };
-
 function Atelier() {
   const { t, lang } = useI18n();
-  const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
-  const [onglets, setOnglets] = useState<string[]>(["wf-1"]);
-  const [actif, setActif] = useState("wf-1");
   const [nodes, setNodes, onNodesChange] = useNodesState<NoeudAtelier>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
@@ -182,15 +177,6 @@ function Atelier() {
   const [rfInstance, setRfInstance] = useState<any>(null);
 
   // Un seul onglet wf-1. Le bouton × vide le canevas.
-  const nouvelOnglet = useCallback(() => {
-    setNodes([]);
-    setEdges([]);
-    cacheExec.current.clear();
-    setSel(null);
-    setPile([]);
-    grapheRacineRef.current = null;
-  }, [setNodes, setEdges]);
-
   const fermerOnglet = useCallback((id: string) => {
     void id;
     setNodes([]);
@@ -201,7 +187,6 @@ function Atelier() {
     grapheRacineRef.current = null;
   }, [setNodes, setEdges]);
 
-  const changerOnglet = useCallback((id: string) => { void id; }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const resumeAudio = useCallback(async () => {
@@ -239,7 +224,6 @@ function Atelier() {
   const prioritaireRef = useRef<string | null>(null);
   prioritaireRef.current = prioritaire;
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
-  const [sf2List, setSf2List] = useState<string[]>([]);
   // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
   // Historique pour undo (Ctrl+Z).
   const pressePapierRef = useRef<{ ficheId: string; parametres: Record<string, number | string>; width: number; height: number; data: Record<string, unknown> } | null>(null);
@@ -729,7 +713,6 @@ function Atelier() {
             }
           }}
           onImporter={importer}
-          onNouvelOnglet={nouvelOnglet}
         />
         <div className="attic-onglets">
           <span className="attic-onglet actif">

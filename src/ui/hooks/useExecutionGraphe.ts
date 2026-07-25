@@ -16,7 +16,7 @@ import {
 import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
-import { useI18n, defautParametre } from "../../i18n";
+import { useI18n } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 
@@ -38,7 +38,7 @@ export interface OptionsExecution {
 }
 
 export function useExecutionGraphe(o: OptionsExecution) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const {
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,

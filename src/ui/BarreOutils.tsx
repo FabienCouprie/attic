@@ -10,7 +10,6 @@ interface Props {
   onResumeAudio: () => Promise<void>;
   onExporter: () => void;
   onImporter: (f?: File) => void;
-  onNouvelOnglet: () => void;
   onDetacher: () => void;
   onSauvegarder: () => void;
   nbPlugins: number;
@@ -40,7 +39,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onResumeAudio, onExporter, onImporter, onNouvelOnglet, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
@@ -211,7 +210,7 @@ export function BarreOutils(props: Props) {
             await onResumeAudio();
             setEtatAudio("✓");
             setTimeout(() => setEtatAudio(""), 1200);
-          } catch (e: any) {
+          } catch {
             setEtatAudio("✗");
             setTimeout(() => setEtatAudio(""), 2000);
           }

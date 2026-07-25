@@ -1,7 +1,7 @@
 // plugins/magenta.test.ts — Vérification de l’enregistrement des nœuds Magenta.
 // Les modèles @magenta/music nécessitent un navigateur + WebGL + réseau ;
 // on ne teste ici que l’enregistrement et les validations d’entrée.
-import { describe, it, expect, beforeAll, vi } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./magenta";
 
 class AudioBufferPolyfill {

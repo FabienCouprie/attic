@@ -332,7 +332,7 @@ async function traiterMdx(
     for (let f = 0; f < nbFramesEffectif; f++) {
       for (let b = 0; b < NB_BINS; b++) {
         const idx = f * NB_BINS + b;
-        entree[(0 * NB_BINS + b) * nframesModele + f] = s0.real[idx];
+        entree[b * nframesModele + f] = s0.real[idx];
         entree[(1 * NB_BINS + b) * nframesModele + f] = s0.imag[idx];
         entree[(2 * NB_BINS + b) * nframesModele + f] = s1.real[idx];
         entree[(3 * NB_BINS + b) * nframesModele + f] = s1.imag[idx];
@@ -363,7 +363,7 @@ async function traiterMdx(
     for (let f = 0; f < mF; f++) {
       for (let b = 0; b < Math.min(mBins, NB_BINS); b++) {
         const dst = f * NB_BINS + b;
-        r0Voix[dst] = sortieData[(0 * mBins + b) * mFrames + f];
+        r0Voix[dst] = sortieData[b * mFrames + f];
         i0Voix[dst] = sortieData[(1 * mBins + b) * mFrames + f];
         r1Voix[dst] = sortieData[(2 * mBins + b) * mFrames + f];
         i1Voix[dst] = sortieData[(3 * mBins + b) * mFrames + f];

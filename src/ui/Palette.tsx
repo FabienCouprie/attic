@@ -55,7 +55,12 @@ export function Palette({ plugins, onSupprimerMeta }: Props) {
   const [replies, setReplies] = useState<Set<string>>(() => new Set(plugins.map((p) => p.univers)));
 
   function basculer(cle: string) {
-    setReplies((prev) => { const n = new Set(prev); n.has(cle) ? n.delete(cle) : n.add(cle); return n; });
+    setReplies((prev) => {
+      const n = new Set(prev);
+      if (n.has(cle)) n.delete(cle);
+      else n.add(cle);
+      return n;
+    });
   }
   // Un groupe est ouvert s'il n'est pas replié — mais une recherche déplie tout
   // pour que les résultats restent visibles.

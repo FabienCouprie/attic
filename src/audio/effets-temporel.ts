@@ -522,10 +522,7 @@ export function appliquerPaulstretch(
 
       // Randomisation des phases tout en conservant la symétrie hermitienne
       // (sinon la sortie n'est pas réelle).
-      const mags: number[] = new Array(half + 1);
-      for (let k = 0; k <= half; k++) {
-        mags[k] = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
-      }
+      const mags: number[] = Array.from({ length: half + 1 }, (_, k) => Math.sqrt(re[k] * re[k] + im[k] * im[k]));
       re[0] = mags[0];
       im[0] = 0;
       re[half] = mags[half] * (Math.random() > 0.5 ? 1 : -1);

@@ -56,14 +56,14 @@ function chromaFenetre(
 ): number[] {
   const fen = creerFenetreHann(taille);
   const n = Math.min(taille, donnees.length - debut);
-  if (n < 8) return new Array(12).fill(0);
+  if (n < 8) return Array.from({ length: 12 }, () => 0);
   const re = new Float64Array(taille);
   const im = new Float64Array(taille);
   for (let i = 0; i < n; i++) re[i] = donnees[debut + i] * (fen[i] ?? 1);
   fft(re, im, false);
 
   const nbBins = Math.floor(taille / 2);
-  const chroma = new Array(12).fill(0);
+  const chroma = Array.from({ length: 12 }, () => 0);
   for (let b = 1; b < nbBins; b++) {
     const mag = Math.hypot(re[b], im[b]);
     const freq = (b * sr) / taille;

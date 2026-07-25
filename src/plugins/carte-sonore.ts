@@ -167,12 +167,6 @@ const NOMS_BOU = [
   "Boulevard de la République", "Boulevard des Capucines",
 ];
 
-const NOMS_QUARTIERS = [
-  "Centre-ville", "La Vieille Ville", "Les Halles", "Quartier Nord",
-  "Quartier Sud", "La Gare", "Le Port", "Les Acacias", "Belleville",
-  "Montmartre", "Le Panier", "Saint-Jean", "Les Champs", "Le Marché",
-];
-
 export function genererCarteVille(
   seed: number,
   width = 1400,
@@ -192,11 +186,6 @@ export function genererCarteVille(
     if (usedNames.has(nom)) nom = `${nom} ${Math.floor(rng() * 99) + 1}`;
     usedNames.add(nom);
     return nom;
-  }
-
-  function routePathStr(r: RouteVille): string {
-    if (r.points.length === 0) return "";
-    return r.points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
   }
 
   // ─── Eau : rivière et lac ───
@@ -424,7 +413,7 @@ export function genererHtmlCarte(carte: CarteSonore, titre: string, fichiers: { 
     return `<path d="${pathString(e.points)}" fill="none" stroke="#aec9e0" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />`;
   }).join("");
 
-  const espacesVerts = carte.espacesVerts.map((e, i) => {
+  const espacesVerts = carte.espacesVerts.map((e) => {
     const arbres = e.arbres?.map((a) => `<circle cx="${a.x.toFixed(1)}" cy="${a.y.toFixed(1)}" r="${a.r.toFixed(1)}" fill="#7cb369" />`).join("") ?? "";
     return `<ellipse cx="${e.cx.toFixed(1)}" cy="${e.cy.toFixed(1)}" rx="${e.rx.toFixed(1)}" ry="${e.ry.toFixed(1)}" fill="#b5d6a5" stroke="#8cb87a" stroke-width="1" />${arbres}`;
   }).join("");
@@ -435,12 +424,12 @@ export function genererHtmlCarte(carte: CarteSonore, titre: string, fichiers: { 
 
   // Routes en deux passes : fond gris puis surface blanche
   const routeDefs: string[] = [];
-  const routeCasings = carte.routes.map((r, i) => {
+  const routeCasings = carte.routes.map((r, _i) => {
     const d = pathString(r.points);
     return `<path d="${d}" fill="none" stroke="#9ca3af" stroke-width="${(r.epaisseur + 2).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round" />`;
   }).join("");
 
-  const routeSurfaces = carte.routes.map((r, i) => {
+  const routeSurfaces = carte.routes.map((r, _i) => {
     const d = pathString(r.points);
     const color = r.type === "artere" ? "#fdfbf7" : r.type === "boulevard" ? "#f9f7f2" : "#ffffff";
     return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${r.epaisseur.toFixed(1)}" stroke-linecap="round" stroke-linejoin="round" />`;
