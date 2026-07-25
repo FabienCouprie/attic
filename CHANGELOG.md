@@ -2,6 +2,15 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.5] — 2026-07-25
+
+### Changed
+- **Renamed text-generation AI nodes** — `DistilGPT-2 Lyrics` / `DistilGPT-2 Paroles` → `DistilGPT-2` and `Qwen2.5-0.5B Lyrics` → `Qwen2.5-0.5B`. The default prompts, system prompt, and notices were updated to describe generic text generation instead of lyrics, since these nodes do not generate lyrics.
+- **Default theme is now dark purple** — the previous pale green "light" theme was replaced with a dark purple theme. The toggle switches between dark purple (default) and black. The internal theme name changed from `clair` to `violet`.
+
+### Fixed
+- **Magenta nodes are now cached** — they no longer force the whole downstream chain to re-run when an unrelated node is added or changed. The `jamaisCache: true` flag has been removed from all Magenta nodes so the execution cache can skip them when inputs and parameters are unchanged.
+
 ## [1.2.4] — 2026-07-24
 
 ### Security

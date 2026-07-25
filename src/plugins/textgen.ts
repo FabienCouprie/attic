@@ -1,5 +1,5 @@
-// plugins/textgen.ts — Trois nodes de génération de texte (paroles/poésie) :
-// 1. GPT-2 Paroles : génération par IA (anglais, GPT-2 small)
+// plugins/textgen.ts — Trois nodes de génération de texte :
+// 1. DistilGPT-2 : génération par IA (anglais, GPT-2 small)
 // 2. Réservoir textuel : émergence par réseau de neurones aléatoires
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
 
@@ -118,16 +118,16 @@ function genererTexteReservoir(
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "gpt2-paroles", nom: "DistilGPT-2 Paroles", nomEn: "DistilGPT-2 Lyrics",
+    id: "gpt2-paroles", nom: "DistilGPT-2", nomEn: "DistilGPT-2",
     univers: "Autres", famille: "Texte",
-    resume: "Génère des paroles de chanson ou poésie par IA (GPT-2, anglais).",
-    resumeEn: "Generates song lyrics or poetry via AI (GPT-2, English).",
+    resume: "Génère du texte par IA (DistilGPT-2, anglais).",
+    resumeEn: "Generates text via AI (DistilGPT-2, English).",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
-      { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:\n",
-        doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats). Ex : « Write a song about the ocean: »",
-        docEn: "Seed prompt (English for best results). E.g. « Write a song about the ocean: »", defautEn: "Write a song about love andrain:\n" },
+      { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a creative text about love and rain:\n",
+        doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats). Ex : « Write a creative text about the ocean: »",
+        docEn: "Seed prompt (English for best results). E.g. « Write a creative text about the ocean: »", defautEn: "Write a creative text about love and rain:\n" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 300], pas: 10, defaut: 100, unite: " tokens",
         doc: "Nombre maximum de tokens générés (~0.75 mot/token).",
         docEn: "Maximum number of generated tokens (~0.75 word/token)." },
@@ -209,16 +209,16 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "qwen2.5-lyrics", nom: "Qwen2.5-0.5B Lyrics", nomEn: "Qwen2.5-0.5B Lyrics",
+    id: "qwen2.5-lyrics", nom: "Qwen2.5-0.5B", nomEn: "Qwen2.5-0.5B",
     univers: "Autres", famille: "Texte",
-    resume: "Génère des paroles de chanson par IA avec le modèle Qwen2.5-0.5B (multilingue).",
-    resumeEn: "Generates song lyrics via AI using the Qwen2.5-0.5B model (multilingual).",
+    resume: "Génère du texte par IA avec le modèle Qwen2.5-0.5B (multilingue).",
+    resumeEn: "Generates text via AI using the Qwen2.5-0.5B model (multilingual).",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
-      { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about love and rain:",
+      { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a creative text about love and rain:",
         doc: "Prompt d'amorçage. L'anglais donne les meilleurs résultats, mais le modèle supporte plusieurs langues.",
-        docEn: "Seed prompt. English works best, but the model supports several languages.", defautEn: "Write a song about love andrain:" },
+        docEn: "Seed prompt. English works best, but the model supports several languages.", defautEn: "Write a creative text about love and rain:" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 300], pas: 10, defaut: 120, unite: " tokens",
         doc: "Nombre maximum de tokens générés.", docEn: "Maximum number of generated tokens." },
       { nom: "Créativité", nomEn: "Temperature", plage: [0.1, 1.5], pas: 0.1, defaut: 0.9,
@@ -249,7 +249,7 @@ export const fiches: FicheAudio[] = ([
         };
         w.addEventListener("message", onMessage);
         const messages = [
-          { role: "system", content: "You are a creative songwriter. Write original, evocative song lyrics based on the user's request." },
+          { role: "system", content: "You are a creative writer. Write original, evocative text based on the user's request." },
           { role: "user", content: prompt },
         ];
         w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });

@@ -9,6 +9,7 @@ export interface EchantillonSF2 {
   taux: number;
   noteOriginale: number;
   correction: number;
+  type: number;
 }
 
 export interface ZoneInstrument {
@@ -21,6 +22,8 @@ export interface ZoneInstrument {
   rootKey?: number;
   coarseTune?: number;
   fineTune?: number;
+  attenuation?: number;
+  pan?: number;
 }
 
 export interface InstrumentSF2 {
@@ -28,10 +31,23 @@ export interface InstrumentSF2 {
   zones: ZoneInstrument[];
 }
 
+export interface PresetZone {
+  noteMin: number;
+  noteMax: number;
+  velMin: number;
+  velMax: number;
+  instrumentIdx: number;
+  coarseTune?: number;
+  fineTune?: number;
+  attenuation?: number;
+  pan?: number;
+}
+
 export interface PresetSF2 {
   nom: string;
   programme: number;
   banque: number;
+  zones: PresetZone[];
 }
 
 export interface StructureSF2 {
@@ -104,7 +120,10 @@ function chercherList(v: DataView, pos: number, limite: number, id: string): { p
 // GenOper types used in SF2
 const GEN_KEY_RANGE = 43;
 const GEN_VEL_RANGE = 44;
+const GEN_PAN = 17;
+const GEN_INITIAL_ATTENUATION = 48;
 const GEN_COARSE_TUNE = 51;
+const GEN_INSTRUMENT = 41;
 const GEN_FINE_TUNE = 52;
 const GEN_SAMPLE_ID = 53;
 const GEN_SAMPLE_MODES = 54;
@@ -133,10 +152,10 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   // --- Sample headers (shdr) ---
   const shdrChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "shdr");
   if (!shdrChunk) throw new Error(traduire("msg.chunk_shdr_introuvable"));
-  const nbEchantillons = Math.floor(shdrChunk.taille / 96) - 1; // last record is terminator
+  const nbEchantillons = Math.floor(shdrChunk.taille / 46) - 1; // last record is terminator
   const echantillons: EchantillonSF2[] = [];
   for (let i = 0; i < nbEchantillons; i++) {
-    const base = shdrChunk.pos + i * 96;
+    const base = shdrChunk.pos + i * 46;
     echantillons.push({
       nom: lireChaine(v, base, 20),
       debut: lireUint32(v, base + 20),
@@ -144,9 +163,10 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       debutBoucle: lireUint32(v, base + 28),
       finBoucle: lireUint32(v, base + 32),
       taux: lireUint32(v, base + 36),
-      noteOriginale: lireUint8(v, base + 40),
-      correction: lireInt8(v, base + 41),
-    });
+        noteOriginale: lireUint8(v, base + 40),
+        correction: lireInt8(v, base + 41),
+        type: lireUint16(v, base + 44),
+      });
   }
 
   // --- Instrument headers (inst) ---
@@ -184,6 +204,8 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let rootKey: number | undefined;
       let coarseTune = 0;
       let fineTune = 0;
+      let attenuation = 0;
+      let pan = 0;
 
       for (let gi = genDebut; gi < Math.min(genFin, nbIgen); gi++) {
         const genBase = igenChunk.pos + gi * 4;
@@ -199,18 +221,23 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         } else if (type === GEN_SAMPLE_ID) {
           echantillonId = valeur;
         } else if (type === GEN_SAMPLE_MODES) {
-          boucleActive = ((valeur & 0x01) !== 0);
+          const loopMode = valeur & 0x03;
+          boucleActive = (loopMode === 1 || loopMode === 3);
         } else if (type === GEN_OVERRIDING_ROOT_KEY) {
           rootKey = valeur & 0x7F;
         } else if (type === GEN_COARSE_TUNE) {
           coarseTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         } else if (type === GEN_FINE_TUNE) {
           fineTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
+        } else if (type === GEN_INITIAL_ATTENUATION) {
+          attenuation = valeur;
+        } else if (type === GEN_PAN) {
+          pan = valeur;
         }
       }
 
       if (echantillonId >= 0 && echantillonId < nbEchantillons) {
-        zones.push({ noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune });
+        zones.push({ noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune, attenuation, pan });
       }
     }
 
@@ -219,16 +246,91 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
 
   // --- Preset headers (phdr) ---
   const phdrChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "phdr");
-  if (!phdrChunk) throw new Error(traduire("msg.chunk_phdr_introuvable"));
+  const pbagChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "pbag");
+  const pgenChunk = chercherSousChunk(v, pdta.pos, pdta.pos + pdta.taille, "pgen");
+  if (!phdrChunk || !pbagChunk || !pgenChunk) throw new Error(traduire("msg.chunks_pdta_manquants"));
 
   const nbPresets = Math.floor(phdrChunk.taille / 38) - 1;
+  const nbPbag = Math.floor(pbagChunk.taille / 4);
+  const nbPgen = Math.floor(pgenChunk.taille / 4);
+
+  function lirePbagIndex(i: number): number {
+    if (i >= nbPbag) return nbPgen;
+    return lireUint16(v, pbagChunk!.pos + i * 4);
+  }
+
   const presets: PresetSF2[] = [];
   for (let i = 0; i < nbPresets; i++) {
     const base = phdrChunk.pos + i * 38;
+    const zoneDebut = lireUint16(v, base + 24);
+    const zoneFin = i + 1 < nbPresets
+      ? lireUint16(v, phdrChunk.pos + (i + 1) * 38 + 24)
+      : nbPbag;
+
+    const zones: PresetZone[] = [];
+    let globalCoarseTune = 0;
+    let globalFineTune = 0;
+    let globalAttenuation = 0;
+    let globalPan = 0;
+    for (let zi = zoneDebut; zi < Math.min(zoneFin, nbPbag); zi++) {
+      const genDebut = lirePbagIndex(zi);
+      const genFin = lirePbagIndex(zi + 1);
+
+      let noteMin = 0, noteMax = 127;
+      let velMin = 0, velMax = 127;
+      let instrumentIdx = -1;
+      let coarseTune = 0;
+      let fineTune = 0;
+      let attenuation = 0;
+      let pan = 0;
+
+      for (let gi = genDebut; gi < Math.min(genFin, nbPgen); gi++) {
+        const genBase = pgenChunk.pos + gi * 4;
+        const type = lireUint16(v, genBase);
+        const valeur = lireUint16(v, genBase + 2);
+
+        if (type === GEN_KEY_RANGE) {
+          noteMin = valeur & 0xFF;
+          noteMax = (valeur >> 8) & 0xFF;
+        } else if (type === GEN_VEL_RANGE) {
+          velMin = valeur & 0xFF;
+          velMax = (valeur >> 8) & 0xFF;
+        } else if (type === GEN_INSTRUMENT) {
+          instrumentIdx = valeur;
+        } else if (type === GEN_COARSE_TUNE) {
+          coarseTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
+        } else if (type === GEN_FINE_TUNE) {
+          fineTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
+        } else if (type === GEN_INITIAL_ATTENUATION) {
+          attenuation = valeur;
+        } else if (type === GEN_PAN) {
+          pan = valeur;
+        }
+      }
+
+      if (instrumentIdx >= 0 && instrumentIdx < nbInstruments) {
+        zones.push({
+          noteMin, noteMax, velMin, velMax,
+          instrumentIdx,
+          coarseTune: coarseTune + globalCoarseTune,
+          fineTune: fineTune + globalFineTune,
+          attenuation: attenuation + globalAttenuation,
+          pan: pan + globalPan,
+        });
+      } else if (instrumentIdx === -1) {
+        // Zone globale (pas d'instrument) : accumulateurs pour les zones suivantes
+        globalCoarseTune += coarseTune;
+        globalFineTune += fineTune;
+        globalAttenuation += attenuation;
+        globalPan += pan;
+      }
+    }
+
     presets.push({
       nom: lireChaine(v, base, 20),
       programme: lireUint16(v, base + 20),
       banque: lireUint16(v, base + 22),
+      zones,
     });
   }
   const programme = presets.length > 0 ? presets[0].programme : 0;
@@ -237,34 +339,136 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   return { programme, nom: nomPreset, presets, echantillons, instruments, smpl, bufferOriginal: buffer };
 }
 
-export function chercherZoneInstrument(sf: StructureSF2, noteMidi: number, velocite: number, instrumentIdx?: number): {
+export function chercherZoneInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {
   echantillon: EchantillonSF2;
   zone: ZoneInstrument;
   donnees: Int16Array;
   debutSample: number;
   finSample: number;
+  instrumentIdx: number;
 } | null {
-  let instruments: InstrumentSF2[];
-  if (instrumentIdx !== undefined && instrumentIdx >= 0 && instrumentIdx < sf.instruments.length) {
-    instruments = [sf.instruments[instrumentIdx]];
+  // Trouver le preset demandé, sinon le premier preset disponible
+  let preset = sf.presets.find(p => p.programme === programme && p.banque === banque);
+  if (!preset && sf.presets.length > 0) {
+    preset = sf.presets[0];
+  }
+
+  let presetZone: PresetZone | undefined;
+  let instrumentIdx = 0;
+  if (preset) {
+    presetZone = preset.zones.find(
+      z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
+           velocite >= z.velMin && velocite <= z.velMax
+    );
+    if (!presetZone) return null;
+    instrumentIdx = presetZone.instrumentIdx;
+  } else if (sf.instruments.length > 0) {
+    // Fallback : pas de presets -> instrument 0
+    instrumentIdx = 0;
   } else {
-    instruments = sf.instruments;
+    return null;
   }
-  for (const inst of instruments) {
-    for (const zone of inst.zones) {
-      if (noteMidi >= zone.noteMin && noteMidi <= zone.noteMax &&
-          velocite >= zone.velMin && velocite <= zone.velMax) {
-        const ech = sf.echantillons[zone.echantillonId];
-        if (!ech || ech.debut >= ech.fin) continue;
-        return {
-          echantillon: ech,
-          zone,
-          donnees: sf.smpl,
-          debutSample: ech.debut,
-          finSample: ech.fin,
-        };
-      }
-    }
+
+  const inst = sf.instruments[instrumentIdx];
+  if (!inst) return null;
+
+  const zone = inst.zones.find(
+    z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
+         velocite >= z.velMin && velocite <= z.velMax
+  );
+  if (!zone) return null;
+
+  const ech = sf.echantillons[zone.echantillonId];
+  if (!ech || ech.debut >= ech.fin) return null;
+
+  // Combine les accordages du preset et de l'instrument
+  const finalAttenuation = (zone.attenuation ?? 0) + (presetZone?.attenuation ?? 0);
+  const finalPan = Math.max(-500, Math.min(500, (zone.pan ?? 0) + (presetZone?.pan ?? 0)));
+  const combinedZone: ZoneInstrument = {
+    ...zone,
+    coarseTune: (zone.coarseTune ?? 0) + (presetZone?.coarseTune ?? 0),
+    fineTune: (zone.fineTune ?? 0) + (presetZone?.fineTune ?? 0),
+    attenuation: finalAttenuation,
+    pan: finalPan,
+  };
+
+  return {
+    echantillon: ech,
+    zone: combinedZone,
+    donnees: sf.smpl,
+    debutSample: ech.debut,
+    finSample: ech.fin,
+    instrumentIdx,
+  };
+}
+
+export function chercherZonesInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {
+  echantillon: EchantillonSF2;
+  zone: ZoneInstrument;
+  donnees: Int16Array;
+  debutSample: number;
+  finSample: number;
+  instrumentIdx: number;
+}[] {
+  // Trouver le preset demandé, sinon le premier preset disponible
+  let preset = sf.presets.find(p => p.programme === programme && p.banque === banque);
+  if (!preset && sf.presets.length > 0) {
+    preset = sf.presets[0];
   }
-  return null;
+
+  let presetZone: PresetZone | undefined;
+  let instrumentIdx = 0;
+  if (preset) {
+    presetZone = preset.zones.find(
+      z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
+           velocite >= z.velMin && velocite <= z.velMax
+    );
+    if (!presetZone) return [];
+    instrumentIdx = presetZone.instrumentIdx;
+  } else if (sf.instruments.length > 0) {
+    instrumentIdx = 0;
+  } else {
+    return [];
+  }
+
+  const inst = sf.instruments[instrumentIdx];
+  if (!inst) return [];
+
+  const matches: {
+    echantillon: EchantillonSF2;
+    zone: ZoneInstrument;
+    donnees: Int16Array;
+    debutSample: number;
+    finSample: number;
+    instrumentIdx: number;
+  }[] = [];
+
+  for (const zone of inst.zones) {
+    if (noteMidi < zone.noteMin || noteMidi > zone.noteMax ||
+        velocite < zone.velMin || velocite > zone.velMax) continue;
+
+    const ech = sf.echantillons[zone.echantillonId];
+    if (!ech || ech.debut >= ech.fin) continue;
+
+    const finalAttenuation = (zone.attenuation ?? 0) + (presetZone?.attenuation ?? 0);
+    const finalPan = Math.max(-500, Math.min(500, (zone.pan ?? 0) + (presetZone?.pan ?? 0)));
+    const combinedZone: ZoneInstrument = {
+      ...zone,
+      coarseTune: (zone.coarseTune ?? 0) + (presetZone?.coarseTune ?? 0),
+      fineTune: (zone.fineTune ?? 0) + (presetZone?.fineTune ?? 0),
+      attenuation: finalAttenuation,
+      pan: finalPan,
+    };
+
+    matches.push({
+      echantillon: ech,
+      zone: combinedZone,
+      donnees: sf.smpl,
+      debutSample: ech.debut,
+      finSample: ech.fin,
+      instrumentIdx,
+    });
+  }
+
+  return matches;
 }

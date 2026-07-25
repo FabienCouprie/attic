@@ -33,6 +33,7 @@ function buildSF2(opts: { sampleRate: number; rootNote: number; freq: number; du
         taux: sampleRate,
         noteOriginale: rootNote,
         correction: 0,
+        type: 0,
       },
     ],
     instruments: [

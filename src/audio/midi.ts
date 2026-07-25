@@ -2,7 +2,7 @@
 
 import { parseMidi, writeMidi } from "midi-file";
 import type { StructureSF2 } from "./soundfont";
-import { chercherZoneInstrument } from "./soundfont";
+import { chercherZonesInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
 
@@ -95,7 +95,8 @@ export function rendreAvecSF2(
   sf: StructureSF2,
   notes: NoteEvenement[],
   volume: number,
-  instrumentIdx?: number,
+  programme = 0,
+  banque = 0,
 ): AudioBuffer {
   if (notes.length === 0) {
     const ctx = new OfflineAudioContext(2, 22050, 44100);
@@ -114,59 +115,78 @@ export function rendreAvecSF2(
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
 
-    const match = chercherZoneInstrument(sf, n.note, n.velocite, instrumentIdx);
-    if (!match) continue;
+    const matches = chercherZonesInstrument(sf, n.note, n.velocite, programme, banque);
+    if (matches.length === 0) continue;
+    if (notes.indexOf(n) < 5) {
+      const first = matches[0];
+      const ech = first.echantillon;
+      const zone = first.zone;
+      const root = zone.rootKey ?? ech.noteOriginale;
+      const effPan = (ech.type === 2 || ech.type === 0x8002) ? 1 : (ech.type === 4 || ech.type === 0x8004) ? -1 : (zone.pan ?? 0) / 500;
+      console.log(`[attic] SF2 note ${n.note} vel=${n.velocite} -> inst=${first.instrumentIdx} zones=${matches.length} sample="${ech.nom}" root=${root} sr=${ech.taux || 44100} loop=${zone.boucleActive} att=${zone.attenuation ?? 0} type=${ech.type} pan=${zone.pan ?? 0} effPan=${effPan.toFixed(2)}`);
+    }
 
-    const ech = match.echantillon;
-    const zone = match.zone;
-    const donnees = match.donnees;
-    const srcDebut = match.debutSample;
-    const srcFin = match.finSample;
-    const srcLen = srcFin - srcDebut;
-    if (srcLen < 2) continue;
+    for (const match of matches) {
+      const ech = match.echantillon;
+      const zone = match.zone;
+      const donnees = match.donnees;
+      const srcDebut = match.debutSample;
+      const srcFin = match.finSample;
+      const srcLen = srcFin - srcDebut;
+      if (srcLen < 2) continue;
 
-    const rootNote = zone.rootKey ?? ech.noteOriginale;
-    const noteDiff = n.note - rootNote + (zone.coarseTune ?? 0) + (ech.correction + (zone.fineTune ?? 0)) / 100;
-    const sampleRate = ech.taux || sr;
-    const ratio = (sampleRate / sr) * (2 ** (noteDiff / 12));
-    const gain = (n.velocite / 127) * vol * 0.8;
+      const rootNote = zone.rootKey ?? ech.noteOriginale;
+      const noteDiff = n.note - rootNote + (zone.coarseTune ?? 0) + (ech.correction + (zone.fineTune ?? 0)) / 100;
+      const sampleRate = ech.taux || sr;
+      const ratio = (sampleRate / sr) * (2 ** (noteDiff / 12));
+      const attenuation = zone.attenuation ?? 0;
+      const gain = (n.velocite / 127) * vol * 0.8 * Math.pow(10, -attenuation / 200);
+      const pan = (ech.type === 2 || ech.type === 0x8002) ? 1
+                  : (ech.type === 4 || ech.type === 0x8004) ? -1
+                  : (zone.pan ?? 0) / 500;
+      const gainGauche = Math.sqrt((1 - pan) / 2);
+      const gainDroite = Math.sqrt((1 + pan) / 2);
 
-    const debutEch = Math.max(0, Math.floor(n.debut * sr));
-    const nbEchantJoues = Math.floor(Math.min(dureeNote, srcLen / ratio) * sr);
+      const debutEch = Math.max(0, Math.floor(n.debut * sr));
+      const boucleActive = zone.boucleActive && ech.debutBoucle < ech.finBoucle && ech.finBoucle > 0;
+      const nbEchantJoues = Math.floor((boucleActive ? dureeNote : Math.min(dureeNote, srcLen / ratio)) * sr);
 
-    const boucleActive = zone.boucleActive && ech.debutBoucle < ech.finBoucle && ech.finBoucle > 0;
-    const debutBoucle = (ech.debutBoucle - ech.debut);
-    const finBoucle = (ech.finBoucle - ech.debut);
-    const longueurBoucle = finBoucle - debutBoucle;
+      const debutBoucle = (ech.debutBoucle - ech.debut);
+      const finBoucle = (ech.finBoucle - ech.debut);
+      const longueurBoucle = finBoucle - debutBoucle;
 
-    for (let j = 0; j < nbEchantJoues; j++) {
-      const posSortie = debutEch + j;
-      if (posSortie >= length) break;
+      for (let j = 0; j < nbEchantJoues; j++) {
+        const posSortie = debutEch + j;
+        if (posSortie >= length) break;
 
-      let srcPos = j * ratio;
-      let srcIdx: number;
-      let frac: number;
+        let srcPos = j * ratio;
+        let srcIdx: number;
+        let frac: number;
 
-      if (boucleActive && longueurBoucle > 0 && srcPos >= debutBoucle + longueurBoucle) {
-        const posBoucle = ((srcPos - debutBoucle) % longueurBoucle);
-        srcPos = debutBoucle + posBoucle;
-      }
+        if (boucleActive && longueurBoucle > 0 && srcPos >= debutBoucle + longueurBoucle) {
+          const posBoucle = ((srcPos - debutBoucle) % longueurBoucle);
+          srcPos = debutBoucle + posBoucle;
+        }
 
-      srcIdx = srcDebut + Math.floor(srcPos);
-      frac = srcPos - Math.floor(srcPos);
+        srcIdx = srcDebut + Math.floor(srcPos);
+        frac = srcPos - Math.floor(srcPos);
 
-      if (srcIdx + 1 >= srcDebut + srcLen) {
-        if (boucleActive && longueurBoucle > 0) {
-          srcIdx = srcDebut + debutBoucle + ((srcIdx - srcDebut - debutBoucle) % longueurBoucle);
-        } else {
+        if (!boucleActive && srcIdx + 1 >= srcDebut + srcLen) {
           break;
         }
-      }
 
-      const g = donnees[srcIdx] * (1 - frac) + donnees[Math.min(srcIdx + 1, srcDebut + srcLen - 1)] * frac;
-      const mono = (g / 32768) * gain;
-      gauche[posSortie] += mono;
-      droite[posSortie] += mono;
+        let idx2 = srcIdx + 1;
+        if (boucleActive && longueurBoucle > 0 && idx2 >= srcDebut + finBoucle) {
+          idx2 = srcDebut + debutBoucle + ((idx2 - srcDebut - finBoucle) % longueurBoucle);
+        }
+        if (idx2 >= srcDebut + srcLen) {
+          idx2 = srcDebut + srcLen - 1;
+        }
+        const g = donnees[srcIdx] * (1 - frac) + donnees[idx2] * frac;
+        const mono = (g / 32768) * gain;
+        gauche[posSortie] += mono * gainGauche;
+        droite[posSortie] += mono * gainDroite;
+      }
     }
   }
 
@@ -264,7 +284,7 @@ export async function rendreMidiDepuisBytes(
     if (!sf2Global) {
       throw new Error(traduire("msg.sf2.non.charge"));
     }
-    console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
+    console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.presets.length} presets, ${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
     const sr = 44100;
     const duree = Math.max(dureeTotale, 0.5);
     const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
@@ -273,11 +293,11 @@ export async function rendreMidiDepuisBytes(
         const nc = notes.filter((n) => n.canal === canal);
         if (!nc.length) continue;
         const prog = canauxInstrument.get(canal) ?? 0;
-        const idx = prog < sf2Global.instruments.length ? prog : undefined;
-        const nomInst = idx !== undefined ? sf2Global.instruments[idx]?.nom : "(auto)";
-        console.log(`[attic] rendreMidiDepuisBytes canal ${canal} → programme ${prog} → instrument SF2 ${idx ?? "auto"} "${nomInst ?? "?"}" (${nc.length} notes)`);
+        const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === 0) ?? sf2Global.presets[0];
+        const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
+        console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
         const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
-        const layer = rendreAvecSF2(sf2Global, an, volume, idx);
+        const layer = rendreAvecSF2(sf2Global, an, volume, prog, 0);
         for (let i = 0; i < master.length && i < layer.length; i++) {
           master.getChannelData(0)[i] += layer.getChannelData(0)[i];
           master.getChannelData(1)[i] += layer.getChannelData(1)[i];
@@ -354,10 +374,11 @@ export async function rendreSequence(
     if (!sf2Global) {
       throw new Error(traduire("msg.sf2.non.charge"));
     }
-    const idx = instrument ?? 0;
-    const nomInst = sf2Global.instruments[idx]?.nom ?? "?";
-    console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, instrument ${idx} "${nomInst}" (${notes.length} notes)`);
-    return rendreAvecSF2(sf2Global, notes, volume, idx);
+    const prog = instrument ?? 0;
+    const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === 0) ?? sf2Global.presets[0];
+    const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
+    console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, programme ${prog}, preset "${preset?.nom ?? "?"}" -> instrument "${nomInst}" (${notes.length} notes)`);
+    return rendreAvecSF2(sf2Global, notes, volume, prog, 0);
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing

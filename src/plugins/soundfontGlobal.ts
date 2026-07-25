@@ -31,7 +31,11 @@ export async function chargerSF2Globale(
   const sf2 = analyserSF2(buf);
   g.__attic_sf2__ = sf2;
   g.__attic_sf2_nom__ = nom;
-  console.log(`[attic] SF2 global chargé : ${nom} (${sf2.instruments.length} instruments, ${sf2.echantillons.length} échantillons)`);
+  console.log(`[attic] SF2 global chargé : ${nom} (${sf2.presets.length} presets, ${sf2.instruments.length} instruments, ${sf2.echantillons.length} échantillons)`);
+  for (const p of sf2.presets.slice(0, 3)) {
+    const insts = [...new Set(p.zones.map(z => z.instrumentIdx))].join(",");
+    console.log(`[attic]   preset "${p.nom}" prog=${p.programme} banque=${p.banque} zones=${p.zones.length} -> insts=[${insts}]`);
+  }
   return sf2;
 }
 

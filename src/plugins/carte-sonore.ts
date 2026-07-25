@@ -549,7 +549,7 @@ const EXTENSIONS_AUDIO = [".wav", "wave", ".mp3", ".ogg", ".flac", ".m4a", ".aac
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "carte-sonore", nom: "Carte sonore", nomEn: "Sound Map", univers: "Autres", famille: "Carte sonore",
+    id: "carte-sonore", nom: "Carte sonore", nomEn: "Sound Map", univers: "Collections", famille: "Export",
     resume: "Charge un dossier audio et génère une carte HTML interactive d'une ville fictive, ouvrable dans le navigateur.",
     resumeEn: "Loads an audio folder and generates an interactive HTML map of a fictional city, openable in a browser.",
     affichageAutonome: true,

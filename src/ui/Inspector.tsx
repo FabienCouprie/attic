@@ -98,6 +98,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
       )}
 
       {def.parametres.map((p) => {
+        // Paramètres internes (ex: chemin persisté) — pas d'affichage
+        if (p.hidden) return null;
         // Cacher conditionnellement certains paramètres selon la valeur d'un autre
         if (def.id === "gestion-nodes" && p.nom === "Node à exporter" && params["Action"] === "Importer") return null;
         const docP = lang === "en" && p.docEn ? p.docEn : p.doc;

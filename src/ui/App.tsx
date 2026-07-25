@@ -278,10 +278,10 @@ function Atelier() {
   useEffect(() => {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, prioritaire: n.id === prioritaire } })));
   }, [prioritaire, setNodes]);
-  const [theme, setTheme] = useState<"clair" | "black">("black");
+  const [theme, setTheme] = useState<"violet" | "black">("black");
 
   useEffect(() => {
-    if (theme === "clair") delete document.documentElement.dataset.theme;
+    if (theme === "violet") delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
   }, [theme]);
 
@@ -433,11 +433,15 @@ function Atelier() {
         },
         onChargerAudio: (nid: string, fichier: File) => {
           cacheExec.current.delete(nid);
-          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : n));
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
         },
         onChargerMidi: (nid: string, fichier: File) => {
           cacheExec.current.delete(nid);
-          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
         },
         onChargerImage: (nid: string, fichier: File) => {
           cacheExec.current.delete(nid);
@@ -472,8 +476,18 @@ function Atelier() {
     },
     onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
     onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
-    onChargerAudio: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : n)); },
-    onChargerMidi: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n)); },
+    onChargerAudio: (nid: string, fichier: File) => {
+      cacheExec.current.delete(nid);
+      const api = (window as any).api;
+      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+    },
+    onChargerMidi: (nid: string, fichier: File) => {
+      cacheExec.current.delete(nid);
+      const api = (window as any).api;
+      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+    },
     onChargerImage: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, imageFichier: fichier, imageNom: fichier.name } } : n)); },
     onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n)); },

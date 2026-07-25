@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 
 interface Props {
-  theme: string; setTheme: (t: "clair" | "black") => void;
+  theme: string; setTheme: (t: "violet" | "black") => void;
   enExecution: boolean;
   repertoire: string; onChoisirDossier: () => void;
   onLancer: () => void;
@@ -120,7 +120,7 @@ export function BarreOutils(props: Props) {
         <span className="attic-sf2-check">{sf2Nom ? "✓" : "?"}</span>
         <input type="file" accept=".sf2" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) onChargerSF2(f); e.target.value = ""; }} />
       </label>
-      <button className="attic-btn-icon" title={t("btn.theme")} onClick={() => setTheme(theme === "black" ? "clair" : "black")}>
+      <button className="attic-btn-icon" title={t("btn.theme")} onClick={() => setTheme(theme === "black" ? "violet" : "black")}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
       </button>
       <button className="attic-btn-lang" onClick={() => setLang(lang === "fr" ? "en" : "fr")} title={t("btn.langue")}>

@@ -174,10 +174,14 @@ export function usePersistance(o: OptionsPersistance) {
           o.lancerRef.current(nid);
         },
         onChargerAudio: (nid: string, fichier: File) => {
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) } } : nd));
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
         },
         onChargerMidi: (nid: string, fichier: File) => {
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, midiFichier: fichier, midiNom: fichier.name } } : nd));
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
         },
         onChargerImage: (nid: string, fichier: File) => {
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, imageFichier: fichier, imageNom: fichier.name } } : nd));
@@ -194,6 +198,39 @@ export function usePersistance(o: OptionsPersistance) {
         },
       },
     }));
+
+    // Recharger les fichiers persistés (Electron) : le File n'est pas sérialisable,
+    // mais le chemin est sauvé dans le paramètre "Chemin".
+    const api = (window as any).api;
+    if (api) {
+      for (const n of importedNodes) {
+        const chemin = n.data?.parametres?.Chemin as string | undefined;
+        if (!chemin || !n.data?.ficheId) continue;
+        try {
+          if (n.data.ficheId === "entree-audio" && !n.data.audioFichier) {
+            const res = await api.lireFichierAudio(chemin);
+            if (res) {
+              const mime = res.url?.match(/data:([^;]+);base64/)?.[1] ?? "audio/wav";
+              const blob = new Blob([res.donnees], { type: mime });
+              const fichier = new File([blob], res.nom, { type: mime });
+              n.data.audioFichier = fichier;
+              n.data.audioNom = res.nom;
+              n.data.audioUrl = URL.createObjectURL(fichier);
+            }
+          } else if (n.data.ficheId === "lecteur-midi" && !n.data.midiFichier) {
+            const res = await api.lireBinaire(chemin);
+            if (res) {
+              const fichier = new File([res.donnees], res.nom, { type: "audio/midi" });
+              n.data.midiFichier = fichier;
+              n.data.midiNom = res.nom;
+            }
+          }
+        } catch (e) {
+          console.warn(`[attic] Impossible de recharger ${chemin}`, e);
+        }
+      }
+    }
+
     o.setNodes(importedNodes);
     o.setEdges(json.edges || []);
     o.cacheExec.current.clear();

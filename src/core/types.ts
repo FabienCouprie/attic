@@ -86,6 +86,7 @@ export interface ParametreDef {
   unite?: string;
   doc?: string;
   docEn?: string;
+  hidden?: boolean;
 }
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et

@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
     "Computes the spectral rolloff frequency using Meyda.",
     "Rolloff", calculerRolloffSpectralMeyda),
   {
-    id: "transcripteur-midi", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Sorties", famille: "Écoute",
+    id: "transcripteur-midi", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un signal audio en notes MIDI.",
     resumeEn: "Transcribes an audio signal into MIDI notes.",
     noticeEn: "Transcribes an audio signal into MIDI notes. FFT mono or Basic Pitch ONNX polyphonic.",

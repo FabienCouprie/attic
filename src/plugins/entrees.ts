@@ -14,7 +14,9 @@ const entrees: FicheAudio[] = [
     // Le nœud affiche le fichier chargé (vue dédiée alimentée par `data`) :
     // le moteur ne doit pas écraser cet affichage avec le rendu de sa sortie.
     affichageAutonome: true,
-    parametres: [],
+    parametres: [
+      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true },
+    ],
     async executer(ctx) {
       const fichier = ctx.noeud.data.audioFichier as File | undefined;
       if (!fichier) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_charg") };

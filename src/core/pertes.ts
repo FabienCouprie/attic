@@ -14,6 +14,12 @@ export const CHAMPS_CONSERVES = new Set([
   "ficheId", "parametres", "audioNom", "midiNom", "sf2InstrumentIdx", "zonesSelectionnees",
 ]);
 
+// Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine
+// de les signaler comme des pertes à l'export.
+const CHAMPS_FICHIER_RECHARGEABLES = new Set([
+  "audioFichier", "midiFichier", "imageFichier", "enregistrementBlob", "irFichier", "pureDataFichier",
+]);
+
 function typeChamp(v: unknown): string {
   if (v === null) return "null";
   if (v === undefined) return "undefined";
@@ -47,8 +53,9 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
     // Champs de statut runtime (recréés à l'exécution)
     if (["statut", "progression", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
          "audioUrl", "enregistrementUrl", "mp3Url", "scriptGenere", "midiFichierSortie",
-         "sf2Data", "modeleFichier"].includes(cle)) {
-      if (estNonSerializable(val)) {
+         "sf2Data", "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "enregistrementBlob",
+         "irFichier", "pureDataFichier"].includes(cle)) {
+      if (estNonSerializable(val) && !CHAMPS_FICHIER_RECHARGEABLES.has(cle)) {
         pertes.push({ champ: cle, type: typeChamp(val), nom: (val as any)?.name });
       }
       continue;
