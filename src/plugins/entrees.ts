@@ -76,7 +76,7 @@ const entrees: FicheAudio[] = [
     entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["1/4", "1/8", "1/16", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "A", "A#", "B"], defautEn: "1/4" },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "minor"], defautEn: "major" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée", nomEn: "Duration", plage: [4,120], defaut: 30, unite: "s" },
