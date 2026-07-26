@@ -91,6 +91,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "msg.ocr.erreur": { fr: "Erreur OCR.", en: "OCR error." },
   "progress.ocr": { fr: "Reconnaissance de texte…", en: "Text recognition…" },
   "progress.piper.load_voice": { fr: "Chargement de la voix Piper…", en: "Loading Piper voice…" },
+  "progress.piper.download": { fr: "Téléchargement de la voix Piper…", en: "Downloading Piper voice…" },
   "progress.piper.decode": { fr: "Décodage audio…", en: "Audio decoding…" },
   "msg.piper_tts_var_0_var_1": { fr: "Piper TTS · {0} · {1}{2}", en: "Piper TTS · {0} · {1}{2}" },
   "msg.export_image.termine": { fr: "Image sauvegardée : {0}", en: "Image saved: {0}" },

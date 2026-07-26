@@ -2,7 +2,8 @@
 // et de l'équivalence d'exécution entre graphe standard et graphe aplati.
 import { describe, it, expect } from "vitest";
 import {
-  empreinteParametres, empreinteEntrees, ordreTopologique, valeursEntrantes,
+  empreinteParametres, empreinteEntrees, empreinteValeur, empreinteValeursEntrantes,
+  ordreTopologique, valeursEntrantes,
   resoudreEntree,
 } from "./graphe";
 import { aplatirGraphe, creerMeta, type NoeudG, type AreteG, type DefPorts } from "./meta";
@@ -91,6 +92,74 @@ describe("cache d'exécution — empreinteEntrees", () => {
   it("est insensible à l'ordre des arêtes", () => {
     expect(empreinteEntrees("D", [a("C", "D"), a("A", "D")]))
       .toBe(empreinteEntrees("D", [a("A", "D"), a("C", "D")]));
+  });
+});
+
+describe("cache d'exécution — empreinteValeur", () => {
+  it("différencie les valeurs primitives", () => {
+    expect(empreinteValeur("a")).not.toBe(empreinteValeur("b"));
+    expect(empreinteValeur(1)).not.toBe(empreinteValeur(2));
+    expect(empreinteValeur(true)).not.toBe(empreinteValeur(false));
+  });
+
+  it("est stable pour les mêmes objets", () => {
+    expect(empreinteValeur({ a: 1, b: "x" })).toBe(empreinteValeur({ b: "x", a: 1 }));
+  });
+
+  it("différencie les tableaux selon le contenu", () => {
+    expect(empreinteValeur([1, 2, 3])).not.toBe(empreinteValeur([1, 2, 4]));
+  });
+
+  it("différencie deux AudioBuffer par leurs propriétés", () => {
+    const b1 = { length: 100, sampleRate: 44100, numberOfChannels: 1 } as unknown as AudioBuffer;
+    const b2 = { length: 200, sampleRate: 44100, numberOfChannels: 1 } as unknown as AudioBuffer;
+    expect(empreinteValeur(b1)).not.toBe(empreinteValeur(b2));
+  });
+
+  it("différencie les fichiers par nom/taille/type", () => {
+    const f1 = { name: "a.wav", size: 10, type: "audio/wav" } as unknown as File;
+    const f2 = { name: "a.wav", size: 20, type: "audio/wav" } as unknown as File;
+    expect(empreinteValeur(f1)).not.toBe(empreinteValeur(f2));
+  });
+
+  it("distingue null et undefined", () => {
+    expect(empreinteValeur(null)).not.toBe(empreinteValeur(undefined));
+  });
+});
+
+describe("cache d'exécution — empreinteValeursEntrantes", () => {
+  it("est stable si les valeurs d'entrée ne changent pas", () => {
+    const aretes = [a("A", "D"), a("B", "D")];
+    const resultats = new Map<string, string[]>([
+      ["A", ["hello"]],
+      ["B", ["world"]],
+    ]);
+    expect(empreinteValeursEntrantes("D", aretes, resultats))
+      .toBe(empreinteValeursEntrantes("D", aretes, resultats));
+  });
+
+  it("change si une valeur d'entrée change", () => {
+    const aretes = [a("A", "D"), a("B", "D")];
+    const resultats1 = new Map<string, string[]>([["A", ["hello"]], ["B", ["world"]]]);
+    const resultats2 = new Map<string, string[]>([["A", ["hello"]], ["B", ["changed"]]]);
+    expect(empreinteValeursEntrantes("D", aretes, resultats1))
+      .not.toBe(empreinteValeursEntrantes("D", aretes, resultats2));
+  });
+
+  it("est stable quand l'ordre des arêtes dans le tableau change", () => {
+    const aretes1 = [a("A", "D"), a("B", "D")];
+    const aretes2 = [a("B", "D"), a("A", "D")];
+    const resultats = new Map<string, string[]>([["A", ["hello"]], ["B", ["world"]]]);
+    expect(empreinteValeursEntrantes("D", aretes1, resultats))
+      .toBe(empreinteValeursEntrantes("D", aretes2, resultats));
+  });
+
+  it("change si les ports d'entrée connectés changent", () => {
+    const aretes1 = [a("A", "D", "out:0", "in:0"), a("B", "D", "out:0", "in:1")];
+    const aretes2 = [a("B", "D", "out:0", "in:0"), a("A", "D", "out:0", "in:1")];
+    const resultats = new Map<string, string[]>([["A", ["hello"]], ["B", ["world"]]]);
+    expect(empreinteValeursEntrantes("D", aretes1, resultats))
+      .not.toBe(empreinteValeursEntrantes("D", aretes2, resultats));
   });
 });
 

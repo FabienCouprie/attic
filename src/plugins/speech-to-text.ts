@@ -71,7 +71,7 @@ const LANGUES_WHISPER: Record<string, string> = {
 export const fiches: FicheAudio[] = ([
   {
     id: "whisper-en", nom: "Whisper (Anglais)", nomEn: "Whisper (English)",
-    univers: "Sorties", famille: "Speech to Text",
+    univers: "Autres", famille: "Speech to Text",
     resume: "Transcription vocale en anglais (OpenAI Whisper base).",
     resumeEn: "English speech recognition (OpenAI Whisper base).",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -101,7 +101,7 @@ export const fiches: FicheAudio[] = ([
  },
   {
     id: "whisper-multilingue", nom: "Whisper (Multilingue)", nomEn: "Whisper (Multilingual)",
-    univers: "Sorties", famille: "Speech to Text",
+    univers: "Autres", famille: "Speech to Text",
     resume: "Transcription vocale multilingue (OpenAI Whisper, 99 langues).",
     resumeEn: "Multilingual speech recognition (OpenAI Whisper, 99 languages).",
     entrees: [{ nom: "Audio", type: "audio" }],
