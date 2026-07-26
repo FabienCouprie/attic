@@ -14,6 +14,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - **Input nodes losing loaded file paths** after save/restart — `entree-image` now persists the file path via the hidden `Chemin` parameter; localStorage restore reloads audio, MIDI, SVG and image files from disk.
 - **Chord detector result displayed twice** — the generic node message is now hidden when a custom view already renders it.
 - **Export filename** (`nomFichier`) is now saved and restored.
+- **Wrong English `optionsEn`/`defautEn` for "Key" / "Clé" and other parameters** in `reservoir-musical`, `reservoir-midi`, `multi-reservoirs`, `generateur-accords`, `generateur-musical`, `sequenceur`, `vexflow`, `tonal` and related nodes. The UI was showing resolution/style values instead of keys (e.g. "1/4") because of copy-pasted i18n metadata.
+- **Additional copy-paste fixes** in `Mélodie aléatoire`, `Musique fractale`, `Sampler personnalisé`, `Métronome`, `Générateur musical`, `Générateur de paroles`, `Générateur de pochette` and `Visualisation Songsee` (time signatures, keys, scales, format, style default).
 
 ### Changed
 - Version bumped to `1.6.3`.

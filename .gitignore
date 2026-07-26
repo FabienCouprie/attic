@@ -89,6 +89,9 @@ test-results/
 # Tesseract OCR models (downloaded at build/setup)
 eng.traineddata
 
+# Temporary audit scripts
+scripts/audit-params.mjs
+
 # Duplicate terms file (TERMS_OF_USE.txt is the source)
 TERMS_OF_USE.md
 
