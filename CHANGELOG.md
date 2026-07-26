@@ -5,7 +5,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 ## [1.6.3] — 2026-07-26
 
 ### Added
-- **Cellular automaton music generator** node (`automate-cellulaire`) — generates audio + MIDI from 1D Wolfram rules (30, 90, 110, 126, 150) with Polyphony / Melody modes, configurable scale, key, width, generations and seed.
+- **Cellular automaton music generator** node (`automate-cellulaire`) — generates audio + MIDI from 1D Wolfram rules (18, 22, 26, 30, 45, 54, 60, 62, 73, 90, 102, 105, 110, 122, 126, 150, 160, 184, 204, 225, 232, 240, 250) plus custom 0-255 rules, and 2D topologies (Conway's Game of Life, Highlife). Supports Polyphony / Melody / Arpeggio voice modes and Pitch / Velocity / Duration / Pitch+velocity mappings. Configurable scale, key, width, height, generations, seed, density and mutation probability.
 - **Sherpa-ONNX ASR runtime hardening** — worker `global` alias, high-quality Web Audio resampling with linear fallback, offline model cache control (auto / clear & re-download), and worker download progress messages.
 - **Local Windows installer build** — production packaging path using a stripped dependency set to avoid electron-builder out-of-memory issues.
 
