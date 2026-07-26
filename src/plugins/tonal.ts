@@ -78,10 +78,10 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Tonic", type: "texte", defaut: "C",
         doc: "Tonalité de départ (ex : C, D#, F#).",
-        docEn: "Starting tonic (e.g. C, D#, F#).", defautEn: "1/4" },
+        docEn: "Starting tonic (e.g. C, D#, F#).", defautEn: "C" },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
         doc: "Type de gamme.",
-        docEn: "Scale type.", optionsEn: ["Block", "Arpeggio", "dorian", "mixolydian", "lydian", "phrygian", "Local"], defautEn: "major" },
+        docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -107,7 +107,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Note to transpose (e.g. C4, D#3, F#5).", defautEn: "C4" },
       { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defaut: "2M",
         doc: "Intervalle de transposition (2M = ton, 3m = tierce mineure, 3M = tierce majeure, etc.).",
-        docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.).", optionsEn: ["1P", "2m", "2M", "3 m", "3M", "4P", "4A", "5P", "6 m", "6M", "7 m", "7M", "8P"], defautEn: "2M" },
+        docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.).", optionsEn: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defautEn: "2M" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -129,7 +129,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la progression (ex : C, G, Dm, F#).",
-        docEn: "Progression key (e.g. C, G, Dm, F#).", defautEn: "1/4" },
+        docEn: "Progression key (e.g. C, G, Dm, F#).", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains (ex : I V vi IV, ii V I).",
         docEn: "Roman numeral progression (e.g. I V vi IV, ii V I).", defautEn: "I V vi IV" },
@@ -155,7 +155,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité de la grille (ex : C, G, Dm, F#).",
-        docEn: "Grid key (e.g. C, G, Dm, F#).", defautEn: "1/4" },
+        docEn: "Grid key (e.g. C, G, Dm, F#).", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains. Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
         docEn: "Roman numeral progression. Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
