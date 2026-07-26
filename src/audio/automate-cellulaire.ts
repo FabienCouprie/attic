@@ -42,10 +42,10 @@ const REGLES_1D_NOMS: Record<number, string> = {
 
 export const REGLES_1D = Object.keys(REGLES_1D_NOMS).map(Number).sort((a, b) => a - b);
 
-export const REGLES_2D = {
+export const REGLES_2D: Record<string, { naitre: number[]; survie: number[] }> = {
   "Conway": { naitre: [3], survie: [2, 3] },
   "Highlife": { naitre: [3, 6], survie: [2, 3] },
-} as const;
+};
 
 export type Topologie = "1D" | "2D Conway" | "2D Highlife";
 export type ModeVoix = "Polyphonie" | "Mélodie" | "Arpège";
