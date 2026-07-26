@@ -132,7 +132,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Émotion dominante (ex : l'espoir, la tristesse, la colère).",
         docEn: "Dominant emotion (e.g. hope, sadness, anger).", defautEn: "hope" },
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "English"], optionsEn: ["Français", "English"],
+        options: ["Français", "English"], optionsEn: ["French", "English"],
         defaut: "Français",
         doc: "Langue des paroles générées.", docEn: "Language of generated lyrics.", defautEn: "French" },
       { nom: "Lignes/section", nomEn: "Lines/section", plage: [2, 8], pas: 1, defaut: 4,
