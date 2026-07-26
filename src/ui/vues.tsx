@@ -92,6 +92,20 @@ function VueUploadImage({ id, data }: VueProps) {
   );
 }
 
+// ── Chargement d'un fichier SVG ──
+function VueUploadSvg({ id, data }: VueProps) {
+  const { t } = useI18n();
+  return (
+    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <label className="attic-node-fichier-btn">
+        {data.svgNom ? t("btn.changer.svg") : t("btn.charger.svg")}
+        <input type="file" accept=".svg" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerSvg?.(id, f); }} />
+      </label>
+      {data.svgNom && <div className="attic-node-fichier-nom">{data.svgNom}</div>}
+    </div>
+  );
+}
+
 // ── Explorateur de musique (Electron) ──
 function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
@@ -1031,7 +1045,7 @@ function VueCarteSonore({ data }: VueProps) {
 
 // ── Registre : id (ou prédicat) → vue(s), position relative au lecteur ──
 type Vue = (props: VueProps) => ReactNode;
-interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; position: "avant" | "apres"; }
+interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; position: "avant" | "apres"; masqueMessage?: boolean; }
 const parId = (...ids: string[]) => (f: string) => ids.includes(f);
 
 const REGISTRE: EntreeRegistre[] = [
@@ -1053,7 +1067,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("tessitures-voix"), vue: VueTessituresVoix, position: "avant" },
   { correspond: parId("generateur-script-ia"), vue: VueGenerateurScriptIA, position: "avant" },
   { correspond: parId("couleur-suno-ia"), vue: VueCouleurSunoIA, position: "avant" },
-  { correspond: parId("detecteur-accords"), vue: VueDetecteurAccords, position: "avant" },
+  { correspond: parId("detecteur-accords"), vue: VueDetecteurAccords, position: "avant", masqueMessage: true },
   { correspond: parId("vu-metre"), vue: VueVuMetre, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
@@ -1070,6 +1084,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("lecteur-svg"), vue: VueUploadSvg, position: "avant" },
+  { correspond: parId("lecteur-svg"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
@@ -1084,4 +1100,8 @@ const REGISTRE: EntreeRegistre[] = [
 
 export function vuesPourNoeud(ficheId: string, position: "avant" | "apres"): Vue[] {
   return REGISTRE.filter((e) => e.position === position && e.correspond(ficheId)).map((e) => e.vue);
+}
+
+export function vueAvantMasqueMessage(ficheId: string): boolean {
+  return REGISTRE.some((e) => e.position === "avant" && e.correspond(ficheId) && e.masqueMessage);
 }

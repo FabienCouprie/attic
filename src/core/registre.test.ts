@@ -4,6 +4,8 @@ import type { PluginDef } from "./types";
 
 const fake = (id: string, over: Partial<PluginDef<any, any>> = {}): PluginDef<any, any> => ({
   id, nom: id, univers: "Test", famille: "Test", resume: "résumé",
+  notice: "Notice de test.",
+  noticeEn: "Test notice.",
   entrees: [], sorties: [], parametres: [],
   executer: async () => ({ valeurs: [] }),
   ...over,

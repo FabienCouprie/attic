@@ -15,6 +15,12 @@ vite-out.txt
 # ONNX models (too large for git, distributed via extraResources)
 public/oonx/
 
+# Piper TTS assets (copied from node_modules by postinstall)
+public/piper-tts/
+
+# Sherpa-ONNX WASM assets (copied from node_modules by postinstall)
+public/sherpa-onnx-wasm/
+
 # SoundFont files (binary assets, user-provided)
 public/sf2/
 
@@ -72,6 +78,16 @@ build/
 
 # Exception: the custom NSIS installer script is source, not output.
 !build/installer.nsh
+
+# Build artifacts
+release-build/
+release-prod/
+
+# Test outputs
+test-results/
+
+# Tesseract OCR models (downloaded at build/setup)
+eng.traineddata
 
 # Duplicate terms file (TERMS_OF_USE.txt is the source)
 TERMS_OF_USE.md

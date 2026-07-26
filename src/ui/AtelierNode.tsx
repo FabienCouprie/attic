@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
-import { vuesPourNoeud } from "./vues";
+import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
 import { copierTexte } from "./copier";
 
 export type DonneesNoeud = {
@@ -19,6 +19,7 @@ export type DonneesNoeud = {
   modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;
   enregistrementBlob?: Blob; enregistrementUrl?: string;
   imageFichier?: File; imageNom?: string;
+  svgFichier?: File; svgNom?: string;
   prioritaire?: boolean;
   imageResultatUrl?: string;
   imageResultatFile?: File;
@@ -28,6 +29,7 @@ export type DonneesNoeud = {
   onChargerAudio?: (id: string, fichier: File) => void;
   onChargerMidi?: (id: string, fichier: File) => void;
   onChargerImage?: (id: string, fichier: File) => void;
+  onChargerSvg?: (id: string, fichier: File) => void;
   onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   zonesSelectionnees?: { debut: number; duree: number }[];
   onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;
@@ -137,7 +139,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           <audio className="attic-node-audio nodrag" controls src={data.audioUrl} />
         </div>
       )}
-      {data.audioResultatMessage && (
+      {data.audioResultatMessage && !vueAvantMasqueMessage(data.ficheId) && (
         <div className="attic-node-message">
           <button
             className="attic-node-copy-btn"

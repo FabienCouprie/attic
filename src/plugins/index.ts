@@ -25,7 +25,9 @@ import { fiches as f_generateur_script_ia } from "./generateur-script-ia";
 import { fiches as f_musicgen } from "./musicgen";
 import { fiches as f_texte_provider } from "./texte-provider";
 import { fiches as f_tts } from "./tts";
+import { fiches as f_tts_piper } from "./tts-piper";
 import { fiches as f_speech_to_text } from "./speech-to-text";
+import { fiches as f_sherpa_asr } from "./sherpa-asr";
 import { fiches as f_traduction } from "./traduction";
 import { fiches as f_prompt_graphe } from "./prompt-graphe";
 import { fiches as f_pochette } from "./pochette";
@@ -51,10 +53,14 @@ import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
 import { fiches as f_image_export } from "./image-export";
+import { fiches as f_export_svg } from "./export-svg";
 import { fiches as f_image_rendu } from "./image-rendu";
 import { fiches as f_pixeltone } from "./pixeltone";
 import { fiches as f_entree_image } from "./entree-image";
+import { fiches as f_lecteur_svg } from "./lecteur-svg";
+import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
+import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -79,7 +85,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_musicgen,
   ...f_texte_provider,
   ...f_tts,
+  ...f_tts_piper,
   ...f_speech_to_text,
+  ...f_sherpa_asr,
   ...f_traduction,
   ...f_prompt_graphe,
   ...f_pochette,
@@ -105,8 +113,12 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_pure_data,
   ...f_songsee,
   ...f_image_export,
+  ...f_export_svg,
   ...f_image_rendu,
   ...f_pixeltone,
   ...f_entree_image,
+  ...f_lecteur_svg,
+  ...f_ocr,
   ...f_carte_sonore,
+  ...f_automate_cellulaire,
 ];

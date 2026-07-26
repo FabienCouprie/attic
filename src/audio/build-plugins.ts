@@ -37,7 +37,7 @@ export const audioOptimizeDeps: any = {
   // Les dépendances CJS ci-dessous sont utilisées par @magenta/music dans le
   // thread principal (notamment par le nœud DDSP) et dans le worker ; on les
   // pré-bundl pour éviter des erreurs de module CJS dans le worker/dev.
-  exclude: ["_audio_backup"],
+  exclude: ["_audio_backup", "piper-tts-web"],
   include: [
     "@tensorflow/tfjs",
     "@tensorflow/tfjs-core",
@@ -47,5 +47,6 @@ export const audioOptimizeDeps: any = {
     "midi-file",
     "protobufjs",
     "long",
+    "tesseract.js",
   ],
 };
