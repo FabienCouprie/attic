@@ -15,7 +15,11 @@ const entreesImage: FicheAudio[] = [
     resumeEn: "Loads an image file and passes it to its output.",
     entrees: [],
     sorties: [{ nom: "Image", type: "image" }],
-    parametres: [],
+    parametres: [
+      { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true,
+        doc: "Chemin du fichier image chargé depuis l'inspecteur.",
+        docEn: "Path of the image file loaded from the inspector." },
+    ],
     async executer(ctx) {
       const fichier = ctx.noeud.data.imageFichier as File | undefined;
       if (!fichier) {

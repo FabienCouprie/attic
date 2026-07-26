@@ -8,6 +8,7 @@ import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../../core";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
+import { rechargerFichiersPersistes } from "../rechargerFichiers";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -75,8 +76,10 @@ export function usePersistance(o: OptionsPersistance) {
         audioNom: data.audioNom,
         midiNom: data.midiNom,
         imageNom: data.imageNom,
+        svgNom: data.svgNom,
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
+        nomFichier: data.nomFichier,
       },
     }));
     const cleanEdges = racine.edges.map(({ id, source, target, sourceHandle, targetHandle, type, style }) => ({
@@ -184,13 +187,22 @@ export function usePersistance(o: OptionsPersistance) {
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
         },
         onChargerImage: (nid: string, fichier: File) => {
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, imageFichier: fichier, imageNom: fichier.name } } : nd));
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, imageFichier: fichier, imageNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
+        },
+        onChargerSvg: (nid: string, fichier: File) => {
+          const api = (window as any).api;
+          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
         },
         onChangerEnregistrement: (nid: string, blob: Blob) => {
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, enregistrementBlob: blob, enregistrementUrl: URL.createObjectURL(blob) } } : nd));
         },
         onChangerParametre: (nid: string, nom: string, val: number | string) => {
+          o.cacheExec.current.delete(nid);
           o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, parametres: { ...nd.data.parametres, [nom]: val } } } : nd));
+          o.reinitialiserNoeud(nid);
         },
         onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => {
           o.cacheExec.current.delete(nid);
@@ -201,35 +213,7 @@ export function usePersistance(o: OptionsPersistance) {
 
     // Recharger les fichiers persistés (Electron) : le File n'est pas sérialisable,
     // mais le chemin est sauvé dans le paramètre "Chemin".
-    const api = (window as any).api;
-    if (api) {
-      for (const n of importedNodes) {
-        const chemin = n.data?.parametres?.Chemin as string | undefined;
-        if (!chemin || !n.data?.ficheId) continue;
-        try {
-          if (n.data.ficheId === "entree-audio" && !n.data.audioFichier) {
-            const res = await api.lireFichierAudio(chemin);
-            if (res) {
-              const mime = res.url?.match(/data:([^;]+);base64/)?.[1] ?? "audio/wav";
-              const blob = new Blob([res.donnees], { type: mime });
-              const fichier = new File([blob], res.nom, { type: mime });
-              n.data.audioFichier = fichier;
-              n.data.audioNom = res.nom;
-              n.data.audioUrl = URL.createObjectURL(fichier);
-            }
-          } else if (n.data.ficheId === "lecteur-midi" && !n.data.midiFichier) {
-            const res = await api.lireBinaire(chemin);
-            if (res) {
-              const fichier = new File([res.donnees], res.nom, { type: "audio/midi" });
-              n.data.midiFichier = fichier;
-              n.data.midiNom = res.nom;
-            }
-          }
-        } catch (e) {
-          console.warn(`[attic] Impossible de recharger ${chemin}`, e);
-        }
-      }
-    }
+    await rechargerFichiersPersistes(importedNodes);
 
     o.setNodes(importedNodes);
     o.setEdges(json.edges || []);

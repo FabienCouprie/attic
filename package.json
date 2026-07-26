@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "1.2.6",
+  "version": "1.6.3",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -14,8 +14,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "download:songsee": "node scripts/download-songsee.cjs",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
+    "postinstall": "npm run copy-piper-assets && npm run copy-sherpa-wasm",
+    "copy-sherpa-wasm": "node scripts/copy-sherpa-wasm.cjs"
   },
   "build": {
     "appId": "com.attic.audio",
@@ -26,7 +30,7 @@
     "toolsets": {
       "nsis": "1.2.1"
     },
-    "compression": "maximum",
+    "compression": "normal",
     "files": [
       "dist/**/*",
       "!dist/oonx/**/*",
@@ -85,6 +89,7 @@
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
     "@magenta/music": "^1.23.1",
+    "@siteed/sherpa-onnx.rn": "^1.3.1",
     "@xyflow/react": "^12.11.2",
     "adm-zip": "^0.6.0",
     "electron-updater": "^6.8.9",
@@ -95,18 +100,23 @@
     "midi-file": "^1.2.4",
     "onnxruntime-node": "^1.27.0",
     "onnxruntime-web": "^1.21.0",
+    "piper-tts-web": "^1.1.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "resonance-audio": "^1.0.0",
+    "seedrandom": "^3.0.5",
     "sharp": "^0.35.3",
     "soundtouchjs": "^0.3.0",
+    "speech-asr": "^1.1.6",
+    "tesseract.js": "^7.0.0",
     "time-stretch": "^1.2.1",
-    "tone": "^14.9.17",
     "tonal": "^6.4.3",
+    "tone": "^14.9.17",
     "vexflow": "^4.2.5",
     "wavesurfer.js": "^7.12.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",

@@ -20,6 +20,8 @@ export function serialiserMeta(m: MetaComposant) {
         parametres: n.data.parametres,
         audioNom: (n.data as Record<string, unknown>).audioNom,
         midiNom: (n.data as Record<string, unknown>).midiNom,
+        imageNom: (n.data as Record<string, unknown>).imageNom,
+        svgNom: (n.data as Record<string, unknown>).svgNom,
         sf2InstrumentIdx: (n.data as Record<string, unknown>).sf2InstrumentIdx,
         zonesSelectionnees: (n.data as Record<string, unknown>).zonesSelectionnees,
       },

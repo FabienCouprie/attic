@@ -133,7 +133,7 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 // de nodes installés (new Function). unsafe-inline pour les vues canvas/inline.
 const CSP = [
   "default-src 'self' display-capture",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net",
   "style-src 'self' 'unsafe-inline'",
   "media-src 'self' blob: data: stream:",
   "img-src 'self' blob: data:",

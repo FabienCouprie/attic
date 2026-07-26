@@ -2,6 +2,22 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6.3] — 2026-07-26
+
+### Added
+- **Cellular automaton music generator** node (`automate-cellulaire`) — generates audio + MIDI from 1D Wolfram rules (30, 90, 110, 126, 150) with Polyphony / Melody modes, configurable scale, key, width, generations and seed.
+- **Sherpa-ONNX ASR runtime hardening** — worker `global` alias, high-quality Web Audio resampling with linear fallback, offline model cache control (auto / clear & re-download), and worker download progress messages.
+- **Local Windows installer build** — production packaging path using a stripped dependency set to avoid electron-builder out-of-memory issues.
+
+### Fixed
+- **Inconsistent node reset** when editing parameters — all parameter changes now trigger the same cascade reset (`reinitialiserNoeud`) instead of partial ad-hoc cleanup.
+- **Input nodes losing loaded file paths** after save/restart — `entree-image` now persists the file path via the hidden `Chemin` parameter; localStorage restore reloads audio, MIDI, SVG and image files from disk.
+- **Chord detector result displayed twice** — the generic node message is now hidden when a custom view already renders it.
+- **Export filename** (`nomFichier`) is now saved and restored.
+
+### Changed
+- Version bumped to `1.6.3`.
+
 ## [1.2.6] — 2026-07-25
 
 ### Security
