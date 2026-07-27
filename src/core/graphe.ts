@@ -58,6 +58,59 @@ export function empreinteParametres(data: Record<string, unknown>): string {
   return JSON.stringify({ p: data.parametres ?? {}, s: data.sequenceNotes ?? null, f: f ? f.name : null });
 }
 
+// Empreinte stable d'une valeur individuelle (utilisée pour les entrées).
+// Permet au cache d'invalidation d'être basé sur les valeurs réelles reçues,
+// pas seulement sur les ids des nœuds amont. Traite les types courants du
+// moteur (primitifs, AudioBuffer, File/Blob, tableaux, objets simples).
+export function empreinteValeur(valeur: unknown): string {
+  if (valeur === null) return "null";
+  if (valeur === undefined) return "undefined";
+  const type = typeof valeur;
+  if (type === "string" || type === "number" || type === "boolean") return String(valeur);
+  if (typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer) {
+    return `AudioBuffer(${valeur.length},${valeur.sampleRate},${valeur.numberOfChannels})`;
+  }
+  if (valeur instanceof File) return `File(${valeur.name},${valeur.size},${valeur.type})`;
+  if (valeur instanceof Blob) return `Blob(${valeur.size},${valeur.type})`;
+  if (Array.isArray(valeur)) return `[${valeur.map(empreinteValeur).join(",")}]`;
+  if (valeur instanceof Uint8Array || valeur instanceof Int8Array || valeur instanceof Float32Array) {
+    return `TypedArray(${(valeur as ArrayBufferView).constructor.name},${valeur.length})`;
+  }
+  if (type === "object") {
+    const obj = valeur as Record<string, unknown>;
+    const keys = Object.keys(obj).sort();
+    return `{${keys.map((k) => `${k}:${empreinteValeur(obj[k])}`).join(",")}}`;
+  }
+  return `other(${String(valeur)})`;
+}
+
+// Empreinte des valeurs effectivement branchées en entrée d'un nœud.
+// Si un amont est recalculé et produit une valeur différente, l'empreinte change
+// et force la réexécution du nœud — même si la liste des ids amont n'a pas changé.
+// Les arêtes sont triées par index d'entrée pour que l'ordre de l'array ne change
+// pas l'empreinte (seuls les ports réellement connectés comptent).
+export function empreinteValeursEntrantes<T = unknown>(
+  nodeId: string,
+  aretes: AreteG[],
+  resultats: Map<string, T[]>,
+): string {
+  const aretesTriees = aretes
+    .filter((a) => a.target === nodeId)
+    .sort((a, b) => {
+      const ia = parseInt((a.targetHandle ?? "in:-1").split(":")[1]);
+      const ib = parseInt((b.targetHandle ?? "in:-1").split(":")[1]);
+      if (ia !== ib) return ia - ib;
+      const sa = `${a.source}:${a.sourceHandle ?? "out:0"}`;
+      const sb = `${b.source}:${b.sourceHandle ?? "out:0"}`;
+      return sa.localeCompare(sb);
+    });
+  const valeurs = aretesTriees.map((a) => {
+    const si = parseInt((a.sourceHandle ?? "out:0").split(":")[1]);
+    return resultats.get(a.source)?.[si] ?? null;
+  });
+  return empreinteValeur(valeurs);
+}
+
 // Résout la valeur branchée sur l'entrée `index` d'un nœud, depuis les arêtes et
 // la table des résultats déjà calculés. Renvoie null si l'entrée n'est pas connectée.
 export function resoudreEntree<T = unknown>(

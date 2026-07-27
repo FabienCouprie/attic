@@ -1,5 +1,5 @@
-// plugins/speech-to-text.ts — Nœuds de reconnaissance vocale (Speech-to-Text).
-// Deux modèles : Whisper (anglais, léger) et Whisper (multilingue, 99 langues).
+// plugins/speech-to-text.ts — Nœud de reconnaissance vocale (Speech-to-Text).
+// Whisper anglais (OpenAI Whisper base), léger et rapide à charger.
 // L'audio provient d'une entrée audio (port vert) — branchez un node « Entrée audio »
 // ou un enregistrement. Le texte est émis sur la sortie texte (port bleu).
 // La transcription tourne dans un Web Worker.
@@ -51,27 +51,10 @@ function resamplerVers16k(mono: Float32Array, sr: number): Float32Array {
   return out;
 }
 
-const LANGUES_WHISPER: Record<string, string> = {
-  "Auto": "",
-  "Anglais": "en",
-  "Français": "fr",
-  "Espagnol": "es",
-  "Allemand": "de",
-  "Italien": "it",
-  "Portugais": "pt",
-  "Néerlandais": "nl",
-  "Russe": "ru",
-  "Japonais": "ja",
-  "Chinois": "zh",
-  "Arabe": "ar",
-  "Hindi": "hi",
-  "Coréen": "ko",
-};
-
 export const fiches: FicheAudio[] = ([
   {
     id: "whisper-en", nom: "Whisper (Anglais)", nomEn: "Whisper (English)",
-    univers: "Sorties", famille: "Speech to Text",
+    univers: "Autres", famille: "Speech to Text",
     resume: "Transcription vocale en anglais (OpenAI Whisper base).",
     resumeEn: "English speech recognition (OpenAI Whisper base).",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -97,51 +80,6 @@ export const fiches: FicheAudio[] = ([
         w.addEventListener("message", onMessage);
         w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-base.en" });
       });
-   },
- },
-  {
-    id: "whisper-multilingue", nom: "Whisper (Multilingue)", nomEn: "Whisper (Multilingual)",
-    univers: "Sorties", famille: "Speech to Text",
-    resume: "Transcription vocale multilingue (OpenAI Whisper, 99 langues).",
-    resumeEn: "Multilingual speech recognition (OpenAI Whisper, 99 languages).",
-    entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
-    parametres: [
-      { nom: "Langue", nomEn: "Language", type: "choix",
-        options: Object.keys(LANGUES_WHISPER),
-        optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Chinese", "Arabic", "Hindi", "Korean"],
-        defaut: "Auto",
-        doc: "Langue du discours à transcrire. « Auto » = détection automatique.",
-        docEn: "Language of the speech to transcribe. « Auto » = automatic detection.", defautEn: "Auto" },
-      { nom: "Traduire", nomEn: "Translate", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
-        defaut: "Non",
-        doc: "Si « Oui », traduit le discours en anglais au lieu de le transcrire dans sa langue d'origine.",
-        docEn: "If « Yes », translates the speech to English instead of transcribing in its original language.", defautEn: "No" },
-    ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      const langue = ctx.paramTexte("Langue", "Auto");
-      const translateToEnglish = ctx.paramTexte("Traduire", "Non") === "Oui";
-      const langCode = LANGUES_WHISPER[langue] || undefined;
-      const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
-      const w = getWorker();
-      return new Promise((resolve) => {
-        const onMessage = (e: MessageEvent) => {
-          const msg = e.data;
-          if (msg.type === "progress") ctx.onProgress(msg.msg);
-          else if (msg.type === "done") {
-            libererWorker();
-            resolve({ valeurs: [msg.text], message: traduire("msg.transcrit_var_0_var_1_var_2_var_3", langue, translateToEnglish ? " → EN" : "", msg.text.slice(0, 60), msg.text.length > 60 ? "…" : "") });
-          } else if (msg.type === "error") {
-            libererWorker();
-            resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_whisper_var_0", msg.msg) });
-          }
-        };
-        w.addEventListener("message", onMessage);
-        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-large-v2", language: langCode, translate: translateToEnglish });
-      });
-   },
- },
+    },
+  },
 ] as FicheAudio[]).map(avecDoc);

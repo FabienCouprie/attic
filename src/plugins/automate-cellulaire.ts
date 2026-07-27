@@ -136,6 +136,8 @@ const FICHES: FicheAudio[] = [
         defaut: "Do",
         optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
         defautEn: "C",
+        doc: "Clé de la gamme utilisée pour mapper les cellules en notes.",
+        docEn: "Key of the scale used to map cells to notes.",
       },
       {
         nom: "Gamme",
@@ -145,6 +147,8 @@ const FICHES: FicheAudio[] = [
         defaut: "Pentatonique majeure",
         optionsEn: ["Major", "Natural minor", "Major pentatonic", "Minor pentatonic", "Chromatic"],
         defautEn: "Major pentatonic",
+        doc: "Gamme utilisée pour convertir les positions de cellules en hauteurs de notes.",
+        docEn: "Scale used to convert cell positions into note pitches.",
       },
       {
         nom: "Octave",
@@ -153,6 +157,8 @@ const FICHES: FicheAudio[] = [
         plage: [1, 6],
         pas: 1,
         defaut: 4,
+        doc: "Octave de base des notes MIDI générées.",
+        docEn: "Base octave of the generated MIDI notes.",
       },
       {
         nom: "Durée note",
@@ -172,6 +178,8 @@ const FICHES: FicheAudio[] = [
         plage: [1, 127],
         pas: 1,
         defaut: 100,
+        doc: "Vélocité MIDI de base des notes générées (1-127).",
+        docEn: "Base MIDI velocity of the generated notes (1-127).",
       },
       {
         nom: "Volume",
@@ -210,6 +218,8 @@ const FICHES: FicheAudio[] = [
         defaut: "FM/Oscillateurs",
         optionsEn: ["FM/Oscillators", "SoundFont"],
         defautEn: "FM/Oscillators",
+        doc: "Moteur audio pour le rendu : FM/oscillateurs intégrés ou SoundFont global chargé.",
+        docEn: "Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont.",
       },
     ],
     async executer(ctx: any) {

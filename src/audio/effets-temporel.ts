@@ -557,3 +557,38 @@ export function appliquerPaulstretch(
   // Normalisation douce pour éviter les dépassements sans monter artificiellement le bruit.
   return normaliser(resultat, -3);
 }
+
+// --- Granular freeze : boucle de grains avec contrôle de taille et hauteur ----
+// Extrait un grain à la position choisie et le répète sur toute la durée. Le
+// pitch décale la vitesse de lecture dans le grain (pas de conservation de la
+// durée originale). Le mix permet de doser l'effet avec le signal original.
+
+export function granularFreeze(
+  buffer: AudioBuffer,
+  grainSizeMs: number,
+  pitch: number,
+  position: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const grainSize = Math.max(1, Math.round(grainSizeMs / 1000 * sr));
+  const start = Math.floor(position * Math.max(0, buffer.length - grainSize));
+  const ratio = Math.pow(2, pitch / 12);
+  const mixVal = mix / 100;
+
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    let phase = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      const idx = start + (Math.floor(phase) % grainSize);
+      const wet = src[idx];
+      dst[i] = src[i] * (1 - mixVal) + wet * mixVal;
+      phase += ratio;
+      while (phase >= grainSize) phase -= grainSize;
+    }
+  }
+  return resultat;
+}
+

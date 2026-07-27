@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "1.6.3",
+  "version": "2.0.0",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -73,6 +73,10 @@
       ],
       "icon": null
     },
+    "asarUnpack": [
+      "dist/piper-tts/**/*.wasm",
+      "dist/piper-tts/**/*.data"
+    ],
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -134,9 +138,11 @@
   },
   "overrides": {
     "adm-zip": "^0.6.0",
+    "brace-expansion": "^5.0.8",
     "minimist": "^1.2.8",
     "protobufjs": "^7.6.5",
     "sharp": "^0.35.3",
-    "static-eval": "^2.1.1"
+    "static-eval": "^2.1.1",
+    "uuid": "^11.1.1"
   }
 }

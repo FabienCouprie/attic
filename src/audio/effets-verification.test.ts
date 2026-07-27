@@ -26,11 +26,13 @@ class AudioBufferPolyfill {
 
 let dyn: typeof import("./effets-dynamique");
 let spec: typeof import("./effets-spectral");
+let temp: typeof import("./effets-temporel");
 
 beforeAll(async () => {
   (globalThis as any).AudioBuffer = AudioBufferPolyfill;
   dyn = await import("./effets-dynamique");
   spec = await import("./effets-spectral");
+  temp = await import("./effets-temporel");
 });
 
 const SR = 44100;
@@ -170,6 +172,109 @@ describe("octaver", () => {
   });
 });
 
+describe("limiter", () => {
+  it("réduit les pics au-dessus du seuil", () => {
+    const e = sinus(440, 0.5, 1); // crête à 1.0 = 0 dB
+    const s = dyn.limiter(e, -6, 50, -6); // seuil = plafond = -6 dB
+    expect(pic(s)).toBeLessThanOrEqual(0.502);
+  });
+  it("laisse inchangé un signal sous le seuil", () => {
+    const e = sinus(440, 0.5, 0.2); // crête à -14 dB, sous -6 dB
+    const s = dyn.limiter(e, -6, 50, -6);
+    expect(pic(s)).toBeCloseTo(0.2, 2);
+  });
+  it("applique le make-up jusqu'au plafond", () => {
+    const e = sinus(440, 0.5, 1);
+    const s = dyn.limiter(e, -6, 50, -3); // makeup +3 dB
+    expect(pic(s)).toBeCloseTo(0.501 * Math.pow(10, 3 / 20), 2);
+  });
+});
+
+describe("transientShaper", () => {
+  function burstSustain(): AudioBuffer {
+    const n = SR;
+    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      if (t < 0.05) d[i] = Math.sin(2 * Math.PI * 440 * t);
+      else d[i] = 0.3 * Math.sin(2 * Math.PI * 440 * t);
+    }
+    return b;
+  }
+
+  it("augmente l'attaque quand Attack est positif", () => {
+    const e = burstSustain();
+    const s = dyn.transientShaper(e, 6, 0, 1, 100);
+    const burstAvant = rms(e, 0, Math.floor(0.05 * SR));
+    const burstApres = rms(s, 0, Math.floor(0.05 * SR));
+    expect(burstApres).toBeGreaterThan(burstAvant * 1.3);
+  });
+  it("diminue le sustain quand Sustain est négatif", () => {
+    const e = burstSustain();
+    const s = dyn.transientShaper(e, 0, -6, 1, 100);
+    const sustainAvant = rms(e, Math.floor(0.1 * SR), Math.floor(0.5 * SR));
+    const sustainApres = rms(s, Math.floor(0.1 * SR), Math.floor(0.5 * SR));
+    expect(sustainApres).toBeLessThan(sustainAvant * 0.9);
+  });
+  it("laisse le signal inchangé avec Attack=Sustain=0", () => {
+    const e = burstSustain();
+    const s = dyn.transientShaper(e, 0, 0, 1, 100);
+    expect(rms(s)).toBeCloseTo(rms(e), 2);
+  });
+});
+
+describe("largeurStereo", () => {
+  function stereoSinus(): AudioBuffer {
+    const n = Math.floor(SR * 0.5);
+    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SR });
+    for (let i = 0; i < n; i++) {
+      b.getChannelData(0)[i] = Math.sin((2 * Math.PI * 440 * i) / SR);
+      b.getChannelData(1)[i] = Math.sin((2 * Math.PI * 440 * i) / SR + Math.PI);
+    }
+    return b;
+  }
+
+  it("conserve le signal stéréo à 100% de largeur et 100% Mid", () => {
+    const e = stereoSinus();
+    const s = dyn.ajusterLargeurStereo(e, 100, 100);
+    expect(rms(s, 0, s.length)).toBeCloseTo(rms(e, 0, e.length), 2);
+    expect(pic(s)).toBeCloseTo(pic(e), 2);
+  });
+
+  it("passe en mono quand la largeur est 0%", () => {
+    const e = stereoSinus();
+    const s = dyn.ajusterLargeurStereo(e, 0, 100);
+    const l = s.getChannelData(0);
+    const r = s.getChannelData(1);
+    expect(Math.abs(l[Math.floor(SR / 10)])).toBeCloseTo(Math.abs(r[Math.floor(SR / 10)]), 5);
+  });
+
+  it("élargit le stéréo quand la largeur est 200%", () => {
+    const e = stereoSinus();
+    const s = dyn.ajusterLargeurStereo(e, 200, 100);
+    const idx = Math.floor(SR / 10);
+    const side = s.getChannelData(0)[idx] - s.getChannelData(1)[idx];
+    const sideOrig = e.getChannelData(0)[idx] - e.getChannelData(1)[idx];
+    expect(Math.abs(side)).toBeGreaterThan(Math.abs(sideOrig) * 1.9);
+  });
+
+  it("élargit un signal mono en stéréo", () => {
+    const e = sinus(440, 0.5, 1);
+    const s = dyn.ajusterLargeurStereo(e, 100, 100);
+    expect(s.numberOfChannels).toBe(2);
+    expect(rms(s)).toBeCloseTo(rms(e), 2);
+    expect(s.getChannelData(0)[Math.floor(SR / 10)]).toBeCloseTo(s.getChannelData(1)[Math.floor(SR / 10)], 5);
+  });
+
+  it("coupe le centre quand Mid est 0", () => {
+    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: 1000, sampleRate: SR });
+    for (let i = 0; i < 1000; i++) { e.getChannelData(0)[i] = 0.5; e.getChannelData(1)[i] = 0.5; }
+    const s = dyn.ajusterLargeurStereo(e, 100, 0);
+    expect(pic(s)).toBeCloseTo(0, 5);
+  });
+});
+
 describe("dererverberer", () => {
   it("atténue une traîne de réverbération synthétique", () => {
     // Burst 100 ms suivi d'une « traîne » : le même signal qui décroît en exp.
@@ -194,5 +299,71 @@ describe("dererverberer", () => {
     expect(reductionTraine).toBeLessThan(0.5);              // au moins −6 dB sur la traîne
     expect(reductionBurst).toBeGreaterThan(0.5);            // le corps du son survit
     expect(reductionTraine).toBeLessThan(reductionBurst);   // et la traîne est plus touchée
+  });
+});
+
+describe("harmoniser", () => {
+  it("ajoute une voix à l'intervalle demandé", () => {
+    const e = sinus(440, 0.5, 0.5);
+    const s = spec.harmoniser(e, 12, 50, 0, 0); // octave supérieure, 50%
+    const avant = energieA(e, 880, 0, e.length);
+    const apres = energieA(s, 880, 0, s.length);
+    expect(apres).toBeGreaterThan(avant * 2 + 1e-6);
+  });
+  it("laisse le signal original quand les deux mix sont à 0", () => {
+    const e = sinus(440, 0.2, 0.5);
+    const s = spec.harmoniser(e, 12, 0, 7, 0);
+    expect(rms(s)).toBeCloseTo(rms(e), 5);
+  });
+});
+
+describe("granularFreeze", () => {
+  it("répète un grain sur toute la durée", () => {
+    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const d = e.getChannelData(0);
+    // 1 s : burst au début, silence ensuite
+    for (let i = 0; i < SR; i++) d[i] = i < SR / 10 ? 0.5 : 0;
+    const s = temp.granularFreeze(e, 50, 0, 0, 100); // grain 50 ms au début, 100% wet
+    // La sortie doit rester active dans la seconde moitié grâce au loop
+    const rmsAvant = rms(e, Math.floor(0.5 * SR), SR);
+    const rmsApres = rms(s, Math.floor(0.5 * SR), SR);
+    expect(rmsAvant).toBeCloseTo(0, 5);
+    expect(rmsApres).toBeGreaterThan(0.01);
+  });
+  it("transpose le grain quand pitch est non nul", () => {
+    const e = sinus(440, 0.5, 0.5);
+    const s = temp.granularFreeze(e, 50, 12, 0, 100); // pitch +12
+    const energieDouze = energieA(s, 880, 0, s.length);
+    expect(energieDouze).toBeGreaterThan(0.001);
+  });
+});
+
+describe("exciter", () => {
+  it("est exporté comme fonction async", async () => {
+    expect(typeof dyn.exciter).toBe("function");
+  });
+  it.skipIf(!(globalThis as any).OfflineAudioContext)("ajoute de l'énergie dans les hautes fréquences", async () => {
+    const e = sinus(440, 0.5, 0.5);
+    const s = await dyn.exciter(e, 80, 2000, 100);
+    const avant = energieA(e, 3520, 0, e.length);
+    const apres = energieA(s, 3520, 0, s.length);
+    expect(apres).toBeGreaterThan(avant * 2 + 1e-6);
+  });
+});
+
+describe("vocoder", () => {
+  it("est exporté comme fonction async", async () => {
+    expect(typeof spec.vocoder).toBe("function");
+  });
+  it.skipIf(!(globalThis as any).OfflineAudioContext)("produit une sortie modulée par l'enveloppe", async () => {
+    const mod = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const car = sinus(1000, 1, 0.5);
+    const d = mod.getChannelData(0);
+    // modulateur = gate 100 Hz on/off toutes les 100 ms
+    for (let i = 0; i < SR; i++) d[i] = (Math.floor(i / (SR / 10)) % 2 === 0) ? 0.5 : 0;
+    const s = await spec.vocoder(mod, car, 8, 500, 4000, 2, 100);
+    expect(s.numberOfChannels).toBe(1);
+    expect(s.length).toBe(SR);
+    expect(rms(s)).toBeGreaterThan(0);
   });
 });

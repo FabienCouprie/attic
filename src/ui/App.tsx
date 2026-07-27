@@ -26,6 +26,7 @@ import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
+import { filtrerAretesInvalides } from "./validerGraphe";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
@@ -122,7 +123,6 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "tessitures-voix") return { width: 300, height: 320 };
   if (def.id === "generateur-script-ia") return { width: 380, height: 400 };
   if (def.id === "detecteur-accords") return { width: 320, height: 340 };
-  if (def.id === "automate-cellulaire") return { width: 320, height: 260 };
   if (def.id === "vu-metre") return { width: 300, height: 260 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 280, height: 340 };
@@ -330,9 +330,10 @@ function Atelier() {
           ...e, type: "arete-personnalisee",
           style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },
         }));
+        const edgesValides = filtrerAretesInvalides(nodesRestaures, edgesRestaures);
         await rechargerFichiersPersistes(nodesRestaures);
         setNodes(nodesRestaures);
-        setEdges(edgesRestaures);
+        setEdges(edgesValides);
         if (data.viewport && rfInstance) {
           queueMicrotask(() => rfInstance.setViewport(data.viewport));
         }

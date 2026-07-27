@@ -43,8 +43,8 @@ export const fiches: FicheAudio[] = ([
         optionsEn: Object.values(VOIX_PIPER).map((v) => v.nomEn),
         defaut: "ru_RU-irina-medium",
         defautEn: "ru_RU-irina-medium",
-        doc: "Voix Piper à utiliser. Les voix russes sont recommandées pour le russe. Le modèle ONNX se télécharge depuis HuggingFace au premier usage.",
-        docEn: "Piper voice to use. Russian voices are recommended for Russian. The ONNX model downloads from HuggingFace on first use.",
+        doc: "Voix Piper à utiliser. Les voix russes sont recommandées pour le russe. Le modèle ONNX de la voix est téléchargé depuis HuggingFace la première fois, puis mis en cache.",
+        docEn: "Piper voice to use. Russian voices are recommended for Russian. The ONNX voice model is downloaded from HuggingFace on first use, then cached.",
       },
     ],
     async executer(ctx: any) {
@@ -58,8 +58,18 @@ export const fiches: FicheAudio[] = ([
       return new Promise((resolve) => {
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
-          if (msg.type === "progress") ctx.onProgress(traduire(msg.key));
-          else if (msg.type === "done") {
+          if (msg.type === "progress") {
+            const total = Number(msg.total || 0);
+            const downloaded = Number(msg.downloaded || 0);
+            let progressText = traduire(msg.key);
+            if (msg.key === "progress.piper.download" && total > 0) {
+              const pct = Math.round((downloaded / total) * 100);
+              const mb = (downloaded / 1024 / 1024).toFixed(1);
+              const totalMb = (total / 1024 / 1024).toFixed(1);
+              progressText = `${progressText} ${pct}% (${mb}/${totalMb} MB)`;
+            }
+            ctx.onProgress(progressText);
+          } else if (msg.type === "done") {
             w.removeEventListener("message", onMessage);
             const buf = new AudioBuffer({ numberOfChannels: 1, length: msg.length, sampleRate: msg.sampleRate });
             buf.getChannelData(0).set(msg.data);

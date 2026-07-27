@@ -137,34 +137,24 @@ function glissandoTonaliteCourt(buffer: AudioBuffer, debutDemiTons: number, finD
 
 export async function equaliser(
   buffer: AudioBuffer,
-  graveDb: number,
-  mediumDb: number,
-  aiguDb: number
+  ...gainsDb: number[]
 ): Promise<AudioBuffer> {
+  const FREQUENCES = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000];
   const ctx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
   const source = ctx.createBufferSource();
   source.buffer = buffer;
 
-  const grave = ctx.createBiquadFilter();
-  grave.type = "lowshelf";
-  grave.frequency.value = 200;
-  grave.gain.value = graveDb;
-
-  const medium = ctx.createBiquadFilter();
-  medium.type = "peaking";
-  medium.frequency.value = 2000;
-  medium.Q.value = 1;
-  medium.gain.value = mediumDb;
-
-  const aigu = ctx.createBiquadFilter();
-  aigu.type = "highshelf";
-  aigu.frequency.value = 8000;
-  aigu.gain.value = aiguDb;
-
-  source.connect(grave);
-  grave.connect(medium);
-  medium.connect(aigu);
-  aigu.connect(ctx.destination);
+  let precedent = source as AudioNode;
+  for (let i = 0; i < FREQUENCES.length; i++) {
+    const filtre = ctx.createBiquadFilter();
+    filtre.type = "peaking";
+    filtre.frequency.value = FREQUENCES[i];
+    filtre.Q.value = 1.4;
+    filtre.gain.value = gainsDb[i] ?? 0;
+    precedent.connect(filtre);
+    precedent = filtre;
+  }
+  precedent.connect(ctx.destination);
 
   source.start();
   return ctx.startRendering();
@@ -284,8 +274,14 @@ export async function appliquerResonanceAudio(
   }
 
   const mod = (await import("resonance-audio")) as any;
-  const ResonanceAudio = mod.ResonanceAudio ?? mod.default;
+  console.log("[resonance] module import:", mod, "keys:", Object.keys(mod || {}));
+  const ResonanceAudio = mod?.ResonanceAudio ?? mod?.default?.ResonanceAudio ?? mod?.default;
+  console.log("[resonance] ResonanceAudio class:", ResonanceAudio, "typeof:", typeof ResonanceAudio);
+  if (typeof ResonanceAudio !== "function") {
+    throw new Error("resonance-audio: ResonanceAudio class not found in module export");
+  }
   const scene = new ResonanceAudio(ctx);
+  console.log("[resonance] scene created:", scene, "listener:", scene?._listener, "renderer:", scene?._listener?._renderer);
   const source = scene.createSource();
   scene.setRoomProperties(
     { width: roomWidth, height: roomHeight, depth: roomDepth },
@@ -298,8 +294,11 @@ export async function appliquerResonanceAudio(
   // cette initialisation avant de lancer le rendu, sinon le résultat est
   // silencieux.
   const renderer = scene._listener?._renderer;
+  console.log("[resonance] renderer ready:", renderer?._isRendererReady, "has initialize:", typeof renderer?.initialize);
   if (renderer && !renderer._isRendererReady && typeof renderer.initialize === "function") {
+    console.log("[resonance] awaiting renderer.initialize()");
     await renderer.initialize();
+    console.log("[resonance] renderer initialized, ready:", renderer._isRendererReady);
   }
 
   const src = ctx.createBufferSource();
@@ -307,8 +306,12 @@ export async function appliquerResonanceAudio(
   src.connect(source.input);
   src.start();
   scene.output.connect(ctx.destination);
+  console.log("[resonance] graph connected, rendering", buffer.length, "samples");
 
-  return ctx.startRendering();
+  const out = await ctx.startRendering();
+  const rms = Math.sqrt((out.getChannelData(0).reduce((s, v) => s + v * v, 0) + out.getChannelData(1).reduce((s, v) => s + v * v, 0)) / (out.length * 2));
+  console.log("[resonance] rendered", out.numberOfChannels, "channels RMS", rms);
+  return out;
 }
 
 // Auto-pan : déplacement automatique du son entre gauche et droite.
@@ -334,6 +337,118 @@ export async function autoPan(
     }
   }
   return resultat;
+}
+
+// --- Harmonizer / Octaver : ajoute des voix pitch-shiftées ---------------------
+// Crée jusqu'à deux voix décalées en demi-tons et les mixe sous l'original.
+
+export function harmoniser(
+  buffer: AudioBuffer,
+  interval1: number,
+  mix1: number,
+  interval2: number,
+  mix2: number,
+): AudioBuffer {
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    resultat.getChannelData(c).set(buffer.getChannelData(c));
+  }
+
+  function ajouterVoix(interval: number, gainRel: number): void {
+    if (gainRel <= 0 || interval === 0) return;
+    const voix = changerTonalite(buffer, interval);
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const dst = resultat.getChannelData(c);
+      const src = voix.getChannelData(c);
+      const gain = gainRel / 100;
+      for (let i = 0; i < buffer.length; i++) dst[i] += src[i] * gain;
+    }
+  }
+
+  ajouterVoix(interval1, mix1);
+  ajouterVoix(interval2, mix2);
+  return resultat;
+}
+
+// --- Vocoder filterbank : modulateur + porteuse → effet robot -----------------
+// Découpe modulateur et porteuse en bandes passe-bande, détecte l'enveloppe du
+// modulateur par bande, puis applique cette enveloppe à la porteuse correspondante.
+
+async function filtreBiquadSpectral(
+  buffer: AudioBuffer,
+  type: BiquadFilterType,
+  frequency: number,
+  Q = 0.707,
+): Promise<AudioBuffer> {
+  const ctx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = type;
+  filter.frequency.value = frequency;
+  filter.Q.value = Q;
+  source.connect(filter);
+  filter.connect(ctx.destination);
+  source.start();
+  return ctx.startRendering();
+}
+
+function detecterEnveloppe(buffer: AudioBuffer, attackMs: number, releaseMs: number): Float32Array[] {
+  const sr = buffer.sampleRate;
+  const attackCoeff = Math.exp(-1 / (Math.max(0.01, attackMs) / 1000 * sr));
+  const releaseCoeff = Math.exp(-1 / (Math.max(0.01, releaseMs) / 1000 * sr));
+  const envs: Float32Array[] = [];
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const env = new Float32Array(buffer.length);
+    let e = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      const target = Math.abs(src[i]);
+      e = target > e ? attackCoeff * e + (1 - attackCoeff) * target : releaseCoeff * e + (1 - releaseCoeff) * target;
+      env[i] = e;
+    }
+    envs.push(env);
+  }
+  return envs;
+}
+
+export async function vocoder(
+  modulateur: AudioBuffer,
+  porteuse: AudioBuffer,
+  bands: number,
+  fMin: number,
+  fMax: number,
+  Q: number,
+  mix: number,
+): Promise<AudioBuffer> {
+  const sr = modulateur.sampleRate;
+  const length = Math.min(modulateur.length, porteuse.length);
+  const nch = modulateur.numberOfChannels;
+  const resultat = new AudioBuffer({ numberOfChannels: nch, length, sampleRate: sr });
+  for (let c = 0; c < nch; c++) resultat.getChannelData(c).fill(0);
+
+  for (let i = 0; i < bands; i++) {
+    const freq = fMin * Math.pow(fMax / fMin, i / Math.max(1, bands - 1));
+    const modBand = await filtreBiquadSpectral(modulateur, "bandpass", freq, Q);
+    const carBand = await filtreBiquadSpectral(porteuse, "bandpass", freq, Q);
+    const envs = detecterEnveloppe(modBand, 1, 20);
+    for (let c = 0; c < nch; c++) {
+      const dst = resultat.getChannelData(c);
+      const car = carBand.getChannelData(c);
+      const env = envs[c];
+      for (let j = 0; j < length; j++) dst[j] += car[j] * env[j];
+    }
+  }
+
+  const mixVal = mix / 100;
+  const sortie = new AudioBuffer({ numberOfChannels: nch, length, sampleRate: sr });
+  for (let c = 0; c < nch; c++) {
+    const src = modulateur.getChannelData(c);
+    const wet = resultat.getChannelData(c);
+    const dst = sortie.getChannelData(c);
+    for (let i = 0; i < length; i++) dst[i] = src[i] * (1 - mixVal) + wet[i] * mixVal;
+  }
+  return sortie;
 }
 
 // Wah-wah : filtre passe-bande modulé par un LFO.

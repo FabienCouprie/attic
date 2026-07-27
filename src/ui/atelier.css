@@ -332,6 +332,28 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 .attic-node-player { padding: 4px 8px; overflow: hidden; }
 
+/* Aesthetic test: node player with sepia background, visible numbers and sepia icons. */
+.attic-node-player .attic-node-audio {
+  background-color: #f5f0e6;
+  filter: sepia(0.6) contrast(1.05);
+  border-radius: 6px;
+}
+.attic-node-player .attic-node-audio::-webkit-media-controls-panel {
+  background-color: #f5f0e6;
+}
+.attic-node-player .attic-node-audio::-webkit-media-controls-current-time-display,
+.attic-node-player .attic-node-audio::-webkit-media-controls-time-remaining-display {
+  color: #5c3d1e;
+  text-shadow: none;
+}
+.attic-node-player .attic-node-audio::-webkit-media-controls-mute-button,
+.attic-node-player .attic-node-audio::-webkit-media-controls-play-button,
+.attic-node-player .attic-node-audio::-webkit-media-controls-timeline-container,
+.attic-node-player .attic-node-audio::-webkit-media-controls-volume-slider-container,
+.attic-node-player .attic-node-audio::-webkit-media-controls-download-button {
+  filter: sepia(1) saturate(1.5) hue-rotate(330deg) brightness(1.1);
+}
+
 /* ── Forme d'onde / sélecteur multi-zones ── */
 .attic-node-onde { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; }
 .attic-node-onde-canvas {
