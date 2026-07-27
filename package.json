@@ -1,12 +1,12 @@
 {
   "name": "attic",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "dev:electron": "concurrently -k \"vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development electron .\"",
     "build": "tsc -b && vite build",
     "build:electron": "npm run build && npm run ensure-songsee && electron-builder --win -c.electronDist=node_modules/electron/dist",
     "publish:electron": "npm run build && npm run ensure-songsee && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",

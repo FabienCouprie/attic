@@ -10,6 +10,7 @@ const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
+console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
 
 // ─── Auto-updater (electron-updater) ───
 // En mode dev, autoUpdater ne fonctionne pas (pas d'app packagée).
@@ -155,7 +156,7 @@ const PERMISSIONS_ACCORDEES = new Set([
 
 let fenetre = null;
 
-function creerFenetre() {
+async function creerFenetre() {
   fenetre = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -186,7 +187,15 @@ function creerFenetre() {
   });
 
   if (DEV) {
-    fenetre.loadURL("http://localhost:5173");
+    // En dev, forcer un rechargement sans cache du renderer pour éviter qu'un
+    // ancien build Vite ne soit réutilisé par la session Electron (HTTP cache,
+    // V8 code cache, CacheStorage, localStorage, etc. entre deux redémarrages).
+    const sess = fenetre.webContents.session;
+    await sess.clearCache();
+    await sess.clearCodeCaches({ urls: [] });
+    await sess.clearStorageData();
+    console.log("[attic] dev cache cleared (HTTP + V8 + storage)");
+    fenetre.loadURL("http://localhost:5175");
     // fenetre.webContents.openDevTools({ mode: "detach" });
   } else {
     const cheminDist = path.join(__dirname, "..", "dist", "index.html");
