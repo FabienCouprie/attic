@@ -27,7 +27,7 @@ async function ocrImage(fichier: File, langues: string, onProgress: (msg: string
   }
 }
 
-const LANGUES_DEFAUT = "eng+fra+deu+spa+rus+ell+ara+heb";
+const LANGUES_DEFAUT = "eng+fra+deu+spa+rus+ell+ara";
 
 function isControlChar(code: number): boolean {
   return (code <= 0x1f) || code === 0x7f;
@@ -63,10 +63,10 @@ const ocrPlugins: FicheAudio[] = [
         nom: "Langues",
         nomEn: "Languages",
         type: "texte",
-        defaut: "eng+fra+deu+spa+rus+ell+ara+heb",
-        defautEn: "eng+fra+deu+spa+rus+ell+ara+heb",
-        doc: "Codes de langues Tesseract séparés par « + » (ex: eng+fra+rus). Par défaut : latin, cyrillique, grec, arabe, hébreu. Chaque langue télécharge son modèle (~2-10 Mo) depuis le CDN Tesseract.",
-        docEn: "Tesseract language codes separated by « + » (e.g. eng+fra+rus). Default: Latin, Cyrillic, Greek, Arabic, Hebrew. Each language downloads its model (~2-10 MB) from the Tesseract CDN.",
+        defaut: "eng+fra+deu+spa+rus+ell+ara",
+        defautEn: "eng+fra+deu+spa+rus+ell+ara",
+        doc: "Codes de langues Tesseract séparés par « + » (ex: eng+fra+rus). Par défaut : latin, cyrillique, grec, arabe. Chaque langue télécharge son modèle (~2-10 Mo) depuis le CDN Tesseract.",
+        docEn: "Tesseract language codes separated by « + » (e.g. eng+fra+rus). Default: Latin, Cyrillic, Greek, Arabic. Each language downloads its model (~2-10 MB) from the Tesseract CDN.",
       },
     ],
     async executer(ctx) {

@@ -15,9 +15,9 @@ describe("ocr", () => {
   });
 
   it("falls back to default languages when parameter is empty or whitespace", () => {
-    expect(normaliserLangues("")).toBe("eng+fra+deu+spa+rus+ell+ara+heb");
-    expect(normaliserLangues("   ")).toBe("eng+fra+deu+spa+rus+ell+ara+heb");
-    expect(normaliserLangues("  \n\t  ")).toBe("eng+fra+deu+spa+rus+ell+ara+heb");
+    expect(normaliserLangues("")).toBe("eng+fra+deu+spa+rus+ell+ara");
+    expect(normaliserLangues("   ")).toBe("eng+fra+deu+spa+rus+ell+ara");
+    expect(normaliserLangues("  \n\t  ")).toBe("eng+fra+deu+spa+rus+ell+ara");
   });
 
   it("removes whitespace from language codes", () => {

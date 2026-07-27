@@ -2,6 +2,16 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.1] — 2026-07-27
+
+### Fixed
+- **Dev Electron stale renderer cache** — `electron/main.cjs` now clears the HTTP cache, V8 code cache, and storage data on startup when running in development mode. This prevents a stale Vite build from being served between dev-server restarts.
+- **Dev server port collision** — `dev:electron` and `electron/main.cjs` now use port **5175** instead of the default **5173**, avoiding ghosted Vite processes that were serving an outdated renderer.
+- **OCR default languages** — removed Hebrew from the default Tesseract language set to reduce unexpected model downloads and avoid the `language_model_ngram_on` LSTM-only warning for unsupported languages. Default is now `eng+fra+deu+spa+rus+ell+ara`.
+
+### Changed
+- **Version bump to 2.0.1** — local Windows installer rebuilt and tagged as `Attic Setup 2.0.1.exe`.
+
 ## [2.0.0] — 2026-07-27
 
 ### Security
