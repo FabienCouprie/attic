@@ -274,8 +274,14 @@ export async function appliquerResonanceAudio(
   }
 
   const mod = (await import("resonance-audio")) as any;
-  const ResonanceAudio = mod.ResonanceAudio ?? mod.default;
+  console.log("[resonance] module import:", mod, "keys:", Object.keys(mod || {}));
+  const ResonanceAudio = mod?.ResonanceAudio ?? mod?.default?.ResonanceAudio ?? mod?.default;
+  console.log("[resonance] ResonanceAudio class:", ResonanceAudio, "typeof:", typeof ResonanceAudio);
+  if (typeof ResonanceAudio !== "function") {
+    throw new Error("resonance-audio: ResonanceAudio class not found in module export");
+  }
   const scene = new ResonanceAudio(ctx);
+  console.log("[resonance] scene created:", scene, "listener:", scene?._listener, "renderer:", scene?._listener?._renderer);
   const source = scene.createSource();
   scene.setRoomProperties(
     { width: roomWidth, height: roomHeight, depth: roomDepth },
@@ -288,8 +294,11 @@ export async function appliquerResonanceAudio(
   // cette initialisation avant de lancer le rendu, sinon le résultat est
   // silencieux.
   const renderer = scene._listener?._renderer;
+  console.log("[resonance] renderer ready:", renderer?._isRendererReady, "has initialize:", typeof renderer?.initialize);
   if (renderer && !renderer._isRendererReady && typeof renderer.initialize === "function") {
+    console.log("[resonance] awaiting renderer.initialize()");
     await renderer.initialize();
+    console.log("[resonance] renderer initialized, ready:", renderer._isRendererReady);
   }
 
   const src = ctx.createBufferSource();
@@ -297,8 +306,12 @@ export async function appliquerResonanceAudio(
   src.connect(source.input);
   src.start();
   scene.output.connect(ctx.destination);
+  console.log("[resonance] graph connected, rendering", buffer.length, "samples");
 
-  return ctx.startRendering();
+  const out = await ctx.startRendering();
+  const rms = Math.sqrt((out.getChannelData(0).reduce((s, v) => s + v * v, 0) + out.getChannelData(1).reduce((s, v) => s + v * v, 0)) / (out.length * 2));
+  console.log("[resonance] rendered", out.numberOfChannels, "channels RMS", rms);
+  return out;
 }
 
 // Auto-pan : déplacement automatique du son entre gauche et droite.
