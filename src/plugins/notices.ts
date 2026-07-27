@@ -217,6 +217,8 @@ const DOCS_PARAM: Record<string, Bilingue> = {
   "Synthèse": { fr: "Moteur de synthèse : FM/Oscillateurs (local) ou SoundFont (échantillons).", en: "Synthesis engine: FM/Oscillators (local) or SoundFont (samples)." },
   "Gain": { fr: "Gain appliqué au signal, en décibels.", en: "Gain applied to the signal, in decibels." },
   "Fondu": { fr: "Durée du fondu enchaîné aux raccords, pour éviter un clic audible.", en: "Crossfade duration at joins, to avoid an audible click." },
+  "Octave": { fr: "Octave centrale des notes générées (1 = très grave, 6 = très aigu).", en: "Central octave of the generated notes (1 = very low, 6 = very high)." },
+  "Vélocité": { fr: "Intensité (vélocité) des notes MIDI, de 1 à 127.", en: "MIDI note velocity (intensity), from 1 to 127." },
   "Qualité": { fr: "Débit d'encodage MP3, en kbps (plus élevé = meilleure qualité, fichier plus lourd).", en: "MP3 encoding bitrate, in kbps (higher = better quality, larger file)." },
   "Dossier entrée": { fr: "Dossier contenant les fichiers à traiter.", en: "Folder containing the files to process." },
   "Dossier sortie": { fr: "Dossier où écrire les fichiers convertis.", en: "Folder where the converted files are written." },
