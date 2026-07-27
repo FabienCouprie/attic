@@ -12,6 +12,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - Related catalog notices, prompt-graph aliases, and unused i18n keys were cleaned up.
 
 ### Fixed
+- **React Flow error #008 on load** — restored/imported graphs are now sanitised: edges pointing to missing input handles (e.g., after a node definition changed or a node was removed) are silently dropped instead of causing React Flow warnings at startup.
 - **Resonance Audio** — added a Playwright isolation test and diagnostic logs inside `appliquerResonanceAudio`; the node now produces a non-silent stereo buffer both in the isolation test and in the app.
 
 ### Changed

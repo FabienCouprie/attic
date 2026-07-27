@@ -26,6 +26,7 @@ import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
+import { filtrerAretesInvalides } from "./validerGraphe";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
@@ -329,9 +330,10 @@ function Atelier() {
           ...e, type: "arete-personnalisee",
           style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },
         }));
+        const edgesValides = filtrerAretesInvalides(nodesRestaures, edgesRestaures);
         await rechargerFichiersPersistes(nodesRestaures);
         setNodes(nodesRestaures);
-        setEdges(edgesRestaures);
+        setEdges(edgesValides);
         if (data.viewport && rfInstance) {
           queueMicrotask(() => rfInstance.setViewport(data.viewport));
         }
