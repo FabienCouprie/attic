@@ -19,15 +19,16 @@ function indexHandle(handle: string | null | undefined): number | null {
 export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   const valides: Edge[] = [];
+  const rejetees: string[] = [];
   for (const e of edges) {
     const source = nodeMap.get(e.source);
     const target = nodeMap.get(e.target);
     if (!source || !target) {
-      console.warn(`[attic] Arête ignorée (nœud manquant) : ${e.id}`);
+      rejetees.push(e.id);
       continue;
     }
     if (!e.sourceHandle || !e.targetHandle) {
-      console.warn(`[attic] Arête ignorée (handle absent) : ${e.id}`);
+      rejetees.push(e.id);
       continue;
     }
     const sourceFrontiere = estFrontiere(source.data?.ficheId as string);
@@ -37,7 +38,7 @@ export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {
       const def = trouverDef(source.data?.ficheId as string);
       const idx = indexHandle(e.sourceHandle);
       if (!def || idx === null || idx < 0 || idx >= def.sorties.length) {
-        console.warn(`[attic] Arête ignorée (handle source invalide) : ${e.id} → ${e.sourceHandle}`);
+        rejetees.push(e.id);
         continue;
       }
     }
@@ -46,12 +47,15 @@ export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {
       const def = trouverDef(target.data?.ficheId as string);
       const idx = indexHandle(e.targetHandle);
       if (!def || idx === null || idx < 0 || idx >= def.entrees.length) {
-        console.warn(`[attic] Arête ignorée (handle cible invalide) : ${e.id} → ${e.targetHandle}`);
+        rejetees.push(e.id);
         continue;
       }
     }
 
     valides.push(e);
+  }
+  if (rejetees.length) {
+    console.warn(`[attic] ${rejetees.length} arête(s) cassée(s) ignorée(s) à la restauration : ${rejetees.join(", ")}`);
   }
   return valides;
 }
