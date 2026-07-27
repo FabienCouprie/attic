@@ -9,6 +9,7 @@ import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
+import { filtrerAretesInvalides } from "../validerGraphe";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -215,8 +216,9 @@ export function usePersistance(o: OptionsPersistance) {
     // mais le chemin est sauvé dans le paramètre "Chemin".
     await rechargerFichiersPersistes(importedNodes);
 
+    const aretesValides = filtrerAretesInvalides(importedNodes, json.edges || []);
     o.setNodes(importedNodes);
-    o.setEdges(json.edges || []);
+    o.setEdges(aretesValides);
     o.cacheExec.current.clear();
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
   }, [o]);

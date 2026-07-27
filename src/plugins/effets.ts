@@ -22,6 +22,14 @@ import {
    appliquerEchoPingPong,
    appliquerVoiceChanger,
    appliquerDecoupeAleatoire,
+   limiter,
+   transientShaper,
+   ajusterLargeurStereo,
+   compresserMultiBande,
+   exciter,
+   harmoniser,
+   vocoder,
+   granularFreeze,
 } from "../audio";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
@@ -83,6 +91,9 @@ export const fiches: FicheAudio[] = ([
      param("Fréquence", 22050, "Rate", "Hz", "Fréquence d'échantillonnage simulée. Plus basse = son plus cassé/aliased.", "Simulated sample rate. Lower = more broken/aliased sound.", [1000, 44100], 100),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet. 100% = effet seul.", "Dry/wet balance. 100% = effect only.")],
     (a,bits,freq,mix) => bitcrusher(a, bits, freq, mix)),
+  effet("exciter", "Exciter / Aural enhancer", "Exciter / Aural Enhancer", "Ajoute de la présence par distorsion harmonique dans les hauts médiums.", "Adds presence via harmonic distortion in the high mids.",
+    [param("Amount", 50, "Amount", "%", "Intensité de la distorsion asymétrique.", "Intensity of the asymmetrical distortion.", [0, 100], 1), param("Fréquence", 3000, "Frequency", "Hz", "Fréquence de coupure du passe-haut après distorsion.", "High-pass cutoff after distortion.", [500, 10000], 100), param("Mix", 30, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
+    (a, amount, freq, mix) => exciter(a, amount, freq, mix)),
   effet("flanger", "Flanger", "Flanger", "Modulation par délai variable.", "Variable delay modulation.",
     [param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.5, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 3, "Depth", "ms", "Amplitude du balayage.", "Modulation depth in ms.")],
     (a,mix,v,p) => appliquerFlanger(a, v, p, mix/100)),
@@ -92,6 +103,23 @@ export const fiches: FicheAudio[] = ([
   effet("compresseur", "Compresseur", "Compressor", "Compresseur feed-forward.", "Feed-forward compressor.",
     [param("Seuil", -20, "Threshold", "dB", "Niveau au-dessus duquel la compression s'active.", "Level above which compression engages.", [-60, 0], 1), param("Ratio", 4, "Ratio", "∶1", "Taux de compression.", "Compression ratio.", [1, 20], 0.5), param("Attaque", 5, "Attack", "ms", "Temps de réaction du compresseur.", "Compressor attack time.", [0, 200], 1), param("Relâchement", 100, "Release", "ms", "Temps de retour au gain normal.", "Compressor release time.", [5, 1000], 5), param("Gain", 0, "Gain", "dB", "Gain de sortie (make-up gain).", "Output makeup gain.", [-12, 24], 1)],
     (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain)),
+  effet("limiteur", "Limiteur", "Limiter", "Limiteur de crête pour le mastering.", "Peak limiter for mastering.",
+    [param("Seuil", -3, "Threshold", "dB", "Niveau au-dessus duquel la limitation s'active.", "Level above which limiting engages.", [-40, 0], 1), param("Relâchement", 50, "Release", "ms", "Temps de retour au gain normal après un pic.", "Time to return to normal gain after a peak.", [1, 1000], 1), param("Plafond", -1, "Ceiling", "dB", "Niveau maximal de sortie.", "Maximum output level.", [-40, 0], 0.5)],
+    (a, seuil, relachement, plafond) => limiter(a, seuil, relachement, plafond)),
+  effet("compresseur-multibande", "Compresseur multibande", "Multiband Compressor", "Compresseur 3 bandes indépendantes (low/mid/high).", "3-band compressor with independent thresholds/ratios.",
+    [
+      param("Seuil Low", -20, "Low threshold", "dB", "Seuil du compresseur sur la bande grave.", "Compressor threshold for the low band.", [-60, 0], 1),
+      param("Ratio Low", 4, "Low ratio", "∶1", "Ratio du compresseur sur la bande grave.", "Compressor ratio for the low band.", [1, 20], 0.5),
+      param("Seuil Mid", -20, "Mid threshold", "dB", "Seuil du compresseur sur la bande médium.", "Compressor threshold for the mid band.", [-60, 0], 1),
+      param("Ratio Mid", 4, "Mid ratio", "∶1", "Ratio du compresseur sur la bande médium.", "Compressor ratio for the mid band.", [1, 20], 0.5),
+      param("Seuil High", -20, "High threshold", "dB", "Seuil du compresseur sur la bande aiguë.", "Compressor threshold for the high band.", [-60, 0], 1),
+      param("Ratio High", 4, "High ratio", "∶1", "Ratio du compresseur sur la bande aiguë.", "Compressor ratio for the high band.", [1, 20], 0.5),
+      param("Attaque", 5, "Attack", "ms", "Temps de réaction commun aux trois bandes.", "Common attack time for all bands.", [0, 200], 1),
+      param("Relâchement", 100, "Release", "ms", "Temps de retour commun aux trois bandes.", "Common release time for all bands.", [5, 1000], 5),
+      param("Fréq Low", 250, "Low freq", "Hz", "Fréquence de coupure entre les bandes low et mid.", "Crossover between low and mid bands.", [40, 1000], 10),
+      param("Fréq High", 4000, "High freq", "Hz", "Fréquence de coupure entre les bandes mid et high.", "Crossover between mid and high bands.", [1000, 12000], 100),
+    ],
+    (a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh) => compresserMultiBande(a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh)),
   {
     id: "gate-expandeur", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
     univers: "Traitement", famille: "Effets",
@@ -126,7 +154,10 @@ export const fiches: FicheAudio[] = ([
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
       return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expandeur" ? ` · ratio ${ratio}:1` : "") };
    },
- },
+  },
+  effet("transient-shaper", "Transient Shaper", "Transient Shaper", "Contrôle indépendant de l'attaque et du sustain.", "Independent attack and sustain control.",
+    [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires.", "Transient detector reaction time.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain.", "Sustain detector reaction time.", [10, 500], 1)],
+    (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain)),
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
     [param("Fréquence", 7000, "Frequency", "Hz", "Fréquence centrale de la bande cible (sibilances : 5-9 kHz).", "Center frequency of the target band (sibilances: 5-9 kHz).", [2000, 12000], 100),
      param("Largeur", 2000, "Width", "Hz", "Largeur de la bande cible (Q = fréquence/largeur).", "Width of the target band (Q = frequency/width).", [200, 6000], 100),
@@ -139,6 +170,38 @@ export const fiches: FicheAudio[] = ([
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],
     (a,freq,mix) => ringModulator(a, freq, mix)),
+  {
+    id: "vocoder", nom: "Vocoder", nomEn: "Vocoder",
+    univers: "Traitement", famille: "Effets",
+    resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",
+    resumeEn: "Filterbank vocoder: modulator + carrier → robot voice effect.",
+    entrees: [{ nom: "Modulateur", nomEn: "Modulator", type: "audio" }, { nom: "Porteuse", nomEn: "Carrier", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Bandes", nomEn: "Bands", type: "nombre", plage: [4, 16], pas: 1, defaut: 8, unite: "",
+        doc: "Nombre de bandes passe-bande du vocoder. Plus de bandes = plus de précision spectrale.", docEn: "Number of vocoder filter bands. More bands = more spectral precision." },
+      { nom: "Fréq min", nomEn: "Min freq", type: "nombre", plage: [80, 1000], pas: 10, defaut: 100, unite: "Hz",
+        doc: "Fréquence la plus basse des bandes.", docEn: "Lowest band frequency." },
+      { nom: "Fréq max", nomEn: "Max freq", type: "nombre", plage: [2000, 16000], pas: 100, defaut: 8000, unite: "Hz",
+        doc: "Fréquence la plus haute des bandes.", docEn: "Highest band frequency." },
+      { nom: "Q", nomEn: "Q", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 2, unite: "",
+        doc: "Facteur de qualité des filtres passe-bande. Plus élevé = bandes plus étroites.", docEn: "Bandpass filter quality factor. Higher = narrower bands." },
+      { nom: "Mix", nomEn: "Mix", type: "nombre", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Équilibre modulateur original / vocoder.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const modulateur = ctx.entree(0);
+      const porteuse = ctx.entree(1);
+      if (!(modulateur instanceof AudioBuffer) || !(porteuse instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+      const bands = ctx.paramNombre("Bandes", 8);
+      const fMin = ctx.paramNombre("Fréq min", 100);
+      const fMax = ctx.paramNombre("Fréq max", 8000);
+      const Q = ctx.paramNombre("Q", 2);
+      const mix = ctx.paramNombre("Mix", 50);
+      const out = await vocoder(modulateur, porteuse, bands, fMin, fMax, Q, mix);
+      return { valeurs: [out] };
+    },
+  },
   effet("normaliseur", "Normaliseur", "Normalizer", "Normalisation de niveau.", "Level normalization.",
     [param("Niveau", -3, "Level", "dB", "Niveau cible en dB (crête).", "Target peak level in dB.", [-40, 0], 0.5)],
     (a,niveau) => normaliser(a, niveau)),
@@ -159,10 +222,16 @@ export const fiches: FicheAudio[] = ([
     [param("Début", 0, "Start", "st", "Hauteur de départ en demi-tons.", "Start pitch in semitones.", [-24, 24], 0.5),
      param("Fin", 12, "End", "st", "Hauteur d'arrivée en demi-tons.", "End pitch in semitones.", [-24, 24], 0.5)],
     (a,debut,fin) => glissandoTonalite(a, debut, fin)),
+  effet("harmonizer", "Harmonizer / Octaver", "Harmonizer / Octaver", "Ajoute des voix pitch-shiftées (octave, quinte…) sous l'original.", "Adds pitch-shifted voices (octave, fifth…) under the original.",
+    [param("Voix 1", 12, "Voice 1", "st", "Intervalle de la première voix en demi-tons. 12 = octave supérieure, -12 = octave inférieure, 7 = quinte.", "Interval of first voice in semitones. 12 = octave up, -12 = octave down, 7 = fifth.", [-24, 24], 1), param("Mix 1", 30, "Mix 1", "%", "Niveau de la première voix.", "Level of first voice.", [0, 100], 1), param("Voix 2", -12, "Voice 2", "st", "Intervalle de la deuxième voix en demi-tons.", "Interval of second voice in semitones.", [-24, 24], 1), param("Mix 2", 30, "Mix 2", "%", "Niveau de la deuxième voix.", "Level of second voice.", [0, 100], 1)],
+    (a, v1, m1, v2, m2) => harmoniser(a, v1, m1, v2, m2)),
   effet("paulstretch", "Paulstretch", "Paulstretch", "Étirement extrême par randomisation des phases (stéréo).", "Extreme phase-randomization time-stretch (stereo).",
     [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", "Stretch factor. 1 = no effect, 8 = 8× longer.", [1, 100], 1),
      param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", "STFT window size in seconds. Large = smooth texture, small = more transients.", [0.01, 1], 0.01)],
     (a, stretch, fenetre) => appliquerPaulstretch(a, stretch, fenetre)),
+  effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
+    [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
+    (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix)),
   {
     id: "formule-echantillons", nom: "Formule sur échantillons", nomEn: "Sample Formula",
     univers: "Traitement", famille: "Effets",
@@ -227,9 +296,19 @@ export const fiches: FicheAudio[] = ([
       }
    },
  },
-  effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 3 bandes.", "3-band equalizer.",
-    [param("Basses", 0, "Bass", "dB", "Gain des basses fréquences.", "Low frequency gain."), param("Médiums", 0, "Mid", "dB", "Gain des fréquences médiums.", "Mid frequency gain."), param("Aigus", 0, "Treble", "dB", "Gain des hautes fréquences.", "High frequency gain.")],
-    (a,b,m,ag) => equaliser(a, b, m, ag)),
+  effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 9 bandes.", "9-band equalizer.",
+    [
+      param("32 Hz", 0, "32 Hz", "dB", "Gain de la bande 32 Hz.", "32 Hz band gain.", [-24, 24], 1),
+      param("64 Hz", 0, "64 Hz", "dB", "Gain de la bande 64 Hz.", "64 Hz band gain.", [-24, 24], 1),
+      param("125 Hz", 0, "125 Hz", "dB", "Gain de la bande 125 Hz.", "125 Hz band gain.", [-24, 24], 1),
+      param("250 Hz", 0, "250 Hz", "dB", "Gain de la bande 250 Hz.", "250 Hz band gain.", [-24, 24], 1),
+      param("500 Hz", 0, "500 Hz", "dB", "Gain de la bande 500 Hz.", "500 Hz band gain.", [-24, 24], 1),
+      param("1 kHz", 0, "1 kHz", "dB", "Gain de la bande 1 kHz.", "1 kHz band gain.", [-24, 24], 1),
+      param("2 kHz", 0, "2 kHz", "dB", "Gain de la bande 2 kHz.", "2 kHz band gain.", [-24, 24], 1),
+      param("4 kHz", 0, "4 kHz", "dB", "Gain de la bande 4 kHz.", "4 kHz band gain.", [-24, 24], 1),
+      param("8 kHz", 0, "8 kHz", "dB", "Gain de la bande 8 kHz.", "8 kHz band gain.", [-24, 24], 1),
+    ],
+    (a, ...gains) => equaliser(a, ...gains)),
   simple("inverseur-audio", "Inverseur audio", "Audio Inverter", "Inverse le signal.", "Inverts the signal.", inverserAudio),
   simple("echange-canaux", "Échange canaux", "Swap Channels", "Permute gauche/droite.", "Swaps left/right channels.", echangerCanaux),
   effet("extraction-centre-cote", "Extraction centre/côté", "Center/Side Extract", "Sépare le centre stéréo des côtés.", "Separates stereo center from sides.",
@@ -247,6 +326,9 @@ export const fiches: FicheAudio[] = ([
       }
       return resultat;
     }),
+  effet("largeur-stereo", "Largeur stéréo / MS", "Stereo Width / MS", "Ajuste la largeur stéréo et le niveau Mid.", "Adjusts stereo width and Mid level.",
+    [param("Largeur", 100, "Width", "%", "Largeur du champ stéréo. 0% = mono, 100% = original, 200% = stéréo élargi.", "Stereo width. 0% = mono, 100% = original, 200% = widened stereo.", [0, 200], 1), param("Mid", 100, "Mid", "%", "Gain du signal central (Mid).", "Mid channel gain.", [0, 200], 1)],
+    (a, largeur, mid) => ajusterLargeurStereo(a, largeur, mid)),
   effet("fondu", "Fondu", "Fade", "Fondu entrée/sortie.", "Fade in/out.",
     [param("Entrée", 0.5, "In", "s", "Durée du fondu d'entrée.", "Fade-in duration."), param("Sortie", 0.5, "Out", "s", "Durée du fondu de sortie.", "Fade-out duration.")],
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),

@@ -2,6 +2,23 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] — 2026-07-27
+
+### Security
+- Patched Dependabot alerts by overriding transitive dependencies: `uuid` to `^11.1.1` (missing buffer bounds check in v3/v5/v6) and `brace-expansion` to `^5.0.8` (DoS via unbounded expansion length causing OOM). `npm audit` now reports `0 vulnerabilities`.
+
+### Removed
+- **Whisper (Multilingual)** and **Whisper Translation** nodes removed from the catalog. The English-only Whisper model (`Whisper (Anglais)`) and Sherpa-ONNX ASR remain available. This avoids shipping a ~1.5 GB model and a heavy TTS+ASR translation pipeline.
+- Related catalog notices, prompt-graph aliases, and unused i18n keys were cleaned up.
+
+### Fixed
+- **React Flow error #008 on load** — restored/imported graphs are now sanitised: edges pointing to missing input handles (e.g., after a node definition changed or a node was removed) are silently dropped instead of causing React Flow warnings at startup.
+- **Resonance Audio** — added a Playwright isolation test and diagnostic logs inside `appliquerResonanceAudio`; the node now produces a non-silent stereo buffer both in the isolation test and in the app.
+
+### Changed
+- **Version bump to 2.0.0** — local Windows installer rebuilt and tagged as `Attic Setup 2.0.0.exe`.
+- **GitHub release v2.0** updated with the latest installer and release notes.
+
 ## [1.6.3] — 2026-07-26
 
 ### Added
@@ -16,8 +33,27 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - **Export filename** (`nomFichier`) is now saved and restored.
 - **Wrong English `optionsEn`/`defautEn` for "Key" / "Clé" and other parameters** in `reservoir-musical`, `reservoir-midi`, `multi-reservoirs`, `generateur-accords`, `generateur-musical`, `sequenceur`, `vexflow`, `tonal` and related nodes. The UI was showing resolution/style values instead of keys (e.g. "1/4") because of copy-pasted i18n metadata.
 - **Additional copy-paste fixes** in `Mélodie aléatoire`, `Musique fractale`, `Sampler personnalisé`, `Métronome`, `Générateur musical`, `Générateur de paroles`, `Générateur de pochette` and `Visualisation Songsee` (time signatures, keys, scales, format, style default).
+- **Cellular automaton node size** — removed its oversized 320×260 fixed size so it now uses the standard node sizing (240×140) like other non-visual nodes.
+- **Node audio player aesthetic test** — added an inverted/sepia style for players inside nodes: background matches the node's `--bg-surface`, sepia inverted controls/icons.
+- **Piper TTS loading** — replaced the default HuggingFace-only provider with a custom caching provider: tries local bundled voices first, then IndexedDB cache, then downloads with a 10-minute timeout and live progress reporting (MB + percentage). Prevents the "loading for hours" hang.
+- **Execution cache** — cache key now includes a stable hash of the actual input values (not just the upstream node IDs). This fixes upstream nodes being re-executed when a downstream node is launched and makes cache invalidation correct for all nodes (text, audio, file, objects, arrays, typed arrays). Added diagnostic console logs temporarily to trace any remaining cache misses.
+- **Piper TTS WASM MIME type** — Vite dev server now serves `.wasm` files with `application/wasm` so WebAssembly streaming compilation works in the worker. In the packaged app, Piper TTS runtime files are unpacked from `app.asar` to ensure Chromium fetches them with correct MIME types.
+- **Piper TTS voice loading** — reverted to the original Piper TTS setup: the runtime WASM/data is bundled (from `node_modules/piper-tts-web/dist` into `public/piper-tts`), but the ONNX voice models are downloaded from HuggingFace on first use and cached. This keeps the installer small; no ~376 MB voice bundle is included.
+- **OCR language string** — `createWorker` now receives a `+`-joined string of language codes instead of an array, which avoids corrupted/empty language values (`'\x01'`) that caused `Failed loading language` and `Error opening data file ./ .traineddata` in Tesseract.js v7.0.0.
+- **Automate cellulaire documentation** — added missing parameter docs for `Octave`, `Vélocité`, `Clé`, `Gamme` and `Synthèse`.
 
 ### Changed
+- **Equalizer** node upgraded to a **9-band graphic EQ** (32 Hz, 64 Hz, 125 Hz, 250 Hz, 500 Hz, 1 kHz, 2 kHz, 4 kHz, 8 kHz) with independent ±24 dB gain controls, replacing the previous 3-band EQ.
+- **Speech-to-Text nodes** (`Whisper (Anglais)`, `Whisper (Multilingue)`, `Sherpa ASR`) moved from **Sorties** to **Autres** so they sit alongside other text-generation/analysis utilities instead of output nodes.
+- **Limiter** node — peak limiter with instant attack, release and output ceiling, ideal for mastering loudness without clipping.
+- **Transient Shaper** node — independent attack/sustain control via fast/slow envelope detectors, perfect for adding drum punch or shortening tails.
+- **Stereo Width / MS** node — adjusts stereo width (0% mono → 200% widened) and independent Mid level via Mid/Side decoding.
+- **Multiband Compressor** node — 3-band compressor (low/mid/high) with independent thresholds and ratios per band.
+- **Harmonizer / Octaver** node — adds up to two pitch-shifted voices (semitone intervals) under the original signal.
+- **Exciter / Aural enhancer** node — adds high-mid presence via asymmetrical distortion and high-pass filtering.
+- **Granular Freeze** node — loops a grain with size, pitch and position control.
+- **Vocoder (filterbank)** node — two-audio-input vocoder (modulator + carrier) with configurable band count, frequency range and Q.
+- **COMPONENTS.md** generator script (`scripts/generate-components-md.ts`) and regenerated catalog (194 components).
 - Version bumped to `1.6.3`.
 
 ## [1.2.6] — 2026-07-25

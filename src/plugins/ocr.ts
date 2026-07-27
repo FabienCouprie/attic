@@ -7,8 +7,9 @@ import { createWorker, PSM } from "tesseract.js";
 
 async function ocrImage(fichier: File, langues: string, onProgress: (msg: string) => void): Promise<string> {
   const codes = languesToArray(langues);
-  console.log("[ocr] langues brutes:", JSON.stringify(langues), "codes:", codes);
-  const worker = await createWorker(codes.length > 0 ? codes : ["eng"], undefined, {
+  const languesString = codes.length > 0 ? codes.join("+") : "eng";
+  console.log("[ocr] langues brutes:", JSON.stringify(langues), "codes:", codes, "string:", languesString);
+  const worker = await createWorker(languesString, undefined, {
     logger: (m) => {
       if (m?.status && m?.progress != null) {
         onProgress(`${traduire("progress.ocr")} ${m.status} ${Math.round(m.progress * 100)}%`);

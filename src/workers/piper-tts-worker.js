@@ -1,18 +1,38 @@
-// src/workers/piper-tts-worker.js — Web Worker pour Piper TTS (local, ONNX).
+// src/workers/piper-tts-worker.js — Web Worker pour Piper TTS (ONNX).
 import { PiperWebEngine, OnnxWebRuntime, PhonemizeWebRuntime } from "piper-tts-web";
 
 let engine = null;
 
+/**
+ * Resolves a base URL so it works in both dev and production.
+ * In production Electron the worker is bundled under dist/assets/; relative paths
+ * walk up into dist/ and find the bundled static files.
+ * In dev, Vite may serve the worker from a blob or hashed asset URL, so we fall
+ * back to absolute paths at the origin root where the public/ files are served.
+ */
+function resolveAppBase(relativePath, rootPath) {
+  const url = import.meta.url || "";
+  if (url.startsWith("file:")) {
+    return new URL(relativePath, url).href;
+  }
+  if (self.location?.origin) {
+    return new URL(rootPath, self.location.origin).href;
+  }
+  return new URL(relativePath, url).href;
+}
+
 function getEngine() {
   if (!engine) {
-    // ONNX multi-threading requires crossOriginIsolated (COOP/COEP).
-    // Fall back to single-threading in environments that are not isolated
-    // (dev server, standard Electron, older browsers) to avoid the warning
-    // and the runtime fallback.
     const numThreads = globalThis.crossOriginIsolated ? navigator.hardwareConcurrency : 1;
+    // Les assets Piper (onnx/ + piper/) sont copiés dans public/piper-tts par
+    // `npm run copy-piper-assets`. En dev on les sert à la racine ; en prod
+    // le worker est sous dist/assets/ et `../piper-tts/` le remonte à dist/.
+    const onnxBase = resolveAppBase("../piper-tts/onnx/", "/piper-tts/onnx/");
+    const piperBase = resolveAppBase("../piper-tts/piper/", "/piper-tts/piper/");
+    console.log("[piper-worker] bases:", { onnxBase, piperBase, importMetaUrl: import.meta.url, origin: self.location?.origin });
     engine = new PiperWebEngine({
-      onnxRuntime: new OnnxWebRuntime({ basePath: "/piper-tts/onnx/", numThreads }),
-      phonemizeRuntime: new PhonemizeWebRuntime({ basePath: "/piper-tts/piper/" }),
+      onnxRuntime: new OnnxWebRuntime({ basePath: onnxBase, numThreads }),
+      phonemizeRuntime: new PhonemizeWebRuntime({ basePath: piperBase }),
     });
   }
   return engine;
@@ -35,9 +55,7 @@ async function decodeWavToBuffer(blob) {
 self.onmessage = async (e) => {
   const { text, voice, speaker } = e.data;
   try {
-    self.postMessage({ type: "progress", key: "progress.piper.load_voice" });
     const response = await getEngine().generate(text, voice, speaker ?? 0);
-    self.postMessage({ type: "progress", key: "progress.piper.decode" });
     const { sampleRate, data } = await decodeWavToBuffer(response.file);
     self.postMessage({
       type: "done",

@@ -1,6 +1,8 @@
 // audio/effets-spectral.test.ts — Vérification des fonctions de changement de tonalité et glissando.
+import "node-web-audio-api/polyfill.js";
+import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser } from "./effets-spectral";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -38,6 +40,23 @@ function compterZeroCrossings(buf: AudioBuffer, debut = 0, fin = buf.length): nu
     if (data[i] * data[i - 1] < 0) count++;
   }
   return count;
+}
+
+function sinusWebAudio(freq: number, dureeS: number, channels = 1): AudioBuffer {
+  const n = Math.floor(SR * dureeS);
+  const b = new AudioBufferNWA({ numberOfChannels: channels, length: n, sampleRate: SR }) as any;
+  for (let ch = 0; ch < channels; ch++) {
+    const d = b.getChannelData(ch);
+    for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
+  }
+  return b;
+}
+
+function rms(buf: AudioBuffer): number {
+  const data = buf.getChannelData(0);
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+  return Math.sqrt(sum / data.length);
 }
 
 beforeAll(() => {
@@ -89,5 +108,31 @@ describe("glissandoTonalite", () => {
     const zcFin = compterZeroCrossings(out, out.length - tailleFenetre, out.length);
     const zcOrigFin = compterZeroCrossings(buffer, buffer.length - tailleFenetre, buffer.length);
     expect(zcFin).toBeLessThan(zcOrigFin * 0.7);
+  });
+});
+
+describe("equaliser", () => {
+  it("conserve la durée et le sample rate avec un EQ plat", async () => {
+    const buffer = sinusWebAudio(1000, 1);
+    const gains = Array.from({ length: 9 }, () => 0);
+    const out = await equaliser(buffer, ...gains);
+    expect(out.duration).toBeCloseTo(buffer.duration, 1);
+    expect(out.sampleRate).toBe(buffer.sampleRate);
+  });
+
+  it("boost 1 kHz augmente le niveau d'un sinus 1 kHz", async () => {
+    const buffer = sinusWebAudio(1000, 1);
+    const gains = Array.from({ length: 9 }, () => 0);
+    gains[5] = 12;
+    const out = await equaliser(buffer, ...gains);
+    expect(rms(out)).toBeGreaterThan(rms(buffer) * 1.5);
+  });
+
+  it("cut 1 kHz diminue le niveau d'un sinus 1 kHz", async () => {
+    const buffer = sinusWebAudio(1000, 1);
+    const gains = Array.from({ length: 9 }, () => 0);
+    gains[5] = -12;
+    const out = await equaliser(buffer, ...gains);
+    expect(rms(out)).toBeLessThan(rms(buffer) * 0.7);
   });
 });

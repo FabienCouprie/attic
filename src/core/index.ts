@@ -4,7 +4,7 @@ export { aplatirGraphe, creerMeta, indexPort, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
 export { trouverMeta, tousLesMetas, estMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
-export { ordreTopologique, ancetres, empreinteEntrees, empreinteParametres, resoudreEntree, valeursEntrantes } from "./graphe";
+export { ordreTopologique, ancetres, empreinteEntrees, empreinteParametres, empreinteValeur, empreinteValeursEntrantes, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
 export { valider, validerGraphe } from "./validation";

@@ -230,7 +230,7 @@ export const fiches: FicheAudio[] = ([
     id: "sherpa-asr",
     nom: "Sherpa ASR",
     nomEn: "Sherpa ASR",
-    univers: "Sorties",
+    univers: "Autres",
     famille: "Speech to Text",
     resume: "Reconnaissance vocale locale via Sherpa-ONNX (Whisper tiny multilingue).",
     resumeEn: "Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny).",

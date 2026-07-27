@@ -9,7 +9,7 @@ import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
   aplatirGraphe, trouverMeta,
-  ordreTopologique, ancetres, empreinteParametres, empreinteEntrees,
+  ordreTopologique, ancetres, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
@@ -111,6 +111,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     if (noeudsRef.current.length === 0) return;
     if (!noeudPrioritaireId) setEnExecution(true);
     try {
+    console.log(`[lancer] priorite=${noeudPrioritaireId} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
@@ -215,13 +216,24 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const sourceReprocessee = aretes.some((a) => a.target === nodeId && traitesCeRun.has(a.source));
       const hashParams = empreinteParametres(node.data);
       const monHashEntree = empreinteEntrees(nodeId, aretesG);
+      const hashValeursEntree = empreinteValeursEntrantes(nodeId, aretesG, resultats);
       const entreeCache = cacheExec.current.get(nodeId);
 
       // Certains nodes (sans sortie, avec I/O fichiers) ne doivent jamais être
       // cachés — la fiche le déclare, le moteur ne connaît aucun id en dur.
       const jamaisCache = trouverDef(node.data.ficheId as string)?.jamaisCache === true;
 
-      if (!jamaisCache && !sourceReprocessee && entreeCache && entreeCache.hashParams === hashParams && entreeCache.hashEntree === monHashEntree) {
+      const cacheIdentique =
+        !jamaisCache &&
+        !sourceReprocessee &&
+        entreeCache &&
+        entreeCache.hashParams === hashParams &&
+        entreeCache.hashEntree === monHashEntree &&
+        entreeCache.hashValeursEntree === hashValeursEntree;
+
+      console.log(`[cache] ${nodeId}(${node.data.ficheId}) sourceReprocessee=${sourceReprocessee} jamaisCache=${jamaisCache} hit=${cacheIdentique} hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree} cached=${entreeCache ? { hp: entreeCache.hashParams, he: entreeCache.hashEntree, hv: entreeCache.hashValeursEntree } : null}`);
+
+      if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         definirStatut(nodeId, "termine");
         continue;
@@ -284,7 +296,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
           definirStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);
         } else {
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree });
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree });
+          console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           definirStatut(nodeId, "termine");
         }
       } catch (e: any) {

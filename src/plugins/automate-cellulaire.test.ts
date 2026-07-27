@@ -68,4 +68,11 @@ describe("automate-cellulaire plugin", () => {
     expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
     expect(res.valeurs[1]).toBeInstanceOf(File);
   });
+
+  it("a de la documentation pour tous ses paramètres", () => {
+    const f = trouver("automate-cellulaire")!;
+    for (const p of f.parametres) {
+      expect(p.doc || p.docEn, `paramètre « ${p.nom} » sans doc`).toBeTruthy();
+    }
+  });
 });
