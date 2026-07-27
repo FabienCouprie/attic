@@ -4,12 +4,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [2.0.0] — 2026-07-27
 
+### Security
+- Patched Dependabot alerts by overriding transitive dependencies: `uuid` to `^11.1.1` (missing buffer bounds check in v3/v5/v6) and `brace-expansion` to `^5.0.8` (DoS via unbounded expansion length causing OOM). `npm audit` now reports `0 vulnerabilities`.
+
 ### Removed
 - **Whisper (Multilingual)** and **Whisper Translation** nodes removed from the catalog. The English-only Whisper model (`Whisper (Anglais)`) and Sherpa-ONNX ASR remain available. This avoids shipping a ~1.5 GB model and a heavy TTS+ASR translation pipeline.
 - Related catalog notices, prompt-graph aliases, and unused i18n keys were cleaned up.
 
 ### Fixed
-- **Resonance Audio** — added a Playwright isolation test and diagnostic logs inside `appliquerResonanceAudio`; the function produces a non-silent stereo buffer in Chromium, confirming the effect is not broken and the in-app silence is caused elsewhere.
+- **Resonance Audio** — added a Playwright isolation test and diagnostic logs inside `appliquerResonanceAudio`; the node now produces a non-silent stereo buffer both in the isolation test and in the app.
 
 ### Changed
 - **Version bump to 2.0.0** — local Windows installer rebuilt and tagged as `Attic Setup 2.0.0.exe`.
