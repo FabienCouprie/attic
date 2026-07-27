@@ -18,15 +18,15 @@ const typeMap: Record<string, string> = {
   controle: 'control',
 };
 
-function esc(s: string | undefined): string {
-  return (s ?? '').replace(/\|/g, '\\|').trim();
+function normalize(s: string | undefined): string {
+  return (s ?? '').trim();
 }
 
 function fmtInputOutput(list: any[] | undefined): string {
   if (!list || list.length === 0) return 'none';
   return list
     .map((io) => {
-      const name = esc(io.nomEn ?? io.nom);
+      const name = normalize(io.nomEn ?? io.nom);
       const type = typeMap[io.type] ?? io.type ?? 'audio';
       const sub = io.sousType ? ` / ${io.sousType}` : '';
       return `${name} (${type}${sub})`;
@@ -35,7 +35,7 @@ function fmtInputOutput(list: any[] | undefined): string {
 }
 
 function fmtParam(p: any): string {
-  const name = esc(p.nomEn ?? p.nom);
+  const name = normalize(p.nomEn ?? p.nom);
   const type = typeMap[p.type] ?? p.type ?? 'number';
   const def = p.defautEn ?? p.defaut;
   const defStr = typeof def === 'string' ? `"${def}"` : String(def ?? '');
@@ -44,10 +44,10 @@ function fmtParam(p: any): string {
   if (p.plage && Array.isArray(p.plage)) s += ` [${p.plage[0]}..${p.plage[1]}]`;
   if (p.pas !== undefined && p.pas !== null) s += ` step ${p.pas}`;
   if (type === 'choice' && (p.optionsEn || p.options)) {
-    const opts = (p.optionsEn || p.options).map((o: string) => esc(o)).join(' / ');
+    const opts = (p.optionsEn || p.options).map((o: string) => normalize(o)).join(' / ');
     s += ` options: ${opts}`;
   }
-  const doc = esc(p.docEn ?? p.doc ?? '');
+  const doc = normalize(p.docEn ?? p.doc ?? '');
   if (doc) s += ` — ${doc}`;
   return s;
 }
@@ -89,9 +89,9 @@ for (const universe of sortedUniverses) {
     const fiches = families.get(family)!;
     fiches.sort((a, b) => (a.nomEn ?? a.nom).localeCompare(b.nomEn ?? b.nom));
     for (const f of fiches) {
-      const name = esc(f.nomEn ?? f.nom);
-      const summary = esc(f.resumeEn ?? f.resume);
-      const doc = esc(f.noticeEn ?? f.resumeEn ?? f.resume ?? '');
+      const name = normalize(f.nomEn ?? f.nom);
+      const summary = normalize(f.resumeEn ?? f.resume);
+      const doc = normalize(f.noticeEn ?? f.resumeEn ?? f.resume ?? '');
       md += `- **${name}** \`${f.id}\`\n`;
       md += `  - Summary: ${summary}\n`;
       md += `  - Documentation: ${doc}\n`;
