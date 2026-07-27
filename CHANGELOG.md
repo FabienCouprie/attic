@@ -2,10 +2,18 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [2.0.0] — 2026-07-26
+## [2.0.0] — 2026-07-27
+
+### Removed
+- **Whisper (Multilingual)** and **Whisper Translation** nodes removed from the catalog. The English-only Whisper model (`Whisper (Anglais)`) and Sherpa-ONNX ASR remain available. This avoids shipping a ~1.5 GB model and a heavy TTS+ASR translation pipeline.
+- Related catalog notices, prompt-graph aliases, and unused i18n keys were cleaned up.
+
+### Fixed
+- **Resonance Audio** — added a Playwright isolation test and diagnostic logs inside `appliquerResonanceAudio`; the function produces a non-silent stereo buffer in Chromium, confirming the effect is not broken and the in-app silence is caused elsewhere.
 
 ### Changed
-- **Version bump to 2.0.0** — local Windows installer built and tagged as `Attic Setup 2.0.0.exe`.
+- **Version bump to 2.0.0** — local Windows installer rebuilt and tagged as `Attic Setup 2.0.0.exe`.
+- **GitHub release v2.0** updated with the latest installer and release notes.
 
 ## [1.6.3] — 2026-07-26
 

@@ -1,24 +1,11 @@
-// plugins/traduction.ts — Deux nodes de traduction dans « Autres » :
-// 1. Traduction Whisper : texte → TTS interne → Whisper translate → texte anglais
-// 2. OPUS-MT : texte → texte multilingue (paires de langues, modèle léger)
+// plugins/traduction.ts — Node de traduction OPUS-MT dans « Autres » :
+// texte → texte multilingue (paires de langues, modèle léger).
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
-let ttsWorker: Worker | null = null;
-let asrWorker: Worker | null = null;
 let opusWorkers: Map<string, Worker> = new Map();
-
-function getTtsWorker(): Worker {
-  if (!ttsWorker) ttsWorker = new Worker(new URL("../workers/tts-worker.js", import.meta.url), { type: "module" });
-  return ttsWorker;
-}
-
-function getAsrWorker(): Worker {
-  if (!asrWorker) asrWorker = new Worker(new URL("../workers/asr-worker.js", import.meta.url), { type: "module" });
-  return asrWorker;
-}
 
 function getOpusWorker(modelId: string): Worker {
   if (!opusWorkers.has(modelId)) {
@@ -28,10 +15,6 @@ function getOpusWorker(modelId: string): Worker {
   return opusWorkers.get(modelId)!;
 }
 
-// Libère les workers IA (et leurs modèles résidents en WASM) après usage —
-// évite d'accumuler TTS + ASR + OPUS en mémoire sur un même run (saturation).
-function libererTtsWorker(): void { if (ttsWorker) { ttsWorker.terminate(); ttsWorker = null; } }
-function libererAsrWorker(): void { if (asrWorker) { asrWorker.terminate(); asrWorker = null; } }
 function libererOpusWorker(modelId: string): void {
   const w = opusWorkers.get(modelId);
   if (w) { w.terminate(); opusWorkers.delete(modelId); }
@@ -60,68 +43,6 @@ const Paires_OPUS: { id: string; nom: string; nomEn: string; model: string }[] =
 ];
 
 export const fiches: FicheAudio[] = ([
-  {
-    id: "traduction-whisper", nom: "Traduction Whisper", nomEn: "Whisper Translation",
-    univers: "Autres", famille: "Texte",
-    resume: "Traduit un texte de n'importe quelle langue vers l'anglais (via TTS + Whisper).",
-    resumeEn: "Translates text from any language to English (via TTS + Whisper).",
-    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
-    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
-    parametres: [
-      { nom: "Langue TTS", nomEn: "TTS Language", type: "choix",
-        options: ["Auto", "Anglais", "Français", "Espagnol", "Allemand", "Italien", "Portugais", "Néerlandais", "Roumain", "Polonais", "Russe"],
-        optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Romanian", "Polish", "Russian"],
-        defaut: "Auto",
-        doc: "Langue du texte d'entrée (pour le TTS intermédiaire). « Auto » = anglais par défaut.",
-        docEn: "Language of the input text (for the intermediate TTS). « Auto » = English default.", defautEn: "Auto" },
-    ],
-    async executer(ctx: any) {
-      const texte = ctx.entree(0);
-      if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
-      if (texte.trim().length < 35) return { valeurs: [null], message: traduire("msg.texte_trop_court_min_35_caract_res") };
-
-      // Étape 1 : TTS (texte → audio)
-      ctx.onProgress(traduire("progress.synth_se_vocale_interm_diaire"));
-      const ttsW = getTtsWorker();
-      const langueTTS = ctx.paramTexte("Langue TTS", "Auto");
-      const ttsModels: Record<string, string> = {
-        "Anglais": "Xenova/speecht5_tts", "Français": "Xenova/mms-tts-fra", "Espagnol": "Xenova/mms-tts-spa",
-        "Allemand": "Xenova/mms-tts-deu", "Italien": "Xenova/mms-tts-ita", "Portugais": "Xenova/mms-tts-por",
-        "Néerlandais": "Xenova/mms-tts-nld", "Roumain": "Xenova/mms-tts-ron", "Polonais": "Xenova/mms-tts-pol",
-        "Russe": "Xenova/mms-tts-rus", "Auto": "Xenova/speecht5_tts",
-      };
-      const ttsModel = ttsModels[langueTTS] || "Xenova/speecht5_tts";
-      const speakerUrl = ttsModel === "Xenova/speecht5_tts"
-        ? "https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors-extracted/resolve/main/cmu_us_bdl_arctic-wav-arctic_a0001.bin"
-        : undefined;
-
-      const audioData = await new Promise<{ data: Float32Array; sampleRate: number } | null>((resolve) => {
-        const onMsg = (e: MessageEvent) => {
-          const msg = e.data;
-          if (msg.type === "done") { libererTtsWorker(); resolve({ data: msg.data, sampleRate: msg.sampleRate }); }
-          else if (msg.type === "error") { libererTtsWorker(); resolve(null); }
-        };
-        ttsW.addEventListener("message", onMsg);
-        ttsW.postMessage({ text: texte, modelId: ttsModel, speakerUrl });
-      });
-      if (!audioData) return { valeurs: [null], message: traduire("msg.chec_du_tts_interm_diaire") };
-
-      // Étape 2 : Whisper translate (audio → texte anglais)
-      ctx.onProgress(traduire("progress.traduction_whisper"));
-      const asrW = getAsrWorker();
-      const traduit = await new Promise<string | null>((resolve) => {
-        const onMsg = (e: MessageEvent) => {
-          const msg = e.data;
-          if (msg.type === "done") { libererAsrWorker(); resolve(msg.text); }
-          else if (msg.type === "error") { libererAsrWorker(); resolve(null); }
-        };
-        asrW.addEventListener("message", onMsg);
-        asrW.postMessage({ audioData: audioData.data, sampleRate: audioData.sampleRate, modelId: "Xenova/whisper-large-v2", translate: true });
-      });
-      if (!traduit) return { valeurs: [null], message: traduire("msg.chec_de_la_traduction_whisper") };
-      return { valeurs: [traduit], message: traduire("msg.traduit_var_0_en_var_1_var_2", langueTTS, traduit.slice(0, 60), traduit.length > 60 ? "…" : "") };
-   },
- },
   {
     id: "traduction-opus", nom: "Traduction OPUS-MT", nomEn: "OPUS-MT Translation",
     univers: "Autres", famille: "Texte",
