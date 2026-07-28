@@ -974,14 +974,15 @@ function VueSourceTexte({ id, data }: VueProps) {
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const texte = String(data.parametres?.["Texte"] ?? "");
   return (
-    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+    <div className="nodrag attic-node-source-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
       <NodeResizer minWidth={220} minHeight={120} />
       <textarea
         defaultValue={texte}
         key={`${id}-texte`}
         onChange={(e) => d.onChangerParametre?.(id, "Texte", e.target.value)}
         style={{
-          width: "100%", minHeight: 80, resize: "none",
+          width: "100%", flex: "1 1 auto", minHeight: 80,
+          resize: "none",
           fontSize: 12, lineHeight: 1.5, fontFamily: "inherit",
           background: "var(--bg-input, #0d1117)", color: "var(--texte, #cbd5e1)",
           border: "1px solid var(--border, #333)",
