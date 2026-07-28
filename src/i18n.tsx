@@ -354,6 +354,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_styles_var_1": { fr: "{__VAR_0__} styles{__VAR_1__}", en: "{__VAR_0__} styles{__VAR_1__}" },
   "msg.var_0_tessitures_var_1": { fr: "{__VAR_0__} tessitures{__VAR_1__}", en: "{__VAR_0__} tesses{__VAR_1__}" },
   "msg.var_0_caract_res": { fr: "{__VAR_0__} caractères", en: "{__VAR_0__} characters" },
+  "msg.auto_pan_logistique": { fr: "Auto-pan logistique · {__VAR_0__} s", en: "Logistic auto-pan · {__VAR_0__} s" },
   "msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne": { fr: "Aucune note reconnue. Format attendu : « C4 0.5 » par ligne.", en: "No marks recognized. Expected format: \"C4 0.5\" per line." },
   "msg.var_0_note_s_var_1_bpm_var_2_s": { fr: "{__VAR_0__} note(s) · {__VAR_1__} BPM · {__VAR_2__}s", en: "{__VAR_0__} note(s) · {__VAR_1__} BPM · {__VAR_2__}s" },
   "msg.gpt_2_var_0_caract_res": { fr: "GPT-2 · {__VAR_0__} caractères", en: "GPT-2 · {__VAR_0__} characters" },
