@@ -339,6 +339,35 @@ export async function autoPan(
   return resultat;
 }
 
+// Pan logistique : déplacement mono-directionnel gauche → droite selon une loi logistique.
+export function panLogistique(
+  buffer: AudioBuffer,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: 2, length: buffer.length, sampleRate: sr });
+  const depth = Math.max(0, Math.min(1, mix / 100));
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+  const n = buffer.length;
+
+  for (let c = 0; c < 2; c++) {
+    const src = buffer.numberOfChannels > c ? buffer.getChannelData(c) : buffer.getChannelData(0);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const gain = c === 0
+        ? 1 - depth * p
+        : 1 - depth * (1 - p);
+      dst[i] = src[i] * gain;
+    }
+  }
+  return resultat;
+}
+
 // --- Harmonizer / Octaver : ajoute des voix pitch-shiftées ---------------------
 // Crée jusqu'à deux voix décalées en demi-tons et les mixe sous l'original.
 

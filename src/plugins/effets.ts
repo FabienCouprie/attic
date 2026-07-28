@@ -736,7 +736,31 @@ export const fiches: FicheAudio[] = ([
       const depth = ctx.paramNombre("Profondeur", 80);
       return { valeurs: [await autoPan(a, freq, depth)] };
    },
- },
+  },
+  {
+    id: "auto-pan-logistique", nom: "Auto-pan logistique", nomEn: "Logistic auto-pan", univers: "Traitement", famille: "Effets",
+    resume: "Balayage gauche → droite selon une courbe logistique.",
+    resumeEn: "Left-to-right sweep following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { panLogistique } = await import("../audio");
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      return { valeurs: [panLogistique(a, centre, pente, mix)], message: traduire("msg.auto_pan_logistique", (a.duration ?? 0).toFixed(1)) };
+   },
+  },
   {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     resume: "Filtre passe-bande modulé (effet pédale wah).",

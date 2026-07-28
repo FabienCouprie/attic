@@ -2,7 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser, panLogistique } from "./effets-spectral";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -30,6 +30,13 @@ function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
   }
+  return b;
+}
+
+function constant(dureeS: number, channels = 1): AudioBuffer {
+  const n = Math.floor(SR * dureeS);
+  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  for (let ch = 0; ch < channels; ch++) b.getChannelData(ch).fill(1);
   return b;
 }
 
@@ -134,5 +141,26 @@ describe("equaliser", () => {
     gains[5] = -12;
     const out = await equaliser(buffer, ...gains);
     expect(rms(out)).toBeLessThan(rms(buffer) * 0.7);
+  });
+});
+
+describe("panLogistique", () => {
+  it("passe un signal mono de la gauche vers la droite", () => {
+    const buffer = constant(1, 1);
+    const out = panLogistique(buffer, 50, 10, 100);
+    expect(out.numberOfChannels).toBe(2);
+    const left = out.getChannelData(0);
+    const right = out.getChannelData(1);
+    expect(left[0]).toBeGreaterThan(0.95);
+    expect(right[0]).toBeLessThan(0.05);
+    expect(left[left.length - 1]).toBeLessThan(0.05);
+    expect(right[right.length - 1]).toBeGreaterThan(0.95);
+  });
+
+  it("ne modifie pas le signal avec un mix à 0", () => {
+    const buffer = constant(1, 1);
+    const out = panLogistique(buffer, 50, 10, 0);
+    expect(out.getChannelData(0)[0]).toBeCloseTo(1, 5);
+    expect(out.getChannelData(1)[0]).toBeCloseTo(1, 5);
   });
 });
