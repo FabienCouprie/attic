@@ -46,6 +46,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "generateur-frequence", mots: ["oscillateur", "sinus", "sine", "tone", "tonalité", "fréquence pure", "générateur de fréquence"], category: "source" },
   { ficheId: "metronome", mots: ["métronome", "metronome", "click track"], category: "source" },
   { ficheId: "sequenceur-batterie", mots: ["séquenceur batterie", "drum sequencer", "boîte à rythmes", "drum machine"], category: "source" },
+  { ficheId: "sequenceur-batterie-avance", mots: ["séquenceur batterie avancé", "advanced drum sequencer", "drum machine avancée", "grille velocity batterie"], category: "source" },
   { ficheId: "sequenceur-melodique", mots: ["séquenceur mélodique", "melodic sequencer", "piano-roll"], category: "source" },
   { ficheId: "reservoir-musical", mots: ["réservoir", "reservoir", "neural", "neuronal"], category: "source" },
   { ficheId: "reservoir-midi", mots: ["réservoir midi", "reservoir midi", "neural midi"], category: "source" },

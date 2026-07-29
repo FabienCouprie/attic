@@ -138,6 +138,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "python-processor") return { width: 380, height: 300 };
   if (def.id === "multi-reservoirs") return { width: 280, height: 420 };
   if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
+  if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
   if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
   if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
@@ -243,11 +244,11 @@ function Atelier() {
 
   const pushHistorique = useCallback(() => {
     historiqueRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes.map((n) => ({ ...n, data: { ...n.data } })))),
-      edges: JSON.parse(JSON.stringify(edges)),
+      nodes: JSON.parse(JSON.stringify(noeudsRef.current.map((n) => ({ ...n, data: { ...n.data } })))),
+      edges: JSON.parse(JSON.stringify(aretesRef.current)),
     });
     if (historiqueRef.current.length > MAX_HISTORIQUE) historiqueRef.current.shift();
-  }, [nodes, edges]);
+  }, []);
 
   const undo = useCallback(() => {
     const prev = historiqueRef.current.pop();
@@ -405,14 +406,40 @@ function Atelier() {
   });
   lancerRef.current = lancer;
 
+  // ── Suppression d'un nœud : nettoyage des URLs de résultat, du cache et cascade aval ──
+  const supprimerNoeud = useCallback((ids: string | string[], opts: { filterNodes?: boolean } = {}) => {
+    const idArr = Array.isArray(ids) ? ids : [ids];
+    if (idArr.length === 0) return;
+    // Révoquer les object URLs de résultats générés par le nœud (pas les fichiers
+    // d'entrée audioUrl/enregistrementUrl, conservés pour que l'undo reste fonctionnel).
+    for (const id of idArr) {
+      const n = noeudsRef.current.find((nn) => nn.id === id);
+      if (!n) continue;
+      const d = n.data;
+      if (d.audioResultatUrl) URL.revokeObjectURL(d.audioResultatUrl);
+      if (d.imageResultatUrl) URL.revokeObjectURL(d.imageResultatUrl);
+      if (d.visualisationUrl) URL.revokeObjectURL(d.visualisationUrl);
+      if ((d as any).mp3Url) URL.revokeObjectURL((d as any).mp3Url);
+    }
+    // Réinitialiser les nœuds en aval et vider leurs entrées du cache d'exécution.
+    for (const id of idArr) {
+      reinitialiserNoeud(id);
+    }
+    // Retirer les nœuds et les arêtes du graphe (sauf si React Flow l'a déjà fait,
+    // par exemple via la touche Delete).
+    if (opts.filterNodes !== false) {
+      setNodes((nds) => nds.filter((n) => !idArr.includes(n.id)));
+    }
+    setEdges((eds) => eds.filter((e) => !idArr.includes(e.source) && !idArr.includes(e.target)));
+    setSel((prev) => prev && idArr.includes(prev.id) ? null : prev);
+  }, [reinitialiserNoeud, setNodes, setEdges]);
+
 
   // Callbacks standard attachés à tout nœud (ajout, import, copier/coller).
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
       pushHistorique();
-      setNodes((nds2) => nds2.filter((n) => n.id !== nid));
-      setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
-      setSel((prev) => prev?.id === nid ? null : prev);
+      supprimerNoeud(nid);
     },
     onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
     onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
@@ -448,7 +475,7 @@ function Atelier() {
     },
     onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
     onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); },
-  }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire]);
+  }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
 
   // ── Ajouter / Supprimer ──
   const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
@@ -502,10 +529,7 @@ function Atelier() {
         };
         // Sauvegarder pour undo puis supprimer
         pushHistorique();
-        const sid = sel.id;
-        setNodes((nds) => nds.filter((n) => n.id !== sid));
-        setEdges((eds) => eds.filter((e2) => e2.source !== sid && e2.target !== sid));
-        setSel(null);
+        supprimerNoeud(sel.id);
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current) {
@@ -552,7 +576,7 @@ function Atelier() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sel, callbacksNoeud, setNodes, undo]);
+  }, [sel, callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
@@ -608,7 +632,7 @@ function Atelier() {
   const { exporter, importer } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
-    reinitialiserNoeud, setPrioritaire, lancerRef, cacheExec,
+    reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
   });
 
   return (
@@ -620,10 +644,10 @@ function Atelier() {
           const nom = (lang === "en" && meta?.nomEn ? meta.nomEn : meta?.nom) ?? id;
           if (!window.confirm(t("meta.confirmSupprimerCatalogue").replace("{nom}", nom))) return;
           // Retire aussi ses instances éventuelles du graphe courant (sinon nœuds orphelins).
-          const aRetirer = new Set(noeudsRef.current.filter((n) => n.data.ficheId === id).map((n) => n.id));
+          const aRetirer = noeudsRef.current.filter((n) => n.data.ficheId === id).map((n) => n.id);
           supprimerMeta(id);
-          setNodes((nds) => nds.filter((n) => !aRetirer.has(n.id)));
-          setEdges((eds) => eds.filter((e) => !aRetirer.has(e.source) && !aRetirer.has(e.target)));
+          pushHistorique();
+          supprimerNoeud(aRetirer);
         }}
       />
       <div className="attic-canevas" ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
@@ -752,8 +776,7 @@ function Atelier() {
           selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {
             pushHistorique();
-            const ids = new Set(deletedNodes.map((n) => n.id));
-            setEdges((eds) => eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)));
+            supprimerNoeud(deletedNodes.map((n) => n.id), { filterNodes: false });
           }}
         >
           <Background />
@@ -780,9 +803,8 @@ function Atelier() {
         }}
         onSupprimer={() => {
           if (sel) {
-            setNodes((nds) => nds.filter((n) => n.id !== sel.id));
-            setEdges((eds) => eds.filter((e) => e.source !== sel.id && e.target !== sel.id));
-            setSel(null);
+            pushHistorique();
+            supprimerNoeud(sel.id);
           }
         }}
         onReinitialiser={() => {

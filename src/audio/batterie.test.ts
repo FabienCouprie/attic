@@ -3,7 +3,7 @@
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { genererGrilleCantor, genererRythmeCantor } from "./batterie";
+import { genererGrilleCantor, genererRythmeCantor, decoderMotifVelocite, encoderMotifVelocite, rendreSequenceurBatterieAvance } from "./batterie";
 
 describe("genererGrilleCantor", () => {
   it("produit au moins un pas actif", () => {
@@ -46,5 +46,46 @@ describe("genererRythmeCantor", () => {
   it("respecte la durée attendue pour plusieurs mesures", async () => {
     const buffer = await genererRythmeCantor(120, 2, 3, "centre", 2, "Kick", 80, 0);
     expect(buffer.duration).toBeCloseTo(2 * 4 * (60 / 120), 0); // 2 mesures × 4 temps
+  });
+});
+
+describe("decoderMotifVelocite", () => {
+  it("découpe un motif en velocities 0-9", () => {
+    const motif = "0009000000000000|0000000900000000";
+    const grille = decoderMotifVelocite(motif, 2, 16);
+    expect(grille).toHaveLength(2);
+    expect(grille[0][3]).toBe(9);
+    expect(grille[1][7]).toBe(9);
+    expect(grille[0].filter((v) => v > 0).length).toBe(1);
+  });
+
+  it("ignore les caractères non numériques", () => {
+    const motif = "abc|1a";
+    const grille = decoderMotifVelocite(motif, 2, 4);
+    expect(grille[0]).toEqual([0, 0, 0, 0]);
+    expect(grille[1]).toEqual([1, 0, 0, 0]);
+  });
+});
+
+describe("encoderMotifVelocite", () => {
+  it("encode une grille de velocities", () => {
+    const grille = [
+      [0, 0, 0, 9],
+      [0, 5, 0, 0],
+    ];
+    expect(encoderMotifVelocite(grille)).toBe("0009|0500");
+  });
+});
+
+describe("rendreSequenceurBatterieAvance", () => {
+  it("rend un buffer audio non silencieux", async () => {
+    const motif = "9000000000000000|0009000000000000|0000000000000000|0000000000000000|0000000000000000|0000000000000000|0000000000000000|0000000000000000";
+    const grille = decoderMotifVelocite(motif, 8, 16);
+    const buffer = await rendreSequenceurBatterieAvance(grille, 120, 16, 0, 1, 80);
+    expect(buffer).toBeInstanceOf(AudioBuffer);
+    expect(buffer.numberOfChannels).toBe(2);
+    expect(buffer.duration).toBeGreaterThan(0);
+    const energy = buffer.getChannelData(0).reduce((a, b) => a + Math.abs(b), 0);
+    expect(energy).toBeGreaterThan(0);
   });
 });

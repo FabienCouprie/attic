@@ -20,8 +20,8 @@ describe("tts-piper", () => {
   it("has a Russian voice as default", () => {
     const voix = fiches[0].parametres?.find((p) => p.nom === "Voix");
     expect(voix).toBeDefined();
-    expect(voix?.defaut).toBe("ru_RU-irina-medium");
-    expect(voix?.options).toContain("ru_RU-irina-medium");
-    expect(voix?.options).toContain("ru_RU-ruslan-medium");
+    expect(voix?.defaut).toBe("RU-irina-medium");
+    expect(voix?.options).toContain("RU-irina-medium");
+    expect(voix?.options).toContain("RU-ruslan-medium");
   });
 });

@@ -15,22 +15,48 @@ export interface NoteMidi {
 }
 
 
+export interface InstrumentCanal {
+  programme: number;
+  banque: number;
+}
+
 export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   notes: NoteMidi[];
   dureeTotale: number;
-  canauxInstrument: Map<number, number>;
+  canauxInstrument: Map<number, InstrumentCanal>;
 } {
   const tpm = midi.header.ticksPerBeat ?? 480;
   const changementsTempo: { tick: number; tempo: number }[] = [{ tick: 0, tempo: 500000 }];
-  const canauxInstrument = new Map<number, number>();
-  for (let c = 0; c < 16; c++) canauxInstrument.set(c, 0);
+  const canauxInstrument = new Map<number, InstrumentCanal>();
+  const bankMsb = new Map<number, number>();
+  const bankLsb = new Map<number, number>();
+  for (let c = 0; c < 16; c++) {
+    canauxInstrument.set(c, { programme: 0, banque: 0 });
+    bankMsb.set(c, 0);
+    bankLsb.set(c, 0);
+  }
 
   for (const piste of midi.tracks) {
     let tick = 0;
     for (const evt of piste) {
       tick += evt.deltaTime;
       if (evt.type === "setTempo") changementsTempo.push({ tick, tempo: evt.microsecondsPerBeat });
-      if (evt.type === "programChange") canauxInstrument.set(evt.channel, evt.programNumber);
+      if (evt.type === "programChange") {
+        const inst = canauxInstrument.get(evt.channel) ?? { programme: 0, banque: 0 };
+        canauxInstrument.set(evt.channel, { ...inst, programme: evt.programNumber });
+      }
+      if (evt.type === "controller") {
+        const canal = evt.channel;
+        if (evt.controllerType === 0) {
+          bankMsb.set(canal, evt.value);
+          const inst = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
+          canauxInstrument.set(canal, { ...inst, banque: (bankMsb.get(canal) ?? 0) * 128 + (bankLsb.get(canal) ?? 0) });
+        } else if (evt.controllerType === 32) {
+          bankLsb.set(canal, evt.value);
+          const inst = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
+          canauxInstrument.set(canal, { ...inst, banque: (bankMsb.get(canal) ?? 0) * 128 + (bankLsb.get(canal) ?? 0) });
+        }
+      }
     }
   }
   changementsTempo.sort((a, b) => a.tick - b.tick);
@@ -252,13 +278,43 @@ export function notesVersFichierMidi(notes: NoteEvenement[], tempoBpm: number): 
 }
 
 
+/** Insère un changement de banque/programme en tête du premier canal du fichier MIDI.
+ * La valeur `instrument` est encodée comme `banque * 128 + programme`. */
+export async function appliquerInstrumentMidi(
+  fichier: File,
+  instrument: number,
+): Promise<File> {
+  if (instrument === 0) return fichier;
+  const valeur = instrument;
+  const programme = Math.max(0, Math.min(127, Math.round(valeur % 128)));
+  const banque = Math.max(0, Math.floor(valeur / 128));
+  const bytes = new Uint8Array(await fichier.arrayBuffer());
+  const midi = parseMidi(bytes);
+  const canal = 0;
+  const evts: any[] = [];
+  if (banque > 0) {
+    evts.push({ deltaTime: 0, type: "controller", channel: canal, controllerType: 0, value: Math.floor(banque / 128) });
+    evts.push({ deltaTime: 0, type: "controller", channel: canal, controllerType: 32, value: banque % 128 });
+  }
+  evts.push({ deltaTime: 0, type: "programChange", channel: canal, programNumber: programme });
+  if (midi.tracks.length === 0) {
+    midi.tracks = [evts];
+  } else {
+    midi.tracks[0] = [...evts, ...midi.tracks[0]];
+  }
+  const out = new Uint8Array(writeMidi(midi as any));
+  return new File([out], fichier.name, { type: fichier.type });
+}
+
 export async function rendreMidi(
   fichier: File,
   mode: "FM/Oscillateurs" | "SoundFont",
   volume: number,
+  instrument?: number,
+  banque?: number,
 ): Promise<AudioBuffer> {
   const bytes = new Uint8Array(await fichier.arrayBuffer());
-  return rendreMidiDepuisBytes(bytes, mode, volume);
+  return rendreMidiDepuisBytes(bytes, mode, volume, instrument, banque);
 }
 
 
@@ -266,6 +322,8 @@ export async function rendreMidiDepuisBytes(
   bytes: Uint8Array,
   mode: "FM/Oscillateurs" | "SoundFont",
   volume: number,
+  instrument?: number,
+  banque?: number,
 ): Promise<AudioBuffer> {
   const midi = parseMidi(bytes);
   const { notes, dureeTotale, canauxInstrument } = analyserMidi(midi);
@@ -292,12 +350,14 @@ export async function rendreMidiDepuisBytes(
       for (const canal of canaux) {
         const nc = notes.filter((n) => n.canal === canal);
         if (!nc.length) continue;
-        const prog = canauxInstrument.get(canal) ?? 0;
-        const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === 0) ?? sf2Global.presets[0];
+        const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
+        const prog = instrument ?? instCanal.programme;
+        const bq = banque ?? instCanal.banque;
+        const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
         const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
-        console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
+        console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
         const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
-        const layer = rendreAvecSF2(sf2Global, an, volume, prog, 0);
+        const layer = rendreAvecSF2(sf2Global, an, volume, prog, bq);
         for (let i = 0; i < master.length && i < layer.length; i++) {
           master.getChannelData(0)[i] += layer.getChannelData(0)[i];
           master.getChannelData(1)[i] += layer.getChannelData(1)[i];
@@ -360,6 +420,7 @@ export async function rendreSequence(
   mode: "FM/Oscillateurs" | "SoundFont",
   volume: number,
   instrument?: number,
+  banque?: number,
 ): Promise<AudioBuffer> {
   if (notes.length === 0) {
     const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
@@ -378,7 +439,7 @@ export async function rendreSequence(
     const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === 0) ?? sf2Global.presets[0];
     const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
     console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, programme ${prog}, preset "${preset?.nom ?? "?"}" -> instrument "${nomInst}" (${notes.length} notes)`);
-    return rendreAvecSF2(sf2Global, notes, volume, prog, 0);
+    return rendreAvecSF2(sf2Global, notes, volume, prog, banque ?? 0);
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing

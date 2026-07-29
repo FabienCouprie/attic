@@ -139,6 +139,183 @@ export async function rendreSequenceurBatterie(
   return out;
 }
 
+// ── Séquenceur de batterie avancé (velocity + 8 instruments) ──────────────
+// Grille de velocity : chaque cellule vaut 0 (off) ou 1–9 (velocity). La grille
+// est encodée comme le motif binaire : `nRows` lignes séparées par « | », mais
+// chaque pas est un chiffre 0–9.
+export function decoderMotifVelocite(motif: string, nRows: number, nbPas: number): number[][] {
+  const lignes = (motif || "").split("|");
+  const g: number[][] = [];
+  for (let r = 0; r < nRows; r++) {
+    const s = lignes[r] ?? "";
+    const row: number[] = [];
+    for (let c = 0; c < nbPas; c++) {
+      const d = s[c];
+      const v = d ? parseInt(d, 10) : 0;
+      row.push(v >= 1 && v <= 9 ? v : 0);
+    }
+    g.push(row);
+  }
+  return g;
+}
+
+export function encoderMotifVelocite(grille: number[][]): string {
+  return grille.map((row) => row.map((v) => (v > 0 ? String(v) : "0")).join("")).join("|");
+}
+
+export async function rendreSequenceurBatterieAvance(
+  grille: number[][], // [piste 0..7][pas 0..nbPas-1], cellules 0..9
+  tempo: number,
+  nbPas: number,
+  swing: number,
+  mesures: number,
+  volume: number,
+): Promise<AudioBuffer> {
+  const sr = 44100;
+  const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
+  const totalPas = Math.max(1, mesures) * nbPas;
+  const duree = totalPas * stepDur + 0.8;
+  const offline = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
+  const v = Math.max(0, Math.min(1, volume / 100));
+
+  // Pas de son si velocity == 0.
+  function jouer(debut: number, vel: number, fn: (t: number, vol: number) => void) {
+    if (vel <= 0) return;
+    fn(debut, vel / 9);
+  }
+
+  function jouerKick(debut: number, vol: number) {
+    const gVol = v * 0.8 * vol;
+    const osc = offline.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(150, debut);
+    osc.frequency.exponentialRampToValueAtTime(30, debut + 0.12);
+    const g = offline.createGain();
+    g.gain.setValueAtTime(gVol, debut);
+    g.gain.exponentialRampToValueAtTime(0.001, debut + 0.25);
+    osc.connect(g); g.connect(offline.destination);
+    osc.start(debut); osc.stop(debut + 0.3);
+    const cOsc = offline.createOscillator();
+    cOsc.type = "square"; cOsc.frequency.value = 1000;
+    const cG = offline.createGain();
+    cG.gain.setValueAtTime(gVol * 0.2, debut);
+    cG.gain.exponentialRampToValueAtTime(0.001, debut + 0.003);
+    cOsc.connect(cG); cG.connect(offline.destination);
+    cOsc.start(debut); cOsc.stop(debut + 0.01);
+  }
+
+  function jouerSnare(debut: number, vol: number) {
+    const gVol = v * 0.6 * vol;
+    const osc = offline.createOscillator();
+    osc.type = "triangle"; osc.frequency.value = 200;
+    const g = offline.createGain();
+    g.gain.setValueAtTime(gVol * 0.4, debut);
+    g.gain.exponentialRampToValueAtTime(0.001, debut + 0.08);
+    osc.connect(g); g.connect(offline.destination);
+    osc.start(debut); osc.stop(debut + 0.1);
+    const nLen = Math.ceil(0.12 * sr);
+    const buf = offline.createBuffer(1, nLen, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    const src = offline.createBufferSource(); src.buffer = buf;
+    const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 800;
+    const nG = offline.createGain();
+    nG.gain.setValueAtTime(gVol, debut);
+    nG.gain.exponentialRampToValueAtTime(0.001, debut + 0.12);
+    src.connect(f); f.connect(nG); nG.connect(offline.destination);
+    src.start(debut); src.stop(debut + 0.15);
+  }
+
+  function jouerHat(debut: number, vol: number, ouvert: boolean) {
+    const gVol = v * 0.5 * vol;
+    const dureeSon = ouvert ? 0.25 : 0.04;
+    const nLen = Math.ceil(dureeSon * sr);
+    const buf = offline.createBuffer(1, nLen, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    const src = offline.createBufferSource(); src.buffer = buf;
+    const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = ouvert ? 5000 : 7000;
+    const nG = offline.createGain();
+    nG.gain.setValueAtTime(gVol, debut);
+    nG.gain.exponentialRampToValueAtTime(0.001, debut + dureeSon);
+    src.connect(f); f.connect(nG); nG.connect(offline.destination);
+    src.start(debut); src.stop(debut + dureeSon + 0.01);
+  }
+
+  function jouerClap(debut: number, vol: number) {
+    const gVol = v * 0.5 * vol;
+    for (const off of [0, 0.01, 0.02, 0.032]) {
+      const nLen = Math.ceil(0.05 * sr);
+      const buf = offline.createBuffer(1, nLen, sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+      const src = offline.createBufferSource(); src.buffer = buf;
+      const f = offline.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1200; f.Q.value = 1.4;
+      const g = offline.createGain(); const t0 = debut + off;
+      g.gain.setValueAtTime(gVol * (off === 0 ? 0.6 : 1), t0);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
+      src.connect(f); f.connect(g); g.connect(offline.destination);
+      src.start(t0); src.stop(t0 + 0.06);
+    }
+  }
+
+  function jouerCrash(debut: number, vol: number) {
+    const gVol = v * 0.45 * vol;
+    const dureeSon = 0.8;
+    const nLen = Math.ceil(dureeSon * sr);
+    const buf = offline.createBuffer(1, nLen, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    const src = offline.createBufferSource(); src.buffer = buf;
+    const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 4000;
+    const nG = offline.createGain();
+    nG.gain.setValueAtTime(gVol, debut);
+    nG.gain.exponentialRampToValueAtTime(0.001, debut + dureeSon);
+    src.connect(f); f.connect(nG); nG.connect(offline.destination);
+    src.start(debut); src.stop(debut + dureeSon + 0.02);
+  }
+
+  function jouerTom(debut: number, vol: number, pitch: number) {
+    const gVol = v * 0.55 * vol;
+    const osc = offline.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(pitch, debut);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.5, debut + 0.08);
+    const g = offline.createGain();
+    g.gain.setValueAtTime(gVol, debut);
+    g.gain.exponentialRampToValueAtTime(0.001, debut + 0.18);
+    osc.connect(g); g.connect(offline.destination);
+    osc.start(debut); osc.stop(debut + 0.25);
+  }
+
+  for (let pas = 0; pas < totalPas; pas++) {
+    const s = pas % nbPas;
+    let t = pas * stepDur;
+    if (s % 2 === 1) t += (swing / 100) * stepDur * 0.6;
+    const row = grille;
+    jouer(t, row[0]?.[s] ?? 0, jouerKick);
+    jouer(t, row[1]?.[s] ?? 0, jouerSnare);
+    jouer(t, row[2]?.[s] ?? 0, (time, vol) => jouerHat(time, vol, false));
+    jouer(t, row[3]?.[s] ?? 0, (time, vol) => jouerHat(time, vol, true));
+    jouer(t, row[4]?.[s] ?? 0, jouerClap);
+    jouer(t, row[5]?.[s] ?? 0, jouerCrash);
+    jouer(t, row[6]?.[s] ?? 0, (time, vol) => jouerTom(time, vol, 120));
+    jouer(t, row[7]?.[s] ?? 0, (time, vol) => jouerTom(time, vol, 180));
+  }
+
+  const rendu = await offline.startRendering();
+  const barLen = Math.round(totalPas * stepDur * sr);
+  if (barLen >= rendu.length) return rendu;
+  const out = new AudioBuffer({ numberOfChannels: rendu.numberOfChannels, length: barLen, sampleRate: sr });
+  for (let c = 0; c < rendu.numberOfChannels; c++) {
+    const src = rendu.getChannelData(c);
+    const dst = out.getChannelData(c);
+    dst.set(src.subarray(0, barLen));
+    for (let i = barLen; i < src.length; i++) dst[i - barLen] += src[i];
+  }
+  return out;
+}
+
 // ── Rythme de Cantor ───────────────────────────────────────────────────────
 // Construit une grille de pas et retire récursivement la partie centrale de
 // chaque intervalle restant. Chaque pas survivant déclenche une percussion.

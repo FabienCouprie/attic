@@ -2,8 +2,9 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
+import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";;
+import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 function noeudMeyda(
   id: string,
@@ -127,6 +128,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Note minimale", nomEn: "Min note", plage: [21,120], defaut: 36, docEn: "Lowest MIDI note to detect." },
       { nom: "Note maximale", nomEn: "Max note", plage: [21,127], defaut: 96, docEn: "Highest MIDI note to detect." },
       { nom: "Tempo du fichier MIDI", nomEn: "MIDI tempo", plage: [40,240], defaut: 120, unite: "BPM", docEn: "Tempo of the generated MIDI file." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
@@ -147,10 +149,10 @@ export const fiches: FicheAudio[] = ([
         ? await transcrirePolyphonique(audio, seuil, noteMin, noteMax)
         : transcrireMono(audio, seuil, noteMin, noteMax);
       if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };
-      const fichier = notesVersFichierMidi(notes, tempo);
+      const fichier = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
       return { valeurs: [fichier], message: traduire("msg.midi_var_0_notes_transcrites", notes.length) };
    },
- },
+  },
   {
     id: "detecteur-accords", nom: "Détecteur d'accords", nomEn: "Chord Detector", univers: "Visualisation", famille: "Analyse",
     resume: "Détecte la progression d'accords dans le signal audio.",

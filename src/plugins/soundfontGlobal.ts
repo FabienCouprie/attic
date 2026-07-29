@@ -1,4 +1,5 @@
 import { analyserSF2, type StructureSF2 } from "../audio/soundfont";
+import type { ParametreDef } from "../core/types";
 
 type GlobalAttic = typeof globalThis & {
   __attic_sf2__?: StructureSF2 | null;
@@ -14,6 +15,41 @@ export function sf2Chargee(): StructureSF2 | null {
 export function sf2Nom(): string {
   return g.__attic_sf2_nom__ ?? "";
 }
+
+/** Liste les presets du SoundFont global (toutes banques). La valeur encodée est
+ * `banque * 128 + programme`, ce qui permet de stocker banque + programme dans
+ * un seul nombre pour le paramètre `sf2instrument`. */
+export function listerPresetsSF2(): { valeur: number; banque: number; programme: number; nom: string }[] {
+  const sf2 = sf2Chargee();
+  if (!sf2) return [];
+  const vus = new Set<string>();
+  const liste: { valeur: number; banque: number; programme: number; nom: string }[] = [];
+  for (const p of sf2.presets) {
+    const cle = `${p.banque}:${p.programme}`;
+    if (vus.has(cle)) continue;
+    vus.add(cle);
+    const valeur = p.banque * 128 + p.programme;
+    liste.push({ valeur, banque: p.banque, programme: p.programme, nom: p.nom });
+  }
+  return liste.sort((a, b) => a.banque - b.banque || a.programme - b.programme);
+}
+
+/** Décode une valeur `sf2instrument` en programme (0-127) et banque. */
+export function decoderInstrumentSF2(valeur: number): { programme: number; banque: number } {
+  const programme = Math.max(0, Math.min(127, Math.round(valeur % 128)));
+  const banque = Math.max(0, Math.floor(valeur / 128));
+  return { programme, banque };
+}
+
+/** Paramètre réutilisable : sélecteur d'instrument SoundFont. */
+export const PARAMETRE_INSTRUMENT_SF2: ParametreDef = {
+  nom: "Instrument",
+  nomEn: "Instrument",
+  type: "sf2instrument",
+  defaut: 0,
+  doc: "Preset du SoundFont global à utiliser pour le rendu (ignoré en mode FM). Chargez d'abord un fichier SF2 dans la barre d'outils. Les kits de percussion (banque 128) sont inclus s'ils sont présents.",
+  docEn: "Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present.",
+};
 
 export function normaliserModeSynthèse(valeur: string): "Automatique" | "FM/Oscillateurs" | "SoundFont" {
   const v = valeur.trim().toLowerCase();

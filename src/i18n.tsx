@@ -84,6 +84,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   "inspecteur.vide": { fr: "Sélectionnez un bloc", en: "Select a block" },
   "inspecteur.savoirPlus": { fr: "En savoir plus", en: "Learn more" },
   "inspecteur.savoirMoins": { fr: "Réduire", en: "Show less" },
+  "inspecteur.sf2NonCharge": { fr: "SoundFont non chargé", en: "SoundFont not loaded" },
+  "inspecteur.sf2AucunPreset": { fr: "Aucun preset", en: "No preset" },
   "msg.connecter.audio": { fr: "Connectez une entrée audio → Lancer", en: "Connect audio input → Run" },
   "msg.aucun.fichier": { fr: "Aucun fichier chargé.", en: "No file loaded." },
   "msg.au-moins-2": { fr: "Branchez au moins 2 entrées.", en: "Connect at least 2 inputs." },

@@ -59,16 +59,16 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Voix", nomEn: "Voice", type: "choix",
-        options: VOIX_SPEECHT5.map((v) => v.id), optionsEn: VOIX_SPEECHT5.map((v) => v.nomEn ?? v.nom),
-        defaut: "bdl",
+        options: VOIX_SPEECHT5.map((v) => v.nom), optionsEn: VOIX_SPEECHT5.map((v) => v.nomEn ?? v.nom),
+        defaut: VOIX_SPEECHT5[0].nom,
         doc: "Voix prédéfinie (embeddings CMU Arctic). BDL/RMS = hommes américains ; SLT/CLB = femmes américaines ; JMK = homme canadien ; AWB = homme écossais ; KSP = homme indien.",
-        docEn: "Preset voice (CMU Arctic embeddings). BDL/RMS = US males; SLT/CLB = US females; JMK = Canadian male; AWB = Scottish male; KSP = Indian male.", defautEn: "bdl" },
+        docEn: "Preset voice (CMU Arctic embeddings). BDL/RMS = US males; SLT/CLB = US females; JMK = Canadian male; AWB = Scottish male; KSP = Indian male.", defautEn: VOIX_SPEECHT5[0].nomEn ?? VOIX_SPEECHT5[0].nom },
     ],
     async executer(ctx: any) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
-      const voixId = ctx.paramTexte("Voix", "default");
-      const voix = VOIX_SPEECHT5.find((v) => v.id === voixId) ?? VOIX_SPEECHT5[0];
+      const voixId = ctx.paramTexte("Voix", VOIX_SPEECHT5[0].nom);
+      const voix = VOIX_SPEECHT5.find((v) => v.id === voixId || v.nom === voixId || v.nomEn === voixId) ?? VOIX_SPEECHT5[0];
       const w = getWorker();
       return new Promise((resolve) => {
         const onMessage = (e: MessageEvent) => {

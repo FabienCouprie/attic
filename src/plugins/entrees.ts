@@ -117,10 +117,10 @@ const entrees: FicheAudio[] = [
         for (const canal of [0,1,2,9]) {
           const nc = notes.filter((n: any) => n.canal === canal);
           if (!nc.length) continue;
-          const prog = canauxInstrument.get(canal) ?? 0;
-          const idx = prog < sf2.instruments.length ? prog : undefined;
+          const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
+          const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
           const an = nc.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
-          const layer = rendreAvecSF2(sf2, an, volume, idx);
+          const layer = rendreAvecSF2(sf2, an, volume, idx, instCanal.banque);
           for (let i = 0; i < master.length && i < layer.length; i++) {
             master.getChannelData(0)[i] += layer.getChannelData(0)[i];
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];

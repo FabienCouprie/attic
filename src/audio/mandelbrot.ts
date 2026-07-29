@@ -3,7 +3,7 @@
 // d'itérations avant divergence (ou le temps de séjour) détermine la hauteur,
 // la vélocité et/ou l'octave.
 
-import { notesVersFichierMidi, rendreSequence } from "./midi";
+import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
 import { DEMI_TONS_CLE } from "./commun";
 
 export type ModeMandelbrot = "escape" | "dwell" | "octave";
@@ -25,6 +25,8 @@ export interface OptionsMandelbrot {
   timbre: "Douce" | "Brillante" | "Percutante";
   volume: number;
   graine: number;
+  instrument?: number;
+  banque?: number;
 }
 
 const GAMMES: Record<string, number[]> = {
@@ -142,10 +144,10 @@ export async function genererMusiqueMandelbrot(
   modeSynthese: "Automatique" | "FM/Oscillateurs" | "SoundFont"
 ): Promise<{ audio: AudioBuffer; notes: any[]; midiFile: File }> {
   const notes = genererNotesMandelbrot(options);
-  const midiFile = notesVersFichierMidi(notes, options.tempo);
+  const midiFile = await appliquerInstrumentMidi(notesVersFichierMidi(notes, options.tempo), options.instrument ?? 0);
   const useSf2 = modeSynthese === "SoundFont" || (modeSynthese === "Automatique" && (globalThis as any).__attic_sf2__);
   const mode: "FM/Oscillateurs" | "SoundFont" = useSf2 ? "SoundFont" : "FM/Oscillateurs";
-  const audio = await rendreSequence(notes, mode, options.volume);
+  const audio = await rendreSequence(notes, mode, options.volume, options.instrument ?? 0, options.banque ?? 0);
   return { audio, notes, midiFile };
 }
 

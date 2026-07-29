@@ -30,7 +30,9 @@ import {
    harmoniser,
    vocoder,
    granularFreeze,
+   appliquerInstrumentMidi,
 } from "../audio";
+import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
@@ -482,6 +484,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const { transposerQuantifierMidi } = await import("../audio");
@@ -490,13 +493,16 @@ export const fiches: FicheAudio[] = ([
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
       const quantifierFin = ctx.paramTexte("Quantifier fins", "Non") === "Oui";
-      const nouvFichier = await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin);
+      const nouvFichier = await appliquerInstrumentMidi(
+        await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin),
+        ctx.paramNombre("Instrument", 0),
+      );
       const msgs: string[] = [];
       if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
       if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
- },
+  },
   {
     id: "arpegiateur-midi", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
@@ -529,6 +535,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note length", plage: [10, 100], pas: 5, defaut: 50, unite: "%",
         doc: "Durée de chaque note arpégée en pourcentage du pas de temps. 100% = legato, 50% = staccato.",
         docEn: "Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const { arpegerMidi } = await import("../audio");
@@ -539,10 +546,13 @@ export const fiches: FicheAudio[] = ([
       const vitesse = ctx.paramTexte("Vitesse", "1/16");
       const octaves = Math.round(ctx.paramNombre("Octaves", 1));
       const dureeNote = ctx.paramNombre("Durée note", 50);
-      const nouvFichier = await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote);
+      const nouvFichier = await appliquerInstrumentMidi(
+        await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote),
+        ctx.paramNombre("Instrument", 0),
+      );
       return { valeurs: [nouvFichier], message: traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves) };
    },
- },
+  },
   {
     id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
