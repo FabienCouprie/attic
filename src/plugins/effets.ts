@@ -769,7 +769,67 @@ export const fiches: FicheAudio[] = ([
       const pente = ctx.paramNombre("Pente", 10);
       const mix = ctx.paramNombre("Mix", 100);
       return { valeurs: [panLogistique(a, centre, pente, mix)], message: traduire("msg.auto_pan_logistique", (a.duration ?? 0).toFixed(1)) };
-   },
+    },
+  },
+  {
+    id: "vibrato-logistique", nom: "Vibrato logistique", nomEn: "Logistic vibrato", univers: "Traitement", famille: "Effets",
+    resume: "Vibrato dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Vibrato whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Vitesse de la modulation (oscillations par seconde).", docEn: "Modulation speed (oscillations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Amplitude maximale de la modulation de hauteur (0% = aucun, 100% = ±2 demi-tons).", docEn: "Maximum pitch modulation depth (0% = none, 100% = ±2 semitones)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { vibratoLogistique } = await import("../audio");
+      const freq = ctx.paramNombre("Fréquence", 5);
+      const prof = ctx.paramNombre("Profondeur", 50);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      return { valeurs: [vibratoLogistique(a, freq, prof, centre, pente, mix)], message: traduire("msg.vibrato_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
+    id: "tremolo-logistique", nom: "Tremolo logistique", nomEn: "Logistic tremolo", univers: "Traitement", famille: "Effets",
+    resume: "Tremolo dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Tremolo whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Fréquence de la modulation (vibrations par seconde).", docEn: "Modulation rate (vibrations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Profondeur maximale de la modulation (0% = aucun effet, 100% = volume coupé complètement).", docEn: "Maximum modulation depth (0% = no effect, 100% = volume fully cut)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { tremoloLogistique } = await import("../audio");
+      const freq = ctx.paramNombre("Fréquence", 5);
+      const prof = ctx.paramNombre("Profondeur", 50);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      return { valeurs: [tremoloLogistique(a, freq, prof, centre, pente, mix)], message: traduire("msg.tremolo_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
   },
   {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",

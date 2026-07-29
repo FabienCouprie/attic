@@ -621,6 +621,88 @@ export function vibrato(
   return resultat;
 }
 
+// Vibrato logistique : le vibrato s'installe progressivement selon une courbe
+// logistique. En début de piste l'effet est nul, en fin de piste il atteint la
+// profondeur demandée.
+export function vibratoLogistique(
+  buffer: AudioBuffer,
+  frequence: number,
+  profondeur: number,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  const maxCents = Math.max(0, profondeur * 2);
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+  const n = buffer.length;
+  const delayMax = Math.ceil(sr * 0.02);
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    const delayLine = new Float64Array(delayMax);
+    let dlyPos = 0;
+
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const envelopeCents = maxCents * p;
+      const lfo = Math.sin(2 * Math.PI * frequence * i / sr);
+      const delaySamples = (delayMax / 2) * (1 + lfo * (envelopeCents / 200));
+      const readPos = dlyPos - delaySamples;
+      const idx0 = Math.floor(readPos);
+      const frac = readPos - idx0;
+      const s0 = delayLine[((idx0 % delayMax) + delayMax) % delayMax];
+      const s1 = delayLine[(((idx0 + 1) % delayMax) + delayMax) % delayMax];
+      const wet = s0 + (s1 - s0) * frac;
+      dst[i] = src[i] * (1 - mixWet) + wet * mixWet;
+      delayLine[dlyPos] = src[i];
+      dlyPos = (dlyPos + 1) % delayMax;
+    }
+  }
+  return resultat;
+}
+
+// Tremolo logistique : le tremolo s'installe progressivement selon une courbe
+// logistique. En début de piste l'effet est nul, en fin de piste il atteint la
+// profondeur demandée.
+export function tremoloLogistique(
+  buffer: AudioBuffer,
+  frequence: number,
+  profondeur: number,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  const maxDepth = Math.max(0, Math.min(1, profondeur / 100));
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+  const n = buffer.length;
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const depth = maxDepth * p;
+      const lfo = Math.sin(2 * Math.PI * frequence * i / sr);
+      const gain = 1 - depth * (1 - lfo) / 2;
+      const wet = src[i] * gain;
+      dst[i] = src[i] * (1 - mixWet) + wet * mixWet;
+    }
+  }
+  return resultat;
+}
+
 // Octaver : ajoute une voix à l'octave supérieure et/ou inférieure.
 // Techniques monophoniques classiques des pédales analogiques :
 //  - octave SUP : redressement double alternance (|x| double la fréquence),
