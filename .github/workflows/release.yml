@@ -49,7 +49,16 @@ jobs:
           # app's bundled assets. Disable asar in the checked-out package.json before
           # building so the final app remains unpacked.
           node -e "const p = require('./package.json'); p.build.asar = false; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
-          npm run publish:electron
+          # Build with the full dev dependency tree.
+          npm run build
+          npm run ensure-songsee
+          # electron-builder scans node_modules when packaging. With the full dev tree
+          # this exhausts the GitHub runner memory. Keep Electron aside and prune.
+          Copy-Item -Path node_modules/electron/dist -Destination electron-dist -Recurse
+          npm prune --production
+          # Re-install only the packager so it can run against the production tree.
+          npm install --no-save electron-builder@26.15.3
+          npm exec -- electron-builder --win -p always -c.electronDist=electron-dist
         env:
           # Use the native GitHub Actions token instead of a personal access token.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
