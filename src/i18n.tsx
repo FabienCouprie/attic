@@ -191,6 +191,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.aucun_fichier_midi_en_entr_e": { fr: "Aucun fichier MIDI en entrée.", en: "No MIDI file entered." },
   "msg.arp_ge_var_0_var_1_var_2_oct": { fr: "Arpège {__VAR_0__} · {__VAR_1__} · {__VAR_2__} oct.", en: "Arpège {__VAR_0__} · {__VAR_1__} · {__VAR_2__} Oct." },
   "msg.jointure_midi_var_0_notes_var_1_s": { fr: "Jointure MIDI · {__VAR_0__} notes · {__VAR_1__}s", en: "MIDI join · {__VAR_0__} notes · {__VAR_1__}s" },
+  "msg.boucle_midi_var_0_repetitions_var_1_notes_var_2_s": { fr: "Boucle MIDI · {__VAR_0__} répétitions · {__VAR_1__} notes · {__VAR_2__}s", en: "MIDI loop · {__VAR_0__} repeats · {__VAR_1__} notes · {__VAR_2__}s" },
   "msg.branchez_une_r_f_rence_entr_e_1": { fr: "Branchez une référence (entrée 1).", en: "Connect a reference (entry 1)." },
   "msg.branchez_une_piste_aligner_entr_e_2": { fr: "Branchez une piste à aligner (entrée 2).", en: "Connect a track to align (entry 2)." },
   "msg.var_0_var_1_2": { fr: "{__VAR_0__} · {__VAR_1__}", en: "{__VAR_0__} · {__VAR_1__}" },

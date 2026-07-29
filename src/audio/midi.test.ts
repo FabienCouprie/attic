@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { writeMidi, parseMidi } from "midi-file";
-import { joindreMidi, analyserMidi } from "./midi";
+import { joindreMidi, bouclerMidi, analyserMidi } from "./midi";
 
 function createMidiFile(
   notes: { note: number; velocity: number; start: number; end: number }[],
@@ -92,5 +92,50 @@ describe("joindreMidi", () => {
     expect(notes.length).toBe(2);
     expect(notes[0].debut).toBeCloseTo(0, 3);
     expect(notes[1].debut).toBeCloseTo(1, 3);
+  });
+});
+
+describe("bouclerMidi", () => {
+  it("répète un fichier MIDI sans chevauchement", async () => {
+    const f = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 1 }]);
+    const looped = await bouclerMidi(f, 3, 0);
+    const { notes } = analyserMidi(parseMidi(new Uint8Array(await looped.arrayBuffer())));
+    expect(notes.length).toBe(3);
+    expect(notes[0].debut).toBeCloseTo(0, 3);
+    expect(notes[1].debut).toBeCloseTo(1, 3);
+    expect(notes[2].debut).toBeCloseTo(2, 3);
+  });
+
+  it("répète un fichier MIDI avec chevauchement", async () => {
+    const f = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 1 }]);
+    const looped = await bouclerMidi(f, 2, 500);
+    const parsed = parseMidi(new Uint8Array(await looped.arrayBuffer()));
+    const ons: number[] = [];
+    const offs: number[] = [];
+    let tick = 0;
+    const tpm = parsed.header.ticksPerBeat || 480;
+    const tempoEvent = parsed.tracks[0].find((e: any) => e.type === "setTempo");
+    const tempo = 60_000_000 / ((tempoEvent as any)?.microsecondsPerBeat ?? 500000);
+    for (const e of parsed.tracks[0]) {
+      tick += e.deltaTime;
+      const t = tick / ((tpm * tempo) / 60);
+      if (e.type === "noteOn" && e.velocity > 0) ons.push(t);
+      if (e.type === "noteOff" || (e.type === "noteOn" && e.velocity === 0)) offs.push(t);
+    }
+    expect(ons.length).toBe(2);
+    expect(ons[0]).toBeCloseTo(0, 3);
+    expect(ons[1]).toBeCloseTo(0.5, 3);
+    expect(offs.length).toBe(2);
+    expect(offs[0]).toBeCloseTo(1, 3);
+    expect(offs[1]).toBeCloseTo(1.5, 3);
+  });
+
+  it("ne modifie pas le fichier pour une seule répétition", async () => {
+    const f = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 1 }]);
+    const looped = await bouclerMidi(f, 1, 0);
+    const { notes } = analyserMidi(parseMidi(new Uint8Array(await looped.arrayBuffer())));
+    expect(notes.length).toBe(1);
+    expect(notes[0].debut).toBeCloseTo(0, 3);
+    expect(notes[0].fin).toBeCloseTo(1, 3);
   });
 });

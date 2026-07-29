@@ -33,6 +33,7 @@ import {
    granularFreeze,
    appliquerInstrumentMidi,
    joindreMidi,
+   bouclerMidi,
    analyserMidi,
 } from "../audio";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
@@ -578,6 +579,31 @@ export const fiches: FicheAudio[] = ([
       const nouvFichier = await joindreMidi(fichier1, fichier2, chevauchement);
       const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
       return { valeurs: [nouvFichier], message: traduire("msg.jointure_midi_var_0_notes_var_1_s", notes.length, dureeTotale.toFixed(2)) };
+    },
+  },
+  {
+    id: "boucle-midi", nom: "Boucle MIDI", nomEn: "MIDI Loop",
+    univers: "Traitement", famille: "Montage",
+    resume: "Répète un fichier MIDI un nombre de fois donné.",
+    resumeEn: "Repeats a MIDI file a given number of times.",
+    entrees: [{ nom: "MIDI", nomEn: "MIDI", type: "midi" }],
+    sorties: [{ nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Répétitions", nomEn: "Repeats", plage: [1, 32], pas: 1, defaut: 4,
+        doc: "Nombre de fois où le fichier MIDI est rejoué à la suite.",
+        docEn: "Number of times the MIDI file is replayed in a row." },
+      { nom: "Fondu", nomEn: "Fade", plage: [0, 1000], pas: 1, defaut: 0, unite: "ms",
+        doc: "Chevauchement entre deux répétitions. 0 = pas de chevauchement (raccord sec).",
+        docEn: "Overlap between two repetitions. 0 = no overlap (hard join)." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const repetitions = Math.round(ctx.paramNombre("Répétitions", 4));
+      const fondu = ctx.paramNombre("Fondu", 0);
+      const nouvFichier = await bouclerMidi(fichier, repetitions, fondu);
+      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      return { valeurs: [nouvFichier], message: traduire("msg.boucle_midi_var_0_repetitions_var_1_notes_var_2_s", repetitions, notes.length, dureeTotale.toFixed(2)) };
     },
   },
   {

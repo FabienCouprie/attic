@@ -386,6 +386,24 @@ export async function joindreMidi(
   return new File([bytes], "jointure.mid", { type: "audio/midi" });
 }
 
+/** Répète un fichier MIDI un nombre de fois donné. Le fondu (en ms) est
+ * interprété comme un chevauchement entre deux répétitions (0 = simple
+ * concaténation). */
+export async function bouclerMidi(
+  fichier: File,
+  repetitions: number,
+  fonduMs: number,
+): Promise<File> {
+  const reps = Math.max(1, Math.round(repetitions));
+  if (reps === 1) return fichier;
+  const chevSec = Math.max(0, fonduMs) / 1000;
+  let resultat = fichier;
+  for (let i = 1; i < reps; i++) {
+    resultat = await joindreMidi(resultat, fichier, chevSec);
+  }
+  return resultat;
+}
+
 export async function rendreMidi(
   fichier: File,
   mode: "FM/Oscillateurs" | "SoundFont",
