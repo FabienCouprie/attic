@@ -52,9 +52,22 @@ jobs:
           # Build with the full dev dependency tree.
           npm run build
           npm run ensure-songsee
-          # electron-builder scans node_modules when packaging. With the full dev tree
-          # this exhausts the GitHub runner memory. Keep Electron aside and prune.
+          # electron-builder scans node_modules when packaging. With the full dependency
+          # tree this exhausts the GitHub runner memory. Keep Electron aside, shrink
+          # dependencies to only those used by the main process, and prune.
           Copy-Item -Path node_modules/electron/dist -Destination electron-dist -Recurse
+          node -e "
+            const p = require('./package.json');
+            const fs = require('fs');
+            const ver = (n) => { try { return require('./node_modules/' + n + '/package.json').version; } catch { return '*'; } };
+            p.dependencies = {
+              '@huggingface/tokenizers': ver('@huggingface/tokenizers'),
+              'adm-zip': p.dependencies['adm-zip'] || ver('adm-zip'),
+              'electron-updater': p.dependencies['electron-updater'] || ver('electron-updater'),
+              'onnxruntime-node': p.dependencies['onnxruntime-node'] || ver('onnxruntime-node')
+            };
+            fs.writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
+          "
           npm prune --production
           # Re-install only the packager so it can run against the production tree.
           npm install --no-save electron-builder@26.15.3
