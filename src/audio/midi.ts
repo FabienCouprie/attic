@@ -176,6 +176,8 @@ export function rendreAvecSF2(
       const debutEch = Math.max(0, Math.floor(n.debut * sr));
       const boucleActive = zone.boucleActive && ech.debutBoucle < ech.finBoucle && ech.finBoucle > 0;
       const nbEchantJoues = Math.floor((boucleActive ? dureeNote : Math.min(dureeNote, srcLen / ratio)) * sr);
+      const releaseSamples = Math.max(1, Math.min(Math.floor(0.005 * sr), nbEchantJoues));
+      const fadeOutStart = nbEchantJoues - releaseSamples;
 
       const debutBoucle = (ech.debutBoucle - ech.debut);
       const finBoucle = (ech.finBoucle - ech.debut);
@@ -209,7 +211,8 @@ export function rendreAvecSF2(
           idx2 = srcDebut + srcLen - 1;
         }
         const g = donnees[srcIdx] * (1 - frac) + donnees[idx2] * frac;
-        const mono = (g / 32768) * gain;
+        const fadeOut = j >= fadeOutStart ? Math.max(0, (nbEchantJoues - j) / releaseSamples) : 1;
+        const mono = (g / 32768) * gain * fadeOut;
         gauche[posSortie] += mono * gainGauche;
         droite[posSortie] += mono * gainDroite;
       }
