@@ -16,6 +16,11 @@ function makeSineSample(freq: number, sampleRate: number, duration: number) {
   return arr;
 }
 
+function makeConstantSample(sampleRate: number, duration: number) {
+  const n = Math.floor(sampleRate * duration);
+  return new Int16Array(n).fill(32767);
+}
+
 function buildSF2(opts: { sampleRate: number; rootNote: number; freq: number; duration: number }) {
   const { sampleRate, rootNote, freq, duration } = opts;
   const smpl = makeSineSample(freq, sampleRate, duration);
@@ -106,5 +111,32 @@ describe("rendreAvecSF2 sample rate", () => {
     );
     expect(maxAmp).toBeLessThanOrEqual(1 + 1e-6);
     expect(matchScore(buffer, 441)).toBeGreaterThan(0.99);
+  });
+
+  it("applique un fondu de sortie pour éviter les clics de coupure", () => {
+    const smpl = makeConstantSample(44100, 2);
+    const sf2 = {
+      programme: 0,
+      nom: "test",
+      presets: [] as any[],
+      echantillons: [{
+        nom: "constant", debut: 0, fin: smpl.length, debutBoucle: 0, finBoucle: 0,
+        taux: 44100, noteOriginale: 69, correction: 0, type: 0,
+      }],
+      instruments: [{
+        nom: "constant-inst",
+        zones: [{
+          noteMin: 0, noteMax: 127, velMin: 0, velMax: 127,
+          echantillonId: 0, boucleActive: false,
+        }],
+      }],
+      smpl,
+      bufferOriginal: smpl.buffer,
+    };
+    const buffer = rendreAvecSF2(sf2 as any, [{ note: 69, velocite: 127, debut: 0, fin: 0.5 }], 100, 0);
+    const ch = buffer.getChannelData(0);
+    // Le signal est fort avant le fondu, mais les derniers échantillons sont atténués vers 0.
+    expect(Math.abs(ch[Math.floor(0.49 * 44100)])).toBeGreaterThan(0.1);
+    expect(Math.abs(ch[ch.length - 1])).toBeLessThan(0.01);
   });
 });

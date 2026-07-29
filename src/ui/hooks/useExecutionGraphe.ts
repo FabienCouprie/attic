@@ -83,6 +83,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
       if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
       if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
+      if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
       return {
         ...n,
         data: {
@@ -97,6 +98,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           mp3Url: undefined,
           imageResultatUrl: undefined,
           imageResultatFile: undefined,
+          visualisationUrl: undefined,
           zonesSelectionnees: undefined,
         },
       };

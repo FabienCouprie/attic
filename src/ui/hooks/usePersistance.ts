@@ -28,6 +28,7 @@ export interface OptionsPersistance {
   grapheRacineRef: MutableRefObject<GrapheRacine>;
   setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
   reinitialiserNoeud: (id: string) => void;
+  supprimerNoeud: (ids: string | string[]) => void;
   setPrioritaire: (id: string | null) => void;
   lancerRef: MutableRefObject<any>;
   cacheExec: MutableRefObject<Map<string, any>>;
@@ -168,10 +169,7 @@ export function usePersistance(o: OptionsPersistance) {
       data: {
         ...n.data,
         statut: "attente",
-        onSupprimerNoeud: (nid: string) => {
-          o.setNodes((nds2) => nds2.filter((nd) => nd.id !== nid));
-          o.setEdges((eds) => eds.filter((e) => e.source !== nid && e.target !== nid));
-        },
+        onSupprimerNoeud: (nid: string) => o.supprimerNoeud(nid),
         onReinitialiser: (nid: string) => o.reinitialiserNoeud(nid),
         onDefinirPrioritaire: (nid: string) => {
           o.setPrioritaire(nid);

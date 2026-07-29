@@ -1,7 +1,7 @@
 // audio/koch.ts — Arpégiateur flocon de Koch : chaque côté du triangle est une voix,
 // chaque subdivision récursive génère un motif mélodique polyrythmique.
 
-import { notesVersFichierMidi, rendreSequence } from "./midi";
+import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
 import { DEMI_TONS_CLE } from "./commun";
 
 export type AccordKoch = "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";
@@ -20,6 +20,8 @@ export interface OptionsArpegeKoch {
   dureeNote: number; // secondes (durée max d'une note)
   timbre: "Douce" | "Brillante" | "Percutante";
   volume: number;
+  instrument?: number;
+  banque?: number;
 }
 
 const GAMMES: Record<string, number[]> = {
@@ -122,10 +124,10 @@ export async function genererArpegeKoch(
   modeSynthese: "Automatique" | "FM/Oscillateurs" | "SoundFont" = "Automatique",
 ): Promise<{ audio: AudioBuffer; notes: any[]; midiFile: File }> {
   const { notes } = genererNotesKoch(options);
-  const midiFile = notesVersFichierMidi(notes, options.tempo);
+  const midiFile = await appliquerInstrumentMidi(notesVersFichierMidi(notes, options.tempo), options.instrument ?? 0);
   const useSf2 = modeSynthese === "SoundFont" || (modeSynthese === "Automatique" && (globalThis as any).__attic_sf2__);
   const mode: "FM/Oscillateurs" | "SoundFont" = useSf2 ? "SoundFont" : "FM/Oscillateurs";
-  const audio = await rendreSequence(notes, mode, options.volume);
+  const audio = await rendreSequence(notes, mode, options.volume, options.instrument ?? 0, options.banque ?? 0);
   return { audio, notes, midiFile };
 }
 

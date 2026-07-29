@@ -2,7 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser, panLogistique } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique } from "./effets-spectral";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -162,5 +162,62 @@ describe("panLogistique", () => {
     const out = panLogistique(buffer, 50, 10, 0);
     expect(out.getChannelData(0)[0]).toBeCloseTo(1, 5);
     expect(out.getChannelData(1)[0]).toBeCloseTo(1, 5);
+  });
+});
+
+function rmsTranche(buf: AudioBuffer, debut: number, fin: number): number {
+  const data = buf.getChannelData(0);
+  let sum = 0;
+  for (let i = debut; i < fin; i++) sum += data[i] * data[i];
+  return Math.sqrt(sum / (fin - debut));
+}
+
+describe("vibratoLogistique", () => {
+  it("conserve la durée, le sample rate et le nombre de canaux", () => {
+    const buffer = sinus(440, 1, 2);
+    const out = vibratoLogistique(buffer, 5, 50, 50, 10, 100);
+    expect(out.duration).toBeCloseTo(buffer.duration, 1);
+    expect(out.sampleRate).toBe(buffer.sampleRate);
+    expect(out.numberOfChannels).toBe(buffer.numberOfChannels);
+  });
+
+  it("ne modifie pas le signal avec un mix à 0", () => {
+    const buffer = sinus(440, 1, 1);
+    const out = vibratoLogistique(buffer, 5, 100, 50, 10, 0);
+    expect(out.getChannelData(0)).toEqual(buffer.getChannelData(0));
+  });
+
+  it("modifie le signal quand la profondeur et le mix sont non nuls", () => {
+    const buffer = sinus(440, 1, 1);
+    const out = vibratoLogistique(buffer, 10, 100, 50, 10, 100);
+    let diff = 0;
+    for (let i = 0; i < buffer.length; i++) diff += Math.abs(out.getChannelData(0)[i] - buffer.getChannelData(0)[i]);
+    expect(diff / buffer.length).toBeGreaterThan(0.01);
+  });
+});
+
+describe("tremoloLogistique", () => {
+  it("conserve la durée, le sample rate et le nombre de canaux", () => {
+    const buffer = constant(1, 2);
+    const out = tremoloLogistique(buffer, 5, 50, 50, 10, 100);
+    expect(out.duration).toBeCloseTo(buffer.duration, 1);
+    expect(out.sampleRate).toBe(buffer.sampleRate);
+    expect(out.numberOfChannels).toBe(buffer.numberOfChannels);
+  });
+
+  it("ne modifie pas le signal avec un mix à 0", () => {
+    const buffer = constant(1, 1);
+    const out = tremoloLogistique(buffer, 5, 100, 50, 10, 0);
+    expect(out.getChannelData(0)).toEqual(buffer.getChannelData(0));
+  });
+
+  it("l'effet s'installe progressivement : début fort, fin affaiblie", () => {
+    const buffer = constant(1, 1);
+    const out = tremoloLogistique(buffer, 20, 100, 50, 10, 100);
+    const quart = Math.floor(buffer.length / 4);
+    const rmsDebut = rmsTranche(out, 0, quart);
+    const rmsFin = rmsTranche(out, buffer.length - quart, buffer.length);
+    expect(rmsDebut).toBeGreaterThan(0.95);
+    expect(rmsFin).toBeLessThan(0.8);
   });
 });

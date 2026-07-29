@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { parseMidi } from "midi-file";
 import {
   appliquerDelay, appliquerReverberation, appliquerDistorsion,
   appliquerFlanger, appliquerChorus, compresser, normaliser,
@@ -30,7 +31,12 @@ import {
    harmoniser,
    vocoder,
    granularFreeze,
+   appliquerInstrumentMidi,
+   joindreMidi,
+   bouclerMidi,
+   analyserMidi,
 } from "../audio";
+import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
@@ -482,6 +488,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const { transposerQuantifierMidi } = await import("../audio");
@@ -490,13 +497,16 @@ export const fiches: FicheAudio[] = ([
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
       const quantifierFin = ctx.paramTexte("Quantifier fins", "Non") === "Oui";
-      const nouvFichier = await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin);
+      const nouvFichier = await appliquerInstrumentMidi(
+        await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin),
+        ctx.paramNombre("Instrument", 0),
+      );
       const msgs: string[] = [];
       if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
       if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
- },
+  },
   {
     id: "arpegiateur-midi", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
@@ -529,6 +539,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note length", plage: [10, 100], pas: 5, defaut: 50, unite: "%",
         doc: "Durée de chaque note arpégée en pourcentage du pas de temps. 100% = legato, 50% = staccato.",
         docEn: "Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const { arpegerMidi } = await import("../audio");
@@ -539,10 +550,62 @@ export const fiches: FicheAudio[] = ([
       const vitesse = ctx.paramTexte("Vitesse", "1/16");
       const octaves = Math.round(ctx.paramNombre("Octaves", 1));
       const dureeNote = ctx.paramNombre("Durée note", 50);
-      const nouvFichier = await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote);
+      const nouvFichier = await appliquerInstrumentMidi(
+        await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote),
+        ctx.paramNombre("Instrument", 0),
+      );
       return { valeurs: [nouvFichier], message: traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves) };
    },
- },
+  },
+  {
+    id: "jointure-midi", nom: "Jointure MIDI", nomEn: "MIDI Join",
+    univers: "Traitement", famille: "Montage",
+    resume: "Place deux fichiers MIDI l'un après l'autre avec un chevauchement.",
+    resumeEn: "Places two MIDI files one after another with an overlap.",
+    entrees: [{ nom: "MIDI 1", nomEn: "MIDI 1", type: "midi" }, { nom: "MIDI 2", nomEn: "MIDI 2", type: "midi" }],
+    sorties: [{ nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Chevauchement", nomEn: "Overlap", plage: [0, 30], pas: 0.1, defaut: 0, unite: "s",
+        doc: "Durée pendant laquelle le deuxième MIDI démarre avant la fin du premier. 0 = concaténation simple.",
+        docEn: "Duration for which the second MIDI starts before the first ends. 0 = simple concatenation." },
+    ],
+    async executer(ctx: any) {
+      const fichier1 = ctx.entree(0);
+      const fichier2 = ctx.entree(1);
+      if (!(fichier1 instanceof File) || !(fichier2 instanceof File)) {
+        return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      }
+      const chevauchement = ctx.paramNombre("Chevauchement", 0);
+      const nouvFichier = await joindreMidi(fichier1, fichier2, chevauchement);
+      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      return { valeurs: [nouvFichier], message: traduire("msg.jointure_midi_var_0_notes_var_1_s", notes.length, dureeTotale.toFixed(2)) };
+    },
+  },
+  {
+    id: "boucle-midi", nom: "Boucle MIDI", nomEn: "MIDI Loop",
+    univers: "Traitement", famille: "Montage",
+    resume: "Répète un fichier MIDI un nombre de fois donné.",
+    resumeEn: "Repeats a MIDI file a given number of times.",
+    entrees: [{ nom: "MIDI", nomEn: "MIDI", type: "midi" }],
+    sorties: [{ nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Répétitions", nomEn: "Repeats", plage: [1, 32], pas: 1, defaut: 4,
+        doc: "Nombre de fois où le fichier MIDI est rejoué à la suite.",
+        docEn: "Number of times the MIDI file is replayed in a row." },
+      { nom: "Fondu", nomEn: "Fade", plage: [0, 1000], pas: 1, defaut: 0, unite: "ms",
+        doc: "Chevauchement entre deux répétitions. 0 = pas de chevauchement (raccord sec).",
+        docEn: "Overlap between two repetitions. 0 = no overlap (hard join)." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const repetitions = Math.round(ctx.paramNombre("Répétitions", 4));
+      const fondu = ctx.paramNombre("Fondu", 0);
+      const nouvFichier = await bouclerMidi(fichier, repetitions, fondu);
+      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      return { valeurs: [nouvFichier], message: traduire("msg.boucle_midi_var_0_repetitions_var_1_notes_var_2_s", repetitions, notes.length, dureeTotale.toFixed(2)) };
+    },
+  },
   {
     id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
@@ -759,7 +822,67 @@ export const fiches: FicheAudio[] = ([
       const pente = ctx.paramNombre("Pente", 10);
       const mix = ctx.paramNombre("Mix", 100);
       return { valeurs: [panLogistique(a, centre, pente, mix)], message: traduire("msg.auto_pan_logistique", (a.duration ?? 0).toFixed(1)) };
-   },
+    },
+  },
+  {
+    id: "vibrato-logistique", nom: "Vibrato logistique", nomEn: "Logistic vibrato", univers: "Traitement", famille: "Effets",
+    resume: "Vibrato dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Vibrato whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Vitesse de la modulation (oscillations par seconde).", docEn: "Modulation speed (oscillations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Amplitude maximale de la modulation de hauteur (0% = aucun, 100% = ±2 demi-tons).", docEn: "Maximum pitch modulation depth (0% = none, 100% = ±2 semitones)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { vibratoLogistique } = await import("../audio");
+      const freq = ctx.paramNombre("Fréquence", 5);
+      const prof = ctx.paramNombre("Profondeur", 50);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      return { valeurs: [vibratoLogistique(a, freq, prof, centre, pente, mix)], message: traduire("msg.vibrato_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
+    id: "tremolo-logistique", nom: "Tremolo logistique", nomEn: "Logistic tremolo", univers: "Traitement", famille: "Effets",
+    resume: "Tremolo dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Tremolo whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
+        doc: "Fréquence de la modulation (vibrations par seconde).", docEn: "Modulation rate (vibrations per second)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Profondeur maximale de la modulation (0% = aucun effet, 100% = volume coupé complètement).", docEn: "Maximum modulation depth (0% = no effect, 100% = volume fully cut)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { tremoloLogistique } = await import("../audio");
+      const freq = ctx.paramNombre("Fréquence", 5);
+      const prof = ctx.paramNombre("Profondeur", 50);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      return { valeurs: [tremoloLogistique(a, freq, prof, centre, pente, mix)], message: traduire("msg.tremolo_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
   },
   {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",

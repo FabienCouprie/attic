@@ -4,14 +4,21 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
+// Convertit l'ID technique Piper (langue_COUNTRY-voix-qualité) en libellé court
+// utilisé comme valeur du paramètre : langue en majuscule, sans le pays.
+function displayIdPiper(id: string) {
+  const [lang, ...rest] = id.split("-");
+  return `${lang.split("_")[0].toUpperCase()}-${rest.join("-")}`;
+}
+
 // Quelques voix Piper russes disponibles sur HuggingFace (rhasspy/piper-voices).
-const VOIX_PIPER: Record<string, { id: string; nom: string; nomEn: string; langue: string }> = {
-  "ru_RU-irina-medium": { id: "ru_RU-irina-medium", nom: "Irina (russe, medium)", nomEn: "Irina (Russian, medium)", langue: "ru" },
-  "ru_RU-ruslan-medium": { id: "ru_RU-ruslan-medium", nom: "Ruslan (russe, medium)", nomEn: "Ruslan (Russian, medium)", langue: "ru" },
-  "en_US-libritts_r-medium": { id: "en_US-libritts_r-medium", nom: "LibriTTS (anglais, medium)", nomEn: "LibriTTS (English, medium)", langue: "en" },
-  "fr_FR-siwis-medium": { id: "fr_FR-siwis-medium", nom: "Siwis (français, medium)", nomEn: "Siwis (French, medium)", langue: "fr" },
-  "de_DE-thorsten-medium": { id: "de_DE-thorsten-medium", nom: "Thorsten (allemand, medium)", nomEn: "Thorsten (German, medium)", langue: "de" },
-  "es_ES-davefx-medium": { id: "es_ES-davefx-medium", nom: "Davefx (espagnol, medium)", nomEn: "Davefx (Spanish, medium)", langue: "es" },
+const VOIX_PIPER: Record<string, { id: string; displayId: string; nom: string; nomEn: string; langue: string }> = {
+  "ru_RU-irina-medium": { id: "ru_RU-irina-medium", displayId: displayIdPiper("ru_RU-irina-medium"), nom: "Irina (russe, medium)", nomEn: "Irina (Russian, medium)", langue: "ru" },
+  "ru_RU-ruslan-medium": { id: "ru_RU-ruslan-medium", displayId: displayIdPiper("ru_RU-ruslan-medium"), nom: "Ruslan (russe, medium)", nomEn: "Ruslan (Russian, medium)", langue: "ru" },
+  "en_US-libritts_r-medium": { id: "en_US-libritts_r-medium", displayId: displayIdPiper("en_US-libritts_r-medium"), nom: "LibriTTS (anglais, medium)", nomEn: "LibriTTS (English, medium)", langue: "en" },
+  "fr_FR-siwis-medium": { id: "fr_FR-siwis-medium", displayId: displayIdPiper("fr_FR-siwis-medium"), nom: "Siwis (français, medium)", nomEn: "Siwis (French, medium)", langue: "fr" },
+  "de_DE-thorsten-medium": { id: "de_DE-thorsten-medium", displayId: displayIdPiper("de_DE-thorsten-medium"), nom: "Thorsten (allemand, medium)", nomEn: "Thorsten (German, medium)", langue: "de" },
+  "es_ES-davefx-medium": { id: "es_ES-davefx-medium", displayId: displayIdPiper("es_ES-davefx-medium"), nom: "Davefx (espagnol, medium)", nomEn: "Davefx (Spanish, medium)", langue: "es" },
 };
 
 let worker: Worker | null = null;
@@ -39,10 +46,10 @@ export const fiches: FicheAudio[] = ([
         nom: "Voix",
         nomEn: "Voice",
         type: "choix",
-        options: Object.keys(VOIX_PIPER),
-        optionsEn: Object.values(VOIX_PIPER).map((v) => v.nomEn),
-        defaut: "ru_RU-irina-medium",
-        defautEn: "ru_RU-irina-medium",
+        options: Object.values(VOIX_PIPER).map((v) => v.displayId),
+        optionsEn: Object.values(VOIX_PIPER).map((v) => v.displayId),
+        defaut: displayIdPiper("ru_RU-irina-medium"),
+        defautEn: displayIdPiper("ru_RU-irina-medium"),
         doc: "Voix Piper à utiliser. Les voix russes sont recommandées pour le russe. Le modèle ONNX de la voix est téléchargé depuis HuggingFace la première fois, puis mis en cache.",
         docEn: "Piper voice to use. Russian voices are recommended for Russian. The ONNX voice model is downloaded from HuggingFace on first use, then cached.",
       },
@@ -52,8 +59,10 @@ export const fiches: FicheAudio[] = ([
       if (typeof texte !== "string" || !texte.trim()) {
         return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       }
-      const voixId = ctx.paramTexte("Voix", "ru_RU-irina-medium");
-      const voix = VOIX_PIPER[voixId] ?? VOIX_PIPER["ru_RU-irina-medium"];
+      const defaultDisplayId = displayIdPiper("ru_RU-irina-medium");
+      const voixId = ctx.paramTexte("Voix", defaultDisplayId);
+      const voix = Object.values(VOIX_PIPER).find((v) => v.displayId === voixId || v.id === voixId || v.nom === voixId || v.nomEn === voixId)
+        ?? VOIX_PIPER["ru_RU-irina-medium"];
       const w = getWorker();
       return new Promise((resolve) => {
         const onMessage = (e: MessageEvent) => {

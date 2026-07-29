@@ -2,6 +2,15 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+### Fixed
+- **Node deletion cleanup** — deleting a node via the red-cross button, the Delete key, the Inspector, Ctrl+X, or by removing a meta-component now clears the execution cache for the deleted node and its downstream nodes, revokes generated result object URLs, and resets downstream statuses. This prevents stale cached results and memory leaks from outliving the deleted node.
+- **TTS voice parameter labels** — SpeechT5 and Piper TTS voice dropdowns now show readable labels (e.g., `US male (BDL)`, `RU-irina-medium`) instead of raw technical IDs, while the runtime still receives the correct voice. Old saved values remain supported.
+
+### Added
+- **Advanced Drum Sequencer** — new node `sequenceur-batterie-avance` with 8 drum tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom), per-step velocity (0–9), and synthesized drum-machine sounds. The existing `Séquenceur de batterie` is unchanged.
+
 ## [2.0.1] — 2026-07-27
 
 ### Fixed

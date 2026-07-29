@@ -260,13 +260,19 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   padding: 10px 14px; font-weight: 600; font-size: 13px;
   border-bottom: 1px solid var(--border-divider);
   color: var(--text-title);
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0;
 }
-.attic-node-actions { display: flex; gap: 4px; margin-left: auto; }
+.attic-node-nom {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0;
+}
+.attic-node-actions { display: flex; flex: none; gap: 4px; margin-left: auto; align-items: center; }
 .attic-node-btn-doc, .attic-node-btn-del, .attic-node-btn-reset, .attic-node-btn-prio {
   width: 20px; height: 20px; border-radius: 50%; border: 1px solid transparent;
   background: none; color: var(--text-icon); font-size: 11px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
+  flex: none; line-height: 1; overflow: hidden; box-sizing: border-box;
 }
 .attic-node-btn-doc:hover { background: var(--bg-btn-hover); }
 .attic-node-btn-del:hover { background: rgba(238,68,68,0.1); color: #e44; border-color: #e44; }

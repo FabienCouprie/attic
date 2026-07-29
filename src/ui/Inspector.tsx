@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre } from "../i18n";
+import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -130,6 +131,11 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                 </select>
               );
             })()
+          ) : p.type === "sf2instrument" ? (
+            <SelecteurInstrumentSF2
+              value={Number(params[p.nom] ?? defautP)}
+              onChange={(v) => onChangerParametre(p.nom, v)}
+            />
           ) : p.type === "texte" ? (
             <textarea
               value={String(params[p.nom] ?? defautP)}

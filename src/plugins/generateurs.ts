@@ -7,7 +7,7 @@ import {
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
-  genererAudioFormule, notesVersFichierMidi, rendreSequence,
+  genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi,
   rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
   genererMusiqueMandelbrot,
@@ -15,7 +15,7 @@ import {
   rendreSpectrogrammeFractal,
 } from "../audio";
 import { parseMidi } from "midi-file";
-import { sf2Chargee, normaliserModeSynthèse } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -49,10 +49,10 @@ export const fiches: FicheAudio[] = ([
         for (const canal of [0,1]) {
           const nc = notes.filter((n:any)=>n.canal===canal);
           if (!nc.length) continue;
-          const progGM = canauxInstrument.get(canal)??0;
-          const idx = progGM < sf2.instruments.length ? progGM : undefined;
+          const instCanal = canauxInstrument.get(canal)??{programme:0,banque:0};
+          const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
           const an = nc.map((n:any)=>({note:n.note,velocite:n.velociete,debut:n.debut,fin:n.fin}));
-          const layer = rendreAvecSF2(sf2, an, vol, idx);
+          const layer = rendreAvecSF2(sf2, an, vol, idx, instCanal.banque);
           for (let i=0;i<master.length&&i<layer.length;i++) {
             master.getChannelData(0)[i] += layer.getChannelData(0)[i];
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];
@@ -79,6 +79,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       console.log("[attic] Mélodie aléatoire : exécution démarrée");
@@ -87,13 +88,15 @@ export const fiches: FicheAudio[] = ([
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
-      console.log(`[attic] Mélodie aléatoire : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+      console.log(`[attic] Mélodie aléatoire : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
       const audioFinal = useSf2
-        ? await rendreSequence(notes, "SoundFont", volume)
+        ? await rendreSequence(notes, "SoundFont", volume, instrument, banque)
         : audio;
+      const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Mélodie aléatoire : audioFinal durée=${audioFinal?.duration ?? 0}`);
-      return { valeurs: [audioFinal, midiFile] };
+      return { valeurs: [audioFinal, midiFinal] };
     },
   },
   {
@@ -114,6 +117,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       console.log("[attic] Musique fractale : exécution démarrée");
@@ -122,13 +126,15 @@ export const fiches: FicheAudio[] = ([
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
-      console.log(`[attic] Musique fractale : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
+      console.log(`[attic] Musique fractale : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
       const audioFinal = useSf2
-        ? await rendreSequence(notes, "SoundFont", volume)
+        ? await rendreSequence(notes, "SoundFont", volume, instrument, banque)
         : audio;
+      const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
-      return { valeurs: [audioFinal, midiFile] };
+      return { valeurs: [audioFinal, midiFinal] };
     },
   },
   {
@@ -155,6 +161,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const cx = ctx.paramNombre("Centre X", -0.5);
@@ -162,6 +169,7 @@ export const fiches: FicheAudio[] = ([
       const zoom = ctx.paramNombre("Zoom", 1);
       const width = 3.5 / Math.max(0.1, zoom);
       const height = 2.5 / Math.max(0.1, zoom);
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const { audio, midiFile } = await genererMusiqueMandelbrot({
         xMin: cx - width / 2,
         xMax: cx + width / 2,
@@ -179,6 +187,8 @@ export const fiches: FicheAudio[] = ([
         timbre: ctx.paramTexte("Timbre", "Douce") as any,
         volume: ctx.paramNombre("Volume", 80),
         graine: ctx.paramNombre("Graine", 42),
+        instrument,
+        banque,
       }, ctx.paramTexte("Synthèse", "Automatique") as any);
       return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
     },
@@ -204,8 +214,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const { audio, midiFile } = await genererArpegeKoch({
         cle: ctx.paramTexte("Clé", "Do"),
         gamme: ctx.paramTexte("Gamme", "Majeur"),
@@ -219,6 +231,8 @@ export const fiches: FicheAudio[] = ([
         dureeNote: ctx.paramNombre("Durée note", 0.25),
         timbre: ctx.paramTexte("Timbre", "Douce") as any,
         volume: ctx.paramNombre("Volume", 80),
+        instrument,
+        banque,
       }, ctx.paramTexte("Synthèse", "Automatique") as any);
       return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
     },
@@ -384,6 +398,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
@@ -392,9 +407,10 @@ export const fiches: FicheAudio[] = ([
       if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
       try {
         const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+        const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
         const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
-        console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, notes=${notes.length}`);
-        const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80));
+        console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
+        const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80), instrument, banque);
         console.log(`[attic] Clavier mélodie : buffer rendu, durée=${buf?.duration ?? 0}`);
         return { valeurs: [buf] };
       } catch (e: any) {
@@ -793,10 +809,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Probabilité de silence à chaque pas. Crée des respirations dans la mélodie.", docEn: "Probability of silence at each step. Creates breathing room in the melody." },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution). Même graine = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same melody." },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
-      const { genererReservoirMusical } = await import("../audio");
-      const { notesVersFichierMidi } = await import("../audio");
+      const { genererReservoirMusical, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
       const config = {
@@ -822,9 +838,12 @@ export const fiches: FicheAudio[] = ([
       const { notes, graineUtilisee } = genererReservoirMusical(config);
       const notesJouees = notes.filter((n: any) => !n.silence);
       if (notesJouees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_g_n_r_e") };
-      const fichier = notesVersFichierMidi(
-        notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
-        config.tempo,
+      const fichier = await appliquerInstrumentMidi(
+        notesVersFichierMidi(
+          notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
+          config.tempo,
+        ),
+        ctx.paramNombre("Instrument", 0),
       );
       return { valeurs: [fichier], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2", config.taille, notesJouees.length, graineUtilisee) };
     },
