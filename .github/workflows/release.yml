@@ -58,7 +58,9 @@ jobs:
           npm prune --production
           # Re-install only the packager so it can run against the production tree.
           npm install --no-save electron-builder@26.15.3
-          npm exec -- electron-builder --win -p always -c.electronDist=electron-dist
+          # Point the packager to the saved Electron distribution via package.json.
+          node -e "const p = require('./package.json'); p.build.electronDist = 'electron-dist'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
+          npm exec -- electron-builder --win -p always
         env:
           # Use the native GitHub Actions token instead of a personal access token.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
