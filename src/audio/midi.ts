@@ -309,6 +309,83 @@ export async function appliquerInstrumentMidi(
   return new File([out], fichier.name, { type: fichier.type });
 }
 
+function bpmInitial(midi: any): number {
+  for (const piste of midi.tracks) {
+    for (const evt of piste) {
+      if (evt.type === "setTempo") return 60_000_000 / evt.microsecondsPerBeat;
+    }
+  }
+  return 120;
+}
+
+function evenementsAbsolus(
+  midi: any,
+  tpmSortie: number,
+  supprimerTempoDebut: boolean,
+): { tick: number; evt: any }[] {
+  const ratio = tpmSortie / (midi.header.ticksPerBeat || 480);
+  const result: { tick: number; evt: any }[] = [];
+  for (const piste of midi.tracks) {
+    let tick = 0;
+    for (const evt of piste) {
+      tick += evt.deltaTime;
+      if (evt.type === "endOfTrack") continue;
+      if (supprimerTempoDebut && tick === 0 && (evt.type === "setTempo" || evt.type === "timeSignature")) continue;
+      result.push({ tick: Math.round(tick * ratio), evt: { ...evt } });
+    }
+  }
+  return result;
+}
+
+/** Concatène deux fichiers MIDI. La seconde piste commence à la fin de la première,
+ * moins le chevauchement (en secondes). Le chevauchement nul donne une simple
+ * concaténation. Les événements sont conservés et les canaux restent inchangés. */
+export async function joindreMidi(
+  fichier1: File,
+  fichier2: File,
+  chevauchementSec: number,
+): Promise<File> {
+  const tpmSortie = 480;
+  const midi1 = parseMidi(new Uint8Array(await fichier1.arrayBuffer()));
+  const midi2 = parseMidi(new Uint8Array(await fichier2.arrayBuffer()));
+
+  const evts1 = evenementsAbsolus(midi1, tpmSortie, false);
+  const evts2 = evenementsAbsolus(midi2, tpmSortie, true);
+
+  const maxTick1 = evts1.reduce((m, e) => Math.max(m, e.tick), 0);
+  const bpm1 = bpmInitial(midi1);
+  const chevTicks = Math.max(
+    0,
+    Math.min(maxTick1, Math.round(chevauchementSec * ((tpmSortie * bpm1) / 60))),
+  );
+  const decalage2 = maxTick1 - chevTicks;
+  for (const e of evts2) e.tick += decalage2;
+
+  const evts = [...evts1, ...evts2];
+  evts.sort((a, b) => {
+    if (a.tick !== b.tick) return a.tick - b.tick;
+    if (a.evt.type === "noteOff" && b.evt.type !== "noteOff") return -1;
+    if (a.evt.type !== "noteOff" && b.evt.type === "noteOff") return 1;
+    return 0;
+  });
+
+  let tickCourant = 0;
+  const outEvts: any[] = [];
+  for (const { tick, evt } of evts) {
+    const deltaTime = Math.max(0, tick - tickCourant);
+    outEvts.push({ ...evt, deltaTime });
+    tickCourant = tick;
+  }
+  outEvts.push({ deltaTime: 0, type: "endOfTrack" });
+
+  const midi = {
+    header: { format: 1 as const, numTracks: 1, ticksPerBeat: tpmSortie },
+    tracks: [outEvts],
+  };
+  const bytes = new Uint8Array(writeMidi(midi as any));
+  return new File([bytes], "jointure.mid", { type: "audio/midi" });
+}
+
 export async function rendreMidi(
   fichier: File,
   mode: "FM/Oscillateurs" | "SoundFont",

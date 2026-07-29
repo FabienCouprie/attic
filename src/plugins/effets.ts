@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { parseMidi } from "midi-file";
 import {
   appliquerDelay, appliquerReverberation, appliquerDistorsion,
   appliquerFlanger, appliquerChorus, compresser, normaliser,
@@ -31,6 +32,8 @@ import {
    vocoder,
    granularFreeze,
    appliquerInstrumentMidi,
+   joindreMidi,
+   analyserMidi,
 } from "../audio";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
@@ -552,6 +555,30 @@ export const fiches: FicheAudio[] = ([
       );
       return { valeurs: [nouvFichier], message: traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves) };
    },
+  },
+  {
+    id: "jointure-midi", nom: "Jointure MIDI", nomEn: "MIDI Join",
+    univers: "Traitement", famille: "Montage",
+    resume: "Place deux fichiers MIDI l'un après l'autre avec un chevauchement.",
+    resumeEn: "Places two MIDI files one after another with an overlap.",
+    entrees: [{ nom: "MIDI 1", nomEn: "MIDI 1", type: "midi" }, { nom: "MIDI 2", nomEn: "MIDI 2", type: "midi" }],
+    sorties: [{ nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Chevauchement", nomEn: "Overlap", plage: [0, 30], pas: 0.1, defaut: 0, unite: "s",
+        doc: "Durée pendant laquelle le deuxième MIDI démarre avant la fin du premier. 0 = concaténation simple.",
+        docEn: "Duration for which the second MIDI starts before the first ends. 0 = simple concatenation." },
+    ],
+    async executer(ctx: any) {
+      const fichier1 = ctx.entree(0);
+      const fichier2 = ctx.entree(1);
+      if (!(fichier1 instanceof File) || !(fichier2 instanceof File)) {
+        return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      }
+      const chevauchement = ctx.paramNombre("Chevauchement", 0);
+      const nouvFichier = await joindreMidi(fichier1, fichier2, chevauchement);
+      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      return { valeurs: [nouvFichier], message: traduire("msg.jointure_midi_var_0_notes_var_1_s", notes.length, dureeTotale.toFixed(2)) };
+    },
   },
   {
     id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
