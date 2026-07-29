@@ -45,11 +45,11 @@ jobs:
       - name: Build and publish to GitHub release
         shell: pwsh
         run: |
-          npm run build
-          npm run ensure-songsee
           # Packaging as a single asar archive consumes excessive memory for this
-          # app's bundled assets. Publish with asar disabled so files remain unpacked.
-          npm exec -- electron-builder --win -p always -c.electronDist=node_modules/electron/dist -c.asar=false
+          # app's bundled assets. Disable asar in the checked-out package.json before
+          # building so the final app remains unpacked.
+          node -e "const p = require('./package.json'); p.build.asar = false; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
+          npm run publish:electron
         env:
           # Use the native GitHub Actions token instead of a personal access token.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
