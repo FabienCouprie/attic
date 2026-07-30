@@ -586,7 +586,6 @@ const INSTRUMENTS_GM: Record<string, number> = {
   "Contrebasse": 43, "Basse slap": 36,
   "Flûte": 73, "Trompette": 56, "Sax alto": 65, "Guitare nylon": 24,
   "Violon": 40, "Lead synth": 80, "Boîte à musique": 10, "Xylophone": 13,
-  "Batterie (GM)": 0, "Batterie (électro)": 0, "Batterie (jazz)": 0,
 };
 
 
@@ -655,7 +654,6 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const pisteMelodie: any[] = [
     { deltaTime: 0, type: "programChange", channel: 2, programNumber: instr3 },
   ];
-  const pisteBatterie: any[] = [];
 
   for (let i = 0; i < nbAccords; i++) {
     const debAcc = i * dureeAccord;
@@ -687,13 +685,6 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
       pisteMelodie.push({ deltaTime: Math.max(tMelD + 1, tMelF), type: "noteOff", channel: 2, noteNumber: midiMel, velocity: 0 });
     }
 
-    // Batterie (canal 9 = percussions GM)
-    for (let b = 0; b < Math.floor(dureeAccord / (noire * 0.25)); b++) {
-      const tBat = secEnTicks(debAcc + b * noire * 0.25);
-      if (b % 8 === 0) { pisteBatterie.push({ deltaTime: tBat, type: "noteOn", channel: 9, noteNumber: 36, velocity: 100 }); pisteBatterie.push({ deltaTime: tBat + 1, type: "noteOff", channel: 9, noteNumber: 36, velocity: 0 }); }
-      if (b % 8 === 4) { pisteBatterie.push({ deltaTime: tBat, type: "noteOn", channel: 9, noteNumber: 38, velocity: 80 }); pisteBatterie.push({ deltaTime: tBat + 1, type: "noteOff", channel: 9, noteNumber: 38, velocity: 0 }); }
-      if (b % 2 === 0 || b % 2 === 1) { pisteBatterie.push({ deltaTime: tBat, type: "noteOn", channel: 9, noteNumber: 42, velocity: 60 }); pisteBatterie.push({ deltaTime: tBat + 1, type: "noteOff", channel: 9, noteNumber: 42, velocity: 0 }); }
-    }
   }
 
   // Trier chaque piste par temps absolu puis convertir en deltaTimes
@@ -716,9 +707,8 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const piste1 = [...metaEvents, ...trierPiste(pisteAccords)];
   const piste2 = trierPiste(pisteBasse);
   const piste3 = trierPiste(pisteMelodie);
-  const piste4 = trierPiste(pisteBatterie);
 
-  const midi = { header: { format: 1 as const, numTracks: 4, ticksPerBeat: tpm }, tracks: [piste1, piste2, piste3, piste4] };
+  const midi = { header: { format: 1 as const, numTracks: 3, ticksPerBeat: tpm }, tracks: [piste1, piste2, piste3] };
   const bytes = new Uint8Array(writeMidi(midi));
 
   const descr = [
@@ -726,7 +716,7 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     `Genre : ${genre}  ·  ${tempo} BPM  ·  ${tonalite}  ·  ${dureeSec}s`,
     `Structure : ${nbAccords} accords × ${dureeAccord.toFixed(1)}s`,
     `Progression : ${progression.map((d) => ["I", "II", "III", "IV", "V", "VI", "VII"][d % 7]).join(" – ")}`,
-    `Instruments : Piano · Basse · Marimba · Batterie`,
+    `Instruments : Piano · Basse · Marimba`,
   ].join("\n");
 
   return { midiBytes: bytes, description: descr };

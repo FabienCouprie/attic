@@ -84,7 +84,6 @@ const entrees: FicheAudio[] = [
       { nom: "Instrument 1", nomEn: "Instrument 1", type: "choix", options: ["Piano","Piano électrique","Guitare acoustique","Guitare électrique","Orgue","Clavecin","Vibraphone","Marimba","Cordes","Pad"], defaut: "Piano", docEn: "Layer 1 — chords.", optionsEn: ["Piano", "Electric piano", "Acoustic guitar", "Electric guitar", "Organ", "Harpsichord", "Vibraphone", "Marimba", "Cords", "Pad"], defautEn: "Piano" },
       { nom: "Instrument 2", nomEn: "Instrument 2", type: "choix", options: ["Basse fretless","Basse acoustique","Basse électrique","Synth bass","Contrebasse","Basse slap"], defaut: "Basse fretless", docEn: "Layer 2 — bass.", optionsEn: ["Fretless bass", "Acoustic bass", "Electric bass", "Synth bass", "Double bass", "Slap bass"], defautEn: "Fretless bass" },
       { nom: "Instrument 3", nomEn: "Instrument 3", type: "choix", options: ["Marimba","Flûte","Trompette","Sax alto","Guitare nylon","Violon","Lead synth","Boîte à musique","Xylophone","Cordes"], defaut: "Marimba", docEn: "Layer 3 — melody.", optionsEn: ["Marimba", "Flute", "Trumpet", "Sax alto", "Nylon guitar", "Violin", "Lead synth", "Music box", "Xylophone", "Cords"], defautEn: "Marimba" },
-      { nom: "Instrument 4", nomEn: "Instrument 4", type: "choix", options: ["Batterie (GM)","Batterie (électro)","Batterie (jazz)"], defaut: "Batterie (GM)", docEn: "Layer 4 — drums (channel 9).", optionsEn: ["Drum kit (GM)", "Drum kit (electro)", "Drum kit (jazz)"], defautEn: "Drum kit (GM)" },
     ],
     async executer(ctx) {
       const genre = ctx.paramTexte("Genre", "pop");
@@ -96,13 +95,12 @@ const entrees: FicheAudio[] = [
       const instr1 = ctx.paramTexte("Instrument 1", "Piano");
       const instr2 = ctx.paramTexte("Instrument 2", "Basse fretless");
       const instr3 = ctx.paramTexte("Instrument 3", "Marimba");
-      const instr4 = ctx.paramTexte("Instrument 4", "Batterie (GM)");
 
       ctx.onProgress(traduire("progress.g_n_ration_du_script"));
       const { genererDepuisScript, analyserMidi, rendreMidiDepuisBytes, rendreAvecSF2 } = await import("../audio");
       const { sf2Chargee } = await import("./soundfontGlobal");
 
-      const script = `genre = ${genre}\ntempo = ${tempo}\ncle = ${cle}\ngamme = ${gamme}\nduree = ${duree}\ninstr1 = ${instr1}\ninstr2 = ${instr2}\ninstr3 = ${instr3}\ninstr4 = ${instr4}`;
+      const script = `genre = ${genre}\ntempo = ${tempo}\ncle = ${cle}\ngamme = ${gamme}\nduree = ${duree}\ninstr1 = ${instr1}\ninstr2 = ${instr2}\ninstr3 = ${instr3}`;
       const { midiBytes, description } = await genererDepuisScript(script);
 
       const sf2 = sf2Chargee();
@@ -110,11 +108,11 @@ const entrees: FicheAudio[] = [
         ctx.onProgress(traduire("progress.rendu_soundfont"));
         const { parseMidi } = await import("midi-file");
         const parsed = parseMidi(midiBytes);
-        const { notes, canauxInstrument } = analyserMidi(parsed);
+        const { notes, dureeTotale, canauxInstrument } = analyserMidi(parsed);
         const sr = 44100;
-        const dTot = notes.reduce((m: number, n: any) => Math.max(m, n.fin), 0) + 1;
+        const dTot = Math.max(dureeTotale, 0.5);
         const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(dTot * sr), sampleRate: sr });
-        for (const canal of [0,1,2,9]) {
+        for (const canal of [0,1,2]) {
           const nc = notes.filter((n: any) => n.canal === canal);
           if (!nc.length) continue;
           const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };

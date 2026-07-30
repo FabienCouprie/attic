@@ -13,6 +13,7 @@ import {
   genererMusiqueMandelbrot,
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
+  type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
@@ -393,31 +394,34 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "clavier-melodie", nom: "Clavier mélodie", nomEn: "Melody Keyboard", univers: "Entrées", famille: "Génération",
-    resume: "Joue une séquence enregistrée au clavier.",
-    resumeEn: "Plays a keyboard-recorded sequence.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    resume: "Joue une séquence enregistrée au clavier et exporte aussi un fichier MIDI.",
+    resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
+      { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
       console.log("[attic] Clavier mélodie : exécution démarrée");
-      const notes = ctx.noeud.data.sequenceNotes;
-      if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
+      const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
+      if (!notes || !Array.isArray(notes)) return { valeurs:[null, null], message:traduire("msg.aucune_s_quence") };
       try {
         const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
         const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
         const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
         console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
-        const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80), instrument, banque);
+        const buf = await rendreSequence(notes, modeRendu, ctx.paramNombre("Volume",80), instrument, banque);
+        const tempo = ctx.paramNombre("Tempo", 120);
+        const midiFile = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
         console.log(`[attic] Clavier mélodie : buffer rendu, durée=${buf?.duration ?? 0}`);
-        return { valeurs: [buf] };
+        return { valeurs: [buf, midiFile] };
       } catch (e: any) {
         console.error("[attic] Clavier mélodie : erreur", e);
-        return { valeurs:[null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
+        return { valeurs:[null, null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },
   },
@@ -1241,13 +1245,7 @@ export const fiches: FicheAudio[] = ([
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
 
       const { notes: notesMidi, dureeTotale } = analyserMidi(parseMidi(midiBytes));
-      const duree = Math.max(dureeTotale, 0.5);
       const sampleRate = ctx.runtime?.sampleRate ?? 44100;
-      const master = new AudioBuffer({
-        numberOfChannels: 2,
-        length: Math.ceil(duree * sampleRate),
-        sampleRate,
-      });
 
       const drums = notesMidi
         .filter((n) => n.canal === 9)
@@ -1270,6 +1268,13 @@ export const fiches: FicheAudio[] = ([
           .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
         melodicBuf = await rendreSequence(melodic, "FM/Oscillateurs", volume);
       }
+
+      const dureeMix = Math.max(dureeTotale, drumBuf.duration, melodicBuf.duration, 0.5);
+      const master = new AudioBuffer({
+        numberOfChannels: 2,
+        length: Math.ceil(dureeMix * sampleRate),
+        sampleRate,
+      });
 
       for (let i = 0; i < master.length; i++) {
         if (i < melodicBuf.length) {

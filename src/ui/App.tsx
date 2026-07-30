@@ -179,6 +179,14 @@ function Atelier() {
   const grapheRacineRef = useRef<{ nodes: NoeudAtelier[]; edges: Edge[] } | null>(null);
   const [enExecution, setEnExecution] = useState(false);
   const enExecRef = useRef(false);
+  const [paletteOuverte, setPaletteOuverte] = useState(() => localStorage.getItem("attic-palette-ouverte") !== "false");
+  const togglePalette = useCallback(() => {
+    setPaletteOuverte((prev) => {
+      const next = !prev;
+      localStorage.setItem("attic-palette-ouverte", String(next));
+      return next;
+    });
+  }, []);
   const noeudsRef = useRef(nodes);
   const aretesRef = useRef(edges);
   useEffect(() => {
@@ -681,8 +689,10 @@ function Atelier() {
   }, []);
 
   return (
-    <div className="attic-app">
+    <div className="attic-app" style={{ gridTemplateColumns: paletteOuverte ? "260px 1fr 280px" : "40px 1fr 280px" }}>
       <Palette
+        ouverte={paletteOuverte}
+        onToggle={togglePalette}
         plugins={plugins.filter((p) => !estFrontiere(p.id))}
         onSupprimerMeta={(id) => {
           const meta = trouverMeta(id);

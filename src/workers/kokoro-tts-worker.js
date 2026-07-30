@@ -37,26 +37,47 @@ function sendProgress(msg) {
 self.onmessage = async (e) => {
   const { text, voice, speed, labels } = e.data;
   const label = (key, fallback) => labels?.[key] ?? fallback;
+  const basename = (path) => {
+    if (!path) return "";
+    return path.split(/[\\/]/).pop() || path;
+  };
+  const toPercent = (value, loaded, total) => {
+    if (typeof value === "number" && !isNaN(value)) {
+      if (value >= 0 && value <= 1) return Math.round(value * 100);
+      return Math.round(Math.min(100, Math.max(0, value)));
+    }
+    if (typeof loaded === "number" && typeof total === "number" && total > 0) {
+      return Math.round(Math.min(100, Math.max(0, (loaded / total) * 100)));
+    }
+    return 0;
+  };
+  const formatLoad = (pct) => {
+    const tpl = label("load", "Chargement du modèle Kokoro… {__VAR_0__}%");
+    return tpl.replace("{__VAR_0__}", pct);
+  };
   const formatDownload = (file, pct) => {
     const tpl = label("download", "Téléchargement {__VAR_0__} {__VAR_1__}%");
-    return tpl.replace("{__VAR_0__}", file ?? "").replace("{__VAR_1__}", pct);
+    return tpl.replace("{__VAR_0__}", basename(file)).replace("{__VAR_1__}", pct);
   };
   try {
     if (!tts) {
-      sendProgress(label("load", "Chargement du modèle Kokoro…"));
+      sendProgress(formatLoad(0));
       tts = await KokoroTTS.from_pretrained(MODEL_ID, {
         dtype: "q8",
         device: "wasm",
         progress_callback: (data) => {
-          // data.status peut être "progress", "download", "done", "ready"
-          if (data?.status === "progress" && typeof data.progress === "number") {
-            const pct = Math.round(data.progress * 100);
-            sendProgress(formatDownload(data.file || "", pct));
-          } else if (data?.status === "download" && typeof data.progress === "number") {
-            const pct = Math.round(data.progress * 100);
-            sendProgress(formatDownload(data.file || "", pct));
-          } else if (data?.status) {
-            sendProgress(data.status);
+          // data.status peut être "progress", "download", "done", "ready", "initiate"
+          const file = data?.file || "";
+          if (data?.status === "progress") {
+            const pct = toPercent(data.progress, data.loaded, data.total);
+            sendProgress(formatLoad(pct));
+          } else if (data?.status === "download") {
+            const pct = toPercent(data.progress, data.loaded, data.total);
+            sendProgress(formatDownload(file, pct));
+          } else if (data?.status === "initiate") {
+            sendProgress(formatLoad(0));
+          } else if (data?.status === "ready") {
+            sendProgress(formatLoad(100));
           }
         },
       });

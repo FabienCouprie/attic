@@ -113,7 +113,7 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
     }
   }
 
-  return { notes, dureeTotale: dureeMax + 1, canauxInstrument };
+  return { notes, dureeTotale: dureeMax, canauxInstrument };
 }
 
 
