@@ -47,6 +47,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 function isVoixKokoro(v: string): v is VoixKokoro {
   return (VOIX_KOKORO as readonly string[]).includes(v);
 }
@@ -102,11 +109,14 @@ export const fiches: FicheAudio[] = ([
         synthesize: traduire("progress.kokoro.synthesize"),
       };
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") {
             ctx.onProgress?.(msg.msg);
           } else if (msg.type === "done") {
+            w.removeEventListener("message", onMessage);
             const { data, sampleRate, length } = msg;
             const buf = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
             buf.getChannelData(0).set(data);
@@ -115,11 +125,12 @@ export const fiches: FicheAudio[] = ([
               message: traduire("msg.kokoro_var_0_var_1", voix, texte.slice(0, 40), texte.length > 40 ? "…" : ""),
             });
           } else if (msg.type === "error") {
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_kokoro_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, voice: voix, speed: vitesse, lang, labels });
+        w.postMessage({ text: texte, voice: voix, speed: vitesse, lang, labels, requestId });
       });
     },
   },

@@ -16,11 +16,11 @@ function getWorker(): Worker {
   return worker;
 }
 
-// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
-// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
-// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
-function libererWorker(): void {
-  if (worker) { worker.terminate(); worker = null; }
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 // Embeddings de voix SpeechT5 (CMU Arctic — 7 locuteurs différents).
@@ -71,24 +71,26 @@ export const fiches: FicheAudio[] = ([
       const voix = VOIX_SPEECHT5.find((v) => v.id === voixId || v.nom === voixId || v.nomEn === voixId) ?? VOIX_SPEECHT5[0];
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             const buf = new AudioBuffer({ numberOfChannels: 1, length: msg.length, sampleRate: msg.sampleRate });
             buf.getChannelData(0).set(msg.data);
             resolve({ valeurs: [buf], message: traduire("msg.speecht5_var_0_var_1", texte.slice(0, 40), texte.length > 40 ? "…" : "") });
           } else if (msg.type === "error") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_tts_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url });
+        w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url, requestId });
       });
    },
- },
+  },
   {
     id: "tts-mms", nom: "MMS-TTS Multilingue", nomEn: "MMS-TTS Multilingual",
     univers: "Entrées", famille: "Text to Speech",
@@ -111,22 +113,24 @@ export const fiches: FicheAudio[] = ([
       const modelId = LANGUES_MMS[langue] ?? LANGUES_MMS["Anglais"];
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             const buf = new AudioBuffer({ numberOfChannels: 1, length: msg.length, sampleRate: msg.sampleRate });
             buf.getChannelData(0).set(msg.data);
             resolve({ valeurs: [buf], message: traduire("msg.mms_tts_var_0_var_1_var_2", langue, texte.slice(0, 40), texte.length > 40 ? "…" : "") });
           } else if (msg.type === "error") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_tts_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, modelId });
+        w.postMessage({ text: texte, modelId, requestId });
       });
    },
- },
+  },
 ] as FicheAudio[]).map(avecDoc);

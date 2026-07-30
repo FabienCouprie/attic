@@ -17,11 +17,11 @@ function getWorker(): Worker {
   return worker;
 }
 
-// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
-// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
-// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
-function libererWorker(): void {
-  if (worker) { worker.terminate(); worker = null; }
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 const COULEURS_EN = NOMS_COULEURS.map((c) => COULEURS[c].en);
@@ -90,14 +90,16 @@ Write a single creative Suno prompt paragraph:`;
       ctx.onProgress(traduire("progress.g_n_ration_du_script_ia"));
       const w = getWorker();
       const llmText = await new Promise<string | null>((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve(msg.text);
           } else if (msg.type === "error") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve(null);
           }
         };
@@ -109,6 +111,7 @@ Write a single creative Suno prompt paragraph:`;
           maxTokens: 120,
           temperature,
           repetitionPenalty: 1.4,
+          requestId,
         });
       });
 

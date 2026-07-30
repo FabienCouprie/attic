@@ -15,11 +15,11 @@ function getWorker(): Worker {
   return worker;
 }
 
-function libererWorker(): void {
-  if (worker) {
-    worker.terminate();
-    worker = null;
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
   }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 // Chaque token généré correspond environ à 20 ms de audio (50 Hz).
@@ -73,12 +73,14 @@ export const fiches: FicheAudio[] = ([
 
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") {
             ctx.onProgress?.(msg.msg);
           } else if (msg.type === "done") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             const { data, sampleRate, length } = msg;
             const buf = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
             buf.getChannelData(0).set(data);
@@ -87,12 +89,12 @@ export const fiches: FicheAudio[] = ([
               message: traduire("msg.musicgen_var_0_s_var_1_var_2", duration, prompt.slice(0, 40), prompt.length > 40 ? "…" : ""),
             });
           } else if (msg.type === "error") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_musicgen_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ prompt, maxTokens, guidanceScale });
+        w.postMessage({ prompt, maxTokens, guidanceScale, requestId });
       });
     },
   },

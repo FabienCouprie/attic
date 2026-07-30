@@ -64,11 +64,12 @@ async function loadModelFiles(files, debug) {
   }
 }
 
-async function initRecognizer(config) {
+async function initRecognizer(config, requestId) {
   await wasmReady;
   self.SherpaOnnx.onDownloadProgress = function(info) {
     self.postMessage({
       type: "progress",
+      requestId,
       filename: info.filename || "model",
       percent: info.percent || 0,
       loaded: info.loaded || 0,
@@ -97,6 +98,7 @@ function recognize(sampleRate, samples) {
 
 self.onmessage = async function(e) {
   const msg = e.data;
+  const requestId = msg.requestId;
   try {
     if (msg.type === "init") {
       // Libère un éventuel reconnaisseur précédent pour supporter le changement
@@ -105,20 +107,20 @@ self.onmessage = async function(e) {
         try { currentRecognizer.free(); } catch { /* ignore */ }
         currentRecognizer = null;
       }
-      await initRecognizer(msg.config);
-      self.postMessage({ type: "ready" });
+      await initRecognizer(msg.config, requestId);
+      self.postMessage({ type: "ready", requestId });
     } else if (msg.type === "transcribe") {
       const samples = new Float32Array(msg.samples);
       const text = recognize(msg.sampleRate, samples);
-      self.postMessage({ type: "done", text });
+      self.postMessage({ type: "done", requestId, text });
     } else if (msg.type === "clearCache") {
       await self.SherpaOnnx.Cache.clear();
-      self.postMessage({ type: "cacheCleared" });
+      self.postMessage({ type: "cacheCleared", requestId });
     } else {
-      self.postMessage({ type: "error", error: "Unknown message type: " + msg.type });
+      self.postMessage({ type: "error", requestId, error: "Unknown message type: " + msg.type });
     }
   } catch (err) {
-    self.postMessage({ type: "error", error: String(err && err.message ? err.message : err) });
+    self.postMessage({ type: "error", requestId, error: String(err && err.message ? err.message : err) });
   }
 };
 
