@@ -2,7 +2,7 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [2.2.0] — 2026-07-30
+## [2.2.1] — 2026-07-30
 
 ### Fixed
 - **Node deletion cleanup** — deleting a node via the red-cross button, the Delete key, the Inspector, Ctrl+X, or by removing a meta-component now clears the execution cache for the deleted node and its downstream nodes, revokes generated result object URLs, and resets downstream statuses. This prevents stale cached results and memory leaks from outliving the deleted node.
