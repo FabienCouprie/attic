@@ -326,7 +326,7 @@ export function genererGrilleCantor(
   nbPas: number,
   profondeur: number,
   subdivision: number,
-  partieRetiree: "centre" | "gauche" | "droite" | "aleatoire"
+  partieRetiree: "center" | "left" | "right" | "random"
 ): number[] {
   // Retourne le niveau de récursion de chaque pas actif, ou -1 si inactif.
   const grille = new Int8Array(nbPas).fill(-1);
@@ -344,19 +344,19 @@ export function genererGrilleCantor(
     const tier = taille / subdivision;
     let retireDebut = 0, retireFin = 0;
     switch (partieRetiree) {
-      case "centre":
+      case "center":
         retireDebut = debut + Math.floor(tier);
         retireFin = debut + Math.ceil(tier * (subdivision - 1));
         break;
-      case "gauche":
+      case "left":
         retireDebut = debut;
         retireFin = debut + Math.floor(tier);
         break;
-      case "droite":
+      case "right":
         retireDebut = debut + Math.ceil(tier * (subdivision - 1));
         retireFin = fin;
         break;
-      case "aleatoire":
+      case "random":
         // Tire au sort une partie contiguë à retirer.
         const partie = Math.floor(Math.random() * subdivision);
         retireDebut = debut + Math.floor(tier * partie);
@@ -377,9 +377,9 @@ export async function genererRythmeCantor(
   tempo: number,
   profondeur: number,
   subdivision: number,
-  partieRetiree: "centre" | "gauche" | "droite" | "aleatoire",
+  partieRetiree: "center" | "left" | "right" | "random",
   mesures: number,
-  instrument: "Kick" | "Caisse claire" | "Charley" | "Tous",
+  instrument: "kick" | "snare" | "hihat" | "all",
   volume: number,
   swing: number = 0,
 ): Promise<AudioBuffer> {
@@ -456,13 +456,13 @@ export async function genererRythmeCantor(
       if (niveau < 0) continue;
       let t = (m * pasParMesure + p) * dureePas;
       if (p % 2 === 1) t += (swing / 100) * dureePas * 0.6;
-      if (instrument === "Tous") {
+      if (instrument === "all") {
         if (niveau % 3 === 0) jouerKick(t, 1);
         else if (niveau % 3 === 1) jouerSnare(t, 1);
         else jouerHat(t, 1);
-      } else if (instrument === "Kick") {
+      } else if (instrument === "kick") {
         jouerKick(t, 1);
-      } else if (instrument === "Caisse claire") {
+      } else if (instrument === "snare") {
         jouerSnare(t, 1);
       } else {
         jouerHat(t, 1);

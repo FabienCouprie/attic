@@ -81,6 +81,7 @@ export const fiches: FicheAudio[] = ([
         type: "choix",
         options: ["Mono", "Stéréo"],
         optionsEn: ["Mono", "Stereo"],
+        optionIds: ["mono", "stereo"],
         defaut: "Stéréo",
         defautEn: "Stereo",
         doc: "Nombre de canaux de l'audio de sortie.",
@@ -114,7 +115,7 @@ export const fiches: FicheAudio[] = ([
       const bleu = parsePlage(ctx.paramTexte("Bleu (Hz)", "1000,5000"), [1000, 5000]);
 
       const balayage = ctx.paramTexte("Balayage", "Horizontal").toLowerCase() as "horizontal" | "vertical" | "zigzag";
-      const canaux = ctx.paramTexte("Canaux", "Stéréo") === "Mono" ? 1 : 2;
+      const canaux = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
 
       try {
         const audio = await sonifierImage(

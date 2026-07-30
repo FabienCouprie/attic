@@ -1,7 +1,7 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
-import { useI18n, defautParametre } from "../i18n";
+import { useI18n, defautParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 
 interface Props {
@@ -116,17 +116,20 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           {isOpen && docP && <p className="inspecteur-param-doc">{docP}</p>}
           {p.type === "choix" && p.options ? (
             (() => {
-              const raw = String(params[p.nom] ?? defautP);
-              const valeur = p.options.includes(raw)
-                ? raw
-                : (p.optionsEn?.indexOf(raw) ?? -1) >= 0
-                ? p.options[p.optionsEn!.indexOf(raw)]
-                : p.options[0] ?? raw;
+              const defautCanonique = defautCanoniqueChoix(p);
+              const raw = String(params[p.nom] ?? defautCanonique);
+              const candidat = String(valeurCanoniqueChoix(p, raw));
+              const hasIds = p.optionIds && p.optionIds.length > 0;
+              const valeur = hasIds
+                ? (p.optionIds!.includes(candidat) ? candidat : String(defautCanonique))
+                : candidat;
+              const optionValue = (i: number) => p.optionIds?.[i] ?? p.options[i];
               return (
                 <select value={valeur} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
                   {p.options.map((o, i) => {
+                    const id = optionValue(i);
                     const label = lang === "en" && p.optionsEn?.[i] ? p.optionsEn[i] : o;
-                    return <option key={o} value={o}>{label}</option>;
+                    return <option key={id} value={id}>{label}</option>;
                   })}
                 </select>
               );

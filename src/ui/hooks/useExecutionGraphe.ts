@@ -16,9 +16,34 @@ import {
 import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
-import { useI18n } from "../../i18n";
+import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
+
+// Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
+// une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
+// statuts, messages, cache) peuvent être effacés.
+const CHAMPS_UTILISATEUR = new Set([
+  "ficheId",
+  "parametres",
+  "zonesSelectionnees",
+  "audioFichier",
+  "audioNom",
+  "audioUrl",
+  "midiFichier",
+  "midiNom",
+  "midiUrl",
+  "imageFichier",
+  "imageNom",
+  "imageUrl",
+  "svgFichier",
+  "svgNom",
+  "svgUrl",
+  "irFichier",
+  "irNom",
+  "enregistrementBlob",
+  "enregistrementUrl",
+]);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -84,24 +109,28 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
       if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
       if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
-      return {
-        ...n,
-        data: {
-          ...n.data,
-          statut: "attente",
-          progression: undefined,
-          audioResultatUrl: undefined,
-          audioResultatNom: undefined,
-          audioResultatBuffer: undefined,
-          audioResultatMessage: undefined,
-          scriptGenere: undefined,
-          mp3Url: undefined,
-          imageResultatUrl: undefined,
-          imageResultatFile: undefined,
-          visualisationUrl: undefined,
-          zonesSelectionnees: undefined,
-        },
+      const nouvelleData: any = {
+        ...n.data,
+        statut: "attente",
+        progression: undefined,
+        audioResultatUrl: undefined,
+        audioResultatNom: undefined,
+        audioResultatBuffer: undefined,
+        audioResultatMessage: undefined,
+        scriptGenere: undefined,
+        mp3Url: undefined,
+        imageResultatUrl: undefined,
+        imageResultatFile: undefined,
+        visualisationUrl: undefined,
       };
+      // Garde-fou : on ne doit jamais effacer un champ utilisateur.
+      for (const champ of CHAMPS_UTILISATEUR) {
+        if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
+          console.warn(`[reinitialiserNoeud] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
+          nouvelleData[champ] = (n.data as any)[champ];
+        }
+      }
+      return { ...n, data: nouvelleData };
     }));
     for (const id of ids) cacheExec.current.delete(id);
   }, [setNodes]);
@@ -274,11 +303,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
           },
           paramTexte: (nom: string, defaut: string) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            if (typeof p === "string") return p;
             const def = trouverDef(node.data.ficheId as string);
             const pDef = def?.parametres.find((p) => p.nom === nom);
+            if (typeof p === "string" && pDef) {
+              return String(valeurCanoniqueChoix(pDef, p));
+            }
             const defautEff = typeof pDef?.defautEn === "string" ? pDef.defautEn : defaut;
-            return defautEff;
+            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defautEff;
           },
           onProgress: (msg: string) => definirStatut(nodeId, "en_cours", msg),
         });

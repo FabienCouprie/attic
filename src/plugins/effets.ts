@@ -135,7 +135,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], defaut: "Gate",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], optionIds: ["gate", "expander"], defaut: "Gate",
         doc: "Gate = coupe le signal sous le seuil (atténuation fixe vers le plancher). Expandeur = atténue progressivement le signal sous le seuil selon le ratio (compresseur inversé).",
         docEn: "Gate = cuts signal below threshold (fixed attenuation to floor). Expander = gradually attenuates signal below threshold by ratio (reverse compressor).", defautEn: "Gate" },
       { nom: "Seuil", nomEn: "Threshold", plage: [-80, 0], pas: 1, defaut: -40, unite: "dB",
@@ -152,7 +152,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const mode = ctx.paramTexte("Mode", "Gate") === "Expandeur" ? "expandeur" : "gate";
+      const mode = ctx.paramTexte("Mode", "gate");
       const seuil = ctx.paramNombre("Seuil", -40);
       const ratio = ctx.paramNombre("Ratio", 4);
       const attaque = ctx.paramNombre("Attaque", 1);
@@ -481,11 +481,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Quantisation", nomEn: "Quantization", type: "choix",
         options: ["Aucune", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
         optionsEn: ["None", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
+        optionIds: ["none", "1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"],
         defaut: "1/16",
         doc: "Grille de quantification des départs de notes. Aligner les notes sur la grille rythmique choisie.",
         docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid.", defautEn: "1/16" },
       { nom: "Quantifier fins", nomEn: "Quantize ends", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
+        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["no", "yes"],
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
@@ -497,14 +498,14 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
-      const quantifierFin = ctx.paramTexte("Quantifier fins", "Non") === "Oui";
+      const quantifierFin = ctx.paramTexte("Quantifier fins", "no") === "yes";
       const nouvFichier = await appliquerInstrumentMidi(
         await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin),
         ctx.paramNombre("Instrument", 0),
       );
       const msgs: string[] = [];
       if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
-      if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
+      if (grille !== "none") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
   },
@@ -616,7 +617,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Référence", nomEn: "Reference", type: "audio" }, { nom: "Piste alignée", nomEn: "Aligned track", type: "audio" }],
     parametres: [
       { nom: "Position", nomEn: "Position", type: "choix",
-        options: ["Avant", "Après"], optionsEn: ["Before", "After"],
+        options: ["Avant", "Après"], optionsEn: ["Before", "After"], optionIds: ["before", "after"],
         defaut: "Après",
         doc: "Où ajuster la différence. Si la piste est trop courte : ajoute du silence au début (« Avant ») ou à la fin (« Après »). Si trop longue : fade d'ouverture (« Avant », garde le début) ou fade de fermeture (« Après », garde la fin).",
         docEn: "Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end).", defautEn: "After" },
@@ -627,12 +628,12 @@ export const fiches: FicheAudio[] = ([
       if (!(ref instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.branchez_une_r_f_rence_entr_e_1") };
       if (!(piste instanceof AudioBuffer)) return { valeurs: [ref, null], message: traduire("msg.branchez_une_piste_aligner_entr_e_2") };
       const { alignerPiste } = await import("../audio");
-      const position = ctx.paramTexte("Position", "Après") === "Avant" ? "avant" : "apres";
-      const [refOut, pisteOut] = alignerPiste(ref, piste, position);
+      const position = ctx.paramTexte("Position", "after");
+      const [refOut, pisteOut] = alignerPiste(ref, piste, position === "before" ? "avant" : "apres");
       const diff = piste.length - ref.length;
       let msg: string;
-      if (diff < 0) msg = `Piste ${(-diff / ref.sampleRate).toFixed(2)}s trop courte → silence ${position === "avant" ? "au début" : "à la fin"}`;
-      else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "avant" ? "d'ouverture" : "de fermeture"}`;
+      if (diff < 0) msg = `Piste ${(-diff / ref.sampleRate).toFixed(2)}s trop courte → silence ${position === "before" ? "au début" : "à la fin"}`;
+      else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "before" ? "d'ouverture" : "de fermeture"}`;
       else msg = "Pistes de même longueur — aucune modification";
       return { valeurs: [refOut, pisteOut], message: msg };
    },

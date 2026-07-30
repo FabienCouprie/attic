@@ -165,7 +165,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de chaque accord en temps.", docEn: "Duration of each chord in beats." },
       { nom: "Octave", nomEn: "Octave", plage: [2, 5], pas: 1, defaut: 3,
         doc: "Octave de base des accords.", docEn: "Base octave for chords." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], defaut: "Bloc",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], optionIds: ["block", "arpeggio"], defaut: "Bloc",
         doc: "Bloc joue toutes les notes simultanément, Arpège les décline en croches.",
         docEn: "Block plays all notes at once, Arpeggio plays them as eighth notes.", defautEn: "Block" },
     ],
@@ -188,7 +188,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       const lignes: string[] = [`TEMPO ${tempo}`];
-      if (mode === "Arpège") {
+      if (mode === "arpeggio") {
         const dureeNote = 0.5;
         for (const accord of accords) {
           for (const n of notesAccordAscendantes(accord, octave + 1)) {

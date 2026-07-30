@@ -27,6 +27,26 @@ function ctx(sequenceNotes: any[]) {
   };
 }
 
+function ctxParams(params: Record<string, string | number>) {
+  return {
+    entree: () => null,
+    entrees: () => [],
+    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
+    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
+    onProgress: () => {},
+    noeud: { data: {} },
+    runtime: null,
+  };
+}
+
+function bufferNonSilencieux(b: AudioBuffer) {
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const d = b.getChannelData(c);
+    if (d.some((s) => Math.abs(s) > 0.001)) return true;
+  }
+  return false;
+}
+
 describe("generateurs plugin", () => {
   it("Clavier mélodie produit audio et MIDI", async () => {
     const f = registre.trouverDef("clavier-melodie")!;
@@ -55,5 +75,26 @@ describe("generateurs plugin", () => {
     expect(res.valeurs.length).toBe(2);
     expect(res.valeurs[0]).toBeNull();
     expect(res.valeurs[1]).toBeNull();
+  });
+
+  it("Générateur de fréquence : forme Square fonctionne avec id canonique", async () => {
+    const f = registre.trouverDef("generateur-frequence")!;
+    const res = await f.executer(ctxParams({ Saisie: "frequency", Fréquence: 440, Forme: "square", Durée: 0.1, Volume: 80 }) as any);
+    expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect(bufferNonSilencieux(res.valeurs[0] as AudioBuffer)).toBe(true);
+  });
+
+  it("Générateur de fréquence : forme Saw fonctionne avec libellé anglais", async () => {
+    const f = registre.trouverDef("generateur-frequence")!;
+    const res = await f.executer(ctxParams({ Saisie: "Frequency (Hz)", Fréquence: 440, Forme: "Saw", Durée: 0.1, Volume: 80 }) as any);
+    expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect(bufferNonSilencieux(res.valeurs[0] as AudioBuffer)).toBe(true);
+  });
+
+  it("Métronome : timbre Beep fonctionne avec id canonique", async () => {
+    const f = registre.trouverDef("metronome")!;
+    const res = await f.executer(ctxParams({ Tempo: 120, Signature: "4/4", Durée: 1, Timbre: "beep", Volume: 80 }) as any);
+    expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect(bufferNonSilencieux(res.valeurs[0] as AudioBuffer)).toBe(true);
   });
 });

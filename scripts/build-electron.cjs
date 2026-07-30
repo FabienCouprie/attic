@@ -65,7 +65,6 @@ function main() {
   }
 
   const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-  const originalPackageManager = pkg.packageManager;
   pkg.packageManager = "traversal@1.0.0";
   fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   modified = true;

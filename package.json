@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.2.2",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "smoke": "node scripts/smoke-test.cjs",
     "test:e2e": "playwright test",
     "download:songsee": "node scripts/download-songsee.cjs",
     "lint": "oxlint",

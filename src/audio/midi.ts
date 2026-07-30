@@ -630,12 +630,15 @@ export async function rendreSequence(
 const GRILLES: Record<string, number> = {
   "Aucune": 0,
   "None": 0,
+  "none": 0,
   "1/4": 1,
   "1/8": 2,
   "1/16": 4,
   "1/32": 8,
   "1/8 triplet": 3,
+  "1/8t": 3,
   "1/16 triplet": 6,
+  "1/16t": 6,
 };
 
 export async function transposerQuantifierMidi(

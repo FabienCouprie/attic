@@ -73,7 +73,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Genres", type: "texte" }],
     parametres: [
-      { nom: "Mode", type: "choix", options: ["IA (ONNX)","Heuristique"], defaut: "IA (ONNX)", optionsEn: ["AI (ONNX)", "Heuristic"], defautEn: "AI (ONNX)", nomEn: "Mode" },
+      { nom: "Mode", type: "choix", options: ["IA (ONNX)","Heuristique"], optionsEn: ["AI (ONNX)", "Heuristic"], optionIds: ["ai", "heuristic"], defaut: "IA (ONNX)", defautEn: "AI (ONNX)", nomEn: "Mode" },
       { nom: "Durée", plage: [5,120], defaut: 30, unite: "s", nomEn: "Duration" },
     ],
     async executer(ctx: any) {
@@ -81,8 +81,8 @@ export const fiches: FicheAudio[] = ([
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const duree = ctx.paramNombre("Durée", 30);
-      const mode = ctx.paramTexte("Mode", "IA (ONNX)");
-      const buf = mode === "IA (ONNX)" && ctx.noeud.data.modeleFichier
+      const mode = ctx.paramTexte("Mode", "ai");
+      const buf = mode === "ai" && ctx.noeud.data.modeleFichier
         ? await (ctx.noeud.data.modeleFichier as File).arrayBuffer() : undefined;
       ctx.onProgress(traduire("progress.classification"));
       const genres = await classerGenre(audio, duree, buf);
@@ -123,7 +123,7 @@ export const fiches: FicheAudio[] = ([
     // ne pas le convertir en échec via le filet « tout-null ».
     sortieNullePermise: true,
     parametres: [
-      { nom: "Méthode", nomEn: "Method", type: "choix", options: ["Monophonique (FFT)","Polyphonique (Basic Pitch ONNX)"], defaut: "Monophonique (FFT)", docEn: "Transcription algorithm.", optionsEn: ["Monophonic (FFT)", "Polyphonic (Basic Pitch ONNX)"], defautEn: "Monophonic (FFT)" },
+      { nom: "Méthode", nomEn: "Method", type: "choix", options: ["Monophonique (FFT)","Polyphonique (Basic Pitch ONNX)"], optionsEn: ["Monophonic (FFT)", "Polyphonic (Basic Pitch ONNX)"], optionIds: ["mono", "poly"], defaut: "Monophonique (FFT)", docEn: "Transcription algorithm.", defautEn: "Monophonic (FFT)" },
       { nom: "Seuil onset", nomEn: "Onset threshold", plage: [1,50], defaut: 10, unite: "%", docEn: "Note attack detection sensitivity." },
       { nom: "Note minimale", nomEn: "Min note", plage: [21,120], defaut: 36, docEn: "Lowest MIDI note to detect." },
       { nom: "Note maximale", nomEn: "Max note", plage: [21,127], defaut: 96, docEn: "Highest MIDI note to detect." },
@@ -133,7 +133,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      const methode = ctx.paramTexte("Méthode", "Monophonique (FFT)");
+      const methode = ctx.paramTexte("Méthode", "mono");
       const seuil = ctx.paramNombre("Seuil onset", 10);
       const noteMin = ctx.paramNombre("Note minimale", 36);
       const noteMax = ctx.paramNombre("Note maximale", 96);
@@ -145,7 +145,7 @@ export const fiches: FicheAudio[] = ([
           if (tDetecte > 0) tempo = tDetecte;
         } catch {}
       }
-      const notes = methode === "Polyphonique (Basic Pitch ONNX)"
+      const notes = methode === "poly"
         ? await transcrirePolyphonique(audio, seuil, noteMin, noteMax)
         : transcrireMono(audio, seuil, noteMin, noteMax);
       if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };

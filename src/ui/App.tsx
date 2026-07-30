@@ -19,7 +19,7 @@ const tousLesPlugins = () => registre.tousLesPlugins();
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
-import { useI18n, defautParametre } from "../i18n";
+import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
@@ -369,7 +369,9 @@ function Atelier() {
           const def = trouverDef(specNode.ficheId);
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
-          if (def) for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
+          if (def) for (const p of def.parametres) {
+            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+          }
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
           return {
@@ -492,7 +494,9 @@ function Atelier() {
     if (!def) return;
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
-    for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
+    for (const p of def.parametres) {
+      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+    }
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {
       id: idUnique(nds),

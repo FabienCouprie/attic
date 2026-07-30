@@ -79,6 +79,7 @@ export interface ParametreDef {
   type?: "choix" | "curseur" | "texte" | "dossier" | "nombre" | "sf2instrument";
   options?: string[];
   optionsEn?: string[];
+  optionIds?: string[];
   plage?: [number, number];
   pas?: number;
   defaut: string | number;

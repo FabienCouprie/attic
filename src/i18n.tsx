@@ -309,6 +309,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.branchez_deux_pistes": { fr: "Branchez deux pistes.", en: "Connect two leads." },
   "msg.var_0_var_1_s_var_2_s": { fr: "{__VAR_0__} × {__VAR_1__}s = {__VAR_2__}s", en: "{__VAR_0__} × {__VAR_1__}s = {__VAR_2__}s" },
   "msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones": { fr: "Aucune zone reçue — branchez le sélecteur multi-zones.", en: "No area received — plug the multi-zone selector." },
+  "msg.aucune_zone_extraite": { fr: "Aucune zone à extraire.", en: "No area to extract." },
+  "msg.var_0_zones_rabout_es_var_1_s": { fr: "{__VAR_0__} zone(s) raboutée(s) · {__VAR_1__}s", en: "{__VAR_0__} area(s) joined · {__VAR_1__}s" },
   "msg.zone_vide": { fr: "Zone vide.", en: "Empty area." },
   "msg.zone_var_0_var_1_extraite_var_2_s_var_3_var_4_s": { fr: "Zone {__VAR_0__}/{__VAR_1__} extraite · {__VAR_2__}s · {__VAR_3__}→{__VAR_4__}s", en: "Area {__VAR_0__}/{__VAR_1__} extracted · {__VAR_2__}s · {__VAR_3__}→{__VAR_4__}s" },
   "msg.musicgen_var_0_s_var_1_var_2": { fr: "MusicGen · {__VAR_0__}s · \"{__VAR_1__}{__VAR_2__}\"", en: "MusicGen · {__VAR_0__}s · \"{__VAR_1__}{__VAR_2__}\"" },
@@ -567,4 +569,25 @@ export function traduire(cle: string, ...args: (string | number)[]): string {
 
 export function defautParametre(p: Pick<ParametreDef, "defaut" | "defautEn">, lang: Langue): string | number {
   return lang === "en" && p.defautEn !== undefined ? p.defautEn : p.defaut;
+}
+
+/**
+ * Retourne la valeur canonique (id stable) d'un paramètre de type "choix".
+ * Accepte indifféremment l'id canonique, la valeur française ou la valeur anglaise,
+ * ce qui garantit la compatibilité avec les anciens projets.
+ */
+export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsEn" | "optionIds">, valeur: string | number): string | number {
+  const ids = p.optionIds;
+  if (!ids || ids.length === 0) return valeur;
+  const v = String(valeur);
+  if (ids.includes(v)) return v;
+  const idx = p.options?.indexOf(v) ?? -1;
+  if (idx >= 0 && ids[idx] !== undefined) return ids[idx];
+  const idxEn = p.optionsEn?.indexOf(v) ?? -1;
+  if (idxEn >= 0 && ids[idxEn] !== undefined) return ids[idxEn];
+  return v;
+}
+
+export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">): string | number {
+  return valeurCanoniqueChoix(p, p.defautEn ?? p.defaut);
 }
