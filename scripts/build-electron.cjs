@@ -11,7 +11,7 @@
 //   electron-builder against the production tree.
 // - Restores package.json and dev dependencies at the end so the workspace stays usable.
 
-const { spawnSync, execSync } = require("child_process");
+const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -51,8 +51,7 @@ function runCommand(cmd, args, env) {
 function removeDirectory(dir) {
   if (!fs.existsSync(dir)) return;
   try {
-    execSync(`cmd /c attrib -r /s /d "${dir}\\*.*"`, { stdio: "ignore" });
-    execSync(`cmd /c rmdir /s /q "${dir}"`, { stdio: "ignore" });
+    fs.rmSync(dir, { recursive: true, force: true });
   } catch (err) {
     console.error("[build] Failed to remove directory:", dir, err.message);
     throw err;
