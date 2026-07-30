@@ -163,6 +163,46 @@ export async function appliquerEchoPingPong(
 
 
 
+// Echo inverse (reverse echo / pre-echo) : les répétitions atténuées apparaissent
+// AVANT le son principal. Principe : on inverse le signal, on applique un echo
+// classique, puis on ré-inverse le résultat.
+export function appliquerEchoInverse(
+  entree: AudioBuffer,
+  tempsMs: number,
+  feedbackPct: number,
+): AudioBuffer {
+  const sr = entree.sampleRate;
+  const delay = Math.max(1, Math.round((Math.max(0.001, tempsMs) / 1000) * sr));
+  const feedback = Math.max(0, Math.min(0.99, feedbackPct / 100));
+  const repetitions =
+    feedback > 0.001 && feedback < 0.99
+      ? Math.ceil(Math.log(1e-4) / Math.log(feedback))
+      : feedback >= 0.99 ? 40 : 0;
+  const tail = delay * repetitions;
+  const length = entree.length + tail;
+
+  const resultat = new AudioBuffer({
+    numberOfChannels: entree.numberOfChannels,
+    length,
+    sampleRate: sr,
+  });
+
+  for (let c = 0; c < entree.numberOfChannels; c++) {
+    const src = entree.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    let amp = 1;
+    for (let r = 0; r <= repetitions; r++) {
+      const offset = tail - r * delay;
+      for (let i = 0; i < src.length; i++) {
+        dst[offset + i] += src[i] * amp;
+      }
+      amp *= feedback;
+    }
+  }
+
+  return resultat;
+}
+
 export async function appliquerReverberation(
   entree: AudioBuffer,
   taille: number,

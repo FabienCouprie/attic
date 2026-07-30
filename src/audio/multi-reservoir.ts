@@ -6,7 +6,9 @@
 // Inspiré d'Allendia/EVY : aucun entraînement, aucun dataset. Les motifs
 // émergent de l'interaction entre réseaux aléatoires.
 
-import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
+import { genererReservoirMusical, mulberry32, type ConfigReservoir, type NoteGeneree } from "./reservoir";
+import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
+import { notesVersFichierMidi } from "./midi";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -36,11 +38,28 @@ export interface ConfigMultiReservoir {
   rythmeNeurones: number;
   rythmeDensite: number;
 
+  // Kit de batterie pour la sortie MIDI rythme (bank * 128 + programme)
+  rythmeInstrument: number;
+  // Transposition (en demi-tons) appliquée aux notes de batterie MIDI
+  rythmeTranspose: number;
+
   // Influence croisée (0 = indépendants, 1 = forte influence)
   influence: number;
 }
 
-export function genererMultiReservoir(config: ConfigMultiReservoir): { notes: NoteGeneree[]; buffer: AudioBuffer; details: string } {
+export interface MultiReservoirResult {
+  notes: NoteGeneree[];
+  buffer: AudioBuffer;
+  details: string;
+  midis: {
+    melody: File;
+    bass: File;
+    harmony: File;
+    rhythm: File;
+  };
+}
+
+export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReservoirResult {
   const graineBase = config.graine > 0 ? config.graine : Math.floor(Math.random() * 99999) + 1;
   const sr = 44100;
   const stepDur = (60 / config.tempo) / config.pasParBeat;
@@ -75,9 +94,17 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): { notes: No
       pasActifs.add(pas);
     }
   }
-  // Si le rythme est trop vide, activer tous les beats
+  // Si le rythme est trop vide, ajouter une pulsation de secours sur les beats
+  const activesRythme = notesRythme.filter((n) => !n.silence);
   if (pasActifs.size < totalPas * 0.2) {
-    for (let p = 0; p < totalPas; p += config.pasParBeat) pasActifs.add(p);
+    const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const noteBase = 36 + Math.max(0, NOTES.indexOf(config.cle));
+    for (let p = 0; p < totalPas; p += config.pasParBeat) {
+      if (!activesRythme.some((n) => Math.floor(n.debut / stepDur + 0.5) === p)) {
+        notesRythme.push({ note: noteBase, velocite: 80, debut: p * stepDur, duree: stepDur, silence: false });
+      }
+      pasActifs.add(p);
+    }
   }
 
   // 2. Mélodie : la voix principale
@@ -225,9 +252,53 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): { notes: No
   const nbHarm = harmonieFinale.filter((n) => !n.silence).length;
   const nbRythme = rythmeFinale.filter((n) => !n.silence).length;
 
+  // Map the rhythm part to General MIDI drum notes for the MIDI output.
+  // The audio preview still uses the original pitch-based rhythm notes.
+  const gmDrums = {
+    kick: 36, snare: 38, clap: 39, closedHat: 42, pedalHat: 44, lowTom: 45, openHat: 46, crash: 49, highTom: 50,
+  };
+  const rngDrums = mulberry32(graineBase + 100);
+  const pasParMesure = config.pasParBeat * 4;
+  const halfStep = Math.floor(config.pasParBeat / 2);
+  const rythmeGM = rythmeFinale.map((n) => {
+    if (n.silence) return n;
+    const step = Math.floor(n.debut / stepDur);
+    const beat = step % pasParMesure;
+    let note = gmDrums.closedHat;
+    if (beat === 0) {
+      note = gmDrums.kick;
+    } else if (beat === pasParMesure / 2) {
+      note = gmDrums.snare;
+    } else if (halfStep > 0 && beat % config.pasParBeat === halfStep) {
+      note = rngDrums() > 0.7 ? gmDrums.openHat : gmDrums.closedHat;
+    } else if (beat % config.pasParBeat === 0) {
+      note = rngDrums() > 0.5 ? gmDrums.lowTom : gmDrums.highTom;
+    } else {
+      note = rngDrums() > 0.6 ? gmDrums.clap : gmDrums.closedHat;
+    }
+    const transpose = config.rythmeTranspose ?? 0;
+    return { ...n, note: Math.max(0, Math.min(127, note + transpose)) };
+  });
+
+  const { programme: rythmeProgramme, banque: rythmeBanque } = decoderInstrumentSF2(config.rythmeInstrument ?? 0);
+
+  function toMidiFile(notes: NoteGeneree[], name: string, canal = 0, banque?: number, programme?: number): File {
+    const events = notes
+      .filter((n) => !n.silence)
+      .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree }));
+    const file = notesVersFichierMidi(events, config.tempo, canal, banque, programme);
+    return new File([file], name, { type: file.type });
+  }
+
   return {
     notes: toutesNotes,
     buffer: buf,
     details: `Mélodie: ${nbMel} · Basse: ${nbBasse} · Harmonie: ${nbHarm} · Rythme: ${nbRythme}`,
+    midis: {
+      melody: toMidiFile(melodieFinale, "multi-melody.mid"),
+      bass: toMidiFile(basseFinale, "multi-bass.mid"),
+      harmony: toMidiFile(harmonieFinale, "multi-harmony.mid"),
+      rhythm: toMidiFile(rythmeGM, "multi-rhythm.mid", 9, rythmeBanque, rythmeProgramme),
+    },
   };
 }

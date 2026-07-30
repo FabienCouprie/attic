@@ -4,7 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreMidi, appliquerInstrumentMidi } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
-      PARAMETRE_INSTRUMENT_SF2,
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -48,7 +48,7 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
-      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(fichier, modeRendu, volume, instrument, banque);
       const midiFinal = await appliquerInstrumentMidi(fichier, ctx.paramNombre("Instrument", 0));
@@ -67,7 +67,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
-      PARAMETRE_INSTRUMENT_SF2,
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
       if (!midi) return { valeurs: [null, null], message: traduire("msg.chargez_un_fichier_midi") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
-      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
       const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
@@ -92,7 +92,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
-      PARAMETRE_INSTRUMENT_SF2,
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -101,7 +101,7 @@ export const fiches: FicheAudio[] = ([
       if (!(midi instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
-      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       console.log(`[attic] Point d'écoute MIDI : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}`);
       const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);

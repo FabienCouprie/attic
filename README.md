@@ -81,6 +81,8 @@ npm run build           # TypeScript + Vite (renderer only)
 npm run build:electron  # Full Electron app (NSIS installer for Windows)
 ```
 
+`npm run build:electron` runs `scripts/build-electron.cjs`. This script temporarily sets `"packageManager": "traversal"` in `package.json` so electron-builder uses manual node_modules traversal instead of `npm list`, which exhausts memory on this app's large dependency tree. It also sets `NODE_OPTIONS=--max-old-space-size=32000` and cleans the `release/` directory before packaging. The original `package.json` is restored when the build finishes.
+
 ### Publish a release
 
 The recommended way is to push a semver tag; the GitHub Actions workflow handles the build and upload automatically:

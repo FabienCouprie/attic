@@ -181,10 +181,10 @@ export async function genererMelodieAleatoire(
 }
 
 
-type Patron = { kick: number[]; snare: number[]; hat: number[]; hatOuvert: number[] };
+export type Patron = { kick: number[]; snare: number[]; hat: number[]; hatOuvert: number[] };
 
 
-const PATRONS_RYTHME: Record<string, { signatures: string[]; positions: Record<string, Patron> }> = {
+export const PATRONS_RYTHME: Record<string, { signatures: string[]; positions: Record<string, Patron> }> = {
   Rock: {
     signatures: ["4/4"],
     positions: {
@@ -566,7 +566,7 @@ export function rendreAvecEchantillon(
 }
 
 
-const PROGRESSIONS_GENRE: Record<string, number[][]> = {
+export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   rock: [[0, 4, 5], [0, 4, 0, 5], [0, 5, 3, 4]],
   pop: [[0, 5, 3, 4], [0, 4, 5, 4], [0, 3, 5, 4]],
   jazz: [[0, 3, 2, 5], [0, 2, 3, 4], [0, 5, 0, 3]],
@@ -590,12 +590,12 @@ const INSTRUMENTS_GM: Record<string, number> = {
 };
 
 
-const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
+export const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 
-const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
+export const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
 
 
-function traduireCle(nom: string): number {
+export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {
     Do: 0, "Do#": 1, Ré: 2, "Ré#": 3, Mi: 4, Fa: 5, "Fa#": 6,
     Sol: 7, "Sol#": 8, La: 9, "La#": 10, Si: 11,

@@ -244,6 +244,152 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
   return audioBufferDepuisTone(toneBuffer);
 }
 
+export interface OptionsDrumSynth {
+  notes: { note: number; velocite: number; debut: number; fin: number }[];
+  volume: number;
+  sampleRate?: number;
+}
+
+/**
+ * Rendu d'une piste MIDI batterie avec des synthétiseurs de percussion.
+ * Utilise Tone.js MembraneSynth, MetalSynth et NoiseSynth.
+ * Les notes General MIDI sont mappées : 36 kick, 38 snare, 39 clap,
+ * 42/46 charley, 49 crash, 45/50 toms.
+ */
+export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioBuffer> {
+  const { notes, volume, sampleRate = 44100 } = opts;
+  const { MembraneSynth, MetalSynth, NoiseSynth, Offline } = await import("tone");
+
+  const dureeTotale = notes.length > 0
+    ? Math.max(0.5, Math.max(...notes.map((n) => n.fin)) + 0.5)
+    : 0.5;
+  const velocity = Math.max(0, Math.min(1, volume / 100));
+
+  const toneBuffer = await Offline(
+    () => {
+      const gain = 20 * Math.log10(Math.max(0.01, velocity));
+
+      const kick = new MembraneSynth({
+        pitchDecay: 0.05,
+        octaves: 4,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" },
+      }).toDestination();
+      kick.volume.value = gain;
+
+      const snare = new MembraneSynth({
+        pitchDecay: 0.02,
+        octaves: 2,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.5, attackCurve: "exponential" },
+      }).toDestination();
+      snare.volume.value = gain;
+
+      const snareNoise = new NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 },
+      }).toDestination();
+      snareNoise.volume.value = gain;
+
+      const clap = new NoiseSynth({
+        noise: { type: "brown" },
+        envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 },
+      }).toDestination();
+      clap.volume.value = gain;
+
+      const hihat = new MetalSynth({
+        harmonicity: 5.1,
+        modulationIndex: 32,
+        resonance: 4000,
+        octaves: 1.5,
+        envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05, attackCurve: "linear" },
+      }).toDestination();
+      hihat.volume.value = gain;
+
+      const hihatOpen = new MetalSynth({
+        harmonicity: 5.1,
+        modulationIndex: 32,
+        resonance: 4000,
+        octaves: 1.5,
+        envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.1, attackCurve: "linear" },
+      }).toDestination();
+      hihatOpen.volume.value = gain;
+
+      const crash = new MetalSynth({
+        harmonicity: 4,
+        modulationIndex: 40,
+        resonance: 3000,
+        octaves: 2,
+        envelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 1.0, attackCurve: "linear" },
+      }).toDestination();
+      crash.volume.value = gain;
+
+      const lowTom = new MembraneSynth({
+        pitchDecay: 0.04,
+        octaves: 3,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" },
+      }).toDestination();
+      lowTom.volume.value = gain;
+
+      const highTom = new MembraneSynth({
+        pitchDecay: 0.03,
+        octaves: 3,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" },
+      }).toDestination();
+      highTom.volume.value = gain;
+
+      for (const n of notes) {
+        const v = Math.max(0, Math.min(1, n.velocite / 127));
+        const t = n.debut;
+        switch (n.note) {
+          case 36:
+            kick.triggerAttackRelease("C2", "8n", t, v);
+            break;
+          case 38:
+            snare.triggerAttackRelease("D2", "8n", t, v);
+            snareNoise.triggerAttackRelease("16n", t, v);
+            break;
+          case 39:
+            clap.triggerAttackRelease("16n", t, v);
+            break;
+          case 42:
+          case 44:
+            hihat.triggerAttackRelease("C5", "32n", t, v);
+            break;
+          case 46:
+            hihatOpen.triggerAttackRelease("C5", "16n", t, v);
+            break;
+          case 45:
+            lowTom.triggerAttackRelease("A1", "8n", t, v);
+            break;
+          case 47:
+            lowTom.triggerAttackRelease("C2", "8n", t, v);
+            break;
+          case 48:
+            highTom.triggerAttackRelease("E2", "8n", t, v);
+            break;
+          case 49:
+            crash.triggerAttackRelease("C5", "4n", t, v);
+            break;
+          case 50:
+            highTom.triggerAttackRelease("F2", "8n", t, v);
+            break;
+          default:
+            kick.triggerAttackRelease("C2", "8n", t, v);
+            break;
+        }
+      }
+    },
+    dureeTotale,
+    2,
+    sampleRate,
+  );
+
+  return audioBufferDepuisTone(toneBuffer);
+}
+
 /**
  * Genere un son metallique synthetique avec Tone.MetalSynth.
  * Le rendu est fait en offline pour obtenir un AudioBuffer directement.

@@ -1,6 +1,6 @@
 // audio/effets-temporel.test.ts — Vérification de Paulstretch.
 import { describe, it, expect, beforeAll } from "vitest";
-import { appliquerPaulstretch } from "./effets-temporel";
+import { appliquerPaulstretch, appliquerEchoInverse } from "./effets-temporel";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -60,5 +60,36 @@ describe("appliquerPaulstretch", () => {
     const buffer = sinus(220, 0.5, 1);
     const out = appliquerPaulstretch(buffer, 2, 0.25);
     expect(out.numberOfChannels).toBe(1);
+  });
+});
+
+describe("appliquerEchoInverse", () => {
+  it("allonge la durée par une queue de pré-echo", () => {
+    const buffer = sinus(440, 0.1, 1);
+    const out = appliquerEchoInverse(buffer, 50, 50);
+    const delay = Math.round(0.05 * SR);
+    const repetitions = Math.ceil(Math.log(1e-4) / Math.log(0.5));
+    expect(out.length).toBe(buffer.length + repetitions * delay);
+    expect(out.numberOfChannels).toBe(1);
+  });
+
+  it("place les répétitions atténuées avant le signal principal", () => {
+    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const src = buffer.getChannelData(0);
+    src[0] = 1;
+    const out = appliquerEchoInverse(buffer, 50, 50);
+    const delay = Math.round(0.05 * SR);
+    const repetitions = Math.ceil(Math.log(1e-4) / Math.log(0.5));
+    const tail = delay * repetitions;
+    const dst = out.getChannelData(0);
+
+    // Le signal principal est décalé de la queue de pré-echo.
+    expect(dst[tail]).toBeCloseTo(1, 6);
+    // Les échos sont avant le signal principal, du plus fort au plus doux...
+    for (let r = 1; r <= Math.min(repetitions, 5); r++) {
+      expect(dst[tail - r * delay]).toBeCloseTo(Math.pow(0.5, r), 6);
+    }
+    // ...et le tout débute par l'écho le plus doux.
+    expect(dst[0]).toBeCloseTo(Math.pow(0.5, repetitions), 6);
   });
 });

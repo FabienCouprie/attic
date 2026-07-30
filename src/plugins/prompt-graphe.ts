@@ -127,6 +127,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "reservoir-textuel", mots: ["réservoir textuel", "text reservoir", "texte aléatoire"], category: "texte" },
   { ficheId: "tts-speecht5", mots: ["speecht5", "tts", "synthèse vocale", "text to speech"], category: "texte" },
   { ficheId: "tts-mms", mots: ["mms", "mms tts", "multilingue tts"], category: "texte" },
+  { ficheId: "tts-kokoro", mots: ["kokoro", "kokoro tts", "text to speech"], category: "texte" },
   { ficheId: "whisper-en", mots: ["whisper", "transcription", "speech to text", "asr"], category: "texte" },
   { ficheId: "sherpa-asr", mots: ["sherpa", "sherpa asr", "speech to text", "asr", "transcription"], category: "texte" },
   { ficheId: "traduction-opus", mots: ["traduction", "translate", "opus", "translator"], category: "texte" },

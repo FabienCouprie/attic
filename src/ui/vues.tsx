@@ -394,7 +394,7 @@ function ClavierMelodie({ id }: VueProps) {
   function relacher(note: number) { setTouches((p) => { const n = new Set(p); n.delete(note); return n; }); arreter(note); if (enRegRef.current) { for (const s of seqRef.current) if (s.note === note && s.fin === 0) { s.fin = (performance.now() - debutRef.current) / 1000; break; } setVersion((v) => v + 1); } }
   function trouverNoteDepuisPointer(e: React.PointerEvent): number | null { const el = touchesRef.current; if (!el) return null; const rect = el.getBoundingClientRect(), x = e.clientX - rect.left + el.scrollLeft, idx = Math.floor(x / NB); if (idx < 0 || idx >= blanches.length) return null; return blanches[idx].note; }
   function onPointerDown(e: React.PointerEvent) { if (e.button !== 0) return; e.preventDefault(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); pointerEnfonce.current = true; const note = trouverNoteDepuisPointer(e); if (note !== null) presser(note); }
-  function onPointerMove(e: React.PointerEvent) { if (!pointerEnfonce.current) return; const note = trouverNoteDepuisPointer(e); if (note !== null && !touches.has(note)) presser(note); }
+  function onPointerMove(e: React.PointerEvent) { if (!pointerEnfonce.current) return; if (e.buttons === 0) { onPointerUp(); return; } const note = trouverNoteDepuisPointer(e); if (note !== null && !touches.has(note)) presser(note); }
   function onPointerUp() { pointerEnfonce.current = false; for (const note of activesRef.current.keys()) relacher(note); }
   function demarrerEnreg() { seqRef.current = []; setVersion((v) => v + 1); enRegRef.current = true; debutRef.current = performance.now(); setEnReg(true); }
   function arreterEnreg() { enRegRef.current = false; setEnReg(false); const now = performance.now(); for (const s of seqRef.current) if (s.fin === 0) s.fin = (now - debutRef.current) / 1000; setNodes((nds) => nds.map((nd) => nd.id === id ? { ...nd, data: { ...nd.data, sequenceNotes: [...seqRef.current] } } : nd)); setVersion((v) => v + 1); }
@@ -433,7 +433,7 @@ function ClavierMelodie({ id }: VueProps) {
         <span className="clavier-octave">←↑→ {nomNote(octaveClavier * 12)}–{nomNote(octaveClavier * 12 + 11)}</span>
       </div>
       <div className={"clavier-touches" + (larg > 0 && totalWidth > larg ? " avec-scroll" : "")}
-        ref={touchesRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+        ref={touchesRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onLostPointerCapture={onPointerUp}
         style={{ width: "100%", minHeight: 70 }}>
         <div className="clavier-interieure" style={{ width: totalWidth, position: "relative", height: "100%" }}>
           {blanches.map((b, i) => (

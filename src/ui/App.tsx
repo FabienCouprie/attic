@@ -136,7 +136,6 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "source-texte") return { width: 280, height: 200 };
   if (def.id === "sortie-texte") return { width: 280, height: 250 };
   if (def.id === "python-processor") return { width: 380, height: 300 };
-  if (def.id === "multi-reservoirs") return { width: 280, height: 420 };
   if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
@@ -145,7 +144,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id.startsWith("collection-")) return { width: 380, height: 280 };
   if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
   if (def.id === "classificateur-genre") return { width: 380, height: 300 };
-  if (def.id === "multi-reservoirs") return { width: 280, height: 420 };
+  if (def.id === "multi-reservoirs") return { width: 280, height: 540 };
   // Nodes standard : largeur fixe, hauteur = contenu réel (en-tête + ports + statut)
   void nbParams; void w;
   return { width: 240, height: nbPorts * 22 + 96 };
@@ -169,6 +168,8 @@ function Atelier() {
   const edgeTypes = useMemo(() => edgeTypesImport, []);
   const [nodes, setNodes, onNodesChange] = useNodesState<NoeudAtelier>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const rfRef = useRef<HTMLDivElement>(null);
+  const pointerDownRef = useRef(false);
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
   // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
   // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
@@ -635,6 +636,50 @@ function Atelier() {
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
   });
 
+  // ── Filet de sécurité anti-curseur collé ──
+  // Si le bouton souris est relâché hors de la fenêtre (second écran, Alt-Tab,
+  // menu système…), React Flow peut rester en état "drag" quand le curseur
+  // revient. On détecte un pointermove avec buttons===0 alors qu'on pensait le
+  // bouton enfoncé, et on envoie pointerup/pointercancel au canevas pour forcer
+  // la libération.
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.isPrimary) pointerDownRef.current = true;
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.isPrimary) pointerDownRef.current = false;
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!pointerDownRef.current || e.isPrimary === false) return;
+      if (e.buttons === 0 && rfRef.current) {
+        pointerDownRef.current = false;
+        const target = rfRef.current;
+        const init = {
+          bubbles: true,
+          cancelable: true,
+          pointerId: e.pointerId,
+          pointerType: e.pointerType,
+          button: 0,
+          buttons: 0,
+          clientX: e.clientX,
+          clientY: e.clientY,
+        };
+        target.dispatchEvent(new PointerEvent("pointerup", init));
+        target.dispatchEvent(new PointerEvent("pointercancel", init));
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("pointermove", onPointerMove);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("pointermove", onPointerMove);
+    };
+  }, []);
+
   return (
     <div className="attic-app">
       <Palette
@@ -761,6 +806,7 @@ function Atelier() {
           </div>
         )}
         <ReactFlow<NoeudAtelier>
+          ref={rfRef}
           nodes={nodes} edges={edges}
           onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
           onConnect={onConnect}

@@ -2,7 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, spatialiserStereo } from "./effets-spectral";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -61,6 +61,13 @@ function sinusWebAudio(freq: number, dureeS: number, channels = 1): AudioBuffer 
 
 function rms(buf: AudioBuffer): number {
   const data = buf.getChannelData(0);
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+  return Math.sqrt(sum / data.length);
+}
+
+function rmsCanal(buf: AudioBuffer, canal: number): number {
+  const data = buf.getChannelData(canal);
   let sum = 0;
   for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
   return Math.sqrt(sum / data.length);
@@ -219,5 +226,20 @@ describe("tremoloLogistique", () => {
     const rmsFin = rmsTranche(out, buffer.length - quart, buffer.length);
     expect(rmsDebut).toBeGreaterThan(0.95);
     expect(rmsFin).toBeLessThan(0.8);
+  });
+});
+
+describe("spatialiserStereo", () => {
+  it("mixe une entrée stéréo « droite seule » en mono avant de spatialiser", async () => {
+    const n = Math.floor(SR * 0.2);
+    const buffer = new AudioBufferNWA({ numberOfChannels: 2, length: n, sampleRate: SR }) as any;
+    buffer.getChannelData(0).fill(0);
+    buffer.getChannelData(1).fill(1);
+    const out = await spatialiserStereo(buffer, 0, 1);
+    expect(out.numberOfChannels).toBe(2);
+    // Avant correction, le canal gauche restait à 0. Après mixage mono, les deux
+    // canaux portent du signal (même si HRTF les balance légèrement).
+    expect(rmsCanal(out, 0)).toBeGreaterThan(0.01);
+    expect(rmsCanal(out, 1)).toBeGreaterThan(0.01);
   });
 });

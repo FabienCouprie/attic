@@ -8,7 +8,10 @@ import {
   genererModulationSynth,
   genererPluckSynth,
   genererPolySynth,
-} from "../audio";
+  rendreBatterieMidi,
+} from "../audio/tone-synths";
+import { analyserMidi } from "../audio/midi";
+import { parseMidi } from "midi-file";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -682,6 +685,69 @@ export const fiches: FicheAudio[] = ([
           valeurs: [null],
           erreur: true,
           message: traduire("msg.erreur_plucksynth_var_0", e?.message ?? e),
+        };
+      }
+    },
+  },
+  {
+    id: "drum-synth",
+    nom: "Batterie synthétique",
+    nomEn: "Drum Synth",
+    univers: "Entrées",
+    famille: "Génération",
+    resume: "Reçoit un MIDI et le joue avec des synthétiseurs de percussion (sans SoundFont).",
+    resumeEn: "Receives MIDI and plays it with percussion synthesizers (no SoundFont).",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      {
+        nom: "Canal MIDI",
+        nomEn: "MIDI channel",
+        type: "nombre",
+        plage: [1, 16],
+        pas: 1,
+        defaut: 10,
+        doc: "Canal MIDI contenant les notes de batterie (10 = canal GM batterie).",
+        docEn: "MIDI channel containing the drum notes (10 = GM drum channel).",
+      },
+      {
+        nom: "Volume",
+        nomEn: "Volume",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 80,
+        unite: "%",
+        doc: "Niveau de sortie de la batterie.",
+        docEn: "Output level of the drum kit.",
+      },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
+      const canal = ctx.paramNombre("Canal MIDI", 10);
+      const volume = ctx.paramNombre("Volume", 80);
+      try {
+        const data = new Uint8Array(await fichier.arrayBuffer());
+        const midi = parseMidi(data);
+        const { notes } = analyserMidi(midi);
+        const notesFiltrees = notes
+          .filter((n) => n.canal === canal - 1)
+          .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        const buffer = await rendreBatterieMidi({
+          notes: notesFiltrees,
+          volume,
+          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+        });
+        return {
+          valeurs: [buffer, fichier],
+          message: traduire("msg.batterie_var_0_coups_var_1_s", notesFiltrees.length, buffer.duration.toFixed(2)),
+        };
+      } catch (e: any) {
+        return {
+          valeurs: [null, null],
+          erreur: true,
+          message: traduire("msg.erreur_drumsynth_var_0", e?.message ?? e),
         };
       }
     },

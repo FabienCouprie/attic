@@ -7,9 +7,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 ### Fixed
 - **Node deletion cleanup** — deleting a node via the red-cross button, the Delete key, the Inspector, Ctrl+X, or by removing a meta-component now clears the execution cache for the deleted node and its downstream nodes, revokes generated result object URLs, and resets downstream statuses. This prevents stale cached results and memory leaks from outliving the deleted node.
 - **TTS voice parameter labels** — SpeechT5 and Piper TTS voice dropdowns now show readable labels (e.g., `US male (BDL)`, `RU-irina-medium`) instead of raw technical IDs, while the runtime still receives the correct voice. Old saved values remain supported.
+- **MIDI output default** — MIDI output nodes now default to "Follow MIDI" so they respect the instrument/bank changes embedded in the incoming MIDI stream.
+- **SoundFont drum mapping** — GM drum notes (36–50) were often inaudible with SoundFont kits because the drum kit patch was not applied. The Groove Box now always renders its own drum part via an internal drum synth, and a dedicated `Volume batterie` parameter controls the drum level independently.
+- **Stuck mouse cursor** — pointer capture could remain active on the waveform/multi-zone selectors, the piano keyboard, or on the React Flow canvas if the mouse button was released outside the window (second screen, Alt-Tab, system menu). Added `pointercancel`/`lostpointercapture` handlers, `buttons===0` guards during `pointermove`, and a global safety net that dispatches `pointerup`/`pointercancel` to the canvas when a pointer is believed to be down but has no pressed buttons.
 
 ### Added
 - **Advanced Drum Sequencer** — new node `sequenceur-batterie-avance` with 8 drum tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom), per-step velocity (0–9), and synthesized drum-machine sounds. The existing `Séquenceur de batterie` is unchanged.
+- **Drum Synth** — new node `batterie-synth` ("Batterie synthétique") that renders GM drum notes (36–50) from a MIDI input into synthesized audio using Tone.js Membrane/Metal/Noise synths. It also outputs the MIDI passthrough.
+- **Groove Box** — new node `boite-groove` that generates a complete backing track: deterministic chord progression, reservoir melody, and synthesized drum pattern. The final mix is normalized to 0.9 peak. Outputs four separate MIDI files (drums, chords, bass, melody) plus stereo audio. The same seed reproduces the same melody; chord progression is deterministic.
+- **Windows local build script** — `scripts/build-electron.cjs` now wraps the Electron build. It temporarily switches `package.json` to the `traversal` package manager collector, sets `NODE_OPTIONS=--max-old-space-size=32000`, and cleans the `release/` directory before packaging to avoid the out-of-memory failure caused by electron-builder's `npm list` collector on this large dependency tree.
 
 ## [2.0.1] — 2026-07-27
 

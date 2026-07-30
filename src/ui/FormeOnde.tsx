@@ -38,6 +38,7 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
   const visibleRef = useRef({ start: 0, end: 0 });
   const selectionRef = useRef<Zone>({ debut: 0, duree: 0 });
   const dragRef = useRef<{ type: "selectionner" | "deplacer"; debutSec: number } | null>(null);
+  const pointerIdRef = useRef<number | null>(null);
   const [, forceRedraw] = useState(0);
 
   const hauteur = multi ? 140 : 100;
@@ -261,10 +262,27 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
       selectionRef.current = { debut: t, duree: 0 };
     }
     overlayRef.current?.setPointerCapture(e.pointerId);
+    pointerIdRef.current = e.pointerId;
   }, [multi, dureeTotale, tempsDepuisX]);
+
+  const finirPointer = useCallback(() => {
+    if (pointerIdRef.current !== null && overlayRef.current) {
+      try {
+        overlayRef.current.releasePointerCapture(pointerIdRef.current);
+      } catch {}
+      pointerIdRef.current = null;
+    }
+    dragRef.current = null;
+    setSelAffichee({ ...selectionRef.current });
+    dessiner();
+  }, [dessiner]);
 
   const surPointeurDeplacer = useCallback((e: React.PointerEvent) => {
     if (!dragRef.current || dureeTotale <= 0) return;
+    if (e.buttons === 0) {
+      finirPointer();
+      return;
+    }
     const t = tempsDepuisX(e.nativeEvent.offsetX);
     if (dragRef.current.type === "selectionner") {
       const debut = Math.min(dragRef.current.debutSec, t);
@@ -275,15 +293,20 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
     }
     setSelAffichee({ ...selectionRef.current });
     dessiner();
-  }, [dureeTotale, tempsDepuisX, dessiner]);
+  }, [dureeTotale, tempsDepuisX, dessiner, finirPointer]);
 
   const surPointeurLeve = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    dragRef.current = null;
-    setSelAffichee({ ...selectionRef.current });
-    overlayRef.current?.releasePointerCapture(e.pointerId);
-    dessiner();
-  }, [dessiner]);
+    e.preventDefault();
+    finirPointer();
+  }, [finirPointer]);
+
+  // ── Libération défensive du pointer capture si la fenêtre perd le focus ou
+  //    si le navigateur annule le pointer (curseur collé au canvas).
+  useEffect(() => {
+    const onBlur = () => finirPointer();
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, [finirPointer]);
 
   const ajouterZone = useCallback(() => {
     const sel = selectionRef.current;
@@ -324,6 +347,8 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
           onPointerDown={surPointeurBas}
           onPointerMove={surPointeurDeplacer}
           onPointerUp={surPointeurLeve}
+          onPointerCancel={surPointeurLeve}
+          onLostPointerCapture={surPointeurLeve}
           onWheel={(e) => {
             e.preventDefault();
             const facteur = e.deltaY > 0 ? 1 / 1.3 : 1.3;
