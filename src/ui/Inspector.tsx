@@ -123,7 +123,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               const valeur = hasIds
                 ? (p.optionIds!.includes(candidat) ? candidat : String(defautCanonique))
                 : candidat;
-              const optionValue = (i: number) => p.optionIds?.[i] ?? p.options[i];
+              const optionValue = (i: number) => p.optionIds?.[i] ?? (p.options ?? [])[i];
               return (
                 <select value={valeur} onChange={(e) => onChangerParametre(p.nom, e.target.value)}>
                   {p.options.map((o, i) => {
