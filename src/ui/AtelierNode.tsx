@@ -102,7 +102,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const vuesApres = vuesPourNoeud(data.ficheId, "apres");
 
   return (
-    <div className={`attic-node ${selected ? "selected" : ""} ${nodeEstMeta ? "meta" : ""} ${nodeEstFrontiere ? "frontiere" : ""}`} ref={nodeRef}>
+      <div className={`attic-node ${selected ? "selected" : ""} ${nodeEstMeta ? "meta" : ""} ${nodeEstFrontiere ? "frontiere" : ""} ${data.statut === "en_cours" ? "running" : ""}`} ref={nodeRef}>
       {/* En-tête */}
       <div className="attic-node-entete">
         <span className="attic-node-nom">

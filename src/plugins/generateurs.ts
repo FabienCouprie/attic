@@ -7,15 +7,18 @@ import {
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
-  genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi,
+  genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes, filtrerCanauxMidi,
   rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
   genererMusiqueMandelbrot,
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
+  type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
+import { rendreBatterieMidi } from "../audio/tone-synths";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -149,7 +152,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Itérations max", nomEn: "Max iterations", type: "nombre", plage: [50, 2000], pas: 10, defaut: 200, doc: "Nombre maximal d'itérations de z = z² + c avant de considérer le point comme dans l'ensemble.", docEn: "Maximum number of z = z² + c iterations before considering the point in the set." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Escape time", "Dwell", "Octave"], optionsEn: ["Escape time", "Dwell", "Octave"], defaut: "Escape time", defautEn: "Escape time", doc: "Escape time = divergence rapide → notes hautes/fortes. Dwell = proche de l'ensemble → plus fort. Octave = la position Y choisit l'octave.", docEn: "Escape time = fast divergence → higher/louder notes. Dwell = close to the set → louder. Octave = Y position selects the octave." },
       { nom: "Notes", nomEn: "Notes", type: "nombre", plage: [8, 256], pas: 1, defaut: 32, unite: "notes", doc: "Nombre de points échantillonnés dans le plan, donc de notes générées.", docEn: "Number of points sampled in the plane, hence notes generated." },
-      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s", doc: "Durée de chaque note en secondes.", docEn: "Duration of each note in seconds." },
+      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5, doc: "Durée de chaque note exprimée en fraction de temps (1 = 1 temps/noire, 0.5 = croche, 0.25 = double-croche). Le tempo (BPM) détermine la durée réelle.", docEn: "Duration of each note expressed as a fraction of a beat (1 = one beat/quarter note, 0.5 = eighth note, 0.25 = sixteenth note). Tempo (BPM) determines the actual duration." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de la mélodie en battements par minute.", docEn: "Tempo of the melody in beats per minute." },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de la gamme.", docEn: "Reference note (tonic) of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure","Chromatique"], defaut: "Majeur", optionsEn: ["Major","Natural minor","Harmonic minor","Major pentatonic","Minor pentatonic","Chromatic"], defautEn: "Major", doc: "Gamme utilisée pour quantiser les hauteurs de notes.", docEn: "Scale used to quantize note pitches." },
@@ -391,31 +394,34 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "clavier-melodie", nom: "Clavier mélodie", nomEn: "Melody Keyboard", univers: "Entrées", famille: "Génération",
-    resume: "Joue une séquence enregistrée au clavier.",
-    resumeEn: "Plays a keyboard-recorded sequence.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    resume: "Joue une séquence enregistrée au clavier et exporte aussi un fichier MIDI.",
+    resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
+      { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     async executer(ctx: any) {
       console.log("[attic] Clavier mélodie : exécution démarrée");
-      const notes = ctx.noeud.data.sequenceNotes;
-      if (!notes || !Array.isArray(notes)) return { valeurs:[null], message:traduire("msg.aucune_s_quence") };
+      const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
+      if (!notes || !Array.isArray(notes)) return { valeurs:[null, null], message:traduire("msg.aucune_s_quence") };
       try {
         const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
         const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
         const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
         console.log(`[attic] Clavier mélodie : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
-        const buf = await rendreSequence(notes as any, modeRendu, ctx.paramNombre("Volume",80), instrument, banque);
+        const buf = await rendreSequence(notes, modeRendu, ctx.paramNombre("Volume",80), instrument, banque);
+        const tempo = ctx.paramNombre("Tempo", 120);
+        const midiFile = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
         console.log(`[attic] Clavier mélodie : buffer rendu, durée=${buf?.duration ?? 0}`);
-        return { valeurs: [buf] };
+        return { valeurs: [buf, midiFile] };
       } catch (e: any) {
         console.error("[attic] Clavier mélodie : erreur", e);
-        return { valeurs:[null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
+        return { valeurs:[null, null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },
   },
@@ -854,7 +860,13 @@ export const fiches: FicheAudio[] = ([
     resume: "Plusieurs réservoirs neuronaux en réseau (mélodie, basse, harmonie, rythme) — émergence polyphonique.",
     resumeEn: "Multiple neural reservoirs in network (melody, bass, harmony, rhythm) — polyphonic emergence.",
     entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    sorties: [
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
+      { nom: "Mélodie MIDI", nomEn: "Melody MIDI", type: "midi" },
+      { nom: "Basse MIDI", nomEn: "Bass MIDI", type: "midi" },
+      { nom: "Harmonie MIDI", nomEn: "Harmony MIDI", type: "midi" },
+      { nom: "Rythme MIDI", nomEn: "Rhythm MIDI", type: "midi" },
+    ],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
         doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
@@ -895,6 +907,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Neurones du réservoir rythme (détermine quand les autres jouent).", docEn: "Rhythm reservoir neurons (determines when others play)." },
       { nom: "Rythme densité", nomEn: "Rhythm density", plage: [10, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Densité du pattern rythmique.", docEn: "Rhythm pattern density." },
+      { ...PARAMETRE_INSTRUMENT_SF2, nom: "Kit de batterie", nomEn: "Drum kit", defaut: 16384,
+        doc: "Preset du SoundFont global à utiliser pour la piste rythme MIDI. Sélectionnez un kit de percussion (banque 128).", docEn: "Preset of the loaded global SoundFont to use for the rhythm MIDI track. Select a percussion kit (bank 128)." },
+      { nom: "Transpose batterie", nomEn: "Drum transpose", plage: [-36, 36], pas: 1, defaut: 0, unite: "demi-tons",
+        doc: "Transposition des notes de batterie MIDI si le kit de batterie du SoundFont n'est pas mappé sur les notes General MIDI.", docEn: "Transpose the drum MIDI notes if the SoundFont drum kit is not mapped to General MIDI notes." },
       // Influence
       { nom: "Influence", nomEn: "Influence", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Influence croisée du rythme sur les autres voix. 0 = indépendantes, 100% = les autres ne jouent que sur les pas rythmiques.",
@@ -923,11 +939,16 @@ export const fiches: FicheAudio[] = ([
         harmonieConnectivite: ctx.paramNombre("Harm. connectivité", 20),
         rythmeNeurones: ctx.paramNombre("Rythme neurones", 12),
         rythmeDensite: ctx.paramNombre("Rythme densité", 50),
+        rythmeInstrument: ctx.paramNombre("Kit de batterie", 0),
+        rythmeTranspose: ctx.paramNombre("Transpose batterie", 0),
         influence: ctx.paramNombre("Influence", 50) / 100,
       };
       ctx.onProgress(traduire("progress.g_n_ration_multi_r_servoirs"));
-      const { buffer, details } = genererMultiReservoir(config);
-      return { valeurs: [buffer], message: traduire("msg.var_0_graine_var_1", details, config.graine > 0 ? config.graine : "auto") };
+      const { buffer, details, midis } = genererMultiReservoir(config);
+      return {
+        valeurs: [buffer, midis.melody, midis.bass, midis.harmony, midis.rhythm],
+        message: traduire("msg.var_0_graine_var_1", details, config.graine > 0 ? config.graine : "auto"),
+      };
     },
   },
   {
@@ -956,6 +977,337 @@ export const fiches: FicheAudio[] = ([
       const adapt = notes.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
       const buf = rendreAvecEchantillon(adapt, sample, vol, noteRef);
       return { valeurs: [buf, midiFile], message: traduire("msg.var_0_notes_chantillon_var_1", notes.length, audioFichier.name) };
+    },
+  },
+  {
+    id: "boite-groove",
+    nom: "Groove Box",
+    nomEn: "Groove Box",
+    univers: "Entrées",
+    famille: "Génération",
+    resume: "Génère une boucle groove : progression d'accords déterministe + mélodie de réservoir + batterie.",
+    resumeEn: "Generates a groove loop: deterministic chord progression + reservoir melody + drums.",
+    entrees: [],
+    sorties: [
+      { nom: "Audio", nomEn: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "MIDI batterie", nomEn: "MIDI drums", type: "midi" },
+      { nom: "MIDI accords", nomEn: "MIDI chords", type: "midi" },
+      { nom: "MIDI basse", nomEn: "MIDI bass", type: "midi" },
+      { nom: "MIDI mélodie", nomEn: "MIDI melody", type: "midi" },
+    ],
+    parametres: [
+      {
+        nom: "Clé",
+        nomEn: "Key",
+        type: "choix",
+        options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+        optionsEn: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+        defaut: "C",
+        defautEn: "C",
+        doc: "Note fondamentale (tonique) de la grille harmonique.",
+        docEn: "Root note (tonic) of the harmonic grid.",
+      },
+      {
+        nom: "Gamme",
+        nomEn: "Scale",
+        type: "choix",
+        options: ["majeur","mineur"],
+        optionsEn: ["major","minor"],
+        defaut: "majeur",
+        defautEn: "major",
+        doc: "Gamme utilisée pour construire les accords.",
+        docEn: "Scale used to build chords.",
+      },
+      {
+        nom: "Genre",
+        nomEn: "Genre",
+        type: "choix",
+        options: ["pop","rock","jazz","blues","classique","electro","hiphop","reggae","ambient","personnalisé"],
+        optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"],
+        defaut: "pop",
+        defautEn: "pop",
+        doc: "Style déterminant la progression d'accords. Choisissez « personnalisé » pour saisir la progression.",
+        docEn: "Style that determines the chord progression. Choose « Custom » to enter the progression.",
+      },
+      {
+        nom: "Progression",
+        nomEn: "Progression",
+        type: "texte",
+        defaut: "I-V-vi-IV",
+        defautEn: "I-V-vi-IV",
+        doc: "Progression personnalisée en chiffres romains (ex. I-V-vi-IV, ii-V-I). Utilisée seulement si Genre = personnalisé.",
+        docEn: "Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V-I). Used only when Genre = Custom.",
+      },
+      {
+        nom: "Tempo",
+        nomEn: "Tempo",
+        type: "nombre",
+        plage: [40, 240],
+        pas: 1,
+        defaut: 110,
+        unite: "BPM",
+        doc: "Vitesse en battements par minute.",
+        docEn: "Speed in beats per minute.",
+      },
+      {
+        nom: "Durée par accord",
+        nomEn: "Chord duration",
+        type: "nombre",
+        plage: [1, 8],
+        pas: 1,
+        defaut: 2,
+        unite: "temps",
+        doc: "Durée de chaque accord en temps (4 temps = 1 mesure 4/4).",
+        docEn: "Duration of each chord in beats (4 beats = 1 4/4 bar).",
+      },
+      {
+        nom: "Nombre d'accords",
+        nomEn: "Chord count",
+        type: "nombre",
+        plage: [2, 32],
+        pas: 1,
+        defaut: 8,
+        doc: "Nombre total d'accords / taille de la boucle.",
+        docEn: "Total number of chords / loop length.",
+      },
+      {
+        nom: "Style rythmique",
+        nomEn: "Rhythm style",
+        type: "choix",
+        options: ["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","House","Techno","Pop dance","Bossa Nova"],
+        optionsEn: ["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","House","Techno","Pop dance","Bossa Nova"],
+        defaut: "Pop dance",
+        defautEn: "Pop dance",
+        doc: "Pattern de batterie appliqué sur la boucle.",
+        docEn: "Drum pattern applied to the loop.",
+      },
+      {
+        nom: "Neurones",
+        nomEn: "Neurons",
+        type: "nombre",
+        plage: [5, 50],
+        pas: 1,
+        defaut: 15,
+        doc: "Nombre de neurones du réservoir mélodique. Peu = motifs courts ; beaucoup = motifs complexes.",
+        docEn: "Number of neurons in the melodic reservoir. Few = short patterns; many = complex patterns.",
+      },
+      {
+        nom: "Connectivité",
+        nomEn: "Connectivity",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 30,
+        unite: "%",
+        doc: "Probabilité de connexion entre neurones.",
+        docEn: "Probability of connection between neurons.",
+      },
+      {
+        nom: "Mémoire",
+        nomEn: "Memory",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 30,
+        unite: "%",
+        doc: "Taux de fuite (leaking). Élevé = mémoire longue.",
+        docEn: "Leaking rate. High = long memory.",
+      },
+      {
+        nom: "Spectre",
+        nomEn: "Spectral radius",
+        type: "nombre",
+        plage: [50, 150],
+        pas: 1,
+        defaut: 90,
+        unite: "%",
+        doc: "Rayon spectral du réseau. <100% = stable, >100% = chaotique.",
+        docEn: "Network spectral radius. <100% = stable, >100% = chaotic.",
+      },
+      {
+        nom: "Octave",
+        nomEn: "Octave",
+        type: "nombre",
+        plage: [2, 6],
+        pas: 1,
+        defaut: 4,
+        doc: "Octave de départ de la mélodie du réservoir.",
+        docEn: "Starting octave of the reservoir melody.",
+      },
+      {
+        nom: "Densité",
+        nomEn: "Density",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 70,
+        unite: "%",
+        doc: "Probabilité de produire une note mélodique à chaque pas.",
+        docEn: "Probability of producing a melodic note at each step.",
+      },
+      {
+        nom: "Répétition",
+        nomEn: "Repetition",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 25,
+        unite: "%",
+        doc: "Tendance à répéter la note mélodique précédente.",
+        docEn: "Tendency to repeat the previous melodic note.",
+      },
+      {
+        nom: "Silence",
+        nomEn: "Silence",
+        type: "nombre",
+        plage: [0, 50],
+        pas: 1,
+        defaut: 10,
+        unite: "%",
+        doc: "Probabilité de silence mélodique à chaque pas.",
+        docEn: "Probability of melodic silence at each step.",
+      },
+      {
+        nom: "Graine",
+        nomEn: "Seed",
+        type: "nombre",
+        plage: [0, 99999],
+        pas: 1,
+        defaut: 0,
+        doc: "Graine du réservoir (0 = aléatoire à chaque exécution). Même graine = même mélodie.",
+        docEn: "Reservoir seed (0 = random each run). Same seed = same melody.",
+      },
+      {
+        nom: "Volume",
+        nomEn: "Volume",
+        type: "nombre",
+        plage: [0, 100],
+        pas: 1,
+        defaut: 80,
+        unite: "%",
+        doc: "Volume général des parties mélodiques et harmoniques.",
+        docEn: "General volume for melodic and harmonic parts.",
+      },
+      {
+        nom: "Volume batterie",
+        nomEn: "Drum volume",
+        type: "nombre",
+        plage: [0, 200],
+        pas: 1,
+        defaut: 100,
+        unite: "%",
+        doc: "Volume de la batterie. La batterie est toujours synthétisée par le drum-synth interne pour être audible, même en mode SoundFont.",
+        docEn: "Drum volume. Drums are always synthesized by the internal drum synth to remain audible, even in SoundFont mode.",
+      },
+      {
+        nom: "Synthèse",
+        nomEn: "Synthesis",
+        type: "choix",
+        options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
+        optionsEn: ["Auto", "FM/Oscillators", "SoundFont"],
+        defaut: "Automatique",
+        defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. La batterie utilise toujours le drum-synth interne.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth.",
+      },
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
+    ],
+    async executer(ctx: any) {
+      const config: ConfigGrooveBox = {
+        cle: ctx.paramTexte("Clé", "C"),
+        gamme: ctx.paramTexte("Gamme", "majeur"),
+        genre: ctx.paramTexte("Genre", "pop"),
+        progression: ctx.paramTexte("Progression", "I-V-vi-IV"),
+        tempo: ctx.paramNombre("Tempo", 110),
+        dureeAccord: ctx.paramNombre("Durée par accord", 2),
+        nbAccords: ctx.paramNombre("Nombre d'accords", 8),
+        styleRythme: ctx.paramTexte("Style rythmique", "Pop dance"),
+        neurones: ctx.paramNombre("Neurones", 15),
+        connectivite: ctx.paramNombre("Connectivité", 30) / 100,
+        memoire: ctx.paramNombre("Mémoire", 30) / 100,
+        spectre: ctx.paramNombre("Spectre", 90) / 100,
+        octave: ctx.paramNombre("Octave", 4),
+        densite: ctx.paramNombre("Densité", 70) / 100,
+        repetition: ctx.paramNombre("Répétition", 25) / 100,
+        silence: ctx.paramNombre("Silence", 10) / 100,
+        graine: ctx.paramNombre("Graine", 0),
+      };
+      ctx.onProgress(traduire("progress.g_n_ration_groove_box"));
+      const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, description, graineUtilisee } = genererGrooveBox(config);
+      const fichierBatterie = new File([midiBatterie as unknown as BlobPart], "groove-box-drums.mid", { type: "audio/midi" });
+      const fichierAccords = new File([midiAccords as unknown as BlobPart], "groove-box-chords.mid", { type: "audio/midi" });
+      const fichierBasse = new File([midiBasse as unknown as BlobPart], "groove-box-bass.mid", { type: "audio/midi" });
+      const fichierMelodie = new File([midiMelodie as unknown as BlobPart], "groove-box-melody.mid", { type: "audio/midi" });
+      const volume = ctx.paramNombre("Volume", 80);
+      const volumeBatterie = ctx.paramNombre("Volume batterie", 100);
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
+      const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+
+      const { notes: notesMidi, dureeTotale } = analyserMidi(parseMidi(midiBytes));
+      const sampleRate = ctx.runtime?.sampleRate ?? 44100;
+
+      const drums = notesMidi
+        .filter((n) => n.canal === 9)
+        .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
+
+      let melodicBuf: AudioBuffer;
+      if (useSf2) {
+        const melodicBytes = filtrerCanauxMidi(midiBytes, [0, 1, 2]);
+        melodicBuf = await rendreMidiDepuisBytes(
+          melodicBytes,
+          "SoundFont",
+          volume,
+          instrument >= 0 ? instrument : undefined,
+          instrument >= 0 ? banque : undefined,
+        );
+      } else {
+        const melodic = notesMidi
+          .filter((n) => n.canal !== 9)
+          .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        melodicBuf = await rendreSequence(melodic, "FM/Oscillateurs", volume);
+      }
+
+      const dureeMix = Math.max(dureeTotale, drumBuf.duration, melodicBuf.duration, 0.5);
+      const master = new AudioBuffer({
+        numberOfChannels: 2,
+        length: Math.ceil(dureeMix * sampleRate),
+        sampleRate,
+      });
+
+      for (let i = 0; i < master.length; i++) {
+        if (i < melodicBuf.length) {
+          master.getChannelData(0)[i] += melodicBuf.getChannelData(0)[i];
+          master.getChannelData(1)[i] += melodicBuf.getChannelData(1)[i];
+        }
+        if (i < drumBuf.length) {
+          master.getChannelData(0)[i] += drumBuf.getChannelData(0)[i];
+          master.getChannelData(1)[i] += drumBuf.getChannelData(1)[i];
+        }
+      }
+
+      // Normalisation douce du mix
+      let pic = 1e-9;
+      for (let c = 0; c < 2; c++) {
+        const ch = master.getChannelData(c);
+        for (let i = 0; i < ch.length; i++) {
+          const a = Math.abs(ch[i]);
+          if (a > pic) pic = a;
+        }
+      }
+      if (pic > 0.001) {
+        const g = 0.9 / pic;
+        for (let c = 0; c < 2; c++) {
+          const ch = master.getChannelData(c);
+          for (let i = 0; i < ch.length; i++) ch[i] *= g;
+        }
+      }
+
+      return {
+        valeurs: [master, fichierBatterie, fichierAccords, fichierBasse, fichierMelodie],
+        message: `${description} · graine ${graineUtilisee}`,
+      };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

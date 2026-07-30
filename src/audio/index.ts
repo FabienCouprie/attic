@@ -25,6 +25,7 @@ export * from "./vumetre";
 export * from "./reservoir";
 export * from "./evolution";
 export * from "./multi-reservoir";
+export * from "./groove-box";
 export * from "./graphe-embarque";
 export * from "./formants";
 export * from "./math-formules";

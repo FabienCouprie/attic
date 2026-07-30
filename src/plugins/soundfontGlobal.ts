@@ -34,8 +34,11 @@ export function listerPresetsSF2(): { valeur: number; banque: number; programme:
   return liste.sort((a, b) => a.banque - b.banque || a.programme - b.programme);
 }
 
-/** Décode une valeur `sf2instrument` en programme (0-127) et banque. */
+/** Décode une valeur `sf2instrument` en programme (0-127) et banque.
+ *  Une valeur négative signifie « Suivre le MIDI » : ne pas écraser les
+ *  changements de programme/banque présents dans le fichier. */
 export function decoderInstrumentSF2(valeur: number): { programme: number; banque: number } {
+  if (valeur < 0) return { programme: -1, banque: -1 };
   const programme = Math.max(0, Math.min(127, Math.round(valeur % 128)));
   const banque = Math.max(0, Math.floor(valeur / 128));
   return { programme, banque };
@@ -49,6 +52,13 @@ export const PARAMETRE_INSTRUMENT_SF2: ParametreDef = {
   defaut: 0,
   doc: "Preset du SoundFont global à utiliser pour le rendu (ignoré en mode FM). Chargez d'abord un fichier SF2 dans la barre d'outils. Les kits de percussion (banque 128) sont inclus s'ils sont présents.",
   docEn: "Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present.",
+};
+
+export const PARAMETRE_INSTRUMENT_SF2_SUIVI: ParametreDef = {
+  ...PARAMETRE_INSTRUMENT_SF2,
+  defaut: -1,
+  doc: "Preset du SoundFont à utiliser, ou Suivre le MIDI pour respecter les changements de programme/banque présents dans le fichier MIDI.",
+  docEn: "SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file.",
 };
 
 export function normaliserModeSynthèse(valeur: string): "Automatique" | "FM/Oscillateurs" | "SoundFont" {

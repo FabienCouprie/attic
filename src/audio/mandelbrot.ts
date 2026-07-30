@@ -93,7 +93,7 @@ function echantillonnerPoints(
 export function genererNotesMandelbrot(options: OptionsMandelbrot) {
   const {
     xMin, xMax, yMin, yMax, maxIter, mode, nbNotes, dureeNote,
-    cle, gamme, octaveBase, sensibilite,
+    cle, gamme, octaveBase, sensibilite, tempo,
   } = options;
 
   const points = echantillonnerPoints(xMin, xMax, yMin, yMax, nbNotes, options.graine);
@@ -101,13 +101,18 @@ export function genererNotesMandelbrot(options: OptionsMandelbrot) {
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
   const notes = [];
 
+  // dureeNote est exprimée en fraction de temps (1 = 1 temps/noire, 0.5 = croche, ...).
+  // Le tempo (BPM) donne la durée réelle d'un temps.
+  const dureeTemps = 60 / Math.max(1, tempo);
+  const dureeNoteReelle = Math.max(0.01, dureeNote * dureeTemps);
+
   for (let i = 0; i < points.length; i++) {
     const { x, y } = points[i];
     const escape = itererMandelbrot(x, y, maxIter);
     const bounded = escape >= maxIter;
     const t = i; // temps en nombre de notes
-    const debut = t * dureeNote;
-    const fin = debut + dureeNote * 0.9;
+    const debut = t * dureeNoteReelle;
+    const fin = debut + dureeNoteReelle * 0.9;
 
     let midiNote: number;
     let velocite: number;

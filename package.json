@@ -1,14 +1,14 @@
 {
   "name": "attic",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:electron": "concurrently -k \"vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development electron .\"",
     "build": "tsc -b && vite build",
-    "build:electron": "npm run build && npm run ensure-songsee && electron-builder --win -c.electronDist=node_modules/electron/dist",
+    "build:electron": "node scripts/build-electron.cjs",
     "publish:electron": "npm run build && npm run ensure-songsee && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
     "ensure-songsee": "node scripts/ensure-songsee.cjs",
     "preview": "vite preview",
@@ -37,9 +37,17 @@
       "!dist/sf2/**/*",
       "electron/*.cjs",
       "package.json",
+      "!release*/**/*",
+      "!release-build*/**/*",
+      "!release-prod*/**/*",
+      "!build/**/*",
       "!**/*.dylib",
       "!**/*.so",
-      "!**/*.so.*"
+      "!**/*.so.*",
+      "!**/*.a",
+      "!**/.cache/**/*",
+      "!**/*.d.ts",
+      "!**/*.map"
     ],
     "extraResources": [
       {
@@ -97,6 +105,7 @@
     "@xyflow/react": "^12.11.2",
     "adm-zip": "^0.6.0",
     "electron-updater": "^6.8.9",
+    "kokoro-js": "^1.2.1",
     "lamejs": "^1.2.1",
     "libpd-wasm": "^0.1.6",
     "mathjs": "^15.2.0",

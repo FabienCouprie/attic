@@ -210,7 +210,6 @@ export async function spatialiserStereo(
   const sr = buffer.sampleRate;
   const ctx = new OfflineAudioContext(2, buffer.length, sr);
   const source = ctx.createBufferSource();
-  source.buffer = buffer;
 
   const panner = ctx.createPanner();
   panner.panningModel = "HRTF";
@@ -231,12 +230,23 @@ export async function spatialiserStereo(
     panner.positionZ.value = -1;
   }
 
-  if (buffer.numberOfChannels === 1) {
-    const stereo = ctx.createBuffer(2, buffer.length, sr);
-    const mono = buffer.getChannelData(0);
-    stereo.getChannelData(0).set(mono);
-    stereo.getChannelData(1).set(mono);
-    source.buffer = stereo;
+  // Le panner HRTF est conçu pour une source mono. On mixe donc toute entrée
+  // (mono ou stéréo) en mono avant de la spatialiser, sinon un canal silencieux
+  // ou un signal exclusivement à droite resterait figé dans son canal d'origine.
+  if (buffer.numberOfChannels > 1) {
+    const mono = ctx.createBuffer(1, buffer.length, sr);
+    const monoData = mono.getChannelData(0);
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const src = buffer.getChannelData(c);
+      for (let i = 0; i < buffer.length; i++) {
+        monoData[i] += src[i];
+      }
+    }
+    const inv = 1 / buffer.numberOfChannels;
+    for (let i = 0; i < buffer.length; i++) monoData[i] *= inv;
+    source.buffer = mono;
+  } else {
+    source.buffer = buffer;
   }
 
   source.connect(panner);

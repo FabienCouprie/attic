@@ -28,7 +28,9 @@ export function SelecteurInstrumentSF2({ value, onChange, disabled }: Props) {
     return () => clearInterval(id);
   }, []);
 
-  const valeur = options.some((o) => o.valeur === value) ? value : (options[0]?.valeur ?? 0);
+  const suivreMidi = { valeur: -1, banque: -1, programme: -1, nom: t("inspecteur.suivreMidi") ?? "Suivre le MIDI" };
+  const allOptions = [suivreMidi, ...options];
+  const valeur = allOptions.some((o) => o.valeur === value) ? value : (options[0]?.valeur ?? 0);
   return (
     <select
       className="inspecteur-sf2"
@@ -41,9 +43,9 @@ export function SelecteurInstrumentSF2({ value, onChange, disabled }: Props) {
       ) : options.length === 0 ? (
         <option value="0">{t("inspecteur.sf2AucunPreset")}</option>
       ) : (
-        options.map((o) => (
+        allOptions.map((o) => (
           <option key={o.valeur} value={o.valeur}>
-            {labelPreset(o.banque, o.programme, o.nom)}
+            {o.valeur === -1 ? o.nom : labelPreset(o.banque, o.programme, o.nom)}
           </option>
         ))
       )}

@@ -54,12 +54,27 @@ describe("mandelbrot", () => {
       cle: "Do", gamme: "Pentatonique majeure", octaveBase: 48, sensibilite: 1,
       timbre: "Douce" as const, volume: 80, graine: 42,
     });
-    const gamme = GAMMES["Pentatonique majeure"];
+      const gamme = GAMMES["Pentatonique majeure"];
     for (const n of notes) {
       const classe = n.note % 12;
       const base = 48 % 12;
       const relative = (classe - base + 12) % 12;
       expect(gamme).toContain(relative);
     }
+  });
+
+  it("le tempo affecte l'espacement des notes", () => {
+    const opts = {
+      xMin: -2.5, xMax: 1, yMin: -1.25, yMax: 1.25,
+      maxIter: 100, mode: "escape" as const, nbNotes: 16, dureeNote: 1,
+      cle: "Do", gamme: "Majeur", octaveBase: 48, sensibilite: 1,
+      timbre: "Douce" as const, volume: 80, graine: 42,
+    };
+    const lent = genererNotesMandelbrot({ ...opts, tempo: 60 });
+    const rapide = genererNotesMandelbrot({ ...opts, tempo: 120 });
+    expect(lent.length).toBeGreaterThan(1);
+    expect(rapide.length).toBeGreaterThan(1);
+    // À tempo doublé, l'espacement entre deux notes consécutives doit être deux fois plus court.
+    expect(rapide[1].debut - rapide[0].debut).toBeCloseTo((lent[1].debut - lent[0].debut) / 2, 5);
   });
 });

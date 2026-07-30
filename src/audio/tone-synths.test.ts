@@ -136,6 +136,37 @@ describe("genererModulationSynth", () => {
   });
 });
 
+describe("rendreBatterieMidi", () => {
+  it("rend une piste rythmique stéréo non silencieuse", async () => {
+    const { rendreBatterieMidi } = await import("./tone-synths");
+    const buffer = await rendreBatterieMidi({
+      notes: [
+        { note: 36, velocite: 100, debut: 0, fin: 0.2 },
+        { note: 38, velocite: 100, debut: 0.25, fin: 0.45 },
+        { note: 42, velocite: 80, debut: 0.5, fin: 0.6 },
+        { note: 46, velocite: 80, debut: 0.75, fin: 0.9 },
+      ],
+      volume: 80,
+      sampleRate: 44100,
+    });
+
+    expect(buffer).toBeDefined();
+    expect(buffer.numberOfChannels).toBe(2);
+    expect(buffer.sampleRate).toBe(44100);
+    expect(buffer.duration).toBeGreaterThan(0.5);
+
+    const gauche = buffer.getChannelData(0);
+    const droite = buffer.getChannelData(1);
+    expect(Math.max(...gauche)).toBeGreaterThan(0);
+    expect(Math.max(...droite)).toBeGreaterThan(0);
+
+    for (let i = 0; i < gauche.length; i++) {
+      expect(Number.isFinite(gauche[i])).toBe(true);
+      expect(Number.isFinite(droite[i])).toBe(true);
+    }
+  });
+});
+
 describe("genererPluckSynth", () => {
   it("rend une corde pincée C4 stéréo non silencieux", async () => {
     const { genererPluckSynth } = await import("./tone-synths");

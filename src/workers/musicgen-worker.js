@@ -1,7 +1,8 @@
 // src/workers/musicgen-worker.js — Web Worker pour MusicGen (Transformers.js).
-// Tourne dans un thread séparé pour ne pas bloquer l'UI. Charge les modèles
-// Xenova/musicgen-small (q8) depuis HuggingFace la première fois (cache navigateur).
-import { MusicgenForConditionalGeneration, AutoTokenizer, RawAudio, env } from "@huggingface/transformers";
+// Tourne dans un thread séparé pour ne pas bloquer l'UI. Charge le modèle
+// Xenova/musicgen-small (ONNX quantifié) depuis HuggingFace la première fois
+// (cache navigateur).
+import { MusicgenForConditionalGeneration, AutoTokenizer, env } from "@huggingface/transformers";
 
 env.backends.onnx.wasm.proxy = true;
 
@@ -18,8 +19,8 @@ self.onmessage = async (e) => {
       modele = await MusicgenForConditionalGeneration.from_pretrained("Xenova/musicgen-small", {
         device: "wasm",
         dtype: {
-          text_encoder: "fp32",
-          decoder_model_merged: "fp32",
+          text_encoder: "q8",
+          decoder_model_merged: "q8",
           encodec_decode: "fp32",
         },
       });
@@ -43,13 +44,13 @@ self.onmessage = async (e) => {
     });
 
     const sr = modele.config.audio_encoder.sampling_rate;
-    const audio = new RawAudio(audioValues.data, sr);
+    const data = audioValues.data;
 
     self.postMessage({
       type: "done",
-      data: audio.data,
+      data,
       sampleRate: sr,
-      length: audio.data.length,
+      length: data.length,
     });
   } catch (err) {
     self.postMessage({ type: "error", msg: String(err?.message || err) });

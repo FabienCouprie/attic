@@ -10,9 +10,14 @@ const COULEURS: Record<string, string> = {
   Autres: "#fab005",
 };
 
-interface Props { plugins: FicheAudio[]; onSupprimerMeta?: (id: string) => void }
+interface Props {
+  plugins: FicheAudio[];
+  onSupprimerMeta?: (id: string) => void;
+  ouverte?: boolean;
+  onToggle?: () => void;
+}
 
-export function Palette({ plugins, onSupprimerMeta }: Props) {
+export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: Props) {
   const [q, setQ] = useState("");
   const { t, lang } = useI18n();
 
@@ -67,49 +72,58 @@ export function Palette({ plugins, onSupprimerMeta }: Props) {
   const ouvert = (cle: string) => !!q.trim() || !replies.has(cle);
 
   return (
-    <div className="palette">
-      <div className="palette-titre">{t("palette.titre")}</div>
-      <input className="palette-recherche" placeholder={t("palette.recherche")} value={q} onChange={(e) => setQ(e.target.value)} />
-      <div className="palette-arbre">
-        {groupes.map((g) => (
-          <div key={g.univers} className="palette-univers">
-            <div className="palette-univers-titre" style={{ borderLeftColor: COULEURS[g.univers] ?? "#999" }} onClick={() => basculer(g.univers)}>
-              <span><span className="palette-chevron">{ouvert(g.univers) ? "▾" : "▸"}</span>{t(`univers.${g.univers}`)}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {g.univers === "Méta-composants" && onSupprimerMeta && g.familles.reduce((n, f) => n + f.defs.length, 0) > 0 && (
-                  <button className="palette-composant-suppr" title={t("palette.effacerToutMeta")}
-                    onClick={(e) => { e.stopPropagation(); if (window.confirm(t("palette.confirmEffacer"))) { for (const fg of g.familles) for (const def of fg.defs) onSupprimerMeta(def.id); } }}>🗑</button>
-                )}
-                <span className="palette-compteur">{g.familles.reduce((n, f) => n + f.defs.length, 0)}</span>
-              </span>
-            </div>
-            {ouvert(g.univers) && g.familles.map((fg) => {
-              const cle = `${g.univers}/${fg.famille}`;
-              return (
-                <div key={cle} className="palette-famille">
-                  <div className="palette-famille-titre" onClick={() => basculer(cle)}>
-                    <span><span className="palette-chevron">{ouvert(cle) ? "▾" : "▸"}</span>{t(`famille.${fg.famille}`)}</span>
-                    <span className="palette-compteur">{fg.defs.length}</span>
-                  </div>
-                  {ouvert(cle) && fg.defs.map((def) => (
-                    <div key={def.id} className="palette-composant" draggable style={{ cursor: "grab" }}
-                      onDragStart={(e) => { e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
-                      title={def.resume}
-                    >
-                      <span className="palette-composant-puce" style={{ background: COULEURS[g.univers] ?? "#999" }} />
-                      <span className="palette-composant-nom">{nomDef(def)}</span>
-                      {g.univers === "Méta-composants" && onSupprimerMeta && (
-                        <button className="palette-composant-suppr" title={t("palette.supprimerMeta")}
-                          onClick={(e) => { e.stopPropagation(); onSupprimerMeta(def.id); }}>×</button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
+    <div className={`palette ${ouverte ? "" : "palette--repliee"}`}>
+      {ouverte ? (
+        <>
+          <div className="palette-titre">
+            <span>{t("palette.titre")}</span>
+            <button className="palette-toggle" title={t("palette.replier")} onClick={onToggle} aria-label={t("palette.replier")}>‹</button>
           </div>
-        ))}
-      </div>
+          <input className="palette-recherche" placeholder={t("palette.recherche")} value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="palette-arbre">
+            {groupes.map((g) => (
+              <div key={g.univers} className="palette-univers">
+                <div className="palette-univers-titre" style={{ borderLeftColor: COULEURS[g.univers] ?? "#999" }} onClick={() => basculer(g.univers)}>
+                  <span><span className="palette-chevron">{ouvert(g.univers) ? "▾" : "▸"}</span>{t(`univers.${g.univers}`)}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {g.univers === "Méta-composants" && onSupprimerMeta && g.familles.reduce((n, f) => n + f.defs.length, 0) > 0 && (
+                      <button className="palette-composant-suppr" title={t("palette.effacerToutMeta")}
+                        onClick={(e) => { e.stopPropagation(); if (window.confirm(t("palette.confirmEffacer"))) { for (const fg of g.familles) for (const def of fg.defs) onSupprimerMeta(def.id); } }}>🗑</button>
+                    )}
+                    <span className="palette-compteur">{g.familles.reduce((n, f) => n + f.defs.length, 0)}</span>
+                  </span>
+                </div>
+                {ouvert(g.univers) && g.familles.map((fg) => {
+                  const cle = `${g.univers}/${fg.famille}`;
+                  return (
+                    <div key={cle} className="palette-famille">
+                      <div className="palette-famille-titre" onClick={() => basculer(cle)}>
+                        <span><span className="palette-chevron">{ouvert(cle) ? "▾" : "▸"}</span>{t(`famille.${fg.famille}`)}</span>
+                        <span className="palette-compteur">{fg.defs.length}</span>
+                      </div>
+                      {ouvert(cle) && fg.defs.map((def) => (
+                        <div key={def.id} className="palette-composant" draggable style={{ cursor: "grab" }}
+                          onDragStart={(e) => { e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
+                          title={def.resume}
+                        >
+                          <span className="palette-composant-puce" style={{ background: COULEURS[g.univers] ?? "#999" }} />
+                          <span className="palette-composant-nom">{nomDef(def)}</span>
+                          {g.univers === "Méta-composants" && onSupprimerMeta && (
+                            <button className="palette-composant-suppr" title={t("palette.supprimerMeta")}
+                              onClick={(e) => { e.stopPropagation(); onSupprimerMeta(def.id); }}>×</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <button className="palette-toggle palette-toggle--repliee" title={t("palette.deplier")} onClick={onToggle} aria-label={t("palette.deplier")}>›</button>
+      )}
     </div>
   );
 }

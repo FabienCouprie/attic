@@ -2,14 +2,29 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased
+## [2.2.1] — 2026-07-30
 
 ### Fixed
 - **Node deletion cleanup** — deleting a node via the red-cross button, the Delete key, the Inspector, Ctrl+X, or by removing a meta-component now clears the execution cache for the deleted node and its downstream nodes, revokes generated result object URLs, and resets downstream statuses. This prevents stale cached results and memory leaks from outliving the deleted node.
 - **TTS voice parameter labels** — SpeechT5 and Piper TTS voice dropdowns now show readable labels (e.g., `US male (BDL)`, `RU-irina-medium`) instead of raw technical IDs, while the runtime still receives the correct voice. Old saved values remain supported.
+- **MIDI output default** — MIDI output nodes now default to "Follow MIDI" so they respect the instrument/bank changes embedded in the incoming MIDI stream.
+- **SoundFont drum mapping** — GM drum notes (36–50) were often inaudible with SoundFont kits because the drum kit patch was not applied. The Groove Box now always renders its own drum part via an internal drum synth, and a dedicated `Volume batterie` parameter controls the drum level independently.
+- **Stuck mouse cursor** — pointer capture could remain active on the waveform/multi-zone selectors, the piano keyboard, or on the React Flow canvas if the mouse button was released outside the window (second screen, Alt-Tab, system menu). Added `pointercancel`/`lostpointercapture` handlers, `buttons===0` guards during `pointermove`, and a global safety net that dispatches `pointerup`/`pointercancel` to the canvas when a pointer is believed to be down but has no pressed buttons.
+- **Kokoro TTS progress unit** — the loading message below the node now always shows a percentage (`Chargement du modèle Kokoro… 12%` / `Loading Kokoro model… 12%`). The progress callback now uses a `load` template with a `%` placeholder, normalizes the raw progress value to a 0–100 percent, and keeps only the file basename in download messages so the percentage stays visible.
+- **End-of-track silence** — `analyserMidi` no longer adds a 1-second padding to the reported total duration. The `Générateur musical` and `Groove Box` mix now stop at the actual last note, so rendered tracks no longer end with an audible second of silence.
 
 ### Added
 - **Advanced Drum Sequencer** — new node `sequenceur-batterie-avance` with 8 drum tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom), per-step velocity (0–9), and synthesized drum-machine sounds. The existing `Séquenceur de batterie` is unchanged.
+- **Drum Synth** — new node `batterie-synth` ("Batterie synthétique") that renders GM drum notes (36–50) from a MIDI input into synthesized audio using Tone.js Membrane/Metal/Noise synths. It also outputs the MIDI passthrough.
+- **Groove Box** — new node `boite-groove` that generates a complete backing track: deterministic chord progression, reservoir melody, and synthesized drum pattern. The final mix is normalized to 0.9 peak. Outputs four separate MIDI files (drums, chords, bass, melody) plus stereo audio. The same seed reproduces the same melody; chord progression is deterministic.
+- **Visual feedback for running nodes** — a node whose status is `en_cours` now gets a pulsing outline (`outline: var(--success)` + `node-running-pulse` animation) in addition to the existing status dot, making it easy to spot which node is currently executing.
+- **Collapsible node palette** — the left-hand catalog can now be fully collapsed to a narrow toggle bar via a chevron button in the palette header. The state is persisted in `localStorage` (`attic-palette-ouverte`) and the main canvas grid expands automatically when the palette is hidden.
+- **Windows local build script** — `scripts/build-electron.cjs` now wraps the Electron build. It temporarily switches `package.json` to the `traversal` package manager collector, sets `NODE_OPTIONS=--max-old-space-size=32000`, and cleans the `release/` directory before packaging to avoid the out-of-memory failure caused by electron-builder's `npm list` collector on this large dependency tree. It also mirrors the CI shrink step: after `vite build` it keeps only the few packages the Electron main process actually needs (`onnxruntime-node`, `@huggingface/tokenizers`, `electron-updater`, `adm-zip`), prunes the full dev dependency tree, packages the app, and finally restores `package.json` and reinstalls dev dependencies so the workspace remains usable.
+- **MIDI output for Clavier mélodie** — the `Clavier mélodie` node now outputs the recorded melody as a MIDI file on its second output, so it can be chained to other MIDI nodes. A new `Tempo` parameter sets the BPM of the generated MIDI.
+- **Installer size reduction** — the local Windows build script mirrors the CI shrink step, cutting the packaged installer from ~1.48 GB to ~1.26 GB by pruning renderer-only dependencies.
+
+### Changed
+- **Générateur musical** — the non-working drum layer (`Instrument 4`) has been removed. The node now generates three tracks (chords, bass, melody) only, and the MIDI file uses 3 tracks instead of 4.
 
 ## [2.0.1] — 2026-07-27
 

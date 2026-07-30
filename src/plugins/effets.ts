@@ -21,6 +21,7 @@ import {
   appliquerFormuleSpectrale,
   reverberationFractale,
    appliquerEchoPingPong,
+   appliquerEchoInverse,
    appliquerVoiceChanger,
    appliquerDecoupeAleatoire,
    limiter,
@@ -1012,6 +1013,24 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Répartition", 50))] };
+   },
+  },
+  {
+    id: "echo-inverse", nom: "Echo inversé", nomEn: "Reverse Echo", univers: "Traitement", famille: "Effets",
+    resume: "Echo inversé : les répétitions atténuées arrivent AVANT le son principal.",
+    resumeEn: "Reverse echo: attenuated repetitions build up before the main sound.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Temps", nomEn: "Time", type: "curseur", plage: [50, 2000], pas: 10, defaut: 350, unite: "ms",
+        doc: "Temps de retard entre chaque répétition.", docEn: "Delay time between repetitions." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Quantité de signal réinjecté (plus = plus de répétitions et plus longue montée).", docEn: "Amount of signal fed back (more = more repetitions and longer build-up)." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      return { valeurs: [appliquerEchoInverse(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40))] };
    },
   },
   {

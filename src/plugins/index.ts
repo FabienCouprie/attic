@@ -26,6 +26,7 @@ import { fiches as f_musicgen } from "./musicgen";
 import { fiches as f_texte_provider } from "./texte-provider";
 import { fiches as f_tts } from "./tts";
 import { fiches as f_tts_piper } from "./tts-piper";
+import { fiches as f_tts_kokoro } from "./tts-kokoro";
 import { fiches as f_speech_to_text } from "./speech-to-text";
 import { fiches as f_sherpa_asr } from "./sherpa-asr";
 import { fiches as f_traduction } from "./traduction";
@@ -86,6 +87,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_texte_provider,
   ...f_tts,
   ...f_tts_piper,
+  ...f_tts_kokoro,
   ...f_speech_to_text,
   ...f_sherpa_asr,
   ...f_traduction,
