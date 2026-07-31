@@ -13,6 +13,7 @@ import {
   genererMusiqueMandelbrot,
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
+  frequenceDeNoteMidi,
   type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
@@ -20,6 +21,24 @@ import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+
+/**
+ * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
+ * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
+ * Retourne null si la note est invalide.
+ */
+function noteVersFrequence(note: string): number | null {
+  const n = note.trim().replace(/\s+/g, "");
+  const m = n.match(/^([A-Ga-g])([#♯]|[b♭])?(-?\d+)$/);
+  if (!m) return null;
+  const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  let pc = tbl[m[1].toUpperCase()] ?? 9;
+  const alt = m[2] ?? "";
+  if (alt === "#" || alt === "♯") pc += 1;
+  else if (alt === "b" || alt === "♭") pc -= 1;
+  const midi = (parseInt(m[3]) + 1) * 12 + pc;
+  return frequenceDeNoteMidi(midi);
+}
 
 const FORMES_FREQ = { ids: ["sine", "square", "saw", "triangle"], fr: ["Sinus", "Carré", "Scie", "Triangle"], en: ["Sine", "Square", "Saw", "Triangle"] };
 
@@ -528,17 +547,14 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
-      const saisie = ctx.paramTexte("Saisie", "frequency");
+      const saisie = ctx.paramTexte("Saisie", "frequency").trim().toLowerCase();
+      const enModeNote = saisie === "note" || saisie.startsWith("note");
       let freq: number;
-      if (saisie === "note") {
+      if (enModeNote) {
         const noteStr = ctx.paramTexte("Note", "A4");
-        const m = noteStr.match(/^([A-G])(#|b)?(-?\d+)$/);
-        if (!m) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
-        const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-        let pc = tbl[m[1]] ?? 9;
-        if (m[2] === "#") pc += 1; else if (m[2] === "b") pc -= 1;
-        const midi = (parseInt(m[3]) + 1) * 12 + pc;
-        freq = 440 * Math.pow(2, (midi - 69) / 12);
+        const parsed = noteVersFrequence(noteStr);
+        if (parsed == null) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
+        freq = parsed;
       } else {
         freq = ctx.paramNombre("Fréquence", 440);
       }
@@ -571,7 +587,7 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
-      const noteAff = saisie === "note" ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
+      const noteAff = enModeNote ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
       const labelForme = (langueCourante() === "en" ? FORMES_FREQ.en : FORMES_FREQ.fr)[FORMES_FREQ.ids.indexOf(forme)] ?? forme;
       return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, labelForme, duree.toFixed(1)) };
     },

@@ -141,4 +141,30 @@ export const fiches: FicheAudio[] = ([
       return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
   },
+  {
+    id: "collection-lecteur-musique", nom: "Lecteur musique", nomEn: "Music player", univers: "Collections", famille: "Lecture",
+    resume: "Lecteur simple pour pré-écouter un dossier de musique (shuffle, boucle, contrôle du volume).",
+    resumeEn: "Simple player to preview a music folder (shuffle, loop, volume control).",
+    entrees: [], sorties: [],
+    affichageAutonome: true,
+    jamaisCache: true,
+    parametres: [
+      { nom: "Chemin", nomEn: "Path", type: "dossier", defaut: "music collection", defautEn: "music collection",
+        doc: "Dossier contenant les fichiers WAV/MP3 à écouter.", docEn: "Folder containing WAV/MP3 files to play." },
+      { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], defaut: 80, unite: "%",
+        doc: "Volume du lecteur.", docEn: "Player volume." },
+      { nom: "Lecture aléatoire", nomEn: "Shuffle", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
+        doc: "Joue les pistes dans un ordre aléatoire.", docEn: "Play tracks in random order." },
+      { nom: "Lecture en boucle", nomEn: "Loop", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
+        doc: "Répète la playlist en boucle.", docEn: "Repeat the playlist in a loop." },
+      { nom: "Piste", nomEn: "Track", type: "texte", defaut: "", defautEn: "", hidden: true,
+        doc: "Nom du fichier actuellement sélectionné (réservé à l'interface).", docEn: "Name of the currently selected file (reserved for the UI)." },
+    ],
+    async executer(ctx: any) {
+      if (!(window as any).api) return { valeurs: [null], message: traduire("msg.electron_requis") };
+      const chemin = ctx.paramTexte("Chemin", "music collection").replace(/^[/\\]+|[/\\]+$/g, "");
+      if (!chemin) return { valeurs: [null], message: traduire("msg.configurez_les_dossiers") };
+      return { valeurs: [null], message: traduire("msg.lecteur_musique") };
+    },
+  },
 ] as FicheAudio[]).map(avecDoc);

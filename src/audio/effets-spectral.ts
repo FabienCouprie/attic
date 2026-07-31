@@ -713,6 +713,52 @@ export function tremoloLogistique(
   return resultat;
 }
 
+// Écho logistique : les répétitions de l'écho s'installent progressivement
+// selon une courbe logistique. En début de piste l'effet est nul, en fin de
+// piste il atteint le feedback et le mix demandés.
+export function echoLogistique(
+  buffer: AudioBuffer,
+  tempsMs: number,
+  feedback: number,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  const maxFeedback = Math.max(0, Math.min(1, feedback / 100));
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+  const n = buffer.length;
+  const delaySamples = Math.max(0.001, (tempsMs / 1000) * sr);
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    const delayLine = new Float64Array(Math.ceil(delaySamples) + 2);
+    let pos = 0;
+
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const readPos = pos - delaySamples;
+      const idx0 = Math.floor(readPos);
+      const frac = readPos - idx0;
+      const s0 = delayLine[((idx0 % delayLine.length) + delayLine.length) % delayLine.length];
+      const s1 = delayLine[(((idx0 + 1) % delayLine.length) + delayLine.length) % delayLine.length];
+      const wet = s0 + (s1 - s0) * frac;
+      const wetScaled = wet * p;
+      const out = src[i] * (1 - mixWet) + wetScaled * mixWet;
+      dst[i] = Math.max(-1, Math.min(1, out));
+      const feedbackAmount = wet * maxFeedback * p;
+      delayLine[pos] = Math.max(-1, Math.min(1, src[i] + feedbackAmount));
+      pos = (pos + 1) % delayLine.length;
+    }
+  }
+  return resultat;
+}
+
 // Octaver : ajoute une voix à l'octave supérieure et/ou inférieure.
 // Techniques monophoniques classiques des pédales analogiques :
 //  - octave SUP : redressement double alternance (|x| double la fréquence),
@@ -797,6 +843,61 @@ export function chopper(
         }
       }
       dst[i] = src[i] * gain;
+    }
+  }
+  return resultat;
+}
+
+// Chopper logistique : gate rythmique dont la profondeur s'installe
+// progressivement selon une courbe logistique. En début de piste l'effet est
+// nul, en fin de piste il atteint la profondeur demandée.
+export function chopperLogistique(
+  buffer: AudioBuffer,
+  frequence: number,
+  duree: number,
+  type: number,
+  profondeur: number,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
+  const ratioOn = Math.max(1, Math.min(99, duree)) / 100;
+  const maxDepth = Math.max(0, Math.min(1, profondeur / 100));
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+  const fadeSamples = type === 1 ? Math.min(256, Math.floor(sr / frequence / 8)) : 1;
+  const n = buffer.length;
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < n; i++) {
+      const tSample = i / sr;
+      const cyclePos = (tSample * frequence) % 1;
+      let baseGain: number;
+      if (cyclePos < ratioOn) {
+        baseGain = 1;
+        if (type === 1) {
+          const fadePos = cyclePos / ratioOn;
+          const fadeRatio = fadeSamples / (sr / frequence);
+          if (fadePos < fadeRatio) baseGain = fadePos / fadeRatio;
+        }
+      } else {
+        baseGain = 0;
+        if (type === 1) {
+          const offPos = (cyclePos - ratioOn) / (1 - ratioOn);
+          const fadeRatio = fadeSamples / (sr / frequence);
+          if (offPos < fadeRatio) baseGain = 1 - offPos / fadeRatio;
+        }
+      }
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const depth = maxDepth * p;
+      const wet = src[i] * (1 - depth * (1 - baseGain));
+      dst[i] = src[i] * (1 - mixWet) + wet * mixWet;
     }
   }
   return resultat;

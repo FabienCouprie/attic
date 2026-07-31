@@ -33,6 +33,7 @@ const ctx = {
       Volume: 80,
       "Densité max": 4,
       "Probabilité mutation": 0,
+      Instrument: 0,
     };
     return params[nom] ?? def;
   },

@@ -17,6 +17,7 @@ import {
   deEsser,
   ringModulator,
   appliquerPaulstretch,
+  paulstretchLogistique,
   appliquerFormuleEchantillons,
   appliquerFormuleSpectrale,
   reverberationFractale,
@@ -236,6 +237,13 @@ export const fiches: FicheAudio[] = ([
     [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", "Stretch factor. 1 = no effect, 8 = 8× longer.", [1, 100], 1),
      param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", "STFT window size in seconds. Large = smooth texture, small = more transients.", [0.01, 1], 0.01)],
     (a, stretch, fenetre) => appliquerPaulstretch(a, stretch, fenetre)),
+  effet("paulstretch-logistique", "Paulstretch logistique", "Logistic Paulstretch", "Étirement extrême qui s'installe progressivement.", "Extreme time-stretch that grows in progressively.",
+    [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement maximal atteint en fin de transition.", "Maximum stretch factor reached at the end of the transition.", [1, 100], 1),
+     param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes.", "STFT window size in seconds.", [0.01, 1], 0.01),
+     param("Centre", 50, "Center", "%", "Point milieu de la transition logistique.", "Midpoint of the logistic transition.", [0, 100], 1),
+     param("Pente", 10, "Steepness", "", "Raideur de la courbe logistique.", "Steepness of the logistic curve.", [0.1, 50], 0.1),
+     param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
+    (a, stretch, fenetre, centre, pente, mix) => paulstretchLogistique(a, stretch, fenetre, centre, pente, mix)),
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
     [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix)),
@@ -887,6 +895,36 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
+    id: "echo-logistique", nom: "Écho logistique", nomEn: "Logistic echo", univers: "Traitement", famille: "Effets",
+    resume: "Écho dont le feedback croît selon une courbe logistique.",
+    resumeEn: "Echo whose feedback grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Temps", nomEn: "Time", type: "curseur", plage: [50, 2000], pas: 10, defaut: 350, unite: "ms",
+        doc: "Temps de retard entre chaque répétition.", docEn: "Delay time between repetitions." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Feedback maximal atteint en fin de transition (0% = une seule répétition, 95% = répétitions longues).", docEn: "Maximum feedback reached at the end of the transition (0% = single repeat, 95% = long tail)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { echoLogistique } = await import("../audio");
+      const temps = ctx.paramNombre("Temps", 350);
+      const feedback = ctx.paramNombre("Feedback", 40);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 50);
+      return { valeurs: [echoLogistique(a, temps, feedback, centre, pente, mix)], message: traduire("msg.echo_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     resume: "Filtre passe-bande modulé (effet pédale wah).",
     resumeEn: "Modulated bandpass filter (wah pedal effect).",
@@ -995,6 +1033,69 @@ export const fiches: FicheAudio[] = ([
       const typeStr = ctx.paramTexte("Type", "Dur");
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
    },
+  },
+  {
+    id: "chopper-logistique", nom: "Chopper logistique", nomEn: "Logistic chopper", univers: "Traitement", famille: "Effets",
+    resume: "Gate rythmique dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Rhythmic gate whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "Hz",
+        doc: "Vitesse de coupe (coups par seconde).", docEn: "Chop speed (cuts per second)." },
+      { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
+        doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
+      { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
+        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Profondeur maximale du gate atteinte en fin de transition (0% = aucun effet, 100% = gate complet).", docEn: "Maximum gate depth reached at the end of the transition (0% = no effect, 100% = full gate)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { chopperLogistique } = await import("../audio");
+      const typeStr = ctx.paramTexte("Type", "Dur");
+      return { valeurs: [chopperLogistique(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0, ctx.paramNombre("Profondeur", 50), ctx.paramNombre("Centre", 50), ctx.paramNombre("Pente", 10), ctx.paramNombre("Mix", 100))], message: traduire("msg.chopper_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
+    id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
+    resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
+    resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
+      { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], optionsEn: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], defaut: "1/4",
+        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, etc.", docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc." },
+      { nom: "Taille", nomEn: "Size", type: "choix", options: ["1/32", "1/16", "1/8", "1/4", "1/2"], optionsEn: ["1/32", "1/16", "1/8", "1/4", "1/2"], defaut: "1/16",
+        doc: "Longueur du segment capturé et répété.", docEn: "Length of the captured and repeated segment." },
+      { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
+        doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide).", docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { beatRepeat } = await import("../audio");
+      const intervalStr = ctx.paramTexte("Intervalle", "1/4");
+      const sizeStr = ctx.paramTexte("Taille", "1/16");
+      const parseDiv = (s: string) => {
+        const parts = s.split("/");
+        return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
+      };
+      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Mix", 100))], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
+    },
   },
   {
     id: "echo", nom: "Echo", nomEn: "Echo", univers: "Traitement", famille: "Effets",

@@ -598,6 +598,42 @@ export function appliquerPaulstretch(
   return normaliser(resultat, -3);
 }
 
+// Paulstretch logistique : l'étirement extrême s'installe progressivement selon
+// une courbe logistique. En début de piste le signal est intact, en fin de piste
+// il atteint le facteur d'étirement maximal.
+export function paulstretchLogistique(
+  buffer: AudioBuffer,
+  stretch: number,
+  windowSizeSeconds: number,
+  centre: number,
+  pente: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const maxStretch = Math.max(1, stretch);
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  if (mixWet <= 0 || maxStretch <= 1) return buffer;
+  const stretched = appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds);
+  const n = stretched.length;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
+  const centreRel = Math.max(0, Math.min(1, centre / 100));
+  const k = Math.max(0.1, pente);
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const wet = stretched.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+      const dry = i < src.length ? src[i] : 0;
+      const wetScaled = dry * (1 - p) + wet[i] * p;
+      dst[i] = dry * (1 - mixWet) + wetScaled * mixWet;
+    }
+  }
+  return resultat;
+}
+
 // --- Granular freeze : boucle de grains avec contrôle de taille et hauteur ----
 // Extrait un grain à la position choisie et le répète sur toute la durée. Le
 // pitch décale la vitesse de lecture dans le grain (pas de conservation de la
@@ -627,6 +663,51 @@ export function granularFreeze(
       dst[i] = src[i] * (1 - mixVal) + wet * mixVal;
       phase += ratio;
       while (phase >= grainSize) phase -= grainSize;
+    }
+  }
+  return resultat;
+}
+
+// Beat repeat / stutter : capture un court segment à intervalles réguliers
+// synchronisés sur le tempo et le répète un nombre de fois avec décroissance.
+// Parfait pour les effets stutter, glitch et répétitions rythmiques.
+export function beatRepeat(
+  buffer: AudioBuffer,
+  bpm: number,
+  intervalDiv: number,
+  segmentDiv: number,
+  repetitions: number,
+  feedback: number,
+  mix: number,
+): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const len = buffer.length;
+  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: len, sampleRate: sr });
+  const beatDuration = 60 / Math.max(1, bpm);
+  const intervalSamples = Math.max(1, Math.round(beatDuration * 4 / intervalDiv * sr));
+  const segmentSamples = Math.max(1, Math.round(beatDuration * 4 / segmentDiv * sr));
+  const maxRepeatSamples = Math.min(intervalSamples, Math.max(1, repetitions * segmentSamples));
+  const decay = Math.max(0, Math.min(1, feedback / 100));
+  const mixWet = Math.max(0, Math.min(1, mix / 100));
+
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < len; i++) {
+      const posInInterval = i % intervalSamples;
+      const intervalStart = i - posInInterval;
+      let out: number;
+      if (posInInterval < maxRepeatSamples) {
+        const repeatIndex = Math.floor(posInInterval / segmentSamples);
+        const segPos = posInInterval % segmentSamples;
+        const srcIdx = Math.min(len - 1, Math.max(0, intervalStart + segPos));
+        const gain = Math.pow(decay, repeatIndex);
+        const wet = src[srcIdx] * gain;
+        out = src[i] * (1 - mixWet) + wet * mixWet;
+      } else {
+        out = src[i] * (1 - mixWet) + src[i] * mixWet;
+      }
+      dst[i] = out;
     }
   }
   return resultat;

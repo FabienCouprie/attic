@@ -80,7 +80,9 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "changement-tonalite", mots: ["pitch", "tonalité", "transpose", "hauteur"], category: "effet" },
   { ficheId: "glissando-tonalite", mots: ["glissando", "pitch glide", "glisser", "bend", "glissando tonalité", "pitch ramp"], category: "effet" },
   { ficheId: "paulstretch", mots: ["paulstretch", "extreme stretch", "stretch extrême", "drone", "phase randomization", "texture"], category: "effet" },
+  { ficheId: "paulstretch-logistique", mots: ["paulstretch logistique", "logistic paulstretch", "stretch progressif", "progressive stretch", "drone progressif", "progressive drone"], category: "effet" },
   { ficheId: "formule-echantillons", mots: ["formule", "math", "sample formula", "expression mathématique", "y ="], category: "effet" },
+  { ficheId: "beat-repeat", mots: ["beat repeat", "stutter", "glitch", "répétition rythmique", "rhythmic repeat", "repeater", "stutter effect", "beat repeater"], category: "effet" },
   { ficheId: "formule-spectrale", mots: ["spectral formula", "formule spectrale", "spectral shaping", "magnitude", "phase"], category: "effet" },
   { ficheId: "generateur-audio-mathematique", mots: ["générateur mathématique", "math audio", "oscillateur math", "formula generator", "sinus"], category: "source" },
   { ficheId: "changement-tempo", mots: ["tempo", "time stretch", "vitesse", "ralentir", "accélérer"], category: "effet" },
@@ -100,8 +102,10 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "vibrato-logistique", mots: ["vibrato logistique", "logistic vibrato", "vibrato progressif", "progressive vibrato"], category: "effet" },
   { ficheId: "tremolo", mots: ["tremolo"], category: "effet" },
   { ficheId: "tremolo-logistique", mots: ["tremolo logistique", "logistic tremolo", "tremolo progressif", "progressive tremolo"], category: "effet" },
+  { ficheId: "echo-logistique", mots: ["echo logistique", "logistic echo", "écho logistique", "echo progressif", "progressive echo", "delay logistique"], category: "effet" },
   { ficheId: "octaver", mots: ["octaver", "octave", "octave sup", "octave inf", "sub octave", "harmonizer"], category: "effet" },
   { ficheId: "chopper", mots: ["chopper", "chop", "stutter", "gate rythmique", "rhythmic gate", "tremolo extrême"], category: "effet" },
+  { ficheId: "chopper-logistique", mots: ["chopper logistique", "logistic chopper", "chopper progressif", "progressive chopper", "gate logistique", "logistic gate", "stutter progressif", "progressive stutter"], category: "effet" },
   { ficheId: "echo", mots: ["echo", "delay", "répétition", "ping pong", "ping-pong"], category: "effet" },
   { ficheId: "voice-changer", mots: ["voice changer", "changer voix", "modifier voix", "chipmunk", "robot voice", "monster voice"], category: "effet" },
   { ficheId: "decoupe-aleatoire", mots: ["découpe aléatoire", "random slice", "slice", "rearrange", "réarranger", "découper", "tranches", "remix slices"], category: "effet" },
@@ -140,6 +144,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "generateur-pochette", mots: ["pochette", "cover", "album cover"], category: "texte" },
   { ficheId: "galerie-exposition", mots: ["galerie", "gallery", "exposition"], category: "texte" },
   { ficheId: "carte-sonore", mots: ["carte sonore", "sound map", "carte ville", "city map", "sons sur carte", "carte interactive"], category: "texte" },
+  { ficheId: "collection-lecteur-musique", mots: ["lecteur musique", "music player", "lecteur", "playlist", "écouter", "listen", "jukebox", "shuffle", "boucle"], category: "texte" },
 ];
 
 // Map des catégories par univers (pour les nodes non présents dans ALIAS_MANUELS)

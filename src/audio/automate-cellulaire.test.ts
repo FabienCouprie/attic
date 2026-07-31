@@ -30,6 +30,7 @@ const defaults = {
   velocite: 100,
   volume: 80,
   timbre: "FM/Oscillateurs" as const,
+  instrument: 0,
   probabilite: 0,
   densiteMax: 4,
 };

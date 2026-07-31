@@ -141,6 +141,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
   if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
   if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
+  if (def.id === "collection-lecteur-musique") return { width: 380, height: 320 };
   if (def.id.startsWith("collection-")) return { width: 380, height: 280 };
   if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
   if (def.id === "classificateur-genre") return { width: 380, height: 300 };
@@ -829,9 +830,11 @@ function Atelier() {
           onNodeClick={(_, n) => setSel(n)}
           onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
           onPaneClick={() => setSel(null)}
+          onPaneContextMenu={(e) => e.preventDefault()}
+          onNodeContextMenu={(e) => e.preventDefault()}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
-          panOnDrag={true}
+          panOnDrag={[2]}
           selectionOnDrag={false}
           selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {

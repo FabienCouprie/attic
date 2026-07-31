@@ -12,6 +12,7 @@ import {
 } from "../audio/automate-cellulaire";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];
@@ -221,6 +222,7 @@ const FICHES: FicheAudio[] = [
         doc: "Moteur audio pour le rendu : FM/oscillateurs intégrés ou SoundFont global chargé.",
         docEn: "Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont.",
       },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
       const regleTexte = ctx.paramTexte("Règle", "90");
@@ -244,6 +246,7 @@ const FICHES: FicheAudio[] = [
         velocite: ctx.paramNombre("Vélocité", 100),
         volume: ctx.paramNombre("Volume", 80),
         timbre: normaliserTimbre(ctx.paramTexte("Synthèse", "FM/Oscillateurs")),
+        instrument: ctx.paramNombre("Instrument", 0),
         densiteMax: ctx.paramNombre("Densité max", 4),
         probabilite: ctx.paramNombre("Probabilité mutation", 0),
       });
