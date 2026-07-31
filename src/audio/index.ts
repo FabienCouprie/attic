@@ -36,6 +36,12 @@ export * from "./koch";
 export * from "./reverb-fractal";
 export * from "./spectrogramme-fractal";
 export * from "./pixeltone";
+export * from "./palette-harmonique";
+export * from "./dessin-sonore";
+export * from "./couleur-rgb";
+export * from "./spectre-visible";
+export * from "./color-looper";
+export * from "./camelot";
 export * from "./voice-changer";
 export * from "./random-slice";
 

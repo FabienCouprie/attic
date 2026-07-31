@@ -29,11 +29,15 @@ function ctx() {
 }
 
 describe("entrees plugin", () => {
-  it("Générateur musical ne padde pas la fin de piste", async () => {
+  it("Générateur musical ne padde pas la fin de piste et sort audio + 3 MIDI", async () => {
     const f = registre.trouverDef("generateur-musical")!;
     const res = await f.executer(ctx() as any);
-    expect(res.valeurs.length).toBe(1);
+    expect(res.valeurs.length).toBe(4);
     expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect(res.valeurs[1]).toBeInstanceOf(File);
+    expect(res.valeurs[2]).toBeInstanceOf(File);
+    expect(res.valeurs[3]).toBeInstanceOf(File);
+    expect((res.valeurs[1] as File).type).toBe("audio/midi");
     const buf = res.valeurs[0] as AudioBuffer;
     // 4 mesures de 1s à 120 BPM => durée ~4s, pas 5s (ancien padding de 1s)
     expect(buf.duration).toBeLessThan(4.5);

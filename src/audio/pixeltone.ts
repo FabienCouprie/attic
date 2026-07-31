@@ -3,6 +3,8 @@
 // fréquences distinctes. Aucune dépendance externe : le décodage image se fait
 // via canvas et l'audio par synthèse directe d'ondes sinusoïdales.
 
+import { frequenceDepuisValeur } from "./commun";
+
 export interface OptionsPixeltone {
   /** Durée en secondes attribuée à chaque pixel. */
   dureePixel: number;
@@ -26,10 +28,6 @@ export interface PixelBuffer {
   width: number;
   height: number;
   data: Uint8ClampedArray | Uint8Array | number[];
-}
-
-export function frequenceDepuisValeur(v: number, min: number, max: number): number {
-  return min + (max - min) * (v / 255);
 }
 
 export function* pixelsEnOrdre(

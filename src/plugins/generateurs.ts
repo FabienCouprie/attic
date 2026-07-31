@@ -706,10 +706,13 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reservoir-musical", nom: "Réservoir neuronal", nomEn: "Neural Reservoir",
     univers: "Entrées", famille: "Génération",
-    resume: "Génère une mélodie émergente par réseau de neurones aléatoires (inspiré d'Allendia/EVY).",
-    resumeEn: "Generates emergent melody via random neural networks (inspired by Allendia/EVY).",
+    resume: "Génère une mélodie émergente par réseau de neurones aléatoires (inspiré d'Allendia/EVY). Sortie audio + sortie MIDI.",
+    resumeEn: "Generates emergent melody via random neural networks (inspired by Allendia/EVY). Audio output + MIDI output.",
     entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    sorties: [
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
+      { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+    ],
     parametres: [
       { nom: "Neurones", nomEn: "Neurons", plage: [5, 50], pas: 1, defaut: 15,
         doc: "Nombre de neurones dans le réservoir. Peu = motifs courts et répétitifs ; beaucoup = motifs complexes et chaotiques.",
@@ -746,9 +749,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
-      const { genererReservoirMusical, rendreReservoirAudio } = await import("../audio");
+      const { genererReservoirMusical, rendreReservoirAudio, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
       const config = {
@@ -774,87 +778,18 @@ export const fiches: FicheAudio[] = ([
       const { notes, graineUtilisee } = genererReservoirMusical(config);
       ctx.onProgress(traduire("progress.rendu_audio"));
       const buf = rendreReservoirAudio(notes, config);
-      const nbNotes = notes.filter((n: any) => !n.silence).length;
-      return { valeurs: [buf], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
-    },
-  },
-  {
-    id: "reservoir-midi", nom: "Réservoir neuronal MIDI", nomEn: "Neural Reservoir MIDI",
-    univers: "Entrées", famille: "Génération",
-    resume: "Génère un fichier MIDI par réseau de neurones aléatoires (branchable sur Arpégiateur, Transposeur, Sortie MIDI).",
-    resumeEn: "Generates a MIDI file via random neural networks (connectable to Arpeggiator, Transposer, MIDI Output).",
-    entrees: [],
-    sorties: [{ nom: "MIDI", type: "midi" }],
-    parametres: [
-      { nom: "Neurones", nomEn: "Neurons", plage: [5, 50], pas: 1, defaut: 15,
-        doc: "Nombre de neurones dans le réservoir. Peu = motifs courts et répétitifs ; beaucoup = motifs complexes et chaotiques.",
-        docEn: "Number of neurons in the reservoir. Few = short repetitive patterns; many = complex chaotic patterns." },
-      { nom: "Connectivité", nomEn: "Connectivity", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
-        doc: "Probabilité de connexion entre neurones. Faible = motifs simples ; élevée = motifs denses.",
-        docEn: "Probability of connection between neurons. Low = simple patterns; high = dense patterns." },
-      { nom: "Mémoire", nomEn: "Memory", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
-        doc: "Taux de fuite (leaking). Élevé = mémoire longue, motifs qui évoluent lentement ; faible = réactions brèves.",
-        docEn: "Leaking rate. High = long memory, slowly evolving patterns; low = brief reactions." },
-      { nom: "Spectre", nomEn: "Spectral radius", plage: [50, 150], pas: 1, defaut: 90, unite: "%",
-        doc: "Rayon spectral du réseau. <100% = stable (converge) ; >100% = chaotique (diverge). 90% = sweet spot mélodique.",
-        docEn: "Network spectral radius. <100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot." },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"], defaut: "majeur",
-        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatic"], defautEn: "major" },
-      { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 4,
-        doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
-      { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
-      { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
-        doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
-        doc: "Probabilité de produire une note à chaque pas. Élevée = mélodie dense ; faible = mélodie éparse.", docEn: "Probability of producing a note at each step. High = dense melody; low = sparse melody." },
-      { nom: "Répétition", nomEn: "Repetition", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
-        doc: "Tendance à répéter la note précédente. Élevée = motifs accrocheurs ; faible = variation continue.", docEn: "Tendency to repeat the previous note. High = catchy patterns; low = continuous variation." },
-      { nom: "Silence", nomEn: "Silence", plage: [0, 50], pas: 1, defaut: 10, unite: "%",
-        doc: "Probabilité de silence à chaque pas. Crée des respirations dans la mélodie.", docEn: "Probability of silence at each step. Creates breathing room in the melody." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
-        doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution). Même graine = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same melody." },
-      PARAMETRE_INSTRUMENT_SF2,
-    ],
-    async executer(ctx: any) {
-      const { genererReservoirMusical, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
-      const resolution = ctx.paramTexte("Résolution", "1/8");
-      const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
-      const config = {
-        taille: ctx.paramNombre("Neurones", 15),
-        connectivite: ctx.paramNombre("Connectivité", 30) / 100,
-        leaking: ctx.paramNombre("Mémoire", 30) / 100,
-        gain: 1.5,
-        spectre: ctx.paramNombre("Spectre", 90) / 100,
-        cle: ctx.paramTexte("Clé", "C"),
-        gamme: ctx.paramTexte("Gamme", "majeur"),
-        octave: ctx.paramNombre("Octave", 4),
-        tempo: ctx.paramNombre("Tempo", 120),
-        pasParBeat,
-        mesures: ctx.paramNombre("Mesures", 4),
-        volume: 85,
-        timbre: "Triangle",
-        graine: ctx.paramNombre("Graine", 0),
-        probaNote: ctx.paramNombre("Densité", 70) / 100,
-        repetition: ctx.paramNombre("Répétition", 25) / 100,
-        silence: ctx.paramNombre("Silence", 10) / 100,
-      };
-      ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_neuronal"));
-      const { notes, graineUtilisee } = genererReservoirMusical(config);
       const notesJouees = notes.filter((n: any) => !n.silence);
-      if (notesJouees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_g_n_r_e") };
-      const fichier = await appliquerInstrumentMidi(
-        notesVersFichierMidi(
-          notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
-          config.tempo,
-        ),
-        ctx.paramNombre("Instrument", 0),
-      );
-      return { valeurs: [fichier], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2", config.taille, notesJouees.length, graineUtilisee) };
+      const midiFile = notesJouees.length === 0
+        ? null
+        : await appliquerInstrumentMidi(
+            notesVersFichierMidi(
+              notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
+              config.tempo,
+            ),
+            ctx.paramNombre("Instrument", 0),
+          );
+      const nbNotes = notesJouees.length;
+      return { valeurs: [buf, midiFile], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
     },
   },
   {

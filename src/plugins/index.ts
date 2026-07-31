@@ -57,6 +57,12 @@ import { fiches as f_image_export } from "./image-export";
 import { fiches as f_export_svg } from "./export-svg";
 import { fiches as f_image_rendu } from "./image-rendu";
 import { fiches as f_pixeltone } from "./pixeltone";
+import { fiches as f_palette_harmonique } from "./palette-harmonique";
+import { fiches as f_dessin_sonore } from "./dessin-sonore";
+import { fiches as f_couleur_rgb } from "./couleur-rgb";
+import { fiches as f_spectre_visible } from "./spectre-visible";
+import { fiches as f_color_looper } from "./color-looper";
+import { fiches as f_camelot } from "./camelot";
 import { fiches as f_entree_image } from "./entree-image";
 import { fiches as f_lecteur_svg } from "./lecteur-svg";
 import { fiches as f_ocr } from "./ocr";
@@ -118,6 +124,12 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_export_svg,
   ...f_image_rendu,
   ...f_pixeltone,
+  ...f_palette_harmonique,
+  ...f_dessin_sonore,
+  ...f_couleur_rgb,
+  ...f_spectre_visible,
+  ...f_color_looper,
+  ...f_camelot,
   ...f_entree_image,
   ...f_lecteur_svg,
   ...f_ocr,

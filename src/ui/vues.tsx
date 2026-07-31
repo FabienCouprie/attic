@@ -1092,6 +1092,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },

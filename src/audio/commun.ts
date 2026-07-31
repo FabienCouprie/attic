@@ -37,6 +37,12 @@ export const TAILLE_FFT_HAUTEUR = 2048;
 export const SAUT_ANALYSE_HAUTEUR = TAILLE_FFT_HAUTEUR / 4;
 
 
+export function frequenceDepuisValeur(v: number, min: number, max: number): number {
+  const n = Math.max(0, Math.min(255, v)) / 255;
+  return min + (max - min) * n;
+}
+
+
 export function creerFenetreHann(taille: number): Float64Array {
   const fenetre = new Float64Array(taille);
   for (let i = 0; i < taille; i++) {

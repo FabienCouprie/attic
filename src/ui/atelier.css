@@ -561,3 +561,94 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: transparent;
   color: var(--text-muted);
 }
+
+/* ── Sélecteur de couleurs (inspecteur) ── */
+.saisie-couleurs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.saisie-couleurs-texte {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+.saisie-couleurs-grille {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.saisie-couleur-puce {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.saisie-couleur-input {
+  width: 28px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  cursor: pointer;
+  overflow: hidden;
+}
+.saisie-couleur-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.saisie-couleur-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+.saisie-couleur-input::-moz-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+.saisie-couleur-suppr {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: #e44;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+  padding: 0;
+}
+.saisie-couleur-suppr:hover { opacity: 1; background: #c33; }
+.saisie-couleur-ajouter {
+  width: 28px;
+  height: 28px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: var(--bg-btn);
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+.saisie-couleur-ajouter:hover {
+  background: var(--bg-btn-hover);
+  color: var(--text-title);
+}

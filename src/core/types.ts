@@ -76,7 +76,7 @@ export interface PortDef {
 export interface ParametreDef {
   nom: string;
   nomEn?: string;
-  type?: "choix" | "curseur" | "texte" | "dossier" | "nombre" | "sf2instrument";
+  type?: "choix" | "curseur" | "texte" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
   options?: string[];
   optionsEn?: string[];
   optionIds?: string[];

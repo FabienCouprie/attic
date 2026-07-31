@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
+import { SaisieCouleurs } from "./SaisieCouleurs";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -156,6 +157,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                 }
               }} title={t("btn.parcourir")} style={{ padding: "2px 6px", cursor: "pointer" }}>…</button>
             </div>
+          ) : p.type === "couleurs" ? (
+            <SaisieCouleurs valeur={String(params[p.nom] ?? defautP)} onChange={(v) => onChangerParametre(p.nom, v)} />
           ) : (
             <div className="inspecteur-range">
               {p.unite === "Hz" ? (

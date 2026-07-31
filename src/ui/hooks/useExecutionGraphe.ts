@@ -369,7 +369,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
         const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
         const fichier = valsSafe.find((v): v is File => v instanceof File);
-        const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg") ? fichier : null;
+        const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
         const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
         const texte = valsSafe.find((v): v is string => typeof v === "string");
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé

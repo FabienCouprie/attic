@@ -3,7 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { decoderFichier, decoderBlob } from "../audio";
+import { decoderFichier, decoderBlob, filtrerCanauxMidi } from "../audio";
 
 const entrees: FicheAudio[] = [
   {
@@ -69,11 +69,16 @@ const entrees: FicheAudio[] = [
   },
   {
     id: "generateur-musical", nom: "Générateur musical", nomEn: "Music Generator", univers: "Entrées", famille: "Génération",
-    resume: "Génère une composition multi-pistes à partir d'un script descriptif.",
-    resumeEn: "Generates a multi-track composition from a descriptive script.",
+    resume: "Génère une composition multi-pistes à partir d'un script descriptif. Sortie audio + trois sorties MIDI (une par instrument).",
+    resumeEn: "Generates a multi-track composition from a descriptive script. Audio output + three MIDI outputs (one per instrument).",
     notice: "Script : genre=pop, tempo=120, cle=C, gamme=majeur, duree=30",
     noticeEn: "Script: genre=pop, tempo=120, cle=C, gamme=majeur, duree=30",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [], sorties: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "MIDI 1", nomEn: "MIDI 1", type: "midi" },
+      { nom: "MIDI 2", nomEn: "MIDI 2", type: "midi" },
+      { nom: "MIDI 3", nomEn: "MIDI 3", type: "midi" },
+    ],
     parametres: [
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
@@ -103,6 +108,7 @@ const entrees: FicheAudio[] = [
       const script = `genre = ${genre}\ntempo = ${tempo}\ncle = ${cle}\ngamme = ${gamme}\nduree = ${duree}\ninstr1 = ${instr1}\ninstr2 = ${instr2}\ninstr3 = ${instr3}`;
       const { midiBytes, description } = await genererDepuisScript(script);
 
+      let audioBuffer: AudioBuffer;
       const sf2 = sf2Chargee();
       if (sf2) {
         ctx.onProgress(traduire("progress.rendu_soundfont"));
@@ -124,11 +130,17 @@ const entrees: FicheAudio[] = [
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];
           }
         }
-        return { valeurs: [master], message: traduire("msg.var_0_rendu_soundfont", description) };
+        audioBuffer = master;
+      } else {
+        ctx.onProgress(traduire("progress.rendu_fm"));
+        audioBuffer = await rendreMidiDepuisBytes(midiBytes, "FM/Oscillateurs", volume);
       }
-      ctx.onProgress(traduire("progress.rendu_fm"));
-      const buffer = await rendreMidiDepuisBytes(midiBytes, "FM/Oscillateurs", volume);
-      return { valeurs: [buffer], message: traduire("msg.var_0_rendu_fm", description) };
+
+      const midi1 = new File([filtrerCanauxMidi(midiBytes, [0]) as BlobPart], "music-gen-track1.mid", { type: "audio/midi" });
+      const midi2 = new File([filtrerCanauxMidi(midiBytes, [1]) as BlobPart], "music-gen-track2.mid", { type: "audio/midi" });
+      const midi3 = new File([filtrerCanauxMidi(midiBytes, [2]) as BlobPart], "music-gen-track3.mid", { type: "audio/midi" });
+
+      return { valeurs: [audioBuffer, midi1, midi2, midi3], message: traduire(sf2 ? "msg.var_0_rendu_soundfont" : "msg.var_0_rendu_fm", description) };
     },
   },
 ];
