@@ -70,9 +70,24 @@ export function useMetaComposants(o: OptionsMeta) {
     const meta = trouverMeta(cible.data.ficheId as string)!;
     const prefixe = `${cible.id}::`;
     const cb = o.callbacksNoeud();
-    const nouveaux = o.noeudsRef.current.filter((n) => n.id !== cible.id).slice() as unknown as NoeudG[];
+    // Le sous-graphe est replacé sous le méta-nœud : on translate les positions
+    // intérieures pour que leur barycentre coïncide avec la position actuelle du méta.
+    const cx = meta.sousNoeuds.reduce((s, n) => s + (n.position?.x ?? 0), 0) / Math.max(1, meta.sousNoeuds.length);
+    const cy = meta.sousNoeuds.reduce((s, n) => s + (n.position?.y ?? 0), 0) / Math.max(1, meta.sousNoeuds.length);
+    const dx = (cible.position?.x ?? 0) - cx;
+    const dy = (cible.position?.y ?? 0) - cy;
+    const nouveaux = o.noeudsRef.current
+      .filter((n) => n.id !== cible.id)
+      .map((n) => ({ ...n, selected: false })) as unknown as NoeudG[];
     for (const sn of meta.sousNoeuds) {
-      nouveaux.push({ ...sn, id: prefixe + sn.id, type: "atelier", data: { ...sn.data, statut: "attente", ...cb } });
+      nouveaux.push({
+        ...sn,
+        id: prefixe + sn.id,
+        type: "atelier",
+        position: { x: (sn.position?.x ?? 0) + dx, y: (sn.position?.y ?? 0) + dy },
+        selected: true,
+        data: { ...sn.data, statut: "attente", ...cb },
+      });
     }
     const nouvellesA = o.aretesRef.current.filter((e) => e.source !== cible.id && e.target !== cible.id).slice() as unknown as AreteG[];
     for (const e of o.aretesRef.current) {

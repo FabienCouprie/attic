@@ -248,7 +248,16 @@ function Atelier() {
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
   // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
   // Historique pour undo (Ctrl+Z).
-  const pressePapierRef = useRef<{ ficheId: string; parametres: Record<string, number | string>; width: number; height: number; data: Record<string, unknown> } | null>(null);
+  type PressePapierItem = {
+    ficheId: string;
+    parametres: Record<string, number | string>;
+    width: number;
+    height: number;
+    data: Record<string, unknown>;
+    dx: number;
+    dy: number;
+  };
+  const pressePapierRef = useRef<PressePapierItem[] | null>(null);
   const historiqueRef = useRef<{ nodes: any[]; edges: any[] }[]>([]);
   const MAX_HISTORIQUE = 50;
 
@@ -519,68 +528,100 @@ function Atelier() {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "c" && sel) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
+        if (selection.length === 0) return;
         e.preventDefault();
-        const def = trouverDef(sel.data.ficheId as string);
-        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-        pressePapierRef.current = {
-          ficheId: sel.data.ficheId as string,
-          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
-          width, height,
-          data: {},
-        };
+        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
+        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
+        pressePapierRef.current = selection.map((n) => {
+          const d = n.data as Record<string, unknown>;
+          const data: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === "function") continue;
+            data[k] = v;
+          }
+          return {
+            ficheId: d.ficheId as string,
+            parametres: { ...(d.parametres as Record<string, number | string>) },
+            width: n.width ?? 230,
+            height: n.height ?? 200,
+            data,
+            dx: (n.position?.x ?? 0) - origineX,
+            dy: (n.position?.y ?? 0) - origineY,
+          };
+        });
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "x" && sel) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
+        if (selection.length === 0) return;
         e.preventDefault();
-        const def = trouverDef(sel.data.ficheId as string);
-        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-        pressePapierRef.current = {
-          ficheId: sel.data.ficheId as string,
-          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
-          width, height,
-          data: {},
-        };
+        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
+        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
+        pressePapierRef.current = selection.map((n) => {
+          const d = n.data as Record<string, unknown>;
+          const data: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === "function") continue;
+            data[k] = v;
+          }
+          return {
+            ficheId: d.ficheId as string,
+            parametres: { ...(d.parametres as Record<string, number | string>) },
+            width: n.width ?? 230,
+            height: n.height ?? 200,
+            data,
+            dx: (n.position?.x ?? 0) - origineX,
+            dy: (n.position?.y ?? 0) - origineY,
+          };
+        });
         // Sauvegarder pour undo puis supprimer
         pushHistorique();
-        supprimerNoeud(sel.id);
+        supprimerNoeud(selection.map((n) => n.id));
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current && pressePapierRef.current.length > 0) {
         e.preventDefault();
         const clip = pressePapierRef.current;
-        const def = trouverDef(clip.ficheId);
-        if (!def) return;
+        pushHistorique();
         const cbs = callbacksNoeud();
+        const ajoutesRef: any[] = [];
         setNodes((nds) => {
-          const nouvelId = idUnique(nds);
-          const position = {
-            x: (sel?.position?.x ?? 120) + 40 + Math.random() * 30,
-            y: (sel?.position?.y ?? 80) + 40 + Math.random() * 30,
-          };
-          return [...nds, {
-            id: nouvelId,
-            type: "atelier",
-            position,
-            width: clip.width,
-            height: clip.height,
-            data: {
-              ficheId: clip.ficheId,
-              parametres: { ...clip.parametres },
-              statut: "attente",
-              onSupprimerNoeud: cbs.onSupprimerNoeud,
-              onReinitialiser: cbs.onReinitialiser,
-              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
-              onChargerAudio: cbs.onChargerAudio,
-              onChargerMidi: cbs.onChargerMidi,
-              onChargerImage: cbs.onChargerImage,
-              onChangerEnregistrement: cbs.onChangerEnregistrement,
-              onChangerParametre: cbs.onChangerParametre,
-              onChangerZones: cbs.onChangerZones,
-              onChargerIR: cbs.onChargerIR,
-            },
-          }];
+          const selectionCourante = nds.filter((n) => (n as { selected?: boolean }).selected);
+          const origine = (() => {
+            if (selectionCourante.length === 0) return { x: 120, y: 80 };
+            const cx = selectionCourante.reduce((s, n) => s + (n.position?.x ?? 0), 0) / selectionCourante.length;
+            const cy = selectionCourante.reduce((s, n) => s + (n.position?.y ?? 0), 0) / selectionCourante.length;
+            return { x: cx + 40, y: cy + 40 };
+          })();
+          const deselected = nds.map((n) => n.selected ? { ...n, selected: false } : n);
+          let current = deselected;
+          for (const item of clip) {
+            const nouvelId = idUnique(current);
+            const def = trouverDef(item.ficheId);
+            const { width, height } = def ? tailleDefaut(def) : { width: item.width, height: item.height };
+            const n: any = {
+              id: nouvelId,
+              type: "atelier",
+              position: { x: origine.x + item.dx, y: origine.y + item.dy },
+              width,
+              height,
+              selected: true,
+              data: {
+                ficheId: item.ficheId,
+                parametres: { ...item.parametres },
+                ...item.data,
+                statut: "attente",
+                ...cbs,
+              },
+            };
+            current = [...current, n];
+            ajoutesRef.push(n);
+          }
+          return current;
         });
+        setSel(ajoutesRef[0] ?? null);
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -590,7 +631,7 @@ function Atelier() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sel, callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
+  }, [callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
@@ -835,7 +876,7 @@ function Atelier() {
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
           panOnDrag={[2]}
-          selectionOnDrag={false}
+          selectionOnDrag={true}
           selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {
             pushHistorique();
