@@ -1,6 +1,6 @@
 // audio/effets-dynamique.ts — Effets (issus du découpage de effets.ts).
 import { fft } from "./fft";
-import { TAILLE_FFT, SAUT_FFT, creerFenetreHann } from "./commun";
+import { TAILLE_FFT, SAUT_FFT, TAILLE_FFT_BRUIT, SAUT_FFT_BRUIT, creerFenetreHann } from "./commun";
 
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
   let pic = 0;
@@ -109,17 +109,26 @@ export function compresser(
 
 
 export function calculerProfilBruit(buffer: AudioBuffer): Float32Array {
-  const fenetre = creerFenetreHann(TAILLE_FFT);
-  const nbBins = TAILLE_FFT / 2 + 1;
+  const fenetre = creerFenetreHann(TAILLE_FFT_BRUIT);
+  const nbBins = TAILLE_FFT_BRUIT / 2 + 1;
   const somme = new Float64Array(nbBins);
   let nbTrames = 0;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const donnees = buffer.getChannelData(c);
-    for (let debut = 0; debut + TAILLE_FFT <= donnees.length; debut += SAUT_FFT) {
-      const re = new Float64Array(TAILLE_FFT);
-      const im = new Float64Array(TAILLE_FFT);
-      for (let i = 0; i < TAILLE_FFT; i++) re[i] = donnees[debut + i] * fenetre[i];
+    const canal = buffer.getChannelData(c);
+    // On pad avec des zéros pour que les très courts extraits de bruit
+    // (moins d'une trame FFT) produisent quand même un profil non vide.
+    const donnees = canal.length < TAILLE_FFT_BRUIT
+      ? (() => {
+          const p = new Float32Array(TAILLE_FFT_BRUIT);
+          p.set(canal);
+          return p;
+        })()
+      : canal;
+    for (let debut = 0; debut + TAILLE_FFT_BRUIT <= donnees.length; debut += SAUT_FFT_BRUIT) {
+      const re = new Float64Array(TAILLE_FFT_BRUIT);
+      const im = new Float64Array(TAILLE_FFT_BRUIT);
+      for (let i = 0; i < TAILLE_FFT_BRUIT; i++) re[i] = donnees[debut + i] * fenetre[i];
       fft(re, im, false);
       for (let b = 0; b < nbBins; b++) somme[b] += Math.hypot(re[b], im[b]);
       nbTrames++;
@@ -133,72 +142,137 @@ export function calculerProfilBruit(buffer: AudioBuffer): Float32Array {
 
 
 
-export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: number): AudioBuffer {
-  const fenetre = creerFenetreHann(TAILLE_FFT);
-  const nbBins = TAILLE_FFT / 2 + 1;
+export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: number, plancherRelatif = 0.01): AudioBuffer {
+  const fenetre = creerFenetreHann(TAILLE_FFT_BRUIT);
+  const nbBins = TAILLE_FFT_BRUIT / 2 + 1;
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
     length: buffer.length,
     sampleRate: buffer.sampleRate,
   });
 
-  // Lissage temporel de la décision de gain (pas du signal lui-même) : une
-  // trame de bruit isolée a une magnitude qui varie beaucoup d'une trame à
-  // l'autre. Sans lissage, des trames voisines qui se recouvrent reçoivent des
-  // gains très différents, et leur addition (overlap-add) peut recréer par
-  // endroits un signal plus fort qu'à l'origine (« bruit musical »). On lisse
-  // donc l'estimation servant à calculer le gain, puis on applique ce gain à
-  // l'amplitude réelle de la trame.
-  const LISSAGE = 0.85;
-  const PLANCHER_RELATIF = 0.15;
+  // Soustraction spectrale en puissance (standard) : on estime le bruit par le
+  // profil et on soustrait sa puissance à celle du signal bruité. Le plancher
+  // est un pourcentage de la puissance du signal bruité, donc il ne peut pas
+  // amplifier quand le profil surestime le bruit local.
+  const plancher = Math.max(0, Math.min(1, plancherRelatif));
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const entree = buffer.getChannelData(c);
-    const sortie = new Float64Array(buffer.length);
-    const enveloppe = new Float64Array(buffer.length);
-    const magnitudeLissee = new Float64Array(nbBins);
-    let premiereTrame = true;
+    const canal = buffer.getChannelData(c);
+    // Pour les extraits courts on centre le signal dans une trame FFT :
+    // évite l'amplification dangereuse aux bords de la fenêtre Hann
+    // (overlap-add) quand le signal ne couvre pas une trame complète.
+    const estCourt = canal.length < TAILLE_FFT_BRUIT;
+    const entree = estCourt ? new Float32Array(TAILLE_FFT_BRUIT) : canal;
+    const offsetCourt = estCourt ? Math.floor((TAILLE_FFT_BRUIT - canal.length) / 2) : 0;
+    if (estCourt) entree.set(canal, offsetCourt);
 
-    for (let debut = 0; debut + TAILLE_FFT <= entree.length; debut += SAUT_FFT) {
-      const re = new Float64Array(TAILLE_FFT);
-      const im = new Float64Array(TAILLE_FFT);
-      for (let i = 0; i < TAILLE_FFT; i++) re[i] = entree[debut + i] * fenetre[i];
+    const sortie = new Float64Array(estCourt ? TAILLE_FFT_BRUIT : buffer.length);
+    const enveloppe = new Float64Array(estCourt ? TAILLE_FFT_BRUIT : buffer.length);
+    for (let debut = 0; debut + TAILLE_FFT_BRUIT <= entree.length; debut += SAUT_FFT_BRUIT) {
+      const re = new Float64Array(TAILLE_FFT_BRUIT);
+      const im = new Float64Array(TAILLE_FFT_BRUIT);
+      for (let i = 0; i < TAILLE_FFT_BRUIT; i++) re[i] = entree[debut + i] * fenetre[i];
       fft(re, im, false);
 
       for (let b = 0; b < nbBins; b++) {
         const magnitude = Math.hypot(re[b], im[b]);
-        if (premiereTrame) magnitudeLissee[b] = magnitude;
-        else magnitudeLissee[b] = LISSAGE * magnitudeLissee[b] + (1 - LISSAGE) * magnitude;
 
         const phase = Math.atan2(im[b], re[b]);
-        const seuil = (profil[b] ?? 0) * force;
-        const plancher = magnitudeLissee[b] * PLANCHER_RELATIF;
-        const magnitudeCible = Math.max(magnitudeLissee[b] - seuil, plancher);
-        const gain = magnitudeLissee[b] > 1e-9 ? magnitudeCible / magnitudeLissee[b] : 0;
+        const profilBin = profil[b] ?? 0;
+        // On soustrait le bruit de la magnitude de la trame courante, pas de la
+        // version lissée, pour un débruitage plus efficace sur le bruit blanc.
+        const power = magnitude * magnitude;
+        const noisePower = profilBin * profilBin;
+        const cleanPower = Math.max(power - noisePower * force, power * plancher);
+        const gain = power > 1e-9 ? Math.sqrt(cleanPower / power) : 0;
         const nouvelleMagnitude = magnitude * gain;
 
         re[b] = nouvelleMagnitude * Math.cos(phase);
         im[b] = nouvelleMagnitude * Math.sin(phase);
-        if (b > 0 && b < TAILLE_FFT - b) {
-          re[TAILLE_FFT - b] = re[b];
-          im[TAILLE_FFT - b] = -im[b];
+        if (b > 0 && b < TAILLE_FFT_BRUIT - b) {
+          re[TAILLE_FFT_BRUIT - b] = re[b];
+          im[TAILLE_FFT_BRUIT - b] = -im[b];
         }
       }
-      premiereTrame = false;
 
       fft(re, im, true);
-      for (let i = 0; i < TAILLE_FFT; i++) {
+      for (let i = 0; i < TAILLE_FFT_BRUIT; i++) {
         sortie[debut + i] += re[i] * fenetre[i];
         enveloppe[debut + i] += fenetre[i] * fenetre[i];
       }
     }
 
     const canalSortie = resultat.getChannelData(c);
-    for (let i = 0; i < sortie.length; i++) {
-      canalSortie[i] = enveloppe[i] > 1e-6 ? sortie[i] / enveloppe[i] : 0;
+    if (estCourt) {
+      for (let i = 0; i < canal.length; i++) {
+        const j = offsetCourt + i;
+        canalSortie[i] = enveloppe[j] > 1e-6 ? sortie[j] / enveloppe[j] : 0;
+      }
+    } else {
+      for (let i = 0; i < sortie.length; i++) {
+        canalSortie[i] = enveloppe[i] > 1e-6 ? sortie[i] / enveloppe[i] : 0;
+      }
     }
   }
 
+  return resultat;
+}
+
+function appliquerNotch(signal: Float32Array, sr: number, f: number, Q: number): void {
+  const w0 = (2 * Math.PI * f) / sr;
+  const cosw0 = Math.cos(w0);
+  const sinw0 = Math.sin(w0);
+  const alpha = sinw0 / (2 * Q);
+  const a0 = 1 + alpha;
+  const a1 = (-2 * cosw0) / a0;
+  const a2 = (1 - alpha) / a0;
+  const b0 = 1 / a0;
+  const b1 = (-2 * cosw0) / a0;
+  const b2 = 1 / a0;
+  let x1 = 0;
+  let x2 = 0;
+  let y1 = 0;
+  let y2 = 0;
+  for (let i = 0; i < signal.length; i++) {
+    const x = signal[i];
+    const y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+    signal[i] = y;
+    x2 = x1;
+    x1 = x;
+    y2 = y1;
+    y1 = y;
+  }
+}
+
+export function reduireBruitNotches(buffer: AudioBuffer, profil: Float32Array, seuilMult = 2, maxNotches = 50, Q = 10): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const df = sr / TAILLE_FFT_BRUIT;
+  const moy = profil.reduce((a, b) => a + b, 0) / profil.length;
+  const seuil = Math.max(1e-9, moy * seuilMult);
+  const candidats: { bin: number; f: number; mag: number }[] = [];
+  for (let i = 0; i < profil.length; i++) {
+    const f = i * df;
+    if (f > 50 && f < sr / 2 - 100 && profil[i] > seuil) {
+      candidats.push({ bin: i, f, mag: profil[i] });
+    }
+  }
+  candidats.sort((a, b) => b.mag - a.mag);
+  const notches = candidats.slice(0, maxNotches).map((c) => c.f);
+
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: sr,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    dst.set(src);
+    for (const f of notches) {
+      appliquerNotch(dst, sr, f, Q);
+    }
+  }
   return resultat;
 }
 

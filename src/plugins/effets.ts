@@ -5,9 +5,9 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { parseMidi } from "midi-file";
 import {
-  appliquerDelay, appliquerReverberation, appliquerDistorsion,
-  appliquerFlanger, appliquerChorus, compresser, normaliser,
-  appliquerFiltre, supprimerClics, reduireBruit, calculerProfilBruit,
+   appliquerDelay, appliquerReverberation, appliquerDistorsion,
+   appliquerFlanger, appliquerChorus, compresser, normaliser,
+   appliquerFiltre, supprimerClics, reduireBruit, reduireBruitNotches, calculerProfilBruit,
   dererverberer, changerTempo, changerTonalite, glissandoTonalite, equaliser,
   inverserAudio, echangerCanaux, extraireCentreCote,
   appliquerFondu,
@@ -373,16 +373,34 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Spectral noise subtraction.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", nomEn: "Profile", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Réduction", defaut: 70, nomEn: "Reduction" }],
+    parametres: [
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Spectral", "Notches"], optionsEn: ["Spectral", "Notches"], optionIds: ["spectral", "notches"], defaut: "Spectral",
+        doc: "Spectral = soustraction de puissance standard. Notches = filtres coupe-bande dynamiques sur les fréquences les plus fortes du profil (utile pour un ronflement/hum).", docEn: "Spectral = standard power subtraction. Notches = dynamic notch filters on the strongest profile frequencies (useful for hum/buzz).", defautEn: "Spectral" },
+      { nom: "Réduction", nomEn: "Reduction", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%", doc: "(Mode Spectral) Pourcentage de la puissance du bruit soustrait au signal. 100% = soustraction complète, 0% = aucun effet.", docEn: "(Spectral mode) Percentage of the noise power subtracted from the signal. 100% = full subtraction, 0% = no effect." },
+      { nom: "Plancher", nomEn: "Floor", type: "nombre", plage: [0, 100], pas: 1, defaut: 1, unite: "%", doc: "(Mode Spectral) Niveau minimum de puissance conservé (pourcentage de la puissance du signal bruité). 0% = débruitage maximal, peut créer des artefacts musicaux.", docEn: "(Spectral mode) Minimum residual power level (percentage of the noisy signal power). 0% = maximum denoising, may create musical artifacts." },
+      { nom: "Notches", nomEn: "Notches", type: "nombre", plage: [1, 100], pas: 1, defaut: 50, unite: "", doc: "(Mode Notches) Nombre maximum de filtres coupe-bande appliqués. Augmentez si le ronflement a beaucoup d'harmoniques.", docEn: "(Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics." },
+      { nom: "Q", nomEn: "Q", type: "nombre", plage: [1, 50], pas: 1, defaut: 10, unite: "", doc: "(Mode Notches) Sélectivité des filtres coupe-bande. Plus Q est élevé, plus la bande supprimée est étroite. Pour des harmoniques proches, laissez Q = 10.", docEn: "(Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10." },
+    ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       const profil = ctx.entree(1);
       if (!(audio instanceof AudioBuffer) || !(profil instanceof Float32Array))
         return { valeurs: [null], message: traduire("msg.branchez_audio_profil_n_ud_profil_de_bruit") };
-      const reduction = ctx.paramNombre("Réduction", 70) / 100;
-      return { valeurs: [await reduireBruit(audio, profil, reduction)] };
+      const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
+      if (profilEnergie < 1e-6) {
+        return { valeurs: [audio], message: traduire("msg.reduction_bruit_profil_trop_faible") };
+      }
+      const mode = ctx.paramTexte("Mode", "Spectral");
+      if (mode === "Notches" || mode === "notches") {
+        const nb = Math.round(ctx.paramNombre("Notches", 50));
+        const q = ctx.paramNombre("Q", 10);
+        return { valeurs: [await reduireBruitNotches(audio, profil, 2, nb, q)] };
+      }
+      const reduction = ctx.paramNombre("Réduction", 100) / 100;
+      const plancher = ctx.paramNombre("Plancher", 1) / 100;
+      return { valeurs: [await reduireBruit(audio, profil, reduction, plancher)] };
    },
- },
+  },
   {
     id: "profil-bruit", nom: "Profil de bruit", nomEn: "Noise Profile", univers: "Traitement", famille: "Effets",
     resume: "Capture le profil spectral d'un bruit.",
@@ -393,9 +411,11 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      return { valeurs: [await calculerProfilBruit(audio)] };
+      const profil = await calculerProfilBruit(audio);
+      const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
+      return { valeurs: [profil], message: profilEnergie < 1e-6 ? traduire("msg.profil_bruit_trop_faible") : undefined };
    },
- },
+  },
   {
     id: "reponse-filtre", nom: "Filtre + réponse", nomEn: "Filter + Response",
     univers: "Traitement", famille: "Effets",
