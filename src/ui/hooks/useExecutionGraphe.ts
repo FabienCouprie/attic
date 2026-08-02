@@ -89,20 +89,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     );
   };
 
-  // ── Réinitialiser un nœud (cascade aval) ──
-  // Utilise aretesRef pour toujours avoir les arêtes courantes (pas une closure périmée).
-  const reinitialiserNoeud = useCallback((nodeId: string) => {
-    const edgesCourantes = aretesRef.current;
-    const ids = new Set<string>();
-    const file = [nodeId];
-    while (file.length > 0) {
-      const courant = file.pop()!;
-      if (ids.has(courant)) continue;
-      ids.add(courant);
-      for (const e of edgesCourantes) {
-        if (e.source === courant && !ids.has(e.target)) file.push(e.target);
-      }
-    }
+  // ── Réinitialiser un ensemble de nœuds ──
+  const reinitialiserIds = useCallback((ids: Set<string>) => {
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
       if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
@@ -126,7 +114,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // Garde-fou : on ne doit jamais effacer un champ utilisateur.
       for (const champ of CHAMPS_UTILISATEUR) {
         if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
-          console.warn(`[reinitialiserNoeud] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
+          console.warn(`[reinitialiserIds] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
           nouvelleData[champ] = (n.data as any)[champ];
         }
       }
@@ -134,6 +122,29 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }));
     for (const id of ids) cacheExec.current.delete(id);
   }, [setNodes]);
+
+  // ── Réinitialiser un nœud (cascade aval) ──
+  // Utilise aretesRef pour toujours avoir les arêtes courantes (pas une closure périmée).
+  const reinitialiserNoeud = useCallback((nodeId: string) => {
+    const edgesCourantes = aretesRef.current;
+    const ids = new Set<string>();
+    const file = [nodeId];
+    while (file.length > 0) {
+      const courant = file.pop()!;
+      if (ids.has(courant)) continue;
+      ids.add(courant);
+      for (const e of edgesCourantes) {
+        if (e.source === courant && !ids.has(e.target)) file.push(e.target);
+      }
+    }
+    reinitialiserIds(ids);
+  }, [reinitialiserIds]);
+
+  // ── Réinitialiser tous les nœuds (reset global) ──
+  const reinitialiserTout = useCallback(() => {
+    const ids = new Set(noeudsRef.current.map((n) => n.id));
+    reinitialiserIds(ids);
+  }, [reinitialiserIds]);
 
   const lancer = useCallback(async (noeudPrioritaireId?: string) => {
     // Ne pas bloquer si on lance un node individuellement (prioritaire)
@@ -492,5 +503,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [prioritaire, repertoire, t]);
 
-  return { lancer, reinitialiserNoeud };
+  return { lancer, reinitialiserNoeud, reinitialiserTout };
 }

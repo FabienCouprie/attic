@@ -369,15 +369,14 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Custom"], defaut:"Rock", defautEn: "Rock" },
-      { nom:"Code personnalisé", nomEn:"Custom code", type:"texte", defaut:"", defautEn: "" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Military march","Pop ballad","Pop dance","Pop latin","Pop folk","Pop R&B","Pop punk","Waltz","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], defaut:"Rock", defautEn: "Rock" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
       { nom:"Charley", nomEn:"Hi-hat", plage:[0,100], defaut:60, unite:"%" },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramTexte("Code personnalisé",""),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
+      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
     },
   },
   {

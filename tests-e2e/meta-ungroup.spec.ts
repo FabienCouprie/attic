@@ -167,3 +167,119 @@ test.describe("Copy / paste", () => {
     expect(ys[1]).toBeCloseTo(140, 0);
   });
 });
+
+test.describe("Global reset", () => {
+  test("resets all nodes from the top bar button", async ({ page }) => {
+    const graph = {
+      nodes: [
+        { id: "a", position: { x: 100, y: 100 }, width: 230, height: 200, data: { ficheId: "entree-audio", parametres: {} } },
+        { id: "b", position: { x: 300, y: 100 }, width: 230, height: 200, data: { ficheId: "sortie-audio", parametres: {} } },
+      ],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    };
+
+    await page.addInitScript((g: string) => {
+      localStorage.setItem("attic-encours", g);
+    }, JSON.stringify(graph));
+
+    await page.goto(devUrl);
+    await page.waitForSelector('.react-flow__node[data-id="a"]', { timeout: 10000 });
+    await page.waitForSelector('.react-flow__node[data-id="b"]', { timeout: 10000 });
+
+    // Make entree-audio runnable without a file so we can get a real "terminé" state.
+    await page.evaluate(async () => {
+      const mod = await import("/src/audio/adaptateur.ts");
+      const def = mod.registre.trouverDef("entree-audio");
+      if (!def) throw new Error("entree-audio not found in registry");
+      (def as any).executer = async () => {
+        const audio = new AudioBuffer({ numberOfChannels: 1, length: 4410, sampleRate: 44100 });
+        const data = new Float32Array(4410).fill(0.1);
+        audio.copyToChannel(data, 0);
+        return { valeurs: [audio], message: "Terminé" };
+      };
+    });
+
+    // Run node a and wait for it to finish.
+    await page.click('.react-flow__node[data-id="a"] .attic-node-btn-prio');
+    await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
+
+    // Click the global reset button in the top bar.
+    await page.click('.attic-barre-outils button[title="Réinitialiser"]');
+
+    // All nodes should return to the waiting state.
+    await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.attente', { timeout: 3000 });
+    await page.waitForSelector('.react-flow__node[data-id="b"] .attic-node-statut-puce.attente', { timeout: 3000 });
+
+    const textes = await page.evaluate(() => {
+      const lire = (id: string) => {
+        const node = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+        if (!node) return null;
+        const label = node.querySelector(".attic-node-statut");
+        return label ? label.textContent : null;
+      };
+      return { a: lire("a"), b: lire("b") };
+    });
+
+    expect(textes.a).toContain("En attente");
+    expect(textes.b).toContain("En attente");
+  });
+
+  test("undo restores nodes and keeps their callbacks functional", async ({ page }) => {
+    const graph = {
+      nodes: [
+        { id: "a", position: { x: 100, y: 100 }, width: 230, height: 200, data: { ficheId: "entree-audio", parametres: {} } },
+        { id: "b", position: { x: 300, y: 100 }, width: 230, height: 200, data: { ficheId: "sortie-audio", parametres: {} } },
+      ],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    };
+
+    await page.addInitScript((g: string) => {
+      localStorage.setItem("attic-encours", g);
+    }, JSON.stringify(graph));
+
+    await page.goto(devUrl);
+    await page.waitForSelector('.react-flow__node[data-id="a"]', { timeout: 10000 });
+
+    // Make entree-audio runnable without a file.
+    await page.evaluate(async () => {
+      const mod = await import("/src/audio/adaptateur.ts");
+      const def = mod.registre.trouverDef("entree-audio");
+      if (!def) throw new Error("entree-audio not found in registry");
+      (def as any).executer = async () => {
+        const audio = new AudioBuffer({ numberOfChannels: 1, length: 4410, sampleRate: 44100 });
+        const data = new Float32Array(4410).fill(0.1);
+        audio.copyToChannel(data, 0);
+        return { valeurs: [audio], message: "Terminé" };
+      };
+    });
+
+    // Run node a to finish it.
+    await page.click('.react-flow__node[data-id="a"] .attic-node-btn-prio');
+    await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
+
+    // Delete node a, then undo.
+    await page.click('.react-flow__node[data-id="a"]');
+    await page.keyboard.press("Delete");
+    await page.waitForSelector('.react-flow__node[data-id="a"]', { state: "detached", timeout: 3000 });
+
+    await page.keyboard.press("Control+z");
+    await page.waitForSelector('.react-flow__node[data-id="a"]', { timeout: 3000 });
+
+    // Run node a again: this proves the callbacks re-attached by undo still work.
+    await page.click('.react-flow__node[data-id="a"] .attic-node-btn-prio');
+    await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
+
+    // Click the global reset button.
+    await page.click('.attic-barre-outils button[title="Réinitialiser"]');
+    await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.attente', { timeout: 3000 });
+
+    const texte = await page.evaluate(() => {
+      const node = document.querySelector('.react-flow__node[data-id="a"]');
+      const label = node?.querySelector(".attic-node-statut");
+      return label?.textContent ?? null;
+    });
+    expect(texte).toContain("En attente");
+  });
+});

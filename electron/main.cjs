@@ -923,6 +923,12 @@ ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
     if (!path.isAbsolute(chemin)) {
       const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
       chemin = path.join(base, chemin);
+      // En dev, le dossier public/ est servi par Vite mais n'est pas à la racine :
+      // on essaie donc aussi public/<chemin> si le fichier n'est pas à la racine.
+      if (!app.isPackaged && !fs.existsSync(chemin)) {
+        const cheminPublic = path.join(base, "public", cheminRelatif);
+        if (fs.existsSync(cheminPublic)) chemin = cheminPublic;
+      }
     }
     if (!fs.existsSync(chemin)) return null;
     const buf = fs.readFileSync(chemin);

@@ -1279,6 +1279,39 @@ function VueSourceTexte({ id, data }: VueProps) {
   );
 }
 
+// ── Sortie de texte (zone de texte redimensionnable + copie) ──
+function VueSortieTexte({ data }: VueProps) {
+  const { t } = useI18n();
+  const texte = data.audioResultatMessage ?? "";
+  return (
+    <div className="nodrag attic-node-sortie-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+      <NodeResizer minWidth={260} minHeight={140} maxWidth={800} maxHeight={600} />
+      <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <button
+          className="attic-node-copy-btn"
+          style={{ position: "absolute", top: 4, right: 4, zIndex: 1 }}
+          title={t("btn.copier")}
+          onClick={(e) => { e.stopPropagation(); copierTexte(texte); }}
+        >⧉</button>
+        <textarea
+          readOnly
+          value={texte || t("export.avantLancer")}
+          style={{
+            width: "100%", flex: "1 1 auto", minHeight: 80,
+            resize: "none",
+            fontSize: 12, lineHeight: 1.5, fontFamily: "inherit",
+            background: "var(--bg-input, #0d1117)", color: "var(--texte, #cbd5e1)",
+            border: "1px solid var(--border, #333)",
+            borderRadius: 4, padding: "6px 8px", outline: "none",
+            boxSizing: "border-box",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ── Carte sonore (génère un HTML ouvrable dans le navigateur par défaut) ──
 function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
@@ -1365,6 +1398,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
+  { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },

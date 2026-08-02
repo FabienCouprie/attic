@@ -219,6 +219,7 @@ function Atelier() {
   }, []);
   const lancerRef = useRef<any>(null);
   const cacheExec = useRef<Map<string, any>>(new Map());
+  const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
   const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
 
   const changerRepertoire = useCallback((r: string) => {
@@ -272,7 +273,12 @@ function Atelier() {
   const undo = useCallback(() => {
     const prev = historiqueRef.current.pop();
     if (!prev) return;
-    setNodes(prev.nodes);
+    // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
+    // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
+    // restent fonctionnels après un Ctrl+Z.
+    const cbs = callbacksNoeudRef.current?.();
+    if (!cbs) return;
+    setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
     setEdges(prev.edges);
     setSel(null);
     cacheExec.current.clear();
@@ -366,7 +372,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud } = useExecutionGraphe({
+  const { lancer, reinitialiserNoeud, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -497,6 +503,7 @@ function Atelier() {
     onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
     onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); },
   }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
+  callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
   const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
@@ -770,6 +777,7 @@ function Atelier() {
             await lancer();
             rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
           }}
+          onReinitialiser={reinitialiserTout}
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}

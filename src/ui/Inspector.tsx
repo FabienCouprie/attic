@@ -144,6 +144,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             <textarea
               value={String(params[p.nom] ?? defautP)}
               rows={2}
+              placeholder={lang === "en" && p.placeholderEn ? p.placeholderEn : p.placeholder}
               onChange={(e) => onChangerParametre(p.nom, e.target.value)}
             />
           ) : p.type === "dossier" ? (

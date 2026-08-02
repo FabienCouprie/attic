@@ -7,6 +7,7 @@ interface Props {
   enExecution: boolean;
   repertoire: string; onChoisirDossier: () => void;
   onLancer: () => void;
+  onReinitialiser: () => void;
   onResumeAudio: () => Promise<void>;
   onExporter: () => void;
   onImporter: (f?: File) => void;
@@ -39,7 +40,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
@@ -224,6 +225,12 @@ export function BarreOutils(props: Props) {
             <path d="M12 5a3 3 0 010 6" />
           </svg>
         )}
+      </button>
+      <button className="attic-btn-icon" title={t("btn.reinitialiser")} onClick={onReinitialiser} disabled={enExecution}>
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M13.5 8a5.5 5.5 0 1 0-11 0 5.5 5.5 0 0 0 8.5 4.5" />
+          <path d="M12.5 4v4h-4" />
+        </svg>
       </button>
       <button className="attic-btn-lancer" onClick={onLancer} disabled={enExecution}>
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>

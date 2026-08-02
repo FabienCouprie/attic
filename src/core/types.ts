@@ -87,6 +87,8 @@ export interface ParametreDef {
   unite?: string;
   doc?: string;
   docEn?: string;
+  placeholder?: string;
+  placeholderEn?: string;
   hidden?: boolean;
 }
 
