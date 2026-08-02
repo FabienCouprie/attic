@@ -73,6 +73,8 @@ export function usePersistance(o: OptionsPersistance) {
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
         nomFichier: data.nomFichier,
+        nom: data.nom,
+        couleur: data.couleur,
       },
     }));
     const cleanEdges = racine.edges.map(({ id, source, target, sourceHandle, targetHandle, type, style }) => ({
@@ -98,7 +100,7 @@ export function usePersistance(o: OptionsPersistance) {
       // Aussi sauvegarder l'en-cours localStorage
       try {
         const data = {
-          nodes: cleanNodes.map((n: any) => ({ id: n.id, position: n.position, data: { ficheId: n.data.ficheId, parametres: n.data.parametres } })),
+          nodes: cleanNodes.map((n: any) => ({ id: n.id, position: n.position, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, nom: n.data.nom, couleur: n.data.couleur } })),
           edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
           viewport: o.rfInstance?.getViewport(),
           date: new Date().toISOString(),

@@ -110,6 +110,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         imageResultatUrl: undefined,
         imageResultatFile: undefined,
         visualisationUrl: undefined,
+        tempsExecution: undefined,
       };
       // Garde-fou : on ne doit jamais effacer un champ utilisateur.
       for (const champ of CHAMPS_UTILISATEUR) {
@@ -201,6 +202,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
     // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
     // « erreur », donnant l'illusion d'un run global.
+    const idsDecoratifs = new Set(nds.filter((n: any) => n.data?.ficheId === "comment" || n.data?.ficheId === "frame").map((n: any) => n.id));
+    ordreFiltre = ordreFiltre.filter((id) => !idsDecoratifs.has(id));
     const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
 
     for (const id of ordreFiltre) {
@@ -232,6 +235,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
         definirStatut(proprio, "erreur", detail ? t("execution.brancheEnEchecDetail").replace("{detail}", detail) : t("execution.brancheEnEchec"));
       }
     };
+
+    const tempsParVisible = new Map<string, number>();
 
     for (let i = 0; i < ordreFiltre.length; i++) {
       const nodeId = ordreFiltre[i];
@@ -278,6 +283,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         definirStatut(nodeId, "termine");
+        if (typeof entreeCache.tempsExecution === "number") {
+          const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+          tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + entreeCache.tempsExecution);
+        }
         continue;
       }
 
@@ -290,13 +299,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
       // elles suivent ce nœud dans l'ordre linéaire sans en dépendre. La
       // réexécution des vrais descendants est déjà assurée par `sourceReprocessee`
-      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les nœuds
-      // dont une entrée réelle a été recalculée ce run.
+      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les
+      // nœuds dont une entrée réelle a été recalculée ce run.
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
+      const start = performance.now();
+      const ajouterTemps = (ms: number) => {
+        const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+        tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
+      };
       try {
         const res = await fn({
           noeud: node,
@@ -339,19 +353,24 @@ export function useExecutionGraphe(o: OptionsExecution) {
           noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);
+          ajouterTemps(performance.now() - start);
         } else {
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree });
+          const elapsed = performance.now() - start;
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           definirStatut(nodeId, "termine");
+          ajouterTemps(elapsed);
         }
       } catch (e: any) {
         // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
         // ET remontée sur le nœud (statut « erreur » + message).
+        const elapsed = performance.now() - start;
         console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
         definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
         marquerMetaEnEchec(nodeId, node.data.ficheId as string);
+        ajouterTemps(elapsed);
       }
     }
 
@@ -456,6 +475,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
         };
       })
     );
+
+    // Appliquer les temps d'exécution mesurés (cumulés par nœud visible, y compris méta)
+    if (tempsParVisible.size > 0) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!tempsParVisible.has(n.id)) return n;
+          const t = tempsParVisible.get(n.id)!;
+          if (n.data.tempsExecution === t) return n;
+          return { ...n, data: { ...n.data, tempsExecution: t } };
+        })
+      );
+    }
 
     // Vérifier si un node a généré une spec de graphe (prompt → graphe)
     if (onGrapheGenere) {

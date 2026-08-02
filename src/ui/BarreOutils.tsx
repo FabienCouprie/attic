@@ -13,6 +13,8 @@ interface Props {
   onImporter: (f?: File) => void;
   onDetacher: () => void;
   onSauvegarder: () => void;
+  onAjouterCommentaire: () => void;
+  onAjouterCadre: () => void;
   nbPlugins: number;
   sf2Nom: string;
   onChargerSF2: (f: File) => void;
@@ -40,7 +42,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, nbPlugins, sf2Nom, onChargerSF2 } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2 } = props;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
@@ -106,6 +108,12 @@ export function BarreOutils(props: Props) {
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 14V5m-4 4 4-4 4 4M3 2h10"/></svg>
       </button>
       <input ref={refImport} type="file" accept=".json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onImporter(f); e.target.value = ""; }} />
+      <button className="attic-btn-icon" title={t("btn.commentaire")} onClick={onAjouterCommentaire}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 3h8a1 1 0 011 1v7a1 1 0 01-1 1H8l-3 2v-2H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+      </button>
+      <button className="attic-btn-icon" title={t("btn.cadre")} onClick={onAjouterCadre}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>
+      </button>
       <span className="attic-sep" />
       <button className="attic-btn-icon" title={t("btn.dossier")} onClick={onChoisirDossier}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>

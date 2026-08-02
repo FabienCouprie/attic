@@ -17,7 +17,6 @@ import type { FicheAudio } from "../audio/types-domaine";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const tousLesPlugins = () => registre.tousLesPlugins();
 const couleurFlux = (id: string) => registre.couleurFlux(id);
-const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
@@ -26,7 +25,8 @@ import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
-import { filtrerAretesInvalides } from "./validerGraphe";
+import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
+import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
@@ -338,6 +338,8 @@ function Atelier() {
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
               nomFichier: n.data.nomFichier,
+              nom: n.data.nom,
+              couleur: n.data.couleur,
               onSupprimerNoeud: cbs.onSupprimerNoeud,
               onReinitialiser: cbs.onReinitialiser,
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
@@ -528,6 +530,46 @@ function Atelier() {
     }]);
   }, [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, callbacksNoeud]);
 
+  const ajouterCommentaire = useCallback(() => {
+    const position = { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    setNodes((nds) => [...nds, {
+      id: idUnique(nds),
+      type: "atelier",
+      position,
+      width: 180,
+      height: 100,
+      data: {
+        ficheId: "comment",
+        parametres: {},
+        statut: "attente",
+        nom: t("btn.commentaire"),
+        ...callbacksNoeud(),
+      },
+    }]);
+  }, [setNodes, callbacksNoeud, t]);
+
+  const ajouterCadre = useCallback(() => {
+    const position = { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    setNodes((nds) => {
+      const nouveau = {
+        id: idUnique(nds),
+        type: "atelier" as const,
+        position,
+        width: 320,
+        height: 200,
+        data: {
+          ficheId: "frame",
+          parametres: {},
+          statut: "attente",
+          nom: t("btn.cadre"),
+          couleur: "rgba(120,120,120,0.12)",
+          ...callbacksNoeud(),
+        },
+      };
+      return [nouveau, ...nds];
+    });
+  }, [setNodes, callbacksNoeud, t]);
+
   // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -659,23 +701,19 @@ function Atelier() {
   const isValidConnection = useCallback((conn: Connection | Edge) => {
     const source = noeudsRef.current.find((n) => n.id === conn.source);
     const target = noeudsRef.current.find((n) => n.id === conn.target);
-    if (!source || !target || !conn.sourceHandle || !conn.targetHandle) return false;
-    // Un nœud-frontière accepte n'importe quel type (le port exposé hérite du
-    // type interne relié).
-    if (estFrontiere(source.data.ficheId as string) || estFrontiere(target.data.ficheId as string)) return true;
-    const defS = trouverDef(source.data.ficheId);
-    const defT = trouverDef(target.data.ficheId);
-    if (!defS || !defT) return false;
-    const si = parseInt(conn.sourceHandle.split(":")[1]);
-    const ti = parseInt(conn.targetHandle.split(":")[1]);
-    const typeS = defS.sorties[si]?.type;
-    const typeT = defT.entrees[ti]?.type;
-    if (!typeS || !typeT || !fluxCompatibles(typeS, typeT)) return false;
-    return true;
-  }, [trouverDef, fluxCompatibles]);
+    return validerArete(source, target, conn);
+  }, []);
+
+  const nodeColor = useCallback((node: any) => {
+    const cat = categorieNoeud(node.data?.ficheId, registre.trouverDef(node.data?.ficheId));
+    return COULEURS_CATEGORIE[cat] ?? "var(--text-muted)";
+  }, []);
 
   const onConnect: OnConnect = useCallback((conn) => {
     if (!conn.sourceHandle || !conn.targetHandle) return;
+    const ficheSource = noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId;
+    const ficheTarget = noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId;
+    if (ficheSource === "comment" || ficheTarget === "comment") return;
     pushHistorique();
     const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
     const ti = parseInt(conn.targetHandle.split(":")[1]);
@@ -797,6 +835,8 @@ function Atelier() {
             else { window.open(location.href, '_blank', 'width=1400,height=900'); }
           }}
           onExporter={exporter}
+          onAjouterCommentaire={ajouterCommentaire}
+          onAjouterCadre={ajouterCadre}
           onSauvegarder={() => {
             try {
               // Sauver le contexte courant : grapheRacineRef contient alors le graphe
@@ -822,6 +862,8 @@ function Atelier() {
                     parametres: n.data.parametres,
                     zonesSelectionnees: n.data.zonesSelectionnees,
                     nomFichier: n.data.nomFichier,
+                    nom: n.data.nom,
+                    couleur: n.data.couleur,
                   },
                 })),
                 edges: racine.edges.map((e: any) => ({
@@ -893,7 +935,7 @@ function Atelier() {
         >
           <Background />
           <Controls />
-          <MiniMap pannable zoomable />
+          <MiniMap pannable zoomable nodeColor={nodeColor} />
         </ReactFlow>
       </div>
       <Inspector
