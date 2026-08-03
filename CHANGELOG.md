@@ -2,6 +2,11 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- **Partition MIDI** (`vexflow-midi`, Visualisation → Notation) — génère une portée SVG à partir d'un fichier MIDI. Accepte le MIDI en sortie du Transcripteur MIDI, du Lecteur MIDI, etc. Paramètres : tempo (0 = auto-détecté), canal (-1 = tous), quantification rythmique et clé. La sortie SVG (fichier) peut être exportée avec le nœud « Export SVG ».
+
 ## [2.4.4] — 2026-08-04
 
 ### Added
