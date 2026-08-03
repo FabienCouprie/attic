@@ -157,11 +157,20 @@ function notationEasyScore(texte: string): { notes: string; totalQuarts: number 
     if (rest === "r") return `${notes}/${duree}/r`;
     return notes.includes("+") ? `(${notes.replace(/\+/g, " ")})/${duree}` : `${notes}/${duree}`;
   });
-  // Complète la mesure (jusqu'à 4 temps) avec des silences
-  const reste = 4 - (totalQuarts % 4 || 4);
-  if (reste > 0 && reste < 4) {
-    const duree = dureeDepuisQuarts(reste);
-    parts.push(`B4/${duree}/r`);
+  // Complète la mesure (jusqu'au prochain multiple de 4) avec des silences
+  let reste = 4 - (totalQuarts % 4 || 4);
+  const eps = 0.001;
+  if (reste > eps && reste < 4 - eps) {
+    for (const { q, v } of DUREES_VEX.slice().reverse()) {
+      while (reste > eps) {
+        const max = Math.max(q, eps);
+        if (reste + eps < max) break;
+        parts.push(`B4/${v}/r`);
+        totalQuarts += q;
+        reste -= q;
+        if (reste <= eps) break;
+      }
+    }
   }
   return { notes: parts.join(", "), totalQuarts };
 }
