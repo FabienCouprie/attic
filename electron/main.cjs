@@ -152,6 +152,7 @@ const PERMISSIONS_ACCORDEES = new Set([
   "media", "display-capture", "audioCapture",     // micro + capture système
   "persistent-storage",                           // cache modèles HuggingFace (main.tsx)
   "clipboard-read", "clipboard-sanitized-write",  // bouton copier (ui/copier.ts)
+  "midi",                                         // nœud Capture MIDI (navigator.requestMIDIAccess, pas de sysex)
 ]);
 
 let fenetre = null;

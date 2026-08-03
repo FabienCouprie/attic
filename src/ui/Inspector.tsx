@@ -13,6 +13,7 @@ interface Props {
   onSupprimer: () => void;
   onReinitialiser: () => void;
   onEnregistrer?: (id: string, blob: Blob) => void;
+  onEnregistrerMidi?: (id: string, fichier: File) => void;
 }
 
 // Borne à la plage du paramètre et cale sur son pas. Utilisé par le champ
@@ -62,7 +63,7 @@ function ChampNombre({ p, valeur, onChanger }: {
   );
 }
 
-export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer }: Props) {
+export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
   const [noticeOuverte, setNoticeOuverte] = useState(true);
@@ -191,6 +192,10 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
 
       {def.id === "capture-systeme-audio" ? (
         <CaptureSystemeInspecteur noeud={noeud} onEnregistrer={onEnregistrer} />
+      ) : null}
+
+      {def.id === "capture-midi" ? (
+        <CaptureMidiInspecteur noeud={noeud} onEnregistrerMidi={onEnregistrerMidi} onChangerParametre={onChangerParametre} />
       ) : null}
 
       {/* Sampler MIDI : chargement de l'échantillon audio */}
@@ -406,6 +411,134 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
           <audio className="attic-node-audio" controls src={enregistrementUrl} style={{ marginTop: 8 }} />
           <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
         </>
+      )}
+    </div>
+  );
+}
+
+// Capture d'une performance MIDI matérielle (Web MIDI API). Même patron que
+// EnregistreurInspecteur (bouton Enregistrer/Arrêter + sélecteur de
+// périphérique) mais aucun flux audio ici : on bufferise des paires
+// note-on/note-off horodatées et on les convertit en fichier .mid à l'arrêt.
+function CaptureMidiInspecteur({ noeud, onEnregistrerMidi, onChangerParametre }: { noeud: { id: string; data: Record<string, unknown> }; onEnregistrerMidi?: (id: string, fichier: File) => void; onChangerParametre?: (nom: string, val: number | string) => void }) {
+  const { t } = useI18n();
+  const [enRegistrant, setEnRegistrant] = useState(false);
+  const [duree, setDuree] = useState(0);
+  const [nbNotes, setNbNotes] = useState(0);
+  const [peripheriques, setPeripheriques] = useState<{ id: string; nom: string }[]>([]);
+  const [erreurAcces, setErreurAcces] = useState(false);
+  const accesRef = useRef<any>(null);
+  const entreeActiveRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const debutMsRef = useRef(0);
+  const notesOuvertesRef = useRef<Map<number, { debut: number; velocite: number }>>(new Map());
+  const notesCaptureesRef = useRef<{ note: number; velocite: number; debut: number; fin: number }[]>([]);
+  const params = noeud.data.parametres as Record<string, string | number> | undefined;
+
+  useEffect(() => {
+    const nav = navigator as any;
+    if (!nav.requestMIDIAccess) { setErreurAcces(true); return; }
+    nav.requestMIDIAccess().then((acces: any) => {
+      accesRef.current = acces;
+      const liste: { id: string; nom: string }[] = [];
+      acces.inputs.forEach((entree: any) => liste.push({ id: entree.id, nom: entree.name || entree.id }));
+      setPeripheriques(liste);
+      // La liste des périphériques peut changer après montage (branchement à chaud).
+      acces.onstatechange = () => {
+        const maj: { id: string; nom: string }[] = [];
+        acces.inputs.forEach((entree: any) => maj.push({ id: entree.id, nom: entree.name || entree.id }));
+        setPeripheriques(maj);
+      };
+    }).catch(() => setErreurAcces(true));
+    return () => { if (accesRef.current) accesRef.current.onstatechange = null; };
+  }, []);
+
+  const tempsEcoule = () => (performance.now() - debutMsRef.current) / 1000;
+
+  const onMessageMidi = (e: any) => {
+    const [status, note, vel] = e.data as Uint8Array;
+    const type = status & 0xf0;
+    if (type === 0x90 && vel > 0) {
+      notesOuvertesRef.current.set(note, { debut: tempsEcoule(), velocite: vel });
+    } else if (type === 0x80 || (type === 0x90 && vel === 0)) {
+      const ouverte = notesOuvertesRef.current.get(note);
+      if (ouverte) {
+        notesCaptureesRef.current.push({ note, velocite: ouverte.velocite, debut: ouverte.debut, fin: tempsEcoule() });
+        notesOuvertesRef.current.delete(note);
+        setNbNotes((n) => n + 1);
+      }
+    }
+  };
+
+  const demarrer = () => {
+    const acces = accesRef.current;
+    if (!acces) return;
+    const idChoisi = params?.["Périphérique"] as string | undefined;
+    let entree: any = idChoisi ? acces.inputs.get(idChoisi) : undefined;
+    if (!entree) entree = acces.inputs.values().next().value; // repli : le premier périphérique
+    if (!entree) { alert(t("msg.aucunPeripheriqueMidi")); return; }
+    entreeActiveRef.current = entree;
+    entree.onmidimessage = onMessageMidi;
+    notesOuvertesRef.current = new Map();
+    notesCaptureesRef.current = [];
+    debutMsRef.current = performance.now();
+    setNbNotes(0);
+    setDuree(0);
+    setEnRegistrant(true);
+    timerRef.current = setInterval(() => setDuree((d) => d + 1), 1000);
+  };
+
+  const arreter = async () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    const entree = entreeActiveRef.current;
+    if (entree) entree.onmidimessage = null;
+    // Notes encore enfoncées à l'arrêt : les clore au temps courant plutôt
+    // que de les perdre.
+    const fin = tempsEcoule();
+    for (const [note, o] of notesOuvertesRef.current) {
+      notesCaptureesRef.current.push({ note, velocite: o.velocite, debut: o.debut, fin });
+    }
+    notesOuvertesRef.current = new Map();
+    setEnRegistrant(false);
+    const notes = notesCaptureesRef.current;
+    if (notes.length === 0) return;
+    const { notesVersFichierMidi } = await import("../audio");
+    const fichier = notesVersFichierMidi(notes, 120, 0);
+    onEnregistrerMidi?.(noeud.id, fichier);
+  };
+
+  const midiNom = noeud.data.midiNom as string | undefined;
+
+  return (
+    <div className="inspecteur-param">
+      <div className="inspecteur-param-ligne"><label>{t("btn.record")}</label></div>
+      {erreurAcces && <p className="inspecteur-param-doc">{t("msg.midiIndisponible")}</p>}
+      {!erreurAcces && !enRegistrant && (
+        <button className="attic-node-btn-record" onClick={demarrer} disabled={peripheriques.length === 0}>● {t("btn.record")}</button>
+      )}
+      {enRegistrant && (
+        <>
+          <div className="attic-node-rec-indicator"><span className="attic-node-rec-pulse" /> {duree}s · {nbNotes} {t("btn.notes")}</div>
+          <button className="attic-node-btn-stop" onClick={arreter}>■ {t("btn.stop")}</button>
+        </>
+      )}
+      {midiNom && !enRegistrant && (
+        <>
+          <div className="attic-node-fichier-nom" style={{ marginTop: 8 }}>🎹 {midiNom}</div>
+          <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }} disabled={peripheriques.length === 0}>● {t("btn.rerecord")}</button>
+        </>
+      )}
+      {peripheriques.length > 0 && !enRegistrant && (
+        <div style={{ marginTop: 8 }}>
+          <div className="inspecteur-param-ligne"><label>{t("btn.device")}</label></div>
+          <select className="attic-node-select" value={String(params?.["Périphérique"] ?? "")}
+            onChange={(e) => onChangerParametre?.("Périphérique", e.target.value)}>
+            {peripheriques.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+          </select>
+        </div>
+      )}
+      {!erreurAcces && peripheriques.length === 0 && !enRegistrant && (
+        <p className="inspecteur-param-doc">{t("msg.aucunPeripheriqueMidi")}</p>
       )}
     </div>
   );

@@ -12,7 +12,7 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 
 ## Features
 
-- **212 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npx tsx scripts/generate-components-md.ts`)
+- **213 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npx tsx scripts/generate-components-md.ts`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -126,7 +126,7 @@ AI models (Demucs, MDX-Net) are distributed via `extraResources` (outside asar).
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (212 nodes)
+  plugins/       # Plugin node definitions (213 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN

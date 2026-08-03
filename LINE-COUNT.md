@@ -100,11 +100,11 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/core/typesFlux.ts | 10 |
 | src/core/validation.ts | 129 |
 | **core/ total** | **2,261** |
-| src/i18n.tsx | 618 |
+| src/i18n.tsx | 622 |
 | src/ia.ts | 465 |
 | src/main.tsx | 28 |
 | src/shims.d.ts | 4 |
-| **root/ total** | **1,115** |
+| **root/ total** | **1,119** |
 | src/plugins/analyse.ts | 181 |
 | src/plugins/automate-cellulaire.test.ts | 79 |
 | src/plugins/automate-cellulaire.ts | 261 |
@@ -125,7 +125,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/entree-image.ts | 36 |
 | src/plugins/entrees-extra.ts | 24 |
 | src/plugins/entrees.test.ts | 46 |
-| src/plugins/entrees.ts | 148 |
+| src/plugins/entrees.ts | 176 |
 | src/plugins/enveloppe.ts | 39 |
 | src/plugins/export-svg.ts | 62 |
 | src/plugins/frontiere.ts | 36 |
@@ -152,7 +152,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/musicgen.ts | 101 |
 | src/plugins/noise-nodes.test.ts | 179 |
 | src/plugins/notices.test.ts | 24 |
-| src/plugins/notices.ts | 289 |
+| src/plugins/notices.ts | 290 |
 | src/plugins/ocr.test.ts | 35 |
 | src/plugins/ocr.ts | 97 |
 | src/plugins/ollama.ts | 84 |
@@ -200,8 +200,8 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/vexflow.test.ts | 77 |
 | src/plugins/vexflow.ts | 283 |
 | src/plugins/visualisation.ts | 195 |
-| **plugins/ total** | **15,293** |
-| src/ui/App.tsx | 1013 |
+| **plugins/ total** | **15,322** |
+| src/ui/App.tsx | 1022 |
 | src/ui/AretePersonnalisee.tsx | 77 |
 | src/ui/atelier.css | 834 |
 | src/ui/AtelierNode.tsx | 366 |
@@ -218,7 +218,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/ui/hooks/useMetaComposants.ts | 210 |
 | src/ui/hooks/usePersistance.ts | 218 |
 | src/ui/ids.ts | 11 |
-| src/ui/Inspector.tsx | 412 |
+| src/ui/Inspector.tsx | 545 |
 | src/ui/metasLocaux.ts | 76 |
 | src/ui/OscilloVue.tsx | 130 |
 | src/ui/Palette.tsx | 129 |
@@ -239,7 +239,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/ui/validerGraphe.ts | 79 |
 | src/ui/vues.tsx | 1426 |
 | src/ui/VuMetre.tsx | 167 |
-| **ui/ total** | **8,876** |
+| **ui/ total** | **9,018** |
 | src/workers/magenta-worker.ts | 119 |
 | **workers/ total** | **119** |
-| **Grand total** | **44,357** |
+| **Grand total** | **44,532** |

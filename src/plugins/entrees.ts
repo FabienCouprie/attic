@@ -3,7 +3,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { decoderFichier, decoderBlob, filtrerCanauxMidi } from "../audio";
+import { decoderFichier, decoderBlob, filtrerCanauxMidi, rendreMidi, appliquerInstrumentMidi } from "../audio";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 const entrees: FicheAudio[] = [
   {
@@ -65,6 +66,33 @@ const entrees: FicheAudio[] = [
       if (!blob) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_capture_cliquez_sur_enregistrer_dans_l_inspecteur") };
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
+    },
+  },
+  {
+    id: "capture-midi", nom: "Capture MIDI", nomEn: "MIDI Capture", univers: "Entrées", famille: "Audio",
+    resume: "Enregistre une performance jouée sur un clavier ou contrôleur MIDI branché.",
+    resumeEn: "Records a performance played on a connected MIDI keyboard or controller.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
+      { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
+    ],
+    // Même dispositif de synthèse que « Lecteur MIDI » (sorties.ts) : la
+    // performance capturée est un fichier MIDI comme un autre une fois
+    // enregistrée (posé sur ctx.noeud.data.midiFichier par l'inspecteur).
+    async executer(ctx: any) {
+      const midi = ctx.noeud.data.midiFichier as File | undefined;
+      if (!midi) return { valeurs: [null, null], message: traduire("msg.aucune_performance_midi_cliquez_sur_enregistrer_dans_l_inspecteur") };
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const volume = ctx.paramNombre("Volume", 80);
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
+      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
+      return { valeurs: [buffer, midiFinal] };
     },
   },
   {

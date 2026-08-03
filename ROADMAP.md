@@ -4,7 +4,7 @@ Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic 
 architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
 plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state (2026-08-03): **tsc 0 errors · 212 catalog components · 61 test files / 418 tests · build OK**.
+Continuously verified state (2026-08-03): **tsc 0 errors · 213 catalog components · 61 test files / 418 tests · build OK**.
 
 > **Note on staleness**: this file lagged several releases (last touched around
 > v2.2.1; the app is now at v2.4.3). The sections below were re-verified
@@ -123,6 +123,30 @@ domain in the UI (see `PORTING-A-DOMAIN.md`).
 
 ---
 
+## Proposal recorded 2026-08-03: hardware MIDI input
+
+The app could only read/write MIDI *files*; no node received a live MIDI
+keyboard/controller (`navigator.requestMIDIAccess` was absent from the code).
+Scoped into three independent tiers by how much of the current — fully
+offline/batch — rendering engine each one touches (every effect is a pure
+`(buffer, params) → AudioBuffer` run once inside an `OfflineAudioContext`;
+there is no live Web Audio graph anywhere):
+
+- ✅ **Tier 1 — capture node.** Done, this session. See the `capture-midi`
+  entry in `CHANGELOG.md` (Unreleased). Mirrors the microphone recorder
+  exactly: no core/engine changes.
+- **Tier 2 — MIDI Learn onto Inspector parameters** (map a hardware
+  knob/fader to a node parameter for the *next* Lancer, not live during
+  playback). Not started. Low-medium risk, touches only `Inspector.tsx` +
+  a small persisted CC→parameter mapping table — no execution-engine changes.
+- **Tier 3 — live modulation during playback** (turn a knob, hear it change
+  in real time). Not started, and not recommended as a first step: would
+  require rewriting affected effects as real-time `AudioWorkletNode`s and
+  giving the DAG a "currently playing" concept it doesn't have today — a
+  second engine alongside the current one, not a feature.
+
+---
+
 ## 1. "Educational studio" vision
 
 ### 1.1 Interactive guided tours
@@ -148,8 +172,12 @@ Textual markers on the waveform ("chorus", "verse", "solo") — persisted with t
 ## 2. "Creative AI workshop" vision
 
 ### 2.1 MIDI neural reservoir
-Still open — no `reservoir-midi`-style node found; only `reservoir-musical`
-(audio) and `reservoir-textuel` (text) exist.
+✅ **Done — my 2026-08-03 verification of this file was wrong.** `reservoir-musical`
+(`src/plugins/generateurs.ts`) already exposes a second output port typed
+`midi` alongside `Audio` (`sorties: [{Audio}, {MIDI, type:"midi"}]`); it
+chains directly into Transposer/Quantizer/Arpeggiator/MIDI Output like any
+other MIDI source. No separate node was ever needed. (My earlier grep only
+searched for a literal `id: "reservoir-midi"` and missed the port.)
 MIDI version of the reservoir — generates MIDI files that can be plugged into Transposer/Quantizer, Arpeggiator or MIDI Output. Allows chaining multiple reservoirs.
 
 ### 2.2 Multi-reservoir network
@@ -157,11 +185,13 @@ MIDI version of the reservoir — generates MIDI files that can be plugged into 
 A node that connects multiple reservoirs in parallel/series (melody, bass, harmony, rhythm). Each reservoir "listens" to the others via a control input → polyphonic emergence.
 
 ### 2.3 Genetic evolution of reservoirs
-**Half done.** `src/audio/evolution.ts` implements exactly this algorithm
-(population, mutation, user like/dislike selection, crossover, no training —
-the file's own header even says so almost verbatim) — but it is **not wired
-to any plugin or UI**: no fiche imports it, no view renders it. The engine
-exists; the node doesn't.
+**Half done, deprioritized by owner decision (2026-08-03).** `src/audio/evolution.ts`
+implements exactly this algorithm (population, mutation, user like/dislike
+selection, crossover, no training — the file's own header even says so almost
+verbatim) — but it is **not wired to any plugin or UI**: no fiche imports it,
+no view renders it. The engine exists; the node doesn't. Judged not valuable
+enough to prioritize wiring it up — left here for the record, not on the
+active queue.
 A meta-node that evolves a population of reservoirs: random mutation of weights/parameters, user selection (like / dislike), crossover. After a few generations, the reservoir adapts to taste. No training — natural selection.
 
 ### 2.4 ColorSynth
@@ -215,10 +245,12 @@ A web page or an "Import from gallery" node listing shared graphs. Description, 
 `useExecutionGraphe.ts` — the producing graph is embedded when exporting audio.
 
 ### 4.3 Plugin system (user-defined nodes)
-Still open, but a related, smaller feature shipped: `gestion-nodes` lets you
-**export/import an existing node as a `.zip`** (packaging, not authoring).
-Writing a brand-new node's `executer` in JS from an in-app editor, with no
-coding outside Attic, is not implemented.
+Still open, deprioritized by owner decision (2026-08-03): redundant with the
+existing Python and Julia processor nodes, which already let you extend
+Attic with custom code without touching core. A related, smaller feature
+shipped: `gestion-nodes` lets you **export/import an existing node as a
+`.zip`** (packaging, not authoring). Writing a brand-new node's `executer` in
+JS from an in-app editor is not implemented, and isn't planned.
 Create your own node without coding: define inputs/outputs/parameters via UI, write `executer` in JS in an integrated editor, registered dynamically (localStorage, exportable as JSON).
 
 ### 4.4 Live coding / performance mode
@@ -243,16 +275,18 @@ Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign 
 
 ## Suggested order
 
-Shipped items (2.2, 2.4, 2.5, 4.2) removed from the queue below — see their
-✅ notes in the sections above. Remaining, in the original relative order:
+Shipped items (2.1, 2.2, 2.4, 2.5, 4.2) removed from the queue below — see
+their ✅ notes in the sections above. **Owner decision, 2026-08-03**: 2.3
+(genetic evolution) and 4.3 (user-defined JS plugin editor) are deprioritized
+— 2.3 was judged not valuable enough to justify wiring `evolution.ts` to a
+node, and 4.3 is redundant with the existing Python/Julia processor nodes,
+which already cover "extend without touching core". Both left in the vision
+sections above for the record, dropped from the active queue.
 
 | # | Task | Effort | Value |
 |---|---|---|---|
-| 2.1 | MIDI reservoir | Low | High — unlocks chaining |
 | 1.1 | Guided tours (remaining topics + annotations + exercises) | Medium | High — educational = mission |
 | 3.1 | Image domain | Medium | Strategic — proves the framework |
-| 4.3 | User-defined plugin | Medium | High — extensible without coding |
-| 2.3 | Genetic evolution — wire `audio/evolution.ts` to a node/UI | Low (engine already written) | Unique — no other app does this |
 | 4.4 | Live mode | High | High for performance |
 | 4.1 | Community gallery | High | Long term |
 | 1.2 | Educational A/B | Low | Educational |

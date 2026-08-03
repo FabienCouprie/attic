@@ -2,6 +2,11 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- **MIDI Capture node** (`capture-midi`, Entrées → Audio) — records a live performance from a connected MIDI keyboard/controller via the Web MIDI API. Mirrors the existing microphone recorder: pick the device, click Record, play, click Stop — held notes are closed automatically at stop. The captured performance becomes a MIDI file (`ctx.noeud.data.midiFichier`), synthesized to audio (same FM/SoundFont pipeline as the MIDI Player node) and passed through unchanged on the MIDI output, so it chains directly into Transposer/Quantizer/Arpeggiator/MIDI Output. Requires the `midi` Electron permission (added to the app's permission allowlist) and browser/OS MIDI access on first use.
+
 ## [2.4.3] — 2026-08-03
 
 ### Added

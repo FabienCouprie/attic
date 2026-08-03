@@ -1007,6 +1007,15 @@ function Atelier() {
           const url = URL.createObjectURL(blob);
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
         }}
+        onEnregistrerMidi={(id, fichier) => {
+          // Même contrat que onChargerMidi (AtelierNode) : vider le cache
+          // AVANT de poser le nouveau fichier, sinon un ré-enregistrement
+          // sans toucher aucun paramètre rejoue le résultat de la prise
+          // précédente (empreinteParametres/empreinteEntrees ne voient pas
+          // midiFichier, qui n'est pas dans `parametres`).
+          cacheExec.current.delete(id);
+          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
+        }}
       />
     </div>
   );
