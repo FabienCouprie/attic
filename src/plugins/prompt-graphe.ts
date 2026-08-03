@@ -337,9 +337,19 @@ async function genererViaOllama(prompt: string, model: string, timeoutMs: number
   const { ollamaGenerer } = await import("./ollama");
   const dictionnaire = await construireDictionnaire();
   const catalogue = construireCatalogue(dictionnaire);
-  const instructions = `Tu es un générateur de graphe de traitement audio nodal. Voici le catalogue des blocs disponibles (un par ligne, "identifiant — nom") :\n${catalogue}\n\nÀ partir de la description utilisateur ci-dessous, choisis les blocs pertinents et l'ordre de connexion (source → effets → sortie). Réponds UNIQUEMENT par un objet JSON, sans aucun texte avant ni après, de la forme exacte :\n{"nodes":[{"ficheId":"...","label":"..."}],"edges":[{"source":0,"target":1}]}\n"ficheId" DOIT être copié tel quel depuis la colonne identifiant du catalogue ci-dessus — n'invente aucun identifiant. "source"/"target" sont les index (0-based) dans le tableau "nodes". Inclus toujours au moins un bloc source et un bloc de sortie.\n\nDescription utilisateur : ${prompt}`;
+  // Vérifié contre un vrai serveur Ollama (qwen3:4b, 2026-08-04) : sans garde-
+  // fous, le modèle RAISONNE correctement (choisit les bons blocs) mais le
+  // fait en texte libre avant le JSON — malgré la consigne « UNIQUEMENT du
+  // JSON » — et sans limite de tokens explicite, la réponse est tronquée en
+  // PLEIN raisonnement, jamais assez loin pour atteindre le JSON. Trois
+  // garde-fous : `/no_think` (convention Qwen3 pour couper son canal de
+  // raisonnement interne — ignoré sans effet par les modèles qui ne le
+  // connaissent pas), un exemple concret (ancre le format mieux qu'une
+  // description abstraite), et num_predict généreux pour ne jamais tronquer
+  // avant le JSON même si le modèle raisonne quand même un peu.
+  const instructions = `/no_think\nTu es un générateur de graphe de traitement audio nodal. Voici le catalogue des blocs disponibles (un par ligne, "identifiant — nom") :\n${catalogue}\n\nÀ partir de la description utilisateur ci-dessous, choisis les blocs pertinents et l'ordre de connexion (source → effets → sortie). Réponds UNIQUEMENT par l'objet JSON demandé — aucune explication, aucun raisonnement, aucun texte avant ou après.\n\nExemple de réponse attendue pour "un delay avec une réverbération puis la sortie" :\n{"nodes":[{"ficheId":"entree-audio","label":"Entrée"},{"ficheId":"delay-stereo","label":"Delay"},{"ficheId":"reverberation","label":"Réverbération"},{"ficheId":"sortie-audio","label":"Sortie"}],"edges":[{"source":0,"target":1},{"source":1,"target":2},{"source":2,"target":3}]}\n\n"ficheId" DOIT être copié tel quel depuis la colonne identifiant du catalogue ci-dessus — n'invente aucun identifiant. "source"/"target" sont les index (0-based) dans le tableau "nodes". Inclus toujours au moins un bloc source et un bloc de sortie.\n\nDescription utilisateur : ${prompt}`;
 
-  const res = await ollamaGenerer({ model, prompt: instructions, options: { temperature: 0.2 }, timeout: timeoutMs });
+  const res = await ollamaGenerer({ model, prompt: instructions, options: { temperature: 0.2, num_predict: 2000 }, timeout: timeoutMs, format: "json" });
   if (res.erreur || !res.reponse) return null;
   const brut = extraireJson(res.reponse);
   if (!brut) return null;

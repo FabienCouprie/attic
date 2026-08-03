@@ -155,14 +155,14 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/notices.ts | 290 |
 | src/plugins/ocr.test.ts | 35 |
 | src/plugins/ocr.ts | 97 |
-| src/plugins/ollama.ts | 84 |
+| src/plugins/ollama.ts | 93 |
 | src/plugins/palette-harmonique.ts | 92 |
 | src/plugins/phase-vocoder.test.ts | 115 |
 | src/plugins/phase-vocoder.ts | 83 |
 | src/plugins/pixeltone.ts | 144 |
 | src/plugins/pochette.ts | 44 |
 | src/plugins/prompt-graphe.test.ts | 89 |
-| src/plugins/prompt-graphe.ts | 402 |
+| src/plugins/prompt-graphe.ts | 412 |
 | src/plugins/pure-data.test.ts | 46 |
 | src/plugins/pure-data.ts | 92 |
 | src/plugins/python-processor.ts | 287 |
@@ -201,7 +201,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/vexflow.test.ts | 77 |
 | src/plugins/vexflow.ts | 283 |
 | src/plugins/visualisation.ts | 195 |
-| **plugins/ total** | **15,529** |
+| **plugins/ total** | **15,548** |
 | src/ui/App.tsx | 1022 |
 | src/ui/AretePersonnalisee.tsx | 77 |
 | src/ui/atelier.css | 834 |
@@ -243,4 +243,4 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | **ui/ total** | **9,036** |
 | src/workers/magenta-worker.ts | 119 |
 | **workers/ total** | **119** |
-| **Grand total** | **44,758** |
+| **Grand total** | **44,777** |

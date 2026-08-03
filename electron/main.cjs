@@ -863,6 +863,7 @@ ipcMain.handle("ollama:generer", async (_event, options) => {
         stream: false,
         think: false,
         options: options?.options || {},
+        ...(options?.format ? { format: options.format } : {}),
       }),
       signal: ctrl.signal,
     });

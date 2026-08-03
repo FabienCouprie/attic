@@ -149,12 +149,28 @@ there is no live Web Audio graph anywhere):
 
 ## Proposal recorded 2026-08-04: Ollama-driven graph generation
 
-✅ **Done.** "Prompt → graphe" (`src/plugins/prompt-graphe.ts`) already had an
+✅ **Done, verified against a real local server** (qwen3:4b via `ollama serve`,
+2026-08-04). "Prompt → graphe" (`src/plugins/prompt-graphe.ts`) already had an
 offline keyword parser; Ollama is now an additional `Méthode` option, not a
 replacement — the LLM reads the full installed catalog and picks blocks
 itself for phrasing the keyword matcher can't parse, with automatic fallback
 to keywords on any Ollama failure. See the CHANGELOG (Unreleased) for the
-untrusted-output hardening (hallucinated `ficheId` filtering).
+untrusted-output hardening (hallucinated `ficheId` filtering) and the real
+before/after numbers on the `format: "json"` fix below.
+
+**Real-server finding that changed the design**: the first live test (prompt
+engineering only — a "respond with JSON only" instruction, `/no_think`, a
+one-shot example) failed every time. Network capture showed why: the model
+reasons correctly (it picked Réverbération + Paulstretch for a cave/stretch
+description with zero literal keyword overlap — genuinely the right answer)
+but does so as plain-text rambling the decoder is free to emit regardless of
+what the prompt asks for, and `done_reason: "length"` showed it burning its
+*entire* token budget (2000 tokens, 38.8 s) on that reasoning without ever
+reaching JSON. Fix was **not** a better prompt — it was Ollama's `format:
+"json"` request field, a decoder-level grammar constraint the model cannot
+violate. Same model, same prompt, format added: `done_reason: "stop"`, 90
+tokens, 1.7 s, clean JSON on the first token. `ollamaGenerer` (both the
+browser-fetch and Electron-IPC code paths) now forwards `format`.
 
 **Found and fixed while verifying it** — two bugs, both pre-existing and
 unrelated to this addition, both blocking verification until fixed:
