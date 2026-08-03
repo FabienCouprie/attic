@@ -172,6 +172,11 @@ function Atelier() {
   const rfRef = useRef<HTMLDivElement>(null);
   const pointerDownRef = useRef(false);
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
+  // Placement des éléments décoratifs (note / cadre) : après un clic sur la barre
+  // d'outils, le prochain clic sur le canevas pose l'élément à l'endroit cliqué.
+  const [pendingAdd, setPendingAdd] = useState<null | "comment" | "frame">(null);
+  const pendingAddRef = useRef(pendingAdd);
+  pendingAddRef.current = pendingAdd;
   // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
   // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
   const [pile, setPile] = useState<{ metaId: string; nom: string; nomEn?: string }[]>([]);
@@ -197,6 +202,8 @@ function Atelier() {
     setGrapheRef({ nodes, edges });
   }, [nodes, edges, enExecution]);
   const [rfInstance, setRfInstance] = useState<any>(null);
+  const rfInstanceRef = useRef(rfInstance);
+  rfInstanceRef.current = rfInstance;
 
   // Un seul onglet wf-1. Le bouton × vide le canevas.
   const fermerOnglet = useCallback((id: string) => {
@@ -531,9 +538,16 @@ function Atelier() {
   }, [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, callbacksNoeud]);
 
   const ajouterCommentaire = useCallback(() => {
-    const position = { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    setPendingAdd("comment");
+  }, []);
+
+  const ajouterCadre = useCallback(() => {
+    setPendingAdd("frame");
+  }, []);
+
+  const creerCommentaire = useCallback((position: { x: number; y: number }) => {
     setNodes((nds) => [...nds, {
-      id: idUnique(nds),
+      id: idUnique(noeudsRef.current),
       type: "atelier",
       position,
       width: 180,
@@ -543,16 +557,15 @@ function Atelier() {
         parametres: {},
         statut: "attente",
         nom: t("btn.commentaire"),
-        ...callbacksNoeud(),
+        ...callbacksNoeudRef.current,
       },
     }]);
-  }, [setNodes, callbacksNoeud, t]);
+  }, [setNodes, t]);
 
-  const ajouterCadre = useCallback(() => {
-    const position = { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+  const creerCadre = useCallback((position: { x: number; y: number }) => {
     setNodes((nds) => {
       const nouveau = {
-        id: idUnique(nds),
+        id: idUnique(noeudsRef.current),
         type: "atelier" as const,
         position,
         width: 320,
@@ -563,12 +576,12 @@ function Atelier() {
           statut: "attente",
           nom: t("btn.cadre"),
           couleur: "rgba(120,120,120,0.12)",
-          ...callbacksNoeud(),
+          ...callbacksNoeudRef.current,
         },
       };
       return [nouveau, ...nds];
     });
-  }, [setNodes, callbacksNoeud, t]);
+  }, [setNodes, t]);
 
   // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
   useEffect(() => {
@@ -698,6 +711,32 @@ function Atelier() {
     ajouterNoeud(ficheId, rfInstance.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top }));
   }, [ajouterNoeud, rfInstance]);
 
+  const onPaneClick = useCallback((e: React.MouseEvent) => {
+    const type = pendingAddRef.current;
+    if (type && wrapperRef.current && rfInstanceRef.current) {
+      const bounds = wrapperRef.current.getBoundingClientRect();
+      const position = rfInstanceRef.current.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+      setPendingAdd(null);
+      if (type === "comment") {
+        creerCommentaire(position);
+      } else {
+        creerCadre(position);
+      }
+      return;
+    }
+    setSel(null);
+  }, [creerCommentaire, creerCadre]);
+
+  // Échap annule un placement de note/cadre en attente.
+  useEffect(() => {
+    if (!pendingAdd) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPendingAdd(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pendingAdd]);
+
   const isValidConnection = useCallback((conn: Connection | Edge) => {
     const source = noeudsRef.current.find((n) => n.id === conn.source);
     const target = noeudsRef.current.find((n) => n.id === conn.target);
@@ -796,7 +835,7 @@ function Atelier() {
           supprimerNoeud(aRetirer);
         }}
       />
-      <div className="attic-canevas" ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
+      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
         <BarreOutils
           theme={theme} setTheme={setTheme}
           enExecution={enExecution}
@@ -920,7 +959,7 @@ function Atelier() {
           nodeTypes={nodeTypes} edgeTypes={edgeTypes}
           onNodeClick={(_, n) => setSel(n)}
           onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
-          onPaneClick={() => setSel(null)}
+          onPaneClick={onPaneClick}
           onPaneContextMenu={(e) => e.preventDefault()}
           onNodeContextMenu={(e) => e.preventDefault()}
           onInit={setRfInstance}
