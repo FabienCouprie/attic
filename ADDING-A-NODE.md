@@ -6,7 +6,7 @@ interrupting the chain. This is the simplest case: **a sheet + a registration
 + a notice**, nothing else. Advanced features (custom view, size,
 new flow type…) are at the end of the guide, each optional.
 
-> Architecture reminders: a node = a **plugin** described by a `PluginDef`
+> Architecture reminders: a node = a **plugin** described by a `FicheAudio` (a `PluginDef` specialised for the audio domain — see `PORTING-A-DOMAIN.md`)
 > sheet and an `executer(ctx)` function. The core, the palette, the inspector, the docs, the
 > meta-components and persistence are **generic** — you only touch your
 > domain files. See `ARCHITECTURE.md`.
@@ -37,7 +37,7 @@ File: [`src/plugins/sortie-conversion.ts`](src/plugins/sortie-conversion.ts)
 Then at the bottom of the file, **a single line** registers all the sheets in the file:
 
 ```ts
-] as PluginDef[]) enregistrer(avecDoc(def));
+] as FicheAudio[]).map(avecDoc);
 ```
 
 And its notice (educational documentation) in
@@ -56,7 +56,7 @@ executes in the graph.
 
 ---
 
-## The fields of the sheet (`PluginDef`)
+## The fields of the sheet (`FicheAudio`)
 
 Defined in [`src/core/types.ts`](src/core/types.ts).
 
@@ -141,10 +141,10 @@ Any exception is anyway **caught** by the engine, logged and surfaced as an
 ## The 3 steps (neutral node)
 
 ### 1. Write the sheet
-Add the `PluginDef` object in the appropriate **family** file of `src/plugins/`
+Add the `FicheAudio` object in the appropriate **family** file of `src/plugins/`
 (by domain/theme): `entrees.ts`, `effets.ts`, `generateurs.ts`, `montage.ts`,
 `analyse.ts`, `sorties.ts`, `sortie-conversion.ts`… Each file ends with
-`… as PluginDef[]) enregistrer(avecDoc(def));` → your sheet is registered
+`… as FicheAudio[]).map(avecDoc);` → your sheet is registered
 automatically. (New file? import it in
 [`src/plugins/index.ts`](src/plugins/index.ts).)
 

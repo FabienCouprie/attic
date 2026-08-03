@@ -7,13 +7,13 @@ Le graphe nodal d'Attic est composé de trois couches qui partagent trop d'état
 1. **État utilisateur et état de calcul sont mélangés**  
    `NodeData` contient à la fois des données saisies par l'utilisateur (`zonesSelectionnees`, `parametres`, fichiers chargés) et des résultats de l'exécution (`audioResultatUrl`, `audioResultatBuffer`, `mp3Url`, `statut`). Quand un hook comme `useExecutionGraphe` réinitialise un nœud, il ne peut pas distinguer ce qui est calculé de ce qui appartient à l'utilisateur, ce qui efface des sélections de zones ou des paramètres.
 
-2. **Couplage via des chaînes de caractères localisées**  
+2. **Couplage via des chaînes de caractères localisées** — ✅ *résolu en v2.2.2, voir feuille de route ci-dessous.*  
    Plusieurs plugins (ex. `Masque de zones`, `Boucle`, `Porte`) comparent la valeur d'un paramètre `choix` avec la chaîne française affichée (`"Conserver les zones"`). Si l'UI est en anglais, si on renomme un label, ou si la valeur stockée vient d'une ancienne sauvegarde, le plugin interprète mal l'action. La langue d'affichage ne devrait jamais être une clé de logique métier.
 
-3. **Hooks globaux avec des effets de bord larges**  
-   `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud.
+3. **Hooks globaux avec des effets de bord larges** — toujours vrai, voire aggravé.  
+   `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud. (`App.tsx` est passé de 437 à 1013 lignes depuis l'extraction de hooks documentée dans `APP-BREAKDOWN.md`.)
 
-4. **Manque de tests d'intégration entre UI et plugins**  
+4. **Manque de tests d'intégration entre UI et plugins** — ✅ *résolu en v2.2.2, voir feuille de route ci-dessous.*  
    Les tests unitaires couvrent bien les plugins isolés, mais il n'existe pas de tests qui exécutent une chaîne complète : sélection de zones dans le composant React → passage dans le graphe → exécution du plugin. De ce fait, une régression sur un chemin critique (sélecteur → masque) n'est détectée que manuellement.
 
 5. **Absence de contrat explicite entre UI et plugins**  
@@ -65,20 +65,44 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 
 ## Feuille de route concrète
 
+> **Statut re-vérifié le 2026-08-03** contre le code réel (l'app était alors
+> restée sur cette feuille de route depuis ~v2.2.1, elle est maintenant en
+> v2.4.3). Voir la note sous chaque case.
+
 ### Court terme (avant la prochaine release)
 
-- [ ] **Identifier tous les plugins qui comparent des libellés localisés** et les faire utiliser un id canonique.  
-  Fichier de référence : `src/plugins/` + `src/i18n.tsx`.
-- [ ] **Marquer explicitement les champs utilisateur** dans `NodeData` et exclure ces champs de `reinitialiserNoeud`.
-- [ ] **Ajouter des tests d'intégration** pour les 5 scénarios les plus sensibles (masque de zones, extraction, placement, réinsertion, génération musicale).
-- [ ] **Documenter les chemins critiques** dans un `IMPACT.md` ou ce fichier.
+- [x] **Identifier tous les plugins qui comparent des libellés localisés** et les faire utiliser un id canonique.  
+  Fait en v2.2.2 : `ParametreDef.optionIds` ajouté, `0` comparaison à un libellé
+  localisé restante dans `src/plugins/` (grep vérifié). Ancien exemple
+  (« Conserver les zones ») corrigé le premier ; le mécanisme a ensuite été
+  généralisé à tous les paramètres `choix` sensibles (gate/expandeur,
+  aligneur de piste, comparateur A/B, grille tonale, quantisation MIDI,
+  rythme de Cantor, spectrogramme fractal, Magenta, transcripteur MIDI…).
+- [ ] **Marquer explicitement les champs utilisateur** dans `NodeData` et exclure ces champs de `reinitialiserNoeud`. Toujours pas fait.
+- [x] **Ajouter des tests d'intégration** pour les scénarios les plus sensibles.
+  Fait et dépassé : `src/plugins/integration.test.ts` couvre 14 chaînes
+  UI → graphe → plugin (bien au-delà des 5 scénarios listés à l'origine),
+  toutes centrées sur la bascule libellé localisé → id canonique ci-dessus.
+- [ ] **Documenter les chemins critiques** dans un `IMPACT.md` ou ce fichier. Pas de `IMPACT.md` ; non fait (ROADMAP.md joue un rôle voisin mais ne remplace pas un tel document).
 
 ### Moyen terme (prochaines releases)
 
 - [ ] **Extraire le runtime d'exécution** de `useExecutionGraphe.ts` dans un module pur (`src/core/execution.ts`) sans dépendance React.
-- [ ] **Générer les types des plugins** à partir de `FicheAudio` pour typé les `executer`.
-- [ ] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
+  Partiellement fait : `src/core/execution.ts` existe et teste
+  `estResultatEnErreur` (la règle « tout-null = échec », testée), mais c'est
+  un extrait ciblé, pas l'extraction complète de l'ordonnancement/cache/
+  résolution — ceux-ci vivent déjà dans `core/graphe.ts` depuis le
+  refactoring documenté dans `APP-BREAKDOWN.md` (antérieur à cette feuille de
+  route). `useExecutionGraphe.ts` reste à 538 lignes et continue d'orchestrer
+  React + logique métier ensemble.
+- [ ] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Pas fait : `executer(ctx: any)` reste présent dans 60 fichiers de `src/plugins/` (vérifié par grep).
+- [ ] **Introduire des tests de non-régression** qui rejouent des graphes de référence. Pas fait : aucun fichier de graphe "golden" trouvé.
 - [ ] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
+  Pas fait — et la tendance s'est inversée : `App.tsx` était descendu à 437
+  lignes après l'extraction documentée dans `APP-BREAKDOWN.md`, il est
+  remonté à **1013 lignes** avec les fonctionnalités ajoutées depuis
+  (couleurs de nœuds, badges de temps d'exécution, placement de notes/cadres,
+  éditeur de formules, etc.). `useExecutionGraphe.ts` : 538 lignes.
 
 ### Long terme
 

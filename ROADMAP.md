@@ -1,9 +1,16 @@
 # Attic — Roadmap
 
-Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (technical spec of
-the framework) and `Atelier-Specification.md` (conceptual spec §3).
+Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic +
+architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
+plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
+Continuously verified state (2026-08-03): **tsc 0 errors · 212 catalog components · 61 test files / 418 tests · build OK**.
+
+> **Note on staleness**: this file lagged several releases (last touched around
+> v2.2.1; the app is now at v2.4.3). The sections below were re-verified
+> against the current code on 2026-08-03 — see the "Shipped since" note under
+> each item that turned out to already be done. If you're reading this later
+> still, re-check before trusting a status.
 
 ---
 
@@ -67,60 +74,67 @@ Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
 
 ---
 
-## Proposals recorded 2026-07-18 (open)
+## Proposals recorded 2026-07-18 — status re-checked 2026-08-03
 
-Proposals made during the 2026-07 sessions, decided or discussed with the user,
-not yet implemented. Recorded here so they survive the conversation.
+Proposals made during the 2026-07 sessions. Re-verified against the current
+code; most of the concrete, small-scope ones shipped. The two structural
+architecture items did not.
 
 ### Features
-- **Second local LLM node (Qwen 2.5 or similar via Ollama)** — a SEPARATE
-  component, not a replacement for the existing DistilGPT-2 lyrics node
-  (user decision). Same IPC path as the Ollama node; mostly a fiche + prompt work.
-- **Text-export node** — writes a text input to a `.txt` file (counterpart of
-  the audio/MIDI export nodes). Small; from the 2026-07-16 punch-list.
-- **Black theme reinforcement pass** — audit remaining light-gray surfaces and
-  hard-coded colors; from the punch-list, untouched.
-- **Extra i18n pass on parameter items** — some parameter names/docs and
-  dropdown options still lack `nomEn`/`optionsEn`; from the punch-list.
+- ✅ **Second local LLM node** — shipped as `qwen2.5-lyrics` (`src/plugins/textgen.ts`
+  / `notices.ts`): Qwen2.5-0.5B via Transformers.js, a SEPARATE node from
+  DistilGPT-2 as decided, not a replacement.
+- **Text-export node** — no dedicated `.txt`-export node exists, but
+  `sortie-texte` ("Text Output") already offers copy **and download** of the
+  received text, which covers the original ask in practice. Leaving open only
+  if a real file on disk (vs. a browser download) turns out to matter.
+- **Black theme reinforcement pass** — status unverified either way; nobody
+  has audited remaining light-gray surfaces / hard-coded colors since this was
+  written. Still open.
+- **Extra i18n pass on parameter items** — status unverified either way.
+  Still open.
 
-### Architecture (from the risk-table review, 2026-07-17)
-- **UI shell decoupling (“item 3”)** — the 5 files that import `registre` from
-  `audio/adaptateur` (App, AtelierNode, useExecutionGraphe, useMetaComposants,
-  metasLocaux) switch to a single injection point (`ui/registre-actif.ts`)
-  configured by the composition root; includes clearing/namespacing
-  `AtelierNode`'s module-global `DEFS_CACHE`. See PORTING-A-DOMAIN.md §6.a.
-- **Domain-provided result materialisation** — `useExecutionGraphe` still
-  sniffs domain types (`instanceof AudioBuffer/File`, `bufferVersWavBlob`,
-  `type === "audio"`) to build node display state. The adapter should provide
-  `materialiser(vals, def, data)` / `liberer(data)` instead. See
-  PORTING-A-DOMAIN.md §6.b. Prerequisite for a clean second domain in the UI.
+### Architecture (from the risk-table review, 2026-07-17) — still open
+Neither item below has moved. Both are prerequisites for a clean second
+domain in the UI (see `PORTING-A-DOMAIN.md`).
+- **UI shell decoupling ("item 3")** — `App.tsx`, `AtelierNode.tsx`,
+  `useExecutionGraphe.ts`, `useMetaComposants.ts` and `metasLocaux.ts` still
+  import `registre` directly from `audio/adaptateur` (verified 2026-08-03,
+  same 5 files). No `ui/registre-actif.ts` injection point exists yet. See
+  PORTING-A-DOMAIN.md §6.a.
+- **Domain-provided result materialisation** — `useExecutionGraphe.ts` still
+  does `instanceof AudioBuffer` / `instanceof File` and calls
+  `bufferVersWavBlob` directly to build node display state (verified
+  2026-08-03, same lines). See PORTING-A-DOMAIN.md §6.b.
 
 ### Storage / ops (from the 2026-07-18 model-cache investigation)
-- **File-based AI-model cache** — HuggingFace models currently live in
-  Chromium Cache Storage, which is (a) split per origin — dev
-  (`localhost:5173`) and packaged (`file://`) each download their own 1.5 GB
-  copy — and (b) evictable under quota pressure for the unengaged `file://`
-  origin (observed 2026-07-18: packaged bucket recreated, 1.1 GB
-  re-downloaded, while the dev bucket survived). Durable fix: transformers.js
-  `env.useCustomCache` backed by plain files in `userData/modeles-ia` served
-  through a custom Electron protocol (`attic-cache://`), shared by both dev
-  and packaged. Mitigations already in place: explicit `persistent-storage`
-  permission grant + boot-time `persisted()`/`estimate()` logging.
-- **Build ops** — `electron-builder` fails intermittently with `EPERM` renaming
-  `win-unpacked.tmp` (antivirus scans the freshly extracted Electron binaries
-  inside the rename window). Durable fix on the machine: exclude
-  `E:\attic\release` from real-time scanning. Workaround: retry after a few
-  seconds.
+- **File-based AI-model cache** — still open. HuggingFace models still live in
+  Chromium Cache Storage (no `env.useCustomCache` / `attic-cache://` protocol
+  found in the code). The mitigations from 2026-07-18 (explicit
+  `persistent-storage` permission grant, single consolidated
+  `setPermissionRequestHandler` in `electron/main.cjs`, boot-time
+  `persisted()`/`estimate()` logging in `main.tsx`) are in place and appear to
+  have held — no further eviction reports since.
+- ✅ **Build ops (EPERM)** — fixed, and further hardened.
+  `scripts/build-electron.cjs` now copies the local Electron dist to
+  `electron-dist/` and points `electron-builder` at it via `electronDist`
+  before packaging, removing the extract-then-rename race with antivirus
+  scanning entirely (not just working around it).
 
 ---
 
 ## 1. "Educational studio" vision
 
 ### 1.1 Interactive guided tours
+**Partially done.** `presets/synthe-soustractif.json` exists and matches the
+"Subtractive synthesis" example (also listed in the README as "Embedded
+subtractive synthesizer meta-component example"). Still missing: the other
+tour topics (compressor, mixing chain), the educational annotations layer on
+the canvas, and the guided exercises.
 Embedded pre-built workflows (`presets/`) with educational annotations on the canvas:
 - "How does a compressor work?"
 - "The mixing chain": EQ → Compressor → Reverb → Limiter
-- "Subtractive synthesis" with interactive tutorial
+- "Subtractive synthesis" with interactive tutorial — ✅ example graph exists
 - Exercises ("change the threshold and listen to the difference")
 
 ### 1.2 Educational A/B comparator
@@ -134,23 +148,41 @@ Textual markers on the waveform ("chorus", "verse", "solo") — persisted with t
 ## 2. "Creative AI workshop" vision
 
 ### 2.1 MIDI neural reservoir
+Still open — no `reservoir-midi`-style node found; only `reservoir-musical`
+(audio) and `reservoir-textuel` (text) exist.
 MIDI version of the reservoir — generates MIDI files that can be plugged into Transposer/Quantizer, Arpeggiator or MIDI Output. Allows chaining multiple reservoirs.
 
 ### 2.2 Multi-reservoir network
+✅ **Done.** Shipped as the `multi-reservoirs` node (`src/plugins/generateurs.ts`).
 A node that connects multiple reservoirs in parallel/series (melody, bass, harmony, rhythm). Each reservoir "listens" to the others via a control input → polyphonic emergence.
 
 ### 2.3 Genetic evolution of reservoirs
+**Half done.** `src/audio/evolution.ts` implements exactly this algorithm
+(population, mutation, user like/dislike selection, crossover, no training —
+the file's own header even says so almost verbatim) — but it is **not wired
+to any plugin or UI**: no fiche imports it, no view renders it. The engine
+exists; the node doesn't.
 A meta-node that evolves a population of reservoirs: random mutation of weights/parameters, user selection (like / dislike), crossover. After a few generations, the reservoir adapts to taste. No training — natural selection.
 
 ### 2.4 ColorSynth
+✅ **Done.** Shipped in v2.3.0 as the `colorsynth` node
+(`src/plugins/visualisation.ts`) — 6-band spectrum (Sub/Bass/Low-Mid/Mid/High/Air)
+mapped to warm→cool HSL colors, exactly as proposed here.
 The inverse of the "Color combination" node: listens to the audio signal and deduces a color palette. Spectrum → color space (bass = warm, treble = cold). Canvas view. Educational: "seeing" the timbre.
 
 ### 2.5 Musical prompt → graph
+✅ **Done.** Shipped as `src/plugins/prompt-graphe.ts`, already listed in the
+README ("Prompt-to-graph — type a keyword, get a pre-wired graph, 55+ keywords").
 A node that takes a text prompt ("a stereo delay with short feedback over a hall reverb") and generates the corresponding graph by automatically connecting the nodes. Keyword-rules parser → plugins + connections. Magical for discovery.
 
 ---
 
 ## 3. "Multi-domain laboratory" vision
+
+Still open — 3.1, 3.2 and 3.3 all unverified/absent as of 2026-08-03. Note
+that 3.1 is blocked on the "UI shell decoupling" architecture item above:
+without it, a second domain can't reach the UI cleanly (see
+PORTING-A-DOMAIN.md).
 
 ### 3.1 Image domain (proof of concept)
 A minimal image adapter to prove the golden rule:
@@ -173,15 +205,24 @@ A generic node that displays any flow type (audio = waveform, image = pixels, ta
 ## 4. "Collaborative platform" vision
 
 ### 4.1 Community presets gallery
+Still open. `galerie-exposition` (an MP3-folder → HTML gallery generator with
+procedural cover art) exists but solves a different problem — it's not a
+shared-graph gallery.
 A web page or an "Import from gallery" node listing shared graphs. Description, tags, audio preview. One-click import. Storage on HuggingFace or GitHub (JSON files).
 
 ### 4.2 Audio export + embedded graph
-The graph that produced a WAV/MP3 is embedded in the metadata (WAV `INFO` chunk or MP3 ID3 tag). Importing the audio file into Attic recovers the graph — exact reproduction.
+✅ **Done.** `src/audio/graphe-embarque.ts` + `_grapheEmbarque` wired into
+`useExecutionGraphe.ts` — the producing graph is embedded when exporting audio.
 
 ### 4.3 Plugin system (user-defined nodes)
+Still open, but a related, smaller feature shipped: `gestion-nodes` lets you
+**export/import an existing node as a `.zip`** (packaging, not authoring).
+Writing a brand-new node's `executer` in JS from an in-app editor, with no
+coding outside Attic, is not implemented.
 Create your own node without coding: define inputs/outputs/parameters via UI, write `executer` in JS in an integrated editor, registered dynamically (localStorage, exportable as JSON).
 
 ### 4.4 Live coding / performance mode
+Still open — no full-screen/performance mode, macro knobs, or MIDI-learn found.
 Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign a controller to a parameter), continuous execution. The musician "plays" the graph.
 
 ---
@@ -193,27 +234,26 @@ Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign 
 | 1 | **Stable port IDs** (instead of positional indices) — re-indexing breaks edges | High |
 | 2 | **`lienExterne?`** in `PluginDef` ("to go further") + rendered in the notice | Medium |
 | 3 | **File persistence** as base64 in the JSON | Medium |
-| 4 | **Relocate `TypeValeur`** out of the core into the audio domain | Low |
-| 5 | **Split** `audio/generation.ts` (889 lines), `audio/analyse.ts` (820 lines) | Low |
-| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) | Low |
+| 4 | **Relocate `TypeValeur`** out of the core into the audio domain — still there as of 2026-08-03; now explicitly documented as accepted debt in `PORTING-A-DOMAIN.md` rather than an oversight | Low |
+| 5 | **Split** `audio/generation.ts` (983 lines, up from 889), `audio/analyse.ts` (980 lines, up from 820) — grew, not shrunk | Low |
+| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) — now 1,426 lines (up from 952) | Low |
 | 7 | **`compatible` compatibility** for stereo/mono subtyping | Low |
 
 ---
 
 ## Suggested order
 
+Shipped items (2.2, 2.4, 2.5, 4.2) removed from the queue below — see their
+✅ notes in the sections above. Remaining, in the original relative order:
+
 | # | Task | Effort | Value |
 |---|---|---|---|
 | 2.1 | MIDI reservoir | Low | High — unlocks chaining |
-| 1.1 | Guided tours | Medium | High — educational = mission |
+| 1.1 | Guided tours (remaining topics + annotations + exercises) | Medium | High — educational = mission |
 | 3.1 | Image domain | Medium | Strategic — proves the framework |
 | 4.3 | User-defined plugin | Medium | High — extensible without coding |
-| 2.5 | Prompt → graph | Low | Magical — discovery |
-| 2.3 | Genetic evolution | Medium | Unique — no other app does this |
+| 2.3 | Genetic evolution — wire `audio/evolution.ts` to a node/UI | Low (engine already written) | Unique — no other app does this |
 | 4.4 | Live mode | High | High for performance |
-| 4.2 | Embedded graph | Low | Elegant — reproducibility |
-| 2.2 | Multi-reservoirs | Medium | Unique — polyphonic emergence |
-| 2.4 | ColorSynth | Low | Educational — seeing sound |
 | 4.1 | Community gallery | High | Long term |
 | 1.2 | Educational A/B | Low | Educational |
 | 1.3 | Annotator | Low | Educational |

@@ -2,6 +2,96 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.3] — 2026-08-03
+
+### Added
+- **Arpeggio mode in Dessin sonore** — the image-to-sound sonification node can now play its detected shapes as an arpeggio instead of a block chord.
+- **Circulating playback marker** — nodes with a position-in-time concept (Dessin sonore and similar) show a moving point over the currently playing target.
+- **Notes and frames on the canvas** — click the note/frame tool then click the canvas to place it at that exact spot, instead of a fixed offset from the toolbar.
+
+### Fixed
+- **Comment/frame node callbacks** — the callbacks wired to comment and frame nodes were not being invoked correctly after the note/frame placement rework; restored.
+- **`test denoise/` folder** — corrected a `.gitignore` entry so local noise-reduction test assets (`audio.wav`, `output-notches.wav`, `output-spectral.wav`, `sample.wav`) are properly excluded.
+
+### Changed
+- **Smaller installer** — moved renderer-only packages to `devDependencies` so electron-builder's dependency scan (and the packaged `node_modules`) stays lean.
+
+## [2.4.2] — 2026-08-03
+
+### Fixed
+- **Demucs stem order corrected** — the native Demucs separator (4-stem and 6-stem) reported stems in the order `[batterie, basse, autre, voix]`, but the embedded ONNX models actually output `[batterie, basse, voix, autre]`. **Vocals and "other" were swapped** on every native Demucs separation. Fixed in `electron/demucs.cjs`.
+- **Spectral noise-reduction fixes** — corrections to the FFT-based denoiser's magnitude/phase handling (`effets-dynamique.ts`), covered by a new 179-case test file (`noise-nodes.test.ts`).
+
+### Added
+- **Notch-filter noise reduction** — `reduireBruitNotches()`, a second denoising strategy that detects narrowband noise components (mains hum, whine) above a profile threshold and notches them out (configurable threshold multiplier, max notch count, Q), as an alternative to the existing spectral-subtraction reducer (`reduireBruit`, which also gained a configurable relative floor).
+
+## [2.4.0] — 2026-08-02
+
+### Added
+- **Node category colors** — a left accent border on each node reflects its catalog category at a glance.
+- **MiniMap styling** — the React Flow minimap now reflects node colors instead of generic gray blocks.
+- **Node description tooltips** and **per-node execution time badge** — hovering a node shows its description; after a run, a badge shows how long it took.
+- **Red edges for invalid connections** — an edge that fails type-compatibility validation is drawn in red instead of failing silently.
+
+### Changed
+- **Note resize aligned with text output** — the sticky-note node now shares the same resizable-textarea behavior as the Text Output node.
+- **Camera no longer zooms on execution** — running the graph used to re-fit the viewport; it now stays put so you don't lose your place on a large canvas.
+- **Drum Synth moved** from its previous catalog spot to Traitement → Effets, next to the other percussion/rhythm processors.
+
+## [2.3.3] — 2026-08-02
+
+### Added
+- **Global reset button** in the toolbar — clears execution state across the whole canvas in one action, instead of resetting nodes one by one.
+- **Drum machine patterns** — additional preset rhythmic patterns for the drum-pattern generators.
+- **Resizable text output** — the "Sortie texte" node now has a resizable textarea (drag the corner, 260×140 to 800×600) with a copy button, instead of a fixed-height box.
+
+### Fixed
+- **SoundFont default loading** — the embedded FluidR3 SoundFont (`FluidR3_GM.sf2` / `FluidR3_GM_GS.sf2`) now loads reliably both from the packaged app's `resources/sf2/` and from `public/sf2/` in dev, with RIFF/sfbk header validation before use.
+
+## [2.3.2] — 2026-08-01
+
+### Fixed
+- **Meta-component ungroup position** — ungrouping a meta-component now restores its inner nodes at the correct canvas position instead of an offset location.
+- **Multi-node copy/paste** — copying and pasting a multi-node selection (including internal edges between the copied nodes) now works correctly; covered by a new Playwright end-to-end test (`tests-e2e/meta-ungroup.spec.ts`).
+
+## [2.3.1] — 2026-08-01
+
+### Added
+- **Logistic-map effects** — three new effects driven by the logistic chaos map: **Écho logistique** (echo whose feedback/delay drifts chaotically), **Chopper logistique** (rhythmic gate with a chaotically evolving pattern), and **Paulstretch logistique** (extreme time-stretch that grows in progressively rather than applying instantly).
+- **Beat Repeat / Stutter** — captures and repeats a short audio segment at rhythmic intervals.
+- **Mathematical audio nodes** — **Générateur audio mathématique**, **Formule sur échantillons** and **Formule spectrale** let you type a formula (evaluated per-sample or per-bin) to synthesize or process audio. A dedicated formula editor (`ui/EditeurFormule.tsx`) opens in an overlay outside the canvas — reusing the Python/Julia editor's fix for cursor drift inside a zoomed/transformed node.
+- **Music player node** — browses a music folder from the Electron app (play/pause/stop/prev/next) instead of loading a single file.
+- Additional collections and cellular-automaton refinements, plus i18n additions for the new nodes.
+
+## [2.3.0] — 2026-07-31
+
+### Added
+- **Color ↔ sound node family**: **Camelot wheel** (musical journey across the Camelot wheel illustrating harmonic transitions), **Color-Looper** (step sequencer where each step is a color), **RGB color synth** (synthesizes an RGB color into three oscillators), **Dessin sonore** (sonifies the colored shapes of a drawing image into notes/chords), **Palette harmonique** (extracts an image's dominant colors and turns them into a melody/harmony), **Spectre visible** (transposes a visible color's wavelength into the audible range), and **ColorSynth** (the inverse: derives a 6-color palette from an audio signal's spectrum — Sub/Bass/Low-Mid/Mid/High/Air bands mapped to warm→cool HSL colors).
+- A new **color-picker input component** (`ui/SaisieCouleurs.tsx`) backs the color-based nodes.
+
+### Fixed
+- **SVG rendering fix** in the pixel-art/pixeltone node.
+
+## [2.2.4] — 2026-07-31
+
+### Fixed
+- **Race condition in shared AI workers** — Kokoro, textgen, MusicGen, TTS, ASR and Sherpa workers are singletons shared by every node of their kind. Concurrent requests (e.g. two TTS nodes running near-simultaneously) could have their progress messages and results cross-attributed. Added `requestId` correlation and a request queue to each worker so results always reach the node that asked for them.
+
+## [2.2.3] — 2026-07-30
+
+### Fixed
+- **Export/import confirmation dialogs suppressed** — exporting an empty canvas or importing a graph with data loss no longer shows a blocking confirmation dialog; the summary is surfaced without interrupting the flow.
+- Minor persistence cleanup (`usePersistance.ts`).
+
+## [2.2.2] — 2026-07-30
+
+### Added
+- **Integration/smoke tests** for choice-parameter canonicalization and the zone selector, covering the UI → graph → plugin execution path end to end (`src/plugins/integration.test.ts`, `montage.test.ts`, `generateurs.test.ts`).
+
+### Fixed
+- **Canonical ids for choice parameters** — plugins like the zone mask/loop/gate nodes used to compare a `choix` parameter against its *displayed, localized* label (e.g. `"Conserver les zones"` in French). Switching the UI to English, renaming a label, or loading an older saved graph would then silently misinterpret the action. `ParametreDef` gained an `optionIds` field so plugins compare a stable id (`"keep"` / `"mute"`) instead — the first concrete fix from the `ARCHITECTURE.md` diagnostic on localized-string coupling.
+- **Zone selector** — the "Masque de zones" / zone-extraction nodes had inconsistent behavior when combining multiple selected zones; corrected alongside the canonicalization work.
+
 ## [2.2.1] — 2026-07-30
 
 ### Fixed
