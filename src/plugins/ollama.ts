@@ -8,10 +8,10 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
-interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number }
-interface RepOllama { reponse?: string; erreur?: string }
+export interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number }
+export interface RepOllama { reponse?: string; erreur?: string }
 
-async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
+export async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
   const api = (window as unknown as { api?: { ollamaGenerer?: (o: OptsOllama) => Promise<RepOllama> } }).api;
   if (api?.ollamaGenerer) return api.ollamaGenerer(opts); // Electron : passe par le main
   try {

@@ -100,11 +100,11 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/core/typesFlux.ts | 10 |
 | src/core/validation.ts | 129 |
 | **core/ total** | **2,261** |
-| src/i18n.tsx | 622 |
+| src/i18n.tsx | 623 |
 | src/ia.ts | 465 |
 | src/main.tsx | 28 |
 | src/shims.d.ts | 4 |
-| **root/ total** | **1,119** |
+| **root/ total** | **1,120** |
 | src/plugins/analyse.ts | 181 |
 | src/plugins/automate-cellulaire.test.ts | 79 |
 | src/plugins/automate-cellulaire.ts | 261 |
@@ -161,7 +161,8 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/phase-vocoder.ts | 83 |
 | src/plugins/pixeltone.ts | 144 |
 | src/plugins/pochette.ts | 44 |
-| src/plugins/prompt-graphe.ts | 284 |
+| src/plugins/prompt-graphe.test.ts | 89 |
+| src/plugins/prompt-graphe.ts | 402 |
 | src/plugins/pure-data.test.ts | 46 |
 | src/plugins/pure-data.ts | 92 |
 | src/plugins/python-processor.ts | 287 |
@@ -200,7 +201,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/plugins/vexflow.test.ts | 77 |
 | src/plugins/vexflow.ts | 283 |
 | src/plugins/visualisation.ts | 195 |
-| **plugins/ total** | **15,322** |
+| **plugins/ total** | **15,529** |
 | src/ui/App.tsx | 1022 |
 | src/ui/AretePersonnalisee.tsx | 77 |
 | src/ui/atelier.css | 834 |
@@ -214,7 +215,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/ui/EnveloppeADSR.tsx | 81 |
 | src/ui/ErreurBoundary.tsx | 27 |
 | src/ui/FormeOnde.tsx | 443 |
-| src/ui/hooks/useExecutionGraphe.ts | 538 |
+| src/ui/hooks/useExecutionGraphe.ts | 556 |
 | src/ui/hooks/useMetaComposants.ts | 210 |
 | src/ui/hooks/usePersistance.ts | 218 |
 | src/ui/ids.ts | 11 |
@@ -239,7 +240,7 @@ Generated from `src/` — all `.ts`, `.tsx`, `.css` files.
 | src/ui/validerGraphe.ts | 79 |
 | src/ui/vues.tsx | 1426 |
 | src/ui/VuMetre.tsx | 167 |
-| **ui/ total** | **9,018** |
+| **ui/ total** | **9,036** |
 | src/workers/magenta-worker.ts | 119 |
 | **workers/ total** | **119** |
-| **Grand total** | **44,532** |
+| **Grand total** | **44,758** |

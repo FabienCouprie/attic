@@ -4,7 +4,7 @@ Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic 
 architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
 plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state (2026-08-03): **tsc 0 errors · 213 catalog components · 61 test files / 418 tests · build OK**.
+Continuously verified state (2026-08-04): **tsc 0 errors · 213 catalog components · 62 test files / 431 tests · build OK**.
 
 > **Note on staleness**: this file lagged several releases (last touched around
 > v2.2.1; the app is now at v2.4.3). The sections below were re-verified
@@ -144,6 +144,35 @@ there is no live Web Audio graph anywhere):
   require rewriting affected effects as real-time `AudioWorkletNode`s and
   giving the DAG a "currently playing" concept it doesn't have today — a
   second engine alongside the current one, not a feature.
+
+---
+
+## Proposal recorded 2026-08-04: Ollama-driven graph generation
+
+✅ **Done.** "Prompt → graphe" (`src/plugins/prompt-graphe.ts`) already had an
+offline keyword parser; Ollama is now an additional `Méthode` option, not a
+replacement — the LLM reads the full installed catalog and picks blocks
+itself for phrasing the keyword matcher can't parse, with automatic fallback
+to keywords on any Ollama failure. See the CHANGELOG (Unreleased) for the
+untrusted-output hardening (hallucinated `ficheId` filtering).
+
+**Found and fixed while verifying it** — two bugs, both pre-existing and
+unrelated to this addition, both blocking verification until fixed:
+- The node's Text input lacked `requis: false`, so it couldn't run standalone
+  despite having a `Prompt` parameter specifically for that.
+- The generated graph never actually appeared on the canvas — confirmed on
+  the *unmodified* code. `useExecutionGraphe`'s post-run check read node data
+  from `noeudsRef.current`, which is a different object than the one the
+  plugin mutated by the time it runs (`definirStatut` replaces the node's
+  `data` via spread before the plugin is even called). This affected the two
+  sibling mechanisms too (embedded-graph import, `.zip` node install) — none
+  of the three could have been working. See CHANGELOG for the fix.
+
+**Also found, not fixed (flagged as a separate background task)**: re-running
+the *same* "Prompt → graphe" node more than once generates edge ids that
+collide with the previous run's (`e-prompt-${nodeId}-${i}`, not globally
+unique) — React logs a duplicate-key warning. Unrelated to Ollama; out of
+scope for this change.
 
 ---
 

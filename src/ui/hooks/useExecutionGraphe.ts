@@ -489,8 +489,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
 
     // Vérifier si un node a généré une spec de graphe (prompt → graphe)
+    //
+    // IMPORTANT : on itère `nds` (l'instantané aplati LOCAL à ce `lancer()`,
+    // capturé à la ligne ~166), PAS `noeudsRef.current`. `ctx.noeud` passé au
+    // plugin pointe vers les entrées de `nds` ; `definirStatut` (appelé au
+    // moins une fois par nœud AVANT même l'appel du plugin, pour passer en
+    // "en_cours") crée lui un NOUVEL objet `data` via spread pour l'état React
+    // — donc dès ce premier appel, `noeudsRef.current` ne contient déjà plus
+    // le MÊME objet `data` que celui que le plugin mute ensuite (`ctx.noeud.data`
+    // reste l'ancien objet, maintenant orphelin de l'état React). Toute
+    // mutation que le plugin fait sur `ctx.noeud.data` (ex. `_grapheGenere`,
+    // `_grapheEmbarque`, `_nodeInstalle` ci-dessous) était donc invisible ici
+    // — bug préexistant, vérifié sur le code d'origine (avant l'ajout du mode
+    // Ollama), qui rendait la génération de graphe totalement silencieuse :
+    // le nœud passait bien à « Terminé » mais rien n'apparaissait sur le
+    // canevas. `nds`, lui, référence directement les objets mutés par les
+    // plugins — aucune de ces trois fonctionnalités ne peut avoir fonctionné
+    // depuis l'introduction de cette optimisation de `definirStatut`.
     if (onGrapheGenere) {
-      for (const n of noeudsRef.current) {
+      for (const n of nds) {
         const spec = (n.data as any)?._grapheGenere;
         if (spec && spec.nodes && spec.edges) {
           onGrapheGenere(n.id, { nodes: spec.nodes, edges: spec.edges });
@@ -512,8 +529,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
 
     // Vérifier si un node a été installé dynamiquement (import de .zip)
+    // Même raison qu'au-dessus : lire `nds`, pas `noeudsRef.current`.
     if (onNodeInstalle) {
-      for (const n of noeudsRef.current) {
+      for (const n of nds) {
         const data = n.data as any;
         if (data?._nodeInstalle) {
           onNodeInstalle();

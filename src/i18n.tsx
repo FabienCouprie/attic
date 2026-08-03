@@ -370,6 +370,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.aucune_performance_midi_cliquez_sur_enregistrer_dans_l_inspecteur": { fr: "Aucune performance enregistrée. Cliquez sur Enregistrer dans l'inspecteur.", en: "No performance recorded yet. Click Record in the inspector." },
   "msg.midiIndisponible": { fr: "MIDI non disponible : navigateur non compatible ou accès refusé.", en: "MIDI unavailable: unsupported browser or access denied." },
   "msg.aucunPeripheriqueMidi": { fr: "Aucun périphérique MIDI détecté. Branchez un clavier/contrôleur puis rouvrez ce nœud.", en: "No MIDI device detected. Plug in a keyboard/controller, then reopen this node." },
+  "msg.ollamaGraphRepli": { fr: "(Ollama indisponible, repli sur mots-clés)", en: "(Ollama unavailable, fell back to keywords)" },
   "msg.aucun_midi": { fr: "Aucun MIDI.", en: "No MIDI." },
   "msg.la_vitesse_doit_tre_positive": { fr: "La vitesse doit être positive.", en: "The speed must be positive." },
   "msg.vitesse_x_var_0_var_1_s": { fr: "Vitesse x{__VAR_0__} · {__VAR_1__}s", en: "Speed x{__VAR_0__} · {__VAR_1__}s" },
