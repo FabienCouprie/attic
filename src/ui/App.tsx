@@ -557,7 +557,7 @@ function Atelier() {
         parametres: {},
         statut: "attente",
         nom: t("btn.commentaire"),
-        ...callbacksNoeudRef.current,
+        ...(callbacksNoeudRef.current?.() ?? {}),
       },
     }]);
   }, [setNodes, t]);
@@ -576,7 +576,7 @@ function Atelier() {
           statut: "attente",
           nom: t("btn.cadre"),
           couleur: "rgba(120,120,120,0.12)",
-          ...callbacksNoeudRef.current,
+          ...(callbacksNoeudRef.current?.() ?? {}),
         },
       };
       return [nouveau, ...nds];
