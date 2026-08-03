@@ -25,6 +25,10 @@ export function AretePersonnalisee({
     (state: any) => state.nodeLookup.get(source)?.data?.statut === "en_cours",
     [source]
   ));
+  const targetRunning = useStore(useCallback(
+    (state: any) => state.nodeLookup.get(target)?.data?.statut === "en_cours",
+    [target]
+  ));
   const label = useStore(useCallback(
     (state: any) => {
       const src = state.nodeLookup.get(source);
@@ -63,7 +67,7 @@ export function AretePersonnalisee({
         labelBgPadding={[5, 3]}
         labelBgBorderRadius={4}
       />
-      {sourceRunning && (
+      {(sourceRunning || targetRunning) && (
         <circle r="3" fill={dotColor}>
           <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
         </circle>

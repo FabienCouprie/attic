@@ -32,8 +32,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur", "mineur", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
         optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
         doc: "Gamme utilisée pour mapper les teintes.", docEn: "Scale used to map hues." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie"], optionsEn: ["Melody", "Harmony"], defaut: "Mélodie", defautEn: "Melody",
-        doc: "Mélodie = une note par forme ; Harmonie = accord triadique par forme.", docEn: "Melody = one note per shape; Harmony = triad chord per shape." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpège"], optionsEn: ["Melody", "Harmony", "Arpeggio"], defaut: "Mélodie", defautEn: "Melody",
+        doc: "Mélodie = une note par forme ; Harmonie = accord triadique par forme ; Arpège = accord triadique joué note après note.", docEn: "Melody = one note per shape; Harmony = triad chord per shape; Arpeggio = triad chord played one note after another." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
       { nom: "Portée", nomEn: "Range", type: "nombre", plage: [1, 3], pas: 1, defaut: 2,
@@ -59,7 +59,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true, message: traduire("msg.connecter.image") };
       }
 
-      const mode = ctx.paramTexte("Mode", "Mélodie").toLowerCase().includes("harm") ? "harmonie" : "melodie";
+      const modeStr = ctx.paramTexte("Mode", "Mélodie").toLowerCase();
+      const mode = modeStr.includes("harm") ? "harmonie" : modeStr.includes("arp") ? "arpege" : "melodie";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
 

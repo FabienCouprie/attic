@@ -21,7 +21,7 @@ export interface FormeColoree {
 export interface OptionsDessinSonore {
   cle: string;
   gamme: string;
-  mode: "melodie" | "harmonie";
+  mode: "melodie" | "harmonie" | "arpege";
   octave: number;
   portee: number;
   duree: number;
@@ -178,6 +178,14 @@ export function formesVersNotes(
       for (const offset of triade) {
         const note = Math.max(0, Math.min(127, root + offset));
         notes.push({ note, velocite, debut, fin });
+      }
+    } else if (options.mode === "arpege") {
+      const noteLength = Math.max(0.05, (fin - debut) / triade.length);
+      const step = triade.length > 1 ? (fin - debut - noteLength) / (triade.length - 1) : 0;
+      for (let i = 0; i < triade.length; i++) {
+        const note = Math.max(0, Math.min(127, root + triade[i]));
+        const t = debut + i * step;
+        notes.push({ note, velocite, debut: t, fin: t + noteLength });
       }
     } else {
       notes.push({ note: root, velocite, debut, fin });

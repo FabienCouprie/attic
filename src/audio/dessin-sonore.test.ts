@@ -82,4 +82,31 @@ describe("dessin-sonore", () => {
     expect(midi[1] - midi[0]).toBe(4);
     expect(midi[2] - midi[1]).toBe(3);
   });
+
+  it("genere un arpege ascendant par forme en mode arpege", () => {
+    const formes = [
+      { couleur: { r: 255, g: 0, b: 0, h: 0, s: 1, l: 0.5, x: 0.5, y: 0.5, count: 100 }, x: 0.5, y: 0.5, area: 100, largeur: 0.1, hauteur: 0.1 },
+    ];
+    const notes = formesVersNotes(formes, {
+      cle: "C",
+      gamme: "majeur",
+      mode: "arpege",
+      octave: 4,
+      portee: 2,
+      duree: 4,
+      nbCouleurs: 1,
+      tailleMin: 0.01,
+      modeRendu: "FM/Oscillateurs",
+      instrument: 0,
+      volume: 80,
+      tempo: 120,
+    });
+    expect(notes.length).toBe(3);
+    const midi = notes.map((n) => n.note);
+    expect(midi[1] - midi[0]).toBe(4);
+    expect(midi[2] - midi[1]).toBe(3);
+    expect(notes[0].debut).toBeLessThan(notes[1].debut);
+    expect(notes[1].debut).toBeLessThan(notes[2].debut);
+    expect(notes[2].fin).toBeLessThanOrEqual(4);
+  });
 });
