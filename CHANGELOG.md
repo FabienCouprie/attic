@@ -2,7 +2,7 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [2.4.4] — 2026-08-04
 
 ### Added
 - **MIDI Capture node** (`capture-midi`, Entrées → Audio) — records a live performance from a connected MIDI keyboard/controller via the Web MIDI API. Mirrors the existing microphone recorder: pick the device, click Record, play, click Stop — held notes are closed automatically at stop. The captured performance becomes a MIDI file (`ctx.noeud.data.midiFichier`), synthesized to audio (same FM/SoundFont pipeline as the MIDI Player node) and passed through unchanged on the MIDI output, so it chains directly into Transposer/Quantizer/Arpeggiator/MIDI Output. Requires the `midi` Electron permission (added to the app's permission allowlist) and browser/OS MIDI access on first use.
@@ -11,6 +11,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 ### Fixed
 - **"Prompt → graphe" never actually drew anything on the canvas.** Verified this was already broken on the unmodified code (not something the Ollama work introduced): the generated spec is attached to `ctx.noeud.data` inside the plugin, but `useExecutionGraphe`'s post-run check read from `noeudsRef.current` — a *different* object by then, because `definirStatut` had already replaced the node's `data` via spread before the plugin even ran. The check now reads the same flattened array (`nds`) the plugin actually mutated. Same fix applied to the sibling mechanisms sharing this pattern (audio-embedded graph import, dynamic `.zip` node installation) — none of the three could have been materializing their result either.
 - **"Prompt → graphe" couldn't run standalone.** Its Text input had no `requis: false`, so validation blocked execution whenever nothing was connected — even though the node has always had a `Prompt` parameter specifically so it *can* run without a connected input. Pre-existing, unrelated to the Ollama addition, found while verifying it.
+- **Edge ID collision in "Prompt → graphe"** — regenerated graphs from the same source node now use timestamped edge IDs, preventing React duplicate-key warnings and broken edge rendering on repeated generations or repeated audio-to-graph imports.
 
 ## [2.4.3] — 2026-08-03
 
