@@ -10,6 +10,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Progression } from "tonal";
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
+import { parseMidi } from "midi-file";
+import { analyserMidi } from "../audio/midi";
 
 const DUREES: Record<string, string> = {
   w: "w", h: "h", q: "q", "8": "8", "16": "16", "32": "32",
@@ -50,15 +52,109 @@ function dureeDepuisQuarts(quarts: number): string {
   return "32";
 }
 
+// ── MIDI → notation VexFlow ──
+
+const NOMS_NOTES: string[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+const DUREES_VEX: { q: number; v: string }[] = [
+  { q: 0.125, v: "32" },
+  { q: 0.25, v: "16" },
+  { q: 0.5, v: "8" },
+  { q: 1, v: "q" },
+  { q: 2, v: "h" },
+  { q: 4, v: "w" },
+];
+
+const GRILLES_NOTATION: Record<string, number> = {
+  "1/4": 1,
+  "1/8": 0.5,
+  "1/16": 0.25,
+  "1/32": 0.125,
+};
+
+function dureeStandardVex(quarts: number): string {
+  const clamped = Math.max(0.125, Math.min(4, quarts));
+  let meilleur = DUREES_VEX[0];
+  let best = Infinity;
+  for (const d of DUREES_VEX) {
+    const diff = Math.abs(clamped - d.q);
+    if (diff < best) {
+      best = diff;
+      meilleur = d;
+    }
+  }
+  return meilleur.v;
+}
+
+function noteMidiEnNom(note: number): string {
+  const nom = NOMS_NOTES[note % 12];
+  const octave = Math.floor(note / 12) - 1;
+  return `${nom}${octave}`;
+}
+
+function quantifier(quarts: number, grille: number): number {
+  return Math.max(0, Math.round(quarts / grille) * grille);
+}
+
+export function midiVersNotationEasyScore(
+  notes: { note: number; debut: number; fin: number; canal?: number }[],
+  bpm: number,
+  grilleQuarts: number,
+): string {
+  if (notes.length === 0) return "";
+  const secEnQuarts = (sec: number) => (sec * bpm) / 60;
+
+  // Rassembler les notes par instant de début quantifié pour former des accords
+  const groupes = new Map<number, { notes: number[]; fin: number }>();
+  for (const n of notes) {
+    const debut = quantifier(secEnQuarts(n.debut), grilleQuarts);
+    const fin = quantifier(secEnQuarts(n.fin), grilleQuarts);
+    if (fin <= debut) continue;
+    const g = groupes.get(debut);
+    if (g) {
+      g.notes.push(n.note);
+      g.fin = Math.min(g.fin, fin); // accord = durée la plus courte
+    } else {
+      groupes.set(debut, { notes: [n.note], fin });
+    }
+  }
+
+  const sorted = Array.from(groupes.entries()).sort((a, b) => a[0] - b[0]);
+  let position = 0;
+  const parts: string[] = [];
+
+  for (const [debut, groupe] of sorted) {
+    if (debut > position) {
+      const reste = quantifier(debut - position, grilleQuarts);
+      if (reste > 0) {
+        const duree = dureeStandardVex(reste);
+        parts.push(`B4/${duree}/r`);
+        position += DUREES_VEX.find((d) => d.v === duree)?.q ?? reste;
+      }
+    }
+    const dureeQuarts = quantifier(groupe.fin - debut, grilleQuarts);
+    if (dureeQuarts <= 0) continue;
+    const duree = dureeStandardVex(dureeQuarts);
+    const noms = Array.from(new Set(groupe.notes)).sort((a, b) => a - b).map(noteMidiEnNom);
+    const token = noms.length > 1 ? `(${noms.join(" ")})/${duree}` : `${noms[0]}/${duree}`;
+    parts.push(token);
+    position = debut + (DUREES_VEX.find((d) => d.v === duree)?.q ?? dureeQuarts);
+  }
+
+  return parts.join(" ");
+}
+
 function notationEasyScore(texte: string): { notes: string; totalQuarts: number } {
   // Convertit notre format "C4/q D4/8 E4+E4+G4/q" en format EasyScore "C4/q, D4/8, (C4 E4 G4)/q"
+  // Les silences utilisent la notation EasyScore "B4/q/r".
   const tokens = texte.split(/\s+/).filter(Boolean);
   let totalQuarts = 0;
   const parts: string[] = tokens.map((tok) => {
-    const [son, dur] = tok.split("/");
+    const [son, dur, rest] = tok.split("/");
     const duree = dureeVex(dur ?? "q");
     totalQuarts += dureeEnQuarts(duree);
     const notes = noteEasyScore(son);
+    if (rest === "r") return `${notes}/${duree}/r`;
     return notes.includes("+") ? `(${notes.replace(/\+/g, " ")})/${duree}` : `${notes}/${duree}`;
   });
   // Complète la mesure (jusqu'à 4 temps) avec des silences
@@ -278,6 +374,60 @@ export const fiches: FicheAudio[] = ([
       const svg = genererPartition(progression, tonic, clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_progression_valide") };
       return { valeurs: [null], message: svg };
-   },
- },
+    },
+  },
+  {
+    id: "vexflow-midi", nom: "Partition MIDI", nomEn: "MIDI Score",
+    univers: "Visualisation", famille: "Notation",
+    resume: "Affiche une portée de notation musicale à partir d'un fichier MIDI.",
+    resumeEn: "Displays a musical staff from a MIDI file.",
+    entrees: [{ nom: "MIDI", type: "midi", requis: true }],
+    sorties: [{ nom: "SVG", type: "image" }],
+    parametres: [
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
+        doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
+      { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous",
+        doc: "Canal MIDI à afficher (-1 pour tous les canaux).", docEn: "MIDI channel to display (-1 for all channels)." },
+      { nom: "Quantification", nomEn: "Quantization", type: "choix", options: ["1/4", "1/8", "1/16", "1/32"], defaut: "1/16",
+        doc: "Résolution de la grille de quantification.", docEn: "Quantization grid resolution.", optionsEn: ["1/4", "1/8", "1/16", "1/32"], defautEn: "1/16" },
+      { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
+        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
+      { nom: "Largeur", nomEn: "Width", plage: [200, 2000], pas: 10, defaut: 800, unite: "px",
+        doc: "Largeur du SVG.", docEn: "SVG width." },
+      { nom: "Hauteur", nomEn: "Height", plage: [100, 800], pas: 10, defaut: 200, unite: "px",
+        doc: "Hauteur du SVG.", docEn: "SVG height." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      let bpm = ctx.paramNombre("Tempo", 0);
+      if (bpm <= 0) {
+        bpm = 120;
+        for (const piste of midi.tracks) {
+          for (const evt of piste) {
+            if (evt.type === "setTempo") {
+              bpm = Math.round(60 / (evt.microsecondsPerBeat / 1_000_000));
+              break;
+            }
+          }
+          if (bpm !== 120) break;
+        }
+      }
+      const canal = ctx.paramNombre("Canal", -1);
+      const grilleNom = ctx.paramTexte("Quantification", "1/16");
+      const grille = GRILLES_NOTATION[grilleNom] ?? 0.25;
+      const { notes } = analyserMidi(midi);
+      const notesFiltrees = canal >= 0 ? notes.filter((n) => n.canal === canal) : notes;
+      const notation = midiVersNotationEasyScore(notesFiltrees, bpm, grille);
+      if (!notation) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
+      const clef = ctx.paramTexte("Clé", "treble");
+      const w = ctx.paramNombre("Largeur", 800);
+      const h = ctx.paramNombre("Hauteur", 200);
+      const svg = genererPortee(notation, clef, w, h);
+      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
+      const svgFile = new File([svg], "partition.svg", { type: "image/svg+xml" });
+      return { valeurs: [svgFile], message: svg };
+    },
+  },
 ] as FicheAudio[]).map(avecDoc);

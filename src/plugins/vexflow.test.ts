@@ -1,18 +1,27 @@
 // @vitest-environment jsdom
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
-import { fiches } from "./vexflow";
+import { fiches, midiVersNotationEasyScore } from "./vexflow";
+import { notesVersFichierMidi } from "../audio/midi";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
 }
 
-function ctxSimple(valeur: string | null) {
+function ctxSimple(valeur: any) {
   return {
     entree: () => valeur,
     paramTexte: (nom: string, defaut: string) => defaut,
     paramNombre: (nom: string, defaut: number) => defaut,
   };
+}
+
+function notesMelodieSimple() {
+  return [
+    { note: 60, debut: 0, fin: 0.5, velocite: 100 },
+    { note: 62, debut: 0.5, fin: 1.0, velocite: 100 },
+    { note: 64, debut: 1.0, fin: 1.5, velocite: 100 },
+  ];
 }
 
 beforeAll(() => {
@@ -21,11 +30,12 @@ beforeAll(() => {
 });
 
 describe("nœuds VexFlow", () => {
-  it("les 4 fiches sont enregistrées", () => {
+  it("les 5 fiches sont enregistrées", () => {
     expect(trouver("vexflow-portee")).toBeDefined();
     expect(trouver("vexflow-tab")).toBeDefined();
     expect(trouver("vexflow-grille")).toBeDefined();
     expect(trouver("vexflow-partition")).toBeDefined();
+    expect(trouver("vexflow-midi")).toBeDefined();
   });
 
   it("vexflow-portee génère un SVG", async () => {
@@ -73,5 +83,32 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-partition")!;
     const res = await f.executer(ctxSimple(null) as any);
     expect(res.message).toContain("<svg");
+  });
+
+  it("midiVersNotationEasyScore convertit une mélodie simple", () => {
+    const notes = notesMelodieSimple();
+    const notation = midiVersNotationEasyScore(notes, 120, 0.25);
+    expect(notation).toContain("C4/q");
+    expect(notation).toContain("D4/q");
+    expect(notation).toContain("E4/q");
+  });
+
+  it("midiVersNotationEasyScore regroupe les notes simultanées en accords", () => {
+    const notes = [
+      { note: 60, debut: 0, fin: 0.5, velocite: 100 },
+      { note: 64, debut: 0, fin: 0.5, velocite: 100 },
+      { note: 67, debut: 0, fin: 0.5, velocite: 100 },
+    ];
+    const notation = midiVersNotationEasyScore(notes, 120, 0.25);
+    expect(notation).toContain("(C4 E4 G4)/q");
+  });
+
+  it("vexflow-midi génère un SVG à partir d'un fichier MIDI", async () => {
+    const f = trouver("vexflow-midi")!;
+    const midi = notesVersFichierMidi(notesMelodieSimple(), 120);
+    const res = await f.executer(ctxSimple(midi) as any);
+    expect(res.message).toContain("<svg");
+    expect(res.valeurs[0]).toBeInstanceOf(File);
+    expect((res.valeurs[0] as File).name).toBe("partition.svg");
   });
 });
