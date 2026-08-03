@@ -419,11 +419,17 @@ function Atelier() {
             },
           };
         });
-        // Créer les edges
+        // Créer les edges. L'id embarque un horodatage : dérivé seulement de
+        // nodeId+i, il collisionnait avec les arêtes d'une génération
+        // PRÉCÉDENTE dès que le même nœud source régénérait un graphe
+        // (« Prompt → graphe » relancé, ou import répété d'un audio à graphe
+        // embarqué) — React signalait des clés dupliquées. Même convention
+        // que onConnect ci-dessous (`e-${source}-${target}-${Date.now()}`).
+        const horodatage = Date.now();
         const nouveauxEdges = spec.edges.map((e, i) => {
           const srcId = idsNouveaux[e.source];
           return {
-            id: `e-prompt-${nodeId}-${i}`,
+            id: `e-prompt-${nodeId}-${horodatage}-${i}`,
             source: srcId,
             target: idsNouveaux[e.target],
             sourceHandle: "out:0",
