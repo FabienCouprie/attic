@@ -125,7 +125,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "detecteur-accords") return { width: 320, height: 340 };
   if (def.id === "vu-metre") return { width: 300, height: 260 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
-  if (def.id === "generateur-pochette") return { width: 280, height: 340 };
+  if (def.id === "generateur-pochette") return { width: 300, height: 420 };
   if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
   if (def.id === "rendu-image") return { width: 320, height: 320 };
   if (def.id === "entree-image") return { width: 320, height: 320 };
@@ -241,7 +241,10 @@ function Atelier() {
 
   // Persistance des méta-composants : sauvegarde locale à chaque changement
   // (création, édition interne, import). Le chargement se fait au niveau module.
-  useEffect(() => surChangementMetas(sauvegarderMetasLocaux), []);
+  useEffect(() => surChangementMetas(() => {
+    sauvegarderMetasLocaux();
+    setPluginsVersion((v) => v + 1);
+  }), []);
 
   // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
   // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur

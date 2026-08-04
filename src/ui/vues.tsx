@@ -1207,7 +1207,7 @@ function VueVexFlow({ data }: VueProps) {
   );
 }
 
-// ── Générateur de pochette (canvas procédural) ──
+// ── Générateur de pochette (SVG procédural) ──
 function VuePochette({ data }: VueProps) {
   const p = data.parametres ?? {};
   return (
@@ -1216,6 +1216,12 @@ function VuePochette({ data }: VueProps) {
       titre={String(p["Titre"] ?? "Album")}
       artiste={String(p["Artiste"] ?? "")}
       style={String(p["Style"] ?? "bauhaus")}
+      palette={String(p["Palette"] ?? "auto")}
+      complexite={Number(p["Complexité"] ?? 50)}
+      bordure={String(p["Bordure"] ?? "non")}
+      typographie={String(p["Typographie"] ?? "sans-serif")}
+      largeur={Number(p["Largeur"] ?? 512)}
+      hauteur={Number(p["Hauteur"] ?? 512)}
       graine={Number(p["Graine"] ?? 0)}
     />
   );
@@ -1236,7 +1242,7 @@ function VueAttracteurIFS({ data }: VueProps) {
 // ── Rendu image (affiche une image reçue) ──
 function VueRenduImage({ data, def }: VueProps) {
   const { t } = useI18n();
-  const pasDeMessage = def?.id === "entree-image" || def?.id === "lecteur-svg";
+  const pasDeMessage = def?.id === "entree-image" || def?.id === "lecteur-svg" || def?.id === "texte-image";
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={pasDeMessage ? "" : t("msg.connecter.image")} />;
 }
 
@@ -1392,6 +1398,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },

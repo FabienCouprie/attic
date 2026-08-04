@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 import { SaisieCouleurs } from "./SaisieCouleurs";
+import { TexteAvecLiens } from "./texteAvecLiens";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -96,7 +97,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             <span className="chevron">{noticeOuverte ? "▴" : "▾"}</span>
           </button>
           {noticeOuverte && (
-            <p className="inspecteur-notice">{lang === "en" && def.noticeEn ? def.noticeEn : def.notice}</p>
+            <p className="inspecteur-notice"><TexteAvecLiens texte={lang === "en" && def.noticeEn ? def.noticeEn : def.notice} /></p>
           )}
         </div>
       )}
@@ -115,7 +116,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             <label>{nomP(p)}</label>
             {docP && <button className="inspecteur-doc-btn" onClick={() => toggleDoc(p.nom)}>?</button>}
           </div>
-          {isOpen && docP && <p className="inspecteur-param-doc">{docP}</p>}
+          {isOpen && docP && <p className="inspecteur-param-doc"><TexteAvecLiens texte={docP} /></p>}
           {p.type === "choix" && p.options ? (
             (() => {
               const defautCanonique = defautCanoniqueChoix(p);

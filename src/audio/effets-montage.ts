@@ -216,6 +216,27 @@ export function extraireCentreCote(buffer: AudioBuffer): CentreCoteResult {
 
 
 
+export interface SeparateurCanauxResult {
+  gauche: AudioBuffer;
+  droite: AudioBuffer;
+}
+
+export function separerCanaux(buffer: AudioBuffer): SeparateurCanauxResult {
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length;
+  const gauche = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
+  const droite = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
+  const srcL = buffer.getChannelData(0);
+  const srcR = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : srcL;
+  const dstG = gauche.getChannelData(0);
+  const dstD = droite.getChannelData(0);
+  for (let i = 0; i < length; i++) {
+    dstG[i] = srcL[i];
+    dstD[i] = srcR[i];
+  }
+  return { gauche, droite };
+}
+
 export function inverserAudio(buffer: AudioBuffer): AudioBuffer {
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -234,6 +255,29 @@ export function inverserAudio(buffer: AudioBuffer): AudioBuffer {
 // Si la piste est trop courte : ajoute du silence (avant ou après).
 // Si la piste est trop longue : applique un fade (avant ou après).
 // La référence passe inchangée sur la sortie 0, la piste alignée sur la sortie 1.
+
+export function hardPanner(
+  buffer: AudioBuffer,
+  position: "gauche" | "centre" | "droite" | "left" | "center" | "right",
+): AudioBuffer {
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length;
+  const sortie = new AudioBuffer({ numberOfChannels: 2, length, sampleRate });
+  const srcL = buffer.getChannelData(0);
+  const srcR = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : srcL;
+  const dstL = sortie.getChannelData(0);
+  const dstR = sortie.getChannelData(1);
+
+  const p = position.toLowerCase() as string;
+  const gauche = p === "gauche" || p === "left";
+  const droite = p === "droite" || p === "right";
+
+  for (let i = 0; i < length; i++) {
+    dstL[i] = droite ? 0 : srcL[i];
+    dstR[i] = gauche ? 0 : srcR[i];
+  }
+  return sortie;
+}
 
 export function alignerPiste(
   reference: AudioBuffer,

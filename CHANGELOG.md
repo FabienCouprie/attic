@@ -4,11 +4,20 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-08-04
+
 ### Added
 - **Partition MIDI** (`vexflow-midi`, Visualisation → Notation) — génère une portée SVG à partir d'un fichier MIDI. Accepte le MIDI en sortie du Transcripteur MIDI, du Lecteur MIDI, etc. Paramètres : tempo (0 = auto-détecté), canal (-1 = tous), quantification rythmique et clé. La sortie SVG (fichier) peut être exportée avec le nœud « Export SVG ».
+- **Texte → image** (`texte-image`, Entrées → Image) — génère une image 512×512 depuis un prompt texte, en local, avec SDXS-512-0.9 (UNet distillé 1 pas + décodeur TAESD, quantifié int8, ~680 Mo, ~8-11 s/image en CPU pur). Tourne nativement via `onnxruntime-node` dans le process principal (même pattern que Demucs/Stable Audio 3). Le modèle n'est **pas** embarqué dans l'application (poids + provenance de licence pas totalement nette — distillé à partir de SD-Turbo, licence Stability AI Community, plus restrictive que la licence openrail++ déclarée par SDXS-512 lui-même) : publié en accès contrôlé ("gated", licence à accepter) sur Hugging Face à `Fcouprie/sdxs-512-texte-image`, à télécharger et placer soi-même via le paramètre « Chemin modèle » (sélecteur de dossier natif) — lien cliquable directement dans la notice du nœud.
+- **Légende d'image** (`legende-image`, Traitement → Image) — décrit le contenu d'une image en une phrase (anglais) avec Mozilla/distilvit (ViT + GPT2 distillé, ~0,2 Md paramètres, licence Apache 2.0). Contrairement à Texte → image, s'intègre au pattern Transformers.js standard de l'app : un seul appel `pipeline("image-to-text", …)` dans un Web Worker, téléchargé et mis en cache au premier usage comme Whisper/MusicGen (aucune conversion ONNX manuelle, aucun hébergement à gérer). fp32 uniquement (~730 Mo) par contrainte de compatibilité déjà documentée (voir « ONNX Models » plus bas).
 
 ### Fixed
 - **Le run d'un nœud isolé (bouton ▶ individuel) faisait réagir des nœuds totalement déconnectés.** `validerGraphe` (contrôle des entrées obligatoires non connectées) s'exécute sur l'ensemble du graphe, mais son résultat était appliqué sans tenir compte du périmètre du run ciblé : un nœud sans aucun lien avec celui qu'on venait de lancer passait quand même en statut « Erreur » s'il avait lui-même une entrée obligatoire non connectée. Exemple signalé : poser « Explorateur musique » et « Séparateur canaux » sans les relier, lancer seulement le premier faisait passer le second en erreur. Le résultat de validation est désormais restreint aux ancêtres du nœud ciblé, comme le sont déjà l'exécution et le passage en « en attente » ; un run global (bouton « Lancer » principal) continue de valider tout le canevas comme avant.
+- **Générateur de pochette : l'aperçu restait une icône cassée au lieu de l'image.** `PochetteGen.tsx` créait l'URL blob via un `useMemo` séparé de son `useEffect` de nettoyage — sous `<StrictMode>` en dev, le double-invoke des effects (setup → cleanup → setup) révoquait l'unique URL partagée par les deux passes avant que la seconde ne s'affiche, cassant l'image de façon permanente (`naturalWidth: 0`). Corrigé en créant et révoquant l'URL dans le même effect, comme le fait déjà `stable-audio-3.cjs` pour un problème de nature similaire.
+- **Notice de nœud : un lien de documentation n'était jamais cliquable.** La notice (inspecteur, popup « ? » du nœud, doc de paramètre) s'affichait toujours en texte brut. Nouveau composant `TexteAvecLiens` qui transforme les URL `https://…` en vrais liens — utilisé pour le lien de téléchargement du modèle sur le nœud Texte → image.
+
+### Changed
+- **Générateur de pochette déplacé de « Entrées » vers « Autres »** dans le catalogue — n'est pas une entrée de données, catégorie plus appropriée.
 
 ## [2.4.4] — 2026-08-04
 

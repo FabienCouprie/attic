@@ -9,6 +9,7 @@ const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
 import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
 import { copierTexte } from "./copier";
+import { TexteAvecLiens } from "./texteAvecLiens";
 
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
@@ -293,9 +294,9 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
         <>
           {docOpen && (def?.notice || def?.resume) && (
             <div className="attic-node-doc">
-              {def.notice
+              <TexteAvecLiens texte={def.notice
                 ? (lang === "en" && def.noticeEn ? def.noticeEn : def.notice)
-                : (lang === "en" && def.resumeEn ? def.resumeEn : def.resume)}
+                : (lang === "en" && def.resumeEn ? def.resumeEn : def.resume)} />
             </div>
           )}
 

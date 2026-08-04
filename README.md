@@ -116,7 +116,9 @@ npm run lint # oxlint
 
 ## ONNX Models
 
-AI models (Demucs, MDX-Net) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately. See `public/oonx/` for model storage.
+AI models (Demucs, MDX-Net, Stable Audio 3) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately as part of the release build (`assets.zip`, see Releasing below). See `public/oonx/` for model storage.
+
+SDXS-512 (`texte-image` node) is **not** part of this build-time asset pipeline — it's deliberately excluded (~680 MB, unresolved license provenance, see CHANGELOG). It's a runtime-only, user-provided model: download it yourself from `Fcouprie/sdxs-512-texte-image` on Hugging Face (gated) and place it in `public/oonx/sdxs-512-texte-image/`, or point the node's "Chemin modèle" parameter elsewhere.
 
 **Important**: All Transformers.js models must use `dtype: "fp32"` + `device: "wasm"` + `env.backends.onnx.wasm.proxy = true`. Quantized models (`q8`) cause `DequantizeLinear` errors with onnxruntime-web 1.26+.
 

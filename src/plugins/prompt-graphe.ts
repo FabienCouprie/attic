@@ -106,6 +106,8 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "tremolo", mots: ["tremolo"], category: "effet" },
   { ficheId: "etirement-glissant", mots: ["étirement glissant", "slide stretch", "glissant", "ralenti progressif", "accélération progressive"], category: "effet" },
   { ficheId: "spatialisation-stereo", mots: ["spatialisation", "spatialization", "panoramique", "panner", "position stéréo", "stereo position"], category: "effet" },
+  { ficheId: "separateur-canaux", mots: ["séparateur canaux", "channel splitter", "split stereo", "séparer stéréo", "mono gauche droite"], category: "effet" },
+  { ficheId: "hard-panner", mots: ["hard panner", "hard pan", "bascule gauche", "bascule droite", "panoramique total", "full left", "full right", "mute droite", "mute gauche"], category: "effet" },
   { ficheId: "auto-pan", mots: ["auto-pan", "auto pan", "autopan", "balayage stéréo", "stereo sweep", "pan animé"], category: "effet" },
   { ficheId: "auto-pan-logistique", mots: ["auto-pan logistique", "logistic auto-pan", "balayage logistique", "pan progressif", "progressive pan"], category: "effet" },
   { ficheId: "wahwah", mots: ["wah-wah", "wahwah", "wah", "crybaby", "pédale wah"], category: "effet" },

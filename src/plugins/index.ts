@@ -66,9 +66,13 @@ import { fiches as f_color_looper } from "./color-looper";
 import { fiches as f_camelot } from "./camelot";
 import { fiches as f_entree_image } from "./entree-image";
 import { fiches as f_lecteur_svg } from "./lecteur-svg";
+import { fiches as f_separateur_canaux } from "./separateur-canaux";
+import { fiches as f_hard_panner } from "./hard-panner";
 import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
+import { fiches as f_texte_image } from "./texte-image";
+import { fiches as f_legende_image } from "./legende-image";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -134,7 +138,11 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_camelot,
   ...f_entree_image,
   ...f_lecteur_svg,
+  ...f_separateur_canaux,
+  ...f_hard_panner,
   ...f_ocr,
   ...f_carte_sonore,
   ...f_automate_cellulaire,
+  ...f_texte_image,
+  ...f_legende_image,
 ];
