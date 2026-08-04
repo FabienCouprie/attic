@@ -22,13 +22,44 @@ function dureeVex(d: string): string {
 }
 
 function noteEasyScore(note: string): string {
-  // "C4" / "F#3" / "Bb5" restent tels quels pour EasyScore (format VexFlow).
-  // Accepte aussi les accords : "C4+E4+G4" → "C4+E4+G4".
-  return note.split("+").map((n) => {
-    const m = /^([A-Ga-g])([#b]?)(-?\d+)$/.exec(n.trim());
-    if (!m) return n;
-    return `${m[1].toUpperCase()}${m[2]}${m[3]}`;
-  }).join("+");
+  // "C4" / "F#3" / "Bb5" → format VexFlow EasyScore (doit être majuscule).
+  // Accords : "C4+E4+G4" ou "(C4 E4 G4)" → "(C4 E4 G4)".
+  const n = note.trim();
+  const notes = n.includes("+")
+    ? n.split("+")
+    : n.startsWith("(") && n.endsWith(")")
+    ? n.slice(1, -1).split(/\s+/)
+    : [n];
+  const normalise = (s: string) => {
+    const m = /^([A-Ga-g])([#b]?)(-?\d+)$/.exec(s.trim());
+    return m ? `${m[1].toUpperCase()}${m[2]}${m[3]}` : s.trim();
+  };
+  if (notes.length > 1) {
+    return `(${notes.map(normalise).join(" ")})`;
+  }
+  return normalise(notes[0]);
+}
+
+function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
+  // Découpe un token de la forme "note/duree" ou "note/duree/r".
+  // La partie note peut contenir un accord entre parenthèses (ex: (C4 E4 G4)/q)
+  // sans être coupée sur la barre de fraction.
+  let profondeur = 0;
+  let barre = -1;
+  for (let i = 0; i < token.length; i++) {
+    const c = token[i];
+    if (c === "(") profondeur++;
+    else if (c === ")") profondeur--;
+    else if (c === "/" && profondeur === 0) {
+      barre = i;
+      break;
+    }
+  }
+  if (barre === -1) return { notes: token, duree: "q", rest: false };
+  const notes = token.slice(0, barre);
+  const reste = token.slice(barre + 1).split("/");
+  const duree = reste[0] || "q";
+  return { notes, duree, rest: reste[1] === "r" };
 }
 
 function creerRenderer(width: number, height: number): { renderer: InstanceType<typeof Renderer>; div: HTMLDivElement } {
@@ -36,6 +67,13 @@ function creerRenderer(width: number, height: number): { renderer: InstanceType<
   const renderer = new Renderer(div, Renderer.Backends.SVG);
   renderer.resize(width, height);
   return { renderer, div };
+}
+
+function extraireSvgRendu(div: HTMLDivElement): string {
+  // VexFlow produit parfois un premier SVG vide (contexte) avant le SVG réel.
+  // On ne garde que les SVG contenant du contenu, ce qui évite un rectangle blanc vide.
+  const svgs = Array.from(div.querySelectorAll("svg")).filter((svg) => svg.childElementCount > 0);
+  return svgs.map((svg) => svg.outerHTML).join("");
 }
 
 function dureeEnQuarts(duree: string): number {
@@ -144,18 +182,39 @@ export function midiVersNotationEasyScore(
   return parts.join(" ");
 }
 
+function tokenizeNotation(texte: string): string[] {
+  // Découpe par espace sans couper à l'intérieur des parenthèses d'un accord.
+  const tokens: string[] = [];
+  let courant = "";
+  let profondeur = 0;
+  for (const c of texte.trim()) {
+    if (c === "(") profondeur++;
+    else if (c === ")") profondeur--;
+    if (/\s/.test(c) && profondeur === 0) {
+      if (courant) {
+        tokens.push(courant);
+        courant = "";
+      }
+    } else {
+      courant += c;
+    }
+  }
+  if (courant) tokens.push(courant);
+  return tokens;
+}
+
 function notationEasyScore(texte: string): { notes: string; totalQuarts: number } {
-  // Convertit notre format "C4/q D4/8 E4+E4+G4/q" en format EasyScore "C4/q, D4/8, (C4 E4 G4)/q"
+  // Convertit notre format "C4/q D4/8 C4+E4+G4/q" en format EasyScore "C4/q, D4/8, (C4 E4 G4)/q"
   // Les silences utilisent la notation EasyScore "B4/q/r".
-  const tokens = texte.split(/\s+/).filter(Boolean);
+  const tokens = tokenizeNotation(texte);
   let totalQuarts = 0;
   const parts: string[] = tokens.map((tok) => {
-    const [son, dur, rest] = tok.split("/");
-    const duree = dureeVex(dur ?? "q");
+    const { notes: son, duree: dur, rest } = parseTokenNote(tok);
+    const duree = dureeVex(dur);
     totalQuarts += dureeEnQuarts(duree);
     const notes = noteEasyScore(son);
-    if (rest === "r") return `${notes}/${duree}/r`;
-    return notes.includes("+") ? `(${notes.replace(/\+/g, " ")})/${duree}` : `${notes}/${duree}`;
+    if (rest) return `${notes}/${duree}/r`;
+    return `${notes}/${duree}`;
   });
   // Complète la mesure (jusqu'au prochain multiple de 4) avec des silences
   let reste = 4 - (totalQuarts % 4 || 4);
@@ -175,7 +234,7 @@ function notationEasyScore(texte: string): { notes: string; totalQuarts: number 
   return { notes: parts.join(", "), totalQuarts };
 }
 
-function genererPortee(notation: string, clef: string, largeur: number, hauteur: number): string {
+export function genererPortee(notation: string, clef: string, largeur: number, hauteur: number): string {
   const { div } = creerRenderer(largeur, hauteur);
   div.id = "vex-" + Math.random().toString(36).slice(2);
   document.body.appendChild(div);
@@ -190,7 +249,7 @@ function genererPortee(notation: string, clef: string, largeur: number, hauteur:
     voices: [score.voice(score.notes(notesStr, { stem: "up" }))],
   }).addClef(clef).addTimeSignature(`${beats}/4`);
   vf.draw();
-  const svg = div.innerHTML;
+  const svg = extraireSvgRendu(div);
   div.remove();
   return svg;
 }
@@ -216,7 +275,7 @@ function genererTab(tabText: string, accordage: string, largeur: number, hauteur
   voice.addTickables(tabNotes);
   new Formatter().joinVoices([voice]).format([voice], largeur - 40);
   voice.draw(ctx, stave);
-  return div.innerHTML;
+  return extraireSvgRendu(div);
 }
 
 function genererGrille(accords: string[], mesuresParLigne: number, largeur: number, hauteur: number): string {
@@ -240,7 +299,7 @@ function genererGrille(accords: string[], mesuresParLigne: number, largeur: numb
     voice.draw(vf.getContext(), stave);
   }
   vf.draw();
-  const svg = div.innerHTML;
+  const svg = extraireSvgRendu(div);
   div.remove();
   return svg;
 }

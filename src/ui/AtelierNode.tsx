@@ -268,6 +268,9 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
             const h = Math.round(height);
             data.onChangerParametre?.(id, "Largeur", w);
             data.onChangerParametre?.(id, "Hauteur", h);
+            // Persister explicitement les nouvelles dimensions du nœud,
+            // sinon ReactFlow le réinitialise à sa taille initiale après le setNodes.
+            setNodes((nds) => nds.map((n) => n.id === id ? { ...n, width, height } : n));
           }}
         />
       )}

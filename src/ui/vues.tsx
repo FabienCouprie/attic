@@ -1195,13 +1195,13 @@ function VueVexFlow({ data }: VueProps) {
   const isSvg = svg.trim().startsWith("<svg");
   if (!isSvg) {
     return (
-      <div className="nodrag attic-node-vue-vexflow" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px" }}>
+      <div className="attic-node-vue-vexflow" style={{ padding: "4px" }}>
         <div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div>
       </div>
     );
   }
   return (
-    <div className="nodrag attic-node-vue-vexflow" onPointerDown={(e) => e.stopPropagation()}>
+    <div className="attic-node-vue-vexflow">
       <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
@@ -1391,7 +1391,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
-  { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
+  { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },

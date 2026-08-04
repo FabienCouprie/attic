@@ -111,4 +111,28 @@ describe("nœuds VexFlow", () => {
     expect(res.valeurs[0]).toBeInstanceOf(File);
     expect((res.valeurs[0] as File).name).toBe("partition.svg");
   });
+
+  it("vexflow-portee affiche les accords et la syntaxe plus", async () => {
+    const f = trouver("vexflow-portee")!;
+    const ctx = {
+      entree: () => "C4+E4+G4/q (C4 E4 G4)/h B4/q/r",
+      paramTexte: (nom: string, defaut: string) => defaut,
+      paramNombre: (nom: string, defaut: number) => defaut,
+    };
+    const res = await f.executer(ctx as any);
+    expect(res.message).toContain("<svg");
+  });
+
+  it("vexflow-midi gère les notes simultanées (accords)", async () => {
+    const f = trouver("vexflow-midi")!;
+    const notes = [
+      { note: 60, debut: 0, fin: 0.5, velocite: 100 },
+      { note: 64, debut: 0, fin: 0.5, velocite: 100 },
+      { note: 67, debut: 0, fin: 0.5, velocite: 100 },
+    ];
+    const midi = notesVersFichierMidi(notes, 120);
+    const res = await f.executer(ctxSimple(midi) as any);
+    expect(res.message).toContain("<svg");
+    expect(res.valeurs[0]).toBeInstanceOf(File);
+  });
 });
