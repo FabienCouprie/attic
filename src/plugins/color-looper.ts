@@ -31,8 +31,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur", "mineur", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
         optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
         doc: "Gamme utilisée.", docEn: "Scale used." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie"], optionsEn: ["Melody", "Harmony"], defaut: "Mélodie", defautEn: "Melody",
-        doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas.", docEn: "Melody = one note per step; Harmony = triad chord per step." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
+        doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
       { nom: "Portée", nomEn: "Range", type: "nombre", plage: [1, 3], pas: 1, defaut: 2,
@@ -51,7 +51,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
     async executer(ctx: any) {
-      const mode = ctx.paramTexte("Mode", "Mélodie").toLowerCase().includes("harm") ? "harmonie" : "melodie";
+      const modeTexte = ctx.paramTexte("Mode", "Mélodie").toLowerCase();
+      const mode = modeTexte.includes("arp") ? "arpeges" : modeTexte.includes("harm") ? "harmonie" : "melodie";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
       const { audio, midi, notes } = await genererColorLooper({

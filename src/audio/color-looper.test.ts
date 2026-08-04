@@ -58,6 +58,30 @@ describe("color-looper", () => {
     expect(notes.length).toBe(3);
   });
 
+  it("genere une arpege par pas en mode arpeges", () => {
+    const notes = genererNotesColorLooper({
+      couleurs: "#ff0000",
+      cle: "C",
+      gamme: "majeur",
+      mode: "arpeges",
+      octave: 4,
+      portee: 2,
+      tempo: 120,
+      dureeNote: 0.5,
+      mesures: 1,
+      modeRendu: "FM/Oscillateurs",
+      instrument: 0,
+      volume: 80,
+    });
+    expect(notes.length).toBe(3);
+    const stepDur = 60 / 120;
+    const subDur = stepDur / 3;
+    expect(notes[0].debut).toBe(0);
+    expect(notes[1].debut).toBeCloseTo(subDur, 5);
+    expect(notes[2].debut).toBeCloseTo(2 * subDur, 5);
+    expect(notes[0].fin - notes[0].debut).toBeCloseTo(subDur, 5);
+  });
+
   it("genere audio et midi", async () => {
     const result = await genererColorLooper({
       couleurs: "#ff0000,#0000ff",

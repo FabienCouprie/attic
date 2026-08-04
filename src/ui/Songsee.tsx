@@ -24,7 +24,7 @@ export function SongseeVue({ fichier, url, message }: Props) {
   }, [fichier, url]);
 
   if (chargement) return <div className="attic-node-onde-attente">{t("onde.chargement")}</div>;
-  if (!src) return <div className="attic-node-onde-attente">{message || t("msg.connecter.image")}</div>;
+  if (!src) return <div className="attic-node-onde-attente">{message === undefined ? t("msg.connecter.image") : message}</div>;
 
   return (
     <div className="attic-node-songsee nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%" }}>

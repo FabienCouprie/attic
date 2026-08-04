@@ -1234,9 +1234,10 @@ function VueAttracteurIFS({ data }: VueProps) {
 }
 
 // ── Rendu image (affiche une image reçue) ──
-function VueRenduImage({ data }: VueProps) {
+function VueRenduImage({ data, def }: VueProps) {
   const { t } = useI18n();
-  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
+  const pasDeMessage = def?.id === "entree-image" || def?.id === "lecteur-svg";
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={pasDeMessage ? "" : t("msg.connecter.image")} />;
 }
 
 // ── ColorSynth (spectre → palette de couleurs) ──

@@ -228,8 +228,6 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_motions_var_1": { fr: "{__VAR_0__} émotions{__VAR_1__}", en: "{__VAR_0__} emotions{__VAR_1__}" },
   "msg.aucun_fichier": { fr: "Aucun fichier.", en: "No files." },
   "msg.aucun_fichier_charg": { fr: "Aucun fichier chargé.", en: "No file loaded." },
-  "msg.aucune_image_chargee": { fr: "Aucune image chargée.", en: "No image loaded." },
-  "msg.aucun_svg_charge": { fr: "Aucun SVG chargé.", en: "No SVG loaded." },
   "msg.erreur_chargement_svg": { fr: "Impossible de charger le SVG.", en: "Unable to load the SVG." },
   "msg.erreur_canvas": { fr: "Canvas 2D indisponible.", en: "Canvas 2D unavailable." },
   "msg.erreur_conversion_png": { fr: "Conversion PNG échouée.", en: "PNG conversion failed." },

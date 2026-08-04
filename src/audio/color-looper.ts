@@ -10,7 +10,7 @@ export interface OptionsColorLooper {
   gamme: string;
   octave: number;
   portee: number;
-  mode: "melodie" | "harmonie";
+  mode: "melodie" | "harmonie" | "arpeges";
   tempo: number;
   dureeNote: number; // fraction d'un temps
   mesures: number;
@@ -118,6 +118,13 @@ export function genererNotesColorLooper(options: OptionsColorLooper): NoteEvenem
     if (options.mode === "harmonie") {
       for (const offset of triade) {
         notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut, fin });
+      }
+    } else if (options.mode === "arpeges") {
+      const subDur = stepDur / triade.length;
+      for (const [i, offset] of triade.entries()) {
+        const debutArp = step * stepDur + i * subDur;
+        const finArp = debutArp + subDur;
+        notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut: debutArp, fin: finArp });
       }
     } else {
       notes.push({ note: root, velocite, debut, fin });
