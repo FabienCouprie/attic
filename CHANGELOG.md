@@ -7,6 +7,9 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 ### Added
 - **Partition MIDI** (`vexflow-midi`, Visualisation → Notation) — génère une portée SVG à partir d'un fichier MIDI. Accepte le MIDI en sortie du Transcripteur MIDI, du Lecteur MIDI, etc. Paramètres : tempo (0 = auto-détecté), canal (-1 = tous), quantification rythmique et clé. La sortie SVG (fichier) peut être exportée avec le nœud « Export SVG ».
 
+### Fixed
+- **Le run d'un nœud isolé (bouton ▶ individuel) faisait réagir des nœuds totalement déconnectés.** `validerGraphe` (contrôle des entrées obligatoires non connectées) s'exécute sur l'ensemble du graphe, mais son résultat était appliqué sans tenir compte du périmètre du run ciblé : un nœud sans aucun lien avec celui qu'on venait de lancer passait quand même en statut « Erreur » s'il avait lui-même une entrée obligatoire non connectée. Exemple signalé : poser « Explorateur musique » et « Séparateur canaux » sans les relier, lancer seulement le premier faisait passer le second en erreur. Le résultat de validation est désormais restreint aux ancêtres du nœud ciblé, comme le sont déjà l'exécution et le passage en « en attente » ; un run global (bouton « Lancer » principal) continue de valider tout le canevas comme avant.
+
 ## [2.4.4] — 2026-08-04
 
 ### Added

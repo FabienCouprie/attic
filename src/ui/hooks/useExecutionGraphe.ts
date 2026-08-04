@@ -167,25 +167,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const aretes = plat.aretes as unknown as Edge[];
     const priorite = noeudPrioritaireId ?? prioritaireRef.current;
 
-    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
-    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
-    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
-    const validation = validerGraphe(
-      plat.noeuds,
-      aretes as unknown as AreteG[],
-      (ficheId) => trouverDef(ficheId),
-      registre.fluxCompatibles,
-    );
-    const noeudsEnErreur = new Set<string>();
-    for (const [nodeId, msgs] of validation.noeudsAffectes) {
-      noeudsEnErreur.add(nodeId);
-      definirStatut(nodeId, "erreur", msgs[0]);
-    }
-
     // Topologie (logique pure testée — cf. core/graphe.ts)
     const aretesG = aretes as unknown as AreteG[];
     const ordonnees = ordreTopologique(nds.map((n) => n.id), aretesG);
     let ordreFiltre = ordonnees;
+    // Périmètre d'un run ciblé (nœud prioritaire) : null = run global (tout le graphe).
+    let ancPriorite: Set<string> | null = null;
     if (priorite) {
       // Si le nœud prioritaire est un méta, il n'existe pas dans le graphe aplati
       // (il est expansé) : cibler ses nœuds de sortie internes aplatis, sinon
@@ -196,7 +183,30 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (metaPrio) cibles = (metaPrio.mapSorties as { noeudInterne: string }[]).map((m) => `${priorite}::${m.noeudInterne}`);
       const anc = new Set<string>();
       for (const c of cibles) for (const a of ancetres(c, aretesG)) anc.add(a);
+      ancPriorite = anc;
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
+    }
+
+    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
+    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
+    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
+    // `validerGraphe` inspecte TOUT le graphe (entrées obligatoires non connectées
+    // comprises) : sur un run ciblé (nœud prioritaire), un nœud hors périmètre —
+    // même totalement déconnecté du nœud lancé — se faisait donc marquer « erreur »
+    // alors qu'il n'a ni lien ni exécution avec le nœud sur lequel on a cliqué
+    // « lancer ». On restreint donc l'application des résultats de validation au
+    // périmètre du run (`ancPriorite`), comme le fait déjà `ordreFiltre` plus bas.
+    const validation = validerGraphe(
+      plat.noeuds,
+      aretes as unknown as AreteG[],
+      (ficheId) => trouverDef(ficheId),
+      registre.fluxCompatibles,
+    );
+    const noeudsEnErreur = new Set<string>();
+    for (const [nodeId, msgs] of validation.noeudsAffectes) {
+      if (ancPriorite && !ancPriorite.has(nodeId)) continue;
+      noeudsEnErreur.add(nodeId);
+      definirStatut(nodeId, "erreur", msgs[0]);
     }
     // Un méta est « dans le périmètre » du run ssi au moins un de ses nœuds internes
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
