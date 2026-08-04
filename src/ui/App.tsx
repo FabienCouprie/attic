@@ -130,6 +130,11 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "rendu-image") return { width: 320, height: 320 };
   if (def.id === "entree-image") return { width: 320, height: 320 };
   if (def.id === "lecteur-svg") return { width: 320, height: 320 };
+  if (def.id.startsWith("vexflow-")) {
+    const largeur = Number(def.parametres.find((p) => p.nom === "Largeur" || p.nomEn === "Width")?.defaut ?? 500);
+    const hauteur = Number(def.parametres.find((p) => p.nom === "Hauteur" || p.nomEn === "Height")?.defaut ?? 160);
+    return { width: largeur, height: hauteur };
+  }
   if (def.id === "galerie-exposition") return { width: 280, height: 280 };
   if (def.id === "gestion-nodes") return { width: 280, height: 220 };
   if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };

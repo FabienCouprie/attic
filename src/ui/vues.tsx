@@ -1195,14 +1195,14 @@ function VueVexFlow({ data }: VueProps) {
   const isSvg = svg.trim().startsWith("<svg");
   if (!isSvg) {
     return (
-      <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px" }}>
+      <div className="nodrag attic-node-vue-vexflow" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px" }}>
         <div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div>
       </div>
     );
   }
   return (
-    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      <div style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="nodrag attic-node-vue-vexflow" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
 }

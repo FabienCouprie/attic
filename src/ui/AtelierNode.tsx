@@ -103,6 +103,9 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const nodeEstMeta = estMeta(data.ficheId as string);
   const nodeEstCommentaire = data.ficheId === "comment";
   const estCadre = data.ficheId === "frame";
+  const estVexFlow = data.ficheId.startsWith("vexflow-");
+  const paramLargeur = def?.parametres.find((p) => p.nom === "Largeur" || p.nomEn === "Width");
+  const paramHauteur = def?.parametres.find((p) => p.nom === "Hauteur" || p.nomEn === "Height");
   const replie = data.replie === true;
   const categorie = categorieNoeud(data.ficheId, def);
   const categorieClass = categorie !== "autre" ? `attic-node-categorie-${categorie}` : "";
@@ -251,6 +254,23 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
         </svg>
       )}
       {flash && <div className={`attic-node-flash ${flash}`} />}
+      {estVexFlow && (
+        <NodeResizer
+          minWidth={Math.max(200, paramLargeur?.plage?.[0] ?? 200)}
+          maxWidth={Math.min(2000, paramLargeur?.plage?.[1] ?? 2000)}
+          minHeight={Math.max(100, paramHauteur?.plage?.[0] ?? 100)}
+          maxHeight={Math.min(1000, paramHauteur?.plage?.[1] ?? 1000)}
+          isVisible={selected}
+          lineClassName="attic-node-vexflow-resize-line"
+          handleClassName="attic-node-vexflow-resize-handle"
+          onResizeEnd={(_, { width, height }) => {
+            const w = Math.round(width);
+            const h = Math.round(height);
+            data.onChangerParametre?.(id, "Largeur", w);
+            data.onChangerParametre?.(id, "Hauteur", h);
+          }}
+        />
+      )}
       {/* En-tête */}
       <div className="attic-node-entete" title={descriptionTooltip}>
         <span className="attic-node-nom">
