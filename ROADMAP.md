@@ -49,6 +49,7 @@ Continuously verified state (2026-08-04): **tsc 0 errors · 213 catalog componen
 - ✅ **Whisper (Multilingual)** — 99 languages + translate-to-English option (`whisper-large-v2`, ~1.5 GB).
 - ✅ **Whisper translation** — text → TTS → Whisper translate → English text (internal chain).
 - ✅ **OPUS-MT translation** — 18 text→text language pairs (lightweight models ~30 MB).
+- ⏸️ **Text-to-image — paused by owner decision (2026-08-04).** Investigated a local, no-API image-generation node to match the pattern above. Finding: unlike every model listed here (tens–few hundred MB, `device: "wasm"`, pure CPU), a diffusion UNet is structurally in a different weight class (~800M–1B params) — even the lightest practical option (LCM Dreamshaper v7, few-step) is a ~4.28 GB ONNX download, and reference browser implementations (e.g. `lacerbi/web-txt2img`) confirm CPU/WASM inference for diffusion models is experimental/unreliable; real speed requires WebGPU, which nothing else in this app depends on. Revisit if either (a) a genuinely small, pre-converted-to-ONNX, CPU-viable text-to-image model becomes available, or (b) the app decides to adopt WebGPU as a supported backend for select nodes.
 
 ### Data collections
 - ✅ **Musical styles** — 200+ styles across 11 categories (Rock/Metal/Pop/Electronic/Hip-Hop/Jazz/Blues-Soul-Funk/Country-Folk/Reggae-Latin/Classical/World).
