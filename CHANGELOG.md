@@ -4,6 +4,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.3] — 2026-08-05
+
+### Fixed
+- **Nœud « Entrée texte » partiellement traduit en anglais.** Le placeholder et le compteur de caractères de la vue du nœud étaient codés en dur en français ; ils passent désormais par le dictionnaire i18n et s'affichent en anglais quand la langue est EN.
+- **Passe de traduction anglaise.** Correction de nombreuses traductions anglaises erronées ou incomplètes : `chord(s)` (et non `agreement`), `drums` (et non `battery`), `vocal ranges` (et non `tesses`), `lyrics` (et non `words`), `steps` (et non `not`), la typo `seed`/`see`, les messages tronqués de Julia/Python/Pure Data, les messages mal formés d'export/install de nœud, et de nombreuses formulations de progress.
+- **Bordure des ports de nœud en thème black.** Passe de `--bg-surface` à `--bg-node` dans `AtelierNode.tsx` pour un meilleur contraste sur le fond du nœud.
+
 ## [3.0.2] — 2026-08-05
 
 ### Fixed

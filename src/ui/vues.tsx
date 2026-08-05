@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
-import { useI18n, defautParametre } from "../i18n";
+import { useI18n, defautParametre, traduire } from "../i18n";
 import { copierTexte } from "./copier";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
@@ -1258,6 +1258,7 @@ function VueVuMetre({ data }: VueProps) {
 
 // ── Source de texte (zone de texte éditable et redimensionnable) ──
 function VueSourceTexte({ id, data }: VueProps) {
+  const { t } = useI18n();
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
   const texte = String(data.parametres?.["Texte"] ?? "");
   return (
@@ -1276,11 +1277,11 @@ function VueSourceTexte({ id, data }: VueProps) {
           borderRadius: 4, padding: "6px 8px", outline: "none",
           boxSizing: "border-box",
         }}
-        placeholder="Saisissez votre texte ici…"
+        placeholder={t("node.source_texte.placeholder")}
         onClick={(e) => e.stopPropagation()}
       />
       <div style={{ fontSize: 10, marginTop: 3, color: "var(--text-muted, #666)" }}>
-        {texte.length} caractères
+        {traduire("msg.var_0_caract_res", texte.length)}
       </div>
     </div>
   );
