@@ -95,7 +95,7 @@
   --text-badge: #999;
   --success: #40c057;
   --success-dim: #2b5a35;
-  --running-outline: var(--bg-surface-alt);
+  --termine-outline: var(--bg-surface-alt);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -353,14 +353,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 
 .attic-node.running {
-  outline: 2px solid var(--running-outline, var(--success));
+  outline: 2px solid var(--success);
   outline-offset: 2px;
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--running-outline, var(--success)) 40%, transparent);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--success) 40%, transparent);
   animation: node-running-pulse 1.5s ease-in-out infinite;
   z-index: 10;
 }
 .attic-node.termine {
-  outline: 2px solid #3bc049;
+  outline: 2px solid var(--termine-outline, #3bc049);
   outline-offset: 2px;
   z-index: 10;
 }
