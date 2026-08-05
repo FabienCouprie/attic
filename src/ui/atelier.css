@@ -73,7 +73,8 @@
    sélection) qui lit var(--border)/var(--bg-btn)/etc. hérite automatiquement
    de ces valeurs plutôt que de celles du thème, sans toucher un seul sélecteur
    supplémentaire. */
-[data-theme="black"] .attic-node {
+[data-theme="black"] .attic-node,
+[data-theme="dark"] .attic-node {
   --bg-node: #1a1a1e;
   --bg-surface: #1a1a1e;
   --bg-input: #1a1a1e;
@@ -94,6 +95,7 @@
   --text-badge: #999;
   --success: #40c057;
   --success-dim: #2b5a35;
+  --running-outline: var(--bg-surface-alt);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -351,15 +353,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 
 .attic-node.running {
-  outline: 2px solid var(--success);
+  outline: 2px solid var(--running-outline, var(--success));
   outline-offset: 2px;
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--success) 40%, transparent);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--running-outline, var(--success)) 40%, transparent);
   animation: node-running-pulse 1.5s ease-in-out infinite;
   z-index: 10;
-}
-[data-theme="black"] .attic-node.running {
-  outline-color: var(--bg-surface-alt);
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--bg-surface-alt) 40%, transparent);
 }
 .attic-node.termine {
   outline: 2px solid #3bc049;
