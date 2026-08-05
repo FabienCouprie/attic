@@ -4,6 +4,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+- **Police Gras du générateur de pochette non appliquée.** Le style `"font-weight:900"` était injecté directement dans la balise SVG comme un attribut mal formé, sans guillemets ni préfixe `style=`. La police Gras (Impact) et l'italique Serif (Georgia) utilisent maintenant des attributs SVG valides (`font-weight="900"` / `font-style="italic"`).
+- **Régression de renommage des méta-composants.** Le champ `data.nom` (nom personnalisé d'un méta-composant, d'un commentaire ou d'un cadre) n'était pas dans la liste `CHAMPS_UTILISATEUR`. Copier/coller un méta-composant renommé le faisait donc revenir à son nom par défaut. Le champ est désormais préservé comme les autres champs saisis par l'utilisateur.
+
+### Changed
+- **Stabilisation du test de réduction de bruit.** `effets-dynamique.test.ts` utilisait `Math.random()` pour générer le bruit de test, ce qui rendait le test `réduit l'énergie du bruit sur un signal sinus + bruit` aléatoirement instable. Un générateur pseudo-aléatoire déterministe (`mulberry32`) remplace désormais `Math.random()` dans ce fichier de test.
+
 ## [3.0.1] — 2026-08-05
 
 ### Fixed

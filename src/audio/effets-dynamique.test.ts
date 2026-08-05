@@ -3,12 +3,24 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { calculerProfilBruit, reduireBruit, reduireBruitNotches } from "./effets-dynamique";
 
+function mulberry32(seed: number): () => number {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rngTest = mulberry32(20260805);
+
 function bruitBlanc(dureeS: number, sr = 44100, channels = 1): AudioBuffer {
   const len = Math.round(dureeS * sr);
   const buf = new AudioBuffer({ numberOfChannels: channels, length: len, sampleRate: sr });
   for (let c = 0; c < channels; c++) {
     const ch = buf.getChannelData(c);
-    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < len; i++) ch[i] = rngTest() * 2 - 1;
   }
   return buf;
 }
@@ -20,7 +32,7 @@ function signalAvecBruit(signalAmp: number, bruitAmp: number, sr = 44100): Audio
   for (let i = 0; i < len; i++) {
     const t = i / sr;
     const signal = signalAmp * Math.sin(2 * Math.PI * 440 * t);
-    const bruit = bruitAmp * (Math.random() * 2 - 1);
+    const bruit = bruitAmp * (rngTest() * 2 - 1);
     ch[i] = signal + bruit;
   }
   return buf;

@@ -32,6 +32,7 @@ const trouverDef = (id: string) => registre.trouverDef(id);
 // étaient copiés par erreur avec le reste de `data`.
 export const CHAMPS_UTILISATEUR = new Set([
   "ficheId",
+  "nom",
   "parametres",
   "zonesSelectionnees",
   "audioFichier",
