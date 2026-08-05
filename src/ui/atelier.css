@@ -327,7 +327,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 .attic-node-progress-ring-bg { stroke: rgba(255,255,255,0.12); }
 .attic-node-progress-ring-bar {
-  stroke: var(--success);
+  stroke: var(--execution-outline, var(--success));
   transition: stroke-dashoffset 0.2s ease;
 }
 .attic-node-progress-ring-bar.indeterminate {
