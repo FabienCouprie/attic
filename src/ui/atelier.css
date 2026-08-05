@@ -95,7 +95,7 @@
   --text-badge: #999;
   --success: #40c057;
   --success-dim: #2b5a35;
-  --execution-outline: var(--bg-surface-alt);
+  --execution-outline: #36a2eb;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

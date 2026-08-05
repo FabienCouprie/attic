@@ -12,7 +12,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 - **Stabilisation du test de réduction de bruit.** `effets-dynamique.test.ts` utilisait `Math.random()` pour générer le bruit de test, ce qui rendait le test `réduit l'énergie du bruit sur un signal sinus + bruit` aléatoirement instable. Un générateur pseudo-aléatoire déterministe (`mulberry32`) remplace désormais `Math.random()` dans ce fichier de test.
-- **Thème black : liserets et anneau d'exécution en bleu catalogue.** Dans le thème `data-theme="black"`, les liserets du nœud en cours d'exécution (`attic-node.running`) et du nœud terminé (`attic-node.termine`), ainsi que l'anneau de progression dans le coin bas droite (`attic-node-progress-ring-bar`), passent du vert au bleu du fond de la palette (`--bg-surface-alt`).
+- **Thème black : liserets et anneau d'exécution en bleu connexion texte.** Dans le thème `data-theme="black"`, les liserets du nœud en cours d'exécution (`attic-node.running`) et du nœud terminé (`attic-node.termine`), ainsi que l'anneau de progression dans le coin bas droite (`attic-node-progress-ring-bar`), passent du vert au bleu des connexions texte (`#36a2eb`).
 
 ## [3.0.1] — 2026-08-05
 
