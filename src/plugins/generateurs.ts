@@ -1,7 +1,7 @@
 // plugins/generateurs.ts — Nœuds generateurs (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import {
   decoderFichier, decoderBlob,
   genererMelodieAleatoire, genererMusiqueFractale, genererBoiteRythmes,
@@ -13,6 +13,7 @@ import {
   genererMusiqueMandelbrot,
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
+  frequenceDeNoteMidi,
   type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
@@ -20,6 +21,26 @@ import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+
+/**
+ * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
+ * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
+ * Retourne null si la note est invalide.
+ */
+function noteVersFrequence(note: string): number | null {
+  const n = note.trim().replace(/\s+/g, "");
+  const m = n.match(/^([A-Ga-g])([#♯]|[b♭])?(-?\d+)$/);
+  if (!m) return null;
+  const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  let pc = tbl[m[1].toUpperCase()] ?? 9;
+  const alt = m[2] ?? "";
+  if (alt === "#" || alt === "♯") pc += 1;
+  else if (alt === "b" || alt === "♭") pc -= 1;
+  const midi = (parseInt(m[3]) + 1) * 12 + pc;
+  return frequenceDeNoteMidi(midi);
+}
+
+const FORMES_FREQ = { ids: ["sine", "square", "saw", "triangle"], fr: ["Sinus", "Carré", "Scie", "Triangle"], en: ["Sine", "Square", "Saw", "Triangle"] };
 
 export const fiches: FicheAudio[] = ([
   {
@@ -250,7 +271,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "FFT", nomEn: "FFT", type: "choix", options: ["512", "1024", "2048", "4096"], defaut: "2048", optionsEn: ["512", "1024", "2048", "4096"], defautEn: "2048", doc: "Taille de la fenêtre FFT : plus grand = meilleure résolution fréquentielle, moins bonne temporelle.", docEn: "FFT window size: larger = finer frequency resolution, coarser time resolution." },
       { nom: "Octaves", nomEn: "Octaves", type: "nombre", plage: [1, 8], pas: 1, defaut: 4, doc: "Nombre d'octaves de bruit fractal.", docEn: "Number of fractal noise octaves." },
       { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
-      { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },
+      { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], optionsEn: ["Logarithmic", "Linear"], optionIds: ["logarithmic", "linear"], defaut: "Logarithmique", defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour reproduire la même texture fractale.", docEn: "Seed to reproduce the same fractal texture." },
       { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], defaut: "PNG", optionsEn: ["PNG", "JPEG"], defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
     ],
@@ -261,7 +282,7 @@ export const fiches: FicheAudio[] = ([
         fftSize,
         octaves: ctx.paramNombre("Octaves", 4),
         roughness: ctx.paramNombre("Rugosité", 0.5),
-        forme: ctx.paramTexte("Échelle", "Logarithmique").toLowerCase() as any,
+        forme: ctx.paramTexte("Échelle", "logarithmic") as any,
         graine: ctx.paramNombre("Graine", 42),
       });
       const fmt = ctx.paramTexte("Format", "PNG");
@@ -348,15 +369,14 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Personnalisé"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Custom"], defaut:"Rock", defautEn: "Rock" },
-      { nom:"Code personnalisé", nomEn:"Custom code", type:"texte", defaut:"", defautEn: "" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Military march","Pop ballad","Pop dance","Pop latin","Pop folk","Pop R&B","Pop punk","Waltz","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], defaut:"Rock", defautEn: "Rock" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
       { nom:"Charley", nomEn:"Hi-hat", plage:[0,100], defaut:60, unite:"%" },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramTexte("Code personnalisé",""),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
+      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
     },
   },
   {
@@ -368,15 +388,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM", doc: "Vitesse du groove en battements par minute.", docEn: "Groove speed in beats per minute." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de niveaux de récursion de la suppression de pas (plus = plus fractal).", docEn: "Number of recursion levels of beat removal (higher = more fractal)." },
       { nom: "Subdivision", nomEn: "Subdivision", type: "choix", options: ["3", "5", "7"], optionsEn: ["3", "5", "7"], defaut: "3", defautEn: "3", doc: "Nombre de segments dans lesquels chaque intervalle est divisé à chaque récursion.", docEn: "Number of segments each interval is divided into at each recursion." },
-      { nom: "Partie retirée", nomEn: "Removed part", type: "choix", options: ["Centre", "Gauche", "Droite", "Aléatoire"], optionsEn: ["Center", "Left", "Right", "Random"], defaut: "Centre", defautEn: "Center", doc: "Partie de l'intervalle retirée à chaque niveau de récursion.", docEn: "Part of the interval removed at each recursion level." },
-      { nom: "Instrument", nomEn: "Instrument", type: "choix", options: ["Kick", "Caisse claire", "Charley", "Tous"], optionsEn: ["Kick", "Snare", "Hi-hat", "All"], defaut: "Tous", defautEn: "All", doc: "Percussion(s) jouée(s) par les pas survivants.", docEn: "Drum(s) played by the surviving steps." },
+      { nom: "Partie retirée", nomEn: "Removed part", type: "choix", options: ["Centre", "Gauche", "Droite", "Aléatoire"], optionsEn: ["Center", "Left", "Right", "Random"], optionIds: ["center", "left", "right", "random"], defaut: "Centre", defautEn: "Center", doc: "Partie de l'intervalle retirée à chaque niveau de récursion.", docEn: "Part of the interval removed at each recursion level." },
+      { nom: "Instrument", nomEn: "Instrument", type: "choix", options: ["Kick", "Caisse claire", "Charley", "Tous"], optionsEn: ["Kick", "Snare", "Hi-hat", "All"], optionIds: ["kick", "snare", "hihat", "all"], defaut: "Tous", defautEn: "All", doc: "Percussion(s) jouée(s) par les pas survivants.", docEn: "Drum(s) played by the surviving steps." },
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2, doc: "Nombre de mesures générées.", docEn: "Number of bars generated." },
       { nom: "Swing", nomEn: "Swing", type: "nombre", plage: [0, 100], defaut: 0, unite: "%", doc: "Décalage des temps impairs pour un feeling swing/shuffle.", docEn: "Offset of odd beats for a swing/shuffle feel." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%", doc: "Volume de sortie du groove.", docEn: "Output volume of the groove." },
     ],
     async executer(ctx: any) {
-      const partie = ctx.paramTexte("Partie retirée", "Centre").toLowerCase() as any;
-      const partieValide = ["centre", "gauche", "droite", "aleatoire"].includes(partie) ? partie : "centre";
+      const partie = ctx.paramTexte("Partie retirée", "center") as any;
+      const partieValide = ["center", "left", "right", "random"].includes(partie) ? partie : "center";
       const subdivision = parseInt(ctx.paramTexte("Subdivision", "3"), 10);
       const subdivisionValide = [3, 5, 7].includes(subdivision) ? subdivision : 3;
       const buffer = await genererRythmeCantor(
@@ -385,7 +405,7 @@ export const fiches: FicheAudio[] = ([
         subdivisionValide,
         partieValide,
         ctx.paramNombre("Mesures", 2),
-        ctx.paramTexte("Instrument", "Tous") as any,
+        ctx.paramTexte("Instrument", "all") as any,
         ctx.paramNombre("Volume", 80),
         ctx.paramNombre("Swing", 0),
       );
@@ -509,7 +529,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Saisie", nomEn: "Input", type: "choix", options: ["Fréquence (Hz)", "Note"], optionsEn: ["Frequency (Hz)", "Note"], defaut: "Fréquence (Hz)",
+      { nom: "Saisie", nomEn: "Input", type: "choix", options: ["Fréquence (Hz)", "Note"], optionsEn: ["Frequency (Hz)", "Note"], optionIds: ["frequency", "note"], defaut: "Fréquence (Hz)",
         doc: "Mode de saisie : en Hz (ex. 440) ou en note musicale (ex. A4, C#5).",
         docEn: "Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5).", defautEn: "Frequency (Hz)" },
       { nom: "Fréquence", nomEn: "Frequency", plage: [20, 20000], pas: 1, defaut: 440, unite: "Hz",
@@ -517,8 +537,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A4",
         doc: "Note musicale (utilisé si « Saisie » = Note). Format : lettre + altération + octave, ex. C4, F#5, Bb3.",
-        docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. C4, F#5, Bb3.", defautEn: "A4" },
-      { nom: "Forme", nomEn: "Waveform", type: "choix", options: ["Sinus", "Carré", "Scie", "Triangle"], optionsEn: ["Sine", "Square", "Saw", "Triangle"], defaut: "Sinus",
+        docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3.", defautEn: "A4" },
+      { nom: "Forme", nomEn: "Waveform", type: "choix", options: ["Sinus", "Carré", "Scie", "Triangle"], optionsEn: ["Sine", "Square", "Saw", "Triangle"], optionIds: FORMES_FREQ.ids, defaut: "Sinus",
         doc: "Forme d'onde. Sinus = pur (une seule fréquence) ; Carré = harmoniques impaires ; Scie = toutes les harmoniques ; Triangle = harmoniques impaires douces.",
         docEn: "Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics.", defautEn: "Sine" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
@@ -526,30 +546,27 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
-      const saisie = ctx.paramTexte("Saisie", "Fréquence (Hz)");
+      const saisie = ctx.paramTexte("Saisie", "frequency").trim().toLowerCase();
+      const enModeNote = saisie === "note" || saisie.startsWith("note");
       let freq: number;
-      if (saisie === "Note") {
+      if (enModeNote) {
         const noteStr = ctx.paramTexte("Note", "A4");
-        const m = noteStr.match(/^([A-G])(#|b)?(-?\d+)$/);
-        if (!m) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
-        const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-        let pc = tbl[m[1]] ?? 9;
-        if (m[2] === "#") pc += 1; else if (m[2] === "b") pc -= 1;
-        const midi = (parseInt(m[3]) + 1) * 12 + pc;
-        freq = 440 * Math.pow(2, (midi - 69) / 12);
+        const parsed = noteVersFrequence(noteStr);
+        if (parsed == null) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
+        freq = parsed;
       } else {
         freq = ctx.paramNombre("Fréquence", 440);
       }
       freq = Math.max(20, Math.min(20000, freq));
 
-      const forme = ctx.paramTexte("Forme", "Sinus");
+      const forme = ctx.paramTexte("Forme", "sine");
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
       const sr = 44100;
       const len = Math.max(1, Math.floor(duree * sr));
       const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
       const vol = Math.max(0, Math.min(1, volume / 100)) * 0.7;
-      const typeOsc: OscillatorType = forme === "Carré" ? "square" : forme === "Scie" ? "sawtooth" : forme === "Triangle" ? "triangle" : "sine";
+      const typeOsc: OscillatorType = forme === "square" ? "square" : forme === "saw" ? "sawtooth" : forme === "triangle" ? "triangle" : "sine";
 
       for (let ch = 0; ch < 2; ch++) {
         const d = buf.getChannelData(ch);
@@ -569,8 +586,9 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
-      const noteAff = saisie === "Note" ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
-      return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, forme, duree.toFixed(1)) };
+      const noteAff = enModeNote ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
+      const labelForme = (langueCourante() === "en" ? FORMES_FREQ.en : FORMES_FREQ.fr)[FORMES_FREQ.ids.indexOf(forme)] ?? forme;
+      return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, labelForme, duree.toFixed(1)) };
     },
   },
   {
@@ -585,14 +603,14 @@ export const fiches: FicheAudio[] = ([
         docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * ft * 440)" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
-      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], defaut: "Stéréo",
+      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo",
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels.", defautEn: "Stereo" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440)");
       const duree = ctx.paramNombre("Durée", 2);
-      const channels = ctx.paramTexte("Canaux", "Stéréo") === "Mono" ? 1 : 2;
+      const channels = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
       const volume = ctx.paramNombre("Volume", 80);
       try {
         const buf = genererAudioFormule(formule, duree, 44100, channels);
@@ -625,7 +643,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", plage: [1, 60], pas: 1, defaut: 10, unite: "s",
         doc: "Durée totale du métronome.", docEn: "Total duration of the metronome." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
-        options: ["Clic", "Woodblock", "Bip"], optionsEn: ["Click", "Woodblock", "Beep"], defaut: "Clic",
+        options: ["Clic", "Woodblock", "Bip"], optionsEn: ["Click", "Woodblock", "Beep"], optionIds: ["click", "woodblock", "beep"], defaut: "Clic",
         doc: "Son du clic. Clic = transitoire court ; Woodblock = résonance bois ; Bip = sinus bref.",
         docEn: "Click sound. Click = short transient; Woodblock = woody resonance; Beep = brief sine.", defautEn: "Click" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
@@ -634,7 +652,7 @@ export const fiches: FicheAudio[] = ([
       const tempo = ctx.paramNombre("Tempo", 120);
       const sig = ctx.paramTexte("Signature", "4/4");
       const duree = ctx.paramNombre("Durée", 10);
-      const timbre = ctx.paramTexte("Timbre", "Clic");
+      const timbre = ctx.paramTexte("Timbre", "click");
       const volume = ctx.paramNombre("Volume", 90);
       const sr = 44100;
       const vol = Math.max(0, Math.min(1, volume / 100));
@@ -650,7 +668,7 @@ export const fiches: FicheAudio[] = ([
 
       function ecrireClic(pos: number, accent: boolean) {
         const amp = accent ? vol * 0.9 : vol * 0.5;
-        if (timbre === "Bip") {
+        if (timbre === "beep") {
           const freq = accent ? 1500 : 1000;
           const dureeClic = 0.02;
           const n = Math.floor(dureeClic * sr);
@@ -661,7 +679,7 @@ export const fiches: FicheAudio[] = ([
             buf.getChannelData(0)[pos + i] += s;
             buf.getChannelData(1)[pos + i] += s;
           }
-        } else if (timbre === "Woodblock") {
+        } else if (timbre === "woodblock") {
           const freq = accent ? 800 : 600;
           const dureeClic = 0.05;
           const n = Math.floor(dureeClic * sr);
@@ -703,10 +721,13 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reservoir-musical", nom: "Réservoir neuronal", nomEn: "Neural Reservoir",
     univers: "Entrées", famille: "Génération",
-    resume: "Génère une mélodie émergente par réseau de neurones aléatoires (inspiré d'Allendia/EVY).",
-    resumeEn: "Generates emergent melody via random neural networks (inspired by Allendia/EVY).",
+    resume: "Génère une mélodie émergente par réseau de neurones aléatoires (inspiré d'Allendia/EVY). Sortie audio + sortie MIDI.",
+    resumeEn: "Generates emergent melody via random neural networks (inspired by Allendia/EVY). Audio output + MIDI output.",
     entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    sorties: [
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
+      { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+    ],
     parametres: [
       { nom: "Neurones", nomEn: "Neurons", plage: [5, 50], pas: 1, defaut: 15,
         doc: "Nombre de neurones dans le réservoir. Peu = motifs courts et répétitifs ; beaucoup = motifs complexes et chaotiques.",
@@ -743,9 +764,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
+      PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
-      const { genererReservoirMusical, rendreReservoirAudio } = await import("../audio");
+      const { genererReservoirMusical, rendreReservoirAudio, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
       const config = {
@@ -771,87 +793,18 @@ export const fiches: FicheAudio[] = ([
       const { notes, graineUtilisee } = genererReservoirMusical(config);
       ctx.onProgress(traduire("progress.rendu_audio"));
       const buf = rendreReservoirAudio(notes, config);
-      const nbNotes = notes.filter((n: any) => !n.silence).length;
-      return { valeurs: [buf], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
-    },
-  },
-  {
-    id: "reservoir-midi", nom: "Réservoir neuronal MIDI", nomEn: "Neural Reservoir MIDI",
-    univers: "Entrées", famille: "Génération",
-    resume: "Génère un fichier MIDI par réseau de neurones aléatoires (branchable sur Arpégiateur, Transposeur, Sortie MIDI).",
-    resumeEn: "Generates a MIDI file via random neural networks (connectable to Arpeggiator, Transposer, MIDI Output).",
-    entrees: [],
-    sorties: [{ nom: "MIDI", type: "midi" }],
-    parametres: [
-      { nom: "Neurones", nomEn: "Neurons", plage: [5, 50], pas: 1, defaut: 15,
-        doc: "Nombre de neurones dans le réservoir. Peu = motifs courts et répétitifs ; beaucoup = motifs complexes et chaotiques.",
-        docEn: "Number of neurons in the reservoir. Few = short repetitive patterns; many = complex chaotic patterns." },
-      { nom: "Connectivité", nomEn: "Connectivity", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
-        doc: "Probabilité de connexion entre neurones. Faible = motifs simples ; élevée = motifs denses.",
-        docEn: "Probability of connection between neurons. Low = simple patterns; high = dense patterns." },
-      { nom: "Mémoire", nomEn: "Memory", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
-        doc: "Taux de fuite (leaking). Élevé = mémoire longue, motifs qui évoluent lentement ; faible = réactions brèves.",
-        docEn: "Leaking rate. High = long memory, slowly evolving patterns; low = brief reactions." },
-      { nom: "Spectre", nomEn: "Spectral radius", plage: [50, 150], pas: 1, defaut: 90, unite: "%",
-        doc: "Rayon spectral du réseau. <100% = stable (converge) ; >100% = chaotique (diverge). 90% = sweet spot mélodique.",
-        docEn: "Network spectral radius. <100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot." },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"], defaut: "majeur",
-        doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatic"], defautEn: "major" },
-      { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 4,
-        doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
-      { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
-      { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
-        doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
-        doc: "Probabilité de produire une note à chaque pas. Élevée = mélodie dense ; faible = mélodie éparse.", docEn: "Probability of producing a note at each step. High = dense melody; low = sparse melody." },
-      { nom: "Répétition", nomEn: "Repetition", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
-        doc: "Tendance à répéter la note précédente. Élevée = motifs accrocheurs ; faible = variation continue.", docEn: "Tendency to repeat the previous note. High = catchy patterns; low = continuous variation." },
-      { nom: "Silence", nomEn: "Silence", plage: [0, 50], pas: 1, defaut: 10, unite: "%",
-        doc: "Probabilité de silence à chaque pas. Crée des respirations dans la mélodie.", docEn: "Probability of silence at each step. Creates breathing room in the melody." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
-        doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution). Même graine = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same melody." },
-      PARAMETRE_INSTRUMENT_SF2,
-    ],
-    async executer(ctx: any) {
-      const { genererReservoirMusical, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
-      const resolution = ctx.paramTexte("Résolution", "1/8");
-      const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
-      const config = {
-        taille: ctx.paramNombre("Neurones", 15),
-        connectivite: ctx.paramNombre("Connectivité", 30) / 100,
-        leaking: ctx.paramNombre("Mémoire", 30) / 100,
-        gain: 1.5,
-        spectre: ctx.paramNombre("Spectre", 90) / 100,
-        cle: ctx.paramTexte("Clé", "C"),
-        gamme: ctx.paramTexte("Gamme", "majeur"),
-        octave: ctx.paramNombre("Octave", 4),
-        tempo: ctx.paramNombre("Tempo", 120),
-        pasParBeat,
-        mesures: ctx.paramNombre("Mesures", 4),
-        volume: 85,
-        timbre: "Triangle",
-        graine: ctx.paramNombre("Graine", 0),
-        probaNote: ctx.paramNombre("Densité", 70) / 100,
-        repetition: ctx.paramNombre("Répétition", 25) / 100,
-        silence: ctx.paramNombre("Silence", 10) / 100,
-      };
-      ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_neuronal"));
-      const { notes, graineUtilisee } = genererReservoirMusical(config);
       const notesJouees = notes.filter((n: any) => !n.silence);
-      if (notesJouees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_g_n_r_e") };
-      const fichier = await appliquerInstrumentMidi(
-        notesVersFichierMidi(
-          notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
-          config.tempo,
-        ),
-        ctx.paramNombre("Instrument", 0),
-      );
-      return { valeurs: [fichier], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2", config.taille, notesJouees.length, graineUtilisee) };
+      const midiFile = notesJouees.length === 0
+        ? null
+        : await appliquerInstrumentMidi(
+            notesVersFichierMidi(
+              notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
+              config.tempo,
+            ),
+            ctx.paramNombre("Instrument", 0),
+          );
+      const nbNotes = notesJouees.length;
+      return { valeurs: [buf, midiFile], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
     },
   },
   {

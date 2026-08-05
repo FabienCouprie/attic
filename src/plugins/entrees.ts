@@ -3,7 +3,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { decoderFichier, decoderBlob } from "../audio";
+import { decoderFichier, decoderBlob, filtrerCanauxMidi, rendreMidi, appliquerInstrumentMidi } from "../audio";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 const entrees: FicheAudio[] = [
   {
@@ -68,12 +69,44 @@ const entrees: FicheAudio[] = [
     },
   },
   {
+    id: "capture-midi", nom: "Capture MIDI", nomEn: "MIDI Capture", univers: "Entrées", famille: "Audio",
+    resume: "Enregistre une performance jouée sur un clavier ou contrôleur MIDI branché.",
+    resumeEn: "Records a performance played on a connected MIDI keyboard or controller.",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2_SUIVI,
+      { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
+    ],
+    // Même dispositif de synthèse que « Lecteur MIDI » (sorties.ts) : la
+    // performance capturée est un fichier MIDI comme un autre une fois
+    // enregistrée (posé sur ctx.noeud.data.midiFichier par l'inspecteur).
+    async executer(ctx: any) {
+      const midi = ctx.noeud.data.midiFichier as File | undefined;
+      if (!midi) return { valeurs: [null, null], message: traduire("msg.aucune_performance_midi_cliquez_sur_enregistrer_dans_l_inspecteur") };
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const volume = ctx.paramNombre("Volume", 80);
+      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
+      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
+      return { valeurs: [buffer, midiFinal] };
+    },
+  },
+  {
     id: "generateur-musical", nom: "Générateur musical", nomEn: "Music Generator", univers: "Entrées", famille: "Génération",
-    resume: "Génère une composition multi-pistes à partir d'un script descriptif.",
-    resumeEn: "Generates a multi-track composition from a descriptive script.",
+    resume: "Génère une composition multi-pistes à partir d'un script descriptif. Sortie audio + trois sorties MIDI (une par instrument).",
+    resumeEn: "Generates a multi-track composition from a descriptive script. Audio output + three MIDI outputs (one per instrument).",
     notice: "Script : genre=pop, tempo=120, cle=C, gamme=majeur, duree=30",
     noticeEn: "Script: genre=pop, tempo=120, cle=C, gamme=majeur, duree=30",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [], sorties: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "MIDI 1", nomEn: "MIDI 1", type: "midi" },
+      { nom: "MIDI 2", nomEn: "MIDI 2", type: "midi" },
+      { nom: "MIDI 3", nomEn: "MIDI 3", type: "midi" },
+    ],
     parametres: [
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
@@ -103,6 +136,7 @@ const entrees: FicheAudio[] = [
       const script = `genre = ${genre}\ntempo = ${tempo}\ncle = ${cle}\ngamme = ${gamme}\nduree = ${duree}\ninstr1 = ${instr1}\ninstr2 = ${instr2}\ninstr3 = ${instr3}`;
       const { midiBytes, description } = await genererDepuisScript(script);
 
+      let audioBuffer: AudioBuffer;
       const sf2 = sf2Chargee();
       if (sf2) {
         ctx.onProgress(traduire("progress.rendu_soundfont"));
@@ -124,11 +158,17 @@ const entrees: FicheAudio[] = [
             master.getChannelData(1)[i] += layer.getChannelData(1)[i];
           }
         }
-        return { valeurs: [master], message: traduire("msg.var_0_rendu_soundfont", description) };
+        audioBuffer = master;
+      } else {
+        ctx.onProgress(traduire("progress.rendu_fm"));
+        audioBuffer = await rendreMidiDepuisBytes(midiBytes, "FM/Oscillateurs", volume);
       }
-      ctx.onProgress(traduire("progress.rendu_fm"));
-      const buffer = await rendreMidiDepuisBytes(midiBytes, "FM/Oscillateurs", volume);
-      return { valeurs: [buffer], message: traduire("msg.var_0_rendu_fm", description) };
+
+      const midi1 = new File([filtrerCanauxMidi(midiBytes, [0]) as BlobPart], "music-gen-track1.mid", { type: "audio/midi" });
+      const midi2 = new File([filtrerCanauxMidi(midiBytes, [1]) as BlobPart], "music-gen-track2.mid", { type: "audio/midi" });
+      const midi3 = new File([filtrerCanauxMidi(midiBytes, [2]) as BlobPart], "music-gen-track3.mid", { type: "audio/midi" });
+
+      return { valeurs: [audioBuffer, midi1, midi2, midi3], message: traduire(sf2 ? "msg.var_0_rendu_soundfont" : "msg.var_0_rendu_fm", description) };
     },
   },
 ];

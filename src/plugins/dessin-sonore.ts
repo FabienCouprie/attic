@@ -1,0 +1,89 @@
+// plugins/dessin-sonore.ts — Nœud « Dessin sonore » (Kandinsky).
+// Lit une image contenant des formes colorées et sonifie chaque région connexe.
+// Position X → timing, position Y → hauteur, taille → durée/vélocité,
+// couleur → octave. Sortie audio + MIDI.
+
+import type { FicheAudio } from "../audio/types-domaine";
+import { genererDessinSonore, type FormeColoree } from "../audio";
+import { traduire } from "../i18n";
+import { avecDoc } from "./notices";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+
+const formatCouleur = (c: FormeColoree) => `rgb(${c.couleur.r},${c.couleur.g},${c.couleur.b})`;
+
+export const fiches: FicheAudio[] = ([
+  {
+    id: "dessin-sonore",
+    nom: "Dessin sonore",
+    nomEn: "Sound Drawing",
+    univers: "Autres",
+    famille: "Génération",
+    resume: "Sonifie les formes colorées d'une image (dessin) en notes ou accords.",
+    resumeEn: "Sonifies the colored shapes of a drawing image into notes or chords.",
+    entrees: [{ nom: "Image", type: "image" }],
+    sorties: [
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
+      { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+    ],
+    parametres: [
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defaut: "C",
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C",
+        doc: "Fondamentale de la gamme.", docEn: "Root note of the scale." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur", "mineur", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
+        optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
+        doc: "Gamme utilisée pour mapper les teintes.", docEn: "Scale used to map hues." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpège"], optionsEn: ["Melody", "Harmony", "Arpeggio"], defaut: "Mélodie", defautEn: "Melody",
+        doc: "Mélodie = une note par forme ; Harmonie = accord triadique par forme ; Arpège = accord triadique joué note après note.", docEn: "Melody = one note per shape; Harmony = triad chord per shape; Arpeggio = triad chord played one note after another." },
+      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
+        doc: "Octave de base.", docEn: "Base octave." },
+      { nom: "Portée", nomEn: "Range", type: "nombre", plage: [1, 3], pas: 1, defaut: 2,
+        doc: "Octaves de variation permises par la luminosité.", docEn: "Allowed octave variation from lightness." },
+      { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [1, 60], pas: 1, defaut: 8, unite: "s",
+        doc: "Durée totale de la séquence.", docEn: "Total duration of the sequence." },
+      { nom: "Couleurs", nomEn: "Colors", type: "nombre", plage: [2, 12], pas: 1, defaut: 4,
+        doc: "Nombre de couleurs dominantes à détecter.", docEn: "Number of dominant colors to detect." },
+      { nom: "Taille min", nomEn: "Min size", type: "nombre", plage: [0, 20], pas: 0.1, defaut: 0.5, unite: "%",
+        doc: "Surface minimale d'une forme colorée pour être conservée (en % de l'image).", docEn: "Minimum colored shape area to keep (percentage of image)." },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
+      PARAMETRE_INSTRUMENT_SF2,
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
+        doc: "Volume de sortie.", docEn: "Output volume." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM",
+        doc: "Tempo du fichier MIDI.", docEn: "Tempo of the MIDI file." },
+    ],
+    async executer(ctx: any) {
+      const image = ctx.entree(0);
+      if (!(image instanceof File)) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.connecter.image") };
+      }
+
+      const modeStr = ctx.paramTexte("Mode", "Mélodie").toLowerCase();
+      const mode = modeStr.includes("harm") ? "harmonie" : modeStr.includes("arp") ? "arpege" : "melodie";
+      const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
+
+      try {
+        const { audio, midi, formes } = await genererDessinSonore(image, {
+          cle: ctx.paramTexte("Clé", "C"),
+          gamme: ctx.paramTexte("Gamme", "majeur"),
+          mode,
+          octave: ctx.paramNombre("Octave", 4),
+          portee: ctx.paramNombre("Portée", 2),
+          duree: ctx.paramNombre("Durée", 8),
+          nbCouleurs: ctx.paramNombre("Couleurs", 4),
+          tailleMin: ctx.paramNombre("Taille min", 0.5) / 100,
+          modeRendu,
+          instrument: ctx.paramNombre("Instrument", 0),
+          volume: ctx.paramNombre("Volume", 80),
+          tempo: ctx.paramNombre("Tempo", 120),
+        });
+        const liste = formes.map(formatCouleur).join(", ");
+        return { valeurs: [audio, midi], message: `Dessin sonore · ${formes.length} formes · ${liste}` };
+      } catch (e: any) {
+        return { valeurs: [null, null], erreur: true, message: e?.message || traduire("msg.erreur") };
+      }
+    },
+  },
+] as FicheAudio[]).map(avecDoc);

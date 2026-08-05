@@ -11,6 +11,7 @@ import { fiches as f_sortie_texte } from "./sortie-texte";
 import { fiches as f_entrees_extra } from "./entrees-extra";
 import { fiches as f_generateurs } from "./generateurs";
 import { fiches as f_montage } from "./montage";
+import { fiches as f_melangeur_logistique } from "./melangeur-logistique";
 import { fiches as f_sortie_conversion } from "./sortie-conversion";
 import { fiches as f_separation } from "./separation";
 import { fiches as f_collections } from "./collections";
@@ -57,11 +58,21 @@ import { fiches as f_image_export } from "./image-export";
 import { fiches as f_export_svg } from "./export-svg";
 import { fiches as f_image_rendu } from "./image-rendu";
 import { fiches as f_pixeltone } from "./pixeltone";
+import { fiches as f_palette_harmonique } from "./palette-harmonique";
+import { fiches as f_dessin_sonore } from "./dessin-sonore";
+import { fiches as f_couleur_rgb } from "./couleur-rgb";
+import { fiches as f_spectre_visible } from "./spectre-visible";
+import { fiches as f_color_looper } from "./color-looper";
+import { fiches as f_camelot } from "./camelot";
 import { fiches as f_entree_image } from "./entree-image";
 import { fiches as f_lecteur_svg } from "./lecteur-svg";
+import { fiches as f_separateur_canaux } from "./separateur-canaux";
+import { fiches as f_hard_panner } from "./hard-panner";
 import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
+import { fiches as f_texte_image } from "./texte-image";
+import { fiches as f_legende_image } from "./legende-image";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -72,6 +83,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees_extra,
   ...f_generateurs,
   ...f_montage,
+  ...f_melangeur_logistique,
   ...f_sortie_conversion,
   ...f_separation,
   ...f_collections,
@@ -118,9 +130,19 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_export_svg,
   ...f_image_rendu,
   ...f_pixeltone,
+  ...f_palette_harmonique,
+  ...f_dessin_sonore,
+  ...f_couleur_rgb,
+  ...f_spectre_visible,
+  ...f_color_looper,
+  ...f_camelot,
   ...f_entree_image,
   ...f_lecteur_svg,
+  ...f_separateur_canaux,
+  ...f_hard_panner,
   ...f_ocr,
   ...f_carte_sonore,
   ...f_automate_cellulaire,
+  ...f_texte_image,
+  ...f_legende_image,
 ];

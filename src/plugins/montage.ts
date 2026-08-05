@@ -9,6 +9,56 @@ import {
 } from "../audio";
 import { avecDoc } from "./notices";
 
+function zonesValides(z: any) {
+  return (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
+}
+
+function fusionnerZones(zones: any[]): any[] {
+  if (zones.length === 0) return [];
+  const tri = [...zones].sort((a, b) => a.debut - b.debut);
+  const res = [tri[0]];
+  for (let i = 1; i < tri.length; i++) {
+    const last = res[res.length - 1];
+    const cur = tri[i];
+    if (cur.debut <= last.debut + last.duree) {
+      last.duree = Math.max(last.debut + last.duree, cur.debut + cur.duree) - last.debut;
+    } else {
+      res.push(cur);
+    }
+  }
+  return res;
+}
+
+function complementZones(zones: any[], dureeTotale: number): any[] {
+  if (zones.length === 0) return [{ debut: 0, duree: dureeTotale }];
+  const res: any[] = [];
+  let fin = 0;
+  for (const z of zones) {
+    if (z.debut > fin) res.push({ debut: fin, duree: z.debut - fin });
+    fin = Math.max(fin, z.debut + z.duree);
+  }
+  if (fin < dureeTotale) res.push({ debut: fin, duree: dureeTotale - fin });
+  return res;
+}
+
+function appliquerFonduSegment(src: Float32Array, dst: Float32Array, offset: number, len: number, fonduEch: number) {
+  if (fonduEch <= 0) {
+    for (let i = 0; i < len; i++) dst[offset + i] = src[i];
+    return;
+  }
+  for (let i = 0; i < len; i++) {
+    let echantillon = src[i];
+    if (i < fonduEch) {
+      const t = i / fonduEch;
+      echantillon *= 0.5 * (1 - Math.cos(Math.PI * t));
+    } else if (i >= len - fonduEch) {
+      const t = (len - i) / fonduEch;
+      echantillon *= 0.5 * (1 - Math.cos(Math.PI * t));
+    }
+    dst[offset + i] = echantillon;
+  }
+}
+
 export const fiches: FicheAudio[] = ([
   {
     id: "echo-ping-pong", nom: "Echo Ping-Pong", nomEn: "Ping-Pong Echo", univers: "Traitement", famille: "Effets",
@@ -92,9 +142,9 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Action", nomEn: "Action", type: "choix",
-        options: ["Supprimer les zones", "Conserver les zones"], defaut: "Supprimer les zones",
+        options: ["Supprimer les zones", "Conserver les zones"], optionsEn: ["Mute zones", "Keep zones"], optionIds: ["mute", "keep"], defaut: "Supprimer les zones",
         doc: "« Supprimer » coupe le son dans les zones et garde le reste ; « Conserver » ne garde que les zones et coupe le reste. Les deux sont complémentaires.",
-        docEn: "« Mute » silences the zones and keeps the rest; « Keep » keeps only the zones and silences the rest. The two are complementary.", optionsEn: ["Mute zones", "Keep zones"], defautEn: "Mute zones" },
+        docEn: "« Mute » silences the zones and keeps the rest; « Keep » keeps only the zones and silences the rest. The two are complementary.", defautEn: "Mute zones" },
       { nom: "Fondu", nomEn: "Fade", plage: [0, 100], defaut: 10, unite: "ms",
         doc: "Fondu appliqué aux bords des zones pour éviter les clics.", docEn: "Fade applied at zone edges to avoid clicks." },
     ],
@@ -103,7 +153,8 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       const z = ctx.entree(1);
       const zones = (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
-      const garder = ctx.paramTexte("Action", "Supprimer les zones") === "Conserver les zones";
+      const action = ctx.paramTexte("Action", "mute");
+      const garder = action === "keep";
       const sr = a.sampleRate, len = a.length;
 
       // Masque binaire : dans une zone sélectionnée ?
@@ -117,17 +168,29 @@ export const fiches: FicheAudio[] = ([
       const k = new Float32Array(len);
       for (let i = 0; i < len; i++) k[i] = (garder ? dansZone[i] === 1 : dansZone[i] === 0) ? 1 : 0;
 
-      // Fondus linéaires centrés sur chaque transition (anti-clic)
+      // Fondus linéaires sur les bords extérieurs de chaque zone (anti-clic).
+      // Le fondu ne s'étend pas à l'intérieur de la zone, pour que la suppression
+      // ou la conservation reste totale même sur des zones très courtes.
       const nf = Math.max(0, Math.floor((ctx.paramNombre("Fondu", 10) / 1000) * sr));
       const g = k.slice();
       if (nf > 0) {
         const half = Math.max(1, nf >> 1);
+        const inside = garder ? 1 : 0;
+        const outside = garder ? 0 : 1;
         for (let i = 1; i < len; i++) {
           if (k[i] !== k[i - 1]) {
-            for (let j = -half; j < half; j++) {
-              const idx = i + j; if (idx < 0 || idx >= len) continue;
-              const t = (j + half) / (2 * half);
-              g[idx] = k[i - 1] + (k[i] - k[i - 1]) * t;
+            if (k[i] === inside) {
+              // Entrée dans une zone : fondu de l'extérieur vers l'intérieur
+              for (let j = Math.max(0, i - half); j < i; j++) {
+                const t = (j - (i - half)) / half;
+                g[j] = outside + (inside - outside) * t;
+              }
+            } else {
+              // Sortie d'une zone : fondu de l'intérieur vers l'extérieur
+              for (let j = i; j < Math.min(len, i + half); j++) {
+                const t = (j - i) / half;
+                g[j] = inside + (outside - inside) * t;
+              }
             }
           }
         }
@@ -234,63 +297,67 @@ export const fiches: FicheAudio[] = ([
    },
  },
 
-  // ── Visualisation + Convertisseur ──
+   // ── Visualisation + Convertisseur ──
 
-  // ── Extraction de zone (depuis sélecteur multi-zones) ──
+  // ── Extraction de zones (depuis sélecteur multi-zones) ──
   {
     id: "extraire-zones-selecteur", nom: "Extraire zones (sélecteur)", nomEn: "Extract Zones (Selector)",
     univers: "Traitement", famille: "Montage",
-    resume: "Extrait la zone temporelle exacte depuis le sélecteur multi-zones.",
-    resumeEn: "Extracts the exact time zone from the multi-zone selector.",
+    resume: "Découpe et concatène les zones choisies dans le sélecteur multi-zones.",
+    resumeEn: "Cuts and concatenates the zones chosen in the multi-zone selector.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
     parametres: [
-      { nom: "Zone", nomEn: "Zone", plage: [1, 100], pas: 1, defaut: 1,
-        doc: "Numéro de la zone à extraire (1 = première zone sélectionnée dans le sélecteur multi-zones).",
-        docEn: "Number of the zone to extract (1 = first zone selected in the multi-zone selector)." },
+      { nom: "Mode", nomEn: "Mode", type: "choix",
+        options: ["Zones sélectionnées", "Zones non sélectionnées"], optionsEn: ["Selected zones", "Unselected zones"], optionIds: ["selected", "unselected"], defaut: "Zones sélectionnées",
+        doc: "Conserve les zones sélectionnées, ou à l'inverse les parties situées entre elles.",
+        docEn: "Keep the selected zones, or conversely the parts between them.", defautEn: "Selected zones" },
       { nom: "Fondu", nomEn: "Fade", plage: [0, 100], defaut: 5, unite: "ms",
-        doc: "Fondu aux bords de la zone extraite pour éviter les clics.", docEn: "Fade at the extracted zone edges to avoid clicks." },
+        doc: "Fondu aux bords de chaque zone extraite pour éviter les clics.", docEn: "Fade at the edges of each extracted zone to avoid clicks." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       const z = ctx.entree(1);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.connectez_une_source_audio") };
-      const zones = (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
-      if (zones.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones") };
-      const numZone = Math.max(1, Math.min(zones.length, Math.round(ctx.paramNombre("Zone", 1)))) - 1;
-      const zone = zones[numZone];
+      const selected = zonesValides(z);
+      if (selected.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones") };
+      const mode = ctx.paramTexte("Mode", "selected");
       const sr = a.sampleRate;
-      const debutEch = Math.max(0, Math.floor(zone.debut * sr));
-      const finEch = Math.min(a.length, Math.ceil((zone.debut + zone.duree) * sr));
-      const longueur = finEch - debutEch;
-      if (longueur <= 0) return { valeurs: [null, null], message: traduire("msg.zone_vide") };
+      const dureeTotale = a.duration;
+      const segments = mode === "unselected" ? complementZones(fusionnerZones(selected), dureeTotale) : selected;
+      if (segments.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_zone_extraite") };
 
-      const fonduEch = Math.min(Math.floor(longueur / 2), Math.round((ctx.paramNombre("Fondu", 5) / 1000) * sr));
-      const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: longueur, sampleRate: sr });
+      const fonduSec = Math.max(0, ctx.paramNombre("Fondu", 5) / 1000);
+      const totalSamples = segments.reduce((sum, zone) => {
+        const d = Math.max(0, Math.floor(zone.debut * sr));
+        const f = Math.min(a.length, Math.ceil((zone.debut + zone.duree) * sr));
+        return sum + Math.max(0, f - d);
+      }, 0);
+      const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: totalSamples, sampleRate: sr });
+      const extractedZones: any[] = [];
+      let offset = 0;
+      const temp = new Float32Array(a.length);
 
-      for (let ch = 0; ch < a.numberOfChannels; ch++) {
-        const src = a.getChannelData(ch);
-        const dst = resultat.getChannelData(ch);
-        for (let i = 0; i < longueur; i++) {
-          let echantillon = src[debutEch + i];
-          // Fondu d'ouverture
-          if (i < fonduEch) {
-            const t = i / fonduEch;
-            echantillon *= 0.5 * (1 - Math.cos(Math.PI * t));
-          }
-          // Fondu de fermeture
-          if (i >= longueur - fonduEch) {
-            const t = (longueur - i) / fonduEch;
-            echantillon *= 0.5 * (1 - Math.cos(Math.PI * t));
-          }
-          dst[i] = echantillon;
+      for (const zone of segments) {
+        const debutEch = Math.max(0, Math.floor(zone.debut * sr));
+        const finEch = Math.min(a.length, Math.ceil((zone.debut + zone.duree) * sr));
+        const len = finEch - debutEch;
+        if (len <= 0) continue;
+        const fonduEch = Math.min(Math.floor(len / 2), Math.round(fonduSec * sr));
+        for (let ch = 0; ch < a.numberOfChannels; ch++) {
+          const src = a.getChannelData(ch);
+          const dst = resultat.getChannelData(ch);
+          for (let i = 0; i < len; i++) temp[i] = src[debutEch + i];
+          appliquerFonduSegment(temp, dst, offset, len, fonduEch);
         }
+        extractedZones.push({ debut: offset / sr, duree: len / sr });
+        offset += len;
       }
 
       return {
-        valeurs: [resultat, zone],
-        message: traduire("msg.zone_var_0_var_1_extraite_var_2_s_var_3_var_4_s", numZone + 1, zones.length, zone.duree.toFixed(2), (debutEch / sr).toFixed(2), (finEch / sr).toFixed(2)),
+        valeurs: [resultat, extractedZones],
+        message: traduire("msg.var_0_zones_rabout_es_var_1_s", extractedZones.length, (offset / sr).toFixed(2)),
       };
    },
- },
+  },
 ] as FicheAudio[]).map(avecDoc);

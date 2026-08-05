@@ -95,7 +95,7 @@ const lecteursSvg: FicheAudio[] = [
     async executer(ctx) {
       const fichier = ctx.noeud.data.svgFichier as File | undefined;
       if (!fichier) {
-        return { valeurs: [null], erreur: true, message: traduire("msg.aucun_svg_charge") };
+        return { valeurs: [null], erreur: true };
       }
       try {
         const largeur = ctx.paramNombre("Largeur", 512);

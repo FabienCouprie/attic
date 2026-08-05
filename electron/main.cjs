@@ -7,6 +7,7 @@ const { execSync, execFile } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
+const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
@@ -152,6 +153,7 @@ const PERMISSIONS_ACCORDEES = new Set([
   "media", "display-capture", "audioCapture",     // micro + capture système
   "persistent-storage",                           // cache modèles HuggingFace (main.tsx)
   "clipboard-read", "clipboard-sanitized-write",  // bouton copier (ui/copier.ts)
+  "midi",                                         // nœud Capture MIDI (navigator.requestMIDIAccess, pas de sysex)
 ]);
 
 let fenetre = null;
@@ -474,6 +476,38 @@ ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
     return { ok: true, ...result };
   } catch (err) {
     console.error("[attic] stable-audio-3:generer erreur:", err);
+    return { ok: false, erreur: String(err && err.message ? err.message : err) };
+  }
+});
+
+// --- IPC : SDXS-512 texte->image (process principal, onnxruntime-node) ---
+// Modèle non bundlé (~680 Mo quantifié int8) : fourni par l'utilisateur dans
+// public/oonx/sdxs-512-texte-image/, ou via un chemin explicite. Voir
+// ROADMAP.md « Text-to-image » pour le choix de ne pas l'embarquer/télécharger
+// automatiquement.
+ipcMain.handle("sdxs-image:generer", async (_event, options) => {
+  try {
+    const { prompt, seed, modelPath: cheminExplicite } = options;
+    let modelDir = cheminExplicite;
+    if (!modelDir) {
+      const cible = "sdxs-512-texte-image";
+      const candidats = [
+        path.join(__dirname, "..", "public", "oonx", cible),
+        path.join(__dirname, "..", "dist", "oonx", cible),
+        path.join(process.resourcesPath || "", "oonx", cible),
+      ];
+      modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
+    } else if (!path.isAbsolute(modelDir)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      modelDir = path.join(base, modelDir);
+    }
+    if (!modelDir || !fs.existsSync(modelDir)) {
+      return { ok: false, erreur: `Bundle SDXS-512 introuvable : ${modelDir}` };
+    }
+    const result = await genererSdxsImage({ prompt, seed, modelDir });
+    return { ok: true, rgba: result.rgba, width: result.width, height: result.height, seed: result.seed };
+  } catch (err) {
+    console.error("[attic] sdxs-image:generer erreur:", err);
     return { ok: false, erreur: String(err && err.message ? err.message : err) };
   }
 });
@@ -862,6 +896,7 @@ ipcMain.handle("ollama:generer", async (_event, options) => {
         stream: false,
         think: false,
         options: options?.options || {},
+        ...(options?.format ? { format: options.format } : {}),
       }),
       signal: ctrl.signal,
     });
@@ -923,6 +958,12 @@ ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
     if (!path.isAbsolute(chemin)) {
       const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
       chemin = path.join(base, chemin);
+      // En dev, le dossier public/ est servi par Vite mais n'est pas à la racine :
+      // on essaie donc aussi public/<chemin> si le fichier n'est pas à la racine.
+      if (!app.isPackaged && !fs.existsSync(chemin)) {
+        const cheminPublic = path.join(base, "public", cheminRelatif);
+        if (fs.existsSync(cheminPublic)) chemin = cheminPublic;
+      }
     }
     if (!fs.existsSync(chemin)) return null;
     const buf = fs.readFileSync(chemin);

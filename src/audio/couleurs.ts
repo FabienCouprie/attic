@@ -281,3 +281,56 @@ export function profilVersScript(
 
   return lignes.join("\n");
 }
+
+// ─── Utilitaires de conversion couleur partagés ───
+
+export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  const R = r / 255;
+  const G = g / 255;
+  const B = b / 255;
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const L = (max + min) / 2;
+  let H = 0;
+  let S = 0;
+  if (max !== min) {
+    const d = max - min;
+    S = L > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case R:
+        H = ((G - B) / d + (G < B ? 6 : 0)) / 6;
+        break;
+      case G:
+        H = ((B - R) / d + 2) / 6;
+        break;
+      case B:
+        H = ((R - G) / d + 4) / 6;
+        break;
+    }
+  }
+  return [H * 360, S, L];
+}
+
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const match = hex.match(/^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/);
+  if (!match) return null;
+  let h = match[1];
+  if (h.length === 3) {
+    h = h.split("").map((c) => c + c).join("");
+  }
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  };
+}
+
+export function distanceRgb2(
+  c1: { r: number; g: number; b: number },
+  c2: { r: number; g: number; b: number },
+): number {
+  const dr = c1.r - c2.r;
+  const dg = c1.g - c2.g;
+  const db = c1.b - c2.b;
+  return dr * dr + dg * dg + db * db;
+}

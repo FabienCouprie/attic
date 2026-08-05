@@ -1,9 +1,16 @@
 # Attic — Roadmap
 
-Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (technical spec of
-the framework) and `Atelier-Specification.md` (conceptual spec §3).
+Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic +
+architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
+plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
+Continuously verified state (2026-08-04): **tsc 0 errors · 213 catalog components · 62 test files / 431 tests · build OK**.
+
+> **Note on staleness**: this file lagged several releases (last touched around
+> v2.2.1; the app is now at v2.4.3). The sections below were re-verified
+> against the current code on 2026-08-03 — see the "Shipped since" note under
+> each item that turned out to already be done. If you're reading this later
+> still, re-check before trusting a status.
 
 ---
 
@@ -42,6 +49,9 @@ Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
 - ✅ **Whisper (Multilingual)** — 99 languages + translate-to-English option (`whisper-large-v2`, ~1.5 GB).
 - ✅ **Whisper translation** — text → TTS → Whisper translate → English text (internal chain).
 - ✅ **OPUS-MT translation** — 18 text→text language pairs (lightweight models ~30 MB).
+- ✅ **Text-to-image (`texte-image`, SDXS-512-0.9)** — revisited after the pause below turned up a genuinely small option: SDXS-512 (0.3B-param 1-step distilled UNet + TAESD decoder) instead of LCM Dreamshaper. Converted to ONNX by hand (`torch.onnx.export`, no ready-made export existed), quantized to int8 (text_encoder/unet ~340/330 MB each, TAESD decoder ~5 MB fp32) — runs natively via `onnxruntime-node` in the Electron main process (same pattern as Demucs/Stable Audio 3), ~8-11 s/image on CPU, no GPU. **Not bundled** with the app (~680 MB, licensing provenance not fully clean — see below): published as a gated model on Hugging Face (openrail++ license, user must accept terms) at `Fcouprie/sdxs-512-texte-image`; the node's "Chemin modèle" parameter (folder picker) points at a user-provided local copy, same as Stable Audio 3's own model-path pattern. License note: SDXS-512 is distilled from SD-Turbo (Stability AI Community License, more restrictive than openrail++); the base model's own authors withheld newer versions "to avoid possible commercial and copyright risks" — a residual, unresolved provenance caveat, accepted knowingly rather than blocking on it.
+  - Superseded finding from the initial investigation (2026-08-04): LCM Dreamshaper v7 was the first candidate considered and rejected — ~4.28 GB ONNX, no clean pre-quantized export, and CPU/WASM diffusion inference confirmed unreliable by reference implementations (`lacerbi/web-txt2img`). SDXS-512's far smaller UNet (0.3B vs ~0.86B) and single-step distillation made hand-conversion + quantization actually worth doing.
+- ✅ **Image captioning (`legende-image`, Mozilla/distilvit)** — describes an image's content as an English sentence. Unlike text-to-image, this fits the existing Transformers.js pattern exactly: one `pipeline("image-to-text", ...)` call in a Web Worker, downloaded/cached on first use like Whisper/MusicGen (no custom Electron pipeline, no manual ONNX export, no hosting). ~0.2B params, Apache 2.0 (clean license, no caveats). fp32 only (~730 MB) per the app-wide constraint below — quantized variants exist upstream but aren't used here.
 
 ### Data collections
 - ✅ **Musical styles** — 200+ styles across 11 categories (Rock/Metal/Pop/Electronic/Hip-Hop/Jazz/Blues-Soul-Funk/Country-Folk/Reggae-Latin/Classical/World).
@@ -67,60 +77,136 @@ Continuously verified state: **tsc 0 errors · 26 unit tests · build OK**.
 
 ---
 
-## Proposals recorded 2026-07-18 (open)
+## Proposals recorded 2026-07-18 — status re-checked 2026-08-03
 
-Proposals made during the 2026-07 sessions, decided or discussed with the user,
-not yet implemented. Recorded here so they survive the conversation.
+Proposals made during the 2026-07 sessions. Re-verified against the current
+code; most of the concrete, small-scope ones shipped. The two structural
+architecture items did not.
 
 ### Features
-- **Second local LLM node (Qwen 2.5 or similar via Ollama)** — a SEPARATE
-  component, not a replacement for the existing DistilGPT-2 lyrics node
-  (user decision). Same IPC path as the Ollama node; mostly a fiche + prompt work.
-- **Text-export node** — writes a text input to a `.txt` file (counterpart of
-  the audio/MIDI export nodes). Small; from the 2026-07-16 punch-list.
-- **Black theme reinforcement pass** — audit remaining light-gray surfaces and
-  hard-coded colors; from the punch-list, untouched.
-- **Extra i18n pass on parameter items** — some parameter names/docs and
-  dropdown options still lack `nomEn`/`optionsEn`; from the punch-list.
+- ✅ **Second local LLM node** — shipped as `qwen2.5-lyrics` (`src/plugins/textgen.ts`
+  / `notices.ts`): Qwen2.5-0.5B via Transformers.js, a SEPARATE node from
+  DistilGPT-2 as decided, not a replacement.
+- **Text-export node** — no dedicated `.txt`-export node exists, but
+  `sortie-texte` ("Text Output") already offers copy **and download** of the
+  received text, which covers the original ask in practice. Leaving open only
+  if a real file on disk (vs. a browser download) turns out to matter.
+- **Black theme reinforcement pass** — status unverified either way; nobody
+  has audited remaining light-gray surfaces / hard-coded colors since this was
+  written. Still open.
+- **Extra i18n pass on parameter items** — status unverified either way.
+  Still open.
 
-### Architecture (from the risk-table review, 2026-07-17)
-- **UI shell decoupling (“item 3”)** — the 5 files that import `registre` from
-  `audio/adaptateur` (App, AtelierNode, useExecutionGraphe, useMetaComposants,
-  metasLocaux) switch to a single injection point (`ui/registre-actif.ts`)
-  configured by the composition root; includes clearing/namespacing
-  `AtelierNode`'s module-global `DEFS_CACHE`. See PORTING-A-DOMAIN.md §6.a.
-- **Domain-provided result materialisation** — `useExecutionGraphe` still
-  sniffs domain types (`instanceof AudioBuffer/File`, `bufferVersWavBlob`,
-  `type === "audio"`) to build node display state. The adapter should provide
-  `materialiser(vals, def, data)` / `liberer(data)` instead. See
-  PORTING-A-DOMAIN.md §6.b. Prerequisite for a clean second domain in the UI.
+### Architecture (from the risk-table review, 2026-07-17) — still open
+Neither item below has moved. Both are prerequisites for a clean second
+domain in the UI (see `PORTING-A-DOMAIN.md`).
+- **UI shell decoupling ("item 3")** — `App.tsx`, `AtelierNode.tsx`,
+  `useExecutionGraphe.ts`, `useMetaComposants.ts` and `metasLocaux.ts` still
+  import `registre` directly from `audio/adaptateur` (verified 2026-08-03,
+  same 5 files). No `ui/registre-actif.ts` injection point exists yet. See
+  PORTING-A-DOMAIN.md §6.a.
+- **Domain-provided result materialisation** — `useExecutionGraphe.ts` still
+  does `instanceof AudioBuffer` / `instanceof File` and calls
+  `bufferVersWavBlob` directly to build node display state (verified
+  2026-08-03, same lines). See PORTING-A-DOMAIN.md §6.b.
 
 ### Storage / ops (from the 2026-07-18 model-cache investigation)
-- **File-based AI-model cache** — HuggingFace models currently live in
-  Chromium Cache Storage, which is (a) split per origin — dev
-  (`localhost:5173`) and packaged (`file://`) each download their own 1.5 GB
-  copy — and (b) evictable under quota pressure for the unengaged `file://`
-  origin (observed 2026-07-18: packaged bucket recreated, 1.1 GB
-  re-downloaded, while the dev bucket survived). Durable fix: transformers.js
-  `env.useCustomCache` backed by plain files in `userData/modeles-ia` served
-  through a custom Electron protocol (`attic-cache://`), shared by both dev
-  and packaged. Mitigations already in place: explicit `persistent-storage`
-  permission grant + boot-time `persisted()`/`estimate()` logging.
-- **Build ops** — `electron-builder` fails intermittently with `EPERM` renaming
-  `win-unpacked.tmp` (antivirus scans the freshly extracted Electron binaries
-  inside the rename window). Durable fix on the machine: exclude
-  `E:\attic\release` from real-time scanning. Workaround: retry after a few
-  seconds.
+- **File-based AI-model cache** — still open. HuggingFace models still live in
+  Chromium Cache Storage (no `env.useCustomCache` / `attic-cache://` protocol
+  found in the code). The mitigations from 2026-07-18 (explicit
+  `persistent-storage` permission grant, single consolidated
+  `setPermissionRequestHandler` in `electron/main.cjs`, boot-time
+  `persisted()`/`estimate()` logging in `main.tsx`) are in place and appear to
+  have held — no further eviction reports since.
+- ✅ **Build ops (EPERM)** — fixed, and further hardened.
+  `scripts/build-electron.cjs` now copies the local Electron dist to
+  `electron-dist/` and points `electron-builder` at it via `electronDist`
+  before packaging, removing the extract-then-rename race with antivirus
+  scanning entirely (not just working around it).
+
+---
+
+## Proposal recorded 2026-08-03: hardware MIDI input
+
+The app could only read/write MIDI *files*; no node received a live MIDI
+keyboard/controller (`navigator.requestMIDIAccess` was absent from the code).
+Scoped into three independent tiers by how much of the current — fully
+offline/batch — rendering engine each one touches (every effect is a pure
+`(buffer, params) → AudioBuffer` run once inside an `OfflineAudioContext`;
+there is no live Web Audio graph anywhere):
+
+- ✅ **Tier 1 — capture node.** Done, this session. See the `capture-midi`
+  entry in `CHANGELOG.md` (Unreleased). Mirrors the microphone recorder
+  exactly: no core/engine changes.
+- **Tier 2 — MIDI Learn onto Inspector parameters** (map a hardware
+  knob/fader to a node parameter for the *next* Lancer, not live during
+  playback). Not started. Low-medium risk, touches only `Inspector.tsx` +
+  a small persisted CC→parameter mapping table — no execution-engine changes.
+- **Tier 3 — live modulation during playback** (turn a knob, hear it change
+  in real time). Not started, and not recommended as a first step: would
+  require rewriting affected effects as real-time `AudioWorkletNode`s and
+  giving the DAG a "currently playing" concept it doesn't have today — a
+  second engine alongside the current one, not a feature.
+
+---
+
+## Proposal recorded 2026-08-04: Ollama-driven graph generation
+
+✅ **Done, verified against a real local server** (qwen3:4b via `ollama serve`,
+2026-08-04). "Prompt → graphe" (`src/plugins/prompt-graphe.ts`) already had an
+offline keyword parser; Ollama is now an additional `Méthode` option, not a
+replacement — the LLM reads the full installed catalog and picks blocks
+itself for phrasing the keyword matcher can't parse, with automatic fallback
+to keywords on any Ollama failure. See the CHANGELOG (Unreleased) for the
+untrusted-output hardening (hallucinated `ficheId` filtering) and the real
+before/after numbers on the `format: "json"` fix below.
+
+**Real-server finding that changed the design**: the first live test (prompt
+engineering only — a "respond with JSON only" instruction, `/no_think`, a
+one-shot example) failed every time. Network capture showed why: the model
+reasons correctly (it picked Réverbération + Paulstretch for a cave/stretch
+description with zero literal keyword overlap — genuinely the right answer)
+but does so as plain-text rambling the decoder is free to emit regardless of
+what the prompt asks for, and `done_reason: "length"` showed it burning its
+*entire* token budget (2000 tokens, 38.8 s) on that reasoning without ever
+reaching JSON. Fix was **not** a better prompt — it was Ollama's `format:
+"json"` request field, a decoder-level grammar constraint the model cannot
+violate. Same model, same prompt, format added: `done_reason: "stop"`, 90
+tokens, 1.7 s, clean JSON on the first token. `ollamaGenerer` (both the
+browser-fetch and Electron-IPC code paths) now forwards `format`.
+
+**Found and fixed while verifying it** — two bugs, both pre-existing and
+unrelated to this addition, both blocking verification until fixed:
+- The node's Text input lacked `requis: false`, so it couldn't run standalone
+  despite having a `Prompt` parameter specifically for that.
+- The generated graph never actually appeared on the canvas — confirmed on
+  the *unmodified* code. `useExecutionGraphe`'s post-run check read node data
+  from `noeudsRef.current`, which is a different object than the one the
+  plugin mutated by the time it runs (`definirStatut` replaces the node's
+  `data` via spread before the plugin is even called). This affected the two
+  sibling mechanisms too (embedded-graph import, `.zip` node install) — none
+  of the three could have been working. See CHANGELOG for the fix.
+
+**Also found, not fixed (flagged as a separate background task)**: re-running
+the *same* "Prompt → graphe" node more than once generates edge ids that
+collide with the previous run's (`e-prompt-${nodeId}-${i}`, not globally
+unique) — React logs a duplicate-key warning. Unrelated to Ollama; out of
+scope for this change.
 
 ---
 
 ## 1. "Educational studio" vision
 
 ### 1.1 Interactive guided tours
+**Partially done.** `presets/synthe-soustractif.json` exists and matches the
+"Subtractive synthesis" example (also listed in the README as "Embedded
+subtractive synthesizer meta-component example"). Still missing: the other
+tour topics (compressor, mixing chain), the educational annotations layer on
+the canvas, and the guided exercises.
 Embedded pre-built workflows (`presets/`) with educational annotations on the canvas:
 - "How does a compressor work?"
 - "The mixing chain": EQ → Compressor → Reverb → Limiter
-- "Subtractive synthesis" with interactive tutorial
+- "Subtractive synthesis" with interactive tutorial — ✅ example graph exists
 - Exercises ("change the threshold and listen to the difference")
 
 ### 1.2 Educational A/B comparator
@@ -134,23 +220,47 @@ Textual markers on the waveform ("chorus", "verse", "solo") — persisted with t
 ## 2. "Creative AI workshop" vision
 
 ### 2.1 MIDI neural reservoir
+✅ **Done — my 2026-08-03 verification of this file was wrong.** `reservoir-musical`
+(`src/plugins/generateurs.ts`) already exposes a second output port typed
+`midi` alongside `Audio` (`sorties: [{Audio}, {MIDI, type:"midi"}]`); it
+chains directly into Transposer/Quantizer/Arpeggiator/MIDI Output like any
+other MIDI source. No separate node was ever needed. (My earlier grep only
+searched for a literal `id: "reservoir-midi"` and missed the port.)
 MIDI version of the reservoir — generates MIDI files that can be plugged into Transposer/Quantizer, Arpeggiator or MIDI Output. Allows chaining multiple reservoirs.
 
 ### 2.2 Multi-reservoir network
+✅ **Done.** Shipped as the `multi-reservoirs` node (`src/plugins/generateurs.ts`).
 A node that connects multiple reservoirs in parallel/series (melody, bass, harmony, rhythm). Each reservoir "listens" to the others via a control input → polyphonic emergence.
 
 ### 2.3 Genetic evolution of reservoirs
+**Half done, deprioritized by owner decision (2026-08-03).** `src/audio/evolution.ts`
+implements exactly this algorithm (population, mutation, user like/dislike
+selection, crossover, no training — the file's own header even says so almost
+verbatim) — but it is **not wired to any plugin or UI**: no fiche imports it,
+no view renders it. The engine exists; the node doesn't. Judged not valuable
+enough to prioritize wiring it up — left here for the record, not on the
+active queue.
 A meta-node that evolves a population of reservoirs: random mutation of weights/parameters, user selection (like / dislike), crossover. After a few generations, the reservoir adapts to taste. No training — natural selection.
 
 ### 2.4 ColorSynth
+✅ **Done.** Shipped in v2.3.0 as the `colorsynth` node
+(`src/plugins/visualisation.ts`) — 6-band spectrum (Sub/Bass/Low-Mid/Mid/High/Air)
+mapped to warm→cool HSL colors, exactly as proposed here.
 The inverse of the "Color combination" node: listens to the audio signal and deduces a color palette. Spectrum → color space (bass = warm, treble = cold). Canvas view. Educational: "seeing" the timbre.
 
 ### 2.5 Musical prompt → graph
+✅ **Done.** Shipped as `src/plugins/prompt-graphe.ts`, already listed in the
+README ("Prompt-to-graph — type a keyword, get a pre-wired graph, 55+ keywords").
 A node that takes a text prompt ("a stereo delay with short feedback over a hall reverb") and generates the corresponding graph by automatically connecting the nodes. Keyword-rules parser → plugins + connections. Magical for discovery.
 
 ---
 
 ## 3. "Multi-domain laboratory" vision
+
+Still open — 3.1, 3.2 and 3.3 all unverified/absent as of 2026-08-03. Note
+that 3.1 is blocked on the "UI shell decoupling" architecture item above:
+without it, a second domain can't reach the UI cleanly (see
+PORTING-A-DOMAIN.md).
 
 ### 3.1 Image domain (proof of concept)
 A minimal image adapter to prove the golden rule:
@@ -173,15 +283,26 @@ A generic node that displays any flow type (audio = waveform, image = pixels, ta
 ## 4. "Collaborative platform" vision
 
 ### 4.1 Community presets gallery
+Still open. `galerie-exposition` (an MP3-folder → HTML gallery generator with
+procedural cover art) exists but solves a different problem — it's not a
+shared-graph gallery.
 A web page or an "Import from gallery" node listing shared graphs. Description, tags, audio preview. One-click import. Storage on HuggingFace or GitHub (JSON files).
 
 ### 4.2 Audio export + embedded graph
-The graph that produced a WAV/MP3 is embedded in the metadata (WAV `INFO` chunk or MP3 ID3 tag). Importing the audio file into Attic recovers the graph — exact reproduction.
+✅ **Done.** `src/audio/graphe-embarque.ts` + `_grapheEmbarque` wired into
+`useExecutionGraphe.ts` — the producing graph is embedded when exporting audio.
 
 ### 4.3 Plugin system (user-defined nodes)
+Still open, deprioritized by owner decision (2026-08-03): redundant with the
+existing Python and Julia processor nodes, which already let you extend
+Attic with custom code without touching core. A related, smaller feature
+shipped: `gestion-nodes` lets you **export/import an existing node as a
+`.zip`** (packaging, not authoring). Writing a brand-new node's `executer` in
+JS from an in-app editor is not implemented, and isn't planned.
 Create your own node without coding: define inputs/outputs/parameters via UI, write `executer` in JS in an integrated editor, registered dynamically (localStorage, exportable as JSON).
 
 ### 4.4 Live coding / performance mode
+Still open — no full-screen/performance mode, macro knobs, or MIDI-learn found.
 Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign a controller to a parameter), continuous execution. The musician "plays" the graph.
 
 ---
@@ -193,27 +314,28 @@ Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign 
 | 1 | **Stable port IDs** (instead of positional indices) — re-indexing breaks edges | High |
 | 2 | **`lienExterne?`** in `PluginDef` ("to go further") + rendered in the notice | Medium |
 | 3 | **File persistence** as base64 in the JSON | Medium |
-| 4 | **Relocate `TypeValeur`** out of the core into the audio domain | Low |
-| 5 | **Split** `audio/generation.ts` (889 lines), `audio/analyse.ts` (820 lines) | Low |
-| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) | Low |
+| 4 | **Relocate `TypeValeur`** out of the core into the audio domain — still there as of 2026-08-03; now explicitly documented as accepted debt in `PORTING-A-DOMAIN.md` rather than an oversight | Low |
+| 5 | **Split** `audio/generation.ts` (983 lines, up from 889), `audio/analyse.ts` (980 lines, up from 820) — grew, not shrunk | Low |
+| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) — now 1,426 lines (up from 952) | Low |
 | 7 | **`compatible` compatibility** for stereo/mono subtyping | Low |
 
 ---
 
 ## Suggested order
 
+Shipped items (2.1, 2.2, 2.4, 2.5, 4.2) removed from the queue below — see
+their ✅ notes in the sections above. **Owner decision, 2026-08-03**: 2.3
+(genetic evolution) and 4.3 (user-defined JS plugin editor) are deprioritized
+— 2.3 was judged not valuable enough to justify wiring `evolution.ts` to a
+node, and 4.3 is redundant with the existing Python/Julia processor nodes,
+which already cover "extend without touching core". Both left in the vision
+sections above for the record, dropped from the active queue.
+
 | # | Task | Effort | Value |
 |---|---|---|---|
-| 2.1 | MIDI reservoir | Low | High — unlocks chaining |
-| 1.1 | Guided tours | Medium | High — educational = mission |
+| 1.1 | Guided tours (remaining topics + annotations + exercises) | Medium | High — educational = mission |
 | 3.1 | Image domain | Medium | Strategic — proves the framework |
-| 4.3 | User-defined plugin | Medium | High — extensible without coding |
-| 2.5 | Prompt → graph | Low | Magical — discovery |
-| 2.3 | Genetic evolution | Medium | Unique — no other app does this |
 | 4.4 | Live mode | High | High for performance |
-| 4.2 | Embedded graph | Low | Elegant — reproducibility |
-| 2.2 | Multi-reservoirs | Medium | Unique — polyphonic emergence |
-| 2.4 | ColorSynth | Low | Educational — seeing sound |
 | 4.1 | Community gallery | High | Long term |
 | 1.2 | Educational A/B | Low | Educational |
 | 1.3 | Annotator | Low | Educational |

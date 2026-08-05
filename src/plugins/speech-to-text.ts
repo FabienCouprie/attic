@@ -17,11 +17,11 @@ function getWorker(): Worker {
   return worker;
 }
 
-// Libère le worker (et donc le modèle résident en mémoire WASM) après usage.
-// Évite l'accumulation de plusieurs modèles IA sur un même run — cause de
-// plantage par saturation mémoire. Le modèle se recharge au prochain besoin.
-function libererWorker(): void {
-  if (worker) { worker.terminate(); worker = null; }
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 // Mixage stéréo → mono Float32Array pour Whisper
@@ -66,19 +66,21 @@ export const fiches: FicheAudio[] = ([
       const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [msg.text], message: traduire("msg.transcrit_var_0_var_1", msg.text.slice(0, 60), msg.text.length > 60 ? "…" : "") });
           } else if (msg.type === "error") {
-            libererWorker();
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_whisper_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-base.en" });
+        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-base.en", requestId });
       });
     },
   },

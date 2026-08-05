@@ -2,7 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, spatialiserStereo } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, echoLogistique, chopperLogistique, spatialiserStereo } from "./effets-spectral";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -226,6 +226,69 @@ describe("tremoloLogistique", () => {
     const rmsFin = rmsTranche(out, buffer.length - quart, buffer.length);
     expect(rmsDebut).toBeGreaterThan(0.95);
     expect(rmsFin).toBeLessThan(0.8);
+  });
+});
+
+describe("echoLogistique", () => {
+  it("conserve la durée, le sample rate et le nombre de canaux", () => {
+    const buffer = sinus(440, 1, 2);
+    const out = echoLogistique(buffer, 100, 40, 50, 10, 50);
+    expect(out.duration).toBeCloseTo(buffer.duration, 1);
+    expect(out.sampleRate).toBe(buffer.sampleRate);
+    expect(out.numberOfChannels).toBe(buffer.numberOfChannels);
+  });
+
+  it("ne modifie pas le signal avec un mix à 0", () => {
+    const buffer = sinus(440, 1, 1);
+    const out = echoLogistique(buffer, 100, 40, 50, 10, 0);
+    expect(out.getChannelData(0)).toEqual(buffer.getChannelData(0));
+  });
+
+  it("l'écho s'installe progressivement : peu de répétitions au début, plus à la fin", () => {
+    const buffer = constant(1, 1);
+    const out = echoLogistique(buffer, 100, 40, 50, 10, 100);
+    const quart = Math.floor(buffer.length / 4);
+    const rmsDebut = rmsTranche(out, 0, quart);
+    const rmsFin = rmsTranche(out, buffer.length - quart, buffer.length);
+    // La fin doit être plus riche en répétitions (énergie plus élevée) qu'au début.
+    expect(rmsFin).toBeGreaterThan(rmsDebut);
+    // On doit observer au moins une répétition audible après le délai initial.
+    const data = out.getChannelData(0);
+    expect(data.some((s: number) => Math.abs(s) > 0.1)).toBe(true);
+  });
+});
+
+describe("chopperLogistique", () => {
+  it("conserve la durée, le sample rate et le nombre de canaux", () => {
+    const buffer = sinus(440, 1, 2);
+    const out = chopperLogistique(buffer, 4, 50, 0, 50, 50, 10, 100);
+    expect(out.duration).toBeCloseTo(buffer.duration, 1);
+    expect(out.sampleRate).toBe(buffer.sampleRate);
+    expect(out.numberOfChannels).toBe(buffer.numberOfChannels);
+  });
+
+  it("ne modifie pas le signal avec un mix à 0", () => {
+    const buffer = sinus(440, 1, 1);
+    const out = chopperLogistique(buffer, 4, 50, 0, 100, 50, 10, 0);
+    expect(out.getChannelData(0)).toEqual(buffer.getChannelData(0));
+  });
+
+  it("ne modifie pas le signal avec une profondeur à 0", () => {
+    const buffer = sinus(440, 1, 1);
+    const out = chopperLogistique(buffer, 4, 50, 0, 0, 50, 10, 100);
+    expect(out.getChannelData(0)).toEqual(buffer.getChannelData(0));
+  });
+
+  it("le gate s'installe progressivement : début intact, fin coupé", () => {
+    const buffer = constant(1, 1);
+    const out = chopperLogistique(buffer, 4, 50, 0, 100, 50, 10, 100);
+    const quart = Math.floor(buffer.length / 4);
+    const rmsDebut = rmsTranche(out, 0, quart);
+    const rmsFin = rmsTranche(out, buffer.length - quart, buffer.length);
+    // Le début est quasi intact (pas encore de gate), la fin est coupée (RMS ≈ 0.7 pour un carré 50% duty).
+    expect(rmsDebut).toBeGreaterThan(0.95);
+    expect(rmsFin).toBeLessThan(0.8);
+    expect(rmsFin).toBeLessThan(rmsDebut);
   });
 });
 

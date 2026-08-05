@@ -40,17 +40,6 @@ export function usePersistance(o: OptionsPersistance) {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
 
-    // ── Garde anti-perte : exporter un canevas vide alors que des métas existent ──
-    // est presque toujours une erreur (c'est ainsi qu'un workflow perd ses nœuds :
-    // le fichier ne garde que le catalogue de métas). Confirmer avant d'exporter.
-    const metasActuels = tousLesMetas();
-    if (racine.nodes.length === 0 && metasActuels.length > 0) {
-      const msg = t("persistance.confirmExportVide")
-        .replace("{nb}", String(metasActuels.length));
-      const ok = typeof confirm === "undefined" || confirm(msg);
-      if (!ok) return;
-    }
-
     // ── Détection des pertes de données (Chantier B) ──
     const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
     for (const n of racine.nodes) {
@@ -62,12 +51,14 @@ export function usePersistance(o: OptionsPersistance) {
     if (pertes.length > 0) {
       const rapport = formaterRapportPertes(pertes);
       console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
-      // Alerte utilisateur — non bloquante, informative
+      // Alerte utilisateur — non bloquante, informative, limitée au cas détaillé (≤3 nœuds)
       const nbChamps = pertes.reduce((s, p) => s + p.champs.length, 0);
-      const message = pertes.length <= 3
-        ? t("persistance.exportPertesDetail").replace("{nb}", String(nbChamps)).replace("{rapport}", rapport)
-        : t("persistance.exportPertesResume").replace("{nb}", String(nbChamps)).replace("{nodes}", String(pertes.length));
-      if (typeof alert !== "undefined") alert(message);
+      if (pertes.length <= 3) {
+        const message = t("persistance.exportPertesDetail")
+          .replace("{nb}", String(nbChamps))
+          .replace("{rapport}", rapport);
+        if (typeof alert !== "undefined") alert(message);
+      }
     }
 
     const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
@@ -82,6 +73,8 @@ export function usePersistance(o: OptionsPersistance) {
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
         nomFichier: data.nomFichier,
+        nom: data.nom,
+        couleur: data.couleur,
       },
     }));
     const cleanEdges = racine.edges.map(({ id, source, target, sourceHandle, targetHandle, type, style }) => ({
@@ -107,7 +100,7 @@ export function usePersistance(o: OptionsPersistance) {
       // Aussi sauvegarder l'en-cours localStorage
       try {
         const data = {
-          nodes: cleanNodes.map((n: any) => ({ id: n.id, position: n.position, data: { ficheId: n.data.ficheId, parametres: n.data.parametres } })),
+          nodes: cleanNodes.map((n: any) => ({ id: n.id, position: n.position, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, nom: n.data.nom, couleur: n.data.couleur } })),
           edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
           viewport: o.rfInstance?.getViewport(),
           date: new Date().toISOString(),

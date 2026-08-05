@@ -10,6 +10,7 @@ export interface NoeudG {
   position?: { x: number; y: number };
   width?: number;
   height?: number;
+  selected?: boolean;
   data: { ficheId: string; parametres?: Record<string, unknown>; [k: string]: unknown };
 }
 

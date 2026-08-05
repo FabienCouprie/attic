@@ -3,9 +3,9 @@
 // bloquer le thread principal.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { MODES, MODES_EN } from "./magenta-helpers";
+import { MODES, MODES_EN, MODES_IDS } from "./magenta-helpers";
 import { appliquerInstrumentMidi } from "../audio/midi";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
@@ -183,10 +183,11 @@ export const fiches: FicheAudio[] = ([
         nom: "Mode", nomEn: "Mode", type: "choix",
         options: MODES,
         optionsEn: MODES_EN,
+        optionIds: MODES_IDS,
         defaut: "Aléatoire",
         doc: "Séquence des boutons Piano Genie (0-7). Aléatoire = boutons aléatoires, Marche = dérive, Montant/Descendant/Arpège = motifs.",
         docEn: "Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns.", defautEn: "Random"
-     },
+      },
       {
         nom: "Graine", nomEn: "Seed", type: "curseur",
         plage: [0, 1000], pas: 1, defaut: 0,
@@ -200,13 +201,14 @@ export const fiches: FicheAudio[] = ([
         const duree = ctx.paramNombre("Durée", 8);
         const tempo = ctx.paramNombre("Tempo", 120);
         const temperature = ctx.paramNombre("Température", 1.0);
-        const mode = ctx.paramTexte("Mode", "Aléatoire");
+        const mode = ctx.paramTexte("Mode", "random");
         const seed = ctx.paramNombre("Graine", 0);
         const file = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "improvisation", { duree, tempo, temperature, mode, seed }),
           ctx.paramNombre("Instrument", 0),
         );
-        return { valeurs: [file], message: traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, mode, tempo) };
+        const label = (langueCourante() === "en" ? MODES_EN : MODES)[MODES_IDS.indexOf(mode)] ?? mode;
+        return { valeurs: [file], message: traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, label, tempo) };
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }

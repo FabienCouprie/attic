@@ -30,6 +30,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 export const fiches: FicheAudio[] = ([
   {
     id: "tts-piper",
@@ -65,8 +72,10 @@ export const fiches: FicheAudio[] = ([
         ?? VOIX_PIPER["ru_RU-irina-medium"];
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") {
             const total = Number(msg.total || 0);
             const downloaded = Number(msg.downloaded || 0);
@@ -92,7 +101,7 @@ export const fiches: FicheAudio[] = ([
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, voice: voix.id, speaker: 0 });
+        w.postMessage({ text: texte, voice: voix.id, speaker: 0, requestId });
       });
     },
   },

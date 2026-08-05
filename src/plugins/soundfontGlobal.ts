@@ -126,30 +126,77 @@ export async function chargerSF2DepuisUrl(url: string): Promise<StructureSF2 | n
   }
 }
 
+/** Charge le SoundFont embarqué (FluidR3) via le binaire embarqué si l'application
+ *  tourne sous Electron, ou via fetch en mode dev Vite. */
+const NOMS_SF2_DEFAUT = ["FluidR3_GM.sf2", "FluidR3_GM_GS.sf2"];
+
+async function chargerSF2ParNom(nom: string): Promise<StructureSF2 | null> {
+  const api = (window as any).api;
+  if (api?.lireBinaire) {
+    // En production, le fichier est dans resources/sf2/ ; en dev, le main
+    // résout aussi public/sf2/ grâce au fallback public/.
+    try {
+      const res = await api.lireBinaire(`./sf2/${nom}`);
+      if (res?.donnees) {
+        const donnees = res.donnees;
+        if (donnees.length >= 1024) {
+          const riff = String.fromCharCode(donnees[0], donnees[1], donnees[2], donnees[3]);
+          const sfbk = String.fromCharCode(donnees[8], donnees[9], donnees[10], donnees[11]);
+          if (riff === "RIFF" && sfbk === "sfbk") {
+            return await chargerSF2Globale(donnees, res.nom || nom);
+          }
+        }
+      }
+    } catch {}
+  }
+  // Fallback Vite / serveur web (public/sf2/).
+  try {
+    return await chargerSF2DepuisUrl(`./sf2/${nom}`);
+  } catch {}
+  return null;
+}
+
+async function chargerSF2Defaut(): Promise<StructureSF2 | null> {
+  for (const nom of NOMS_SF2_DEFAUT) {
+    const charge = await chargerSF2ParNom(nom);
+    if (charge) return charge;
+  }
+  return null;
+}
+
 export async function autoChargerSF2(repertoireTravail?: string): Promise<StructureSF2 | null> {
   const existant = sf2Chargee();
   if (existant) return existant;
 
+  // 1. SoundFont embarqué par défaut (FluidR3) — prioritaire.
+  const chargeDefaut = await chargerSF2Defaut();
+  if (chargeDefaut) return chargeDefaut;
+
   const dernierNom = localStorage.getItem("attic-sf2-nom");
 
-  // 1. Dossier public/sf2/ — prioritaire
-  try {
-    const liste = await fetch("./sf2/");
-    if (liste.ok) {
-      // Essayer le dernier utilisé d'abord
-      if (dernierNom) {
-        const charge = await chargerSF2DepuisUrl(`./sf2/${encodeURIComponent(dernierNom)}`);
-        if (charge) return charge;
-      }
-      // Sinon charger le premier .sf2 trouvé
-      const charge = await chargerSF2DepuisUrl("./sf2/The Fixed JummBox SoundFont11.sf2");
-      if (charge) return charge;
+  // 2. Dossier public/sf2/ (dev) ou resources/sf2/ (Electron) — autre fichier.
+  if (dernierNom) {
+    const api = (window as any).api;
+    if (api?.lireBinaire) {
+      try {
+        const res = await api.lireBinaire(`./sf2/${encodeURIComponent(dernierNom)}`);
+        if (res?.donnees) {
+          const donnees = res.donnees;
+          if (donnees.length >= 1024) {
+            const riff = String.fromCharCode(donnees[0], donnees[1], donnees[2], donnees[3]);
+            const sfbk = String.fromCharCode(donnees[8], donnees[9], donnees[10], donnees[11]);
+            if (riff === "RIFF" && sfbk === "sfbk") {
+              return await chargerSF2Globale(donnees, res.nom || dernierNom);
+            }
+          }
+        }
+      } catch {}
     }
-  } catch { /* pas de dossier sf2/ */ }
-
-  // 2. Racine public/
-  const chargePub = await chargerSF2DepuisUrl("./The Fixed JummBox SoundFont11.sf2");
-  if (chargePub) return chargePub;
+    try {
+      const charge = await chargerSF2DepuisUrl(`./sf2/${encodeURIComponent(dernierNom)}`);
+      if (charge) return charge;
+    } catch {}
+  }
 
   // 3. Scanner le répertoire de travail (Electron)
   if (repertoireTravail && (window as any).api) {

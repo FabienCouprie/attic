@@ -30,6 +30,7 @@ bin/songsee/songsee
 
 # User work files
 work/
+test denoise/
 
 # Audio/MIDI collections (user data, not source code)
 music collection/

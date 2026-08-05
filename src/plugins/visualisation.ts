@@ -128,7 +128,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Écoute", nomEn: "Listen", type: "choix", options: ["A", "B"], defaut: "A",
         doc: "Quelle entrée est envoyée en sortie et écoutée.", docEn: "Which input is sent to the output and heard.", optionsEn: ["A", "B"], defautEn: "A" },
-      { nom: "Aligner les niveaux", nomEn: "Match levels", type: "choix", options: ["Oui", "Non"], defaut: "Oui",
+      { nom: "Aligner les niveaux", nomEn: "Match levels", type: "choix", options: ["Oui", "Non"], optionIds: ["yes", "no"], defaut: "Oui",
         doc: "Ramène le signal écouté au même niveau crête, pour une comparaison honnête (le plus fort paraît sinon « meilleur »).",
         docEn: "Brings the heard signal to the same peak level, for a fair comparison (the louder one otherwise seems « better »).", optionsEn: ["Yes", "No"], defautEn: "Yes" },
     ],
@@ -138,7 +138,7 @@ export const fiches: FicheAudio[] = ([
       const B = b instanceof AudioBuffer ? b : null;
       if (!A && !B) return { valeurs: [null], message: traduire("msg.connectez_a_et_ou_b") };
       const sel = ctx.paramTexte("Écoute", "A");
-      const align = ctx.paramTexte("Aligner les niveaux", "Oui") === "Oui";
+      const align = ctx.paramTexte("Aligner les niveaux", "yes") === "yes";
       const choisi = sel === "A" ? (A ?? B) : (B ?? A);
       const crete = (buf: AudioBuffer | null) => {
         if (!buf) return 0;

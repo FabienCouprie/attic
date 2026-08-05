@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("api", {
 
   separerDemucs: (options) => ipcRenderer.invoke("demucs:separer", options),
   genererStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:generer", options),
+  genererImageSdxs: (options) => ipcRenderer.invoke("sdxs-image:generer", options),
   genererSongsee: (options) => ipcRenderer.invoke("songsee:generer", options),
 
   sauvegarderFichier: (options) => ipcRenderer.invoke("fichier:sauvegarder", options),

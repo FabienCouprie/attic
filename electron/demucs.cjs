@@ -27,7 +27,7 @@ async function obtenirSession(modelePath) {
 
 // canaux : tableau de Float32Array (1 pour mono, 2 pour stéréo), même longueur.
 // nbStems : 4 (htdemucs classique) ou 6 (htdemucs_6s avec guitare + piano).
-// Retourne { batterie, basse, autre, voix, guitare?, piano? }, chacun = [Float32Array G, Float32Array D]
+// Retourne { batterie, basse, voix, autre, guitare?, piano? }, chacun = [Float32Array G, Float32Array D]
 // (stems stéréo) ou null si le stem est silencieux.
 async function separerDemucs(modelePath, canaux, surProgres, chevauchement, nbStems = 4) {
   const session = await obtenirSession(modelePath);
@@ -41,11 +41,12 @@ async function separerDemucs(modelePath, canaux, surProgres, chevauchement, nbSt
   const pas = CHUNK - chev;
   const nbTranches = Math.max(1, Math.ceil((longueur - chev) / pas));
 
-  // Ordre des stems : 4-stem = [batterie, basse, autre, voix]
-  //                   6-stem = [batterie, basse, autre, voix, guitare, piano]
+  // Ordre des stems observé sur les modèles ONNX embarqués :
+  // 4-stem = [batterie, basse, voix, autre]
+  // 6-stem = [batterie, basse, voix, autre, guitare, piano]
   const noms = nbStems === 6
-    ? ["batterie", "basse", "autre", "voix", "guitare", "piano"]
-    : ["batterie", "basse", "autre", "voix"];
+    ? ["batterie", "basse", "voix", "autre", "guitare", "piano"]
+    : ["batterie", "basse", "voix", "autre"];
 
   // Accumulateurs par stem ET par canal (vraie sortie stéréo), enveloppe commune.
   const acc = [];

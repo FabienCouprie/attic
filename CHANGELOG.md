@@ -2,6 +2,124 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+## [3.0.0] — 2026-08-04
+
+### Added
+- **Partition MIDI** (`vexflow-midi`, Visualisation → Notation) — génère une portée SVG à partir d'un fichier MIDI. Accepte le MIDI en sortie du Transcripteur MIDI, du Lecteur MIDI, etc. Paramètres : tempo (0 = auto-détecté), canal (-1 = tous), quantification rythmique et clé. La sortie SVG (fichier) peut être exportée avec le nœud « Export SVG ».
+- **Texte → image** (`texte-image`, Entrées → Image) — génère une image 512×512 depuis un prompt texte, en local, avec SDXS-512-0.9 (UNet distillé 1 pas + décodeur TAESD, quantifié int8, ~680 Mo, ~8-11 s/image en CPU pur). Tourne nativement via `onnxruntime-node` dans le process principal (même pattern que Demucs/Stable Audio 3). Le modèle n'est **pas** embarqué dans l'application (poids + provenance de licence pas totalement nette — distillé à partir de SD-Turbo, licence Stability AI Community, plus restrictive que la licence openrail++ déclarée par SDXS-512 lui-même) : publié en accès contrôlé ("gated", licence à accepter) sur Hugging Face à `Fcouprie/sdxs-512-texte-image`, à télécharger et placer soi-même via le paramètre « Chemin modèle » (sélecteur de dossier natif) — lien cliquable directement dans la notice du nœud.
+- **Légende d'image** (`legende-image`, Traitement → Image) — décrit le contenu d'une image en une phrase (anglais) avec Mozilla/distilvit (ViT + GPT2 distillé, ~0,2 Md paramètres, licence Apache 2.0). Contrairement à Texte → image, s'intègre au pattern Transformers.js standard de l'app : un seul appel `pipeline("image-to-text", …)` dans un Web Worker, téléchargé et mis en cache au premier usage comme Whisper/MusicGen (aucune conversion ONNX manuelle, aucun hébergement à gérer). fp32 uniquement (~730 Mo) par contrainte de compatibilité déjà documentée (voir « ONNX Models » plus bas).
+
+### Fixed
+- **Le run d'un nœud isolé (bouton ▶ individuel) faisait réagir des nœuds totalement déconnectés.** `validerGraphe` (contrôle des entrées obligatoires non connectées) s'exécute sur l'ensemble du graphe, mais son résultat était appliqué sans tenir compte du périmètre du run ciblé : un nœud sans aucun lien avec celui qu'on venait de lancer passait quand même en statut « Erreur » s'il avait lui-même une entrée obligatoire non connectée. Exemple signalé : poser « Explorateur musique » et « Séparateur canaux » sans les relier, lancer seulement le premier faisait passer le second en erreur. Le résultat de validation est désormais restreint aux ancêtres du nœud ciblé, comme le sont déjà l'exécution et le passage en « en attente » ; un run global (bouton « Lancer » principal) continue de valider tout le canevas comme avant.
+- **Générateur de pochette : l'aperçu restait une icône cassée au lieu de l'image.** `PochetteGen.tsx` créait l'URL blob via un `useMemo` séparé de son `useEffect` de nettoyage — sous `<StrictMode>` en dev, le double-invoke des effects (setup → cleanup → setup) révoquait l'unique URL partagée par les deux passes avant que la seconde ne s'affiche, cassant l'image de façon permanente (`naturalWidth: 0`). Corrigé en créant et révoquant l'URL dans le même effect, comme le fait déjà `stable-audio-3.cjs` pour un problème de nature similaire.
+- **Notice de nœud : un lien de documentation n'était jamais cliquable.** La notice (inspecteur, popup « ? » du nœud, doc de paramètre) s'affichait toujours en texte brut. Nouveau composant `TexteAvecLiens` qui transforme les URL `https://…` en vrais liens — utilisé pour le lien de téléchargement du modèle sur le nœud Texte → image.
+
+### Changed
+- **Générateur de pochette déplacé de « Entrées » vers « Autres »** dans le catalogue — n'est pas une entrée de données, catégorie plus appropriée.
+
+## [2.4.4] — 2026-08-04
+
+### Added
+- **MIDI Capture node** (`capture-midi`, Entrées → Audio) — records a live performance from a connected MIDI keyboard/controller via the Web MIDI API. Mirrors the existing microphone recorder: pick the device, click Record, play, click Stop — held notes are closed automatically at stop. The captured performance becomes a MIDI file (`ctx.noeud.data.midiFichier`), synthesized to audio (same FM/SoundFont pipeline as the MIDI Player node) and passed through unchanged on the MIDI output, so it chains directly into Transposer/Quantizer/Arpeggiator/MIDI Output. Requires the `midi` Electron permission (added to the app's permission allowlist) and browser/OS MIDI access on first use.
+- **Ollama-driven graph generation** — "Prompt → graphe" gained a "Méthode" parameter: the existing offline keyword parser (default, unchanged) or a new "Ollama (IA)" mode where a local LLM reads the *entire* installed node catalog and picks the relevant blocks itself, understanding free-form phrasing the keyword matcher can't. Verified against a real local server (qwen3:4b): for a prompt containing no literal keyword at all ("je veux entendre ma voix comme si j'étais tout au fond d'une grotte immense, avec un son qui s'étire et devient de plus en plus lent et étrange"), it correctly picked Réverbération + Paulstretch — exactly what the wording implies, and something the keyword matcher cannot do (it falls back to a bare source→output chain). Untrusted-output hardening: the request sets Ollama's `format: "json"` decoder-level constraint (not just a prompt instruction — a "reasoning" model measurably ignored "respond with JSON only" and burned its entire token budget thinking out loud in plain text before ever reaching JSON; `format: "json"` fixed this outright: same model, same prompt, 38.8 s/2000 tokens of rambling → 1.7 s/90 tokens of clean JSON), the reply is extracted tolerating markdown fences, and any `ficheId` the model invents that isn't a real registered node is silently dropped (edges through it are dropped too, not left dangling) rather than creating a broken node on the canvas. On any Ollama failure (server down, invalid reply) the node automatically falls back to the keyword parser and says so in its message. New `Modèle` / `Délai max` parameters (Ollama mode only); `ollamaGenerer` (both the browser-fetch and Electron-IPC paths) gained a `format` passthrough for this.
+
+### Fixed
+- **"Prompt → graphe" never actually drew anything on the canvas.** Verified this was already broken on the unmodified code (not something the Ollama work introduced): the generated spec is attached to `ctx.noeud.data` inside the plugin, but `useExecutionGraphe`'s post-run check read from `noeudsRef.current` — a *different* object by then, because `definirStatut` had already replaced the node's `data` via spread before the plugin even ran. The check now reads the same flattened array (`nds`) the plugin actually mutated. Same fix applied to the sibling mechanisms sharing this pattern (audio-embedded graph import, dynamic `.zip` node installation) — none of the three could have been materializing their result either.
+- **"Prompt → graphe" couldn't run standalone.** Its Text input had no `requis: false`, so validation blocked execution whenever nothing was connected — even though the node has always had a `Prompt` parameter specifically so it *can* run without a connected input. Pre-existing, unrelated to the Ollama addition, found while verifying it.
+- **Edge ID collision in "Prompt → graphe"** — regenerated graphs from the same source node now use timestamped edge IDs, preventing React duplicate-key warnings and broken edge rendering on repeated generations or repeated audio-to-graph imports.
+
+## [2.4.3] — 2026-08-03
+
+### Added
+- **Arpeggio mode in Dessin sonore** — the image-to-sound sonification node can now play its detected shapes as an arpeggio instead of a block chord.
+- **Circulating playback marker** — nodes with a position-in-time concept (Dessin sonore and similar) show a moving point over the currently playing target.
+- **Notes and frames on the canvas** — click the note/frame tool then click the canvas to place it at that exact spot, instead of a fixed offset from the toolbar.
+
+### Fixed
+- **Comment/frame node callbacks** — the callbacks wired to comment and frame nodes were not being invoked correctly after the note/frame placement rework; restored.
+- **`test denoise/` folder** — corrected a `.gitignore` entry so local noise-reduction test assets (`audio.wav`, `output-notches.wav`, `output-spectral.wav`, `sample.wav`) are properly excluded.
+
+### Changed
+- **Smaller installer** — moved renderer-only packages to `devDependencies` so electron-builder's dependency scan (and the packaged `node_modules`) stays lean.
+
+## [2.4.2] — 2026-08-03
+
+### Fixed
+- **Demucs stem order corrected** — the native Demucs separator (4-stem and 6-stem) reported stems in the order `[batterie, basse, autre, voix]`, but the embedded ONNX models actually output `[batterie, basse, voix, autre]`. **Vocals and "other" were swapped** on every native Demucs separation. Fixed in `electron/demucs.cjs`.
+- **Spectral noise-reduction fixes** — corrections to the FFT-based denoiser's magnitude/phase handling (`effets-dynamique.ts`), covered by a new 179-case test file (`noise-nodes.test.ts`).
+
+### Added
+- **Notch-filter noise reduction** — `reduireBruitNotches()`, a second denoising strategy that detects narrowband noise components (mains hum, whine) above a profile threshold and notches them out (configurable threshold multiplier, max notch count, Q), as an alternative to the existing spectral-subtraction reducer (`reduireBruit`, which also gained a configurable relative floor).
+
+## [2.4.0] — 2026-08-02
+
+### Added
+- **Node category colors** — a left accent border on each node reflects its catalog category at a glance.
+- **MiniMap styling** — the React Flow minimap now reflects node colors instead of generic gray blocks.
+- **Node description tooltips** and **per-node execution time badge** — hovering a node shows its description; after a run, a badge shows how long it took.
+- **Red edges for invalid connections** — an edge that fails type-compatibility validation is drawn in red instead of failing silently.
+
+### Changed
+- **Note resize aligned with text output** — the sticky-note node now shares the same resizable-textarea behavior as the Text Output node.
+- **Camera no longer zooms on execution** — running the graph used to re-fit the viewport; it now stays put so you don't lose your place on a large canvas.
+- **Drum Synth moved** from its previous catalog spot to Traitement → Effets, next to the other percussion/rhythm processors.
+
+## [2.3.3] — 2026-08-02
+
+### Added
+- **Global reset button** in the toolbar — clears execution state across the whole canvas in one action, instead of resetting nodes one by one.
+- **Drum machine patterns** — additional preset rhythmic patterns for the drum-pattern generators.
+- **Resizable text output** — the "Sortie texte" node now has a resizable textarea (drag the corner, 260×140 to 800×600) with a copy button, instead of a fixed-height box.
+
+### Fixed
+- **SoundFont default loading** — the embedded FluidR3 SoundFont (`FluidR3_GM.sf2` / `FluidR3_GM_GS.sf2`) now loads reliably both from the packaged app's `resources/sf2/` and from `public/sf2/` in dev, with RIFF/sfbk header validation before use.
+
+## [2.3.2] — 2026-08-01
+
+### Fixed
+- **Meta-component ungroup position** — ungrouping a meta-component now restores its inner nodes at the correct canvas position instead of an offset location.
+- **Multi-node copy/paste** — copying and pasting a multi-node selection (including internal edges between the copied nodes) now works correctly; covered by a new Playwright end-to-end test (`tests-e2e/meta-ungroup.spec.ts`).
+
+## [2.3.1] — 2026-08-01
+
+### Added
+- **Logistic-map effects** — three new effects driven by the logistic chaos map: **Écho logistique** (echo whose feedback/delay drifts chaotically), **Chopper logistique** (rhythmic gate with a chaotically evolving pattern), and **Paulstretch logistique** (extreme time-stretch that grows in progressively rather than applying instantly).
+- **Beat Repeat / Stutter** — captures and repeats a short audio segment at rhythmic intervals.
+- **Mathematical audio nodes** — **Générateur audio mathématique**, **Formule sur échantillons** and **Formule spectrale** let you type a formula (evaluated per-sample or per-bin) to synthesize or process audio. A dedicated formula editor (`ui/EditeurFormule.tsx`) opens in an overlay outside the canvas — reusing the Python/Julia editor's fix for cursor drift inside a zoomed/transformed node.
+- **Music player node** — browses a music folder from the Electron app (play/pause/stop/prev/next) instead of loading a single file.
+- Additional collections and cellular-automaton refinements, plus i18n additions for the new nodes.
+
+## [2.3.0] — 2026-07-31
+
+### Added
+- **Color ↔ sound node family**: **Camelot wheel** (musical journey across the Camelot wheel illustrating harmonic transitions), **Color-Looper** (step sequencer where each step is a color), **RGB color synth** (synthesizes an RGB color into three oscillators), **Dessin sonore** (sonifies the colored shapes of a drawing image into notes/chords), **Palette harmonique** (extracts an image's dominant colors and turns them into a melody/harmony), **Spectre visible** (transposes a visible color's wavelength into the audible range), and **ColorSynth** (the inverse: derives a 6-color palette from an audio signal's spectrum — Sub/Bass/Low-Mid/Mid/High/Air bands mapped to warm→cool HSL colors).
+- A new **color-picker input component** (`ui/SaisieCouleurs.tsx`) backs the color-based nodes.
+
+### Fixed
+- **SVG rendering fix** in the pixel-art/pixeltone node.
+
+## [2.2.4] — 2026-07-31
+
+### Fixed
+- **Race condition in shared AI workers** — Kokoro, textgen, MusicGen, TTS, ASR and Sherpa workers are singletons shared by every node of their kind. Concurrent requests (e.g. two TTS nodes running near-simultaneously) could have their progress messages and results cross-attributed. Added `requestId` correlation and a request queue to each worker so results always reach the node that asked for them.
+
+## [2.2.3] — 2026-07-30
+
+### Fixed
+- **Export/import confirmation dialogs suppressed** — exporting an empty canvas or importing a graph with data loss no longer shows a blocking confirmation dialog; the summary is surfaced without interrupting the flow.
+- Minor persistence cleanup (`usePersistance.ts`).
+
+## [2.2.2] — 2026-07-30
+
+### Added
+- **Integration/smoke tests** for choice-parameter canonicalization and the zone selector, covering the UI → graph → plugin execution path end to end (`src/plugins/integration.test.ts`, `montage.test.ts`, `generateurs.test.ts`).
+
+### Fixed
+- **Canonical ids for choice parameters** — plugins like the zone mask/loop/gate nodes used to compare a `choix` parameter against its *displayed, localized* label (e.g. `"Conserver les zones"` in French). Switching the UI to English, renaming a label, or loading an older saved graph would then silently misinterpret the action. `ParametreDef` gained an `optionIds` field so plugins compare a stable id (`"keep"` / `"mute"`) instead — the first concrete fix from the `ARCHITECTURE.md` diagnostic on localized-string coupling.
+- **Zone selector** — the "Masque de zones" / zone-extraction nodes had inconsistent behavior when combining multiple selected zones; corrected alongside the canonicalization work.
+
 ## [2.2.1] — 2026-07-30
 
 ### Fixed
@@ -12,6 +130,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - **Stuck mouse cursor** — pointer capture could remain active on the waveform/multi-zone selectors, the piano keyboard, or on the React Flow canvas if the mouse button was released outside the window (second screen, Alt-Tab, system menu). Added `pointercancel`/`lostpointercapture` handlers, `buttons===0` guards during `pointermove`, and a global safety net that dispatches `pointerup`/`pointercancel` to the canvas when a pointer is believed to be down but has no pressed buttons.
 - **Kokoro TTS progress unit** — the loading message below the node now always shows a percentage (`Chargement du modèle Kokoro… 12%` / `Loading Kokoro model… 12%`). The progress callback now uses a `load` template with a `%` placeholder, normalizes the raw progress value to a 0–100 percent, and keeps only the file basename in download messages so the percentage stays visible.
 - **End-of-track silence** — `analyserMidi` no longer adds a 1-second padding to the reported total duration. The `Générateur musical` and `Groove Box` mix now stop at the actual last note, so rendered tracks no longer end with an audible second of silence.
+- **Build script shell injection** — `scripts/build-electron.cjs` now removes directories using `fs.rmSync(dir, { recursive: true, force: true })` instead of `cmd /c rmdir /s /q`, fixing the CodeQL `js/shell-command-injection-from-environment` warning.
 
 ### Added
 - **Advanced Drum Sequencer** — new node `sequenceur-batterie-avance` with 8 drum tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom), per-step velocity (0–9), and synthesized drum-machine sounds. The existing `Séquenceur de batterie` is unchanged.

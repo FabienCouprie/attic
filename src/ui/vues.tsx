@@ -7,7 +7,7 @@
 // Point d'extension multi-domaines (cf. ARCHITECTURE.md §11) : un autre domaine
 // enregistre ici ses propres vues (aperçu image, grille de données, éditeur…)
 // sans toucher au renderer.
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, defautParametre } from "../i18n";
@@ -26,6 +26,7 @@ import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
+import { EditeurFormule } from "./EditeurFormule";
 import { SongseeVue } from "./Songsee";
 import { construireListeInstruments } from "../plugins/instruments";
 import { construireListeStyles } from "../plugins/styles-musicaux";
@@ -157,6 +158,269 @@ function VueExplorateur({ id, data }: VueProps) {
           )}
           {audioLocale && !data.audioUrl && <audio className="attic-node-audio" controls src={audioLocale} />}
           {data.audioResultatUrl && <audio className="attic-node-audio" controls src={data.audioResultatUrl} />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Lecteur musique (Electron) ──
+function VueLecteurMusique({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  const [fichiers, setFichiers] = useState<{ nom: string; chemin: string }[] | null>(null);
+  const [chargement, setChargement] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioNom, setAudioNom] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [pendingPlay, setPendingPlay] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevStatutRef = useRef<string>("");
+  const prevUrlRef = useRef<string | null>(null);
+
+  const chemin = String((data.parametres?.["Chemin"] as string | number | undefined) ?? "music collection");
+  const volume = typeof data.parametres?.["Volume"] === "number" ? (data.parametres["Volume"] as number) : 80;
+  const shuffle = data.parametres?.["Lecture aléatoire"] === "Oui";
+  const loop = data.parametres?.["Lecture en boucle"] === "Oui";
+
+  const formatTime = (s: number) => {
+    if (!Number.isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const rafraichir = useCallback(async () => {
+    if (!api) return;
+    setChargement(true);
+    try {
+      const rel = chemin.replace(/^[/\\]+|[/\\]+$/g, "");
+      const liste = (await api?.lireDossier(rel)) ?? [];
+      const cibles = (liste as { nom: string; chemin: string }[]).filter((f) => {
+        const ext = f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase();
+        return [".wav", ".mp3"].includes(ext);
+      });
+      setFichiers(cibles);
+      setCurrentIndex(-1);
+      setAudioUrl(null);
+      setAudioNom(null);
+      setCurrentTime(0);
+      setDuration(0);
+    } finally {
+      setChargement(false);
+    }
+  }, [api, chemin]);
+
+  const loadTrack = useCallback(async (i: number, andPlay = false) => {
+    if (!api || !fichiers || !fichiers[i]) return;
+    const f = fichiers[i];
+    setCurrentIndex(i);
+    setAudioNom(f.nom);
+    const res: { nom: string; donnees: ArrayBufferView | ArrayBuffer } | null = await api.lireFichierAudio(f.chemin);
+    if (!res) return;
+      const blob = new Blob([res.donnees as ArrayBuffer], { type: "audio/mpeg" });
+    const fichier = new File([blob], res.nom, { type: "audio/mpeg" });
+    const url = URL.createObjectURL(fichier);
+    if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+    prevUrlRef.current = url;
+    setAudioUrl(url);
+    setPendingPlay(andPlay);
+    data.onChangerParametre?.(id, "Piste", f.nom);
+  }, [api, fichiers, data, id]);
+
+  const nextIndex = useCallback((from: number) => {
+    if (!fichiers || fichiers.length === 0) return -1;
+    if (fichiers.length === 1) return 0;
+    if (shuffle) {
+      let n = from;
+      let safety = 0;
+      while (n === from && safety < 10) { n = Math.floor(Math.random() * fichiers.length); safety++; }
+      return n;
+    }
+    return (from + 1) % fichiers.length;
+  }, [fichiers, shuffle]);
+
+  const prevIndex = useCallback((from: number) => {
+    if (!fichiers || fichiers.length === 0) return -1;
+    if (fichiers.length === 1) return 0;
+    if (shuffle) {
+      let n = from;
+      let safety = 0;
+      while (n === from && safety < 10) { n = Math.floor(Math.random() * fichiers.length); safety++; }
+      return n;
+    }
+    return (from - 1 + fichiers.length) % fichiers.length;
+  }, [fichiers, shuffle]);
+
+  const handlePlay = useCallback(() => {
+    if (!audioRef.current) return;
+    if (!audioUrl && fichiers && fichiers.length > 0) {
+      loadTrack(currentIndex >= 0 ? currentIndex : 0, true);
+      return;
+    }
+    audioRef.current.play().catch(() => {});
+  }, [audioUrl, fichiers, currentIndex, loadTrack]);
+
+  const handlePause = useCallback(() => {
+    audioRef.current?.pause();
+  }, []);
+
+  const handleStop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (!fichiers?.length) return;
+    const i = nextIndex(currentIndex);
+    if (i >= 0) loadTrack(i, true);
+  }, [fichiers, currentIndex, nextIndex, loadTrack]);
+
+  const handlePrev = useCallback(() => {
+    if (!fichiers?.length) return;
+    const i = prevIndex(currentIndex);
+    if (i >= 0) loadTrack(i, true);
+  }, [fichiers, currentIndex, prevIndex, loadTrack]);
+
+  const handleEnded = useCallback(() => {
+    if (!fichiers?.length) return;
+    if (loop) {
+      const i = nextIndex(currentIndex);
+      if (i >= 0) loadTrack(i, true);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [fichiers, loop, currentIndex, nextIndex, loadTrack]);
+
+  const toggleShuffle = useCallback(() => {
+    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "Non" : "Oui");
+  }, [data, id, shuffle]);
+
+  const toggleLoop = useCallback(() => {
+    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "Non" : "Oui");
+  }, [data, id, loop]);
+
+  const handleVolume = useCallback((v: number) => {
+    data.onChangerParametre?.(id, "Volume", v);
+    if (audioRef.current) audioRef.current.volume = v / 100;
+  }, [data, id]);
+
+  const handleSeek = useCallback((v: number) => {
+    if (audioRef.current && duration) audioRef.current.currentTime = (v / 100) * duration;
+  }, [duration]);
+
+  // Déclenchement au run : détecte la transition en_cours -> termine
+  useEffect(() => {
+    const prev = prevStatutRef.current;
+    prevStatutRef.current = data.statut ?? "";
+    if (data.statut === "termine" && prev === "en_cours") {
+      if (fichiers && fichiers.length > 0 && !audioUrl) {
+        loadTrack(currentIndex >= 0 ? currentIndex : 0, true);
+      } else {
+        setPendingPlay(true);
+      }
+    }
+  }, [data.statut, fichiers, audioUrl, currentIndex, loadTrack]);
+
+  // Lecture automatique dès qu'un audio est prêt et demandé
+  useEffect(() => {
+    if (pendingPlay && audioRef.current && audioUrl) {
+      audioRef.current.play().catch(() => {});
+      setPendingPlay(false);
+    }
+  }, [pendingPlay, audioUrl]);
+
+  // Volume initial / changement
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume / 100;
+  }, [volume]);
+
+  // Nettoyage de l'URL à la destruction du nœud
+  useEffect(() => {
+    return () => {
+      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="attic-node-fichier nodrag" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <NodeResizer minWidth={300} minHeight={220} />
+      {!api ? (
+        <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.electronUniquement")}</div>
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button className="attic-node-fichier-btn" style={{ flex: 1 }} disabled={chargement} onClick={rafraichir}>
+              {t("lecteur.rafraichir").replace("{chemin}", chemin.replace(/^[/\\]+/, "")).replace("{path}", chemin.replace(/^[/\\]+/, ""))}
+            </button>
+            <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
+              const d = await api?.choisirDossier();
+              if (d) data.onChangerParametre?.(id, "Chemin", d);
+            }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" /></svg>
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "auto", minHeight: 0 }}>
+            {fichiers && fichiers.length > 0 && (
+              <select className="attic-node-select" size={Math.min(fichiers.length, 99)} value={currentIndex} onChange={(e) => {
+                const i = parseInt(e.target.value);
+                if (!Number.isNaN(i)) loadTrack(i, false);
+              }} style={{ width: "100%", height: "100%", minHeight: 0 }}>
+                {fichiers.map((f, i) => <option key={f.chemin} value={i}>{f.nom}</option>)}
+              </select>
+            )}
+            {fichiers && fichiers.length === 0 && (
+              <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("lecteur.aucunFichier")}</div>
+            )}
+            {fichiers === null && !chargement && (
+              <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("lecteur.rafraichir").replace("{chemin}", chemin.replace(/^[/\\]+/, "")).replace("{path}", chemin.replace(/^[/\\]+/, ""))}</div>
+            )}
+            {chargement && (
+              <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("lecteur.chargement")}</div>
+            )}
+          </div>
+          <div className="attic-node-fichier-nom" style={{ textAlign: "center", minHeight: 18 }}>{audioNom || "—"}</div>
+          <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+            <button className="attic-node-fichier-btn" title={t("lecteur.precedent")} onClick={handlePrev}>⏮</button>
+            <button className="attic-node-fichier-btn" title={isPlaying ? t("lecteur.pause") : t("lecteur.lecture")} onClick={isPlaying ? handlePause : handlePlay}>
+              {isPlaying ? "⏸" : "▶"}
+            </button>
+            <button className="attic-node-fichier-btn" title={t("lecteur.stop")} onClick={handleStop}>⏹</button>
+            <button className="attic-node-fichier-btn" title={t("lecteur.suivant")} onClick={handleNext}>⏭</button>
+          </div>
+          <div style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, padding: "2px 0" }}>
+            <span style={{ width: 32, textAlign: "right" }}>{formatTime(currentTime)}</span>
+            <input type="range" min={0} max={100} step={0.1} value={duration ? (currentTime / duration) * 100 : 0} onChange={(e) => handleSeek(parseFloat(e.target.value))} style={{ flex: 1 }} />
+            <span style={{ width: 32, textAlign: "left" }}>{formatTime(duration)}</span>
+          </div>
+          <div style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, padding: "2px 0" }}>
+            <button className="attic-node-fichier-btn" style={{ opacity: shuffle ? 1 : 0.5 }} title={t("lecteur.shuffle")} onClick={toggleShuffle}>🔀</button>
+            <button className="attic-node-fichier-btn" style={{ opacity: loop ? 1 : 0.5 }} title={t("lecteur.loop")} onClick={toggleLoop}>🔁</button>
+            <span style={{ width: 24 }}>Vol</span>
+            <input type="range" min={0} max={100} step={1} value={volume} onChange={(e) => handleVolume(parseInt(e.target.value))} style={{ flex: 1 }} />
+          </div>
+          <audio ref={audioRef} src={audioUrl || undefined} style={{ display: "none" }}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={handleEnded}
+            onTimeUpdate={() => {
+              if (audioRef.current) {
+                setCurrentTime(audioRef.current.currentTime);
+                setDuration(audioRef.current.duration || 0);
+              }
+            }}
+            onLoadedMetadata={() => {
+              if (audioRef.current) {
+                setDuration(audioRef.current.duration || 0);
+                audioRef.current.volume = volume / 100;
+              }
+            }}
+          />
         </>
       )}
     </div>
@@ -931,19 +1195,19 @@ function VueVexFlow({ data }: VueProps) {
   const isSvg = svg.trim().startsWith("<svg");
   if (!isSvg) {
     return (
-      <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px" }}>
+      <div className="attic-node-vue-vexflow" style={{ padding: "4px" }}>
         <div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div>
       </div>
     );
   }
   return (
-    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      <div style={{ background: "#fff", borderRadius: 4, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="attic-node-vue-vexflow">
+      <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
 }
 
-// ── Générateur de pochette (canvas procédural) ──
+// ── Générateur de pochette (SVG procédural) ──
 function VuePochette({ data }: VueProps) {
   const p = data.parametres ?? {};
   return (
@@ -952,6 +1216,12 @@ function VuePochette({ data }: VueProps) {
       titre={String(p["Titre"] ?? "Album")}
       artiste={String(p["Artiste"] ?? "")}
       style={String(p["Style"] ?? "bauhaus")}
+      palette={String(p["Palette"] ?? "auto")}
+      complexite={Number(p["Complexité"] ?? 50)}
+      bordure={String(p["Bordure"] ?? "non")}
+      typographie={String(p["Typographie"] ?? "sans-serif")}
+      largeur={Number(p["Largeur"] ?? 512)}
+      hauteur={Number(p["Hauteur"] ?? 512)}
       graine={Number(p["Graine"] ?? 0)}
     />
   );
@@ -970,9 +1240,10 @@ function VueAttracteurIFS({ data }: VueProps) {
 }
 
 // ── Rendu image (affiche une image reçue) ──
-function VueRenduImage({ data }: VueProps) {
+function VueRenduImage({ data, def }: VueProps) {
   const { t } = useI18n();
-  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
+  const pasDeMessage = def?.id === "entree-image" || def?.id === "lecteur-svg" || def?.id === "texte-image";
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={pasDeMessage ? "" : t("msg.connecter.image")} />;
 }
 
 // ── ColorSynth (spectre → palette de couleurs) ──
@@ -1010,6 +1281,39 @@ function VueSourceTexte({ id, data }: VueProps) {
       />
       <div style={{ fontSize: 10, marginTop: 3, color: "var(--text-muted, #666)" }}>
         {texte.length} caractères
+      </div>
+    </div>
+  );
+}
+
+// ── Sortie de texte (zone de texte redimensionnable + copie) ──
+function VueSortieTexte({ data }: VueProps) {
+  const { t } = useI18n();
+  const texte = data.audioResultatMessage ?? "";
+  return (
+    <div className="nodrag attic-node-sortie-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+      <NodeResizer minWidth={260} minHeight={140} maxWidth={800} maxHeight={600} />
+      <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <button
+          className="attic-node-copy-btn"
+          style={{ position: "absolute", top: 4, right: 4, zIndex: 1 }}
+          title={t("btn.copier")}
+          onClick={(e) => { e.stopPropagation(); copierTexte(texte); }}
+        >⧉</button>
+        <textarea
+          readOnly
+          value={texte || t("export.avantLancer")}
+          style={{
+            width: "100%", flex: "1 1 auto", minHeight: 80,
+            resize: "none",
+            fontSize: 12, lineHeight: 1.5, fontFamily: "inherit",
+            background: "var(--bg-input, #0d1117)", color: "var(--texte, #cbd5e1)",
+            border: "1px solid var(--border, #333)",
+            borderRadius: 4, padding: "6px 8px", outline: "none",
+            boxSizing: "border-box",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
       </div>
     </div>
   );
@@ -1078,6 +1382,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("sequenceur-batterie"), vue: VueSequenceurBatterie, position: "avant" },
   { correspond: parId("sequenceur-batterie-avance"), vue: VueSequenceurBatterieAvance, position: "avant" },
   { correspond: parId("sequenceur-melodique"), vue: VueSequenceurMelodique, position: "avant" },
+  { correspond: parId("generateur-audio-mathematique", "formule-echantillons", "formule-spectrale"), vue: EditeurFormule, position: "avant" },
   { correspond: parId("enveloppe-adsr"), vue: VueADSR, position: "avant" },
   { correspond: parId("noms-instruments"), vue: VueNomsInstruments, position: "avant" },
   { correspond: parId("styles-musicaux"), vue: VueStylesMusicaux, position: "avant" },
@@ -1092,13 +1397,16 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
-  { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant" },
+  { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
+  { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
+  { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
@@ -1111,7 +1419,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
   { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "avant" },
   { correspond: parId("pure-data"), vue: VueUploadPd, position: "avant" },
-  { correspond: (f) => f.startsWith("collection-"), vue: VueCollections, position: "apres" },
+  { correspond: (f) => f.startsWith("collection-") && f !== "collection-lecteur-musique", vue: VueCollections, position: "apres" },
+  { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },
 ];

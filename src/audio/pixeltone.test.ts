@@ -3,7 +3,8 @@
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { frequenceDepuisValeur, pixelsEnOrdre, sonifierDepuisPixels } from "./pixeltone";
+import { frequenceDepuisValeur } from "./commun";
+import { pixelsEnOrdre, sonifierDepuisPixels } from "./pixeltone";
 
 function bufferNonSilencieux(buf: AudioBuffer): boolean {
   for (let ch = 0; ch < buf.numberOfChannels; ch++) {

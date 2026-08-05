@@ -35,6 +35,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 function bufferVersMono(buffer: AudioBuffer): Float32Array {
   const nch = buffer.numberOfChannels;
   const len = buffer.length;
@@ -165,9 +172,11 @@ function hashConfig(config: SherpaWorkerConfig): string {
 
 function sendInit(w: Worker, config: SherpaWorkerConfig, onProgress?: (detail: string) => void): Promise<void> {
   return new Promise((resolve, reject) => {
+    const requestId = makeRequestId();
     const timer = setTimeout(() => reject(new Error(traduire("msg.sherpa_asr.init_timeout"))), 120000);
     const onMsg = (e: MessageEvent) => {
       const msg = e.data;
+      if (msg.requestId !== requestId) return;
       if (msg.type === "ready") {
         clearTimeout(timer);
         w.removeEventListener("message", onMsg);
@@ -181,15 +190,17 @@ function sendInit(w: Worker, config: SherpaWorkerConfig, onProgress?: (detail: s
       }
     };
     w.addEventListener("message", onMsg);
-    w.postMessage({ type: "init", config });
+    w.postMessage({ type: "init", config, requestId });
   });
 }
 
 function sendClearCache(w: Worker): Promise<void> {
   return new Promise((resolve, reject) => {
+    const requestId = makeRequestId();
     const timer = setTimeout(() => reject(new Error(traduire("msg.sherpa_asr.clear_cache_timeout"))), 30000);
     const onMsg = (e: MessageEvent) => {
       const msg = e.data;
+      if (msg.requestId !== requestId) return;
       if (msg.type === "cacheCleared") {
         clearTimeout(timer);
         w.removeEventListener("message", onMsg);
@@ -201,15 +212,17 @@ function sendClearCache(w: Worker): Promise<void> {
       }
     };
     w.addEventListener("message", onMsg);
-    w.postMessage({ type: "clearCache" });
+    w.postMessage({ type: "clearCache", requestId });
   });
 }
 
 function sendTranscribe(w: Worker, sampleRate: number, samples: Float32Array): Promise<string> {
   return new Promise((resolve, reject) => {
+    const requestId = makeRequestId();
     const timer = setTimeout(() => reject(new Error(traduire("msg.sherpa_asr.transcribe_timeout"))), 180000);
     const onMsg = (e: MessageEvent) => {
       const msg = e.data;
+      if (msg.requestId !== requestId) return;
       if (msg.type === "done") {
         clearTimeout(timer);
         w.removeEventListener("message", onMsg);
@@ -221,7 +234,7 @@ function sendTranscribe(w: Worker, sampleRate: number, samples: Float32Array): P
       }
     };
     w.addEventListener("message", onMsg);
-    w.postMessage({ type: "transcribe", sampleRate, samples: samples.buffer }, [samples.buffer]);
+    w.postMessage({ type: "transcribe", requestId, sampleRate, samples: samples.buffer }, [samples.buffer]);
   });
 }
 

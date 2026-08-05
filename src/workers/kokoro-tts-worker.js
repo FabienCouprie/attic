@@ -29,13 +29,15 @@ env.wasmPaths = {
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
 
 let tts = null;
+const queue = [];
+let busy = false;
 
-function sendProgress(msg) {
-  self.postMessage({ type: "progress", msg });
+function sendProgress(msg, requestId) {
+  self.postMessage({ type: "progress", msg, requestId });
 }
 
-self.onmessage = async (e) => {
-  const { text, voice, speed, labels } = e.data;
+async function processRequest(req) {
+  const { text, voice, speed, labels, requestId } = req;
   const label = (key, fallback) => labels?.[key] ?? fallback;
   const basename = (path) => {
     if (!path) return "";
@@ -61,7 +63,7 @@ self.onmessage = async (e) => {
   };
   try {
     if (!tts) {
-      sendProgress(formatLoad(0));
+      sendProgress(formatLoad(0), requestId);
       tts = await KokoroTTS.from_pretrained(MODEL_ID, {
         dtype: "q8",
         device: "wasm",
@@ -70,20 +72,20 @@ self.onmessage = async (e) => {
           const file = data?.file || "";
           if (data?.status === "progress") {
             const pct = toPercent(data.progress, data.loaded, data.total);
-            sendProgress(formatLoad(pct));
+            sendProgress(formatLoad(pct), requestId);
           } else if (data?.status === "download") {
             const pct = toPercent(data.progress, data.loaded, data.total);
-            sendProgress(formatDownload(file, pct));
+            sendProgress(formatDownload(file, pct), requestId);
           } else if (data?.status === "initiate") {
-            sendProgress(formatLoad(0));
+            sendProgress(formatLoad(0), requestId);
           } else if (data?.status === "ready") {
-            sendProgress(formatLoad(100));
+            sendProgress(formatLoad(100), requestId);
           }
         },
       });
     }
 
-    sendProgress(label("synthesize", "Synthèse vocale…"));
+    sendProgress(label("synthesize", "Synthèse vocale…"), requestId);
     const audio = await tts.generate(text, { voice, speed });
     console.log("[kokoro-worker] audio object", audio);
     // kokoro-js returns { audio: Float32Array, sampling_rate: number }.
@@ -94,12 +96,33 @@ self.onmessage = async (e) => {
     }
     self.postMessage({
       type: "done",
+      requestId,
       data,
       sampleRate,
       length: data.length,
     });
   } catch (err) {
     console.error("[kokoro-worker] error", err);
-    self.postMessage({ type: "error", msg: String(err?.message || err) });
+    self.postMessage({ type: "error", requestId, msg: String(err?.message || err) });
   }
+}
+
+function processQueue() {
+  if (busy) return;
+  busy = true;
+  (async () => {
+    try {
+      while (queue.length > 0) {
+        const req = queue.shift();
+        await processRequest(req);
+      }
+    } finally {
+      busy = false;
+    }
+  })();
+}
+
+self.onmessage = (e) => {
+  queue.push(e.data);
+  processQueue();
 };

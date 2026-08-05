@@ -42,6 +42,7 @@ export const fiches: FicheAudio[] = ([
         type: "choix",
         options: ["oui", "non"],
         optionsEn: ["yes", "no"],
+        optionIds: ["yes", "no"],
         defaut: "oui",
         doc: "Envoie un bang à l'objet [loadbang] au démarrage de l'audio.",
         docEn: "Send a bang to the [loadbang] object when audio starts.", defautEn: "yes",
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
 
       const packages = ctx.paramTexte("Bibliothèques", "vanilla");
       const outputChannels = ctx.paramNombre("Canaux sortie", 2);
-      const bangOnStart = ctx.paramTexte("Bang démarrage", "oui") === "oui";
+      const bangOnStart = ctx.paramTexte("Bang démarrage", "yes") === "yes";
 
       try {
         const { appliquerPatchPureData } = await import("../audio/pure-data");

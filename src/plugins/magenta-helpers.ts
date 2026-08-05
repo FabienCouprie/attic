@@ -247,14 +247,15 @@ export async function continuerMidi(file: File, steps: number, temperature: numb
 
 export const MODES = ["Aléatoire", "Marche", "Montant", "Descendant", "Arpège"];
 export const MODES_EN = ["Random", "Walk", "Up", "Down", "Arpeggio"];
+export const MODES_IDS = ["random", "walk", "up", "down", "arpeggio"];
 export const ARP = [0, 2, 4, 6, 7, 5, 3, 1];
 
 export function choisirBouton(step: number, mode: string, prev: number): number {
   switch (mode) {
-    case "Montant": return step % 8;
-    case "Descendant": return 7 - (step % 8);
-    case "Arpège": return ARP[step % 8];
-    case "Marche": {
+    case "up": return step % 8;
+    case "down": return 7 - (step % 8);
+    case "arpeggio": return ARP[step % 8];
+    case "walk": {
       const dir = Math.random() < 0.5 ? -1 : 1;
       return Math.max(0, Math.min(7, prev + dir));
     }

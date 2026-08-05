@@ -16,9 +16,34 @@ import {
 import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob } from "../../audio";
-import { useI18n } from "../../i18n";
+import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
+
+// Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
+// une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
+// statuts, messages, cache) peuvent être effacés.
+const CHAMPS_UTILISATEUR = new Set([
+  "ficheId",
+  "parametres",
+  "zonesSelectionnees",
+  "audioFichier",
+  "audioNom",
+  "audioUrl",
+  "midiFichier",
+  "midiNom",
+  "midiUrl",
+  "imageFichier",
+  "imageNom",
+  "imageUrl",
+  "svgFichier",
+  "svgNom",
+  "svgUrl",
+  "irFichier",
+  "irNom",
+  "enregistrementBlob",
+  "enregistrementUrl",
+]);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -64,6 +89,41 @@ export function useExecutionGraphe(o: OptionsExecution) {
     );
   };
 
+  // ── Réinitialiser un ensemble de nœuds ──
+  const reinitialiserIds = useCallback((ids: Set<string>) => {
+    setNodes((nds) => nds.map((n) => {
+      if (!ids.has(n.id)) return n;
+      if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
+      if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
+      if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
+      if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
+      const nouvelleData: any = {
+        ...n.data,
+        statut: "attente",
+        progression: undefined,
+        audioResultatUrl: undefined,
+        audioResultatNom: undefined,
+        audioResultatBuffer: undefined,
+        audioResultatMessage: undefined,
+        scriptGenere: undefined,
+        mp3Url: undefined,
+        imageResultatUrl: undefined,
+        imageResultatFile: undefined,
+        visualisationUrl: undefined,
+        tempsExecution: undefined,
+      };
+      // Garde-fou : on ne doit jamais effacer un champ utilisateur.
+      for (const champ of CHAMPS_UTILISATEUR) {
+        if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
+          console.warn(`[reinitialiserIds] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
+          nouvelleData[champ] = (n.data as any)[champ];
+        }
+      }
+      return { ...n, data: nouvelleData };
+    }));
+    for (const id of ids) cacheExec.current.delete(id);
+  }, [setNodes]);
+
   // ── Réinitialiser un nœud (cascade aval) ──
   // Utilise aretesRef pour toujours avoir les arêtes courantes (pas une closure périmée).
   const reinitialiserNoeud = useCallback((nodeId: string) => {
@@ -78,33 +138,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
         if (e.source === courant && !ids.has(e.target)) file.push(e.target);
       }
     }
-    setNodes((nds) => nds.map((n) => {
-      if (!ids.has(n.id)) return n;
-      if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
-      if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
-      if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
-      if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
-      return {
-        ...n,
-        data: {
-          ...n.data,
-          statut: "attente",
-          progression: undefined,
-          audioResultatUrl: undefined,
-          audioResultatNom: undefined,
-          audioResultatBuffer: undefined,
-          audioResultatMessage: undefined,
-          scriptGenere: undefined,
-          mp3Url: undefined,
-          imageResultatUrl: undefined,
-          imageResultatFile: undefined,
-          visualisationUrl: undefined,
-          zonesSelectionnees: undefined,
-        },
-      };
-    }));
-    for (const id of ids) cacheExec.current.delete(id);
-  }, [setNodes]);
+    reinitialiserIds(ids);
+  }, [reinitialiserIds]);
+
+  // ── Réinitialiser tous les nœuds (reset global) ──
+  const reinitialiserTout = useCallback(() => {
+    const ids = new Set(noeudsRef.current.map((n) => n.id));
+    reinitialiserIds(ids);
+  }, [reinitialiserIds]);
 
   const lancer = useCallback(async (noeudPrioritaireId?: string) => {
     // Ne pas bloquer si on lance un node individuellement (prioritaire)
@@ -126,25 +167,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const aretes = plat.aretes as unknown as Edge[];
     const priorite = noeudPrioritaireId ?? prioritaireRef.current;
 
-    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
-    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
-    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
-    const validation = validerGraphe(
-      plat.noeuds,
-      aretes as unknown as AreteG[],
-      (ficheId) => trouverDef(ficheId),
-      registre.fluxCompatibles,
-    );
-    const noeudsEnErreur = new Set<string>();
-    for (const [nodeId, msgs] of validation.noeudsAffectes) {
-      noeudsEnErreur.add(nodeId);
-      definirStatut(nodeId, "erreur", msgs[0]);
-    }
-
     // Topologie (logique pure testée — cf. core/graphe.ts)
     const aretesG = aretes as unknown as AreteG[];
     const ordonnees = ordreTopologique(nds.map((n) => n.id), aretesG);
     let ordreFiltre = ordonnees;
+    // Périmètre d'un run ciblé (nœud prioritaire) : null = run global (tout le graphe).
+    let ancPriorite: Set<string> | null = null;
     if (priorite) {
       // Si le nœud prioritaire est un méta, il n'existe pas dans le graphe aplati
       // (il est expansé) : cibler ses nœuds de sortie internes aplatis, sinon
@@ -155,12 +183,37 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (metaPrio) cibles = (metaPrio.mapSorties as { noeudInterne: string }[]).map((m) => `${priorite}::${m.noeudInterne}`);
       const anc = new Set<string>();
       for (const c of cibles) for (const a of ancetres(c, aretesG)) anc.add(a);
+      ancPriorite = anc;
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
+    }
+
+    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
+    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
+    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
+    // `validerGraphe` inspecte TOUT le graphe (entrées obligatoires non connectées
+    // comprises) : sur un run ciblé (nœud prioritaire), un nœud hors périmètre —
+    // même totalement déconnecté du nœud lancé — se faisait donc marquer « erreur »
+    // alors qu'il n'a ni lien ni exécution avec le nœud sur lequel on a cliqué
+    // « lancer ». On restreint donc l'application des résultats de validation au
+    // périmètre du run (`ancPriorite`), comme le fait déjà `ordreFiltre` plus bas.
+    const validation = validerGraphe(
+      plat.noeuds,
+      aretes as unknown as AreteG[],
+      (ficheId) => trouverDef(ficheId),
+      registre.fluxCompatibles,
+    );
+    const noeudsEnErreur = new Set<string>();
+    for (const [nodeId, msgs] of validation.noeudsAffectes) {
+      if (ancPriorite && !ancPriorite.has(nodeId)) continue;
+      noeudsEnErreur.add(nodeId);
+      definirStatut(nodeId, "erreur", msgs[0]);
     }
     // Un méta est « dans le périmètre » du run ssi au moins un de ses nœuds internes
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
     // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
     // « erreur », donnant l'illusion d'un run global.
+    const idsDecoratifs = new Set(nds.filter((n: any) => n.data?.ficheId === "comment" || n.data?.ficheId === "frame").map((n: any) => n.id));
+    ordreFiltre = ordreFiltre.filter((id) => !idsDecoratifs.has(id));
     const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
 
     for (const id of ordreFiltre) {
@@ -192,6 +245,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
         definirStatut(proprio, "erreur", detail ? t("execution.brancheEnEchecDetail").replace("{detail}", detail) : t("execution.brancheEnEchec"));
       }
     };
+
+    const tempsParVisible = new Map<string, number>();
 
     for (let i = 0; i < ordreFiltre.length; i++) {
       const nodeId = ordreFiltre[i];
@@ -238,6 +293,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         definirStatut(nodeId, "termine");
+        if (typeof entreeCache.tempsExecution === "number") {
+          const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+          tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + entreeCache.tempsExecution);
+        }
         continue;
       }
 
@@ -250,13 +309,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
       // elles suivent ce nœud dans l'ordre linéaire sans en dépendre. La
       // réexécution des vrais descendants est déjà assurée par `sourceReprocessee`
-      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les nœuds
-      // dont une entrée réelle a été recalculée ce run.
+      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les
+      // nœuds dont une entrée réelle a été recalculée ce run.
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
+      const start = performance.now();
+      const ajouterTemps = (ms: number) => {
+        const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+        tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
+      };
       try {
         const res = await fn({
           noeud: node,
@@ -274,11 +338,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
           },
           paramTexte: (nom: string, defaut: string) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            if (typeof p === "string") return p;
             const def = trouverDef(node.data.ficheId as string);
             const pDef = def?.parametres.find((p) => p.nom === nom);
+            if (typeof p === "string" && pDef) {
+              return String(valeurCanoniqueChoix(pDef, p));
+            }
             const defautEff = typeof pDef?.defautEn === "string" ? pDef.defautEn : defaut;
-            return defautEff;
+            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defautEff;
           },
           onProgress: (msg: string) => definirStatut(nodeId, "en_cours", msg),
         });
@@ -297,19 +363,24 @@ export function useExecutionGraphe(o: OptionsExecution) {
           noeudsEnErreur.add(nodeId);
           definirStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);
+          ajouterTemps(performance.now() - start);
         } else {
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree });
+          const elapsed = performance.now() - start;
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           definirStatut(nodeId, "termine");
+          ajouterTemps(elapsed);
         }
       } catch (e: any) {
         // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
         // ET remontée sur le nœud (statut « erreur » + message).
+        const elapsed = performance.now() - start;
         console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
         definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
         marquerMetaEnEchec(nodeId, node.data.ficheId as string);
+        ajouterTemps(elapsed);
       }
     }
 
@@ -338,7 +409,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
         const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
         const fichier = valsSafe.find((v): v is File => v instanceof File);
-        const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg") ? fichier : null;
+        const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
         const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
         const texte = valsSafe.find((v): v is string => typeof v === "string");
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
@@ -415,9 +486,38 @@ export function useExecutionGraphe(o: OptionsExecution) {
       })
     );
 
+    // Appliquer les temps d'exécution mesurés (cumulés par nœud visible, y compris méta)
+    if (tempsParVisible.size > 0) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!tempsParVisible.has(n.id)) return n;
+          const t = tempsParVisible.get(n.id)!;
+          if (n.data.tempsExecution === t) return n;
+          return { ...n, data: { ...n.data, tempsExecution: t } };
+        })
+      );
+    }
+
     // Vérifier si un node a généré une spec de graphe (prompt → graphe)
+    //
+    // IMPORTANT : on itère `nds` (l'instantané aplati LOCAL à ce `lancer()`,
+    // capturé à la ligne ~166), PAS `noeudsRef.current`. `ctx.noeud` passé au
+    // plugin pointe vers les entrées de `nds` ; `definirStatut` (appelé au
+    // moins une fois par nœud AVANT même l'appel du plugin, pour passer en
+    // "en_cours") crée lui un NOUVEL objet `data` via spread pour l'état React
+    // — donc dès ce premier appel, `noeudsRef.current` ne contient déjà plus
+    // le MÊME objet `data` que celui que le plugin mute ensuite (`ctx.noeud.data`
+    // reste l'ancien objet, maintenant orphelin de l'état React). Toute
+    // mutation que le plugin fait sur `ctx.noeud.data` (ex. `_grapheGenere`,
+    // `_grapheEmbarque`, `_nodeInstalle` ci-dessous) était donc invisible ici
+    // — bug préexistant, vérifié sur le code d'origine (avant l'ajout du mode
+    // Ollama), qui rendait la génération de graphe totalement silencieuse :
+    // le nœud passait bien à « Terminé » mais rien n'apparaissait sur le
+    // canevas. `nds`, lui, référence directement les objets mutés par les
+    // plugins — aucune de ces trois fonctionnalités ne peut avoir fonctionné
+    // depuis l'introduction de cette optimisation de `definirStatut`.
     if (onGrapheGenere) {
-      for (const n of noeudsRef.current) {
+      for (const n of nds) {
         const spec = (n.data as any)?._grapheGenere;
         if (spec && spec.nodes && spec.edges) {
           onGrapheGenere(n.id, { nodes: spec.nodes, edges: spec.edges });
@@ -439,8 +539,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
 
     // Vérifier si un node a été installé dynamiquement (import de .zip)
+    // Même raison qu'au-dessus : lire `nds`, pas `noeudsRef.current`.
     if (onNodeInstalle) {
-      for (const n of noeudsRef.current) {
+      for (const n of nds) {
         const data = n.data as any;
         if (data?._nodeInstalle) {
           onNodeInstalle();
@@ -461,5 +562,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [prioritaire, repertoire, t]);
 
-  return { lancer, reinitialiserNoeud };
+  return { lancer, reinitialiserNoeud, reinitialiserTout };
 }

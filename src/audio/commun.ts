@@ -32,9 +32,19 @@ export const TAILLE_FFT = 2048;
 
 export const SAUT_FFT = TAILLE_FFT / 2;
 
+export const TAILLE_FFT_BRUIT = 8192;
+
+export const SAUT_FFT_BRUIT = TAILLE_FFT_BRUIT / 2;
+
 export const TAILLE_FFT_HAUTEUR = 2048;
 
 export const SAUT_ANALYSE_HAUTEUR = TAILLE_FFT_HAUTEUR / 4;
+
+
+export function frequenceDepuisValeur(v: number, min: number, max: number): number {
+  const n = Math.max(0, Math.min(255, v)) / 255;
+  return min + (max - min) * n;
+}
 
 
 export function creerFenetreHann(taille: number): Float64Array {

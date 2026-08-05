@@ -4,7 +4,7 @@ import { fft } from "./audio/fft";
 export const TAILLE_TRANCHE = 343980;
 export const CHEVAUCHEMENT = 4410;
 
-export const NOMS_STEMS = ["Voix", "Batterie", "Basse", "Autre"] as const;
+export const NOMS_STEMS = ["Batterie", "Basse", "Voix", "Autre"] as const;
 
 // Fournisseurs d'exécution réellement disponibles avec l'import par défaut
 // d'onnxruntime-web : le backend « wasm » et, via le même module WASM/JSEP,
@@ -419,11 +419,11 @@ function reconstruireStems(
   nbCanaux: number,
   sampleRate: number
 ): ResultatSeparation {
-  // Le modèle Demucs (HT) produit les stems dans l'ordre :
-  // [batterie, basse, autre, voix].  On corrige le nommage ici pour que
+  // Le modèle Demucs (HT) embarqué produit les stems dans l'ordre observé :
+  // [batterie, basse, voix, autre].  On corrige le nommage ici pour que
   // resultat.voix contienne bien la voix, resultat.batterie la batterie, etc.
   const resultat: ResultatSeparation = { voix: null, batterie: null, basse: null, autre: null };
-  const sortiesNom = ["batterie", "basse", "autre", "voix"] as const;
+  const sortiesNom = ["batterie", "basse", "voix", "autre"] as const;
 
   for (let s = 0; s < NOMS_STEMS.length; s++) {
     const acc = accumulateurs[s];

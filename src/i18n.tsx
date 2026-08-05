@@ -15,11 +15,17 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.sauvegarder": { fr: "Sauvegarder l'en-cours", en: "Save work-in-progress" },
   "btn.importer": { fr: "Importer", en: "Import" },
   "btn.dossier": { fr: "Dossier", en: "Folder" },
+  "btn.parcourir": { fr: "Parcourir", en: "Browse" },
+  "btn.choisirDossier": { fr: "Choisir un dossier", en: "Choose a folder" },
   "btn.theme": { fr: "Thème", en: "Theme" },
   "btn.sf2": { fr: "SF2", en: "SF2" },
   "btn.executer": { fr: "Exécuter ce bloc", en: "Run this block" },
   "btn.reinitialiser": { fr: "Réinitialiser", en: "Reset" },
   "btn.doc": { fr: "Documentation", en: "Documentation" },
+  "btn.commentaire": { fr: "Ajouter une note", en: "Add a note" },
+  "btn.replier": { fr: "Replier le nœud", en: "Collapse node" },
+  "btn.deplier": { fr: "Déplier le nœud", en: "Expand node" },
+  "btn.cadre": { fr: "Ajouter un cadre", en: "Add frame" },
   "btn.charger.audio": { fr: "Charger audio…", en: "Load audio…" },
   "btn.changer.audio": { fr: "Changer…", en: "Change…" },
   "btn.charger.image": { fr: "Charger image…", en: "Load image…" },
@@ -40,6 +46,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.rerecord": { fr: "Réenregistrer", en: "Re-record" },
   "btn.stop": { fr: "Arrêter", en: "Stop" },
   "btn.device": { fr: "Périphérique", en: "Device" },
+  "btn.notes": { fr: "notes", en: "notes" },
   "btn.detacher": { fr: "Détacher", en: "Detach" },
   "statut.attente": { fr: "En attente", en: "Waiting" },
   "statut.en_cours": { fr: "En cours", en: "Running" },
@@ -52,6 +59,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "execution.entreeEnErreur": { fr: "Entrée en erreur : {source}", en: "Input in error: {source}" },
   "execution.brancheEchecSansResultat": { fr: "Branche sans résultat : {fautif}", en: "Branch with no result: {fautif}" },
   "execution.brancheEchecAucunResultat": { fr: "Aucun résultat produit", en: "No result produced" },
+  "execution.temps": { fr: "Temps d'exécution", en: "Execution time" },
   "msg.enCoursSauvegarde": { fr: "Sauvegarde en cours…", en: "Saving in progress…" },
   "btn.langue": { fr: "Langue", en: "Language" },
   "palette.titre": { fr: "Catalogue", en: "Catalog" },
@@ -163,6 +171,16 @@ const DICO: Record<string, Record<Langue, string>> = {
   "meta.sortie": { fr: "Sortie", en: "Output" },
   "meta.ajoutSortie": { fr: "Ajouter une sortie exposée au méta-composant", en: "Add an exposed output to the meta-component" },
   "meta.atelier": { fr: "Atelier", en: "Workshop" },
+  "lecteur.rafraichir": { fr: "⟳ /{chemin}", en: "Refresh /{path}" },
+  "lecteur.chargement": { fr: "Chargement…", en: "Loading…" },
+  "lecteur.aucunFichier": { fr: "Aucun fichier audio.", en: "No audio file." },
+  "lecteur.lecture": { fr: "Lecture", en: "Play" },
+  "lecteur.pause": { fr: "Pause", en: "Pause" },
+  "lecteur.suivant": { fr: "Suivant", en: "Next" },
+  "lecteur.precedent": { fr: "Précédent", en: "Previous" },
+  "lecteur.stop": { fr: "Stop", en: "Stop" },
+  "lecteur.shuffle": { fr: "Aléatoire", en: "Shuffle" },
+  "lecteur.loop": { fr: "Boucle", en: "Loop" },
 };
 
 const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
@@ -176,6 +194,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_var_1": { fr: "{__VAR_0__}\n\n{__VAR_1__}", en: "{__VAR_0__}\n\n{__VAR_1__}" },
   "msg.electron_requis": { fr: "Electron requis.", en: "Electron required." },
   "msg.configurez_les_dossiers": { fr: "Configurez les dossiers.", en: "Configure the folders." },
+  "msg.lecteur_musique": { fr: "Lecteur musique prêt.", en: "Music player ready." },
+  "msg.electronUniquement": { fr: "Electron uniquement.", en: "Electron only." },
   "msg.aucun_wav_ogg_trouv": { fr: "Aucun .wav/.ogg trouvé.", en: "No .wav/.ogg found." },
   "msg.termin_var_0_converti_s_var_1": { fr: "Terminé : {__VAR_0__} converti(s){__VAR_1__}.", en: "Completed: {__VAR_0__} converted{__VAR_1__}." },
   "msg.aucun_mp3_trouv": { fr: "Aucun .mp3 trouvé.", en: "No .mp3 found." },
@@ -192,6 +212,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.formule_spectrale_appliqu_e": { fr: "Formule spectrale appliquée", en: "Spectral formula applied" },
   "msg.erreur_formule_spectrale_var_0": { fr: "Erreur formule spectrale : {__VAR_0__}", en: "Spectral formula error: {__VAR_0__}" },
   "msg.branchez_audio_profil_n_ud_profil_de_bruit": { fr: "Branchez audio + profil (nœud Profil de bruit).", en: "Connect audio + profile (node Noise profile)." },
+  "msg.profil_bruit_trop_faible": { fr: "Profil de bruit quasi vide (zone trop silencieuse/courte).", en: "Noise profile almost empty (zone too silent/short)." },
+  "msg.reduction_bruit_profil_trop_faible": { fr: "Réduction désactivée : profil de bruit vide.", en: "Noise reduction disabled: empty noise profile." },
   "msg.r_verb_ration_convolution_ir_var_0_s": { fr: "Réverbération à convolution (IR : {__VAR_0__} s)", en: "Reverberation at convolution (IR: {__VAR_0__} s)" },
   "msg.aucun_fichier_midi_en_entr_e": { fr: "Aucun fichier MIDI en entrée.", en: "No MIDI file entered." },
   "msg.arp_ge_var_0_var_1_var_2_oct": { fr: "Arpège {__VAR_0__} · {__VAR_1__} · {__VAR_2__} oct.", en: "Arpège {__VAR_0__} · {__VAR_1__} · {__VAR_2__} Oct." },
@@ -206,8 +228,6 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_motions_var_1": { fr: "{__VAR_0__} émotions{__VAR_1__}", en: "{__VAR_0__} emotions{__VAR_1__}" },
   "msg.aucun_fichier": { fr: "Aucun fichier.", en: "No files." },
   "msg.aucun_fichier_charg": { fr: "Aucun fichier chargé.", en: "No file loaded." },
-  "msg.aucune_image_chargee": { fr: "Aucune image chargée.", en: "No image loaded." },
-  "msg.aucun_svg_charge": { fr: "Aucun SVG chargé.", en: "No SVG loaded." },
   "msg.erreur_chargement_svg": { fr: "Impossible de charger le SVG.", en: "Unable to load the SVG." },
   "msg.erreur_canvas": { fr: "Canvas 2D indisponible.", en: "Canvas 2D unavailable." },
   "msg.erreur_conversion_png": { fr: "Conversion PNG échouée.", en: "PNG conversion failed." },
@@ -309,6 +329,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.branchez_deux_pistes": { fr: "Branchez deux pistes.", en: "Connect two leads." },
   "msg.var_0_var_1_s_var_2_s": { fr: "{__VAR_0__} × {__VAR_1__}s = {__VAR_2__}s", en: "{__VAR_0__} × {__VAR_1__}s = {__VAR_2__}s" },
   "msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones": { fr: "Aucune zone reçue — branchez le sélecteur multi-zones.", en: "No area received — plug the multi-zone selector." },
+  "msg.aucune_zone_extraite": { fr: "Aucune zone à extraire.", en: "No area to extract." },
+  "msg.var_0_zones_rabout_es_var_1_s": { fr: "{__VAR_0__} zone(s) raboutée(s) · {__VAR_1__}s", en: "{__VAR_0__} area(s) joined · {__VAR_1__}s" },
   "msg.zone_vide": { fr: "Zone vide.", en: "Empty area." },
   "msg.zone_var_0_var_1_extraite_var_2_s_var_3_var_4_s": { fr: "Zone {__VAR_0__}/{__VAR_1__} extraite · {__VAR_2__}s · {__VAR_3__}→{__VAR_4__}s", en: "Area {__VAR_0__}/{__VAR_1__} extracted · {__VAR_2__}s · {__VAR_3__}→{__VAR_4__}s" },
   "msg.musicgen_var_0_s_var_1_var_2": { fr: "MusicGen · {__VAR_0__}s · \"{__VAR_1__}{__VAR_2__}\"", en: "MusicGen · {__VAR_0__}s · \"{__VAR_1__}{__VAR_2__}\"" },
@@ -332,9 +354,9 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.resonance_audio_var_0_2_canaux": { fr: "Resonance Audio · {__VAR_0__}→2 canaux", en: "Resonance Audio · {__VAR_0__}→2 channels" },
   "msg.erreur_resonance_audio_var_0": { fr: "Erreur Resonance Audio : {__VAR_0__}", en: "Audio Resonance Error: {__VAR_0__}" },
   "msg.demucs_n_cessite_l_application_de_bureau": { fr: "Demucs nécessite l'application de bureau.", en: "Demoucs requires desktop application." },
-  "msg.s_par_4_pistes_batterie_basse_autre_voix": { fr: "Séparé : 4 pistes (batterie, basse, autre, voix)", en: "Separated: 4 tracks (battery, bass, other, voice)" },
+  "msg.s_par_4_pistes_batterie_basse_voix_autre": { fr: "Séparé : 4 pistes (batterie, basse, voix, autre)", en: "Separated: 4 tracks (battery, bass, voice, other)" },
   "msg.demucs_6s_n_cessite_l_application_de_bureau": { fr: "Demucs 6s nécessite l'application de bureau.", en: "Democs 6s requires desktop application." },
-  "msg.s_par_6_pistes_batterie_basse_autre_voix_guitare_piano": { fr: "Séparé : 6 pistes (batterie, basse, autre, voix, guitare, piano)", en: "Separated : 6 tracks (battery, bass, other, voice, guitar, piano)" },
+  "msg.s_par_6_pistes_batterie_basse_voix_autre_guitare_piano": { fr: "Séparé : 6 pistes (batterie, basse, voix, autre, guitare, piano)", en: "Separated : 6 tracks (battery, bass, voice, other, guitar, piano)" },
   "msg.mod_le_mdx_non_disponible": { fr: "Modèle MDX non disponible.", en: "MDX model not available." },
   "msg.s_par_voix_instrumental": { fr: "Séparé : voix + instrumental", en: "Separated: voice + instrumental" },
   "msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s": { fr: "{__VAR_0__} pas · {__VAR_1__} mesure(s) · {__VAR_2__} BPM · {__VAR_3__} frappe(s)", en: "{__VAR_0__} not · {__VAR_1__} measure(s) · {__VAR_2__} BPM · {__VAR_3__} hit(s)" },
@@ -343,6 +365,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.aucun_texte_en_entr_e": { fr: "Aucun texte en entrée.", en: "No text input." },
   "msg.aucun_fichier_midi": { fr: "Aucun fichier MIDI.", en: "No MIDI file." },
   "msg.chargez_un_fichier_midi": { fr: "Chargez un fichier MIDI.", en: "Load a MIDI file." },
+  "msg.aucune_performance_midi_cliquez_sur_enregistrer_dans_l_inspecteur": { fr: "Aucune performance enregistrée. Cliquez sur Enregistrer dans l'inspecteur.", en: "No performance recorded yet. Click Record in the inspector." },
+  "msg.midiIndisponible": { fr: "MIDI non disponible : navigateur non compatible ou accès refusé.", en: "MIDI unavailable: unsupported browser or access denied." },
+  "msg.aucunPeripheriqueMidi": { fr: "Aucun périphérique MIDI détecté. Branchez un clavier/contrôleur puis rouvrez ce nœud.", en: "No MIDI device detected. Plug in a keyboard/controller, then reopen this node." },
+  "msg.ollamaGraphRepli": { fr: "(Ollama indisponible, repli sur mots-clés)", en: "(Ollama unavailable, fell back to keywords)" },
   "msg.aucun_midi": { fr: "Aucun MIDI.", en: "No MIDI." },
   "msg.la_vitesse_doit_tre_positive": { fr: "La vitesse doit être positive.", en: "The speed must be positive." },
   "msg.vitesse_x_var_0_var_1_s": { fr: "Vitesse x{__VAR_0__} · {__VAR_1__}s", en: "Speed x{__VAR_0__} · {__VAR_1__}s" },
@@ -363,12 +389,20 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_stable_audio_3_var_0": { fr: "Erreur Stable Audio 3 : {__VAR_0__}", en: "Stable Audio 3 Error: {__VAR_0__}" },
   "msg.stable_audio_3_a_retourn_un_audio_vide": { fr: "Stable Audio 3 a retourné un audio vide.", en: "Stable Audio 3 returned an empty audio." },
   "msg.stable_audio_3_var_0_s_var_1_tapes_seed_var_2": { fr: "Stable Audio 3 · {__VAR_0__}s · {__VAR_1__} étapes · seed {__VAR_2__}", en: "Stable Audio 3 · {__VAR_0__}s · {__VAR_1__} steps · see {__VAR_2__}" },
+  "msg.texte_image_n_cessite_l_application_de_bureau": { fr: "Texte → image nécessite l’application de bureau.", en: "Text to image requires desktop application." },
+  "msg.texte_image_mod_le_introuvable": { fr: "Modèle SDXS-512 introuvable. Téléchargez-le depuis https://huggingface.co/Fcouprie/sdxs-512-texte-image, placez le bundle dans public/oonx/sdxs-512-texte-image/ ou renseignez le paramètre « Chemin modèle ».", en: "SDXS-512 model not found. Download it from https://huggingface.co/Fcouprie/sdxs-512-texte-image, place the bundle in public/oonx/sdxs-512-texte-image/ or set the “Model path” parameter." },
+  "msg.erreur_texte_image_var_0": { fr: "Erreur Texte → image : {__VAR_0__}", en: "Text to image error: {__VAR_0__}" },
+  "msg.texte_image_seed_var_0": { fr: "Texte → image · seed {__VAR_0__}", en: "Text to image · seed {__VAR_0__}" },
   "msg.var_0_styles_var_1": { fr: "{__VAR_0__} styles{__VAR_1__}", en: "{__VAR_0__} styles{__VAR_1__}" },
   "msg.var_0_tessitures_var_1": { fr: "{__VAR_0__} tessitures{__VAR_1__}", en: "{__VAR_0__} tesses{__VAR_1__}" },
   "msg.var_0_caract_res": { fr: "{__VAR_0__} caractères", en: "{__VAR_0__} characters" },
   "msg.auto_pan_logistique": { fr: "Auto-pan logistique · {__VAR_0__} s", en: "Logistic auto-pan · {__VAR_0__} s" },
   "msg.vibrato_logistique": { fr: "Vibrato logistique · {__VAR_0__} s", en: "Logistic vibrato · {__VAR_0__} s" },
   "msg.tremolo_logistique": { fr: "Tremolo logistique · {__VAR_0__} s", en: "Logistic tremolo · {__VAR_0__} s" },
+  "msg.echo_logistique": { fr: "Écho logistique · {__VAR_0__} s", en: "Logistic echo · {__VAR_0__} s" },
+  "msg.chopper_logistique": { fr: "Chopper logistique · {__VAR_0__} s", en: "Logistic chopper · {__VAR_0__} s" },
+  "msg.paulstretch_logistique": { fr: "Paulstretch logistique · {__VAR_0__} s", en: "Logistic Paulstretch · {__VAR_0__} s" },
+  "msg.beat_repeat": { fr: "Beat Repeat / Stutter · {__VAR_0__} s", en: "Beat Repeat / Stutter · {__VAR_0__} s" },
   "msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne": { fr: "Aucune note reconnue. Format attendu : « C4 0.5 » par ligne.", en: "No marks recognized. Expected format: \"C4 0.5\" per line." },
   "msg.var_0_note_s_var_1_bpm_var_2_s": { fr: "{__VAR_0__} note(s) · {__VAR_1__} BPM · {__VAR_2__}s", en: "{__VAR_0__} note(s) · {__VAR_1__} BPM · {__VAR_2__}s" },
   "msg.gpt_2_var_0_caract_res": { fr: "GPT-2 · {__VAR_0__} caractères", en: "GPT-2 · {__VAR_0__} characters" },
@@ -450,6 +484,9 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.pr_paration_de_la_session": { fr: "Préparation de la session…", en: "Preparation of the session..." },
   "progress.s_paration_var_0": { fr: "Séparation {__VAR_0__}%", en: "Separation {__VAR_0__}%" },
   "progress.g_n_ration_stable_audio_3_en_cours_cela_peut_prendre_plusieu": { fr: "Génération Stable Audio 3 en cours (cela peut prendre plusieurs minutes)…", en: "Generation Stable Audio 3 in progress (this can take several minutes)..." },
+  "progress.g_n_ration_image_en_cours": { fr: "Génération de l’image en cours (~10 s)…", en: "Generating image (~10 s)…" },
+  "msg.legende_image_vide": { fr: "Aucune légende générée.", en: "No caption generated." },
+  "msg.erreur_legende_image_var_0": { fr: "Erreur Légende d’image : {__VAR_0__}", en: "Image Caption error: {__VAR_0__}" },
   "progress.g_n_ration_du_r_servoir_textuel": { fr: "Génération du réservoir textuel…", en: "Generation of textbook tank..." },
   "progress.g_n_ration_des_paroles_anglais": { fr: "Génération des paroles (anglais)…", en: "Generation of lyrics..." },
   "progress.traduction_vers_var_0": { fr: "Traduction vers {__VAR_0__}…", en: "Translation to {__VAR_0__}..." },
@@ -567,4 +604,25 @@ export function traduire(cle: string, ...args: (string | number)[]): string {
 
 export function defautParametre(p: Pick<ParametreDef, "defaut" | "defautEn">, lang: Langue): string | number {
   return lang === "en" && p.defautEn !== undefined ? p.defautEn : p.defaut;
+}
+
+/**
+ * Retourne la valeur canonique (id stable) d'un paramètre de type "choix".
+ * Accepte indifféremment l'id canonique, la valeur française ou la valeur anglaise,
+ * ce qui garantit la compatibilité avec les anciens projets.
+ */
+export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsEn" | "optionIds">, valeur: string | number): string | number {
+  const ids = p.optionIds;
+  if (!ids || ids.length === 0) return valeur;
+  const v = String(valeur);
+  if (ids.includes(v)) return v;
+  const idx = p.options?.indexOf(v) ?? -1;
+  if (idx >= 0 && ids[idx] !== undefined) return ids[idx];
+  const idxEn = p.optionsEn?.indexOf(v) ?? -1;
+  if (idxEn >= 0 && ids[idxEn] !== undefined) return ids[idxEn];
+  return v;
+}
+
+export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">): string | number {
+  return valeurCanoniqueChoix(p, p.defautEn ?? p.defaut);
 }

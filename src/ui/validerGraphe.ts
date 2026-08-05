@@ -3,17 +3,35 @@
 // des fiches). React Flow lève l'erreur #008 quand une arête pointe vers un
 // handle qui n'est pas rendu.
 
-import type { Edge } from "@xyflow/react";
+import type { Connection, Edge } from "@xyflow/react";
 import { estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
 
 const trouverDef = (ficheId: string) => registre.trouverDef(ficheId);
 
-function indexHandle(handle: string | null | undefined): number | null {
+export function indexHandle(handle: string | null | undefined): number | null {
   if (!handle) return null;
   const m = handle.match(/^[^:]+:(\d+)$/);
   if (!m) return null;
   return parseInt(m[1], 10);
+}
+
+export function validerArete(source: any, target: any, edge: Edge | Connection): boolean {
+  if (!source || !target || !edge.sourceHandle || !edge.targetHandle) return false;
+  const sourceFicheId = source.data?.ficheId;
+  const targetFicheId = target.data?.ficheId;
+  if (sourceFicheId === "comment" || targetFicheId === "comment") return false;
+  if (estFrontiere(sourceFicheId) || estFrontiere(targetFicheId)) return true;
+  const defS = trouverDef(sourceFicheId);
+  const defT = trouverDef(targetFicheId);
+  if (!defS || !defT) return false;
+  const si = indexHandle(edge.sourceHandle);
+  const ti = indexHandle(edge.targetHandle);
+  if (si === null || ti === null) return false;
+  const typeS = defS.sorties[si]?.type;
+  const typeT = defT.entrees[ti]?.type;
+  if (!typeS || !typeT) return false;
+  return registre.fluxCompatibles(typeS, typeT);
 }
 
 export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {

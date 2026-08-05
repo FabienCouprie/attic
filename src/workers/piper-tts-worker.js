@@ -52,18 +52,42 @@ async function decodeWavToBuffer(blob) {
   return { sampleRate, data: channelData };
 }
 
-self.onmessage = async (e) => {
-  const { text, voice, speaker } = e.data;
+const queue = [];
+let busy = false;
+
+async function processRequest(req) {
+  const { text, voice, speaker, requestId } = req;
   try {
     const response = await getEngine().generate(text, voice, speaker ?? 0);
     const { sampleRate, data } = await decodeWavToBuffer(response.file);
     self.postMessage({
       type: "done",
+      requestId,
       data,
       sampleRate,
       length: data.length,
     });
   } catch (err) {
-    self.postMessage({ type: "error", msg: String(err?.message || err) });
+    self.postMessage({ type: "error", requestId, msg: String(err?.message || err) });
   }
+}
+
+function processQueue() {
+  if (busy) return;
+  busy = true;
+  (async () => {
+    try {
+      while (queue.length > 0) {
+        const req = queue.shift();
+        await processRequest(req);
+      }
+    } finally {
+      busy = false;
+    }
+  })();
+}
+
+self.onmessage = (e) => {
+  queue.push(e.data);
+  processQueue();
 };

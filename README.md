@@ -12,12 +12,13 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 
 ## Features
 
-- **90+ plugin nodes** — effects, generators, AI models, collections, separation, visualization
+- **213 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npx tsx scripts/generate-components-md.ts`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
-  - Whisper — speech-to-text (English + multilingual, 99 languages)
+  - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
   - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 10 languages)
-  - GPT-2 / OPUS-MT — lyrics generation + translation (18 language pairs)
+  - DistilGPT-2 / Qwen2.5-0.5B — two separate local lyrics-generation nodes (Qwen2.5 is newer and multilingual)
+  - OPUS-MT — translation (18 language pairs)
   - Demucs 6-stem / MDX-Net — AI source separation (drums, bass, vocals, guitar, piano, other)
   - Ollama — local LLMs (Qwen3, Llama, Mistral…) for text/lyrics generation via a local Ollama server
 - **Python Processor** and **Julia Processor** nodes — custom audio/MIDI/text processing in Python or Julia
@@ -29,7 +30,7 @@ It was built by dialing the whimsicality up to eleven, intentionally blending se
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
-- **90+ effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter
+- **48 effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 
 ## Architecture
@@ -42,11 +43,13 @@ Three-layer architecture with a strict separation rule: **never touch `core/`** 
 | Domain adapter | Flux types, plugins, views, audio processing | Yes |
 | `ui/` (shell) | Palette, canvas, inspector, generic node renderer | No (registry-driven) |
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full technical spec.
+See [`PORTING-A-DOMAIN.md`](PORTING-A-DOMAIN.md) for the concrete plugin/UI contract
+(with the two places it still leaks domain knowledge into the generic layers), and
+[`ARCHITECTURE.md`](ARCHITECTURE.md) for the ongoing architecture cleanup plan.
 
 ## Tech Stack
 
-- **Electron** 35 + **Vite** 8 + **React** 19 + **TypeScript** 6
+- **Electron** 43 + **Vite** 8 + **React** 19 + **TypeScript** 6
 - **@xyflow/react** — nodal canvas
 - **@huggingface/transformers** 4.2 + **onnxruntime-web** — AI inference (WASM, fp32)
 - **electron-updater** — automatic updates
@@ -81,7 +84,7 @@ npm run build           # TypeScript + Vite (renderer only)
 npm run build:electron  # Full Electron app (NSIS installer for Windows)
 ```
 
-`npm run build:electron` runs `scripts/build-electron.cjs`. This script temporarily sets `"packageManager": "traversal"` in `package.json` so electron-builder uses manual node_modules traversal instead of `npm list`, which exhausts memory on this app's large dependency tree. It also sets `NODE_OPTIONS=--max-old-space-size=32000` and cleans the `release/` directory before packaging. The original `package.json` is restored when the build finishes.
+`npm run build:electron` runs `scripts/build-electron.cjs`. This script temporarily sets `"packageManager": "traversal"` in `package.json` so electron-builder uses manual node_modules traversal instead of `npm list`, which exhausts memory on this app's large dependency tree. It also sets `NODE_OPTIONS=--max-old-space-size=32000`, cleans the `release/` directory before packaging, and copies the local Electron distribution aside to `electron-dist/` (passed to electron-builder via `electronDist`) so packaging doesn't re-extract and rename Electron's zip in place — a step that used to race with antivirus real-time scanning and fail intermittently with `EPERM`. The original `package.json` is restored when the build finishes.
 
 ### Publish a release
 
@@ -107,13 +110,15 @@ If you still have an old `GH_TOKEN` classic personal access token used for previ
 ### Tests & Lint
 
 ```bash
-npm test     # Vitest (26 unit tests)
+npm test     # Vitest (418 tests across 61 files)
 npm run lint # oxlint
 ```
 
 ## ONNX Models
 
-AI models (Demucs, MDX-Net) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately. See `public/oonx/` for model storage.
+AI models (Demucs, MDX-Net, Stable Audio 3) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately as part of the release build (`assets.zip`, see Releasing below). See `public/oonx/` for model storage.
+
+SDXS-512 (`texte-image` node) is **not** part of this build-time asset pipeline — it's deliberately excluded (~680 MB, unresolved license provenance, see CHANGELOG). It's a runtime-only, user-provided model: download it yourself from `Fcouprie/sdxs-512-texte-image` on Hugging Face (gated) and place it in `public/oonx/sdxs-512-texte-image/`, or point the node's "Chemin modèle" parameter elsewhere.
 
 **Important**: All Transformers.js models must use `dtype: "fp32"` + `device: "wasm"` + `env.backends.onnx.wasm.proxy = true`. Quantized models (`q8`) cause `DequantizeLinear` errors with onnxruntime-web 1.26+.
 
@@ -123,7 +128,7 @@ AI models (Demucs, MDX-Net) are distributed via `extraResources` (outside asar).
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (70+ nodes)
+  plugins/       # Plugin node definitions (213 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -136,10 +141,17 @@ electron/
 ## Documentation
 
 - [`CHANGELOG.md`](CHANGELOG.md) — Release notes per version
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — Technical framework spec
-- [`ROADMAP.md`](ROADMAP.md) — Project roadmap (4 visions)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — Diagnostic and architecture cleanup plan
+- [`ROADMAP.md`](ROADMAP.md) — Project roadmap (4 visions), re-verified against the code periodically
+- [`PORTING-A-DOMAIN.md`](PORTING-A-DOMAIN.md) — How to plug a second domain (e.g. image, ETL) into the existing core/UI, and exactly where that isn't clean yet
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
-- [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — App.tsx decomposition report
+- [`REMOVING-A-NODE.md`](REMOVING-A-NODE.md) — How to safely remove one
+- [`COMPONENTS.md`](COMPONENTS.md) — Generated dictionary of every catalog node (not versioned — regenerate with `npx tsx scripts/generate-components-md.ts`)
+- [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/`
+- [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — Historical record of the `App.tsx` → hooks extraction (a completed milestone; `App.tsx` has since grown again as features were added)
+- [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — Guided exercises for learning the app
+- [`SECURITY.md`](SECURITY.md) — Vulnerability reporting policy
+- [`TERMS_OF_USE.md`](TERMS_OF_USE.md) — Terms of use
 
 ## Releasing
 

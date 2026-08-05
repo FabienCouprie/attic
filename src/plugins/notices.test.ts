@@ -20,4 +20,5 @@ describe("notices des composants livrés", () => {
     expect(typeof fiche.noticeEn).toBe("string");
     expect(fiche.noticeEn?.length).toBeGreaterThan(10);
   });
+
 });

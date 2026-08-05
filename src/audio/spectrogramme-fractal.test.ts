@@ -37,7 +37,7 @@ describe("spectrogramme fractal", () => {
       octaves: 3,
       roughness: 0.5,
       graine: 42,
-      forme: "logarithmique",
+      forme: "logarithmic",
     });
     expect(result.audio).toBeInstanceOf(AudioBuffer);
     expect(result.audio.duration).toBeGreaterThan(0.5);

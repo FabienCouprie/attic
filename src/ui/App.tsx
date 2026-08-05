@@ -17,16 +17,16 @@ import type { FicheAudio } from "../audio/types-domaine";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const tousLesPlugins = () => registre.tousLesPlugins();
 const couleurFlux = (id: string) => registre.couleurFlux(id);
-const fluxCompatibles = (s: string, t: string) => registre.fluxCompatibles(s, t);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
-import { useI18n, defautParametre } from "../i18n";
+import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
-import { filtrerAretesInvalides } from "./validerGraphe";
+import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
+import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { Inspector } from "./Inspector";
@@ -125,11 +125,16 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "detecteur-accords") return { width: 320, height: 340 };
   if (def.id === "vu-metre") return { width: 300, height: 260 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
-  if (def.id === "generateur-pochette") return { width: 280, height: 340 };
+  if (def.id === "generateur-pochette") return { width: 300, height: 420 };
   if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
   if (def.id === "rendu-image") return { width: 320, height: 320 };
   if (def.id === "entree-image") return { width: 320, height: 320 };
   if (def.id === "lecteur-svg") return { width: 320, height: 320 };
+  if (def.id.startsWith("vexflow-")) {
+    const largeur = Number(def.parametres.find((p) => p.nom === "Largeur" || p.nomEn === "Width")?.defaut ?? 500);
+    const hauteur = Number(def.parametres.find((p) => p.nom === "Hauteur" || p.nomEn === "Height")?.defaut ?? 160);
+    return { width: largeur, height: hauteur };
+  }
   if (def.id === "galerie-exposition") return { width: 280, height: 280 };
   if (def.id === "gestion-nodes") return { width: 280, height: 220 };
   if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };
@@ -141,6 +146,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
   if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
   if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
+  if (def.id === "collection-lecteur-musique") return { width: 380, height: 320 };
   if (def.id.startsWith("collection-")) return { width: 380, height: 280 };
   if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
   if (def.id === "classificateur-genre") return { width: 380, height: 300 };
@@ -171,6 +177,11 @@ function Atelier() {
   const rfRef = useRef<HTMLDivElement>(null);
   const pointerDownRef = useRef(false);
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
+  // Placement des éléments décoratifs (note / cadre) : après un clic sur la barre
+  // d'outils, le prochain clic sur le canevas pose l'élément à l'endroit cliqué.
+  const [pendingAdd, setPendingAdd] = useState<null | "comment" | "frame">(null);
+  const pendingAddRef = useRef(pendingAdd);
+  pendingAddRef.current = pendingAdd;
   // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
   // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
   const [pile, setPile] = useState<{ metaId: string; nom: string; nomEn?: string }[]>([]);
@@ -196,6 +207,8 @@ function Atelier() {
     setGrapheRef({ nodes, edges });
   }, [nodes, edges, enExecution]);
   const [rfInstance, setRfInstance] = useState<any>(null);
+  const rfInstanceRef = useRef(rfInstance);
+  rfInstanceRef.current = rfInstance;
 
   // Un seul onglet wf-1. Le bouton × vide le canevas.
   const fermerOnglet = useCallback((id: string) => {
@@ -218,6 +231,7 @@ function Atelier() {
   }, []);
   const lancerRef = useRef<any>(null);
   const cacheExec = useRef<Map<string, any>>(new Map());
+  const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
   const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
 
   const changerRepertoire = useCallback((r: string) => {
@@ -227,7 +241,10 @@ function Atelier() {
 
   // Persistance des méta-composants : sauvegarde locale à chaque changement
   // (création, édition interne, import). Le chargement se fait au niveau module.
-  useEffect(() => surChangementMetas(sauvegarderMetasLocaux), []);
+  useEffect(() => surChangementMetas(() => {
+    sauvegarderMetasLocaux();
+    setPluginsVersion((v) => v + 1);
+  }), []);
 
   // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
   // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur
@@ -247,7 +264,16 @@ function Atelier() {
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
   // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
   // Historique pour undo (Ctrl+Z).
-  const pressePapierRef = useRef<{ ficheId: string; parametres: Record<string, number | string>; width: number; height: number; data: Record<string, unknown> } | null>(null);
+  type PressePapierItem = {
+    ficheId: string;
+    parametres: Record<string, number | string>;
+    width: number;
+    height: number;
+    data: Record<string, unknown>;
+    dx: number;
+    dy: number;
+  };
+  const pressePapierRef = useRef<PressePapierItem[] | null>(null);
   const historiqueRef = useRef<{ nodes: any[]; edges: any[] }[]>([]);
   const MAX_HISTORIQUE = 50;
 
@@ -262,7 +288,12 @@ function Atelier() {
   const undo = useCallback(() => {
     const prev = historiqueRef.current.pop();
     if (!prev) return;
-    setNodes(prev.nodes);
+    // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
+    // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
+    // restent fonctionnels après un Ctrl+Z.
+    const cbs = callbacksNoeudRef.current?.();
+    if (!cbs) return;
+    setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
     setEdges(prev.edges);
     setSel(null);
     cacheExec.current.clear();
@@ -322,6 +353,8 @@ function Atelier() {
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
               nomFichier: n.data.nomFichier,
+              nom: n.data.nom,
+              couleur: n.data.couleur,
               onSupprimerNoeud: cbs.onSupprimerNoeud,
               onReinitialiser: cbs.onReinitialiser,
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
@@ -356,7 +389,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud } = useExecutionGraphe({
+  const { lancer, reinitialiserNoeud, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -369,7 +402,9 @@ function Atelier() {
           const def = trouverDef(specNode.ficheId);
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
-          if (def) for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
+          if (def) for (const p of def.parametres) {
+            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+          }
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
           return {
@@ -392,11 +427,17 @@ function Atelier() {
             },
           };
         });
-        // Créer les edges
+        // Créer les edges. L'id embarque un horodatage : dérivé seulement de
+        // nodeId+i, il collisionnait avec les arêtes d'une génération
+        // PRÉCÉDENTE dès que le même nœud source régénérait un graphe
+        // (« Prompt → graphe » relancé, ou import répété d'un audio à graphe
+        // embarqué) — React signalait des clés dupliquées. Même convention
+        // que onConnect ci-dessous (`e-${source}-${target}-${Date.now()}`).
+        const horodatage = Date.now();
         const nouveauxEdges = spec.edges.map((e, i) => {
           const srcId = idsNouveaux[e.source];
           return {
-            id: `e-prompt-${nodeId}-${i}`,
+            id: `e-prompt-${nodeId}-${horodatage}-${i}`,
             source: srcId,
             target: idsNouveaux[e.target],
             sourceHandle: "out:0",
@@ -485,6 +526,7 @@ function Atelier() {
     onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
     onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); },
   }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
+  callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
   const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
@@ -492,7 +534,9 @@ function Atelier() {
     if (!def) return;
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
-    for (const p of def.parametres) parametres[p.nom] = defautParametre(p, lang);
+    for (const p of def.parametres) {
+      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+    }
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {
       id: idUnique(nds),
@@ -507,6 +551,52 @@ function Atelier() {
     }]);
   }, [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, callbacksNoeud]);
 
+  const ajouterCommentaire = useCallback(() => {
+    setPendingAdd("comment");
+  }, []);
+
+  const ajouterCadre = useCallback(() => {
+    setPendingAdd("frame");
+  }, []);
+
+  const creerCommentaire = useCallback((position: { x: number; y: number }) => {
+    setNodes((nds) => [...nds, {
+      id: idUnique(noeudsRef.current),
+      type: "atelier",
+      position,
+      width: 180,
+      height: 100,
+      data: {
+        ficheId: "comment",
+        parametres: {},
+        statut: "attente",
+        nom: t("btn.commentaire"),
+        ...(callbacksNoeudRef.current?.() ?? {}),
+      },
+    }]);
+  }, [setNodes, t]);
+
+  const creerCadre = useCallback((position: { x: number; y: number }) => {
+    setNodes((nds) => {
+      const nouveau = {
+        id: idUnique(noeudsRef.current),
+        type: "atelier" as const,
+        position,
+        width: 320,
+        height: 200,
+        data: {
+          ficheId: "frame",
+          parametres: {},
+          statut: "attente",
+          nom: t("btn.cadre"),
+          couleur: "rgba(120,120,120,0.12)",
+          ...(callbacksNoeudRef.current?.() ?? {}),
+        },
+      };
+      return [nouveau, ...nds];
+    });
+  }, [setNodes, t]);
+
   // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -514,68 +604,100 @@ function Atelier() {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "c" && sel) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
+        if (selection.length === 0) return;
         e.preventDefault();
-        const def = trouverDef(sel.data.ficheId as string);
-        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-        pressePapierRef.current = {
-          ficheId: sel.data.ficheId as string,
-          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
-          width, height,
-          data: {},
-        };
+        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
+        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
+        pressePapierRef.current = selection.map((n) => {
+          const d = n.data as Record<string, unknown>;
+          const data: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === "function") continue;
+            data[k] = v;
+          }
+          return {
+            ficheId: d.ficheId as string,
+            parametres: { ...(d.parametres as Record<string, number | string>) },
+            width: n.width ?? 230,
+            height: n.height ?? 200,
+            data,
+            dx: (n.position?.x ?? 0) - origineX,
+            dy: (n.position?.y ?? 0) - origineY,
+          };
+        });
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "x" && sel) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
+        if (selection.length === 0) return;
         e.preventDefault();
-        const def = trouverDef(sel.data.ficheId as string);
-        const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-        pressePapierRef.current = {
-          ficheId: sel.data.ficheId as string,
-          parametres: { ...(sel.data.parametres as Record<string, number | string>) },
-          width, height,
-          data: {},
-        };
+        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
+        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
+        pressePapierRef.current = selection.map((n) => {
+          const d = n.data as Record<string, unknown>;
+          const data: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === "function") continue;
+            data[k] = v;
+          }
+          return {
+            ficheId: d.ficheId as string,
+            parametres: { ...(d.parametres as Record<string, number | string>) },
+            width: n.width ?? 230,
+            height: n.height ?? 200,
+            data,
+            dx: (n.position?.x ?? 0) - origineX,
+            dy: (n.position?.y ?? 0) - origineY,
+          };
+        });
         // Sauvegarder pour undo puis supprimer
         pushHistorique();
-        supprimerNoeud(sel.id);
+        supprimerNoeud(selection.map((n) => n.id));
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current && pressePapierRef.current.length > 0) {
         e.preventDefault();
         const clip = pressePapierRef.current;
-        const def = trouverDef(clip.ficheId);
-        if (!def) return;
+        pushHistorique();
         const cbs = callbacksNoeud();
+        const ajoutesRef: any[] = [];
         setNodes((nds) => {
-          const nouvelId = idUnique(nds);
-          const position = {
-            x: (sel?.position?.x ?? 120) + 40 + Math.random() * 30,
-            y: (sel?.position?.y ?? 80) + 40 + Math.random() * 30,
-          };
-          return [...nds, {
-            id: nouvelId,
-            type: "atelier",
-            position,
-            width: clip.width,
-            height: clip.height,
-            data: {
-              ficheId: clip.ficheId,
-              parametres: { ...clip.parametres },
-              statut: "attente",
-              onSupprimerNoeud: cbs.onSupprimerNoeud,
-              onReinitialiser: cbs.onReinitialiser,
-              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
-              onChargerAudio: cbs.onChargerAudio,
-              onChargerMidi: cbs.onChargerMidi,
-              onChargerImage: cbs.onChargerImage,
-              onChangerEnregistrement: cbs.onChangerEnregistrement,
-              onChangerParametre: cbs.onChangerParametre,
-              onChangerZones: cbs.onChangerZones,
-              onChargerIR: cbs.onChargerIR,
-            },
-          }];
+          const selectionCourante = nds.filter((n) => (n as { selected?: boolean }).selected);
+          const origine = (() => {
+            if (selectionCourante.length === 0) return { x: 120, y: 80 };
+            const cx = selectionCourante.reduce((s, n) => s + (n.position?.x ?? 0), 0) / selectionCourante.length;
+            const cy = selectionCourante.reduce((s, n) => s + (n.position?.y ?? 0), 0) / selectionCourante.length;
+            return { x: cx + 40, y: cy + 40 };
+          })();
+          const deselected = nds.map((n) => n.selected ? { ...n, selected: false } : n);
+          let current = deselected;
+          for (const item of clip) {
+            const nouvelId = idUnique(current);
+            const def = trouverDef(item.ficheId);
+            const { width, height } = def ? tailleDefaut(def) : { width: item.width, height: item.height };
+            const n: any = {
+              id: nouvelId,
+              type: "atelier",
+              position: { x: origine.x + item.dx, y: origine.y + item.dy },
+              width,
+              height,
+              selected: true,
+              data: {
+                ficheId: item.ficheId,
+                parametres: { ...item.parametres },
+                ...item.data,
+                statut: "attente",
+                ...cbs,
+              },
+            };
+            current = [...current, n];
+            ajoutesRef.push(n);
+          }
+          return current;
         });
+        setSel(ajoutesRef[0] ?? null);
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -585,7 +707,7 @@ function Atelier() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sel, callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
+  }, [callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
@@ -603,26 +725,48 @@ function Atelier() {
     ajouterNoeud(ficheId, rfInstance.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top }));
   }, [ajouterNoeud, rfInstance]);
 
+  const onPaneClick = useCallback((e: React.MouseEvent) => {
+    const type = pendingAddRef.current;
+    if (type && wrapperRef.current && rfInstanceRef.current) {
+      const bounds = wrapperRef.current.getBoundingClientRect();
+      const position = rfInstanceRef.current.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+      setPendingAdd(null);
+      if (type === "comment") {
+        creerCommentaire(position);
+      } else {
+        creerCadre(position);
+      }
+      return;
+    }
+    setSel(null);
+  }, [creerCommentaire, creerCadre]);
+
+  // Échap annule un placement de note/cadre en attente.
+  useEffect(() => {
+    if (!pendingAdd) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPendingAdd(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pendingAdd]);
+
   const isValidConnection = useCallback((conn: Connection | Edge) => {
     const source = noeudsRef.current.find((n) => n.id === conn.source);
     const target = noeudsRef.current.find((n) => n.id === conn.target);
-    if (!source || !target || !conn.sourceHandle || !conn.targetHandle) return false;
-    // Un nœud-frontière accepte n'importe quel type (le port exposé hérite du
-    // type interne relié).
-    if (estFrontiere(source.data.ficheId as string) || estFrontiere(target.data.ficheId as string)) return true;
-    const defS = trouverDef(source.data.ficheId);
-    const defT = trouverDef(target.data.ficheId);
-    if (!defS || !defT) return false;
-    const si = parseInt(conn.sourceHandle.split(":")[1]);
-    const ti = parseInt(conn.targetHandle.split(":")[1]);
-    const typeS = defS.sorties[si]?.type;
-    const typeT = defT.entrees[ti]?.type;
-    if (!typeS || !typeT || !fluxCompatibles(typeS, typeT)) return false;
-    return true;
-  }, [trouverDef, fluxCompatibles]);
+    return validerArete(source, target, conn);
+  }, []);
+
+  const nodeColor = useCallback((node: any) => {
+    const cat = categorieNoeud(node.data?.ficheId, registre.trouverDef(node.data?.ficheId));
+    return COULEURS_CATEGORIE[cat] ?? "var(--text-muted)";
+  }, []);
 
   const onConnect: OnConnect = useCallback((conn) => {
     if (!conn.sourceHandle || !conn.targetHandle) return;
+    const ficheSource = noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId;
+    const ficheTarget = noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId;
+    if (ficheSource === "comment" || ficheTarget === "comment") return;
     pushHistorique();
     const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
     const ti = parseInt(conn.targetHandle.split(":")[1]);
@@ -705,7 +849,7 @@ function Atelier() {
           supprimerNoeud(aRetirer);
         }}
       />
-      <div className="attic-canevas" ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
+      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
         <BarreOutils
           theme={theme} setTheme={setTheme}
           enExecution={enExecution}
@@ -724,6 +868,7 @@ function Atelier() {
             await lancer();
             rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
           }}
+          onReinitialiser={reinitialiserTout}
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
@@ -743,6 +888,8 @@ function Atelier() {
             else { window.open(location.href, '_blank', 'width=1400,height=900'); }
           }}
           onExporter={exporter}
+          onAjouterCommentaire={ajouterCommentaire}
+          onAjouterCadre={ajouterCadre}
           onSauvegarder={() => {
             try {
               // Sauver le contexte courant : grapheRacineRef contient alors le graphe
@@ -768,6 +915,8 @@ function Atelier() {
                     parametres: n.data.parametres,
                     zonesSelectionnees: n.data.zonesSelectionnees,
                     nomFichier: n.data.nomFichier,
+                    nom: n.data.nom,
+                    couleur: n.data.couleur,
                   },
                 })),
                 edges: racine.edges.map((e: any) => ({
@@ -824,11 +973,13 @@ function Atelier() {
           nodeTypes={nodeTypes} edgeTypes={edgeTypes}
           onNodeClick={(_, n) => setSel(n)}
           onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
-          onPaneClick={() => setSel(null)}
+          onPaneClick={onPaneClick}
+          onPaneContextMenu={(e) => e.preventDefault()}
+          onNodeContextMenu={(e) => e.preventDefault()}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
-          panOnDrag={true}
-          selectionOnDrag={false}
+          panOnDrag={[2]}
+          selectionOnDrag={true}
           selectNodesOnDrag={false}
           onNodesDelete={(deletedNodes) => {
             pushHistorique();
@@ -837,7 +988,7 @@ function Atelier() {
         >
           <Background />
           <Controls />
-          <MiniMap pannable zoomable />
+          <MiniMap pannable zoomable nodeColor={nodeColor} />
         </ReactFlow>
       </div>
       <Inspector
@@ -869,6 +1020,15 @@ function Atelier() {
         onEnregistrer={(id, blob) => {
           const url = URL.createObjectURL(blob);
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
+        }}
+        onEnregistrerMidi={(id, fichier) => {
+          // Même contrat que onChargerMidi (AtelierNode) : vider le cache
+          // AVANT de poser le nouveau fichier, sinon un ré-enregistrement
+          // sans toucher aucun paramètre rejoue le résultat de la prise
+          // précédente (empreinteParametres/empreinteEntrees ne voient pas
+          // midiFichier, qui n'est pas dans `parametres`).
+          cacheExec.current.delete(id);
+          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
         }}
       />
     </div>

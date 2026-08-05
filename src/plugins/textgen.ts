@@ -17,6 +17,13 @@ function getWorker(): Worker {
   return worker;
 }
 
+function makeRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 // ─── Réservoir textuel ───
 // Un réseau de neurones aléatoires génère du texte par émergence :
 // les activations sont mappées vers des lettres/mots. Aucun entraînement.
@@ -148,22 +155,24 @@ export const fiches: FicheAudio[] = ([
       const repPenalty = ctx.paramNombre("Anti-répétition", 1.3);
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [msg.text], message: traduire("msg.gpt_2_var_0_caract_res", msg.text.length) });
           } else if (msg.type === "error") {
-
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_gpt_2_var_0", msg.msg) });
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });
+        w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty, requestId });
       });
    },
- },
+  },
   {
     id: "reservoir-textuel", nom: "Réservoir textuel", nomEn: "Text Reservoir",
     univers: "Autres", famille: "Texte",
@@ -236,14 +245,16 @@ export const fiches: FicheAudio[] = ([
       const repPenalty = ctx.paramNombre("Anti-répétition", 1.3);
       const w = getWorker();
       return new Promise((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [msg.text], message: traduire("msg.qwen2_5_var_0_caract_res", msg.text.length) });
           } else if (msg.type === "error") {
-
+            w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_qwen2_5_var_0", msg.msg) });
           }
         };
@@ -252,10 +263,10 @@ export const fiches: FicheAudio[] = ([
           { role: "system", content: "You are a creative writer. Write original, evocative text based on the user's request." },
           { role: "user", content: prompt },
         ];
-        w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty });
+        w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty, requestId });
       });
    },
- },
+  },
   {
     id: "nllb-paroles", nom: "Paroles multilingues (IA)", nomEn: "Multilingual Lyrics (AI)",
     univers: "Autres", famille: "Texte",
@@ -289,19 +300,21 @@ export const fiches: FicheAudio[] = ([
       // Étape 1 : générer en anglais via DistilGPT-2
       ctx.onProgress(traduire("progress.g_n_ration_des_paroles_anglais"));
       const texteEn = await new Promise<string | null>((resolve) => {
+        const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
+          if (msg.requestId !== requestId) return;
           if (msg.type === "progress") ctx.onProgress(msg.msg);
           else if (msg.type === "done") {
-
+            w.removeEventListener("message", onMessage);
             resolve(msg.text);
           } else if (msg.type === "error") {
-
+            w.removeEventListener("message", onMessage);
             resolve(null);
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: 1.3 });
+        w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: 1.3, requestId });
       });
 
       if (!texteEn || texteEn.length < 10) {

@@ -9,10 +9,10 @@ export const fiches: FicheAudio[] = ([
     id: "separateur-ia", nom: "Séparateur IA", nomEn: "AI Separator", univers: "Traitement", famille: "Effets",
     resume: "Sépare les sources audio via IA (Demucs 4/6 stems, MDX-Net).",
     resumeEn: "Separates audio sources via AI (Demucs 4/6 stems, MDX-Net).",
-    notice: "Sépare une piste en stems. Demucs (HT) = 4 pistes (batterie, basse, autre, voix). Demucs 6s = 6 pistes (batterie, basse, autre, voix, guitare, piano). MDX-Net = voix + instrumental. Les modèles par défaut sont embarqués (public/oonx/) et chargés automatiquement. Vous pouvez aussi charger votre propre .onnx via le bouton du nœud ou renseigner une URL.",
-    noticeEn: "Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, other, vocals). Demucs 6s = 6 stems (drums, bass, other, vocals, guitar, piano). MDX-Net = vocals + instrumental. Default models are bundled (public/oonx/) and loaded automatically. You may also load your own .onnx via the node button or provide a URL.",
+    notice: "Sépare une piste en stems. Demucs (HT) = 4 pistes (batterie, basse, voix, autre). Demucs 6s = 6 pistes (batterie, basse, voix, autre, guitare, piano). MDX-Net = voix + instrumental. Les modèles par défaut sont embarqués (public/oonx/) et chargés automatiquement. Vous pouvez aussi charger votre propre .onnx via le bouton du nœud ou renseigner une URL.",
+    noticeEn: "Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). Demucs 6s = 6 stems (drums, bass, vocals, other, guitar, piano). MDX-Net = vocals + instrumental. Default models are bundled (public/oonx/) and loaded automatically. You may also load your own .onnx via the node button or provide a URL.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Batterie", nomEn: "Drums", type: "audio" },{ nom: "Basse", nomEn: "Bass", type: "audio" },{ nom: "Autre", nomEn: "Other", type: "audio" },{ nom: "Voix", nomEn: "Vocals", type: "audio" },{ nom: "Guitare", nomEn: "Guitar", type: "audio" },{ nom: "Piano", nomEn: "Piano", type: "audio" }],
+    sorties: [{ nom: "Batterie", nomEn: "Drums", type: "audio" },{ nom: "Basse", nomEn: "Bass", type: "audio" },{ nom: "Voix", nomEn: "Vocals", type: "audio" },{ nom: "Autre", nomEn: "Other", type: "audio" },{ nom: "Guitare", nomEn: "Guitar", type: "audio" },{ nom: "Piano", nomEn: "Piano", type: "audio" }],
     parametres: [
       { nom:"Modèle", nomEn:"Model", type:"choix", options:["Demucs 6s","Demucs (HT)","MDX-Net"], optionsEn:["Demucs 6s","Demucs (HT)","MDX-Net"], defaut:"Demucs 6s",
         doc:"Architecture de séparation. Demucs (HT) = 4 pistes, Demucs 6s = 6 pistes (+ guitare + piano), MDX-Net = voix/instrumental.",
@@ -41,7 +41,7 @@ export const fiches: FicheAudio[] = ([
           return buf;
         };
         const s = rep.stems;
-        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), null, null], message: traduire("msg.s_par_4_pistes_batterie_basse_autre_voix") };
+        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.voix), versBuffer(s.autre), null, null], message: traduire("msg.s_par_4_pistes_batterie_basse_voix_autre") };
       }
 
       // ── Demucs 6-stem (natif) ──
@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
           return buf;
         };
         const s = rep.stems;
-        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.autre), versBuffer(s.voix), versBuffer(s.guitare), versBuffer(s.piano)], message: traduire("msg.s_par_6_pistes_batterie_basse_autre_voix_guitare_piano") };
+        return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.voix), versBuffer(s.autre), versBuffer(s.guitare), versBuffer(s.piano)], message: traduire("msg.s_par_6_pistes_batterie_basse_voix_autre_guitare_piano") };
       }
 
       // ── MDX-Net : chemin renderer WASM (modèle plus léger) ──
@@ -82,7 +82,7 @@ export const fiches: FicheAudio[] = ([
       ctx.onProgress(traduire("progress.pr_paration_de_la_session"));
       const session = await preparerSession(octets, "Auto", modele);
       const r = await separerAvecSession(a, session, (p: number) => ctx.onProgress(traduire("progress.s_paration_var_0", Math.round(p))), "mdx");
-      return { valeurs:[null, null, r.autre, r.voix, null, null], message:traduire("msg.s_par_voix_instrumental") };
+       return { valeurs:[null, null, r.voix, r.autre, null, null], message:traduire("msg.s_par_voix_instrumental") };
    },
  },
 ] as FicheAudio[]).map(avecDoc);

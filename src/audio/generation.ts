@@ -335,24 +335,187 @@ export const PATRONS_RYTHME: Record<string, { signatures: string[]; positions: R
       "3/4": { kick: [0, 4], snare: [8], hat: [0, 4, 8], hatOuvert: [] },
     },
   },
+  Afrobeat: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 10, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  Rumba: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  Flamenco: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 6, 8, 12], snare: [4, 10, 12], hat: [2, 6, 10, 14], hatOuvert: [] },
+    },
+  },
+  Merengue: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [2, 6, 10, 14], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [] },
+    },
+  },
+  Breakbeat: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [11] },
+    },
+  },
+  Electro: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [2, 6, 10, 14], hatOuvert: [0, 8] },
+    },
+  },
+  "Detroit techno": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [], hat: [2, 6, 10, 14], hatOuvert: [] },
+    },
+  },
+  Minimal: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8, 10], snare: [4, 12], hat: [0, 4, 8, 12], hatOuvert: [2, 10] },
+    },
+  },
+  Dubstep: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [14] },
+    },
+  },
+  Moombahton: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 6, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  Dembow: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 6, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  Reggaeton: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  Cumbia: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [2, 6, 10, 14], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [] },
+    },
+  },
+  Bachata: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [8] },
+    },
+  },
+  "Blues shuffle": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [10] },
+    },
+  },
+  Gospel: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [8] },
+    },
+  },
+  Metal: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 6, 8, 10, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [] },
+    },
+  },
+  Punk: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [2, 4, 6, 8, 10, 12, 14], hat: [0, 4, 8, 12], hatOuvert: [] },
+    },
+  },
+  Grunge: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [0] },
+    },
+  },
+  Trance: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [4, 12] },
+    },
+  },
+  Hardstyle: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 6, 8, 10, 12, 14], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [] },
+    },
+  },
+  "Lo-fi hip hop": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [0, 8] },
+    },
+  },
+  "Boom bap": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [0, 8] },
+    },
+  },
+  Drill: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8], snare: [4, 12], hat: [3, 7, 11, 15], hatOuvert: [0] },
+    },
+  },
+  "Trip hop": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [8] },
+    },
+  },
+  Amapiano: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 10, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [10] },
+    },
+  },
+  Salsa: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [2, 6, 10, 14], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [8] },
+    },
+  },
+  Highlife: {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  "Baile funk": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 6, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [3, 11] },
+    },
+  },
+  "Tech house": {
+    signatures: ["4/4"],
+    positions: {
+      "4/4": { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatOuvert: [4, 12] },
+    },
+  },
 };
-
-
-function decoderPatronTexte(code: string, totalPas: number): { kick: boolean[]; snare: boolean[]; hat: boolean[]; hatOuvert: boolean[] } {
-  const pas = code.replace(/\s/g, "").split("");
-  const kick = Array.from({ length: totalPas }, () => false);
-  const snare = Array.from({ length: totalPas }, () => false);
-  const hat = Array.from({ length: totalPas }, () => false);
-  const hatOuvert = Array.from({ length: totalPas }, () => false);
-  for (let i = 0; i < totalPas; i++) {
-    const c = i < pas.length ? pas[i] : ".";
-    kick[i] = c === "K" || c === "T" || c === "H" || c === "X";
-    snare[i] = c === "S" || c === "T" || c === "R" || c === "X";
-    hat[i] = c === "h" || c === "H" || c === "R" || c === "X";
-    hatOuvert[i] = c === "O" || c === "o";
-  }
-  return { kick, snare, hat, hatOuvert };
-}
 
 
 function genererPatronDefaut(tempsParMesure: number, uniteBattement: number): Patron {
@@ -373,7 +536,6 @@ function genererPatronDefaut(tempsParMesure: number, uniteBattement: number): Pa
 export async function genererBoiteRythmes(
   tempo: number,
   patronNom: string,
-  patronCode: string,
   mesures: number,
   volumeKick: number,
   volumeSnare: number,
@@ -390,31 +552,26 @@ export async function genererBoiteRythmes(
   const duree = totalPas * tempsPas;
   const offline = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
 
-  let triggers: { kick: boolean[]; snare: boolean[]; hat: boolean[]; hatOuvert: boolean[] };
-  if (patronNom === "Personnalisé") {
-    triggers = decoderPatronTexte(patronCode, totalPas);
+  const entree = PATRONS_RYTHME[patronNom];
+  const signatureCle = `${tempsParMesure}/${uniteBattement}`;
+  let patron: Patron;
+  if (entree && entree.signatures.includes(signatureCle)) {
+    patron = entree.positions[signatureCle]!;
   } else {
-    const entree = PATRONS_RYTHME[patronNom];
-    const signatureCle = `${tempsParMesure}/${uniteBattement}`;
-    let patron: Patron;
-    if (entree && entree.signatures.includes(signatureCle)) {
-      patron = entree.positions[signatureCle]!;
-    } else {
-      patron = genererPatronDefaut(tempsParMesure, uniteBattement);
-    }
-    const kick = Array.from({ length: totalPas }, () => false);
-    const snare = Array.from({ length: totalPas }, () => false);
-    const hat = Array.from({ length: totalPas }, () => false);
-    const hatOuvert = Array.from({ length: totalPas }, () => false);
-    for (let m = 0; m < mesures; m++) {
-      const decalage = m * pasMesure;
-      for (const p of patron.kick) kick[decalage + p] = true;
-      for (const p of patron.snare) snare[decalage + p] = true;
-      for (const p of patron.hat) hat[decalage + p] = true;
-      for (const p of patron.hatOuvert) hatOuvert[decalage + p] = true;
-    }
-    triggers = { kick, snare, hat, hatOuvert };
+    patron = genererPatronDefaut(tempsParMesure, uniteBattement);
   }
+  const kick = Array.from({ length: totalPas }, () => false);
+  const snare = Array.from({ length: totalPas }, () => false);
+  const hat = Array.from({ length: totalPas }, () => false);
+  const hatOuvert = Array.from({ length: totalPas }, () => false);
+  for (let m = 0; m < mesures; m++) {
+    const decalage = m * pasMesure;
+    for (const p of patron.kick) kick[decalage + p] = true;
+    for (const p of patron.snare) snare[decalage + p] = true;
+    for (const p of patron.hat) hat[decalage + p] = true;
+    for (const p of patron.hatOuvert) hatOuvert[decalage + p] = true;
+  }
+  const triggers = { kick, snare, hat, hatOuvert };
 
   function jouerKick(debut: number, vol: number) {
     const gVol = vol * 0.8;

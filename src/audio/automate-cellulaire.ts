@@ -68,6 +68,7 @@ export interface OptionsAutomateCellulaire {
   velocite: number;
   volume: number;
   timbre: "FM/Oscillateurs" | "SoundFont";
+  instrument: number;
   probabilite: number;
   densiteMax: number;
 }
@@ -134,6 +135,13 @@ export function normaliserGamme(v: string): string {
 export function normaliserTimbre(v: string): "FM/Oscillateurs" | "SoundFont" {
   if (v.includes("FM") || v.includes("Osc") || v.includes("Oscillators")) return "FM/Oscillateurs";
   return "SoundFont";
+}
+
+function decodeInstrument(valeur: number): { programme: number; banque: number } {
+  if (valeur < 0) return { programme: -1, banque: -1 };
+  const programme = Math.max(0, Math.min(127, Math.round(valeur % 128)));
+  const banque = Math.max(0, Math.floor(valeur / 128));
+  return { programme, banque };
 }
 
 function snapperNote(midi: number, degres: number[]): number {
@@ -417,13 +425,14 @@ export function genererNotesAutomateCellulaire(options: OptionsAutomateCellulair
 export async function genererAutomateCellulaire(options: OptionsAutomateCellulaire): Promise<{ audio: AudioBuffer; midi: File; notes: NoteEvenement[] }> {
   const notes = genererNotesAutomateCellulaire(options);
   const tempo = notes.length > 0 ? 60 / options.dureeNote : 120;
-  const midiFile = notesVersFichierMidi(notes, tempo);
+  const { programme, banque } = decodeInstrument(options.instrument ?? 0);
+  const midiFile = notesVersFichierMidi(notes, tempo, 0, banque, programme);
   let audio: AudioBuffer;
   try {
-    audio = await rendreSequence(notes, options.timbre, options.volume);
+    audio = await rendreSequence(notes, options.timbre, options.volume, programme, banque);
   } catch (e) {
     if (options.timbre === "SoundFont") {
-      audio = await rendreSequence(notes, "FM/Oscillateurs", options.volume);
+      audio = await rendreSequence(notes, "FM/Oscillateurs", options.volume, programme, banque);
     } else {
       throw e;
     }

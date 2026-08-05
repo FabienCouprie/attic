@@ -15,7 +15,7 @@ export interface OptionsSpectrogrammeFractal {
   graine: number;
   minFreq?: number; // Hz
   maxFreq?: number; // Hz
-  forme?: "linéaire" | "logarithmique";
+  forme?: "linear" | "logarithmic";
 }
 
 function creerRng(graine: number) {
@@ -80,14 +80,14 @@ function generateSpectrogram(
   octaves: number,
   roughness: number,
   graine: number,
-  forme: "linéaire" | "logarithmique",
+  forme: "linear" | "logarithmic",
 ): number[][] {
   const rng = creerRng(graine);
   const spectro: number[][] = [];
   for (let t = 0; t < frames; t++) {
     const col: number[] = [];
     for (let b = 0; b < bins; b++) {
-      const y = forme === "logarithmique" ? Math.log(1 + b) / Math.log(bins) : b / bins;
+      const y = forme === "logarithmic" ? Math.log(1 + b) / Math.log(bins) : b / bins;
       const x = t / Math.max(1, frames);
       const val = bruitFractal(rng, x * 4, y * 4, octaves, roughness);
       // Shape: more energy in low-mid frequencies, less in very highs.
@@ -163,7 +163,7 @@ export async function rendreSpectrogrammeFractal(
   const bins = fftSize / 2 + 1;
   const octaves = Math.max(1, Math.min(8, Math.round(options.octaves)));
   const roughness = Math.max(0, Math.min(1, options.roughness));
-  const forme = options.forme ?? "logarithmique";
+  const forme = options.forme ?? "logarithmic";
 
   const spectro = generateSpectrogram(frames, bins, octaves, roughness, options.graine, forme);
   const audio = synthetiserDepuisSpectrogramme(spectro, sr, fftSize, overlap);

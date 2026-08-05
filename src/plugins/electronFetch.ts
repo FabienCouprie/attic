@@ -1,7 +1,8 @@
-// plugins/electronFetch.ts — Patcher fetch pour télécharger les modèles via le main Electron.
-// Utilisé par les nœuds qui chargent des modèles @magenta/music (DDSP, MusicVAE, MusicRNN, Piano Genie).
+// plugins/electronFetch.ts — Patcher fetch pour télécharger les ressources via le main Electron.
+// Utilisé par les nœuds qui chargent des modèles @magenta/music (DDSP, MusicVAE, MusicRNN, Piano Genie)
+// et les images Pollinations.ai.
 // Le processus principal n’a pas les contraintes CSP/CORS du renderer, donc on route les requêtes
-// de modèles (tfhub.dev, storage.googleapis.com, kaggle.com…) par lui.
+// distantes (tfhub.dev, storage.googleapis.com, kaggle.com, pollinations.ai…) par lui.
 
 export function isModelDownloadUrl(url: string): boolean {
   return /tfhub\.dev|storage\.googleapis\.com|kagglesdsdata|kaggle\.com|googleusercontent\.com/i.test(url);

@@ -5,9 +5,9 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { parseMidi } from "midi-file";
 import {
-  appliquerDelay, appliquerReverberation, appliquerDistorsion,
-  appliquerFlanger, appliquerChorus, compresser, normaliser,
-  appliquerFiltre, supprimerClics, reduireBruit, calculerProfilBruit,
+   appliquerDelay, appliquerReverberation, appliquerDistorsion,
+   appliquerFlanger, appliquerChorus, compresser, normaliser,
+   appliquerFiltre, supprimerClics, reduireBruit, reduireBruitNotches, calculerProfilBruit,
   dererverberer, changerTempo, changerTonalite, glissandoTonalite, equaliser,
   inverserAudio, echangerCanaux, extraireCentreCote,
   appliquerFondu,
@@ -17,6 +17,7 @@ import {
   deEsser,
   ringModulator,
   appliquerPaulstretch,
+  paulstretchLogistique,
   appliquerFormuleEchantillons,
   appliquerFormuleSpectrale,
   reverberationFractale,
@@ -135,7 +136,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], defaut: "Gate",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], optionIds: ["gate", "expander"], defaut: "Gate",
         doc: "Gate = coupe le signal sous le seuil (atténuation fixe vers le plancher). Expandeur = atténue progressivement le signal sous le seuil selon le ratio (compresseur inversé).",
         docEn: "Gate = cuts signal below threshold (fixed attenuation to floor). Expander = gradually attenuates signal below threshold by ratio (reverse compressor).", defautEn: "Gate" },
       { nom: "Seuil", nomEn: "Threshold", plage: [-80, 0], pas: 1, defaut: -40, unite: "dB",
@@ -152,7 +153,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const mode = ctx.paramTexte("Mode", "Gate") === "Expandeur" ? "expandeur" : "gate";
+      const mode = ctx.paramTexte("Mode", "gate");
       const seuil = ctx.paramNombre("Seuil", -40);
       const ratio = ctx.paramNombre("Ratio", 4);
       const attaque = ctx.paramNombre("Attaque", 1);
@@ -236,6 +237,13 @@ export const fiches: FicheAudio[] = ([
     [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", "Stretch factor. 1 = no effect, 8 = 8× longer.", [1, 100], 1),
      param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", "STFT window size in seconds. Large = smooth texture, small = more transients.", [0.01, 1], 0.01)],
     (a, stretch, fenetre) => appliquerPaulstretch(a, stretch, fenetre)),
+  effet("paulstretch-logistique", "Paulstretch logistique", "Logistic Paulstretch", "Étirement extrême qui s'installe progressivement.", "Extreme time-stretch that grows in progressively.",
+    [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement maximal atteint en fin de transition.", "Maximum stretch factor reached at the end of the transition.", [1, 100], 1),
+     param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes.", "STFT window size in seconds.", [0.01, 1], 0.01),
+     param("Centre", 50, "Center", "%", "Point milieu de la transition logistique.", "Midpoint of the logistic transition.", [0, 100], 1),
+     param("Pente", 10, "Steepness", "", "Raideur de la courbe logistique.", "Steepness of the logistic curve.", [0.1, 50], 0.1),
+     param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
+    (a, stretch, fenetre, centre, pente, mix) => paulstretchLogistique(a, stretch, fenetre, centre, pente, mix)),
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
     [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix)),
@@ -365,16 +373,34 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Spectral noise subtraction.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", nomEn: "Profile", type: "controle" }],
     sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{ nom: "Réduction", defaut: 70, nomEn: "Reduction" }],
+    parametres: [
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Spectral", "Notches"], optionsEn: ["Spectral", "Notches"], optionIds: ["spectral", "notches"], defaut: "Spectral",
+        doc: "Spectral = soustraction de puissance standard. Notches = filtres coupe-bande dynamiques sur les fréquences les plus fortes du profil (utile pour un ronflement/hum).", docEn: "Spectral = standard power subtraction. Notches = dynamic notch filters on the strongest profile frequencies (useful for hum/buzz).", defautEn: "Spectral" },
+      { nom: "Réduction", nomEn: "Reduction", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%", doc: "(Mode Spectral) Pourcentage de la puissance du bruit soustrait au signal. 100% = soustraction complète, 0% = aucun effet.", docEn: "(Spectral mode) Percentage of the noise power subtracted from the signal. 100% = full subtraction, 0% = no effect." },
+      { nom: "Plancher", nomEn: "Floor", type: "nombre", plage: [0, 100], pas: 1, defaut: 1, unite: "%", doc: "(Mode Spectral) Niveau minimum de puissance conservé (pourcentage de la puissance du signal bruité). 0% = débruitage maximal, peut créer des artefacts musicaux.", docEn: "(Spectral mode) Minimum residual power level (percentage of the noisy signal power). 0% = maximum denoising, may create musical artifacts." },
+      { nom: "Notches", nomEn: "Notches", type: "nombre", plage: [1, 100], pas: 1, defaut: 50, unite: "", doc: "(Mode Notches) Nombre maximum de filtres coupe-bande appliqués. Augmentez si le ronflement a beaucoup d'harmoniques.", docEn: "(Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics." },
+      { nom: "Q", nomEn: "Q", type: "nombre", plage: [1, 50], pas: 1, defaut: 10, unite: "", doc: "(Mode Notches) Sélectivité des filtres coupe-bande. Plus Q est élevé, plus la bande supprimée est étroite. Pour des harmoniques proches, laissez Q = 10.", docEn: "(Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10." },
+    ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       const profil = ctx.entree(1);
       if (!(audio instanceof AudioBuffer) || !(profil instanceof Float32Array))
         return { valeurs: [null], message: traduire("msg.branchez_audio_profil_n_ud_profil_de_bruit") };
-      const reduction = ctx.paramNombre("Réduction", 70) / 100;
-      return { valeurs: [await reduireBruit(audio, profil, reduction)] };
+      const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
+      if (profilEnergie < 1e-6) {
+        return { valeurs: [audio], message: traduire("msg.reduction_bruit_profil_trop_faible") };
+      }
+      const mode = ctx.paramTexte("Mode", "Spectral");
+      if (mode === "Notches" || mode === "notches") {
+        const nb = Math.round(ctx.paramNombre("Notches", 50));
+        const q = ctx.paramNombre("Q", 10);
+        return { valeurs: [await reduireBruitNotches(audio, profil, 2, nb, q)] };
+      }
+      const reduction = ctx.paramNombre("Réduction", 100) / 100;
+      const plancher = ctx.paramNombre("Plancher", 1) / 100;
+      return { valeurs: [await reduireBruit(audio, profil, reduction, plancher)] };
    },
- },
+  },
   {
     id: "profil-bruit", nom: "Profil de bruit", nomEn: "Noise Profile", univers: "Traitement", famille: "Effets",
     resume: "Capture le profil spectral d'un bruit.",
@@ -385,9 +411,11 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      return { valeurs: [await calculerProfilBruit(audio)] };
+      const profil = await calculerProfilBruit(audio);
+      const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
+      return { valeurs: [profil], message: profilEnergie < 1e-6 ? traduire("msg.profil_bruit_trop_faible") : undefined };
    },
- },
+  },
   {
     id: "reponse-filtre", nom: "Filtre + réponse", nomEn: "Filter + Response",
     univers: "Traitement", famille: "Effets",
@@ -481,11 +509,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Quantisation", nomEn: "Quantization", type: "choix",
         options: ["Aucune", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
         optionsEn: ["None", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
+        optionIds: ["none", "1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"],
         defaut: "1/16",
         doc: "Grille de quantification des départs de notes. Aligner les notes sur la grille rythmique choisie.",
         docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid.", defautEn: "1/16" },
       { nom: "Quantifier fins", nomEn: "Quantize ends", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
+        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["no", "yes"],
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
@@ -497,14 +526,14 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
-      const quantifierFin = ctx.paramTexte("Quantifier fins", "Non") === "Oui";
+      const quantifierFin = ctx.paramTexte("Quantifier fins", "no") === "yes";
       const nouvFichier = await appliquerInstrumentMidi(
         await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin),
         ctx.paramNombre("Instrument", 0),
       );
       const msgs: string[] = [];
       if (demiTons !== 0) msgs.push(traduire("msg.transposition_var_0_var_1", `${demiTons > 0 ? "+" : ""}${demiTons}`, Math.abs(demiTons) > 1 ? "s" : ""));
-      if (grille !== "Aucune" && grille !== "None") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
+      if (grille !== "none") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
   },
@@ -616,7 +645,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Référence", nomEn: "Reference", type: "audio" }, { nom: "Piste alignée", nomEn: "Aligned track", type: "audio" }],
     parametres: [
       { nom: "Position", nomEn: "Position", type: "choix",
-        options: ["Avant", "Après"], optionsEn: ["Before", "After"],
+        options: ["Avant", "Après"], optionsEn: ["Before", "After"], optionIds: ["before", "after"],
         defaut: "Après",
         doc: "Où ajuster la différence. Si la piste est trop courte : ajoute du silence au début (« Avant ») ou à la fin (« Après »). Si trop longue : fade d'ouverture (« Avant », garde le début) ou fade de fermeture (« Après », garde la fin).",
         docEn: "Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end).", defautEn: "After" },
@@ -627,12 +656,12 @@ export const fiches: FicheAudio[] = ([
       if (!(ref instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.branchez_une_r_f_rence_entr_e_1") };
       if (!(piste instanceof AudioBuffer)) return { valeurs: [ref, null], message: traduire("msg.branchez_une_piste_aligner_entr_e_2") };
       const { alignerPiste } = await import("../audio");
-      const position = ctx.paramTexte("Position", "Après") === "Avant" ? "avant" : "apres";
-      const [refOut, pisteOut] = alignerPiste(ref, piste, position);
+      const position = ctx.paramTexte("Position", "after");
+      const [refOut, pisteOut] = alignerPiste(ref, piste, position === "before" ? "avant" : "apres");
       const diff = piste.length - ref.length;
       let msg: string;
-      if (diff < 0) msg = `Piste ${(-diff / ref.sampleRate).toFixed(2)}s trop courte → silence ${position === "avant" ? "au début" : "à la fin"}`;
-      else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "avant" ? "d'ouverture" : "de fermeture"}`;
+      if (diff < 0) msg = `Piste ${(-diff / ref.sampleRate).toFixed(2)}s trop courte → silence ${position === "before" ? "au début" : "à la fin"}`;
+      else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "before" ? "d'ouverture" : "de fermeture"}`;
       else msg = "Pistes de même longueur — aucune modification";
       return { valeurs: [refOut, pisteOut], message: msg };
    },
@@ -886,6 +915,36 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
+    id: "echo-logistique", nom: "Écho logistique", nomEn: "Logistic echo", univers: "Traitement", famille: "Effets",
+    resume: "Écho dont le feedback croît selon une courbe logistique.",
+    resumeEn: "Echo whose feedback grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Temps", nomEn: "Time", type: "curseur", plage: [50, 2000], pas: 10, defaut: 350, unite: "ms",
+        doc: "Temps de retard entre chaque répétition.", docEn: "Delay time between repetitions." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Feedback maximal atteint en fin de transition (0% = une seule répétition, 95% = répétitions longues).", docEn: "Maximum feedback reached at the end of the transition (0% = single repeat, 95% = long tail)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { echoLogistique } = await import("../audio");
+      const temps = ctx.paramNombre("Temps", 350);
+      const feedback = ctx.paramNombre("Feedback", 40);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 50);
+      return { valeurs: [echoLogistique(a, temps, feedback, centre, pente, mix)], message: traduire("msg.echo_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     resume: "Filtre passe-bande modulé (effet pédale wah).",
     resumeEn: "Modulated bandpass filter (wah pedal effect).",
@@ -994,6 +1053,69 @@ export const fiches: FicheAudio[] = ([
       const typeStr = ctx.paramTexte("Type", "Dur");
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
    },
+  },
+  {
+    id: "chopper-logistique", nom: "Chopper logistique", nomEn: "Logistic chopper", univers: "Traitement", famille: "Effets",
+    resume: "Gate rythmique dont la profondeur croît selon une courbe logistique.",
+    resumeEn: "Rhythmic gate whose depth grows following a logistic curve.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "Hz",
+        doc: "Vitesse de coupe (coups par seconde).", docEn: "Chop speed (cuts per second)." },
+      { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
+        doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
+      { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
+        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Profondeur maximale du gate atteinte en fin de transition (0% = aucun effet, 100% = gate complet).", docEn: "Maximum gate depth reached at the end of the transition (0% = no effect, 100% = full gate)." },
+      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
+        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { chopperLogistique } = await import("../audio");
+      const typeStr = ctx.paramTexte("Type", "Dur");
+      return { valeurs: [chopperLogistique(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0, ctx.paramNombre("Profondeur", 50), ctx.paramNombre("Centre", 50), ctx.paramNombre("Pente", 10), ctx.paramNombre("Mix", 100))], message: traduire("msg.chopper_logistique", (a.duration ?? 0).toFixed(1)) };
+    },
+  },
+  {
+    id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
+    resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
+    resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
+      { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], optionsEn: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], defaut: "1/4",
+        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, etc.", docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc." },
+      { nom: "Taille", nomEn: "Size", type: "choix", options: ["1/32", "1/16", "1/8", "1/4", "1/2"], optionsEn: ["1/32", "1/16", "1/8", "1/4", "1/2"], defaut: "1/16",
+        doc: "Longueur du segment capturé et répété.", docEn: "Length of the captured and repeated segment." },
+      { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
+        doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
+      { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
+        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide).", docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay)." },
+      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const a = ctx.entree(0);
+      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const { beatRepeat } = await import("../audio");
+      const intervalStr = ctx.paramTexte("Intervalle", "1/4");
+      const sizeStr = ctx.paramTexte("Taille", "1/16");
+      const parseDiv = (s: string) => {
+        const parts = s.split("/");
+        return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
+      };
+      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Mix", 100))], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
+    },
   },
   {
     id: "echo", nom: "Echo", nomEn: "Echo", univers: "Traitement", famille: "Effets",

@@ -8,10 +8,18 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
-interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number }
-interface RepOllama { reponse?: string; erreur?: string }
+// `format` : forçage de sortie côté décodeur Ollama ("json", ou un schéma
+// JSON complet sur les versions récentes). Contrairement à une consigne dans
+// le prompt (« réponds UNIQUEMENT en JSON »), c'est appliqué au niveau du
+// GRAMMAIRE de génération — le modèle ne peut PAS produire de prose, même s'il
+// « veut » raisonner à voix haute avant de répondre. Vérifié nécessaire contre
+// un vrai serveur (qwen3:4b) : avec une simple consigne + /no_think + exemple,
+// le modèle épuisait tout son budget de tokens en raisonnement libre sans
+// jamais atteindre le JSON (voir prompt-graphe.ts:genererViaOllama).
+export interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number; format?: "json" | Record<string, unknown> }
+export interface RepOllama { reponse?: string; erreur?: string }
 
-async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
+export async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
   const api = (window as unknown as { api?: { ollamaGenerer?: (o: OptsOllama) => Promise<RepOllama> } }).api;
   if (api?.ollamaGenerer) return api.ollamaGenerer(opts); // Electron : passe par le main
   try {
@@ -23,6 +31,7 @@ async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
         stream: false,
         think: opts.thinking || false,
         options: opts.options || {},
+        ...(opts.format ? { format: opts.format } : {}),
       }),
     });
     if (!r.ok) {
