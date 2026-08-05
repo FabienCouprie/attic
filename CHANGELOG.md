@@ -4,6 +4,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.2] — 2026-08-05
+
 ### Fixed
 - **Police Gras du générateur de pochette non appliquée.** Le style `"font-weight:900"` était injecté directement dans la balise SVG comme un attribut mal formé, sans guillemets ni préfixe `style=`. La police Gras (Impact) et l'italique Serif (Georgia) utilisent maintenant des attributs SVG valides (`font-weight="900"` / `font-style="italic"`).
 - **Régression de renommage des méta-composants.** Le champ `data.nom` (nom personnalisé d'un méta-composant, d'un commentaire ou d'un cadre) n'était pas dans la liste `CHAMPS_UTILISATEUR`. Copier/coller un méta-composant renommé le faisait donc revenir à son nom par défaut. Le champ est désormais préservé comme les autres champs saisis par l'utilisateur.
