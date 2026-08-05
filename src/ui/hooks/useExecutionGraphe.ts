@@ -23,7 +23,14 @@ const trouverDef = (id: string) => registre.trouverDef(id);
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
 // statuts, messages, cache) peuvent être effacés.
-const CHAMPS_UTILISATEUR = new Set([
+// Exporté : sert aussi d'allowlist au copier-coller (App.tsx) — copier UNIQUEMENT
+// ces champs plutôt que tout `data` sans filtre, pour ne jamais dupliquer un
+// résultat calculé (buffer audio, URL blob…) sur un nœud qui n'a pas encore
+// tourné lui-même. Voir le commit qui a introduit ce commentaire pour le détail
+// du bug : un nœud collé affichait/jouait le résultat de l'original avant même
+// sa première exécution, car `audioResultatBuffer`/`audioResultatUrl` etc.
+// étaient copiés par erreur avec le reste de `data`.
+export const CHAMPS_UTILISATEUR = new Set([
   "ficheId",
   "parametres",
   "zonesSelectionnees",
