@@ -23,7 +23,7 @@ import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe, CHAMPS_UTILISATEUR } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
@@ -612,9 +612,14 @@ function Atelier() {
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
+          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
+          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
+          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
+          // joue le résultat de l'original avant même d'avoir tourné lui-même.
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;
+            if (!CHAMPS_UTILISATEUR.has(k)) continue;
             data[k] = v;
           }
           return {
@@ -637,9 +642,14 @@ function Atelier() {
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
+          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
+          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
+          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
+          // joue le résultat de l'original avant même d'avoir tourné lui-même.
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;
+            if (!CHAMPS_UTILISATEUR.has(k)) continue;
             data[k] = v;
           }
           return {

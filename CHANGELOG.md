@@ -4,6 +4,9 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+- **Un nœud copié-collé (ou dupliqué) affichait/jouait le résultat de l'original avant même sa première exécution.** Ctrl+C copiait `data` du nœud sans filtre — y compris les champs de résultat calculés (`audioResultatBuffer`, `audioResultatUrl`, `audioResultatMessage`, etc.), pas seulement la configuration (`ficheId`, `parametres`). Le nœud collé affichait donc « En attente » tout en montrant/jouant l'audio (ou l'image) de l'original, jusqu'à sa propre exécution. Corrigé en filtrant via `CHAMPS_UTILISATEUR`, l'allowlist des champs réellement saisis par l'utilisateur déjà utilisée par la cascade de reset — même mécanisme, donc protège aussi par construction tout futur domaine (image, etc.) ajoutant ses propres champs de résultat.
+
 ## [3.0.0] — 2026-08-04
 
 ### Added
