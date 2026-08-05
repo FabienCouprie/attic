@@ -10,6 +10,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 - **Stabilisation du test de réduction de bruit.** `effets-dynamique.test.ts` utilisait `Math.random()` pour générer le bruit de test, ce qui rendait le test `réduit l'énergie du bruit sur un signal sinus + bruit` aléatoirement instable. Un générateur pseudo-aléatoire déterministe (`mulberry32`) remplace désormais `Math.random()` dans ce fichier de test.
+- **Thème black : liseret d'exécution en bleu catalogue.** Dans le thème `data-theme="black"`, le liseret du nœud en cours d'exécution (`attic-node.running`) passe du vert au bleu du fond de la palette (`--bg-surface-alt`).
 
 ## [3.0.1] — 2026-08-05
 
