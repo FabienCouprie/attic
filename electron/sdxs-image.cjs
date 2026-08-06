@@ -1,9 +1,9 @@
 // electron/sdxs-image.cjs — Génération d'image texte→image via SDXS-512-0.9
 // (UNet 0,3 Md paramètres, distillation 1 pas, quantifié int8) + décodeur TAESD.
 // Uses onnxruntime-node (CPU) et le tokenizer CLIP via @huggingface/tokenizers.
-// Le bundle modèle est cherché dans public/oonx/sdxs-512-texte-image/ (non
-// versionné — voir README.md « ONNX Models », option retenue : fourni par
-// l'utilisateur, pas de téléchargement automatique).
+// Le bundle modèle est embarqué via extraResources dans
+// resources/oonx/sdxs-512-texte-image/. L'utilisateur peut aussi fournir un
+// chemin explicite via le paramètre « Chemin modèle ».
 
 const ort = require("onnxruntime-node");
 const { Tokenizer } = require("@huggingface/tokenizers");

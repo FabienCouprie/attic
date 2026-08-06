@@ -481,10 +481,8 @@ ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
 });
 
 // --- IPC : SDXS-512 texte->image (process principal, onnxruntime-node) ---
-// Modèle non bundlé (~680 Mo quantifié int8) : fourni par l'utilisateur dans
-// public/oonx/sdxs-512-texte-image/, ou via un chemin explicite. Voir
-// ROADMAP.md « Text-to-image » pour le choix de ne pas l'embarquer/télécharger
-// automatiquement.
+// Modèle embarqué (~680 Mo quantifié int8) dans resources/oonx/sdxs-512-texte-image
+// via extraResources. L'utilisateur peut aussi fournir un chemin explicite.
 ipcMain.handle("sdxs-image:generer", async (_event, options) => {
   try {
     const { prompt, seed, modelPath: cheminExplicite } = options;
