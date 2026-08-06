@@ -75,7 +75,7 @@ export function extraireGrapheMp3(arrayBuffer: ArrayBuffer): string | null {
   return null;
 }
 
-export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string): Blob {
+export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, securise: boolean = false): Blob {
   const nbCanaux = buffer.numberOfChannels;
   const frequence = buffer.sampleRate;
   const nbEchantillons = buffer.length;
@@ -130,10 +130,12 @@ export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string): Blo
   const canaux: Float32Array[] = [];
   for (let c = 0; c < nbCanaux; c++) canaux.push(buffer.getChannelData(c));
 
+  const SEUIL_PREVIEW = 0.5; // -6 dBFS
+  const maxAbs = securise ? SEUIL_PREVIEW : 1.0;
   let offset = 44;
   for (let i = 0; i < nbEchantillons; i++) {
     for (let c = 0; c < nbCanaux; c++) {
-      const echantillon = Math.max(-1, Math.min(1, canaux[c][i]));
+      const echantillon = Math.max(-maxAbs, Math.min(maxAbs, canaux[c][i]));
       vue.setInt16(offset, echantillon < 0 ? echantillon * 0x8000 : echantillon * 0x7fff, true);
       offset += 2;
     }

@@ -4,6 +4,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.5] — 2026-08-06
+
+### Security
+- **Hard output clamp at -6 dBFS for the 5 sensitive nodes.** `formule-echantillons`, `formule-spectrale`, `generateur-audio-mathematique`, `julia-processor` and `python-processor` now clamp their audio output to `[-0.5, 0.5]`. Users can amplify downstream with an Amplifier node if they want more level.
+- **Default volume 30% for formula nodes.** The three math formula nodes now default to 30% output volume.
+- **First-run warning for formula nodes.** A one-time `window.confirm` warns about high-intensity signals before the first execution of any formula node.
+- **VU meter on audio nodes.** The generic node player shows a peak/RMS level bar (green/orange/red) so users can see the output level.
+- **Default player volume 30%.** The `<audio>` player in the node UI starts at 30% volume on each new audio load.
+- **Preview limiter at -6 dBFS.** Preview WAV generation applies an additional -6 dBFS hard ceiling only for the 5 sensitive nodes.
+
+### Fixed
+- **English formula defaults used `ft` instead of `pi`.** `defautEn` for Sample Formula and Mathematical Audio Generator corrected from `sin(t * 2 * ft * 440)` to `sin(t * 2 * pi * 440)`.
+
 ## [3.0.3] — 2026-08-05
 
 ### Fixed

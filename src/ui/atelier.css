@@ -569,6 +569,10 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background-color: #f5f0e6;
 }
 .attic-node-player { padding: 4px 8px; overflow: hidden; }
+.attic-node-vu { display: flex; align-items: center; gap: 6px; padding: 2px 0 4px; }
+.attic-node-vu-bar-bg { flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+.attic-node-vu-bar { height: 100%; border-radius: 3px; transition: width 0.2s ease; }
+.attic-node-vu-text { font-size: 9px; color: var(--text-muted); font-family: monospace; min-width: 40px; text-align: right; }
 
 /* Aesthetic test: node player with sepia background, visible numbers and sepia icons. */
 .attic-node-player .attic-node-audio {

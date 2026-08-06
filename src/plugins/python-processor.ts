@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
+import { securiserAmplitude } from "../audio/math-formules";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -241,7 +242,8 @@ export const fiches: FicheAudio[] = ([
         if (rep?.donnees) {
           const ab = rep.donnees.buffer.slice(rep.donnees.byteOffset, rep.donnees.byteOffset + rep.donnees.byteLength);
           const ac = new AudioContext();
-          sorties[0] = await ac.decodeAudioData(ab);
+          const decoded = await ac.decodeAudioData(ab);
+          sorties[0] = securiserAmplitude(decoded, 0.5);
           ac.close();
         }
       } catch {}

@@ -212,6 +212,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_formule_var_0": { fr: "Erreur formule : {__VAR_0__}", en: "Formula error: {__VAR_0__}" },
   "msg.formule_spectrale_appliqu_e": { fr: "Formule spectrale appliquée", en: "Spectral formula applied" },
   "msg.erreur_formule_spectrale_var_0": { fr: "Erreur formule spectrale : {__VAR_0__}", en: "Spectral formula error: {__VAR_0__}" },
+  "msg.avertissement_formule": { fr: "⚠️ Attention : les nœuds de formules mathématiques peuvent produire des signaux à forte intensité. Baissez le volume de votre système avant de lancer. Souhaitez-vous continuer ?", en: "⚠️ Warning: math formula nodes can produce high-intensity signals. Lower your system volume before running. Do you want to continue?" },
   "msg.branchez_audio_profil_n_ud_profil_de_bruit": { fr: "Branchez audio + profil (nœud Profil de bruit).", en: "Connect audio + profile (node Noise profile)." },
   "msg.profil_bruit_trop_faible": { fr: "Profil de bruit quasi vide (zone trop silencieuse/courte).", en: "Noise profile almost empty (zone too silent/short)." },
   "msg.reduction_bruit_profil_trop_faible": { fr: "Réduction désactivée : profil de bruit vide.", en: "Noise reduction disabled: empty noise profile." },

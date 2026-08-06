@@ -600,18 +600,18 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440)",
         doc: "Expression mathématique donnant la valeur de l'échantillon. Variables disponibles : t (temps en s), i (index), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
-        docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * ft * 440)" },
+        docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * pi * 440)" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
       { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo",
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels.", defautEn: "Stereo" },
-      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%" },
     ],
     async executer(ctx: any) {
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440)");
       const duree = ctx.paramNombre("Durée", 2);
       const channels = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
-      const volume = ctx.paramNombre("Volume", 80);
+      const volume = ctx.paramNombre("Volume", 30);
       try {
         const buf = genererAudioFormule(formule, duree, 44100, channels);
         const vol = Math.max(0, Math.min(1, volume / 100));
@@ -764,10 +764,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
+      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx: any) {
-      const { genererReservoirMusical, rendreReservoirAudio, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
+      const { genererReservoirMusical, rendreReservoirAudio, rendreSequence, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
       const config = {
@@ -789,11 +792,25 @@ export const fiches: FicheAudio[] = ([
         repetition: ctx.paramNombre("Répétition", 25) / 100,
         silence: ctx.paramNombre("Silence", 10) / 100,
       };
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_neuronal"));
       const { notes, graineUtilisee } = genererReservoirMusical(config);
-      ctx.onProgress(traduire("progress.rendu_audio"));
-      const buf = rendreReservoirAudio(notes, config);
       const notesJouees = notes.filter((n: any) => !n.silence);
+      ctx.onProgress(traduire("progress.rendu_audio"));
+      let buf: AudioBuffer;
+      if (modeRendu === "SoundFont") {
+        const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+        buf = await rendreSequence(
+          notesJouees.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.debut + n.duree })),
+          "SoundFont",
+          config.volume,
+          programme,
+          banque,
+        );
+      } else {
+        buf = rendreReservoirAudio(notes, config);
+      }
       const midiFile = notesJouees.length === 0
         ? null
         : await appliquerInstrumentMidi(

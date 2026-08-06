@@ -9,6 +9,19 @@ function normaliserFormule(formule: string): string {
   return m ? m[1] : f;
 }
 
+/** Limite chaque échantillon à [-maxAbs, maxAbs] pour éviter les signaux
+ *  hors plage pouvant être dangereux à l'écoute ou pour le matériel. */
+export function securiserAmplitude(buffer: AudioBuffer, maxAbs: number = 1.0): AudioBuffer {
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < d.length; i++) {
+      if (d[i] > maxAbs) d[i] = maxAbs;
+      else if (d[i] < -maxAbs) d[i] = -maxAbs;
+    }
+  }
+  return buffer;
+}
+
 export function appliquerFormuleEchantillons(
   buffer: AudioBuffer,
   formule: string,
@@ -35,7 +48,7 @@ export function appliquerFormuleEchantillons(
       dst[i] = typeof y === "number" ? y : Number(y);
     }
   }
-  return resultat;
+  return securiserAmplitude(resultat, 0.5);
 }
 
 export function genererAudioFormule(
@@ -59,7 +72,7 @@ export function genererAudioFormule(
       dst[i] = typeof y === "number" ? y : Number(y);
     }
   }
-  return resultat;
+  return securiserAmplitude(resultat, 0.5);
 }
 
 export function appliquerFormuleSpectrale(
@@ -146,7 +159,7 @@ export function appliquerFormuleSpectrale(
     }
   }
 
-  return resultat;
+  return securiserAmplitude(resultat, 0.5);
 }
 
 const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
