@@ -19,6 +19,9 @@ import { bufferVersWavBlob } from "../../audio";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
+const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
+const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
+const AVERTISSEMENT_FORMULE_KEY = "attic-avertissement-formule";
 
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
@@ -32,6 +35,7 @@ const trouverDef = (id: string) => registre.trouverDef(id);
 // étaient copiés par erreur avec le reste de `data`.
 export const CHAMPS_UTILISATEUR = new Set([
   "ficheId",
+  "nom",
   "parametres",
   "zonesSelectionnees",
   "audioFichier",
@@ -235,6 +239,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     }
 
+    // ── Avertissement de sécurité pour les nœuds de formules mathématiques ──
+    // Affiché une seule fois par session utilisateur via localStorage.
+    const contientFormule = ordreFiltre.some((id) => {
+      const n = nds.find((n: any) => n.id === id);
+      return n && FORMULA_NODE_IDS.includes(n.data?.ficheId);
+    });
+    if (contientFormule) {
+      try {
+        if (typeof localStorage !== "undefined" && !localStorage.getItem(AVERTISSEMENT_FORMULE_KEY)) {
+          const confirmer = window.confirm(t("msg.avertissement_formule"));
+          if (!confirmer) {
+            if (!noeudPrioritaireId) setEnExecution(false);
+            return;
+          }
+          localStorage.setItem(AVERTISSEMENT_FORMULE_KEY, "1");
+        }
+      } catch { /* ignore localStorage errors */ }
+    }
+
     const ctx = await obtenirAudio();
     const resultats = new Map<string, TypeValeur[]>();
     const messages = new Map<string, string>();
@@ -430,7 +453,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
             url = n.data.audioResultatUrl;
           } else {
             if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
-            url = URL.createObjectURL(bufferVersWavBlob(audio, grapheExport));
+            const securiser = NOEUDS_AVEC_PLAFOND_PREVIEW.includes(n.data.ficheId as string);
+            url = URL.createObjectURL(bufferVersWavBlob(audio, grapheExport, securiser));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);

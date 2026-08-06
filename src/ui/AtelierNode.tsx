@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
@@ -93,6 +93,39 @@ export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
     if (def.famille === "Théorie") return "analyse";
   }
   return "autre";
+}
+
+// ── Indicateur de niveau (VU / pic) ──
+function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
+  const niveau = useMemo(() => {
+    if (!buffer || typeof AudioBuffer === "undefined" || !(buffer instanceof AudioBuffer)) return null;
+    let peak = 0;
+    let rmsAcc = 0;
+    let n = 0;
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const data = buffer.getChannelData(c);
+      for (let i = 0; i < data.length; i++) {
+        const v = Math.abs(data[i]);
+        if (v > peak) peak = v;
+        rmsAcc += v * v;
+        n++;
+      }
+    }
+    return { peak, rms: n > 0 ? Math.sqrt(rmsAcc / n) : 0 };
+  }, [buffer]);
+  if (!niveau) return null;
+  const db = niveau.peak > 0 ? 20 * Math.log10(niveau.peak) : -Infinity;
+  const dbText = Number.isFinite(db) ? `${db.toFixed(1)} dB` : "-∞ dB";
+  const pct = Math.min(100, niveau.peak * 100);
+  const couleur = niveau.peak >= 0.7 ? "#e8590c" : niveau.peak >= 0.3 ? "#f59e0b" : "#40c057";
+  return (
+    <div className="attic-node-vu" title={`Pic : ${dbText} | RMS : ${(niveau.rms * 100).toFixed(1)}%`}>
+      <div className="attic-node-vu-bar-bg">
+        <div className="attic-node-vu-bar" style={{ width: `${pct}%`, background: couleur }} />
+      </div>
+      <span className="attic-node-vu-text">{dbText}</span>
+    </div>
+  );
 }
 
 // Renderer GÉNÉRIQUE : en-tête, documentation, ports typés et statut sont communs
@@ -306,12 +339,13 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {/* Lecteur + message (générique) — masqué si une vue custom gère déjà l'audio */}
           {data.audioResultatUrl && vuesAvant.length === 0 && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
-              <audio className="attic-node-audio nodrag" controls src={data.audioResultatUrl} />
+              <IndicateurNiveau buffer={data.audioResultatBuffer} />
+              <audio className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
             </div>
           )}
           {!data.audioResultatUrl && data.audioUrl && vuesAvant.length === 0 && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
-              <audio className="attic-node-audio nodrag" controls src={data.audioUrl} />
+              <audio className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
             </div>
           )}
           {data.audioResultatMessage && !vueAvantMasqueMessage(data.ficheId) && (
@@ -345,7 +379,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
               <div key={hid} className="attic-node-port" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
                 <Handle type="target" position={Position.Left} id={hid}
                   title={libelleType}
-                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-surface)" }} />
+                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-node)" }} />
                 <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
                 {survolPort === hid && (
                   <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
@@ -368,7 +402,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
                 )}
                 <Handle type="source" position={Position.Right} id={hid}
                   title={libelleType}
-                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-surface)" }} />
+                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-node)" }} />
               </div>
             );
           })}

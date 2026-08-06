@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
+import { securiserAmplitude } from "../audio/math-formules";
 
 const JULIA_KEYWORDS = new Set([
   "function", "return", "if", "elseif", "else", "for", "while", "in", "!", "&&", "||",
@@ -202,7 +203,7 @@ export const fiches: FicheAudio[] = ([
           const ab = rep.donnees.buffer.slice(rep.donnees.byteOffset, rep.donnees.byteOffset + rep.donnees.byteLength);
           const ctx2 = new AudioContext();
           const decoded = await ctx2.decodeAudioData(ab);
-          sorties[0] = decoded;
+          sorties[0] = securiserAmplitude(decoded, 0.5);
           ctx2.close();
         }
       } catch {}

@@ -3,6 +3,7 @@
 :root {
   --bg-app: #0f0b17;
   --bg-surface: #1a1425;
+  --bg-node: var(--bg-surface);
   --bg-surface-alt: #120e1b;
   --bg-toolbar: #161020;
   --bg-hover: rgba(255,255,255,0.04);
@@ -35,31 +36,66 @@
   --cat-autre: #64748b;
 }
 
+/* Thème « plan technique » — bleu profond + blanc, inspiré d'un dessin
+   industriel façon bleu de méthode (blueprint). Remplace l'ancien thème
+   noir sous la même clé data-theme="black" (test esthétique, réversible). */
 [data-theme="black"] {
-  --bg-app: #0d0d0f;
+  --bg-app: #0a1a40;
+  --bg-surface: #123166;
+  --bg-surface-alt: #0c2454;
+  --bg-toolbar: #0e2758;
+  --bg-hover: rgba(255,255,255,0.06);
+  --bg-hover-accent: rgba(94,179,245,0.16);
+  --bg-btn: #1a3f7f;
+  --bg-btn-hover: #234f99;
+  --bg-input: #0c2454;
+  --bg-badge: #1a3f7f;
+  --border: #2f5590;
+  --border-divider: #16305f;
+  --text-primary: #e8f1ff;
+  --text-secondary: #93b8e8;
+  --text-tertiary: #6690c7;
+  --text-muted: #3f5f92;
+  --text-title: #ffffff;
+  --text-inverse: #0a1a40;
+  --text-icon: #93b8e8;
+  --text-badge: #cfe2fb;
+  --success: #34d399;
+  --success-dim: #1f6d54;
+  --accent: #5eb3f5;
+  --etiquette-bg: #1a3f7f;
+}
+
+/* Nœuds : gardent les teintes neutres de l'ancien thème « dark » (demandé
+   explicitement), pendant que tout le reste (fond, panneaux, barre d'outils)
+   passe au bleu plan technique ci-dessus. Réassigner ces variables au niveau
+   .attic-node suffit : tout élément interne (boutons, badges, bordures,
+   sélection) qui lit var(--border)/var(--bg-btn)/etc. hérite automatiquement
+   de ces valeurs plutôt que de celles du thème, sans toucher un seul sélecteur
+   supplémentaire. */
+[data-theme="black"] .attic-node,
+[data-theme="dark"] .attic-node {
+  --bg-node: #1a1a1e;
   --bg-surface: #1a1a1e;
-  --bg-surface-alt: #131316;
-  --bg-toolbar: #16161a;
-  --bg-hover: rgba(255,255,255,0.04);
-  --bg-hover-accent: rgba(76,110,245,0.12);
+  --bg-input: #1a1a1e;
   --bg-btn: #222228;
   --bg-btn-hover: #2a2a32;
-  --bg-input: #1a1a1e;
   --bg-badge: #2a2a32;
+  --bg-hover: rgba(255,255,255,0.04);
+  --bg-hover-accent: rgba(76,110,245,0.12);
   --border: #2a2a32;
   --border-divider: #222;
+  --accent: #5c7cfa;
   --text-primary: #d8d8e0;
   --text-secondary: #999;
   --text-tertiary: #666;
   --text-muted: #444;
   --text-title: #eee;
-  --text-inverse: #000;
   --text-icon: #666;
   --text-badge: #999;
   --success: #40c057;
   --success-dim: #2b5a35;
-  --accent: #5c7cfa;
-  --etiquette-bg: #1a2540;
+  --execution-outline: #36a2eb;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -251,7 +287,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 
 /* ── Nœuds ── */
 .attic-node {
-  background: var(--bg-surface); border: 1px solid var(--border);
+  background: var(--bg-node); border: 1px solid var(--border);
   border-radius: 10px; min-width: 200px; font-size: 13px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   position: relative;
@@ -291,7 +327,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 .attic-node-progress-ring-bg { stroke: rgba(255,255,255,0.12); }
 .attic-node-progress-ring-bar {
-  stroke: var(--success);
+  stroke: var(--execution-outline, var(--success));
   transition: stroke-dashoffset 0.2s ease;
 }
 .attic-node-progress-ring-bar.indeterminate {
@@ -317,14 +353,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 
 .attic-node.running {
-  outline: 2px solid var(--success);
+  outline: 2px solid var(--execution-outline, var(--success));
   outline-offset: 2px;
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--success) 40%, transparent);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--execution-outline, var(--success)) 40%, transparent);
   animation: node-running-pulse 1.5s ease-in-out infinite;
   z-index: 10;
 }
 .attic-node.termine {
-  outline: 2px solid #3bc049;
+  outline: 2px solid var(--execution-outline, #3bc049);
   outline-offset: 2px;
   z-index: 10;
 }
@@ -533,6 +569,10 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background-color: #f5f0e6;
 }
 .attic-node-player { padding: 4px 8px; overflow: hidden; }
+.attic-node-vu { display: flex; align-items: center; gap: 6px; padding: 2px 0 4px; }
+.attic-node-vu-bar-bg { flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+.attic-node-vu-bar { height: 100%; border-radius: 3px; transition: width 0.2s ease; }
+.attic-node-vu-text { font-size: 9px; color: var(--text-muted); font-family: monospace; min-width: 40px; text-align: right; }
 
 /* Aesthetic test: node player with sepia background, visible numbers and sepia icons. */
 .attic-node-player .attic-node-audio {
@@ -741,7 +781,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   fill: rgba(15, 11, 23, 0.85);
 }
 [data-theme="black"] .react-flow__minimap-mask {
-  fill: rgba(13, 13, 15, 0.85);
+  fill: rgba(10, 26, 64, 0.85);
 }
 .react-flow__attribution {
   background: transparent;

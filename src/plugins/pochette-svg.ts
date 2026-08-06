@@ -145,8 +145,11 @@ function buildTitleText(titre: string, artiste: string, W: number, H: number, fo
   const fontSize = Math.max(14, Math.min(42, (W / Math.max(safeTitre.length, 5)) * 1.8));
   const hasBoth = safeTitre && safeArtiste;
   const titleY = hasBoth ? H * 0.52 : H * 0.5;
-  const fontStyle = font === "Impact, sans-serif" ? `font-weight:900` : font === "Georgia, serif" ? `font-style:italic` : "";
-  text += `<text x="${W / 2}" y="${titleY}" font-family="${font}" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" ${fontStyle}>${safeTitre}</text>`;
+  const isGras = font === "Impact, sans-serif";
+  const isSerif = font === "Georgia, serif";
+  const fontWeight = isGras ? "900" : "bold";
+  const fontStyleAttr = isSerif ? 'font-style="italic"' : "";
+  text += `<text x="${W / 2}" y="${titleY}" font-family="${font}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" ${fontStyleAttr}>${safeTitre}</text>`;
   if (hasBoth) {
     text += `<text x="${W / 2}" y="${titleY + fontSize * 0.9}" font-family="sans-serif" font-size="${Math.max(10, fontSize * 0.42)}" fill="${textColor}" opacity="0.75" text-anchor="middle" dominant-baseline="middle">${safeArtiste}</text>`;
   }

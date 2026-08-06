@@ -4,6 +4,38 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.5] — 2026-08-06
+
+### Security
+- **Hard output clamp at -6 dBFS for the 5 sensitive nodes.** `formule-echantillons`, `formule-spectrale`, `generateur-audio-mathematique`, `julia-processor` and `python-processor` now clamp their audio output to `[-0.5, 0.5]`. Users can amplify downstream with an Amplifier node if they want more level.
+- **Default volume 30% for formula nodes.** The three math formula nodes now default to 30% output volume.
+- **First-run warning for formula nodes.** A one-time `window.confirm` warns about high-intensity signals before the first execution of any formula node.
+- **VU meter on audio nodes.** The generic node player shows a peak/RMS level bar (green/orange/red) so users can see the output level.
+- **Default player volume 30%.** The `<audio>` player in the node UI starts at 30% volume on each new audio load.
+- **Preview limiter at -6 dBFS.** Preview WAV generation applies an additional -6 dBFS hard ceiling only for the 5 sensitive nodes.
+
+### Fixed
+- **English formula defaults used `ft` instead of `pi`.** `defautEn` for Sample Formula and Mathematical Audio Generator corrected from `sin(t * 2 * ft * 440)` to `sin(t * 2 * pi * 440)`.
+
+## [3.0.3] — 2026-08-05
+
+### Fixed
+- **Nœud « Entrée texte » partiellement traduit en anglais.** Le placeholder et le compteur de caractères de la vue du nœud étaient codés en dur en français ; ils passent désormais par le dictionnaire i18n et s'affichent en anglais quand la langue est EN.
+- **Passe de traduction anglaise.** Correction de nombreuses traductions anglaises erronées ou incomplètes : `chord(s)` (et non `agreement`), `drums` (et non `battery`), `vocal ranges` (et non `tesses`), `lyrics` (et non `words`), `steps` (et non `not`), la typo `seed`/`see`, les messages tronqués de Julia/Python/Pure Data, les messages mal formés d'export/install de nœud, et de nombreuses formulations de progress.
+- **Bordure des ports de nœud en thème black.** Passe de `--bg-surface` à `--bg-node` dans `AtelierNode.tsx` pour un meilleur contraste sur le fond du nœud.
+
+## [3.0.2] — 2026-08-05
+
+### Fixed
+- **Police Gras du générateur de pochette non appliquée.** Le style `"font-weight:900"` était injecté directement dans la balise SVG comme un attribut mal formé, sans guillemets ni préfixe `style=`. La police Gras (Impact) et l'italique Serif (Georgia) utilisent maintenant des attributs SVG valides (`font-weight="900"` / `font-style="italic"`).
+- **Régression de renommage des méta-composants.** Le champ `data.nom` (nom personnalisé d'un méta-composant, d'un commentaire ou d'un cadre) n'était pas dans la liste `CHAMPS_UTILISATEUR`. Copier/coller un méta-composant renommé le faisait donc revenir à son nom par défaut. Le champ est désormais préservé comme les autres champs saisis par l'utilisateur.
+
+### Changed
+- **Stabilisation du test de réduction de bruit.** `effets-dynamique.test.ts` utilisait `Math.random()` pour générer le bruit de test, ce qui rendait le test `réduit l'énergie du bruit sur un signal sinus + bruit` aléatoirement instable. Un générateur pseudo-aléatoire déterministe (`mulberry32`) remplace désormais `Math.random()` dans ce fichier de test.
+- **Thème black : liserets et anneau d'exécution en bleu connexion texte.** Dans le thème `data-theme="black"`, les liserets du nœud en cours d'exécution (`attic-node.running`) et du nœud terminé (`attic-node.termine`), ainsi que l'anneau de progression dans le coin bas droite (`attic-node-progress-ring-bar`), passent du vert au bleu des connexions texte (`#36a2eb`).
+
+## [3.0.1] — 2026-08-05
+
 ### Fixed
 - **Un nœud copié-collé (ou dupliqué) affichait/jouait le résultat de l'original avant même sa première exécution.** Ctrl+C copiait `data` du nœud sans filtre — y compris les champs de résultat calculés (`audioResultatBuffer`, `audioResultatUrl`, `audioResultatMessage`, etc.), pas seulement la configuration (`ficheId`, `parametres`). Le nœud collé affichait donc « En attente » tout en montrant/jouant l'audio (ou l'image) de l'original, jusqu'à sa propre exécution. Corrigé en filtrant via `CHAMPS_UTILISATEUR`, l'allowlist des champs réellement saisis par l'utilisateur déjà utilisée par la cascade de reset — même mécanisme, donc protège aussi par construction tout futur domaine (image, etc.) ajoutant ses propres champs de résultat.
 

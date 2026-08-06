@@ -257,14 +257,14 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440) + x",
         doc: "Expression mathématique donnant la valeur de sortie de chaque échantillon. Variables : x (valeur actuelle), t (temps en secondes), i (index de l'échantillon), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
-        docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * ft * 440) + x" },
-      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
+        docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * pi * 440) + x" },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440) + x");
-      const volume = ctx.paramNombre("Volume", 80);
+      const volume = ctx.paramNombre("Volume", 30);
       try {
         const out = appliquerFormuleEchantillons(audio, formule);
         const vol = Math.max(0, Math.min(1, volume / 100));
@@ -294,6 +294,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Phase", nomEn: "Phase", type: "texte", defaut: "",
         doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Variables : mag, phase, freq, bin, N, sr.",
         docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Variables: mag, phase, freq, bin, N, sr.", defautEn: "" },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
     ],
@@ -303,14 +304,22 @@ export const fiches: FicheAudio[] = ([
       const formuleMag = ctx.paramTexte("Magnitude", "mag * 2");
       const formulePhase = ctx.paramTexte("Phase", "");
       const fftSize = ctx.paramNombre("FFT", 2048);
+      const volume = ctx.paramNombre("Volume", 30);
       try {
         const out = appliquerFormuleSpectrale(audio, formuleMag, formulePhase, fftSize);
+        const vol = Math.max(0, Math.min(1, volume / 100));
+        if (vol !== 1) {
+          for (let c = 0; c < out.numberOfChannels; c++) {
+            const d = out.getChannelData(c);
+            for (let i = 0; i < d.length; i++) d[i] *= vol;
+          }
+        }
         return { valeurs: [out], message: traduire("msg.formule_spectrale_appliqu_e") };
       } catch (e: any) {
         return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
       }
    },
- },
+  },
   effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 9 bandes.", "9-band equalizer.",
     [
       param("32 Hz", 0, "32 Hz", "dB", "Gain de la bande 32 Hz.", "32 Hz band gain.", [-24, 24], 1),

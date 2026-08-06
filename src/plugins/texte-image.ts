@@ -55,8 +55,8 @@ export const fiches: FicheAudio[] = ([
       },
       {
         nom: "Chemin modèle", nomEn: "Model path", type: "dossier", defaut: "",
-        doc: "Dossier du bundle SDXS-512 (vide = public/oonx/sdxs-512-texte-image, non fourni par défaut — téléchargeable depuis https://huggingface.co/Fcouprie/sdxs-512-texte-image).",
-        docEn: "Folder of the SDXS-512 bundle (empty = public/oonx/sdxs-512-texte-image, not provided by default — downloadable from https://huggingface.co/Fcouprie/sdxs-512-texte-image).", defautEn: "",
+        doc: "Dossier du bundle SDXS-512 (vide = modèle embarqué dans resources/oonx/sdxs-512-texte-image).",
+        docEn: "Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image).", defautEn: "",
       },
     ],
     async executer(ctx: any) {

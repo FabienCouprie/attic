@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.0.5",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -48,7 +48,8 @@
       "!**/*.a",
       "!**/.cache/**/*",
       "!**/*.d.ts",
-      "!**/*.map"
+      "!**/*.map",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*"
     ],
     "extraResources": [
       {
