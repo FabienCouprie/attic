@@ -3,7 +3,7 @@
 // motif : teinte → note, saturation → vélocité, luminosité → octave.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { genererColorLooper, parseCouleurs } from "../audio";
+import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
@@ -28,9 +28,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defaut: "C",
         optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C",
         doc: "Fondamentale de la gamme.", docEn: "Root note of the scale." },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur", "mineur", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
-        optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
-        doc: "Gamme utilisée.", docEn: "Scale used." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
+        optionsEn: ["major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
+        optionIds: GAMMES_ACCORDS.map((g) => g.id),
+        doc: "Gamme utilisée (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
+        docEn: "Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,

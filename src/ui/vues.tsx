@@ -156,8 +156,8 @@ function VueExplorateur({ id, data }: VueProps) {
           {fichiersMusique && fichiersMusique.length === 0 && (
             <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.aucunFichierAudio")}</div>
           )}
-          {audioLocale && !data.audioUrl && <audio className="attic-node-audio" controls src={audioLocale} />}
-          {data.audioResultatUrl && <audio className="attic-node-audio" controls src={data.audioResultatUrl} />}
+          {audioLocale && !data.audioUrl && <audio key={audioLocale} className="attic-node-audio" controls src={audioLocale} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />}
+          {data.audioResultatUrl && <audio key={data.audioResultatUrl} className="attic-node-audio" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />}
         </>
       )}
     </div>

@@ -107,6 +107,7 @@ export const fiches: FicheAudio[] = ([
         load: traduire("progress.kokoro.load_model"),
         download: traduire("progress.kokoro.download"),
         synthesize: traduire("progress.kokoro.synthesize"),
+        chunk: traduire("progress.kokoro.chunk"),
       };
       return new Promise((resolve) => {
         const requestId = makeRequestId();

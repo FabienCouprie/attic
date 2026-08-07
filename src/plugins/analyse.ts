@@ -2,7 +2,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
+import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";;
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
@@ -55,6 +55,22 @@ export const fiches: FicheAudio[] = ([
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
  },
   {
+    id: "analyse-emotionnelle", nom: "Analyse émotionnelle", nomEn: "Emotional Analysis", univers: "Visualisation", famille: "Analyse",
+    resume: "Associe une émotion à un morceau à partir de sa musique seule (tempo, mode, énergie, timbre) — aucun texte ni parole analysés.",
+    resumeEn: "Associates an emotion with a track from its music alone (tempo, mode, energy, timbre) — no text or lyrics analyzed.",
+    notice: "Estimation heuristique combinant le tempo, le mode majeur/mineur, l'intensité sonore et la brillance spectrale en un score valence/arousal (modèle circomplex de Russell), reprojeté ensuite sur une émotion nommée. Purement acoustique — ne lit ni paroles ni métadonnées.",
+    noticeEn: "Heuristic estimate combining tempo, major/minor mode, loudness and spectral brightness into a valence/arousal score (Russell's circumplex model), then mapped to a named emotion. Purely acoustic — does not read lyrics or metadata.",
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
+    parametres: [],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+      const resultat = analyserEmotion(audio);
+      return { valeurs: [audio, resultat.description], message: traduire("emotion.verdict", resultat.emotion, Math.round(resultat.confiance * 100)) };
+   },
+ },
+  {
     id: "lecteur-analyse", nom: "Lecteur d'analyse", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche le résultat d'une analyse et permet l'écoute.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
@@ -82,8 +98,18 @@ export const fiches: FicheAudio[] = ([
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const duree = ctx.paramNombre("Durée", 30);
       const mode = ctx.paramTexte("Mode", "ai");
-      const buf = mode === "ai" && ctx.noeud.data.modeleFichier
-        ? await (ctx.noeud.data.modeleFichier as File).arrayBuffer() : undefined;
+      let buf: ArrayBuffer | undefined;
+      if (mode === "ai") {
+        if (ctx.noeud.data.modeleFichier) {
+          buf = await (ctx.noeud.data.modeleFichier as File).arrayBuffer();
+        } else if (typeof window !== "undefined" && (window as any).api?.lireBinaire) {
+          const rep = await (window as any).api.lireBinaire("oonx/model_genre.onnx");
+          if (rep?.donnees) {
+            const b = rep.donnees as Buffer;
+            buf = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
+          }
+        }
+      }
       ctx.onProgress(traduire("progress.classification"));
       const genres = await classerGenre(audio, duree, buf);
       if (!genres.length) return { valeurs: [audio, null], message: traduire("msg.classification_non_disponible") };

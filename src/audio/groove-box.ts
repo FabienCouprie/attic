@@ -7,8 +7,8 @@ import { writeMidi } from "midi-file";
 import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 import {
   PROGRESSIONS_GENRE,
-  DEGRES_MAJEUR,
-  DEGRES_MINEUR,
+  degresGammeAccords,
+  degreAccordProche,
   traduireCle,
   PATRONS_RYTHME,
   type Patron,
@@ -60,7 +60,7 @@ const ROMAIN_VERS_DEGRE: Record<string, number> = {
 };
 
 function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
-  if (config.genre === "personnalisé") {
+  if (config.genre === "custom" || config.genre === "personnalisé") {
     const parsed = config.progression
       .split("-")
       .map((r) => ROMAIN_VERS_DEGRE[r.trim()])
@@ -71,10 +71,16 @@ function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
   return progressions[0];
 }
 
+// Tierce et quinte trouvées par proximité (degreAccordProche) plutôt que par
+// décalage d'index fixe (+2/+4 degrés) : sur une gamme heptatonique cela
+// retombe sur le 3e/5e degré habituel, et cela reste correct sur une gamme
+// pentatonique (5 degrés) où +2/+4 degrés ne correspond plus à une tierce/
+// quinte réelle.
 function notesAccord(degre: number, decalage: number, degres: number[]): number[] {
-  const root = 36 + decalage + degres[degre % degres.length] + Math.floor(degre / degres.length) * 12;
-  const third = 36 + decalage + degres[(degre + 2) % degres.length] + Math.floor((degre + 2) / degres.length) * 12;
-  const fifth = 36 + decalage + degres[(degre + 4) % degres.length] + Math.floor((degre + 4) / degres.length) * 12;
+  const racinePc = degres[degre % degres.length];
+  const root = 36 + decalage + racinePc + Math.floor(degre / degres.length) * 12;
+  const third = root + degreAccordProche(degres, racinePc, 4);
+  const fifth = root + degreAccordProche(degres, racinePc, 7);
   return [root, third, fifth];
 }
 
@@ -223,8 +229,7 @@ function midiCanalUnique(
 }
 
 export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
-  const estMineur = config.gamme.toLowerCase().includes("min");
-  const degres = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
+  const degres = degresGammeAccords(config.gamme);
   const decalage = traduireCle(config.cle);
   const progression = progressionDepuisConfig(config);
 

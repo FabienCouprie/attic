@@ -81,15 +81,6 @@ function dureeEnQuarts(duree: string): number {
   return map[duree] ?? 1;
 }
 
-function dureeDepuisQuarts(quarts: number): string {
-  if (quarts >= 4) return "w";
-  if (quarts >= 2) return "h";
-  if (quarts >= 1) return "q";
-  if (quarts >= 0.5) return "8";
-  if (quarts >= 0.25) return "16";
-  return "32";
-}
-
 // ── MIDI → notation VexFlow ──
 
 const NOMS_NOTES: string[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];

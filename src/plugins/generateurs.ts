@@ -14,6 +14,7 @@ import {
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
   frequenceDeNoteMidi,
+  GAMMES_ACCORDS,
   type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
@@ -42,6 +43,17 @@ function noteVersFrequence(note: string): number | null {
 
 const FORMES_FREQ = { ids: ["sine", "square", "saw", "triangle"], fr: ["Sinus", "Carré", "Scie", "Triangle"], en: ["Sine", "Square", "Saw", "Triangle"] };
 
+// Ids canoniques du paramètre "Genre" des générateurs d'accords (Générateur
+// d'accords, Groove Box) — doivent correspondre exactement aux clés de
+// PROGRESSIONS_GENRE (audio/generation.ts), plus "custom" pour la
+// progression personnalisée.
+const GENRES_ACCORDS_IDS = ["pop", "rock", "jazz", "blues", "classique", "electro", "hiphop", "reggae", "ambient", "custom"];
+
+// Ids canoniques du paramètre "Gamme" des mêmes nœuds — dérivés de
+// GAMMES_ACCORDS (audio/generation.ts), seule source de vérité pour les
+// intervalles réellement utilisés lors de la génération.
+const GAMMES_ACCORDS_IDS = GAMMES_ACCORDS.map((g) => g.id);
+
 export const fiches: FicheAudio[] = ([
   {
     id: "generateur-accords", nom: "Générateur d'accords", nomEn: "Chord Generator", univers: "Entrées", famille: "Génération",
@@ -51,9 +63,18 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "minor"], defautEn: "major" },
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], defaut: "pop", docEn: "Style determines the chord progression.", defautEn: "pop" },
-      { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I", docEn: "Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV.", defautEn: "I-IV-V-I" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur","mineur","dorien","phrygien","lydien","mixolydien","locrien","pentatonique majeure","pentatonique mineure"],
+        optionsEn: ["Major","minor","Dorian","Phrygian","Lydian","Mixolydian","Locrian","Major pentatonic","Minor pentatonic"],
+        optionIds: GAMMES_ACCORDS_IDS, defaut: "majeur", defautEn: "Major",
+        doc: "Gamme utilisée pour construire les accords (7 modes + 2 gammes pentatoniques).",
+        docEn: "Scale used to build the chords (7 modes + 2 pentatonic scales)." },
+      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], optionIds: GENRES_ACCORDS_IDS, defaut: "pop",
+        doc: "Style déterminant la progression d'accords. Choisissez « personnalisé » pour saisir votre propre progression ci-dessous.",
+        docEn: "Style determines the chord progression. Choose « Custom » to enter your own progression below.", defautEn: "pop" },
+      { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I",
+        doc: "Progression personnalisée en chiffres romains. I=tonique, IV=sous-dominante, V=dominante. Ex : I-IV-V-I, ii-V-I, I-V-vi-IV. Utilisée seulement si Genre = personnalisé.",
+        docEn: "Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV. Used only when Genre = Custom.", defautEn: "I-IV-V-I" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée par accord", nomEn: "Chord duration", plage: [1,8], pas: 1, defaut: 2, unite: "temps", docEn: "Duration per chord in beats." },
       { nom: "Nombre d'accords", nomEn: "Chord count", plage: [2,32], pas: 1, defaut: 8, docEn: "Total number of chords." },
@@ -981,12 +1002,13 @@ export const fiches: FicheAudio[] = ([
         nom: "Gamme",
         nomEn: "Scale",
         type: "choix",
-        options: ["majeur","mineur"],
-        optionsEn: ["major","minor"],
+        options: ["majeur","mineur","dorien","phrygien","lydien","mixolydien","locrien","pentatonique majeure","pentatonique mineure"],
+        optionsEn: ["major","minor","dorian","phrygian","lydian","mixolydian","locrian","major pentatonic","minor pentatonic"],
+        optionIds: GAMMES_ACCORDS_IDS,
         defaut: "majeur",
         defautEn: "major",
-        doc: "Gamme utilisée pour construire les accords.",
-        docEn: "Scale used to build chords.",
+        doc: "Gamme utilisée pour construire les accords (7 modes + 2 gammes pentatoniques).",
+        docEn: "Scale used to build chords (7 modes + 2 pentatonic scales).",
       },
       {
         nom: "Genre",
@@ -994,6 +1016,7 @@ export const fiches: FicheAudio[] = ([
         type: "choix",
         options: ["pop","rock","jazz","blues","classique","electro","hiphop","reggae","ambient","personnalisé"],
         optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"],
+        optionIds: GENRES_ACCORDS_IDS,
         defaut: "pop",
         defautEn: "pop",
         doc: "Style déterminant la progression d'accords. Choisissez « personnalisé » pour saisir la progression.",

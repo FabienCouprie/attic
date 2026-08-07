@@ -6,6 +6,9 @@ import { withElectronFetch } from "./electronFetch";
 import * as sequences from "@magenta/music/esm/core/sequences";
 import { NoteSequence } from "@magenta/music/esm/protobuf";
 import { parseMidi, writeMidi } from "midi-file";
+import * as tf from "@tensorflow/tfjs";
+
+tf.disableDeprecationWarnings();
 
 export const CHECKPOINTS = {
   drums: "https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/drums_2bar_nade_9_q2",

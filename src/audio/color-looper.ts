@@ -3,6 +3,7 @@
 
 import { rgbToHsl, hexToRgb } from "./couleurs";
 import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
+import { degresGammeAccords, degreAccordProche } from "./generation";
 
 export interface OptionsColorLooper {
   couleurs: string;
@@ -18,15 +19,6 @@ export interface OptionsColorLooper {
   instrument: number;
   volume: number;
 }
-
-const GAMMES: Record<string, number[]> = {
-  majeur: [0, 2, 4, 5, 7, 9, 11],
-  mineur: [0, 2, 3, 5, 7, 8, 10],
-  "pentatonique majeur": [0, 2, 4, 7, 9],
-  "pentatonique mineur": [0, 3, 5, 7, 10],
-  blues: [0, 3, 5, 6, 7, 10],
-  chromatique: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -81,13 +73,9 @@ export function parseCouleurs(texte: string): { r: number; g: number; b: number 
   return result;
 }
 
-function intervallesGamme(nom: string): number[] {
-  return GAMMES[nom] ?? GAMMES["majeur"];
-}
-
 function noteDepuisCouleur(rgb: { r: number; g: number; b: number }, cle: string, gamme: string, octave: number, portee: number): number {
   const [h, , l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
-  const intervals = intervallesGamme(gamme);
+  const intervals = degresGammeAccords(gamme);
   const cleIdx = Math.max(0, NOTES.indexOf(cle));
   const base = (octave + 1) * 12 + cleIdx;
   const deg = Math.floor((h / 360) * intervals.length) % intervals.length;
@@ -96,9 +84,13 @@ function noteDepuisCouleur(rgb: { r: number; g: number; b: number }, cle: string
   return Math.max(0, Math.min(127, base + semi + octOffset * 12));
 }
 
-function estGammeMajeure(gamme: string): boolean {
-  const g = gamme.toLowerCase();
-  return g.includes("majeur") || g === "chromatique";
+// Tierce et quinte les plus proches dans la gamme choisie (au lieu d'une
+// triade majeure/mineure figée) : généralise correctement aux modes
+// (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
+// exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
+function triadeGamme(gamme: string): number[] {
+  const intervals = degresGammeAccords(gamme);
+  return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 
 export function genererNotesColorLooper(options: OptionsColorLooper): NoteEvenement[] {
@@ -106,7 +98,7 @@ export function genererNotesColorLooper(options: OptionsColorLooper): NoteEvenem
   const notes: NoteEvenement[] = [];
   const stepDur = 60 / Math.max(1, options.tempo);
   const noteDur = Math.max(0.05, stepDur * options.dureeNote);
-  const triade = estGammeMajeure(options.gamme) ? [0, 4, 7] : [0, 3, 7];
+  const triade = triadeGamme(options.gamme);
   const totalSteps = couleurs.length * Math.max(1, options.mesures);
 
   for (let step = 0; step < totalSteps; step++) {

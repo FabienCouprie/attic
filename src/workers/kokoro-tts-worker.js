@@ -1,6 +1,7 @@
 // src/workers/kokoro-tts-worker.js — Web Worker pour Kokoro TTS (Transformers.js / ONNX).
 // Charge le modèle Kokoro 82M et génère de la parole à partir d'un texte.
 import { KokoroTTS, env } from "kokoro-js";
+import { splitText, trimSilence, mergeAudioBuffers } from "./tts-utils.js";
 // kokoro-js bundle includes onnxruntime-web@1.22.0-dev, but Vite's default
 // relative WASM resolution picks the root onnxruntime-web@1.27.0 files, which
 // are incompatible. Force the runtime to load the bundled WASM files.
@@ -85,21 +86,40 @@ async function processRequest(req) {
       });
     }
 
-    sendProgress(label("synthesize", "Synthèse vocale…"), requestId);
-    const audio = await tts.generate(text, { voice, speed });
-    console.log("[kokoro-worker] audio object", audio);
-    // kokoro-js returns { audio: Float32Array, sampling_rate: number }.
-    const data = audio?.audio;
-    const sampleRate = audio?.sampling_rate;
-    if (!data || !sampleRate) {
-      throw new Error(`L'audio généré est vide (data=${typeof data}, sampleRate=${sampleRate})`);
+    const chunks = splitText(text, 250);
+    const audios = [];
+    let sampleRate = 0;
+    const total = chunks.length;
+    for (let i = 0; i < total; i++) {
+      const chunk = chunks[i];
+      const chunkTpl = label("chunk", "Synthèse vocale… {__VAR_0__}/{__VAR_1__}");
+      const chunkMsg = chunkTpl
+        .replace("{__VAR_0__}", String(i + 1))
+        .replace("{__VAR_1__}", String(total));
+      sendProgress(chunkMsg, requestId);
+      const audio = await tts.generate(chunk, { voice, speed });
+      // kokoro-js returns { audio: Float32Array, sampling_rate: number }.
+      const data = audio?.audio;
+      const sr = audio?.sampling_rate;
+      if (!data || !sr) {
+        throw new Error(`L'audio généré est vide (chunk ${i + 1}/${total})`);
+      }
+      if (!sampleRate) sampleRate = sr;
+      else if (sampleRate !== sr) {
+        throw new Error(`Fréquence d'échantillonnage incompatible entre les chunks (${sampleRate} vs ${sr})`);
+      }
+      audios.push(trimSilence(data, sr));
+    }
+    const merged = mergeAudioBuffers(audios, { sampleRate });
+    if (!merged) {
+      throw new Error("L'audio généré est vide après fusion");
     }
     self.postMessage({
       type: "done",
       requestId,
-      data,
+      data: merged,
       sampleRate,
-      length: data.length,
+      length: merged.length,
     });
   } catch (err) {
     console.error("[kokoro-worker] error", err);

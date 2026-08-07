@@ -750,6 +750,56 @@ export const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 
 export const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
 
+// Gammes disponibles pour les nœuds qui construisent des accords ou
+// mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,
+// Dessin sonore, Palette harmonique). id = valeur canonique stockée dans
+// les paramètres ; degres = intervalles en demi-tons depuis la tonique.
+// Les 9 premières entrées (7 modes heptatoniques dérivés de la gamme
+// majeure + 2 gammes pentatoniques) sont communes à tous ces nœuds ; blues
+// et chromatique ne sont proposées que par les nœuds de sonification
+// d'image, qui les avaient déjà.
+export const GAMMES_ACCORDS: { id: string; fr: string; en: string; degres: number[] }[] = [
+  { id: "majeur", fr: "Majeur", en: "Major", degres: DEGRES_MAJEUR },
+  { id: "mineur", fr: "Mineur naturel", en: "Natural minor", degres: DEGRES_MINEUR },
+  { id: "dorien", fr: "Dorien", en: "Dorian", degres: [0, 2, 3, 5, 7, 9, 10] },
+  { id: "phrygien", fr: "Phrygien", en: "Phrygian", degres: [0, 1, 3, 5, 7, 8, 10] },
+  { id: "lydien", fr: "Lydien", en: "Lydian", degres: [0, 2, 4, 6, 7, 9, 11] },
+  { id: "mixolydien", fr: "Mixolydien", en: "Mixolydian", degres: [0, 2, 4, 5, 7, 9, 10] },
+  { id: "locrien", fr: "Locrien", en: "Locrian", degres: [0, 1, 3, 5, 6, 8, 10] },
+  { id: "pentatonique-majeure", fr: "Pentatonique majeure", en: "Major pentatonic", degres: [0, 2, 4, 7, 9] },
+  { id: "pentatonique-mineure", fr: "Pentatonique mineure", en: "Minor pentatonic", degres: [0, 3, 5, 7, 10] },
+  { id: "blues", fr: "Blues", en: "Blues", degres: [0, 3, 5, 6, 7, 10] },
+  { id: "chromatique", fr: "Chromatique", en: "Chromatic", degres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+];
+
+export function degresGammeAccords(id: string): number[] {
+  return GAMMES_ACCORDS.find((g) => g.id === id)?.degres ?? DEGRES_MAJEUR;
+}
+
+/**
+ * Décalage en demi-tons (1-12, ascendant) depuis une fondamentale jusqu'à la
+ * note de la gamme la plus proche d'un intervalle cible (4 = tierce majeure,
+ * 7 = quinte juste). Généralise la construction d'accords tertiaires à des
+ * gammes de longueur quelconque : sur une gamme heptatonique cela retombe
+ * exactement sur le 3e/5e degré habituel ; sur une gamme pentatonique
+ * (qui n'a pas de degré à exactement 2 crans d'écart) cela choisit la note
+ * de la gamme la plus proche de la tierce/quinte visée.
+ */
+export function degreAccordProche(degresGamme: number[], racinePc: number, cibleSemitons: number): number {
+  let meilleur = cibleSemitons;
+  let meilleurEcart = Infinity;
+  for (const pc of degresGamme) {
+    let dist = (((pc - racinePc) % 12) + 12) % 12;
+    if (dist === 0) dist = 12;
+    const ecart = Math.abs(dist - cibleSemitons);
+    if (ecart < meilleurEcart) {
+      meilleurEcart = ecart;
+      meilleur = dist;
+    }
+  }
+  return meilleur;
+}
+
 
 export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {
@@ -892,12 +942,12 @@ export function genererAccords(
   cleNom: string, gammeNom: string, genreNom: string, progressionPerso: string,
   tempo: number, dureeAccord: number, nbAccords: number,
 ): { midiBytes: Uint8Array; description: string } {
-  const estMineur = gammeNom.toLowerCase().includes("min");
-  const gammeCourante = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
+  const gammeCourante = degresGammeAccords(gammeNom);
+  const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
   const decalage = traduireCle(cleNom);
 
   let progression: number[];
-  if (genreNom === "personnalisé") {
+  if (genreNom === "custom" || genreNom === "personnalisé") {
     progression = progressionPerso.split("-").map((r) => ROMAIN_VERS_DEGRE[r.trim()] ?? 0);
   } else {
     const progressions = PROGRESSIONS_GENRE[genreNom] || PROGRESSIONS_GENRE["pop"];
@@ -921,16 +971,22 @@ export function genererAccords(
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
     const degre = progression[i % progression.length];
-    const fonda = 36 + decalage + gammeCourante[degre % gammeCourante.length] + Math.floor(degre / gammeCourante.length) * 12;
+    const racinePc = gammeCourante[degre % gammeCourante.length];
+    const fonda = 36 + decalage + racinePc + Math.floor(degre / gammeCourante.length) * 12;
+    const tierce = degreAccordProche(gammeCourante, racinePc, 4);
+    const quinte = degreAccordProche(gammeCourante, racinePc, 7);
     const td = secEnTicks(deb);
     const tf = secEnTicks(fin);
 
-    // Voicing aéré sur 3 octaves — son plus riche et moins agressif
+    // Voicing aéré sur 3 octaves — son plus riche et moins agressif. Tierce
+    // et quinte suivent la gamme choisie (degreAccordProche) au lieu d'un
+    // intervalle fixe, pour que les modes (dorien, locrien…) et les gammes
+    // pentatoniques sonnent avec leur couleur propre.
     const voixAccord = [
       { note: fonda - 12, vel: 90 },        // basse octave -1
-      { note: fonda + 7, vel: 65 },          // quinte médium
-      { note: fonda + 12 + 3, vel: 60 },     // tierce aiguë
-      { note: fonda + 12 + 7, vel: 55 },     // quinte aiguë
+      { note: fonda + quinte, vel: 65 },     // quinte médium
+      { note: fonda + 12 + tierce, vel: 60 }, // tierce aiguë
+      { note: fonda + 12 + quinte, vel: 55 }, // quinte aiguë
       { note: fonda + 24, vel: 50 },         // octave haute
     ];
 

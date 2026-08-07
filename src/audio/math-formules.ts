@@ -18,6 +18,8 @@ export function securiserAmplitude(buffer: AudioBuffer, maxAbs: number = 1.0): A
       if (d[i] > maxAbs) d[i] = maxAbs;
       else if (d[i] < -maxAbs) d[i] = -maxAbs;
     }
+    // Défense si getChannelData retourne une copie : écrire dans le buffer interne.
+    buffer.copyToChannel(d, c);
   }
   return buffer;
 }
@@ -47,6 +49,8 @@ export function appliquerFormuleEchantillons(
       const y = compiled.evaluate(scope);
       dst[i] = typeof y === "number" ? y : Number(y);
     }
+    // Défense si getChannelData retourne une copie.
+    resultat.copyToChannel(dst, c);
   }
   return securiserAmplitude(resultat, 0.5);
 }
@@ -71,6 +75,8 @@ export function genererAudioFormule(
       const y = compiled.evaluate(scope);
       dst[i] = typeof y === "number" ? y : Number(y);
     }
+    // Défense si getChannelData retourne une copie.
+    resultat.copyToChannel(dst, c);
   }
   return securiserAmplitude(resultat, 0.5);
 }
@@ -157,6 +163,8 @@ export function appliquerFormuleSpectrale(
     for (let i = 0; i < len; i++) {
       dst[i] = norm[i] > 0 ? acc[i] / norm[i] : 0;
     }
+    // Défense si getChannelData retourne une copie.
+    resultat.copyToChannel(dst, c);
   }
 
   return securiserAmplitude(resultat, 0.5);

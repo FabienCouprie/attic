@@ -52,6 +52,15 @@ describe("logique de graphe (filet de sécurité du moteur)", () => {
       .not.toBe(empreinteParametres({ audioFichier: { name: "b.wav" } }));
   });
 
+  it("place un mélangeur terminal après ses branches parallèles", () => {
+    const ordre = ordreTopologique(
+      ["tts", "autre", "mix"],
+      [a("tts", "mix"), a("autre", "mix")],
+    );
+    expect(ordre.indexOf("mix")).toBeGreaterThan(ordre.indexOf("tts"));
+    expect(ordre.indexOf("mix")).toBeGreaterThan(ordre.indexOf("autre"));
+  });
+
   it("résout une entrée via les handles (out:2 → in:1)", () => {
     const aretes = [a("S", "N", "out:2", "in:1")];
     const res = new Map<string, string[]>([["S", ["x", "y", "z"]]]);

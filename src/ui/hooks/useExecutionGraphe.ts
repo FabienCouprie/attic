@@ -15,13 +15,12 @@ import {
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
 import { registre } from "../../audio/adaptateur";
-import { bufferVersWavBlob } from "../../audio";
+import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
 const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
-const AVERTISSEMENT_FORMULE_KEY = "attic-avertissement-formule";
 
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
@@ -163,9 +162,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // — seul le bouton Run global (sans prioritaire) est bloqué pendant l'exécution
     if (!noeudPrioritaireId && enExecRef.current) return;
     if (noeudsRef.current.length === 0) return;
-    if (!noeudPrioritaireId) setEnExecution(true);
+    const estGlobal = !noeudPrioritaireId;
+    if (estGlobal) {
+      // Mise à jour immédiate de la ref pour bloquer les doubles-clics / re-lancements
+      // avant que React ne déclenche le useEffect qui synchronise enExecRef.
+      enExecRef.current = true;
+      setEnExecution(true);
+    }
     try {
-    console.log(`[lancer] priorite=${noeudPrioritaireId} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
+    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
@@ -197,8 +202,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       ancPriorite = anc;
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
     }
-
-    // ── Garde-fou : valider les types de connexions avant exécution (spec §10) ──
+    // Debug : tracer l'ordre topologique réel pour diagnostiquer les exécutions avant
+    // les branches amont (ex. mélangeur terminal avant SpeechT5).
+    console.log("[ordre] priorite=" + priorite + " ordreFiltre=" + ordreFiltre.map((id) => id + "(" + ((nds.find((n: any) => n.id === id) as any)?.data?.ficheId ?? "?") + ")").join(", "));
     // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
     // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
     // `validerGraphe` inspecte TOUT le graphe (entrées obligatoires non connectées
@@ -237,25 +243,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (meta && !noeudsEnErreur.has(n.id) && estMetaEnScope(n.id)) {
         definirStatut(n.id, "en_cours");
       }
-    }
-
-    // ── Avertissement de sécurité pour les nœuds de formules mathématiques ──
-    // Affiché une seule fois par session utilisateur via localStorage.
-    const contientFormule = ordreFiltre.some((id) => {
-      const n = nds.find((n: any) => n.id === id);
-      return n && FORMULA_NODE_IDS.includes(n.data?.ficheId);
-    });
-    if (contientFormule) {
-      try {
-        if (typeof localStorage !== "undefined" && !localStorage.getItem(AVERTISSEMENT_FORMULE_KEY)) {
-          const confirmer = window.confirm(t("msg.avertissement_formule"));
-          if (!confirmer) {
-            if (!noeudPrioritaireId) setEnExecution(false);
-            return;
-          }
-          localStorage.setItem(AVERTISSEMENT_FORMULE_KEY, "1");
-        }
-      } catch { /* ignore localStorage errors */ }
     }
 
     const ctx = await obtenirAudio();
@@ -322,6 +309,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
+        if (entreeCache.message) messages.set(nodeId, entreeCache.message);
         definirStatut(nodeId, "termine");
         if (typeof entreeCache.tempsExecution === "number") {
           const visibleId = plat.expansions.get(nodeId) ?? nodeId;
@@ -396,7 +384,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           definirStatut(nodeId, "termine");
           ajouterTemps(elapsed);
@@ -438,6 +426,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // (ex: séparateur IA) — chaque sortie a son propre lecteur via les ports.
         const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
         const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
+        if ((n.data.ficheId as string) === "griffin-lim") {
+          const peak0 = audio ? picAbsolu(audio.getChannelData(0)) : 0;
+          const peak1 = audio && audio.numberOfChannels > 1 ? picAbsolu(audio.getChannelData(1)) : 0;
+          console.log("[audio url] griffin-lim", {
+            valsLength: valsSafe.length,
+            firstType: valsSafe[0] ? typeof valsSafe[0] : "undefined",
+            isAudioBuffer: valsSafe[0] instanceof AudioBuffer,
+            audioFound: !!audio,
+            audioCh: audio?.numberOfChannels,
+            audioLen: audio?.length,
+            audioSr: audio?.sampleRate,
+            peakCh0: peak0,
+            peakCh1: peak1,
+            existingUrl: n.data.audioResultatUrl ? "yes" : "no",
+            sameBuffer: audio === n.data.audioResultatBuffer,
+          });
+        }
         const fichier = valsSafe.find((v): v is File => v instanceof File);
         const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
         const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
@@ -585,7 +590,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     } catch (e: any) {
       console.error("lancer error", e);
     } finally {
-      setEnExecution(false);
+      // Seul le run global a positionné le spinner/flag ; une exécution ciblée
+      // (nœud prioritaire) ne doit PAS effacer l'état d'un run global encore en cours.
+      if (estGlobal) setEnExecution(false);
       // Lire la valeur LIVE (pas la closure, périmée quand onDefinirPrioritaire vient
       // de la fixer) pour toujours effacer la priorité après le run — sinon le run
       // global suivant reste filtré sur l'ancien nœud prioritaire.

@@ -31,9 +31,7 @@ describe("nœud Pure Data", () => {
   it("retourne une erreur si aucun patch n'est chargé", async () => {
     const f = trouver("pure-data")!;
     (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: 1024, sampleRate: 44100 });
     const ctx = {
-      entree: () => buffer,
       noeud: { data: {} },
       paramTexte: (nom: string, defaut: string) => defaut,
       paramNombre: (nom: string, defaut: number) => defaut,

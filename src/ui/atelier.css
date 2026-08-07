@@ -249,6 +249,12 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 140px;
 }
+.attic-nom-fichier {
+  font-size: 11px; color: var(--text-title); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 160px;
+  margin-left: 2px; padding: 2px 6px; border-radius: 4px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border);
+}
 
 /* ── Canevas ── */
 .attic-canevas { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
@@ -408,6 +414,20 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 [class*="attic-node-categorie-"] .attic-node-entete {
   background: color-mix(in srgb, var(--cat-accent) 8%, transparent);
   border-bottom-color: color-mix(in srgb, var(--cat-accent) 25%, transparent);
+}
+
+/* Décaler légèrement le contenu des nœuds catégorisés pour éviter que la
+   barre de catégorie (3px à gauche) ne recouvre les textes, inputs et labels.
+   On applique le padding à tous les enfants directs avec !important pour passer
+   au-dessus des styles inline des vues spécifiques, puis on le retire sur la
+   zone des ports (handles) afin de ne pas décaler les points d'entrée/sortie. */
+.attic-node[class*="attic-node-categorie-"] > * {
+  padding-left: 12px !important;
+}
+.attic-node[class*="attic-node-categorie-"] > .attic-node-ports,
+.attic-node[class*="attic-node-categorie-"] > .attic-node-progress-ring,
+.attic-node[class*="attic-node-categorie-"] > .attic-node-flash {
+  padding-left: 0 !important;
 }
 
 /* Nœud commentaire / note autocollante */
@@ -598,6 +618,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 
 /* ── Forme d'onde / sélecteur multi-zones ── */
 .attic-node-onde { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; }
+.attic-node-zoom-slider {
+  width: calc(100% - 16px);
+  margin: 4px 8px 0;
+  accent-color: #2a9d8f;
+}
 .attic-node-onde-canvas {
   width: 100%; height: 140px; display: block;
   border-radius: 4px; background: #0d1117; touch-action: none;

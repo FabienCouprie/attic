@@ -79,7 +79,7 @@ export const fiches: FicheAudio[] = ([
           if (msg.type === "progress") {
             const total = Number(msg.total || 0);
             const downloaded = Number(msg.downloaded || 0);
-            let progressText = traduire(msg.key);
+            let progressText = traduire(msg.key, ...(Array.isArray(msg.args) ? msg.args : []));
             if (msg.key === "progress.piper.download" && total > 0) {
               const pct = Math.round((downloaded / total) * 100);
               const mb = (downloaded / 1024 / 1024).toFixed(1);

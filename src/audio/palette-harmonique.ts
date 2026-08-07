@@ -6,6 +6,7 @@ import type { PixelBuffer } from "./pixeltone";
 import { imageDataDepuisFichier } from "./pixeltone";
 import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
+import { degresGammeAccords, degreAccordProche } from "./generation";
 
 export interface CouleurExtraite {
   r: number;
@@ -22,7 +23,7 @@ export interface CouleurExtraite {
 export interface OptionsPaletteHarmonique {
   cle: string;
   gamme: string;
-  mode: "melodie" | "harmonie";
+  mode: "melodie" | "harmonie" | "arpege";
   octave: number;
   portee: number;
   duree: number;
@@ -33,15 +34,6 @@ export interface OptionsPaletteHarmonique {
   volume: number;
   tempo: number;
 }
-
-const GAMMES: Record<string, number[]> = {
-  majeur: [0, 2, 4, 5, 7, 9, 11],
-  mineur: [0, 2, 3, 5, 7, 8, 10],
-  "pentatonique majeur": [0, 2, 4, 7, 9],
-  "pentatonique mineur": [0, 3, 5, 7, 10],
-  blues: [0, 3, 5, 6, 7, 10],
-  chromatique: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -160,12 +152,8 @@ export function extrairePalette(
   });
 }
 
-function intervallesGamme(nom: string): number[] {
-  return GAMMES[nom] ?? GAMMES["majeur"];
-}
-
 function noteDepuisCouleur(couleur: CouleurExtraite, options: OptionsPaletteHarmonique): number {
-  const intervals = intervallesGamme(options.gamme);
+  const intervals = degresGammeAccords(options.gamme);
   const cleIdx = Math.max(0, NOTES.indexOf(options.cle));
   const base = (options.octave + 1) * 12 + cleIdx;
   const deg = Math.floor((couleur.h / 360) * intervals.length) % intervals.length;
@@ -174,9 +162,13 @@ function noteDepuisCouleur(couleur: CouleurExtraite, options: OptionsPaletteHarm
   return Math.max(0, Math.min(127, base + semi + octOffset * 12));
 }
 
-function estGammeMajeure(gamme: string): boolean {
-  const g = gamme.toLowerCase();
-  return g.includes("majeur") || g === "majeur" || g === "chromatique";
+// Tierce et quinte les plus proches dans la gamme choisie (au lieu d'une
+// triade majeure/mineure figée) : généralise correctement aux modes
+// (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
+// exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
+function triadeGamme(gamme: string): number[] {
+  const intervals = degresGammeAccords(gamme);
+  return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 
 export function couleursVersNotes(
@@ -185,7 +177,7 @@ export function couleursVersNotes(
 ): NoteEvenement[] {
   const notes: NoteEvenement[] = [];
   const dureeNote = Math.min(options.duree, options.duree / Math.max(1, couleurs.length));
-  const triade = estGammeMajeure(options.gamme) ? [0, 4, 7] : [0, 3, 7];
+  const triade = triadeGamme(options.gamme);
 
   const xs = couleurs.map((c) => c.x);
   const minX = xs.length > 0 ? Math.min(...xs) : 0;
@@ -202,6 +194,14 @@ export function couleursVersNotes(
       for (const offset of triade) {
         const note = Math.max(0, Math.min(127, root + offset));
         notes.push({ note, velocite, debut, fin });
+      }
+    } else if (options.mode === "arpege") {
+      const noteLength = Math.max(0.05, (fin - debut) / triade.length);
+      const step = triade.length > 1 ? (fin - debut - noteLength) / (triade.length - 1) : 0;
+      for (let i = 0; i < triade.length; i++) {
+        const note = Math.max(0, Math.min(127, root + triade[i]));
+        const t = debut + i * step;
+        notes.push({ note, velocite, debut: t, fin: t + noteLength });
       }
     } else {
       notes.push({ note: root, velocite, debut, fin });

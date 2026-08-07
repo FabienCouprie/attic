@@ -44,5 +44,7 @@ export * from "./color-looper";
 export * from "./camelot";
 export * from "./voice-changer";
 export * from "./random-slice";
+export * from "./griffin-lim";
+export * from "./emotion";
 
 export { registre } from "./adaptateur";
