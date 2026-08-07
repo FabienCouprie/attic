@@ -4,6 +4,11 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.7] — 2026-08-07
+
+### Changed
+- **Texte → image : le modèle SDXS-512 est désormais embarqué dans l'installateur.** Le bundle ONNX (~680 Mo, quantifié int8) et son tokenizer sont inclus dans `assets.zip` et donc copiés dans `resources/oonx/sdxs-512-texte-image` de l'application packagée. Le paramètre « Chemin modèle » reste disponible pour un modèle personnalisé ; la valeur par défaut (vide) utilise le modèle embarqué.
+
 ## [3.0.6] — 2026-08-07
 
 ### Added
