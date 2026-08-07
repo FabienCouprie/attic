@@ -4,6 +4,7 @@ import { fiches as fichesOcr } from "./ocr";
 import { fiches as fichesExportSvg } from "./export-svg";
 import { fiches as fichesTtsPiper } from "./tts-piper";
 import { fiches as fichesTtsKokoro } from "./tts-kokoro";
+import { fiches as fichesTtsFrancais } from "./tts-francais";
 
 
 describe("notices des composants livrés", () => {
@@ -12,6 +13,7 @@ describe("notices des composants livrés", () => {
     ["export-svg", fichesExportSvg],
     ["tts-piper", fichesTtsPiper],
     ["tts-kokoro", fichesTtsKokoro],
+    ["tts-francais", fichesTtsFrancais],
   ])("%s a une notice française et anglaise", (_id, fiches) => {
     const fiche = fiches[0];
     expect(fiche).toBeDefined();
