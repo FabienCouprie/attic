@@ -4,6 +4,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.6] — 2026-08-07
+
 ### Added
 - **Nouveau nœud « Analyse émotionnelle ».** Associe une émotion à un morceau à partir de sa musique seule — tempo, mode majeur/mineur, énergie (RMS) et brillance spectrale (centroïde, via Meyda) — aucun texte ni parole n'est analysé. Ces indices sont combinés en un score valence/arousal (modèle circomplex de Russell, 1980 — le mode domine la valence d'après Gagnon & Peretz 2003, le tempo domine l'arousal), puis reprojetés sur 8 émotions nommées (Joyeux, Énergique, Tendu, Triste, Mélancolique, Calme, Serein, Content) ou « Neutre » si le signal est trop proche du centre. Entièrement heuristique, sans modèle ni entraînement — fonctionne comme le Détecteur d'accords ou l'Analyse audio existants, et se branche sur le nœud « Lecteur d'analyse » comme eux. `analyserAudio()` expose maintenant aussi `mode`/`modeConfiance` (majeur/mineur bruts), déjà calculés en interne mais pas encore exposés, réutilisés ici.
 - **Palette harmonique : mode « Arpège ».** Le paramètre `Mode` propose maintenant Mélodie / Harmonie / Arpège, comme le nœud Dessin sonore. Arpège joue les notes de l'accord triadique l'une après l'autre (au lieu de simultanément en Harmonie, ou d'une seule note en Mélodie) sur la durée impartie à chaque couleur.
