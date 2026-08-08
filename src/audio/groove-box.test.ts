@@ -1,7 +1,7 @@
 // audio/groove-box.test.ts
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { genererGrooveBox } from "./groove-box";
+import { genererGrooveBox, type ConfigGrooveBox } from "./groove-box";
 import { rendreBatterieMidi } from "./tone-synths";
 import { rendreSequence, analyserMidi } from "./midi";
 import { parseMidi } from "midi-file";
@@ -13,6 +13,7 @@ describe("genererGrooveBox", () => {
       gamme: "majeur",
       genre: "pop",
       progression: "I-V-vi-IV",
+      extension: "aucune",
       tempo: 120,
       dureeAccord: 2,
       nbAccords: 4,
@@ -72,11 +73,12 @@ describe("genererGrooveBox", () => {
   });
 
   it("est déterministe avec la même graine", () => {
-    const config = {
+    const config: ConfigGrooveBox = {
       cle: "D",
       gamme: "mineur",
       genre: "rock",
       progression: "i-VII-VI-i",
+      extension: "aucune",
       tempo: 100,
       dureeAccord: 2,
       nbAccords: 4,
@@ -107,6 +109,7 @@ describe("genererGrooveBox", () => {
       gamme: "majeur",
       genre: "personnalisé",
       progression: "I-II-III-IV-V-VI-VII",
+      extension: "aucune",
       tempo: 120,
       dureeAccord: 1,
       nbAccords: 7,
@@ -141,6 +144,7 @@ describe("genererGrooveBox", () => {
       gamme: "majeur",
       genre: "personnalisé",
       progression: "I-IV-V-I",
+      extension: "aucune",
       tempo: 120,
       dureeAccord: 1,
       nbAccords: 4,
@@ -160,12 +164,39 @@ describe("genererGrooveBox", () => {
     expect(result.description).toContain("I–IV–V–I");
   });
 
+  it("l'extension 7e ajoute une 4e note diatonique aux accords (canal 0)", () => {
+    const config: ConfigGrooveBox = {
+      cle: "C", gamme: "majeur", genre: "personnalisé", progression: "I",
+      extension: "septieme",
+      tempo: 120, dureeAccord: 4, nbAccords: 1, styleRythme: "Rock",
+      neurones: 5, connectivite: 0.3, memoire: 0.3, spectre: 0.9, octave: 4,
+      densite: 0, repetition: 0, silence: 0, graine: 1,
+    };
+    const result = genererGrooveBox(config);
+    const pitches = [...new Set(result.notes.filter((n) => n.canal === 0).map((n) => ((n.note % 12) + 12) % 12))].sort((a, b) => a - b);
+    expect(pitches).toEqual([0, 4, 7, 11]); // Cmaj7
+  });
+
+  it("sans extension, les accords restent des triades pures (comportement inchangé)", () => {
+    const config: ConfigGrooveBox = {
+      cle: "C", gamme: "majeur", genre: "personnalisé", progression: "I",
+      extension: "aucune",
+      tempo: 120, dureeAccord: 4, nbAccords: 1, styleRythme: "Rock",
+      neurones: 5, connectivite: 0.3, memoire: 0.3, spectre: 0.9, octave: 4,
+      densite: 0, repetition: 0, silence: 0, graine: 1,
+    };
+    const result = genererGrooveBox(config);
+    const pitches = [...new Set(result.notes.filter((n) => n.canal === 0).map((n) => ((n.note % 12) + 12) % 12))].sort((a, b) => a - b);
+    expect(pitches).toEqual([0, 4, 7]);
+  });
+
   it("rend un mix FM avec des drums audibles", async () => {
     const result = genererGrooveBox({
       cle: "C",
       gamme: "majeur",
       genre: "pop",
       progression: "I-V-vi-IV",
+      extension: "aucune",
       tempo: 120,
       dureeAccord: 2,
       nbAccords: 2,

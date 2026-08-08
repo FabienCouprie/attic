@@ -9,6 +9,7 @@ import {
   PROGRESSIONS_GENRE,
   degresGammeAccords,
   degreAccordProche,
+  degreSeptiemeProche,
   traduireCle,
   PATRONS_RYTHME,
   type Patron,
@@ -19,6 +20,7 @@ export interface ConfigGrooveBox {
   gamme: string;
   genre: string;
   progression: string;
+  extension: "aucune" | "septieme" | "sixte";
   tempo: number;
   dureeAccord: number;
   nbAccords: number;
@@ -75,13 +77,16 @@ function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
 // décalage d'index fixe (+2/+4 degrés) : sur une gamme heptatonique cela
 // retombe sur le 3e/5e degré habituel, et cela reste correct sur une gamme
 // pentatonique (5 degrés) où +2/+4 degrés ne correspond plus à une tierce/
-// quinte réelle.
-function notesAccord(degre: number, decalage: number, degres: number[]): number[] {
+// quinte réelle. Extension optionnelle (7e ou 6e) en 4e note.
+function notesAccord(degre: number, decalage: number, degres: number[], extension: ConfigGrooveBox["extension"] = "aucune"): number[] {
   const racinePc = degres[degre % degres.length];
   const root = 36 + decalage + racinePc + Math.floor(degre / degres.length) * 12;
   const third = root + degreAccordProche(degres, racinePc, 4);
   const fifth = root + degreAccordProche(degres, racinePc, 7);
-  return [root, third, fifth];
+  const notes = [root, third, fifth];
+  if (extension === "septieme") notes.push(root + degreSeptiemeProche(degres, racinePc));
+  else if (extension === "sixte") notes.push(root + degreAccordProche(degres, racinePc, 9));
+  return notes;
 }
 
 function genererNotesAccordsEtBasse(
@@ -98,12 +103,13 @@ function genererNotesAccordsEtBasse(
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
     const deg = progression[i % progression.length];
-    const [root, third, fifth] = notesAccord(deg, decalage, degres);
+    const [root, third, fifth, extension] = notesAccord(deg, decalage, degres, config.extension);
 
     // Accord (canal 0)
     notes.push({ note: root, velocite: 75, debut: deb, fin, canal: 0 });
     notes.push({ note: third, velocite: 70, debut: deb, fin, canal: 0 });
     notes.push({ note: fifth, velocite: 65, debut: deb, fin, canal: 0 });
+    if (extension !== undefined) notes.push({ note: extension, velocite: 60, debut: deb, fin, canal: 0 });
 
     // Basse (canal 1)
     notes.push({ note: root - 12, velocite: 95, debut: deb, fin, canal: 1 });
@@ -126,8 +132,7 @@ function quantifierReservoirSurAccord(
     config.nbAccords - 1,
   );
   const deg = progression[idxChord % progression.length];
-  const [root, third, fifth] = notesAccord(deg, decalage, degres);
-  const chordTones = [root, third, fifth];
+  const chordTones = notesAccord(deg, decalage, degres, config.extension);
 
   // Trouve la hauteur de l'accord la plus proche de la note du réservoir
   let nearest = chordTones[0];

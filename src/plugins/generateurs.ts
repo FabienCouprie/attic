@@ -84,6 +84,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée par accord", nomEn: "Chord duration", plage: [1,8], pas: 1, defaut: 2, unite: "temps", docEn: "Duration per chord in beats." },
       { nom: "Nombre d'accords", nomEn: "Chord count", plage: [2,32], pas: 1, defaut: 8, docEn: "Total number of chords." },
+      { nom: "Extension", nomEn: "Extension", type: "choix", options: ["Aucune","7e","6e"], optionsEn: ["None","7th","6th"], optionIds: ["aucune","septieme","sixte"], defaut: "Aucune", defautEn: "None",
+        doc: "Ajoute une 7e ou une 6e diatonique (selon la gamme choisie) à chaque accord.", docEn: "Adds a diatonic 7th or 6th (per the chosen scale) to each chord." },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
@@ -91,7 +93,8 @@ export const fiches: FicheAudio[] = ([
       const genre = ctx.paramTexte("Genre","pop"), prog = ctx.paramTexte("Progression","I-IV-V-I");
       const tempo = ctx.paramNombre("Tempo",120), dAcc = ctx.paramNombre("Durée par accord",2);
       const nb = ctx.paramNombre("Nombre d'accords",8), vol = ctx.paramNombre("Volume",80);
-      const { midiBytes, description } = genererAccords(cle, gamme, genre, prog, tempo, dAcc, nb);
+      const extension = ctx.paramTexte("Extension", "aucune") as "aucune" | "septieme" | "sixte";
+      const { midiBytes, description } = genererAccords(cle, gamme, genre, prog, tempo, dAcc, nb, extension);
       const sf2 = sf2Chargee();
       if (sf2) {
         const { notes, canauxInstrument } = analyserMidi(parseMidi(midiBytes));
@@ -1072,6 +1075,18 @@ export const fiches: FicheAudio[] = ([
         docEn: "Total number of chords / loop length.",
       },
       {
+        nom: "Extension",
+        nomEn: "Extension",
+        type: "choix",
+        options: ["Aucune", "7e", "6e"],
+        optionsEn: ["None", "7th", "6th"],
+        optionIds: ["aucune", "septieme", "sixte"],
+        defaut: "Aucune",
+        defautEn: "None",
+        doc: "Ajoute une 7e ou une 6e diatonique (selon la gamme choisie) à chaque accord, ainsi qu'à la note du réservoir mélodique quand elle se cale sur l'accord.",
+        docEn: "Adds a diatonic 7th or 6th (per the chosen scale) to each chord, and to the melodic reservoir note when it snaps to the chord.",
+      },
+      {
         nom: "Style rythmique",
         nomEn: "Rhythm style",
         type: "choix",
@@ -1219,6 +1234,7 @@ export const fiches: FicheAudio[] = ([
         gamme: ctx.paramTexte("Gamme", "majeur"),
         genre: ctx.paramTexte("Genre", "pop"),
         progression: ctx.paramTexte("Progression", "I-V-vi-IV"),
+        extension: ctx.paramTexte("Extension", "aucune"),
         tempo: ctx.paramNombre("Tempo", 110),
         dureeAccord: ctx.paramNombre("Durée par accord", 2),
         nbAccords: ctx.paramNombre("Nombre d'accords", 8),

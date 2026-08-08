@@ -153,12 +153,16 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
     sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la grille (ex : C, G, Dm, F#).",
-        docEn: "Grid key (e.g. C, G, Dm, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Key", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonique de la grille. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i iv v VI) plutôt qu'un suffixe sur la tonalité.",
+        docEn: "Root note of the grid. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i iv v VI) rather than a suffix on the key.", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        doc: "Progression en chiffres romains. Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
-        docEn: "Roman numeral progression. Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
+        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
+        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t",
@@ -180,7 +184,12 @@ export const fiches: FicheAudio[] = ([
       const mode = ctx.paramTexte("Mode", "Bloc");
 
       const tokens = progEntree.split(/\s+/).filter((t: string) => t.length > 0);
-      const romains = /^[IViv]+$/.test(tokens[0] ?? "");
+      // Un jeton en chiffres romains commence par (b/# facultatif +) I ou V,
+      // éventuellement suivi d'une extension (IV7, IMaj7, vii°...) — aucun
+      // symbole d'accord ne commence par I ou V (les notes vont de A à G),
+      // donc tester juste le début du jeton (pas son intégralité) suffit à
+      // distinguer les deux syntaxes sans rejeter les extensions.
+      const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
       const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {

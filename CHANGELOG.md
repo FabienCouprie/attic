@@ -4,8 +4,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+- **Générateur d'accords et Groove Box : extension 7e/6e.** Nouveau paramètre « Extension » (Aucune/7e/6e) ajoutant une 4e note diatonique à chaque accord, en plus de la triade fondamentale-tierce-quinte déjà en place. La 7e est déterminée par comparaison entre 7e mineure et 7e majeure (celle dont l'écart réel à la gamme choisie est le plus petit gagne), pas par une cible fixe — sinon 6e (9 demi-tons) et 7e majeure (11 demi-tons) sont à égale distance d'une cible médiane et le résultat serait arbitraire. Vérifié sur les 7 modes heptatoniques : Cmaj7 sur Majeur/Lydien, C7 dominant sur Mixolydien, Cm7 sur Mineur naturel/Dorien/Phrygien, Cm7♭5 demi-diminué sur Locrien. Comportement par défaut (Aucune) inchangé pour les projets existants.
+
 ### Fixed
 - **Numéro de version figé dans la barre d'outils.** Le `v1.1.2` affiché en haut de l'app était une chaîne codée en dur dans `BarreOutils.tsx`, jamais mise à jour depuis — sans lien avec la version réellement installée. Corrigé en l'injectant depuis `package.json` au build (`vite.config.ts`, option `define`), vérifié dans le bundle de production réel (celui utilisé pour l'app Electron packagée), pas seulement le serveur de dev.
+- **Grille d'accords : tonalité en champ texte libre au lieu d'une liste déroulante.** Seul nœud de l'app où « Key »/« Tonalité » n'était pas un menu déroulant — corrigé, avec les 12 notes comme partout ailleurs. Au passage, l'exemple de la doc (« Dm » pour une tonalité mineure) ne fonctionnait en réalité pas du tout : `Progression.fromRomanNumerals` ignore silencieusement le suffixe « m » et retourne un résultat vide. Le mode mineur s'exprime en fait par la casse des chiffres romains dans le champ « Progression » (minuscules = accord mineur, ex. `i iv v VI`), pas par un suffixe sur la tonalité — doc corrigée en conséquence.
+- **Grille d'accords : les chiffres romains avec extension (7e, maj7...) disparaissaient silencieusement.** La détection « Progression en chiffres romains vs symboles d'accords bruts » ne testait que si le premier jeton était entièrement composé de I/V/i/v — un jeton comme `IMaj7` ou `IV7` échouait ce test à cause du suffixe, tombait à tort en mode « symboles bruts », et comme « I »/« IV » ne sont pas des notes valides, l'accord ne produisait aucune note (sans erreur). La bibliothèque `tonal` gère pourtant nativement les extensions sur les chiffres romains (`V7` → G7, `IMaj7` → CMaj7). Corrigé en ne testant que le début du jeton plutôt que son intégralité — aucune ambiguïté possible puisqu'aucun symbole d'accord ne commence par I ou V (notes réelles : A–G).
 
 ## [3.0.8] — 2026-08-08
 

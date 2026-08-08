@@ -109,6 +109,26 @@ describe("nœuds Tonal", () => {
     expect(notation).toContain("A3+C4+E4 1");
   });
 
+  it("tonal-grille accepte des chiffres romains avec extension (7e, maj7...)", async () => {
+    // Régression : le test de classification romains-vs-symboles ne testait
+    // que si le 1er jeton était ENTIÈREMENT composé de I/V/i/v, donc "IMaj7"
+    // (avec suffixe) tombait à tort en mode "symboles bruts" — "I" n'étant
+    // pas une note valide, Chord.get() ne trouvait aucune note et l'accord
+    // disparaissait silencieusement de la notation, sans erreur.
+    const f = trouver("tonal-grille")!;
+    const ctx = {
+      entree: () => null,
+      paramTexte: (nom: string, defaut: string) => (nom === "Progression" ? "IMaj7 IV7 V7 vi7" : defaut),
+      paramNombre: (nom: string, defaut: number) => defaut,
+    };
+    const res = await f.executer(ctx as any);
+    const notation = res.valeurs[0] as string;
+    expect(notation).toContain("C3+E3+G3+B3 1");
+    expect(notation).toContain("F3+A3+C4+Eb4 1");
+    expect(notation).toContain("G3+B3+D4+F4 1");
+    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 A7");
+  });
+
   it("tonal-analyse détecte une tonalité C major", async () => {
     const f = trouver("tonal-analyse")!;
     const ctx = {

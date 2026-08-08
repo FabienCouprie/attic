@@ -815,6 +815,27 @@ export function degreAccordProche(degresGamme: number[], racinePc: number, cible
   return meilleur;
 }
 
+/**
+ * Septième diatonique la plus proche (7e mineure = 10 demi-tons, 7e
+ * majeure = 11 demi-tons). Contrairement à la tierce/quinte, une cible
+ * unique ne suffit pas : à équidistance d'une cible à 10 demi-tons, une 6e
+ * (9 demi-tons) et une 7e majeure (11 demi-tons) sont à égale distance, et
+ * degreAccordProche choisirait arbitrairement la première trouvée dans le
+ * tableau — donnant par exemple une 6te au lieu de la 7e majeure attendue
+ * sur une gamme majeure. On cherche donc séparément la note la plus proche
+ * de chaque qualité (mineure/majeure) et on retient celle dont l'écart
+ * réel est le plus petit — ce qui retombe exactement sur la 7e diatonique
+ * usuelle pour chacun des 7 modes heptatoniques (majeure sur Majeur/Lydien/
+ * Mixolydien, mineure sur Mineur naturel/Dorien/Phrygien/Locrien).
+ */
+export function degreSeptiemeProche(degresGamme: number[], racinePc: number): number {
+  const viaMineure = degreAccordProche(degresGamme, racinePc, 10);
+  const viaMajeure = degreAccordProche(degresGamme, racinePc, 11);
+  const ecartMineure = Math.abs(viaMineure - 10);
+  const ecartMajeure = Math.abs(viaMajeure - 11);
+  return ecartMajeure <= ecartMineure ? viaMajeure : viaMineure;
+}
+
 
 export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {
@@ -956,6 +977,7 @@ const ROMAIN_VERS_DEGRE: Record<string, number> = {
 export function genererAccords(
   cleNom: string, gammeNom: string, genreNom: string, progressionPerso: string,
   tempo: number, dureeAccord: number, nbAccords: number,
+  extension: "aucune" | "septieme" | "sixte" = "aucune",
 ): { midiBytes: Uint8Array; description: string } {
   const gammeCourante = degresGammeAccords(gammeNom);
   const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
@@ -1004,6 +1026,13 @@ export function genererAccords(
       { note: fonda + 12 + quinte, vel: 55 }, // quinte aiguë
       { note: fonda + 24, vel: 50 },         // octave haute
     ];
+    // Extension optionnelle (7e ou 6e), diatonique à la gamme choisie —
+    // ajoutée dans le même registre aigu que la tierce/quinte.
+    if (extension === "septieme") {
+      voixAccord.push({ note: fonda + 12 + degreSeptiemeProche(gammeCourante, racinePc), vel: 50 });
+    } else if (extension === "sixte") {
+      voixAccord.push({ note: fonda + 12 + degreAccordProche(gammeCourante, racinePc, 9), vel: 50 });
+    }
 
     for (let vi = 0; vi < voixAccord.length; vi++) {
       const v = voixAccord[vi];
