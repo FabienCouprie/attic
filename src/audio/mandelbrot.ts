@@ -5,6 +5,7 @@
 
 import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
 import { DEMI_TONS_CLE } from "./commun";
+import { degresGammeMelodie } from "./generation";
 
 export type ModeMandelbrot = "escape" | "dwell" | "octave";
 
@@ -28,15 +29,6 @@ export interface OptionsMandelbrot {
   instrument?: number;
   banque?: number;
 }
-
-const GAMMES: Record<string, number[]> = {
-  "Majeur": [0, 2, 4, 5, 7, 9, 11],
-  "Mineur naturel": [0, 2, 3, 5, 7, 8, 10],
-  "Mineur harmonique": [0, 2, 3, 5, 7, 8, 11],
-  "Pentatonique majeure": [0, 2, 4, 7, 9],
-  "Pentatonique mineure": [0, 3, 5, 7, 10],
-  "Chromatique": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
 
 function creerRng(graine: number) {
   let s = graine >>> 0;
@@ -97,7 +89,7 @@ export function genererNotesMandelbrot(options: OptionsMandelbrot) {
   } = options;
 
   const points = echantillonnerPoints(xMin, xMax, yMin, yMax, nbNotes, options.graine);
-  const degresGamme = GAMMES[gamme] ?? GAMMES["Majeur"];
+  const degresGamme = degresGammeMelodie(gamme);
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
   const notes = [];
 
@@ -155,5 +147,3 @@ export async function genererMusiqueMandelbrot(
   const audio = await rendreSequence(notes, mode, options.volume, options.instrument ?? 0, options.banque ?? 0);
   return { audio, notes, midiFile };
 }
-
-export { GAMMES };

@@ -265,7 +265,8 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
         const debutVisible = scrollRef.current;
         const finVisible = debutVisible + largeurVisible;
         if (pos > finVisible - 0.5 || pos < debutVisible) {
-          scrollRef.current = Math.max(0, pos - largeurVisible * 0.3);
+          const maxScroll = Math.max(0, buffer.duration - largeurVisible);
+          scrollRef.current = Math.max(0, Math.min(maxScroll, pos - largeurVisible * 0.3));
         }
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -477,7 +478,7 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
       {buffer && (
         <input type="range" min={100} max={5000} step={10} value={zoomPct}
           onChange={(e) => { setZoomPct(Number(e.target.value)); }}
-          style={{ width: "100%", marginTop: 4, accentColor: "#2a9d8f" }}
+          className="attic-node-zoom-slider"
         />
       )}
       {buffer && (

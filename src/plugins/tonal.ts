@@ -76,9 +76,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Notes", nomEn: "Notes", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Tonic", type: "texte", defaut: "C",
-        doc: "Tonalité de départ (ex : C, D#, F#).",
-        docEn: "Starting tonic (e.g. C, D#, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Tonic", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonalité de départ.",
+        docEn: "Starting tonic.", defautEn: "C" },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
         doc: "Type de gamme.",
         docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
@@ -127,9 +131,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la progression (ex : C, G, Dm, F#).",
-        docEn: "Progression key (e.g. C, G, Dm, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Key", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonique de la progression. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i VI III VII) plutôt qu'un suffixe sur la tonalité.",
+        docEn: "Root note of the progression. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i VI III VII) rather than a suffix on the key.", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains (ex : I V vi IV, ii V I).",
         docEn: "Roman numeral progression (e.g. I V vi IV, ii V I).", defautEn: "I V vi IV" },
@@ -153,12 +161,16 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
     sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la grille (ex : C, G, Dm, F#).",
-        docEn: "Grid key (e.g. C, G, Dm, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Key", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonique de la grille. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i iv v VI) plutôt qu'un suffixe sur la tonalité.",
+        docEn: "Root note of the grid. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i iv v VI) rather than a suffix on the key.", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        doc: "Progression en chiffres romains. Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
-        docEn: "Roman numeral progression. Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
+        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
+        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t",
@@ -180,7 +192,12 @@ export const fiches: FicheAudio[] = ([
       const mode = ctx.paramTexte("Mode", "Bloc");
 
       const tokens = progEntree.split(/\s+/).filter((t: string) => t.length > 0);
-      const romains = /^[IViv]+$/.test(tokens[0] ?? "");
+      // Un jeton en chiffres romains commence par (b/# facultatif +) I ou V,
+      // éventuellement suivi d'une extension (IV7, IMaj7, vii°...) — aucun
+      // symbole d'accord ne commence par I ou V (les notes vont de A à G),
+      // donc tester juste le début du jeton (pas son intégralité) suffit à
+      // distinguer les deux syntaxes sans rejeter les extensions.
+      const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
       const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {
@@ -216,7 +233,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Tonalité", nomEn: "Key", type: "texte" }, { nom: "Progression", type: "texte" }, { nom: "Accords détectés", nomEn: "Detected chords", type: "texte" }],
     parametres: [
       { nom: "Style", nomEn: "Style", type: "choix", options: ["Pop", "Jazz", "Blues"], optionsEn: ["Pop", "Jazz", "Blues"], defaut: "Pop",
-        doc: "Style de la progression suggérée.", docEn: "Suggested progression style.", defautEn: "Pop" },
+        doc: "Style de la progression suggérée, adapté au mode détecté (majeur ou mineur).", docEn: "Suggested progression style, adapted to the detected mode (major or minor).", defautEn: "Pop" },
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
@@ -226,9 +243,10 @@ export const fiches: FicheAudio[] = ([
       const tonalite = estimerTonalite(buffer);
       const accords = detecterAccords(buffer, 0.5);
       const style = ctx.paramTexte("Style", "Pop");
+      const mineur = tonalite.type === "minor";
       let prog = progressionSuggest(tonalite.type);
-      if (style === "Jazz") prog = "ii V I";
-      if (style === "Blues") prog = "I I I I IV IV I I V IV I V";
+      if (style === "Jazz") prog = mineur ? "ii V i" : "ii V I";
+      if (style === "Blues") prog = mineur ? "i i i i iv iv i i v iv i v" : "I I I I IV IV I I V IV I V";
       const accordsTexte = accords.map((a) => `${a.nomEn} (${a.duree.toFixed(1)}s)`).join("\n");
       return {
         valeurs: [`${tonalite.nom} (${Math.round(tonalite.confiance * 100)}%)`, prog, accordsTexte],

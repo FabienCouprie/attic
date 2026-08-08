@@ -130,6 +130,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Catégorie", nomEn: "Category", type: "choix",
         options: ["Toutes", ...CATEGORIES_EMOTIONS],
         optionsEn: ["All", ...CATEGORIES_EMOTIONS.map((c) => CATEGORIES_EMOTIONS_LABEL[c]?.en ?? c)],
+        optionIds: ["Toutes", ...CATEGORIES_EMOTIONS],
         defaut: "Toutes",
         doc: "Filtre la liste par catégorie d'émotions.", docEn: "Filters the list by emotion category.", defautEn: "All",
      },

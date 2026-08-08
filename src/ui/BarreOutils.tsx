@@ -18,6 +18,7 @@ interface Props {
   nbPlugins: number;
   sf2Nom: string;
   onChargerSF2: (f: File) => void;
+  currentFilePath?: string | null;
 }
 
 const FAVORIS = [
@@ -42,7 +43,8 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2 } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath } = props;
+  const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
@@ -86,21 +88,23 @@ export function BarreOutils(props: Props) {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
       const ctrl = e.ctrlKey || e.metaKey;
-      if (ctrl && e.key === "s") { e.preventDefault(); onExporter(); }
+      if (ctrl && e.key === "s" && !e.shiftKey) { e.preventDefault(); onSauvegarder(); }
+      if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); onExporter(); }
       if (ctrl && e.key === "o") { e.preventDefault(); refImport.current?.click(); }
       if (!ctrl && e.key === " " && !enExecution) { e.preventDefault(); onLancer(); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [onExporter, onImporter, onLancer, enExecution]);
+  }, [onExporter, onImporter, onLancer, onSauvegarder, enExecution]);
 
   return (
     <div className="attic-barre-outils">
       <span className="attic-titre">{t("app.title")} <span className="attic-nb">({nbPlugins})</span></span>
       <span className="attic-sep" />
-      <button className="attic-btn-icon" title={t("btn.sauvegarder")} onClick={onSauvegarder}>
+      <button className="attic-btn-icon" title={t("btn.sauvegarder")} onClick={() => onSauvegarder()}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h8l2 2v10H3V2z"/><path d="M5 2v4h5V2"/><path d="M5 9h6v5H5z"/></svg>
       </button>
+      {nomFichier && <span className="attic-nom-fichier" title={currentFilePath ?? undefined}>{nomFichier}</span>}
       <button className="attic-btn-icon" title={t("btn.exporter")} onClick={onExporter}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2v9M4 7l4 4 4-4M3 14h10"/></svg>
       </button>
@@ -210,7 +214,7 @@ export function BarreOutils(props: Props) {
           ⟳ {t("maj.relancer")}
         </button>
       )}
-      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v1.1.2</span>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v{__APP_VERSION__}</span>
       <button
         className="attic-btn-icon"
         title={t("btn.resumeAudio")}

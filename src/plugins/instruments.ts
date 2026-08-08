@@ -115,8 +115,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Famille", nomEn: "Family", type: "choix",
-        options: ["Toutes", ...FAMILLES_INSTRUMENTS], 
+        options: ["Toutes", ...FAMILLES_INSTRUMENTS],
         optionsEn: ["All", ...FAMILLES_INSTRUMENTS.map((f) => FAMILLES_LABEL[f]?.en ?? f)],
+        optionIds: ["Toutes", ...FAMILLES_INSTRUMENTS],
         defaut: "Toutes",
         doc: "Filtre la liste par famille d'instruments.", docEn: "Filters the list by instrument family.", defautEn: "All",
      },

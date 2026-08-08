@@ -3,6 +3,7 @@
 
 import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
 import { DEMI_TONS_CLE } from "./commun";
+import { degresGammeMelodie } from "./generation";
 
 export type AccordKoch = "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";
 export type DirectionKoch = "alternée" | "extérieure" | "intérieure";
@@ -23,15 +24,6 @@ export interface OptionsArpegeKoch {
   instrument?: number;
   banque?: number;
 }
-
-const GAMMES: Record<string, number[]> = {
-  "Majeur": [0, 2, 4, 5, 7, 9, 11],
-  "Mineur naturel": [0, 2, 3, 5, 7, 8, 10],
-  "Mineur harmonique": [0, 2, 3, 5, 7, 8, 11],
-  "Pentatonique majeure": [0, 2, 4, 7, 9],
-  "Pentatonique mineure": [0, 3, 5, 7, 10],
-  "Chromatique": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
 
 const INTERVALLES_ACCORD: Record<AccordKoch, number[]> = {
   Majeur: [0, 4, 7],
@@ -79,7 +71,7 @@ export function genererNotesKoch(options: OptionsArpegeKoch) {
     cle, gamme, octave, accord, profondeur, direction, hauteur,
     tempo, mesures, dureeNote,
   } = options;
-  const degresGamme = GAMMES[gamme] ?? GAMMES["Majeur"];
+  const degresGamme = degresGammeMelodie(gamme);
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
   const intervalles = INTERVALLES_ACCORD[accord] ?? INTERVALLES_ACCORD["Majeur"];
   const octaveBase = (octave + 1) * 12;

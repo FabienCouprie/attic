@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 release/
+electron-dist/
+electron-dist2/
 
 # TypeScript build cache
 *.tsbuildinfo

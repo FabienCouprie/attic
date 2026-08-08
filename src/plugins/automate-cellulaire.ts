@@ -13,6 +13,7 @@ import {
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];
@@ -144,9 +145,10 @@ const FICHES: FicheAudio[] = [
         nom: "Gamme",
         nomEn: "Scale",
         type: "choix",
-        options: ["Majeur", "Mineur naturel", "Pentatonique majeure", "Pentatonique mineure", "Chromatique"],
+        options: GAMMES_MELODIE_FR,
         defaut: "Pentatonique majeure",
-        optionsEn: ["Major", "Natural minor", "Major pentatonic", "Minor pentatonic", "Chromatic"],
+        optionsEn: GAMMES_MELODIE_EN,
+        optionIds: GAMMES_MELODIE_IDS,
         defautEn: "Major pentatonic",
         doc: "Gamme utilisée pour convertir les positions de cellules en hauteurs de notes.",
         docEn: "Scale used to convert cell positions into note pitches.",

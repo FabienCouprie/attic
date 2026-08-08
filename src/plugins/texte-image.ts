@@ -2,9 +2,9 @@
 // (ONNX Runtime, process principal). Pipeline lourd (encodeur CLIP + UNet 1 pas
 // + décodeur TAESD) exécuté en natif — voir electron/sdxs-image.cjs.
 //
-// Modèle non embarqué dans l'app (~680 Mo, quantifié int8) : à fournir
-// soi-même dans public/oonx/sdxs-512-texte-image/, ou via le paramètre
-// « Chemin modèle » — voir ROADMAP.md « Text-to-image ».
+// Modèle embarqué dans l'app via extraResources (~680 Mo, quantifié int8).
+// L'utilisateur peut aussi fournir un chemin explicite via le paramètre
+// « Chemin modèle ».
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";

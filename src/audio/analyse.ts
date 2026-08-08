@@ -355,6 +355,8 @@ export interface AnalyseResultat {
   tempo: number;
   tempoConfiance: number;
   tonalites: { debut: number; fin: number; tonalite: string; confiance: number }[];
+  mode: "majeur" | "mineur";
+  modeConfiance: number;
   songVsInstrumental: "chanson" | "instrumental" | "incertain";
   description: string;
 }
@@ -612,6 +614,8 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
     tempo: tempoFinal,
     tempoConfiance: Math.min(1, meilleur.corr * 20),
     tonalites: [{ debut: 0, fin: duree, tonalite: `${traduire(principale.mineur ? "analyse.nom_mineur" : "analyse.nom_majeur", principale.nom.split(" ")[0])} (K-K: ${kkGlobal.split(" : ")[1]}, Temp: ${tpGlobal.split(" : ")[1]})`, confiance: principale.conf }],
+    mode: principale.mineur ? "mineur" : "majeur",
+    modeConfiance: Math.min(1, principale.conf / 60),
     songVsInstrumental,
     description: lignes.join("\n"),
   };

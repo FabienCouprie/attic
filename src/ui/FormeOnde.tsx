@@ -416,7 +416,7 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
       {dureeTotale > 0 && (
         <input type="range" min={100} max={5000} step={10} value={zoomPct}
           onChange={(e) => { setZoomPct(Number(e.target.value)); }}
-          style={{ width: "100%", marginTop: 4, accentColor: "#2a9d8f" }}
+          className="attic-node-zoom-slider"
         />
       )}
       {multi && dureeTotale > 0 && (

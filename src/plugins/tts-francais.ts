@@ -1,48 +1,18 @@
-// plugins/tts-kokoro.ts — Nœud « Kokoro TTS » : synthèse vocale locale
-// (anglais) via Kokoro-82M ONNX + Transformers.js, exécuté dans un Web Worker.
+// plugins/tts-francais.ts — Nœud « TTS Français » : synthèse vocale en français
+// via Kokoro-82M (ONNX) + ephone pour la phonémisation. Utilise la voix ff_siwis.
+// Le modèle et le pack de phonémisation sont téléchargés depuis HuggingFace au
+// premier usage, puis mis en cache. Tourne dans un Web Worker.
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
-// Voix livrées avec le modèle Kokoro-82M-v1.0-ONNX (anglais, US + UK).
-const VOIX_KOKORO = [
-  "af_heart",
-  "af_alloy",
-  "af_aoede",
-  "af_bella",
-  "af_jessica",
-  "af_kore",
-  "af_nicole",
-  "af_nova",
-  "af_river",
-  "af_sarah",
-  "af_sky",
-  "am_adam",
-  "am_echo",
-  "am_eric",
-  "am_fenrir",
-  "am_liam",
-  "am_michael",
-  "am_onyx",
-  "am_puck",
-  "am_santa",
-  "bf_alice",
-  "bf_emma",
-  "bf_isabella",
-  "bf_lily",
-  "bm_daniel",
-  "bm_fable",
-  "bm_george",
-  "bm_lewis",
-] as const;
-
-type VoixKokoro = (typeof VOIX_KOKORO)[number];
+const VOIX_FRANCAISE = "ff_siwis";
 
 let worker: Worker | null = null;
 
 function getWorker(): Worker {
   if (!worker) {
-    worker = new Worker(new URL("../workers/kokoro-tts-worker.js", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("../workers/kokoro-francais-worker.js", import.meta.url), { type: "module" });
   }
   return worker;
 }
@@ -54,33 +24,18 @@ function makeRequestId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function isVoixKokoro(v: string): v is VoixKokoro {
-  return (VOIX_KOKORO as readonly string[]).includes(v);
-}
-
 export const fiches: FicheAudio[] = ([
   {
-    id: "tts-kokoro",
-    nom: "Kokoro TTS",
-    nomEn: "Kokoro TTS",
+    id: "tts-francais",
+    nom: "TTS Français",
+    nomEn: "French TTS",
     univers: "Entrées",
     famille: "Text to Speech",
-    resume: "Synthèse vocale locale en anglais via Kokoro-82M (ONNX).",
-    resumeEn: "Local English text-to-speech with Kokoro-82M (ONNX).",
+    resume: "Synthèse vocale en français via Kokoro-82M (voix Siwis).",
+    resumeEn: "French text-to-speech using Kokoro-82M (Siwis voice).",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "mono" }],
     parametres: [
-      {
-        nom: "Voix",
-        nomEn: "Voice",
-        type: "choix",
-        options: [...VOIX_KOKORO],
-        optionsEn: [...VOIX_KOKORO],
-        defaut: "af_heart",
-        defautEn: "af_heart",
-        doc: "Voix Kokoro à utiliser. Le modèle (≈82 M de paramètres) et la voix sont téléchargés depuis HuggingFace au premier usage.",
-        docEn: "Kokoro voice to use. The model (~82 M parameters) and voice are downloaded from HuggingFace on first use.",
-      },
       {
         nom: "Vitesse",
         nomEn: "Speed",
@@ -97,8 +52,6 @@ export const fiches: FicheAudio[] = ([
       if (typeof texte !== "string" || !texte.trim()) {
         return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       }
-      const voixParam = ctx.paramTexte("Voix", "af_heart");
-      const voix = isVoixKokoro(voixParam) ? voixParam : "af_heart";
       const vitesse = ctx.paramNombre("Vitesse", 1.0);
 
       const w = getWorker();
@@ -124,7 +77,7 @@ export const fiches: FicheAudio[] = ([
               buf.getChannelData(0).set(data);
               resolve({
                 valeurs: [buf],
-                message: traduire("msg.kokoro_var_0_var_1", voix, texte.slice(0, 40), texte.length > 40 ? "…" : ""),
+                message: traduire("msg.kokoro_var_0_var_1", VOIX_FRANCAISE, texte.slice(0, 40), texte.length > 40 ? "…" : ""),
               });
             } catch (err) {
               reject(new Error(traduire("msg.erreur_kokoro_var_0", String(err))));
@@ -135,7 +88,7 @@ export const fiches: FicheAudio[] = ([
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, voice: voix, speed: vitesse, lang, labels, requestId });
+        w.postMessage({ text: texte, voice: VOIX_FRANCAISE, speed: vitesse, lang, labels, requestId });
       });
     },
   },

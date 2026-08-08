@@ -1,6 +1,7 @@
 // audio/mandelbrot.test.ts
 import { describe, it, expect } from "vitest";
-import { genererNotesMandelbrot, itererMandelbrot, GAMMES } from "./mandelbrot";
+import { genererNotesMandelbrot, itererMandelbrot } from "./mandelbrot";
+import { degresGammeMelodie } from "./generation";
 
 describe("mandelbrot", () => {
   it("itère correctement un point de l'ensemble (divergence lente)", () => {
@@ -17,7 +18,7 @@ describe("mandelbrot", () => {
     const notes = genererNotesMandelbrot({
       xMin: -2.5, xMax: 1, yMin: -1.25, yMax: 1.25,
       maxIter: 100, mode: "escape", nbNotes: 16, dureeNote: 0.25, tempo: 100,
-      cle: "Do", gamme: "Majeur", octaveBase: 48, sensibilite: 1,
+      cle: "Do", gamme: "majeur", octaveBase: 48, sensibilite: 1,
       timbre: "Douce", volume: 80, graine: 42,
     });
     expect(notes.length).toBeGreaterThan(0);
@@ -34,7 +35,7 @@ describe("mandelbrot", () => {
     const opts = {
       xMin: -2.5, xMax: 1, yMin: -1.25, yMax: 1.25,
       maxIter: 100, nbNotes: 16, dureeNote: 0.25, tempo: 100,
-      cle: "Do", gamme: "Majeur", octaveBase: 48, sensibilite: 1,
+      cle: "Do", gamme: "majeur", octaveBase: 48, sensibilite: 1,
       timbre: "Douce" as const, volume: 80, graine: 42,
     };
     const e = genererNotesMandelbrot({ ...opts, mode: "escape" as const });
@@ -51,10 +52,10 @@ describe("mandelbrot", () => {
     const notes = genererNotesMandelbrot({
       xMin: -2.5, xMax: 1, yMin: -1.25, yMax: 1.25,
       maxIter: 100, mode: "escape", nbNotes: 32, dureeNote: 0.25, tempo: 100,
-      cle: "Do", gamme: "Pentatonique majeure", octaveBase: 48, sensibilite: 1,
+      cle: "Do", gamme: "pentatonique-majeure", octaveBase: 48, sensibilite: 1,
       timbre: "Douce" as const, volume: 80, graine: 42,
     });
-      const gamme = GAMMES["Pentatonique majeure"];
+      const gamme = degresGammeMelodie("pentatonique-majeure");
     for (const n of notes) {
       const classe = n.note % 12;
       const base = 48 % 12;
@@ -67,7 +68,7 @@ describe("mandelbrot", () => {
     const opts = {
       xMin: -2.5, xMax: 1, yMin: -1.25, yMax: 1.25,
       maxIter: 100, mode: "escape" as const, nbNotes: 16, dureeNote: 1,
-      cle: "Do", gamme: "Majeur", octaveBase: 48, sensibilite: 1,
+      cle: "Do", gamme: "majeur", octaveBase: 48, sensibilite: 1,
       timbre: "Douce" as const, volume: 80, graine: 42,
     };
     const lent = genererNotesMandelbrot({ ...opts, tempo: 60 });

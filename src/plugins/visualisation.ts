@@ -73,7 +73,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Forme", nomEn: "Waveform", type: "choix",
-        options: ["Sinus", "Carré", "Dent de scie", "Triangle"], optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"], defaut: "Sinus",
+        options: ["Sinus", "Carré", "Dent de scie", "Triangle"], optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"],
+        optionIds: ["sine", "square", "sawtooth", "triangle"], defaut: "Sinus",
         doc: "Forme d'onde. Sinus = une seule fréquence. Carré/Triangle = harmoniques impaires. Dent de scie = toutes les harmoniques.",
         docEn: "Waveform. Sine = a single frequency. Square/Triangle = odd harmonics. Sawtooth = all harmonics.", defautEn: "Sine",
      },
@@ -84,7 +85,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
     async executer(ctx: any) {
-      const forme = ctx.paramTexte("Forme", "Sinus");
+      const forme = ctx.paramTexte("Forme", "sine");
       const freq = ctx.paramNombre("Fréquence", 220);
       const duree = ctx.paramNombre("Durée", 1.5);
       const vol = ctx.paramNombre("Volume", 80) / 100;
@@ -92,16 +93,17 @@ export const fiches: FicheAudio[] = ([
       const len = Math.max(1, Math.floor(sr * duree));
       const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
       const d = buf.getChannelData(0);
+      const labelForme = ({ sine: "Sinus", square: "Carré", sawtooth: "Dent de scie", triangle: "Triangle" } as Record<string, string>)[forme] ?? forme;
 
       // Synthèse ADDITIVE band-limitée : somme d'harmoniques sous Nyquist.
       // Séries de Fourier des ondes idéales — aucun aliasing, spectre exact.
       const harmoniques: { h: number; amp: number }[] = [];
       for (let h = 1; h * freq < sr / 2; h++) {
         let amp = 0;
-        if (forme === "Sinus") amp = h === 1 ? 1 : 0;
-        else if (forme === "Dent de scie") amp = 1 / h;
-        else if (forme === "Carré") amp = h % 2 === 1 ? 1 / h : 0;
-        else if (forme === "Triangle") amp = h % 2 === 1 ? (((h - 1) / 2) % 2 === 0 ? 1 : -1) / (h * h) : 0;
+        if (forme === "sine") amp = h === 1 ? 1 : 0;
+        else if (forme === "sawtooth") amp = 1 / h;
+        else if (forme === "square") amp = h % 2 === 1 ? 1 / h : 0;
+        else if (forme === "triangle") amp = h % 2 === 1 ? (((h - 1) / 2) % 2 === 0 ? 1 : -1) / (h * h) : 0;
         if (amp !== 0) harmoniques.push({ h, amp });
       }
       const norm = harmoniques.reduce((s, x) => s + Math.abs(x.amp), 0) || 1;
@@ -115,7 +117,7 @@ export const fiches: FicheAudio[] = ([
       const nf = Math.min(len >> 1, Math.floor(sr * 0.005));
       for (let i = 0; i < nf; i++) { const g = i / nf; d[i] *= g; d[len - 1 - i] *= g; }
 
-      return { valeurs: [buf], message: traduire("msg.var_0_var_1_hz_var_2_harmonique_s", forme, freq, harmoniques.length) };
+      return { valeurs: [buf], message: traduire("msg.var_0_var_1_hz_var_2_harmonique_s", labelForme, freq, harmoniques.length) };
    },
  },
   {

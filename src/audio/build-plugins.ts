@@ -43,8 +43,9 @@ export const audioOptimizeDeps: any = {
   // pré-bundl pour éviter des erreurs de module CJS dans le worker/dev.
   // kokoro-js doit être exclus de l'optimisation dev, car on le résout via un alias
   // vers sa build web (dist/kokoro.web.js) afin d'éviter les imports fs/promises
-  // de la build Node.
-  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js"],
+  // de la build Node. ephone est aussi exclu car il contient des imports dynamiques
+  // de packs de langues et du WASM inline qu'on ne veut pas pré-bundler.
+  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js", "ephone"],
   include: [
     "@tensorflow/tfjs",
     "@tensorflow/tfjs-core",

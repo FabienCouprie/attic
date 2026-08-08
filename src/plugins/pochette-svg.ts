@@ -164,7 +164,7 @@ function buildBorder(border: string, W: number, H: number, color: string): strin
 }
 
 function buildBackground(style: string, palette: string[], W: number, H: number, rng: () => number, defs: string[]): string {
-  const [c1, c2, c3] = palette;
+  const [c1, c2, _c3] = palette;
   switch (style) {
     case "minimaliste": {
       const id = `gradMin-${randInt(rng, 0, 999999)}`;

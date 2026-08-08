@@ -162,6 +162,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Catégorie", nomEn: "Category", type: "choix",
         options: ["Toutes", ...CATEGORIES_STYLES],
         optionsEn: ["All", ...CATEGORIES_STYLES.map((c) => CATEGORIES_LABEL[c]?.en ?? c)],
+        optionIds: ["Toutes", ...CATEGORIES_STYLES],
         defaut: "Toutes",
         doc: "Filtre la liste par catégorie de styles musicaux.", docEn: "Filters the list by musical style category.", defautEn: "All",
      },

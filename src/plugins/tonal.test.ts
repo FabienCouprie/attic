@@ -1,6 +1,7 @@
 // plugins/tonal.test.ts — Vérification rapide des nœuds de théorie musicale.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { fiches } from "./tonal";
+import * as accords from "../audio/accords";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
@@ -109,6 +110,26 @@ describe("nœuds Tonal", () => {
     expect(notation).toContain("A3+C4+E4 1");
   });
 
+  it("tonal-grille accepte des chiffres romains avec extension (7e, maj7...)", async () => {
+    // Régression : le test de classification romains-vs-symboles ne testait
+    // que si le 1er jeton était ENTIÈREMENT composé de I/V/i/v, donc "IMaj7"
+    // (avec suffixe) tombait à tort en mode "symboles bruts" — "I" n'étant
+    // pas une note valide, Chord.get() ne trouvait aucune note et l'accord
+    // disparaissait silencieusement de la notation, sans erreur.
+    const f = trouver("tonal-grille")!;
+    const ctx = {
+      entree: () => null,
+      paramTexte: (nom: string, defaut: string) => (nom === "Progression" ? "IMaj7 IV7 V7 vi7" : defaut),
+      paramNombre: (nom: string, defaut: number) => defaut,
+    };
+    const res = await f.executer(ctx as any);
+    const notation = res.valeurs[0] as string;
+    expect(notation).toContain("C3+E3+G3+B3 1");
+    expect(notation).toContain("F3+A3+C4+Eb4 1");
+    expect(notation).toContain("G3+B3+D4+F4 1");
+    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 A7");
+  });
+
   it("tonal-analyse détecte une tonalité C major", async () => {
     const f = trouver("tonal-analyse")!;
     const ctx = {
@@ -127,5 +148,26 @@ describe("nœuds Tonal", () => {
     const ctx = { entree: () => null, paramTexte: () => "Pop", paramNombre: () => 0 };
     const res = await f.executer(ctx as any);
     expect(res.erreur).toBe(true);
+  });
+
+  it("tonal-analyse adapte les styles Jazz et Blues au mode mineur détecté", async () => {
+    // Avant cette session, Jazz et Blues renvoyaient toujours "ii V I" et la
+    // grille de blues majeure, quel que soit le mode réellement détecté —
+    // un morceau en mineur recevait une suggestion en accords majeurs.
+    const spy = vi.spyOn(accords, "estimerTonalite").mockReturnValue({
+      nom: "A minor", type: "minor", confiance: 0.9,
+    });
+    try {
+      const f = trouver("tonal-analyse")!;
+      const ctxJazz = { entree: () => gammeC(0.1), paramTexte: () => "Jazz", paramNombre: () => 0 };
+      const resJazz = await f.executer(ctxJazz as any);
+      expect(resJazz.valeurs[1]).toBe("ii V i");
+
+      const ctxBlues = { entree: () => gammeC(0.1), paramTexte: () => "Blues", paramNombre: () => 0 };
+      const resBlues = await f.executer(ctxBlues as any);
+      expect(resBlues.valeurs[1]).toBe("i i i i iv iv i i v iv i v");
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

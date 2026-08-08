@@ -4,15 +4,7 @@
 
 import { DEMI_TONS_CLE } from "./commun";
 import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
-
-export const GAMMES: Record<string, number[]> = {
-  "Majeur": [0, 2, 4, 5, 7, 9, 11],
-  "Mineur naturel": [0, 2, 3, 5, 7, 8, 10],
-  "Mineur harmonique": [0, 2, 3, 5, 7, 8, 11],
-  "Pentatonique majeure": [0, 2, 4, 7, 9],
-  "Pentatonique mineure": [0, 3, 5, 7, 10],
-  "Chromatique": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
+import { degresGammeMelodie } from "./generation";
 
 const REGLES_1D_NOMS: Record<number, string> = {
   18: "18",
@@ -121,15 +113,27 @@ export function normaliserCle(v: string): string {
   return map[v] ?? "Do";
 }
 
+// Retourne l'id canonique attendu par degresGammeMelodie (audio/generation.ts) —
+// accepte indifféremment l'ancien libellé français, anglais, ou un id déjà
+// canonique (le paramètre "Gamme" a des optionIds : ctx.paramTexte renvoie
+// donc déjà l'id canonique la plupart du temps — cette fonction reste
+// idempotente pour ce cas, et gère aussi les valeurs brutes des anciens
+// projets ou des appels directs, ex. les tests).
 export function normaliserGamme(v: string): string {
   const map: Record<string, string> = {
-    Majeur: "Majeur", Major: "Majeur",
-    "Mineur naturel": "Mineur naturel", "Natural minor": "Mineur naturel",
-    "Pentatonique majeure": "Pentatonique majeure", "Major pentatonic": "Pentatonique majeure",
-    "Pentatonique mineure": "Pentatonique mineure", "Minor pentatonic": "Pentatonique mineure",
-    Chromatique: "Chromatique", Chromatic: "Chromatique",
+    Majeur: "majeur", Major: "majeur", majeur: "majeur",
+    "Mineur naturel": "mineur", "Natural minor": "mineur", mineur: "mineur",
+    "Mineur harmonique": "mineur-harmonique", "Harmonic minor": "mineur-harmonique", "mineur-harmonique": "mineur-harmonique",
+    Dorien: "dorien", Dorian: "dorien", dorien: "dorien",
+    Phrygien: "phrygien", Phrygian: "phrygien", phrygien: "phrygien",
+    Lydien: "lydien", Lydian: "lydien", lydien: "lydien",
+    Mixolydien: "mixolydien", Mixolydian: "mixolydien", mixolydien: "mixolydien",
+    Locrien: "locrien", Locrian: "locrien", locrien: "locrien",
+    "Pentatonique majeure": "pentatonique-majeure", "Major pentatonic": "pentatonique-majeure", "pentatonique-majeure": "pentatonique-majeure",
+    "Pentatonique mineure": "pentatonique-mineure", "Minor pentatonic": "pentatonique-mineure", "pentatonique-mineure": "pentatonique-mineure",
+    Chromatique: "chromatique", Chromatic: "chromatique", chromatique: "chromatique",
   };
-  return map[v] ?? "Pentatonique majeure";
+  return map[v] ?? "pentatonique-majeure";
 }
 
 export function normaliserTimbre(v: string): "FM/Oscillateurs" | "SoundFont" {
@@ -339,7 +343,7 @@ function genererDepuis1D(options: OptionsAutomateCellulaire): NoteEvenement[] {
   const largeur = Math.max(4, Math.min(64, options.largeur));
   const generations = Math.max(4, Math.min(256, options.generations));
   const dureeNote = options.dureeNote;
-  const degres = GAMMES[normaliserGamme(options.gamme)] ?? GAMMES["Pentatonique majeure"];
+  const degres = degresGammeMelodie(normaliserGamme(options.gamme));
   const base = 12 + (options.octave * 12) + (DEMI_TONS_CLE[normaliserCle(options.cle)] ?? 0);
   const rnd = randomSeed(options.graine);
   const regle = regleEffective(options) as number;
@@ -378,7 +382,7 @@ function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
   const hauteur = Math.max(4, Math.min(64, options.hauteur ?? options.generations));
   const iterations = Math.max(0, Math.min(64, options.generations));
   const dureeNote = options.dureeNote;
-  const degres = GAMMES[normaliserGamme(options.gamme)] ?? GAMMES["Pentatonique majeure"];
+  const degres = degresGammeMelodie(normaliserGamme(options.gamme));
   const base = 12 + (options.octave * 12) + (DEMI_TONS_CLE[normaliserCle(options.cle)] ?? 0);
   const rnd = randomSeed(options.graine);
   const regle = regleEffective(options) as { naitre: number[]; survie: number[] };

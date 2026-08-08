@@ -58,6 +58,7 @@ included in Attic.
 | `wavesurfer.js` | BSD-3-Clause | katspaugh and contributors |
 | `tone` | MIT | Yotam Mann and Tone.js contributors |
 | `node-web-audio-api` | BSD-3-Clause | Ircam / Benjamin Matuszewski |
+| `ephone` | GPL-3.0-or-later | sjmik / eSpeak-NG contributors |
 
 ## GNU Lesser General Public License v2.1
 

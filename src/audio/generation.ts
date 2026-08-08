@@ -48,7 +48,7 @@ export async function genererMusiqueFractale(
     : (MOTIFS_PREDEFINIS[typeMotif] ?? [0, 4, 7]);
   if (motif.length === 0) motif.push(0);
 
-  const degres = DEGRES_GAMME[gamme] ?? DEGRES_GAMME["Majeur"];
+  const degres = degresGammeMelodie(gamme);
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
 
   const notesMidi = deplierMotif(motif, pMax);
@@ -103,13 +103,28 @@ export async function genererMusiqueFractale(
 // --- Génération mélodique aléatoire ---------------------------------------
 
 
-const DEGRES_GAMME: Record<string, number[]> = {
-  Majeur: [0, 2, 4, 5, 7, 9, 11],
-  "Mineur naturel": [0, 2, 3, 5, 7, 8, 10],
-  "Mineur harmonique": [0, 2, 3, 5, 7, 8, 11],
-  "Pentatonique majeure": [0, 2, 4, 7, 9],
-  "Pentatonique mineure": [0, 3, 5, 7, 10],
-};
+// Gammes pour les nœuds mélodiques (Mélodie aléatoire, Musique fractale,
+// Sampler personnalisé, Mappeur Mandelbrot, Arpège de Koch, Automate
+// cellulaire) : les mêmes modes/gammes que les générateurs d'accords
+// (GAMMES_ACCORDS, plus bas dans ce fichier — degresGammeAccords est une
+// function declaration, donc utilisable ici malgré l'ordre textuel), plus
+// la gamme mineure harmonique, propre aux nœuds mélodiques.
+const DEGRES_MINEUR_HARMONIQUE = [0, 2, 3, 5, 7, 8, 11];
+
+export function degresGammeMelodie(id: string): number[] {
+  if (id === "mineur-harmonique") return DEGRES_MINEUR_HARMONIQUE;
+  return degresGammeAccords(id);
+}
+
+// Libellés FR/EN et ids canoniques du paramètre "Gamme" de ces nœuds
+// mélodiques — définis ici (et pas dans un fichier plugins/*) pour que
+// chaque fichier plugins/*.ts puisse les importer depuis "../audio" comme
+// il le fait déjà pour tout le reste, sans dépendance croisée entre
+// fichiers de plugins (qui casserait le graphe de modules circulaire
+// plugins/index.ts ↔ audio/adaptateur.ts).
+export const GAMMES_MELODIE_FR = ["Majeur", "Mineur naturel", "Mineur harmonique", "Dorien", "Phrygien", "Lydien", "Mixolydien", "Locrien", "Pentatonique majeure", "Pentatonique mineure", "Chromatique"];
+export const GAMMES_MELODIE_EN = ["Major", "Natural minor", "Harmonic minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Major pentatonic", "Minor pentatonic", "Chromatic"];
+export const GAMMES_MELODIE_IDS = ["majeur", "mineur", "mineur-harmonique", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique-majeure", "pentatonique-mineure", "chromatique"];
 
 
 export async function genererMelodieAleatoire(
@@ -120,7 +135,7 @@ export async function genererMelodieAleatoire(
   nbMesures: number
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const decalage = DEMI_TONS_CLE[cle] ?? 0;
-  const degres = DEGRES_GAMME[gamme] ?? DEGRES_GAMME["Majeur"];
+  const degres = degresGammeMelodie(gamme);
   const [tempsParMesureTexte, uniteBattementTexte] = signature.split("/");
   const tempsParMesure = Number(tempsParMesureTexte) || 4;
   const uniteBattement = Number(uniteBattementTexte) || 4;
@@ -750,6 +765,77 @@ export const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 
 export const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
 
+// Gammes disponibles pour les nœuds qui construisent des accords ou
+// mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,
+// Dessin sonore, Palette harmonique). id = valeur canonique stockée dans
+// les paramètres ; degres = intervalles en demi-tons depuis la tonique.
+// Les 9 premières entrées (7 modes heptatoniques dérivés de la gamme
+// majeure + 2 gammes pentatoniques) sont communes à tous ces nœuds ; blues
+// et chromatique ne sont proposées que par les nœuds de sonification
+// d'image, qui les avaient déjà.
+export const GAMMES_ACCORDS: { id: string; fr: string; en: string; degres: number[] }[] = [
+  { id: "majeur", fr: "Majeur", en: "Major", degres: DEGRES_MAJEUR },
+  { id: "mineur", fr: "Mineur naturel", en: "Natural minor", degres: DEGRES_MINEUR },
+  { id: "dorien", fr: "Dorien", en: "Dorian", degres: [0, 2, 3, 5, 7, 9, 10] },
+  { id: "phrygien", fr: "Phrygien", en: "Phrygian", degres: [0, 1, 3, 5, 7, 8, 10] },
+  { id: "lydien", fr: "Lydien", en: "Lydian", degres: [0, 2, 4, 6, 7, 9, 11] },
+  { id: "mixolydien", fr: "Mixolydien", en: "Mixolydian", degres: [0, 2, 4, 5, 7, 9, 10] },
+  { id: "locrien", fr: "Locrien", en: "Locrian", degres: [0, 1, 3, 5, 6, 8, 10] },
+  { id: "pentatonique-majeure", fr: "Pentatonique majeure", en: "Major pentatonic", degres: [0, 2, 4, 7, 9] },
+  { id: "pentatonique-mineure", fr: "Pentatonique mineure", en: "Minor pentatonic", degres: [0, 3, 5, 7, 10] },
+  { id: "blues", fr: "Blues", en: "Blues", degres: [0, 3, 5, 6, 7, 10] },
+  { id: "chromatique", fr: "Chromatique", en: "Chromatic", degres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+];
+
+export function degresGammeAccords(id: string): number[] {
+  return GAMMES_ACCORDS.find((g) => g.id === id)?.degres ?? DEGRES_MAJEUR;
+}
+
+/**
+ * Décalage en demi-tons (1-12, ascendant) depuis une fondamentale jusqu'à la
+ * note de la gamme la plus proche d'un intervalle cible (4 = tierce majeure,
+ * 7 = quinte juste). Généralise la construction d'accords tertiaires à des
+ * gammes de longueur quelconque : sur une gamme heptatonique cela retombe
+ * exactement sur le 3e/5e degré habituel ; sur une gamme pentatonique
+ * (qui n'a pas de degré à exactement 2 crans d'écart) cela choisit la note
+ * de la gamme la plus proche de la tierce/quinte visée.
+ */
+export function degreAccordProche(degresGamme: number[], racinePc: number, cibleSemitons: number): number {
+  let meilleur = cibleSemitons;
+  let meilleurEcart = Infinity;
+  for (const pc of degresGamme) {
+    let dist = (((pc - racinePc) % 12) + 12) % 12;
+    if (dist === 0) dist = 12;
+    const ecart = Math.abs(dist - cibleSemitons);
+    if (ecart < meilleurEcart) {
+      meilleurEcart = ecart;
+      meilleur = dist;
+    }
+  }
+  return meilleur;
+}
+
+/**
+ * Septième diatonique la plus proche (7e mineure = 10 demi-tons, 7e
+ * majeure = 11 demi-tons). Contrairement à la tierce/quinte, une cible
+ * unique ne suffit pas : à équidistance d'une cible à 10 demi-tons, une 6e
+ * (9 demi-tons) et une 7e majeure (11 demi-tons) sont à égale distance, et
+ * degreAccordProche choisirait arbitrairement la première trouvée dans le
+ * tableau — donnant par exemple une 6te au lieu de la 7e majeure attendue
+ * sur une gamme majeure. On cherche donc séparément la note la plus proche
+ * de chaque qualité (mineure/majeure) et on retient celle dont l'écart
+ * réel est le plus petit — ce qui retombe exactement sur la 7e diatonique
+ * usuelle pour chacun des 7 modes heptatoniques (majeure sur Majeur/Lydien/
+ * Mixolydien, mineure sur Mineur naturel/Dorien/Phrygien/Locrien).
+ */
+export function degreSeptiemeProche(degresGamme: number[], racinePc: number): number {
+  const viaMineure = degreAccordProche(degresGamme, racinePc, 10);
+  const viaMajeure = degreAccordProche(degresGamme, racinePc, 11);
+  const ecartMineure = Math.abs(viaMineure - 10);
+  const ecartMajeure = Math.abs(viaMajeure - 11);
+  return ecartMajeure <= ecartMineure ? viaMajeure : viaMineure;
+}
+
 
 export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {
@@ -891,13 +977,14 @@ const ROMAIN_VERS_DEGRE: Record<string, number> = {
 export function genererAccords(
   cleNom: string, gammeNom: string, genreNom: string, progressionPerso: string,
   tempo: number, dureeAccord: number, nbAccords: number,
+  extension: "aucune" | "septieme" | "sixte" = "aucune",
 ): { midiBytes: Uint8Array; description: string } {
-  const estMineur = gammeNom.toLowerCase().includes("min");
-  const gammeCourante = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
+  const gammeCourante = degresGammeAccords(gammeNom);
+  const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
   const decalage = traduireCle(cleNom);
 
   let progression: number[];
-  if (genreNom === "personnalisé") {
+  if (genreNom === "custom" || genreNom === "personnalisé") {
     progression = progressionPerso.split("-").map((r) => ROMAIN_VERS_DEGRE[r.trim()] ?? 0);
   } else {
     const progressions = PROGRESSIONS_GENRE[genreNom] || PROGRESSIONS_GENRE["pop"];
@@ -921,18 +1008,31 @@ export function genererAccords(
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
     const degre = progression[i % progression.length];
-    const fonda = 36 + decalage + gammeCourante[degre % gammeCourante.length] + Math.floor(degre / gammeCourante.length) * 12;
+    const racinePc = gammeCourante[degre % gammeCourante.length];
+    const fonda = 36 + decalage + racinePc + Math.floor(degre / gammeCourante.length) * 12;
+    const tierce = degreAccordProche(gammeCourante, racinePc, 4);
+    const quinte = degreAccordProche(gammeCourante, racinePc, 7);
     const td = secEnTicks(deb);
     const tf = secEnTicks(fin);
 
-    // Voicing aéré sur 3 octaves — son plus riche et moins agressif
+    // Voicing aéré sur 3 octaves — son plus riche et moins agressif. Tierce
+    // et quinte suivent la gamme choisie (degreAccordProche) au lieu d'un
+    // intervalle fixe, pour que les modes (dorien, locrien…) et les gammes
+    // pentatoniques sonnent avec leur couleur propre.
     const voixAccord = [
       { note: fonda - 12, vel: 90 },        // basse octave -1
-      { note: fonda + 7, vel: 65 },          // quinte médium
-      { note: fonda + 12 + 3, vel: 60 },     // tierce aiguë
-      { note: fonda + 12 + 7, vel: 55 },     // quinte aiguë
+      { note: fonda + quinte, vel: 65 },     // quinte médium
+      { note: fonda + 12 + tierce, vel: 60 }, // tierce aiguë
+      { note: fonda + 12 + quinte, vel: 55 }, // quinte aiguë
       { note: fonda + 24, vel: 50 },         // octave haute
     ];
+    // Extension optionnelle (7e ou 6e), diatonique à la gamme choisie —
+    // ajoutée dans le même registre aigu que la tierce/quinte.
+    if (extension === "septieme") {
+      voixAccord.push({ note: fonda + 12 + degreSeptiemeProche(gammeCourante, racinePc), vel: 50 });
+    } else if (extension === "sixte") {
+      voixAccord.push({ note: fonda + 12 + degreAccordProche(gammeCourante, racinePc, 9), vel: 50 });
+    }
 
     for (let vi = 0; vi < voixAccord.length; vi++) {
       const v = voixAccord[vi];

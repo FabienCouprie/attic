@@ -1,8 +1,9 @@
 // plugins/integration.test.ts — Tests de chaînes critiques entre plugins.
 import "node-web-audio-api/polyfill.js";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { writeMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
+import { bufferVersWavBlob } from "../audio/io";
 import { valeurCanoniqueChoix } from "../i18n";
 
 function makeBuffer(len: number, sampleRate = len) {
@@ -31,13 +32,33 @@ function createMidiFile(notes: { note: number; velocity: number; start: number; 
   return new File([bytes], "test.mid", { type: "audio/midi" });
 }
 
-function ctx(params: Record<string, string | number>, entrees: unknown[], noeudData: Record<string, unknown> = {}) {
+async function lirePcmWav(blob: Blob) {
+  const buf = await blob.arrayBuffer();
+  const view = new DataView(buf);
+  const channels = view.getUint16(22, true);
+  const sampleRate = view.getUint32(24, true);
+  const dataOffset = 44;
+  const dataLen = view.getUint32(40, true);
+  const interleaved = new Int16Array(buf, dataOffset, dataLen / 2);
+  const samples: Float32Array[] = [];
+  for (let c = 0; c < channels; c++) {
+    const ch = new Float32Array(interleaved.length / channels);
+    for (let i = 0, j = c; i < ch.length; i++, j += channels) {
+      const v = interleaved[j];
+      ch[i] = v < 0 ? v / 0x8000 : v / 0x7fff;
+    }
+    samples.push(ch);
+  }
+  return { samples, channels, sampleRate };
+}
+
+function ctx(params: Record<string, string | number>, entrees: unknown[], noeudData: Record<string, unknown> = {}, onProgress: (msg: string) => void = () => {}) {
   return {
     entree: (idx: number) => entrees[idx],
     entrees: () => entrees,
     paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
     paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
+    onProgress,
     noeud: { data: noeudData },
     runtime: null,
   };
@@ -167,5 +188,67 @@ describe("chaînes critiques", () => {
     for (let i = 0; i < d.length; i++) d[i] = Math.sin((2 * Math.PI * 440 * i) / 44100);
     const res = await def.executer(ctx({ Méthode: "mono", "Seuil onset": 5, "Note minimale": 21, "Note maximale": 127, "Tempo du fichier MIDI": 120 }, [audio]) as any);
     expect(res.valeurs[0]).toBeInstanceOf(File);
+  });
+
+  it("Griffin-Lim : reconstruit un signal depuis le spectrogramme de magnitude", async () => {
+    const def = registre.trouverDef("griffin-lim")!;
+    const audio = new AudioBuffer({ numberOfChannels: 1, length: 22050, sampleRate: 44100 });
+    const d = audio.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.sin((2 * Math.PI * 440 * i) / 44100);
+    const progress = vi.fn();
+    const res = await def.executer(ctx({ Itérations: 30, "Phase initiale": "aleatoire", FFT: 2048, Recouvrement: "75", Mix: 100 }, [audio], {}, progress) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(out).toBeInstanceOf(AudioBuffer);
+    expect(out.length).toBe(audio.length);
+    expect(Math.max(...out.getChannelData(0).map(Math.abs))).toBeGreaterThan(0.01);
+    expect(progress).toHaveBeenCalled();
+  });
+
+  it("Griffin-Lim : reconstruit un signal stéréo de 2 s", async () => {
+    const def = registre.trouverDef("griffin-lim")!;
+    const sr = 48000;
+    const len = 2 * sr;
+    const audio = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
+    for (let c = 0; c < 2; c++) {
+      const d = audio.getChannelData(c);
+      for (let i = 0; i < len; i++) {
+        d[i] = Math.sin((2 * Math.PI * 440 * i) / sr) + (Math.random() - 0.5) * 0.1;
+      }
+    }
+    const res = await def.executer(ctx({ Itérations: 37, "Phase initiale": "aleatoire", FFT: 2048, Recouvrement: "75", Mix: 100 }, [audio]) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(out).toBeInstanceOf(AudioBuffer);
+    expect(out.numberOfChannels).toBe(2);
+    const peakL = Math.max(...out.getChannelData(0).map(Math.abs));
+    const peakR = Math.max(...out.getChannelData(1).map(Math.abs));
+    expect(Math.max(peakL, peakR)).toBeGreaterThan(0.01);
+  });
+
+  it("Griffin-Lim : le WAV de prévisualisation contient du signal", async () => {
+    const def = registre.trouverDef("griffin-lim")!;
+    const audio = new AudioBuffer({ numberOfChannels: 1, length: 22050, sampleRate: 44100 });
+    const d = audio.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.sin((2 * Math.PI * 440 * i) / 44100);
+    const res = await def.executer(ctx({ Itérations: 30, "Phase initiale": "aleatoire", FFT: 2048, Recouvrement: "75", Mix: 100 }, [audio]) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    const blob = bufferVersWavBlob(out);
+    const { samples } = await lirePcmWav(blob);
+    expect(Math.max(...samples[0].map(Math.abs))).toBeGreaterThan(0.01);
+  });
+
+  it("Griffin-Lim : reste audible avec le générateur audio mathématique par défaut", async () => {
+    const gen = registre.trouverDef("generateur-audio-mathematique")!;
+    const genRes = await gen.executer(ctx({ Formule: "sin(t * 2 * pi * 440)", Durée: 2, Canaux: "stereo", Volume: 30 }, []) as any);
+    const audio = genRes.valeurs[0] as AudioBuffer;
+    expect(audio).toBeInstanceOf(AudioBuffer);
+    expect(Math.max(...audio.getChannelData(0).map(Math.abs))).toBeGreaterThan(0.001);
+
+    const def = registre.trouverDef("griffin-lim")!;
+    const res = await def.executer(ctx({ Itérations: 60, "Phase initiale": "aleatoire", FFT: 2048, Recouvrement: "75", Mix: 100 }, [audio]) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(Math.max(...out.getChannelData(0).map(Math.abs))).toBeGreaterThan(0.001);
+    const blob = bufferVersWavBlob(out);
+    const { samples } = await lirePcmWav(blob);
+    expect(Math.max(...samples[0].map(Math.abs))).toBeGreaterThan(0.001);
   });
 });

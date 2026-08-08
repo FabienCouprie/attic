@@ -219,6 +219,7 @@ function Atelier() {
     setSel(null);
     setPile([]);
     grapheRacineRef.current = null;
+    setCurrentFilePath(null);
   }, [setNodes, setEdges]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -233,6 +234,25 @@ function Atelier() {
   const cacheExec = useRef<Map<string, any>>(new Map());
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
   const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
+
+  const [currentFilePath, setCurrentFilePath] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("attic-current-file-path");
+    } catch {
+      return null;
+    }
+  });
+
+  // Met à jour le titre de la fenêtre et le localStorage quand le fichier courant change.
+  useEffect(() => {
+    if (currentFilePath) {
+      localStorage.setItem("attic-current-file-path", currentFilePath);
+      document.title = `[Attic] ${currentFilePath.split(/[\\/]/).pop() || currentFilePath}`;
+    } else {
+      localStorage.removeItem("attic-current-file-path");
+      document.title = "Attic";
+    }
+  }, [currentFilePath]);
 
   const changerRepertoire = useCallback((r: string) => {
     setRepertoire(r);
@@ -314,7 +334,7 @@ function Atelier() {
   useEffect(() => {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, prioritaire: n.id === prioritaire } })));
   }, [prioritaire, setNodes]);
-  const [theme, setTheme] = useState<"violet" | "black">("violet");
+  const [theme, setTheme] = useState<"violet" | "black">("black");
 
   useEffect(() => {
     if (theme === "violet") delete document.documentElement.dataset.theme;
@@ -571,7 +591,7 @@ function Atelier() {
         parametres: {},
         statut: "attente",
         nom: t("btn.commentaire"),
-        ...(callbacksNoeudRef.current?.() ?? {}),
+        ...(callbacksNoeudRef.current?.()),
       },
     }]);
   }, [setNodes, t]);
@@ -590,7 +610,7 @@ function Atelier() {
           statut: "attente",
           nom: t("btn.cadre"),
           couleur: "rgba(120,120,120,0.12)",
-          ...(callbacksNoeudRef.current?.() ?? {}),
+          ...(callbacksNoeudRef.current?.()),
         },
       };
       return [nouveau, ...nds];
@@ -792,11 +812,22 @@ function Atelier() {
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
-  const { exporter, importer } = usePersistance({
+  const { sauvegarder, exporter, importer } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
+    currentFilePath, setCurrentFilePath,
   });
+
+  // ── Auto-save périodique ──
+  // Sauvegarde le fichier courant toutes les 30 secondes si un fichier est ouvert.
+  useEffect(() => {
+    if (!currentFilePath) return;
+    const id = setInterval(() => {
+      sauvegarder().catch((err) => console.error("[attic] Auto-save failed", err));
+    }, 30000);
+    return () => clearInterval(id);
+  }, [currentFilePath, sauvegarder]);
 
   // ── Filet de sécurité anti-curseur collé ──
   // Si le bouton souris est relâché hors de la fenêtre (second écran, Alt-Tab,
@@ -882,6 +913,7 @@ function Atelier() {
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
+          currentFilePath={currentFilePath}
           onChargerSF2={async (f) => {
             try {
               await chargerSF2Globale(await f.arrayBuffer(), f.name);
@@ -900,49 +932,7 @@ function Atelier() {
           onExporter={exporter}
           onAjouterCommentaire={ajouterCommentaire}
           onAjouterCadre={ajouterCadre}
-          onSauvegarder={() => {
-            try {
-              // Sauver le contexte courant : grapheRacineRef contient alors le graphe
-              // RACINE même si l'on est descendu dans un méta-composant. Sinon on
-              // écrasait la sauvegarde du canevas avec l'intérieur du méta affiché.
-              sauvegarderContexteCourant();
-              const racine = grapheRacineRef.current ?? { nodes, edges };
-              // Garde anti-perte : ne pas écraser une sauvegarde non-vide par un
-              // canevas vide (crash/restauration laissant la racine vide).
-              if (racine.nodes.length === 0) {
-                let ancienNonVide = false;
-                try {
-                  const a = localStorage.getItem("attic-encours");
-                  ancienNonVide = !!a && Array.isArray(JSON.parse(a).nodes) && JSON.parse(a).nodes.length > 0;
-                } catch { /* sauvegarde illisible : on laisse écraser */ }
-                if (ancienNonVide && !window.confirm(t("msg.confirmEcraserSauvegarde"))) return;
-              }
-              const data = {
-                nodes: racine.nodes.map((n: any) => ({
-                  id: n.id, type: n.type, position: n.position, width: n.width, height: n.height,
-                  data: {
-                    ficheId: n.data.ficheId,
-                    parametres: n.data.parametres,
-                    zonesSelectionnees: n.data.zonesSelectionnees,
-                    nomFichier: n.data.nomFichier,
-                    nom: n.data.nom,
-                    couleur: n.data.couleur,
-                  },
-                })),
-                edges: racine.edges.map((e: any) => ({
-                  id: e.id, source: e.source, target: e.target,
-                  sourceHandle: e.sourceHandle, targetHandle: e.targetHandle,
-                })),
-                viewport: rfInstance?.getViewport(),
-                date: new Date().toISOString(),
-              };
-              localStorage.setItem("attic-encours", JSON.stringify(data));
-              setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: t("msg.enCoursSauvegarde") } } : null);
-              setTimeout(() => setSel((prev) => prev ? { ...prev, data: { ...prev.data, audioResultatMessage: undefined } } : null), 2000);
-            } catch (e) {
-              console.error("[attic] Sauvegarde échouée", e);
-            }
-          }}
+          onSauvegarder={sauvegarder}
           onImporter={importer}
         />
         <div className="attic-onglets">

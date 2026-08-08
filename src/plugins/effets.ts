@@ -33,8 +33,9 @@ import {
    harmoniser,
    vocoder,
    granularFreeze,
-   appliquerInstrumentMidi,
-   joindreMidi,
+    appliquerInstrumentMidi,
+     griffinLim, picAbsolu,
+    joindreMidi,
    bouclerMidi,
    analyserMidi,
 } from "../audio";
@@ -291,9 +292,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Magnitude", nomEn: "Magnitude", type: "texte", defaut: "mag * 2",
         doc: "Expression pour la magnitude de chaque bin spectral. Variables : mag, phase, freq (Hz), bin, N (taille FFT), sr.",
         docEn: "Expression for the magnitude of each spectral bin. Variables: mag, phase, freq (Hz), bin, N (FFT size), sr.", defautEn: "mag * 2" },
-      { nom: "Phase", nomEn: "Phase", type: "texte", defaut: "",
-        doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Variables : mag, phase, freq, bin, N, sr.",
-        docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Variables: mag, phase, freq, bin, N, sr.", defautEn: "" },
+      { nom: "Phase", nomEn: "Phase", type: "texte", defaut: "phase + 0.5",
+        doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Exemple : phase + 0.5 décale la phase de 0.5 radian. Variables : mag, phase, freq, bin, N, sr.",
+        docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Example: phase + 0.5 shifts the phase by 0.5 radian. Variables: mag, phase, freq, bin, N, sr.", defautEn: "phase + 0.5" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
@@ -1212,6 +1213,69 @@ export const fiches: FicheAudio[] = ([
       const graine = ctx.paramNombre("Graine", 0);
       const out = appliquerDecoupeAleatoire(a, parts, crossfade, mode, graine);
       return { valeurs: [out], message: `Découpe aléatoire · ${mode}` };
-   },
+    },
+  },
+  {
+    id: "griffin-lim", nom: "Griffin-Lim", nomEn: "Griffin-Lim", univers: "Traitement", famille: "Effets",
+    resume: "Reconstruction itérative depuis le spectrogramme de magnitude. Change la phase pour créer des textures spectrales.",
+    resumeEn: "Iterative reconstruction from the magnitude spectrogram. Changes phase to create spectral textures.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [1, 300], pas: 1, defaut: 60, unite: "",
+        doc: "Nombre d'itérations Griffin-Lim. Plus c'est élevé, plus la phase est cohérente et le rendu propre.", docEn: "Number of Griffin-Lim iterations. Higher values produce more coherent phase and cleaner output." },
+      { nom: "Phase initiale", nomEn: "Initial phase", type: "choix",
+        options: ["Aléatoire", "Nulle", "Originale"],
+        optionsEn: ["Random", "Zero", "Original"],
+        optionIds: ["aleatoire", "nulle", "originale"],
+        defaut: "Aléatoire",
+        doc: "Phase de départ pour la reconstruction. Aléatoire = texture créative ; Nulle = impulsion initiale ; Originale = reconstruit le signal original.", docEn: "Starting phase for reconstruction. Random = creative texture; Zero = initial pulse; Original = reconstruct the original signal." },
+      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+        doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
+      { nom: "Recouvrement", nomEn: "Overlap", type: "choix",
+        options: ["50 %", "75 %"],
+        optionsEn: ["50 %", "75 %"],
+        optionIds: ["50", "75"],
+        defaut: "75 %",
+        doc: "Taux de recouvrement entre fenêtres. 75 % donne un résultat plus lisse.", docEn: "Overlap between frames. 75% gives a smoother result." },
+      { nom: "Mix", nomEn: "Mix", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+      const iterations = ctx.paramNombre("Itérations", 60);
+      const phase = ctx.paramTexte("Phase initiale", "aleatoire");
+      const fftSize = ctx.paramNombre("FFT", 2048);
+      const recouvrement = ctx.paramTexte("Recouvrement", "75");
+      const mix = ctx.paramNombre("Mix", 100);
+      const peakIn = Math.max(...Array.from({ length: audio.numberOfChannels }, (_, c) => picAbsolu(audio.getChannelData(c))));
+      try {
+        const out = await griffinLim(audio, iterations, fftSize, recouvrement === "50" ? "50%" : "75%", phase as any, mix, ctx.onProgress);
+        let peakOut = 0;
+        let hasNaN = false;
+        let hasInf = false;
+        for (let c = 0; c < out.numberOfChannels; c++) {
+          const ch = out.getChannelData(c);
+          for (let i = 0; i < ch.length; i++) {
+            const v = ch[i];
+            if (Number.isNaN(v)) hasNaN = true;
+            if (!Number.isFinite(v)) hasInf = true;
+            const a = Math.abs(v);
+            if (a > peakOut) peakOut = a;
+          }
+        }
+        const fmt = (n: number) => n.toExponential(2);
+        let message: string;
+        if (peakIn < 1e-12) message = `Griffin-Lim · ${iterations} it. · entrée silencieuse (pic ${fmt(peakIn)})`;
+        else if (hasNaN || hasInf) message = `Griffin-Lim · ${iterations} it. · sortie invalide (NaN/Inf)`;
+        else if (peakOut < 1e-12) message = `Griffin-Lim · ${iterations} it. · sortie silencieuse (pic ${fmt(peakOut)})`;
+        else message = `Griffin-Lim · ${iterations} it. · pic E/S ${fmt(peakIn)} / ${fmt(peakOut)}`;
+        console.log("[griffin-lim]", message, { peakIn, peakOut, hasNaN, hasInf, mix, phase });
+        return { valeurs: [out], message };
+      } catch (e: any) {
+        return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
+      }
+    },
   },
 ] as FicheAudio[]).map(avecDoc);

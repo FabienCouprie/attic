@@ -1,7 +1,7 @@
 // ui/hooks/usePersistance.ts — Export / import du workflow (JSON) + méta-composants.
 // Extrait d'App.tsx à l'identique (comportement inchangé). Le hook reçoit l'état
 // et les setters dont il a besoin et renvoie { exporter, importer }.
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../../core";
@@ -21,7 +21,7 @@ export interface OptionsPersistance {
   nodes: NoeudAtelier[];
   edges: Edge[];
   setNodes: Dispatch<SetStateAction<NoeudAtelier[]>>;
-  setEdges: Dispatch<SetStateAction<Edge[]>>;
+  setEdges: Dispatch<SetStateAction<NoeudAtelier[]>>;
   rfInstance: any;
   repertoire: string;
   sauvegarderContexteCourant: () => void;
@@ -32,11 +32,20 @@ export interface OptionsPersistance {
   setPrioritaire: (id: string | null) => void;
   lancerRef: MutableRefObject<any>;
   cacheExec: MutableRefObject<Map<string, any>>;
+  currentFilePath: string | null;
+  setCurrentFilePath: (path: string | null) => void;
 }
 
 export function usePersistance(o: OptionsPersistance) {
   const { t } = useI18n();
-  const exporter = useCallback(async () => {
+  // Référence stable vers le fichier courant pour éviter les stale closures
+  // dans les raccourcis clavier / callbacks de la barre d'outils.
+  const currentFilePathRef = useRef(o.currentFilePath);
+  useEffect(() => {
+    currentFilePathRef.current = o.currentFilePath;
+  }, [o.currentFilePath]);
+
+  const buildExportData = useCallback(() => {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
 
@@ -51,14 +60,6 @@ export function usePersistance(o: OptionsPersistance) {
     if (pertes.length > 0) {
       const rapport = formaterRapportPertes(pertes);
       console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
-      // Alerte utilisateur — non bloquante, informative, limitée au cas détaillé (≤3 nœuds)
-      const nbChamps = pertes.reduce((s, p) => s + p.champs.length, 0);
-      if (pertes.length <= 3) {
-        const message = t("persistance.exportPertesDetail")
-          .replace("{nb}", String(nbChamps))
-          .replace("{rapport}", rapport);
-        if (typeof alert !== "undefined") alert(message);
-      }
     }
 
     const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
@@ -82,46 +83,77 @@ export function usePersistance(o: OptionsPersistance) {
     }));
     const metas = tousLesMetas().map(serialiserMeta);
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
-    const nom = `attic-${new Date().toISOString().slice(0, 10)}.json`;
+
+    const encours = {
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, nom: n.data.nom, couleur: n.data.couleur } })),
+      edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
+      viewport: o.rfInstance?.getViewport(),
+      date: new Date().toISOString(),
+    };
+
+    return { json, cleanNodes, cleanEdges, encours };
+  }, [o]);
+
+  /** Sauvegarde "classique" : écrit dans le fichier courant si connu, sinon demande. */
+  const sauvegarder = useCallback(async (forceDialog = false) => {
+    const currentFilePath = currentFilePathRef.current;
+    console.log("[persistance] sauvegarder called forceDialog=", forceDialog, "currentFilePath=", currentFilePath);
+    const { json, encours } = buildExportData();
+    const defaultName = currentFilePath ? undefined : `attic-${new Date().toISOString().slice(0, 10)}.json`;
 
     if ((window as any).api?.sauvegarderFichier) {
-      // Mode Electron : dialogue de sauvegarde dans le répertoire work par défaut
       const api = (window as any).api;
-      let dossier = o.repertoire;
-      if (!dossier) {
-        dossier = await api.obtenirRepertoireTravail?.();
+      console.log("[persistance] api available, ecrireFichier=", !!api.ecrireFichier);
+      let filePath = currentFilePath;
+      // Si pas de fichier courant ou "Save as" demandé, on ouvre le dialogue.
+      if (!filePath || forceDialog) {
+        let dossier = o.repertoire;
+        if (!dossier) dossier = await api.obtenirRepertoireTravail?.();
+        const defaultPath = filePath || (dossier ? `${dossier}\\${defaultName}` : defaultName);
+        filePath = await api.sauvegarderFichier({
+          defaultPath,
+          filters: [{ name: "Workflow Attic", extensions: ["json"] }],
+          data: json,
+        });
+      } else if (api?.ecrireFichier) {
+        // Écriture directe dans le fichier courant sans dialogue.
+        await api.ecrireFichier(filePath, json);
+      } else {
+        // Fallback : dialogue pré-rempli avec le fichier courant.
+        filePath = await api.sauvegarderFichier({
+          defaultPath: filePath,
+          filters: [{ name: "Workflow Attic", extensions: ["json"] }],
+          data: json,
+        });
       }
-      const defaultPath = dossier ? `${dossier}\\${nom}` : nom;
-      const result = await api.sauvegarderFichier({
-        defaultPath,
-        filters: [{ name: "Workflow Attic", extensions: ["json"] }],
-        data: json,
-      });
-      // Aussi sauvegarder l'en-cours localStorage
-      try {
-        const data = {
-          nodes: cleanNodes.map((n: any) => ({ id: n.id, position: n.position, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, nom: n.data.nom, couleur: n.data.couleur } })),
-          edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
-          viewport: o.rfInstance?.getViewport(),
-          date: new Date().toISOString(),
-        };
-        localStorage.setItem("attic-encours", JSON.stringify(data));
-      } catch {}
-      if (result) {
-        console.log(`[attic] Exporté : ${result}`);
+      if (filePath) {
+        o.setCurrentFilePath(filePath);
+        console.log(`[attic] Sauvegardé : ${filePath}`);
       }
     } else {
-      // Mode web : téléchargement
+      // Mode web : téléchargement (aucun vrai "fichier courant" possible).
       const blob = new Blob([json], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = nom; a.click();
+      a.download = defaultName || "attic.json"; a.click();
     }
-  }, [o]);
+
+    // Toujours mettre à jour l'en-cours localStorage.
+    try {
+      localStorage.setItem("attic-encours", JSON.stringify(encours));
+    } catch {}
+  }, [o, buildExportData]);
+
+  const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
   const importer = useCallback(async (f?: File) => {
     let texte: string;
+    let chemin: string | null = null;
     if (f) {
       texte = await f.text();
+      const api = (window as any).api;
+      if (api?.cheminFichier) {
+        chemin = api.cheminFichier(f) || null;
+      }
     } else if ((window as any).api) {
       const resultat = await (window as any).api.ouvrirFichier({
         defaultPath: o.repertoire || undefined,
@@ -129,9 +161,12 @@ export function usePersistance(o: OptionsPersistance) {
       });
       if (!resultat) return;
       texte = resultat.contenu;
+      chemin = resultat.chemin || null;
     } else {
       return;
     }
+    console.log("[persistance] importer chemin=", chemin);
+    o.setCurrentFilePath(chemin);
     let json: any;
     try {
       json = JSON.parse(texte);
@@ -214,5 +249,5 @@ export function usePersistance(o: OptionsPersistance) {
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
   }, [o]);
 
-  return { exporter, importer };
+  return { sauvegarder, exporter, importer };
 }

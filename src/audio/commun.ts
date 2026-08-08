@@ -1,19 +1,24 @@
 // audio/commun.ts — Extrait de l'ancien monolithe DSP.
 import { fft } from "./fft";
 
+// Noms français ET anglais comme clés directement : évite d'avoir besoin
+// d'optionIds sur chaque paramètre "Clé" pour retrouver la bonne tonique
+// quel que soit la langue de l'interface (ctx.paramTexte renvoie la valeur
+// brute stockée, dans la langue où elle a été choisie). Mêmes alias que
+// traduireCle() plus bas dans generation.ts.
 export const DEMI_TONS_CLE: Record<string, number> = {
-  Do: 0,
-  "Do#": 1,
-  Ré: 2,
-  "Mi♭": 3,
-  Mi: 4,
-  Fa: 5,
-  "Fa#": 6,
-  Sol: 7,
-  "Sol#": 8,
-  La: 9,
-  "Si♭": 10,
-  Si: 11,
+  Do: 0, C: 0,
+  "Do#": 1, "C#": 1,
+  Ré: 2, D: 2,
+  "Mi♭": 3, Eb: 3, "D#": 3,
+  Mi: 4, E: 4,
+  Fa: 5, F: 5,
+  "Fa#": 6, "F#": 6,
+  Sol: 7, G: 7,
+  "Sol#": 8, "G#": 8,
+  La: 9, A: 9,
+  "Si♭": 10, Bb: 10, "A#": 10,
+  Si: 11, B: 11,
 };
 
 

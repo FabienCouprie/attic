@@ -340,12 +340,12 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {data.audioResultatUrl && vuesAvant.length === 0 && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <IndicateurNiveau buffer={data.audioResultatBuffer} />
-              <audio className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
+              <audio key={data.audioResultatUrl} className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>
           )}
           {!data.audioResultatUrl && data.audioUrl && vuesAvant.length === 0 && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
-              <audio className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
+              <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>
           )}
           {data.audioResultatMessage && !vueAvantMasqueMessage(data.ficheId) && (
