@@ -76,9 +76,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Notes", nomEn: "Notes", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Tonic", type: "texte", defaut: "C",
-        doc: "Tonalité de départ (ex : C, D#, F#).",
-        docEn: "Starting tonic (e.g. C, D#, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Tonic", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonalité de départ.",
+        docEn: "Starting tonic.", defautEn: "C" },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
         doc: "Type de gamme.",
         docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
@@ -127,9 +131,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la progression (ex : C, G, Dm, F#).",
-        docEn: "Progression key (e.g. C, G, Dm, F#).", defautEn: "C" },
+      { nom: "Tonalité", nomEn: "Key", type: "choix",
+        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+        defaut: "C",
+        doc: "Tonique de la progression. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i VI III VII) plutôt qu'un suffixe sur la tonalité.",
+        docEn: "Root note of the progression. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i VI III VII) rather than a suffix on the key.", defautEn: "C" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains (ex : I V vi IV, ii V I).",
         docEn: "Roman numeral progression (e.g. I V vi IV, ii V I).", defautEn: "I V vi IV" },
@@ -225,7 +233,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Tonalité", nomEn: "Key", type: "texte" }, { nom: "Progression", type: "texte" }, { nom: "Accords détectés", nomEn: "Detected chords", type: "texte" }],
     parametres: [
       { nom: "Style", nomEn: "Style", type: "choix", options: ["Pop", "Jazz", "Blues"], optionsEn: ["Pop", "Jazz", "Blues"], defaut: "Pop",
-        doc: "Style de la progression suggérée.", docEn: "Suggested progression style.", defautEn: "Pop" },
+        doc: "Style de la progression suggérée, adapté au mode détecté (majeur ou mineur).", docEn: "Suggested progression style, adapted to the detected mode (major or minor).", defautEn: "Pop" },
     ],
     async executer(ctx: any) {
       const buffer = ctx.entree(0);
@@ -235,9 +243,10 @@ export const fiches: FicheAudio[] = ([
       const tonalite = estimerTonalite(buffer);
       const accords = detecterAccords(buffer, 0.5);
       const style = ctx.paramTexte("Style", "Pop");
+      const mineur = tonalite.type === "minor";
       let prog = progressionSuggest(tonalite.type);
-      if (style === "Jazz") prog = "ii V I";
-      if (style === "Blues") prog = "I I I I IV IV I I V IV I V";
+      if (style === "Jazz") prog = mineur ? "ii V i" : "ii V I";
+      if (style === "Blues") prog = mineur ? "i i i i iv iv i i v iv i v" : "I I I I IV IV I I V IV I V";
       const accordsTexte = accords.map((a) => `${a.nomEn} (${a.duree.toFixed(1)}s)`).join("\n");
       return {
         valeurs: [`${tonalite.nom} (${Math.round(tonalite.confiance * 100)}%)`, prog, accordsTexte],
