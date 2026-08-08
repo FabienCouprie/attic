@@ -4,6 +4,9 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+- **Numéro de version figé dans la barre d'outils.** Le `v1.1.2` affiché en haut de l'app était une chaîne codée en dur dans `BarreOutils.tsx`, jamais mise à jour depuis — sans lien avec la version réellement installée. Corrigé en l'injectant depuis `package.json` au build (`vite.config.ts`, option `define`), vérifié dans le bundle de production réel (celui utilisé pour l'app Electron packagée), pas seulement le serveur de dev.
+
 ## [3.0.8] — 2026-08-08
 
 ### Added
