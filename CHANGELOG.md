@@ -4,6 +4,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [3.0.8] — 2026-08-08
+
 ### Added
 - **Mélodie aléatoire, Musique fractale, Sampler personnalisé, Mappeur Mandelbrot, Arpège de Koch et Automate cellulaire : 5 nouveaux modes de gamme.** Dorien, Phrygien, Lydien, Mixolydien et Locrien s'ajoutent à Majeur, Mineur naturel, Mineur harmonique (nouveau sur Mandelbrot/Koch/Automate cellulaire), aux 2 gammes pentatoniques et à Chromatique déjà disponibles. Le paramètre `Gamme` de ces six nœuds n'avait pas d'`optionIds` — même bug que l'Oscillateur/Générateur d'accords plus tôt : en anglais, une gamme non reconnue retombait silencieusement sur la valeur par défaut. Corrigé partout, et les 6 copies dupliquées de la table de gammes fusionnées en une seule fonction partagée (`degresGammeMelodie`, `audio/generation.ts`).
 
