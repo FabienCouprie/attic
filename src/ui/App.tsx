@@ -144,6 +144,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
+  if (def.id === "sequenceur-accords") return { width: 480, height: 380 };
   if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
   if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
   if (def.id === "collection-lecteur-musique") return { width: 380, height: 320 };

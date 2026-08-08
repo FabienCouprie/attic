@@ -1,14 +1,15 @@
 # Attic
 
-Nodal audio processing framework with AI integration. Build audio processing graphs by connecting plugin nodes on a canvas, then execute the DAG to produce results.
+> **A visual node-editor for AI-powered music & sound design.**  
+> 213+ nodes · local ML models · bilingual FR/EN · one-click workflows.
 
-"This is not a professional piece of software; it is a pure, hardcore 'vibe coding' test, born out of self-training. The goal is twofold:
+[![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
+[![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/FabienCouprie/attic?style=social)](https://github.com/FabienCouprie/attic/stargazers)
 
-  1 - To get a clear sense of the capabilities and limitations of extreme vibe coding (where the pilot hasn't typed a single line of code, nor referred to any documentation other than this single paragraph).
+Build audio processing graphs by connecting plugin nodes on a canvas, then execute the DAG to produce sound, stems, MIDI, lyrics, or even poetic sound maps.
 
-  2 - To obtain a reusable framework (UI + core) for other use cases.
-
-It was built by dialing the whimsicality up to eleven, intentionally blending serious features with utterly improbable ones to stress-test the robustness and flexibility of the underlying framework. It is designed to be a creativity assistant, allowing you to chain together elements in two clicks that would normally be difficult to connect."
+> ⚠️ **Heads-up:** Attic is a hardcore “vibe coding” experiment — a stress-test of AI-assisted development and a creativity assistant. It intentionally blends serious audio tools with whimsical features to test the flexibility of the underlying framework.
 
 ## Features
 

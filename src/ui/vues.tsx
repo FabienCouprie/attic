@@ -22,6 +22,7 @@ import { ReponseFiltre } from "./ReponseFiltre";
 import { SequenceurBatterie } from "./SequenceurBatterie";
 import { SequenceurBatterieAvance } from "./SequenceurBatterieAvance";
 import { SequenceurMelodique } from "./SequenceurMelodique";
+import { SequenceurAccords } from "./SequenceurAccords";
 import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
@@ -792,6 +793,25 @@ function VueSequenceurMelodique({ id, data }: VueProps) {
   );
 }
 
+// ── Séquenceur d'accords (grille de degrés pas-à-pas) ──
+function VueSequenceurAccords({ id, data }: VueProps) {
+  const p = data.parametres ?? {};
+  const nbPas = parseInt(String(p["Nombre de pas"] ?? "16"), 10) || 16;
+  const motif = String(p["Motif"] ?? "");
+  const cle = String(p["Clé"] ?? "C");
+  const gamme = String(p["Gamme"] ?? "majeur");
+  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  return (
+    <SequenceurAccords
+      motif={motif}
+      nbPas={nbPas}
+      cle={cle}
+      gamme={gamme}
+      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
+    />
+  );
+}
+
 // ── Séquenceur de batterie avancé (velocity + 8 pistes) ──
 function VueSequenceurBatterieAvance({ id, data }: VueProps) {
   const p = data.parametres ?? {};
@@ -1383,6 +1403,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("sequenceur-batterie"), vue: VueSequenceurBatterie, position: "avant" },
   { correspond: parId("sequenceur-batterie-avance"), vue: VueSequenceurBatterieAvance, position: "avant" },
   { correspond: parId("sequenceur-melodique"), vue: VueSequenceurMelodique, position: "avant" },
+  { correspond: parId("sequenceur-accords"), vue: VueSequenceurAccords, position: "avant" },
   { correspond: parId("generateur-audio-mathematique", "formule-echantillons", "formule-spectrale"), vue: EditeurFormule, position: "avant" },
   { correspond: parId("enveloppe-adsr"), vue: VueADSR, position: "avant" },
   { correspond: parId("noms-instruments"), vue: VueNomsInstruments, position: "avant" },

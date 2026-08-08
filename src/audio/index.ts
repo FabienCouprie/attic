@@ -21,6 +21,7 @@ export * from "./convolution";
 export * from "./melodie";
 export * from "./couleurs";
 export * from "./accords";
+export * from "./accords-sequencer";
 export * from "./vumetre";
 export * from "./reservoir";
 export * from "./multi-reservoir";

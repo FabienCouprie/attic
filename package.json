@@ -2,6 +2,14 @@
   "name": "attic",
   "private": true,
   "version": "3.0.8",
+  "description": "Visual node-editor for AI-powered music & sound design — 213+ nodes, local ML models, bilingual FR/EN.",
+  "keywords": [
+    "audio", "music", "daw", "music-production", "sound-design",
+    "ai", "machine-learning", "transformers", "onnx", "local-ai",
+    "electron", "react", "typescript", "node-editor", "visual-programming",
+    "generative-music", "speech-to-text", "text-to-speech", "source-separation",
+    "creative-coding", "bilingual", "french", "open-source"
+  ],
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
