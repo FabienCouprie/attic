@@ -90,7 +90,7 @@ async function processRequest(req) {
       length: merged.length,
     });
   } catch (err) {
-    console.error(`[tts-worker] error modelId=${modelId}`, err);
+    console.error("[tts-worker] error modelId=%s", modelId, err);
     self.postMessage({ type: "error", requestId, msg: String(err?.message || err) });
   }
 }
