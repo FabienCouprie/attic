@@ -339,69 +339,6 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   return { programme, nom: nomPreset, presets, echantillons, instruments, smpl, bufferOriginal: buffer };
 }
 
-export function chercherZoneInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {
-  echantillon: EchantillonSF2;
-  zone: ZoneInstrument;
-  donnees: Int16Array;
-  debutSample: number;
-  finSample: number;
-  instrumentIdx: number;
-} | null {
-  // Trouver le preset demandé, sinon le premier preset disponible
-  let preset = sf.presets.find(p => p.programme === programme && p.banque === banque);
-  if (!preset && sf.presets.length > 0) {
-    preset = sf.presets[0];
-  }
-
-  let presetZone: PresetZone | undefined;
-  let instrumentIdx = 0;
-  if (preset) {
-    presetZone = preset.zones.find(
-      z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
-           velocite >= z.velMin && velocite <= z.velMax
-    );
-    if (!presetZone) return null;
-    instrumentIdx = presetZone.instrumentIdx;
-  } else if (sf.instruments.length > 0) {
-    // Fallback : pas de presets -> instrument 0
-    instrumentIdx = 0;
-  } else {
-    return null;
-  }
-
-  const inst = sf.instruments[instrumentIdx];
-  if (!inst) return null;
-
-  const zone = inst.zones.find(
-    z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
-         velocite >= z.velMin && velocite <= z.velMax
-  );
-  if (!zone) return null;
-
-  const ech = sf.echantillons[zone.echantillonId];
-  if (!ech || ech.debut >= ech.fin) return null;
-
-  // Combine les accordages du preset et de l'instrument
-  const finalAttenuation = (zone.attenuation ?? 0) + (presetZone?.attenuation ?? 0);
-  const finalPan = Math.max(-500, Math.min(500, (zone.pan ?? 0) + (presetZone?.pan ?? 0)));
-  const combinedZone: ZoneInstrument = {
-    ...zone,
-    coarseTune: (zone.coarseTune ?? 0) + (presetZone?.coarseTune ?? 0),
-    fineTune: (zone.fineTune ?? 0) + (presetZone?.fineTune ?? 0),
-    attenuation: finalAttenuation,
-    pan: finalPan,
-  };
-
-  return {
-    echantillon: ech,
-    zone: combinedZone,
-    donnees: sf.smpl,
-    debutSample: ech.debut,
-    finSample: ech.fin,
-    instrumentIdx,
-  };
-}
-
 export function chercherZonesInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {
   echantillon: EchantillonSF2;
   zone: ZoneInstrument;

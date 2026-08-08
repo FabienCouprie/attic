@@ -109,7 +109,7 @@ export const fiches: FicheAudio[] = ([
         synthesize: traduire("progress.kokoro.synthesize"),
         chunk: traduire("progress.kokoro.chunk"),
       };
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
           const msg = e.data;
@@ -118,13 +118,17 @@ export const fiches: FicheAudio[] = ([
             ctx.onProgress?.(msg.msg);
           } else if (msg.type === "done") {
             w.removeEventListener("message", onMessage);
-            const { data, sampleRate, length } = msg;
-            const buf = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
-            buf.getChannelData(0).set(data);
-            resolve({
-              valeurs: [buf],
-              message: traduire("msg.kokoro_var_0_var_1", voix, texte.slice(0, 40), texte.length > 40 ? "…" : ""),
-            });
+            try {
+              const { data, sampleRate, length } = msg;
+              const buf = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
+              buf.getChannelData(0).set(data);
+              resolve({
+                valeurs: [buf],
+                message: traduire("msg.kokoro_var_0_var_1", voix, texte.slice(0, 40), texte.length > 40 ? "…" : ""),
+              });
+            } catch (err) {
+              reject(new Error(traduire("msg.erreur_kokoro_var_0", String(err))));
+            }
           } else if (msg.type === "error") {
             w.removeEventListener("message", onMessage);
             resolve({ valeurs: [null], erreur: true, message: traduire("msg.erreur_kokoro_var_0", msg.msg) });

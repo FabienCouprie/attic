@@ -118,7 +118,6 @@ const DICO: Record<string, Record<Langue, string>> = {
   "progress.piper.decode": { fr: "Décodage audio…", en: "Audio decoding…" },
   "progress.piper.chunk": { fr: "Synthèse vocale… {__VAR_0__}/{__VAR_1__}", en: "Synthesizing speech… {__VAR_0__}/{__VAR_1__}" },
   "msg.piper_tts_var_0_var_1": { fr: "Piper TTS · {0} · {1}{2}", en: "Piper TTS · {0} · {1}{2}" },
-  "msg.tts_francais_var_0": { fr: "TTS Français · Siwis · {__VAR_0__}{__VAR_1__}", en: "French TTS · Siwis · {__VAR_0__}{__VAR_1__}" },
   "msg.kokoro_var_0_var_1": { fr: "Kokoro TTS · {__VAR_0__} · {__VAR_1__}{__VAR_2__}", en: "Kokoro TTS · {__VAR_0__} · {__VAR_1__}{__VAR_2__}" },
   "msg.erreur_kokoro_var_0": { fr: "Erreur Kokoro : {__VAR_0__}", en: "Kokoro error: {__VAR_0__}" },
   "msg.export_image.termine": { fr: "Image sauvegardée : {0}", en: "Image saved: {0}" },

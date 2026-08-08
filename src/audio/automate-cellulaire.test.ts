@@ -4,7 +4,6 @@ import { describe, it, expect } from "vitest";
 import {
   genererNotesAutomateCellulaire,
   genererAutomateCellulaire,
-  GAMMES,
   normaliserGamme,
   normaliserCle,
   normaliserMode,
@@ -12,6 +11,7 @@ import {
   normaliserModeVoix,
   normaliserMapping,
 } from "./automate-cellulaire";
+import { degresGammeMelodie } from "./generation";
 
 const defaults = {
   regle: 90,
@@ -84,7 +84,7 @@ describe("automate-cellulaire", () => {
       cle: "La",
       gamme: "Pentatonique mineure",
     });
-    const gamme = GAMMES[normaliserGamme("Pentatonique mineure")];
+    const gamme = degresGammeMelodie(normaliserGamme("Pentatonique mineure"));
     for (const n of notes) {
       const pc = ((n.note % 12) + 12) % 12;
       expect(gamme).toContain(pc);
@@ -167,8 +167,8 @@ describe("automate-cellulaire", () => {
     expect(normaliserMode("Melody")).toBe("Mélodie");
     expect(normaliserCle("C")).toBe("Do");
     expect(normaliserCle("A")).toBe("La");
-    expect(normaliserGamme("Major")).toBe("Majeur");
-    expect(normaliserGamme("Minor pentatonic")).toBe("Pentatonique mineure");
+    expect(normaliserGamme("Major")).toBe("majeur");
+    expect(normaliserGamme("Minor pentatonic")).toBe("pentatonique-mineure");
     expect(normaliserTopologie("2D Conway")).toBe("2D Conway");
     expect(normaliserTopologie("Highlife")).toBe("2D Highlife");
     expect(normaliserModeVoix("Arpège")).toBe("Arpège");

@@ -15,6 +15,11 @@ import {
   rendreSpectrogrammeFractal,
   frequenceDeNoteMidi,
   GAMMES_ACCORDS,
+  degresGammeMelodie,
+  GAMMES_MELODIE_FR,
+  GAMMES_MELODIE_EN,
+  GAMMES_MELODIE_IDS,
+  DEMI_TONS_CLE,
   type NoteEvenement,
 } from "../audio";
 import { parseMidi } from "midi-file";
@@ -53,6 +58,7 @@ const GENRES_ACCORDS_IDS = ["pop", "rock", "jazz", "blues", "classique", "electr
 // GAMMES_ACCORDS (audio/generation.ts), seule source de vérité pour les
 // intervalles réellement utilisés lors de la génération.
 const GAMMES_ACCORDS_IDS = GAMMES_ACCORDS.map((g) => g.id);
+
 
 export const fiches: FicheAudio[] = ([
   {
@@ -116,7 +122,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["4/4","3/4","6/8"], defautEn: "4/4" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
@@ -156,7 +162,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
@@ -197,7 +203,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5, doc: "Durée de chaque note exprimée en fraction de temps (1 = 1 temps/noire, 0.5 = croche, 0.25 = double-croche). Le tempo (BPM) détermine la durée réelle.", docEn: "Duration of each note expressed as a fraction of a beat (1 = one beat/quarter note, 0.5 = eighth note, 0.25 = sixteenth note). Tempo (BPM) determines the actual duration." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de la mélodie en battements par minute.", docEn: "Tempo of the melody in beats per minute." },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de la gamme.", docEn: "Reference note (tonic) of the scale." },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure","Chromatique"], defaut: "Majeur", optionsEn: ["Major","Natural minor","Harmonic minor","Major pentatonic","Minor pentatonic","Chromatic"], defautEn: "Major", doc: "Gamme utilisée pour quantiser les hauteurs de notes.", docEn: "Scale used to quantize note pitches." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les hauteurs de notes.", docEn: "Scale used to quantize note pitches." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base des notes MIDI générées.", docEn: "Base octave of the generated MIDI notes." },
       { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1, doc: "Facteur multiplicateur appliqué au nombre d'itérations pour choisir le degré de la gamme.", docEn: "Multiplier applied to the iteration count to select the scale degree." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde utilisée pour la synthèse FM.", docEn: "Waveform used for FM synthesis." },
@@ -245,7 +251,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de l'accord de base.", docEn: "Reference note (tonic) of the base chord." },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure","Chromatique"], defaut: "Majeur", optionsEn: ["Major","Natural minor","Harmonic minor","Major pentatonic","Minor pentatonic","Chromatic"], defautEn: "Major", doc: "Gamme utilisée pour quantiser les notes de l'arpège.", docEn: "Scale used to quantize the arpeggio notes." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les notes de l'arpège.", docEn: "Scale used to quantize the arpeggio notes." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base de l'accord.", docEn: "Base octave of the chord." },
       { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major", doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de subdivisions récursives du flocon de Koch.", docEn: "Number of recursive subdivisions of the Koch snowflake." },
@@ -474,7 +480,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
-      { nom:"Gamme", nomEn:"Scale", type:"choix", options:["Majeur","Mineur naturel","Mineur harmonique","Pentatonique majeure","Pentatonique mineure"], defaut:"Majeur", optionsEn: ["Major", "Natural minor", "Harmonic minor", "Major pentatonic", "Minor pentatonic"], defautEn: "Major" },
+      { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Durée", nomEn:"Duration", plage:[1,60], defaut:4, unite:"s" },
       { nom:"Note référence", nomEn:"Reference note", plage:[21,108], defaut:60, docEn:"MIDI note for the original pitch of the sample." },
@@ -497,8 +503,8 @@ export const fiches: FicheAudio[] = ([
       const dAuto = dureeAuto ?? sample.duration ?? 4;
       const d = Math.min(dAuto, ctx.paramNombre("Durée", 30));
       const notes: { note: number; velocite: number; debut: number; fin: number }[] = [];
-      const decalage = ({Do:0,"Do#":1,Ré:2,"Mi♭":3,Mi:4,Fa:5,"Fa#":6,Sol:7,"Sol#":8,La:9,"Si♭":10,Si:11} as Record<string,number>)[cle]??0;
-      const deg = ({Majeur:[0,2,4,5,7,9,11],"Mineur naturel":[0,2,3,5,7,8,10],"Mineur harmonique":[0,2,3,5,7,8,11],"Pentatonique majeure":[0,2,4,7,9],"Pentatonique mineure":[0,3,5,7,10]} as Record<string,number[]>)[gamme]??[0,2,4,5,7,9,11];
+      const decalage = DEMI_TONS_CLE[cle] ?? 0;
+      const deg = degresGammeMelodie(gamme);
       const dureeNoire = 60 / Math.max(1, tempo);
       let t = 0;
       while (t < d) {
@@ -765,6 +771,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
         doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"], defaut: "majeur",
+        optionIds: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues","chromatique"],
         doc: "Gamme utilisée pour mapper les activations du réseau vers des notes.", docEn: "Scale used to map network activations to notes.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues", "chromatic"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
@@ -862,6 +869,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
         doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"], defaut: "majeur",
+        optionIds: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"],
         doc: "Gamme utilisée pour mapper les activations vers des notes.", docEn: "Scale used to map activations to notes.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },

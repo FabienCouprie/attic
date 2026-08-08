@@ -88,4 +88,42 @@ test.describe("Kokoro TTS plugin", () => {
     expect(result.sampleCount).toBeGreaterThan(0);
     expect(result.sampleRate).toBeGreaterThan(0);
   });
+
+  test("Kokoro TTS French worker can synthesize French speech", async ({ page }) => {
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 10000 });
+    const workerUrl = new URL("src/workers/kokoro-francais-worker.js", devUrl).toString();
+    const result = await page.evaluate(async (url: string) => {
+      try {
+        const worker = new Worker(url, { type: "module" });
+        return await new Promise<{ ok: boolean; msg: string; sampleCount?: number; sampleRate?: number }>((resolve) => {
+          const timer = setTimeout(() => {
+            worker.terminate();
+            resolve({ ok: false, msg: "Timeout waiting for synthesis" });
+          }, 180000);
+          worker.addEventListener("error", (e) => {
+            clearTimeout(timer);
+            resolve({ ok: false, msg: String(e.message || e) });
+          });
+          worker.addEventListener("message", (e) => {
+            if (e.data?.type === "progress") {
+              console.log("[kokoro-fr]", e.data.msg);
+            } else if (e.data?.type === "done") {
+              clearTimeout(timer);
+              resolve({ ok: true, msg: "Synthesis complete", sampleCount: e.data.length, sampleRate: e.data.sampleRate });
+            } else if (e.data?.type === "error") {
+              clearTimeout(timer);
+              resolve({ ok: false, msg: e.data.msg });
+            }
+          });
+          worker.postMessage({ text: "Bonjour le monde", voice: "ff_siwis", speed: 1.0 });
+        });
+      } catch (e: any) {
+        return { ok: false, msg: e.message || String(e) };
+      }
+    }, workerUrl);
+    expect(result.ok).toBe(true);
+    expect(result.sampleCount).toBeGreaterThan(0);
+    expect(result.sampleRate).toBeGreaterThan(0);
+  });
 });

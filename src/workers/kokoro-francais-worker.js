@@ -1,7 +1,10 @@
-// src/workers/kokoro-tts-worker.js — Web Worker pour Kokoro TTS (Transformers.js / ONNX).
-// Charge le modèle Kokoro 82M et génère de la parole à partir d'un texte.
+// src/workers/kokoro-francais-worker.js — Web Worker pour Kokoro TTS en français.
+// Phonémise le texte avec ephone (eSpeak-NG WASM) puis génère l'audio via
+// Kokoro-82M (ONNX) en utilisant la voix française ff_siwis.
 import { KokoroTTS, env } from "kokoro-js";
 import { splitText, trimSilence, mergeAudioBuffers } from "./tts-utils.js";
+import createEphone, { roa } from "ephone";
+
 // kokoro-js bundle includes onnxruntime-web@1.22.0-dev, but Vite's default
 // relative WASM resolution picks the root onnxruntime-web@1.27.0 files, which
 // are incompatible. Force the runtime to load the bundled WASM files.
@@ -28,8 +31,10 @@ env.wasmPaths = {
 };
 
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
+const VOICE_FR = "ff_siwis";
 
 let tts = null;
+let ephone = null;
 const queue = [];
 let busy = false;
 
@@ -37,8 +42,29 @@ function sendProgress(msg, requestId) {
   self.postMessage({ type: "progress", msg, requestId });
 }
 
-async function processRequest(req) {
-  const { text, voice, speed, labels, requestId } = req;
+async function getEphone() {
+  if (!ephone) {
+    ephone = await createEphone(roa);
+    ephone.setVoice("fr");
+  }
+  return ephone;
+}
+
+/**
+ * Phonémise un texte en français avec ephone.
+ * ephone ajoute un point final systématique qu'on supprime.
+ */
+async function phonemizeFrench(text) {
+  await getEphone();
+  let ipa = ephone.textToIpa(text);
+  // Suppression universelle du point final ajouté par ephone.
+  ipa = ipa.replace(/\.$/, "").trim();
+  // Post-traitement léger : ʲ → j (présent dans certaines langues).
+  ipa = ipa.replace(/ʲ/g, "j");
+  return ipa;
+}
+
+async function loadTts(requestId, labels) {
   const label = (key, fallback) => labels?.[key] ?? fallback;
   const basename = (path) => {
     if (!path) return "";
@@ -62,28 +88,36 @@ async function processRequest(req) {
     const tpl = label("download", "Téléchargement {__VAR_0__} {__VAR_1__}%");
     return tpl.replace("{__VAR_0__}", basename(file)).replace("{__VAR_1__}", pct);
   };
+
+  sendProgress(formatLoad(0), requestId);
+  return KokoroTTS.from_pretrained(MODEL_ID, {
+    dtype: "q8",
+    device: "wasm",
+    progress_callback: (data) => {
+      const file = data?.file || "";
+      if (data?.status === "progress") {
+        const pct = toPercent(data.progress, data.loaded, data.total);
+        sendProgress(formatLoad(pct), requestId);
+      } else if (data?.status === "download") {
+        const pct = toPercent(data.progress, data.loaded, data.total);
+        sendProgress(formatDownload(file, pct), requestId);
+      } else if (data?.status === "initiate") {
+        sendProgress(formatLoad(0), requestId);
+      } else if (data?.status === "ready") {
+        sendProgress(formatLoad(100), requestId);
+      }
+    },
+  });
+}
+
+async function processRequest(req) {
+  const { text, speed, labels, requestId } = req;
+  const label = (key, fallback) => labels?.[key] ?? fallback;
   try {
-    if (!tts) {
-      sendProgress(formatLoad(0), requestId);
-      tts = await KokoroTTS.from_pretrained(MODEL_ID, {
-        dtype: "q8",
-        device: "wasm",
-        progress_callback: (data) => {
-          // data.status peut être "progress", "download", "done", "ready", "initiate"
-          const file = data?.file || "";
-          if (data?.status === "progress") {
-            const pct = toPercent(data.progress, data.loaded, data.total);
-            sendProgress(formatLoad(pct), requestId);
-          } else if (data?.status === "download") {
-            const pct = toPercent(data.progress, data.loaded, data.total);
-            sendProgress(formatDownload(file, pct), requestId);
-          } else if (data?.status === "initiate") {
-            sendProgress(formatLoad(0), requestId);
-          } else if (data?.status === "ready") {
-            sendProgress(formatLoad(100), requestId);
-          }
-        },
-      });
+    // Charge le modèle et initialise ephone en parallèle au premier usage.
+    if (!tts || !ephone) {
+      const [loadedTts] = await Promise.all([loadTts(requestId, labels), getEphone()]);
+      tts = loadedTts;
     }
 
     const chunks = splitText(text, 250);
@@ -97,7 +131,10 @@ async function processRequest(req) {
         .replace("{__VAR_0__}", String(i + 1))
         .replace("{__VAR_1__}", String(total));
       sendProgress(chunkMsg, requestId);
-      const audio = await tts.generate(chunk, { voice, speed });
+
+      const phonemes = await phonemizeFrench(chunk);
+      const { input_ids } = await tts.tokenizer(phonemes, { truncation: true });
+      const audio = await tts.generate_from_ids(input_ids, { voice: VOICE_FR, speed });
       // kokoro-js returns { audio: Float32Array, sampling_rate: number }.
       const data = audio?.audio;
       const sr = audio?.sampling_rate;
@@ -122,7 +159,7 @@ async function processRequest(req) {
       length: merged.length,
     });
   } catch (err) {
-    console.error("[kokoro-worker] error", err);
+    console.error("[kokoro-francais-worker] error", err);
     self.postMessage({ type: "error", requestId, msg: String(err?.message || err) });
   }
 }

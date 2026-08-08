@@ -67,6 +67,46 @@ const CAS: Cas[] = [
   { node: "boite-groove", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
   { node: "boite-groove", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
 
+  // Mélodie aléatoire / Musique fractale / Sampler personnalisé — Gamme (5
+  // anciennes options communes aux trois nœuds, dont Mineur harmonique qui
+  // n'existe pas ailleurs dans l'app)
+  ...(["melodie-aleatoire", "generateur-fractal", "sampler-personnalise"] as const).flatMap((node) => [
+    { node, param: "Gamme", ancienneValeur: "Majeur", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Mineur naturel", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "Mineur harmonique", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "Pentatonique majeure", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "Pentatonique mineure", idAttendu: "pentatonique-mineure" },
+    { node, param: "Gamme", ancienneValeur: "Major", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Natural minor", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "Harmonic minor", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "Major pentatonic", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "Minor pentatonic", idAttendu: "pentatonique-mineure" },
+  ]),
+
+  // Mappeur Mandelbrot / Arpège de Koch — Gamme (mêmes 6 anciennes options,
+  // dont Chromatique déjà présente sur ces deux nœuds avant le fix).
+  ...(["mappeur-mandelbrot", "arpege-koch"] as const).flatMap((node) => [
+    { node, param: "Gamme", ancienneValeur: "Majeur", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Mineur naturel", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "Mineur harmonique", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "Pentatonique majeure", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "Pentatonique mineure", idAttendu: "pentatonique-mineure" },
+    { node, param: "Gamme", ancienneValeur: "Chromatique", idAttendu: "chromatique" },
+    { node, param: "Gamme", ancienneValeur: "Major", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Harmonic minor", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "Chromatic", idAttendu: "chromatique" },
+  ]),
+
+  // Automate cellulaire — Gamme : seulement 5 anciennes options (pas de
+  // Mineur harmonique avant le fix).
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Majeur", idAttendu: "majeur" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Mineur naturel", idAttendu: "mineur" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Pentatonique majeure", idAttendu: "pentatonique-majeure" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Pentatonique mineure", idAttendu: "pentatonique-mineure" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Chromatique", idAttendu: "chromatique" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Major", idAttendu: "majeur" },
+  { node: "automate-cellulaire", param: "Gamme", ancienneValeur: "Major pentatonic", idAttendu: "pentatonique-majeure" },
+
   // Dessin sonore / Palette harmonique / Color Looper — Gamme : les 3 nœuds
   // partageaient exactement les mêmes anciennes options (y compris la
   // coquille "chromatonic" côté anglais, volontairement préservée).
@@ -83,6 +123,31 @@ const CAS: Cas[] = [
     { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
     { node, param: "Gamme", ancienneValeur: "chromatonic", idAttendu: "chromatique" },
   ]),
+
+  // Séquenceur mélodique / Multi-réservoirs — Gamme : 5 anciennes options
+  // (pas de chromatique).
+  ...(["sequenceur-melodique", "multi-reservoirs"] as const).flatMap((node) => [
+    { node, param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+    { node, param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
+    { node, param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique majeur" },
+    { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique mineur" },
+  ]),
+
+  // Réservoir neuronal — Gamme : 6 anciennes options (avec chromatique).
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatique", idAttendu: "chromatique" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {

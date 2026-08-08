@@ -92,6 +92,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Groupe", nomEn: "Group", type: "choix",
         options: ["Toutes", ...GROUPES_TESSITURES],
         optionsEn: ["All", ...GROUPES_TESSITURES.map((g) => GROUPES_TESSITURES_LABEL[g]?.en ?? g)],
+        optionIds: ["Toutes", ...GROUPES_TESSITURES],
         defaut: "Toutes",
         doc: "Filtre la liste par groupe : hommes, femmes ou enfants.", docEn: "Filters the list by group: men, women or children.", defautEn: "All",
      },

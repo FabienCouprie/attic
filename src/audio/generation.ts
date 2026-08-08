@@ -48,7 +48,7 @@ export async function genererMusiqueFractale(
     : (MOTIFS_PREDEFINIS[typeMotif] ?? [0, 4, 7]);
   if (motif.length === 0) motif.push(0);
 
-  const degres = DEGRES_GAMME[gamme] ?? DEGRES_GAMME["Majeur"];
+  const degres = degresGammeMelodie(gamme);
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
 
   const notesMidi = deplierMotif(motif, pMax);
@@ -103,13 +103,28 @@ export async function genererMusiqueFractale(
 // --- Génération mélodique aléatoire ---------------------------------------
 
 
-const DEGRES_GAMME: Record<string, number[]> = {
-  Majeur: [0, 2, 4, 5, 7, 9, 11],
-  "Mineur naturel": [0, 2, 3, 5, 7, 8, 10],
-  "Mineur harmonique": [0, 2, 3, 5, 7, 8, 11],
-  "Pentatonique majeure": [0, 2, 4, 7, 9],
-  "Pentatonique mineure": [0, 3, 5, 7, 10],
-};
+// Gammes pour les nœuds mélodiques (Mélodie aléatoire, Musique fractale,
+// Sampler personnalisé, Mappeur Mandelbrot, Arpège de Koch, Automate
+// cellulaire) : les mêmes modes/gammes que les générateurs d'accords
+// (GAMMES_ACCORDS, plus bas dans ce fichier — degresGammeAccords est une
+// function declaration, donc utilisable ici malgré l'ordre textuel), plus
+// la gamme mineure harmonique, propre aux nœuds mélodiques.
+const DEGRES_MINEUR_HARMONIQUE = [0, 2, 3, 5, 7, 8, 11];
+
+export function degresGammeMelodie(id: string): number[] {
+  if (id === "mineur-harmonique") return DEGRES_MINEUR_HARMONIQUE;
+  return degresGammeAccords(id);
+}
+
+// Libellés FR/EN et ids canoniques du paramètre "Gamme" de ces nœuds
+// mélodiques — définis ici (et pas dans un fichier plugins/*) pour que
+// chaque fichier plugins/*.ts puisse les importer depuis "../audio" comme
+// il le fait déjà pour tout le reste, sans dépendance croisée entre
+// fichiers de plugins (qui casserait le graphe de modules circulaire
+// plugins/index.ts ↔ audio/adaptateur.ts).
+export const GAMMES_MELODIE_FR = ["Majeur", "Mineur naturel", "Mineur harmonique", "Dorien", "Phrygien", "Lydien", "Mixolydien", "Locrien", "Pentatonique majeure", "Pentatonique mineure", "Chromatique"];
+export const GAMMES_MELODIE_EN = ["Major", "Natural minor", "Harmonic minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Major pentatonic", "Minor pentatonic", "Chromatic"];
+export const GAMMES_MELODIE_IDS = ["majeur", "mineur", "mineur-harmonique", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique-majeure", "pentatonique-mineure", "chromatique"];
 
 
 export async function genererMelodieAleatoire(
@@ -120,7 +135,7 @@ export async function genererMelodieAleatoire(
   nbMesures: number
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const decalage = DEMI_TONS_CLE[cle] ?? 0;
-  const degres = DEGRES_GAMME[gamme] ?? DEGRES_GAMME["Majeur"];
+  const degres = degresGammeMelodie(gamme);
   const [tempsParMesureTexte, uniteBattementTexte] = signature.split("/");
   const tempsParMesure = Number(tempsParMesureTexte) || 4;
   const uniteBattement = Number(uniteBattementTexte) || 4;

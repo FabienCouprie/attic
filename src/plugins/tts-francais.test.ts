@@ -15,6 +15,9 @@ describe("tts-francais", () => {
     expect(fiche.entrees[0].type).toBe("texte");
     expect(fiche.sorties).toHaveLength(1);
     expect(fiche.sorties[0].type).toBe("audio");
+    expect(fiche.sorties[0].sousType).toBe("mono");
+    expect(fiche.parametres).toHaveLength(1);
+    expect(fiche.parametres[0].nom).toBe("Vitesse");
     expect(typeof fiche.executer).toBe("function");
   });
 });
