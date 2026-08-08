@@ -89,7 +89,7 @@
       "target": [
         "nsis"
       ],
-      "icon": null
+      "icon": "public/icon.png"
     },
     "asarUnpack": [
       "dist/piper-tts/**/*.wasm",

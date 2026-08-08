@@ -164,6 +164,7 @@ async function creerFenetre() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
+    icon: path.join(__dirname, DEV ? "../public/icon.png" : "../dist/icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
