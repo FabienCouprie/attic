@@ -488,56 +488,10 @@ function VueUploadOnnx({ data }: VueProps) {
   );
 }
 
-// ── Chargement d'une réponse impulsionnelle (IR) + lecteur ──
+// ── Chargement d'une réponse impulsionnelle (IR) ──
 function VueUploadIR({ id, data }: VueProps) {
   const { t } = useI18n();
   const d = data as { irFichier?: File; irNom?: string; onChargerIR?: (id: string, f: File) => void };
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const prevUrlRef = useRef<string | null>(null);
-
-  const formatTime = (s: number) => {
-    if (!Number.isFinite(s) || s < 0) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const handlePlay = () => audioRef.current?.play().catch(() => {});
-  const handlePause = () => audioRef.current?.pause();
-  const handleStop = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
-  const handleSeek = (v: number) => {
-    if (audioRef.current && duration) audioRef.current.currentTime = (v / 100) * duration;
-  };
-
-  useEffect(() => {
-    if (d.irFichier) {
-      const url = URL.createObjectURL(d.irFichier);
-      setAudioUrl(url);
-      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
-      prevUrlRef.current = url;
-      setCurrentTime(0);
-      setDuration(0);
-      setIsPlaying(false);
-    } else {
-      setAudioUrl(null);
-      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
-      prevUrlRef.current = null;
-    }
-    return () => {
-      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
-      prevUrlRef.current = null;
-    };
-  }, [d.irFichier]);
-
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
@@ -545,28 +499,6 @@ function VueUploadIR({ id, data }: VueProps) {
         <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { d.irFichier = f; d.irNom = f.name; d.onChargerIR?.(id, f); } }} />
       </label>
       {d.irNom && <div className="attic-node-fichier-nom">{d.irNom}</div>}
-      {audioUrl && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
-          <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
-            <button className="attic-node-fichier-btn" title={t("lecteur.stop")} onClick={handleStop}>⏹</button>
-            <button className="attic-node-fichier-btn" title={isPlaying ? t("lecteur.pause") : t("lecteur.lecture")} onClick={isPlaying ? handlePause : handlePlay}>
-              {isPlaying ? "⏸" : "▶"}
-            </button>
-          </div>
-          <div style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11 }}>
-            <span style={{ width: 32, textAlign: "right" }}>{formatTime(currentTime)}</span>
-            <input type="range" min={0} max={100} step={0.1} value={duration ? (currentTime / duration) * 100 : 0} onChange={(e) => handleSeek(parseFloat(e.target.value))} style={{ flex: 1 }} />
-            <span style={{ width: 32, textAlign: "left" }}>{formatTime(duration)}</span>
-          </div>
-          <audio ref={audioRef} src={audioUrl} style={{ display: "none" }}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            onTimeUpdate={() => { if (audioRef.current) { setCurrentTime(audioRef.current.currentTime); setDuration(audioRef.current.duration || 0); } }}
-            onLoadedMetadata={() => { if (audioRef.current) setDuration(audioRef.current.duration || 0); }}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -1554,7 +1486,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
-  { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "avant" },
+  { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "apres" },
   { correspond: parId("pure-data"), vue: VueUploadPd, position: "avant" },
   { correspond: (f) => f.startsWith("collection-") && f !== "collection-lecteur-musique", vue: VueCollections, position: "apres" },
   { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },
