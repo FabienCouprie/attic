@@ -507,11 +507,13 @@ export function etirementGlissant(buffer: AudioBuffer, facteurDebut: number, fac
 
 // Paulstretch : étirement extrême par STFT avec phases aléatoires.
 // Basé sur l'algorithme de Paul Nasca (paulstretch_stereo.py).
-export function appliquerPaulstretch(
+export async function appliquerPaulstretch(
   buffer: AudioBuffer,
   stretch: number,
   windowSizeSeconds: number,
-): AudioBuffer {
+  options: { onProgress?: (msg: string) => void; signal?: AbortSignal } = {}
+): Promise<AudioBuffer> {
+  const { onProgress, signal } = options;
   const sr = buffer.sampleRate;
   const nCh = buffer.numberOfChannels;
   const len = buffer.length;
@@ -536,6 +538,9 @@ export function appliquerPaulstretch(
     fenetre[i] = Math.pow(1 - x * x, 1.25);
   }
 
+  const totalFrames = outputFrames * nCh;
+  const reportInterval = Math.max(1, Math.floor(totalFrames / 20));
+
   for (let c = 0; c < nCh; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
@@ -549,6 +554,8 @@ export function appliquerPaulstretch(
     let frame = 0;
 
     while (startPos < len) {
+      if (signal?.aborted) throw new Error("aborted");
+
       const istart = Math.floor(startPos);
       const buf = new Float64Array(windowSize);
       for (let i = 0; i < windowSize; i++) {
@@ -591,9 +598,16 @@ export function appliquerPaulstretch(
 
       startPos += displace;
       frame++;
+      const frameIndex = c * outputFrames + frame;
+      if (frameIndex % reportInterval === 0) {
+        const pct = Math.min(100, Math.round((frameIndex / totalFrames) * 100));
+        onProgress?.(`Paulstretch · ${pct}%`);
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      }
     }
   }
 
+  onProgress?.("Paulstretch · 100%");
   // Normalisation douce pour éviter les dépassements sans monter artificiellement le bruit.
   return normaliser(resultat, -3);
 }
@@ -601,25 +615,28 @@ export function appliquerPaulstretch(
 // Paulstretch logistique : l'étirement extrême s'installe progressivement selon
 // une courbe logistique. En début de piste le signal est intact, en fin de piste
 // il atteint le facteur d'étirement maximal.
-export function paulstretchLogistique(
+export async function paulstretchLogistique(
   buffer: AudioBuffer,
   stretch: number,
   windowSizeSeconds: number,
   centre: number,
   pente: number,
   mix: number,
-): AudioBuffer {
+  options: { onProgress?: (msg: string) => void; signal?: AbortSignal } = {}
+): Promise<AudioBuffer> {
+  const { onProgress, signal } = options;
   const sr = buffer.sampleRate;
   const maxStretch = Math.max(1, stretch);
   const mixWet = Math.max(0, Math.min(1, mix / 100));
   if (mixWet <= 0 || maxStretch <= 1) return buffer;
-  const stretched = appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds);
+  const stretched = await appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds, { onProgress, signal });
   const n = stretched.length;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
   const centreRel = Math.max(0, Math.min(1, centre / 100));
   const k = Math.max(0.1, pente);
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
+    if (signal?.aborted) throw new Error("aborted");
     const src = buffer.getChannelData(c);
     const wet = stretched.getChannelData(c);
     const dst = resultat.getChannelData(c);

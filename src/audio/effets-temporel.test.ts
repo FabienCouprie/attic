@@ -36,18 +36,18 @@ beforeAll(() => {
 });
 
 describe("appliquerPaulstretch", () => {
-  it("étire la durée d'environ le facteur demandé", () => {
+  it("étire la durée d'environ le facteur demandé", async () => {
     const buffer = sinus(440, 1, 2);
     const stretch = 4;
-    const out = appliquerPaulstretch(buffer, stretch, 0.25);
+    const out = await appliquerPaulstretch(buffer, stretch, 0.25);
     expect(out.numberOfChannels).toBe(2);
     expect(out.duration).toBeGreaterThan(buffer.duration * 0.9);
     expect(out.duration).toBeLessThan(buffer.duration * (stretch + 0.5));
   });
 
-  it("ne produit pas de NaN ni d'Inf", () => {
+  it("ne produit pas de NaN ni d'Inf", async () => {
     const buffer = sinus(440, 0.5);
-    const out = appliquerPaulstretch(buffer, 8, 0.25);
+    const out = await appliquerPaulstretch(buffer, 8, 0.25);
     for (let c = 0; c < out.numberOfChannels; c++) {
       const d = out.getChannelData(c);
       for (let i = 0; i < d.length; i++) {
@@ -56,9 +56,9 @@ describe("appliquerPaulstretch", () => {
     }
   });
 
-  it("conserve le nombre de canaux d'une entrée mono", () => {
+  it("conserve le nombre de canaux d'une entrée mono", async () => {
     const buffer = sinus(220, 0.5, 1);
-    const out = appliquerPaulstretch(buffer, 2, 0.25);
+    const out = await appliquerPaulstretch(buffer, 2, 0.25);
     expect(out.numberOfChannels).toBe(1);
   });
 });
@@ -102,9 +102,9 @@ function rmsTranche(buf: AudioBuffer, debut: number, fin: number): number {
 }
 
 describe("paulstretchLogistique", () => {
-  it("produit une sortie plus longue que l'entrée et sans NaN/Inf", () => {
+  it("produit une sortie plus longue que l'entrée et sans NaN/Inf", async () => {
     const buffer = sinus(440, 0.5, 1);
-    const out = paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
+    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
     expect(out.duration).toBeGreaterThan(buffer.duration * 0.9);
     for (let c = 0; c < out.numberOfChannels; c++) {
       const d = out.getChannelData(c);
@@ -112,18 +112,18 @@ describe("paulstretchLogistique", () => {
     }
   });
 
-  it("avec un mix à 0, retourne le signal original (pas étiré)", () => {
+  it("avec un mix à 0, retourne le signal original (pas étiré)", async () => {
     const buffer = sinus(440, 0.5, 1);
-    const out = paulstretchLogistique(buffer, 4, 0.25, 50, 10, 0);
+    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 0);
     const src = buffer.getChannelData(0);
     const dst = out.getChannelData(0);
     expect(dst.length).toBe(src.length);
     for (let i = 0; i < src.length; i++) expect(dst[i]).toBeCloseTo(src[i], 6);
   });
 
-  it("l'étirement s'installe progressivement : début proche du sec, fin étirée", () => {
+  it("l'étirement s'installe progressivement : début proche du sec, fin étirée", async () => {
     const buffer = sinus(440, 0.5, 1);
-    const out = paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
+    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
     const quart = Math.floor(out.length / 4);
     const rmsDebut = rmsTranche(out, 0, quart);
     const rmsFin = rmsTranche(out, out.length - quart, out.length);

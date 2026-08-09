@@ -234,17 +234,50 @@ export const fiches: FicheAudio[] = ([
   effet("harmonizer", "Harmonizer / Octaver", "Harmonizer / Octaver", "Ajoute des voix pitch-shiftées (octave, quinte…) sous l'original.", "Adds pitch-shifted voices (octave, fifth…) under the original.",
     [param("Voix 1", 12, "Voice 1", "st", "Intervalle de la première voix en demi-tons. 12 = octave supérieure, -12 = octave inférieure, 7 = quinte.", "Interval of first voice in semitones. 12 = octave up, -12 = octave down, 7 = fifth.", [-24, 24], 1), param("Mix 1", 30, "Mix 1", "%", "Niveau de la première voix.", "Level of first voice.", [0, 100], 1), param("Voix 2", -12, "Voice 2", "st", "Intervalle de la deuxième voix en demi-tons.", "Interval of second voice in semitones.", [-24, 24], 1), param("Mix 2", 30, "Mix 2", "%", "Niveau de la deuxième voix.", "Level of second voice.", [0, 100], 1)],
     (a, v1, m1, v2, m2) => harmoniser(a, v1, m1, v2, m2)),
-  effet("paulstretch", "Paulstretch", "Paulstretch", "Étirement extrême par randomisation des phases (stéréo).", "Extreme phase-randomization time-stretch (stereo).",
-    [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", "Stretch factor. 1 = no effect, 8 = 8× longer.", [1, 100], 1),
-     param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", "STFT window size in seconds. Large = smooth texture, small = more transients.", [0.01, 1], 0.01)],
-    (a, stretch, fenetre) => appliquerPaulstretch(a, stretch, fenetre)),
-  effet("paulstretch-logistique", "Paulstretch logistique", "Logistic Paulstretch", "Étirement extrême qui s'installe progressivement.", "Extreme time-stretch that grows in progressively.",
-    [param("Stretch", 8, "Stretch", "×", "Facteur d'étirement maximal atteint en fin de transition.", "Maximum stretch factor reached at the end of the transition.", [1, 100], 1),
-     param("Fenêtre", 0.25, "Window", "s", "Taille de la fenêtre STFT en secondes.", "STFT window size in seconds.", [0.01, 1], 0.01),
-     param("Centre", 50, "Center", "%", "Point milieu de la transition logistique.", "Midpoint of the logistic transition.", [0, 100], 1),
-     param("Pente", 10, "Steepness", "", "Raideur de la courbe logistique.", "Steepness of the logistic curve.", [0.1, 50], 0.1),
-     param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
-    (a, stretch, fenetre, centre, pente, mix) => paulstretchLogistique(a, stretch, fenetre, centre, pente, mix)),
+  {
+    id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
+    resume: "Étirement extrême par randomisation des phases (stéréo).",
+    resumeEn: "Extreme phase-randomization time-stretch (stereo).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Stretch", nomEn: "Stretch", defaut: 8, unite: "×", doc: "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", docEn: "Stretch factor. 1 = no effect, 8 = 8× longer.", plage: [1, 100], pas: 1 },
+      { nom: "Fenêtre", nomEn: "Window", defaut: 0.25, unite: "s", doc: "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", docEn: "STFT window size in seconds. Large = smooth texture, small = more transients.", plage: [0.01, 1], pas: 0.01 },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+      const stretch = ctx.paramNombre("Stretch", 8);
+      const fenetre = ctx.paramNombre("Fenêtre", 0.25);
+      const out = await appliquerPaulstretch(audio, stretch, fenetre, { onProgress: ctx.onProgress, signal: ctx.signal });
+      return { valeurs: [out] };
+    },
+  },
+  {
+    id: "paulstretch-logistique", nom: "Paulstretch logistique", nomEn: "Logistic Paulstretch", univers: "Traitement", famille: "Effets",
+    resume: "Étirement extrême qui s'installe progressivement.",
+    resumeEn: "Extreme time-stretch that grows in progressively.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Stretch", nomEn: "Stretch", defaut: 8, unite: "×", doc: "Facteur d'étirement maximal atteint en fin de transition.", docEn: "Maximum stretch factor reached at the end of the transition.", plage: [1, 100], pas: 1 },
+      { nom: "Fenêtre", nomEn: "Window", defaut: 0.25, unite: "s", doc: "Taille de la fenêtre STFT en secondes.", docEn: "STFT window size in seconds.", plage: [0.01, 1], pas: 0.01 },
+      { nom: "Centre", nomEn: "Center", defaut: 50, unite: "%", doc: "Point milieu de la transition logistique.", docEn: "Midpoint of the logistic transition.", plage: [0, 100], pas: 1 },
+      { nom: "Pente", nomEn: "Steepness", defaut: 10, unite: "", doc: "Raideur de la courbe logistique.", docEn: "Steepness of the logistic curve.", plage: [0.1, 50], pas: 0.1 },
+      { nom: "Mix", nomEn: "Mix", defaut: 100, unite: "%", doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance.", plage: [0, 100], pas: 1 },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+      const stretch = ctx.paramNombre("Stretch", 8);
+      const fenetre = ctx.paramNombre("Fenêtre", 0.25);
+      const centre = ctx.paramNombre("Centre", 50);
+      const pente = ctx.paramNombre("Pente", 10);
+      const mix = ctx.paramNombre("Mix", 100);
+      const out = await paulstretchLogistique(audio, stretch, fenetre, centre, pente, mix, { onProgress: ctx.onProgress, signal: ctx.signal });
+      return { valeurs: [out], message: traduire("msg.paulstretch_logistique", out.duration.toFixed(1)) };
+    },
+  },
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
     [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix)),
