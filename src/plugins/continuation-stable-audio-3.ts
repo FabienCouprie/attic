@@ -70,11 +70,11 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Chemin modèle",
         nomEn: "Model path",
-        type: "texte",
+        type: "dossier",
         defaut: "",
+        defautEn: "",
         doc: "Chemin absolu ou relatif du bundle Stable Audio 3 (vide = modèle embarqué public/oonx/stable-audio-3-small-music). L'encodeur audio (encoder_q4.onnx) doit aussi être présent.",
         docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music). The audio encoder (encoder_q4.onnx) must also be present.",
-        defautEn: "",
       },
     ],
     async executer(ctx: any) {
