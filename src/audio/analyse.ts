@@ -185,6 +185,37 @@ export function extraireValeursMeyda(
   return valeurs;
 }
 
+// MFCC : Meyda renvoie un tableau de coefficients par trame (pas un scalaire
+// comme les autres features), donc extraireValeursMeyda ne convient pas ici —
+// même découpage en trames, mais on garde le tableau complet par trame.
+export function extraireMFCC(
+  buffer: AudioBuffer,
+  options: OptionsCentroidSpectral = {},
+): number[][] {
+  const fenetre = tailleFenetreSuivante(options.fenetre || 2048);
+  const pas = Math.max(64, options.pas || Math.floor(fenetre / 2));
+  const sr = buffer.sampleRate;
+  const nCh = buffer.numberOfChannels;
+  const length = buffer.length;
+  const mono = new Float32Array(length);
+  for (let c = 0; c < nCh; c++) {
+    const ch = buffer.getChannelData(c);
+    for (let i = 0; i < length; i++) mono[i] += ch[i] / nCh;
+  }
+
+  Meyda.sampleRate = sr;
+  Meyda.bufferSize = fenetre;
+  Meyda.windowingFunction = "hanning";
+
+  const trames: number[][] = [];
+  for (let debut = 0; debut + fenetre <= length; debut += pas) {
+    const frame = mono.slice(debut, debut + fenetre);
+    const features = Meyda.extract("mfcc", frame);
+    if (Array.isArray(features) && features.every((v) => Number.isFinite(v))) trames.push(features as number[]);
+  }
+  return trames;
+}
+
 export function agregerValeurs(
   valeurs: number[],
   aggregation: OptionsCentroidSpectral["aggregation"] = "moyenne",
@@ -377,7 +408,7 @@ const TEMP_MAJOR = [5.0, 2.0, 3.5, 2.5, 4.5, 4.0, 2.5, 5.0, 2.5, 3.5, 1.5, 4.0];
 const TEMP_MINOR = [5.0, 2.5, 3.5, 4.5, 2.5, 4.0, 2.5, 5.0, 3.5, 2.5, 1.5, 4.0];
 
 
-function chromagramme(donnees: Float32Array, sampleRate: number): number[] {
+export function chromagramme(donnees: Float32Array, sampleRate: number): number[] {
   const fftTaille = 2048;
   const saut = 512;
   const fenetre = creerFenetreHann(fftTaille);

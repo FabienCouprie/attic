@@ -1847,8 +1847,12 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
+      // Pas de blob téléchargeable : le HTML référence ses fichiers audio en
+      // chemins relatifs (`audio/xxx.mp3`, copiés à côté d'index.html sur
+      // disque) — un téléchargement isolé du blob romprait ces liens. Seul
+      // « Ouvrir dans le navigateur » (le vrai fichier sur disque, aux côtés
+      // de son dossier audio/) donne un résultat qui fonctionne.
       (ctx.noeud.data as any)._carteHtmlPath = htmlPath;
-      (ctx.noeud.data as any)._carteHtmlUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
       (ctx.noeud.data as any)._carteSonore = carte;
       (ctx.noeud.data as any)._carteSonoreGraine = graine;
 

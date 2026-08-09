@@ -1172,16 +1172,28 @@ function VueCouleurSunoIA({ data }: VueProps) {
   );
 }
 
-// ── Galerie d'exposition (aperçu + téléchargement HTML) ──
+// ── Galerie d'exposition (liste des pistes + ouverture du HTML généré) ──
 function VueGalerieExposition({ data }: VueProps) {
   const { t } = useI18n();
-  const html = (data as any)._galerieHTML as string | undefined;
+  const [erreur, setErreur] = useState<string | null>(null);
+  const htmlPath = (data as any)._galerieHtmlPath as string | undefined;
   const pistes = (data as any)._galeriePistes as { nom: string; url: string }[] | undefined;
-  const htmlUrl = useMemo(() => html ? URL.createObjectURL(new Blob([html], { type: "text/html" })) : null, [html]);
-  useEffect(() => () => { if (htmlUrl) URL.revokeObjectURL(htmlUrl); }, [htmlUrl]);
+
+  async function ouvrirDansNavigateur() {
+    if (!htmlPath) return;
+    setErreur(null);
+    const api = (window as any).api;
+    if (!api?.ouvrirChemin) {
+      setErreur(t("msg.n_cessite_electron"));
+      return;
+    }
+    const res = await api.ouvrirChemin(htmlPath);
+    if (!res?.ok) setErreur(res?.erreur || t("msg.erreur_ouverture"));
+  }
+
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      {html ? (
+      {htmlPath ? (
         <>
           {pistes && pistes.length > 0 && (
             <div style={{ maxHeight: 120, overflowY: "auto", fontSize: 11, marginBottom: 6 }}>
@@ -1194,12 +1206,11 @@ function VueGalerieExposition({ data }: VueProps) {
               {pistes.length > 10 && <div style={{ opacity: 0.5, padding: "3px 0" }}>… +{pistes.length - 10} autres</div>}
             </div>
           )}
-          <a href={htmlUrl ?? "#"}
-            download="index.html"
-            className="attic-node-fichier-btn"
-            style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
-            ⬇ index.html ({Math.round(html.length / 1024)} KB)
-          </a>
+          <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%" }} onClick={ouvrirDansNavigateur}>
+            🌐 {t("btn.ouvrir_navigateur")}
+          </button>
+          <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all", marginTop: 4 }}>{htmlPath}</div>
+          {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
         </>
       ) : (
         <div style={{ fontSize: 11, opacity: 0.5, padding: "4px" }}>{t("export.avantLancer")}</div>
@@ -1345,7 +1356,6 @@ function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
   const htmlPath = (data as any)._carteHtmlPath as string | undefined;
-  const htmlUrl = (data as any)._carteHtmlUrl as string | undefined;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {
@@ -1371,11 +1381,47 @@ function VueCarteSonore({ data }: VueProps) {
           <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%", marginBottom: 6 }} onClick={ouvrirDansNavigateur}>
             🌐 {t("btn.ouvrir_navigateur")}
           </button>
-          {htmlUrl && (
-            <a href={htmlUrl} download="carte-sonore.html" className="attic-node-fichier-btn" style={{ display: "block", textAlign: "center", textDecoration: "none", marginBottom: 6 }}>
-              ⬇ {t("btn.telecharger_html")}
-            </a>
-          )}
+          <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all" }}>{htmlPath}</div>
+          {message && <div style={{ fontSize: 10, marginTop: 6, color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{message}</div>}
+          {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Coordonnées sur carte (variante de Carte sonore pilotée par des
+// coordonnées reçues en entrée — carte-sonore.ts et VueCarteSonore ne sont
+// pas modifiés, ceci est une copie adaptée volontairement séparée) ──
+function VueCoordonneesSurCarte({ data }: VueProps) {
+  const { t } = useI18n();
+  const [erreur, setErreur] = useState<string | null>(null);
+  const htmlPath = (data as any)._coordCarteHtmlPath as string | undefined;
+  const message = data.audioResultatMessage ?? "";
+
+  async function ouvrirDansNavigateur() {
+    if (!htmlPath) return;
+    setErreur(null);
+    const api = (window as any).api;
+    if (!api?.ouvrirChemin) {
+      setErreur(t("msg.n_cessite_electron"));
+      return;
+    }
+    const res = await api.ouvrirChemin(htmlPath);
+    if (!res?.ok) setErreur(res?.erreur || t("msg.erreur_ouverture"));
+  }
+
+  return (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px", minWidth: 220 }}>
+      {!htmlPath ? (
+        <div style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
+          {t("export.avantLancer")}
+        </div>
+      ) : (
+        <>
+          <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%", marginBottom: 6 }} onClick={ouvrirDansNavigateur}>
+            🌐 {t("btn.ouvrir_navigateur")}
+          </button>
           <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all" }}>{htmlPath}</div>
           {message && <div style={{ fontSize: 10, marginTop: 6, color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{message}</div>}
           {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
@@ -1424,6 +1470,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
+  { correspond: parId("coordonnees-sur-carte"), vue: VueCoordonneesSurCarte, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },

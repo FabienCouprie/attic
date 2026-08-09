@@ -22,6 +22,13 @@ const trouverDef = (id: string) => registre.trouverDef(id);
 const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
 const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
 
+// Champs "signal unique" déjà consommés et effacés (mis à `undefined`) par leurs
+// blocs dédiés plus bas dans `lancer()`, avant la fusion générique des champs
+// autonomes. Exclus explicitement de cette fusion : ce sont des déclencheurs
+// ponctuels (import de graphe, installation de node), pas de l'état d'affichage
+// à faire persister sur le nœud.
+const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_nodeInstalle"]);
+
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
 // statuts, messages, cache) peuvent être effacés.
@@ -585,6 +592,38 @@ export function useExecutionGraphe(o: OptionsExecution) {
           break;
         }
       }
+    }
+
+    // Fusion générique des champs "autonomes" (préfixés `_`, ex. `_carteHtmlUrl`,
+    // `_carteSonore`) qu'un plugin à `affichageAutonome: true` écrit sur
+    // `ctx.noeud.data` pendant son exécution. `ctx.noeud` pointe vers l'entrée
+    // de `nds` (l'instantané local aplati de ce run), pas vers l'état React réel
+    // — une mutation faite là ne serait donc jamais vue par personne sans cette
+    // passe (même cause que `_grapheGenere`/`_grapheEmbarque`/`_nodeInstalle`
+    // ci-dessus, qui ont chacun leur propre correctif ciblé). Volontairement
+    // placée en dernier : les trois blocs précédents effacent leurs champs une
+    // fois consommés, donc cette passe les recopie à `undefined` (no-op) plutôt
+    // que de risquer de les redéclencher.
+    const champsAutonomesParNoeud = new Map<string, Record<string, unknown>>();
+    for (const n of nds) {
+      const d = n.data as any;
+      if (!d) continue;
+      let champs: Record<string, unknown> | null = null;
+      for (const cle of Object.keys(d)) {
+        if (!cle.startsWith("_") || CHAMPS_SIGNAL_UNIQUE.has(cle)) continue;
+        (champs ??= {})[cle] = d[cle];
+      }
+      if (champs) champsAutonomesParNoeud.set(n.id, champs);
+    }
+    if (champsAutonomesParNoeud.size > 0) {
+      setNodes((nds2) =>
+        nds2.map((n) => {
+          const champs = champsAutonomesParNoeud.get(n.id);
+          if (!champs) return n;
+          const change = Object.keys(champs).some((cle) => (n.data as any)[cle] !== champs[cle]);
+          return change ? { ...n, data: { ...n.data, ...champs } } : n;
+        })
+      );
     }
 
     } catch (e: any) {
