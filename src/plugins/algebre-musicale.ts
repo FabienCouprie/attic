@@ -221,6 +221,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [
       { nom: "Rapport", nomEn: "Report", type: "texte" },
       { nom: "Coordonnées", nomEn: "Coordinates", type: "texte" },
+      { nom: "Voisins les plus proches", nomEn: "Nearest neighbors", type: "texte" },
       { nom: "Graphique", nomEn: "Chart", type: "image" },
       { nom: "Moyennes par groupe", nomEn: "Group averages", type: "image" },
     ],
@@ -242,10 +243,10 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const api = (window as any).api;
-      if (!api?.lireDossier || !api?.lireFichierAudio) return { valeurs: [null, null, null, null], message: traduire("msg.n_cessite_electron") };
+      if (!api?.lireDossier || !api?.lireFichierAudio) return { valeurs: [null, null, null, null, null], message: traduire("msg.n_cessite_electron") };
 
       const chemin = ctx.paramTexte("Dossier", "").replace(/^[/\\]+|[/\\]+$/g, "");
-      if (!chemin) return { valeurs: [null, null, null, null], message: traduire("msg.aucun_r_pertoire_sp_cifi") };
+      if (!chemin) return { valeurs: [null, null, null, null, null], message: traduire("msg.aucun_r_pertoire_sp_cifi") };
 
       ctx.onProgress(traduire("progress.lecture_du_r_pertoire"));
       let fichiers: { nom: string; chemin: string }[] = (await api.lireDossier(chemin)) ?? [];
@@ -253,7 +254,7 @@ export const fiches: FicheAudio[] = ([
         const ext = f.nom.slice(f.nom.lastIndexOf(".")).toLowerCase();
         return EXTENSIONS_AUDIO.includes(ext);
       });
-      if (fichiers.length === 0) return { valeurs: [null, null, null, null], message: traduire("msg.aucun_fichier_audio_dans_var_0", chemin) };
+      if (fichiers.length === 0) return { valeurs: [null, null, null, null, null], message: traduire("msg.aucun_fichier_audio_dans_var_0", chemin) };
 
       // Décode + extrait le vecteur de features PISTE PAR PISTE, sans jamais
       // accumuler les AudioBuffer décodés de toute la collection en mémoire :
@@ -268,6 +269,12 @@ export const fiches: FicheAudio[] = ([
       const actx = new AudioContext();
       try {
         for (let i = 0; i < fichiers.length; i++) {
+          // Réinitialiser ce nœud pendant l'extraction (souvent le plus long,
+          // sur une grande collection) posait `ctx.signal.aborted` : sortir
+          // tout de suite plutôt que continuer à décoder en pure perte —
+          // l'engin a déjà remis le nœud à « attente » et ignorera de toute
+          // façon le résultat qu'on renverrait.
+          if (ctx.signal?.aborted) break;
           const f = fichiers[i];
           ctx.onProgress(traduire("progress.lecture_nom_var_0_var_1_var_2", f.nom, i + 1, fichiers.length));
           const buffer = await decoderPiste(api, f.chemin, actx);
@@ -280,8 +287,11 @@ export const fiches: FicheAudio[] = ([
       } finally {
         actx.close();
       }
+      if (ctx.signal?.aborted) {
+        return { valeurs: [null, null, null, null, null], message: traduire("msg.classification_annulee") };
+      }
       if (pistes.length < 3) {
-        return { valeurs: [null, null, null, null], erreur: true, message: traduire("msg.classification_minimum_3_pistes_var_0", pistes.length) };
+        return { valeurs: [null, null, null, null, null], erreur: true, message: traduire("msg.classification_minimum_3_pistes_var_0", pistes.length) };
       }
 
       const nbAxesPCA = Math.round(ctx.paramNombre("Axes PCA", 5));
@@ -298,7 +308,7 @@ export const fiches: FicheAudio[] = ([
           graine,
         });
       } catch (e: any) {
-        return { valeurs: [null, null, null, null], erreur: true, message: e?.message ?? String(e) };
+        return { valeurs: [null, null, null, null, null], erreur: true, message: e?.message ?? String(e) };
       }
 
       const rapportJson = JSON.stringify(resultat.rapport, null, 2);
@@ -311,6 +321,7 @@ export const fiches: FicheAudio[] = ([
       const svgFichier = new File([genererSvgClassification(resultat)], "classification.svg", { type: "image/svg+xml" });
       const moyennesGroupes = calculerMoyennesParGroupe(pistes, resultat.rapport);
       const svgMoyennesFichier = new File([genererSvgMoyennesGroupes(moyennesGroupes)], "moyennes-par-groupe.svg", { type: "image/svg+xml" });
+      const voisinsJson = JSON.stringify(resultat.voisins, null, 2);
 
       let messageIgnorees = "";
       if (ignorees.length > 0) {
@@ -320,7 +331,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       return {
-        valeurs: [rapportJson, coordonneesJson, svgFichier, svgMoyennesFichier],
+        valeurs: [rapportJson, coordonneesJson, voisinsJson, svgFichier, svgMoyennesFichier],
         message: traduire("msg.classification_termin_e_var_0_pistes_var_1_groupes", pistes.length, resultat.k) + messageIgnorees,
       };
     },

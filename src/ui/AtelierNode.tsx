@@ -91,6 +91,7 @@ export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
     if (def.famille === "Analyse") return "analyse";
     if (def.famille === "Texte") return "entree";
     if (def.famille === "Théorie") return "analyse";
+    if (def.famille === "Algèbre musicale") return "analyse";
   }
   return "autre";
 }

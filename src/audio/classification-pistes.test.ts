@@ -163,3 +163,38 @@ describe("calculerMoyennesParGroupe", () => {
     expect(moyennes.ecartTypeInterGroupes[idxCentroid]).toBeGreaterThan(0);
   }, 30000);
 });
+
+describe("voisins (calculés dans classifierPistes)", () => {
+  it("donne 3 plus proches voisins par piste (n=9), jamais la piste elle-même, triés du plus proche au plus loin", () => {
+    const pistes = jeuDePistes();
+    const resultat = classifierPistes(pistes, { nbAxesPCA: 5, k: 3, kMaxAuto: 6, graine: 42 });
+    expect(resultat.voisins.length).toBe(9);
+    for (const v of resultat.voisins) {
+      expect(v.plusProches.length).toBe(3);
+      expect(v.plusProches.some((p) => p.chemin === v.chemin)).toBe(false);
+      for (let i = 1; i < v.plusProches.length; i++) {
+        expect(v.plusProches[i].distance).toBeGreaterThanOrEqual(v.plusProches[i - 1].distance);
+      }
+      for (const p of v.plusProches) expect(Number.isFinite(p.distance)).toBe(true);
+    }
+  }, 30000);
+
+  it("les 2 plus proches voisins d'une piste tombent dans sa propre famille synthétique (grave/aigu/bruit nettement séparées)", () => {
+    // Chaque famille ne compte que 3 pistes (elle-même + 2 autres) : avec
+    // NB_VOISINS=3, le 3e voisin retourné vient nécessairement d'une autre
+    // famille. On ne teste donc que les 2 premiers (les seuls "vrais" voisins
+    // de même famille possibles).
+    const pistes = jeuDePistes();
+    const resultat = classifierPistes(pistes, { nbAxesPCA: 5, k: 3, kMaxAuto: 6, graine: 42 });
+    const voisinsDe = (nom: string) => resultat.voisins.find((v) => v.nom === nom)!.plusProches.slice(0, 2).map((p) => p.nom);
+    for (const nom of voisinsDe("grave-1")) expect(nom.startsWith("grave-")).toBe(true);
+    for (const nom of voisinsDe("aigu-2")) expect(nom.startsWith("aigu-")).toBe(true);
+    for (const nom of voisinsDe("bruit-3")) expect(nom.startsWith("bruit-")).toBe(true);
+  }, 30000);
+
+  it("plafonne le nombre de voisins à n-1 quand la collection est proche du minimum (n=3)", () => {
+    const pistes = jeuDePistes().slice(0, 3);
+    const resultat = classifierPistes(pistes, { nbAxesPCA: 5, k: 2, kMaxAuto: 6, graine: 1 });
+    for (const v of resultat.voisins) expect(v.plusProches.length).toBe(2);
+  }, 30000);
+});

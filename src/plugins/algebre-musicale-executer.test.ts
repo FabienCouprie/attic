@@ -60,8 +60,16 @@ describe("classification-pistes (executer, bout en bout)", () => {
     const coordonnees = JSON.parse(res.valeurs[1] as string);
     expect(rapport.length).toBe(6);
     expect(coordonnees.length).toBe(6);
-    expect(res.valeurs[2]).toBeInstanceOf(File);
-    expect((res.valeurs[2] as File).type).toBe("image/svg+xml");
+    const voisins = JSON.parse(res.valeurs[2] as string);
+    expect(voisins.length).toBe(6);
+    expect(res.valeurs[3]).toBeInstanceOf(File);
+    expect((res.valeurs[3] as File).type).toBe("image/svg+xml");
+    expect(res.valeurs[4]).toBeInstanceOf(File);
+    expect((res.valeurs[4] as File).type).toBe("image/svg+xml");
+    for (const v of voisins) {
+      expect(v.plusProches.length).toBe(3);
+      expect(v.plusProches.some((p: any) => p.chemin === v.chemin)).toBe(false);
+    }
 
     // La progression cite chaque piste par son nom, pour diagnostiquer un
     // gros lot (voir le plantage par épuisement mémoire corrigé ici).
@@ -96,5 +104,43 @@ describe("classification-pistes (executer, bout en bout)", () => {
     expect(res.message).toContain("corrompu.wav");
     const rapport = JSON.parse(res.valeurs[0] as string);
     expect(rapport.length).toBe(3);
+  }, 30000);
+
+  it("s'arrête au milieu de la boucle piste par piste quand ctx.signal est annulé (reset pendant l'exécution)", async () => {
+    // Reproduit le bug rapporté : réinitialiser le nœud pendant l'extraction
+    // (la phase la plus longue sur une grosse collection) doit stopper le
+    // décodage des pistes restantes au lieu de continuer en arrière-plan.
+    const pistes = [
+      pisteFactice("p1.wav", 220), pisteFactice("p2.wav", 220), pisteFactice("p3.wav", 220),
+      pisteFactice("p4.wav", 220), pisteFactice("p5.wav", 220), pisteFactice("p6.wav", 220),
+    ];
+    const controller = new AbortController();
+    const api = {
+      lireDossier: vi.fn(() => Promise.resolve(pistes.map((p) => ({ nom: p.nom, chemin: p.chemin })))),
+      lireFichierAudio: vi.fn((chemin: string) => {
+        // Simule un reset déclenché par l'utilisateur après la 2e piste lue —
+        // le moteur réel appelle controller.abort() depuis reinitialiserIds().
+        if (api.lireFichierAudio.mock.calls.length >= 3) controller.abort();
+        const p = pistes.find((x) => x.chemin === chemin)!;
+        return Promise.resolve({ url: `data:audio/wav;base64,${genererWavBase64(p.freq, 1.5)}` });
+      }),
+    };
+    (globalThis as any).window = { api };
+
+    const fiche = fiches.find((f) => f.id === "classification-pistes")!;
+    const ctx = {
+      noeud: { data: {} },
+      paramTexte: (nom: string, defaut: string) => (({ Dossier: "/fake" } as Record<string, string>)[nom] ?? defaut),
+      paramNombre: (nom: string, defaut: number) => defaut,
+      onProgress: () => {},
+      signal: controller.signal,
+    };
+
+    const res = await fiche.executer(ctx as any);
+    expect(res.erreur).toBeUndefined();
+    expect(res.valeurs.every((v) => v === null)).toBe(true);
+    // N'a pas décodé les 6 pistes : la boucle s'est arrêtée dès que le signal
+    // est passé à `aborted`, pas seulement à la fin naturelle du lot.
+    expect(api.lireFichierAudio.mock.calls.length).toBeLessThan(pistes.length);
   }, 30000);
 });

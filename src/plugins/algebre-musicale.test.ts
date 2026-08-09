@@ -18,6 +18,11 @@ function resultatFactice(): ResultatClassificationPistes {
     ],
     varianceExpliquee: [0.62, 0.21],
     etiquettesFeatures: ["Tempo (BPM)"],
+    voisins: [
+      { nom: "a.wav", chemin: "/a.wav", plusProches: [{ nom: "b.wav", chemin: "/b.wav", distance: 0.36 }] },
+      { nom: "b.wav", chemin: "/b.wav", plusProches: [{ nom: "a.wav", chemin: "/a.wav", distance: 0.36 }] },
+      { nom: "c.wav", chemin: "/c.wav", plusProches: [{ nom: "a.wav", chemin: "/a.wav", distance: 8.1 }] },
+    ],
   };
 }
 

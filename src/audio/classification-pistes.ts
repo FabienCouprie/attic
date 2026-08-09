@@ -12,7 +12,7 @@
 // épuisement mémoire sur une collection de 240 pistes.
 
 import type { VecteurFeaturesPiste } from "./features-piste";
-import { calculerPCA, standardiser, kmeans, kmeansAuto, gmm, type ResultatKMeans } from "./algebre";
+import { calculerPCA, standardiser, kmeans, kmeansAuto, gmm, distanceCarree, type ResultatKMeans } from "./algebre";
 
 export interface PisteVectorisee {
   nom: string;
@@ -44,6 +44,18 @@ export interface PointCoordonnees {
   y: number;
 }
 
+export interface VoisinProche {
+  nom: string;
+  chemin: string;
+  distance: number;
+}
+
+export interface VoisinsPiste {
+  nom: string;
+  chemin: string;
+  plusProches: VoisinProche[];
+}
+
 export interface ResultatClassificationPistes {
   k: number;
   rapport: LigneRapportClassification[];
@@ -53,6 +65,36 @@ export interface ResultatClassificationPistes {
   etiquettesFeatures: string[];
   /** Présent seulement en mode k="auto" : score testé pour chaque k candidat. */
   scoresCalinskiHarabasz?: { k: number; score: number }[];
+  /** k plus proches voisins de chaque piste (distance euclidienne dans l'espace
+   *  PCA COMPLET retenu pour le clustering — pas seulement les 2 axes affichés
+   *  sur le graphique), triés du plus proche au plus loin. */
+  voisins: VoisinsPiste[];
+}
+
+const NB_VOISINS = 3;
+
+/**
+ * k plus proches voisins de chaque piste, par distance euclidienne dans
+ * l'espace PCA retenu pour le clustering (mêmes coordonnées que KMeans/GMM,
+ * pas seulement les 2 axes exposés pour la visualisation 2D) — cohérent avec
+ * les groupes (le plus proche voisin d'une piste est presque toujours dans le
+ * même groupe qu'elle) et moins bruité qu'une distance sur les 40 features
+ * brutes (les axes PCA à faible variance, souvent du bruit, sont déjà écartés).
+ */
+function calculerPlusProchesVoisins(
+  pistes: PisteVectorisee[],
+  coordonneesPCA: number[][],
+  k: number,
+): VoisinsPiste[] {
+  return pistes.map((p, i) => {
+    const plusProches = pistes
+      .map((autre, j) => ({ nom: autre.nom, chemin: autre.chemin, distance: Math.sqrt(distanceCarree(coordonneesPCA[i], coordonneesPCA[j])), j }))
+      .filter(({ j }) => j !== i)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, k)
+      .map(({ nom, chemin, distance }) => ({ nom, chemin, distance }));
+    return { nom: p.nom, chemin: p.chemin, plusProches };
+  });
 }
 
 export interface MoyennesGroupe {
@@ -154,6 +196,9 @@ export function classifierPistes(
     y: pca.coordonnees[i][1],
   }));
 
+  const nbVoisins = Math.min(NB_VOISINS, pistes.length - 1);
+  const voisins = calculerPlusProchesVoisins(pistes, pca.coordonnees, nbVoisins);
+
   return {
     k: resultatKMeans.k,
     rapport,
@@ -161,5 +206,6 @@ export function classifierPistes(
     varianceExpliquee: pca.varianceExpliquee,
     etiquettesFeatures,
     scoresCalinskiHarabasz,
+    voisins,
   };
 }

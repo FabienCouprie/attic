@@ -149,7 +149,7 @@ export function standardiser(donnees: number[][]): ResultatStandardisation {
   return { donnees: donneesStandardisees, moyennes, ecartsTypes };
 }
 
-function distanceCarree(a: number[], b: number[]): number {
+export function distanceCarree(a: number[], b: number[]): number {
   let s = 0;
   for (let i = 0; i < a.length; i++) {
     const diff = a[i] - b[i];

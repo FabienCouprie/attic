@@ -6,6 +6,7 @@
 // amont de la PCA, à l'étape suivante, pas ici.
 
 import { analyserAudio, calculerCentroidSpectralMeyda, extraireMFCC, chromagramme } from "./analyse";
+import { extraitCentre, mixdownMono } from "./commun";
 
 export interface VecteurFeaturesPiste {
   vecteur: number[];
@@ -25,41 +26,12 @@ const NB_COEFFS_MFCC_DEFAUT = 13;
 // méthodes, chromagramme, MFCC image par image) tourne sur toute la durée.
 const DUREE_MAX_ANALYSE_S = 30;
 
-// Extrait central plutôt que le début : évite les intros/outros silencieux
-// ou atypiques (fade-in, applaudissements...), plus représentatif du corps
-// de la piste. Retourne le buffer tel quel si déjà assez court (aucun coût
-// ni changement de comportement sur les pistes courtes — tests existants
-// inclus).
-function extraitCentre(buffer: AudioBuffer, dureeMaxS: number): AudioBuffer {
-  const longueurMax = Math.floor(dureeMaxS * buffer.sampleRate);
-  if (buffer.length <= longueurMax) return buffer;
-  const debut = Math.floor((buffer.length - longueurMax) / 2);
-  const extrait = new AudioBuffer({
-    numberOfChannels: buffer.numberOfChannels,
-    length: longueurMax,
-    sampleRate: buffer.sampleRate,
-  });
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    extrait.copyToChannel(buffer.getChannelData(c).subarray(debut, debut + longueurMax), c);
-  }
-  return extrait;
-}
-
 function moyenneEtVariance(valeurs: number[]): { moyenne: number; variance: number } {
   const n = valeurs.length;
   if (n === 0) return { moyenne: 0, variance: 0 };
   const moyenne = valeurs.reduce((a, b) => a + b, 0) / n;
   const variance = valeurs.reduce((a, b) => a + (b - moyenne) ** 2, 0) / n;
   return { moyenne, variance };
-}
-
-function mixdownMono(buffer: AudioBuffer): Float32Array {
-  const mono = new Float32Array(buffer.length);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const ch = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) mono[i] += ch[i] / buffer.numberOfChannels;
-  }
-  return mono;
 }
 
 /**
