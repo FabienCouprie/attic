@@ -432,6 +432,45 @@ export function chromagramme(donnees: Float32Array, sampleRate: number): number[
 }
 
 
+/**
+ * Comme `chromagramme`, mais renvoie un vecteur de 12 classes par trame FFT
+ * (~11.6 ms à 44.1 kHz, saut 512) plutôt qu'un seul vecteur agrégé sur tout
+ * le signal — nécessaire pour aligner deux pistes trame par trame (DTW), qui
+ * a besoin d'une vraie série temporelle, pas d'un résumé. Fonction distincte
+ * plutôt que dérivée de `chromagramme` : agréger des vecteurs déjà normalisés
+ * par trame donnerait un résultat différent de la normalisation par le
+ * maximum global que fait `chromagramme` — les deux doivent rester
+ * indépendantes pour ne pas changer son comportement (déjà testé).
+ */
+// Exporté : un consommateur du chemin d'alignement DTW (ex. un nœud
+// d'étirement temporel) a besoin de connaître le pas en échantillons pour
+// replacer un indice de trame `i`/`j` sur l'axe temporel — dupliquer cette
+// constante ailleurs risquerait de diverger silencieusement si elle change ici.
+export const SAUT_TRAME_CHROMAGRAMME = 512;
+
+export function chromagrammeParTrame(donnees: Float32Array, sampleRate: number): number[][] {
+  const fftTaille = 2048;
+  const saut = SAUT_TRAME_CHROMAGRAMME;
+  const fenetre = creerFenetreHann(fftTaille);
+  const trames = tramesDepuisBuffer(donnees, fftTaille, saut, fenetre);
+  const nbBins = fftTaille / 2 + 1;
+
+  return trames.map((trame) => {
+    const chroma = new Array(12).fill(0);
+    for (let bin = 1; bin < nbBins; bin++) {
+      const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
+      const freq = (bin * sampleRate) / fftTaille;
+      if (freq < 65 || freq > 8000) continue;
+      const midiNote = 12 * Math.log2(freq / 440) + 69;
+      const pc = ((Math.round(midiNote) % 12) + 12) % 12;
+      chroma[pc] += mag;
+    }
+    const maxTrame = Math.max(...chroma, 1e-10);
+    return chroma.map((v) => v / maxTrame);
+  });
+}
+
+
 function meilleureCorrelation(chroma: number[], profil: number[]): { shift: number; corr: number } {
   let bestShift = 0;
   let bestCorr = -Infinity;
