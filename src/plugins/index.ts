@@ -76,6 +76,9 @@ import { fiches as f_texte_image } from "./texte-image";
 import { fiches as f_legende_image } from "./legende-image";
 import { fiches as f_algebre_musicale } from "./algebre-musicale";
 import { fiches as f_coordonnees_sur_carte } from "./coordonnees-sur-carte";
+import { fiches as f_alignement_dtw } from "./alignement-dtw";
+import { fiches as f_etirement_dtw } from "./etirement-dtw";
+import { fiches as f_pca_neuronale } from "./pca-neuronale";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -151,4 +154,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_legende_image,
   ...f_algebre_musicale,
   ...f_coordonnees_sur_carte,
+  ...f_alignement_dtw,
+  ...f_etirement_dtw,
+  ...f_pca_neuronale,
 ];
