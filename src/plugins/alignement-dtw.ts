@@ -1,5 +1,5 @@
 // plugins/alignement-dtw.ts — Nœud « Similarité audio » (sous-menu Autres →
-// Algèbre musicale). Aligne deux pistes qui diffèrent en tempo/durée par
+// Collections → Analyse). Aligne deux pistes qui diffèrent en tempo/durée par
 // Dynamic Time Warping sur leur chromagramme trame par trame, et expose
 // séparément la similarité (un score, pas de l'audio) et le chemin
 // d'alignement (une liste d'indices de trames) — volontairement DEUX sorties
@@ -27,7 +27,7 @@ const DUREE_MAX_ANALYSE_DTW_DEFAUT_S = 180;
 export const fiches: FicheAudio[] = ([
   {
     id: "alignement-dtw", nom: "Similarité audio", nomEn: "Audio Similarity",
-    univers: "Autres", famille: "Algèbre musicale",
+    univers: "Collections", famille: "Analyse",
     resume: "Similarité audio : aligne deux pistes qui diffèrent en tempo/durée (Dynamic Time Warping sur le chromagramme) et mesure leur similarité une fois alignées.",
     resumeEn: "Audio similarity: aligns two tracks that differ in tempo/duration (Dynamic Time Warping on the chromagram) and measures their similarity once aligned.",
     entrees: [

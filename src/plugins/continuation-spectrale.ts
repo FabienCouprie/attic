@@ -1,5 +1,5 @@
 // plugins/continuation-spectrale.ts — Deux nœuds de prolongation d'une piste
-// par prédiction autoregressive sur son spectrogramme (famille Algèbre musicale).
+// par prédiction autoregressive sur son spectrogramme (famille Test zone).
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -102,7 +102,7 @@ export const fiches: FicheAudio[] = ([
     nom: "Continuation AR",
     nomEn: "AR Continuation",
     univers: "Autres",
-    famille: "Algèbre musicale",
+    famille: "Test zone",
     resume: "Prolonge une piste en prédissant chaque frame spectrale à partir des frames précédentes par un modèle autoregressif linéaire.",
     resumeEn: "Extends a track by predicting each spectral frame from previous frames using a linear autoregressive model.",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -117,7 +117,7 @@ export const fiches: FicheAudio[] = ([
     nom: "Continuation LSTM",
     nomEn: "LSTM Continuation",
     univers: "Autres",
-    famille: "Algèbre musicale",
+    famille: "Test zone",
     resume: "Prolonge une piste par un petit réseau récurrent (LSTM) entraîné à la volée sur les frames de son spectrogramme.",
     resumeEn: "Extends a track by a small recurrent network (LSTM) trained on the fly on its spectrogram frames.",
     entrees: [{ nom: "Audio", type: "audio" }],

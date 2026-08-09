@@ -1,5 +1,5 @@
 // audio/algebre.ts — Primitives d'algèbre linéaire pour l'analyse de pistes
-// (sous-menu Autres → Algèbre musicale). Aucune dépendance externe : les
+// (sous-menu Autres → Test zone). Aucune dépendance externe : les
 // matrices manipulées ici (dizaines de features, quelques centaines de
 // pistes/frames tout au plus) sont assez petites pour un solveur de valeurs
 // propres "maison" par balayages de Jacobi, sans avoir recours à une lib

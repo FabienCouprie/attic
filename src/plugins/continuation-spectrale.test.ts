@@ -51,9 +51,9 @@ describe("continuation-spectrale", () => {
     expect(ficheAr).toBeDefined();
     expect(ficheLstm).toBeDefined();
     expect(ficheAr.univers).toBe("Autres");
-    expect(ficheAr.famille).toBe("Algèbre musicale");
+    expect(ficheAr.famille).toBe("Test zone");
     expect(ficheLstm.univers).toBe("Autres");
-    expect(ficheLstm.famille).toBe("Algèbre musicale");
+    expect(ficheLstm.famille).toBe("Test zone");
   });
 
   it("AR : produit un audio plus long que l'entrée", async () => {

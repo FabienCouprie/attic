@@ -1,4 +1,4 @@
-// plugins/pca-neuronale.ts — Nœud PCA neuronale (Autres → Algèbre musicale).
+// plugins/pca-neuronale.ts — Nœud PCA neuronale (Autres → Test zone).
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +10,7 @@ export const fiches: FicheAudio[] = ([
     nom: "PCA neuronale",
     nomEn: "Neural PCA",
     univers: "Autres",
-    famille: "Algèbre musicale",
+    famille: "Test zone",
     resume: "Entraîne un autoencodeur non linéaire sur le spectrogramme d'une piste pour en filtrer la texture et la resynthétiser.",
     resumeEn: "Trains a non-linear autoencoder on a track's spectrogram to filter its texture and resynthesize it.",
     entrees: [{ nom: "Audio", type: "audio" }],

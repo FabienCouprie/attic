@@ -1,6 +1,6 @@
 // audio/classification-pistes.ts — Assemble des vecteurs de features déjà
 // extraits en un pipeline de standardisation, PCA, KMeans/GMM (sous-menu
-// Autres → Algèbre musicale). Prend des vecteurs déjà calculés, PAS des
+// Collections → Analyse). Prend des vecteurs déjà calculés, PAS des
 // AudioBuffer : l'extraction (audio/features-piste.ts) doit se faire piste
 // par piste dans l'appelant (algebre-musicale.ts), immédiatement après le
 // décodage de CETTE piste, puis laisser son AudioBuffer décodé redevenir

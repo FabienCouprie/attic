@@ -1,5 +1,5 @@
 // plugins/etirement-dtw.ts — Nœud « Étirement temporel (DTW) » (sous-menu
-// Autres → Algèbre musicale). Deuxième moitié du couple avec Similarité audio :
+// Autres → Test zone). Deuxième moitié du couple avec Similarité audio :
 // consomme son « Chemin d'alignement » (JSON, auto-suffisant — porte le
 // décalage nécessaire pour se replacer dans le buffer d'origine de la Piste A)
 // pour réétirer l'audio de la Piste A, sans jamais avoir besoin de l'audio de
@@ -16,9 +16,9 @@ import { SAUT_TRAME_CHROMAGRAMME } from "../audio/analyse";
 export const fiches: FicheAudio[] = ([
   {
     id: "etirement-dtw", nom: "Étirement temporel (DTW)", nomEn: "Time Stretch (DTW)",
-    univers: "Autres", famille: "Algèbre musicale",
-    resume: "Réétire l'audio de la Piste A le long du chemin d'alignement produit par Similarité audio, pour suivre le timing d'une piste étalon.",
-    resumeEn: "Re-stretches Track A's audio along the alignment path produced by Audio Similarity, to follow a reference track's timing.",
+    univers: "Autres", famille: "Test zone",
+    resume: "[EXPÉRIMENTAL — résultat très discutable] Réétire l'audio de la Piste A le long du chemin d'alignement produit par Similarité audio, par interpolation linéaire le long de la correspondance de trames. Ce n'est PAS un vocodeur de phase : la hauteur dérive localement partout où le débit change (comme une lecture à vitesse variable).",
+    resumeEn: "[EXPERIMENTAL — very questionable result] Re-stretches Track A's audio along the alignment path produced by Audio Similarity, by linear interpolation along the frame correspondence. This is NOT a phase vocoder: pitch drifts locally wherever the rate changes (like variable-speed playback).",
     entrees: [
       { nom: "Piste à traiter", nomEn: "Track to process", type: "audio", requis: true },
       { nom: "Chemin d'alignement", nomEn: "Alignment path", type: "texte", requis: true },

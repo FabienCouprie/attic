@@ -149,7 +149,7 @@ function buildCrossAttentionAndGlobalConditioning(textEmbed, durationEmbed) {
   return { crossAttnCond, globalCond };
 }
 
-function buildInpaintConditioning(prefixLatent, T_in, T_lat) {
+function buildInpaintConditioning(prefixLatent, T_in, T_lat, scale = 0.27) {
   const cond = new Float32Array(1 * 257 * T_lat);
   const prefixSize = LATENT_CHANNELS * T_in;
   // The int4 encoder (bgkb/encoder-onnx) emits latents with a far larger scale than the diffusion
@@ -157,7 +157,6 @@ function buildInpaintConditioning(prefixLatent, T_in, T_lat) {
   // Feeding the raw encoder latent into local_add_cond makes the DiT produce huge, distorted
   // output. Scale down to roughly match the diffusion latent distribution. Value is empirical
   // (0.62 / 2.31 ≈ 0.27) and works across the tested sine and real-music inputs.
-  const scale = 0.27;
   for (let j = 0; j < prefixSize; j++) {
     cond[j] = prefixLatent[j] * scale;
   }
@@ -168,7 +167,7 @@ function buildInpaintConditioning(prefixLatent, T_in, T_lat) {
   return cond;
 }
 
-async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, prefixLatent) {
+async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale) {
   const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
   const rng = mulberry32(seed);
 
@@ -188,6 +187,10 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
   const tTensor = new Float32Array(1);
   const schedule = buildSchedule(steps);
 
+  // Optional: keep the known prefix region aligned with the noised encoder latent
+  // instead of letting the sampler drift. This is a common inpainting sampler trick.
+  const maskPrefix = prefixLatent && T_in > 0 && T_in < T_lat;
+
   for (let i = 0; i < schedule.length - 1; i++) {
     const tCurr = schedule[i];
     const tNext = schedule[i + 1];
@@ -205,6 +208,21 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
     const denoised = new Float32Array(x.length);
     for (let j = 0; j < x.length; j++) {
       denoised[j] = x[j] - tCurr * v[j];
+    }
+
+    if (maskPrefix) {
+      // Force the prefix region to denoise to the scaled encoder latent, so the
+      // diffusion trajectory stays anchored to the real input. This compensates for
+      // the fact that the bgkb int4 encoder latent does not perfectly align with the
+      // distribution the DiT expects; without this anchor, the sampler drifts and the
+      // continuation becomes unrelated noise/drone.
+      for (let c = 0; c < LATENT_CHANNELS; c++) {
+        for (let t = 0; t < T_in; t++) {
+          const denoisedIdx = c * T_lat + t;
+          const latentIdx = c * T_in + t;
+          denoised[denoisedIdx] = prefixLatent[latentIdx] * latentScale;
+        }
+      }
     }
 
     const noise = randn(latentShape, rng);
@@ -344,9 +362,10 @@ async function continueAudio(options) {
     throw new Error("La durée générée est trop courte par rapport à la piste d'entrée");
   }
 
-  const localAddCond = buildInpaintConditioning(prefixLatent, T_in, T_lat);
+  const latentScale = 0.27;
+  const localAddCond = buildInpaintConditioning(prefixLatent, T_in, T_lat, latentScale);
 
-  const result = await diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent);
+  const result = await diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale);
 
   // Preserve the original input exactly by copying the resampled source audio back into the
   // decoded output prefix. The diffusion model uses the encoded latent only as conditioning, so

@@ -93,8 +93,12 @@ function synthetiserSpectrogramme(
       }
     }
   }
+  // Avoid division by extremely small (or zero) window norms at frame boundaries, which
+  // otherwise amplify any tiny numerical noise into a huge spike.
+  const minNorm = 1e-6;
   for (let i = 0; i < length; i++) {
-    if (norm[i] > 0) out[i] /= norm[i];
+    if (norm[i] > minNorm) out[i] /= norm[i];
+    else out[i] = 0;
   }
   return out;
 }
@@ -122,7 +126,11 @@ function initialiserPoidsGlorot(tf: any, model: any, seed: number) {
       const size = shape.reduce((a, b) => a * b, 1);
       const rng = rngGraine(seed + i * 1000 + j);
       const data = new Float32Array(size);
-      if (j === 0 && shape.length >= 2) {
+      // All 2D weight tensors (kernel + recurrent kernel for LSTM, kernel for dense) get a Glorot
+      // uniform-like init. 1D tensors (bias) are zero-initialized. Previously only the first weight
+      // tensor (j === 0) was initialized, which left the LSTM recurrent kernel at zero — the LSTM
+      // had no memory and produced only noise.
+      if (shape.length >= 2) {
         const fanIn = shape[shape.length - 2];
         const fanOut = shape[shape.length - 1];
         const limit = Math.sqrt(6 / (fanIn + fanOut));
@@ -382,9 +390,20 @@ export async function appliquerContinuationSpectrale(
     }
 
     const genFrames: FrameSpectrale[] = [];
+    // Phase propagation: use the real observed phase difference between the last two
+    // original frames rather than the coarse bin-centre frequency. This captures the
+    // true instantaneous frequency of each bin (e.g. a 440 Hz sine between bins 14 and 15)
+    // and stops the generated continuation from drifting into phase noise.
     const phaseIncrement = new Float64Array(nbBins);
-    for (let b = 0; b < nbBins; b++) phaseIncrement[b] = (2 * Math.PI * b * hop) / fftSize;
-    const lastPhase = new Float64Array(spectrograms[c].frames[nFrames - 1].phase);
+    const lastFrame = spectrograms[c].frames[nFrames - 1];
+    const prevFrame = spectrograms[c].frames[nFrames - 2];
+    for (let b = 0; b < nbBins; b++) {
+      let diff = lastFrame.phase[b] - prevFrame.phase[b];
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      phaseIncrement[b] = diff;
+    }
+    const lastPhase = new Float64Array(lastFrame.phase);
 
     for (let g = 0; g < nGenFrames; g++) {
       let inputTensor: any;
@@ -398,11 +417,18 @@ export async function appliquerContinuationSpectrale(
       const pred = predData instanceof Float32Array ? predData : new Float32Array(predData);
       tf.dispose([inputTensor, predTensor]);
 
-      const start = length + g * hop;
+      // Start the generated frames at the next position in the original frame grid so that they
+      // overlap with the last original frames. Using length + g*hop left a gap of fftSize-hop
+      // samples between the last original frame and the first generated frame, causing the overlap-add
+      // synthesis to divide by a near-zero window norm at the boundary and produce huge spikes.
+      const start = (nFrames + g) * hop;
       const mag = new Float64Array(nbBins);
       const phase = new Float64Array(nbBins);
       for (let b = 0; b < nbBins; b++) {
-        const db = pred[b] * std[b] + mean[b];
+        // Clamp the standardized prediction to a few standard deviations to stop a stray
+        // dB prediction from exploding into a loud spike after linearization.
+        const clampedPred = Math.max(-3, Math.min(3, pred[b]));
+        const db = clampedPred * std[b] + mean[b];
         mag[b] = Math.max(0, Math.pow(10, db / 20));
         phase[b] = lastPhase[b] + phaseIncrement[b];
         lastPhase[b] = phase[b];
@@ -430,7 +456,18 @@ export async function appliquerContinuationSpectrale(
     const allFrames: FrameSpectrale[] = [...spectrograms[c].frames, ...genFrames];
     const signalCh = synthetiserSpectrogramme(allFrames, fftSize, hop, fenetre, resultat.length);
     const dst = resultat.getChannelData(c);
-    for (let i = 0; i < resultat.length; i++) dst[i] = signalCh[i];
+    for (let i = 0; i < resultat.length; i++) dst[i] = Math.max(-1, Math.min(1, signalCh[i]));
+
+    // Smooth fade-out at the very end of the generated tail to avoid a click where the
+    // window norm drops to zero. The fade only touches the continuation, never the original input.
+    const fadeLen = Math.min(fftSize, nGenFrames * hop);
+    const fadeStart = resultat.length - fadeLen;
+    if (fadeLen > 1 && fadeStart >= length) {
+      for (let i = 0; i < fadeLen; i++) {
+        const idx = fadeStart + i;
+        dst[idx] *= (1 - i / (fadeLen - 1));
+      }
+    }
 
     onProgress?.(`Continuation spectrale · canal ${c + 1}/${nCh} terminé`);
   }

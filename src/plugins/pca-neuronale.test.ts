@@ -52,7 +52,7 @@ describe("pca-neuronale", () => {
     expect(fiche).toBeDefined();
     expect(fiche.id).toBe("pca-neuronale");
     expect(fiche.univers).toBe("Autres");
-    expect(fiche.famille).toBe("Algèbre musicale");
+    expect(fiche.famille).toBe("Test zone");
   });
 
   it("produit un audio de même durée et canaux sur un sinus court", async () => {

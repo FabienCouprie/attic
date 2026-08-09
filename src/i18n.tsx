@@ -94,7 +94,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Export": { fr: "Export", en: "Export" },
   "famille.Installation": { fr: "Installation", en: "Installation" },
   "famille.Théorie": { fr: "Théorie", en: "Theory" },
-  "famille.Algèbre musicale": { fr: "Algèbre musical", en: "Musical Algebra" },
+  "famille.Test zone": { fr: "Test zone", en: "Test zone" },
   "famille.Magenta": { fr: "Magenta", en: "Magenta" },
   "inspecteur.vide": { fr: "Sélectionnez un bloc", en: "Select a block" },
   "inspecteur.savoirPlus": { fr: "En savoir plus", en: "Learn more" },

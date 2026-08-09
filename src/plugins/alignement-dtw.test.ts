@@ -43,6 +43,13 @@ beforeAll(() => {
 
 const fiche = fiches.find((f) => f.id === "alignement-dtw")!;
 
+describe("fiche similarité audio", () => {
+  it("est dans Collections → Analyse", () => {
+    expect(fiche.univers).toBe("Collections");
+    expect(fiche.famille).toBe("Analyse");
+  });
+});
+
 function ctxDe(entrees: any[], params: Record<string, number> = {}) {
   return {
     entree: (i: number) => entrees[i] ?? null,

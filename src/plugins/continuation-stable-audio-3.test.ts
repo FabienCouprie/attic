@@ -14,7 +14,7 @@ describe("continuation-stable-audio-3", () => {
   it("est dans la bonne famille et univers", () => {
     const f = trouver("continuation-stable-audio-3")!;
     expect(f.univers).toBe("Autres");
-    expect(f.famille).toBe("Algèbre musicale");
+    expect(f.famille).toBe("Test zone");
   });
 
   it("a les bonnes entrées / sorties", () => {

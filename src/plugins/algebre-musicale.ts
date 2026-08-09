@@ -1,5 +1,5 @@
 // plugins/algebre-musicale.ts — Classification d'une collection de pistes par
-// PCA + KMeans/GMM (sous-menu Autres → Algèbre musicale). La logique de calcul
+// PCA + KMeans/GMM (sous-menu Collections → Analyse). La logique de calcul
 // vit dans audio/classification-pistes.ts (testable sans Electron) ; ce
 // fichier ne fait que lire le dossier, décoder l'audio et sérialiser les sorties.
 
@@ -214,7 +214,7 @@ function attendreProchainTick(): Promise<void> {
 export const fiches: FicheAudio[] = ([
   {
     id: "classification-pistes", nom: "Classification de pistes", nomEn: "Track classification",
-    univers: "Autres", famille: "Algèbre musicale",
+    univers: "Collections", famille: "Analyse",
     resume: "Regroupe une collection de pistes par similarité (features audio → PCA → KMeans/GMM) et estime la probabilité d'appartenance de chaque piste à chaque groupe.",
     resumeEn: "Groups a collection of tracks by similarity (audio features → PCA → KMeans/GMM) and estimates each track's probability of belonging to each group.",
     entrees: [],

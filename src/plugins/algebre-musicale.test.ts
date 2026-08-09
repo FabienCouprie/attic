@@ -1,6 +1,6 @@
 // plugins/algebre-musicale.test.ts
 import { describe, it, expect } from "vitest";
-import { genererSvgClassification, genererSvgMoyennesGroupes, avecTimeout } from "./algebre-musicale";
+import { fiches, genererSvgClassification, genererSvgMoyennesGroupes, avecTimeout } from "./algebre-musicale";
 import type { ResultatClassificationPistes, RapportMoyennesGroupes } from "../audio/classification-pistes";
 
 function resultatFactice(): ResultatClassificationPistes {
@@ -25,6 +25,14 @@ function resultatFactice(): ResultatClassificationPistes {
     ],
   };
 }
+
+describe("fiche classification-pistes", () => {
+  it("est dans Collections → Analyse", () => {
+    const fiche = fiches.find((f) => f.id === "classification-pistes")!;
+    expect(fiche.univers).toBe("Collections");
+    expect(fiche.famille).toBe("Analyse");
+  });
+});
 
 describe("genererSvgClassification", () => {
   it("produit un SVG valide contenant un point par piste", () => {

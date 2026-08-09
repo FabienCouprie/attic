@@ -1,5 +1,5 @@
 // audio/features-piste.ts — Réduit une piste à un vecteur de features de
-// longueur fixe, pour le sous-menu Autres → Algèbre musicale (classification
+// longueur fixe, pour le sous-menu Collections → Analyse (classification
 // d'une collection de pistes par PCA/KMeans/GMM). Purement déterministe à
 // partir du buffer : aucune dépendance à d'autres pistes de la collection —
 // la standardisation inter-pistes (mise à l'échelle par feature) se fait en
