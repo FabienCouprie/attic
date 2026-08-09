@@ -152,8 +152,14 @@ function buildCrossAttentionAndGlobalConditioning(textEmbed, durationEmbed) {
 function buildInpaintConditioning(prefixLatent, T_in, T_lat) {
   const cond = new Float32Array(1 * 257 * T_lat);
   const prefixSize = LATENT_CHANNELS * T_in;
+  // The int4 encoder (bgkb/encoder-onnx) emits latents with a far larger scale than the diffusion
+  // latents the model generates: encoder std ~2.3 vs diffusion std ~0.62 on a calibration signal.
+  // Feeding the raw encoder latent into local_add_cond makes the DiT produce huge, distorted
+  // output. Scale down to roughly match the diffusion latent distribution. Value is empirical
+  // (0.62 / 2.31 ≈ 0.27) and works across the tested sine and real-music inputs.
+  const scale = 0.27;
   for (let j = 0; j < prefixSize; j++) {
-    cond[j] = prefixLatent[j];
+    cond[j] = prefixLatent[j] * scale;
   }
   const maskOffset = LATENT_CHANNELS * T_lat;
   for (let t = 0; t < T_in; t++) {
@@ -182,11 +188,6 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
   const tTensor = new Float32Array(1);
   const schedule = buildSchedule(steps);
 
-  if (prefixLatent) {
-    const prefixSize = prefixLatent.length;
-    for (let j = 0; j < prefixSize; j++) x[j] = prefixLatent[j];
-  }
-
   for (let i = 0; i < schedule.length - 1; i++) {
     const tCurr = schedule[i];
     const tNext = schedule[i + 1];
@@ -212,12 +213,6 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
       x[j] = (1 - tNext) * denoised[j] + tNext * noise[j];
     }
 
-    if (prefixLatent) {
-      const prefixSize = prefixLatent.length;
-      for (let j = 0; j < prefixSize; j++) {
-        x[j] = prefixLatent[j];
-      }
-    }
   }
 
   const decOut = await sessions.decoder.run({
@@ -229,8 +224,8 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
   const left = new Float32Array(trimSamples);
   const right = new Float32Array(trimSamples);
   for (let i = 0; i < trimSamples; i++) {
-    left[i] = audio[i];
-    right[i] = audio[audioLen + i];
+    left[i] = Math.max(-1, Math.min(1, audio[i]));
+    right[i] = Math.max(-1, Math.min(1, audio[audioLen + i]));
   }
 
   return { left, right, sampleRate: SAMPLE_RATE, duration: trimSamples / SAMPLE_RATE };
@@ -294,6 +289,14 @@ function toStereo44100(channels, sampleRate) {
   return { left, right };
 }
 
+async function decodeAudio(sessions, latent, T_lat) {
+  const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
+  const decOut = await sessions.decoder.run({
+    latents: makeTensor("float32", latent, [1, LATENT_CHANNELS, T_lat]),
+  });
+  return decOut.audio.data;
+}
+
 async function encodeAudio(sessions, left, right) {
   const N = Math.ceil(left.length / DOWNSAMPLING) * DOWNSAMPLING;
   const audioData = new Float32Array(2 * N);
@@ -343,7 +346,19 @@ async function continueAudio(options) {
 
   const localAddCond = buildInpaintConditioning(prefixLatent, T_in, T_lat);
 
-  return diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent);
+  const result = await diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent);
+
+  // Preserve the original input exactly by copying the resampled source audio back into the
+  // decoded output prefix. The diffusion model uses the encoded latent only as conditioning, so
+  // the generated prefix is a reconstruction that may differ from the source; replacing it
+  // guarantees the original audio is untouched. The generated continuation follows from there.
+  const inputSamples = left.length;
+  for (let i = 0; i < inputSamples; i++) {
+    result.left[i] = left[i];
+    result.right[i] = right[i];
+  }
+  result.duration = inputSeconds + generatedSeconds;
+  return result;
 }
 
-module.exports = { generate, continueAudio };
+module.exports = { generate, continueAudio, encodeAudio, decodeAudio };
