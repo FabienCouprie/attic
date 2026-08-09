@@ -79,6 +79,7 @@ import { fiches as f_coordonnees_sur_carte } from "./coordonnees-sur-carte";
 import { fiches as f_alignement_dtw } from "./alignement-dtw";
 import { fiches as f_etirement_dtw } from "./etirement-dtw";
 import { fiches as f_pca_neuronale } from "./pca-neuronale";
+import { fiches as f_continuation_spectrale } from "./continuation-spectrale";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -157,4 +158,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_alignement_dtw,
   ...f_etirement_dtw,
   ...f_pca_neuronale,
+  ...f_continuation_spectrale,
 ];
