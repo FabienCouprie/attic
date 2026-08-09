@@ -6,7 +6,7 @@ const http = require("http");
 const { execSync, execFile } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
-const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
+const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 
@@ -477,6 +477,42 @@ ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
     return { ok: true, ...result };
   } catch (err) {
     console.error("[attic] stable-audio-3:generer erreur:", err);
+    return { ok: false, erreur: String(err && err.message ? err.message : err) };
+  }
+});
+
+// --- IPC : Stable Audio 3 continuation audio (inpainting causale) ---
+ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
+  try {
+    const { audio, prompt, generatedSeconds, steps, seed, modelPath: cheminExplicite } = options;
+    let modelDir = cheminExplicite;
+    if (!modelDir) {
+      const cible = "stable-audio-3-small-music";
+      const candidats = [
+        path.join(__dirname, "..", "public", "oonx", cible),
+        path.join(__dirname, "..", "dist", "oonx", cible),
+        path.join(process.resourcesPath || "", "oonx", cible),
+      ];
+      modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
+    } else if (!path.isAbsolute(modelDir)) {
+      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
+      modelDir = path.join(base, modelDir);
+    }
+    if (!modelDir || !fs.existsSync(modelDir)) {
+      return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
+    }
+    const channels = (audio?.channels || []).map((c) => (c instanceof Float32Array ? c : Float32Array.from(c)));
+    const result = await continuerStableAudio3({
+      audio: { channels, sampleRate: audio.sampleRate || 44100 },
+      prompt,
+      generatedSeconds,
+      steps,
+      seed,
+      modelDir,
+    });
+    return { ok: true, ...result };
+  } catch (err) {
+    console.error("[attic] stable-audio-3:continuer erreur:", err);
     return { ok: false, erreur: String(err && err.message ? err.message : err) };
   }
 });

@@ -52,6 +52,7 @@ import { fiches as f_phase_vocoder } from "./phase-vocoder";
 import { fiches as f_resonance } from "./resonance";
 import { fiches as f_ddsp } from "./ddsp";
 import { fiches as f_stable_audio_3 } from "./stable-audio-3";
+import { fiches as f_continuation_stable_audio_3 } from "./continuation-stable-audio-3";
 import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
@@ -131,6 +132,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_resonance,
   ...f_ddsp,
   ...f_stable_audio_3,
+  ...f_continuation_stable_audio_3,
   ...f_magenta,
   ...f_pure_data,
   ...f_songsee,
