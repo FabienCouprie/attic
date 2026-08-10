@@ -57,6 +57,8 @@ export const CHAMPS_UTILISATEUR = new Set([
   "svgFichier",
   "svgNom",
   "svgUrl",
+  "pdfFichier",
+  "pdfNom",
   "irFichier",
   "irNom",
   "enregistrementBlob",

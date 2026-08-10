@@ -21,6 +21,7 @@ export type DonneesNoeud = {
   enregistrementBlob?: Blob; enregistrementUrl?: string;
   imageFichier?: File; imageNom?: string;
   svgFichier?: File; svgNom?: string;
+  pdfFichier?: File; pdfNom?: string;
   prioritaire?: boolean;
   tempsExecution?: number;
   imageResultatUrl?: string;
@@ -32,6 +33,7 @@ export type DonneesNoeud = {
   onChargerMidi?: (id: string, fichier: File) => void;
   onChargerImage?: (id: string, fichier: File) => void;
   onChargerSvg?: (id: string, fichier: File) => void;
+  onChargerPdf?: (id: string, fichier: File) => void;
   onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   zonesSelectionnees?: { debut: number; duree: number }[];
   onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;
@@ -185,19 +187,44 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     const el = nodeRef.current;
     if (!el) return;
     // ResizeObserver sur tous les nodes : recalcule les handles quand la
-    // hauteur change (chargement de fichier, apparition de lecteur, etc.).
-    // Le guard sur la hauteur évite les recalculs inutiles.
+    // hauteur OU la largeur change (chargement de fichier, apparition de
+    // lecteur, redimensionnement via NodeResizer, etc.). Le guard évite les
+    // recalculs inutiles. Suivre uniquement la hauteur laissait les ports
+    // mal positionnés (arête tirée depuis le milieu du nœud plutôt que le
+    // port réel) sur les nœuds redimensionnables tant qu'on ne les avait pas
+    // explicitement redimensionnés au moins une fois — un changement de
+    // largeur seul ne déclenchait jamais updateNodeInternals.
+    //
+    // Pour les nœuds SANS NodeResizer (la majorité), `updateNodeInternals`
+    // seul ne suffit pas : `ajouterNoeud` (App.tsx) fixe explicitement
+    // width/height à la création (tailleDefaut) et ReactFlow ne remesure
+    // jamais spontanément un nœud aux dimensions explicites — donc si le
+    // contenu grandit après coup (ex. lecteur audio qui apparaît une fois un
+    // fichier chargé), le cadre ReactFlow reste figé à l'ancienne taille et
+    // les ports restent positionnés dessus, décalés par rapport au contenu
+    // réellement affiché (qui déborde visuellement en dessous). Les nœuds
+    // AVEC NodeResizer (détectés via son marqueur DOM) gèrent déjà eux-mêmes
+    // cette synchronisation width/height — ne pas les court-circuiter, sinon
+    // un nœud volontairement réduit par l'utilisateur (contenu qui scrolle/
+    // clippe dans un cadre plus petit) se ferait regonfler de force.
     let lastH = 0;
+    let lastW = 0;
     const obs = new ResizeObserver(() => {
       const h = el.offsetHeight;
-      if (h === lastH) return;
+      const w = el.offsetWidth;
+      if (h === lastH && w === lastW) return;
       lastH = h;
+      lastW = w;
+      if (!el.querySelector(".react-flow__resize-control")) {
+        setNodes((nds) => nds.map((n) => n.id === id && (n.width !== w || n.height !== h) ? { ...n, width: w, height: h } : n));
+      }
       requestAnimationFrame(() => updateNodeInternals(id));
     });
     lastH = el.offsetHeight;
+    lastW = el.offsetWidth;
     obs.observe(el);
     return () => obs.disconnect();
-  }, [id, updateNodeInternals]);
+  }, [id, updateNodeInternals, setNodes]);
 
 
   const nodeEstFrontiere = estFrontiere(data.ficheId as string);

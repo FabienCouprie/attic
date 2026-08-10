@@ -77,6 +77,10 @@ function VueUploadAudio({ id, data }: VueProps) {
         <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerAudio?.(id, f); }} />
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
+      {data.audioUrl && (
+        <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl}
+          onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
+      )}
     </div>
   );
 }
@@ -105,6 +109,20 @@ function VueUploadSvg({ id, data }: VueProps) {
         <input type="file" accept=".svg" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerSvg?.(id, f); }} />
       </label>
       {data.svgNom && <div className="attic-node-fichier-nom">{data.svgNom}</div>}
+    </div>
+  );
+}
+
+// ── Chargement d'un fichier PDF ──
+function VueUploadPdf({ id, data }: VueProps) {
+  const { t } = useI18n();
+  return (
+    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <label className="attic-node-fichier-btn">
+        {data.pdfNom ? t("btn.changer.pdf") : t("btn.charger.pdf")}
+        <input type="file" accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerPdf?.(id, f); }} />
+      </label>
+      {data.pdfNom && <div className="attic-node-fichier-nom">{data.pdfNom}</div>}
     </div>
   );
 }
@@ -1512,6 +1530,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueUploadSvg, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("entree-pdf"), vue: VueUploadPdf, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },

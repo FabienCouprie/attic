@@ -67,6 +67,8 @@ import { fiches as f_spectre_visible } from "./spectre-visible";
 import { fiches as f_color_looper } from "./color-looper";
 import { fiches as f_camelot } from "./camelot";
 import { fiches as f_entree_image } from "./entree-image";
+import { fiches as f_entree_pdf } from "./entree-pdf";
+import { fiches as f_extraction_pdf } from "./extraction-pdf";
 import { fiches as f_lecteur_svg } from "./lecteur-svg";
 import { fiches as f_separateur_canaux } from "./separateur-canaux";
 import { fiches as f_hard_panner } from "./hard-panner";
@@ -147,6 +149,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_color_looper,
   ...f_camelot,
   ...f_entree_image,
+  ...f_entree_pdf,
+  ...f_extraction_pdf,
   ...f_lecteur_svg,
   ...f_separateur_canaux,
   ...f_hard_panner,

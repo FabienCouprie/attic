@@ -55,7 +55,11 @@ if (api0?.majRestaurerBackupSync) {
 }
 const nbPluginsAvant = tousLesPlugins().length;
 console.log(`[attic] Plugins avant chargerMetasLocaux: ${nbPluginsAvant}`);
-chargerMetasLocaux();
+// Métas dont un sous-nœud référence un plugin introuvable (renommé/supprimé) :
+// non réinjectés dans le catalogue par chargerMetasLocaux (qui les garde en
+// stockage), mais signalés après le premier rendu (cf. useEffect plus bas) —
+// sinon ils disparaissent de la palette sans qu'aucune trace n'explique pourquoi.
+const metasNonRestaures = chargerMetasLocaux();
 installerMetasExemples();
 // Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.
 chargerNodesInstalles();
@@ -88,6 +92,8 @@ interface DonneesNoeud {
   imageNom?: string;
   svgFichier?: File;
   svgNom?: string;
+  pdfFichier?: File;
+  pdfNom?: string;
   [key: string]: unknown;
 }
 
@@ -267,6 +273,21 @@ function Atelier() {
     setPluginsVersion((v) => v + 1);
   }), []);
 
+  // Avertit (une fois, après le premier rendu) si des méta-composants n'ont pas
+  // pu être réinjectés dans le catalogue — sinon leur disparition silencieuse
+  // (cf. metasNonRestaures, calculé au chargement du module) passe pour une
+  // perte de données côté sauvegarde alors que la cause est un plugin renommé
+  // ou supprimé depuis. Toujours en stockage (metasLocaux.ts) : rien n'est perdu.
+  useEffect(() => {
+    if (metasNonRestaures.length === 0) return;
+    const detail = metasNonRestaures
+      .map((m) => `• ${m.nom} (${m.manquants.join(", ")})`)
+      .join("\n");
+    if (typeof alert !== "undefined") {
+      alert(t("persistance.metasNonRestaures").replace("{nb}", String(metasNonRestaures.length)) + "\n\n" + detail);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
   // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur
   // n'a pas choisi le sien (via l'icône « dossier » de la barre d'outils).
@@ -384,6 +405,7 @@ function Atelier() {
               onChargerMidi: cbs.onChargerMidi,
               onChargerImage: cbs.onChargerImage,
               onChargerSvg: cbs.onChargerSvg,
+              onChargerPdf: cbs.onChargerPdf,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,
@@ -442,6 +464,7 @@ function Atelier() {
               onChargerMidi: cbs.onChargerMidi,
               onChargerImage: cbs.onChargerImage,
               onChargerSvg: cbs.onChargerSvg,
+              onChargerPdf: cbs.onChargerPdf,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,
@@ -538,6 +561,12 @@ function Atelier() {
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+    },
+    onChargerPdf: (nid: string, fichier: File) => {
+      cacheExec.current.delete(nid);
+      const api = (window as any).api;
+      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, pdfFichier: fichier, pdfNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
     },
     onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {

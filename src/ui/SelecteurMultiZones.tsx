@@ -427,7 +427,7 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
           >
             <div style={{
               position: "absolute", height: "100%",
-              left: `${scrollPct}%`, width: `${thumbPct}%`,
+              left: `${scrollPct}%`, width: `${Math.min(thumbPct, 100 - scrollPct)}%`,
               background: "rgba(42,157,143,0.5)", borderRadius: 3,
             }} />
           </div>

@@ -35,23 +35,31 @@ export function sauvegarderMetasLocaux(): void {
   try { localStorage.setItem(CLE, JSON.stringify(tousLesMetas().map(serialiserMeta))); } catch { /* quota/indispo : on ignore */ }
 }
 
+// Un méta non restauré (sous-nœud référençant un plugin introuvable) — de quoi
+// afficher un avertissement compréhensible plutôt que de le perdre en silence.
+export interface MetaNonRestaure { nom: string; manquants: string[] }
+
 // Recharge les métas persistés et les ré-enregistre. GARDE : un méta n'est
 // restauré que si chacun de ses sous-nœuds référence un plugin connu (ou un autre
 // méta persisté — cas des métas imbriqués). Sinon il est ignoré (mais conservé en
-// stockage, au cas où le plugin reviendrait). Renvoie le nombre restauré.
-export function chargerMetasLocaux(): number {
+// stockage, au cas où le plugin reviendrait — ex. le renommage d'un plugin, à
+// réparer via l'ALIAS de core/registre.ts plutôt qu'en resignalant sans cesse le
+// même méta comme perdu). Renvoie les métas non restaurés (tableau vide si tout
+// va bien), pour que l'appelant puisse prévenir l'utilisateur au lieu de laisser
+// des méta-composants disparaître du catalogue sans explication.
+export function chargerMetasLocaux(): MetaNonRestaure[] {
   try {
     const brut = localStorage.getItem(CLE);
     if (!brut) {
       console.log("[attic] chargerMetasLocaux: aucun méta en localStorage");
-      return 0;
+      return [];
     }
     const liste = JSON.parse(brut);
-    if (!Array.isArray(liste)) return 0;
+    if (!Array.isArray(liste)) return [];
     console.log(`[attic] chargerMetasLocaux: ${liste.length} méta(s) trouvé(s) en localStorage`);
     const idsPersistes = new Set(liste.map((m: any) => m?.id));
     const valides: any[] = [];
-    let n = 0;
+    const nonRestaures: MetaNonRestaure[] = [];
     for (const m of liste) {
       if (!m?.id || !m?.nom || !Array.isArray(m.sousNoeuds)) continue;
       const invalide = m.sousNoeuds.filter((sn: any) => {
@@ -62,15 +70,16 @@ export function chargerMetasLocaux(): number {
       });
       if (invalide.length === 0) {
         enregistrerMeta(m as MetaComposant);
-        n++;
         valides.push(m);
       } else {
-        console.warn(`[attic] Méta « ${m.id} » non restauré : sous-nœud(s) inconnu(s) : ${invalide.map((s: any) => s?.data?.ficheId).join(", ")}`);
+        const manquants = [...new Set(invalide.map((s: any) => s?.data?.ficheId))] as string[];
+        console.warn(`[attic] Méta « ${m.id} » non restauré : sous-nœud(s) inconnu(s) : ${manquants.join(", ")}`);
+        nonRestaures.push({ nom: m.nom, manquants });
       }
     }
     if (valides.length !== liste.length) {
       localStorage.setItem(CLE, JSON.stringify(valides.map(serialiserMeta)));
     }
-    return n;
-  } catch { return 0; }
+    return nonRestaures;
+  } catch { return []; }
 }
