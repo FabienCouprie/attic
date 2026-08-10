@@ -373,6 +373,7 @@ function Atelier() {
               parametres: n.data.parametres ?? {},
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
+              audioChemin: n.data.audioChemin,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               couleur: n.data.couleur,

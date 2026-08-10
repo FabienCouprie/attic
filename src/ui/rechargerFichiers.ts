@@ -42,6 +42,19 @@ export async function rechargerFichiersPersistes(nodes: NoeudAtelier[]) {
           n.data.imageFichier = fichier;
           n.data.imageNom = res.nom;
         }
+      } else if (n.data.ficheId === "explorateur-musique" && !n.data.audioFichier) {
+        const cheminAudio = n.data.audioChemin || chemin;
+        if (cheminAudio) {
+          const res = await api.lireFichierAudio(cheminAudio);
+          if (res) {
+            const mime = res.url?.match(/data:([^;]+);base64/)?.[1] ?? "audio/mpeg";
+            const blob = new Blob([res.donnees], { type: mime });
+            const fichier = new File([blob], res.nom, { type: mime });
+            n.data.audioFichier = fichier;
+            n.data.audioNom = res.nom;
+            n.data.audioUrl = URL.createObjectURL(fichier);
+          }
+        }
       }
     } catch (e) {
       console.warn(`[attic] Impossible de recharger ${chemin}`, e);

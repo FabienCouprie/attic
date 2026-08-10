@@ -68,6 +68,7 @@ export function usePersistance(o: OptionsPersistance) {
         ficheId: data.ficheId,
         parametres: data.parametres,
         audioNom: data.audioNom,
+        audioChemin: data.audioChemin,
         midiNom: data.midiNom,
         imageNom: data.imageNom,
         svgNom: data.svgNom,
@@ -85,7 +86,7 @@ export function usePersistance(o: OptionsPersistance) {
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
 
     const encours = {
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, nom: n.data.nom, couleur: n.data.couleur } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, nom: n.data.nom, couleur: n.data.couleur } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

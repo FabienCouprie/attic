@@ -14,7 +14,7 @@ import { TexteAvecLiens } from "./texteAvecLiens";
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
   progression?: string; audioResultatUrl?: string; audioResultatMessage?: string;
-  audioFichier?: File; audioNom?: string; audioUrl?: string;
+  audioFichier?: File; audioNom?: string; audioUrl?: string; audioChemin?: string;
   audioResultatBuffer?: AudioBuffer;
   midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
   modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;

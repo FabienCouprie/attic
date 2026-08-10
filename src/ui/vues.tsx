@@ -114,8 +114,28 @@ function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
   const [fichiersMusique, setFichiersMusique] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargementMusique, setChargementMusique] = useState(false);
-  const [audioLocale, setAudioLocale] = useState<string | null>(null);
+  const [audioLocale, setAudioLocale] = useState<string | null>(data.audioUrl ?? null);
+  const { setNodes } = useReactFlow();
   const api = (window as { api?: any }).api;
+
+  // Restaurer la sélection de piste si le workflow a été rechargé.
+  useEffect(() => {
+    if (!api || !data.audioChemin || fichiersMusique) return;
+    const dossier = String(data.parametres?.["Chemin"] || "music collection");
+    const rel = dossier.replace(/^[/\\]+|[/\\]+$/g, "");
+    api.lireDossier(rel).then((liste: { nom: string; chemin: string }[] | null) => {
+      if (liste) setFichiersMusique(liste);
+    }).catch((e: any) => console.warn("[VueExplorateur] échec du re-scan du dossier", e));
+  }, [api, data.audioChemin, data.parametres, fichiersMusique]);
+
+  // Garder le lecteur local synchronisé avec l'URL rechargée depuis le disque.
+  useEffect(() => {
+    if (data.audioUrl) setAudioLocale(data.audioUrl);
+  }, [data.audioUrl]);
+
+  const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
+  const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
+
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()}>
       {!api ? (
@@ -125,12 +145,12 @@ function VueExplorateur({ id, data }: VueProps) {
           <div style={{ display: "flex", gap: 4 }}>
             <button className="attic-node-fichier-btn" style={{ flex: 1 }} disabled={chargementMusique} onClick={async () => {
               setChargementMusique(true);
-              const rel = (data.parametres?.["Chemin"] as string) || "music collection";
-              const fichiers = (await api?.lireDossier(rel.replace(/^[/\\]+|[/\\]+$/g, ""))) ?? null;
+              const rel = dossierCourant.replace(/^[/\\]+|[/\\]+$/g, "");
+              const fichiers = (await api?.lireDossier(rel)) ?? null;
               setFichiersMusique(fichiers);
               setChargementMusique(false);
             }}>
-              ⟳ /{String(data.parametres?.["Chemin"] || "music collection")}
+              ⟳ /{dossierCourant}
             </button>
             <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
               const dossier = await api?.choisirDossier();
@@ -141,6 +161,7 @@ function VueExplorateur({ id, data }: VueProps) {
           </div>
           {fichiersMusique && fichiersMusique.length > 0 && (
             <select className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
+              value={selectedIndex >= 0 ? String(selectedIndex) : ""}
               onChange={async (e) => {
                 const f = fichiersMusique[parseInt(e.target.value)];
                 if (!f) return;
@@ -148,8 +169,18 @@ function VueExplorateur({ id, data }: VueProps) {
                 if (!resultat) return;
                 const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
                 const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
-                setAudioLocale(URL.createObjectURL(fichier));
-                data.onChargerAudio?.(id, fichier);
+                const url = URL.createObjectURL(fichier);
+                setAudioLocale(url);
+                setNodes((nds) => nds.map((nd) => nd.id === id ? {
+                  ...nd,
+                  data: {
+                    ...nd.data,
+                    audioFichier: fichier,
+                    audioNom: fichier.name,
+                    audioUrl: url,
+                    audioChemin: f.chemin,
+                  },
+                } : nd));
               }}>
               {fichiersMusique.map((f, i) => <option key={f.chemin} value={i}>{f.nom}</option>)}
             </select>

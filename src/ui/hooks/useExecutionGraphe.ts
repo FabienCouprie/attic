@@ -47,6 +47,7 @@ export const CHAMPS_UTILISATEUR = new Set([
   "audioFichier",
   "audioNom",
   "audioUrl",
+  "audioChemin",
   "midiFichier",
   "midiNom",
   "midiUrl",
