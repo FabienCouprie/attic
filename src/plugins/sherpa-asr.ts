@@ -255,6 +255,10 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Language",
         type: "choix",
         options: Object.keys(LANGUES),
+        // Ids canoniques = codes ISO 639-1, c'est-à-dire les valeurs mêmes de
+        // LANGUES (« auto » pour l'entrée sans code). Le libellé français n'est
+        // donc plus l'identité du paramètre.
+        optionIds: Object.values(LANGUES).map((c) => c || "auto"),
         optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Chinese", "Arabic", "Hindi", "Korean"],
         defaut: "Auto",
         defautEn: "Auto",
@@ -289,8 +293,11 @@ export const fiches: FicheAudio[] = ([
       if (!(audio instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       }
-      const langue = ctx.paramTexte("Langue", "Auto");
-      const langCode = LANGUES[langue] ?? "";
+      // `paramTexte` renvoie désormais l'id canonique, qui EST le code ISO
+      // (« auto » = pas de code). Le repli sur LANGUES couvre les projets
+      // enregistrés avant la migration, qui stockent encore le libellé.
+      const langue = ctx.paramTexte("Langue", "auto");
+      const langCode = langue === "auto" ? "" : (LANGUES[langue] ?? langue);
       const qualiteResampling = ctx.paramTexte("Qualité resampling", RESAMPLE_OPTIONS_FR[0]);
       const modeCache = ctx.paramTexte("Cache modèle", CACHE_OPTIONS_FR[0]);
       const mono = bufferVersMono(audio);

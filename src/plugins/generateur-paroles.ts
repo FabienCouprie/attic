@@ -132,7 +132,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Émotion dominante (ex : l'espoir, la tristesse, la colère).",
         docEn: "Dominant emotion (e.g. hope, sadness, anger).", defautEn: "hope" },
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "English"], optionsEn: ["French", "English"],
+        options: ["Français", "English"], optionsEn: ["French", "English"], optionIds: ["fr", "en"],
         defaut: "Français",
         doc: "Langue des paroles générées.", docEn: "Language of generated lyrics.", defautEn: "French" },
       { nom: "Lignes/section", nomEn: "Lines/section", plage: [2, 8], pas: 1, defaut: 4,
@@ -145,8 +145,10 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const theme = ctx.paramTexte("Thème", "l'amour");
       const emotion = ctx.paramTexte("Émotion", "l'espoir");
-      const langueParam = ctx.paramTexte("Langue", "Français");
-      const langue = langueParam === "English" ? "en" : "fr";
+      // `paramTexte` renvoie l'id canonique (code ISO) ; les anciens libellés
+      // (« English », « Français ») restent acceptés pour les projets existants.
+      const langueParam = ctx.paramTexte("Langue", "fr");
+      const langue = /^(en|english)$/i.test(langueParam) ? "en" : "fr";
       const nbLignes = ctx.paramNombre("Lignes/section", 4);
       const graine = ctx.paramNombre("Graine", 0) || Math.floor(Math.random() * 99999) + 1;
 

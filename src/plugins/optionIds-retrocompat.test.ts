@@ -249,6 +249,22 @@ const CAS: Cas[] = [
     { node, param: "Échelle", ancienneValeur: "Linéaire", idAttendu: "lineaire" },
     { node, param: "Échelle", ancienneValeur: "Linear", idAttendu: "lineaire" },
   ]),
+
+  // ── Lot 4b : langues ──
+  // Ids canoniques = codes ISO 639-1. Chacun des 4 nœuds s'appuyait sur une
+  // table de correspondance distincte, indexée par le libellé français.
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Anglais", idAttendu: "en" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Néerlandais", idAttendu: "nl" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Dutch", idAttendu: "nl" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Japanese", idAttendu: "ja" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Coréen", idAttendu: "ko" },
+  { node: "nllb-paroles", param: "Langue cible", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "nllb-paroles", param: "Langue cible", ancienneValeur: "Chinese", idAttendu: "zh" },
+  { node: "generateur-paroles", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "generateur-paroles", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
