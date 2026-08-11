@@ -447,7 +447,7 @@ function Atelier() {
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
           if (def) for (const p of def.parametres) {
-            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p, lang) : defautParametre(p, lang);
           }
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
@@ -586,7 +586,7 @@ function Atelier() {
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
     for (const p of def.parametres) {
-      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p, lang) : defautParametre(p, lang);
     }
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {

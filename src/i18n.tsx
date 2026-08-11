@@ -684,6 +684,17 @@ export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsE
   return v;
 }
 
-export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">): string | number {
-  return valeurCanoniqueChoix(p, p.defautEn ?? p.defaut);
+// `lang` par défaut à "fr" : les rares appelants qui ne le passent pas restent
+// corrects tant que la langue courante est celle par défaut de l'app, mais
+// l'idéal est de toujours transmettre la langue active (cf. Inspector.tsx).
+export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">, lang: Langue = "fr"): string | number {
+  // Avant : `p.defautEn ?? p.defaut` ignorait la langue et préférait toujours
+  // l'anglais dès qu'il était renseigné. Sans `optionIds` (aucune recherche
+  // bidirectionnelle possible dans valeurCanoniqueChoix, qui renvoie alors la
+  // valeur telle quelle), ça renvoyait par ex. "Center" même en français —
+  // valeur absente des <option value="Gauche"|"Centre"|"Droite">, donc le
+  // <select> contrôlé retombait sur son 1er <option> (« Gauche ») sans le
+  // signaler, alors que l'exécution du nœud utilise bien "Centre" en repli
+  // (ctx.paramTexte("Position", "Centre")) — défaut affiché ≠ défaut réel.
+  return valeurCanoniqueChoix(p, defautParametre(p, lang));
 }

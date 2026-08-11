@@ -207,8 +207,22 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     // cette synchronisation width/height — ne pas les court-circuiter, sinon
     // un nœud volontairement réduit par l'utilisateur (contenu qui scrolle/
     // clippe dans un cadre plus petit) se ferait regonfler de force.
-    let lastH = 0;
-    let lastW = 0;
+    //
+    // lastH/lastW démarrent à -1 (jamais une vraie taille) plutôt que d'être
+    // pré-lus sur `el` avant `observe()` : un ResizeObserver déclenche TOUJOURS
+    // son callback une première fois dès l'observation, avec la taille
+    // courante — si on pré-remplit lastH/lastW avec cette même valeur avant
+    // que ce premier callback n'arrive, la comparaison h===lastH y voit
+    // (à tort) « rien n'a changé » et l'avale silencieusement. Résultat : le
+    // décalage initial entre la taille estimée à la création (tailleDefaut,
+    // une heuristique sur le nombre de ports) et la taille réellement rendue
+    // (en-tête + paramètres + statut) n'était jamais corrigé tant qu'aucun
+    // changement ultérieur ne survenait — cas des nœuds simples dont le
+    // contenu ne varie jamais après le montage (ex. Hard panner : ports
+    // décalés dès la création, sans qu'aucun redimensionnement manuel ne
+    // puisse s'appliquer puisque le nœud n'est pas redimensionnable).
+    let lastH = -1;
+    let lastW = -1;
     const obs = new ResizeObserver(() => {
       const h = el.offsetHeight;
       const w = el.offsetWidth;
@@ -220,8 +234,6 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
       }
       requestAnimationFrame(() => updateNodeInternals(id));
     });
-    lastH = el.offsetHeight;
-    lastW = el.offsetWidth;
     obs.observe(el);
     return () => obs.disconnect();
   }, [id, updateNodeInternals, setNodes]);
