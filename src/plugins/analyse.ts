@@ -25,7 +25,7 @@ function noeudMeyda(
         doc: "Taille de la fenêtre d'analyse (arrondie à la puissance de 2 supérieure).", docEn: "Analysis window size (rounded up to the next power of 2)." },
       { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.",
         doc: "Décalage entre deux fenêtres d'analyse.", docEn: "Hop size between analysis frames." },
-      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], defaut: "Moyenne",
+      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], optionIds: ["moyenne","mediane","maximum"], defaut: "Moyenne",
         doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values.", optionsEn: ["Average", "Median", "Maximum"], defautEn: "Average" },
     ],
     async executer(ctx: any) {

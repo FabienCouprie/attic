@@ -122,7 +122,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionIds: ["triangle","square","sawtooth","sine"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure.", defautEn: "Triangle" },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",

@@ -10,6 +10,7 @@ import { registre } from "../audio/adaptateur";
 import { valeurCanoniqueChoix } from "../i18n";
 import { normaliserModeSynthèse } from "./soundfontGlobal";
 import { normaliserTimbre } from "../audio/automate-cellulaire";
+import { formeOndeDepuisTimbre, caractereTimbre } from "../audio/timbres";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {
@@ -167,6 +168,45 @@ const CAS: Cas[] = [
   { node: "melodie-aleatoire", param: "Synthèse", ancienneValeur: "Auto", idAttendu: "auto" },
   { node: "generateur-fractal", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
   { node: "clavier-melodie", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+
+  // ── Lot 3 ──
+  // « Timbre » caractère (Douce/Brillante/Percutante).
+  ...(["generateur-fractal", "mappeur-mandelbrot", "arpege-koch"] as const).flatMap((node) => [
+    { node, param: "Timbre", ancienneValeur: "Douce", idAttendu: "douce" },
+    { node, param: "Timbre", ancienneValeur: "Soft", idAttendu: "douce" },
+    { node, param: "Timbre", ancienneValeur: "Brillante", idAttendu: "brillante" },
+    { node, param: "Timbre", ancienneValeur: "Bright", idAttendu: "brillante" },
+    { node, param: "Timbre", ancienneValeur: "Percutante", idAttendu: "percutante" },
+    { node, param: "Timbre", ancienneValeur: "Percussive", idAttendu: "percutante" },
+  ]),
+  // « Timbre » forme d'onde — mêmes ids que le paramètre « Forme » de
+  // l'Oscillateur, migré précédemment (cohérence de tout le parc).
+  ...(["reservoir-musical", "multi-reservoirs", "sequenceur-melodique"] as const).flatMap((node) => [
+    { node, param: "Timbre", ancienneValeur: "Sinus", idAttendu: "sine" },
+    { node, param: "Timbre", ancienneValeur: "Sine", idAttendu: "sine" },
+    { node, param: "Timbre", ancienneValeur: "Carré", idAttendu: "square" },
+    { node, param: "Timbre", ancienneValeur: "Square", idAttendu: "square" },
+    { node, param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
+    { node, param: "Timbre", ancienneValeur: "Saw", idAttendu: "sawtooth" },
+    { node, param: "Timbre", ancienneValeur: "Triangle", idAttendu: "triangle" },
+  ]),
+  // « Agrégation » — « Médiane » calculait en réalité une moyenne avant ce lot.
+  ...(["centroide-spectral", "rms-meyda", "zcr-meyda", "rolloff-spectral-meyda"] as const).flatMap((node) => [
+    { node, param: "Agrégation", ancienneValeur: "Moyenne", idAttendu: "moyenne" },
+    { node, param: "Agrégation", ancienneValeur: "Average", idAttendu: "moyenne" },
+    { node, param: "Agrégation", ancienneValeur: "Médiane", idAttendu: "mediane" },
+    { node, param: "Agrégation", ancienneValeur: "Median", idAttendu: "mediane" },
+    { node, param: "Agrégation", ancienneValeur: "Maximum", idAttendu: "maximum" },
+  ]),
+  // « Format » des quatre nœuds de listes textuelles.
+  ...(["noms-instruments", "styles-musicaux", "emotions", "tessitures-voix"] as const).flatMap((node) => [
+    { node, param: "Format", ancienneValeur: "Virgule", idAttendu: "virgule" },
+    { node, param: "Format", ancienneValeur: "Comma", idAttendu: "virgule" },
+    { node, param: "Format", ancienneValeur: "Retour ligne", idAttendu: "retour-ligne" },
+    { node, param: "Format", ancienneValeur: "Newline", idAttendu: "retour-ligne" },
+    { node, param: "Format", ancienneValeur: "Puces", idAttendu: "puces" },
+    { node, param: "Format", ancienneValeur: "Bullets", idAttendu: "puces" },
+  ]),
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
@@ -207,5 +247,22 @@ describe("les normaliseurs acceptent l'id canonique ET les anciens libellés", (
     for (const v of ["soundfont", "SoundFont"]) {
       expect(normaliserTimbre(v)).toBe("SoundFont");
     }
+  });
+
+  it("formeOndeDepuisTimbre", () => {
+    expect(["sine", "Sinus", "Sine"].map(formeOndeDepuisTimbre)).toEqual(["sine", "sine", "sine"]);
+    expect(["square", "Carré", "Square"].map(formeOndeDepuisTimbre)).toEqual(["square", "square", "square"]);
+    expect(["sawtooth", "Scie", "Saw"].map(formeOndeDepuisTimbre)).toEqual(["sawtooth", "sawtooth", "sawtooth"]);
+    expect(["triangle", "Triangle"].map(formeOndeDepuisTimbre)).toEqual(["triangle", "triangle"]);
+    // Valeur inconnue → undefined, pour que chaque nœud applique SON repli
+    // (« triangle » sur le séquenceur, « sine » sur le réservoir).
+    expect(formeOndeDepuisTimbre("n'importe quoi")).toBeUndefined();
+  });
+
+  it("caractereTimbre", () => {
+    expect(["douce", "Douce", "Soft"].map(caractereTimbre)).toEqual(["douce", "douce", "douce"]);
+    expect(["brillante", "Brillante", "Bright"].map(caractereTimbre)).toEqual(["brillante", "brillante", "brillante"]);
+    expect(["percutante", "Percutante", "Percussive"].map(caractereTimbre)).toEqual(["percutante", "percutante", "percutante"]);
+    expect(caractereTimbre("inconnu")).toBe("douce");
   });
 });

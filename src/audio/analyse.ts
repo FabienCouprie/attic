@@ -7,12 +7,20 @@ import { traduire } from "../i18n";
 
 const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
 
+// Accepte l'id canonique ("moyenne"/"mediane"/"maximum"), l'ancien libellé
+// français ET l'anglais. Le cas « Médiane » était un bug silencieux : son
+// `toLowerCase()` vaut « médiane » (avec accent), ne correspondait à aucun cas,
+// et repartait tel quel — or le calcul en aval teste `case "mediane"` (sans
+// accent) et retombait donc sur la moyenne. Autrement dit, choisir « Médiane »
+// en français calculait en réalité une moyenne, alors que « Median » en anglais
+// fonctionnait. Les `optionIds` suppriment la cause à la racine ; cette
+// tolérance reste nécessaire pour les projets déjà enregistrés.
 function normaliserAggregation(valeur: string): OptionsCentroidSpectral["aggregation"] {
-  switch (valeur.toLowerCase()) {
-    case "average": return "moyenne";
-    case "median": return "mediane";
+  switch (valeur.trim().toLowerCase()) {
+    case "moyenne": case "average": return "moyenne";
+    case "mediane": case "médiane": case "median": return "mediane";
     case "maximum": return "maximum";
-    default: return valeur as OptionsCentroidSpectral["aggregation"];
+    default: return "moyenne";
   }
 }
 

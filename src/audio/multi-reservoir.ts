@@ -9,6 +9,7 @@
 import { genererReservoirMusical, mulberry32, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
 import { notesVersFichierMidi } from "./midi";
+import { formeOndeDepuisTimbre } from "./timbres";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -225,10 +226,7 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
     }
   }
 
-  const timbreMap: Record<string, OscillatorType> = {
-    "Sinus": "sine", "Carré": "square", "Scie": "sawtooth", "Triangle": "triangle",
-  };
-  const osc = timbreMap[config.timbre] ?? "triangle";
+  const osc: OscillatorType = formeOndeDepuisTimbre(config.timbre) ?? "triangle";
 
   rendreNotes(melodieFinale, osc, 1.0, 0.0);
   rendreNotes(basseFinale, "sine", 0.9, -0.3);

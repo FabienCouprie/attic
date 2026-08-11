@@ -72,6 +72,23 @@ describe("calculerCentroidSpectralMeyda", () => {
     expect(moyenne).toBeCloseTo(mediane, 0);
     expect(maximum).toBeGreaterThanOrEqual(moyenne);
   });
+
+  // Régression : « Médiane » (libellé français, accentué) tombait dans le
+  // `default` du normaliseur — son toLowerCase() vaut « médiane » avec accent,
+  // que le calcul en aval ne reconnaissait pas — et calculait donc une MOYENNE.
+  // « Median » (anglais) fonctionnait, lui. Un projet français demandant la
+  // médiane obtenait silencieusement autre chose.
+  it("« Médiane » accentué donne bien la médiane, pas la moyenne", () => {
+    const buffer = bruitBlanc(1);
+    const attendu = calculerCentroidSpectralMeyda(buffer, { aggregation: "mediane" }).valeur;
+    for (const libelle of ["Médiane", "médiane", "Median", "mediane"]) {
+      const obtenu = calculerCentroidSpectralMeyda(buffer, { aggregation: libelle as any }).valeur;
+      expect(obtenu).toBe(attendu);
+    }
+    // …et reste distinct de la moyenne sur un signal où les deux diffèrent.
+    const moyenne = calculerCentroidSpectralMeyda(buffer, { aggregation: "moyenne" }).valeur;
+    expect(calculerCentroidSpectralMeyda(buffer, { aggregation: "Médiane" as any }).valeur).not.toBe(moyenne);
+  });
 });
 
 describe("calculerRMS_Meyda", () => {

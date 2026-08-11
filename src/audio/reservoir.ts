@@ -10,6 +10,8 @@
 // Aucun entraînement, aucun dataset, aucun copyright — les motifs émergent
 // de la structure aléatoire du réseau, comme un kaléidoscope.
 
+import { formeOndeDepuisTimbre } from "./timbres";
+
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
   connectivite: number;    // probabilité de connexion (0-1)
@@ -221,10 +223,8 @@ export function rendreReservoirAudio(
   const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
   const vol = Math.max(0, Math.min(1, config.volume / 100)) * 0.5;
 
-  const typeOsc: OscillatorType = config.timbre === "Carré" ? "square"
-    : config.timbre === "Scie" ? "sawtooth"
-    : config.timbre === "Triangle" ? "triangle"
-    : "sine";
+  // Repli « sine » conservé à l'identique (différent des autres nœuds).
+  const typeOsc: OscillatorType = formeOndeDepuisTimbre(config.timbre) ?? "sine";
 
   const gauche = buf.getChannelData(0);
   const droite = buf.getChannelData(1);

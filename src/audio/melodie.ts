@@ -5,6 +5,7 @@
 // batterie : lignes séparées par « | », chaque pas « 1 »/« 0 ».
 
 import type { NoteEvenement } from "./midi";
+import { formeOndeDepuisTimbre } from "./timbres";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
@@ -89,10 +90,8 @@ export async function rendreSequenceurMelodique(
   const v = Math.max(0, Math.min(1, volume / 100));
   const notes: NoteEvenement[] = [];
 
-  const typeOsc: OscillatorType = timbre === "Carré" ? "square"
-    : timbre === "Scie" ? "sawtooth"
-    : timbre === "Sinus" ? "sine"
-    : "triangle";
+  // Repli « triangle » conservé à l'identique (valeur inconnue ou absente).
+  const typeOsc: OscillatorType = formeOndeDepuisTimbre(timbre) ?? "triangle";
 
   function jouerNote(midi: number, debut: number, dureeNote: number) {
     const freq = frequenceNoteMidi(midi);

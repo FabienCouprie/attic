@@ -2,6 +2,7 @@
 import type { NoteEvenement } from "./midi";
 import { writeMidi } from "midi-file";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
+import { caractereTimbre, type CaractereTimbreId } from "./timbres";
 
 const MOTIFS_PREDEFINIS: Record<string, number[]> = {
   "Triade M": [0, 4, 7],
@@ -62,10 +63,13 @@ export async function genererMusiqueFractale(
   const offline = new OfflineAudioContext(2, Math.max(1, Math.ceil(dureeTotale * sampleRate)), sampleRate);
   const notes: NoteEvenement[] = [];
 
-  const formesOsc: Record<string, OscillatorType> = { Douce: "triangle", Brillante: "sawtooth", Percutante: "square" };
-  const typeOsc = formesOsc[timbre] ?? "triangle";
-  const attaque = timbre === "Percutante" ? 0.001 : 0.005;
-  const relache = timbre === "Douce" ? 0.15 : 0.04;
+  // Comparaisons sur l'id canonique (et non plus sur le libellé français brut) :
+  // `caractereTimbre` accepte l'id, l'ancien libellé FR et l'ancien libellé EN.
+  const caractere = caractereTimbre(timbre);
+  const formesOsc: Record<CaractereTimbreId, OscillatorType> = { douce: "triangle", brillante: "sawtooth", percutante: "square" };
+  const typeOsc = formesOsc[caractere];
+  const attaque = caractere === "percutante" ? 0.001 : 0.005;
+  const relache = caractere === "douce" ? 0.15 : 0.04;
 
   for (let i = 0; i < totalNotes; i++) {
     const midiSnappe = degreVersMidi(
@@ -77,7 +81,7 @@ export async function genererMusiqueFractale(
     const freq = frequenceDeNoteMidi(midiSnappe);
     const debut = i * dureeNote;
     const fin = debut + dureeNote;
-    const volume = timbre === "Percutante" ? 0.3 : 0.18;
+    const volume = caractere === "percutante" ? 0.3 : 0.18;
 
     const osc = offline.createOscillator();
     osc.type = typeOsc;
