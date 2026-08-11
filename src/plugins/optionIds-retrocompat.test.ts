@@ -8,6 +8,8 @@
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { valeurCanoniqueChoix } from "../i18n";
+import { normaliserModeSynthèse } from "./soundfontGlobal";
+import { normaliserTimbre } from "../audio/automate-cellulaire";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {
@@ -148,6 +150,23 @@ const CAS: Cas[] = [
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
+
+  // « Synthèse » — paramètre partagé (PARAMETRE_SYNTHESE, soundfontGlobal.ts),
+  // déclaré à l'identique sur une vingtaine de nœuds. Les projets enregistrés
+  // avant l'ajout des optionIds stockent les libellés FR ou EN.
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "Automatique", idAttendu: "auto" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+  // Variante sans « Automatique » (PARAMETRE_SYNTHESE_SANS_AUTO).
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+  // Nœuds au format de déclaration différent, migrés dans le même lot.
+  { node: "melodie-aleatoire", param: "Synthèse", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "generateur-fractal", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "clavier-melodie", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
@@ -162,5 +181,31 @@ describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
     const def = paramDe("generateur-accords", "Genre");
     expect(valeurCanoniqueChoix(def, "custom")).toBe("custom");
     expect(valeurCanoniqueChoix(def, "hiphop")).toBe("hiphop");
+  });
+});
+
+// Ajouter des optionIds ne suffit pas : le code qui CONSOMME le paramètre doit
+// accepter l'id canonique, sinon `paramTexte` renvoie "fm" à un comparateur qui
+// n'attend que "FM/Oscillateurs" et le nœud bascule silencieusement de moteur.
+describe("les normaliseurs acceptent l'id canonique ET les anciens libellés", () => {
+  it("normaliserModeSynthèse", () => {
+    for (const v of ["auto", "Automatique", "Auto"]) {
+      expect(normaliserModeSynthèse(v)).toBe("Automatique");
+    }
+    for (const v of ["fm", "FM/Oscillateurs", "FM/Oscillators"]) {
+      expect(normaliserModeSynthèse(v)).toBe("FM/Oscillateurs");
+    }
+    for (const v of ["soundfont", "SoundFont"]) {
+      expect(normaliserModeSynthèse(v)).toBe("SoundFont");
+    }
+  });
+
+  it("normaliserTimbre (automate cellulaire)", () => {
+    for (const v of ["fm", "FM/Oscillateurs", "FM/Oscillators"]) {
+      expect(normaliserTimbre(v)).toBe("FM/Oscillateurs");
+    }
+    for (const v of ["soundfont", "SoundFont"]) {
+      expect(normaliserTimbre(v)).toBe("SoundFont");
+    }
   });
 });

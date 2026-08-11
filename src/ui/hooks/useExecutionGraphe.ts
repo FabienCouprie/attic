@@ -392,8 +392,16 @@ export function useExecutionGraphe(o: OptionsExecution) {
             if (typeof p === "string" && pDef) {
               return String(valeurCanoniqueChoix(pDef, p));
             }
-            const defautEff = typeof pDef?.defautEn === "string" ? pDef.defautEn : defaut;
-            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defautEff;
+            // Repli sur le défaut DÉCLARÉ PAR LA FICHE (`defaut`, français),
+            // jamais `defautEn` : la forme canonique d'un « choix » est celle
+            // de la liste `options`, et un plugin compare la valeur reçue à ses
+            // propres termes français (ex. profilCouleur("Bleu")). Préférer
+            // `defautEn` renvoyait "Blue" quand le paramètre était absent de
+            // `parametres` (ancien workflow, JSON écrit à la main) et faisait
+            // échouer le nœud sur « Couleur 1 inconnue : Blue » — alors que
+            // l'inspecteur, lui, affichait bien « Bleu ». Cf. defautCanoniqueChoix.
+            const defautEff = pDef ? pDef.defaut : defaut;
+            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defaut;
           },
           // Ignorer un onProgress qui arrive après annulation : la piste déjà en
           // vol au moment du reset (son await ne vérifie pas `signal` en plein

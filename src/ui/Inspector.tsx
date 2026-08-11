@@ -119,7 +119,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           {isOpen && docP && <p className="inspecteur-param-doc"><TexteAvecLiens texte={docP} /></p>}
           {p.type === "choix" && p.options ? (
             (() => {
-              const defautCanonique = defautCanoniqueChoix(p, lang);
+              const defautCanonique = defautCanoniqueChoix(p);
               const raw = String(params[p.nom] ?? defautCanonique);
               const candidat = String(valeurCanoniqueChoix(p, raw));
               const hasIds = p.optionIds && p.optionIds.length > 0;

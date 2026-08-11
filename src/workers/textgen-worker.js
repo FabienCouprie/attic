@@ -13,17 +13,75 @@ function dtypeForModel(modelId) {
   return { decoder_model_merged: "fp32", encoder_model: "fp32" };
 }
 
-async function getGenerator(modelId, task, requestId) {
+function nomFichier(chemin) {
+  if (!chemin) return "";
+  return String(chemin).split(/[\\/]/).pop() || String(chemin);
+}
+
+// `loaded`/`total` (octets) font foi ; `progress` de Transformers.js est déjà
+// un pourcentage 0-100 (et non une fraction 0-1) — cf. utils/core.js.
+function pourcentage(loaded, total, progress) {
+  if (typeof loaded === "number" && typeof total === "number" && total > 0) {
+    return Math.round(Math.min(100, Math.max(0, (loaded / total) * 100)));
+  }
+  if (typeof progress === "number" && isFinite(progress)) {
+    return Math.round(Math.min(100, Math.max(0, progress)));
+  }
+  return 0;
+}
+
+async function getGenerator(modelId, task, requestId, labels) {
   const key = `${task}:${modelId}`;
   if (generators.has(key)) return generators.get(key);
   // Ne garder qu'un seul modèle en mémoire dans le worker pour éviter
   // l'accumulation de plusieurs gros modèles (Qwen, GPT-2, NLLB…) en parallèle.
   generators.clear();
-  self.postMessage({ type: "progress", msg: "Chargement du modèle…", requestId });
+
+  // Les libellés arrivent déjà traduits depuis le plugin (un worker n'a pas
+  // accès au contexte i18n de React) ; repli en français si absents, pour ne
+  // pas casser les appelants qui ne les transmettent pas encore.
+  const tplChargement = labels?.load || "Chargement du modèle… {__VAR_0__}%";
+  const tplTelechargement = labels?.download || "Téléchargement {__VAR_0__} {__VAR_1__}%";
+  const formatChargement = (pct) => tplChargement.replace("{__VAR_0__}", pct);
+  const formatTelechargement = (fichier, pct) =>
+    tplTelechargement.replace("{__VAR_0__}", nomFichier(fichier)).replace("{__VAR_1__}", pct);
+
+  // Le téléchargement d'un modèle émet des centaines d'événements ; on limite
+  // les postMessage à ~10/s pour ne pas saturer le thread principal (qui doit
+  // rester libre de repeindre l'anneau de progression du nœud).
+  let dernierEnvoi = 0;
+  let dernierPct = -1;
+  const envoyer = (msg, force) => {
+    const maintenant = Date.now();
+    if (!force && maintenant - dernierEnvoi < 100) return;
+    dernierEnvoi = maintenant;
+    self.postMessage({ type: "progress", msg, requestId });
+  };
+
+  envoyer(formatChargement(0), true);
   const gen = await pipeline(task, modelId, {
     device: "wasm",
     dtype: dtypeForModel(modelId),
-  });  generators.set(key, gen);
+    progress_callback: (data) => {
+      const statut = data?.status;
+      if (statut === "progress_total") {
+        // Agrégat tous fichiers confondus : `pipeline()` pré-remplit les
+        // tailles attendues de chaque fichier, donc ce pourcentage est
+        // significatif dès le départ et progresse de 0 à 100 sans repartir
+        // à zéro à chaque nouveau fichier (contrairement à `progress`).
+        const pct = pourcentage(data.loaded, data.total, data.progress);
+        if (pct === dernierPct) return;
+        dernierPct = pct;
+        envoyer(formatChargement(pct));
+      } else if (statut === "progress" && dernierPct < 0) {
+        // Repli fichier par fichier tant qu'aucun agrégat n'a été reçu.
+        envoyer(formatTelechargement(data.file, pourcentage(data.loaded, data.total, data.progress)));
+      } else if (statut === "ready") {
+        envoyer(formatChargement(100), true);
+      }
+    },
+  });
+  generators.set(key, gen);
   return gen;
 }
 
@@ -31,10 +89,14 @@ const queue = [];
 let busy = false;
 
 async function processRequest(req) {
-  const { prompt, messages, modelId, task, maxTokens, temperature, repetitionPenalty, requestId } = req;
+  const { prompt, messages, modelId, task, maxTokens, temperature, repetitionPenalty, labels, requestId } = req;
   try {
-    const gen = await getGenerator(modelId, task || "text-generation", requestId);
-    self.postMessage({ type: "progress", msg: "Génération…", requestId });
+    const gen = await getGenerator(modelId, task || "text-generation", requestId, labels);
+    // Même famille de libellés que le chargement : sans ça, un utilisateur en
+    // anglais verrait « Loading model… 40% » puis « Génération 20% ».
+    const tplGeneration = labels?.generate_pct || "Génération {__VAR_0__}%";
+    const formatGeneration = (pct) => tplGeneration.replace("{__VAR_0__}", pct);
+    self.postMessage({ type: "progress", msg: labels?.generate || "Génération…", requestId });
 
     if (task === "text2text-generation") {
       // NLLB / mBART — seq2seq
@@ -56,7 +118,7 @@ async function processRequest(req) {
         callback_function: (beam) => {
           if (beam && beam.tokens) {
             const pct = Math.round((beam.tokens.length / (maxTokens || 100)) * 100);
-            self.postMessage({ type: "progress", msg: `Génération ${pct}%`, requestId });
+            self.postMessage({ type: "progress", msg: formatGeneration(pct), requestId });
           }
         },
       });
@@ -74,7 +136,7 @@ async function processRequest(req) {
         callback_function: (beam) => {
           if (beam && beam.tokens) {
             const pct = Math.round((beam.tokens.length / (maxTokens || 100)) * 100);
-            self.postMessage({ type: "progress", msg: `Génération ${pct}%`, requestId });
+            self.postMessage({ type: "progress", msg: formatGeneration(pct), requestId });
           }
         },
       });

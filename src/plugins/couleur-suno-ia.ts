@@ -89,6 +89,14 @@ Write a single creative Suno prompt paragraph:`;
       // 4. Appeler le LLM (DistilGPT-2) via le worker
       ctx.onProgress(traduire("progress.g_n_ration_du_script_ia"));
       const w = getWorker();
+      // Libellés traduits ici (le worker n'a pas accès au contexte i18n) ;
+      // les {__VAR_N__} sont laissés en place, c'est le worker qui les remplit.
+      const labels = {
+        load: traduire("progress.textgen.load_model"),
+        download: traduire("progress.textgen.download"),
+        generate: traduire("progress.textgen.generate"),
+        generate_pct: traduire("progress.textgen.generate_pct"),
+      };
       const llmText = await new Promise<string | null>((resolve) => {
         const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
@@ -111,6 +119,7 @@ Write a single creative Suno prompt paragraph:`;
           maxTokens: 120,
           temperature,
           repetitionPenalty: 1.4,
+          labels,
           requestId,
         });
       });

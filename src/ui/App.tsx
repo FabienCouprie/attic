@@ -447,7 +447,13 @@ function Atelier() {
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
           if (def) for (const p of def.parametres) {
-            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p, lang) : defautParametre(p, lang);
+            // Tout paramètre « choix » passe par la forme canonique (indépendante de la
+// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
+// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
+// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
+// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
+// « Left ») et refusé par l'exécution.
+parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
           }
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
@@ -586,7 +592,13 @@ function Atelier() {
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
     for (const p of def.parametres) {
-      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p, lang) : defautParametre(p, lang);
+      // Tout paramètre « choix » passe par la forme canonique (indépendante de la
+// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
+// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
+// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
+// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
+// « Left ») et refusé par l'exécution.
+parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
     }
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {

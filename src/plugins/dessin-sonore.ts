@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererDessinSonore, GAMMES_ACCORDS, type FormeColoree } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const formatCouleur = (c: FormeColoree) => `rgb(${c.couleur.r},${c.couleur.g},${c.couleur.b})`;
 
@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de couleurs dominantes à détecter.", docEn: "Number of dominant colors to detect." },
       { nom: "Taille min", nomEn: "Min size", type: "nombre", plage: [0, 20], pas: 0.1, defaut: 0.5, unite: "%",
         doc: "Surface minimale d'une forme colorée pour être conservée (en % de l'image).", docEn: "Minimum colored shape area to keep (percentage of image)." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

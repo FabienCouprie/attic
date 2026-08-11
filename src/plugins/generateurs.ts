@@ -25,7 +25,7 @@ import {
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 /**
@@ -130,8 +130,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -168,8 +167,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -212,7 +210,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde utilisée pour la synthèse FM.", docEn: "Waveform used for FM synthesis." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour la répartition pseudo-aléatoire des points d'échantillonnage.", docEn: "Seed for the pseudo-random distribution of sampling points." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -243,7 +241,7 @@ export const fiches: FicheAudio[] = ([
         graine: ctx.paramNombre("Graine", 42),
         instrument,
         banque,
-      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
       return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
     },
   },
@@ -265,7 +263,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s", doc: "Durée maximale de chaque note.", docEn: "Maximum duration of each note." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde pour la synthèse FM.", docEn: "Waveform for FM synthesis." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -287,7 +285,7 @@ export const fiches: FicheAudio[] = ([
         volume: ctx.paramNombre("Volume", 80),
         instrument,
         banque,
-      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
       return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
     },
   },
@@ -448,8 +446,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
@@ -795,7 +792,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -1216,13 +1213,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Drum volume. Drums are always synthesized by the internal drum synth to remain audible, even in SoundFont mode.",
       },
       {
-        nom: "Synthèse",
-        nomEn: "Synthesis",
-        type: "choix",
-        options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
-        optionsEn: ["Auto", "FM/Oscillators", "SoundFont"],
-        defaut: "Automatique",
-        defautEn: "Auto",
+        ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. La batterie utilise toujours le drum-synth interne.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth.",
       },

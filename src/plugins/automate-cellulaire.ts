@@ -12,7 +12,7 @@ import {
 } from "../audio/automate-cellulaire";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE_SANS_AUTO } from "./soundfontGlobal";
 import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
@@ -214,13 +214,7 @@ const FICHES: FicheAudio[] = [
         docEn: "Probability of randomly flipping a cell at each generation.",
       },
       {
-        nom: "Synthèse",
-        nomEn: "Synthesis",
-        type: "choix",
-        options: ["FM/Oscillateurs", "SoundFont"],
-        defaut: "FM/Oscillateurs",
-        optionsEn: ["FM/Oscillators", "SoundFont"],
-        defautEn: "FM/Oscillators",
+        ...PARAMETRE_SYNTHESE_SANS_AUTO,
         doc: "Moteur audio pour le rendu : FM/oscillateurs intégrés ou SoundFont global chargé.",
         docEn: "Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont.",
       },

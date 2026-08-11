@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -46,7 +46,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de chaque note en fraction de temps (1 = temps entier, 0.5 = croche, 0.25 = double-croche).", docEn: "Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth)." },
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif de couleurs.", docEn: "Number of repetitions of the color pattern." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

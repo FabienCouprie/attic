@@ -21,7 +21,11 @@ export const fiches: FicheAudio[] = ([
         nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: ["1024", "2048", "4096", "8192"], defaut: "4096",
         doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle).",
-        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution).", optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"], defautEn: "Sawtooth",
+        // Pas d'optionsEn/defautEn : des tailles de fenêtre ne se traduisent pas.
+        // (Ces champs contenaient des formes d'onde — « Sine », « Square »… —
+        // copiées-collées depuis un paramètre d'oscillateur, ce qui affichait
+        // des noms de formes d'onde à la place des tailles en anglais.)
+        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution).",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
@@ -48,7 +52,8 @@ export const fiches: FicheAudio[] = ([
         nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: ["512", "1024", "2048", "4096"], defaut: "1024",
         doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence).",
-        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).", optionsEn: ["512", "Sine", "Square", "Sawtooth"], defautEn: "Sine",
+        // Idem : pas d'optionsEn/defautEn (mêmes formes d'onde copiées-collées).
+        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",

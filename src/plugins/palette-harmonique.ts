@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererPaletteHarmonique, GAMMES_ACCORDS, type CouleurExtraite } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const formatCouleur = (c: CouleurExtraite) => `rgb(${c.r},${c.g},${c.b})`;
 
@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de couleurs dominantes à extraire.", docEn: "Number of dominant colors to extract." },
       { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Horizontal", "Vertical", "Luminosité", "Saturation"], optionsEn: ["Horizontal", "Vertical", "Brightness", "Saturation"], defaut: "Horizontal", defautEn: "Horizontal",
         doc: "Ordre de lecture des couleurs dans la séquence.", docEn: "Reading order of colors in the sequence." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

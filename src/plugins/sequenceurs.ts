@@ -11,7 +11,7 @@ import {
   rendreSequenceurAccords, decoderMotifAccords,
   GAMMES_ACCORDS,
 } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 // Motif par défaut (16 pas) : kick sur les temps, snare sur 2 et 4, charley en croches.
 const MOTIF_DEFAUT = [
@@ -124,7 +124,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure.", defautEn: "Triangle" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -192,7 +192,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["harmonie", "arpege"],
         doc: "Harmonie = accord joué en bloc ; Arpège = notes décalées rapidement.", docEn: "Harmony = chord played as a block ; Arpeggio = notes quickly staggered.",
         optionsEn: ["Harmony", "Arpeggio"], defautEn: "Harmony" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

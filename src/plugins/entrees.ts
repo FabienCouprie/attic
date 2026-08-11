@@ -4,7 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { decoderFichier, decoderBlob, filtrerCanauxMidi, rendreMidi, appliquerInstrumentMidi } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 const entrees: FicheAudio[] = [
   {
@@ -74,7 +74,7 @@ const entrees: FicheAudio[] = [
     resumeEn: "Records a performance played on a connected MIDI keyboard or controller.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
@@ -110,7 +110,7 @@ const entrees: FicheAudio[] = [
     parametres: [
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "minor"], defautEn: "major" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur"], defaut: "majeur", optionsEn: ["Major", "Minor"] },
       { nom: "Tempo", nomEn: "Tempo", plage: [40,240], defaut: 120, unite: "BPM" },
       { nom: "Durée", nomEn: "Duration", plage: [4,120], defaut: 30, unite: "s" },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },

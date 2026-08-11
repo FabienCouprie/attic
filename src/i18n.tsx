@@ -417,6 +417,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.kokoro.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
   "progress.kokoro.synthesize": { fr: "Synthèse vocale…", en: "Synthesizing speech…" },
   "progress.kokoro.chunk": { fr: "Synthèse vocale… {__VAR_0__}/{__VAR_1__}", en: "Synthesizing speech… {__VAR_0__}/{__VAR_1__}" },
+  "progress.textgen.load_model": { fr: "Chargement du modèle… {__VAR_0__}%", en: "Loading model… {__VAR_0__}%" },
+  "progress.textgen.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
+  "progress.textgen.generate": { fr: "Génération…", en: "Generating…" },
+  "progress.textgen.generate_pct": { fr: "Génération {__VAR_0__}%", en: "Generating {__VAR_0__}%" },
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
   "msg.sherpa_asr.transcribe_timeout": { fr: "Délai dépassé lors de la transcription Sherpa-ONNX.", en: "Sherpa-ONNX transcription timed out." },
   "msg.sherpa_asr.clear_cache_timeout": { fr: "Délai dépassé lors du vidage du cache Sherpa-ONNX.", en: "Sherpa-ONNX cache clear timed out." },
@@ -684,17 +688,17 @@ export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsE
   return v;
 }
 
-// `lang` par défaut à "fr" : les rares appelants qui ne le passent pas restent
-// corrects tant que la langue courante est celle par défaut de l'app, mais
-// l'idéal est de toujours transmettre la langue active (cf. Inspector.tsx).
-export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">, lang: Langue = "fr"): string | number {
-  // Avant : `p.defautEn ?? p.defaut` ignorait la langue et préférait toujours
-  // l'anglais dès qu'il était renseigné. Sans `optionIds` (aucune recherche
-  // bidirectionnelle possible dans valeurCanoniqueChoix, qui renvoie alors la
-  // valeur telle quelle), ça renvoyait par ex. "Center" même en français —
-  // valeur absente des <option value="Gauche"|"Centre"|"Droite">, donc le
-  // <select> contrôlé retombait sur son 1er <option> (« Gauche ») sans le
-  // signaler, alors que l'exécution du nœud utilise bien "Centre" en repli
-  // (ctx.paramTexte("Position", "Centre")) — défaut affiché ≠ défaut réel.
-  return valeurCanoniqueChoix(p, defautParametre(p, lang));
+// VOLONTAIREMENT indépendant de la langue : la forme canonique d'un paramètre
+// « choix » est toujours celle de la liste `options` (française), jamais celle
+// de `optionsEn`. En effet, sans `optionIds`, l'Inspector rend
+// `<option value={p.options[i]}>{libellé traduit}</option>` : seul le LIBELLÉ
+// est traduit, la valeur stockée reste le terme français. Partir de `defautEn`
+// (par ex. "Center") produisait donc une valeur absente des
+// <option value="Gauche"|"Centre"|"Droite"> : un <select> contrôlé sans option
+// correspondante retombe silencieusement sur son 1er <option> (« Gauche »),
+// alors que l'exécution du nœud, elle, utilisait bien "Centre" — d'où un
+// défaut affiché ≠ défaut réellement appliqué. Avec `optionIds`,
+// valeurCanoniqueChoix sait mapper le terme français vers l'id : correct aussi.
+export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">): string | number {
+  return valeurCanoniqueChoix(p, p.defaut);
 }

@@ -14,7 +14,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 const DEMI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -73,10 +73,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo par défaut (temps → secondes). Une ligne « TEMPO n » dans le texte le remplace.",
         docEn: "Default tempo (beats → seconds). A « TEMPO n » line in the text overrides it." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
-        optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
-        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples.", defautEn: "Auto" },
+      PARAMETRE_SYNTHESE,
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio synthétisé.", docEn: "Synthesized audio volume." },
