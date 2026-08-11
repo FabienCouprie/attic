@@ -134,7 +134,7 @@ const FICHES: FicheAudio[] = [
         nom: "Clé",
         nomEn: "Key",
         type: "choix",
-        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"],
+        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"],
         defaut: "Do",
         optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
         defautEn: "C",

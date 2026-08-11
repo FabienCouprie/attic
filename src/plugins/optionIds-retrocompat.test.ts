@@ -12,6 +12,8 @@ import { normaliserModeSynthèse } from "./soundfontGlobal";
 import { normaliserTimbre } from "../audio/automate-cellulaire";
 import { formeOndeDepuisTimbre, caractereTimbre } from "../audio/timbres";
 import { cleCouleur } from "../audio/couleurs";
+import { DEMI_TONS_CLE } from "../audio/commun";
+import { normaliserCle } from "../audio/automate-cellulaire";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {
@@ -265,6 +267,23 @@ const CAS: Cas[] = [
   { node: "nllb-paroles", param: "Langue cible", ancienneValeur: "Chinese", idAttendu: "zh" },
   { node: "generateur-paroles", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
   { node: "generateur-paroles", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
+
+  // ── Lot 2 : « Clé » en solfège français ──
+  // Ids = notation internationale, déjà utilisée telle quelle par les 10 autres
+  // nœuds à paramètre « Clé » : la migration unifie le vocabulaire de tout le parc.
+  ...(["melodie-aleatoire", "generateur-fractal", "mappeur-mandelbrot", "arpege-koch",
+       "sampler-personnalise", "automate-cellulaire"] as const).flatMap((node) => [
+    { node, param: "Clé", ancienneValeur: "Do", idAttendu: "C" },
+    { node, param: "Clé", ancienneValeur: "C", idAttendu: "C" },
+    { node, param: "Clé", ancienneValeur: "Ré", idAttendu: "D" },
+    { node, param: "Clé", ancienneValeur: "D", idAttendu: "D" },
+    // Bémols : le libellé français utilise le vrai signe ♭ (U+266D).
+    { node, param: "Clé", ancienneValeur: "Mi♭", idAttendu: "Eb" },
+    { node, param: "Clé", ancienneValeur: "Eb", idAttendu: "Eb" },
+    { node, param: "Clé", ancienneValeur: "Si♭", idAttendu: "Bb" },
+    { node, param: "Clé", ancienneValeur: "Sol#", idAttendu: "G#" },
+    { node, param: "Clé", ancienneValeur: "Si", idAttendu: "B" },
+  ]),
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
@@ -322,6 +341,25 @@ describe("les normaliseurs acceptent l'id canonique ET les anciens libellés", (
   // de couleur, qui indexe COULEURS). La vue lit `parametres` directement, sans
   // canonisation — après la migration elle recevait l'id « vert » et retombait
   // sur la couleur grise par défaut.
+  // Le risque propre au lot 2 n'est pas visuel mais musical : si un id ne
+  // résolvait pas vers le même demi-ton que l'ancien libellé, tout le morceau
+  // serait transposé sans le moindre message d'erreur. On vérifie donc les 12
+  // tonalités une à une, et pas seulement la canonisation des chaînes.
+  it("aucune transposition : solfège français et notation internationale donnent le même demi-ton", () => {
+    const paires: [string, string][] = [
+      ["Do", "C"], ["Do#", "C#"], ["Ré", "D"], ["Mi♭", "Eb"], ["Mi", "E"], ["Fa", "F"],
+      ["Fa#", "F#"], ["Sol", "G"], ["Sol#", "G#"], ["La", "A"], ["Si♭", "Bb"], ["Si", "B"],
+    ];
+    for (const [fr, intl] of paires) {
+      expect(DEMI_TONS_CLE[fr]).toBeTypeOf("number");
+      expect(DEMI_TONS_CLE[intl]).toBe(DEMI_TONS_CLE[fr]);
+      // `normaliserCle` (automate cellulaire) passe par le solfège français.
+      expect(DEMI_TONS_CLE[normaliserCle(intl)]).toBe(DEMI_TONS_CLE[fr]);
+    }
+    // Les 12 tonalités sont bien distinctes (aucune collision de mapping).
+    expect(new Set(paires.map(([, i]) => DEMI_TONS_CLE[i])).size).toBe(12);
+  });
+
   it("cleCouleur (id, nom français, nom anglais)", () => {
     expect(["vert", "Vert", "green", "Green"].map(cleCouleur)).toEqual(["Vert", "Vert", "Vert", "Vert"]);
     expect(["bleu", "Bleu", "Blue"].map(cleCouleur)).toEqual(["Bleu", "Bleu", "Bleu"]);
