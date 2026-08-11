@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée totale de la séquence audio/MIDI.", docEn: "Total duration of the audio/MIDI sequence." },
       { nom: "Couleurs", nomEn: "Colors", type: "nombre", plage: [2, 12], pas: 1, defaut: 4,
         doc: "Nombre de couleurs dominantes à extraire.", docEn: "Number of dominant colors to extract." },
-      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Horizontal", "Vertical", "Luminosité", "Saturation"], optionsEn: ["Horizontal", "Vertical", "Brightness", "Saturation"], defaut: "Horizontal", defautEn: "Horizontal",
+      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Horizontal", "Vertical", "Luminosité", "Saturation"], optionIds: ["Horizontal","Vertical","Luminosité","Saturation"], optionsEn: ["Horizontal", "Vertical", "Brightness", "Saturation"], defaut: "Horizontal", defautEn: "Horizontal",
         doc: "Ordre de lecture des couleurs dans la séquence.", docEn: "Reading order of colors in the sequence." },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",

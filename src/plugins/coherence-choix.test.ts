@@ -68,6 +68,21 @@ describe("cohérence des paramètres « choix »", () => {
     expect(fautifs).toEqual([]);
   });
 
+  // Garde-fou de fin de migration : tout paramètre « choix » dont les libellés
+  // anglais diffèrent du français DOIT porter des `optionIds`. Sans eux, son
+  // identité canonique redevient une chaîne traduisible — exactement la cause
+  // des bugs à répétition qui ont motivé ce chantier (défaut affiché ≠ défaut
+  // appliqué, valeur anglaise stockée puis rejetée à l'exécution…). Ce test
+  // empêche un nouveau nœud de réintroduire le problème.
+  it("tout paramètre « choix » traduit porte des optionIds", () => {
+    const fautifs = CHOIX.filter((c) => {
+      if (c.param.optionIds?.length) return false;
+      const { options = [], optionsEn = [] } = c.param;
+      return optionsEn.length > 0 && options.some((v, i) => optionsEn[i] !== undefined && optionsEn[i] !== v);
+    }).map((c) => c.ref);
+    expect(fautifs).toEqual([]);
+  });
+
   it("`defautEn`, quand présent, fait partie de optionsEn (ou des optionIds)", () => {
     const fautifs = CHOIX.filter((c) => {
       const { optionsEn = [], optionIds = [], defautEn } = c.param;

@@ -32,7 +32,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [],
     parametres: [
       { nom: "Action", nomEn: "Action", type: "choix",
-        options: ["Exporter", "Importer"], optionsEn: ["Export", "Import"],
+        options: ["Exporter", "Importer"], optionIds: ["Exporter","Importer"], optionsEn: ["Export", "Import"],
         defaut: "Exporter",
         doc: "Exporter = créer un .zip d'un node existant. Importer = installer un node depuis un .zip.",
         docEn: "Export = create a .zip of an existing node. Import = install a node from a .zip.", defautEn: "Export" },

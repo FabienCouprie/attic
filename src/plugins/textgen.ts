@@ -193,7 +193,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mots", nomEn: "Words", plage: [5, 100], pas: 1, defaut: 20,
         doc: "Nombre de mots à générer.", docEn: "Number of words to generate." },
       { nom: "Alphabet", nomEn: "Alphabet", type: "choix",
-        options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
+        options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"], optionIds: ["abcdefghijklmnopqrstuvwxyz","aeioubcdfghjklmnpqrstvwxyz","abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
         optionsEn: ["Full (a-z)", "Vowels-first", "French (a-z + accents)"],
         defaut: "abcdefghijklmnopqrstuvwxyz",
         doc: "Alphabet utilisé pour la génération.", docEn: "Alphabet used for generation.", defautEn: "Full (a-z)" },

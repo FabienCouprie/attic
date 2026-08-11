@@ -89,7 +89,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Instrument", nomEn: "Instrument", type: "choix",
-        options: ["Violon", "Flûte", "Saxophone ténor", "Trompette"],
+        options: ["Violon", "Flûte", "Saxophone ténor", "Trompette"], optionIds: ["Violon","Flûte","Saxophone ténor","Trompette"],
         optionsEn: ["Violin", "Flute", "Tenor saxophone", "Trumpet"],
         defaut: "Violon",
         doc: "Instrument cible du transfert de timbre. Le modèle se télécharge au premier usage (~3-4 MB).",

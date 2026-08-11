@@ -25,7 +25,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Visualisation",
         nomEn: "Visualization",
         type: "choix",
-        options: ["Toutes", ...VIZS],
+        options: ["Toutes", ...VIZS], optionIds: ["Toutes", ...VIZS],
         defaut: "Toutes",
         doc: "Mode de visualisation Songsee. 'Toutes' génère une grille des 9 modes.",
         docEn: "Songsee visualization mode. 'All' renders a grid of all 9 modes.",

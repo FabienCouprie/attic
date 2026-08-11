@@ -284,6 +284,46 @@ const CAS: Cas[] = [
     { node, param: "Clé", ancienneValeur: "Sol#", idAttendu: "G#" },
     { node, param: "Clé", ancienneValeur: "Si", idAttendu: "B" },
   ]),
+
+  // ── Lot 5 : paramètres isolés ──
+  // Ici l'id retenu EST l'option française : ces paramètres n'appartiennent à
+  // aucun vocabulaire partagé, et leurs consommateurs comparent chacun des
+  // chaînes françaises avec un style différent (===, .includes, indexation de
+  // table). Ce choix corrige le vrai défaut — une valeur anglaise ne peut plus
+  // être stockée — sans réécrire une vingtaine de consommateurs. Même
+  // convention que « Catégorie »/« Famille », déjà en place avant cette session.
+  { node: "reponse-filtre", param: "Type", ancienneValeur: "Lowpass", idAttendu: "Passe-bas" },
+  { node: "reponse-filtre", param: "Type", ancienneValeur: "Passe-bas", idAttendu: "Passe-bas" },
+  { node: "reverbe-convolution", param: "Type", ancienneValeur: "Cathedral", idAttendu: "Cathédrale" },
+  { node: "chopper", param: "Type", ancienneValeur: "Soft", idAttendu: "Fondu" },
+  { node: "generateur-bruit", param: "Type", ancienneValeur: "Brownian", idAttendu: "Brownien" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "Aléatoire" },
+  { node: "arpegiateur-midi", param: "Motif", ancienneValeur: "Straight", idAttendu: "Droit" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "Sinus" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
+  { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
+  { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },
+  { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Sierpinski", idAttendu: "Sierpiński" },
+  { node: "boite-rythmes", param: "Patron", ancienneValeur: "Military march", idAttendu: "Marche militaire" },
+  { node: "boite-rythmes", param: "Patron", ancienneValeur: "Waltz", idAttendu: "Valse" },
+  { node: "generateur-fractal", param: "Motif", ancienneValeur: "Custom", idAttendu: "Personnalisé" },
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "classic", idAttendu: "classique" },
+  { node: "generateur-musical", param: "Instrument 2", ancienneValeur: "Fretless bass", idAttendu: "Basse fretless" },
+  { node: "gestion-nodes", param: "Action", ancienneValeur: "Export", idAttendu: "Exporter" },
+  { node: "vexflow-tab", param: "Accordage", ancienneValeur: "Ukulele", idAttendu: "Ukulélé" },
+  { node: "ddsp-tone-transfer", param: "Instrument", ancienneValeur: "Tenor saxophone", idAttendu: "Saxophone ténor" },
+  { node: "palette-harmonique", param: "Ordre", ancienneValeur: "Brightness", idAttendu: "Luminosité" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "Gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "Centre" },
+  { node: "automate-cellulaire", param: "Règle", ancienneValeur: "Custom", idAttendu: "Personnalisée" },
+  { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "Polyphonie" },
+  { node: "automate-cellulaire", param: "Mapping", ancienneValeur: "Pitch + velocity", idAttendu: "Hauteur + vélocité" },
+  { node: "sherpa-asr", param: "Qualité resampling", ancienneValeur: "Standard (linear)", idAttendu: "Standard (linéaire)" },
+  { node: "visualisation-songsee", param: "Visualisation", ancienneValeur: "All", idAttendu: "Toutes" },
+  // Exception : les voix SpeechT5 reçoivent de vrais ids sémantiques, parce que
+  // leur consommateur acceptait DÉJÀ `v.id` en plus des libellés FR/EN.
+  { node: "tts-speecht5", param: "Voix", ancienneValeur: "Homme américain (BDL)", idAttendu: "bdl" },
+  { node: "tts-speecht5", param: "Voix", ancienneValeur: "US female (SLT)", idAttendu: "slt" },
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
