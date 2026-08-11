@@ -11,6 +11,7 @@ import { valeurCanoniqueChoix } from "../i18n";
 import { normaliserModeSynthèse } from "./soundfontGlobal";
 import { normaliserTimbre } from "../audio/automate-cellulaire";
 import { formeOndeDepuisTimbre, caractereTimbre } from "../audio/timbres";
+import { cleCouleur } from "../audio/couleurs";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {
@@ -298,6 +299,20 @@ describe("les normaliseurs acceptent l'id canonique ET les anciens libellés", (
     // Valeur inconnue → undefined, pour que chaque nœud applique SON repli
     // (« triangle » sur le séquenceur, « sine » sur le réservoir).
     expect(formeOndeDepuisTimbre("n'importe quoi")).toBeUndefined();
+  });
+
+  // `cleCouleur` est le point de passage obligé des DEUX consommateurs du
+  // paramètre Couleur : le plugin (profilCouleur) et la vue du nœud (pastilles
+  // de couleur, qui indexe COULEURS). La vue lit `parametres` directement, sans
+  // canonisation — après la migration elle recevait l'id « vert » et retombait
+  // sur la couleur grise par défaut.
+  it("cleCouleur (id, nom français, nom anglais)", () => {
+    expect(["vert", "Vert", "green", "Green"].map(cleCouleur)).toEqual(["Vert", "Vert", "Vert", "Vert"]);
+    expect(["bleu", "Bleu", "Blue"].map(cleCouleur)).toEqual(["Bleu", "Bleu", "Bleu"]);
+    // « aucune » / « (aucune) » / « (none) » ne désignent aucune couleur.
+    for (const v of ["aucune", "(aucune)", "(none)", "n'importe quoi"]) {
+      expect(cleCouleur(v)).toBeNull();
+    }
   });
 
   it("caractereTimbre", () => {

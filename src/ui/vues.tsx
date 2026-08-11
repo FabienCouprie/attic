@@ -35,7 +35,7 @@ import { construireListeEmotions } from "../plugins/emotions";
 import { construireListeTessitures } from "../plugins/tessitures";
 import { tokenizePython } from "../plugins/python-processor";
 import { tokenizeJulia } from "../plugins/julia-processor";
-import { COULEURS } from "../audio";
+import { COULEURS, cleCouleur } from "../audio";
 import type { FicheAudio } from "../audio/types-domaine";
 import type { DonneesNoeud } from "./AtelierNode";
 
@@ -1204,8 +1204,11 @@ function VueCouleurSunoIA({ data }: VueProps) {
   const p = data.parametres ?? {};
   const c1 = String(p["Couleur 1"] ?? "Bleu");
   const c2 = String(p["Couleur 2"] ?? "(aucune)");
-  const obj1 = COULEURS[c1];
-  const obj2 = COULEURS[c2];
+  // Lecture directe de `parametres` (sans `paramTexte`), donc sans canonisation :
+  // la valeur peut être l'id (« bleu »), l'ancien nom français ou l'anglais.
+  // Indexer COULEURS avec elle telle quelle ne marchait qu'avec le nom français.
+  const obj1 = COULEURS[cleCouleur(c1) ?? ""];
+  const obj2 = COULEURS[cleCouleur(c2) ?? ""];
   const hex1 = obj1?.hex ?? "#999";
   const hex2 = obj2?.hex ?? "#333";
   const nom1 = obj1 ? obj1[lang] : c1;
@@ -1215,7 +1218,9 @@ function VueCouleurSunoIA({ data }: VueProps) {
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
         <div style={{ width: 24, height: 24, borderRadius: 4, background: hex1, boxShadow: `0 0 6px ${hex1}` }} />
-        {c2 && c2 !== "(aucune)" && obj2 ? (
+        {/* `obj2` suffit : « (aucune) », « (none) » et l'id « aucune » ne
+            résolvent vers aucune couleur, quel que soit leur libellé. */}
+        {obj2 ? (
           <>
             <span style={{ fontSize: 14, opacity: 0.5 }}>+</span>
             <div style={{ width: 24, height: 24, borderRadius: 4, background: hex2, boxShadow: `0 0 6px ${hex2}` }} />
