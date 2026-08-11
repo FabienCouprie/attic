@@ -417,6 +417,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.kokoro.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
   "progress.kokoro.synthesize": { fr: "Synthèse vocale…", en: "Synthesizing speech…" },
   "progress.kokoro.chunk": { fr: "Synthèse vocale… {__VAR_0__}/{__VAR_1__}", en: "Synthesizing speech… {__VAR_0__}/{__VAR_1__}" },
+  "progress.transcription_pourcent_var_0": { fr: "Transcription polyphonique… {__VAR_0__} %", en: "Polyphonic transcription… {__VAR_0__}%" },
+  "msg.transcription_poly_indisponible_var_0": { fr: "Transcription polyphonique indisponible : {__VAR_0__}. Basculez sur « Monophonique (FFT) » ou vérifiez votre connexion.", en: "Polyphonic transcription unavailable: {__VAR_0__}. Switch to « Monophonic (FFT) » or check your connection." },
   "progress.textgen.load_model": { fr: "Chargement du modèle… {__VAR_0__}%", en: "Loading model… {__VAR_0__}%" },
   "progress.textgen.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
   "progress.textgen.generate": { fr: "Génération…", en: "Generating…" },

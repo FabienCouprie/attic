@@ -55,9 +55,9 @@ function trouverPicFFT(
   taille: number,
   sr: number,
   fenetre: Float64Array,
-): { frequence: number; ampleur: number } {
+): { frequence: number; ampleur: number; platitude: number } {
   const n = Math.min(taille, mono.length - debut);
-  if (n < 4) return { frequence: 0, ampleur: 0 };
+  if (n < 4) return { frequence: 0, ampleur: 0, platitude: 1 };
   const re = new Float64Array(n);
   const im = new Float64Array(n);
   for (let i = 0; i < n; i++) re[i] = mono[debut + i] * (fenetre[i] ?? 1);
@@ -69,9 +69,24 @@ function trouverPicFFT(
     const amp = Math.hypot(re[b], im[b]);
     if (amp > picAmp) { picAmp = amp; picBin = b; }
   }
-  if (picBin < 0) return { frequence: 0, ampleur: 0 };
+  if (picBin < 0) return { frequence: 0, ampleur: 0, platitude: 1 };
+  // Platitude spectrale (moyenne géométrique / moyenne arithmétique) : proche de
+  // 0 pour un son tonal (énergie concentrée sur quelques partiels), proche de 1
+  // pour un bruit large bande. C'est ce qui distingue une note d'un coup de
+  // batterie — sans ce critère, chaque frappe produisait une note fantôme, le
+  // pic FFT d'un spectre de bruit étant purement arbitraire.
+  let sommeLog = 0;
+  let somme = 0;
+  let nb = 0;
+  for (let b = 1; b < nbBins; b++) {
+    const amp = Math.hypot(re[b], im[b]);
+    sommeLog += Math.log(amp + 1e-12);
+    somme += amp;
+    nb++;
+  }
+  const platitude = nb > 0 && somme > 0 ? Math.exp(sommeLog / nb) / (somme / nb) : 1;
   const freq = (picBin * sr) / n;
-  return { frequence: freq, ampleur: picAmp };
+  return { frequence: freq, ampleur: picAmp, platitude };
 }
 
 
@@ -121,6 +136,7 @@ export function transcrireMono(
   for (let i = 0; i < tailleFFT; i++) fenetre[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (tailleFFT - 1)));
 
   const notes: NoteEvenement[] = [];
+  const rejets: [number, number][] = [];
   for (let i = 0; i < onsetsSec.length; i++) {
     const tDebut = onsetsSec[i];
     const tFin = i + 1 < onsetsSec.length ? onsetsSec[i + 1] : buffer.duration;
@@ -131,6 +147,11 @@ export function transcrireMono(
     const analyseDebut = Math.max(0, milieuEch - tailleFFT / 2);
     const pic = trouverPicFFT(mono, analyseDebut, tailleFFT, sr, fenetre);
     if (pic.ampleur < seuilSol || pic.frequence < 30) continue;
+    // Rejette les trames de bruit large bande (percussions, souffle) : leur pic
+    // FFT ne correspond à aucune hauteur réelle. On mémorise l'intervalle : une
+    // frappe de batterie PAR-DESSUS une note tenue ne doit pas couper la note,
+    // seulement empêcher d'inventer une hauteur (cf. fusion plus bas).
+    if (pic.platitude > SEUIL_PLATITUDE) { rejets.push([tDebut, tFin]); continue; }
 
     const noteMidi = Math.round(69 + 12 * Math.log2(pic.frequence / 440));
     if (noteMidi < noteMin || noteMidi > noteMax) continue;
@@ -138,7 +159,51 @@ export function transcrireMono(
     const vel = Math.min(127, Math.round((pic.ampleur / maxEnv) * 127));
     notes.push({ note: noteMidi, velocite: Math.max(1, vel), debut: tDebut, fin: tFin });
   }
-  return notes;
+  return fusionnerNotesRepetees(notes, 0.06, rejets);
+}
+
+// Seuil de platitude spectrale au-delà duquel une trame est jugée bruitée.
+// 0,35 laisse passer les instruments harmoniques (typiquement < 0,2) tout en
+// écartant les percussions et le souffle (typiquement > 0,5).
+const SEUIL_PLATITUDE = 0.35;
+
+// Deux notes identiques et jointives proviennent presque toujours d'une même
+// note tenue que la détection d'attaque a coupée en deux (vibrato, tremolo,
+// réattaque de l'enveloppe). Les fusionner supprime le fourmillement sans
+// perdre d'information musicale.
+export function fusionnerNotesRepetees(
+  notes: NoteEvenement[],
+  ecartMax = 0.06,
+  rejets: [number, number][] = [],
+): NoteEvenement[] {
+  if (notes.length < 2) return notes;
+  // Un trou entièrement couvert par des intervalles rejetés pour cause de bruit
+  // n'est pas un silence musical : c'est une frappe de percussion masquant une
+  // note tenue. Sans ce pont, filtrer le bruit hachait chaque note en autant de
+  // fragments qu'il y avait de frappes par-dessus.
+  const combleParRejet = (debut: number, fin: number): boolean => {
+    if (fin <= debut) return true;
+    let couvert = 0;
+    for (const [rd, rf] of rejets) {
+      const a = Math.max(debut, rd);
+      const b = Math.min(fin, rf);
+      if (b > a) couvert += b - a;
+    }
+    return couvert >= (fin - debut) * 0.8;
+  };
+  const tri = [...notes].sort((a, b) => a.debut - b.debut || a.note - b.note);
+  const out: NoteEvenement[] = [];
+  for (const n of tri) {
+    const prec = out.find((p) => p.note === n.note && n.debut >= p.debut
+      && (n.debut - p.fin <= ecartMax || combleParRejet(p.fin, n.debut)));
+    if (prec) {
+      prec.fin = Math.max(prec.fin, n.fin);
+      prec.velocite = Math.max(prec.velocite, n.velocite);
+    } else {
+      out.push({ ...n });
+    }
+  }
+  return out.sort((a, b) => a.debut - b.debut || a.note - b.note);
 }
 
 
@@ -309,6 +374,54 @@ export function calculerRolloffSpectralMeyda(
   return { valeur, texte, trames: valeurs.length };
 }
 
+// ── Basic Pitch (polyphonique) ────────────────────────────────────────────
+// Caractéristiques du modèle, mesurées directement sur le fichier ONNX (et non
+// supposées — l'implémentation précédente se trompait sur les trois points) :
+//   • entrée  : [1, 43844, 1] — fenêtre FIXE de 43844 échantillons à 22050 Hz
+//                (~1,988 s). L'ancien code passait la piste ENTIÈRE en
+//                [1, 1, n] : mauvaise forme ET mauvaise longueur.
+//   • sorties : TROIS tenseurs distincts, pas un seul entrelacé.
+//       - "…Call:2" [1,172,88]  → onset   (2 trames actives sur une note tenue)
+//       - "…Call:1" [1,172,88]  → note    (128 trames actives, l'activation)
+//       - "…Call:0" [1,172,264] → contour (non utilisé ici)
+//     L'ancien code lisait outputNames[0] en l'indexant `(t*K+k)*3+2`, soit
+//     jusqu'à ~3×  la longueur réelle du tenseur : lectures hors limites
+//     (undefined) au-delà du premier tiers, et indices mélangeant les pas de
+//     temps et de note en deçà — d'où notes manquantes ET notes parasites.
+const BP_FENETRE = 43844;          // échantillons par appel au modèle
+const BP_TRAMES = 172;             // trames produites par fenêtre
+const BP_SR = 22050;
+const BP_HOP = BP_FENETRE / BP_TRAMES;   // ≈ 255 échantillons par trame
+// Recouvrement entre fenêtres (comme l'implémentation de référence) : on rogne
+// la moitié de chaque côté pour éliminer les artefacts de bord du modèle.
+const BP_TRAMES_RECOUV = 30;
+const BP_RECOUV = BP_TRAMES_RECOUV * BP_HOP;
+
+const URL_BASIC_PITCH = "https://huggingface.co/daserge/basic-pitch-onnx/resolve/main/nmp.onnx";
+
+let sessionBasicPitch: unknown = null;
+
+// Rééchantillonne en mono vers 22050 Hz (interpolation linéaire).
+function monoVers22k(buffer: AudioBuffer): Float32Array {
+  const sr = buffer.sampleRate;
+  const nCh = buffer.numberOfChannels;
+  const length = buffer.length;
+  const nbEch = Math.max(1, Math.ceil((length / sr) * BP_SR));
+  const canaux: Float32Array[] = [];
+  for (let c = 0; c < nCh; c++) canaux.push(buffer.getChannelData(c));
+  const mono = new Float32Array(nbEch);
+  for (let i = 0; i < nbEch; i++) {
+    const posSrc = (i / BP_SR) * sr;
+    const idx = Math.floor(posSrc);
+    const frac = posSrc - idx;
+    if (idx + 1 >= length) break;
+    let s = 0;
+    for (let c = 0; c < nCh; c++) s += (canaux[c][idx] * (1 - frac) + canaux[c][idx + 1] * frac) / nCh;
+    mono[i] = s;
+  }
+  return mono;
+}
+
 export async function transcrirePolyphonique(
   buffer: AudioBuffer,
   seuilOnset: number,
@@ -316,77 +429,111 @@ export async function transcrirePolyphonique(
   noteMax: number,
   surProgres?: (pct: number) => void,
 ): Promise<NoteEvenement[]> {
-  let session: import("onnxruntime-web").InferenceSession;
-  let ort: typeof import("onnxruntime-web");
-  try {
-    ort = await import("onnxruntime-web");
-    const URL_MODELE = "https://huggingface.co/Politrees/UVR_resources/resolve/main/models/BasicPitch/basic_pitch.onnx";
-    const rep = await fetch(URL_MODELE);
-    if (!rep.ok) throw new Error("HTTP " + rep.status);
+  const ort = await import("onnxruntime-web");
+  if (!sessionBasicPitch) {
+    const rep = await fetch(URL_BASIC_PITCH);
+    if (!rep.ok) throw new Error(`HTTP ${rep.status} — modèle Basic Pitch introuvable`);
     const donnees = await rep.arrayBuffer();
-    session = await ort.InferenceSession.create(new Uint8Array(donnees), { executionProviders: ["wasm"] });
-
-    const srCible = 22050;
-    const sr = buffer.sampleRate;
-    const nCh = buffer.numberOfChannels;
-    const length = buffer.length;
-    const duree = length / sr;
-    const nbEch = Math.ceil(duree * srCible);
-    const mono = new Float32Array(nbEch);
-    for (let i = 0; i < nbEch; i++) {
-      const posSrc = (i / srCible) * sr;
-      const idx = Math.floor(posSrc);
-      const frac = posSrc - idx;
-      if (idx + 1 >= length) { mono[i] = 0; continue; }
-      let s = 0;
-      for (let c = 0; c < nCh; c++) {
-        const ch = buffer.getChannelData(c);
-        s += (ch[idx] * (1 - frac) + ch[Math.min(idx + 1, length - 1)] * frac) / nCh;
-      }
-      mono[i] = s;
-    }
-
-    const hop = 256;
-    const nomEntree = session.inputNames[0];
-    const tenseur = new ort.Tensor("float32", mono, [1, 1, nbEch]);
-    const sorties: Record<string, import("onnxruntime-web").Tensor> = await session.run({ [nomEntree]: tenseur });
-    const nomSortie = session.outputNames[0];
-    const donneesSortie = sorties[nomSortie].data as Float32Array;
-    const dims = sorties[nomSortie].dims!;
-    const T = dims[1] as number;
-    const K = dims[2] as number;
-    const seuil = seuilOnset / 100;
-
-    const notes: NoteEvenement[] = [];
-    for (let k = 0; k < K; k++) {
-      const noteMidi = k + 21;
-      if (noteMidi < noteMin || noteMidi > noteMax) continue;
-      let debutTrame: number | null = null;
-      let maxVel = 0;
-      for (let t = 0; t < T; t++) {
-        const onset = donneesSortie[(t * K + k) * 3];
-        const vel = donneesSortie[(t * K + k) * 3 + 2];
-        if (onset > seuil && debutTrame === null) { debutTrame = t; maxVel = vel; }
-        else if (debutTrame !== null) { maxVel = Math.max(maxVel, vel); }
-        if (debutTrame !== null && (t === T - 1 || (onset <= seuil && t > debutTrame + 1))) {
-          const debutSec = (debutTrame * hop) / srCible;
-          const finSec = (t * hop) / srCible;
-          if (finSec - debutSec > 0.03) {
-            notes.push({ note: noteMidi, velocite: Math.min(127, Math.round(maxVel * 127)), debut: debutSec, fin: finSec });
-          }
-          debutTrame = onset > seuil ? t : null;
-          maxVel = vel;
-        }
-      }
-      surProgres?.(Math.round((k / K) * 100));
-    }
-    surProgres?.(100);
-    return notes;
-  } catch (e) {
-    if (surProgres) surProgres(0);
-    console.warn("Basic Pitch non disponible, fallback FFT :", e);
-    return transcrireMono(buffer, seuilOnset, noteMin, noteMax);
+    sessionBasicPitch = await ort.InferenceSession.create(new Uint8Array(donnees), { executionProviders: ["wasm"] });
   }
+  const session = sessionBasicPitch as import("onnxruntime-web").InferenceSession;
+
+  const mono = monoVers22k(buffer);
+  // Les trois sorties sont identifiées par leur FORME, pas par leur position :
+  // les noms « StatefulPartitionedCall:N » sont un détail d'export TensorFlow.
+  const nomsSorties = session.outputNames;
+  const nomEntree = session.inputNames[0];
+
+  const pas = BP_FENETRE - BP_RECOUV;
+  const nbFenetres = Math.max(1, Math.ceil(mono.length / pas));
+  const marge = BP_TRAMES_RECOUV / 2;
+
+  // Activations concaténées sur toute la piste, note par note (88 demi-tons).
+  const K = 88;
+  const onsetGlobal: number[][] = Array.from({ length: K }, () => []);
+  const noteGlobal: number[][] = Array.from({ length: K }, () => []);
+
+  for (let w = 0; w < nbFenetres; w++) {
+    const debut = w * pas;
+    const bloc = new Float32Array(BP_FENETRE);
+    for (let i = 0; i < BP_FENETRE && debut + i < mono.length; i++) bloc[i] = mono[debut + i];
+    const sorties = await session.run({ [nomEntree]: new ort.Tensor("float32", bloc, [1, BP_FENETRE, 1]) });
+
+    let tOnset: import("onnxruntime-web").Tensor | null = null;
+    let tNote: import("onnxruntime-web").Tensor | null = null;
+    const candidats88: import("onnxruntime-web").Tensor[] = [];
+    for (const nom of nomsSorties) {
+      const t = sorties[nom];
+      if (t.dims[2] === K) candidats88.push(t);   // note ET onset ; contour a 264 bins
+    }
+    if (candidats88.length < 2) throw new Error("Sorties Basic Pitch inattendues");
+    // Départage note/onset par la statistique qui les distingue sans ambiguïté :
+    // l'onset est creux (pics isolés sur les attaques), l'activation de note est
+    // dense (elle dure toute la note). Mesuré : 2 trames actives contre 128.
+    const densite = candidats88.map((t) => {
+      const d = t.data as Float32Array;
+      let n = 0;
+      for (let i = 0; i < d.length; i++) if (d[i] > 0.3) n++;
+      return n;
+    });
+    const iOnset = densite[0] <= densite[1] ? 0 : 1;
+    tOnset = candidats88[iOnset];
+    tNote = candidats88[1 - iOnset];
+
+    const dOnset = tOnset.data as Float32Array;
+    const dNote = tNote.data as Float32Array;
+    const T = tOnset.dims[1] as number;
+    // Rogner les bords recouverts (sauf aux extrémités de la piste).
+    const tDeb = w === 0 ? 0 : marge;
+    const tFin = w === nbFenetres - 1 ? T : T - marge;
+    for (let t = tDeb; t < tFin; t++) {
+      for (let k = 0; k < K; k++) {
+        onsetGlobal[k].push(dOnset[t * K + k]);
+        noteGlobal[k].push(dNote[t * K + k]);
+      }
+    }
+    surProgres?.(Math.round(((w + 1) / nbFenetres) * 100));
+  }
+
+  // Décalage temporel dû au rognage de la première fenêtre.
+  const secParTrame = BP_HOP / BP_SR;
+  const seuil = Math.max(0.05, seuilOnset / 100);
+  const seuilTenue = seuil * 0.5;   // l'activation retombe sous le seuil d'attaque
+  const notes: NoteEvenement[] = [];
+
+  for (let k = 0; k < K; k++) {
+    const noteMidi = k + 21;
+    if (noteMidi < noteMin || noteMidi > noteMax) continue;
+    const on = onsetGlobal[k];
+    const act = noteGlobal[k];
+    const T = on.length;
+    for (let t = 1; t < T - 1; t++) {
+      // Attaque = maximum local franchissant le seuil (évite de redéclencher
+      // une note à chaque trame pendant la montée).
+      if (!(on[t] > seuil && on[t] >= on[t - 1] && on[t] >= on[t + 1])) continue;
+      let fin = t + 1;
+      let velMax = act[t];
+      while (fin < T && act[fin] > seuilTenue) {
+        velMax = Math.max(velMax, act[fin]);
+        // Une nouvelle attaque franche termine la note en cours.
+        if (fin > t + 1 && on[fin] > seuil && on[fin] >= on[fin - 1]) break;
+        fin++;
+      }
+      const debutSec = t * secParTrame;
+      const finSec = fin * secParTrame;
+      if (finSec - debutSec < 0.05) continue;   // rejette le fourmillement
+      notes.push({
+        note: noteMidi,
+        velocite: Math.max(1, Math.min(127, Math.round(velMax * 127))),
+        debut: debutSec,
+        fin: finSec,
+      });
+      t = fin - 1;
+    }
+  }
+
+  notes.sort((a, b) => a.debut - b.debut || a.note - b.note);
+  return notes;
 }
 
 
