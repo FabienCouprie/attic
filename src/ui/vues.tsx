@@ -68,6 +68,22 @@ function VueSelecteurMultiZones({ id, data }: VueProps) {
 }
 
 // ── Chargement d'un fichier audio ──
+// ── Lecture de paramètres « choix » hors `paramTexte` ──
+// Certaines vues lisent `data.parametres` directement, sans passer par la
+// canonisation de `paramTexte`. Elles doivent donc accepter aussi bien l'id
+// canonique que les anciens libellés FR/EN encore présents dans les projets.
+function estActif(valeur: unknown): boolean {
+  const v = String(valeur ?? "").trim().toLowerCase();
+  return v === "oui" || v === "on";
+}
+
+function estLog(valeur: unknown): boolean {
+  const v = String(valeur ?? "log").trim().toLowerCase();
+  // Défaut historique = échelle logarithmique : tout ce qui n'est pas
+  // explicitement linéaire reste logarithmique.
+  return v !== "lineaire" && v !== "linéaire" && v !== "linear";
+}
+
 function VueUploadAudio({ id, data }: VueProps) {
   const { t } = useI18n();
   return (
@@ -233,8 +249,11 @@ function VueLecteurMusique({ id, data }: VueProps) {
 
   const chemin = String((data.parametres?.["Chemin"] as string | number | undefined) ?? "music collection");
   const volume = typeof data.parametres?.["Volume"] === "number" ? (data.parametres["Volume"] as number) : 80;
-  const shuffle = data.parametres?.["Lecture aléatoire"] === "Oui";
-  const loop = data.parametres?.["Lecture en boucle"] === "Oui";
+  // Ces deux paramètres sont lus ici directement dans `parametres` (pas via
+  // `paramTexte`), donc sans canonisation : on accepte l'id « oui » comme les
+  // anciens libellés FR/EN encore stockés dans les projets existants.
+  const shuffle = estActif(data.parametres?.["Lecture aléatoire"]);
+  const loop = estActif(data.parametres?.["Lecture en boucle"]);
 
   const formatTime = (s: number) => {
     if (!Number.isFinite(s) || s < 0) return "0:00";
@@ -347,12 +366,14 @@ function VueLecteurMusique({ id, data }: VueProps) {
     }
   }, [fichiers, loop, currentIndex, nextIndex, loadTrack]);
 
+  // Écrit l'id canonique (et non plus le libellé français), pour rester
+  // cohérent avec la valeur des <option> du menu déroulant de l'inspecteur.
   const toggleShuffle = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "Non" : "Oui");
+    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "non" : "oui");
   }, [data, id, shuffle]);
 
   const toggleLoop = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "Non" : "Oui");
+    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "non" : "oui");
   }, [data, id, loop]);
 
   const handleVolume = useCallback((v: number) => {
@@ -771,7 +792,7 @@ function VueSpectre({ data }: VueProps) {
     <SpectreFFT
       audioUrl={data.audioResultatUrl}
       tailleFFT={parseInt(String(p["Fenêtre"] ?? "4096")) || 4096}
-      log={String(p["Échelle"] ?? "Logarithmique") === "Logarithmique"}
+      log={estLog(p["Échelle"])}
     />
   );
 }
@@ -783,7 +804,7 @@ function VueSpectrogramme({ data }: VueProps) {
     <Spectrogramme
       audioUrl={data.audioResultatUrl}
       tailleFFT={parseInt(String(p["Fenêtre"] ?? "1024")) || 1024}
-      log={String(p["Échelle"] ?? "Logarithmique") === "Logarithmique"}
+      log={estLog(p["Échelle"])}
     />
   );
 }

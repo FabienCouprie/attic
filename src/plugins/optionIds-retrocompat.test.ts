@@ -207,6 +207,47 @@ const CAS: Cas[] = [
     { node, param: "Format", ancienneValeur: "Puces", idAttendu: "puces" },
     { node, param: "Format", ancienneValeur: "Bullets", idAttendu: "puces" },
   ]),
+
+  // ── Lot 4 ──
+  // « Mode » — les consommateurs testaient déjà par sous-chaîne (.includes("arp"))
+  // donc restaient corrects en anglais ; les ids figent malgré tout l'identité.
+  ...(["palette-harmonique", "dessin-sonore"] as const).flatMap((node) => [
+    { node, param: "Mode", ancienneValeur: "Mélodie", idAttendu: "melodie" },
+    { node, param: "Mode", ancienneValeur: "Melody", idAttendu: "melodie" },
+    { node, param: "Mode", ancienneValeur: "Harmonie", idAttendu: "harmonie" },
+    { node, param: "Mode", ancienneValeur: "Harmony", idAttendu: "harmonie" },
+    { node, param: "Mode", ancienneValeur: "Arpège", idAttendu: "arpege" },
+    { node, param: "Mode", ancienneValeur: "Arpeggio", idAttendu: "arpege" },
+  ]),
+  // Color Looper utilise le pluriel « Arpèges » — id distinct, volontairement.
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpèges", idAttendu: "arpeges" },
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpeggios", idAttendu: "arpeges" },
+
+  // « Couleur » — c'est ce paramètre qui échouait sur « Couleur 1 inconnue : Blue ».
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Bleu", idAttendu: "bleu" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Blue", idAttendu: "bleu" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Rouge", idAttendu: "rouge" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Red", idAttendu: "rouge" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "(aucune)", idAttendu: "aucune" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "(none)", idAttendu: "aucune" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "Vert", idAttendu: "vert" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "Green", idAttendu: "vert" },
+
+  // Bascules binaires du lecteur de collection (lues hors paramTexte, cf. vues.tsx).
+  ...(["Lecture aléatoire", "Lecture en boucle"] as const).flatMap((param) => [
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Oui", idAttendu: "oui" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "On", idAttendu: "oui" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Non", idAttendu: "non" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Off", idAttendu: "non" },
+  ]),
+
+  // Échelle des visualisations (également lue hors paramTexte).
+  ...(["analyseur-spectre", "spectrogramme"] as const).flatMap((node) => [
+    { node, param: "Échelle", ancienneValeur: "Logarithmique", idAttendu: "log" },
+    { node, param: "Échelle", ancienneValeur: "Logarithmic", idAttendu: "log" },
+    { node, param: "Échelle", ancienneValeur: "Linéaire", idAttendu: "lineaire" },
+    { node, param: "Échelle", ancienneValeur: "Linear", idAttendu: "lineaire" },
+  ]),
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {

@@ -29,7 +29,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
-        options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique",
+        options: ["Logarithmique", "Linéaire"], optionIds: ["log","lineaire"], defaut: "Logarithmique",
         doc: "Échelle de l'axe des fréquences. Logarithmique = proche de la perception de la hauteur (octaves régulières) ; linéaire = fréquences réparties uniformément.",
         docEn: "Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },
@@ -57,7 +57,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
-        options: ["Logarithmique", "Linéaire"], defaut: "Logarithmique",
+        options: ["Logarithmique", "Linéaire"], optionIds: ["log","lineaire"], defaut: "Logarithmique",
         doc: "Échelle de l'axe vertical des fréquences (log = proche de la perception).",
         docEn: "Vertical frequency axis scale (log = close to perception).", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },

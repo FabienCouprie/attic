@@ -34,7 +34,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
         doc: "Gamme utilisée (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
         docEn: "Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionIds: ["melodie","harmonie","arpeges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
