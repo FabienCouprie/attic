@@ -176,8 +176,23 @@ function VueExplorateur({ id, data }: VueProps) {
         <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.electronUniquement")}</div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button className="attic-node-fichier-btn" style={{ flex: 1 }} disabled={chargementMusique} onClick={async () => {
+          {/* `minWidth: 0` est indispensable : un élément flex a `min-width: auto`
+              par défaut et refuse donc de rétrécir sous la largeur de son
+              contenu. Sans lui, un chemin long élargissait ce bouton au-delà du
+              conteneur et poussait l'icône de dossier hors du cadre du nœud.
+              Le chemin est tronqué par des points de suspension, et reste
+              lisible en entier au survol grâce au `title`. */}
+          <div style={{ display: "flex", gap: 4, minWidth: 0 }}>
+            <button className="attic-node-fichier-btn"
+              // `display: block` (et non le `inline-flex` centré de la classe) :
+              // `text-overflow: ellipsis` ne s'applique pas au contenu d'un
+              // conteneur flex — le texte y était rogné des DEUX côtés, sans
+              // points de suspension. En bloc aligné à gauche, on garde le début
+              // du chemin et l'ellipse apparaît bien à la fin.
+              style={{ flex: 1, minWidth: 0, display: "block", textAlign: "left",
+                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              title={`/${dossierCourant}`}
+              disabled={chargementMusique} onClick={async () => {
               setChargementMusique(true);
               const rel = dossierCourant.replace(/^[/\\]+|[/\\]+$/g, "");
               const fichiers = (await api?.lireDossier(rel)) ?? null;
@@ -186,7 +201,7 @@ function VueExplorateur({ id, data }: VueProps) {
             }}>
               ⟳ /{dossierCourant}
             </button>
-            <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
+            <button className="attic-node-fichier-btn" style={{ flexShrink: 0 }} title={t("btn.choisirDossier")} onClick={async () => {
               const dossier = await api?.choisirDossier();
               if (dossier) { data.parametres!["Chemin"] = dossier; data.onChangerParametre?.(id, "Chemin", dossier); }
             }}>
