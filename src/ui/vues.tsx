@@ -170,6 +170,23 @@ function VueExplorateur({ id, data }: VueProps) {
   const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
   const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
 
+  // Sélection d'une piste, partagée par `onChange` et `onClick` du <select>.
+  async function choisirPiste(index: number) {
+    const f = fichiersMusique?.[index];
+    if (!f) return;
+    if (f.chemin === data.audioChemin) return;   // déjà chargée : rien à refaire
+    const resultat = await api?.lireFichierAudio(f.chemin);
+    if (!resultat) return;
+    const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
+    const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
+    const url = URL.createObjectURL(fichier);
+    setAudioLocale(url);
+    setNodes((nds) => nds.map((nd) => nd.id === id ? {
+      ...nd,
+      data: { ...nd.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: url, audioChemin: f.chemin },
+    } : nd));
+  }
+
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()}>
       {!api ? (
@@ -209,28 +226,23 @@ function VueExplorateur({ id, data }: VueProps) {
             </button>
           </div>
           {fichiersMusique && fichiersMusique.length > 0 && (
+            // `onClick` EN PLUS de `onChange` : tant qu'aucune piste n'est
+            // choisie, React pose value="" — qui ne correspond à aucune option,
+            // si bien que le navigateur replie sur la première et l'affiche en
+            // surbrillance. Cliquer cette première ligne ne changeait alors RIEN
+            // dans le DOM : `change` ne partait pas, le nœud restait sans
+            // fichier, et l'exécution répondait « Aucun fichier » alors que la
+            // liste montrait bien la piste sélectionnée. Les autres lignes
+            // fonctionnaient, elles, puisqu'elles changeaient réellement l'index.
             <select className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
               value={selectedIndex >= 0 ? String(selectedIndex) : ""}
-              onChange={async (e) => {
-                const f = fichiersMusique[parseInt(e.target.value)];
-                if (!f) return;
-                const resultat = await api?.lireFichierAudio(f.chemin);
-                if (!resultat) return;
-                const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
-                const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
-                const url = URL.createObjectURL(fichier);
-                setAudioLocale(url);
-                setNodes((nds) => nds.map((nd) => nd.id === id ? {
-                  ...nd,
-                  data: {
-                    ...nd.data,
-                    audioFichier: fichier,
-                    audioNom: fichier.name,
-                    audioUrl: url,
-                    audioChemin: f.chemin,
-                  },
-                } : nd));
-              }}>
+              onClick={(e) => {
+                const cible = e.target as HTMLElement;
+                if (cible instanceof HTMLOptionElement && cible.value !== "") {
+                  void choisirPiste(parseInt(cible.value, 10));
+                }
+              }}
+              onChange={(e) => void choisirPiste(parseInt(e.target.value, 10))}>
               {fichiersMusique.map((f, i) => <option key={f.chemin} value={i}>{f.nom}</option>)}
             </select>
           )}
