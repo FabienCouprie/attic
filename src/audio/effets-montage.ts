@@ -1,7 +1,12 @@
 // audio/effets-montage.ts — Effets (issus du découpage de effets.ts).
 import { type PositionZone } from "./commun";
 
-export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: number): AudioBuffer {
+// `fonduMs` applique un fondu linéaire en entrée ET en sortie de l'extrait.
+// C'est ce qui évite le clic à la coupe : trancher au milieu d'une période
+// laisse une discontinuité que l'oreille perçoit comme un craquement. Le fondu
+// est plafonné à la moitié de l'extrait pour que montée et descente ne se
+// chevauchent pas (sur une zone plus courte que 2× le fondu demandé).
+export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: number, fonduMs = 0): AudioBuffer {
   const debutEch = Math.max(0, Math.min(buffer.length, Math.floor(debutSec * buffer.sampleRate)));
   const longueur = Math.max(1, Math.min(buffer.length - debutEch, Math.floor(dureeSec * buffer.sampleRate)));
   const resultat = new AudioBuffer({
@@ -9,10 +14,21 @@ export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: nu
     length: longueur,
     sampleRate: buffer.sampleRate,
   });
+  const fondu = Math.min(
+    Math.floor((Math.max(0, fonduMs) / 1000) * buffer.sampleRate),
+    Math.floor(longueur / 2),
+  );
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
-    for (let i = 0; i < longueur; i++) dst[i] = src[debutEch + i];
+    for (let i = 0; i < longueur; i++) {
+      let gain = 1;
+      if (fondu > 0) {
+        if (i < fondu) gain = i / fondu;
+        else if (i >= longueur - fondu) gain = (longueur - 1 - i) / fondu;
+      }
+      dst[i] = src[debutEch + i] * gain;
+    }
   }
   return resultat;
 }

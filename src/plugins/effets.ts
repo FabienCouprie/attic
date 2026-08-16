@@ -406,8 +406,12 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const debut = ctx.paramNombre("Début", 0);
       const duree = Math.min(ctx.paramNombre("Durée", 5), a.duration - debut);
+      // Le paramètre « Fondu » n'était tout simplement jamais lu : il existait
+      // dans l'interface, documenté « fondu aux bords », sans piloter quoi que
+      // ce soit (extraireZone n'avait d'ailleurs pas d'argument correspondant).
+      const fondu = ctx.paramNombre("Fondu", 5);
       const zone = { debut, duree };
-      return { valeurs: [extraireZone(a, debut, duree), zone] };
+      return { valeurs: [extraireZone(a, debut, duree, fondu), zone] };
    },
   },
   {
