@@ -7,7 +7,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Note, Progression, RomanNumeral } from "tonal";
+import { Chord, Note, Progression } from "tonal";
+import { normaliserRomains } from "../audio/theorie-romains";
 
 // Les symboles produits par `detecterAccords` (audio/accords.ts) suivent ses
 // propres gabarits, qui ne coïncident pas tous avec ceux de Tonal : « min7b5 »
@@ -53,20 +54,6 @@ function parserLigneAccord(ligne: string, dureeDefaut: number): { symbole: strin
   if (!m) return null;
   const secondes = m[2] ? parseFloat(m[2].replace(",", ".")) : dureeDefaut;
   return { symbole: m[1], secondes: Number.isFinite(secondes) && secondes > 0 ? secondes : dureeDefaut };
-}
-
-// Tonal LIT bien la casse d'un chiffre romain (`RomanNumeral.get("vi").major`
-// vaut false) mais ne la reporte PAS sur le type d'accord : `chordType` reste
-// vide et `fromRomanNumerals` construit alors une triade majeure. « vi » en do
-// majeur donnait ainsi La MAJEUR (A C# E) au lieu du relatif mineur (A C E) —
-// une faute d'harmonie silencieuse. On explicite donc le « m » quand le chiffre
-// est en minuscules et qu'aucun type n'est déjà précisé (« vi7 » reste intact).
-function normaliserRomains(tokens: string[]): string[] {
-  return tokens.map((t) => {
-    const rn = RomanNumeral.get(t);
-    if (rn.empty || rn.major || rn.chordType) return t;
-    return t + "m";
-  });
 }
 
 // « C major (87%) » / « A minor » → tonique utilisable par Tonal.

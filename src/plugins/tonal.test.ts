@@ -82,9 +82,14 @@ describe("nœuds Tonal", () => {
   it("tonal-progression génère I V vi IV en C", async () => {
     const f = trouver("tonal-progression")!;
     const res = await f.executer(ctxSimple("C") as any);
-    // Tonal retourne les fondamentales ; le type majeur/mineur n'est pas
-    // conservé dans le résultat brut de fromRomanNumerals.
-    expect(res.valeurs[0]).toBe("C G A F");
+    // « vi » est le relatif MINEUR : Am, et non A. Cette attente valait
+    // auparavant "C G A F" — elle codifiait en réalité un bug, que son
+    // commentaire d'origine présentait comme une limite acceptable de Tonal.
+    // Tonal LIT bien la casse (`RomanNumeral.get("vi").major` vaut false) mais
+    // ne la reporte pas sur le type d'accord, si bien que `fromRomanNumerals`
+    // renvoyait une triade majeure. Corrigé par `normaliserRomains`
+    // (audio/theorie-romains.ts).
+    expect(res.valeurs[0]).toBe("C G Am F");
   });
 
   it("tonal-grille génère une notation texte-vers-midi", async () => {
@@ -94,7 +99,7 @@ describe("nœuds Tonal", () => {
     expect(notation).toContain("TEMPO 120");
     expect(notation).toContain("C3+E3+G3 1");
     expect(notation).toContain("G3+B3+D4 1");
-    expect(res.valeurs[1]).toBe("C G A F");
+    expect(res.valeurs[1]).toBe("C G Am F");   // idem : vi = La mineur
   });
 
   it("tonal-grille accepte une progression en symboles", async () => {
