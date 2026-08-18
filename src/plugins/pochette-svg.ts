@@ -464,3 +464,44 @@ export function genererPochetteFile(options: PochetteOptions): File {
   const svg = genererPochetteSVG(options);
   return new File([svg], `pochette-${seedNum}.svg`, { type: "image/svg+xml" });
 }
+
+// Rastérise un SVG en PNG à la taille demandée.
+//
+// Le SVG reste le format natif de la pochette (vectoriel, redimensionnable sans
+// perte) ; le PNG n'est produit qu'à la demande, pour les usages qui ne lisent
+// pas le vectoriel. La conversion passe par un <img> + <canvas>, donc elle
+// n'existe que dans le navigateur : côté Node (tests), il n'y a ni l'un ni
+// l'autre, d'où l'erreur explicite plutôt qu'un plantage obscur.
+export async function rasteriserPochettePNG(
+  svg: string,
+  largeur: number,
+  hauteur: number,
+  nomBase: string,
+): Promise<File> {
+  if (typeof document === "undefined" || typeof Image === "undefined") {
+    throw new Error("Rastérisation PNG indisponible hors navigateur");
+  }
+  const blobSvg = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blobSvg);
+  try {
+    const img = new Image();
+    img.width = largeur;
+    img.height = hauteur;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("SVG illisible pour la rastérisation"));
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = largeur;
+    canvas.height = hauteur;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Contexte 2D indisponible");
+    ctx.drawImage(img, 0, 0, largeur, hauteur);
+    const blobPng = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blobPng) throw new Error("Encodage PNG échoué");
+    return new File([blobPng], `${nomBase}.png`, { type: "image/png" });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

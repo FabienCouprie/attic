@@ -417,6 +417,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.kokoro.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
   "progress.kokoro.synthesize": { fr: "Synthèse vocale…", en: "Synthesizing speech…" },
   "progress.kokoro.chunk": { fr: "Synthèse vocale… {__VAR_0__}/{__VAR_1__}", en: "Synthesizing speech… {__VAR_0__}/{__VAR_1__}" },
+  "msg.pochette_png_echec_var_0": { fr: "Rendu PNG impossible : {__VAR_0__}. Repassez le Format sur SVG.", en: "PNG rendering failed: {__VAR_0__}. Switch Format back to SVG." },
   "msg.accords_notation.accords_absents": { fr: "Connectez la sortie « Accords détectés » d'Analyse harmonique.", en: "Connect the « Detected chords » output of Harmonic Analysis." },
   "msg.accords_notation.progression_absente": { fr: "Connectez la sortie « Progression » d'Analyse harmonique.", en: "Connect the « Progression » output of Harmonic Analysis." },
   "msg.accords_notation.tonalite_absente": { fr: "La source « Progression » exige aussi l'entrée Tonalité : des chiffres romains n'ont de sens que rapportés à une tonique.", en: "The « Progression » source also requires the Key input: roman numerals only make sense relative to a tonic." },
