@@ -69,10 +69,13 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Conversion",
     resume: "Convertit la sortie d'Analyse harmonique en notation lisible par Texte → MIDI.",
     resumeEn: "Converts Harmonic Analysis output into the notation expected by Text → MIDI.",
+    // Ordre calqué sur les SORTIES d'« Analyse harmonique » (Tonalité,
+    // Progression, Accords détectés) : les deux nœuds se branchent ainsi à
+    // ports parallèles, sans liaisons croisées.
     entrees: [
-      { nom: "Accords détectés", nomEn: "Detected chords", type: "texte", requis: false },
-      { nom: "Progression", nomEn: "Progression", type: "texte", requis: false },
       { nom: "Tonalité", nomEn: "Key", type: "texte", requis: false },
+      { nom: "Progression", nomEn: "Progression", type: "texte", requis: false },
+      { nom: "Accords détectés", nomEn: "Detected chords", type: "texte", requis: false },
     ],
     sorties: [{ nom: "Notation", nomEn: "Notation", type: "texte" }],
     parametres: [
@@ -103,7 +106,7 @@ export const fiches: FicheAudio[] = ([
 
       if (source === "progression") {
         const progression = ctx.entree(1);
-        const tonaliteTexte = ctx.entree(2);
+        const tonaliteTexte = ctx.entree(0);
         if (typeof progression !== "string" || !progression.trim()) {
           return { valeurs: [null], message: traduire("msg.accords_notation.progression_absente") };
         }
@@ -121,7 +124,7 @@ export const fiches: FicheAudio[] = ([
           nbAccords++;
         }
       } else {
-        const accords = ctx.entree(0);
+        const accords = ctx.entree(2);
         if (typeof accords !== "string" || !accords.trim()) {
           return { valeurs: [null], message: traduire("msg.accords_notation.accords_absents") };
         }

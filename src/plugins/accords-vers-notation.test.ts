@@ -4,9 +4,17 @@ import { registre } from "../audio/adaptateur";
 
 const fiche = registre.trouverDef("accords-vers-notation")!;
 
+// Les cas de test décrivent les entrées dans l'ordre « métier »
+// [accords, progression, tonalité]. Le nœud, lui, expose ses ports dans l'ordre
+// des SORTIES d'« Analyse harmonique » (tonalité, progression, accords) pour
+// que les deux se branchent sans liaisons croisées. Le helper fait la
+// correspondance ici, en un seul endroit : les cas restent lisibles et un
+// futur changement d'ordre des ports ne se répercute que sur ces trois lignes.
 function ctxDe(entrees: (string | null)[], params: Record<string, string | number> = {}) {
+  const [accords = null, progression = null, tonalite = null] = entrees;
+  const ports: (string | null)[] = [tonalite, progression, accords];
   return {
-    entree: (i: number) => entrees[i] ?? null,
+    entree: (i: number) => ports[i] ?? null,
     paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
     paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
     onProgress: () => {},
