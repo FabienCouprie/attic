@@ -83,6 +83,7 @@ import { fiches as f_alignement_dtw } from "./alignement-dtw";
 import { fiches as f_etirement_dtw } from "./etirement-dtw";
 import { fiches as f_pca_neuronale } from "./pca-neuronale";
 import { fiches as f_continuation_spectrale } from "./continuation-spectrale";
+import { fiches as f_accords_vers_notation } from "./accords-vers-notation";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -165,4 +166,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_etirement_dtw,
   ...f_pca_neuronale,
   ...f_continuation_spectrale,
+  ...f_accords_vers_notation,
 ];
