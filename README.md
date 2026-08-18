@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 213+ nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 234 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **213 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npx tsx scripts/generate-components-md.ts`)
+- **234 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -129,7 +129,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (213 nodes)
+  plugins/       # Plugin node definitions (234 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -147,7 +147,7 @@ electron/
 - [`PORTING-A-DOMAIN.md`](PORTING-A-DOMAIN.md) — How to plug a second domain (e.g. image, ETL) into the existing core/UI, and exactly where that isn't clean yet
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
 - [`REMOVING-A-NODE.md`](REMOVING-A-NODE.md) — How to safely remove one
-- [`COMPONENTS.md`](COMPONENTS.md) — Generated dictionary of every catalog node (not versioned — regenerate with `npx tsx scripts/generate-components-md.ts`)
+- [`COMPONENTS.md`](COMPONENTS.md) — Generated dictionary of every catalog node (not versioned — regenerate with `npm run docs:components`)
 - [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/`
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — Historical record of the `App.tsx` → hooks extraction (a completed milestone; `App.tsx` has since grown again as features were added)
 - [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — Guided exercises for learning the app

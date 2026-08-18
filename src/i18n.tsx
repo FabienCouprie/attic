@@ -56,6 +56,49 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.device": { fr: "Périphérique", en: "Device" },
   "btn.notes": { fr: "notes", en: "notes" },
   "btn.detacher": { fr: "Détacher", en: "Detach" },
+  // Infobulle du bouton × de l'onglet. Malgré son nom, ce bouton ne ferme rien :
+  // il vide le canevas pour repartir d'un workflow neuf (cf. `fermerOnglet`,
+  // App.tsx). Le libellé le dit explicitement, pour éviter un clic destructeur.
+  "workflow.nouveauTitre": { fr: "Nouveau workflow (vide le canevas)", en: "New workflow (clears the canvas)" },
+  // Clés révélées par `i18n.test.ts` : elles étaient citées dans l'interface
+  // sans exister ici, donc affichées telles quelles à l'écran (« python.titre »…).
+  "btn.chargerEchantillon": { fr: "Charger un échantillon", en: "Load a sample" },
+  "btn.configurer": { fr: "Configurer", en: "Configure" },
+  "btn.supprimer": { fr: "Supprimer", en: "Delete" },
+  "inspecteur.echantillon": { fr: "Échantillon", en: "Sample" },
+  "clavier.enreg": { fr: "Enregistrer", en: "Record" },
+  "clavier.arreter": { fr: "Arrêter", en: "Stop" },
+  "clavier.rejouer": { fr: "Rejouer", en: "Replay" },
+  "clavier.effacer": { fr: "Effacer", en: "Clear" },
+  "clavier.notes": { fr: "notes", en: "notes" },
+  "code.editer": { fr: "Éditer", en: "Edit" },
+  "code.editerTitle": { fr: "Ouvrir l'éditeur de code", en: "Open the code editor" },
+  "code.fermer": { fr: "Fermer", en: "Close" },
+  "code.lignes": { fr: "lignes", en: "lines" },
+  "python.titre": { fr: "Éditeur Python", en: "Python editor" },
+  "python.requis": { fr: "Python 3 requis", en: "Python 3 required" },
+  "python.nonDetecte": { fr: "Python non détecté", en: "Python not detected" },
+  "python.configurerChemin": { fr: "Configurer le chemin de l'exécutable Python", en: "Set the Python executable path" },
+  "julia.titre": { fr: "Éditeur Julia", en: "Julia editor" },
+  "julia.requis": { fr: "Julia requis", en: "Julia required" },
+  "julia.nonDetecte": { fr: "Julia non détecté", en: "Julia not detected" },
+  "julia.configurerChemin": { fr: "Configurer le chemin de l'exécutable Julia", en: "Set the Julia executable path" },
+  "meta.badgeTitle": { fr: "Méta-composant", en: "Meta-component" },
+  "meta.groupe": { fr: "Groupe", en: "Group" },
+  "meta.grouperSelection": { fr: "Sélectionnez au moins deux nœuds à grouper.", en: "Select at least two nodes to group." },
+  "meta.degrouperSelection": { fr: "Sélectionnez un méta-composant à dégrouper.", en: "Select a meta-component to ungroup." },
+  "meta.renommerSelection": { fr: "Sélectionnez un méta-composant à renommer.", en: "Select a meta-component to rename." },
+  "meta.nouveauNom": { fr: "Nouveau nom", en: "New name" },
+  // Le {nom} est substitué par `String.replace`, pas par le mécanisme __VAR_n__.
+  "meta.confirmSupprimerCatalogue": { fr: "Supprimer « {nom} » du catalogue ?", en: "Remove “{nom}” from the catalog?" },
+  "msg.aucunFichierAudio": { fr: "Aucun fichier audio", en: "No audio file" },
+  "msg.cheminInvalide": { fr: "Chemin invalide", en: "Invalid path" },
+  "msg.erreur_ouverture": { fr: "Impossible d'ouvrir le fichier.", en: "Could not open the file." },
+  "msg.captureAucuneSource": { fr: "Aucune source de capture disponible.", en: "No capture source available." },
+  "msg.captureAucunFlux": { fr: "La source capturée ne contient aucune piste audio.", en: "The captured source has no audio track." },
+  "msg.captureSelectionnerAudio": { fr: "Aucune piste audio : pensez à cocher « Partager l'audio » dans la boîte de dialogue du navigateur.", en: "No audio track: remember to tick “Share audio” in the browser dialog." },
+  "msg.captureAnnulee": { fr: "Capture annulée.", en: "Capture cancelled." },
+  "onde.analyse": { fr: "Analyse…", en: "Analyzing…" },
   "statut.attente": { fr: "En attente", en: "Waiting" },
   "statut.en_cours": { fr: "En cours", en: "Running" },
   "statut.termine": { fr: "Terminé", en: "Done" },
@@ -666,6 +709,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     </I18nContext.Provider>
   );
 }
+
+/**
+ * Toutes les clés connues des deux dictionnaires statiques. Exposé pour le test
+ * de couverture (`i18n.test.ts`) : une clé absente n'échoue pas bruyamment,
+ * `traduire` renvoie la clé elle-même et l'utilisateur lit « workflow.xxx » à
+ * l'écran — un défaut invisible en revue de code et à la compilation.
+ */
+export const CLES_CONNUES: ReadonlySet<string> = new Set([
+  ...Object.keys(DICO), ...Object.keys(DICO_RUNTIME),
+]);
 
 export function traduire(cle: string, ...args: (string | number)[]): string {
   const lang = langueCourante();

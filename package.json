@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "Visual node-editor for AI-powered music and sound design — 213+ nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
@@ -38,6 +38,7 @@
     "publish:electron": "npm run build && npm run ensure-songsee && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
     "ensure-songsee": "node scripts/ensure-songsee.cjs",
     "preview": "vite preview",
+    "docs:components": "vite-node scripts/generate-components-md.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",

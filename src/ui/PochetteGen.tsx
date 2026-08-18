@@ -49,14 +49,22 @@ export function PochetteGen({
 
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: 4 }}>
+      {/* L'URL d'objet n'existe qu'après le premier effect. Tant qu'elle manque,
+          on ne rend PAS ces éléments plutôt que de leur passer une chaîne vide :
+          `src=""` et `href=""` sont résolus par le navigateur en l'URL de la
+          page elle-même, ce qui déclenche un rechargement complet et inutile du
+          document (React l'avertit d'ailleurs en console). Le conteneur, lui,
+          reste en place pour que le cadre du nœud ne sursaute pas. */}
       <div style={{ width: "100%", maxWidth: 260, margin: "0 auto", borderRadius: 4, overflow: "hidden", background: "#111" }}>
-        <img src={url} alt="Pochette" style={{ width: "100%", height: "auto", display: "block" }} />
+        {url && <img src={url} alt="Pochette" style={{ width: "100%", height: "auto", display: "block" }} />}
       </div>
       <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 4 }}>
-        <a href={url} download="pochette.svg"
-          style={{ fontSize: 11, color: "var(--text-secondary)", textDecoration: "none" }}>
-          ⬇ SVG
-        </a>
+        {url && (
+          <a href={url} download="pochette.svg"
+            style={{ fontSize: 11, color: "var(--text-secondary)", textDecoration: "none" }}>
+            ⬇ SVG
+          </a>
+        )}
         <button
           onClick={() => setTentative((v) => v + 1)}
           title="Regénérer"

@@ -4,13 +4,14 @@ Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic 
 architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
 plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state (2026-08-04): **tsc 0 errors · 213 catalog components · 62 test files / 431 tests · build OK**.
+Continuously verified state (2026-08-19, v3.1.2): **tsc 0 errors · 234 catalog components · 96 test files / 1082 tests · build OK**.
 
-> **Note on staleness**: this file lagged several releases (last touched around
-> v2.2.1; the app is now at v2.4.3). The sections below were re-verified
-> against the current code on 2026-08-03 — see the "Shipped since" note under
-> each item that turned out to already be done. If you're reading this later
-> still, re-check before trusting a status.
+> **Note on staleness**: this file has lagged behind releases before (it was
+> last rewritten around v2.4.3). Only the status line above was re-measured on
+> 2026-08-19 against v3.1.2 — the sections below have **not** been re-verified
+> since 2026-08-03 and may list as pending things that have since shipped
+> (see `CHANGELOG.md`, which is authoritative). Re-check before trusting a
+> status.
 
 ---
 

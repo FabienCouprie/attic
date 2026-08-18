@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
+import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -182,6 +182,50 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     );
     if (aretes.length) { deleteElements({ edges: aretes }); queueMicrotask(() => updateNodeInternals(id)); }
   }, [getEdges, deleteElements, updateNodeInternals, id]);
+
+  // Remesure forcée des ports dès que l'ensemble des connexions du nœud change.
+  //
+  // ReactFlow ne mémorise la position des ports (`internals.handleBounds`) qu'au
+  // prix d'une mesure du DOM, et il ne la refait QUE si la taille extérieure du
+  // nœud a changé — cf. @xyflow/system, `updateNodeInternals` :
+  //     doUpdate = dimensions.width && dimensions.height
+  //                && (dimensionChanged || !handleBounds || force)
+  // Or les nœuds redimensionnables ont une largeur/hauteur explicites, figées :
+  // leur cadre extérieur ne bouge plus, tandis que leur contenu (forme d'onde,
+  // sélecteur multi-zones, zone de texte, image…) se met en place plus tard et
+  // décale les rangées de ports À L'INTÉRIEUR de ce cadre. ReactFlow ne voit
+  // rien, garde des coordonnées périmées, et quand il ne retrouve pas un port il
+  // retombe sur `getHandlePosition(node, null, …)` qui renvoie le milieu de
+  // l'arête du nœud — d'où les liaisons collées au milieu des bords.
+  //
+  // C'est bien pourquoi un redimensionnement manuel, même d'un pixel, corrigeait
+  // l'affichage : il change la taille extérieure, donc déclenche la remesure.
+  // Plutôt que de simuler ce redimensionnement (qui altérerait la taille choisie
+  // par l'utilisateur et provoquerait un sursaut visible), on déclenche
+  // directement la remesure : `useUpdateNodeInternals` passe `force: true`, ce
+  // qui court-circuite la condition ci-dessus et relit le DOM tel qu'il est.
+  //
+  // Déclencher sur le CHANGEMENT de connexions couvre les deux cas : la première
+  // liaison tirée à la main, et le montage d'un projet rechargé dont les arêtes
+  // existent dès la première image.
+  const connexions = useNodeConnections({ id });
+  const cleConnexions = connexions.map((c) => c.edgeId).sort().join("|");
+  useEffect(() => {
+    if (!cleConnexions) return;
+    updateNodeInternals(id);
+  }, [cleConnexions, id, updateNodeInternals]);
+
+  // Même remesure à la fin d'une exécution : c'est le moment où le contenu
+  // produit (forme d'onde, image, texte de résultat) se met enfin en place et
+  // repousse les rangées de ports, sans que le cadre extérieur ne bouge d'un
+  // pixel. Sans cela, un nœud connecté AVANT son exécution verrait ses liaisons
+  // se décrocher au premier lancement. L'événement est rare (une fois par
+  // exécution et par nœud), donc le coût est négligeable.
+  useEffect(() => {
+    if (!connexions.length) return;
+    if (data.statut !== "termine" && data.statut !== "erreur") return;
+    updateNodeInternals(id);
+  }, [data.statut, connexions.length, id, updateNodeInternals]);
 
   useEffect(() => {
     const el = nodeRef.current;
