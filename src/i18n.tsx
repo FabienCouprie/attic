@@ -474,6 +474,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.textgen.generate": { fr: "Génération…", en: "Generating…" },
   "progress.textgen.generate_pct": { fr: "Génération {__VAR_0__}%", en: "Generating {__VAR_0__}%" },
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
+  "msg.sherpa_asr.worker_indisponible": { fr: "Le worker Sherpa-ONNX n'a pas pu démarrer : {__VAR_0__}", en: "The Sherpa-ONNX worker failed to start: {__VAR_0__}" },
   "msg.sherpa_asr.transcribe_timeout": { fr: "Délai dépassé lors de la transcription Sherpa-ONNX.", en: "Sherpa-ONNX transcription timed out." },
   "msg.sherpa_asr.clear_cache_timeout": { fr: "Délai dépassé lors du vidage du cache Sherpa-ONNX.", en: "Sherpa-ONNX cache clear timed out." },
   "msg.sherpa_asr.vide": { fr: "Aucun texte transcrit.", en: "No transcribed text." },
