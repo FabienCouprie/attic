@@ -193,7 +193,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mots", nomEn: "Words", plage: [5, 100], pas: 1, defaut: 20,
         doc: "Nombre de mots à générer.", docEn: "Number of words to generate." },
       { nom: "Alphabet", nomEn: "Alphabet", type: "choix",
-        options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
+        options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"], optionIds: ["abcdefghijklmnopqrstuvwxyz","aeioubcdfghjklmnpqrstvwxyz","abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
         optionsEn: ["Full (a-z)", "Vowels-first", "French (a-z + accents)"],
         defaut: "abcdefghijklmnopqrstuvwxyz",
         doc: "Alphabet utilisé pour la génération.", docEn: "Alphabet used for generation.", defautEn: "Full (a-z)" },
@@ -279,6 +279,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats).", docEn: "Seed prompt (English for best results).", defautEn: "Write a song about the sea and freedom:\n" },
       { nom: "Langue cible", nomEn: "Target language", type: "choix",
         options: ["Français", "Espagnol", "Allemand", "Italien", "Portugais", "Russe", "Japonais", "Chinois", "Arabe", "Hindi"],
+        optionIds: ["fr", "es", "de", "it", "pt", "ru", "ja", "zh", "ar", "hi"],
         optionsEn: ["French", "Spanish", "German", "Italian", "Portuguese", "Russian", "Japanese", "Chinese", "Arabic", "Hindi"],
         defaut: "Français",
         doc: "Langue de traduction. Les paroles sont générées en anglais puis traduites.", docEn: "Translation language. Lyrics are generated in English then translated.", defautEn: "French" },
@@ -292,7 +293,14 @@ export const fiches: FicheAudio[] = ([
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree
         : ctx.paramTexte("Prompt", "Write a song about the sea and freedom:\n");
-      const langueCible = ctx.paramTexte("Langue cible", "Français");
+      const langueCible = ctx.paramTexte("Langue cible", "fr");
+      // Libellé lisible pour les messages : `langueCible` vaut désormais un code
+      // ISO (« fr »), qu'il n'y a pas de sens à afficher tel quel.
+      const LABELS_LANGUES: Record<string, string> = {
+        fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien", pt: "Portugais",
+        ru: "Russe", ja: "Japonais", zh: "Chinois", ar: "Arabe", hi: "Hindi",
+      };
+      const langueLabel = LABELS_LANGUES[langueCible] ?? langueCible;
       const maxTokens = ctx.paramNombre("Longueur", 80);
       const temperature = ctx.paramNombre("Créativité", 0.9);
       const w = getWorker();
@@ -322,18 +330,25 @@ export const fiches: FicheAudio[] = ([
       }
 
       // Étape 2 : traduire via OPUS-MT (worker opus-worker)
+      // Indexé par code ISO 639-1 (l'id canonique du paramètre) ; les anciens
+      // libellés français sont acceptés en repli pour les projets existants.
       const pairesEn: Record<string, string> = {
-        "Français": "Xenova/opus-mt-en-fr", "Espagnol": "Xenova/opus-mt-en-es", "Allemand": "Xenova/opus-mt-en-de",
-        "Italien": "Xenova/opus-mt-en-it", "Portugais": "Xenova/opus-mt-en-pt", "Russe": "Xenova/opus-mt-en-ru",
-        "Japonais": "Xenova/opus-mt-en-ja", "Chinois": "Xenova/opus-mt-en-zh", "Arabe": "Xenova/opus-mt-en-ar",
-        "Hindi": "Xenova/opus-mt-en-hi",
+        fr: "Xenova/opus-mt-en-fr", es: "Xenova/opus-mt-en-es", de: "Xenova/opus-mt-en-de",
+        it: "Xenova/opus-mt-en-it", pt: "Xenova/opus-mt-en-pt", ru: "Xenova/opus-mt-en-ru",
+        ja: "Xenova/opus-mt-en-ja", zh: "Xenova/opus-mt-en-zh", ar: "Xenova/opus-mt-en-ar",
+        hi: "Xenova/opus-mt-en-hi",
       };
-      const modelTrad = pairesEn[langueCible];
+      const LEGACY_LANGUES: Record<string, string> = {
+        "français": "fr", "espagnol": "es", "allemand": "de", "italien": "it", "portugais": "pt",
+        "russe": "ru", "japonais": "ja", "chinois": "zh", "arabe": "ar", "hindi": "hi",
+      };
+      const codeCible = pairesEn[langueCible] ? langueCible : (LEGACY_LANGUES[langueCible.toLowerCase()] ?? langueCible);
+      const modelTrad = pairesEn[codeCible];
       if (!modelTrad) {
-        return { valeurs: [texteEn], message: traduire("msg.paroles_anglais_pas_de_traduction_disponible_pour_var_0", langueCible) };
+        return { valeurs: [texteEn], message: traduire("msg.paroles_anglais_pas_de_traduction_disponible_pour_var_0", langueLabel) };
       }
 
-      ctx.onProgress(traduire("progress.traduction_vers_var_0", langueCible));
+      ctx.onProgress(traduire("progress.traduction_vers_var_0", langueLabel));
       const opusW = new Worker(new URL("../workers/opus-worker.js", import.meta.url), { type: "module" });
       const texteTraduit = await new Promise<string | null>((resolve) => {
         const onMessage = (e: MessageEvent) => {
@@ -359,7 +374,7 @@ export const fiches: FicheAudio[] = ([
 
       return {
         valeurs: [texteTraduit],
-        message: traduire("msg.paroles_en_var_0_var_1_caract_res", langueCible, texteTraduit.length),
+        message: traduire("msg.paroles_en_var_0_var_1_caract_res", langueLabel, texteTraduit.length),
       };
    },
  },

@@ -61,6 +61,60 @@ export function creerFenetreHann(taille: number): Float64Array {
 }
 
 
+/**
+ * Downmix multi-canal vers mono (moyenne des canaux) — étape commune à
+ * plusieurs analyses spectrales/temporelles qui ne travaillent que sur un
+ * signal mono (chroma, MFCC, centroïde...).
+ */
+export function mixdownMono(buffer: AudioBuffer): Float32Array {
+  const mono = new Float32Array(buffer.length);
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const ch = buffer.getChannelData(c);
+    for (let i = 0; i < buffer.length; i++) mono[i] += ch[i] / buffer.numberOfChannels;
+  }
+  return mono;
+}
+
+
+/**
+ * Décalage (en échantillons) où `extraitCentre` prend son extrait dans le
+ * buffer d'origine — 0 si le buffer est déjà assez court pour ne pas être
+ * tronqué. Exporté séparément (et utilisé PAR `extraitCentre` ci-dessous,
+ * source unique) pour qu'un consommateur en aval (ex. un nœud d'étirement
+ * temporel recevant un chemin d'alignement calculé sur cet extrait) puisse
+ * replacer un indice d'échantillon/de trame dans le référentiel du buffer
+ * complet, sans avoir à redupliquer ce calcul.
+ */
+export function decalageExtraitCentre(buffer: AudioBuffer, dureeMaxS: number): number {
+  const longueurMax = Math.floor(dureeMaxS * buffer.sampleRate);
+  if (buffer.length <= longueurMax) return 0;
+  return Math.floor((buffer.length - longueurMax) / 2);
+}
+
+/**
+ * Extrait central d'un buffer, plafonné à `dureeMaxS` — évite les
+ * intros/outros silencieux ou atypiques (fade-in, applaudissements...), plus
+ * représentatif du corps de la piste, et borne le coût de calcul des analyses
+ * qui tournent sur un extrait plutôt que le buffer entier. Retourne le buffer
+ * tel quel si déjà assez court (aucun coût ni changement de comportement sur
+ * les pistes courtes).
+ */
+export function extraitCentre(buffer: AudioBuffer, dureeMaxS: number): AudioBuffer {
+  const longueurMax = Math.floor(dureeMaxS * buffer.sampleRate);
+  if (buffer.length <= longueurMax) return buffer;
+  const debut = decalageExtraitCentre(buffer, dureeMaxS);
+  const extrait = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: longueurMax,
+    sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    extrait.copyToChannel(buffer.getChannelData(c).subarray(debut, debut + longueurMax), c);
+  }
+  return extrait;
+}
+
+
 export function etirerDuree(entree: AudioBuffer, facteur: number): AudioBuffer {
   const n = TAILLE_FFT_HAUTEUR;
   const nbBins = n / 2 + 1;
@@ -197,3 +251,27 @@ export function tramesDepuisBuffer(
   return trames;
 }
 
+
+/**
+ * Contexte audio destiné au SEUL décodage de fichiers (`decodeAudioData`).
+ *
+ * `new AudioContext()` ouvre un vrai périphérique de SORTIE, alors que décoder
+ * n'a rien à jouer. Conséquence : sur une machine sans sortie audio — poste dont
+ * l'audio est désactivé, session distante, serveur, runner d'intégration
+ * continue — la construction échoue (« DeviceUnavailable: No output device
+ * available ») et le nœud tombe en erreur alors que rien ne devait sortir par
+ * les haut-parleurs. Un `OfflineAudioContext` fait exactement le même travail
+ * sans réclamer de périphérique.
+ *
+ * La fréquence est fixée à 48 kHz parce que `decodeAudioData` RÉÉCHANTILLONNE
+ * toujours vers la fréquence du contexte : la valeur n'est donc pas neutre. Un
+ * `AudioContext` adopte celle de la carte son — mesuré à 48 kHz ici, valeur
+ * usuelle sous Chromium/Electron —, si bien que le résultat d'une conversion
+ * dépendait jusqu'ici du matériel de l'utilisateur. Le figer rend le décodage
+ * déterministe d'une machine à l'autre, et conserve le comportement observé.
+ */
+export const SR_DECODAGE = 48000;
+
+export function contexteDecodage(): OfflineAudioContext {
+  return new OfflineAudioContext(1, 1, SR_DECODAGE);
+}

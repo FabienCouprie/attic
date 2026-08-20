@@ -22,6 +22,7 @@ import { ReponseFiltre } from "./ReponseFiltre";
 import { SequenceurBatterie } from "./SequenceurBatterie";
 import { SequenceurBatterieAvance } from "./SequenceurBatterieAvance";
 import { SequenceurMelodique } from "./SequenceurMelodique";
+import { SequenceurAccords } from "./SequenceurAccords";
 import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
 import { ColorSynth } from "./ColorSynth";
@@ -34,7 +35,7 @@ import { construireListeEmotions } from "../plugins/emotions";
 import { construireListeTessitures } from "../plugins/tessitures";
 import { tokenizePython } from "../plugins/python-processor";
 import { tokenizeJulia } from "../plugins/julia-processor";
-import { COULEURS } from "../audio";
+import { COULEURS, cleCouleur } from "../audio";
 import type { FicheAudio } from "../audio/types-domaine";
 import type { DonneesNoeud } from "./AtelierNode";
 
@@ -67,6 +68,22 @@ function VueSelecteurMultiZones({ id, data }: VueProps) {
 }
 
 // ── Chargement d'un fichier audio ──
+// ── Lecture de paramètres « choix » hors `paramTexte` ──
+// Certaines vues lisent `data.parametres` directement, sans passer par la
+// canonisation de `paramTexte`. Elles doivent donc accepter aussi bien l'id
+// canonique que les anciens libellés FR/EN encore présents dans les projets.
+function estActif(valeur: unknown): boolean {
+  const v = String(valeur ?? "").trim().toLowerCase();
+  return v === "oui" || v === "on";
+}
+
+function estLog(valeur: unknown): boolean {
+  const v = String(valeur ?? "log").trim().toLowerCase();
+  // Défaut historique = échelle logarithmique : tout ce qui n'est pas
+  // explicitement linéaire reste logarithmique.
+  return v !== "lineaire" && v !== "linéaire" && v !== "linear";
+}
+
 function VueUploadAudio({ id, data }: VueProps) {
   const { t } = useI18n();
   return (
@@ -76,6 +93,10 @@ function VueUploadAudio({ id, data }: VueProps) {
         <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerAudio?.(id, f); }} />
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
+      {data.audioUrl && (
+        <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl}
+          onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
+      )}
     </div>
   );
 }
@@ -108,30 +129,96 @@ function VueUploadSvg({ id, data }: VueProps) {
   );
 }
 
+// ── Chargement d'un fichier PDF ──
+function VueUploadPdf({ id, data }: VueProps) {
+  const { t } = useI18n();
+  return (
+    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <label className="attic-node-fichier-btn">
+        {data.pdfNom ? t("btn.changer.pdf") : t("btn.charger.pdf")}
+        <input type="file" accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerPdf?.(id, f); }} />
+      </label>
+      {data.pdfNom && <div className="attic-node-fichier-nom">{data.pdfNom}</div>}
+    </div>
+  );
+}
+
 // ── Explorateur de musique (Electron) ──
 function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
   const [fichiersMusique, setFichiersMusique] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargementMusique, setChargementMusique] = useState(false);
-  const [audioLocale, setAudioLocale] = useState<string | null>(null);
+  const [audioLocale, setAudioLocale] = useState<string | null>(data.audioUrl ?? null);
+  const { setNodes } = useReactFlow();
   const api = (window as { api?: any }).api;
+
+  // Restaurer la sélection de piste si le workflow a été rechargé.
+  useEffect(() => {
+    if (!api || !data.audioChemin || fichiersMusique) return;
+    const dossier = String(data.parametres?.["Chemin"] || "music collection");
+    const rel = dossier.replace(/^[/\\]+|[/\\]+$/g, "");
+    api.lireDossier(rel).then((liste: { nom: string; chemin: string }[] | null) => {
+      if (liste) setFichiersMusique(liste);
+    }).catch((e: any) => console.warn("[VueExplorateur] échec du re-scan du dossier", e));
+  }, [api, data.audioChemin, data.parametres, fichiersMusique]);
+
+  // Garder le lecteur local synchronisé avec l'URL rechargée depuis le disque.
+  useEffect(() => {
+    if (data.audioUrl) setAudioLocale(data.audioUrl);
+  }, [data.audioUrl]);
+
+  const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
+  const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
+
+  // Sélection d'une piste, partagée par `onChange` et `onClick` du <select>.
+  async function choisirPiste(index: number) {
+    const f = fichiersMusique?.[index];
+    if (!f) return;
+    if (f.chemin === data.audioChemin) return;   // déjà chargée : rien à refaire
+    const resultat = await api?.lireFichierAudio(f.chemin);
+    if (!resultat) return;
+    const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
+    const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
+    const url = URL.createObjectURL(fichier);
+    setAudioLocale(url);
+    setNodes((nds) => nds.map((nd) => nd.id === id ? {
+      ...nd,
+      data: { ...nd.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: url, audioChemin: f.chemin },
+    } : nd));
+  }
+
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()}>
       {!api ? (
         <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("msg.electronUniquement")}</div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button className="attic-node-fichier-btn" style={{ flex: 1 }} disabled={chargementMusique} onClick={async () => {
+          {/* `minWidth: 0` est indispensable : un élément flex a `min-width: auto`
+              par défaut et refuse donc de rétrécir sous la largeur de son
+              contenu. Sans lui, un chemin long élargissait ce bouton au-delà du
+              conteneur et poussait l'icône de dossier hors du cadre du nœud.
+              Le chemin est tronqué par des points de suspension, et reste
+              lisible en entier au survol grâce au `title`. */}
+          <div style={{ display: "flex", gap: 4, minWidth: 0 }}>
+            <button className="attic-node-fichier-btn"
+              // `display: block` (et non le `inline-flex` centré de la classe) :
+              // `text-overflow: ellipsis` ne s'applique pas au contenu d'un
+              // conteneur flex — le texte y était rogné des DEUX côtés, sans
+              // points de suspension. En bloc aligné à gauche, on garde le début
+              // du chemin et l'ellipse apparaît bien à la fin.
+              style={{ flex: 1, minWidth: 0, display: "block", textAlign: "left",
+                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              title={`/${dossierCourant}`}
+              disabled={chargementMusique} onClick={async () => {
               setChargementMusique(true);
-              const rel = (data.parametres?.["Chemin"] as string) || "music collection";
-              const fichiers = (await api?.lireDossier(rel.replace(/^[/\\]+|[/\\]+$/g, ""))) ?? null;
+              const rel = dossierCourant.replace(/^[/\\]+|[/\\]+$/g, "");
+              const fichiers = (await api?.lireDossier(rel)) ?? null;
               setFichiersMusique(fichiers);
               setChargementMusique(false);
             }}>
-              ⟳ /{String(data.parametres?.["Chemin"] || "music collection")}
+              ⟳ /{dossierCourant}
             </button>
-            <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
+            <button className="attic-node-fichier-btn" style={{ flexShrink: 0 }} title={t("btn.choisirDossier")} onClick={async () => {
               const dossier = await api?.choisirDossier();
               if (dossier) { data.parametres!["Chemin"] = dossier; data.onChangerParametre?.(id, "Chemin", dossier); }
             }}>
@@ -139,17 +226,23 @@ function VueExplorateur({ id, data }: VueProps) {
             </button>
           </div>
           {fichiersMusique && fichiersMusique.length > 0 && (
+            // `onClick` EN PLUS de `onChange` : tant qu'aucune piste n'est
+            // choisie, React pose value="" — qui ne correspond à aucune option,
+            // si bien que le navigateur replie sur la première et l'affiche en
+            // surbrillance. Cliquer cette première ligne ne changeait alors RIEN
+            // dans le DOM : `change` ne partait pas, le nœud restait sans
+            // fichier, et l'exécution répondait « Aucun fichier » alors que la
+            // liste montrait bien la piste sélectionnée. Les autres lignes
+            // fonctionnaient, elles, puisqu'elles changeaient réellement l'index.
             <select className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
-              onChange={async (e) => {
-                const f = fichiersMusique[parseInt(e.target.value)];
-                if (!f) return;
-                const resultat = await api?.lireFichierAudio(f.chemin);
-                if (!resultat) return;
-                const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
-                const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
-                setAudioLocale(URL.createObjectURL(fichier));
-                data.onChargerAudio?.(id, fichier);
-              }}>
+              value={selectedIndex >= 0 ? String(selectedIndex) : ""}
+              onClick={(e) => {
+                const cible = e.target as HTMLElement;
+                if (cible instanceof HTMLOptionElement && cible.value !== "") {
+                  void choisirPiste(parseInt(cible.value, 10));
+                }
+              }}
+              onChange={(e) => void choisirPiste(parseInt(e.target.value, 10))}>
               {fichiersMusique.map((f, i) => <option key={f.chemin} value={i}>{f.nom}</option>)}
             </select>
           )}
@@ -183,8 +276,11 @@ function VueLecteurMusique({ id, data }: VueProps) {
 
   const chemin = String((data.parametres?.["Chemin"] as string | number | undefined) ?? "music collection");
   const volume = typeof data.parametres?.["Volume"] === "number" ? (data.parametres["Volume"] as number) : 80;
-  const shuffle = data.parametres?.["Lecture aléatoire"] === "Oui";
-  const loop = data.parametres?.["Lecture en boucle"] === "Oui";
+  // Ces deux paramètres sont lus ici directement dans `parametres` (pas via
+  // `paramTexte`), donc sans canonisation : on accepte l'id « oui » comme les
+  // anciens libellés FR/EN encore stockés dans les projets existants.
+  const shuffle = estActif(data.parametres?.["Lecture aléatoire"]);
+  const loop = estActif(data.parametres?.["Lecture en boucle"]);
 
   const formatTime = (s: number) => {
     if (!Number.isFinite(s) || s < 0) return "0:00";
@@ -297,12 +393,14 @@ function VueLecteurMusique({ id, data }: VueProps) {
     }
   }, [fichiers, loop, currentIndex, nextIndex, loadTrack]);
 
+  // Écrit l'id canonique (et non plus le libellé français), pour rester
+  // cohérent avec la valeur des <option> du menu déroulant de l'inspecteur.
   const toggleShuffle = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "Non" : "Oui");
+    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "non" : "oui");
   }, [data, id, shuffle]);
 
   const toggleLoop = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "Non" : "Oui");
+    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "non" : "oui");
   }, [data, id, loop]);
 
   const handleVolume = useCallback((v: number) => {
@@ -721,7 +819,7 @@ function VueSpectre({ data }: VueProps) {
     <SpectreFFT
       audioUrl={data.audioResultatUrl}
       tailleFFT={parseInt(String(p["Fenêtre"] ?? "4096")) || 4096}
-      log={String(p["Échelle"] ?? "Logarithmique") === "Logarithmique"}
+      log={estLog(p["Échelle"])}
     />
   );
 }
@@ -733,7 +831,7 @@ function VueSpectrogramme({ data }: VueProps) {
     <Spectrogramme
       audioUrl={data.audioResultatUrl}
       tailleFFT={parseInt(String(p["Fenêtre"] ?? "1024")) || 1024}
-      log={String(p["Échelle"] ?? "Logarithmique") === "Logarithmique"}
+      log={estLog(p["Échelle"])}
     />
   );
 }
@@ -787,6 +885,25 @@ function VueSequenceurMelodique({ id, data }: VueProps) {
       cle={cle}
       gamme={gamme}
       octave={octave}
+      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
+    />
+  );
+}
+
+// ── Séquenceur d'accords (grille de degrés pas-à-pas) ──
+function VueSequenceurAccords({ id, data }: VueProps) {
+  const p = data.parametres ?? {};
+  const nbPas = parseInt(String(p["Nombre de pas"] ?? "16"), 10) || 16;
+  const motif = String(p["Motif"] ?? "");
+  const cle = String(p["Clé"] ?? "C");
+  const gamme = String(p["Gamme"] ?? "majeur");
+  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  return (
+    <SequenceurAccords
+      motif={motif}
+      nbPas={nbPas}
+      cle={cle}
+      gamme={gamme}
       onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
     />
   );
@@ -1114,8 +1231,11 @@ function VueCouleurSunoIA({ data }: VueProps) {
   const p = data.parametres ?? {};
   const c1 = String(p["Couleur 1"] ?? "Bleu");
   const c2 = String(p["Couleur 2"] ?? "(aucune)");
-  const obj1 = COULEURS[c1];
-  const obj2 = COULEURS[c2];
+  // Lecture directe de `parametres` (sans `paramTexte`), donc sans canonisation :
+  // la valeur peut être l'id (« bleu »), l'ancien nom français ou l'anglais.
+  // Indexer COULEURS avec elle telle quelle ne marchait qu'avec le nom français.
+  const obj1 = COULEURS[cleCouleur(c1) ?? ""];
+  const obj2 = COULEURS[cleCouleur(c2) ?? ""];
   const hex1 = obj1?.hex ?? "#999";
   const hex2 = obj2?.hex ?? "#333";
   const nom1 = obj1 ? obj1[lang] : c1;
@@ -1125,7 +1245,9 @@ function VueCouleurSunoIA({ data }: VueProps) {
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
         <div style={{ width: 24, height: 24, borderRadius: 4, background: hex1, boxShadow: `0 0 6px ${hex1}` }} />
-        {c2 && c2 !== "(aucune)" && obj2 ? (
+        {/* `obj2` suffit : « (aucune) », « (none) » et l'id « aucune » ne
+            résolvent vers aucune couleur, quel que soit leur libellé. */}
+        {obj2 ? (
           <>
             <span style={{ fontSize: 14, opacity: 0.5 }}>+</span>
             <div style={{ width: 24, height: 24, borderRadius: 4, background: hex2, boxShadow: `0 0 6px ${hex2}` }} />
@@ -1152,16 +1274,28 @@ function VueCouleurSunoIA({ data }: VueProps) {
   );
 }
 
-// ── Galerie d'exposition (aperçu + téléchargement HTML) ──
+// ── Galerie d'exposition (liste des pistes + ouverture du HTML généré) ──
 function VueGalerieExposition({ data }: VueProps) {
   const { t } = useI18n();
-  const html = (data as any)._galerieHTML as string | undefined;
+  const [erreur, setErreur] = useState<string | null>(null);
+  const htmlPath = (data as any)._galerieHtmlPath as string | undefined;
   const pistes = (data as any)._galeriePistes as { nom: string; url: string }[] | undefined;
-  const htmlUrl = useMemo(() => html ? URL.createObjectURL(new Blob([html], { type: "text/html" })) : null, [html]);
-  useEffect(() => () => { if (htmlUrl) URL.revokeObjectURL(htmlUrl); }, [htmlUrl]);
+
+  async function ouvrirDansNavigateur() {
+    if (!htmlPath) return;
+    setErreur(null);
+    const api = (window as any).api;
+    if (!api?.ouvrirChemin) {
+      setErreur(t("msg.n_cessite_electron"));
+      return;
+    }
+    const res = await api.ouvrirChemin(htmlPath);
+    if (!res?.ok) setErreur(res?.erreur || t("msg.erreur_ouverture"));
+  }
+
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
-      {html ? (
+      {htmlPath ? (
         <>
           {pistes && pistes.length > 0 && (
             <div style={{ maxHeight: 120, overflowY: "auto", fontSize: 11, marginBottom: 6 }}>
@@ -1174,12 +1308,11 @@ function VueGalerieExposition({ data }: VueProps) {
               {pistes.length > 10 && <div style={{ opacity: 0.5, padding: "3px 0" }}>… +{pistes.length - 10} autres</div>}
             </div>
           )}
-          <a href={htmlUrl ?? "#"}
-            download="index.html"
-            className="attic-node-fichier-btn"
-            style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
-            ⬇ index.html ({Math.round(html.length / 1024)} KB)
-          </a>
+          <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%" }} onClick={ouvrirDansNavigateur}>
+            🌐 {t("btn.ouvrir_navigateur")}
+          </button>
+          <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all", marginTop: 4 }}>{htmlPath}</div>
+          {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
         </>
       ) : (
         <div style={{ fontSize: 11, opacity: 0.5, padding: "4px" }}>{t("export.avantLancer")}</div>
@@ -1325,7 +1458,6 @@ function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
   const htmlPath = (data as any)._carteHtmlPath as string | undefined;
-  const htmlUrl = (data as any)._carteHtmlUrl as string | undefined;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {
@@ -1351,11 +1483,47 @@ function VueCarteSonore({ data }: VueProps) {
           <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%", marginBottom: 6 }} onClick={ouvrirDansNavigateur}>
             🌐 {t("btn.ouvrir_navigateur")}
           </button>
-          {htmlUrl && (
-            <a href={htmlUrl} download="carte-sonore.html" className="attic-node-fichier-btn" style={{ display: "block", textAlign: "center", textDecoration: "none", marginBottom: 6 }}>
-              ⬇ {t("btn.telecharger_html")}
-            </a>
-          )}
+          <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all" }}>{htmlPath}</div>
+          {message && <div style={{ fontSize: 10, marginTop: 6, color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{message}</div>}
+          {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Coordonnées sur carte (variante de Carte sonore pilotée par des
+// coordonnées reçues en entrée — carte-sonore.ts et VueCarteSonore ne sont
+// pas modifiés, ceci est une copie adaptée volontairement séparée) ──
+function VueCoordonneesSurCarte({ data }: VueProps) {
+  const { t } = useI18n();
+  const [erreur, setErreur] = useState<string | null>(null);
+  const htmlPath = (data as any)._coordCarteHtmlPath as string | undefined;
+  const message = data.audioResultatMessage ?? "";
+
+  async function ouvrirDansNavigateur() {
+    if (!htmlPath) return;
+    setErreur(null);
+    const api = (window as any).api;
+    if (!api?.ouvrirChemin) {
+      setErreur(t("msg.n_cessite_electron"));
+      return;
+    }
+    const res = await api.ouvrirChemin(htmlPath);
+    if (!res?.ok) setErreur(res?.erreur || t("msg.erreur_ouverture"));
+  }
+
+  return (
+    <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px", minWidth: 220 }}>
+      {!htmlPath ? (
+        <div style={{ padding: 8, fontSize: 11, opacity: 0.6 }}>
+          {t("export.avantLancer")}
+        </div>
+      ) : (
+        <>
+          <button className="attic-node-fichier-btn" style={{ display: "block", width: "100%", marginBottom: 6 }} onClick={ouvrirDansNavigateur}>
+            🌐 {t("btn.ouvrir_navigateur")}
+          </button>
           <div style={{ fontSize: 10, opacity: 0.55, wordBreak: "break-all" }}>{htmlPath}</div>
           {message && <div style={{ fontSize: 10, marginTop: 6, color: "var(--text-secondary)", whiteSpace: "pre-line" }}>{message}</div>}
           {erreur && <div style={{ fontSize: 10, marginTop: 6, color: "#e76f51" }}>{erreur}</div>}
@@ -1383,6 +1551,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("sequenceur-batterie"), vue: VueSequenceurBatterie, position: "avant" },
   { correspond: parId("sequenceur-batterie-avance"), vue: VueSequenceurBatterieAvance, position: "avant" },
   { correspond: parId("sequenceur-melodique"), vue: VueSequenceurMelodique, position: "avant" },
+  { correspond: parId("sequenceur-accords"), vue: VueSequenceurAccords, position: "avant" },
   { correspond: parId("generateur-audio-mathematique", "formule-echantillons", "formule-spectrale"), vue: EditeurFormule, position: "avant" },
   { correspond: parId("enveloppe-adsr"), vue: VueADSR, position: "avant" },
   { correspond: parId("noms-instruments"), vue: VueNomsInstruments, position: "avant" },
@@ -1403,6 +1572,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
+  { correspond: parId("coordonnees-sur-carte"), vue: VueCoordonneesSurCarte, position: "avant" },
   { correspond: parId("gestion-nodes"), vue: VueGestionNodes, position: "avant" },
   { correspond: parId("python-processor"), vue: VuePythonProcessor, position: "avant" },
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
@@ -1413,12 +1583,13 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueUploadSvg, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("entree-pdf"), vue: VueUploadPdf, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
-  { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "avant" },
+  { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "apres" },
   { correspond: parId("pure-data"), vue: VueUploadPd, position: "avant" },
   { correspond: (f) => f.startsWith("collection-") && f !== "collection-lecteur-musique", vue: VueCollections, position: "apres" },
   { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },

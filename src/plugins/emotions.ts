@@ -111,8 +111,11 @@ export function construireListeEmotions(
   const liste = cat && cat !== "Toutes" ? (EMOTIONS[cat] ?? []) : Object.values(EMOTIONS).flat();
   const noms = liste.map((e) => (langue === "en" ? e.en : e.fr));
   let texte: string;
-  if (format === "Retour ligne") texte = noms.join("\n");
-  else if (format === "Puces") texte = noms.map((n) => `• ${n}`).join("\n");
+  // Compare la forme canonique : accepte l'id ("retour-ligne"/"puces") comme
+  // les anciens libellés FR/EN encore présents dans les projets enregistrés.
+  const fmt = format.trim().toLowerCase();
+  if (fmt === "retour-ligne" || fmt === "retour ligne" || fmt === "newline") texte = noms.join("\n");
+  else if (fmt === "puces" || fmt === "bullets") texte = noms.map((n) => `• ${n}`).join("\n");
   else texte = noms.join(", ");
   return { texte, total: noms.length };
 }
@@ -136,7 +139,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Format", nomEn: "Format", type: "choix",
-        options: ["Virgule", "Retour ligne", "Puces"],
+        options: ["Virgule", "Retour ligne", "Puces"], optionIds: ["virgule","retour-ligne","puces"],
         optionsEn: ["Comma", "Newline", "Bullets"],
         defaut: "Virgule",
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",

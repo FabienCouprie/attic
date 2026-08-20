@@ -52,10 +52,18 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Paire", nomEn: "Pair", type: "choix",
-        options: Paires_OPUS.map((p) => p.id), optionsEn: Paires_OPUS.map((p) => p.nomEn),
+        // `optionIds` porte l'identité stable (« fr-en »), `options`/`optionsEn`
+        // seulement l'affichage : les ids servaient jusqu'ici de libellés côté
+        // français, qui voyait donc « fr-en » là où l'anglais lisait
+        // « French → English » (le champ `nom` existait mais n'était pas utilisé).
+        // `executer` compare toujours à `p.id`, que paramTexte renvoie désormais
+        // quelle que soit la langue — et les projets déjà enregistrés stockent
+        // justement cet id.
+        optionIds: Paires_OPUS.map((p) => p.id),
+        options: Paires_OPUS.map((p) => p.nom), optionsEn: Paires_OPUS.map((p) => p.nomEn),
         defaut: "fr-en",
         doc: "Paire de langues source → cible. Chaque paire utilise un modèle OPUS-MT dédié (~30 MB).",
-        docEn: "Source → target language pair. Each pair uses a dedicated OPUS-MT model (~30 MB).", defautEn: "fr-en" },
+        docEn: "Source → target language pair. Each pair uses a dedicated OPUS-MT model (~30 MB)." },
     ],
     async executer(ctx: any) {
       const texte = ctx.entree(0);

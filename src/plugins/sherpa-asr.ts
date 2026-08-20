@@ -170,26 +170,57 @@ function hashConfig(config: SherpaWorkerConfig): string {
   return JSON.stringify(config);
 }
 
-function sendInit(w: Worker, config: SherpaWorkerConfig, onProgress?: (detail: string) => void): Promise<void> {
+// Délai d'INACTIVITÉ, pas de durée totale (voir sendInit).
+const INIT_INACTIVITE_MS = 120000;
+
+// Exporté pour les tests : c'est le comportement du chien de garde qu'il faut
+// verrouiller, pas seulement la structure de la fiche.
+export function sendInit(w: Worker, config: SherpaWorkerConfig, onProgress?: (detail: string) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const requestId = makeRequestId();
-    const timer = setTimeout(() => reject(new Error(traduire("msg.sherpa_asr.init_timeout"))), 120000);
+    // Ce délai était auparavant une échéance ABSOLUE de 120 s couvrant toute
+    // l'initialisation — téléchargement des modèles compris. Or au premier
+    // usage sur une machine, le worker récupère ~104 Mo depuis HuggingFace
+    // (tiny-decoder 90 Mo, tiny-encoder 13 Mo, tokens 0,8 Mo) : tenir dans
+    // 120 s exige plus de 6,9 Mbit/s soutenus. En deçà, un téléchargement qui
+    // se déroulait parfaitement était tué en cours de route, et l'erreur
+    // pointait à tort vers une « expiration » — d'où un échec systématique là
+    // où le modèle n'était pas encore en cache, et aucun problème là où il
+    // l'était (l'init est alors quasi instantanée).
+    //
+    // Le délai porte donc désormais sur l'INACTIVITÉ : il est réarmé à chaque
+    // événement de progression. C'est fiable ici parce que la couche de
+    // téléchargement (sherpa-onnx-core.js, fetchWithProgress) émet un
+    // événement au plus toutes les 200 ms tant que des octets arrivent —
+    // un flux vivant, même lent, ne peut donc pas déclencher le chien de
+    // garde, tandis qu'une connexion réellement bloquée le déclenche toujours.
+    let timer: ReturnType<typeof setTimeout>;
+    const terminer = () => { clearTimeout(timer); w.removeEventListener("message", onMsg); };
+    const armer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        // L'écouteur était laissé en place sur expiration : le worker étant
+        // partagé et durable, chaque échec y accumulait un écouteur mort.
+        w.removeEventListener("message", onMsg);
+        reject(new Error(traduire("msg.sherpa_asr.init_timeout")));
+      }, INIT_INACTIVITE_MS);
+    };
     const onMsg = (e: MessageEvent) => {
       const msg = e.data;
       if (msg.requestId !== requestId) return;
       if (msg.type === "ready") {
-        clearTimeout(timer);
-        w.removeEventListener("message", onMsg);
+        terminer();
         resolve();
       } else if (msg.type === "error") {
-        clearTimeout(timer);
-        w.removeEventListener("message", onMsg);
+        terminer();
         reject(new Error(msg.error));
-      } else if (msg.type === "progress" && onProgress) {
-        onProgress(`${msg.filename}: ${msg.percent}%`);
+      } else if (msg.type === "progress") {
+        armer();
+        if (onProgress) onProgress(`${msg.filename}: ${msg.percent}%`);
       }
     };
     w.addEventListener("message", onMsg);
+    armer();
     w.postMessage({ type: "init", config, requestId });
   });
 }
@@ -255,6 +286,10 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Language",
         type: "choix",
         options: Object.keys(LANGUES),
+        // Ids canoniques = codes ISO 639-1, c'est-à-dire les valeurs mêmes de
+        // LANGUES (« auto » pour l'entrée sans code). Le libellé français n'est
+        // donc plus l'identité du paramètre.
+        optionIds: Object.values(LANGUES).map((c) => c || "auto"),
         optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Chinese", "Arabic", "Hindi", "Korean"],
         defaut: "Auto",
         defautEn: "Auto",
@@ -265,7 +300,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Qualité resampling",
         nomEn: "Resampling quality",
         type: "choix",
-        options: [...RESAMPLE_OPTIONS_FR],
+        options: [...RESAMPLE_OPTIONS_FR], optionIds: [...RESAMPLE_OPTIONS_FR],
         optionsEn: [...RESAMPLE_OPTIONS_EN],
         defaut: RESAMPLE_OPTIONS_FR[0],
         defautEn: RESAMPLE_OPTIONS_EN[0],
@@ -276,7 +311,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Cache modèle",
         nomEn: "Model cache",
         type: "choix",
-        options: [...CACHE_OPTIONS_FR],
+        options: [...CACHE_OPTIONS_FR], optionIds: [...CACHE_OPTIONS_FR],
         optionsEn: [...CACHE_OPTIONS_EN],
         defaut: CACHE_OPTIONS_FR[0],
         defautEn: CACHE_OPTIONS_EN[0],
@@ -289,8 +324,11 @@ export const fiches: FicheAudio[] = ([
       if (!(audio instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       }
-      const langue = ctx.paramTexte("Langue", "Auto");
-      const langCode = LANGUES[langue] ?? "";
+      // `paramTexte` renvoie désormais l'id canonique, qui EST le code ISO
+      // (« auto » = pas de code). Le repli sur LANGUES couvre les projets
+      // enregistrés avant la migration, qui stockent encore le libellé.
+      const langue = ctx.paramTexte("Langue", "auto");
+      const langCode = langue === "auto" ? "" : (LANGUES[langue] ?? langue);
       const qualiteResampling = ctx.paramTexte("Qualité resampling", RESAMPLE_OPTIONS_FR[0]);
       const modeCache = ctx.paramTexte("Cache modèle", CACHE_OPTIONS_FR[0]);
       const mono = bufferVersMono(audio);
@@ -320,7 +358,10 @@ export const fiches: FicheAudio[] = ([
         return {
           valeurs: [null],
           erreur: true,
-          message: `${traduire("msg.erreur_sherpa_asr")} ${e?.message || String(e)}`,
+          // La clé porte un paramètre ({__VAR_0__}) : l'appeler sans argument
+          // et concaténer le détail à côté affichait le marqueur brut à
+          // l'utilisateur (« Sherpa-ONNX error: {__VAR_0__} … »).
+          message: traduire("msg.erreur_sherpa_asr", e?.message || String(e)),
         };
       }
     },

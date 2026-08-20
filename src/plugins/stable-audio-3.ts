@@ -39,10 +39,10 @@ export const fiches: FicheAudio[] = ([
         docEn: "Random seed. -1 = random.",
      },
       {
-        nom: "Chemin modèle", nomEn: "Model path", type: "texte", defaut: "",
+        nom: "Chemin modèle", nomEn: "Model path", type: "dossier", defaut: "", defautEn: "",
         doc: "Chemin absolu ou relatif du bundle Stable Audio 3 (vide = modèle embarqué public/oonx/stable-audio-3-small-music).",
-        docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music).", defautEn: "",
-     },
+        docEn: "Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music).",
+      },
     ],
     async executer(ctx: any) {
       const api = typeof window !== "undefined" ? (window as any).api : null;

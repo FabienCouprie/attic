@@ -348,7 +348,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tablature", nomEn: "Tablature", type: "texte", defaut: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q",
         doc: "Tablature à afficher. Format : corde-fret/durée (ex : 6-3/q = corde 6, fret 3, noire).",
         docEn: "Tablature to display. Format: string-fret/duration (e.g. 6-3/q = 6th string, 3rd fret, quarter note).", defautEn: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q" },
-      { nom: "Accordage", nomEn: "Tuning", type: "choix", options: ["Guitare standard", "Ukulélé", "Basse"], optionsEn: ["Standard guitar", "Ukulele", "Bass"], defaut: "Guitare standard",
+      { nom: "Accordage", nomEn: "Tuning", type: "choix", options: ["Guitare standard", "Ukulélé", "Basse"], optionIds: ["Guitare standard","Ukulélé","Basse"], optionsEn: ["Standard guitar", "Ukulele", "Bass"], defaut: "Guitare standard",
         doc: "Accordage affiché en titre (la notation reste en corde-fret).", docEn: "Tuning displayed in title (notation remains string-fret).", defautEn: "Standard guitar" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },

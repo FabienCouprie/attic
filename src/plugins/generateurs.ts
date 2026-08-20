@@ -25,7 +25,7 @@ import {
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 /**
@@ -124,14 +124,13 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a random melody.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["4/4","3/4","6/8"], defautEn: "4/4" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -159,17 +158,16 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a fractal melody from a repeated motif and scale.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
+      { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionIds: ["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
       { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0.3.7.10" },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
-      { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
+      { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn:["Auto", "FM/Oscillators", "SoundFont"], defaut:"Automatique", defautEn:"Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -205,14 +203,14 @@ export const fiches: FicheAudio[] = ([
       { nom: "Notes", nomEn: "Notes", type: "nombre", plage: [8, 256], pas: 1, defaut: 32, unite: "notes", doc: "Nombre de points échantillonnés dans le plan, donc de notes générées.", docEn: "Number of points sampled in the plane, hence notes generated." },
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5, doc: "Durée de chaque note exprimée en fraction de temps (1 = 1 temps/noire, 0.5 = croche, 0.25 = double-croche). Le tempo (BPM) détermine la durée réelle.", docEn: "Duration of each note expressed as a fraction of a beat (1 = one beat/quarter note, 0.5 = eighth note, 0.25 = sixteenth note). Tempo (BPM) determines the actual duration." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de la mélodie en battements par minute.", docEn: "Tempo of the melody in beats per minute." },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de la gamme.", docEn: "Reference note (tonic) of the scale." },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de la gamme.", docEn: "Reference note (tonic) of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les hauteurs de notes.", docEn: "Scale used to quantize note pitches." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base des notes MIDI générées.", docEn: "Base octave of the generated MIDI notes." },
       { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1, doc: "Facteur multiplicateur appliqué au nombre d'itérations pour choisir le degré de la gamme.", docEn: "Multiplier applied to the iteration count to select the scale degree." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde utilisée pour la synthèse FM.", docEn: "Waveform used for FM synthesis." },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde utilisée pour la synthèse FM.", docEn: "Waveform used for FM synthesis." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour la répartition pseudo-aléatoire des points d'échantillonnage.", docEn: "Seed for the pseudo-random distribution of sampling points." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -243,7 +241,7 @@ export const fiches: FicheAudio[] = ([
         graine: ctx.paramNombre("Graine", 42),
         instrument,
         banque,
-      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
       return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
     },
   },
@@ -253,19 +251,19 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a polyrhythmic arpeggio from the Koch snowflake.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de l'accord de base.", docEn: "Reference note (tonic) of the base chord." },
+      { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de l'accord de base.", docEn: "Reference note (tonic) of the base chord." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les notes de l'arpège.", docEn: "Scale used to quantize the arpeggio notes." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base de l'accord.", docEn: "Base octave of the chord." },
-      { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major", doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
+      { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major", doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de subdivisions récursives du flocon de Koch.", docEn: "Number of recursive subdivisions of the Koch snowflake." },
-      { nom: "Direction", nomEn: "Direction", type: "choix", options: ["alternée","extérieure","intérieure"], defaut: "alternée", optionsEn: ["alternating","outward","inward"], defautEn: "alternating", doc: "Sens des pics de Koch sur chaque voix.", docEn: "Direction of the Koch peaks on each voice." },
+      { nom: "Direction", nomEn: "Direction", type: "choix", options: ["alternée","extérieure","intérieure"], optionIds: ["alternée","extérieure","intérieure"], defaut: "alternée", optionsEn: ["alternating","outward","inward"], defautEn: "alternating", doc: "Sens des pics de Koch sur chaque voix.", docEn: "Direction of the Koch peaks on each voice." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [1, 12], pas: 1, defaut: 3, unite: "demi-tons", docEn: "Height of the Koch bump in semitones.", doc: "Hauteur du pic de Koch en demi-tons." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de l'arpège en battements par minute.", docEn: "Tempo of the arpeggio in beats per minute." },
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2, unite: "mesures", doc: "Nombre de mesures sur lesquelles l'arpège est réparti.", docEn: "Number of bars over which the arpeggio is spread." },
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s", doc: "Durée maximale de chaque note.", docEn: "Maximum duration of each note." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde pour la synthèse FM.", docEn: "Waveform for FM synthesis." },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde pour la synthèse FM.", docEn: "Waveform for FM synthesis." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -287,7 +285,7 @@ export const fiches: FicheAudio[] = ([
         volume: ctx.paramNombre("Volume", 80),
         instrument,
         banque,
-      }, ctx.paramTexte("Synthèse", "Automatique") as any);
+      }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
       return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
     },
   },
@@ -341,7 +339,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Renders a chaotic attractor or IFS as image + audio.",
     entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Attracteur", nomEn: "Attractor", type: "choix", options: ["Lorenz", "Rössler", "Hénon", "Ikeda", "Barnsley", "Sierpiński"], optionsEn: ["Lorenz", "Rossler", "Henon", "Ikeda", "Barnsley", "Sierpinski"], defaut: "Lorenz", defautEn: "Lorenz", doc: "Système dynamique ou IFS à itérer pour produire la trajectoire.", docEn: "Dynamical system or IFS to iterate to produce the trajectory." },
+      { nom: "Attracteur", nomEn: "Attractor", type: "choix", options: ["Lorenz", "Rössler", "Hénon", "Ikeda", "Barnsley", "Sierpiński"], optionIds: ["Lorenz","Rössler","Hénon","Ikeda","Barnsley","Sierpiński"], optionsEn: ["Lorenz", "Rossler", "Henon", "Ikeda", "Barnsley", "Sierpinski"], defaut: "Lorenz", defautEn: "Lorenz", doc: "Système dynamique ou IFS à itérer pour produire la trajectoire.", docEn: "Dynamical system or IFS to iterate to produce the trajectory." },
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [10000, 1000000], pas: 1000, defaut: 200000, unite: "pts", doc: "Nombre de points calculés pour l'image et la sonification.", docEn: "Number of points computed for the image and sonification." },
       { nom: "Largeur", nomEn: "Width", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Largeur de l'image rendue en pixels.", docEn: "Width of the rendered image in pixels." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Hauteur de l'image rendue en pixels.", docEn: "Height of the rendered image in pixels." },
@@ -399,7 +397,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Military march","Pop ballad","Pop dance","Pop latin","Pop folk","Pop R&B","Pop punk","Waltz","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], defaut:"Rock", defautEn: "Rock" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionIds:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Military march","Pop ballad","Pop dance","Pop latin","Pop folk","Pop R&B","Pop punk","Waltz","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], defaut:"Rock", defautEn: "Rock" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
@@ -448,8 +446,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom:"Synthèse", nomEn:"Synthesis", type:"choix", options:["Automatique", "FM/Oscillateurs","SoundFont"], defaut:"Automatique", optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defautEn: "Auto",
-        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+      { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
@@ -482,7 +479,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Durée", nomEn:"Duration", plage:[1,60], defaut:4, unite:"s" },
@@ -539,7 +536,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates white, pink or brownian noise.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Type", nomEn: "Type", type: "choix", options: ["Blanc", "Rose", "Brownien"], defaut: "Blanc",
+      { nom: "Type", nomEn: "Type", type: "choix", options: ["Blanc", "Rose", "Brownien"], optionIds: ["Blanc","Rose","Brownien"], defaut: "Blanc",
         doc: "Blanc = toutes les fréquences à niveau égal (spectre plat). Rose = −3 dB/octave (perçu équilibré). Brownien = −6 dB/octave (grave, sourd). Branchez sur l'Analyseur de spectre pour voir la différence.",
         docEn: "White = all frequencies at equal level (flat spectrum). Pink = −3 dB/octave (perceptually balanced). Brownian = −6 dB/octave (dark, muffled). Connect to the Spectrum Analyzer to see the difference.", optionsEn: ["White", "Pink", "Brownian"], defautEn: "White" },
       { nom: "Durée", nomEn: "Duration", plage: [0.2, 10], pas: 0.1, defaut: 2, unite: "s" },
@@ -784,7 +781,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionIds: ["sine","square","sawtooth","triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Probabilité de produire une note à chaque pas. Élevée = mélodie dense ; faible = mélodie éparse.", docEn: "Probability of producing a note at each step. High = dense melody; low = sparse melody." },
@@ -795,7 +792,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -880,7 +877,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionIds: ["sine","square","sawtooth","triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
@@ -1216,13 +1213,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Drum volume. Drums are always synthesized by the internal drum synth to remain audible, even in SoundFont mode.",
       },
       {
-        nom: "Synthèse",
-        nomEn: "Synthesis",
-        type: "choix",
-        options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
-        optionsEn: ["Auto", "FM/Oscillators", "SoundFont"],
-        defaut: "Automatique",
-        defautEn: "Auto",
+        ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. La batterie utilise toujours le drum-synth interne.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth.",
       },

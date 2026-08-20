@@ -427,7 +427,7 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
           >
             <div style={{
               position: "absolute", height: "100%",
-              left: `${scrollPct}%`, width: `${thumbPct}%`,
+              left: `${scrollPct}%`, width: `${Math.min(thumbPct, 100 - scrollPct)}%`,
               background: "rgba(42,157,143,0.5)", borderRadius: 3,
             }} />
           </div>
@@ -481,25 +481,23 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
           className="attic-node-zoom-slider"
         />
       )}
-      {buffer && (
-        <div className="attic-node-zones">
-          <button
-            className="attic-node-zones-ajouter"
-            onClick={(e) => { e.stopPropagation(); ajouterZone(); }}
-            disabled={selAffichee.duree <= 0.001}
-            title={t("zones.memoriser")}
-          >➕ {t("zones.ajouter")}</button>
-          <div className="attic-node-zones-liste">
-            {zones.length === 0 && <span className="attic-node-zones-vide">{t("zones.aucune")}</span>}
-            {zones.map((z, i) => (
-              <span key={i} className="attic-node-zones-item">
-                {z.debut.toFixed(2)}s → {(z.debut + z.duree).toFixed(2)}s
-                <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title={t("zones.retirer")}>×</button>
-              </span>
-            ))}
-          </div>
+      <div className="attic-node-zones">
+        <button
+          className="attic-node-zones-ajouter"
+          onClick={(e) => { e.stopPropagation(); ajouterZone(); }}
+          disabled={!buffer || selAffichee.duree <= 0.001}
+          title={t("zones.memoriser")}
+        >➕ {t("zones.ajouter")}</button>
+        <div className="attic-node-zones-liste">
+          {zones.length === 0 && <span className="attic-node-zones-vide">{t("zones.aucune")}</span>}
+          {zones.map((z, i) => (
+            <span key={i} className="attic-node-zones-item">
+              {z.debut.toFixed(2)}s → {(z.debut + z.duree).toFixed(2)}s
+              <button className="attic-node-zones-retirer" onClick={(e) => { e.stopPropagation(); retirerZone(i); }} title={t("zones.retirer")}>×</button>
+            </span>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

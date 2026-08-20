@@ -14,12 +14,16 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.exporter": { fr: "Exporter", en: "Export" },
   "btn.sauvegarder": { fr: "Sauvegarder l'en-cours", en: "Save work-in-progress" },
   "btn.importer": { fr: "Importer", en: "Import" },
+  "persistance.importInvalide": { fr: "Fichier invalide : ce n'est pas un workflow Attic (JSON illisible).", en: "Invalid file: not an Attic workflow (unreadable JSON)." },
+  "persistance.importSansNoeuds": { fr: "Ce fichier ne contient aucun nœud sur le canevas (seulement {nb} méta-composant(s) de catalogue) — le canevas restera vide, ce n'est pas un échec d'import.", en: "This file has no canvas nodes (only {nb} catalog meta-component(s)) — the canvas will stay empty, this isn't an import failure." },
+  "persistance.metasNonRestaures": { fr: "{nb} méta-composant(s) n'ont pas pu être réaffichés dans le catalogue : ils utilisent un ou plusieurs blocs qui n'existent plus dans cette version d'Attic. Ils restent en mémoire (rien n'est supprimé) et réapparaîtront si ces blocs reviennent.", en: "{nb} meta-component(s) could not be shown in the catalog: they use one or more blocks that no longer exist in this version of Attic. They remain in storage (nothing is deleted) and will reappear if those blocks come back." },
   "btn.dossier": { fr: "Dossier", en: "Folder" },
   "btn.parcourir": { fr: "Parcourir", en: "Browse" },
   "btn.choisirDossier": { fr: "Choisir un dossier", en: "Choose a folder" },
   "btn.theme": { fr: "Thème", en: "Theme" },
   "btn.sf2": { fr: "SF2", en: "SF2" },
   "btn.executer": { fr: "Exécuter ce bloc", en: "Run this block" },
+  "btn.ouvrir_navigateur": { fr: "Ouvrir navigateur", en: "Open in browser" },
   "btn.reinitialiser": { fr: "Réinitialiser", en: "Reset" },
   "btn.doc": { fr: "Documentation", en: "Documentation" },
   "btn.commentaire": { fr: "Ajouter une note", en: "Add a note" },
@@ -32,6 +36,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.changer.image": { fr: "Changer…", en: "Change…" },
   "btn.charger.svg": { fr: "Charger SVG…", en: "Load SVG…" },
   "btn.changer.svg": { fr: "Changer…", en: "Change…" },
+  "btn.charger.pdf": { fr: "Charger PDF…", en: "Load PDF…" },
+  "btn.changer.pdf": { fr: "Changer…", en: "Change…" },
   "btn.charger.midi": { fr: "Charger MIDI…", en: "Load MIDI…" },
   "btn.changer.midi": { fr: "Changer…", en: "Change…" },
   "btn.charger.onnx": { fr: "Charger modèle ONNX…", en: "Load ONNX…" },
@@ -46,9 +52,53 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.record": { fr: "Enregistrer", en: "Record" },
   "btn.rerecord": { fr: "Réenregistrer", en: "Re-record" },
   "btn.stop": { fr: "Arrêter", en: "Stop" },
+  "seq.pas": { fr: "pas", en: "step" },
   "btn.device": { fr: "Périphérique", en: "Device" },
   "btn.notes": { fr: "notes", en: "notes" },
   "btn.detacher": { fr: "Détacher", en: "Detach" },
+  // Infobulle du bouton × de l'onglet. Malgré son nom, ce bouton ne ferme rien :
+  // il vide le canevas pour repartir d'un workflow neuf (cf. `fermerOnglet`,
+  // App.tsx). Le libellé le dit explicitement, pour éviter un clic destructeur.
+  "workflow.nouveauTitre": { fr: "Nouveau workflow (vide le canevas)", en: "New workflow (clears the canvas)" },
+  // Clés révélées par `i18n.test.ts` : elles étaient citées dans l'interface
+  // sans exister ici, donc affichées telles quelles à l'écran (« python.titre »…).
+  "btn.chargerEchantillon": { fr: "Charger un échantillon", en: "Load a sample" },
+  "btn.configurer": { fr: "Configurer", en: "Configure" },
+  "btn.supprimer": { fr: "Supprimer", en: "Delete" },
+  "inspecteur.echantillon": { fr: "Échantillon", en: "Sample" },
+  "clavier.enreg": { fr: "Enregistrer", en: "Record" },
+  "clavier.arreter": { fr: "Arrêter", en: "Stop" },
+  "clavier.rejouer": { fr: "Rejouer", en: "Replay" },
+  "clavier.effacer": { fr: "Effacer", en: "Clear" },
+  "clavier.notes": { fr: "notes", en: "notes" },
+  "code.editer": { fr: "Éditer", en: "Edit" },
+  "code.editerTitle": { fr: "Ouvrir l'éditeur de code", en: "Open the code editor" },
+  "code.fermer": { fr: "Fermer", en: "Close" },
+  "code.lignes": { fr: "lignes", en: "lines" },
+  "python.titre": { fr: "Éditeur Python", en: "Python editor" },
+  "python.requis": { fr: "Python 3 requis", en: "Python 3 required" },
+  "python.nonDetecte": { fr: "Python non détecté", en: "Python not detected" },
+  "python.configurerChemin": { fr: "Configurer le chemin de l'exécutable Python", en: "Set the Python executable path" },
+  "julia.titre": { fr: "Éditeur Julia", en: "Julia editor" },
+  "julia.requis": { fr: "Julia requis", en: "Julia required" },
+  "julia.nonDetecte": { fr: "Julia non détecté", en: "Julia not detected" },
+  "julia.configurerChemin": { fr: "Configurer le chemin de l'exécutable Julia", en: "Set the Julia executable path" },
+  "meta.badgeTitle": { fr: "Méta-composant", en: "Meta-component" },
+  "meta.groupe": { fr: "Groupe", en: "Group" },
+  "meta.grouperSelection": { fr: "Sélectionnez au moins deux nœuds à grouper.", en: "Select at least two nodes to group." },
+  "meta.degrouperSelection": { fr: "Sélectionnez un méta-composant à dégrouper.", en: "Select a meta-component to ungroup." },
+  "meta.renommerSelection": { fr: "Sélectionnez un méta-composant à renommer.", en: "Select a meta-component to rename." },
+  "meta.nouveauNom": { fr: "Nouveau nom", en: "New name" },
+  // Le {nom} est substitué par `String.replace`, pas par le mécanisme __VAR_n__.
+  "meta.confirmSupprimerCatalogue": { fr: "Supprimer « {nom} » du catalogue ?", en: "Remove “{nom}” from the catalog?" },
+  "msg.aucunFichierAudio": { fr: "Aucun fichier audio", en: "No audio file" },
+  "msg.cheminInvalide": { fr: "Chemin invalide", en: "Invalid path" },
+  "msg.erreur_ouverture": { fr: "Impossible d'ouvrir le fichier.", en: "Could not open the file." },
+  "msg.captureAucuneSource": { fr: "Aucune source de capture disponible.", en: "No capture source available." },
+  "msg.captureAucunFlux": { fr: "La source capturée ne contient aucune piste audio.", en: "The captured source has no audio track." },
+  "msg.captureSelectionnerAudio": { fr: "Aucune piste audio : pensez à cocher « Partager l'audio » dans la boîte de dialogue du navigateur.", en: "No audio track: remember to tick “Share audio” in the browser dialog." },
+  "msg.captureAnnulee": { fr: "Capture annulée.", en: "Capture cancelled." },
+  "onde.analyse": { fr: "Analyse…", en: "Analyzing…" },
   "statut.attente": { fr: "En attente", en: "Waiting" },
   "statut.en_cours": { fr: "En cours", en: "Running" },
   "statut.termine": { fr: "Terminé", en: "Done" },
@@ -92,6 +142,12 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Export": { fr: "Export", en: "Export" },
   "famille.Installation": { fr: "Installation", en: "Installation" },
   "famille.Théorie": { fr: "Théorie", en: "Theory" },
+  "famille.Test zone": { fr: "Test zone", en: "Test zone" },
+  "famille.Magenta": { fr: "Magenta", en: "Magenta" },
+  "famille.Frontière": { fr: "Frontière", en: "Boundary" },
+  "famille.Image": { fr: "Image", en: "Image" },
+  "famille.Lecture": { fr: "Lecture", en: "Playback" },
+  "famille.Notation": { fr: "Notation", en: "Notation" },
   "inspecteur.vide": { fr: "Sélectionnez un bloc", en: "Select a block" },
   "inspecteur.savoirPlus": { fr: "En savoir plus", en: "Learn more" },
   "inspecteur.savoirMoins": { fr: "Réduire", en: "Show less" },
@@ -109,9 +165,17 @@ const DICO: Record<string, Record<Langue, string>> = {
   "msg.attracteur.termine": { fr: "Attracteur {0} rendu ({1}).", en: "Attractor {0} rendered ({1})." },
   "msg.connecter.image": { fr: "Connectez une image.", en: "Connect an image." },
   "msg.connecter.svg": { fr: "Connectez un fichier SVG.", en: "Connect an SVG file." },
+  "msg.connecter_chemin_alignement": { fr: "Connectez la sortie « Chemin d'alignement » d'un nœud Similarité audio.", en: "Connect the « Alignment path » output of an Audio Similarity node." },
+  "msg.chemin_alignement_invalide": { fr: "Chemin d'alignement invalide ou vide — attendu : la sortie « Chemin d'alignement » de Similarité audio.", en: "Invalid or empty alignment path — expected the « Alignment path » output of Audio Similarity." },
   "msg.export_image.ecriture_impossible": { fr: "Impossible d'écrire l'image sur disque.", en: "Unable to write the image to disk." },
   "msg.ocr.vide": { fr: "Aucun texte reconnu.", en: "No text recognized." },
   "msg.ocr.erreur": { fr: "Erreur OCR.", en: "OCR error." },
+  "msg.connecter_fichier_pdf": { fr: "Connectez un fichier PDF (ex. depuis Entrée PDF).", en: "Connect a PDF file (e.g. from PDF input)." },
+  "msg.pdf_vide": { fr: "Aucun texte extrait.", en: "No text extracted." },
+  "msg.pdf_erreur": { fr: "Erreur d'extraction PDF.", en: "PDF extraction error." },
+  "msg.pdf_scanne_sans_texte": { fr: "PDF scanné/image — aucun texte numérique, un OCR serait nécessaire (hors scope de ce nœud).", en: "Scanned/image PDF — no digital text, OCR would be needed (out of scope for this node)." },
+  "msg.pdf_pages_sans_texte_var_0_var_1": { fr: "{__VAR_0__}/{__VAR_1__} pages sans texte numérique (nécessiteraient l'OCR).", en: "{__VAR_0__}/{__VAR_1__} pages with no digital text (would need OCR)." },
+  "msg.pdf_texte_extrait_var_0": { fr: "texte extrait ({__VAR_0__} page(s)).", en: "text extracted ({__VAR_0__} page(s))." },
   "progress.ocr": { fr: "Reconnaissance de texte…", en: "Text recognition…" },
   "progress.piper.load_voice": { fr: "Chargement de la voix Piper…", en: "Loading Piper voice…" },
   "progress.piper.download": { fr: "Téléchargement de la voix Piper…", en: "Downloading Piper voice…" },
@@ -247,8 +311,19 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.docIntrouvable": { fr: "Impossible d'ouvrir la documentation en ligne.", en: "Could not open the online documentation." },
   "msg.aucun_mp3_dans_var_0": { fr: "Aucun MP3 dans : {__VAR_0__}", en: "No MP3 in: {__VAR_0__}" },
   "msg.aucun_fichier_audio_dans_var_0": { fr: "Aucun fichier audio dans : {__VAR_0__}", en: "No audio file in: {__VAR_0__}" },
+  "msg.classification_minimum_3_pistes_var_0": { fr: "La classification nécessite au moins 3 pistes décodables (trouvé : {__VAR_0__}).", en: "Classification requires at least 3 decodable tracks (found: {__VAR_0__})." },
+  "msg.classification_annulee": { fr: "Classification annulée.", en: "Classification cancelled." },
+  "msg.alignement_dtw_termine_var_0": { fr: "Similarité audio terminée — similarité : {__VAR_0__}", en: "Audio similarity complete — similarity: {__VAR_0__}" },
+  "msg.etirement_dtw_termine_var_0": { fr: "Étirement terminé — durée : {__VAR_0__} s", en: "Time stretch complete — duration: {__VAR_0__} s" },
+  "msg.continuation_ar_terminee_var_0_epochs_var_1_s": { fr: "Continuation AR terminée — {__VAR_0__} époques · {__VAR_1__} s générés", en: "AR continuation complete — {__VAR_0__} epochs · {__VAR_1__} s generated" },
+  "msg.continuation_lstm_terminee_var_0_epochs_var_1_s": { fr: "Continuation LSTM terminée — {__VAR_0__} époques · {__VAR_1__} s générés", en: "LSTM continuation complete — {__VAR_0__} epochs · {__VAR_1__} s generated" },
+  "msg.continuation_signal_trop_court": { fr: "Piste trop courte pour la continuation (augmentez la durée analysée ou la fenêtre FFT).", en: "Track too short for continuation (increase the analysed duration or the FFT window)." },
+  "msg.continuation_entrainement_echoue": { fr: "Entraînement du modèle de continuation échoué.", en: "Continuation model training failed." },
+  "msg.classification_termin_e_var_0_pistes_var_1_groupes": { fr: "Classification terminée : {__VAR_0__} pistes réparties en {__VAR_1__} groupes.", en: "Classification complete: {__VAR_0__} tracks split into {__VAR_1__} groups." },
   "msg.carte_sonore_g_n_r_e_var_0_points_graine_var_1": { fr: "Carte sonore générée : {__VAR_0__} points · graine {__VAR_1__}", en: "Sound map generated: {__VAR_0__} points · seed {__VAR_1__}" },
   "msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi": { fr: "Carte sonore générée : {__VAR_0__}\n{__VAR_1__} points · {__VAR_2__} audio copiés dans audio/ · {__VAR_3__}", en: "Sound map generated: {__VAR_0__}\n{__VAR_1__} points · {__VAR_2__} audio copied in audio/ · {__VAR_3__}" },
+  "msg.coord_carte_g_n_r_e_var_0_var_1_points_var_2_audio_copi": { fr: "Carte générée : {__VAR_0__}\n{__VAR_1__} points positionnés par coordonnées · {__VAR_2__} audio copiés dans audio/ · {__VAR_3__}", en: "Map generated: {__VAR_0__}\n{__VAR_1__} points positioned by coordinates · {__VAR_2__} audio copied in audio/ · {__VAR_3__}" },
+  "msg.aucune_coordonnee_recue": { fr: "Aucune coordonnée reçue en entrée. Branchez la sortie « Coordonnées » d'un nœud de classification.", en: "No coordinates received at input. Connect the « Coordinates » output of a classification node." },
   "msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi": { fr: "Galerie générée : {__VAR_0__}/index.html\n{__VAR_1__} pistes · {__VAR_2__} MP3 copiés dans mp3/ · {__VAR_3__}", en: "Gallery generated: {__VAR_0__}/index.html\n{__VAR_1__} tracks · {__VAR_2__} MP3 copied in mp3/ · {__VAR_3__}" },
   "msg.var_0_graine_var_1_var_2_lignes": { fr: "{__VAR_0__} · graine {__VAR_1__} · {__VAR_2__} lignes", en: "{__VAR_0__} · seed {__VAR_1__} · {__VAR_2__} lines" },
   "msg.var_0_var_1_3": { fr: "{__VAR_0__} ({__VAR_1__})", en: "{__VAR_0__} ({__VAR_1__})" },
@@ -364,6 +439,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.s_par_voix_instrumental": { fr: "Séparé : voix + instrumental", en: "Separated: voice + instrumental" },
   "msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s": { fr: "{__VAR_0__} pas · {__VAR_1__} mesure(s) · {__VAR_2__} BPM · {__VAR_3__} frappe(s)", en: "{__VAR_0__} steps · {__VAR_1__} measure(s) · {__VAR_2__} BPM · {__VAR_3__} hit(s)" },
   "msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5": { fr: "{__VAR_0__} pas · {__VAR_1__} mesure(s) · {__VAR_2__} BPM · {__VAR_3__} note(s) · {__VAR_4__}–{__VAR_5__}", en: "{__VAR_0__} steps · {__VAR_1__} measure(s) · {__VAR_2__} BPM · {__VAR_3__} note(s) · {__VAR_4__}–{__VAR_5__}" },
+  "msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_accord_s": { fr: "{__VAR_0__} pas · {__VAR_1__} mesure(s) · {__VAR_2__} BPM · {__VAR_3__} accord(s)", en: "{__VAR_0__} steps · {__VAR_1__} measure(s) · {__VAR_2__} BPM · {__VAR_3__} chord(s)" },
   "msg.aucune_entr_e_connect_e": { fr: "Aucune entrée connectée.", en: "No input connected." },
   "msg.aucun_texte_en_entr_e": { fr: "Aucun texte en entrée.", en: "No text input." },
   "msg.aucun_fichier_midi": { fr: "Aucun fichier MIDI.", en: "No MIDI file." },
@@ -384,6 +460,19 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.kokoro.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
   "progress.kokoro.synthesize": { fr: "Synthèse vocale…", en: "Synthesizing speech…" },
   "progress.kokoro.chunk": { fr: "Synthèse vocale… {__VAR_0__}/{__VAR_1__}", en: "Synthesizing speech… {__VAR_0__}/{__VAR_1__}" },
+  "msg.pochette_png_echec_var_0": { fr: "Rendu PNG impossible : {__VAR_0__}. Repassez le Format sur SVG.", en: "PNG rendering failed: {__VAR_0__}. Switch Format back to SVG." },
+  "msg.accords_notation.accords_absents": { fr: "Connectez la sortie « Accords détectés » d'Analyse harmonique.", en: "Connect the « Detected chords » output of Harmonic Analysis." },
+  "msg.accords_notation.progression_absente": { fr: "Connectez la sortie « Progression » d'Analyse harmonique.", en: "Connect the « Progression » output of Harmonic Analysis." },
+  "msg.accords_notation.tonalite_absente": { fr: "La source « Progression » exige aussi l'entrée Tonalité : des chiffres romains n'ont de sens que rapportés à une tonique.", en: "The « Progression » source also requires the Key input: roman numerals only make sense relative to a tonic." },
+  "msg.accords_notation.aucun_accord": { fr: "Aucun accord exploitable dans l'entrée.", en: "No usable chord in the input." },
+  "msg.accords_notation.resultat_var_0": { fr: "{__VAR_0__} accord(s) convertis.", en: "{__VAR_0__} chord(s) converted." },
+  "msg.accords_notation.resultat_partiel_var_0_var_1": { fr: "{__VAR_0__} accord(s) convertis, {__VAR_1__} non reconnu(s) et ignoré(s).", en: "{__VAR_0__} chord(s) converted, {__VAR_1__} unrecognized and skipped." },
+  "progress.transcription_pourcent_var_0": { fr: "Transcription polyphonique… {__VAR_0__} %", en: "Polyphonic transcription… {__VAR_0__}%" },
+  "msg.transcription_poly_indisponible_var_0": { fr: "Transcription polyphonique indisponible : {__VAR_0__}. Basculez sur « Monophonique (FFT) » ou vérifiez votre connexion.", en: "Polyphonic transcription unavailable: {__VAR_0__}. Switch to « Monophonic (FFT) » or check your connection." },
+  "progress.textgen.load_model": { fr: "Chargement du modèle… {__VAR_0__}%", en: "Loading model… {__VAR_0__}%" },
+  "progress.textgen.download": { fr: "Téléchargement {__VAR_0__} {__VAR_1__}%", en: "Downloading {__VAR_0__} {__VAR_1__}%" },
+  "progress.textgen.generate": { fr: "Génération…", en: "Generating…" },
+  "progress.textgen.generate_pct": { fr: "Génération {__VAR_0__}%", en: "Generating {__VAR_0__}%" },
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
   "msg.sherpa_asr.transcribe_timeout": { fr: "Délai dépassé lors de la transcription Sherpa-ONNX.", en: "Sherpa-ONNX transcription timed out." },
   "msg.sherpa_asr.clear_cache_timeout": { fr: "Délai dépassé lors du vidage du cache Sherpa-ONNX.", en: "Sherpa-ONNX cache clear timed out." },
@@ -393,6 +482,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_stable_audio_3_var_0": { fr: "Erreur Stable Audio 3 : {__VAR_0__}", en: "Stable Audio 3 error: {__VAR_0__}" },
   "msg.stable_audio_3_a_retourn_un_audio_vide": { fr: "Stable Audio 3 a retourné un audio vide.", en: "Stable Audio 3 returned an empty audio." },
   "msg.stable_audio_3_var_0_s_var_1_tapes_seed_var_2": { fr: "Stable Audio 3 · {__VAR_0__}s · {__VAR_1__} étapes · seed {__VAR_2__}", en: "Stable Audio 3 · {__VAR_0__}s · {__VAR_1__} steps · seed {__VAR_2__}" },
+  "msg.continuation_stable_audio_3_var_0_s_var_1_tapes_seed_var_2": { fr: "Continuation Stable Audio 3 · +{__VAR_0__}s · {__VAR_1__} étapes · seed {__VAR_2__}", en: "Stable Audio 3 continuation · +{__VAR_0__}s · {__VAR_1__} steps · seed {__VAR_2__}" },
   "msg.texte_image_n_cessite_l_application_de_bureau": { fr: "Texte → image nécessite l’application de bureau.", en: "Text to image requires desktop application." },
   "msg.texte_image_mod_le_introuvable": { fr: "Modèle SDXS-512 introuvable. Le modèle embarqué est manquant ou corrompu, ou le chemin personnalisé est invalide. Vérifiez l'installation ou renseignez le paramètre « Chemin modèle ».", en: "SDXS-512 model not found. The bundled model is missing or corrupted, or the custom path is invalid. Check the installation or set the “Model path” parameter." },
   "msg.erreur_texte_image_var_0": { fr: "Erreur Texte → image : {__VAR_0__}", en: "Text to image error: {__VAR_0__}" },
@@ -452,6 +542,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.rms_var_0_db_peak_var_1_db_lufs_var_2": { fr: "RMS {__VAR_0__} dB · Peak {__VAR_1__} dB · LUFS {__VAR_2__}", en: "RMS {__VAR_0__} dB · Peak {__VAR_1__} dB · LUFS {__VAR_2__}" },
   "msg.palette_de_couleurs_g_n_r_e": { fr: "Palette de couleurs générée", en: "Colour palette generated" },
   "progress.extraction_des_caract_ristiques": { fr: "Extraction des caractéristiques…", en: "Extraction of characteristics..." },
+  "progress.extraction_nom_var_0_var_1_var_2": { fr: "Extraction {__VAR_0__} ({__VAR_1__}/{__VAR_2__})…", en: "Extracting {__VAR_0__} ({__VAR_1__}/{__VAR_2__})…" },
+  "progress.lecture_nom_var_0_var_1_var_2": { fr: "Lecture {__VAR_0__} ({__VAR_1__}/{__VAR_2__})…", en: "Reading {__VAR_0__} ({__VAR_1__}/{__VAR_2__})…" },
+  "msg.pistes_ignor_es_var_0_var_1": { fr: "⚠ {__VAR_0__} piste(s) ignorée(s) (échec de décodage) : {__VAR_1__}", en: "⚠ {__VAR_0__} track(s) skipped (decode failure): {__VAR_1__}" },
+  "msg.et_var_0_autres": { fr: ", et {__VAR_0__} autre(s)", en: ", and {__VAR_0__} more" },
   "progress.classification": { fr: "Classification…", en: "Classification..." },
   "progress.analyse_harmonique": { fr: "Analyse harmonique…", en: "Harmonic analysis..." },
   "progress.analyse_var_0": { fr: "Analyse {__VAR_0__}%", en: "Analysis {__VAR_0__}%" },
@@ -466,6 +560,9 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.lecture_du_r_pertoire": { fr: "Lecture du répertoire…", en: "Reading the directory..." },
   "progress.g_n_ration_de_la_galerie": { fr: "Génération de la galerie…", en: "Generation of the gallery..." },
   "progress.g_n_ration_de_la_carte": { fr: "Génération de la carte…", en: "Generation of the map..." },
+  "progress.extraction_chroma": { fr: "Extraction du chromagramme…", en: "Extracting the chromagram…" },
+  "progress.calcul_dtw": { fr: "Calcul de l'alignement (DTW)…", en: "Computing the alignment (DTW)…" },
+  "progress.calcul_dtw_pourcent_var_0": { fr: "Calcul de l'alignement (DTW)… {__VAR_0__} %", en: "Computing the alignment (DTW)… {__VAR_0__}%" },
   "progress.copie_audio_var_0": { fr: "Copie audio {__VAR_0__}…", en: "Audio copy {__VAR_0__}..." },
   "progress.pochettes_var_0_var_1": { fr: "Pochettes {__VAR_0__}/{__VAR_1__}…", en: "Packs {__VAR_0__}/{__VAR_1__}..." },
   "progress.copie_mp3_var_0_var_1": { fr: "Copie MP3 {__VAR_0__}/{__VAR_1__}…", en: "MP3 Copy {__VAR_0__}/{__VAR_1__}..." },
@@ -488,6 +585,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.pr_paration_de_la_session": { fr: "Préparation de la session…", en: "Preparation of the session..." },
   "progress.s_paration_var_0": { fr: "Séparation {__VAR_0__}%", en: "Separation {__VAR_0__}%" },
   "progress.g_n_ration_stable_audio_3_en_cours_cela_peut_prendre_plusieu": { fr: "Génération Stable Audio 3 en cours (cela peut prendre plusieurs minutes)…", en: "Generation Stable Audio 3 in progress (this can take several minutes)..." },
+  "progress.continuation_stable_audio_3_en_cours": { fr: "Continuation Stable Audio 3 en cours (cela peut prendre plusieurs minutes)…", en: "Stable Audio 3 continuation in progress (this can take several minutes)..." },
   "progress.g_n_ration_image_en_cours": { fr: "Génération de l’image en cours (~10 s)…", en: "Generating image (~10 s)…" },
   "msg.legende_image_vide": { fr: "Aucune légende générée.", en: "No caption generated." },
   "msg.erreur_legende_image_var_0": { fr: "Erreur Légende d’image : {__VAR_0__}", en: "Image caption error: {__VAR_0__}" },
@@ -612,6 +710,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Toutes les clés connues des deux dictionnaires statiques. Exposé pour le test
+ * de couverture (`i18n.test.ts`) : une clé absente n'échoue pas bruyamment,
+ * `traduire` renvoie la clé elle-même et l'utilisateur lit « workflow.xxx » à
+ * l'écran — un défaut invisible en revue de code et à la compilation.
+ */
+export const CLES_CONNUES: ReadonlySet<string> = new Set([
+  ...Object.keys(DICO), ...Object.keys(DICO_RUNTIME),
+]);
+
 export function traduire(cle: string, ...args: (string | number)[]): string {
   const lang = langueCourante();
   const s = DICO_RUNTIME[cle]?.[lang] ?? DICO_RUNTIME[cle]?.fr ?? DICO[cle]?.[lang] ?? DICO[cle]?.fr ?? cle;
@@ -642,6 +750,17 @@ export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsE
   return v;
 }
 
+// VOLONTAIREMENT indépendant de la langue : la forme canonique d'un paramètre
+// « choix » est toujours celle de la liste `options` (française), jamais celle
+// de `optionsEn`. En effet, sans `optionIds`, l'Inspector rend
+// `<option value={p.options[i]}>{libellé traduit}</option>` : seul le LIBELLÉ
+// est traduit, la valeur stockée reste le terme français. Partir de `defautEn`
+// (par ex. "Center") produisait donc une valeur absente des
+// <option value="Gauche"|"Centre"|"Droite"> : un <select> contrôlé sans option
+// correspondante retombe silencieusement sur son 1er <option> (« Gauche »),
+// alors que l'exécution du nœud, elle, utilisait bien "Centre" — d'où un
+// défaut affiché ≠ défaut réellement appliqué. Avec `optionIds`,
+// valeurCanoniqueChoix sait mapper le terme français vers l'id : correct aussi.
 export function defautCanoniqueChoix(p: Pick<ParametreDef, "defaut" | "defautEn" | "options" | "optionsEn" | "optionIds">): string | number {
-  return valeurCanoniqueChoix(p, p.defautEn ?? p.defaut);
+  return valeurCanoniqueChoix(p, p.defaut);
 }

@@ -14,6 +14,7 @@ included in Attic.
 | `modele-separation.onnx` | MIT | Ultimate Vocal Remover — MDX-Net UVR_MDXNET_9482 |
 | `model_genre.onnx` | MIT | Copyright (c) 2019 Nicklas Hansen — Music genre classifier |
 | `stable-audio-3-small-music/` | Stability AI Community License | Stability AI — Stable Audio 3 small-music (ONNX export by lsb) |
+| `stable-audio-3-small-music/onnx/encoder_q4.onnx` | Stability AI Community License | Stability AI — Stable Audio 3 small-music audio encoder (ONNX export by bgkb) |
 
 ### SoundFont
 

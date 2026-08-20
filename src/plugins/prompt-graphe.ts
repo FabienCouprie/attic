@@ -66,6 +66,7 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "sequenceur-batterie", mots: ["séquenceur batterie", "drum sequencer", "boîte à rythmes", "drum machine"], category: "source" },
   { ficheId: "sequenceur-batterie-avance", mots: ["séquenceur batterie avancé", "advanced drum sequencer", "drum machine avancée", "grille velocity batterie"], category: "source" },
   { ficheId: "sequenceur-melodique", mots: ["séquenceur mélodique", "melodic sequencer", "piano-roll"], category: "source" },
+  { ficheId: "sequenceur-accords", mots: ["séquenceur d'accords", "chord sequencer", "progression d'accords", "grille d'accords", "accords pas à pas"], category: "source" },
   { ficheId: "reservoir-musical", mots: ["réservoir", "reservoir", "neural", "neuronal", "réservoir midi", "reservoir midi", "neural midi"], category: "source" },
   { ficheId: "multi-reservoirs", mots: ["multi-réservoir", "multi reservoir", "polyphonique"], category: "source" },
   { ficheId: "sampler-midi", mots: ["sampler midi", "midi sampler", "échantillon midi", "sample midi"], category: "effet" },

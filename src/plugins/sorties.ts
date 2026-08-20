@@ -4,7 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreMidi, appliquerInstrumentMidi } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -37,7 +37,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI", type: "midi" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
@@ -64,7 +64,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Chemin", nomEn: "Path", type: "texte", defaut: "", defautEn: "", hidden: true,
         doc: "Chemin du fichier MIDI chargé depuis l'inspecteur.",
         docEn: "Path of the MIDI file loaded from the inspector." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
@@ -89,7 +89,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI", type: "midi", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2_SUIVI,

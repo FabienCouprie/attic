@@ -6,7 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { COULEURS, NOMS_COULEURS, profilCouleur, fusionnerProfils, profilVersScript } from "../audio";
+import { COULEURS, NOMS_COULEURS, IDS_COULEURS, cleCouleur, profilCouleur, fusionnerProfils, profilVersScript } from "../audio";
 
 let worker: Worker | null = null;
 
@@ -36,12 +36,13 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Script", nomEn: "Script", type: "texte" }],
     parametres: [
       { nom: "Couleur 1", nomEn: "Color 1", type: "choix",
-        options: NOMS_COULEURS, optionsEn: COULEURS_EN,
+        options: NOMS_COULEURS, optionsEn: COULEURS_EN, optionIds: IDS_COULEURS,
         defaut: "Bleu",
         doc: "Première couleur (mapping psychologique → émotion, mode, tempo, instruments, styles).",
         docEn: "First color (psychological mapping → emotion, mode, tempo, instruments, styles).", defautEn: "Blue" },
       { nom: "Couleur 2", nomEn: "Color 2", type: "choix",
         options: ["(aucune)", ...NOMS_COULEURS], optionsEn: ["(none)", ...COULEURS_EN],
+        optionIds: ["aucune", ...IDS_COULEURS],
         defaut: "(aucune)",
         doc: "Seconde couleur facultative. Si présente, les profils sont fusionnés.",
         docEn: "Optional second color. If present, profiles are fused.", defautEn: "(none)" },
@@ -62,16 +63,21 @@ export const fiches: FicheAudio[] = ([
       const p1 = profilCouleur(c1Nom);
       if (!p1) return { valeurs: [null], message: traduire("msg.couleur_1_inconnue_var_0", c1Nom) };
 
+      // `cleCouleur` résout indifféremment l'id canonique, le nom français ou
+      // l'anglais vers la clé de COULEURS — indexer COULEURS directement avec
+      // la valeur du paramètre ne marchait qu'en français.
+      const cle1 = cleCouleur(c1Nom)!;
+      const cle2 = cleCouleur(c2Nom);
       let profil;
       let couleursLabel: string[];
-      if (c2Nom && c2Nom !== "(aucune)" && COULEURS[c2Nom]) {
+      if (cle2) {
         const p2 = profilCouleur(c2Nom);
         if (!p2) return { valeurs: [null], message: traduire("msg.couleur_2_inconnue_var_0", c2Nom) };
         profil = fusionnerProfils(p1, p2, c1Nom, c2Nom);
-        couleursLabel = [COULEURS[c1Nom].en, COULEURS[c2Nom].en];
+        couleursLabel = [COULEURS[cle1].en, COULEURS[cle2].en];
       } else {
         profil = p1;
-        couleursLabel = [COULEURS[c1Nom].en];
+        couleursLabel = [COULEURS[cle1].en];
       }
 
       // 2. Générer le script de base (template structuré)
@@ -89,6 +95,14 @@ Write a single creative Suno prompt paragraph:`;
       // 4. Appeler le LLM (DistilGPT-2) via le worker
       ctx.onProgress(traduire("progress.g_n_ration_du_script_ia"));
       const w = getWorker();
+      // Libellés traduits ici (le worker n'a pas accès au contexte i18n) ;
+      // les {__VAR_N__} sont laissés en place, c'est le worker qui les remplit.
+      const labels = {
+        load: traduire("progress.textgen.load_model"),
+        download: traduire("progress.textgen.download"),
+        generate: traduire("progress.textgen.generate"),
+        generate_pct: traduire("progress.textgen.generate_pct"),
+      };
       const llmText = await new Promise<string | null>((resolve) => {
         const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {
@@ -111,6 +125,7 @@ Write a single creative Suno prompt paragraph:`;
           maxTokens: 120,
           temperature,
           repetitionPenalty: 1.4,
+          labels,
           requestId,
         });
       });

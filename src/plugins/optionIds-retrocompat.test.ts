@@ -8,6 +8,12 @@
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { valeurCanoniqueChoix } from "../i18n";
+import { normaliserModeSynthèse } from "./soundfontGlobal";
+import { normaliserTimbre } from "../audio/automate-cellulaire";
+import { formeOndeDepuisTimbre, caractereTimbre } from "../audio/timbres";
+import { cleCouleur } from "../audio/couleurs";
+import { DEMI_TONS_CLE } from "../audio/commun";
+import { normaliserCle } from "../audio/automate-cellulaire";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {
@@ -148,6 +154,176 @@ const CAS: Cas[] = [
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
+
+  // « Synthèse » — paramètre partagé (PARAMETRE_SYNTHESE, soundfontGlobal.ts),
+  // déclaré à l'identique sur une vingtaine de nœuds. Les projets enregistrés
+  // avant l'ajout des optionIds stockent les libellés FR ou EN.
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "Automatique", idAttendu: "auto" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "sortie-midi", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+  // Variante sans « Automatique » (PARAMETRE_SYNTHESE_SANS_AUTO).
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+  // Nœuds au format de déclaration différent, migrés dans le même lot.
+  { node: "melodie-aleatoire", param: "Synthèse", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "generateur-fractal", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
+  { node: "clavier-melodie", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
+
+  // ── Lot 3 ──
+  // « Timbre » caractère (Douce/Brillante/Percutante).
+  ...(["generateur-fractal", "mappeur-mandelbrot", "arpege-koch"] as const).flatMap((node) => [
+    { node, param: "Timbre", ancienneValeur: "Douce", idAttendu: "douce" },
+    { node, param: "Timbre", ancienneValeur: "Soft", idAttendu: "douce" },
+    { node, param: "Timbre", ancienneValeur: "Brillante", idAttendu: "brillante" },
+    { node, param: "Timbre", ancienneValeur: "Bright", idAttendu: "brillante" },
+    { node, param: "Timbre", ancienneValeur: "Percutante", idAttendu: "percutante" },
+    { node, param: "Timbre", ancienneValeur: "Percussive", idAttendu: "percutante" },
+  ]),
+  // « Timbre » forme d'onde — mêmes ids que le paramètre « Forme » de
+  // l'Oscillateur, migré précédemment (cohérence de tout le parc).
+  ...(["reservoir-musical", "multi-reservoirs", "sequenceur-melodique"] as const).flatMap((node) => [
+    { node, param: "Timbre", ancienneValeur: "Sinus", idAttendu: "sine" },
+    { node, param: "Timbre", ancienneValeur: "Sine", idAttendu: "sine" },
+    { node, param: "Timbre", ancienneValeur: "Carré", idAttendu: "square" },
+    { node, param: "Timbre", ancienneValeur: "Square", idAttendu: "square" },
+    { node, param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
+    { node, param: "Timbre", ancienneValeur: "Saw", idAttendu: "sawtooth" },
+    { node, param: "Timbre", ancienneValeur: "Triangle", idAttendu: "triangle" },
+  ]),
+  // « Agrégation » — « Médiane » calculait en réalité une moyenne avant ce lot.
+  ...(["centroide-spectral", "rms-meyda", "zcr-meyda", "rolloff-spectral-meyda"] as const).flatMap((node) => [
+    { node, param: "Agrégation", ancienneValeur: "Moyenne", idAttendu: "moyenne" },
+    { node, param: "Agrégation", ancienneValeur: "Average", idAttendu: "moyenne" },
+    { node, param: "Agrégation", ancienneValeur: "Médiane", idAttendu: "mediane" },
+    { node, param: "Agrégation", ancienneValeur: "Median", idAttendu: "mediane" },
+    { node, param: "Agrégation", ancienneValeur: "Maximum", idAttendu: "maximum" },
+  ]),
+  // « Format » des quatre nœuds de listes textuelles.
+  ...(["noms-instruments", "styles-musicaux", "emotions", "tessitures-voix"] as const).flatMap((node) => [
+    { node, param: "Format", ancienneValeur: "Virgule", idAttendu: "virgule" },
+    { node, param: "Format", ancienneValeur: "Comma", idAttendu: "virgule" },
+    { node, param: "Format", ancienneValeur: "Retour ligne", idAttendu: "retour-ligne" },
+    { node, param: "Format", ancienneValeur: "Newline", idAttendu: "retour-ligne" },
+    { node, param: "Format", ancienneValeur: "Puces", idAttendu: "puces" },
+    { node, param: "Format", ancienneValeur: "Bullets", idAttendu: "puces" },
+  ]),
+
+  // ── Lot 4 ──
+  // « Mode » — les consommateurs testaient déjà par sous-chaîne (.includes("arp"))
+  // donc restaient corrects en anglais ; les ids figent malgré tout l'identité.
+  ...(["palette-harmonique", "dessin-sonore"] as const).flatMap((node) => [
+    { node, param: "Mode", ancienneValeur: "Mélodie", idAttendu: "melodie" },
+    { node, param: "Mode", ancienneValeur: "Melody", idAttendu: "melodie" },
+    { node, param: "Mode", ancienneValeur: "Harmonie", idAttendu: "harmonie" },
+    { node, param: "Mode", ancienneValeur: "Harmony", idAttendu: "harmonie" },
+    { node, param: "Mode", ancienneValeur: "Arpège", idAttendu: "arpege" },
+    { node, param: "Mode", ancienneValeur: "Arpeggio", idAttendu: "arpege" },
+  ]),
+  // Color Looper utilise le pluriel « Arpèges » — id distinct, volontairement.
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpèges", idAttendu: "arpeges" },
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpeggios", idAttendu: "arpeges" },
+
+  // « Couleur » — c'est ce paramètre qui échouait sur « Couleur 1 inconnue : Blue ».
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Bleu", idAttendu: "bleu" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Blue", idAttendu: "bleu" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Rouge", idAttendu: "rouge" },
+  { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Red", idAttendu: "rouge" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "(aucune)", idAttendu: "aucune" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "(none)", idAttendu: "aucune" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "Vert", idAttendu: "vert" },
+  { node: "couleur-suno-ia", param: "Couleur 2", ancienneValeur: "Green", idAttendu: "vert" },
+
+  // Bascules binaires du lecteur de collection (lues hors paramTexte, cf. vues.tsx).
+  ...(["Lecture aléatoire", "Lecture en boucle"] as const).flatMap((param) => [
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Oui", idAttendu: "oui" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "On", idAttendu: "oui" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Non", idAttendu: "non" },
+    { node: "collection-lecteur-musique", param, ancienneValeur: "Off", idAttendu: "non" },
+  ]),
+
+  // Échelle des visualisations (également lue hors paramTexte).
+  ...(["analyseur-spectre", "spectrogramme"] as const).flatMap((node) => [
+    { node, param: "Échelle", ancienneValeur: "Logarithmique", idAttendu: "log" },
+    { node, param: "Échelle", ancienneValeur: "Logarithmic", idAttendu: "log" },
+    { node, param: "Échelle", ancienneValeur: "Linéaire", idAttendu: "lineaire" },
+    { node, param: "Échelle", ancienneValeur: "Linear", idAttendu: "lineaire" },
+  ]),
+
+  // ── Lot 4b : langues ──
+  // Ids canoniques = codes ISO 639-1. Chacun des 4 nœuds s'appuyait sur une
+  // table de correspondance distincte, indexée par le libellé français.
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Anglais", idAttendu: "en" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Néerlandais", idAttendu: "nl" },
+  { node: "tts-mms", param: "Langue", ancienneValeur: "Dutch", idAttendu: "nl" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "auto" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Japanese", idAttendu: "ja" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Coréen", idAttendu: "ko" },
+  { node: "nllb-paroles", param: "Langue cible", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "nllb-paroles", param: "Langue cible", ancienneValeur: "Chinese", idAttendu: "zh" },
+  { node: "generateur-paroles", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
+  { node: "generateur-paroles", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
+
+  // ── Lot 2 : « Clé » en solfège français ──
+  // Ids = notation internationale, déjà utilisée telle quelle par les 10 autres
+  // nœuds à paramètre « Clé » : la migration unifie le vocabulaire de tout le parc.
+  ...(["melodie-aleatoire", "generateur-fractal", "mappeur-mandelbrot", "arpege-koch",
+       "sampler-personnalise", "automate-cellulaire"] as const).flatMap((node) => [
+    { node, param: "Clé", ancienneValeur: "Do", idAttendu: "C" },
+    { node, param: "Clé", ancienneValeur: "C", idAttendu: "C" },
+    { node, param: "Clé", ancienneValeur: "Ré", idAttendu: "D" },
+    { node, param: "Clé", ancienneValeur: "D", idAttendu: "D" },
+    // Bémols : le libellé français utilise le vrai signe ♭ (U+266D).
+    { node, param: "Clé", ancienneValeur: "Mi♭", idAttendu: "Eb" },
+    { node, param: "Clé", ancienneValeur: "Eb", idAttendu: "Eb" },
+    { node, param: "Clé", ancienneValeur: "Si♭", idAttendu: "Bb" },
+    { node, param: "Clé", ancienneValeur: "Sol#", idAttendu: "G#" },
+    { node, param: "Clé", ancienneValeur: "Si", idAttendu: "B" },
+  ]),
+
+  // ── Lot 5 : paramètres isolés ──
+  // Ici l'id retenu EST l'option française : ces paramètres n'appartiennent à
+  // aucun vocabulaire partagé, et leurs consommateurs comparent chacun des
+  // chaînes françaises avec un style différent (===, .includes, indexation de
+  // table). Ce choix corrige le vrai défaut — une valeur anglaise ne peut plus
+  // être stockée — sans réécrire une vingtaine de consommateurs. Même
+  // convention que « Catégorie »/« Famille », déjà en place avant cette session.
+  { node: "reponse-filtre", param: "Type", ancienneValeur: "Lowpass", idAttendu: "Passe-bas" },
+  { node: "reponse-filtre", param: "Type", ancienneValeur: "Passe-bas", idAttendu: "Passe-bas" },
+  { node: "reverbe-convolution", param: "Type", ancienneValeur: "Cathedral", idAttendu: "Cathédrale" },
+  { node: "chopper", param: "Type", ancienneValeur: "Soft", idAttendu: "Fondu" },
+  { node: "generateur-bruit", param: "Type", ancienneValeur: "Brownian", idAttendu: "Brownien" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "Aléatoire" },
+  { node: "arpegiateur-midi", param: "Motif", ancienneValeur: "Straight", idAttendu: "Droit" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "Sinus" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
+  { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
+  { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },
+  { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Sierpinski", idAttendu: "Sierpiński" },
+  { node: "boite-rythmes", param: "Patron", ancienneValeur: "Military march", idAttendu: "Marche militaire" },
+  { node: "boite-rythmes", param: "Patron", ancienneValeur: "Waltz", idAttendu: "Valse" },
+  { node: "generateur-fractal", param: "Motif", ancienneValeur: "Custom", idAttendu: "Personnalisé" },
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "classic", idAttendu: "classique" },
+  { node: "generateur-musical", param: "Instrument 2", ancienneValeur: "Fretless bass", idAttendu: "Basse fretless" },
+  { node: "gestion-nodes", param: "Action", ancienneValeur: "Export", idAttendu: "Exporter" },
+  { node: "vexflow-tab", param: "Accordage", ancienneValeur: "Ukulele", idAttendu: "Ukulélé" },
+  { node: "ddsp-tone-transfer", param: "Instrument", ancienneValeur: "Tenor saxophone", idAttendu: "Saxophone ténor" },
+  { node: "palette-harmonique", param: "Ordre", ancienneValeur: "Brightness", idAttendu: "Luminosité" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "Gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "Centre" },
+  { node: "automate-cellulaire", param: "Règle", ancienneValeur: "Custom", idAttendu: "Personnalisée" },
+  { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "Polyphonie" },
+  { node: "automate-cellulaire", param: "Mapping", ancienneValeur: "Pitch + velocity", idAttendu: "Hauteur + vélocité" },
+  { node: "sherpa-asr", param: "Qualité resampling", ancienneValeur: "Standard (linear)", idAttendu: "Standard (linéaire)" },
+  { node: "visualisation-songsee", param: "Visualisation", ancienneValeur: "All", idAttendu: "Toutes" },
+  // Exception : les voix SpeechT5 reçoivent de vrais ids sémantiques, parce que
+  // leur consommateur acceptait DÉJÀ `v.id` en plus des libellés FR/EN.
+  { node: "tts-speecht5", param: "Voix", ancienneValeur: "Homme américain (BDL)", idAttendu: "bdl" },
+  { node: "tts-speecht5", param: "Voix", ancienneValeur: "US female (SLT)", idAttendu: "slt" },
 ];
 
 describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
@@ -162,5 +338,81 @@ describe("rétrocompatibilité des optionIds (anciens projets .attic)", () => {
     const def = paramDe("generateur-accords", "Genre");
     expect(valeurCanoniqueChoix(def, "custom")).toBe("custom");
     expect(valeurCanoniqueChoix(def, "hiphop")).toBe("hiphop");
+  });
+});
+
+// Ajouter des optionIds ne suffit pas : le code qui CONSOMME le paramètre doit
+// accepter l'id canonique, sinon `paramTexte` renvoie "fm" à un comparateur qui
+// n'attend que "FM/Oscillateurs" et le nœud bascule silencieusement de moteur.
+describe("les normaliseurs acceptent l'id canonique ET les anciens libellés", () => {
+  it("normaliserModeSynthèse", () => {
+    for (const v of ["auto", "Automatique", "Auto"]) {
+      expect(normaliserModeSynthèse(v)).toBe("Automatique");
+    }
+    for (const v of ["fm", "FM/Oscillateurs", "FM/Oscillators"]) {
+      expect(normaliserModeSynthèse(v)).toBe("FM/Oscillateurs");
+    }
+    for (const v of ["soundfont", "SoundFont"]) {
+      expect(normaliserModeSynthèse(v)).toBe("SoundFont");
+    }
+  });
+
+  it("normaliserTimbre (automate cellulaire)", () => {
+    for (const v of ["fm", "FM/Oscillateurs", "FM/Oscillators"]) {
+      expect(normaliserTimbre(v)).toBe("FM/Oscillateurs");
+    }
+    for (const v of ["soundfont", "SoundFont"]) {
+      expect(normaliserTimbre(v)).toBe("SoundFont");
+    }
+  });
+
+  it("formeOndeDepuisTimbre", () => {
+    expect(["sine", "Sinus", "Sine"].map(formeOndeDepuisTimbre)).toEqual(["sine", "sine", "sine"]);
+    expect(["square", "Carré", "Square"].map(formeOndeDepuisTimbre)).toEqual(["square", "square", "square"]);
+    expect(["sawtooth", "Scie", "Saw"].map(formeOndeDepuisTimbre)).toEqual(["sawtooth", "sawtooth", "sawtooth"]);
+    expect(["triangle", "Triangle"].map(formeOndeDepuisTimbre)).toEqual(["triangle", "triangle"]);
+    // Valeur inconnue → undefined, pour que chaque nœud applique SON repli
+    // (« triangle » sur le séquenceur, « sine » sur le réservoir).
+    expect(formeOndeDepuisTimbre("n'importe quoi")).toBeUndefined();
+  });
+
+  // `cleCouleur` est le point de passage obligé des DEUX consommateurs du
+  // paramètre Couleur : le plugin (profilCouleur) et la vue du nœud (pastilles
+  // de couleur, qui indexe COULEURS). La vue lit `parametres` directement, sans
+  // canonisation — après la migration elle recevait l'id « vert » et retombait
+  // sur la couleur grise par défaut.
+  // Le risque propre au lot 2 n'est pas visuel mais musical : si un id ne
+  // résolvait pas vers le même demi-ton que l'ancien libellé, tout le morceau
+  // serait transposé sans le moindre message d'erreur. On vérifie donc les 12
+  // tonalités une à une, et pas seulement la canonisation des chaînes.
+  it("aucune transposition : solfège français et notation internationale donnent le même demi-ton", () => {
+    const paires: [string, string][] = [
+      ["Do", "C"], ["Do#", "C#"], ["Ré", "D"], ["Mi♭", "Eb"], ["Mi", "E"], ["Fa", "F"],
+      ["Fa#", "F#"], ["Sol", "G"], ["Sol#", "G#"], ["La", "A"], ["Si♭", "Bb"], ["Si", "B"],
+    ];
+    for (const [fr, intl] of paires) {
+      expect(DEMI_TONS_CLE[fr]).toBeTypeOf("number");
+      expect(DEMI_TONS_CLE[intl]).toBe(DEMI_TONS_CLE[fr]);
+      // `normaliserCle` (automate cellulaire) passe par le solfège français.
+      expect(DEMI_TONS_CLE[normaliserCle(intl)]).toBe(DEMI_TONS_CLE[fr]);
+    }
+    // Les 12 tonalités sont bien distinctes (aucune collision de mapping).
+    expect(new Set(paires.map(([, i]) => DEMI_TONS_CLE[i])).size).toBe(12);
+  });
+
+  it("cleCouleur (id, nom français, nom anglais)", () => {
+    expect(["vert", "Vert", "green", "Green"].map(cleCouleur)).toEqual(["Vert", "Vert", "Vert", "Vert"]);
+    expect(["bleu", "Bleu", "Blue"].map(cleCouleur)).toEqual(["Bleu", "Bleu", "Bleu"]);
+    // « aucune » / « (aucune) » / « (none) » ne désignent aucune couleur.
+    for (const v of ["aucune", "(aucune)", "(none)", "n'importe quoi"]) {
+      expect(cleCouleur(v)).toBeNull();
+    }
+  });
+
+  it("caractereTimbre", () => {
+    expect(["douce", "Douce", "Soft"].map(caractereTimbre)).toEqual(["douce", "douce", "douce"]);
+    expect(["brillante", "Brillante", "Bright"].map(caractereTimbre)).toEqual(["brillante", "brillante", "brillante"]);
+    expect(["percutante", "Percutante", "Percussive"].map(caractereTimbre)).toEqual(["percutante", "percutante", "percutante"]);
+    expect(caractereTimbre("inconnu")).toBe("douce");
   });
 });

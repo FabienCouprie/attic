@@ -6,6 +6,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Scale, Note, Progression } from "tonal";
 import { estimerTonalite, detecterAccords } from "../audio/accords";
+import { normaliserRomains } from "../audio/theorie-romains";
 
 function parserNotes(texte: string): string[] {
   return texte
@@ -148,7 +149,8 @@ export const fiches: FicheAudio[] = ([
         || ctx.paramTexte("Tonalité", "C");
       const progTexte = ctx.paramTexte("Progression", "I V vi IV");
       const numerals = progTexte.split(/\s+/).filter((n: string) => n.length > 0);
-      const accords = Progression.fromRomanNumerals(tonic, numerals);
+      // `normaliserRomains` : sans lui, « vi » produisait un accord MAJEUR.
+      const accords = Progression.fromRomanNumerals(tonic, normaliserRomains(numerals));
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
@@ -198,7 +200,7 @@ export const fiches: FicheAudio[] = ([
       // donc tester juste le début du jeton (pas son intégralité) suffit à
       // distinguer les deux syntaxes sans rejeter les extensions.
       const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
-      const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
+      const accords = romains ? Progression.fromRomanNumerals(tonic, normaliserRomains(tokens)) : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.progression_invalide") };

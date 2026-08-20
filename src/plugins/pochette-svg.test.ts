@@ -1,6 +1,6 @@
 // plugins/pochette-svg.test.ts
 import { describe, it, expect } from "vitest";
-import { genererPochetteSVG, genererPochetteFile, mulberry32, paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-svg";
+import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG, mulberry32, paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-svg";
 import { registre } from "../audio/adaptateur";
 
 function ctx(params: Record<string, string | number> = {}) {
@@ -118,5 +118,14 @@ describe("pochette-svg", () => {
     expect(svg).toContain('height="256"');
     expect(svg).toContain(">Deep<");
     expect(svg).toContain(">Waves<");
+  });
+});
+
+describe("rasteriserPochettePNG", () => {
+  // La rastérisation repose sur <img> + <canvas>, absents de Node. Plutôt que
+  // de planter obscurément, la fonction refuse explicitement — et le nœud
+  // remonte ce message à l'utilisateur au lieu de livrer un SVG nommé .png.
+  it("refuse explicitement hors navigateur", async () => {
+    await expect(rasteriserPochettePNG("<svg/>", 64, 64, "x")).rejects.toThrow(/navigateur/i);
   });
 });

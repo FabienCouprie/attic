@@ -1,6 +1,6 @@
 // audio/analyse.test.ts — Vérification des extracteurs Meyda.
 import { describe, it, expect, beforeAll } from "vitest";
-import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda } from "./analyse";
+import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, transcrireMono, fusionnerNotesRepetees } from "./analyse";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -72,6 +72,23 @@ describe("calculerCentroidSpectralMeyda", () => {
     expect(moyenne).toBeCloseTo(mediane, 0);
     expect(maximum).toBeGreaterThanOrEqual(moyenne);
   });
+
+  // Régression : « Médiane » (libellé français, accentué) tombait dans le
+  // `default` du normaliseur — son toLowerCase() vaut « médiane » avec accent,
+  // que le calcul en aval ne reconnaissait pas — et calculait donc une MOYENNE.
+  // « Median » (anglais) fonctionnait, lui. Un projet français demandant la
+  // médiane obtenait silencieusement autre chose.
+  it("« Médiane » accentué donne bien la médiane, pas la moyenne", () => {
+    const buffer = bruitBlanc(1);
+    const attendu = calculerCentroidSpectralMeyda(buffer, { aggregation: "mediane" }).valeur;
+    for (const libelle of ["Médiane", "médiane", "Median", "mediane"]) {
+      const obtenu = calculerCentroidSpectralMeyda(buffer, { aggregation: libelle as any }).valeur;
+      expect(obtenu).toBe(attendu);
+    }
+    // …et reste distinct de la moyenne sur un signal où les deux diffèrent.
+    const moyenne = calculerCentroidSpectralMeyda(buffer, { aggregation: "moyenne" }).valeur;
+    expect(calculerCentroidSpectralMeyda(buffer, { aggregation: "Médiane" as any }).valeur).not.toBe(moyenne);
+  });
 });
 
 describe("calculerRMS_Meyda", () => {
@@ -110,5 +127,48 @@ describe("calculerRolloffSpectralMeyda", () => {
     const rSine = calculerRolloffSpectralMeyda(sine).valeur;
     expect(rBruit).toBeGreaterThan(rSine);
     expect(rBruit).toBeGreaterThan(SR * 0.1);
+  });
+});
+
+// ── Transcripteur MIDI : rejet du bruit et fusion des notes ──
+describe("transcription — robustesse au bruit", () => {
+  function bufferDe(gen: (i: number, sr: number) => number, duree = 2, sr = 44100): AudioBuffer {
+    const n = Math.round(duree * sr);
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: sr });
+    const d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = gen(i, sr);
+    return b;
+  }
+
+  it("une note tenue produit peu de notes, un bruit blanc n'en produit quasiment aucune", () => {
+    const tonal = bufferDe((i, sr) => 0.5 * Math.sin(2 * Math.PI * 440 * i / sr));
+    const bruit = bufferDe(() => (Math.random() * 2 - 1) * 0.5);
+    const nTonal = transcrireMono(tonal, 10, 21, 108).length;
+    const nBruit = transcrireMono(bruit, 10, 21, 108).length;
+    // Le bruit large bande n'a pas de hauteur : il ne doit plus générer de notes.
+    expect(nBruit).toBe(0);
+    // …sans pour autant faire disparaître le signal tonal.
+    expect(nTonal).toBeGreaterThan(0);
+  });
+
+  it("fusionnerNotesRepetees recolle une note coupée en deux", () => {
+    const fusion = fusionnerNotesRepetees([
+      { note: 60, velocite: 80, debut: 0, fin: 0.5 },
+      { note: 60, velocite: 90, debut: 0.52, fin: 1.0 },
+      { note: 64, velocite: 70, debut: 0.1, fin: 0.6 },
+    ]);
+    expect(fusion).toHaveLength(2);
+    const do60 = fusion.find((n) => n.note === 60)!;
+    expect(do60.debut).toBe(0);
+    expect(do60.fin).toBe(1.0);
+    expect(do60.velocite).toBe(90); // garde la vélocité la plus forte
+  });
+
+  it("ne fusionne pas deux notes réellement séparées", () => {
+    const fusion = fusionnerNotesRepetees([
+      { note: 60, velocite: 80, debut: 0, fin: 0.3 },
+      { note: 60, velocite: 80, debut: 1.5, fin: 1.8 },
+    ]);
+    expect(fusion).toHaveLength(2);
   });
 });

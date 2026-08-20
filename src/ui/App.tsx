@@ -23,7 +23,7 @@ import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe, CHAMPS_UTILISATEUR } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
@@ -55,7 +55,11 @@ if (api0?.majRestaurerBackupSync) {
 }
 const nbPluginsAvant = tousLesPlugins().length;
 console.log(`[attic] Plugins avant chargerMetasLocaux: ${nbPluginsAvant}`);
-chargerMetasLocaux();
+// Métas dont un sous-nœud référence un plugin introuvable (renommé/supprimé) :
+// non réinjectés dans le catalogue par chargerMetasLocaux (qui les garde en
+// stockage), mais signalés après le premier rendu (cf. useEffect plus bas) —
+// sinon ils disparaissent de la palette sans qu'aucune trace n'explique pourquoi.
+const metasNonRestaures = chargerMetasLocaux();
 installerMetasExemples();
 // Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.
 chargerNodesInstalles();
@@ -88,6 +92,8 @@ interface DonneesNoeud {
   imageNom?: string;
   svgFichier?: File;
   svgNom?: string;
+  pdfFichier?: File;
+  pdfNom?: string;
   [key: string]: unknown;
 }
 
@@ -144,6 +150,7 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
+  if (def.id === "sequenceur-accords") return { width: 480, height: 380 };
   if (def.id === "enveloppe-adsr") return { width: 420, height: 300 };
   if (def.id === "selecteur-multi-zones") return { width: 460, height: 340 };
   if (def.id === "collection-lecteur-musique") return { width: 380, height: 320 };
@@ -266,6 +273,21 @@ function Atelier() {
     setPluginsVersion((v) => v + 1);
   }), []);
 
+  // Avertit (une fois, après le premier rendu) si des méta-composants n'ont pas
+  // pu être réinjectés dans le catalogue — sinon leur disparition silencieuse
+  // (cf. metasNonRestaures, calculé au chargement du module) passe pour une
+  // perte de données côté sauvegarde alors que la cause est un plugin renommé
+  // ou supprimé depuis. Toujours en stockage (metasLocaux.ts) : rien n'est perdu.
+  useEffect(() => {
+    if (metasNonRestaures.length === 0) return;
+    const detail = metasNonRestaures
+      .map((m) => `• ${m.nom} (${m.manquants.join(", ")})`)
+      .join("\n");
+    if (typeof alert !== "undefined") {
+      alert(t("persistance.metasNonRestaures").replace("{nb}", String(metasNonRestaures.length)) + "\n\n" + detail);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
   // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur
   // n'a pas choisi le sien (via l'icône « dossier » de la barre d'outils).
@@ -372,6 +394,7 @@ function Atelier() {
               parametres: n.data.parametres ?? {},
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
+              audioChemin: n.data.audioChemin,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               couleur: n.data.couleur,
@@ -382,6 +405,7 @@ function Atelier() {
               onChargerMidi: cbs.onChargerMidi,
               onChargerImage: cbs.onChargerImage,
               onChargerSvg: cbs.onChargerSvg,
+              onChargerPdf: cbs.onChargerPdf,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,
@@ -423,7 +447,13 @@ function Atelier() {
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
           const parametres: Record<string, number | string> = {};
           if (def) for (const p of def.parametres) {
-            parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+            // Tout paramètre « choix » passe par la forme canonique (indépendante de la
+// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
+// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
+// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
+// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
+// « Left ») et refusé par l'exécution.
+parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
           }
           const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
           idsNouveaux.push(id);
@@ -440,6 +470,7 @@ function Atelier() {
               onChargerMidi: cbs.onChargerMidi,
               onChargerImage: cbs.onChargerImage,
               onChargerSvg: cbs.onChargerSvg,
+              onChargerPdf: cbs.onChargerPdf,
               onChangerEnregistrement: cbs.onChangerEnregistrement,
               onChangerParametre: cbs.onChangerParametre,
               onChangerZones: cbs.onChangerZones,
@@ -537,6 +568,12 @@ function Atelier() {
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
     },
+    onChargerPdf: (nid: string, fichier: File) => {
+      cacheExec.current.delete(nid);
+      const api = (window as any).api;
+      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
+      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, pdfFichier: fichier, pdfNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+    },
     onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       cacheExec.current.delete(nid);
@@ -555,7 +592,13 @@ function Atelier() {
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
     const parametres: Record<string, number | string> = {};
     for (const p of def.parametres) {
-      parametres[p.nom] = p.type === "choix" && p.optionIds?.length ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+      // Tout paramètre « choix » passe par la forme canonique (indépendante de la
+// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
+// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
+// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
+// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
+// « Left ») et refusé par l'exécution.
+parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
     }
     const { width, height } = tailleDefaut(def);
     setNodes((nds) => [...nds, {
@@ -632,14 +675,17 @@ function Atelier() {
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
-          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
-          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
-          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
-          // joue le résultat de l'original avant même d'avoir tourné lui-même.
+          // Allowlist de COPIE : les champs saisis par l'utilisateur (ficheId,
+          // paramètres…), jamais les résultats calculés (buffer audio, URL blob,
+          // message…) — sinon le nœud dupliqué affiche ou joue le résultat de
+          // l'original avant d'avoir tourné lui-même — et jamais non plus le média
+          // chargé sur l'original (CHAMPS_MEDIA_LOCAL) : un « Entrée audio » collé
+          // arrivait avec un lecteur affichant déjà une durée de piste alors qu'il
+          // n'avait rien reçu. Le couper-coller, lui, conserve le média (voir Ctrl+X).
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;
-            if (!CHAMPS_UTILISATEUR.has(k)) continue;
+            if (!CHAMPS_COPIABLES.has(k)) continue;
             data[k] = v;
           }
           return {
@@ -662,10 +708,11 @@ function Atelier() {
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
-          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
-          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
-          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
-          // joue le résultat de l'original avant même d'avoir tourné lui-même.
+          // Allowlist de COUPE : identique à la copie pour les résultats calculés,
+          // mais le média chargé (fichier audio/image/MIDI…) est ici CONSERVÉ. Un
+          // couper-coller est un déplacement, pas une duplication : l'original est
+          // supprimé juste après, donc laisser le média derrière reviendrait à le
+          // détruire.
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;

@@ -214,8 +214,11 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
-      // Stocker pour la vue (aperçu + téléchargement HTML)
-      (ctx.noeud.data as any)._galerieHTML = html;
+      // Stocker pour la vue (liste des pistes + ouverture du fichier réel).
+      // Pas de blob téléchargeable séparément : le HTML référence ses MP3 en
+      // chemins relatifs (`mp3/xxx.mp3`, copiés à côté d'index.html sur
+      // disque) — un téléchargement isolé du blob romprait ces liens.
+      (ctx.noeud.data as any)._galerieHtmlPath = `${dossierSortie}/index.html`;
       (ctx.noeud.data as any)._galeriePistes = pistes;
 
       return { valeurs: [], message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };

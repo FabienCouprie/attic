@@ -61,10 +61,40 @@ export const PARAMETRE_INSTRUMENT_SF2_SUIVI: ParametreDef = {
   docEn: "SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file.",
 };
 
+/**
+ * Paramètre réutilisable : moteur de synthèse. Déclaré une seule fois plutôt
+ * que recopié dans chaque nœud — c'est aussi ce qui permet de lui donner des
+ * `optionIds` (identité stable, indépendante de la langue) en un seul endroit.
+ * Les nœuds qui ont besoin d'une variante font `{ ...PARAMETRE_SYNTHESE, doc: … }`.
+ */
+export const PARAMETRE_SYNTHESE: ParametreDef = {
+  nom: "Synthèse",
+  nomEn: "Synthesis",
+  type: "choix",
+  options: ["Automatique", "FM/Oscillateurs", "SoundFont"],
+  optionsEn: ["Auto", "FM/Oscillators", "SoundFont"],
+  optionIds: ["auto", "fm", "soundfont"],
+  defaut: "Automatique",
+  doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
+  docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples.",
+};
+
+/** Variante sans « Automatique » (nœuds dont le rendu FM est le défaut). */
+export const PARAMETRE_SYNTHESE_SANS_AUTO: ParametreDef = {
+  ...PARAMETRE_SYNTHESE,
+  options: ["FM/Oscillateurs", "SoundFont"],
+  optionsEn: ["FM/Oscillators", "SoundFont"],
+  optionIds: ["fm", "soundfont"],
+  defaut: "FM/Oscillateurs",
+};
+
+// Accepte indifféremment l'id canonique ("auto"/"fm"/"soundfont"), l'ancienne
+// valeur française ou l'anglaise : les projets enregistrés avant l'ajout des
+// optionIds stockent encore les libellés, et doivent continuer à être relus.
 export function normaliserModeSynthèse(valeur: string): "Automatique" | "FM/Oscillateurs" | "SoundFont" {
   const v = valeur.trim().toLowerCase();
   if (v === "soundfont" || v === "sound font") return "SoundFont";
-  if (v === "fm/oscillators" || v === "fm/oscillateurs") return "FM/Oscillateurs";
+  if (v === "fm" || v === "fm/oscillators" || v === "fm/oscillateurs") return "FM/Oscillateurs";
   if (v === "auto" || v === "automatique") return "Automatique";
   return "Automatique";
 }

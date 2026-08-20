@@ -5,7 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { genererPochetteFile, genererPochetteSVG } from "./pochette-svg";
+import { genererPochetteFile, genererPochetteSVG, rasteriserPochettePNG } from "./pochette-svg";
 
 export { genererPochetteSVG };
 
@@ -61,6 +61,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Largeur de l'image SVG en pixels.", docEn: "SVG image width in pixels." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [128, 2048], pas: 1, defaut: 512,
         doc: "Hauteur de l'image SVG en pixels.", docEn: "SVG image height in pixels." },
+      { nom: "Format", nomEn: "Format", type: "choix",
+        options: ["SVG", "PNG"], optionsEn: ["SVG", "PNG"], optionIds: ["svg", "png"],
+        defaut: "SVG", defautEn: "SVG",
+        doc: "SVG : format natif, vectoriel, redimensionnable sans perte (à privilégier). PNG : image matricielle rendue à la taille Largeur × Hauteur, pour les usages qui ne lisent pas le vectoriel.",
+        docEn: "SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle à chaque exécution). Même graine = même pochette.",
         docEn: "Random seed (0 = new each run). Same seed = same cover." },
@@ -77,11 +82,28 @@ export const fiches: FicheAudio[] = ([
       const largeur = ctx.paramNombre("Largeur", 512);
       const hauteur = ctx.paramNombre("Hauteur", 512);
       const graine = ctx.paramNombre("Graine", 0);
-      const fichier = genererPochetteFile({
+      const optionsPochette = {
         prompt, titre, artiste, style, palette,
         complexite, bordure, typographie,
         largeur, hauteur, graine,
-      });
+      };
+      const format = ctx.paramTexte("Format", "svg");
+      let fichier = genererPochetteFile(optionsPochette);
+      if (format === "png") {
+        // Le SVG reste la source de vérité : le PNG en est une rastérisation à
+        // la taille demandée, pas une génération distincte — même graine, même
+        // visuel. En cas d'échec (contexte sans canvas), on signale clairement
+        // plutôt que de livrer un SVG déguisé en .png.
+        try {
+          fichier = await rasteriserPochettePNG(
+            genererPochetteSVG(optionsPochette), largeur, hauteur,
+            fichier.name.replace(/\.svg$/i, ""),
+          );
+        } catch (e: any) {
+          return { valeurs: [null], erreur: true,
+            message: traduire("msg.pochette_png_echec_var_0", e?.message ?? String(e)) };
+        }
+      }
       return {
         valeurs: [fichier],
         message: traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30)),

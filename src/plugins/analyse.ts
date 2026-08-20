@@ -25,7 +25,7 @@ function noeudMeyda(
         doc: "Taille de la fenêtre d'analyse (arrondie à la puissance de 2 supérieure).", docEn: "Analysis window size (rounded up to the next power of 2)." },
       { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.",
         doc: "Décalage entre deux fenêtres d'analyse.", docEn: "Hop size between analysis frames." },
-      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], defaut: "Moyenne",
+      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], optionIds: ["moyenne","mediane","maximum"], defaut: "Moyenne",
         doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values.", optionsEn: ["Average", "Median", "Maximum"], defautEn: "Average" },
     ],
     async executer(ctx: any) {
@@ -171,9 +171,23 @@ export const fiches: FicheAudio[] = ([
           if (tDetecte > 0) tempo = tDetecte;
         } catch {}
       }
-      const notes = methode === "poly"
-        ? await transcrirePolyphonique(audio, seuil, noteMin, noteMax)
-        : transcrireMono(audio, seuil, noteMin, noteMax);
+      let notes;
+      if (methode === "poly") {
+        try {
+          notes = await transcrirePolyphonique(audio, seuil, noteMin, noteMax, (p) =>
+            ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)));
+        } catch (e: any) {
+          // NE PAS retomber silencieusement sur le FFT monophonique : c'est ce
+          // que faisait l'ancien code, si bien qu'un modèle indisponible donnait
+          // un résultat mono (inadapté à un mix) présenté comme polyphonique,
+          // sans le moindre signe pour l'utilisateur.
+          console.error("[transcripteur-midi] Basic Pitch", e);
+          return { valeurs: [null], erreur: true,
+            message: traduire("msg.transcription_poly_indisponible_var_0", e?.message ?? String(e)) };
+        }
+      } else {
+        notes = transcrireMono(audio, seuil, noteMin, noteMax);
+      }
       if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };
       const fichier = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
       return { valeurs: [fichier], message: traduire("msg.midi_var_0_notes_transcrites", notes.length) };

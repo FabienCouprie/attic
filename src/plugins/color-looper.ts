@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -34,7 +34,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
         doc: "Gamme utilisée (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
         docEn: "Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionIds: ["melodie","harmonie","arpeges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
@@ -46,7 +46,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de chaque note en fraction de temps (1 = temps entier, 0.5 = croche, 0.25 = double-croche).", docEn: "Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth)." },
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif de couleurs.", docEn: "Number of repetitions of the color pattern." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

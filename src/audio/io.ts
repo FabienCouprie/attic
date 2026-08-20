@@ -1,6 +1,5 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
 import { Mp3Encoder } from "lamejs";
-import { traduire } from "../i18n";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
   const donnees = await fichier.arrayBuffer();

@@ -204,8 +204,25 @@ export const COULEURS: Record<string, { fr: string; en: string; hex: string; pro
 
 export const NOMS_COULEURS = Object.keys(COULEURS);
 
+// Ids canoniques du paramètre « Couleur » : les clés de COULEURS en minuscules
+// (« rouge », « bleu »…). Le nom français reste la clé du tableau, mais il ne
+// sert plus d'identité : c'est cet id que stockent désormais les projets.
+export const IDS_COULEURS = NOMS_COULEURS.map((n) => n.toLowerCase());
+
+// Résout un id canonique, un nom français ou un nom anglais vers la clé de
+// COULEURS. Sans ça, une valeur anglaise (« Blue ») ne correspondait à aucune
+// clé et le nœud échouait sur « Couleur 1 inconnue : Blue ».
+export function cleCouleur(valeur: string): string | null {
+  const v = String(valeur).trim().toLowerCase();
+  for (const nom of NOMS_COULEURS) {
+    if (nom.toLowerCase() === v || COULEURS[nom].en.toLowerCase() === v) return nom;
+  }
+  return null;
+}
+
 export function profilCouleur(nom: string): ProfilMusical | null {
-  return COULEURS[nom]?.profil ?? null;
+  const cle = cleCouleur(nom);
+  return cle ? COULEURS[cle].profil : null;
 }
 
 export function fusionnerProfils(p1: ProfilMusical, p2: ProfilMusical, _nom1: string, _nom2: string): ProfilMusical {

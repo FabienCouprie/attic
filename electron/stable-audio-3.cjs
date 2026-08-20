@@ -1,4 +1,4 @@
-// electron/stable-audio-3.cjs — Stable Audio 3 small-music text-to-audio pipeline.
+// electron/stable-audio-3.cjs — Stable Audio 3 small-music text-to-audio + audio continuation.
 // Uses onnxruntime-node (CPU) and the T5Gemma tokenizer from @huggingface/tokenizers.
 // The model bundle is expected in public/oonx/stable-audio-3-small-music/.
 
@@ -15,6 +15,8 @@ const DOWNSAMPLING = 8192;
 const HEADROOM_SECONDS = 6;
 const DEFAULT_STEPS = 8;
 const DEFAULT_SECONDS = 10;
+const DEFAULT_GENERATED_SECONDS = 5;
+const MAX_SECONDS = 120;
 
 let cached = null;
 
@@ -82,12 +84,17 @@ function loadTokenizer(modelDir) {
 async function loadSessions(modelDir) {
   const onnxDir = path.join(modelDir, "onnx");
   const create = (name) => ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: ["cpu"] });
-  return {
+  const sessions = {
     textEncoder: await create("text_encoder_q4.onnx"),
     numberConditioner: await create("number_conditioner.onnx"),
     dit: await create("dit_q4.onnx"),
     decoder: await create("decoder_q4.onnx"),
   };
+  const encoderPath = path.join(onnxDir, "encoder_q4.onnx");
+  if (fs.existsSync(encoderPath)) {
+    sessions.encoder = await create("encoder_q4.onnx");
+  }
+  return sessions;
 }
 
 async function getResources(modelDir) {
@@ -113,38 +120,19 @@ function tokenize(tokenizer, prompt) {
   return { inputIds, attentionMask: mask };
 }
 
-async function generate(options) {
-  const {
-    prompt,
-    seconds = DEFAULT_SECONDS,
-    steps = DEFAULT_STEPS,
-    seed = Math.floor(Math.random() * 2 ** 32),
-    modelDir,
-  } = options;
+function buildTextAndDurationConditioning(textEncoder, numberConditioner, prompt, seconds) {
+  return Promise.all([
+    textEncoder.run({
+      input_ids: makeTensor("int64", prompt.inputIds, [1, TEXT_LENGTH]),
+      attention_mask: makeTensor("int64", prompt.attentionMask, [1, TEXT_LENGTH]),
+    }),
+    numberConditioner.run({
+      seconds: makeTensor("float32", new Float32Array([seconds]), [1]),
+    }),
+  ]);
+}
 
-  if (!modelDir || !fs.existsSync(modelDir)) {
-    throw new Error(`Modèle introuvable : ${modelDir}`);
-  }
-
-  const rng = mulberry32(seed);
-  const T_lat = Math.ceil(((seconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
-  const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
-
-  const { tokenizer, sessions } = await getResources(modelDir);
-
-  const { inputIds, attentionMask } = tokenize(tokenizer, prompt);
-
-  const textOut = await sessions.textEncoder.run({
-    input_ids: makeTensor("int64", inputIds, [1, TEXT_LENGTH]),
-    attention_mask: makeTensor("int64", attentionMask, [1, TEXT_LENGTH]),
-  });
-  const textEmbed = textOut.last_hidden_state.data;
-
-  const numOut = await sessions.numberConditioner.run({
-    seconds: makeTensor("float32", new Float32Array([seconds]), [1]),
-  });
-  const durationEmbed = numOut.embedding.data;
-
+function buildCrossAttentionAndGlobalConditioning(textEmbed, durationEmbed) {
   const crossAttnCond = new Float32Array(1 * 257 * EMBED_DIM);
   const globalCond = new Float32Array(1 * EMBED_DIM);
   for (let i = 0; i < EMBED_DIM; i++) {
@@ -158,14 +146,50 @@ async function generate(options) {
   for (let c = 0; c < EMBED_DIM; c++) {
     crossAttnCond[TEXT_LENGTH * EMBED_DIM + c] = durationEmbed[c];
   }
+  return { crossAttnCond, globalCond };
+}
 
-  const localAddCond = zeros([1, 257, T_lat]);
+function buildInpaintConditioning(prefixLatent, T_in, T_lat, scale = 0.27) {
+  const cond = new Float32Array(1 * 257 * T_lat);
+  const prefixSize = LATENT_CHANNELS * T_in;
+  // The int4 encoder (bgkb/encoder-onnx) emits latents with a far larger scale than the diffusion
+  // latents the model generates: encoder std ~2.3 vs diffusion std ~0.62 on a calibration signal.
+  // Feeding the raw encoder latent into local_add_cond makes the DiT produce huge, distorted
+  // output. Scale down to roughly match the diffusion latent distribution. Value is empirical
+  // (0.62 / 2.31 ≈ 0.27) and works across the tested sine and real-music inputs.
+  for (let j = 0; j < prefixSize; j++) {
+    cond[j] = prefixLatent[j] * scale;
+  }
+  const maskOffset = LATENT_CHANNELS * T_lat;
+  for (let t = 0; t < T_in; t++) {
+    cond[maskOffset + t] = 1;
+  }
+  return cond;
+}
+
+async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale) {
+  const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
+  const rng = mulberry32(seed);
+
+  const { inputIds, attentionMask } = tokenize(tokenizer, prompt);
+  const [textOut, numOut] = await buildTextAndDurationConditioning(
+    sessions.textEncoder,
+    sessions.numberConditioner,
+    { inputIds, attentionMask },
+    seconds
+  );
+  const { crossAttnCond, globalCond } = buildCrossAttentionAndGlobalConditioning(textOut.last_hidden_state.data, numOut.embedding.data);
+
   const paddingMask = onesUint8([1, T_lat]);
 
   let x = randn([1, LATENT_CHANNELS, T_lat], rng);
-  const schedule = buildSchedule(steps);
   const latentShape = [1, LATENT_CHANNELS, T_lat];
   const tTensor = new Float32Array(1);
+  const schedule = buildSchedule(steps);
+
+  // Optional: keep the known prefix region aligned with the noised encoder latent
+  // instead of letting the sampler drift. This is a common inpainting sampler trick.
+  const maskPrefix = prefixLatent && T_in > 0 && T_in < T_lat;
 
   for (let i = 0; i < schedule.length - 1; i++) {
     const tCurr = schedule[i];
@@ -186,11 +210,27 @@ async function generate(options) {
       denoised[j] = x[j] - tCurr * v[j];
     }
 
+    if (maskPrefix) {
+      // Force the prefix region to denoise to the scaled encoder latent, so the
+      // diffusion trajectory stays anchored to the real input. This compensates for
+      // the fact that the bgkb int4 encoder latent does not perfectly align with the
+      // distribution the DiT expects; without this anchor, the sampler drifts and the
+      // continuation becomes unrelated noise/drone.
+      for (let c = 0; c < LATENT_CHANNELS; c++) {
+        for (let t = 0; t < T_in; t++) {
+          const denoisedIdx = c * T_lat + t;
+          const latentIdx = c * T_in + t;
+          denoised[denoisedIdx] = prefixLatent[latentIdx] * latentScale;
+        }
+      }
+    }
+
     const noise = randn(latentShape, rng);
     x = new Float32Array(x.length);
     for (let j = 0; j < x.length; j++) {
       x[j] = (1 - tNext) * denoised[j] + tNext * noise[j];
     }
+
   }
 
   const decOut = await sessions.decoder.run({
@@ -198,16 +238,146 @@ async function generate(options) {
   });
   const audio = decOut.audio.data;
 
-  // Trim to requested length
   const trimSamples = Math.min(seconds * SAMPLE_RATE, audioLen);
   const left = new Float32Array(trimSamples);
   const right = new Float32Array(trimSamples);
   for (let i = 0; i < trimSamples; i++) {
-    left[i] = audio[i];
-    right[i] = audio[audioLen + i];
+    left[i] = Math.max(-1, Math.min(1, audio[i]));
+    right[i] = Math.max(-1, Math.min(1, audio[audioLen + i]));
   }
 
   return { left, right, sampleRate: SAMPLE_RATE, duration: trimSamples / SAMPLE_RATE };
 }
 
-module.exports = { generate };
+async function generate(options) {
+  const {
+    prompt,
+    seconds = DEFAULT_SECONDS,
+    steps = DEFAULT_STEPS,
+    seed = Math.floor(Math.random() * 2 ** 32),
+    modelDir,
+  } = options;
+
+  if (!modelDir || !fs.existsSync(modelDir)) {
+    throw new Error(`Modèle introuvable : ${modelDir}`);
+  }
+
+  const T_lat = Math.ceil(((seconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
+  const { tokenizer, sessions } = await getResources(modelDir);
+  const localAddCond = zeros([1, 257, T_lat]);
+
+  return diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, null);
+}
+
+function asFloat32Array(arr) {
+  return arr instanceof Float32Array ? arr : Float32Array.from(arr);
+}
+
+function resampleLinear(src, srcRate, dstRate) {
+  if (srcRate === dstRate) return Float32Array.from(src);
+  const ratio = srcRate / dstRate;
+  const dstLen = Math.max(1, Math.floor(src.length / ratio));
+  const dst = new Float32Array(dstLen);
+  for (let i = 0; i < dstLen; i++) {
+    const srcPos = i * ratio;
+    const i0 = Math.floor(srcPos);
+    const i1 = Math.min(i0 + 1, src.length - 1);
+    const frac = srcPos - i0;
+    dst[i] = src[i0] * (1 - frac) + src[i1] * frac;
+  }
+  return dst;
+}
+
+function toStereo44100(channels, sampleRate) {
+  if (!channels || channels.length === 0) {
+    throw new Error("Aucun canal audio fourni");
+  }
+  let left = resampleLinear(asFloat32Array(channels[0]), sampleRate, SAMPLE_RATE);
+  let right = channels.length > 1
+    ? resampleLinear(asFloat32Array(channels[1]), sampleRate, SAMPLE_RATE)
+    : new Float32Array(left.length);
+  if (channels.length === 1) {
+    right = Float32Array.from(left);
+  }
+  const minLen = Math.min(left.length, right.length);
+  if (left.length !== right.length) {
+    left = left.subarray(0, minLen);
+    right = right.subarray(0, minLen);
+  }
+  return { left, right };
+}
+
+async function decodeAudio(sessions, latent, T_lat) {
+  const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
+  const decOut = await sessions.decoder.run({
+    latents: makeTensor("float32", latent, [1, LATENT_CHANNELS, T_lat]),
+  });
+  return decOut.audio.data;
+}
+
+async function encodeAudio(sessions, left, right) {
+  const N = Math.ceil(left.length / DOWNSAMPLING) * DOWNSAMPLING;
+  const audioData = new Float32Array(2 * N);
+  audioData.set(left, 0);
+  audioData.set(right, N);
+  const encoderOut = await sessions.encoder.run({
+    audio: makeTensor("float32", audioData, [1, 2, N]),
+  });
+  return { latent: encoderOut.latents.data, T_in: N / AUDIO_SAMPLES_PER_LATENT };
+}
+
+async function continueAudio(options) {
+  const {
+    audio,
+    prompt,
+    generatedSeconds = DEFAULT_GENERATED_SECONDS,
+    steps = DEFAULT_STEPS,
+    seed = Math.floor(Math.random() * 2 ** 32),
+    modelDir,
+  } = options;
+
+  if (!modelDir || !fs.existsSync(modelDir)) {
+    throw new Error(`Modèle introuvable : ${modelDir}`);
+  }
+  if (!audio || !audio.channels || audio.channels.length === 0) {
+    throw new Error("Audio d'entrée invalide");
+  }
+
+  const { tokenizer, sessions } = await getResources(modelDir);
+  if (!sessions.encoder) {
+    throw new Error("Encodeur audio introuvable dans le bundle (encoder_q4.onnx requis pour la continuation)");
+  }
+
+  const { left, right } = toStereo44100(audio.channels, audio.sampleRate);
+  const { latent: prefixLatent, T_in } = await encodeAudio(sessions, left, right);
+
+  const inputSeconds = left.length / SAMPLE_RATE;
+  const totalSeconds = Math.min(inputSeconds + generatedSeconds, MAX_SECONDS);
+  if (totalSeconds <= inputSeconds) {
+    throw new Error("La durée générée doit être strictement positive");
+  }
+
+  const T_lat = Math.ceil(((totalSeconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
+  if (T_in >= T_lat) {
+    throw new Error("La durée générée est trop courte par rapport à la piste d'entrée");
+  }
+
+  const latentScale = 0.27;
+  const localAddCond = buildInpaintConditioning(prefixLatent, T_in, T_lat, latentScale);
+
+  const result = await diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale);
+
+  // Preserve the original input exactly by copying the resampled source audio back into the
+  // decoded output prefix. The diffusion model uses the encoded latent only as conditioning, so
+  // the generated prefix is a reconstruction that may differ from the source; replacing it
+  // guarantees the original audio is untouched. The generated continuation follows from there.
+  const inputSamples = left.length;
+  for (let i = 0; i < inputSamples; i++) {
+    result.left[i] = left[i];
+    result.right[i] = right[i];
+  }
+  result.duration = inputSeconds + generatedSeconds;
+  return result;
+}
+
+module.exports = { generate, continueAudio, encodeAudio, decodeAudio };

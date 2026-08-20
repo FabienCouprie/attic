@@ -3,7 +3,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { contexteDecodage } from "../audio/commun";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -33,9 +34,8 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = new AudioContext();
+          const actx = contexteDecodage();
           const buf = await actx.decodeAudioData(ab);
-          actx.close();
           const { bufferVersMp3Blob } = await import("../audio");
           const blob = await bufferVersMp3Blob(buf, qualite);
           const arr = await blob.arrayBuffer();
@@ -74,9 +74,8 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = new AudioContext();
+          const actx = contexteDecodage();
           const buf = await actx.decodeAudioData(ab);
-          actx.close();
           const { bufferVersWavBlob } = await import("../audio");
           const blob = bufferVersWavBlob(buf);
           const arr = await blob.arrayBuffer();
@@ -98,7 +97,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
       { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -153,9 +152,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Dossier contenant les fichiers WAV/MP3 à écouter.", docEn: "Folder containing WAV/MP3 files to play." },
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume du lecteur.", docEn: "Player volume." },
-      { nom: "Lecture aléatoire", nomEn: "Shuffle", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
+      { nom: "Lecture aléatoire", nomEn: "Shuffle", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], optionIds: ["non","oui"], defaut: "Non", defautEn: "Off",
         doc: "Joue les pistes dans un ordre aléatoire.", docEn: "Play tracks in random order." },
-      { nom: "Lecture en boucle", nomEn: "Loop", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
+      { nom: "Lecture en boucle", nomEn: "Loop", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], optionIds: ["non","oui"], defaut: "Non", defautEn: "Off",
         doc: "Répète la playlist en boucle.", docEn: "Repeat the playlist in a loop." },
       { nom: "Piste", nomEn: "Track", type: "texte", defaut: "", defautEn: "", hidden: true,
         doc: "Nom du fichier actuellement sélectionné (réservé à l'interface).", docEn: "Name of the currently selected file (reserved for the UI)." },

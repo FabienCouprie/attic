@@ -136,8 +136,14 @@ export function normaliserGamme(v: string): string {
   return map[v] ?? "pentatonique-majeure";
 }
 
+// Comparaison insensible à la casse : accepte l'id canonique ("fm"), les
+// anciens libellés FR/EN ("FM/Oscillateurs", "FM/Oscillators") et tout ce qui
+// mentionne FM/Osc. Sans le `toLowerCase()`, l'id "fm" ne correspondait à aucun
+// motif et retombait à tort sur "SoundFont".
 export function normaliserTimbre(v: string): "FM/Oscillateurs" | "SoundFont" {
-  if (v.includes("FM") || v.includes("Osc") || v.includes("Oscillators")) return "FM/Oscillateurs";
+  const s = v.trim().toLowerCase();
+  if (s === "soundfont") return "SoundFont";
+  if (s.includes("fm") || s.includes("osc")) return "FM/Oscillateurs";
   return "SoundFont";
 }
 

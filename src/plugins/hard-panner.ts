@@ -22,7 +22,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Position",
         nomEn: "Position",
         type: "choix",
-        options: ["Gauche", "Centre", "Droite"],
+        options: ["Gauche", "Centre", "Droite"], optionIds: ["Gauche","Centre","Droite"],
         optionsEn: ["Left", "Center", "Right"],
         defaut: "Centre",
         defautEn: "Center",

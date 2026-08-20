@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
+import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -14,13 +14,14 @@ import { TexteAvecLiens } from "./texteAvecLiens";
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
   progression?: string; audioResultatUrl?: string; audioResultatMessage?: string;
-  audioFichier?: File; audioNom?: string; audioUrl?: string;
+  audioFichier?: File; audioNom?: string; audioUrl?: string; audioChemin?: string;
   audioResultatBuffer?: AudioBuffer;
   midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
   modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;
   enregistrementBlob?: Blob; enregistrementUrl?: string;
   imageFichier?: File; imageNom?: string;
   svgFichier?: File; svgNom?: string;
+  pdfFichier?: File; pdfNom?: string;
   prioritaire?: boolean;
   tempsExecution?: number;
   imageResultatUrl?: string;
@@ -32,6 +33,7 @@ export type DonneesNoeud = {
   onChargerMidi?: (id: string, fichier: File) => void;
   onChargerImage?: (id: string, fichier: File) => void;
   onChargerSvg?: (id: string, fichier: File) => void;
+  onChargerPdf?: (id: string, fichier: File) => void;
   onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   zonesSelectionnees?: { debut: number; duree: number }[];
   onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;
@@ -91,6 +93,7 @@ export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
     if (def.famille === "Analyse") return "analyse";
     if (def.famille === "Texte") return "entree";
     if (def.famille === "Théorie") return "analyse";
+    if (def.famille === "Test zone") return "analyse";
   }
   return "autre";
 }
@@ -180,23 +183,104 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     if (aretes.length) { deleteElements({ edges: aretes }); queueMicrotask(() => updateNodeInternals(id)); }
   }, [getEdges, deleteElements, updateNodeInternals, id]);
 
+  // Remesure forcée des ports dès que l'ensemble des connexions du nœud change.
+  //
+  // ReactFlow ne mémorise la position des ports (`internals.handleBounds`) qu'au
+  // prix d'une mesure du DOM, et il ne la refait QUE si la taille extérieure du
+  // nœud a changé — cf. @xyflow/system, `updateNodeInternals` :
+  //     doUpdate = dimensions.width && dimensions.height
+  //                && (dimensionChanged || !handleBounds || force)
+  // Or les nœuds redimensionnables ont une largeur/hauteur explicites, figées :
+  // leur cadre extérieur ne bouge plus, tandis que leur contenu (forme d'onde,
+  // sélecteur multi-zones, zone de texte, image…) se met en place plus tard et
+  // décale les rangées de ports À L'INTÉRIEUR de ce cadre. ReactFlow ne voit
+  // rien, garde des coordonnées périmées, et quand il ne retrouve pas un port il
+  // retombe sur `getHandlePosition(node, null, …)` qui renvoie le milieu de
+  // l'arête du nœud — d'où les liaisons collées au milieu des bords.
+  //
+  // C'est bien pourquoi un redimensionnement manuel, même d'un pixel, corrigeait
+  // l'affichage : il change la taille extérieure, donc déclenche la remesure.
+  // Plutôt que de simuler ce redimensionnement (qui altérerait la taille choisie
+  // par l'utilisateur et provoquerait un sursaut visible), on déclenche
+  // directement la remesure : `useUpdateNodeInternals` passe `force: true`, ce
+  // qui court-circuite la condition ci-dessus et relit le DOM tel qu'il est.
+  //
+  // Déclencher sur le CHANGEMENT de connexions couvre les deux cas : la première
+  // liaison tirée à la main, et le montage d'un projet rechargé dont les arêtes
+  // existent dès la première image.
+  const connexions = useNodeConnections({ id });
+  const cleConnexions = connexions.map((c) => c.edgeId).sort().join("|");
+  useEffect(() => {
+    if (!cleConnexions) return;
+    updateNodeInternals(id);
+  }, [cleConnexions, id, updateNodeInternals]);
+
+  // Même remesure à la fin d'une exécution : c'est le moment où le contenu
+  // produit (forme d'onde, image, texte de résultat) se met enfin en place et
+  // repousse les rangées de ports, sans que le cadre extérieur ne bouge d'un
+  // pixel. Sans cela, un nœud connecté AVANT son exécution verrait ses liaisons
+  // se décrocher au premier lancement. L'événement est rare (une fois par
+  // exécution et par nœud), donc le coût est négligeable.
+  useEffect(() => {
+    if (!connexions.length) return;
+    if (data.statut !== "termine" && data.statut !== "erreur") return;
+    updateNodeInternals(id);
+  }, [data.statut, connexions.length, id, updateNodeInternals]);
+
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
     // ResizeObserver sur tous les nodes : recalcule les handles quand la
-    // hauteur change (chargement de fichier, apparition de lecteur, etc.).
-    // Le guard sur la hauteur évite les recalculs inutiles.
-    let lastH = 0;
+    // hauteur OU la largeur change (chargement de fichier, apparition de
+    // lecteur, redimensionnement via NodeResizer, etc.). Le guard évite les
+    // recalculs inutiles. Suivre uniquement la hauteur laissait les ports
+    // mal positionnés (arête tirée depuis le milieu du nœud plutôt que le
+    // port réel) sur les nœuds redimensionnables tant qu'on ne les avait pas
+    // explicitement redimensionnés au moins une fois — un changement de
+    // largeur seul ne déclenchait jamais updateNodeInternals.
+    //
+    // Pour les nœuds SANS NodeResizer (la majorité), `updateNodeInternals`
+    // seul ne suffit pas : `ajouterNoeud` (App.tsx) fixe explicitement
+    // width/height à la création (tailleDefaut) et ReactFlow ne remesure
+    // jamais spontanément un nœud aux dimensions explicites — donc si le
+    // contenu grandit après coup (ex. lecteur audio qui apparaît une fois un
+    // fichier chargé), le cadre ReactFlow reste figé à l'ancienne taille et
+    // les ports restent positionnés dessus, décalés par rapport au contenu
+    // réellement affiché (qui déborde visuellement en dessous). Les nœuds
+    // AVEC NodeResizer (détectés via son marqueur DOM) gèrent déjà eux-mêmes
+    // cette synchronisation width/height — ne pas les court-circuiter, sinon
+    // un nœud volontairement réduit par l'utilisateur (contenu qui scrolle/
+    // clippe dans un cadre plus petit) se ferait regonfler de force.
+    //
+    // lastH/lastW démarrent à -1 (jamais une vraie taille) plutôt que d'être
+    // pré-lus sur `el` avant `observe()` : un ResizeObserver déclenche TOUJOURS
+    // son callback une première fois dès l'observation, avec la taille
+    // courante — si on pré-remplit lastH/lastW avec cette même valeur avant
+    // que ce premier callback n'arrive, la comparaison h===lastH y voit
+    // (à tort) « rien n'a changé » et l'avale silencieusement. Résultat : le
+    // décalage initial entre la taille estimée à la création (tailleDefaut,
+    // une heuristique sur le nombre de ports) et la taille réellement rendue
+    // (en-tête + paramètres + statut) n'était jamais corrigé tant qu'aucun
+    // changement ultérieur ne survenait — cas des nœuds simples dont le
+    // contenu ne varie jamais après le montage (ex. Hard panner : ports
+    // décalés dès la création, sans qu'aucun redimensionnement manuel ne
+    // puisse s'appliquer puisque le nœud n'est pas redimensionnable).
+    let lastH = -1;
+    let lastW = -1;
     const obs = new ResizeObserver(() => {
       const h = el.offsetHeight;
-      if (h === lastH) return;
+      const w = el.offsetWidth;
+      if (h === lastH && w === lastW) return;
       lastH = h;
+      lastW = w;
+      if (!el.querySelector(".react-flow__resize-control")) {
+        setNodes((nds) => nds.map((n) => n.id === id && (n.width !== w || n.height !== h) ? { ...n, width: w, height: h } : n));
+      }
       requestAnimationFrame(() => updateNodeInternals(id));
     });
-    lastH = el.offsetHeight;
     obs.observe(el);
     return () => obs.disconnect();
-  }, [id, updateNodeInternals]);
+  }, [id, updateNodeInternals, setNodes]);
 
 
   const nodeEstFrontiere = estFrontiere(data.ficheId as string);

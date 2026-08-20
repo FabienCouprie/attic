@@ -12,7 +12,7 @@ import {
 } from "../audio/automate-cellulaire";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE_SANS_AUTO } from "./soundfontGlobal";
 import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
@@ -48,7 +48,7 @@ const FICHES: FicheAudio[] = [
         nom: "Règle",
         nomEn: "Rule",
         type: "choix",
-        options: reglesOptions,
+        options: reglesOptions, optionIds: reglesOptions,
         defaut: "90",
         optionsEn: reglesOptionsEn,
         defautEn: "90",
@@ -69,7 +69,7 @@ const FICHES: FicheAudio[] = [
         nom: "Mode voix",
         nomEn: "Voice mode",
         type: "choix",
-        options: ["Polyphonie", "Mélodie", "Arpège"],
+        options: ["Polyphonie", "Mélodie", "Arpège"], optionIds: ["Polyphonie","Mélodie","Arpège"],
         defaut: "Polyphonie",
         optionsEn: ["Polyphony", "Melody", "Arpeggio"],
         defautEn: "Polyphony",
@@ -80,7 +80,7 @@ const FICHES: FicheAudio[] = [
         nom: "Mapping",
         nomEn: "Mapping",
         type: "choix",
-        options: ["Hauteur", "Vélocité", "Durée", "Hauteur + vélocité"],
+        options: ["Hauteur", "Vélocité", "Durée", "Hauteur + vélocité"], optionIds: ["Hauteur","Vélocité","Durée","Hauteur + vélocité"],
         defaut: "Hauteur",
         optionsEn: ["Pitch", "Velocity", "Duration", "Pitch + velocity"],
         defautEn: "Pitch",
@@ -134,7 +134,7 @@ const FICHES: FicheAudio[] = [
         nom: "Clé",
         nomEn: "Key",
         type: "choix",
-        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"],
+        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"],
         defaut: "Do",
         optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
         defautEn: "C",
@@ -214,13 +214,7 @@ const FICHES: FicheAudio[] = [
         docEn: "Probability of randomly flipping a cell at each generation.",
       },
       {
-        nom: "Synthèse",
-        nomEn: "Synthesis",
-        type: "choix",
-        options: ["FM/Oscillateurs", "SoundFont"],
-        defaut: "FM/Oscillateurs",
-        optionsEn: ["FM/Oscillators", "SoundFont"],
-        defautEn: "FM/Oscillators",
+        ...PARAMETRE_SYNTHESE_SANS_AUTO,
         doc: "Moteur audio pour le rendu : FM/oscillateurs intégrés ou SoundFont global chargé.",
         docEn: "Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont.",
       },

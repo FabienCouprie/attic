@@ -39,6 +39,14 @@ export interface ContexteExecution<TValeur, TRuntime> {
   paramNombre: (nom: string, defaut: number) => number;
   paramTexte: (nom: string, defaut: string) => string;
   onProgress: (msg: string) => void;
+  // Signal d'annulation du run courant (posé par le moteur si l'utilisateur
+  // réinitialise un nœud pendant qu'il tourne — cf. useExecutionGraphe.ts).
+  // Optionnel : la plupart des plugins sont assez rapides pour l'ignorer sans
+  // conséquence. Un plugin avec une boucle longue (des dizaines de secondes ou
+  // plus, ex. traitement piste par piste d'une grande collection) devrait
+  // vérifier `signal?.aborted` entre deux itérations pour s'arrêter au plus
+  // vite plutôt que de continuer en pure perte après un reset.
+  signal?: AbortSignal;
 }
 
 // CONTRAT D'ÉCHEC (résumé — détail dans PORTING-A-DOMAIN.md §4) :

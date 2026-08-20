@@ -4,7 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCamelot, genererSvgCamelot } from "../audio";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], optionIds: ["bloc", "arpege"], defaut: "Bloc", defautEn: "Block",
         doc: "Bloc = notes de l'accord simultanées ; Arpège = notes déclinées.",
         docEn: "Block = chord notes together; Arpeggio = notes played sequentially." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,

@@ -52,6 +52,7 @@ import { fiches as f_phase_vocoder } from "./phase-vocoder";
 import { fiches as f_resonance } from "./resonance";
 import { fiches as f_ddsp } from "./ddsp";
 import { fiches as f_stable_audio_3 } from "./stable-audio-3";
+import { fiches as f_continuation_stable_audio_3 } from "./continuation-stable-audio-3";
 import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
@@ -66,6 +67,8 @@ import { fiches as f_spectre_visible } from "./spectre-visible";
 import { fiches as f_color_looper } from "./color-looper";
 import { fiches as f_camelot } from "./camelot";
 import { fiches as f_entree_image } from "./entree-image";
+import { fiches as f_entree_pdf } from "./entree-pdf";
+import { fiches as f_extraction_pdf } from "./extraction-pdf";
 import { fiches as f_lecteur_svg } from "./lecteur-svg";
 import { fiches as f_separateur_canaux } from "./separateur-canaux";
 import { fiches as f_hard_panner } from "./hard-panner";
@@ -74,6 +77,13 @@ import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
 import { fiches as f_texte_image } from "./texte-image";
 import { fiches as f_legende_image } from "./legende-image";
+import { fiches as f_algebre_musicale } from "./algebre-musicale";
+import { fiches as f_coordonnees_sur_carte } from "./coordonnees-sur-carte";
+import { fiches as f_alignement_dtw } from "./alignement-dtw";
+import { fiches as f_etirement_dtw } from "./etirement-dtw";
+import { fiches as f_pca_neuronale } from "./pca-neuronale";
+import { fiches as f_continuation_spectrale } from "./continuation-spectrale";
+import { fiches as f_accords_vers_notation } from "./accords-vers-notation";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -125,6 +135,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_resonance,
   ...f_ddsp,
   ...f_stable_audio_3,
+  ...f_continuation_stable_audio_3,
   ...f_magenta,
   ...f_pure_data,
   ...f_songsee,
@@ -139,6 +150,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_color_looper,
   ...f_camelot,
   ...f_entree_image,
+  ...f_entree_pdf,
+  ...f_extraction_pdf,
   ...f_lecteur_svg,
   ...f_separateur_canaux,
   ...f_hard_panner,
@@ -147,4 +160,11 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_automate_cellulaire,
   ...f_texte_image,
   ...f_legende_image,
+  ...f_algebre_musicale,
+  ...f_coordonnees_sur_carte,
+  ...f_alignement_dtw,
+  ...f_etirement_dtw,
+  ...f_pca_neuronale,
+  ...f_continuation_spectrale,
+  ...f_accords_vers_notation,
 ];

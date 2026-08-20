@@ -4,7 +4,7 @@
 // cache et la résolution d'entrées reposent sur les fonctions pures testées de
 // core/graphe.ts ; ce hook orchestre l'aplatissement des métas, l'appel des
 // plugins et la remontée des résultats dans l'état React.
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
@@ -21,6 +21,13 @@ import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
 const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
+
+// Champs "signal unique" déjà consommés et effacés (mis à `undefined`) par leurs
+// blocs dédiés plus bas dans `lancer()`, avant la fusion générique des champs
+// autonomes. Exclus explicitement de cette fusion : ce sont des déclencheurs
+// ponctuels (import de graphe, installation de node), pas de l'état d'affichage
+// à faire persister sur le nœud.
+const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_nodeInstalle"]);
 
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
@@ -40,6 +47,7 @@ export const CHAMPS_UTILISATEUR = new Set([
   "audioFichier",
   "audioNom",
   "audioUrl",
+  "audioChemin",
   "midiFichier",
   "midiNom",
   "midiUrl",
@@ -49,11 +57,41 @@ export const CHAMPS_UTILISATEUR = new Set([
   "svgFichier",
   "svgNom",
   "svgUrl",
+  "pdfFichier",
+  "pdfNom",
   "irFichier",
   "irNom",
   "enregistrementBlob",
   "enregistrementUrl",
 ]);
+
+// Média chargé par l'utilisateur SUR CE NŒUD précis.
+//
+// Ces champs restent dans CHAMPS_UTILISATEUR — ils doivent absolument survivre
+// à une cascade de réinitialisation, sans quoi lancer le graphe ferait perdre à
+// l'utilisateur le fichier qu'il a chargé. Mais ils ne doivent pas être
+// DUPLIQUÉS : un « Entrée audio » collé arrivait avec le fichier de l'original,
+// donc un lecteur affichant déjà une durée de piste, alors que ce nœud n'a rien
+// reçu ni rien exécuté. Un nœud copié doit arriver vierge, prêt à recevoir son
+// propre fichier.
+//
+// La distinction ne vaut que pour la COPIE (Ctrl+C). Un couper-coller (Ctrl+X)
+// est un déplacement, pas une duplication : l'original disparaît, donc le média
+// doit suivre — l'oublier là reviendrait à le détruire.
+export const CHAMPS_MEDIA_LOCAL = new Set([
+  "audioFichier", "audioNom", "audioUrl", "audioChemin",
+  "midiFichier", "midiNom", "midiUrl",
+  "imageFichier", "imageNom", "imageUrl",
+  "svgFichier", "svgNom", "svgUrl",
+  "pdfFichier", "pdfNom",
+  "irFichier", "irNom",
+  "enregistrementBlob", "enregistrementUrl",
+]);
+
+/** Champs retenus par un copier-coller (Ctrl+C) : saisie utilisateur, média exclu. */
+export const CHAMPS_COPIABLES = new Set(
+  [...CHAMPS_UTILISATEUR].filter((c) => !CHAMPS_MEDIA_LOCAL.has(c)),
+);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -80,6 +118,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
     onGrapheGenere, onNodeInstalle,
   } = o;
 
+  // Annulation d'un run en cours : un seul AbortController pour tout `lancer()`
+  // (le moteur exécute les nœuds en séquence dans une seule boucle — pas de
+  // granularité par nœud). `enCoursRef` existe séparément de `enExecRef` (qui
+  // ne suit QUE les runs globaux, pas un run ciblé sur un seul nœud
+  // prioritaire) : sans lui, réinitialiser pendant un run ciblé ne détecterait
+  // aucune exécution en cours et n'annulerait rien.
+  const enCoursRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   async function obtenirAudio() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
     if (audioCtxRef.current.state === "suspended") {
@@ -101,6 +148,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
   // ── Réinitialiser un ensemble de nœuds ──
   const reinitialiserIds = useCallback((ids: Set<string>) => {
+    // Un reset pendant un run en cours signale l'annulation : sans ça, le nœud
+    // en cours de calcul (ex. extraction de features piste par piste sur une
+    // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
+    // de réinitialiser dès son prochain onProgress ou sa fin d'exécution.
+    if (enCoursRef.current) abortControllerRef.current?.abort();
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
       if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
@@ -169,6 +221,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       enExecRef.current = true;
       setEnExecution(true);
     }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
@@ -266,6 +321,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const tempsParVisible = new Map<string, number>();
 
     for (let i = 0; i < ordreFiltre.length; i++) {
+      // Run annulé (reset pendant l'exécution) : arrêter d'enchaîner les nœuds
+      // suivants. Le nœud éventuellement en cours au moment de l'annulation est
+      // géré séparément plus bas (il faut laisser sa promesse se résoudre).
+      if (controller.signal.aborted) break;
       const nodeId = ordreFiltre[i];
       // Sauter les nœuds en erreur (connexion illégale) — déjà marqués « erreur »
       if (noeudsEnErreur.has(nodeId)) continue;
@@ -361,11 +420,32 @@ export function useExecutionGraphe(o: OptionsExecution) {
             if (typeof p === "string" && pDef) {
               return String(valeurCanoniqueChoix(pDef, p));
             }
-            const defautEff = typeof pDef?.defautEn === "string" ? pDef.defautEn : defaut;
-            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defautEff;
+            // Repli sur le défaut DÉCLARÉ PAR LA FICHE (`defaut`, français),
+            // jamais `defautEn` : la forme canonique d'un « choix » est celle
+            // de la liste `options`, et un plugin compare la valeur reçue à ses
+            // propres termes français (ex. profilCouleur("Bleu")). Préférer
+            // `defautEn` renvoyait "Blue" quand le paramètre était absent de
+            // `parametres` (ancien workflow, JSON écrit à la main) et faisait
+            // échouer le nœud sur « Couleur 1 inconnue : Blue » — alors que
+            // l'inspecteur, lui, affichait bien « Bleu ». Cf. defautCanoniqueChoix.
+            const defautEff = pDef ? pDef.defaut : defaut;
+            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defaut;
           },
-          onProgress: (msg: string) => definirStatut(nodeId, "en_cours", msg),
+          // Ignorer un onProgress qui arrive après annulation : la piste déjà en
+          // vol au moment du reset (son await ne vérifie pas `signal` en plein
+          // milieu) peut encore appeler onProgress une dernière fois une fois
+          // résolue — sans cette garde, ce message réaffiche « en cours » par
+          // dessus l'état « attente » que le reset vient de poser, sans plus
+          // jamais être corrigé (l'application du résultat final est, elle,
+          // déjà court-circuitée par la garde juste après cet appel).
+          onProgress: (msg: string) => { if (!controller.signal.aborted) definirStatut(nodeId, "en_cours", msg); },
+          signal: controller.signal,
         });
+        // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
+        // plugin a ignoré `signal`, ou a fini pile au moment de l'annulation) :
+        // ne pas écraser l'état déjà remis à « attente » par le reset avec un
+        // résultat/statut « terminé » ou « erreur » périmé.
+        if (controller.signal.aborted) break;
         resultats.set(nodeId, res.valeurs as TypeValeur[]);
         if (res.message) messages.set(nodeId, res.message);
         // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
@@ -390,6 +470,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(elapsed);
         }
       } catch (e: any) {
+        // Même garde que côté succès : une exception levée après annulation
+        // (ex. le plugin vérifie `signal.aborted` et lève pour sortir vite de
+        // sa boucle) ne doit pas non plus marquer le nœud « erreur ».
+        if (controller.signal.aborted) break;
         // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
         // ET remontée sur le nœud (statut « erreur » + message).
         const elapsed = performance.now() - start;
@@ -587,9 +671,43 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     }
 
+    // Fusion générique des champs "autonomes" (préfixés `_`, ex. `_carteHtmlUrl`,
+    // `_carteSonore`) qu'un plugin à `affichageAutonome: true` écrit sur
+    // `ctx.noeud.data` pendant son exécution. `ctx.noeud` pointe vers l'entrée
+    // de `nds` (l'instantané local aplati de ce run), pas vers l'état React réel
+    // — une mutation faite là ne serait donc jamais vue par personne sans cette
+    // passe (même cause que `_grapheGenere`/`_grapheEmbarque`/`_nodeInstalle`
+    // ci-dessus, qui ont chacun leur propre correctif ciblé). Volontairement
+    // placée en dernier : les trois blocs précédents effacent leurs champs une
+    // fois consommés, donc cette passe les recopie à `undefined` (no-op) plutôt
+    // que de risquer de les redéclencher.
+    const champsAutonomesParNoeud = new Map<string, Record<string, unknown>>();
+    for (const n of nds) {
+      const d = n.data as any;
+      if (!d) continue;
+      let champs: Record<string, unknown> | null = null;
+      for (const cle of Object.keys(d)) {
+        if (!cle.startsWith("_") || CHAMPS_SIGNAL_UNIQUE.has(cle)) continue;
+        (champs ??= {})[cle] = d[cle];
+      }
+      if (champs) champsAutonomesParNoeud.set(n.id, champs);
+    }
+    if (champsAutonomesParNoeud.size > 0) {
+      setNodes((nds2) =>
+        nds2.map((n) => {
+          const champs = champsAutonomesParNoeud.get(n.id);
+          if (!champs) return n;
+          const change = Object.keys(champs).some((cle) => (n.data as any)[cle] !== champs[cle]);
+          return change ? { ...n, data: { ...n.data, ...champs } } : n;
+        })
+      );
+    }
+
     } catch (e: any) {
       console.error("lancer error", e);
     } finally {
+      enCoursRef.current = false;
+      if (abortControllerRef.current === controller) abortControllerRef.current = null;
       // Seul le run global a positionné le spinner/flag ; une exécution ciblée
       // (nœud prioritaire) ne doit PAS effacer l'état d'un run global encore en cours.
       if (estGlobal) setEnExecution(false);

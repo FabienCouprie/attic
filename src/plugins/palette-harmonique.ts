@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererPaletteHarmonique, GAMMES_ACCORDS, type CouleurExtraite } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const formatCouleur = (c: CouleurExtraite) => `rgb(${c.r},${c.g},${c.b})`;
 
@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
         doc: "Gamme sur laquelle mapper les teintes (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
         docEn: "Scale used to map hues (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpège"], optionsEn: ["Melody", "Harmony", "Arpeggio"], defaut: "Mélodie", defautEn: "Melody",
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpège"], optionIds: ["melodie","harmonie","arpege"], optionsEn: ["Melody", "Harmony", "Arpeggio"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par couleur ; Harmonie = accord triadique par couleur ; Arpège = accord triadique joué note après note.", docEn: "Melody = one note per color; Harmony = triad chord per color; Arpeggio = triad chord played one note after another." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base des notes générées.", docEn: "Base octave of generated notes." },
@@ -45,9 +45,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée totale de la séquence audio/MIDI.", docEn: "Total duration of the audio/MIDI sequence." },
       { nom: "Couleurs", nomEn: "Colors", type: "nombre", plage: [2, 12], pas: 1, defaut: 4,
         doc: "Nombre de couleurs dominantes à extraire.", docEn: "Number of dominant colors to extract." },
-      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Horizontal", "Vertical", "Luminosité", "Saturation"], optionsEn: ["Horizontal", "Vertical", "Brightness", "Saturation"], defaut: "Horizontal", defautEn: "Horizontal",
+      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Horizontal", "Vertical", "Luminosité", "Saturation"], optionIds: ["Horizontal","Vertical","Luminosité","Saturation"], optionsEn: ["Horizontal", "Vertical", "Brightness", "Saturation"], defaut: "Horizontal", defautEn: "Horizontal",
         doc: "Ordre de lecture des couleurs dans la séquence.", docEn: "Reading order of colors in the sequence." },
-      { nom: "Synthèse", nomEn: "Synthesis", type: "choix", options: ["Automatique", "FM/Oscillateurs", "SoundFont"], optionsEn: ["Auto", "FM/Oscillators", "SoundFont"], defaut: "Automatique", defautEn: "Auto",
+      { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
