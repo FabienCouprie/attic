@@ -251,3 +251,27 @@ export function tramesDepuisBuffer(
   return trames;
 }
 
+
+/**
+ * Contexte audio destiné au SEUL décodage de fichiers (`decodeAudioData`).
+ *
+ * `new AudioContext()` ouvre un vrai périphérique de SORTIE, alors que décoder
+ * n'a rien à jouer. Conséquence : sur une machine sans sortie audio — poste dont
+ * l'audio est désactivé, session distante, serveur, runner d'intégration
+ * continue — la construction échoue (« DeviceUnavailable: No output device
+ * available ») et le nœud tombe en erreur alors que rien ne devait sortir par
+ * les haut-parleurs. Un `OfflineAudioContext` fait exactement le même travail
+ * sans réclamer de périphérique.
+ *
+ * La fréquence est fixée à 48 kHz parce que `decodeAudioData` RÉÉCHANTILLONNE
+ * toujours vers la fréquence du contexte : la valeur n'est donc pas neutre. Un
+ * `AudioContext` adopte celle de la carte son — mesuré à 48 kHz ici, valeur
+ * usuelle sous Chromium/Electron —, si bien que le résultat d'une conversion
+ * dépendait jusqu'ici du matériel de l'utilisateur. Le figer rend le décodage
+ * déterministe d'une machine à l'autre, et conserve le comportement observé.
+ */
+export const SR_DECODAGE = 48000;
+
+export function contexteDecodage(): OfflineAudioContext {
+  return new OfflineAudioContext(1, 1, SR_DECODAGE);
+}

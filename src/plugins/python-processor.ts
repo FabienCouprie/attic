@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
+import { contexteDecodage } from "../audio/commun";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -241,10 +242,9 @@ export const fiches: FicheAudio[] = ([
         const rep = await api.lireBinaire(outputPath);
         if (rep?.donnees) {
           const ab = rep.donnees.buffer.slice(rep.donnees.byteOffset, rep.donnees.byteOffset + rep.donnees.byteLength);
-          const ac = new AudioContext();
+          const ac = contexteDecodage();
           const decoded = await ac.decodeAudioData(ab);
           sorties[0] = securiserAmplitude(decoded, 0.5);
-          ac.close();
         }
       } catch {}
 

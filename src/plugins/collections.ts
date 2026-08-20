@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { contexteDecodage } from "../audio/commun";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -33,9 +34,8 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = new AudioContext();
+          const actx = contexteDecodage();
           const buf = await actx.decodeAudioData(ab);
-          actx.close();
           const { bufferVersMp3Blob } = await import("../audio");
           const blob = await bufferVersMp3Blob(buf, qualite);
           const arr = await blob.arrayBuffer();
@@ -74,9 +74,8 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = new AudioContext();
+          const actx = contexteDecodage();
           const buf = await actx.decodeAudioData(ab);
-          actx.close();
           const { bufferVersWavBlob } = await import("../audio");
           const blob = bufferVersWavBlob(buf);
           const arr = await blob.arrayBuffer();

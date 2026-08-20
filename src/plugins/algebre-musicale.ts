@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { classifierPistes, calculerMoyennesParGroupe, type PisteVectorisee, type ResultatClassificationPistes, type RapportMoyennesGroupes } from "../audio/classification-pistes";
 import { extraireVecteurFeatures } from "../audio/features-piste";
+import { contexteDecodage } from "../audio/commun";
 
 const EXTENSIONS_AUDIO = [".wav", ".wave", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".webm"];
 
@@ -195,7 +196,10 @@ export function avecTimeout<T>(promesse: Promise<T>, ms: number): Promise<T> {
 // pour l'utilisateur). Chaque étape est donc plafonnée : au-delà du délai,
 // la piste est traitée comme un échec de décodage (silencieusement ignorée,
 // comme les autres échecs), pas comme une erreur fatale pour le lot entier.
-async function decoderPiste(api: any, chemin: string, actx: AudioContext): Promise<AudioBuffer | null> {
+// `BaseAudioContext` et non `AudioContext` : seul `decodeAudioData` est utilisé
+// ici, et il appartient à la classe de base — ce qui laisse passer un
+// OfflineAudioContext, qui décode sans réclamer de périphérique de sortie.
+async function decoderPiste(api: any, chemin: string, actx: BaseAudioContext): Promise<AudioBuffer | null> {
   try {
     const lu = await avecTimeout<{ url?: string } | null>(api.lireFichierAudio(chemin), TIMEOUT_DECODAGE_MS);
     if (!lu?.url) return null;
@@ -266,8 +270,12 @@ export const fiches: FicheAudio[] = ([
       // plantage par épuisement mémoire sur une vraie collection.
       const pistes: PisteVectorisee[] = [];
       const ignorees: string[] = [];
-      const actx = new AudioContext();
-      try {
+      const actx = contexteDecodage();
+      // Le `try { … } finally { actx.close() }` qui enveloppait cette boucle a
+      // disparu avec le passage à OfflineAudioContext : celui-ci ne détient
+      // aucun périphérique, il n'y a rien à libérer (et `close` n'existe pas
+      // dessus). Le bloc n'avait pas d'autre rôle — aucun `catch`.
+      {
         for (let i = 0; i < fichiers.length; i++) {
           // Réinitialiser ce nœud pendant l'extraction (souvent le plus long,
           // sur une grande collection) posait `ctx.signal.aborted` : sortir
@@ -284,8 +292,6 @@ export const fiches: FicheAudio[] = ([
           pistes.push({ nom: f.nom, chemin: f.chemin, features });
           await attendreProchainTick();
         }
-      } finally {
-        actx.close();
       }
       if (ctx.signal?.aborted) {
         return { valeurs: [null, null, null, null, null], message: traduire("msg.classification_annulee") };
