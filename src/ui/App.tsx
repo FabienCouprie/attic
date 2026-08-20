@@ -23,7 +23,7 @@ import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe, CHAMPS_UTILISATEUR } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
@@ -675,14 +675,17 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
-          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
-          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
-          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
-          // joue le résultat de l'original avant même d'avoir tourné lui-même.
+          // Allowlist de COPIE : les champs saisis par l'utilisateur (ficheId,
+          // paramètres…), jamais les résultats calculés (buffer audio, URL blob,
+          // message…) — sinon le nœud dupliqué affiche ou joue le résultat de
+          // l'original avant d'avoir tourné lui-même — et jamais non plus le média
+          // chargé sur l'original (CHAMPS_MEDIA_LOCAL) : un « Entrée audio » collé
+          // arrivait avec un lecteur affichant déjà une durée de piste alors qu'il
+          // n'avait rien reçu. Le couper-coller, lui, conserve le média (voir Ctrl+X).
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;
-            if (!CHAMPS_UTILISATEUR.has(k)) continue;
+            if (!CHAMPS_COPIABLES.has(k)) continue;
             data[k] = v;
           }
           return {
@@ -705,10 +708,11 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
         pressePapierRef.current = selection.map((n) => {
           const d = n.data as Record<string, unknown>;
-          // Allowlist : uniquement les champs saisis par l'utilisateur (ficheId,
-          // paramètres, fichiers chargés…), jamais les résultats calculés (buffer
-          // audio, URL blob, message…) — sinon le nœud collé/dupliqué affiche ou
-          // joue le résultat de l'original avant même d'avoir tourné lui-même.
+          // Allowlist de COUPE : identique à la copie pour les résultats calculés,
+          // mais le média chargé (fichier audio/image/MIDI…) est ici CONSERVÉ. Un
+          // couper-coller est un déplacement, pas une duplication : l'original est
+          // supprimé juste après, donc laisser le média derrière reviendrait à le
+          // détruire.
           const data: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(d)) {
             if (typeof v === "function") continue;

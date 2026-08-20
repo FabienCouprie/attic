@@ -1,6 +1,6 @@
 // plugins/sherpa-asr.test.ts — Tests structurels du nœud Sherpa-ONNX ASR.
-import { describe, it, expect } from "vitest";
-import { fiches, resamplerLineaireVers16k, resamplerVers16k } from "./sherpa-asr";
+import { describe, it, expect, vi } from "vitest";
+import { fiches, resamplerLineaireVers16k, resamplerVers16k, sendInit } from "./sherpa-asr";
 
 describe("sherpa-asr", () => {
   it("exposes a single Sherpa ASR node", () => {
@@ -54,5 +54,80 @@ describe("sherpa-asr", () => {
     const out = await resamplerVers16k(mono, sr, "Haute (Web Audio)");
     expect(out.length).toBe(16000);
     expect(out).toBeInstanceOf(Float32Array);
+  });
+});
+
+// ── Chien de garde d'initialisation ──
+// Au premier usage, le worker télécharge ~104 Mo de modèles depuis HuggingFace.
+// Le délai était auparavant une échéance ABSOLUE de 120 s couvrant ce
+// téléchargement : en deçà de ~6,9 Mbit/s soutenus, un transfert parfaitement
+// sain était tué en cours de route. Il porte désormais sur l'INACTIVITÉ.
+describe("sherpa-asr — délai d'initialisation", () => {
+  // Worker minimal : on pilote nous-mêmes les messages qu'il « émet ».
+  function workerFactice() {
+    const ecouteurs: ((e: any) => void)[] = [];
+    return {
+      addEventListener: (_t: string, f: any) => { ecouteurs.push(f); },
+      removeEventListener: (_t: string, f: any) => {
+        const i = ecouteurs.indexOf(f);
+        if (i >= 0) ecouteurs.splice(i, 1);
+      },
+      postMessage: () => {},
+      emettre: (data: any) => { for (const f of [...ecouteurs]) f({ data }); },
+      get nbEcouteurs() { return ecouteurs.length; },
+    };
+  }
+
+  // Récupère le requestId que sendInit vient d'allouer, en interceptant le
+  // premier postMessage.
+  function poser() {
+    const w = workerFactice() as any;
+    let requestId: string | undefined;
+    w.postMessage = (m: any) => { requestId = m.requestId; };
+    const p = sendInit(w, {} as any);
+    return { w, p, id: () => requestId! };
+  }
+
+  it("un téléchargement qui progresse ne déclenche pas le délai, même au-delà de la durée totale", async () => {
+    vi.useFakeTimers();
+    try {
+      const { w, p, id } = poser();
+      let resolu = false;
+      p.then(() => { resolu = true; });
+      // 10 minutes de téléchargement, un signe de vie toutes les 90 s :
+      // largement au-delà des 120 s de l'ancienne échéance absolue.
+      for (let i = 0; i < 7; i++) {
+        await vi.advanceTimersByTimeAsync(90000);
+        w.emettre({ requestId: id(), type: "progress", filename: "tiny-decoder.int8.onnx", percent: i * 14 });
+      }
+      expect(resolu).toBe(false);            // pas encore prêt…
+      w.emettre({ requestId: id(), type: "ready" });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(resolu).toBe(true);             // …mais surtout jamais rejeté
+      await expect(p).resolves.toBeUndefined();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("un téléchargement réellement bloqué déclenche toujours le délai", async () => {
+    vi.useFakeTimers();
+    try {
+      const { w, p, id } = poser();
+      const attendu = expect(p).rejects.toThrow();
+      w.emettre({ requestId: id(), type: "progress", filename: "tiny-encoder.int8.onnx", percent: 5 });
+      await vi.advanceTimersByTimeAsync(120001);   // plus rien n'arrive
+      await attendu;
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("n'accumule pas d'écouteur mort sur le worker partagé après une expiration", async () => {
+    vi.useFakeTimers();
+    try {
+      const { w, p } = poser();
+      const attendu = expect(p).rejects.toThrow();
+      expect(w.nbEcouteurs).toBe(1);
+      await vi.advanceTimersByTimeAsync(120001);
+      await attendu;
+      expect(w.nbEcouteurs).toBe(0);
+    } finally { vi.useRealTimers(); }
   });
 });

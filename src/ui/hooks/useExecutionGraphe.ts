@@ -65,6 +65,34 @@ export const CHAMPS_UTILISATEUR = new Set([
   "enregistrementUrl",
 ]);
 
+// Média chargé par l'utilisateur SUR CE NŒUD précis.
+//
+// Ces champs restent dans CHAMPS_UTILISATEUR — ils doivent absolument survivre
+// à une cascade de réinitialisation, sans quoi lancer le graphe ferait perdre à
+// l'utilisateur le fichier qu'il a chargé. Mais ils ne doivent pas être
+// DUPLIQUÉS : un « Entrée audio » collé arrivait avec le fichier de l'original,
+// donc un lecteur affichant déjà une durée de piste, alors que ce nœud n'a rien
+// reçu ni rien exécuté. Un nœud copié doit arriver vierge, prêt à recevoir son
+// propre fichier.
+//
+// La distinction ne vaut que pour la COPIE (Ctrl+C). Un couper-coller (Ctrl+X)
+// est un déplacement, pas une duplication : l'original disparaît, donc le média
+// doit suivre — l'oublier là reviendrait à le détruire.
+export const CHAMPS_MEDIA_LOCAL = new Set([
+  "audioFichier", "audioNom", "audioUrl", "audioChemin",
+  "midiFichier", "midiNom", "midiUrl",
+  "imageFichier", "imageNom", "imageUrl",
+  "svgFichier", "svgNom", "svgUrl",
+  "pdfFichier", "pdfNom",
+  "irFichier", "irNom",
+  "enregistrementBlob", "enregistrementUrl",
+]);
+
+/** Champs retenus par un copier-coller (Ctrl+C) : saisie utilisateur, média exclu. */
+export const CHAMPS_COPIABLES = new Set(
+  [...CHAMPS_UTILISATEUR].filter((c) => !CHAMPS_MEDIA_LOCAL.has(c)),
+);
+
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
