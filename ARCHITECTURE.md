@@ -67,7 +67,7 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 
 > **Statut re-vérifié le 2026-08-03** contre le code réel (l'app était alors
 > restée sur cette feuille de route depuis ~v2.2.1). Voir la note sous chaque
-> case. L'app est aujourd'hui en **v3.1.2** : les cases ci-dessous n'ont pas
+> case. L'app est aujourd'hui en **v3.1.3** : les cases ci-dessous n'ont pas
 > été re-vérifiées depuis, `CHANGELOG.md` fait foi.
 
 ### Court terme (avant la prochaine release)
