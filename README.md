@@ -160,7 +160,11 @@ Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workfl
 
 The bundled AI models (`public/oonx`) and SoundFont (`public/sf2`) are **not stored in Git**. They are packaged as `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. The workflow downloads and extracts this archive before building.
 
-If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release.
+If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release. **Nothing checks this**: the workflow extracts whatever `assets.zip` currently holds, so a forgotten upload silently ships an installer with stale models — no warning, no build failure.
+
+> **Do not build and upload the installer by hand.** It looks equivalent and is not. `electron-builder` emits `latest.yml` alongside the `.exe`, and `electron-updater` fetches that file *first*: without it, every installed client fails its update check with `Cannot find latest.yml in the latest release artifacts`, while the release page still looks complete. Releases 3.1.0 and 3.1.1 shipped that way and had no working auto-update until 3.1.3. A hand-made build also skips what the workflow does on purpose — disabling asar (packaging this app's bundled assets into a single archive exhausts memory) and pruning `dependencies` to the four modules the main process actually loads.
+>
+> Push the tag and let the workflow publish. If its output is wrong, fix the workflow rather than working around it.
 
 ## License
 
