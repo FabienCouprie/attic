@@ -6,11 +6,21 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [3.1.3] — 2026-08-20
 
-> L'installeur de cette version a été **remplacé le jour même** de sa publication.
-> Le premier binaire ne contenait pas le correctif de décodage audio ci-dessous,
-> découvert juste après la mise en ligne. Le `v3.1.3.exe` en ligne, son
-> `latest.yml` et son `.blockmap` correspondent tous au second binaire, et le tag
-> `v3.1.3` pointe sur les sources exactes de celui-ci.
+> L'installeur de cette version a été **remplacé le jour même** de sa publication :
+> le premier binaire ne contenait pas le correctif de décodage audio ci-dessous,
+> découvert juste après la mise en ligne. L'installeur distribué est
+> `Attic-Setup-3.1.3.exe`, produit par le workflow `Release Electron` depuis le
+> commit sur lequel pointe le tag `v3.1.3` ; `latest.yml` et le `.blockmap` de la
+> release lui correspondent.
+>
+> Les binaires des versions 3.1.1 à 3.1.3 avaient jusqu'ici été construits à la
+> main et téléversés à part, d'où le nom `vX.Y.Z.exe` sur ces releases — et d'où
+> l'absence de `latest.yml` sur les 3.1.0 et 3.1.1, qui rendait la mise à jour
+> automatique inopérante. Le chemin documenté dans le README (pousser un tag
+> `v*.*.*`, le workflow construit et publie) redevient la référence : il télécharge
+> lui-même `assets.zip`, l'archive des modèles exclus de git. Seule obligation
+> associée : **régénérer `assets.zip` dès qu'un modèle embarqué change**, sans quoi
+> la CI construirait avec des modèles périmés sans rien signaler.
 
 ### Fixed
 - **Les nœuds qui décodent des fichiers audio échouaient sur toute machine sans périphérique de sortie.** « Classification de pistes » (Algèbre musicale), les deux convertisseurs de collection (MP3 et WAV), Python Processor et Julia Processor ouvraient un `new AudioContext()` — donc un vrai périphérique de SORTIE — alors qu'ils ne font que `decodeAudioData` : rien n'est joué. Sur un poste dont l'audio est désactivé, en session distante, sur un serveur ou un runner d'intégration continue, la construction échoue (`DeviceUnavailable: No output device available`) et le nœud tombe en erreur sans rapport avec ce qu'il tentait de faire. Ces cinq appels passent à un `OfflineAudioContext`, qui décode sans réclamer de périphérique (nouveau `contexteDecodage()` dans `audio/commun.ts`, qui centralise aussi la justification). Le `close()` qui les accompagnait disparaît : un contexte hors-ligne ne détient rien à libérer, et la méthode n'existe pas dessus. Point important, car la valeur n'est pas neutre : `decodeAudioData` **rééchantillonne toujours vers la fréquence du contexte**, si bien que le résultat d'une conversion dépendait jusqu'ici de la carte son de l'utilisateur. La fréquence est fixée à 48 kHz — mesurée comme celle d'un `AudioContext` sous Chromium/Electron — ce qui rend le décodage déterministe d'une machine à l'autre tout en conservant le comportement observé. Vérifié sur le décodage d'un même WAV avant et après : 48 000 Hz, 48 000 échantillons et pic 0,6104 dans les deux cas. Découvert parce que ce défaut bloquait la CI depuis `1c617d3` : les runners GitHub n'ont pas de sortie audio, et 3 tests d'`algebre-musicale-executer.test.ts` échouaient donc systématiquement — check obligatoire de `master`, `enforce_admins` actif, aucune fusion possible. Les `AudioContext` restants (lecture, oscilloscope, spectre, VU-mètre) jouent ou analysent réellement du son en direct et gardent leur sortie.
