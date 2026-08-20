@@ -64,17 +64,23 @@ describe("sherpa-asr", () => {
 // sain était tué en cours de route. Il porte désormais sur l'INACTIVITÉ.
 describe("sherpa-asr — délai d'initialisation", () => {
   // Worker minimal : on pilote nous-mêmes les messages qu'il « émet ».
+  // Les écouteurs sont rangés PAR TYPE. Une première version les mettait tous
+  // dans une même liste : les messages étaient alors livrés aussi à l'écouteur
+  // d'erreur, et les tests échouaient sur un défaut du double, pas du code.
   function workerFactice() {
-    const ecouteurs: ((e: any) => void)[] = [];
+    const ecouteurs = new Map<string, ((e: any) => void)[]>();
+    const pour = (t: string) => ecouteurs.get(t) ?? (ecouteurs.set(t, []), ecouteurs.get(t)!);
     return {
-      addEventListener: (_t: string, f: any) => { ecouteurs.push(f); },
-      removeEventListener: (_t: string, f: any) => {
-        const i = ecouteurs.indexOf(f);
-        if (i >= 0) ecouteurs.splice(i, 1);
+      addEventListener: (t: string, f: any) => { pour(t).push(f); },
+      removeEventListener: (t: string, f: any) => {
+        const l = pour(t);
+        const i = l.indexOf(f);
+        if (i >= 0) l.splice(i, 1);
       },
       postMessage: () => {},
-      emettre: (data: any) => { for (const f of [...ecouteurs]) f({ data }); },
-      get nbEcouteurs() { return ecouteurs.length; },
+      emettre: (data: any) => { for (const f of [...pour("message")]) f({ data }); },
+      emettreErreur: (message: string) => { for (const f of [...pour("error")]) f({ type: "error", message }); },
+      get nbEcouteurs() { return [...ecouteurs.values()].reduce((n, l) => n + l.length, 0); },
     };
   }
 
@@ -124,10 +130,41 @@ describe("sherpa-asr — délai d'initialisation", () => {
     try {
       const { w, p } = poser();
       const attendu = expect(p).rejects.toThrow();
-      expect(w.nbEcouteurs).toBe(1);
+      expect(w.nbEcouteurs).toBe(2);   // message + error
       await vi.advanceTimersByTimeAsync(120001);
       await attendu;
       expect(w.nbEcouteurs).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+});
+
+// Un worker qui meurt au démarrage — script introuvable, importScripts en échec —
+// n'envoie aucun message. Sans écouteur d'erreur, on attendait les deux minutes
+// du chien de garde pour annoncer une « expiration », en laissant croire à un
+// téléchargement trop lent alors que rien n'avait commencé.
+describe("sherpa-asr — worker qui ne démarre pas", () => {
+  function workerMort() {
+    const ecouteurs = new Map<string, ((e: any) => void)[]>();
+    const pour = (t: string) => ecouteurs.get(t) ?? (ecouteurs.set(t, []), ecouteurs.get(t)!);
+    return {
+      addEventListener: (t: string, f: any) => { pour(t).push(f); },
+      removeEventListener: (t: string, f: any) => { const l = pour(t); const i = l.indexOf(f); if (i >= 0) l.splice(i, 1); },
+      postMessage: () => {},
+      emettreErreur: (m: string) => { for (const f of [...pour("error")]) f({ type: "error", message: m }); },
+      get nbEcouteurs() { return [...ecouteurs.values()].reduce((n, l) => n + l.length, 0); },
+    };
+  }
+
+  it("rejette immédiatement, sans attendre le délai d'inactivité", async () => {
+    vi.useFakeTimers();
+    try {
+      const w = workerMort() as any;
+      const p = sendInit(w, {} as any);
+      const attendu = expect(p).rejects.toThrow(/worker/i);
+      w.emettreErreur("Failed to load script");
+      await vi.advanceTimersByTimeAsync(0);   // aucun temps écoulé : pas d'attente
+      await attendu;
+      expect(w.nbEcouteurs).toBe(0);          // les deux écouteurs sont retirés
     } finally { vi.useRealTimers(); }
   });
 });

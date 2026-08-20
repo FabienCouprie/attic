@@ -30,7 +30,21 @@ let currentConfigHash: string | null = null;
 
 function getWorker(): Worker {
   if (!worker) {
-    worker = new Worker("/sherpa-asr-worker.js", { type: "classic" });
+    // Chemin RELATIF au document, pas absolu. L'application packagée est chargée
+    // par `fenetre.loadFile()` (electron/main.cjs), donc en `file://` : un
+    // « /sherpa-asr-worker.js » y désigne la racine du disque
+    // (file:///C:/sherpa-asr-worker.js) et non le dossier de l'app. Le worker
+    // n'était alors jamais créé, aucun message ne revenait, et l'initialisation
+    // expirait au bout de deux minutes sur un message parlant de téléchargement
+    // — alors que rien n'avait même commencé à être téléchargé. Le défaut ne se
+    // voyait pas en développement, où Vite sert bien la racine `/`.
+    //
+    // `document.baseURI` pointe sur index.html : la résolution donne le bon
+    // dossier dans les deux cas. Ce worker est un script CLASSIQUE servi depuis
+    // `public/`, d'où cette forme plutôt que le `new URL(..., import.meta.url)`
+    // employé par les douze autres workers du projet, qui sont des modules
+    // passant par le graphe de build de Vite.
+    worker = new Worker(new URL("sherpa-asr-worker.js", document.baseURI), { type: "classic" });
   }
   return worker;
 }
@@ -195,16 +209,32 @@ export function sendInit(w: Worker, config: SherpaWorkerConfig, onProgress?: (de
     // un flux vivant, même lent, ne peut donc pas déclencher le chien de
     // garde, tandis qu'une connexion réellement bloquée le déclenche toujours.
     let timer: ReturnType<typeof setTimeout>;
-    const terminer = () => { clearTimeout(timer); w.removeEventListener("message", onMsg); };
+    const terminer = () => {
+      clearTimeout(timer);
+      w.removeEventListener("message", onMsg);
+      w.removeEventListener("error", onErr);
+    };
     const armer = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        // L'écouteur était laissé en place sur expiration : le worker étant
-        // partagé et durable, chaque échec y accumulait un écouteur mort.
-        w.removeEventListener("message", onMsg);
+        // Les écouteurs étaient laissés en place sur expiration : le worker
+        // étant partagé et durable, chaque échec y accumulait un écouteur mort.
+        terminer();
         reject(new Error(traduire("msg.sherpa_asr.init_timeout")));
       }, INIT_INACTIVITE_MS);
     };
+    // Un worker qui meurt au démarrage — script introuvable, `importScripts`
+    // en échec — n'envoie évidemment aucun message : sans cet écouteur, on
+    // attendait les deux minutes du chien de garde pour annoncer une
+    // « expiration », en laissant croire à un téléchargement trop lent alors que
+    // rien n'avait commencé. On signale désormais la vraie cause tout de suite,
+    // et on oublie le worker mort pour que la tentative suivante en recrée un.
+    const onErr = (e: ErrorEvent) => {
+      terminer();
+      worker = null;
+      reject(new Error(traduire("msg.sherpa_asr.worker_indisponible", e?.message || String(e?.type ?? ""))));
+    };
+    w.addEventListener("error", onErr);
     const onMsg = (e: MessageEvent) => {
       const msg = e.data;
       if (msg.requestId !== requestId) return;

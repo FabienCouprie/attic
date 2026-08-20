@@ -2,8 +2,14 @@
 // Chargement via importScripts() car les modules Sherpa-ONNX sont des scripts
 // globaux (Emscripten + wrappers) non compatibles avec les workers modules Vite.
 
+// Résolu depuis l'emplacement du worker, jamais en chemin absolu : l'application
+// packagée est chargée en `file://`, où « /sherpa-onnx-wasm/ » désigne la racine
+// du disque (file:///C:/sherpa-onnx-wasm/) et non le dossier de l'app. Les
+// `importScripts` échouaient donc dès le démarrage du worker, qui mourait sans
+// jamais répondre — l'initialisation expirait ensuite sur un message parlant de
+// téléchargement. Invisible en développement, où Vite sert bien la racine `/`.
 // eslint-disable-next-line no-unused-vars
-const SHERPA_WASM_BASE = "/sherpa-onnx-wasm/";
+const SHERPA_WASM_BASE = new URL("sherpa-onnx-wasm/", self.location.href).href;
 
 // Configuration du runtime Emscripten avant de charger le glue WASM.
 self.Module = {
