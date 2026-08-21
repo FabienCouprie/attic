@@ -4,6 +4,9 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+- **Publication : le workflow perdait un asset sans jamais échouer.** `electron-builder --win -p always` téléversait lui-même les artefacts, et le job se terminait sans attendre la fin des envois — avec un code de retour nul. Deux releases sur deux en ont fait les frais : la **v3.1.4** a perdu son `.blockmap`, la **v3.1.5** son installeur de 1,66 Go et son `latest.yml`, le job s'achevant 98 secondes après le début d'un téléversement de cette taille. La v3.1.5 se retrouvait ainsi marquée « Latest » avec pour seul contenu un blockmap de 1,7 Mo, ce qui suffit à casser la mise à jour automatique de tous les clients — `electron-updater` interroge `/releases/latest` puis y cherche un `latest.yml` absent. Le build se fait désormais avec `-p never` et le téléversement dans une étape distincte, par `gh release upload --clobber`, qui attend la fin et remonte les erreurs ; une **vérification a posteriori** relit ensuite la liste des assets publiés et fait échouer le job si l'un manque ou est vide — c'est l'absence de ce contrôle qui avait laissé passer les deux incidents. Le nom de l'artefact est par ailleurs fixé sans espace (`Attic-Setup-${version}.${ext}`) : le défaut serait renommé à l'envoi et ne correspondrait plus à l'URL inscrite dans `latest.yml`.
+
 ## [3.1.5] — 2026-08-21
 
 ### Added
