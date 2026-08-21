@@ -476,6 +476,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
   "msg.risset_var_0_var_1_var_2_var_3": { fr: "Glissando de Risset {__VAR_0__} · {__VAR_3__} · une octave en {__VAR_1__} s · {__VAR_2__} octaves", en: "Risset glissando {__VAR_0__} · {__VAR_3__} · one octave in {__VAR_1__} s · {__VAR_2__} octaves" },
   "msg.rythme_risset_var_0_var_1_var_2": { fr: "Rythme de Risset {__VAR_0__} · tempo doublé en {__VAR_1__} s · {__VAR_2__} couches", en: "Risset rhythm {__VAR_0__} · tempo doubled in {__VAR_1__} s · {__VAR_2__} layers" },
+  "msg.pulsars_var_0_var_1_var_2": { fr: "Pulsars · fondamentale {__VAR_0__} Hz · formant {__VAR_1__} Hz · cycle de service {__VAR_2__} %", en: "Pulsars · fundamental {__VAR_0__} Hz · formant {__VAR_1__} Hz · duty cycle {__VAR_2__}%" },
   "msg.canon_ferme_var_0_var_1_var_2": { fr: "Canon de tempo {__VAR_0__} · {__VAR_1__} voix · se referme toutes les {__VAR_2__} s", en: "Tempo canon {__VAR_0__} · {__VAR_1__} voices · closes every {__VAR_2__} s" },
   "msg.canon_ouvert_var_0_var_1": { fr: "Canon de tempo {__VAR_0__} · {__VAR_1__} voix · rapport irrationnel : ne se referme jamais", en: "Tempo canon {__VAR_0__} · {__VAR_1__} voices · irrational ratio: never closes" },
   "msg.continuum_var_0_var_1": { fr: "Continuum hauteur ↔ rythme · {__VAR_0__} octaves · facteur {__VAR_1__}", en: "Pitch ↔ rhythm continuum · {__VAR_0__} octaves · factor {__VAR_1__}" },
