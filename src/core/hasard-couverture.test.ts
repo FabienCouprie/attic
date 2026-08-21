@@ -54,19 +54,15 @@ const CONFORME = new Set([
 ]);
 
 // 3. La dette : le hasard s'entend (ou se voit) et aucune graine ne le tient.
-//    Chacun de ces fichiers rend un résultat différent à chaque exécution, sans
-//    aucun moyen de retrouver le précédent.
-const SANS_GRAINE = new Set([
-  "audio/batterie.ts",
-  "audio/camelot.ts",
-  "audio/couleurs.ts",
-  "audio/effets-temporel.ts",
-  "audio/generation.ts",
-  "audio/griffin-lim.ts",
-  "audio/midi.ts",
-  "audio/palette-harmonique.ts",
-  "plugins/magenta-helpers.ts",
-]);
+//    Chaque entrée ici est un nœud qui rend un résultat différent à chaque
+//    exécution, sans aucun moyen de retrouver le précédent.
+//
+//    VIDE — les neuf fichiers qui s'y trouvaient (batterie, camelot, couleurs,
+//    effets-temporel, generation, griffin-lim, midi, palette-harmonique,
+//    magenta-helpers) ont reçu une graine sur les nœuds qui les appellent. La
+//    catégorie reste déclarée : c'est là qu'atterrit un nouveau nœud qui tire
+//    au sort sans paramètre, plutôt que de passer inaperçu.
+const SANS_GRAINE = new Set<string>([]);
 
 function fichiersSource(dossier: string, acc: string[] = []): string[] {
   for (const entree of readdirSync(dossier)) {

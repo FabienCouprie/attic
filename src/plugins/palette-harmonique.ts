@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererPaletteHarmonique, GAMMES_ACCORDS, type CouleurExtraite } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { creerAleatoire } from "../core";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const formatCouleur = (c: CouleurExtraite) => `rgb(${c.r},${c.g},${c.b})`;
@@ -55,6 +56,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume de sortie.", docEn: "Output volume." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM",
         doc: "Tempo du fichier MIDI.", docEn: "Tempo of the MIDI file." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine de l'extraction de palette (initialisation k-means++). Valeur par défaut FIXE : une même image doit rendre les mêmes couleurs à chaque exécution. La changer peut faire ressortir d'autres teintes dominantes.",
+        docEn: "Seed for the palette extraction (k-means++ initialisation). The default is FIXED: the same image must yield the same colours on every run. Changing it may surface other dominant hues." },
     ],
     async executer(ctx: any) {
       const image = ctx.entree(0);
@@ -85,6 +89,7 @@ export const fiches: FicheAudio[] = ([
           instrument: ctx.paramNombre("Instrument", 0),
           volume: ctx.paramNombre("Volume", 80),
           tempo: ctx.paramNombre("Tempo", 120),
+          hasard: creerAleatoire(ctx.paramNombre("Graine", 42)),
         });
         const liste = palette.map(formatCouleur).join(", ");
         return { valeurs: [audio, midi], message: `Palette harmonique · ${palette.length} couleurs · ${liste}` };

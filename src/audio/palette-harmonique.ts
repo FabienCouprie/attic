@@ -33,6 +33,8 @@ export interface OptionsPaletteHarmonique {
   instrument: number;
   volume: number;
   tempo: number;
+  /** Source du hasard de l'extraction de palette (le noeud passe sa graine). */
+  hasard?: () => number;
 }
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -41,6 +43,10 @@ export function extrairePalette(
   pixels: PixelBuffer,
   nbCouleurs: number,
   maxEchantillons = 5000,
+  // Source du hasard de l'initialisation k-means++. Une palette qui change a
+  // chaque execution est un defaut : le noeud passe donc une graine dont la
+  // valeur par defaut est fixe.
+  hasard: () => number = Math.random,
 ): CouleurExtraite[] {
   const w = pixels.width;
   const h = pixels.height;
@@ -68,7 +74,7 @@ export function extrairePalette(
 
   // k-means++ initialisation
   const centroids: { r: number; g: number; b: number; x: number; y: number }[] = [];
-  const rng = () => Math.random();
+  const rng = hasard;
   let premier = Math.floor(rng() * echantillons.length);
   centroids.push({ ...echantillons[premier] });
   while (centroids.length < k) {
@@ -215,7 +221,7 @@ export async function genererPaletteHarmonique(
   options: OptionsPaletteHarmonique,
 ): Promise<{ audio: AudioBuffer; midi: File | null; palette: CouleurExtraite[] }> {
   const pixels = await imageDataDepuisFichier(image, 512);
-  const palette = extrairePalette(pixels, options.nbCouleurs);
+  const palette = extrairePalette(pixels, options.nbCouleurs, undefined, options.hasard);
 
   // Tri selon l'ordre choisi
   switch (options.ordre) {

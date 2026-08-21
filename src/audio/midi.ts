@@ -705,6 +705,16 @@ export async function transposerQuantifierMidi(
 
 // ─── Arpégiateur MIDI ───
 
+/** Melange uniforme (Fisher-Yates), sans modifier le tableau d'origine. */
+function melangerUniformement(arr: number[], hasard: () => number): number[] {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(hasard() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export async function arpegerMidi(
   fichier: File,
   motif: string,
@@ -712,6 +722,7 @@ export async function arpegerMidi(
   vitesseNom: string,
   octaves: number,
   dureeNotePct: number,
+  hasard: () => number = Math.random,
 ): Promise<File> {
   const bytes = new Uint8Array(await fichier.arrayBuffer());
   const midi = parseMidi(bytes);
@@ -769,7 +780,13 @@ export async function arpegerMidi(
           sequence = [...trie.map((n) => n + base).reverse(), ...trie.map((n) => n + base).slice(1, -1)];
           break;
         case "Aléatoire":
-          sequence = [...trie].sort(() => Math.random() - 0.5).map((n) => n + base);
+          // Fisher-Yates, et non `sort(() => hasard() - 0.5)` : un comparateur
+          // incoherent ne produit pas une permutation uniforme — selon
+          // l'algorithme de tri du moteur, certains ordres sortent bien plus
+          // souvent que d'autres, et les notes du milieu bougent moins que
+          // celles des bords. Le defaut etait invisible parce qu'un arpege
+          // « aleatoire » a toujours l'air aleatoire.
+          sequence = melangerUniformement(trie, hasard).map((n) => n + base);
           break;
         default: // Montant
           sequence = trie.map((n) => n + base);

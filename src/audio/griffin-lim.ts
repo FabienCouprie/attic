@@ -106,6 +106,7 @@ export async function griffinLim(
   phaseInitiale: "aleatoire" | "nulle" | "originale" = "aleatoire",
   mix: number = 100,
   onProgress?: (msg: string) => void,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const sr = buffer.sampleRate;
   const nCh = buffer.numberOfChannels;
@@ -170,7 +171,7 @@ export async function griffinLim(
     if (phaseInitiale === "aleatoire") {
       const nbBins = targetFrames[0]?.phase.length ?? 0;
       const phaseBase = new Float64Array(nbBins);
-      for (let k = 0; k < nbBins; k++) phaseBase[k] = Math.random() * 2 * Math.PI - Math.PI;
+      for (let k = 0; k < nbBins; k++) phaseBase[k] = hasard() * 2 * Math.PI - Math.PI;
       const increment = new Float64Array(nbBins);
       for (let k = 0; k < nbBins; k++) increment[k] = (2 * Math.PI * k * hop) / fftSize;
       for (let f = 0; f < targetFrames.length; f++) {

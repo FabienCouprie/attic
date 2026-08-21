@@ -8,6 +8,7 @@ import { avecDoc } from "./notices";
 import { MODES, MODES_EN, MODES_IDS } from "./magenta-helpers";
 import { appliquerInstrumentMidi } from "../audio/midi";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { hasardDuNoeud } from "../core";
 
 let worker: Worker | null = null;
 const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: any }[] = [];
@@ -190,9 +191,9 @@ export const fiches: FicheAudio[] = ([
       },
       {
         nom: "Graine", nomEn: "Seed", type: "curseur",
-        plage: [0, 1000], pas: 1, defaut: 0,
-        doc: "Graine pour le générateur aléatoire. 0 = aléatoire à chaque exécution.",
-        docEn: "Random seed. 0 = random on every run."
+        plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine de l'improvisation — elle pilote à la fois le modèle et le choix des boutons. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
+        docEn: "Seed for the improvisation — it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here."
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -202,13 +203,13 @@ export const fiches: FicheAudio[] = ([
         const tempo = ctx.paramNombre("Tempo", 120);
         const temperature = ctx.paramNombre("Température", 1.0);
         const mode = ctx.paramTexte("Mode", "random");
-        const seed = ctx.paramNombre("Graine", 0);
+        const { graine: seed } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
         const file = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "improvisation", { duree, tempo, temperature, mode, seed }),
           ctx.paramNombre("Instrument", 0),
         );
         const label = (langueCourante() === "en" ? MODES_EN : MODES)[MODES_IDS.indexOf(mode)] ?? mode;
-        return { valeurs: [file], message: traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, label, tempo) };
+        return { valeurs: [file], message: `${traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, label, tempo)} · graine ${seed}` };
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }

@@ -4,6 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCamelot, genererSvgCamelot } from "../audio";
+import { hasardDuNoeud } from "../core";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
@@ -51,6 +52,9 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine du parcours, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici ; toute autre valeur rejoue le même parcours.",
+        docEn: "Seed for the journey; no effect outside the \"Random\" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey." },
     ],
     async executer(ctx: any) {
       const parcoursBrut = ctx.paramTexte("Parcours", "Complet");
@@ -59,6 +63,7 @@ export const fiches: FicheAudio[] = ([
       const mode: any = modeBrut.toLowerCase().includes("arp") ? "arpege" : "bloc";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const { audio, midi, notes, codes, accords } = await genererCamelot({
         depart: ctx.paramTexte("Départ", "4B"),
         parcours,
@@ -70,12 +75,13 @@ export const fiches: FicheAudio[] = ([
         modeRendu,
         instrument: ctx.paramNombre("Instrument", 0),
         volume: ctx.paramNombre("Volume", 80),
+        hasard: aleatoire,
       });
       const image = genererSvgCamelot(codes);
       const chemin = codes.join(" → ");
       return {
         valeurs: [audio, midi, image],
-        message: `Camelot · ${chemin} · ${accords.length} accords · ${notes.length} notes · ${audio.duration.toFixed(1)} s`,
+        message: `Camelot · ${chemin} · ${accords.length} accords · ${notes.length} notes · ${audio.duration.toFixed(1)} s · graine ${graine}`,
       };
     },
   },

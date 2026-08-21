@@ -207,7 +207,8 @@ export async function appliquerReverberation(
   entree: AudioBuffer,
   taille: number,
   decaySec: number,
-  mix: number
+  mix: number,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const dureeImpulsion = 0.2 + (Math.max(0, Math.min(100, taille)) / 100) * 6;
   const facteurDecay = Math.max(0.5, Math.min(8, decaySec));
@@ -228,7 +229,7 @@ export async function appliquerReverberation(
     const donnees = impulsion.getChannelData(c);
     for (let i = 0; i < donnees.length; i++) {
       const t = i / donnees.length;
-      donnees[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, facteurDecay);
+      donnees[i] = (hasard() * 2 - 1) * Math.pow(1 - t, facteurDecay);
     }
   }
 
@@ -379,6 +380,7 @@ export async function appliquerReverbeProgressive(
   debutPct: number,
   finPct: number,
   dureeFadeSec: number,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const dureeImpulsion = 0.5 + (Math.max(0, Math.min(100, taillePct)) / 100) * 3;
   const coda = dureeImpulsion + 1;
@@ -391,7 +393,7 @@ export async function appliquerReverbeProgressive(
     const donnees = impulsion.getChannelData(c);
     for (let i = 0; i < donnees.length; i++) {
       const t = i / donnees.length;
-      donnees[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3);
+      donnees[i] = (hasard() * 2 - 1) * Math.pow(1 - t, 3);
     }
   }
 
@@ -511,9 +513,10 @@ export async function appliquerPaulstretch(
   buffer: AudioBuffer,
   stretch: number,
   windowSizeSeconds: number,
-  options: { onProgress?: (msg: string) => void; signal?: AbortSignal } = {}
+  options: { onProgress?: (msg: string) => void; signal?: AbortSignal; hasard?: () => number } = {}
 ): Promise<AudioBuffer> {
   const { onProgress, signal } = options;
+  const hasard = options.hasard ?? Math.random;
   const sr = buffer.sampleRate;
   const nCh = buffer.numberOfChannels;
   const len = buffer.length;
@@ -572,10 +575,10 @@ export async function appliquerPaulstretch(
       const mags: number[] = Array.from({ length: half + 1 }, (_, k) => Math.sqrt(re[k] * re[k] + im[k] * im[k]));
       re[0] = mags[0];
       im[0] = 0;
-      re[half] = mags[half] * (Math.random() > 0.5 ? 1 : -1);
+      re[half] = mags[half] * (hasard() > 0.5 ? 1 : -1);
       im[half] = 0;
       for (let k = 1; k < half; k++) {
-        const theta = Math.random() * 2 * Math.PI;
+        const theta = hasard() * 2 * Math.PI;
         const cos = Math.cos(theta);
         const sin = Math.sin(theta);
         const mag = mags[k];
@@ -622,14 +625,14 @@ export async function paulstretchLogistique(
   centre: number,
   pente: number,
   mix: number,
-  options: { onProgress?: (msg: string) => void; signal?: AbortSignal } = {}
+  options: { onProgress?: (msg: string) => void; signal?: AbortSignal; hasard?: () => number } = {}
 ): Promise<AudioBuffer> {
   const { onProgress, signal } = options;
   const sr = buffer.sampleRate;
   const maxStretch = Math.max(1, stretch);
   const mixWet = Math.max(0, Math.min(1, mix / 100));
   if (mixWet <= 0 || maxStretch <= 1) return buffer;
-  const stretched = await appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds, { onProgress, signal });
+  const stretched = await appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds, { onProgress, signal, hasard: options.hasard });
   const n = stretched.length;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
   const centreRel = Math.max(0, Math.min(1, centre / 100));

@@ -3,6 +3,7 @@
 // @magenta/music : Apache 2.0 — déjà listé dans THIRD_PARTY.md.
 
 import { withElectronFetch } from "./electronFetch";
+import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";
 import { NoteSequence } from "@magenta/music/esm/protobuf";
 import { parseMidi, writeMidi } from "midi-file";
@@ -253,16 +254,19 @@ export const MODES_EN = ["Random", "Walk", "Up", "Down", "Arpeggio"];
 export const MODES_IDS = ["random", "walk", "up", "down", "arpeggio"];
 export const ARP = [0, 2, 4, 6, 7, 5, 3, 1];
 
-export function choisirBouton(step: number, mode: string, prev: number): number {
+export function choisirBouton(
+  step: number, mode: string, prev: number,
+  hasard: () => number = Math.random,
+): number {
   switch (mode) {
     case "up": return step % 8;
     case "down": return 7 - (step % 8);
     case "arpeggio": return ARP[step % 8];
     case "walk": {
-      const dir = Math.random() < 0.5 ? -1 : 1;
+      const dir = hasard() < 0.5 ? -1 : 1;
       return Math.max(0, Math.min(7, prev + dir));
     }
-    default: return Math.floor(Math.random() * 8);
+    default: return Math.floor(hasard() * 8);
   }
 }
 
@@ -274,9 +278,13 @@ export async function improviser(duree: number, tempo: number, temperature: numb
   let t = 0;
   let prevButton = 0;
   const seedVal = seed > 0 ? seed : undefined;
+  // La graine pilotait le modele Magenta mais PAS le choix des boutons, qui
+  // tirait sur Math.random : deux executions a graine egale ne donnaient donc
+  // pas la meme improvisation. Les deux sources partagent desormais la graine.
+  const hasard = seed > 0 ? creerAleatoire(seed) : Math.random;
   model.resetState();
   for (let i = 0; i < steps; i++) {
-    const button = choisirBouton(i, mode, prevButton);
+    const button = choisirBouton(i, mode, prevButton, hasard);
     (model as any).overrideDeltaTime(stepDuration);
     const pitch = model.next(button, temperature, seedVal);
     const note = Math.max(0, Math.min(127, pitch + 21));

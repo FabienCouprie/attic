@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreSequenceurBatterie, decoderMotif, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "../audio";
+import { creerAleatoire } from "../core";
 import {
   rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
@@ -85,6 +86,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_DEFAUT,
         doc: "Motif encodé (édité par la grille du nœud) : 5 lignes de pas séparées par « | », chaque pas 1 (actif) ou 0.",
         docEn: "Encoded pattern (edited via the node grid): 5 step rows separated by « | », each step 1 (on) or 0." },
+      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même motif doit rendre le même fichier à chaque exécution.",
+        docEn: "Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo", 120);
@@ -93,7 +97,8 @@ export const fiches: FicheAudio[] = ([
       const mesures = ctx.paramNombre("Mesures", 2);
       const volume = ctx.paramNombre("Volume", 90);
       const grille = decoderMotif(ctx.paramTexte("Motif", MOTIF_DEFAUT), 5, nbPas);
-      const buf = await rendreSequenceurBatterie(grille, tempo, nbPas, swing, mesures, volume);
+      const buf = await rendreSequenceurBatterie(grille, tempo, nbPas, swing, mesures, volume,
+        creerAleatoire(ctx.paramNombre("Graine", 42)));
       const frappes = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
       return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes) };
     },
@@ -242,6 +247,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_AVANCE_DEFAUT,
         doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (off) ou 1–9 (velocity).",
         docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1–9 (velocity)." },
+      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même motif doit rendre le même fichier à chaque exécution.",
+        docEn: "Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo", 120);
@@ -250,7 +258,8 @@ export const fiches: FicheAudio[] = ([
       const mesures = ctx.paramNombre("Mesures", 2);
       const volume = ctx.paramNombre("Volume", 90);
       const grille = decoderMotifVelocite(ctx.paramTexte("Motif", MOTIF_AVANCE_DEFAUT), 8, nbPas);
-      const buf = await rendreSequenceurBatterieAvance(grille, tempo, nbPas, swing, mesures, volume);
+      const buf = await rendreSequenceurBatterieAvance(grille, tempo, nbPas, swing, mesures, volume,
+        creerAleatoire(ctx.paramNombre("Graine", 42)));
       const frappes = grille.reduce((s: number, row: number[]) => s + row.filter((v) => v > 0).length, 0);
       return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes) };
     },

@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererDessinSonore, GAMMES_ACCORDS, type FormeColoree } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { creerAleatoire } from "../core";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const formatCouleur = (c: FormeColoree) => `rgb(${c.couleur.r},${c.couleur.g},${c.couleur.b})`;
@@ -55,6 +56,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume de sortie.", docEn: "Output volume." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM",
         doc: "Tempo du fichier MIDI.", docEn: "Tempo of the MIDI file." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine de l'extraction de palette (initialisation k-means++). Valeur par défaut FIXE : un même dessin doit rendre les mêmes formes à chaque exécution. La changer peut faire ressortir d'autres teintes dominantes.",
+        docEn: "Seed for the palette extraction (k-means++ initialisation). The default is FIXED: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues." },
     ],
     async executer(ctx: any) {
       const image = ctx.entree(0);
@@ -81,6 +85,7 @@ export const fiches: FicheAudio[] = ([
           instrument: ctx.paramNombre("Instrument", 0),
           volume: ctx.paramNombre("Volume", 80),
           tempo: ctx.paramNombre("Tempo", 120),
+          hasard: creerAleatoire(ctx.paramNombre("Graine", 42)),
         });
         const liste = formes.map(formatCouleur).join(", ");
         return { valeurs: [audio, midi], message: `Dessin sonore · ${formes.length} formes · ${liste}` };

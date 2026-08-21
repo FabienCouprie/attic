@@ -61,6 +61,7 @@ export function genererParcoursCamelot(
   depart: string,
   parcours: ParcoursCamelot,
   pas: number,
+  hasard: () => number = Math.random,
 ): string[] {
   const start = parseCamelot(depart);
   if (!start) return [];
@@ -73,7 +74,7 @@ export function genererParcoursCamelot(
       const type = CYCLE_VOISINS[(i - 1) % CYCLE_VOISINS.length];
       current = voisin(current, type);
     } else {
-      const type = CYCLE_VOISINS[Math.floor(Math.random() * CYCLE_VOISINS.length)];
+      const type = CYCLE_VOISINS[Math.floor(hasard() * CYCLE_VOISINS.length)];
       current = voisin(current, type);
     }
     codes.push(camelotToString(current));
@@ -108,6 +109,8 @@ export interface OptionsCamelot {
   modeRendu: "FM/Oscillateurs" | "SoundFont";
   instrument: number;
   volume: number;
+  /** Source du hasard du parcours « aléatoire » (le nœud passe sa graine). */
+  hasard?: () => number;
 }
 
 function decodeInstrument(valeur: number): { programme: number; banque: number } {
@@ -118,7 +121,7 @@ function decodeInstrument(valeur: number): { programme: number; banque: number }
 }
 
 export function genererNotesCamelot(options: OptionsCamelot): { notes: NoteEvenement[]; codes: string[]; accords: string[] } {
-  const codes = genererParcoursCamelot(options.depart, options.parcours, Math.max(1, options.pas));
+  const codes = genererParcoursCamelot(options.depart, options.parcours, Math.max(1, options.pas), options.hasard);
   const accords = codes.map(camelotToAccord).filter((a): a is string => a !== null);
   const notes: NoteEvenement[] = [];
   const stepDur = 60 / Math.max(1, options.tempo);

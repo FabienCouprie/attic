@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { creerAleatoire } from "../core";
 import { COULEURS, NOMS_COULEURS, IDS_COULEURS, cleCouleur, profilCouleur, fusionnerProfils, profilVersScript } from "../audio";
 
 let worker: Worker | null = null;
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
       if (cle2) {
         const p2 = profilCouleur(c2Nom);
         if (!p2) return { valeurs: [null], message: traduire("msg.couleur_2_inconnue_var_0", c2Nom) };
-        profil = fusionnerProfils(p1, p2, c1Nom, c2Nom);
+        profil = fusionnerProfils(p1, p2, c1Nom, c2Nom, creerAleatoire(graine));
         couleursLabel = [COULEURS[cle1].en, COULEURS[cle2].en];
       } else {
         profil = p1;
