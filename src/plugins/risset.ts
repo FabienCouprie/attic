@@ -129,7 +129,10 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "cloche-risset", nom: "Cloche de Risset", nomEn: "Risset Bell",
-    univers: "Traitement", famille: "Génération",
+    // « Entrées » et non « Traitement » : ce nœud n'a aucune entrée, il produit
+    // un son de toutes pièces. Sa place est parmi les sources, avec les autres
+    // générateurs.
+    univers: "Entrées", famille: "Génération",
     resume: "Synthétise une cloche par addition de partiels inharmoniques.",
     resumeEn: "Synthesises a bell by adding inharmonic partials.",
     notice: "Le timbre du « Introductory Catalogue of Computer Synthesized Sounds » de Jean-Claude Risset (Bell Labs, 1969), qui a fait école pour une raison précise : il a montré qu'un timbre n'est pas un spectre figé mais une ÉVOLUTION. Une cloche ne sonne pas cloche parce qu'elle contient telles fréquences, mais parce que ses onze partiels s'éteignent à des vitesses DIFFÉRENTES — les aigus en un dixième du temps que mettent les graves. Second enseignement, que le paramètre « Inharmonicité » permet d'entendre : aucun partiel n'est un multiple entier de la fréquence de base, ce qui explique qu'une cloche n'ait pas de hauteur franche. Ramenez ce réglage à 0 % et les mêmes partiels, rangés sur les harmoniques, cessent instantanément de sonner comme une cloche. Enfin, deux partiels sont doublés à 1 Hz et 1,7 Hz d'écart : ce désaccord minuscule les fait battre lentement, et c'est ce battement qui donne à la cloche sa vie — le paramètre « Battement » permet de le couper pour l'entendre disparaître. La fréquence indiquée n'est PAS la hauteur perçue, puisque aucun partiel ne s'y trouve.",
