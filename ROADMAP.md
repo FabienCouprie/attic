@@ -4,7 +4,7 @@ Tracking of remaining work, prioritized. See also `ARCHITECTURE.md` (diagnostic 
 architecture cleanup plan) and `PORTING-A-DOMAIN.md` (how a second domain would
 plug into the current core/UI, and exactly where it can't yet).
 
-Continuously verified state (2026-08-21, v3.1.5): **tsc 0 errors · 241 catalog components · 104 test files / 1177 tests · build OK**.
+Continuously verified state (2026-08-21, branch `release-3.0.8` — v3.1.5 plus the unreleased Stockhausen, Nancarrow, Roads and Xenakis nodes): **tsc 0 errors · 245 catalog components · 108 test files / 1225 tests · build OK**.
 
 > **Note on staleness**: this file has lagged behind releases before (it was
 > last rewritten around v2.4.3). Only the status line above was re-measured on
