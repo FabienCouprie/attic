@@ -157,3 +157,77 @@ describe("generateurs plugin", () => {
     expect(bufferNonSilencieux(res.valeurs[0] as AudioBuffer)).toBe(true);
   });
 });
+
+// Vérifie la chaîne complète — paramètre du nœud, plugin, module DSP — plutôt
+// que le seul générateur pseudo-aléatoire : c'est le câblage qui casse, pas
+// l'arithmétique. Une faute de frappe sur le nom du paramètre laisserait la
+// graine sans effet, et rien d'autre ne le signalerait.
+describe("graine du générateur de bruit", () => {
+  const PARAMS = { Type: "Blanc", Durée: 0.2, Volume: 80 };
+
+  async function bruit(graine: number) {
+    const f = registre.trouverDef("generateur-bruit")!;
+    const res = await f.executer(ctxParams({ ...PARAMS, Graine: graine }) as any);
+    return { echantillons: (res.valeurs[0] as AudioBuffer).getChannelData(0), message: res.message ?? "" };
+  }
+
+  it("une même graine rend un bruit identique échantillon par échantillon", async () => {
+    const a = await bruit(2024);
+    const b = await bruit(2024);
+    expect(a.echantillons.length).toBeGreaterThan(0);
+    expect(Array.from(a.echantillons)).toEqual(Array.from(b.echantillons));
+  });
+
+  it("changer la graine change le bruit", async () => {
+    const a = await bruit(2024);
+    const b = await bruit(2025);
+    expect(Array.from(a.echantillons)).not.toEqual(Array.from(b.echantillons));
+  });
+
+  it("graine à 0 : le bruit change d'une exécution à l'autre", async () => {
+    // Comportement voulu pour un générateur de bruit — c'est le hasard qu'on
+    // vient y chercher. La graine se fixe seulement quand on veut garder un
+    // rendu précis.
+    const a = await bruit(0);
+    const b = await bruit(0);
+    expect(Array.from(a.echantillons)).not.toEqual(Array.from(b.echantillons));
+  });
+
+  it("le message affiche la graine réellement utilisée, y compris tirée au sort", async () => {
+    // Sans cela, un bruit obtenu avec une graine à 0 serait définitivement
+    // perdu : rien n'indiquerait quoi recopier dans le champ pour le refaire.
+    const tiree = await bruit(0);
+    const graine = Number(/graine (\d+)/.exec(tiree.message)?.[1]);
+    expect(Number.isInteger(graine)).toBe(true);
+    expect(graine).toBeGreaterThan(0);
+    // Et cette graine, recopiée dans le champ, redonne bien le même bruit.
+    const rejouee = await bruit(graine);
+    expect(Array.from(rejouee.echantillons)).toEqual(Array.from(tiree.echantillons));
+  });
+});
+
+describe("graine de la pièce de Lucier", () => {
+  // Ici la graine par défaut est FIXE, à l'inverse du bruit : la pièce est le
+  // sujet de l'œuvre, et vingt itérations dans une pièce chaque fois différente
+  // ne donneraient jamais deux fois le même résultat.
+  async function lucier(params: Record<string, string | number>) {
+    const f = registre.trouverDef("piece-lucier")!;
+    const source = new AudioBuffer({ numberOfChannels: 1, length: 4410, sampleRate: 44100 });
+    const d = source.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.sin(2 * Math.PI * 220 * i / 44100) * 0.5;
+    const res = await f.executer({
+      ...ctxParams({ Itérations: 2, Type: "Room", Taille: 50, Decay: 0.3, "Pre-delay": 0, Damping: 30, ...params }),
+      entree: () => source,
+      runtime: null,
+    } as any);
+    return (res.valeurs[0] as AudioBuffer).getChannelData(0);
+  }
+
+  it("sans rien régler, deux exécutions donnent la même pièce", async () => {
+    expect(Array.from(await lucier({}))).toEqual(Array.from(await lucier({})));
+  });
+
+  it("changer la graine donne une autre pièce", async () => {
+    expect(Array.from(await lucier({ Graine: 1 }))).not.toEqual(Array.from(await lucier({ Graine: 2 })));
+  });
+});

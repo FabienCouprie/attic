@@ -27,6 +27,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Node import/export** — package custom nodes as `.zip`, share between installations
 - **Metacomponents** — encapsulate sub-graphs as reusable nodes
 - **Save/load** — serializes graph + metacomponents to JSON
+- **Per-node seeds** — a node that draws at random carries a `Graine` / `Seed` parameter, set where the effect happens and saved with the node like any other parameter. `0` means "draw one each run", and the node then reports the seed it used so a run worth keeping can be reproduced by copying that value back. Coverage is tracked: `src/core/hasard-couverture.test.ts` inventories every file still calling `Math.random()` directly and fails both when a new one appears and when a migrated one is left behind
 - **Prompt-to-graph** — type a keyword, get a pre-wired graph (55+ keywords)
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
@@ -111,7 +112,7 @@ If you still have an old `GH_TOKEN` classic personal access token used for previ
 ### Tests & Lint
 
 ```bash
-npm test     # Vitest (1225 tests across 108 files)
+npm test     # Vitest (1255 tests across 111 files)
 npm run lint # oxlint
 ```
 

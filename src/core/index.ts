@@ -9,6 +9,7 @@ export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
 export { valider, validerGraphe } from "./validation";
 export type { ResultatValidationGraphe } from "./validation";
+export { creerAleatoire, hasardDuNoeud } from "./hasard";
 export { detecterPertes, formaterRapportPertes } from "./pertes";
 export type { ChampPurge } from "./pertes";
 export { estResultatEnErreur } from "./execution";

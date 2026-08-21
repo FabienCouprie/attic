@@ -1,22 +1,13 @@
 // audio/random-slice.ts — Découpe une piste en parts égales et les réarrange.
 
+import { creerAleatoire } from "../core";
+
 export type ModeDecoupe = "Random" | "Original" | "Reverse";
 
 const MODES: ModeDecoupe[] = ["Random", "Original", "Reverse"];
 
 export function listeModesDecoupe(): readonly ModeDecoupe[] {
   return MODES;
-}
-
-function mulberry32(a: number): () => number {
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function shuffle<T>(arr: T[], rng: () => number): T[] {
@@ -51,7 +42,12 @@ export function appliquerDecoupeAleatoire(
   parts: number,
   crossfadeMs: number,
   mode: string,
+  // Graine du nœud, selon la convention du projet : 0 = tirée au sort à chaque
+  // exécution, toute autre valeur rejoue la même découpe.
   seed: number,
+  // Source du hasard quand `seed` vaut 0. Paramétrable pour que les tests
+  // puissent rendre ce cas déterministe.
+  hasard: () => number = Math.random,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const partsClamped = Math.max(2, Math.min(64, Math.round(parts)));
@@ -74,7 +70,7 @@ export function appliquerDecoupeAleatoire(
     sampleRate: sr,
   });
 
-  const rng = seed > 0 ? mulberry32(seed) : Math.random;
+  const rng = seed > 0 ? creerAleatoire(seed) : hasard;
   const order = ordreDecoupe(mode, partsClamped, rng);
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
