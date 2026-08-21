@@ -4,7 +4,6 @@
 import { describe, it, expect } from "vitest";
 import "node-web-audio-api/polyfill.js";
 import { pieceDeLucier, platitudeSpectrale } from "./lucier";
-import { genererIR } from "./convolution";
 
 const SR = 16000;
 
@@ -40,7 +39,28 @@ describe("platitudeSpectrale", () => {
 });
 
 describe("pieceDeLucier", () => {
-  const ir = () => genererIR("Cathédrale", 80, 3, 20, 40, SR);
+  /**
+   * Réponse impulsionnelle DÉTERMINISTE : quatre modes de résonance, chacun une
+   * sinusoïde qui décroît. C'est d'ailleurs ce qu'est physiquement une pièce
+   * résonante, et cela rend la propriété testée démontrable plutôt que probable.
+   *
+   * Les premiers essais employaient `genererIR`, qui construit sa queue à partir
+   * de `Math.random()` sans graine : chaque exécution obtenait une pièce
+   * différente. Le test passait ici et échouait sur l'intégration continue — le
+   * même défaut que celui signalé par ailleurs sur `noise-nodes`, reproduit par
+   * inadvertance.
+   */
+  function ir(): AudioBuffer {
+    const n = Math.round(0.4 * SR);
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const d = b.getChannelData(0);
+    for (const [f, decroissance] of [[180, 6], [300, 8], [460, 10], [720, 14]] as const) {
+      for (let i = 0; i < n; i++) {
+        d[i] += Math.exp((-decroissance * i) / n) * Math.sin((2 * Math.PI * f * i) / SR) * 0.25;
+      }
+    }
+    return b;
+  }
 
   it("conserve la durée d'origine, quel que soit le nombre de passages", async () => {
     // Une convolution allonge le signal ; sans troncature, quarante passages
