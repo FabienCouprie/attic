@@ -89,6 +89,7 @@ import { fiches as f_lucier } from "./lucier";
 import { fiches as f_reich } from "./reich";
 import { fiches as f_wishart } from "./wishart";
 import { fiches as f_gendyn } from "./gendyn";
+import { fiches as f_stockhausen } from "./stockhausen";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -177,4 +178,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_reich,
   ...f_wishart,
   ...f_gendyn,
+  ...f_stockhausen,
 ];

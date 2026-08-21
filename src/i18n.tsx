@@ -476,6 +476,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
   "msg.risset_var_0_var_1_var_2_var_3": { fr: "Glissando de Risset {__VAR_0__} · {__VAR_3__} · une octave en {__VAR_1__} s · {__VAR_2__} octaves", en: "Risset glissando {__VAR_0__} · {__VAR_3__} · one octave in {__VAR_1__} s · {__VAR_2__} octaves" },
   "msg.rythme_risset_var_0_var_1_var_2": { fr: "Rythme de Risset {__VAR_0__} · tempo doublé en {__VAR_1__} s · {__VAR_2__} couches", en: "Risset rhythm {__VAR_0__} · tempo doubled in {__VAR_1__} s · {__VAR_2__} layers" },
+  "msg.continuum_var_0_var_1": { fr: "Continuum hauteur ↔ rythme · {__VAR_0__} octaves · facteur {__VAR_1__}", en: "Pitch ↔ rhythm continuum · {__VAR_0__} octaves · factor {__VAR_1__}" },
   "msg.gendyn_var_0_var_1_var_2": { fr: "GENDYN · {__VAR_0__} points · hauteur dérivant entre {__VAR_1__} et {__VAR_2__} Hz", en: "GENDYN · {__VAR_0__} points · pitch drifting between {__VAR_1__} and {__VAR_2__} Hz" },
   "msg.wavesets_var_0_var_1_var_2": { fr: "Wavesets · {__VAR_0__} segments · facteur {__VAR_1__} · {__VAR_2__} s", en: "Wavesets · {__VAR_0__} segments · factor {__VAR_1__} · {__VAR_2__} s" },
   "msg.reich_var_0_var_1_var_2": { fr: "Déphasage de Reich · {__VAR_0__} voix · cycle {__VAR_1__} s · boucle {__VAR_2__} s", en: "Reich phasing · {__VAR_0__} voices · {__VAR_1__} s cycle · {__VAR_2__} s loop" },
