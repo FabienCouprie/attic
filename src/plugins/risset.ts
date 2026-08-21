@@ -127,4 +127,54 @@ export const fiches: FicheAudio[] = ([
       };
     },
   },
+  {
+    id: "cloche-risset", nom: "Cloche de Risset", nomEn: "Risset Bell",
+    univers: "Traitement", famille: "Génération",
+    resume: "Synthétise une cloche par addition de partiels inharmoniques.",
+    resumeEn: "Synthesises a bell by adding inharmonic partials.",
+    notice: "Le timbre du « Introductory Catalogue of Computer Synthesized Sounds » de Jean-Claude Risset (Bell Labs, 1969), qui a fait école pour une raison précise : il a montré qu'un timbre n'est pas un spectre figé mais une ÉVOLUTION. Une cloche ne sonne pas cloche parce qu'elle contient telles fréquences, mais parce que ses onze partiels s'éteignent à des vitesses DIFFÉRENTES — les aigus en un dixième du temps que mettent les graves. Second enseignement, que le paramètre « Inharmonicité » permet d'entendre : aucun partiel n'est un multiple entier de la fréquence de base, ce qui explique qu'une cloche n'ait pas de hauteur franche. Ramenez ce réglage à 0 % et les mêmes partiels, rangés sur les harmoniques, cessent instantanément de sonner comme une cloche. Enfin, deux partiels sont doublés à 1 Hz et 1,7 Hz d'écart : ce désaccord minuscule les fait battre lentement, et c'est ce battement qui donne à la cloche sa vie — le paramètre « Battement » permet de le couper pour l'entendre disparaître. La fréquence indiquée n'est PAS la hauteur perçue, puisque aucun partiel ne s'y trouve.",
+    noticeEn: "The timbre from Jean-Claude Risset's \"Introductory Catalogue of Computer Synthesized Sounds\" (Bell Labs, 1969), influential for a precise reason: it showed that timbre is not a fixed spectrum but an EVOLUTION. A bell sounds like a bell not because it contains particular frequencies, but because its eleven partials die away at DIFFERENT rates — the highest in a tenth of the time the lowest take. A second lesson, which the \"Inharmonicity\" parameter lets you hear: no partial is an integer multiple of the base frequency, which is why a bell has no definite pitch. Set it to 0% and the same partials, snapped onto the harmonics, instantly stop sounding like a bell. Finally, two partials are doubled 1 Hz and 1.7 Hz apart: that tiny detuning makes them beat slowly, and this beating is what gives the bell its life — the \"Beating\" parameter lets you switch it off and hear it vanish. The stated frequency is NOT the perceived pitch, since no partial sits on it.",
+    entrees: [],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Fréquence", nomEn: "Frequency", type: "nombre", plage: [40, 2000], pas: 1, defaut: 400, unite: "Hz",
+        doc: "Fréquence de référence dont les onze partiels sont déduits. Ce n'est pas la hauteur perçue : aucun partiel ne tombe dessus.",
+        docEn: "Reference frequency from which the eleven partials are derived. Not the perceived pitch: no partial sits on it." },
+      { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.2, 30], pas: 0.1, defaut: 8, unite: "s",
+        doc: "Durée de la note, c'est-à-dire du partiel qui tient le plus longtemps. Les autres s'éteignent avant, en proportion fixe.",
+        docEn: "Length of the note, i.e. of the longest-lasting partial. The others fade sooner, in fixed proportion." },
+      { nom: "Partiels", nomEn: "Partials", type: "nombre", plage: [1, 11], pas: 1, defaut: 11,
+        doc: "Nombre de partiels retenus, du plus grave au plus aigu. Réduire appauvrit le timbre — utile pour entendre ce que chacun apporte.",
+        docEn: "Number of partials kept, from lowest to highest. Reducing thins the timbre — useful to hear what each one contributes." },
+      { nom: "Inharmonicité", nomEn: "Inharmonicity", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "100 % = les rapports de Risset, inharmoniques. 0 % = chaque partiel ramené sur l'harmonique entier le plus proche : la cloche disparaît et laisse un son d'orgue. C'est la démonstration la plus directe de ce qui fait une cloche.",
+        docEn: "100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell." },
+      { nom: "Battement", nomEn: "Beating", type: "curseur", plage: [0, 400], pas: 5, defaut: 100, unite: "%",
+        doc: "Échelle des désaccords de 1 Hz et 1,7 Hz appliqués aux partiels doublés. 0 % = plus aucun battement, son figé ; au-delà de 100 %, le battement s'accélère jusqu'à devenir une rugosité.",
+        docEn: "Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness." },
+    ],
+    async executer(ctx: any) {
+      const { clocheRisset } = await import("../audio/cloche-risset");
+      const frequenceHz = ctx.paramNombre("Fréquence", 400);
+      const dureeSec = ctx.paramNombre("Durée", 8);
+      const partiels = ctx.paramNombre("Partiels", 11);
+      const inharmonicite = ctx.paramNombre("Inharmonicité", 100) / 100;
+      // `ctx.runtime` est l'AudioContext du graphe : on génère à SA fréquence
+      // d'échantillonnage, comme le fait déjà le nœud de batterie. Une première
+      // version lisait `ctx.sampleRate`, qui n'existe pas sur ce contexte :
+      // elle retombait toujours sur 44 100 en donnant l'illusion de lire une
+      // valeur réelle. Le son n'en était pas désaccordé pour autant — un buffer
+      // est rééchantillonné à la lecture, pas joué plus vite — mais cela
+      // imposait une conversion inutile sur une carte à 48 kHz.
+      const sampleRate = ctx.runtime?.sampleRate ?? 44100;
+      const out = clocheRisset({
+        frequenceHz, dureeSec, sampleRate, partiels, inharmonicite,
+        battement: ctx.paramNombre("Battement", 100) / 100,
+      });
+      return {
+        valeurs: [out],
+        message: traduire("msg.cloche_risset_var_0_var_1_var_2", frequenceHz, partiels, Math.round(inharmonicite * 100)),
+      };
+    },
+  },
 ] as FicheAudio[]).map(avecDoc);

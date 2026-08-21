@@ -476,6 +476,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.sherpa_asr.init_timeout": { fr: "Délai dépassé lors de l'initialisation de Sherpa-ONNX.", en: "Sherpa-ONNX initialization timed out." },
   "msg.risset_var_0_var_1_var_2_var_3": { fr: "Glissando de Risset {__VAR_0__} · {__VAR_3__} · une octave en {__VAR_1__} s · {__VAR_2__} octaves", en: "Risset glissando {__VAR_0__} · {__VAR_3__} · one octave in {__VAR_1__} s · {__VAR_2__} octaves" },
   "msg.rythme_risset_var_0_var_1_var_2": { fr: "Rythme de Risset {__VAR_0__} · tempo doublé en {__VAR_1__} s · {__VAR_2__} couches", en: "Risset rhythm {__VAR_0__} · tempo doubled in {__VAR_1__} s · {__VAR_2__} layers" },
+  "msg.cloche_risset_var_0_var_1_var_2": { fr: "Cloche de Risset · {__VAR_0__} Hz · {__VAR_1__} partiels · inharmonicité {__VAR_2__} %", en: "Risset bell · {__VAR_0__} Hz · {__VAR_1__} partials · inharmonicity {__VAR_2__}%" },
   "risset.accelerant": { fr: "accélérant", en: "speeding up" },
   "risset.ralentissant": { fr: "ralentissant", en: "slowing down" },
   "risset.mode.bande": { fr: "bande", en: "tape" },

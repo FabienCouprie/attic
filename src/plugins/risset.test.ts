@@ -97,3 +97,51 @@ describe("nœud Rythme de Risset", () => {
     }
   });
 });
+
+const ficheCloche = registre.trouverDef("cloche-risset")!;
+
+describe("nœud Cloche de Risset", () => {
+  /** Ce nœud est un générateur : pas d'entrée, mais un AudioContext dans `runtime`. */
+  function ctxCloche(params: Record<string, number> = {}, sampleRate = 22050) {
+    return {
+      runtime: { sampleRate },
+      entree: () => null,
+      paramTexte: (_: string, d: string) => d,
+      paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
+      onProgress: () => {},
+    } as any;
+  }
+
+  it("génère sans aucune entrée", async () => {
+    expect(ficheCloche.entrees).toHaveLength(0);
+    const res = await ficheCloche.executer(ctxCloche({ "Durée": 1 }));
+    expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
+  });
+
+  it("génère à la fréquence d'échantillonnage du graphe, pas à une valeur figée", async () => {
+    // Le nœud lisait `ctx.sampleRate`, absent du contexte : il retombait
+    // silencieusement sur 44 100 quelle que soit la carte son.
+    const res = await ficheCloche.executer(ctxCloche({ "Durée": 1 }, 48000));
+    expect((res.valeurs[0] as AudioBuffer).sampleRate).toBe(48000);
+  });
+
+  it("la Durée pilote la longueur produite", async () => {
+    const res = await ficheCloche.executer(ctxCloche({ "Durée": 2 }, 22050));
+    expect((res.valeurs[0] as AudioBuffer).duration).toBeCloseTo(2, 3);
+  });
+
+  it("l'Inharmonicité atteint le moteur : à 0 %, le son change du tout au tout", async () => {
+    const cloche = (await ficheCloche.executer(ctxCloche({ "Durée": 1, "Inharmonicité": 100 }))).valeurs[0] as AudioBuffer;
+    const orgue = (await ficheCloche.executer(ctxCloche({ "Durée": 1, "Inharmonicité": 0 }))).valeurs[0] as AudioBuffer;
+    const a = cloche.getChannelData(0), b = orgue.getChannelData(0);
+    let ecart = 0;
+    for (let i = 0; i < a.length; i++) ecart += Math.abs(a[i] - b[i]);
+    expect(ecart / a.length).toBeGreaterThan(1e-3);
+  });
+
+  it("le message rend compte des réglages, sans marqueur brut", async () => {
+    const res = await ficheCloche.executer(ctxCloche({ "Fréquence": 523, "Durée": 1 }));
+    expect(res.message).toMatch(/523/);
+    expect(res.message).not.toMatch(/__VAR_/);
+  });
+});
