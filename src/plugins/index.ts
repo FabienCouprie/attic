@@ -85,6 +85,10 @@ import { fiches as f_pca_neuronale } from "./pca-neuronale";
 import { fiches as f_continuation_spectrale } from "./continuation-spectrale";
 import { fiches as f_accords_vers_notation } from "./accords-vers-notation";
 import { fiches as f_risset } from "./risset";
+import { fiches as f_lucier } from "./lucier";
+import { fiches as f_reich } from "./reich";
+import { fiches as f_wishart } from "./wishart";
+import { fiches as f_gendyn } from "./gendyn";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -169,4 +173,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_continuation_spectrale,
   ...f_accords_vers_notation,
   ...f_risset,
+  ...f_lucier,
+  ...f_reich,
+  ...f_wishart,
+  ...f_gendyn,
 ];
