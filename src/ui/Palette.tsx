@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n } from "../i18n";
+import { filtrerFiches } from "./recherche-palette";
 
 const COULEURS: Record<string, string> = {
   Entrées: "#4c6ef5", Traitement: "#495057", Sorties: "#e8590c",
@@ -23,18 +24,10 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
 
   function nomDef(def: FicheAudio) { return lang === "en" && def.nomEn ? def.nomEn : def.nom; }
 
-  const filtres = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return plugins;
-    return plugins.filter((p) =>
-      p.nom.toLowerCase().includes(s) ||
-      p.resume.toLowerCase().includes(s) ||
-      p.famille.toLowerCase().includes(s) ||
-      (p.nomEn || "").toLowerCase().includes(s) ||
-      (p.resumeEn || "").toLowerCase().includes(s) ||
-      (lang === "en" ? t(`famille.${p.famille}`) : "").toLowerCase().includes(s)
-    );
-  }, [q, plugins]);
+  const filtres = useMemo(
+    () => filtrerFiches(plugins, q, (famille) => (lang === "en" ? t(`famille.${famille}`) : "")),
+    [q, plugins, lang, t],
+  );
 
   const groupes = useMemo(() => {
     const map = new Map<string, Map<string, FicheAudio[]>>();
