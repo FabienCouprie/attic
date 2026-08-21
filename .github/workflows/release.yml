@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish to GitHub release
+      - name: Build the installer
         shell: pwsh
         run: |
           # Packaging as a single asar archive consumes excessive memory for this
@@ -73,10 +73,52 @@ jobs:
           npm install --no-save electron-builder@26.15.3
           # Point the packager to the saved Electron distribution via package.json.
           node -e "const p = require('./package.json'); p.build.electronDist = 'electron-dist'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
-          npm exec -- electron-builder --win -p always
+          # On construit SANS publier. Laisser electron-builder téléverser lui-même
+          # (« -p always ») a fait perdre un asset sur chacune des deux dernières
+          # releases, sans jamais échouer : sur la v3.1.4 le blockmap n'est pas
+          # arrivé, sur la v3.1.5 c'est l'installeur de 1,66 Go — le job s'est
+          # terminé 98 secondes après le début de son téléversement, et a rapporté
+          # un succès. Le téléversement se fait donc à l'étape suivante, avec un
+          # outil qui attend la fin et signale les erreurs.
+          #
+          # Le nom de l'artefact est fixé sans espace : le défaut
+          # (« Attic Setup 3.1.5.exe ») serait renommé à l'envoi, et ne
+          # correspondrait plus à l'URL inscrite dans latest.yml.
+          npm exec -- electron-builder --win -p never -c.nsis.artifactName='Attic-Setup-${version}.${ext}'
         env:
-          # Use the native GitHub Actions token instead of a personal access token.
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # electron-builder can exceed the default Node heap on larger apps.
           NODE_OPTIONS: --max-old-space-size=14336
+
+      - name: Publish the installer to the GitHub release
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag || github.ref_name }}"
+          $exe = Get-ChildItem release -Filter 'Attic-Setup-*.exe' |
+                 Where-Object { $_.Name -notlike '*__uninstaller*' }
+          $blockmap = Get-ChildItem release -Filter 'Attic-Setup-*.exe.blockmap'
+          $yml = Get-Item release/latest.yml
+          if (-not $exe -or -not $blockmap -or -not $yml) {
+            throw "Fichier manquant a la sortie du build : exe=$($exe.Count) blockmap=$($blockmap.Count) latest.yml=$($yml.Count)"
+          }
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) { gh release create $tag --title $tag --notes "Attic $tag" }
+
+          # --clobber pour qu'une reprise apres echec remplace un asset partiel
+          # au lieu de buter dessus.
+          gh release upload $tag $exe.FullName $blockmap.FullName $yml.FullName --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Le televersement a echoue" }
+
+          # Vérification a posteriori : c'est l'absence de ce contrôle qui a laissé
+          # passer deux releases incompletes en se fiant au code de retour.
+          $attendus = @($exe.Name, $blockmap.Name, $yml.Name)
+          $publies = gh release view $tag --json assets --jq '.assets[] | "\(.name):\(.size)"'
+          Write-Host "Assets publies :`n$publies"
+          foreach ($nom in $attendus) {
+            $ligne = $publies | Where-Object { $_ -like "$nom`:*" }
+            if (-not $ligne) { throw "Asset absent de la release : $nom" }
+            if ([int]($ligne -split ':')[-1] -le 0) { throw "Asset vide : $ligne" }
+          }
+          Write-Host "Les $($attendus.Count) assets attendus sont bien publies."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
