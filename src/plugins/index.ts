@@ -86,6 +86,7 @@ import { fiches as f_continuation_spectrale } from "./continuation-spectrale";
 import { fiches as f_accords_vers_notation } from "./accords-vers-notation";
 import { fiches as f_risset } from "./risset";
 import { fiches as f_lucier } from "./lucier";
+import { fiches as f_reich } from "./reich";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -171,4 +172,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_accords_vers_notation,
   ...f_risset,
   ...f_lucier,
+  ...f_reich,
 ];
