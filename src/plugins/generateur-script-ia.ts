@@ -5,6 +5,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
+import { hasardDuNoeud } from "../core";
 import { langueCourante, type Langue, traduire } from "../i18n";;
 
 function decouperEntree(valeur: unknown): string[] {
@@ -15,13 +16,13 @@ function decouperEntree(valeur: unknown): string[] {
     .filter((s) => s.length > 0);
 }
 
-function piocher<T>(arr: T[], n: number): T[] {
+function piocher<T>(arr: T[], n: number, hasard: () => number): T[] {
   if (arr.length === 0) return [];
   const copie = [...arr];
   const resultat: T[] = [];
   const count = Math.min(n, copie.length);
   for (let i = 0; i < count; i++) {
-    const idx = Math.floor(Math.random() * copie.length);
+    const idx = Math.floor(hasard() * copie.length);
     resultat.push(copie.splice(idx, 1)[0]);
   }
   return resultat;
@@ -30,13 +31,13 @@ function piocher<T>(arr: T[], n: number): T[] {
 function construireScript(
   instruments: string[], styles: string[], emotions: string[], tessitures: string[],
   nbInstruments: number, nbStyles: number, nbEmotions: number,
-  langue: Langue,
+  langue: Langue, hasard: () => number,
 ): string {
   const fr = langue === "fr";
-  const instr = piocher(instruments, nbInstruments);
-  const styl = piocher(styles, nbStyles);
-  const emo = piocher(emotions, nbEmotions);
-  const tess = piocher(tessitures, 1);
+  const instr = piocher(instruments, nbInstruments, hasard);
+  const styl = piocher(styles, nbStyles, hasard);
+  const emo = piocher(emotions, nbEmotions, hasard);
+  const tess = piocher(tessitures, 1, hasard);
 
   const lignes: string[] = [];
   lignes.push(fr ? "=== Script de génération musicale IA ===" : "=== AI Music Generation Script ===");
@@ -120,16 +121,16 @@ export const fiches: FicheAudio[] = ([
       const nbInstr = Math.round(ctx.paramNombre("Instruments", 3));
       const nbStyles = Math.round(ctx.paramNombre("Styles", 2));
       const nbEmo = Math.round(ctx.paramNombre("Émotions", 2));
-      const graine = Math.round(ctx.paramNombre("Graine", 0));
-      if (graine > 0) {
-        let s = graine;
-        Math.random = () => {
-          s = (s * 1103515245 + 12345) & 0x7fffffff;
-          return s / 0x7fffffff;
-        };
-      }
+      // Ce nœud remplaçait `Math.random` GLOBALEMENT dès qu'une graine était
+      // fournie, et ne le restaurait jamais : après une seule exécution, tout
+      // le reste de l'application — les autres nœuds comme l'interface —
+      // tirait sur un générateur congruentiel faible pour le reste de la
+      // session. Le hasard est désormais passé en paramètre et n'engage que ce
+      // nœud, ce qui est aussi le seul moyen d'avoir une graine par nœud qui
+      // ait un sens.
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
 
-      const script = construireScript(instruments, styles, emotions, tessitures, nbInstr, nbStyles, nbEmo, langue);
+      const script = construireScript(instruments, styles, emotions, tessitures, nbInstr, nbStyles, nbEmo, langue, aleatoire);
 
       const fr = langue === "fr";
       const parties = [];
@@ -139,7 +140,7 @@ export const fiches: FicheAudio[] = ([
       if (tessitures.length > 0) parties.push(`${tessitures.length} ${fr ? "tess." : "voc."}`);
       const source = parties.length > 0 ? parties.join(" · ") : (fr ? "entrées vides — utilisez les valeurs par défaut" : "empty inputs — using defaults");
 
-      return { valeurs: [script], message: traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source) };
+      return { valeurs: [script], message: `${traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source)} · graine ${graine}` };
    },
  },
 ] as FicheAudio[]).map(avecDoc);

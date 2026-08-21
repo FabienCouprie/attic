@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { creerAleatoire } from "../core";
 import { parseMidi } from "midi-file";
 import {
    appliquerDelay, appliquerReverberation, appliquerDistorsion,
@@ -516,6 +517,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Équilibre son direct / réverbération.",
         docEn: "Dry/wet balance." },
+      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine de la queue diffuse. Contrairement aux nœuds où le hasard est l'effet recherché, la valeur par défaut est fixe : une réverbération qui change de pièce à chaque exécution serait un défaut. La changer donne une autre pièce, de mêmes dimensions.",
+        docEn: "Seed for the diffuse tail. Unlike nodes where randomness is the point, the default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -535,7 +539,8 @@ export const fiches: FicheAudio[] = ([
         const decay = ctx.paramNombre("Decay", 2);
         const preDelay = ctx.paramNombre("Pre-delay", 20);
         const damping = ctx.paramNombre("Damping", 30);
-        irBuffer = genererIR(type, taille, decay, preDelay, damping, a.sampleRate);
+        irBuffer = genererIR(type, taille, decay, preDelay, damping, a.sampleRate,
+          creerAleatoire(ctx.paramNombre("Graine", 42)));
       }
       ctx.onProgress(traduire("progress.convolution"));
       const r = await reverberationConvolution(a, irBuffer, mix);

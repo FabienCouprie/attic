@@ -27,6 +27,7 @@ import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { creerAleatoire, hasardDuNoeud } from "../core";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -484,6 +485,9 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Durée", nomEn:"Duration", plage:[1,60], defaut:4, unite:"s" },
       { nom:"Note référence", nomEn:"Reference note", plage:[21,108], defaut:60, docEn:"MIDI note for the original pitch of the sample." },
+      { nom:"Graine", nomEn:"Seed", plage:[0,999999], pas:1, defaut:0,
+        doc:"Graine de la mélodie. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement la même mélodie.",
+        docEn:"Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody." },
     ],
     async executer(ctx: any) {
       const f = ctx.noeud.data.audioFichier as File|undefined;
@@ -506,16 +510,17 @@ export const fiches: FicheAudio[] = ([
       const decalage = DEMI_TONS_CLE[cle] ?? 0;
       const deg = degresGammeMelodie(gamme);
       const dureeNoire = 60 / Math.max(1, tempo);
+      const { graine, aleatoire: hasard } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       let t = 0;
       while (t < d) {
-        const nb = Math.random() < 0.3 ? 2 : 1;
+        const nb = hasard() < 0.3 ? 2 : 1;
         const len = dureeNoire / nb;
         for (let s = 0; s < nb; s++) {
-          if (Math.random() > 0.1) {
-            const g = deg[Math.floor(Math.random() * deg.length)];
-            const midi = 60 + decalage + g + Math.floor(Math.random() * 2) * 12;
+          if (hasard() > 0.1) {
+            const g = deg[Math.floor(hasard() * deg.length)];
+            const midi = 60 + decalage + g + Math.floor(hasard() * 2) * 12;
             const debut = t + s * len;
-            notes.push({ note: midi, velocite: 80 + Math.floor(Math.random() * 40), debut, fin: debut + len * 0.9 });
+            notes.push({ note: midi, velocite: 80 + Math.floor(hasard() * 40), debut, fin: debut + len * 0.9 });
           }
         }
         t += dureeNoire;
@@ -523,7 +528,7 @@ export const fiches: FicheAudio[] = ([
       const noteRef = ctx.paramNombre("Note référence", 60);
       try {
         const buf = rendreAvecEchantillon(notes, sample, 80, noteRef);
-        return { valeurs: [buf], message: traduire("msg.ok_var_0_notes_var_1_s", notes.length, buf.duration.toFixed(1)) };
+        return { valeurs: [buf], message: `${traduire("msg.ok_var_0_notes_var_1_s", notes.length, buf.duration.toFixed(1))} · graine ${graine}` };
       } catch (e: any) {
         return { valeurs:[null], message: traduire("msg.erreur_rendu_var_0", e?.message ?? e) };
       }
@@ -541,11 +546,15 @@ export const fiches: FicheAudio[] = ([
         docEn: "White = all frequencies at equal level (flat spectrum). Pink = −3 dB/octave (perceptually balanced). Brownian = −6 dB/octave (dark, muffled). Connect to the Spectrum Analyzer to see the difference.", optionsEn: ["White", "Pink", "Brownian"], defautEn: "White" },
       { nom: "Durée", nomEn: "Duration", plage: [0.2, 10], pas: 0.1, defaut: 2, unite: "s" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
+      { nom: "Graine", nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine du bruit. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement le même bruit, échantillon par échantillon.",
+        docEn: "Seed for the noise. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same noise, sample for sample." },
     ],
     async executer(ctx: any) {
       const type = ctx.paramTexte("Type", "Blanc");
-      const buf = genererBruit(type, ctx.paramNombre("Durée", 2), ctx.paramNombre("Volume", 80));
-      return { valeurs: [buf], message: traduire("msg.bruit_var_0_var_1_s", type.toLowerCase(), buf.duration.toFixed(1)) };
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      const buf = genererBruit(type, ctx.paramNombre("Durée", 2), ctx.paramNombre("Volume", 80), aleatoire);
+      return { valeurs: [buf], message: `${traduire("msg.bruit_var_0_var_1_s", type.toLowerCase(), buf.duration.toFixed(1))} · graine ${graine}` };
     },
   },
   {
@@ -692,6 +701,10 @@ export const fiches: FicheAudio[] = ([
 
       const len = Math.max(1, Math.floor(duree * sr));
       const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
+      // Graine fixe plutôt qu'un paramètre : le bruit d'un clic de 8 ms n'a
+      // aucune raison de changer d'une exécution à l'autre, et personne ne
+      // souhaite le régler.
+      const hasardClic = creerAleatoire(1);
 
       function ecrireClic(pos: number, accent: boolean) {
         const amp = accent ? vol * 0.9 : vol * 0.5;
@@ -724,7 +737,7 @@ export const fiches: FicheAudio[] = ([
           for (let i = 0; i < n && pos + i < len; i++) {
             const t = i / sr;
             const env = Math.exp(-t * 200);
-            const s = (Math.random() * 2 - 1) * amp * env;
+            const s = (hasardClic() * 2 - 1) * amp * env;
             buf.getChannelData(0)[pos + i] += s;
             buf.getChannelData(1)[pos + i] += s;
           }

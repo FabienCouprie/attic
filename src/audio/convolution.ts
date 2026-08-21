@@ -51,6 +51,10 @@ export function genererIR(
   preDelayMs: number,
   dampingPct: number,
   sr: number,
+  // Source du hasard de la queue diffuse. Le nœud passe le générateur issu de
+  // son paramètre « Graine », dont la valeur par défaut est FIXE : une
+  // réverbération qui change de pièce à chaque exécution serait un défaut.
+  hasard: () => number = Math.random,
 ): AudioBuffer {
   const taille = Math.max(0, Math.min(100, taillePct)) / 100;
   const decay = Math.max(0.1, Math.min(10, decaySec));
@@ -113,7 +117,7 @@ export function genererIR(
         default: // Room
           enveloppe = Math.pow(1 - t, 2.5);
       }
-      d[i] += (Math.random() * 2 - 1) * enveloppe;
+      d[i] += (hasard() * 2 - 1) * enveloppe;
     }
 
     // 4. Damping (passe-bas 1-pôle récursif) sur toute l'IR après le pre-delay.

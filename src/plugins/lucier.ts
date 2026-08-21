@@ -4,6 +4,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { creerAleatoire } from "../core";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -36,6 +37,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Delay before the first reflections. It ACCUMULATES from pass to pass: a high value combined with many iterations pushes the sound later, possibly out of the frame." },
       { nom: "Damping", nomEn: "Damping", type: "nombre", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
         doc: "Absorption des aigus par l'air et les matériaux.", docEn: "Absorption of highs by air and materials." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine de la pièce. Elle mérite d'être fixe ici plus qu'ailleurs : la pièce est le sujet de l'œuvre, et vingt itérations dans une pièce chaque fois différente ne donneraient pas deux fois le même résultat. La changer, c'est enregistrer dans une autre pièce.",
+        docEn: "Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -52,6 +56,7 @@ export const fiches: FicheAudio[] = ([
         ctx.paramNombre("Pre-delay", 10),
         ctx.paramNombre("Damping", 30),
         a.sampleRate,
+        creerAleatoire(ctx.paramNombre("Graine", 42)),
       );
       // Exprimée en dB : la platitude s'effondre si vite (0,73 pour la source,
       // 0,05 après un seul passage, puis en dessous de 0,001) qu'un affichage

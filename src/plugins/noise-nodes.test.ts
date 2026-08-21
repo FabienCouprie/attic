@@ -7,12 +7,21 @@ import { resoudreEntree } from "../core/graphe";
 import { calculerProfilBruit, reduireBruit } from "../audio/effets-dynamique";
 import type { AreteG } from "../core/meta";
 import type { FicheAudio } from "../audio/types-domaine";
+import { creerAleatoire } from "../core/hasard";
+
+// Le bruit de test est tiré d'un générateur à graine fixe, pas de Math.random.
+// Ces tests mesurent des rapports d'énergie sur du bruit : avec un tirage
+// libre, ils échouaient par intermittence sans que le code ait changé, et
+// l'échec ne disait donc rien. Une graine fixe rend l'échec informatif — s'il
+// survient, quelque chose a réellement changé.
+const GRAINE_BRUIT = 20240521;
 
 function bruitBlanc(dureeS: number, sr = 44100): AudioBuffer {
   const len = Math.round(dureeS * sr);
   const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
   const ch = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  const hasard = creerAleatoire(GRAINE_BRUIT);
+  for (let i = 0; i < len; i++) ch[i] = hasard() * 2 - 1;
   return buf;
 }
 
@@ -20,10 +29,14 @@ function signalAvecBruit(signalAmp: number, bruitAmp: number, sr = 44100): Audio
   const len = 2 * sr;
   const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
   const ch = buf.getChannelData(0);
+  // Graine distincte de celle du profil : le bruit à réduire ne doit pas être
+  // le bruit exact qui a servi à établir le profil, sinon la réduction est
+  // trop facile et le test ne mesure plus rien.
+  const hasard = creerAleatoire(GRAINE_BRUIT + 1);
   for (let i = 0; i < len; i++) {
     const t = i / sr;
     const signal = signalAmp * Math.sin(2 * Math.PI * 440 * t);
-    const bruit = bruitAmp * (Math.random() * 2 - 1);
+    const bruit = bruitAmp * (hasard() * 2 - 1);
     ch[i] = signal + bruit;
   }
   return buf;
