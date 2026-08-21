@@ -87,6 +87,7 @@ import { fiches as f_accords_vers_notation } from "./accords-vers-notation";
 import { fiches as f_risset } from "./risset";
 import { fiches as f_lucier } from "./lucier";
 import { fiches as f_reich } from "./reich";
+import { fiches as f_wishart } from "./wishart";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -173,4 +174,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_risset,
   ...f_lucier,
   ...f_reich,
+  ...f_wishart,
 ];
