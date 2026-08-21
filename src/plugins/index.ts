@@ -92,6 +92,7 @@ import { fiches as f_gendyn } from "./gendyn";
 import { fiches as f_stockhausen } from "./stockhausen";
 import { fiches as f_nancarrow } from "./nancarrow";
 import { fiches as f_pulsars } from "./pulsars";
+import { fiches as f_cribles } from "./cribles";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -183,4 +184,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_stockhausen,
   ...f_nancarrow,
   ...f_pulsars,
+  ...f_cribles,
 ];
