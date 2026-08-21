@@ -73,6 +73,17 @@ jobs:
           npm install --no-save electron-builder@26.15.3
           # Point the packager to the saved Electron distribution via package.json.
           node -e "const p = require('./package.json'); p.build.electronDist = 'electron-dist'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
+          # Nom d'artefact SANS ESPACE : le défaut (« Attic Setup 3.1.5.exe »)
+          # serait renommé au téléversement et ne correspondrait plus à l'URL
+          # inscrite dans latest.yml.
+          #
+          # Réglé en patchant package.json, et non par « -c.nsis.artifactName=… »
+          # sur la ligne de commande : PowerShell scinde cet argument en « -c » et
+          # « .nsis.artifactName=… », qu'electron-builder prend alors pour un
+          # chemin de fichier de configuration — c'est ce qui a fait échouer la
+          # première tentative. Le backtick échappe le dollar pour que ${version}
+          # parvienne littéralement à node.
+          node -e "const p = require('./package.json'); p.build.nsis.artifactName = 'Attic-Setup-`${version}.`${ext}'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
           # On construit SANS publier. Laisser electron-builder téléverser lui-même
           # (« -p always ») a fait perdre un asset sur chacune des deux dernières
           # releases, sans jamais échouer : sur la v3.1.4 le blockmap n'est pas
@@ -80,11 +91,7 @@ jobs:
           # terminé 98 secondes après le début de son téléversement, et a rapporté
           # un succès. Le téléversement se fait donc à l'étape suivante, avec un
           # outil qui attend la fin et signale les erreurs.
-          #
-          # Le nom de l'artefact est fixé sans espace : le défaut
-          # (« Attic Setup 3.1.5.exe ») serait renommé à l'envoi, et ne
-          # correspondrait plus à l'URL inscrite dans latest.yml.
-          npm exec -- electron-builder --win -p never -c.nsis.artifactName='Attic-Setup-${version}.${ext}'
+          npm exec -- electron-builder --win -p never
         env:
           # electron-builder can exceed the default Node heap on larger apps.
           NODE_OPTIONS: --max-old-space-size=14336
