@@ -32,6 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Le postinstall récupère ces fichiers en mode tolérant : un échec y est
+      # signalé mais n'interrompt pas l'installation. On revalide donc ici, en
+      # mode bloquant, avant de construire quoi que ce soit — sans quoi on
+      # publierait un installeur dont le nœud Sherpa ASR est muet, avec un job
+      # vert pour seule indication.
+      - name: Verify the Sherpa WASM files
+        run: npm run download:sherpa-wasm
+
       - name: Ensure Electron binary is present
         run: node node_modules/electron/install.js
 
