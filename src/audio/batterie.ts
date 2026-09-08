@@ -28,6 +28,10 @@ export async function rendreSequenceurBatterie(
   swing: number,       // 0..100 % (décale les pas impairs)
   mesures: number,
   volume: number,      // 0..100 (global)
+  // Rafales de bruit de la caisse claire et du charley. Le noeud passe le
+  // generateur issu de son parametre « Graine » : sans quoi le meme motif rend
+  // un fichier different a chaque execution.
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const sr = 44100;
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas); // barre = 4 temps
@@ -68,7 +72,7 @@ export async function rendreSequenceurBatterie(
     const nLen = Math.ceil(0.12 * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 800;
     const nG = offline.createGain();
@@ -84,7 +88,7 @@ export async function rendreSequenceurBatterie(
     const nLen = Math.ceil(dureeSon * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = ouvert ? 5000 : 7000;
     const nG = offline.createGain();
@@ -100,7 +104,7 @@ export async function rendreSequenceurBatterie(
       const nLen = Math.ceil(0.05 * sr);
       const buf = offline.createBuffer(1, nLen, sr);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
       const src = offline.createBufferSource(); src.buffer = buf;
       const f = offline.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1200; f.Q.value = 1.4;
       const g = offline.createGain(); const t0 = debut + off;
@@ -170,6 +174,7 @@ export async function rendreSequenceurBatterieAvance(
   swing: number,
   mesures: number,
   volume: number,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const sr = 44100;
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
@@ -216,7 +221,7 @@ export async function rendreSequenceurBatterieAvance(
     const nLen = Math.ceil(0.12 * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 800;
     const nG = offline.createGain();
@@ -232,7 +237,7 @@ export async function rendreSequenceurBatterieAvance(
     const nLen = Math.ceil(dureeSon * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = ouvert ? 5000 : 7000;
     const nG = offline.createGain();
@@ -248,7 +253,7 @@ export async function rendreSequenceurBatterieAvance(
       const nLen = Math.ceil(0.05 * sr);
       const buf = offline.createBuffer(1, nLen, sr);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
       const src = offline.createBufferSource(); src.buffer = buf;
       const f = offline.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1200; f.Q.value = 1.4;
       const g = offline.createGain(); const t0 = debut + off;
@@ -265,7 +270,7 @@ export async function rendreSequenceurBatterieAvance(
     const nLen = Math.ceil(dureeSon * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 4000;
     const nG = offline.createGain();
@@ -326,7 +331,8 @@ export function genererGrilleCantor(
   nbPas: number,
   profondeur: number,
   subdivision: number,
-  partieRetiree: "center" | "left" | "right" | "random"
+  partieRetiree: "center" | "left" | "right" | "random",
+  hasard: () => number = Math.random,
 ): number[] {
   // Retourne le niveau de récursion de chaque pas actif, ou -1 si inactif.
   const grille = new Int8Array(nbPas).fill(-1);
@@ -358,7 +364,7 @@ export function genererGrilleCantor(
         break;
       case "random":
         // Tire au sort une partie contiguë à retirer.
-        const partie = Math.floor(Math.random() * subdivision);
+        const partie = Math.floor(hasard() * subdivision);
         retireDebut = debut + Math.floor(tier * partie);
         retireFin = debut + Math.floor(tier * (partie + 1));
         break;
@@ -382,6 +388,7 @@ export async function genererRythmeCantor(
   instrument: "kick" | "snare" | "hihat" | "all",
   volume: number,
   swing: number = 0,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const sr = 44100;
   const pasParMesure = 64;
@@ -391,7 +398,7 @@ export async function genererRythmeCantor(
   const offline = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
   const v = Math.max(0, Math.min(1, volume / 100));
 
-  const grille = genererGrilleCantor(pasParMesure, Math.max(1, profondeur), subdivision, partieRetiree);
+  const grille = genererGrilleCantor(pasParMesure, Math.max(1, profondeur), subdivision, partieRetiree, hasard);
 
   function jouerKick(debut: number, vol: number) {
     const gVol = vol * v * 0.8;
@@ -425,7 +432,7 @@ export async function genererRythmeCantor(
     const nLen = Math.ceil(0.12 * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 800;
     const nG = offline.createGain();
@@ -440,7 +447,7 @@ export async function genererRythmeCantor(
     const nLen = Math.ceil(0.04 * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource(); src.buffer = buf;
     const f = offline.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 7000;
     const nG = offline.createGain();

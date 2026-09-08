@@ -131,6 +131,9 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
+      { nom:"Graine", nomEn:"Seed", plage:[0,999999], pas:1, defaut:0,
+        doc:"Graine de la mélodie. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement la même mélodie.",
+        docEn:"Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody." },
       { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
@@ -138,7 +141,8 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       console.log("[attic] Mélodie aléatoire : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",100);
-      const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4));
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      const { audio, notes } = await genererMelodieAleatoire(ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Signature temporelle","4/4"),tempo,ctx.paramNombre("Mesures",4),aleatoire);
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -150,7 +154,10 @@ export const fiches: FicheAudio[] = ([
         : audio;
       const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Mélodie aléatoire : audioFinal durée=${audioFinal?.duration ?? 0}`);
-      return { valeurs: [audioFinal, midiFinal] };
+      // La graine est AFFICHÉE et pas seulement utilisée : avec le réglage par
+      // défaut (0 = tirée au sort), c'est le seul moyen de retrouver une
+      // mélodie qu'on voudrait garder.
+      return { valeurs: [audioFinal, midiFinal], message: `${notes.length} notes · graine ${graine}` };
     },
   },
   {
@@ -403,9 +410,12 @@ export const fiches: FicheAudio[] = ([
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
       { nom:"Charley", nomEn:"Hi-hat", plage:[0,100], defaut:60, unite:"%" },
+      { nom:"Graine", nomEn:"Seed", plage:[1,999999], pas:1, defaut:42,
+        doc:"Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même patron doit rendre le même fichier à chaque exécution.",
+        docEn:"Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60))] };
+      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60),4,4,creerAleatoire(ctx.paramNombre("Graine",42)))] };
     },
   },
   {
@@ -422,12 +432,16 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2, doc: "Nombre de mesures générées.", docEn: "Number of bars generated." },
       { nom: "Swing", nomEn: "Swing", type: "nombre", plage: [0, 100], defaut: 0, unite: "%", doc: "Décalage des temps impairs pour un feeling swing/shuffle.", docEn: "Offset of odd beats for a swing/shuffle feel." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%", doc: "Volume de sortie du groove.", docEn: "Output volume of the groove." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine du choix de la partie retirée et des rafales de bruit. Sans effet sur la grille hors du mode « Aléatoire », mais elle fixe toujours le bruit. 0 = tirée au sort à chaque exécution, et affichée dans le message.",
+        docEn: "Seed for the removed-part choice and the noise bursts. No effect on the grid outside the « Random » mode, but it always fixes the noise. 0 = drawn at random on every run, and shown in the message." },
     ],
     async executer(ctx: any) {
       const partie = ctx.paramTexte("Partie retirée", "center") as any;
       const partieValide = ["center", "left", "right", "random"].includes(partie) ? partie : "center";
       const subdivision = parseInt(ctx.paramTexte("Subdivision", "3"), 10);
       const subdivisionValide = [3, 5, 7].includes(subdivision) ? subdivision : 3;
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const buffer = await genererRythmeCantor(
         ctx.paramNombre("Tempo", 120),
         ctx.paramNombre("Profondeur", 3),
@@ -437,8 +451,9 @@ export const fiches: FicheAudio[] = ([
         ctx.paramTexte("Instrument", "all") as any,
         ctx.paramNombre("Volume", 80),
         ctx.paramNombre("Swing", 0),
+        aleatoire,
       );
-      return { valeurs: [buffer], message: `${buffer.duration.toFixed(1)} s · grille Cantor` };
+      return { valeurs: [buffer], message: `${buffer.duration.toFixed(1)} s · grille Cantor · graine ${graine}` };
     },
   },
   {

@@ -8,6 +8,7 @@ import {
   fusionnerPistes, bouclerAudio,
 } from "../audio";
 import { avecDoc } from "./notices";
+import { creerAleatoire } from "../core";
 
 function zonesValides(z: any) {
   return (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
@@ -85,12 +86,16 @@ export const fiches: FicheAudio[] = ([
       { nom: "Début", nomEn: "Start", defaut: 0, doc: "Mix wet au début (0=sec seulement).", docEn: "Wet mix at start (0=dry only)." },
       { nom: "Fin", nomEn: "End", defaut: 50, doc: "Mix wet à la fin du fondu.", docEn: "Wet mix after fade completes." },
       { nom: "Fondu", nomEn: "Fade", defaut: 8, unite: "s", doc: "Durée du fondu progressif.", docEn: "Duration of the progressive fade." },
+      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+        doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut FIXE : une réverbération qui change de pièce à chaque exécution serait un défaut.",
+        docEn: "Seed for the impulse-response noise. The default is FIXED: a reverb that moves to a different room on every run would be a defect." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
       const fondu = ctx.paramNombre("Fondu", 0);
       const d = fondu > 0 ? fondu : a.duration;
-      return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d)] };
+      return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d,
+        creerAleatoire(ctx.paramNombre("Graine", 42)))] };
    },
  },
   {

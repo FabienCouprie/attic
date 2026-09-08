@@ -136,7 +136,8 @@ export async function genererMelodieAleatoire(
   gamme: string,
   signature: string,
   tempoBpm: number,
-  nbMesures: number
+  nbMesures: number,
+  hasard: () => number = Math.random,
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const decalage = DEMI_TONS_CLE[cle] ?? 0;
   const degres = degresGammeMelodie(gamme);
@@ -157,15 +158,15 @@ export async function genererMelodieAleatoire(
   let tempsCourant = 0;
 
   for (let i = 0; i < nbBattements; i++) {
-    const subdivise = Math.random() < 0.3;
+    const subdivise = hasard() < 0.3;
     const nbSousNotes = subdivise ? 2 : 1;
     const dureeNote = dureeBattement / nbSousNotes;
 
     for (let s = 0; s < nbSousNotes; s++) {
-      const silence = Math.random() < 0.1;
+      const silence = hasard() < 0.1;
       if (!silence) {
-        const degre = degres[Math.floor(Math.random() * degres.length)];
-        const octave = Math.floor(Math.random() * 2) * 12;
+        const degre = degres[Math.floor(hasard() * degres.length)];
+        const octave = Math.floor(hasard() * 2) * 12;
         const midi = noteCentrale + decalage + degre + octave;
         const frequence = frequenceDeNoteMidi(midi);
 
@@ -188,7 +189,7 @@ export async function genererMelodieAleatoire(
         gain.connect(offline.destination);
         osc.start(debut);
         osc.stop(debut + dureeNote + 0.02);
-        notes.push({ note: midi, velocite: 80 + Math.floor(Math.random() * 40), debut, fin });
+        notes.push({ note: midi, velocite: 80 + Math.floor(hasard() * 40), debut, fin });
       }
     }
 
@@ -560,7 +561,8 @@ export async function genererBoiteRythmes(
   volumeSnare: number,
   volumeHat: number,
   tempsParMesure: number = 4,
-  uniteBattement: number = 4
+  uniteBattement: number = 4,
+  hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const sr = 44100;
   const dureeNoire = 60 / Math.max(1, tempo);
@@ -634,7 +636,7 @@ export async function genererBoiteRythmes(
     const nLen = Math.ceil(0.12 * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource();
     src.buffer = buf;
     const f = offline.createBiquadFilter();
@@ -656,7 +658,7 @@ export async function genererBoiteRythmes(
     const nLen = Math.ceil(dureeSon * sr);
     const buf = offline.createBuffer(1, nLen, sr);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < nLen; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nLen; i++) d[i] = hasard() * 2 - 1;
     const src = offline.createBufferSource();
     src.buffer = buf;
     const f = offline.createBiquadFilter();

@@ -32,6 +32,8 @@ export interface OptionsDessinSonore {
   volume: number;
   tempo: number;
   tailleMin: number; // proportion de l'image (0-1)
+  /** Source du hasard de l'extraction de palette (le noeud passe sa graine). */
+  hasard?: () => number;
 }
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -55,8 +57,11 @@ function triadeGamme(gamme: string): number[] {
   return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 
-export function detecterFormesColorees(pixels: PixelBuffer, nbCouleurs: number, tailleMin: number): FormeColoree[] {
-  const palette = extrairePalette(pixels, nbCouleurs);
+export function detecterFormesColorees(
+  pixels: PixelBuffer, nbCouleurs: number, tailleMin: number,
+  hasard: () => number = Math.random,
+): FormeColoree[] {
+  const palette = extrairePalette(pixels, nbCouleurs, undefined, hasard);
   const w = pixels.width;
   const h = pixels.height;
   const data = pixels.data;
@@ -191,7 +196,7 @@ export async function genererDessinSonore(
   options: OptionsDessinSonore,
 ): Promise<{ audio: AudioBuffer; midi: File | null; formes: FormeColoree[] }> {
   const pixels = await imageDataDepuisFichier(image, 512);
-  const formes = detecterFormesColorees(pixels, options.nbCouleurs, options.tailleMin);
+  const formes = detecterFormesColorees(pixels, options.nbCouleurs, options.tailleMin, options.hasard);
   const notes = formesVersNotes(formes, options);
   const { programme, banque } = decodeInstrument(options.instrument);
   const audio = await rendreSequence(notes, options.modeRendu, options.volume, programme, banque);

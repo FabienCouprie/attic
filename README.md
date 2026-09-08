@@ -27,7 +27,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Node import/export** — package custom nodes as `.zip`, share between installations
 - **Metacomponents** — encapsulate sub-graphs as reusable nodes
 - **Save/load** — serializes graph + metacomponents to JSON
-- **Per-node seeds** — a node that draws at random carries a `Graine` / `Seed` parameter, set where the effect happens and saved with the node like any other parameter. `0` means "draw one each run", and the node then reports the seed it used so a run worth keeping can be reproduced by copying that value back. Coverage is tracked: `src/core/hasard-couverture.test.ts` inventories every file still calling `Math.random()` directly and fails both when a new one appears and when a migrated one is left behind
+- **Per-node seeds** — a node that draws at random carries a `Graine` / `Seed` parameter, set where the effect happens and saved with the node like any other parameter. `0` means "draw one each run", and the node then reports the seed it used so a run worth keeping can be reproduced by copying that value back. Where randomness is an implementation detail rather than the effect — reverb tails, phase randomization, palette extraction — the default is a fixed value instead, because a render that changes on every run is a defect. `src/core/hasard-couverture.test.ts` inventories every file still calling `Math.random()` directly, checks structurally that each is either a seed draw or a unique-id generator, and fails both when a new one appears and when a migrated one is left behind
 - **Prompt-to-graph** — type a keyword, get a pre-wired graph (55+ keywords)
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
@@ -112,13 +112,15 @@ If you still have an old `GH_TOKEN` classic personal access token used for previ
 ### Tests & Lint
 
 ```bash
-npm test     # Vitest (1255 tests across 111 files)
+npm test     # Vitest (1267 tests across 112 files)
 npm run lint # oxlint
 ```
 
 ## ONNX Models
 
 AI models (Demucs, MDX-Net, Stable Audio 3) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately as part of the release build (`assets.zip`, see Releasing below). See `public/oonx/` for model storage.
+
+The Sherpa-ONNX ASR node needs five browser WASM files in `public/sherpa-onnx-wasm/`. They are fetched from the `assets` release by `scripts/download-sherpa-wasm.cjs`, run from `postinstall`, and each is checked against a SHA-256 pinned in that script — this is executable WebAssembly, so a file that does not match is refused rather than installed. They used to come from the `@siteed/sherpa-onnx.rn` npm package: 864 MB installed for 12.8 MB actually used, none of its JavaScript ever imported, dragging a React Native toolchain (Metro, Expo) that this Electron app never loads and that carried four unfixable advisories. No upstream replacement exists — the official `sherpa-onnx` package ships only a Node build, and k2-fsa publishes no WASM release assets — so the files are pinned at the version that package shipped.
 
 SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and bundled with the installer (~680 MB, see the `assets` release). The node still accepts a custom model folder via the "Chemin modèle" / "Model path" parameter.
 
