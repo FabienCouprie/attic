@@ -396,6 +396,16 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_magenta_humaniser_groove_var_0": { fr: "Erreur Magenta Humaniser groove : {__VAR_0__}", en: "Magenta Humaniser groove error: {__VAR_0__}" },
   "msg.piste_non_connect_e": { fr: "Piste non connectée.", en: "Track not connected." },
   "msg.zone_non_connect_e": { fr: "Zone non connectée.", en: "Zone not connected." },
+  "msg.zone_trait_e_non_connect_e": { fr: "Zone traitée non connectée.", en: "Processed zone not connected." },
+  "msg.zone_inexploitable": {
+    fr: "Zone connectée mais inexploitable : la valeur reçue ne décrit aucune zone (début + durée).",
+    en: "Zone connected but unusable: the incoming value describes no zone (start + duration).",
+  },
+  "msg.zones_premiere_retenue": {
+    fr: "({__VAR_0__} zones reçues, la première est retenue.)",
+    en: "({__VAR_0__} zones received, the first one is used.)",
+  },
+  "msg.zone_r_ins_r_e_var_0_s": { fr: "Zone réinsérée à {__VAR_0__} s.", en: "Zone reinserted at {__VAR_0__} s." },
   "msg.position_non_connect_e": { fr: "Position non connectée.", en: "Position not connected." },
   "msg.var_0_var_1_zone_s": { fr: "{__VAR_0__} {__VAR_1__} zone(s)", en: "{__VAR_0__} {__VAR_1__} zone(s)" },
   "msg.son_non_connect": { fr: "Son non connecté.", en: "Sound not connected." },

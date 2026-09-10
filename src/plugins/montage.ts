@@ -120,12 +120,43 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom:"Fondu", plage:[0,100], defaut:15, unite:"ms", nomEn: "Fade" }],
     async executer(ctx: any) {
-      const piste = ctx.entree(0), zoneTraitee = ctx.entree(1), zoneOrigine = ctx.entree(2);
+      const piste = ctx.entree(0), zoneTraitee = ctx.entree(1), zoneEntree = ctx.entree(2);
       if (!(piste instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.piste_non_connect_e") };
-      if (!(zoneTraitee instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.zone_non_connect_e") };
-      if (!zoneOrigine || typeof zoneOrigine !== "object" || !("debut" in zoneOrigine)) return { valeurs:[null], message:traduire("msg.zone_non_connect_e") };
-      const fondu = ctx.paramNombre("Fondu",15)/1000;
-      return { valeurs:[reinsererZone(piste, zoneTraitee, (zoneOrigine as any).debut, fondu)] };
+      if (!(zoneTraitee instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.zone_trait_e_non_connect_e") };
+
+      // Le port « Zone » accepte AUSSI une liste. Le sélecteur multi-zones et
+      // « Extraire zones » émettent un tableau sur un port de type `controle`,
+      // qui se branche ici sans que rien ne s'y oppose — les deux ports ont le
+      // même type de flux. Ce nœud n'acceptait qu'un objet unique et répondait
+      // « Zone non connectée » alors que l'arête était bien là : le message
+      // désignait le seul cas qui n'était PAS le sien.
+      const zones = zonesValides(Array.isArray(zoneEntree) ? zoneEntree : [zoneEntree]);
+      if (zones.length === 0) {
+        // Distinguer les deux causes, faute de quoi on renvoie l'utilisateur
+        // vérifier un câblage qui est correct.
+        return {
+          valeurs: [null],
+          message: zoneEntree == null
+            ? traduire("msg.zone_non_connect_e")
+            : traduire("msg.zone_inexploitable"),
+        };
+      }
+
+      // Ce nœud réinsère UN tampon traité à UNE position : avec plusieurs
+      // zones, on prend la première et on le dit, plutôt que d'en choisir une
+      // en silence.
+      const zone = zones[0];
+      // `reinsererZone` attend des MILLISECONDES et divise lui-même par 1000.
+      // Le nœud divisait déjà : un fondu réglé à 15 ms valait 0,015 ms, ramené
+      // à 1 échantillon par le garde-fou de la fonction — donc un clic à la
+      // jointure, pour tout réglage.
+      const fonduMs = ctx.paramNombre("Fondu", 15);
+      const resultat = reinsererZone(piste, zoneTraitee, zone.debut, fonduMs);
+      const suffixe = zones.length > 1 ? " " + traduire("msg.zones_premiere_retenue", zones.length) : "";
+      return {
+        valeurs: [resultat],
+        message: traduire("msg.zone_r_ins_r_e_var_0_s", zone.debut.toFixed(2)) + suffixe,
+      };
    }, nomEn: "Reinsert Zone", resumeEn: "Reinserts a treated zone into the original track.",
   },
   {
