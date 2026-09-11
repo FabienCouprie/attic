@@ -12,6 +12,7 @@ const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
+const { resoudreRessource } = require("./chemins-ressources.cjs");
 
 // Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
 // fichier et un tableau d'arguments, donc aucune citation à gérer et aucune
@@ -26,6 +27,16 @@ const RACINE_NODES = () => path.join(app.getPath("home"), ".attic", "nodes");
 
 // Sauvegarde des données utilisateur autour d'une mise à jour, même raison.
 const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-backup.json");
+
+// Contexte de résolution des chemins de ressources. Sept copies de ce même
+// calcul vivaient dans ce fichier, dont une seule avec le repli `public/` du
+// développement : un chemin relatif se résolvait par un gestionnaire et pas par
+// un autre, en développement seulement. Voir chemins-ressources.cjs.
+const contexteRessources = () => ({
+  empaquete: app.isPackaged,
+  racineRessources: process.resourcesPath,
+  racineProjet: path.resolve(__dirname, ".."),
+});
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
@@ -305,11 +316,7 @@ ipcMain.handle("dossier:choisir", async () => {
 ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
   try {
     // En production, résoudre les chemins relatifs vers resourcesPath
-    let chemin = cheminDossier;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
+    const chemin = resoudreRessource(cheminDossier, contexteRessources());
     const fichiers = fs.readdirSync(chemin);
     const audios = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma", ".mid", ".midi"];
     const resultats = [];
@@ -329,11 +336,7 @@ ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
 // --- IPC : lire un fichier audio et retourner son buffer ---
 ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
   try {
-    let chemin = cheminFichier;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
+    const chemin = resoudreRessource(cheminFichier, contexteRessources());
     const buf = fs.readFileSync(chemin);
     const ext = path.extname(cheminFichier).toLowerCase();
     const mime = ext === ".mp3" ? "audio/mpeg" : ext === ".ogg" ? "audio/ogg" : "audio/wav";
@@ -483,9 +486,8 @@ ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
@@ -511,9 +513,8 @@ ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
@@ -549,9 +550,8 @@ ipcMain.handle("sdxs-image:generer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle SDXS-512 introuvable : ${modelDir}` };
@@ -995,18 +995,11 @@ ipcMain.handle("ollama:modeles", async () => {
 // --- IPC : Lire un fichier binaire par chemin (sans dialogue) ---
 ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
   try {
-    let chemin = cheminRelatif;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-      // En dev, le dossier public/ est servi par Vite mais n'est pas à la racine :
-      // on essaie donc aussi public/<chemin> si le fichier n'est pas à la racine.
-      if (!app.isPackaged && !fs.existsSync(chemin)) {
-        const cheminPublic = path.join(base, "public", cheminRelatif);
-        if (fs.existsSync(cheminPublic)) chemin = cheminPublic;
-      }
-    }
-    if (!fs.existsSync(chemin)) return null;
+    // Le repli vers public/ en développement vit maintenant dans
+    // resoudreRessource, et s'applique donc aussi aux six autres gestionnaires
+    // qui ne l'avaient pas.
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
     const buf = fs.readFileSync(chemin);
     return { donnees: buf, nom: path.basename(chemin) };
   } catch {
@@ -1017,12 +1010,8 @@ ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
 // --- IPC : Lire un fichier texte par chemin ---
 ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
   try {
-    let chemin = cheminRelatif;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
-    if (!fs.existsSync(chemin)) return null;
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
     return fs.readFileSync(chemin, "utf-8");
   } catch {
     return null;
@@ -1149,8 +1138,8 @@ ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
   // process est le plus susceptible d'être tué en cours d'écriture.
   const dataPath = CHEMIN_SAUVEGARDE_MAJ();
   const ok = ecrireSauvegarde(dataPath, data);
-  if (ok) console.log("[attic] Backup sauvegardé :", dataPath);
-  else console.error("[attic] Backup échoué :", dataPath);
+  if (ok) console.log("[attic] Backup sauvegardé:", dataPath);
+  else console.error("[attic] Backup échoué:", dataPath);
   return ok;
 });
 
