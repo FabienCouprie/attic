@@ -11,6 +11,7 @@ const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
+const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
 
 // Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
 // fichier et un tableau d'arguments, donc aucune citation à gérer et aucune
@@ -22,6 +23,9 @@ const lireVersion = (ms) => (fichier, args) =>
 // Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
 // répond qu'une fois Electron prêt.
 const RACINE_NODES = () => path.join(app.getPath("home"), ".attic", "nodes");
+
+// Sauvegarde des données utilisateur autour d'une mise à jour, même raison.
+const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-backup.json");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
@@ -1140,29 +1144,26 @@ ipcMain.handle("maj:telecharger", async () => {
 
 // Sauvegarde des données avant mise à jour
 ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
-  try {
-    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-    fs.writeFileSync(dataPath, JSON.stringify(data), "utf-8");
-    console.log("[attic] Backup sauvegardé:", dataPath);
-    return true;
-  } catch (e) {
-    console.error("[attic] Backup échoué:", e);
-    return false;
-  }
+  // Écriture ATOMIQUE (cf. sauvegarde-maj.cjs) : cette sauvegarde est prise
+  // juste avant qu'electron-updater installe et relance, donc au moment où le
+  // process est le plus susceptible d'être tué en cours d'écriture.
+  const dataPath = CHEMIN_SAUVEGARDE_MAJ();
+  const ok = ecrireSauvegarde(dataPath, data);
+  if (ok) console.log("[attic] Backup sauvegardé :", dataPath);
+  else console.error("[attic] Backup échoué :", dataPath);
+  return ok;
 });
 
 // Restauration des données après mise à jour (synchrone)
 ipcMain.on("maj:restaurer-backup-sync", (event) => {
-  try {
-    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-    if (!fs.existsSync(dataPath)) { event.returnValue = null; return; }
-    const data = fs.readFileSync(dataPath, "utf-8");
-    fs.unlinkSync(dataPath);
-    console.log("[attic] Backup restauré (sync)");
-    event.returnValue = JSON.parse(data);
-  } catch {
-    event.returnValue = null;
-  }
+  // La sauvegarde n'est supprimée QU'APRÈS analyse réussie. L'ancienne version
+  // supprimait avant : sur un contenu corrompu, `JSON.parse` levait et le
+  // fichier n'existait plus — l'échec de la restauration détruisait ce que la
+  // sauvegarde protégeait, exactement dans le cas où elle aurait servi.
+  const { donnees, erreur } = lireSauvegarde(CHEMIN_SAUVEGARDE_MAJ());
+  if (erreur) console.error("[attic] Backup non restauré —", erreur);
+  else if (donnees) console.log("[attic] Backup restauré (sync)");
+  event.returnValue = donnees;
 });
 
 app.whenReady().then(() => {
