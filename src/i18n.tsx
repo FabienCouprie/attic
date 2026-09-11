@@ -396,6 +396,12 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_magenta_humaniser_groove_var_0": { fr: "Erreur Magenta Humaniser groove : {__VAR_0__}", en: "Magenta Humaniser groove error: {__VAR_0__}" },
   "msg.piste_non_connect_e": { fr: "Piste non connectée.", en: "Track not connected." },
   "msg.zone_non_connect_e": { fr: "Zone non connectée.", en: "Zone not connected." },
+  "msg.texte_modifie_var_0_var_1": { fr: "{__VAR_0__} → {__VAR_1__} caractères", en: "{__VAR_0__} → {__VAR_1__} characters" },
+  "msg.texte_remplacements_var_0": { fr: "{__VAR_0__} remplacement(s)", en: "{__VAR_0__} replacement(s)" },
+  "msg.regex_invalide_var_0": {
+    fr: "Expression régulière invalide, texte inchangé : {__VAR_0__}",
+    en: "Invalid regular expression, text unchanged: {__VAR_0__}",
+  },
   "msg.zone_trait_e_non_connect_e": { fr: "Zone traitée non connectée.", en: "Processed zone not connected." },
   "msg.zone_inexploitable": {
     fr: "Zone connectée mais inexploitable : la valeur reçue ne décrit aucune zone (début + durée).",
