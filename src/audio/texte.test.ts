@@ -27,7 +27,7 @@ describe("remplacement littéral", () => {
 
   it("supprime quand le remplacement est vide", () => {
     const r = modifierTexte("[bruit] bonjour [bruit]", { operation: "remplacer", chercher: "[bruit] ", remplacerPar: "" });
-    expect(r.texte).toBe("bonjour [bruit]".replace("[bruit]", "[bruit]"));
+    expect(r.texte).toBe("bonjour [bruit]");
     expect(r.texte).toBe("bonjour [bruit]");
   });
 
