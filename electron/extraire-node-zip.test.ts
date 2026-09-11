@@ -19,7 +19,7 @@ import { join, resolve } from "node:path";
 import { createRequire } from "node:module";
 
 const require_ = createRequire(import.meta.url);
-const { extraireEntrees } = require_("./extraire-node-zip.cjs");
+const { extraireEntrees, identifiantNodeValide, dossierNode } = require_("./extraire-node-zip.cjs");
 
 /** Fausse entrée adm-zip : l'API réellement utilisée se réduit à ceci. */
 function entree(entryName: string, contenu: string, isDirectory = false) {
@@ -108,5 +108,47 @@ describe("protection contre le Zip Slip", () => {
     // seule présence de la chaîne écarterait une entrée légitime.
     extraireEntrees([entree("assets/../manifest.json", "{}")], nodesDir);
     expect(existsSync(join(nodesDir, "manifest.json"))).toBe(true);
+  });
+});
+
+describe("validation de l'identifiant de nœud", () => {
+  // `manifest.id` vient du .zip et sert à construire un chemin. Il alimente
+  // TROIS gestionnaires, dont `node:supprimer` qui fait rmSync en récursif.
+  it("accepte les identifiants du catalogue et des nœuds installés", () => {
+    for (const id of ["generateur-bruit", "stable-audio-3", "couleur-suno-ia",
+                      "test-export", "piece-lucier", "a", "A1", "mon.noeud_v2"]) {
+      expect(identifiantNodeValide(id), id).toBe(true);
+    }
+  });
+
+  it("refuse toute remontée de chemin", () => {
+    for (const id of ["..", "../x", "../../Documents", "a/../..", ".",
+                      "a/b", "a\\b", "..\\..\\x", "/etc", "C:/Windows", "./x"]) {
+      expect(identifiantNodeValide(id), JSON.stringify(id)).toBe(false);
+    }
+  });
+
+  it("refuse ce qui n'est pas une chaîne exploitable", () => {
+    // Le point de tête est écarté explicitement : c'est lui qui ouvre « . » et
+    // « .. », que le jeu de caractères autorisé laisserait sinon passer.
+    for (const id of ["", " ", ".cache", "-tiret", null, undefined, 42, {}, []]) {
+      expect(identifiantNodeValide(id as any), JSON.stringify(id)).toBe(false);
+    }
+    expect(identifiantNodeValide("x".repeat(101))).toBe(false);
+    expect(identifiantNodeValide("x".repeat(100))).toBe(true);
+  });
+
+  it("dossierNode rend null au lieu d'un chemin hors de la racine", () => {
+    // Le point de tout le dispositif : un identifiant refusé ne doit pas
+    // produire un chemin « ailleurs », il ne doit produire AUCUN chemin.
+    expect(dossierNode("/racine/nodes", "../../Documents")).toBeNull();
+    expect(dossierNode("/racine/nodes", "mon-noeud")).toBe(join("/racine/nodes", "mon-noeud"));
+  });
+
+  it("un identifiant valide reste sous la racine", () => {
+    for (const id of ["a", "mon-noeud", "x".repeat(100)]) {
+      const d = dossierNode(nodesDir, id)!;
+      expect(resolve(d).startsWith(resolve(nodesDir))).toBe(true);
+    }
   });
 });

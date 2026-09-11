@@ -25,6 +25,50 @@ const path = require("path");
 /** Fichiers texte dont le contenu est renvoyé à l'appelant. */
 const FICHIERS_TEXTE = ["manifest.json", "executer.js", "notice.json", "dependencies.json"];
 
+// Un identifiant de nœud sert à construire un CHEMIN — celui du dossier
+// d'installation — et il est lu dans le manifest.json d'un .zip reçu de
+// quelqu'un d'autre. Sans ce filtre, « ../../Documents » faisait deux choses :
+//
+//   - à l'import, `path.join(home, ".attic", "nodes", id)` désignait un dossier
+//     hors de l'arborescence des nœuds, que `mkdirSync` créait — et comme la
+//     protection Zip Slip ci-dessous se mesure PAR RAPPORT à ce dossier, elle
+//     validait sans broncher tout ce qu'on y écrivait. Le garde-fou était
+//     relatif à une racine que l'attaquant choisissait ;
+//   - à la suppression, `fs.rmSync(..., { recursive: true })` effaçait ce
+//     dossier. Détruire, là où l'import se contentait d'écrire.
+//
+// D'où un filtre par LISTE BLANCHE et non par exclusion : on décrit ce qu'un
+// identifiant a le droit d'être, plutôt que de tenter d'énumérer les formes
+// d'évasion. Les 263 identifiants du catalogue le respectent, ainsi que ceux
+// des nœuds installés (« couleur-suno-ia », « test-export »).
+const MOTIF_IDENTIFIANT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const LONGUEUR_MAX = 100;
+
+/**
+ * L'identifiant est-il utilisable comme unique segment de chemin ?
+ *
+ * Rejette notamment « . » et « .. », que le motif laisserait passer puisqu'ils
+ * ne contiennent que des caractères autorisés — le premier caractère ne peut
+ * être un point, ce qui les écarte, mais on le vérifie explicitement plutôt que
+ * de le déduire d'une lecture attentive de l'expression régulière.
+ */
+function identifiantNodeValide(id) {
+  if (typeof id !== "string") return false;
+  if (id.length === 0 || id.length > LONGUEUR_MAX) return false;
+  if (id === "." || id === "..") return false;
+  return MOTIF_IDENTIFIANT.test(id);
+}
+
+/**
+ * Dossier d'installation d'un nœud, ou `null` si l'identifiant est refusé.
+ * Les deux appelants (import et suppression) passent par ici, de sorte qu'ils
+ * ne peuvent pas diverger.
+ */
+function dossierNode(racineNodes, id) {
+  if (!identifiantNodeValide(id)) return null;
+  return path.join(racineNodes, id);
+}
+
 /**
  * Écrit les entrées du zip dans `nodesDir`, en refusant celles qui en
  * sortiraient.
@@ -66,4 +110,4 @@ function extraireEntrees(entries, nodesDir) {
   return { fichiers, ignorees };
 }
 
-module.exports = { extraireEntrees, FICHIERS_TEXTE };
+module.exports = { extraireEntrees, identifiantNodeValide, dossierNode, FICHIERS_TEXTE };

@@ -9,7 +9,11 @@ const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
-const { extraireEntrees } = require("./extraire-node-zip.cjs");
+const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
+
+// Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
+// répond qu'une fois Electron prêt.
+const RACINE_NODES = () => path.join(app.getPath("home"), ".attic", "nodes");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
@@ -668,8 +672,13 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     const manifest = JSON.parse(manifestEntry.getData().toString("utf-8"));
     if (!manifest.id || !manifest.nom) return { ok: false, erreur: "manifest.json invalide (id/nom manquant)." };
 
-    // Répertoire d'installation
-    const nodesDir = path.join(app.getPath("home"), ".attic", "nodes", manifest.id);
+    // Répertoire d'installation. `manifest.id` vient du .zip, donc de
+    // l'extérieur, et sert à construire un chemin : il est validé avant, sans
+    // quoi « ../../x » sortirait de l'arborescence des nœuds — et la protection
+    // Zip Slip plus bas, qui se mesure par rapport à CE dossier, validerait
+    // alors tout ce qu'on y écrit.
+    const nodesDir = dossierNode(RACINE_NODES(), manifest.id);
+    if (!nodesDir) return { ok: false, erreur: `manifest.json invalide : identifiant « ${manifest.id} » refusé.` };
     if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
 
     // Extraire tous les fichiers. La boucle vit dans extraire-node-zip.cjs :
@@ -702,14 +711,21 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
 
 // --- IPC : Obtenir le chemin des assets d'un node installé ---
 ipcMain.handle("node:chemin-assets", async (_event, nodeId) => {
-  const assetsPath = path.join(app.getPath("home"), ".attic", "nodes", nodeId, "assets");
+  // En lecture seule, donc le moins exposé des trois — mais il passe par le
+  // même validateur pour que les trois usages de `nodeId` ne divergent pas.
+  const nodeDir = dossierNode(RACINE_NODES(), nodeId);
+  if (!nodeDir) return null;
+  const assetsPath = path.join(nodeDir, "assets");
   return fs.existsSync(assetsPath) ? assetsPath : null;
 });
 
 // --- IPC : Supprimer un node installé (assets) ---
 ipcMain.handle("node:supprimer", async (_event, nodeId) => {
   try {
-    const nodeDir = path.join(app.getPath("home"), ".attic", "nodes", nodeId);
+    // Le plus destructeur des trois usages de `nodeId` : `rmSync` en récursif.
+    // Un identifiant refusé ne supprime RIEN, plutôt que de supprimer ailleurs.
+    const nodeDir = dossierNode(RACINE_NODES(), nodeId);
+    if (!nodeDir) { console.warn(`[attic] node:supprimer identifiant refusé: ${nodeId}`); return false; }
     if (fs.existsSync(nodeDir)) fs.rmSync(nodeDir, { recursive: true });
     return true;
   } catch { return false; }
