@@ -22,7 +22,13 @@ export default defineConfig({
   build: { outDir: 'dist', emptyOutDir: true },
   optimizeDeps: audioOptimizeDeps,
   ssr: { noExternal: ['tone'] },
-  test: { include: ['src/**/*.test.ts'], testTimeout: 15000 },
+  // `electron/` est inclus depuis qu'un défaut y a survécu faute de test : la
+  // boucle d'extraction d'un node .zip écrivait vers une variable jamais
+  // déclarée, et le try/catch du gestionnaire IPC transformait la
+  // ReferenceError en un { ok: false } silencieux. Le process principal
+  // exécute du code au moins aussi délicat que le renderer — protection Zip
+  // Slip comprise — il doit être couvert de la même façon.
+  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts'], testTimeout: 15000 },
 })
 
 // Vite dev server does not always serve .wasm files with the correct MIME type,

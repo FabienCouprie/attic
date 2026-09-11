@@ -3,12 +3,40 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const { execSync, execFile } = require("child_process");
+const { execSync, execFile, execFileSync } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
+const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
+const { infoExecutable } = require("./executables.cjs");
+const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
+const { resoudreRessource } = require("./chemins-ressources.cjs");
+
+// Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
+// fichier et un tableau d'arguments, donc aucune citation à gérer et aucune
+// injection possible. `execSync` interpolait un chemin nu dans une commande
+// shell, ce qui cassait sur « C:\Program Files\… ».
+const lireVersion = (ms) => (fichier, args) =>
+  execFileSync(fichier, args, { stdio: "pipe", timeout: ms }).toString();
+
+// Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
+// répond qu'une fois Electron prêt.
+const RACINE_NODES = () => path.join(app.getPath("home"), ".attic", "nodes");
+
+// Sauvegarde des données utilisateur autour d'une mise à jour, même raison.
+const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-backup.json");
+
+// Contexte de résolution des chemins de ressources. Sept copies de ce même
+// calcul vivaient dans ce fichier, dont une seule avec le repli `public/` du
+// développement : un chemin relatif se résolvait par un gestionnaire et pas par
+// un autre, en développement seulement. Voir chemins-ressources.cjs.
+const contexteRessources = () => ({
+  empaquete: app.isPackaged,
+  racineRessources: process.resourcesPath,
+  racineProjet: path.resolve(__dirname, ".."),
+});
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
@@ -288,11 +316,7 @@ ipcMain.handle("dossier:choisir", async () => {
 ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
   try {
     // En production, résoudre les chemins relatifs vers resourcesPath
-    let chemin = cheminDossier;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
+    const chemin = resoudreRessource(cheminDossier, contexteRessources());
     const fichiers = fs.readdirSync(chemin);
     const audios = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma", ".mid", ".midi"];
     const resultats = [];
@@ -312,11 +336,7 @@ ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
 // --- IPC : lire un fichier audio et retourner son buffer ---
 ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
   try {
-    let chemin = cheminFichier;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
+    const chemin = resoudreRessource(cheminFichier, contexteRessources());
     const buf = fs.readFileSync(chemin);
     const ext = path.extname(cheminFichier).toLowerCase();
     const mime = ext === ".mp3" ? "audio/mpeg" : ext === ".ogg" ? "audio/ogg" : "audio/wav";
@@ -466,9 +486,8 @@ ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
@@ -494,9 +513,8 @@ ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
@@ -532,9 +550,8 @@ ipcMain.handle("sdxs-image:generer", async (_event, options) => {
         path.join(process.resourcesPath || "", "oonx", cible),
       ];
       modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else if (!path.isAbsolute(modelDir)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      modelDir = path.join(base, modelDir);
+    } else {
+      modelDir = resoudreRessource(modelDir, contexteRessources());
     }
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle SDXS-512 introuvable : ${modelDir}` };
@@ -667,34 +684,23 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     const manifest = JSON.parse(manifestEntry.getData().toString("utf-8"));
     if (!manifest.id || !manifest.nom) return { ok: false, erreur: "manifest.json invalide (id/nom manquant)." };
 
-    // Répertoire d'installation
-    const nodesDir = path.join(app.getPath("home"), ".attic", "nodes", manifest.id);
+    // Répertoire d'installation. `manifest.id` vient du .zip, donc de
+    // l'extérieur, et sert à construire un chemin : il est validé avant, sans
+    // quoi « ../../x » sortirait de l'arborescence des nœuds — et la protection
+    // Zip Slip plus bas, qui se mesure par rapport à CE dossier, validerait
+    // alors tout ce qu'on y écrit.
+    const nodesDir = dossierNode(RACINE_NODES(), manifest.id);
+    if (!nodesDir) return { ok: false, erreur: `manifest.json invalide : identifiant « ${manifest.id} » refusé.` };
     if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
 
-    // Extraire tous les fichiers
-    const entries = zip.getEntries();
-    const fichiers = {};
-    const resolvedNodesDir = path.resolve(nodesDir);
-    for (const entry of entries) {
-      const entryName = entry.entryName;
-      if (entry.isDirectory) continue;
-
-      // Protection contre le Zip Slip : s'assurer que l'entrée reste dans nodesDir
-      const targetPath = path.resolve(nodesDir, entryName);
-      const relativePath = path.relative(resolvedNodesDir, targetPath);
-      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-        console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${entryName}`);
-        continue;
-      }
-
-      const targetDir = path.dirname(targetPath);
-      if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-      const entryData = entry.getData(); // force read
-      fs.writeFileSync(resolvedTargetPath, entryData);
-      // Lire le contenu des fichiers texte pour le retourner
-      if (entryName === "manifest.json" || entryName === "executer.js" || entryName === "notice.json" || entryName === "dependencies.json") {
-        fichiers[entryName] = entry.getData().toString("utf-8");
-      }
+    // Extraire tous les fichiers. La boucle vit dans extraire-node-zip.cjs :
+    // elle référençait une variable inexistante (`resolvedTargetPath`), ce que
+    // le try/catch de ce gestionnaire masquait en un simple { ok: false } —
+    // l'import de nœud n'a donc jamais fonctionné dans l'application packagée.
+    // La sortir de main.cjs la rend testable, elle et sa protection Zip Slip.
+    const { fichiers, ignorees } = extraireEntrees(zip.getEntries(), nodesDir);
+    for (const nom of ignorees) {
+      console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${nom}`);
     }
 
     // Chemin des assets
@@ -717,14 +723,21 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
 
 // --- IPC : Obtenir le chemin des assets d'un node installé ---
 ipcMain.handle("node:chemin-assets", async (_event, nodeId) => {
-  const assetsPath = path.join(app.getPath("home"), ".attic", "nodes", nodeId, "assets");
+  // En lecture seule, donc le moins exposé des trois — mais il passe par le
+  // même validateur pour que les trois usages de `nodeId` ne divergent pas.
+  const nodeDir = dossierNode(RACINE_NODES(), nodeId);
+  if (!nodeDir) return null;
+  const assetsPath = path.join(nodeDir, "assets");
   return fs.existsSync(assetsPath) ? assetsPath : null;
 });
 
 // --- IPC : Supprimer un node installé (assets) ---
 ipcMain.handle("node:supprimer", async (_event, nodeId) => {
   try {
-    const nodeDir = path.join(app.getPath("home"), ".attic", "nodes", nodeId);
+    // Le plus destructeur des trois usages de `nodeId` : `rmSync` en récursif.
+    // Un identifiant refusé ne supprime RIEN, plutôt que de supprimer ailleurs.
+    const nodeDir = dossierNode(RACINE_NODES(), nodeId);
+    if (!nodeDir) { console.warn(`[attic] node:supprimer identifiant refusé: ${nodeId}`); return false; }
     if (fs.existsSync(nodeDir)) fs.rmSync(nodeDir, { recursive: true });
     return true;
   } catch { return false; }
@@ -752,25 +765,22 @@ ipcMain.handle("node:selectionner-zip", async () => {
 });
 
 // --- IPC : Informations sur l'exécuteur Python ---
-ipcMain.handle("python:info", async () => {
-  return {
-    disponible: !!CHEMIN_PYTHON,
-    chemin: CHEMIN_PYTHON,
-    version: CHEMIN_PYTHON ? execSync(`${CHEMIN_PYTHON} --version`, { stdio: "pipe", timeout: 3000 }).toString().trim() : null,
-  };
-});
+ipcMain.handle("python:info", async () => infoExecutable(CHEMIN_PYTHON, lireVersion(3000)));
 
 // --- IPC : Définir le chemin de l'exécuteur Python ---
 ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
   try {
     if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
-    // Vérifier que c'est bien Python
-    execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 3000 });
+    // Vérifier que c'est bien Python — une seule fois, sans shell. L'ancienne
+    // version lançait le binaire DEUX fois (contrôle, puis lecture de version)
+    // et citait le chemin à la main, là où `python:info` juste au-dessus ne le
+    // citait pas : d'où un chemin accepté ici et cassé là.
+    const info = infoExecutable(chemin, lireVersion(3000));
+    if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_PYTHON = chemin;
-    // Sauvegarder
     const dataPath = path.join(app.getPath("userData"), "python-path.txt");
     fs.writeFileSync(dataPath, chemin, "utf-8");
-    return { ok: true, chemin, version: execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 3000 }).toString().trim() };
+    return { ok: true, chemin, version: info.version };
   } catch (err) {
     return { ok: false, erreur: String(err?.message || err) };
   }
@@ -836,22 +846,18 @@ ipcMain.handle("python:executer", async (_event, options) => {
 });
 
 // ─── IPC Julia ───
-ipcMain.handle("julia:info", async () => {
-  return {
-    disponible: !!CHEMIN_JULIA,
-    chemin: CHEMIN_JULIA,
-    version: CHEMIN_JULIA ? execSync(`${CHEMIN_JULIA} --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() : null,
-  };
-});
+ipcMain.handle("julia:info", async () => infoExecutable(CHEMIN_JULIA, lireVersion(5000)));
 
 ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
   try {
     if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
-    execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 });
+    // Même traitement que Python : un seul lancement, sans shell.
+    const info = infoExecutable(chemin, lireVersion(5000));
+    if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_JULIA = chemin;
     const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
     fs.writeFileSync(dataPath, chemin, "utf-8");
-    return { ok: true, chemin, version: execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() };
+    return { ok: true, chemin, version: info.version };
   } catch (err) {
     return { ok: false, erreur: String(err?.message || err) };
   }
@@ -989,18 +995,11 @@ ipcMain.handle("ollama:modeles", async () => {
 // --- IPC : Lire un fichier binaire par chemin (sans dialogue) ---
 ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
   try {
-    let chemin = cheminRelatif;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-      // En dev, le dossier public/ est servi par Vite mais n'est pas à la racine :
-      // on essaie donc aussi public/<chemin> si le fichier n'est pas à la racine.
-      if (!app.isPackaged && !fs.existsSync(chemin)) {
-        const cheminPublic = path.join(base, "public", cheminRelatif);
-        if (fs.existsSync(cheminPublic)) chemin = cheminPublic;
-      }
-    }
-    if (!fs.existsSync(chemin)) return null;
+    // Le repli vers public/ en développement vit maintenant dans
+    // resoudreRessource, et s'applique donc aussi aux six autres gestionnaires
+    // qui ne l'avaient pas.
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
     const buf = fs.readFileSync(chemin);
     return { donnees: buf, nom: path.basename(chemin) };
   } catch {
@@ -1011,12 +1010,8 @@ ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
 // --- IPC : Lire un fichier texte par chemin ---
 ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
   try {
-    let chemin = cheminRelatif;
-    if (!path.isAbsolute(chemin)) {
-      const base = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
-      chemin = path.join(base, chemin);
-    }
-    if (!fs.existsSync(chemin)) return null;
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
     return fs.readFileSync(chemin, "utf-8");
   } catch {
     return null;
@@ -1138,29 +1133,26 @@ ipcMain.handle("maj:telecharger", async () => {
 
 // Sauvegarde des données avant mise à jour
 ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
-  try {
-    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-    fs.writeFileSync(dataPath, JSON.stringify(data), "utf-8");
-    console.log("[attic] Backup sauvegardé:", dataPath);
-    return true;
-  } catch (e) {
-    console.error("[attic] Backup échoué:", e);
-    return false;
-  }
+  // Écriture ATOMIQUE (cf. sauvegarde-maj.cjs) : cette sauvegarde est prise
+  // juste avant qu'electron-updater installe et relance, donc au moment où le
+  // process est le plus susceptible d'être tué en cours d'écriture.
+  const dataPath = CHEMIN_SAUVEGARDE_MAJ();
+  const ok = ecrireSauvegarde(dataPath, data);
+  if (ok) console.log("[attic] Backup sauvegardé:", dataPath);
+  else console.error("[attic] Backup échoué:", dataPath);
+  return ok;
 });
 
 // Restauration des données après mise à jour (synchrone)
 ipcMain.on("maj:restaurer-backup-sync", (event) => {
-  try {
-    const dataPath = path.join(app.getPath("userData"), "attic-backup.json");
-    if (!fs.existsSync(dataPath)) { event.returnValue = null; return; }
-    const data = fs.readFileSync(dataPath, "utf-8");
-    fs.unlinkSync(dataPath);
-    console.log("[attic] Backup restauré (sync)");
-    event.returnValue = JSON.parse(data);
-  } catch {
-    event.returnValue = null;
-  }
+  // La sauvegarde n'est supprimée QU'APRÈS analyse réussie. L'ancienne version
+  // supprimait avant : sur un contenu corrompu, `JSON.parse` levait et le
+  // fichier n'existait plus — l'échec de la restauration détruisait ce que la
+  // sauvegarde protégeait, exactement dans le cas où elle aurait servi.
+  const { donnees, erreur } = lireSauvegarde(CHEMIN_SAUVEGARDE_MAJ());
+  if (erreur) console.error("[attic] Backup non restauré —", erreur);
+  else if (donnees) console.log("[attic] Backup restauré (sync)");
+  event.returnValue = donnees;
 });
 
 app.whenReady().then(() => {
