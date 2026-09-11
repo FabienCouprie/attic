@@ -3,13 +3,21 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const { execSync, execFile } = require("child_process");
+const { execSync, execFile, execFileSync } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
+const { infoExecutable } = require("./executables.cjs");
+
+// Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
+// fichier et un tableau d'arguments, donc aucune citation à gérer et aucune
+// injection possible. `execSync` interpolait un chemin nu dans une commande
+// shell, ce qui cassait sur « C:\Program Files\… ».
+const lireVersion = (ms) => (fichier, args) =>
+  execFileSync(fichier, args, { stdio: "pipe", timeout: ms }).toString();
 
 // Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
 // répond qu'une fois Electron prêt.
@@ -753,25 +761,22 @@ ipcMain.handle("node:selectionner-zip", async () => {
 });
 
 // --- IPC : Informations sur l'exécuteur Python ---
-ipcMain.handle("python:info", async () => {
-  return {
-    disponible: !!CHEMIN_PYTHON,
-    chemin: CHEMIN_PYTHON,
-    version: CHEMIN_PYTHON ? execSync(`${CHEMIN_PYTHON} --version`, { stdio: "pipe", timeout: 3000 }).toString().trim() : null,
-  };
-});
+ipcMain.handle("python:info", async () => infoExecutable(CHEMIN_PYTHON, lireVersion(3000)));
 
 // --- IPC : Définir le chemin de l'exécuteur Python ---
 ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
   try {
     if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
-    // Vérifier que c'est bien Python
-    execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 3000 });
+    // Vérifier que c'est bien Python — une seule fois, sans shell. L'ancienne
+    // version lançait le binaire DEUX fois (contrôle, puis lecture de version)
+    // et citait le chemin à la main, là où `python:info` juste au-dessus ne le
+    // citait pas : d'où un chemin accepté ici et cassé là.
+    const info = infoExecutable(chemin, lireVersion(3000));
+    if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_PYTHON = chemin;
-    // Sauvegarder
     const dataPath = path.join(app.getPath("userData"), "python-path.txt");
     fs.writeFileSync(dataPath, chemin, "utf-8");
-    return { ok: true, chemin, version: execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 3000 }).toString().trim() };
+    return { ok: true, chemin, version: info.version };
   } catch (err) {
     return { ok: false, erreur: String(err?.message || err) };
   }
@@ -837,22 +842,18 @@ ipcMain.handle("python:executer", async (_event, options) => {
 });
 
 // ─── IPC Julia ───
-ipcMain.handle("julia:info", async () => {
-  return {
-    disponible: !!CHEMIN_JULIA,
-    chemin: CHEMIN_JULIA,
-    version: CHEMIN_JULIA ? execSync(`${CHEMIN_JULIA} --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() : null,
-  };
-});
+ipcMain.handle("julia:info", async () => infoExecutable(CHEMIN_JULIA, lireVersion(5000)));
 
 ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
   try {
     if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
-    execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 });
+    // Même traitement que Python : un seul lancement, sans shell.
+    const info = infoExecutable(chemin, lireVersion(5000));
+    if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_JULIA = chemin;
     const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
     fs.writeFileSync(dataPath, chemin, "utf-8");
-    return { ok: true, chemin, version: execSync(`"${chemin}" --version`, { stdio: "pipe", timeout: 5000 }).toString().trim() };
+    return { ok: true, chemin, version: info.version };
   } catch (err) {
     return { ok: false, erreur: String(err?.message || err) };
   }
