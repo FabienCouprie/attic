@@ -9,6 +9,7 @@ const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { genererSongsee } = require("./songsee.cjs");
+const { extraireEntrees } = require("./extraire-node-zip.cjs");
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
@@ -671,30 +672,14 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     const nodesDir = path.join(app.getPath("home"), ".attic", "nodes", manifest.id);
     if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
 
-    // Extraire tous les fichiers
-    const entries = zip.getEntries();
-    const fichiers = {};
-    const resolvedNodesDir = path.resolve(nodesDir);
-    for (const entry of entries) {
-      const entryName = entry.entryName;
-      if (entry.isDirectory) continue;
-
-      // Protection contre le Zip Slip : s'assurer que l'entrée reste dans nodesDir
-      const targetPath = path.resolve(nodesDir, entryName);
-      const relativePath = path.relative(resolvedNodesDir, targetPath);
-      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-        console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${entryName}`);
-        continue;
-      }
-
-      const targetDir = path.dirname(targetPath);
-      if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-      const entryData = entry.getData(); // force read
-      fs.writeFileSync(resolvedTargetPath, entryData);
-      // Lire le contenu des fichiers texte pour le retourner
-      if (entryName === "manifest.json" || entryName === "executer.js" || entryName === "notice.json" || entryName === "dependencies.json") {
-        fichiers[entryName] = entry.getData().toString("utf-8");
-      }
+    // Extraire tous les fichiers. La boucle vit dans extraire-node-zip.cjs :
+    // elle référençait une variable inexistante (`resolvedTargetPath`), ce que
+    // le try/catch de ce gestionnaire masquait en un simple { ok: false } —
+    // l'import de nœud n'a donc jamais fonctionné dans l'application packagée.
+    // La sortir de main.cjs la rend testable, elle et sa protection Zip Slip.
+    const { fichiers, ignorees } = extraireEntrees(zip.getEntries(), nodesDir);
+    for (const nom of ignorees) {
+      console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${nom}`);
     }
 
     // Chemin des assets
