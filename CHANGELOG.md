@@ -1,8 +1,10 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [3.1.9] — 2026-09-12
 
 ### Added
 - **Nouveau nœud « Tonalité progressive » (Traitement → Effets).** Répète le son n+1 fois en le transposant d'un cran de plus à chaque reprise, des silences les séparant : avec 3 boucles, 10 s de pause et −5 demi-tons, la sortie enchaîne l'original, puis −5, −10 et −15 st. Elle dure **4 × la source + 30 s**, le pitch-shift de SoundTouch préservant la durée de chaque passage. **Il n'y a pas de silence après le dernier passage** — 3 boucles donnent trois pauses, pas quatre, et c'est l'erreur d'un cran que le test verrouille en premier. La décision qui compte est invisible au réglage : **chaque reprise est calculée depuis l'original**, avec k fois le pas, jamais en ré-appliquant le décalage au résultat précédent. Les deux donnent la même hauteur, mais un pitch-shift est une opération avec pertes : l'enchaîner quatre fois accumulerait ses artefacts, et la dernière reprise sonnerait nettement moins bien que la première sans que rien dans les paramètres ne l'explique. Le palier 0 ne passe pas du tout par le transposeur, qui dégraderait le signal pour un décalage nul. Vérifié **sur l'audio réellement produit** et pas seulement sur l'arithmétique : à partir d'un sinus à 440 Hz, les quatre passages mesurent **440,0 · 329,6 · 246,9 · 185,0 Hz**, soit exactement les valeurs théoriques de −5, −10 et −15 demi-tons ; les pauses ont un RMS de 0,000000 — aucune queue de SoundTouch ne bave dedans — et les passages gardent le même niveau (0,3960 puis 0,3958). Le montage est séparé du traitement du signal pour être testable sans lancer de pitch-shift : c'est l'arithmétique des positions qui se trompe, pas SoundTouch. 16 tests.
