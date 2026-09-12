@@ -117,6 +117,24 @@ describe("Groove Box : une seule fréquence pour le mix", () => {
     expect(b.length).toBe(a.length);
   });
 
+  // L'invariant généralisé, appliqué aux autres générateurs qui mélangent des
+  // tampons. « Générateur musical » et « Générateur d'accords » ont été vérifiés
+  // dans l'app aux deux fréquences — 44 100 en sortie, durée demandée respectée,
+  // tonalité détectée juste dans les deux cas — et ils construisent tout à une
+  // fréquence unique codée en dur. Ce test garde cet état : la sortie d'un
+  // générateur ne doit jamais dépendre de la carte son de la machine.
+  it.each(["generateur-musical", "generateur-accords"])(
+    "%s : sa sortie ne dépend pas de la fréquence de l'AudioContext",
+    async (id) => {
+      const fiche = registre.trouverDef(id)!;
+      const params = { "Clé": "A", "Gamme": "mineur", "Genre": "pop", "Tempo": 120, "Durée": 8, "Volume": 80 };
+      const a = (await fiche.executer(ctxRuntime(params, 44100) as any)).valeurs[0] as AudioBuffer;
+      const b = (await fiche.executer(ctxRuntime(params, 48000) as any)).valeurs[0] as AudioBuffer;
+      expect(a.sampleRate).toBe(b.sampleRate);
+      expect(a.length).toBe(b.length);
+    },
+  );
+
   it("produit le même signal, échantillon par échantillon", async () => {
     // La forme forte de l'assertion précédente : à graine égale, deux
     // AudioContext différents doivent donner le MÊME signal. Sous le défaut, la

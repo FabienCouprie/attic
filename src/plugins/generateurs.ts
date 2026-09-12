@@ -108,10 +108,14 @@ export const fiches: FicheAudio[] = ([
           const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
           const an = nc.map((n:any)=>({note:n.note,velocite:n.velociete,debut:n.debut,fin:n.fin}));
           const layer = rendreAvecSF2(sf2, an, vol, idx, instCanal.banque);
-          for (let i=0;i<master.length&&i<layer.length;i++) {
-            master.getChannelData(0)[i] += layer.getChannelData(0)[i];
-            master.getChannelData(1)[i] += layer.getChannelData(1)[i];
-          }
+          // Canaux sortis de la boucle : quatrième et dernière occurrence du motif,
+          // mesuré 40× plus lent pour un résultat identique au bit. Le master et
+          // les couches partagent ici la même fréquence (44 100 des deux côtés),
+          // donc pas de désaccord comme celui qu'avait le Groove Box.
+          const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
+          const srcL = layer.getChannelData(0), srcR = layer.getChannelData(1);
+          const n = Math.min(master.length, layer.length);
+          for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
         }
         return { valeurs:[master], message:traduire("msg.var_0_soundfont", description) };
       }
