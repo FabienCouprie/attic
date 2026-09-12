@@ -17,7 +17,11 @@ interface SoundTouchParams {
   rate?: number;
 }
 
-function appliquerSoundTouch(buffer: AudioBuffer, params: SoundTouchParams): AudioBuffer {
+// Exportée pour le nœud « Tonalité progressive », qui en a besoin palier par
+// palier. Gardée ici plutôt que déplacée dans audio/ : la fonction est le
+// pont vers SoundTouchJS, et les trois nœuds de ce fichier en sont les
+// premiers usagers.
+export function appliquerSoundTouch(buffer: AudioBuffer, params: SoundTouchParams): AudioBuffer {
   const sr = buffer.sampleRate;
   const channels = buffer.numberOfChannels;
   const factor = params.tempo ?? params.rate ?? 1.0;

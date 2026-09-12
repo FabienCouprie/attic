@@ -397,6 +397,14 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.piste_non_connect_e": { fr: "Piste non connectée.", en: "Track not connected." },
   "msg.zone_non_connect_e": { fr: "Zone non connectée.", en: "Zone not connected." },
   "msg.texte_modifie_var_0_var_1": { fr: "{__VAR_0__} → {__VAR_1__} caractères", en: "{__VAR_0__} → {__VAR_1__} characters" },
+  "msg.tonalite_progressive_var_0_var_1_var_2": {
+    fr: "{__VAR_0__} passages · jusqu'à {__VAR_1__} st · {__VAR_2__} s",
+    en: "{__VAR_0__} passes · down to {__VAR_1__} st · {__VAR_2__} s",
+  },
+  "progress.tonalite_progressive_var_0": {
+    fr: "Transposition de {__VAR_0__} passages…",
+    en: "Transposing {__VAR_0__} passes…",
+  },
   "msg.texte_remplacements_var_0": { fr: "{__VAR_0__} remplacement(s)", en: "{__VAR_0__} replacement(s)" },
   "msg.regex_invalide_var_0": {
     fr: "Expression régulière invalide, texte inchangé : {__VAR_0__}",
