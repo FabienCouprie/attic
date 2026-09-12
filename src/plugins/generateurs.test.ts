@@ -4,6 +4,8 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { analyserMidi, joindreMidi } from "../audio/midi";
+import { parseMidi } from "midi-file";
 
 function ctx(sequenceNotes: any[]) {
   return {
@@ -115,6 +117,143 @@ describe("Groove Box : une seule fréquence pour le mix", () => {
     const b = (await fiche.executer(ctxRuntime(config, 48000) as any)).valeurs[0] as AudioBuffer;
     expect(b.sampleRate).toBe(a.sampleRate);
     expect(b.length).toBe(a.length);
+  });
+
+  // L'invariant généralisé, appliqué aux autres générateurs qui mélangent des
+  // tampons. « Générateur musical » et « Générateur d'accords » ont été vérifiés
+  // dans l'app aux deux fréquences — 44 100 en sortie, durée demandée respectée,
+  // tonalité détectée juste dans les deux cas — et ils construisent tout à une
+  // fréquence unique codée en dur. Ce test garde cet état : la sortie d'un
+  // générateur ne doit jamais dépendre de la carte son de la machine.
+  it.each(["generateur-musical", "generateur-accords"])(
+    "%s : sa sortie ne dépend pas de la fréquence de l'AudioContext",
+    async (id) => {
+      const fiche = registre.trouverDef(id)!;
+      const params = { "Clé": "A", "Gamme": "mineur", "Genre": "pop", "Tempo": 120, "Durée": 8, "Volume": 80 };
+      const a = (await fiche.executer(ctxRuntime(params, 44100) as any)).valeurs[0] as AudioBuffer;
+      const b = (await fiche.executer(ctxRuntime(params, 48000) as any)).valeurs[0] as AudioBuffer;
+      expect(a.sampleRate).toBe(b.sampleRate);
+      expect(a.length).toBe(b.length);
+    },
+  );
+
+  // ── Le kit de batterie, quatrieme case pour la quatrieme sortie ──
+  //
+  // Le noeud expose quatre sorties MIDI et n'offrait que trois cases
+  // d'instrument : la batterie n'en avait aucune, et son kit etait fige a
+  // « Standard » (banque 128, programme 0) ecrit en dur par le generateur. Le
+  // reglage doit voyager AVEC le fichier MIDI, sans quoi le noeud qui le rendra
+  // ensuite retombera sur ce kit-la et le choix restera sans effet.
+  it("laisse le kit standard dans la sortie MIDI par defaut", async () => {
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime(config, 44100) as any);
+    const bytes = new Uint8Array(await (res.valeurs[1] as File).arrayBuffer());
+    const inst = analyserMidi(parseMidi(bytes)).canauxInstrument.get(9)!;
+    expect({ banque: inst.banque, programme: inst.programme }).toEqual({ banque: 128, programme: 0 });
+  });
+
+  it("ecrit le kit choisi dans la sortie MIDI batterie", async () => {
+    // 16420 = banque 128 x 128 + programme 36, soit un kit « Jazz » dans un
+    // SoundFont General MIDI courant.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime({ ...config, "Kit de batterie": 16420 }, 44100) as any);
+    const bytes = new Uint8Array(await (res.valeurs[1] as File).arrayBuffer());
+    const inst = analyserMidi(parseMidi(bytes)).canauxInstrument.get(9)!;
+    expect({ banque: inst.banque, programme: inst.programme }).toEqual({ banque: 128, programme: 36 });
+  });
+
+  it("ne decale pas les frappes en ecrivant le kit", async () => {
+    // La reecriture retire les anciens changements de programme : leur temps doit
+    // etre reporte, sinon toute la piste de batterie glisse.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const sans = await fiche.executer(ctxRuntime(config, 44100) as any);
+    const avec = await fiche.executer(ctxRuntime({ ...config, "Kit de batterie": 16420 }, 44100) as any);
+    const notes = async (f: File) => analyserMidi(parseMidi(new Uint8Array(await f.arrayBuffer()))).notes;
+    const a = await notes(sans.valeurs[1] as File), b = await notes(avec.valeurs[1] as File);
+    expect(b.map((n) => +n.debut.toFixed(4))).toEqual(a.map((n) => +n.debut.toFixed(4)));
+  });
+
+  // ── Les instruments choisis doivent voyager DANS les quatre sorties MIDI ──
+  //
+  // Le kit de batterie était écrit dans sa sortie (tests ci-dessus) mais les
+  // trois autres cases ne l'étaient pas : elles n'agissaient que sur le rendu
+  // audio interne du nœud. Les sorties « MIDI accords / basse / mélodie »
+  // partaient donc avec les programmes que le générateur y inscrit en dur —
+  // piano 0, basse 33, lead 80. Brancher ces sorties sur « Jointure MIDI » puis
+  // rendre le résultat perdait le choix : le morceau joint sonnait piano-basse-
+  // lead quel que soit le réglage. C'est le défaut rapporté, et il ne se voyait
+  // pas sur la sortie audio du nœud, où les instruments fonctionnaient.
+  //
+  // `joindreMidi` n'y est pour rien : elle conserve les programChange, elle ne
+  // les invente pas.
+  const CANAL_DE_SORTIE: Record<number, number> = { 2: 0, 3: 1, 4: 2 };
+
+  const instrumentDe = async (f: File, canal: number) => {
+    const a = analyserMidi(parseMidi(new Uint8Array(await f.arrayBuffer())));
+    const i = a.canauxInstrument.get(canal);
+    return i ? { banque: i.banque, programme: i.programme } : null;
+  };
+
+  it("écrit les instruments choisis dans les sorties MIDI accords, basse et mélodie", async () => {
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime({
+      ...config,
+      "Instrument accords": 19, // Church Organ
+      "Instrument basse": 35, // Fretless Bass
+      "Instrument mélodie": 73, // Flute
+    }, 44100) as any);
+    expect(await instrumentDe(res.valeurs[2] as File, 0)).toEqual({ banque: 0, programme: 19 });
+    expect(await instrumentDe(res.valeurs[3] as File, 1)).toEqual({ banque: 0, programme: 35 });
+    expect(await instrumentDe(res.valeurs[4] as File, 2)).toEqual({ banque: 0, programme: 73 });
+  });
+
+  it("garde les programmes du générateur quand aucun instrument n'est choisi", async () => {
+    // Le repli « Suivre le MIDI » : l'arrangement par défaut du nœud, celui qui
+    // sonnait juste avant l'ajout des cases, doit rester intact.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime(config, 44100) as any);
+    expect(await instrumentDe(res.valeurs[2] as File, 0)).toEqual({ banque: 0, programme: 0 });
+    expect(await instrumentDe(res.valeurs[3] as File, 1)).toEqual({ banque: 0, programme: 33 });
+    expect(await instrumentDe(res.valeurs[4] as File, 2)).toEqual({ banque: 0, programme: 80 });
+  });
+
+  it("ne décale pas les notes des trois parties en y écrivant l'instrument", async () => {
+    // Le pendant du test de non-décalage de la batterie : `appliquerInstrumentsParCanal`
+    // retire les anciens programChange, et leur deltaTime doit être reporté.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const sans = await fiche.executer(ctxRuntime(config, 44100) as any);
+    const avec = await fiche.executer(ctxRuntime({
+      ...config, "Instrument accords": 19, "Instrument basse": 35, "Instrument mélodie": 73,
+    }, 44100) as any);
+    const debuts = async (f: File) =>
+      analyserMidi(parseMidi(new Uint8Array(await f.arrayBuffer()))).notes.map((n) => +n.debut.toFixed(4));
+    for (const i of [2, 3, 4]) {
+      expect(await debuts(avec.valeurs[i] as File)).toEqual(await debuts(sans.valeurs[i] as File));
+    }
+  });
+
+  it("conserve les instruments à travers une jointure MIDI", async () => {
+    // Le scénario rapporté, bout en bout : deux sorties de parties différentes
+    // passées à `joindreMidi`, et les deux timbres doivent survivre. La jointure
+    // fusionne toutes les pistes en une seule — c'est pourquoi l'assertion porte
+    // sur les CANAUX, qui sont ce que le rendu SoundFont suit.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime({
+      ...config, "Instrument basse": 35, "Instrument mélodie": 73,
+    }, 44100) as any);
+    const joint = await joindreMidi(res.valeurs[3] as File, res.valeurs[4] as File, 0);
+    expect(await instrumentDe(joint, 1)).toEqual({ banque: 0, programme: 35 });
+    expect(await instrumentDe(joint, 2)).toEqual({ banque: 0, programme: 73 });
+  });
+
+  it("laisse l'ancienne case « Instrument » agir sur les trois sorties MIDI", async () => {
+    // Un projet enregistré avant les cases par partie ne porte que « Instrument ».
+    // Le repli doit s'appliquer aux sorties MIDI comme il s'applique au rendu.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime({ ...config, Instrument: 19 }, 44100) as any);
+    for (const [sortie, canal] of Object.entries(CANAL_DE_SORTIE)) {
+      expect(await instrumentDe(res.valeurs[+sortie] as File, canal)).toEqual({ banque: 0, programme: 19 });
+    }
   });
 
   it("produit le même signal, échantillon par échantillon", async () => {

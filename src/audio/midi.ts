@@ -321,6 +321,73 @@ export async function appliquerInstrumentMidi(
   return new File([out], fichier.name, { type: fichier.type });
 }
 
+/**
+ * Impose un instrument à certains canaux d'un MIDI, en octets.
+ *
+ * Sert aux nœuds qui rendent plusieurs parties EN UN SEUL PASSAGE : plutôt que
+ * de passer un instrument global au moteur de rendu — qui l'appliquerait alors à
+ * tous les canaux, aplatissant l'arrangement — on écrit dans le MIDI l'instrument
+ * de chaque partie, et le rendu n'a plus qu'à suivre le fichier. Un seul rendu,
+ * donc un seul tampon audio, pour autant d'instruments qu'il y a de canaux.
+ *
+ * @param parCanal instrument par canal, encodé `banque * 128 + programme` comme
+ *        partout ailleurs. Une valeur négative signifie « laisser le canal tel
+ *        quel », c'est-à-dire garder l'instrument que le générateur y a écrit.
+ *
+ * Les événements sont insérés au tick 0 EN TÊTE de la première piste, donc avant
+ * tout changement de programme que le fichier contiendrait déjà — ceux-ci
+ * l'emporteraient sinon, et le réglage resterait sans effet. Les anciens
+ * changements du canal visé sont donc retirés.
+ */
+export function appliquerInstrumentsParCanal(
+  bytes: Uint8Array,
+  parCanal: Map<number, number>,
+): Uint8Array {
+  const remplaces = [...parCanal.entries()].filter(([, v]) => v >= 0);
+  if (remplaces.length === 0) return bytes;
+
+  const midi = parseMidi(bytes);
+  const canauxVises = new Set(remplaces.map(([c]) => c));
+
+  // Retirer les programChange/bank existants des canaux visés : leur laisser la
+  // priorité annulerait le réglage. Le deltaTime retiré est reporté sur
+  // l'événement suivant pour ne pas décaler la suite de la piste.
+  for (const piste of midi.tracks) {
+    let reporte = 0;
+    for (let i = 0; i < piste.length; i++) {
+      const evt: any = piste[i];
+      const estProgramme = evt.type === "programChange"
+        || (evt.type === "controller" && (evt.controllerType === 0 || evt.controllerType === 32));
+      if (estProgramme && canauxVises.has(evt.channel)) {
+        reporte += evt.deltaTime ?? 0;
+        piste.splice(i, 1);
+        i--;
+        continue;
+      }
+      if (reporte > 0) {
+        evt.deltaTime = (evt.deltaTime ?? 0) + reporte;
+        reporte = 0;
+      }
+    }
+  }
+
+  const entete: any[] = [];
+  for (const [canal, valeur] of remplaces) {
+    const programme = Math.max(0, Math.min(127, Math.round(valeur % 128)));
+    const banque = Math.max(0, Math.floor(valeur / 128));
+    if (banque > 0) {
+      entete.push({ deltaTime: 0, type: "controller", channel: canal, controllerType: 0, value: Math.floor(banque / 128) });
+      entete.push({ deltaTime: 0, type: "controller", channel: canal, controllerType: 32, value: banque % 128 });
+    }
+    entete.push({ deltaTime: 0, type: "programChange", channel: canal, programNumber: programme });
+  }
+
+  if (midi.tracks.length === 0) midi.tracks = [entete];
+  else midi.tracks[0] = [...entete, ...midi.tracks[0]];
+
+  return new Uint8Array(writeMidi(midi as any));
+}
+
 function bpmInitial(midi: any): number {
   for (const piste of midi.tracks) {
     for (const evt of piste) {

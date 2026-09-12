@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { writeMidi, parseMidi } from "midi-file";
-import { joindreMidi, bouclerMidi, analyserMidi } from "./midi";
+import { joindreMidi, bouclerMidi, analyserMidi, appliquerInstrumentsParCanal } from "./midi";
 
 function createMidiFile(
   notes: { note: number; velocity: number; start: number; end: number }[],
@@ -137,5 +137,94 @@ describe("bouclerMidi", () => {
     expect(notes.length).toBe(1);
     expect(notes[0].debut).toBeCloseTo(0, 3);
     expect(notes[0].fin).toBeCloseTo(1, 3);
+  });
+});
+
+// ── Un instrument par canal, pour un seul rendu ──
+//
+// Le Groove Box expose quatre sorties MIDI — batterie, accords, basse, mélodie —
+// et ne déclarait qu'une case « Instrument ». La laisser sur « Suivre le MIDI »
+// donnait le bon arrangement, mais y choisir quoi que ce soit l'aplatissait :
+// mesuré dans l'app, un réglage sur « Church Organ » mettait les TROIS parties à
+// l'orgue, la basse perdant son patch de basse. La cause était que l'instrument
+// était passé globalement au moteur de rendu, qui l'applique à tous les canaux.
+//
+// Écrire l'instrument DANS le MIDI, canal par canal, permet de garder un rendu
+// unique — donc un seul tampon audio — pour autant de timbres qu'il y a de
+// canaux.
+describe("appliquerInstrumentsParCanal", () => {
+  /** Un MIDI à trois canaux, chacun avec son propre programme d'origine. */
+  function midiTroisCanaux(): Uint8Array {
+    const evts: any[] = [
+      { deltaTime: 0, type: "setTempo", microsecondsPerBeat: 500000 },
+      { deltaTime: 0, type: "programChange", channel: 0, programNumber: 0 },
+      { deltaTime: 0, type: "programChange", channel: 1, programNumber: 33 },
+      { deltaTime: 0, type: "programChange", channel: 2, programNumber: 80 },
+    ];
+    for (const canal of [0, 1, 2]) {
+      evts.push({ deltaTime: canal === 0 ? 0 : 240, type: "noteOn", channel: canal, noteNumber: 60 + canal, velocity: 100 });
+      evts.push({ deltaTime: 240, type: "noteOff", channel: canal, noteNumber: 60 + canal, velocity: 0 });
+    }
+    evts.push({ deltaTime: 0, type: "endOfTrack" });
+    return new Uint8Array(writeMidi({ header: { format: 1, numTracks: 1, ticksPerBeat: 480 }, tracks: [evts] } as any));
+  }
+
+  /** Programme effectif de chaque canal : le PREMIER programChange rencontré. */
+  function programmes(bytes: Uint8Array): Record<number, number> {
+    const out: Record<number, number> = {};
+    for (const piste of parseMidi(bytes).tracks) {
+      for (const evt of piste as any[]) {
+        if (evt.type === "programChange" && out[evt.channel] === undefined) {
+          out[evt.channel] = evt.programNumber;
+        }
+      }
+    }
+    return out;
+  }
+
+  it("donne à chaque canal l'instrument demandé", () => {
+    const out = appliquerInstrumentsParCanal(midiTroisCanaux(), new Map([[0, 19], [1, 35], [2, 73]]));
+    expect(programmes(out)).toEqual({ 0: 19, 1: 35, 2: 73 });
+  });
+
+  it("laisse intact un canal dont la valeur est négative", () => {
+    // « Suivre le MIDI » : la basse doit garder son programme 33.
+    const out = appliquerInstrumentsParCanal(midiTroisCanaux(), new Map([[0, 19], [1, -1], [2, -1]]));
+    expect(programmes(out)).toEqual({ 0: 19, 1: 33, 2: 80 });
+  });
+
+  it("rend les octets inchangés quand rien n'est imposé", () => {
+    // Le cas par défaut du nœud : aucune réécriture, donc aucun risque.
+    const avant = midiTroisCanaux();
+    const apres = appliquerInstrumentsParCanal(avant, new Map([[0, -1], [1, -1], [2, -1]]));
+    expect(apres).toBe(avant);
+  });
+
+  it("retire l'ancien programme du canal visé, sinon le réglage resterait sans effet", () => {
+    // Le piège : les événements insérés sont en tête, mais un programChange
+    // ultérieur sur le même canal l'emporterait. Il doit donc disparaître.
+    const out = appliquerInstrumentsParCanal(midiTroisCanaux(), new Map([[1, 35]]));
+    const tous = parseMidi(out).tracks.flat().filter((e: any) => e.type === "programChange" && e.channel === 1);
+    expect(tous).toHaveLength(1);
+    expect((tous[0] as any).programNumber).toBe(35);
+  });
+
+  it("ne décale pas les notes en retirant des événements", () => {
+    // Le deltaTime d'un événement supprimé doit être reporté sur le suivant,
+    // sans quoi toute la piste glisse dans le temps.
+    const avant = analyserMidi(parseMidi(midiTroisCanaux()));
+    const apres = analyserMidi(parseMidi(appliquerInstrumentsParCanal(midiTroisCanaux(), new Map([[0, 19], [1, 35], [2, 73]]))));
+    expect(apres.notes.map((n) => +n.debut.toFixed(4))).toEqual(avant.notes.map((n) => +n.debut.toFixed(4)));
+    expect(apres.dureeTotale).toBeCloseTo(avant.dureeTotale, 6);
+  });
+
+  it("écrit la banque quand le preset n'est pas dans la banque 0", () => {
+    // Les kits de percussion vivent en banque 128 : sans les deux contrôleurs de
+    // sélection de banque, on obtiendrait le preset de même numéro en banque 0.
+    const out = appliquerInstrumentsParCanal(midiTroisCanaux(), new Map([[0, 128 * 128 + 5]]));
+    const evts = parseMidi(out).tracks.flat().filter((e: any) => e.channel === 0 && (e.type === "controller" || e.type === "programChange"));
+    expect(evts.some((e: any) => e.type === "controller" && e.controllerType === 0)).toBe(true);
+    expect(evts.some((e: any) => e.type === "controller" && e.controllerType === 32)).toBe(true);
+    expect(programmes(out)[0]).toBe(5);
   });
 });
