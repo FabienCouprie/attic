@@ -9,6 +9,7 @@ import { fiches as f_analyse } from "./analyse";
 import { fiches as f_sorties } from "./sorties";
 import { fiches as f_sortie_texte } from "./sortie-texte";
 import { fiches as f_modifier_texte } from "./modifier-texte";
+import { fiches as f_debruitage_ia } from "./debruitage-ia";
 import { fiches as f_entrees_extra } from "./entrees-extra";
 import { fiches as f_generateurs } from "./generateurs";
 import { fiches as f_montage } from "./montage";
@@ -48,6 +49,7 @@ import { fiches as f_texte_vers_midi } from "./texte-vers-midi";
 import { fiches as f_tonal } from "./tonal";
 import { fiches as f_vexflow } from "./vexflow";
 import { fiches as f_soundtouch } from "./soundtouch";
+import { fiches as f_pitch_progressif } from "./pitch-progressif";
 import { fiches as f_tone_synths } from "./tone-synths";
 import { fiches as f_phase_vocoder } from "./phase-vocoder";
 import { fiches as f_resonance } from "./resonance";
@@ -102,6 +104,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sorties,
   ...f_sortie_texte,
   ...f_modifier_texte,
+  ...f_debruitage_ia,
   ...f_entrees_extra,
   ...f_generateurs,
   ...f_montage,
@@ -141,6 +144,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_tonal,
   ...f_vexflow,
   ...f_soundtouch,
+  ...f_pitch_progressif,
   ...f_tone_synths,
   ...f_phase_vocoder,
   ...f_resonance,

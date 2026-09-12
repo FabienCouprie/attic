@@ -3,6 +3,7 @@ import { BaseEdge, getSimpleBezierPath, type EdgeProps, useStore } from "@xyflow
 import { useCallback, useState } from "react";
 import { registre } from "../audio/adaptateur";
 import { validerArete } from "./validerGraphe";
+import { areteEnFlux } from "./flux-arete";
 
 function libellePort(node: any, handleId: string | null | undefined, kind: "source" | "target") {
   const ficheId = node?.data?.ficheId;
@@ -21,13 +22,15 @@ export function AretePersonnalisee({
   const [edgePath, labelX, labelY] = getSimpleBezierPath({
     sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition,
   });
-  const sourceRunning = useStore(useCallback(
-    (state: any) => state.nodeLookup.get(source)?.data?.statut === "en_cours",
-    [source]
-  ));
-  const targetRunning = useStore(useCallback(
-    (state: any) => state.nodeLookup.get(target)?.data?.statut === "en_cours",
-    [target]
+  // Un seul sélecteur pour les deux statuts : la règle du flux les lit
+  // ensemble, et la séparer en deux abonnements invitait à les combiner à la
+  // main au point d'usage — c'est ainsi que le OU fautif s'était installé.
+  const enFlux = useStore(useCallback(
+    (state: any) => areteEnFlux(
+      state.nodeLookup.get(source)?.data?.statut,
+      state.nodeLookup.get(target)?.data?.statut,
+    ),
+    [source, target]
   ));
   const label = useStore(useCallback(
     (state: any) => {
@@ -67,7 +70,7 @@ export function AretePersonnalisee({
         labelBgPadding={[5, 3]}
         labelBgBorderRadius={4}
       />
-      {(sourceRunning || targetRunning) && (
+      {enFlux && (
         <circle r="3" fill={dotColor}>
           <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
         </circle>

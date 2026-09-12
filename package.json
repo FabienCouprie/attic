@@ -1,8 +1,8 @@
 {
   "name": "attic",
   "private": true,
-  "version": "3.1.8",
-  "description": "Visual node-editor for AI-powered music and sound design — 246 nodes, local ML models, bilingual FR/EN.",
+  "version": "3.1.9",
+  "description": "Visual node-editor for AI-powered music and sound design — 247 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -46,8 +46,9 @@
     "download:songsee": "node scripts/download-songsee.cjs",
     "lint": "oxlint",
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
-    "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant",
-    "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs"
+    "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant",
+    "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs",
+    "download:gtcrn": "node scripts/download-gtcrn.cjs"
   },
   "build": {
     "appId": "com.attic.audio",

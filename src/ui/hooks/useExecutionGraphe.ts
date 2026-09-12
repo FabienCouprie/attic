@@ -9,7 +9,7 @@ import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
   aplatirGraphe, trouverMeta,
-  ordreTopologique, ancetres, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
+  ordreTopologique, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
@@ -186,21 +186,28 @@ export function useExecutionGraphe(o: OptionsExecution) {
     for (const id of ids) cacheExec.current.delete(id);
   }, [setNodes]);
 
-  // ── Réinitialiser un nœud (cascade aval) ──
-  // Utilise aretesRef pour toujours avoir les arêtes courantes (pas une closure périmée).
+  // ── Les deux réinitialisations ──
+  //
+  // Elles ne diffèrent que sur le nœud de départ, et ce détail décide de ce que
+  // l'utilisateur voit :
+  //
+  //   `reinitialiserNoeud` — le nœud ET son aval. Pour un changement qui rend
+  //   FAUSSE la sortie du nœud : un autre fichier, un autre paramètre.
+  //
+  //   `reinitialiserAval` — son aval SEUL. Pour un changement qui périme ce que
+  //   l'aval en a tiré sans toucher ce que le nœud affiche. Effacer le nœud
+  //   ferait disparaître sa forme d'onde et son lecteur à chaque zone ajoutée,
+  //   alors qu'on ajoute justement les zones les unes après les autres en
+  //   regardant l'onde.
+  //
+  // La traversée vit dans core/graphe.ts (testée) ; `aretesRef` garantit des
+  // arêtes à jour plutôt qu'une closure périmée.
   const reinitialiserNoeud = useCallback((nodeId: string) => {
-    const edgesCourantes = aretesRef.current;
-    const ids = new Set<string>();
-    const file = [nodeId];
-    while (file.length > 0) {
-      const courant = file.pop()!;
-      if (ids.has(courant)) continue;
-      ids.add(courant);
-      for (const e of edgesCourantes) {
-        if (e.source === courant && !ids.has(e.target)) file.push(e.target);
-      }
-    }
-    reinitialiserIds(ids);
+    reinitialiserIds(new Set([nodeId, ...descendants(nodeId, aretesRef.current)]));
+  }, [reinitialiserIds]);
+
+  const reinitialiserAval = useCallback((nodeId: string) => {
+    reinitialiserIds(descendants(nodeId, aretesRef.current));
   }, [reinitialiserIds]);
 
   // ── Réinitialiser tous les nœuds (reset global) ──
@@ -718,5 +725,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [prioritaire, repertoire, t]);
 
-  return { lancer, reinitialiserNoeud, reinitialiserTout };
+  return { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
 }

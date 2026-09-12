@@ -6,7 +6,9 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Scale, Note, Progression } from "tonal";
 import { estimerTonalite, detecterAccords } from "../audio/accords";
-import { normaliserRomains } from "../audio/theorie-romains";
+import {
+  accordsDepuisRomains, modeDepuisTonalite, normaliserRomains, type ModeProgression,
+} from "../audio/theorie-romains";
 
 function parserNotes(texte: string): string[] {
   return texte
@@ -42,6 +44,21 @@ function accordVersNotation(accord: string, octave: number, duree: number): stri
 function progressionSuggest(type: "major" | "minor"): string {
   if (type === "minor") return "i VI III VII";
   return "I V vi IV";
+}
+
+/**
+ * Gamme dans laquelle lire les chiffres romains : le texte d'entrée d'abord,
+ * le paramètre ensuite.
+ *
+ * L'entrée l'emporte parce qu'elle vient d'« Analyse harmonique », qui a MESURÉ
+ * le mode (« A minor (90%) ») : le paramètre, lui, est un réglage par défaut que
+ * personne ne pense à changer quand une tonalité arrive par un câble. Un texte
+ * muet sur le mode — une simple tonique « A » — laisse le paramètre décider.
+ */
+function gammeDemandee(ctx: any, entree: unknown): ModeProgression {
+  const duTexte = typeof entree === "string" ? modeDepuisTonalite(entree) : null;
+  if (duTexte) return duTexte;
+  return ctx.paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur";
 }
 
 export const fiches: FicheAudio[] = ([
@@ -137,11 +154,16 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
         optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
         defaut: "C",
-        doc: "Tonique de la progression. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i VI III VII) plutôt qu'un suffixe sur la tonalité.",
-        docEn: "Root note of the progression. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i VI III VII) rather than a suffix on the key.", defautEn: "C" },
+        doc: "Tonique de la progression. Le mode se choisit dans « Gamme » ; l'entrée Tonalité, si elle en nomme un (« A minor »), l'emporte sur le réglage.",
+        docEn: "Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »).", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
+        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
+        doc: "Gamme dans laquelle les degrés sont lus. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la, et non Am F♯ C♯ G♯. La casse, elle, ne décide que de la qualité de l'accord.",
+        docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        doc: "Progression en chiffres romains (ex : I V vi IV, ii V I).",
-        docEn: "Roman numeral progression (e.g. I V vi IV, ii V I).", defautEn: "I V vi IV" },
+        doc: "Progression en chiffres romains (ex : I V vi IV, ii V I). Majuscules = majeur, minuscules = mineur ; une altération explicite (bIII, #IV) est respectée telle quelle.",
+        docEn: "Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written.", defautEn: "I V vi IV" },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -149,8 +171,10 @@ export const fiches: FicheAudio[] = ([
         || ctx.paramTexte("Tonalité", "C");
       const progTexte = ctx.paramTexte("Progression", "I V vi IV");
       const numerals = progTexte.split(/\s+/).filter((n: string) => n.length > 0);
-      // `normaliserRomains` : sans lui, « vi » produisait un accord MAJEUR.
-      const accords = Progression.fromRomanNumerals(tonic, normaliserRomains(numerals));
+      // `accordsDepuisRomains` : sans lui, « vi » produisait un accord MAJEUR et
+      // les degrés III, VI, VII d'un mode mineur gardaient la fondamentale du
+      // mode majeur.
+      const accords = accordsDepuisRomains(tonic, numerals, gammeDemandee(ctx, entree));
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
@@ -168,8 +192,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
         optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
         defaut: "C",
-        doc: "Tonique de la grille. Pour un mode mineur, utilisez des chiffres romains en minuscules dans « Progression » (ex : i iv v VI) plutôt qu'un suffixe sur la tonalité.",
-        docEn: "Root note of the grid. For a minor mode, use lowercase Roman numerals in « Progression » (e.g. i iv v VI) rather than a suffix on the key.", defautEn: "C" },
+        doc: "Tonique de la grille. Le mode se choisit dans « Gamme » ; l'entrée Progression, si elle nomme une tonalité, l'emporte sur le réglage.",
+        docEn: "Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key.", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
+        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
+        doc: "Gamme dans laquelle les degrés sont lus. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la, et non Am F♯ C♯ G♯.",
+        docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G).",
         docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
@@ -200,7 +229,9 @@ export const fiches: FicheAudio[] = ([
       // donc tester juste le début du jeton (pas son intégralité) suffit à
       // distinguer les deux syntaxes sans rejeter les extensions.
       const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
-      const accords = romains ? Progression.fromRomanNumerals(tonic, normaliserRomains(tokens)) : tokens;
+      const accords = romains
+        ? accordsDepuisRomains(tonic, tokens, gammeDemandee(ctx, entree))
+        : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.progression_invalide") };

@@ -8,7 +8,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Note, Progression } from "tonal";
-import { normaliserRomains } from "../audio/theorie-romains";
+import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
 
 // Les symboles produits par `detecterAccords` (audio/accords.ts) suivent ses
 // propres gabarits, qui ne coïncident pas tous avec ceux de Tonal : « min7b5 »
@@ -57,10 +57,6 @@ function parserLigneAccord(ligne: string, dureeDefaut: number): { symbole: strin
 }
 
 // « C major (87%) » / « A minor » → tonique utilisable par Tonal.
-function toniqueDepuisTonalite(texte: string): string | null {
-  const m = /^\s*([A-G][#b]?)/.exec(texte ?? "");
-  return m ? m[1] : null;
-}
 
 export const fiches: FicheAudio[] = ([
   {
@@ -84,6 +80,11 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["accords", "progression"], defaut: "Accords détectés", defautEn: "Detected chords",
         doc: "« Accords détectés » transcrit l'harmonie réelle avec ses durées mesurées. « Progression » développe les chiffres romains suggérés, ce qui exige la Tonalité en entrée.",
         docEn: "« Detected chords » transcribes the actual harmony with its measured durations. « Progression » expands the suggested roman numerals, which requires the Key input." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
+        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
+        doc: "Gamme dans laquelle lire les degrés, quand l'entrée Tonalité ne nomme pas de mode. « Analyse harmonique » écrit « A minor (90%) » : ce mode-là l'emporte, et le réglage ne sert que pour une tonique saisie à la main. En mineur, III, VI et VII descendent d'un demi-ton.",
+        docEn: "Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone." },
       { nom: "Octave", nomEn: "Octave", plage: [1, 6], pas: 1, defaut: 3,
         doc: "Octave de la fondamentale des accords générés.",
         docEn: "Octave of the root note of the generated chords." },
@@ -114,9 +115,31 @@ export const fiches: FicheAudio[] = ([
         if (!tonique) {
           return { valeurs: [null], message: traduire("msg.accords_notation.tonalite_absente") };
         }
-        // Les chiffres romains n'ont de sens que rapportés à une tonique : c'est
-        // pourquoi cette source exige l'entrée Tonalité.
-        const symboles = Progression.fromRomanNumerals(tonique, normaliserRomains(progression.trim().split(/\s+/)));
+        // Les chiffres romains n'ont de sens que rapportés à une tonique ET à un
+        // mode : c'est pourquoi cette source exige l'entrée Tonalité, dont on lit
+        // les deux. « Analyse harmonique » émet « A minor (90%) » et suggérait
+        // « i VI III VII » — développé sur la gamme majeure, cela donnait
+        // Am F♯ C♯ G♯. La chaîne documentée du projet produisait donc de faux
+        // accords pour tout morceau mineur.
+        // Le mode nommé dans l'entrée l'emporte sur le réglage : il a été MESURÉ
+        // par « Analyse harmonique », alors que le paramètre est un défaut que
+        // personne ne pense à changer quand la tonalité arrive par un câble.
+        const mode = modeDepuisTonalite(String(tonaliteTexte))
+          ?? (ctx.paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur");
+        const jetons = progression.trim().split(/\s+/);
+        // Ce port attend des CHIFFRES ROMAINS. La sortie « Accords » du nœud
+        // « Progression » est du texte elle aussi, et se branche donc sans
+        // réserve — mais elle contient des noms d'accords (« Am F C G »), que
+        // Tonal ne sait pas lire comme des degrés. L'échec se manifestait alors
+        // par « aucun accord exploitable », qui ne désignait pas la cause. On la
+        // nomme, avec la sortie à utiliser à la place.
+        if (!jetons.some((j) => /^[b#]?[IViv]/.test(j))) {
+          return {
+            valeurs: [null], erreur: true,
+            message: traduire("msg.accords_notation.pas_des_romains_var_0", jetons.slice(0, 4).join(" ")),
+          };
+        }
+        const symboles = accordsDepuisRomains(tonique, jetons, mode);
         for (const symbole of symboles) {
           const notes = notesAscendantes(symbole, octave);
           if (!notes.length) { nbIgnores++; continue; }

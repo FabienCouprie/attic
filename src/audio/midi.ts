@@ -485,10 +485,12 @@ export async function rendreMidiDepuisBytes(
         console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
         const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
         const layer = rendreAvecSF2(sf2Global, an, volume, prog, bq);
-        for (let i = 0; i < master.length && i < layer.length; i++) {
-          master.getChannelData(0)[i] += layer.getChannelData(0)[i];
-          master.getChannelData(1)[i] += layer.getChannelData(1)[i];
-        }
+        // Canaux sortis de la boucle : appeler `getChannelData` par échantillon
+        // coûtait 40× le temps du même calcul, pour un résultat identique.
+        const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
+        const srcL = layer.getChannelData(0), srcR = layer.getChannelData(1);
+        const n = Math.min(master.length, layer.length);
+        for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
       }
       normaliserBuffer(master);
       return master;

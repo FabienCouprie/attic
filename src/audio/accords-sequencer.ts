@@ -107,13 +107,32 @@ function noteFondamentalePourDegre(degre: number, cle: string, gamme: string, oc
   return (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : traduireCle(cle)) + degres[idx] + octDecal * 12;
 }
 
+/**
+ * Voix d'un accord, à partir de sa fondamentale.
+ *
+ * @param root fondamentale ABSOLUE, en note MIDI : elle place l'accord.
+ * @param racineRelative même fondamentale mais RELATIVE À LA TONIQUE, en
+ *        demi-tons — c'est-à-dire une valeur de `degresGammeAccords`. C'est ce
+ *        que `degreAccordProche` attend, puisqu'il mesure des distances *dans*
+ *        ce tableau.
+ *
+ * Les deux étaient confondues : la fonction faisait `root % 12`, une classe de
+ * hauteur absolue, et la passait à `degreAccordProche`. Les deux ne coïncident
+ * qu'en do, la tonique valant alors 0 — d'où un défaut invisible dans la clé par
+ * défaut et faux dans les onze autres. En la mineur, l'accord de tonique sortait
+ * **A–C–D♯**, un accord diminué, et en mi mineur **E–G♯–C**, un augmenté, alors
+ * que la grille affichait « Am » et « Em » : le nom de l'accord, lui, était
+ * calculé depuis le degré relatif, donc juste. On jouait autre chose que ce qui
+ * était écrit.
+ */
 function construireVoixAccord(
   root: number,
+  racineRelative: number,
   gamme: string,
   extension: "aucune" | "septieme" | "sixte",
 ): { note: number; vel: number }[] {
   const degres = degresGammeAccords(gamme);
-  const racinePc = root % 12;
+  const racinePc = racineRelative;
   const tierce = degreAccordProche(degres, racinePc, 4);
   const quinte = degreAccordProche(degres, racinePc, 7);
   const voix: { note: number; vel: number }[] = [
@@ -155,7 +174,12 @@ export function genererNotesSequenceurAccords(
       if (grille[r]?.[s]) {
         const { degree, extension } = degreeEtExtensionPourLigne(r);
         const root = noteFondamentalePourDegre(degree, cle, gamme, octave);
-        const voix = construireVoixAccord(root, gamme, extension);
+        // La fondamentale relative à la tonique — la même valeur que
+        // `qualiteTriade` emploie pour nommer l'accord, pour que le nom et les
+        // notes ne puissent plus diverger.
+        const degres = degresGammeAccords(gamme);
+        const racineRelative = degres[degree % degres.length];
+        const voix = construireVoixAccord(root, racineRelative, gamme, extension);
         const arpOffset = mode === "arpege" ? Math.min(0.025, stepDur * 0.15) : 0;
         for (let i = 0; i < voix.length; i++) {
           const debut = t + i * arpOffset;

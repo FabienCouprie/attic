@@ -267,14 +267,19 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "melangeur", nom: "Mélangeur", univers: "Traitement", famille: "Montage",
-    resume: "Mélange plusieurs pistes avec niveaux réglables.",
+    // Le résumé annonçait « avec niveaux réglables ». Le nœud n'a aucun
+    // paramètre et applique un gain unique de 0 dB à la somme : il n'y a jamais
+    // eu de niveau par piste, et un modèle de paramètres à une entrée par
+    // connexion n'existe pas. Promettre un réglage absent envoie chercher dans
+    // l'inspecteur ce qui se règle en amont — on dit donc où.
+    resume: "Additionne plusieurs pistes en une seule. Le niveau de chaque piste se règle sur le nœud qui la produit.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio", dynamique: true }], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
       const bufs = ctx.entrees().filter((v: any) => v instanceof AudioBuffer);
       if (bufs.length < 2) return { valeurs:[null], message:traduire("msg.2_entr_es") };
       return { valeurs:[await melangerPistes(bufs, 0)] };
-   }, nomEn: "Mixer", resumeEn: "Mixes several tracks with adjustable levels.",
+   }, nomEn: "Mixer", resumeEn: "Sums several tracks into one. Each track's level is set on the node that produces it.",
  },
   {
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",

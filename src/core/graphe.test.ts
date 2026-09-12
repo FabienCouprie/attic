@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  ordreTopologique, ancetres, empreinteEntrees, empreinteParametres,
+  ordreTopologique, ancetres, descendants, empreinteEntrees, empreinteParametres,
   resoudreEntree, valeursEntrantes,
 } from "./graphe";
 import type { AreteG } from "./meta";
@@ -72,5 +72,103 @@ describe("logique de graphe (filet de sécurité du moteur)", () => {
     const aretes = [a("A", "N", "out:0", "in:0"), a("B", "N", "out:1", "in:1")];
     const res = new Map<string, (number | null)[]>([["A", [10]]]); // B pas encore calculé
     expect(valeursEntrantes("N", aretes, res)).toEqual([10, null]);
+  });
+});
+
+// ── Aval d'un nœud : ce que les deux réinitialisations ont à distinguer ──
+//
+// `reinitialiserNoeud` efface un nœud ET son aval ; `reinitialiserAval` épargne
+// le nœud. La frontière entre les deux est exactement cette fonction, d'où des
+// tests sur le nœud de départ plus insistants que sur la traversée elle-même.
+describe("descendants (aval transitif)", () => {
+  it("EXCLUT le nœud de départ", () => {
+    // Le contrat, et la seule différence avec `ancetres`.
+    const set = descendants("A", [a("A", "B"), a("B", "C")]);
+    expect(set.has("A"), "A ne doit pas être dans son propre aval").toBe(false);
+    expect([...set].sort()).toEqual(["B", "C"]);
+  });
+
+  it("ne remonte jamais en amont", () => {
+    // Réinitialiser l'aval de B ne doit pas toucher A : son résultat reste bon,
+    // et l'effacer forcerait un recalcul inutile — un décodage de fichier, une
+    // génération, parfois une inférence de modèle.
+    const set = descendants("B", [a("A", "B"), a("B", "C")]);
+    expect([...set]).toEqual(["C"]);
+  });
+
+  it("rend un ensemble vide pour un nœud terminal", () => {
+    expect([...descendants("C", [a("A", "B"), a("B", "C")])]).toEqual([]);
+  });
+
+  it("rend un ensemble vide pour un nœud isolé", () => {
+    expect([...descendants("seul", [])]).toEqual([]);
+  });
+
+  it("suit toutes les branches d'une fourche", () => {
+    const set = descendants("A", [a("A", "B"), a("A", "C"), a("C", "D")]);
+    expect([...set].sort()).toEqual(["B", "C", "D"]);
+  });
+
+  it("ne compte qu'une fois le point de convergence d'un diamant", () => {
+    const set = descendants("A", [a("A", "B"), a("A", "C"), a("B", "D"), a("C", "D")]);
+    expect([...set].sort()).toEqual(["B", "C", "D"]);
+    expect(set.size).toBe(3);
+  });
+
+  it("ne compte qu'une fois un nœud relié par deux ports", () => {
+    // Le cas du sélecteur multi-zones vers un masque : deux arêtes, Audio et
+    // Zones, entre la même paire de nœuds.
+    const set = descendants("sel", [
+      a("sel", "masque", "out:0", "in:0"),
+      a("sel", "masque", "out:1", "in:1"),
+    ]);
+    expect([...set]).toEqual(["masque"]);
+  });
+
+  it("ignore les branches sans rapport", () => {
+    const set = descendants("A", [a("A", "B"), a("X", "Y")]);
+    expect([...set]).toEqual(["B"]);
+  });
+
+  it("termine sur un cycle", () => {
+    // L'interface n'interdit pas de refermer une boucle. Sans le garde, la
+    // traversée ne rendrait jamais la main — et c'est l'interface qui se figerait,
+    // pas un test.
+    const set = descendants("A", [a("A", "B"), a("B", "A")]);
+    expect([...set].sort()).toEqual(["A", "B"]);
+  });
+
+  it("compose avec le nœud lui-même pour l'autre réinitialisation", () => {
+    // Ce que fait `reinitialiserNoeud` : l'aval PLUS le nœud de départ. Écrit ici
+    // pour que la différence entre les deux modes soit lisible d'un coup d'œil.
+    const aretes = [a("A", "B"), a("B", "C")];
+    const avalSeul = descendants("B", aretes);
+    const avecLui = new Set(["B", ...avalSeul]);
+    expect([...avalSeul].sort()).toEqual(["C"]);
+    expect([...avecLui].sort()).toEqual(["B", "C"]);
+  });
+});
+
+describe("le cas des zones sélectionnées", () => {
+  // Entrée audio → Sélecteur multi-zones → Masque de zones.
+  const aretes = [
+    a("entree", "sel", "out:0", "in:0"),
+    a("sel", "masque", "out:0", "in:0"),
+    a("sel", "masque", "out:1", "in:1"),
+  ];
+
+  it("retirer une zone périme le masque, pas le sélecteur ni l'entrée", () => {
+    // Mesuré dans l'app avant correction : le masque restait « Terminé » avec un
+    // trou de 1 à 3 s dans son WAV alors que le sélecteur n'affichait plus
+    // aucune zone. Ce que le badge affirme doit correspondre à ce qu'on voit.
+    const aPerimer = descendants("sel", aretes);
+    expect([...aPerimer]).toEqual(["masque"]);
+    expect(aPerimer.has("sel"), "le sélecteur garde sa forme d'onde et son lecteur").toBe(false);
+    expect(aPerimer.has("entree"), "et l'entrée n'est pas redécodée").toBe(false);
+  });
+
+  it("changer le FICHIER de l'entrée périme toute la chaîne, elle comprise", () => {
+    const aPerimer = new Set(["entree", ...descendants("entree", aretes)]);
+    expect([...aPerimer].sort()).toEqual(["entree", "masque", "sel"]);
   });
 });

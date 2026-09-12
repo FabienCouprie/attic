@@ -4,6 +4,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
+import { actionBoutonLecture } from "./lecteur-onde";
 
 export type Zone = { debut: number; duree: number };
 
@@ -40,10 +41,24 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
 
   // Décodage
   useEffect(() => {
+    // Une nouvelle source invalide tout ce qui désignait une position dans
+    // l'ancienne : la lecture en cours, le curseur et la sélection en attente —
+    // une sélection héritée d'un fichier plus long tomberait hors du nouveau, et
+    // « Ajouter » la mémoriserait telle quelle.
+    //
+    // L'élément <audio> est réutilisé d'une source à l'autre (il n'a pas de
+    // `key`) : remplacer son `src` l'arrête SANS émettre `pause`, donc sans que
+    // `isPlaying` se corrige tout seul. Le remettre à zéro ici est ce qui garde
+    // l'icône honnête ; que le bouton reste utilisable même en cas d'écart ne
+    // dépend pas de cette ligne mais de `actionBoutonLecture`. Voir
+    // ui/lecteur-onde.ts.
+    audioElRef.current?.pause();
+    setIsPlaying(false);
+    setPlayPos(0);
+    selectionRef.current = { debut: 0, duree: 0 };
+    setSelAffichee({ debut: 0, duree: 0 });
     if (!audioUrl) {
       setBuffer(null);
-      selectionRef.current = { debut: 0, duree: 0 };
-      setSelAffichee({ debut: 0, duree: 0 });
       setZoomPct(100);
       scrollRef.current = 0;
       const canvas = canvasRef.current;
@@ -449,9 +464,11 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (!audioElRef.current) return;
-                if (isPlaying) { audioElRef.current.pause(); }
-                else { audioElRef.current.play(); }
+                const el = audioElRef.current;
+                // L'élément décide, pas `isPlaying` : voir ui/lecteur-onde.ts.
+                const action = actionBoutonLecture(el?.paused, isPlaying);
+                if (action === "lire") el?.play();
+                else if (action === "pause") el?.pause();
               }}
               style={{
                 width: 28, height: 28, borderRadius: "50%", border: "none",

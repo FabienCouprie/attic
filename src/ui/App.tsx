@@ -433,7 +433,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud, reinitialiserTout } = useExecutionGraphe({
+  const { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -544,45 +544,69 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     },
     onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
     onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
+    // ── Chargement d'un média sur un nœud ──
+    // Chacun se termine par `reinitialiserNoeud`, comme `onChangerParametre` :
+    // choisir un autre fichier est le changement d'entrée le plus lourd qui
+    // soit, et sans cette cascade l'aval gardait son résultat d'avant, marqué
+    // « Terminé ». Sur un sélecteur multi-zones, cela voulait dire dessiner des
+    // zones sur la forme d'onde de l'ancien fichier pour les appliquer au
+    // nouveau. L'incohérence tenait en une ligne : ces gestionnaires écrivent
+    // aussi le paramètre « Chemin », or le même changement passé par
+    // l'inspecteur réinitialisait, lui. Les zones et les fichiers chargés
+    // survivent à la cascade (CHAMPS_UTILISATEUR).
     onChargerAudio: (nid: string, fichier: File) => {
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      reinitialiserNoeud(nid);
     },
     onChargerMidi: (nid: string, fichier: File) => {
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      reinitialiserNoeud(nid);
     },
     onChargerImage: (nid: string, fichier: File) => {
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, imageFichier: fichier, imageNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      reinitialiserNoeud(nid);
     },
     onChargerSvg: (nid: string, fichier: File) => {
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      reinitialiserNoeud(nid);
     },
     onChargerPdf: (nid: string, fichier: File) => {
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, pdfFichier: fichier, pdfNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      reinitialiserNoeud(nid);
     },
-    onChangerEnregistrement: (nid: string, blob: Blob) => { const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); },
+    onChangerEnregistrement: (nid: string, blob: Blob) => { cacheExec.current.delete(nid); const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); reinitialiserNoeud(nid); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       cacheExec.current.delete(nid);
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
       reinitialiserNoeud(nid);
     },
-    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
-    onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); },
-  }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
+    // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
+    // résultat : sa sortie audio est l'entrée transmise telle quelle, que les
+    // zones ne changent pas — et l'effacer ferait disparaître sa forme d'onde et
+    // son lecteur à chaque zone ajoutée, alors qu'on les pose justement les unes
+    // après les autres en regardant l'onde. Son aval, lui, est bien périmé : un
+    // « Masque de zones » restait affiché « Terminé » avec le trou de l'ancienne
+    // zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
+    // Le `cacheExec.delete` reste nécessaire pour le nœud lui-même :
+    // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
+    onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); reinitialiserNoeud(nid); },
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
   callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
@@ -863,6 +887,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
+    callbacksNoeud,
     currentFilePath, setCurrentFilePath,
   });
 
