@@ -75,16 +75,29 @@ describe("tonalités sans ambiguïté", () => {
   });
 });
 
-describe("l'ambiguïté relative n'est pas tranchée, et c'est normal", () => {
-  it("lit Am–F–C–G comme do majeur, ce qui est une lecture défendable", () => {
-    // Le test existe pour FIXER ce comportement, pas pour le célébrer : ces
-    // quatre accords sont vi–IV–I–V en do majeur autant que i–VI–III–VII en la
-    // mineur. Les deux tonalités partagent leurs sept notes et ne diffèrent que
-    // par la hiérarchie ; une suite qui n'affirme pas sa tonique reste ambiguë,
-    // et aucun changement de formule n'y remédie. Le centrage sur la moyenne n'a
-    // d'ailleurs rien changé à ce cas.
+describe("la tonique l'emporte sur la relative quand la basse l'affirme", () => {
+  it("lit Am–F–C–G en la mineur, et non en do majeur", () => {
+    // Ces quatre accords sont vi–IV–I–V en do majeur autant que i–VI–III–VII en
+    // la mineur : les deux tonalités partagent leurs sept notes et ne diffèrent
+    // que par la HIÉRARCHIE. Ici la fondamentale de chaque accord porte plus
+    // fort, comme le ferait une basse, et la suite commence et s'appuie sur le
+    // la : la lecture mineure est donc la bonne.
+    //
+    // Ce cas sortait « C major » tant que `chromaFenetre` normalisait chaque
+    // fenêtre par son maximum : la somme des fenêtres égalisait les passages
+    // forts et faibles, et effaçait précisément la hiérarchie que les profils de
+    // Krumhansl mesurent. Le centrage de la corrélation, lui, n'y changeait
+    // rien — les deux formules donnaient « C major ».
     const r = estimerTonalite(piece([[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]));
-    expect(["C major", "A minor"]).toContain(r.nom);
+    expect(r.nom).toBe("A minor");
+  });
+
+  it("ne se laisse pas entraîner par une suite qui est vraiment en majeur", () => {
+    // Le garde-fou du test précédent : Em–C–G–D est vi–IV–I–V en sol majeur, et
+    // doit le rester. Un correctif qui tirerait systématiquement vers le mineur
+    // se verrait ici.
+    const r = estimerTonalite(piece([[52, 55, 59], [48, 52, 55], [55, 59, 62], [50, 54, 57]]));
+    expect(r.nom).toBe("G major");
   });
 });
 
