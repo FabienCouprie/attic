@@ -26,9 +26,12 @@ describe("remplacement littéral", () => {
   });
 
   it("supprime quand le remplacement est vide", () => {
+    // Le crochet de « [bruit] » est un caractère spécial en regex : s'il était
+    // interprété, rien ne serait trouvé. Ce cas couvre donc l'échappement en
+    // même temps que la suppression.
     const r = modifierTexte("[bruit] bonjour [bruit]", { operation: "remplacer", chercher: "[bruit] ", remplacerPar: "" });
     expect(r.texte).toBe("bonjour [bruit]");
-    expect(r.texte).toBe("bonjour [bruit]");
+    expect(r.remplacements).toBe(1);
   });
 
   it("laisse le texte intact sur une recherche vide", () => {
