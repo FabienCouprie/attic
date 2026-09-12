@@ -153,12 +153,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
     // de réinitialiser dès son prochain onProgress ou sa fin d'exécution.
     if (enCoursRef.current) abortControllerRef.current?.abort();
-    setNodes((nds) => nds.map((n) => {
-      if (!ids.has(n.id)) return n;
+    // Les révocations AVANT `setNodes`, et non dans son updater : celui-ci doit
+    // être pur. Double-invoqué par StrictMode, il révoquait deux fois — sans
+    // conséquence ici, la révocation étant idempotente — mais c'est le même motif
+    // qui, à la création d'URL, laissait un blob orphelin par nœud et par run.
+    for (const n of noeudsRef.current) {
+      if (!ids.has(n.id)) continue;
       if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
       if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
       if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
       if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
+    }
+    setNodes((nds) => nds.map((n) => {
+      if (!ids.has(n.id)) return n;
       const nouvelleData: any = {
         ...n.data,
         statut: "attente",
@@ -493,13 +500,49 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     }
 
-    // Mettre à jour les URL audio
+    // ── Mettre à jour les URL audio ──
+    //
+    // Le calcul se fait ICI, avant `setNodes`, et l'updater ne fait plus
+    // qu'appliquer le résultat. La raison n'est pas cosmétique : un updater de
+    // `setNodes` doit être PUR, et celui-ci appelait `URL.createObjectURL` et
+    // `URL.revokeObjectURL`. React double-invoque les updaters en développement
+    // (StrictMode), si bien que chaque exécution créait DEUX URL pour un même
+    // blob — la seconde allait dans l'état, la première restait orpheline et
+    // n'était jamais révoquée. Tracé sur un graphe de cinq minutes : deux URL de
+    // 53 Mo par nœud audio et par run.
+    //
+    // Ce n'est pas une fuite anodine sur ce type de graphe. Mesuré dans l'app :
+    // le tas JavaScript atteignait 3027 Mo pour une limite de 4192 Mo, et le
+    // sixième lecteur audio refusait de charger son WAV — pourtant intact — avec
+    // « MEDIA_ELEMENT_ERROR: Format error », que Chromium émet aussi par manque
+    // de mémoire. C'est le symptôme « lecteur gris à 0:00 » : il frappe le
+    // dernier nœud de la chaîne, quel qu'il soit, et non celui qui aurait un
+    // défaut.
+    const correctifs = new Map<string, Record<string, unknown>>();
+    for (const n of noeudsRef.current) {
+      const patch = calculerCorrectifResultat(n);
+      if (patch) correctifs.set(n.id, patch);
+    }
+    // Un CORRECTIF de champs, appliqué sur les données VIVANTES du nœud — et non
+    // un remplacement de `data` construit depuis `noeudsRef.current`. Ce ref est en
+    // retard d'un rendu sur les statuts, que `definirStatut` vient de poser :
+    // remplacer `data` en bloc reposait donc un statut périmé, et un nœud restait
+    // affiché « en cours » alors que son calcul était fini. Défaut introduit par
+    // cette refonte, et attrapé en vérifiant dans l'app.
     setNodes((nds) =>
       nds.map((n) => {
+        const patch = correctifs.get(n.id);
+        return patch ? { ...n, data: { ...n.data, ...patch } } : n;
+      }),
+    );
+
+    /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
+    function calculerCorrectifResultat(n: any): Record<string, unknown> | null {
+      {
         const meta = trouverMeta(n.data.ficheId as string);
         // Méta hors du périmètre du run (branche non exécutée) : ne pas y toucher —
         // il garde son statut précédent au lieu de passer « en cours »/« erreur ».
-        if (meta && !estMetaEnScope(n.id)) return n;
+        if (meta && !estMetaEnScope(n.id)) return null;
         // Pour un méta-nœud, on récupère les résultats de ses nœuds internes
         // aplatis (préfixés par l'id du méta-nœud) via ses ports de sortie exposés.
         const vals = meta
@@ -509,9 +552,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
             })
           : resultats.get(n.id);
         const defNode = trouverDef(n.data.ficheId as string);
-        if ((!vals || vals.length === 0) && !messages.has(n.id)) return n;
+        if ((!vals || vals.length === 0) && !messages.has(n.id)) return null;
         // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
-        if (defNode?.affichageAutonome) return n;
+        if (defNode?.affichageAutonome) return null;
         const valsSafe = vals ?? [];
         // Ne pas créer de lecteur audio générique pour les nodes multi-sorties audio
         // (ex: séparateur IA) — chaque sortie a son propre lecteur via les ports.
@@ -589,29 +632,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
                 break;
               }
             }
-            return { ...n, data: { ...n.data, statut: "erreur" as const,
+            return { statut: "erreur" as const,
               audioResultatMessage: fautif
                 ? t("execution.brancheEchecSansResultat").replace("{fautif}", fautif)
-                : t("execution.brancheEchecAucunResultat") } };
+                : t("execution.brancheEchecAucunResultat") };
           }
         }
         return {
-          ...n,
-          data: {
-            ...n.data,
-            audioResultatUrl: url ?? undefined,
-            audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
-            audioResultatBuffer: audio ?? undefined,
-            audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
-            scriptGenere: texte ?? undefined,
-            midiFichierSortie: midiFile ?? undefined,
-            imageResultatUrl: imageUrl ?? undefined,
-            imageResultatFile: imageFile ?? undefined,
-            ...(meta ? { statut: "termine" as const } : {}),
-          },
+          audioResultatUrl: url ?? undefined,
+          audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
+          audioResultatBuffer: audio ?? undefined,
+          audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
+          scriptGenere: texte ?? undefined,
+          midiFichierSortie: midiFile ?? undefined,
+          imageResultatUrl: imageUrl ?? undefined,
+          imageResultatFile: imageFile ?? undefined,
+          ...(meta ? { statut: "termine" as const } : {}),
         };
-      })
-    );
+      }
+    }
 
     // Appliquer les temps d'exécution mesurés (cumulés par nœud visible, y compris méta)
     if (tempsParVisible.size > 0) {
