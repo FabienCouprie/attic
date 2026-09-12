@@ -8,6 +8,7 @@ import {
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes, filtrerCanauxMidi,
+  appliquerInstrumentsParCanal,
   rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
   genererMusiqueMandelbrot,
@@ -1241,15 +1242,50 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 100,
         unite: "%",
-        doc: "Volume de la batterie. La batterie est toujours synthétisée par le drum-synth interne pour être audible, même en mode SoundFont.",
-        docEn: "Drum volume. Drums are always synthesized by the internal drum synth to remain audible, even in SoundFont mode.",
+        doc: "Volume de la batterie, relatif aux trois parties mélodiques. À 100, elle sort MESURÉE À +8,5 dB au-dessus d'elles : la batterie n'est pas normalisée alors que le rendu SoundFont l'est, et le mix est ensuite ramené sous le plafond, ce qui écrase d'autant les accords, la basse et la mélodie. Changer leur instrument s'entend alors à peine. Compter 50 pour +2,5 dB, 30 pour un équilibre.",
+        docEn: "Drum volume, relative to the three melodic parts. At 100 they come out MEASURED AT +8.5 dB above them: drums are not normalized whereas the SoundFont render is, and the mix is then brought back under the ceiling, squashing the chords, bass and melody by as much. Changing their instrument then barely registers. Reckon 50 for +2.5 dB, 30 for a balance.",
       },
       {
         ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. La batterie utilise toujours le drum-synth interne.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth.",
       },
-      PARAMETRE_INSTRUMENT_SF2_SUIVI,
+      // UN INSTRUMENT PAR PARTIE, et non un seul pour les trois.
+      //
+      // Le nœud expose quatre sorties MIDI — batterie, accords, basse, mélodie —
+      // et ne déclarait qu'une case « Instrument ». La laisser sur « Suivre le
+      // MIDI » donnait le bon arrangement (piano, basse jouée aux doigts, lead
+      // carré), mais y choisir quoi que ce soit l'aplatissait : mesuré, un
+      // réglage sur « Church Organ » mettait les TROIS parties à l'orgue, la
+      // basse perdant son patch de basse. Un seul rendu suffit toujours : les
+      // instruments sont écrits dans le MIDI avant de rendre.
+      //
+      // La batterie n'a pas de case : elle passe par le drum-synth interne, dont
+      // les sons ne viennent pas du SoundFont.
+      {
+        ...PARAMETRE_INSTRUMENT_SF2_SUIVI,
+        nom: "Instrument accords", nomEn: "Chord instrument",
+        doc: "Preset du SoundFont pour la partie d'accords, ou « Suivre le MIDI » pour garder celui que le nœud lui donne (piano). Le choix est aussi écrit dans la sortie « MIDI accords », pour que le nœud qui la rendra ensuite l'utilise.",
+        docEn: "SoundFont preset for the chord part, or « Follow MIDI » to keep the one the node assigns (piano). The choice is also written into the « MIDI chords » output, so whichever node renders it next will use it.",
+      },
+      {
+        ...PARAMETRE_INSTRUMENT_SF2_SUIVI,
+        nom: "Instrument basse", nomEn: "Bass instrument",
+        doc: "Preset du SoundFont pour la basse, ou « Suivre le MIDI » pour garder celui que le nœud lui donne (basse jouée aux doigts). Le choix est aussi écrit dans la sortie « MIDI basse », pour que le nœud qui la rendra ensuite l'utilise.",
+        docEn: "SoundFont preset for the bass, or « Follow MIDI » to keep the one the node assigns (fingered bass). The choice is also written into the « MIDI bass » output, so whichever node renders it next will use it.",
+      },
+      {
+        ...PARAMETRE_INSTRUMENT_SF2_SUIVI,
+        nom: "Instrument mélodie", nomEn: "Melody instrument",
+        doc: "Preset du SoundFont pour la mélodie, ou « Suivre le MIDI » pour garder celui que le nœud lui donne (lead carré). Le choix est aussi écrit dans la sortie « MIDI mélodie », pour que le nœud qui la rendra ensuite l'utilise.",
+        docEn: "SoundFont preset for the melody, or « Follow MIDI » to keep the one the node assigns (square lead). The choice is also written into the « MIDI melody » output, so whichever node renders it next will use it.",
+      },
+      {
+        ...PARAMETRE_INSTRUMENT_SF2_SUIVI,
+        nom: "Kit de batterie", nomEn: "Drum kit",
+        doc: "Quatrième case, pour la quatrième sortie. « Suivre le MIDI » garde le drum-synth interne — des percussions synthétisées, toujours audibles même sans SoundFont chargé, et c'est le comportement par défaut. Choisir un preset fait rendre la batterie par ce kit du SoundFont à la place ; prenez-en un de la banque 128. Dans les deux cas, la sortie « MIDI batterie » porte le kit choisi, pour que le nœud qui la rendra ensuite l'utilise.",
+        docEn: "A fourth slot, for the fourth output. « Follow MIDI » keeps the internal drum synth — synthesized percussion, always audible even with no SoundFont loaded, and the default. Picking a preset renders the drums with that SoundFont kit instead; choose one from bank 128. Either way the « MIDI drums » output carries the chosen kit, so whichever node renders it next will use it.",
+      },
     ],
     async executer(ctx: any) {
       const config: ConfigGrooveBox = {
@@ -1274,28 +1310,69 @@ export const fiches: FicheAudio[] = ([
       };
       ctx.onProgress(traduire("progress.g_n_ration_groove_box"));
       const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, description, graineUtilisee } = genererGrooveBox(config);
-      const fichierBatterie = new File([midiBatterie as unknown as BlobPart], "groove-box-drums.mid", { type: "audio/midi" });
-      const fichierAccords = new File([midiAccords as unknown as BlobPart], "groove-box-chords.mid", { type: "audio/midi" });
-      const fichierBasse = new File([midiBasse as unknown as BlobPart], "groove-box-bass.mid", { type: "audio/midi" });
-      const fichierMelodie = new File([midiMelodie as unknown as BlobPart], "groove-box-melody.mid", { type: "audio/midi" });
       const volume = ctx.paramNombre("Volume", 80);
       const volumeBatterie = ctx.paramNombre("Volume batterie", 100);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
-      const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+
+      // L'ancienne case unique « Instrument » n'est plus déclarée, mais un projet
+      // enregistré avant ce changement la porte encore dans ses données : on la
+      // lit comme valeur de repli, pour que ces projets sonnent comme avant. Un
+      // choix explicite par partie l'emporte.
+      const legs = ctx.paramNombre("Instrument", -1);
+      const pourPartie = (nom: string) => {
+        const v = ctx.paramNombre(nom, -1);
+        return v >= 0 ? v : legs;
+      };
+      const instrumentsParCanal = new Map<number, number>([
+        [0, pourPartie("Instrument accords")],
+        [1, pourPartie("Instrument basse")],
+        [2, pourPartie("Instrument mélodie")],
+      ]);
+
+      // L'instrument choisi est écrit dans la sortie MIDI de SA partie, pour qu'il
+      // voyage avec le fichier : c'est ce que fait deja « Multi-reservoirs » pour sa
+      // piste de rythme. Sans cela, le nœud qui rendra ce MIDI retomberait sur le
+      // programme que le generateur y inscrit en dur — piano 0, basse 33, lead 80,
+      // kit « Standard » banque 128 programme 0 — et le reglage n'aurait aucun effet
+      // en aval.
+      //
+      // C'EST LE DÉFAUT RAPPORTÉ : seule la batterie était traitée ainsi. Les trois
+      // autres cases n'agissaient que sur le rendu audio interne du nœud, où elles
+      // s'entendaient parfaitement. Branchées sur « Jointure MIDI » puis rendues,
+      // les parties revenaient au piano-basse-lead d'origine.
+      const kitBatterie = ctx.paramNombre("Kit de batterie", -1);
+      const sortieMidi = (octets: Uint8Array, canal: number, nom: string) => {
+        const inst = canal === 9 ? kitBatterie : instrumentsParCanal.get(canal) ?? -1;
+        const bytes = inst >= 0 ? appliquerInstrumentsParCanal(octets, new Map([[canal, inst]])) : octets;
+        return new File([bytes as unknown as BlobPart], nom, { type: "audio/midi" });
+      };
+      const fichierBatterie = sortieMidi(midiBatterie, 9, "groove-box-drums.mid");
+      const fichierAccords = sortieMidi(midiAccords, 0, "groove-box-chords.mid");
+      const fichierBasse = sortieMidi(midiBasse, 1, "groove-box-bass.mid");
+      const fichierMelodie = sortieMidi(midiMelodie, 2, "groove-box-melody.mid");
 
       const { notes: notesMidi, dureeTotale } = analyserMidi(parseMidi(midiBytes));
 
+      // La batterie passe-t-elle par le SoundFont ? Alors elle est rendue AVEC les
+      // trois autres parties, dans le même passage : le canal 9 rejoint les canaux
+      // 0, 1 et 2, son kit écrit dans le MIDI comme les autres instruments. Un seul
+      // rendu pour les quatre parties, et surtout plus aucun mélange de tampons —
+      // c'est précisément là que vivait le défaut de fréquence d'échantillonnage.
+      const batterieAuSoundFont = useSf2 && kitBatterie >= 0;
+      if (batterieAuSoundFont) instrumentsParCanal.set(9, kitBatterie);
+
       let melodicBuf: AudioBuffer;
       if (useSf2) {
-        const melodicBytes = filtrerCanauxMidi(midiBytes, [0, 1, 2]);
-        melodicBuf = await rendreMidiDepuisBytes(
-          melodicBytes,
-          "SoundFont",
-          volume,
-          instrument >= 0 ? instrument : undefined,
-          instrument >= 0 ? banque : undefined,
+        // Les instruments sont écrits DANS le MIDI, canal par canal, et le rendu
+        // n'a plus qu'à suivre le fichier. Passer un instrument global au moteur
+        // l'aurait appliqué aux trois canaux — c'était le défaut. Un seul rendu,
+        // donc un seul tampon, pour autant de timbres que de canaux.
+        const melodicBytes = appliquerInstrumentsParCanal(
+          filtrerCanauxMidi(midiBytes, batterieAuSoundFont ? [0, 1, 2, 9] : [0, 1, 2]),
+          instrumentsParCanal,
         );
+        melodicBuf = await rendreMidiDepuisBytes(melodicBytes, "SoundFont", volume);
       } else {
         const melodic = notesMidi
           .filter((n) => n.canal !== 9)
@@ -1321,7 +1398,9 @@ export const fiches: FicheAudio[] = ([
       // mineur. L'analyseur avait raison.
       const sampleRate = melodicBuf.sampleRate;
 
-      const drums = notesMidi
+      // Aucune frappe a synthetiser quand le SoundFont s'en charge deja : le tampon
+      // de batterie est alors vide, et le mix ci-dessous n'ajoute rien.
+      const drums = batterieAuSoundFont ? [] : notesMidi
         .filter((n) => n.canal === 9)
         .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
       const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
