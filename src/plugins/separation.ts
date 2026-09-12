@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { lireModeleEmbarque } from "../modele-embarque";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -75,8 +76,9 @@ export const fiches: FicheAudio[] = ([
         octets = await telechargerDepuisUrl(url, (p: number) => ctx.onProgress(traduire("progress.mod_le_var_0", Math.round(p))));
       } else {
         ctx.onProgress(traduire("progress.chargement_du_mod_le_mdx_embarqu"));
-        const reponse = await fetch("oonx/modele-separation.onnx");
-        if (reponse.ok) octets = await reponse.arrayBuffer();
+        // Par le processus principal dans l'app : `fetch("oonx/…")` ne trouve pas
+        // le modèle une fois installée — voir modele-embarque.ts.
+        octets = await lireModeleEmbarque("oonx/modele-separation.onnx");
       }
       if (!octets) return { valeurs:nulls6, message:traduire("msg.mod_le_mdx_non_disponible") };
       ctx.onProgress(traduire("progress.pr_paration_de_la_session"));
