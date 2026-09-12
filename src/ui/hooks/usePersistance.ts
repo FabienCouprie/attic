@@ -30,6 +30,8 @@ export interface OptionsPersistance {
   reinitialiserNoeud: (id: string) => void;
   supprimerNoeud: (ids: string | string[]) => void;
   setPrioritaire: (id: string | null) => void;
+  /** Gestionnaires attachés au `data` de chaque nœud — définis une seule fois, dans App. */
+  callbacksNoeud: () => Record<string, unknown>;
   lancerRef: MutableRefObject<any>;
   cacheExec: MutableRefObject<Map<string, any>>;
   currentFilePath: string | null;
@@ -198,44 +200,14 @@ export function usePersistance(o: OptionsPersistance) {
       data: {
         ...n.data,
         statut: "attente",
-        onSupprimerNoeud: (nid: string) => o.supprimerNoeud(nid),
-        onReinitialiser: (nid: string) => o.reinitialiserNoeud(nid),
-        onDefinirPrioritaire: (nid: string) => {
-          o.setPrioritaire(nid);
-          o.lancerRef.current(nid);
-        },
-        onChargerAudio: (nid: string, fichier: File) => {
-          const api = (window as any).api;
-          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
-        },
-        onChargerMidi: (nid: string, fichier: File) => {
-          const api = (window as any).api;
-          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
-        },
-        onChargerImage: (nid: string, fichier: File) => {
-          const api = (window as any).api;
-          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, imageFichier: fichier, imageNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
-        },
-        onChargerSvg: (nid: string, fichier: File) => {
-          const api = (window as any).api;
-          const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...nd.data.parametres, Chemin: chemin } } } : nd));
-        },
-        onChangerEnregistrement: (nid: string, blob: Blob) => {
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, enregistrementBlob: blob, enregistrementUrl: URL.createObjectURL(blob) } } : nd));
-        },
-        onChangerParametre: (nid: string, nom: string, val: number | string) => {
-          o.cacheExec.current.delete(nid);
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, parametres: { ...nd.data.parametres, [nom]: val } } } : nd));
-          o.reinitialiserNoeud(nid);
-        },
-        onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => {
-          o.cacheExec.current.delete(nid);
-          o.setNodes((nds2) => nds2.map((nd) => nd.id === nid ? { ...nd, data: { ...nd.data, zonesSelectionnees: zones } } : nd));
-        },
+        // Les MÊMES gestionnaires que pour un nœud ajouté à la main : ce bloc en
+        // portait une seconde écriture, et les deux avaient divergé. La copie
+        // d'ici oubliait le `cacheExec.delete` des chargements de fichier — un
+        // projet importé rejouait donc le résultat du fichier précédent depuis
+        // le cache — n'empilait pas l'historique à la suppression d'un nœud, et
+        // n'aurait pas reçu la cascade de réinitialisation ajoutée en face.
+        // Un seul endroit, pour qu'aucune correction ne s'applique qu'à moitié.
+        ...o.callbacksNoeud(),
       },
     }));
 
