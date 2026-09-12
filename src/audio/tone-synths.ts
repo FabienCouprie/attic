@@ -2,6 +2,10 @@
 // Rendu offline : aucune sortie haut-parleur, production directe d'AudioBuffer.
 
 import { Note } from "tonal";
+import {
+  cleEchantillon, echantillonsRequis, placerPercussions, secondesDeclenchement,
+  type Echantillon,
+} from "./percussions-placement";
 
 export interface OptionsMembraneSynth {
   note: string;
@@ -251,143 +255,135 @@ export interface OptionsDrumSynth {
 }
 
 /**
+ * Réglages Tone de chaque voix de percussion.
+ *
+ * Les valeurs sont celles du rendu d'origine, déplacées ici sans y toucher : ce
+ * tableau existe pour qu'une voix puisse être instanciée SEULE, le temps de
+ * rendre son son une fois.
+ *
+ * `queue` est la durée de son qui suit la fin du déclenchement (decay + release,
+ * plus une marge) : elle borne la longueur de l'échantillon à rendre.
+ */
+const VOIX_PERCUSSION: Record<string, {
+  type: "membrane" | "metal" | "bruit";
+  options: Record<string, unknown>;
+  queue: number;
+}> = {
+  kick: {
+    type: "membrane", queue: 1.85,
+    options: { pitchDecay: 0.05, octaves: 4, oscillator: { type: "sine" },
+      envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" } },
+  },
+  snare: {
+    type: "membrane", queue: 0.75,
+    options: { pitchDecay: 0.02, octaves: 2, oscillator: { type: "sine" },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.5, attackCurve: "exponential" } },
+  },
+  snareNoise: {
+    type: "bruit", queue: 0.35,
+    options: { noise: { type: "white" },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 } },
+  },
+  clap: {
+    type: "bruit", queue: 0.2,
+    options: { noise: { type: "brown" },
+      envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 } },
+  },
+  hihat: {
+    type: "metal", queue: 0.2,
+    options: { harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
+      envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05, attackCurve: "linear" } },
+  },
+  hihatOpen: {
+    type: "metal", queue: 0.55,
+    options: { harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
+      envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.1, attackCurve: "linear" } },
+  },
+  crash: {
+    type: "metal", queue: 2.6,
+    options: { harmonicity: 4, modulationIndex: 40, resonance: 3000, octaves: 2,
+      envelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 1.0, attackCurve: "linear" } },
+  },
+  lowTom: {
+    type: "membrane", queue: 0.75,
+    options: { pitchDecay: 0.04, octaves: 3, oscillator: { type: "sine" },
+      envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" } },
+  },
+  highTom: {
+    type: "membrane", queue: 0.75,
+    options: { pitchDecay: 0.03, octaves: 3, oscillator: { type: "sine" },
+      envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" } },
+  },
+};
+
+/**
  * Rendu d'une piste MIDI batterie avec des synthétiseurs de percussion.
  * Utilise Tone.js MembraneSynth, MetalSynth et NoiseSynth.
  * Les notes General MIDI sont mappées : 36 kick, 38 snare, 39 clap,
  * 42/46 charley, 49 crash, 45/50 toms.
+ *
+ * CHAQUE SON EST RENDU UNE FOIS, puis recopié à chaque frappe. Poser toutes les
+ * frappes sur un même synthé de Tone coûtait un temps quadratique dans leur
+ * nombre — 200 frappes sur une seule voix demandaient 78 s de calcul, et le nœud
+ * Groove Box 537 s pour 150 s de musique. Voir audio/percussions-placement.ts
+ * pour la mesure complète et ce que la recopie suppose.
  */
 export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioBuffer> {
   const { notes, volume, sampleRate = 44100 } = opts;
-  const { MembraneSynth, MetalSynth, NoiseSynth, Offline } = await import("tone");
 
   const dureeTotale = notes.length > 0
     ? Math.max(0.5, Math.max(...notes.map((n) => n.fin)) + 0.5)
     : 0.5;
-  const velocity = Math.max(0, Math.min(1, volume / 100));
+  const gain = Math.max(0, Math.min(1, volume / 100));
 
-  const toneBuffer = await Offline(
-    () => {
-      const gain = 20 * Math.log10(Math.max(0.01, velocity));
+  const longueur = Math.ceil(dureeTotale * sampleRate);
+  const gauche = new Float32Array(longueur);
+  const droite = new Float32Array(longueur);
 
-      const kick = new MembraneSynth({
-        pitchDecay: 0.05,
-        octaves: 4,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" },
-      }).toDestination();
-      kick.volume.value = gain;
+  if (notes.length > 0) {
+    const { MembraneSynth, MetalSynth, NoiseSynth, Offline } = await import("tone");
 
-      const snare = new MembraneSynth({
-        pitchDecay: 0.02,
-        octaves: 2,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.5, attackCurve: "exponential" },
-      }).toDestination();
-      snare.volume.value = gain;
+    const echantillons = new Map<string, Echantillon>();
+    for (const d of echantillonsRequis(notes)) {
+      const def = VOIX_PERCUSSION[d.voix];
+      if (!def) continue;
+      // Inutile de rendre une queue plus longue que le morceau : l'ancien rendu
+      // coupait les sons au bout du tampon, la recopie fait de même.
+      const duree = Math.min(dureeTotale, secondesDeclenchement(d.duree) + def.queue);
+      const rendu = await Offline(
+        () => {
+          // Vélocité 1 et volume 0 dB : les deux sont des gains exacts, la
+          // recopie applique le produit. Vérifié dans l'app avant d'y compter.
+          const synthe = def.type === "membrane" ? new MembraneSynth(def.options as any)
+            : def.type === "metal" ? new MetalSynth(def.options as any)
+            : new NoiseSynth(def.options as any);
+          synthe.toDestination();
+          if (d.hauteur === null) (synthe as any).triggerAttackRelease(d.duree, 0, 1);
+          else (synthe as any).triggerAttackRelease(d.hauteur, d.duree, 0, 1);
+        },
+        duree,
+        2,
+        sampleRate,
+      );
+      const buf = audioBufferDepuisTone(rendu);
+      // COPIE, et non la vue rendue par `getChannelData` : l'échantillon survit
+      // au tampon de Tone, qui est libéré à la sortie de cette itération. Sous
+      // node-web-audio-api la mémoire est détenue par Rust, et garder la vue
+      // faisait planter le worker de test sur une violation d'accès — un
+      // usage-après-libération qui, dans le navigateur, aurait tenu par chance.
+      echantillons.set(cleEchantillon(d), {
+        gauche: new Float32Array(buf.getChannelData(0)),
+        droite: new Float32Array(buf.getChannelData(1)),
+      });
+    }
 
-      const snareNoise = new NoiseSynth({
-        noise: { type: "white" },
-        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 },
-      }).toDestination();
-      snareNoise.volume.value = gain;
+    placerPercussions({ frappes: notes, echantillons, sortie: { gauche, droite }, sampleRate, gain });
+  }
 
-      const clap = new NoiseSynth({
-        noise: { type: "brown" },
-        envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 },
-      }).toDestination();
-      clap.volume.value = gain;
-
-      const hihat = new MetalSynth({
-        harmonicity: 5.1,
-        modulationIndex: 32,
-        resonance: 4000,
-        octaves: 1.5,
-        envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05, attackCurve: "linear" },
-      }).toDestination();
-      hihat.volume.value = gain;
-
-      const hihatOpen = new MetalSynth({
-        harmonicity: 5.1,
-        modulationIndex: 32,
-        resonance: 4000,
-        octaves: 1.5,
-        envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.1, attackCurve: "linear" },
-      }).toDestination();
-      hihatOpen.volume.value = gain;
-
-      const crash = new MetalSynth({
-        harmonicity: 4,
-        modulationIndex: 40,
-        resonance: 3000,
-        octaves: 2,
-        envelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 1.0, attackCurve: "linear" },
-      }).toDestination();
-      crash.volume.value = gain;
-
-      const lowTom = new MembraneSynth({
-        pitchDecay: 0.04,
-        octaves: 3,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" },
-      }).toDestination();
-      lowTom.volume.value = gain;
-
-      const highTom = new MembraneSynth({
-        pitchDecay: 0.03,
-        octaves: 3,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.001, decay: 0.3, sustain: 0.01, release: 0.4, attackCurve: "exponential" },
-      }).toDestination();
-      highTom.volume.value = gain;
-
-      for (const n of notes) {
-        const v = Math.max(0, Math.min(1, n.velocite / 127));
-        const t = n.debut;
-        switch (n.note) {
-          case 36:
-            kick.triggerAttackRelease("C2", "8n", t, v);
-            break;
-          case 38:
-            snare.triggerAttackRelease("D2", "8n", t, v);
-            snareNoise.triggerAttackRelease("16n", t, v);
-            break;
-          case 39:
-            clap.triggerAttackRelease("16n", t, v);
-            break;
-          case 42:
-          case 44:
-            hihat.triggerAttackRelease("C5", "32n", t, v);
-            break;
-          case 46:
-            hihatOpen.triggerAttackRelease("C5", "16n", t, v);
-            break;
-          case 45:
-            lowTom.triggerAttackRelease("A1", "8n", t, v);
-            break;
-          case 47:
-            lowTom.triggerAttackRelease("C2", "8n", t, v);
-            break;
-          case 48:
-            highTom.triggerAttackRelease("E2", "8n", t, v);
-            break;
-          case 49:
-            crash.triggerAttackRelease("C5", "4n", t, v);
-            break;
-          case 50:
-            highTom.triggerAttackRelease("F2", "8n", t, v);
-            break;
-          default:
-            kick.triggerAttackRelease("C2", "8n", t, v);
-            break;
-        }
-      }
-    },
-    dureeTotale,
-    2,
-    sampleRate,
-  );
-
-  return audioBufferDepuisTone(toneBuffer);
+  const sortie = new AudioBuffer({ numberOfChannels: 2, length: longueur, sampleRate });
+  sortie.copyToChannel(gauche, 0);
+  sortie.copyToChannel(droite, 1);
+  return sortie;
 }
 
 /**
