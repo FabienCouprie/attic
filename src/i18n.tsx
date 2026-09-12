@@ -270,7 +270,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.couleur_2_inconnue_var_0": { fr: "Couleur 2 inconnue : {__VAR_0__}", en: "Unknown color 2: {__VAR_0__}" },
   "msg.script_g_n_r_var_0_graine_var_1_var_2_caract_res": { fr: "Script généré · {__VAR_0__} · graine {__VAR_1__} · {__VAR_2__} caractères", en: "Script generated · {__VAR_0__} · seed {__VAR_1__} · {__VAR_2__} characters" },
   "msg.aucun_audio_connect": { fr: "Aucun audio connecté.", en: "No audio connected." },
-  "msg.debruitage.modele_absent": { fr: "Modèle GTCRN absent de public/oonx/. Lancez « npm run download:gtcrn ».", en: "GTCRN model missing from public/oonx/. Run « npm run download:gtcrn »." },
+  "msg.debruitage.modele_absent": { fr: "Modèle GTCRN introuvable (oonx/gtcrn.onnx). Application installée : réinstallez-la. Développement : lancez « npm run download:gtcrn ».", en: "GTCRN model not found (oonx/gtcrn.onnx). Installed app: reinstall it. Development: run « npm run download:gtcrn »." },
   "msg.debruitage.var_0_var_1_var_2": { fr: "Bruit de fond : {__VAR_0__} dB · niveau global {__VAR_1__} dB · sortie {__VAR_2__}.", en: "Noise floor: {__VAR_0__} dB · overall level {__VAR_1__} dB · output {__VAR_2__}." },
   "msg.timbre_ddsp_var_0_var_1_s_var_2_hz": { fr: "Timbre DDSP · {__VAR_0__} · {__VAR_1__}s · {__VAR_2__} Hz", en: "DDSP stamp · {__VAR_0__} · {__VAR_1__}s · {__VAR_2__} Hz" },
   "msg.erreur_ddsp_var_0": { fr: "Erreur DDSP : {__VAR_0__}", en: "DDSP error: {__VAR_0__}" },

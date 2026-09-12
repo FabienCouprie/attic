@@ -17,6 +17,7 @@ import { avecDoc } from "./notices";
 import {
   debruiterParTrames, planchecherDeBruit, GTCRN_BINS, GTCRN_SAMPLE_RATE,
 } from "../audio/gtcrn";
+import { lireModeleEmbarque } from "../modele-embarque";
 
 const rmsGlobal = (a: Float32Array) => {
   let s = 0;
@@ -72,8 +73,11 @@ export const fiches: FicheAudio[] = ([
 
       ctx.onProgress(traduire("progress.debruitage.chargement_modele"));
       const { preparerSession } = await import("../ia");
-      const reponse = await fetch("oonx/gtcrn.onnx");
-      if (!reponse.ok) {
+      // Par le processus principal dans l'app, et non par `fetch` : une fois
+      // installée, `fetch("oonx/…")` cherche dans `resources/app/dist/oonx/`, où le
+      // modèle n'est pas. C'était le défaut de la 3.2.0 — voir modele-embarque.ts.
+      const octets = await lireModeleEmbarque("oonx/gtcrn.onnx");
+      if (!octets) {
         return { valeurs: [null], erreur: true, message: traduire("msg.debruitage.modele_absent") };
       }
       // CPU (WASM) explicitement, et non « Auto ».
@@ -86,7 +90,7 @@ export const fiches: FicheAudio[] = ([
       // hostile. GTCRN pèse 344 ko et se déroule image par image ; on l'appelle
       // 62 fois par seconde d'audio, sur des tenseurs minuscules. Le coût est
       // alors celui des allers-retours vers le GPU, pas celui du calcul.
-      const session = await preparerSession(await reponse.arrayBuffer(), "CPU (WASM)", "gtcrn");
+      const session = await preparerSession(octets, "CPU (WASM)", "gtcrn");
       const ort = await import("onnxruntime-web");
 
       ctx.onProgress(traduire("progress.debruitage.reechantillonnage"));
