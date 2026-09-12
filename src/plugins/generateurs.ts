@@ -1281,12 +1281,6 @@ export const fiches: FicheAudio[] = ([
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
 
       const { notes: notesMidi, dureeTotale } = analyserMidi(parseMidi(midiBytes));
-      const sampleRate = ctx.runtime?.sampleRate ?? 44100;
-
-      const drums = notesMidi
-        .filter((n) => n.canal === 9)
-        .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
-      const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
 
       let melodicBuf: AudioBuffer;
       if (useSf2) {
@@ -1304,6 +1298,29 @@ export const fiches: FicheAudio[] = ([
           .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
         melodicBuf = await rendreSequence(melodic, "FM/Oscillateurs", volume);
       }
+
+      // UNE SEULE fréquence d'échantillonnage pour le mix, celle de la partie
+      // mélodique — et non celle de l'AudioContext.
+      //
+      // Le mix additionne les deux tampons INDICE PAR INDICE. Il faut donc qu'ils
+      // partagent leur fréquence, ce qui n'était pas le cas : `rendreMidiDepuisBytes`
+      // rend toujours du 44 100 Hz (codé en dur), la batterie était rendue à la
+      // fréquence de l'AudioContext, et le master aussi. Sur une machine à
+      // 48 000 Hz, la partie mélodique était donc relue 8,8 % trop vite —
+      // **+1,47 demi-ton**, et 8 % trop courte : sur une section de 150 s, la
+      // mélodie finissait douze secondes avant la batterie.
+      //
+      // Le défaut s'entendait sans se voir : le nœud sortait de l'audio plausible,
+      // simplement dans une autre tonalité que ses propres sorties MIDI. Il a été
+      // trouvé en poursuivant un désaccord entre « Analyse harmonique », qui
+      // annonçait fa♯ mineur, et le MIDI, dont les 501 notes étaient toutes en la
+      // mineur. L'analyseur avait raison.
+      const sampleRate = melodicBuf.sampleRate;
+
+      const drums = notesMidi
+        .filter((n) => n.canal === 9)
+        .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
 
       const dureeMix = Math.max(dureeTotale, drumBuf.duration, melodicBuf.duration, 0.5);
       const master = new AudioBuffer({

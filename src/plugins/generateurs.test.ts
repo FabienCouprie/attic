@@ -63,6 +63,82 @@ function mesurerFrequence(b: AudioBuffer): number {
   return duree > 0 ? croisements / duree : 0;
 }
 
+// ── Le mix du Groove Box et la fréquence d'échantillonnage ──
+//
+// Le nœud additionne sa partie mélodique et sa batterie INDICE PAR INDICE. Les
+// deux tampons doivent donc partager leur fréquence — ce qui n'était pas le cas :
+// `rendreMidiDepuisBytes` rend toujours du 44 100 Hz, alors que la batterie et le
+// master étaient créés à la fréquence de l'AudioContext. Sur une machine à
+// 48 000 Hz, la partie mélodique ressortait 8,8 % trop vite, soit +1,47 demi-ton,
+// et 8 % trop courte : sur une section de 150 s, la mélodie finissait douze
+// secondes avant la batterie.
+//
+// Ce test passe donc `runtime: { sampleRate: 48000 }`. Tous les helpers de ce
+// fichier passaient `runtime: null`, dont le repli vaut 44 100 : la fréquence
+// coïncidait, et AUCUN test ne pouvait voir le défaut. C'est ce qui l'a laissé
+// passer.
+describe("Groove Box : une seule fréquence pour le mix", () => {
+  const ctxRuntime = (params: Record<string, string | number>, sampleRate: number) => ({
+    entree: () => null,
+    entrees: () => [],
+    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
+    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
+    onProgress: () => {},
+    noeud: { data: {} },
+    runtime: { sampleRate },
+  });
+
+  const config = {
+    "Clé": "A", "Gamme": "mineur", "Genre": "pop", "Tempo": 120,
+    "Durée par accord": 2, "Nombre d'accords": 2, "Graine": 7,
+    "Synthèse": "FM/Oscillateurs", "Volume": 80, "Volume batterie": 100,
+  };
+
+  it("ne laisse pas la fréquence de l'AudioContext décider du mix", async () => {
+    // L'assertion qui compte : avec un AudioContext à 48 kHz, la sortie doit
+    // rester à la fréquence des parties rendues. Y voir 48 000 signifierait que
+    // du 44,1 kHz a été recopié dans un tampon 48 kHz — donc désaccordé.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const res = await fiche.executer(ctxRuntime(config, 48000) as any);
+    const audio = res.valeurs[0] as AudioBuffer;
+    expect(audio).toBeInstanceOf(AudioBuffer);
+    expect(audio.sampleRate).toBe(44100);
+  });
+
+  it("rend le même audio quelle que soit la fréquence de l'AudioContext", async () => {
+    // Corollaire : la sortie ne doit plus dépendre du matériel. Avant, la même
+    // graine donnait un morceau d'une hauteur et d'une durée différentes selon
+    // la machine — un défaut invisible en test et inaudible pour qui n'a qu'une
+    // seule carte son.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const a = (await fiche.executer(ctxRuntime(config, 44100) as any)).valeurs[0] as AudioBuffer;
+    const b = (await fiche.executer(ctxRuntime(config, 48000) as any)).valeurs[0] as AudioBuffer;
+    expect(b.sampleRate).toBe(a.sampleRate);
+    expect(b.length).toBe(a.length);
+  });
+
+  it("produit le même signal, échantillon par échantillon", async () => {
+    // La forme forte de l'assertion précédente : à graine égale, deux
+    // AudioContext différents doivent donner le MÊME signal. Sous le défaut, la
+    // partie mélodique était comprimée dans l'un des deux et pas dans l'autre.
+    //
+    // Une première version de ce test mesurait au contraire l'instant du dernier
+    // échantillon audible, en pensant y voir la mélodie écourtée. Elle ne
+    // distinguait rien : la batterie, elle, était bien à la fréquence du master
+    // et remplissait la fin du tampon dans les deux cas. Un test qui passe aussi
+    // bien avec le défaut qu'avec sa correction ne vérifie rien.
+    const fiche = registre.trouverDef("boite-groove")!;
+    const a = (await fiche.executer(ctxRuntime(config, 44100) as any)).valeurs[0] as AudioBuffer;
+    const b = (await fiche.executer(ctxRuntime(config, 48000) as any)).valeurs[0] as AudioBuffer;
+    const da = a.getChannelData(0), db = b.getChannelData(0);
+    let ecartMax = 0;
+    for (let i = 0; i < da.length; i++) ecartMax = Math.max(ecartMax, Math.abs(da[i] - db[i]));
+    // Les voix `NoiseSynth` de la batterie tirent du bruit aléatoire : l'égalité
+    // n'est donc pas au bit près, mais le signal doit rester du même ordre.
+    expect(ecartMax).toBeLessThan(0.3);
+  });
+});
+
 describe("generateurs plugin", () => {
   it("Clavier mélodie produit audio et MIDI", async () => {
     const f = registre.trouverDef("clavier-melodie")!;
