@@ -240,17 +240,46 @@ export function estimerTonalite(buffer: AudioBuffer): TonaliteEstimee {
     const maj = correlerProfil(chromaNorm, PROFIL_MAJEUR, tonic);
     const min = correlerProfil(chromaNorm, PROFIL_MINEUR, tonic);
     if (maj > bestScore) { bestScore = maj; bestTonic = tonic; bestType = "major"; }
-    if (min > bestScore) { bestScore = min; bestScore = min; bestTonic = tonic; bestType = "minor"; }
+    // (l'affectation de `bestScore` figurait deux fois ici, sans conséquence)
+    if (min > bestScore) { bestScore = min; bestTonic = tonic; bestType = "minor"; }
   }
 
   return { nom: `${NOMS_NOTES[bestTonic]} ${bestType}`, type: bestType, confiance: bestScore };
 }
 
+/**
+ * Corrélation de Pearson entre un chroma et un profil de tonalité décalé.
+ *
+ * CENTRÉE SUR LA MOYENNE, et c'est tout l'enjeu. La fonction calculait une
+ * similarité cosinus, c'est-à-dire la même formule **sans le centrage**. Or les
+ * deux vecteurs sont strictement positifs : leur produit scalaire est alors
+ * dominé par leur composante constante, commune à tous les candidats. Les
+ * vingt-quatre tonalités obtenaient de ce fait des scores serrés entre 0,93 et
+ * 0,97, et le classement se décidait sur un écart de quelques millièmes —
+ * insuffisant pour séparer une tonalité de sa relative, qui partagent leurs sept
+ * notes et ne diffèrent que par la HIÉRARCHIE de ces notes. C'est précisément
+ * cette hiérarchie que les profils de Krumhansl-Kessler décrivent, et que seul
+ * le centrage fait ressortir : la méthode de Krumhansl-Schmuckler est définie
+ * avec une corrélation de Pearson, pas avec un cosinus.
+ *
+ * Conséquence visible du changement : les valeurs de confiance baissent — de
+ * l'ordre de 0,6 à 0,8 au lieu de 0,93 à 0,97. Elles ne perdent rien, elles
+ * cessent d'être flattées : un score de 0,96 attribué à vingt-quatre candidats
+ * à la fois ne renseignait sur aucun.
+ */
 function correlerProfil(chroma: number[], profil: number[], decalage: number): number {
+  let moyChroma = 0, moyProfil = 0;
+  for (let i = 0; i < 12; i++) {
+    moyChroma += chroma[i];
+    moyProfil += profil[i];
+  }
+  moyChroma /= 12;
+  moyProfil /= 12;
+
   let num = 0, den1 = 0, den2 = 0;
   for (let i = 0; i < 12; i++) {
-    const v = chroma[i];
-    const p = profil[(i - decalage + 12) % 12];
+    const v = chroma[i] - moyChroma;
+    const p = profil[(i - decalage + 12) % 12] - moyProfil;
     num += v * p;
     den1 += v * v;
     den2 += p * p;
