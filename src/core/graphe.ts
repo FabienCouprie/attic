@@ -44,6 +44,35 @@ export function ancetres(cible: string, aretes: AreteG[]): Set<string> {
   return set;
 }
 
+// Ensemble des descendants (aval transitif) d'un nœud, le nœud de départ EXCLU.
+//
+// ATTENTION à l'asymétrie avec `ancetres`, qui inclut sa cible : ce n'est pas un
+// oubli de part ni d'autre. `ancetres` sert au mode « priorité », qui doit
+// exécuter le nœud demandé en plus de ce dont il dépend. Ici, l'exclusion est
+// tout l'intérêt de la fonction — deux réinitialisations différentes s'en
+// distinguent, et c'est au point d'appel de dire laquelle il veut :
+//
+//   changer de FICHIER sur un nœud  → { lui } ∪ descendants  (sa sortie change)
+//   changer ses ZONES sélectionnées → descendants seuls       (sa sortie audio
+//                                     est le fichier d'entrée transmis tel quel ;
+//                                     effacer son résultat ferait disparaître sa
+//                                     forme d'onde à chaque zone ajoutée)
+//
+// Le garde `set.has` n'est pas qu'une optimisation : il fait terminer la
+// traversée sur un graphe cyclique, que l'interface n'interdit pas.
+export function descendants(depart: string, aretes: AreteG[]): Set<string> {
+  const set = new Set<string>();
+  const collecter = (id: string) => {
+    for (const a of aretes) {
+      if (a.source !== id || set.has(a.target)) continue;
+      set.add(a.target);
+      collecter(a.target);
+    }
+  };
+  collecter(depart);
+  return set;
+}
+
 // Empreinte des sources entrantes d'un nœud (clé de cache « entrées »).
 // Deux graphes identiques en amont d'un nœud donnent la même empreinte.
 export function empreinteEntrees(nodeId: string, aretes: AreteG[]): string {

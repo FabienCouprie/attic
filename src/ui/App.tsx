@@ -433,7 +433,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud, reinitialiserTout } = useExecutionGraphe({
+  const { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -595,9 +595,18 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
       reinitialiserNoeud(nid);
     },
-    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); },
+    // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
+    // résultat : sa sortie audio est l'entrée transmise telle quelle, que les
+    // zones ne changent pas — et l'effacer ferait disparaître sa forme d'onde et
+    // son lecteur à chaque zone ajoutée, alors qu'on les pose justement les unes
+    // après les autres en regardant l'onde. Son aval, lui, est bien périmé : un
+    // « Masque de zones » restait affiché « Terminé » avec le trou de l'ancienne
+    // zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
+    // Le `cacheExec.delete` reste nécessaire pour le nœud lui-même :
+    // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
     onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); reinitialiserNoeud(nid); },
-  }), [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
   callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
