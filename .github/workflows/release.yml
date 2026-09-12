@@ -40,6 +40,13 @@ jobs:
       - name: Verify the Sherpa WASM files
         run: npm run download:sherpa-wasm
 
+      # Même raison, pour le modèle du nœud « Débruitage IA » : le postinstall le
+      # récupère en mode tolérant, et il est embarqué depuis public/oonx/ par le
+      # build Vite. Sans cette revalidation bloquante, un échec réseau au
+      # postinstall livrerait un installeur dont ce nœud ne trouve pas son modèle.
+      - name: Verify the GTCRN model
+        run: npm run download:gtcrn
+
       - name: Ensure Electron binary is present
         run: node node_modules/electron/install.js
 
