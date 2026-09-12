@@ -152,6 +152,64 @@ describe("genererNotesSequenceurAccords", () => {
   });
 });
 
+// ── Les accords hors de do ──
+//
+// Tous les tests ci-dessus emploient la clé « C », et c'est précisément ce qui a
+// laissé passer le défaut : les voix de l'accord étaient construites en passant à
+// `degreAccordProche` une classe de hauteur ABSOLUE (`root % 12`) là où la
+// fonction attend un degré RELATIF à la tonique. Les deux ne coïncident qu'en do,
+// où la tonique vaut 0. Dans les onze autres clés, la tierce et la quinte étaient
+// cherchées depuis un point de départ faux : en la mineur l'accord de tonique
+// sortait A–C–D♯ (diminué), en mi mineur E–G♯–C (augmenté) — sous une étiquette
+// « Am » et « Em » correcte, le nom étant calculé, lui, depuis le degré relatif.
+describe("accords dans les douze clés", () => {
+  const hauteurs = (cle: string, gamme: string) => {
+    const grille = decoderMotifAccords(MOTIF_I_V_vi_IV, 16);
+    const notes = genererNotesSequenceurAccords(grille, cle, gamme, "harmonie", 120, 16, 0, 1, 3);
+    // Le premier accord de la grille est le degré I, au pas 0.
+    const premier = notes.filter((n) => n.debut === 0);
+    return [...new Set(premier.map((n) => ((n.note % 12) + 12) % 12))].sort((a, b) => a - b);
+  };
+
+  it("l'accord de tonique est juste en mineur, dans toutes les clés testées", () => {
+    expect(hauteurs("C", "mineur"), "C mineur = C E♭ G").toEqual([0, 3, 7]);
+    expect(hauteurs("A", "mineur"), "A mineur = A C E").toEqual([0, 4, 9]);
+    expect(hauteurs("E", "mineur"), "E mineur = E G B").toEqual([4, 7, 11]);
+    expect(hauteurs("F#", "mineur"), "F♯ mineur = F♯ A C♯").toEqual([1, 6, 9]);
+  });
+
+  it("l'accord de tonique est juste en majeur, dans toutes les clés testées", () => {
+    expect(hauteurs("C", "majeur"), "C majeur = C E G").toEqual([0, 4, 7]);
+    expect(hauteurs("A", "majeur"), "A majeur = A C♯ E").toEqual([1, 4, 9]);
+    expect(hauteurs("G", "majeur"), "G majeur = G B D").toEqual([2, 7, 11]);
+  });
+
+  it("aucune note ne sort de la gamme, quelle que soit la clé", () => {
+    // Le critère qui a servi à trouver le défaut : en la mineur naturel, un D♯,
+    // un F♯, un C♯ ou un G♯ est étranger à la gamme.
+    const laMineur = new Set([9, 11, 0, 2, 4, 5, 7]); // A B C D E F G
+    const grille = decoderMotifAccords(MOTIF_I_V_vi_IV, 16);
+    const notes = genererNotesSequenceurAccords(grille, "A", "mineur", "harmonie", 120, 16, 0, 1, 3);
+    const etrangeres = notes.map((n) => ((n.note % 12) + 12) % 12).filter((pc) => !laMineur.has(pc));
+    expect(etrangeres).toEqual([]);
+  });
+
+  it("les notes jouées s'accordent avec l'étiquette affichée", () => {
+    // C'est la divergence qui rendait le défaut visible sans être compris : la
+    // grille annonçait un accord et en jouait un autre.
+    const attendu: Record<string, number[]> = { "": [0, 4, 7], m: [0, 3, 7], dim: [0, 3, 6], aug: [0, 4, 8] };
+    for (const cle of ["C", "D", "A", "E", "B♭".replace("♭", "b")]) {
+      for (const gamme of ["majeur", "mineur"]) {
+        const etiquette = nomAccordPourLigne(0, cle, gamme);
+        const suffixe = etiquette.replace(/^[A-G][#b]?/, "");
+        const pcs = hauteurs(cle, gamme);
+        const racine = pcs.find((pc) => attendu[suffixe]?.every((i) => pcs.includes((pc + i) % 12)));
+        expect(racine, `${cle} ${gamme} → « ${etiquette} » joue ${pcs.join(",")}`).toBeDefined();
+      }
+    }
+  });
+});
+
 describe("rendreSequenceurAccords", () => {
   it("rend un buffer audio stéréo de la durée attendue", async () => {
     const grille = decoderMotifAccords(MOTIF_I_V_vi_IV, 16);

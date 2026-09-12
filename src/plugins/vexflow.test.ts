@@ -42,7 +42,15 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-portee")!;
     const res = await f.executer(ctxSimple(null) as any);
     expect(res.message).toContain("<svg");
-    expect(res.valeurs[0]).toBeNull();
+    // Le SVG part sur la sortie déclarée ET dans le message. Cette assertion
+    // exigeait `null` : elle décrivait le code, pas une exigence. Un port « SVG »
+    // déclaré qui n'émet jamais rien n'est pas un choix — il rend la sortie
+    // inexploitable en aval, et le moteur marquait le nœud « Erreur » alors que
+    // la portée s'affichait. Vérifié dans l'app avant de changer la règle : le
+    // défaut se produisait aussi sur une entrée sans chiffres romains, donc
+    // indépendamment de la correction d'harmonie faite en même temps.
+    expect(res.valeurs[0]).toContain("<svg");
+    expect(res.valeurs[0]).toBe(res.message);
   });
 
   it("vexflow-portee utilise l'entrée connectée", async () => {

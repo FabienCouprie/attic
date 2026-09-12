@@ -8,10 +8,29 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Progression } from "tonal";
+import { Chord } from "tonal";
+import {
+  accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite,
+} from "../audio/theorie-romains";
+
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
+
+/**
+ * Accords d'une progression écrite pour une partition.
+ *
+ * Le champ « Tonalité » est du texte libre : il reçoit aussi bien « A » que
+ * « A minor (90%) », ce dernier venant de la sortie d'« Analyse harmonique ». Il
+ * faut donc en extraire la tonique — Tonal ne sait rien faire de la chaîne
+ * entière et rendait une grille vide — et en lire le mode s'il y figure, le
+ * réglage « Gamme » ne servant que lorsqu'il n'y figure pas.
+ */
+function accordsPourPartition(tonalite: string, gammeReglee: string, tokens: string[]): string[] {
+  const tonique = toniqueDepuisTonalite(tonalite) ?? "C";
+  const mode = modeDepuisTonalite(tonalite) ?? (gammeReglee === "mineur" ? "mineur" : "majeur");
+  return accordsDepuisRomains(tonique, tokens, mode);
+}
 
 const DUREES: Record<string, string> = {
   w: "w", h: "h", q: "q", "8": "8", "16": "16", "32": "32",
@@ -295,10 +314,15 @@ function genererGrille(accords: string[], mesuresParLigne: number, largeur: numb
   return svg;
 }
 
-function genererPartition(progression: string, tonic: string, clef: string, largeur: number, hauteur: number): string {
+function genererPartition(progression: string, tonic: string, gamme: string, clef: string, largeur: number, hauteur: number): string {
   const tokens = progression.split(/\s+/).filter(Boolean);
   const romains = /^[IViv]+$/.test(tokens[0] ?? "");
-  const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
+  // `accordsPourPartition` et non Tonal brut : appelé directement, il rendait un
+  // accord MAJEUR pour un degré en minuscules (« vi » → La majeur) et résolvait
+  // les degrés d'un mode mineur sur la gamme majeure. La partition imprimait
+  // donc d'autres accords que ceux joués par les nœuds audio, qui passent tous
+  // par la fonction partagée.
+  const accords = romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
   const notation = accords.map((a) => {
     const notes = Chord.get(a).notes.map((n) => noteEasyScore(`${n}4`)).join("+");
     return `${notes}/q`;
@@ -334,7 +358,11 @@ export const fiches: FicheAudio[] = ([
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererPortee(notation, clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
-      return { valeurs: [null], message: svg };
+      // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
+      // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
+      // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
+      // noeud « Erreur » alors que la portee s'affichait correctement.
+      return { valeurs: [svg], message: svg };
    },
  },
   {
@@ -363,7 +391,11 @@ export const fiches: FicheAudio[] = ([
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
-      return { valeurs: [null], message: svg };
+      // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
+      // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
+      // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
+      // noeud « Erreur » alors que la portee s'affichait correctement.
+      return { valeurs: [svg], message: svg };
    },
  },
   {
@@ -378,7 +410,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Accords à afficher, séparés par des espaces. Accepte aussi une progression en chiffres romains si une tonalité est renseignée.",
         docEn: "Chords to display, separated by spaces. Also accepts a roman numeral progression if a key is set.", defautEn: "C Am F G" },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité pour interpréter une progression en chiffres romains.", docEn: "Key to interpret a roman numeral progression.", defautEn: "C" },
+        doc: "Tonalité pour interpréter une progression en chiffres romains. Accepte une tonique seule (« A ») ou un libellé complet (« A minor »), tel que l'émet « Analyse harmonique » — dans ce cas le mode nommé l'emporte sur « Gamme ».",
+        docEn: "Key used to interpret a roman numeral progression. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis » — the named mode then wins over « Scale ».", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
+        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
+        doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la.",
+        docEn: "Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A." },
       { nom: "Mesures par ligne", nomEn: "Measures per line", plage: [1, 8], pas: 1, defaut: 4,
         doc: "Nombre de mesures par ligne.", docEn: "Number of measures per line." },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
@@ -393,13 +431,20 @@ export const fiches: FicheAudio[] = ([
       const tokens = texte.split(/\s+/).filter(Boolean);
       const romains = /^[IViv]+$/.test(tokens[0] ?? "");
       const tonic = ctx.paramTexte("Tonalité", "C");
-      const accords = romains ? Progression.fromRomanNumerals(tonic, tokens) : tokens;
+      // Même correction que `genererPartition` : voir le commentaire là-bas.
+      const accords = romains
+        ? accordsPourPartition(tonic, ctx.paramTexte("Gamme", "majeur"), tokens)
+        : tokens;
       const mpl = Math.round(ctx.paramNombre("Mesures par ligne", 4));
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 200);
       const svg = genererGrille(accords, mpl, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_accord_valide") };
-      return { valeurs: [null], message: svg };
+      // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
+      // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
+      // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
+      // noeud « Erreur » alors que la portee s'affichait correctement.
+      return { valeurs: [svg], message: svg };
    },
  },
   {
@@ -414,7 +459,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Progression en chiffres romains ou en symboles d'accords (ex : C Am F G).",
         docEn: "Roman numeral progression or chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la progression.", docEn: "Progression key.", defautEn: "C" },
+        doc: "Tonalité de la progression. Accepte une tonique seule (« A ») ou un libellé complet (« A minor »), tel que l'émet « Analyse harmonique » — dans ce cas le mode nommé l'emporte sur « Gamme ».",
+        docEn: "Progression key. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis » — the named mode then wins over « Scale ».", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
+        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
+        doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode. En mineur, III, VI et VII descendent d'un demi-ton.",
+        docEn: "Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone." },
       { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
         doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
@@ -430,9 +481,13 @@ export const fiches: FicheAudio[] = ([
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
-      const svg = genererPartition(progression, tonic, clef, w, h);
+      const svg = genererPartition(progression, tonic, ctx.paramTexte("Gamme", "majeur"), clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_progression_valide") };
-      return { valeurs: [null], message: svg };
+      // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
+      // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
+      // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
+      // noeud « Erreur » alors que la portee s'affichait correctement.
+      return { valeurs: [svg], message: svg };
     },
   },
   {

@@ -913,7 +913,20 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     // Accords (piano, notes simultanées)
     const td = secEnTicks(debAcc);
     const tf = secEnTicks(finAcc);
-    const tirades = [0, 3, 7];
+    // La triade se déduit de la GAMME, degré par degré. Elle était figée à
+    // [0, 3, 7] — une triade mineure pour tous les degrés et dans les deux
+    // modes : en do majeur, le IV sortait F–A♭–C et le V G–B♭–D, soit trois
+    // hauteurs étrangères à la gamme (D♯, G♯, A♯) sur la piste d'accords, dans
+    // la configuration par défaut du nœud. Même mécanique que les autres
+    // générateurs d'accords du catalogue (tierce et quinte cherchées par
+    // proximité dans la gamme), pour que le mineur naturel donne bien un VI
+    // majeur et le majeur un V majeur.
+    const racineRelative = gammeCourante[degre % gammeCourante.length];
+    const tirades = [
+      0,
+      degreAccordProche(gammeCourante, racineRelative, 4),
+      degreAccordProche(gammeCourante, racineRelative, 7),
+    ];
     for (const itv of tirades) {
       pisteAccords.push({ deltaTime: td, type: "noteOn", channel: 0, noteNumber: fonda + itv, velocity: 70 });
       pisteAccords.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 0, noteNumber: fonda + itv, velocity: 0 });
