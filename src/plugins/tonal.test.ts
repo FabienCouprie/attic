@@ -59,6 +59,8 @@ describe("nœuds Tonal", () => {
     expect(trouver("tonal-progression")).toBeDefined();
     expect(trouver("tonal-grille")).toBeDefined();
     expect(trouver("tonal-analyse")).toBeDefined();
+    // Rangé avec les autres analyses, et non dans « Traitement » : il décrit le son sans le modifier.
+    expect(trouver("tonal-analyse")).toMatchObject({ univers: "Visualisation", famille: "Analyse" });
   });
 
   it("tonal-accord détecte C E G", async () => {
