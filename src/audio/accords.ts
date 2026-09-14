@@ -269,20 +269,35 @@ export function estimerTonalite(buffer: AudioBuffer): TonaliteEstimee {
   // gardée que pour que le vecteur reste lisible en débogage.
   const max = Math.max(...chromaGlobal, 1e-10);
   const chromaNorm: number[] = Array.from(chromaGlobal).map((v) => v / max);
+  const { tonique, type, confiance } = tonaliteDepuisChroma(chromaNorm);
+  return { nom: `${NOMS_NOTES[tonique]} ${type}`, type, confiance };
+}
 
-  let bestScore = -Infinity;
-  let bestTonic = 0;
-  let bestType: "major" | "minor" = "major";
+export type TonaliteChroma = {
+  /** Classe de hauteur de la tonique, 0 = do. */
+  tonique: number;
+  type: "major" | "minor";
+  confiance: number;
+  /** Écart avec le second candidat : petit, la tonalité est ambiguë. */
+  marge: number;
+};
 
-  for (let tonic = 0; tonic < 12; tonic++) {
-    const maj = correlerProfil(chromaNorm, PROFIL_MAJEUR, tonic);
-    const min = correlerProfil(chromaNorm, PROFIL_MINEUR, tonic);
-    if (maj > bestScore) { bestScore = maj; bestTonic = tonic; bestType = "major"; }
-    // (l'affectation de `bestScore` figurait deux fois ici, sans conséquence)
-    if (min > bestScore) { bestScore = min; bestTonic = tonic; bestType = "minor"; }
+/**
+ * Krumhansl-Schmuckler sur un chroma quelconque : les 24 tonalités, le meilleur
+ * score et l'écart au second. Partagé entre l'audio (chromagramme) et le MIDI
+ * (durées des notes par classe de hauteur), pour que les deux lectures ne
+ * puissent pas diverger.
+ */
+export function tonaliteDepuisChroma(chroma: number[]): TonaliteChroma {
+  const scores: { tonique: number; type: "major" | "minor"; score: number }[] = [];
+  for (let tonique = 0; tonique < 12; tonique++) {
+    scores.push({ tonique, type: "major", score: correlerProfil(chroma, PROFIL_MAJEUR, tonique) });
+    scores.push({ tonique, type: "minor", score: correlerProfil(chroma, PROFIL_MINEUR, tonique) });
   }
-
-  return { nom: `${NOMS_NOTES[bestTonic]} ${bestType}`, type: bestType, confiance: bestScore };
+  // Tri stable : à score égal, l'ordre d'insertion — majeur avant mineur, do
+  // d'abord — départage, comme la boucle qu'il remplace.
+  scores.sort((a, b) => b.score - a.score);
+  return { tonique: scores[0].tonique, type: scores[0].type, confiance: scores[0].score, marge: scores[0].score - scores[1].score };
 }
 
 /**
