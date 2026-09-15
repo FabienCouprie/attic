@@ -39,9 +39,11 @@ export const fiches: FicheAudio[] = ([
         defaut: "Réharmonisation", defautEn: "Reharmonization",
         doc: "Ce qui doit rester fixe, selon la retouche. Réharmonisation : mesures, métrique, tonalité et mélodie. Changement de hauteurs : mesures, métrique et rythme. Variation : mesures, métrique et tonalité. Structure seule : mesures et métrique. Personnalisé : la liste du paramètre Invariants.",
         docEn: "What must stay fixed, depending on the edit. Reharmonization: bars, meter, key and melody. Pitch change: bars, meter and rhythm. Variation: bars, meter and key. Structure only: bars and meter. Custom: the list in the Invariants parameter." },
-      { nom: "Invariants", nomEn: "Invariants", type: "texte", defaut: "mesures, métrique", defautEn: "mesures, métrique",
+      // Les deux langues sont acceptées à la lecture (cf. lireInvariants) : un
+      // projet enregistré en français s'ouvre en anglais sans rien casser.
+      { nom: "Invariants", nomEn: "Invariants", type: "texte", defaut: "mesures, métrique", defautEn: "bars, meter",
         doc: "Utilisé avec Contrôle « Personnalisé ». Parmi : mesures, métrique, tonalité, mélodie, rythme, accords, ambitus. Mélodie et rythme portent sur la première voix ; ambitus vérifie qu'aucune note ne sort de la plage de l'original.",
-        docEn: "Used with Check « Custom ». Among: mesures (bars), métrique (meter), tonalité (key), mélodie (melody), rythme (rhythm), accords (chords), ambitus (range). Melody and rhythm apply to the first voice; range checks that no note leaves the original's span." },
+        docEn: "Used with Check « Custom ». Among: bars, meter, key, melody, rhythm, chords, range. Melody and rhythm apply to the first voice; range checks that no note leaves the original's span." },
     ],
     async executer(ctx: any) {
       const [origineTexte, modifieTexte] = [ctx.entree(0), ctx.entree(1)];
@@ -99,9 +101,11 @@ export const fiches: FicheAudio[] = ([
         defaut: CONSIGNE_DEFAUT, defautEn: CONSIGNE_DEFAUT,
         doc: "Ce qui est demandé au modèle, de préférence en anglais. Ignorée si l'entrée Consigne est connectée. Pour « Réécrire les hauteurs », par exemple : « Rewrite this melody in E minor, keeping its contour. »",
         docEn: "What is asked of the model, preferably in English. Ignored if the Instruction input is connected. For « Rewrite pitches », for instance: « Rewrite this melody in E minor, keeping its contour. »" },
-      { nom: "Tonalité du résultat", nomEn: "Result key", type: "texte", defaut: "Garder", defautEn: "Garder",
+      // « Garder » et « Keep » sont tous deux acceptés (cf. abc-edition-llm.ts) :
+      // l'anglais affiche « Keep », et un projet français reste lisible.
+      { nom: "Tonalité du résultat", nomEn: "Result key", type: "texte", defaut: "Garder", defautEn: "Keep",
         doc: "Pour « Réécrire les hauteurs » : « Garder », ou un champ K: d'ABC (« Em », « Ddor »). Elle fixe l'armure du résultat et est donnée au modèle. Si elle change, les accords chiffrés d'origine sont retirés, puisqu'ils ne valent plus — le rapport le dit.",
-        docEn: "For « Rewrite pitches »: « Garder » (keep), or an ABC K: field (« Em », « Ddor »). It sets the result's key signature and is given to the model. If it changes, the original chord symbols are removed, since they no longer apply — the report says so." },
+        docEn: "For « Rewrite pitches »: « Keep », or an ABC K: field (« Em », « Ddor »). It sets the result's key signature and is given to the model. If it changes, the original chord symbols are removed, since they no longer apply — the report says so." },
       { nom: "Modèle", nomEn: "Model", type: "texte", defaut: "gemma4:12b", defautEn: "gemma4:12b",
         doc: "Modèle Ollama installé. Mesuré sur la réharmonisation et le passage en mineur : gemma4:12b et qwen3:4b réussissent tous deux 10 fois sur 10 ; gemma4:12b est plus musical (accords idiomatiques, notes dans la gamme à 91–100 %) mais met 20 à 80 s ; qwen3:4b répond en 2 à 9 s avec des choix plus étranges (accords hors tonalité, 83–88 % de notes dans la gamme).",
         docEn: "Installed Ollama model. Measured on reharmonization and switching to minor: gemma4:12b and qwen3:4b both succeed 10 times out of 10; gemma4:12b is more musical (idiomatic chords, 91–100% of notes in the scale) but takes 20 to 80 s; qwen3:4b answers in 2 to 9 s with odder choices (out-of-key chords, 83–88% of notes in the scale)." },

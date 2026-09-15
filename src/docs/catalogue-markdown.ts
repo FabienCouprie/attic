@@ -76,7 +76,10 @@ export function defautChoix(p: Param): string {
   return def;
 }
 
-function defautParam(p: Param): string {
+/** Unité telle que l'anglais l'affiche : « temps » y devient « beats ». */
+export const uniteEn = (p: Param): string | undefined => p.uniteEn ?? p.unite;
+
+export function defautParam(p: Param): string {
   const type = p.type ?? "nombre";
   if (type === "choix") return defautChoix(p);
   if (type === "sf2instrument") {
@@ -89,13 +92,13 @@ function defautParam(p: Param): string {
   if (brut === "" || brut === undefined || brut === null) return "—";
   const texte = String(brut);
   const court = texte.length > 60 ? `${texte.slice(0, 57)}…` : texte;
-  return type === "texte" || type === "dossier" ? `\`${court.replace(/`/g, "'").replace(/\r?\n+/g, " ")}\`` : `${court}${p.unite ? ` ${p.unite}` : ""}`;
+  return type === "texte" || type === "dossier" ? `\`${court.replace(/`/g, "'").replace(/\r?\n+/g, " ")}\`` : `${court}${p.unite ? ` ${uniteEn(p)}` : ""}`;
 }
 
-function valeursParam(p: Param): string {
+export function valeursParam(p: Param): string {
   const type = p.type ?? "nombre";
   if (type === "choix") return (p.optionsEn ?? p.options ?? []).join(" / ");
-  if (p.plage) return `${p.plage[0]} – ${p.plage[1]}${p.unite ? ` ${p.unite}` : ""}${p.pas !== undefined ? `, step ${p.pas}` : ""}`;
+  if (p.plage) return `${p.plage[0]} – ${p.plage[1]}${p.unite ? ` ${uniteEn(p)}` : ""}${p.pas !== undefined ? `, step ${p.pas}` : ""}`;
   return "";
 }
 

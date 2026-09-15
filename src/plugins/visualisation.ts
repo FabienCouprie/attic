@@ -174,7 +174,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Mesure et affiche les niveaux audio : RMS, peak, true peak, LUFS.",
     resumeEn: "Measures and displays audio levels: RMS, peak, true peak, LUFS.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Mesures", type: "texte" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Mesures", nomEn: "Readings", type: "texte" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);

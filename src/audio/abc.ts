@@ -25,6 +25,7 @@
 
 import { writeMidi } from "midi-file";
 import { Chord, Note } from "tonal";
+import { traduire } from "../i18n";
 
 // ── Fractions ────────────────────────────────────────────────────────────
 
@@ -81,7 +82,7 @@ export function lireTonalite(valeur: string, avert: (m: string) => void): Armure
     armure.nom = "none";
     reste = reste.replace(/^none/i, "").trim();
   } else if (/^H[Pp]\b/.test(reste)) {
-    avert("tonalité de cornemuse (HP/Hp) lue sans armure");
+    avert(traduire("msg.abc.lecture.cornemuse"));
     armure.nom = "none";
     reste = reste.slice(2).trim();
   } else {
@@ -99,7 +100,7 @@ export function lireTonalite(valeur: string, avert: (m: string) => void): Armure
       reste = reste.slice(m[1].length + m[2].length).trim();
       if (mode) reste = reste.slice(mot.length).trim();
       if (Math.abs(armure.quintes) > 7) {
-        avert(`tonalité ${armure.nom} au-delà de 7 altérations, ramenée à 7`);
+        avert(traduire("msg.abc.lecture.armure_max_var_0", armure.nom));
         armure.quintes = Math.sign(armure.quintes) * 7;
       }
       if (armure.quintes > 0) for (const l of "FCGDAEB".slice(0, armure.quintes)) armure.alterations[l] = 1;
@@ -113,7 +114,7 @@ export function lireTonalite(valeur: string, avert: (m: string) => void): Armure
   for (const j of jetons) {
     const a = /^(\^\^|\^|__|_|=)([A-Ga-g])$/.exec(j);
     if (a) armure.alterations[a[2].toUpperCase()] = { "^^": 2, "^": 1, "__": -2, "_": -1, "=": 0 }[a[1]]!;
-    else if (!/^clef|^treble|^bass|^alto|^tenor|^perc/i.test(j)) avert(`élément de tonalité non lu : « ${j} »`);
+    else if (!/^clef|^treble|^bass|^alto|^tenor|^perc/i.test(j)) avert(traduire("msg.abc.lecture.element_tonalite_var_0", j));
   }
   return armure;
 }
@@ -327,7 +328,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     // Notes d'ornement : sautées, et dites.
     if (c === "{") {
       const fin = s.indexOf("}", i);
-      avert("notes d'ornement {…} ignorées");
+      avert(traduire("msg.abc.lecture.ornements"));
       i = fin < 0 ? s.length : fin + 1;
       continue;
     }
@@ -378,7 +379,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       }
       const volta = /^\[(\d+)((?:[,-]\d+)*)/.exec(s.slice(i));
       if (volta) {
-        if (volta[2]) avert(`fin alternative multiple « [${volta[1]}${volta[2]} » lue comme « [${volta[1]} »`);
+        if (volta[2]) avert(traduire("msg.abc.lecture.volta_var_0_var_1", volta[1], volta[2]));
         v.jetons.push({ t: "barre", debutReprise: false, finReprise: false, volta: parseInt(volta[1], 10), ligne: false });
         i += volta[0].length;
         continue;
@@ -446,7 +447,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       continue;
     }
 
-    avert(`caractère non lu : « ${c} »`);
+    avert(traduire("msg.abc.lecture.caractere_var_0", c));
     i++;
   }
   return v;
@@ -483,7 +484,7 @@ function derouler(v: EtatVoix, avert: (m: string) => void): { notes: NoteAbc[]; 
   let garde = 0;
 
   for (let k = 0; k < j.length; k++) {
-    if (++garde > 200_000) { avert("reprises trop imbriquées : lecture interrompue"); break; }
+    if (++garde > 200_000) { avert(traduire("msg.abc.lecture.reprises_imbriquees")); break; }
     const jeton = j[k];
 
     if (jeton.t === "barre") {
@@ -606,9 +607,9 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
   };
   const surTempo = (valeur: string, v: EtatVoix) => {
     const q = lireTempo(valeur, v.unite);
-    if (q === null) { avert(`tempo non lu : « ${valeur.trim()} »`); return; }
+    if (q === null) { avert(traduire("msg.abc.lecture.tempo_var_0", valeur.trim())); return; }
     if (!tempoVu) { tempo = q; tempoVu = true; }
-    else if (Math.abs(q - (tempo ?? q)) > 1e-9) avert("changement de tempo en cours de morceau ignoré");
+    else if (Math.abs(q - (tempo ?? q)) > 1e-9) avert(traduire("msg.abc.lecture.changement_tempo"));
   };
 
   // Dans un fichier ABC en règle (avec X:), une ligne vide clôt le morceau
@@ -624,7 +625,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
       continue;
     }
     if (ligne.startsWith("%%")) {
-      if (/^%%MIDI/.test(ligne)) avert("directives %%MIDI ignorées");
+      if (/^%%MIDI/.test(ligne)) avert(traduire("msg.abc.lecture.directives_midi"));
       continue;
     }
     if (ligne.startsWith("%")) continue;
@@ -638,7 +639,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
         else if (cle === "L") { global.unite = lireDuree(valeur.trim(), 0).duree; uniteExplicite = true; }
         else if (cle === "Q") {
           const q = lireTempo(valeur, global.unite);
-          if (q === null) avert(`tempo non lu : « ${valeur.trim()} »`); else { tempo = q; tempoVu = true; }
+          if (q === null) avert(traduire("msg.abc.lecture.tempo_var_0", valeur.trim())); else { tempo = q; tempoVu = true; }
         } else if (cle === "K") {
           global.armure = lireTonalite(valeur, avert);
           // K: clôt l'en-tête : les voix déclarées avant lui en héritent, sans quoi
@@ -661,7 +662,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
     }
 
     if (enTete) {
-      avert("champ K: absent : le corps commence sans tonalité déclarée, lu en do majeur");
+      avert(traduire("msg.abc.lecture.k_absent"));
       enTete = false;
     }
     if (!courante) courante = voix[0] ?? obtenirVoix("");
@@ -683,7 +684,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
       const fin = k + 1 < liste.length ? liste[k + 1].debut : porteuse.r.fin;
       if (fin <= a.debut) return;
       const hauteurs = hauteursAccord(a.symbole);
-      if (hauteurs === null) { avert(`accord chiffré non reconnu : « ${a.symbole} »`); return; }
+      if (hauteurs === null) { avert(traduire("msg.abc.lecture.accord_var_0", a.symbole)); return; }
       if (hauteurs.length > 0) accords.push({ symbole: a.symbole, hauteurs, debut: a.debut, duree: fin - a.debut });
     });
   }

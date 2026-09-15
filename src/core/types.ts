@@ -93,6 +93,11 @@ export interface ParametreDef {
   defaut: string | number;
   defautEn?: string;
   unite?: string;
+  // Unité affichée quand l'interface est en anglais. Sans elle, `unite` est
+  // rendue telle quelle dans les deux langues — d'où des « 2 temps » et des
+  // « 3 demi-tons » dans une interface anglaise, et dans COMPONENTS.md.
+  // À laisser vide pour une unité qui ne se traduit pas (Hz, dB, ms, %…).
+  uniteEn?: string;
   doc?: string;
   docEn?: string;
   placeholder?: string;

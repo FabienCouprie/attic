@@ -13,17 +13,18 @@ function noeudMeyda(
   resume: string,
   resumeEn: string,
   nomSortie: string,
+  nomSortieEn: string,
   fn: (audio: AudioBuffer, options: OptionsCentroidSpectral) => ResultatCentroidSpectral,
 ): FicheAudio {
   return {
     id, nom, nomEn, univers: "Visualisation", famille: "Analyse",
     resume, resumeEn,
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: nomSortie, type: "texte" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: nomSortie, nomEn: nomSortieEn, type: "texte" }],
     parametres: [
-      { nom: "Fenêtre", nomEn: "Window", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+      { nom: "Fenêtre", nomEn: "Window", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
         doc: "Taille de la fenêtre d'analyse (arrondie à la puissance de 2 supérieure).", docEn: "Analysis window size (rounded up to the next power of 2)." },
-      { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.",
+      { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.", uniteEn: "samples",
         doc: "Décalage entre deux fenêtres d'analyse.", docEn: "Hop size between analysis frames." },
       { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], optionIds: ["moyenne","mediane","maximum"], defaut: "Moyenne",
         doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values.", optionsEn: ["Average", "Median", "Maximum"], defautEn: "Average" },
@@ -122,22 +123,22 @@ export const fiches: FicheAudio[] = ([
     "centroide-spectral", "Centroïde spectral (Meyda)", "Spectral Centroid (Meyda)",
     "Calcule le centroïde spectral du signal avec la bibliothèque Meyda.",
     "Computes the spectral centroid of the signal using the Meyda library.",
-    "Centroïde", calculerCentroidSpectralMeyda),
+    "Centroïde", "Centroid", calculerCentroidSpectralMeyda),
   noeudMeyda(
     "rms-meyda", "RMS (Meyda)", "RMS (Meyda)",
     "Calcule le niveau RMS moyen du signal en dBFS avec Meyda.",
     "Computes the average RMS level of the signal in dBFS using Meyda.",
-    "RMS", calculerRMS_Meyda),
+    "RMS", "RMS", calculerRMS_Meyda),
   noeudMeyda(
     "zcr-meyda", "ZCR (Meyda)", "ZCR (Meyda)",
     "Compte les passages par zéro par fenêtre avec Meyda.",
     "Counts zero crossings per frame using Meyda.",
-    "ZCR", calculerZCR_Meyda),
+    "ZCR", "ZCR", calculerZCR_Meyda),
   noeudMeyda(
     "rolloff-spectral-meyda", "Rolloff spectral (Meyda)", "Spectral Rolloff (Meyda)",
     "Calcule la fréquence de rolloff spectral avec Meyda.",
     "Computes the spectral rolloff frequency using Meyda.",
-    "Rolloff", calculerRolloffSpectralMeyda),
+    "Rolloff", "Rolloff", calculerRolloffSpectralMeyda),
   {
     id: "transcripteur-midi", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un signal audio en notes MIDI.",

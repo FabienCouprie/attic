@@ -18,6 +18,7 @@
 // telles quelles, l'accompagnement s'y ajoute sur d'autres voix — et vérifiée à
 // la fin par le même contrôle que « Contraintes ABC ».
 
+import { traduire } from "../i18n";
 import { hauteursAccord, lireTonalite, morceauVersMidi, type MorceauAbc, type NoteAbc, type AccordAbc } from "./abc";
 import { midiVersAbc } from "./midi-vers-abc";
 import { lireAbcUnique, verifierContraintes, dureesMesures, longueurMesure, type ResultatContraintes } from "./abc-contraintes";
@@ -152,16 +153,16 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
     ok: false, erreur, abc: null, midi: null, tempo: 0, notesAccompagnement: 0, notesBasse: 0, verification: null, accordsIgnores: [],
   });
   const origine = lireAbcUnique(texte);
-  if (!origine) return echec("aucune partition ABC lisible en entrée");
-  if (origine.avertissements.length) return echec(`partition d'entrée incomplètement lue : ${origine.avertissements.join(" · ")}`);
+  if (!origine) return echec(traduire("msg.abc.illisible_entree"));
+  if (origine.avertissements.length) return echec(traduire("msg.abc.entree_incomplete_var_0", origine.avertissements.join(" · ")));
   if (origine.accords.length === 0) {
-    return echec("la partition n'a pas d'accords chiffrés : ajoutez-les, ou réharmonisez-la d'abord avec « Édition ABC par LLM »");
+    return echec(traduire("msg.abc_reprise.sans_accords"));
   }
   const c = carrure(origine);
   const durees = dureesMesures(origine);
-  if (durees.length > 1 && Math.abs(durees[0] - longueurMesure(origine)) > 1e-6) return echec("les morceaux qui commencent par une levée ne sont pas gérés");
+  if (durees.length > 1 && Math.abs(durees[0] - longueurMesure(origine)) > 1e-6) return echec(traduire("msg.abc.levee_non_geree"));
   const frappes = motif(o.style, c);
-  if (!frappes) return echec(`le style « ${o.style} » ne s'applique pas à une mesure en ${origine.metrique?.texte ?? "4/4"}`);
+  if (!frappes) return echec(traduire("msg.abc_reprise.style_metrique_var_0_var_1", o.style, origine.metrique?.texte ?? "4/4"));
 
   const fin = Math.max(...origine.voix.map((v) => v.dureeNoires));
   const nbMesures = Math.ceil(fin / c.mesure - 1e-9);
@@ -230,10 +231,10 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
     accords: accords.map((a) => ({ debut: a.debut, symbole: a.symbole })),
   });
   const relu = lireAbcUnique(abc);
-  if (!relu) return echec("arrangement illisible (défaut d'Attic)");
+  if (!relu) return echec(traduire("msg.abc_reprise.arrangement_illisible"));
   const verification = verifierContraintes(origine, relu, ["mesures", "metrique", "tonalite", "melodie", "accords"]);
   return {
-    ok: verification.ok, erreur: verification.ok ? null : `arrangement non conforme (défaut d'Attic) : ${verification.violations.join(" · ")}`,
+    ok: verification.ok, erreur: verification.ok ? null : traduire("msg.abc_reprise.arrangement_non_conforme_var_0", verification.violations.join(" · ")),
     abc: verification.ok ? abc : null, midi: verification.ok ? octets : null, tempo,
     notesAccompagnement: accompagnement.length, notesBasse: basse.length, verification, accordsIgnores: [...ignores],
   };
