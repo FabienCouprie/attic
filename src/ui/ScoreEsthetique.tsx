@@ -122,10 +122,12 @@ export function VueComparaisonEsthetique({ a, b }: { a?: AnalyseEsthetique; b?: 
                 color: axe === "PC" || Math.abs(ecart) < 0.005 ? "var(--text-secondary, #94a3b8)" : ecart > 0 ? "#40c057" : "#fa5252",
               }}>{ecart >= 0 ? "+" : "−"}{Math.abs(ecart).toFixed(2)}</span>
             </div>
-            {([["A", a, "#8b949e"], ["B", b, COULEURS_AXES[axe]]] as const).map(([nom, analyse, couleur]) => (
+            {/* Les deux versions portent la couleur de l'axe : ce qui les distingue est leur
+                lettre et leur longueur, pas une teinte qui ferait passer A pour désactivé. */}
+            {([["A", a], ["B", b]] as const).map(([nom, analyse]) => (
               <div key={nom} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                 <span style={{ width: 12, color: "var(--text-secondary, #94a3b8)" }}>{nom}</span>
-                <Barre valeur={analyse.global[axe]} couleur={couleur} hauteur={6} />
+                <Barre valeur={analyse.global[axe]} couleur={COULEURS_AXES[axe]} hauteur={6} />
                 <span style={{ width: 30, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{analyse.global[axe].toFixed(2)}</span>
               </div>
             ))}
