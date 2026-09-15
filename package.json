@@ -48,7 +48,9 @@
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
     "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant",
     "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs",
-    "download:gtcrn": "node scripts/download-gtcrn.cjs"
+    "download:gtcrn": "node scripts/download-gtcrn.cjs",
+    "download:music-collection": "node scripts/download-music-collection.cjs",
+    "verify:resources": "node scripts/verify-bundled-resources.cjs"
   },
   "build": {
     "appId": "com.attic.audio",

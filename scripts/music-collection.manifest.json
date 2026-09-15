@@ -1,0 +1,80 @@
+{
+  "archive": "https://github.com/FabienCouprie/attic/releases/download/assets/music-collection.zip",
+  "fichiers": [
+    {
+      "nom": "A Birthday.mp3",
+      "octets": 6665897,
+      "sha256": "0a8f5d1ef4e5551c7a5e0f2c8e56bd107d6a04d2b9344f0e29372bb3d820f1cf"
+    },
+    {
+      "nom": "A bunch of blue crushed glass.mp3",
+      "octets": 5130061,
+      "sha256": "b7b52f89ac671dd25a64e9c51379b290ca2d3fd9272bb3d7171b2f79ed2dc3f2"
+    },
+    {
+      "nom": "A cosmic spiral in my desk drawer.mp3",
+      "octets": 4710375,
+      "sha256": "0c9f275578941caed61ea36884ba0f8c081b477f2c730634d6ccf6894b69a19c"
+    },
+    {
+      "nom": "A gust of wind sent Emmanuelle’s hat flying.mp3",
+      "octets": 5416619,
+      "sha256": "4da1c206eaf38e7149d51d2f3ac927cbb03b1ea5c5891af6f9522d09b1ad8b64"
+    },
+    {
+      "nom": "A.mp3",
+      "octets": 7231849,
+      "sha256": "06fb6e8319683d0cf3c31aec46b3da553f5f83f3a822597a48095c38b3dbe9ed"
+    },
+    {
+      "nom": "Air (instrumental).mp3",
+      "octets": 5716383,
+      "sha256": "96933f5be78ba605e7ebe5b18929d84f6a4792bf5c0846e46b3dbef3865b93c1"
+    },
+    {
+      "nom": "Bonjour mon coeur.mp3",
+      "octets": 7307552,
+      "sha256": "851a8e705a32557e72ba2a9b440d8066588b7b720c3f9e48b2a1bf4d25efdbbe"
+    },
+    {
+      "nom": "Follow me  (instrumental).mp3",
+      "octets": 8371212,
+      "sha256": "254bd9950f4c1346af592be77924e5b4a18bf068198995247487776290377018"
+    },
+    {
+      "nom": "Icy Monday.mp3",
+      "octets": 8925432,
+      "sha256": "2ce68bf66adc8e5669ef81498727c1c01caa4f4240be541ccbaf9ea6f24ff297"
+    },
+    {
+      "nom": "Night train 4.mp3",
+      "octets": 3929008,
+      "sha256": "0477cd11869dcbd316740b1f7cef207264ef049096d9428e9acbac9ff7a59c0e"
+    },
+    {
+      "nom": "space_annoucement.wav",
+      "octets": 2091268,
+      "sha256": "d055dc1492a1ba5906e6bf1219849c42b06570a118c544ee5ce5c10bac5f249c"
+    },
+    {
+      "nom": "The night air 2.mp3",
+      "octets": 4048237,
+      "sha256": "f2cdf1e90e346a4d293b23b7cbe635f99a03a8ce4402b2c09f8607e2a983f966"
+    },
+    {
+      "nom": "waterdrop.mp3",
+      "octets": 4378,
+      "sha256": "949c64e77f83192d5f5f88e95b5dbf9053b2eb448efb6a56e0d35886a44cc1e4"
+    },
+    {
+      "nom": "Winter-Time.mp3",
+      "octets": 4586252,
+      "sha256": "b48a183477fe433f8c240ce91b266ce3eab385fa2bde5f018f2e3599fe45bede"
+    },
+    {
+      "nom": "Ветер.mp3",
+      "octets": 3723222,
+      "sha256": "4ae8ba65aea903236c783c06eb5888a1ac9809e5bb460550ade4fce13674f9c1"
+    }
+  ]
+}
