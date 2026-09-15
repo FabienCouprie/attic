@@ -69,7 +69,7 @@ describe("ancres en cas de collision de noms", () => {
     fiche("b", "Audio input", "Entrées", "Audio"),
     fiche("c", "Effects", "Traitement", "Effets"),
     fiche("d", "Inputs", "Autres", "Texte"),
-  ], { version: "1" });
+  ]);
 
   it("fait pointer chaque lien vers un titre du bon texte ET du bon niveau, homonymes compris", () => {
     // Le texte seul ne suffit pas : trois titres s'appellent « Audio » (famille
@@ -84,10 +84,10 @@ describe("ancres en cas de collision de noms", () => {
 });
 
 describe("le document généré sur le registre", () => {
-  const md = genererCatalogueMarkdown(toutesLesFiches as any, { version: "9.9.9" });
+  const md = genererCatalogueMarkdown(toutesLesFiches as any);
 
   it("annonce le nombre réel de composants et de catégories", () => {
-    expect(md).toContain(`ships **${toutesLesFiches.length} components** in **7 categories**`);
+    expect(md).toContain(`Attic ships **${toutesLesFiches.length} components** in **7 categories**`);
   });
 
   it("contient chaque composant exactement une fois, par son identifiant", () => {
@@ -129,6 +129,6 @@ describe("le document généré sur le registre", () => {
   });
 
   it("est déterministe : deux générations donnent le même texte", () => {
-    expect(genererCatalogueMarkdown(toutesLesFiches as any, { version: "9.9.9" })).toBe(md);
+    expect(genererCatalogueMarkdown(toutesLesFiches as any)).toBe(md);
   });
 });

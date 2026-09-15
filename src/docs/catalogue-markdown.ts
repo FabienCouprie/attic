@@ -5,9 +5,9 @@
 // ports, paramètres et leur documentation, en anglais. Ce qui se trouve dans le
 // document est donc exactement ce que l'application affiche en anglais.
 //
-// La génération est pure et déterministe (pas de date, ordre stable) : deux
-// générations du même catalogue donnent le même fichier, ce qui permet de
-// vérifier qu'il est à jour.
+// La génération est pure et déterministe (ni date ni version, ordre stable) :
+// deux générations du même catalogue donnent le même fichier. COMPONENTS.md est
+// versionné, et un test vérifie qu'il correspond au registre.
 //
 // Ce que la version précédente faisait mal, et que celle-ci corrige :
 // - des titres en français (« Entrées », « Traitement ») dans un document anglais,
@@ -101,9 +101,13 @@ function valeursParam(p: Param): string {
 
 const nomEn = (f: FicheAudio) => (f.nomEn ?? f.nom).trim();
 
-export type OptionsCatalogue = { version: string };
-
-export function genererCatalogueMarkdown(fiches: FicheAudio[], o: OptionsCatalogue): string {
+/**
+ * Le document ne porte PAS de numéro de version : il est versionné et un test
+ * vérifie qu'il est à jour. Avec la version dedans, chaque montée de version
+ * ferait échouer la suite — et la CI d'une PR de release — tant que le catalogue
+ * n'aurait pas été régénéré, sans que rien n'y ait changé.
+ */
+export function genererCatalogueMarkdown(fiches: FicheAudio[]): string {
   const slug = creerSlugger();
   const univers = [...new Set(fiches.map((f) => f.univers))].sort((a, b) => {
     const ia = ORDRE_UNIVERS.indexOf(a), ib = ORDRE_UNIVERS.indexOf(b);
@@ -134,7 +138,7 @@ export function genererCatalogueMarkdown(fiches: FicheAudio[], o: OptionsCatalog
   l.push("# Attic Component Catalog", "");
   l.push("> Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  ");
   l.push("> Regenerate with `npm run docs:components`.", "");
-  l.push(`Attic **${o.version}** ships **${fiches.length} components** in **${univers.length} categories** and **${nbFamilles} families**. `
+  l.push(`Attic ships **${fiches.length} components** in **${univers.length} categories** and **${nbFamilles} families**. `
     + "Every name, summary, description and parameter note below is the English text the application itself displays.", "");
 
   l.push("## Contents", "");

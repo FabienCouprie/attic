@@ -150,7 +150,7 @@ electron/
 - [`PORTING-A-DOMAIN.md`](PORTING-A-DOMAIN.md) — How to plug a second domain (e.g. image, ETL) into the existing core/UI, and exactly where that isn't clean yet
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
 - [`REMOVING-A-NODE.md`](REMOVING-A-NODE.md) — How to safely remove one
-- [`COMPONENTS.md`](COMPONENTS.md) — Generated dictionary of every catalog node (not versioned — regenerate with `npm run docs:components`)
+- [`COMPONENTS.md`](COMPONENTS.md) — Generated catalog of every node, with its ports and parameters (regenerate with `npm run docs:components`; a test fails when it no longer matches the registry)
 - [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/`
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — Historical record of the `App.tsx` → hooks extraction (a completed milestone; `App.tsx` has since grown again as features were added)
 - [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — Guided exercises for learning the app
