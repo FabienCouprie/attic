@@ -57,6 +57,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Modèle des nœuds « Score esthétique » et « Comparaison esthétique » (420 Mo),
+      # publié à part sur la release `assets` plutôt que dans assets.zip, et vérifié par
+      # son SHA-256 : une archive de 2 Go à retéléverser pour un seul fichier ajouté
+      # multiplierait les occasions d'en publier une périmée.
+      - name: Download the Audiobox Aesthetics model
+        run: npm run download:audiobox-aesthetics
+
       # « music collection » est embarquée (extraResources) mais ignorée par git :
       # absente du checkout, elle était sautée par electron-builder avec un simple
       # avertissement, et les installeurs 3.x sont partis sans elle. Elle vient de

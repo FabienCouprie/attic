@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **260 components** in **7 categories** and **28 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **262 components** in **7 categories** and **28 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **260 components** in **7 categories** and **28 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 55 | [Audio](#audio) (6) · [Generation](#generation) (39) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
 | [Processing](#processing) | 116 | [Conversion](#conversion) (4) · [Editing](#editing) (14) · [Effects](#effects) (94) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 25 | [Analysis](#analysis) (17) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Visualization](#visualization) | 27 | [Analysis](#analysis) (19) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -3738,6 +3738,8 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 
 | Component | Summary |
 |---|---|
+| [Aesthetic Comparison](#aesthetic-comparison) | Compares two versions of a sound on the four aesthetic axes: one mix against another, a sound before and after processing. |
+| [Aesthetic Score](#aesthetic-score) | Scores a sound on four axes — enjoyment, usefulness, complexity, production quality — with each axis' curve over time. |
 | [Analysis Player](#analysis-player) | Displays an analysis result and allows listening. |
 | [Attractor / IFS](#attractor--ifs) | Renders a chaotic attractor or IFS as image + audio. |
 | [Audio Analysis](#audio-analysis) | Analyse tempo, key, song/instrumental type. |
@@ -3755,6 +3757,38 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [VU-meter / LUFS](#vu-meter--lufs) | Measures and displays audio levels: RMS, peak, true peak, LUFS. |
 | [Waveform Viewer](#waveform-viewer) | Displays the waveform with zoom and scrollbar. |
 | [ZCR (Meyda)](#zcr-meyda) | Counts zero crossings per frame using Meyda. |
+
+#### Aesthetic Comparison
+
+`comparaison-esthetique` · Visualization → Analysis
+
+*Compares two versions of a sound on the four aesthetic axes: one mix against another, a sound before and after processing.*
+
+Compares two versions of the same sound — one mix against another, a sound before and after processing — on the four Audiobox Aesthetics axes (see « Aesthetic Score » for their meaning and limits). Each version is scored in 10 s windows, and the message gives the B − A difference for each axis: connect the original to A and the processed version to B: for CE, CU and PQ, a positive difference is a gain, which the view colours green. NOT for PC, which counts components and has no better direction — it stays grey. Measured: an 8-bit Bitcrusher on a spoken announcement loses 0.25 in PQ and gains 0.60 in PC, its quantization noise counting as one more component. Same caution as for the single score: on a creative treatment, a lower PQ does not mean « worse », and PC is meaningless for speech. The two sounds need not have the same length. Scoring takes about 0.6 s per window of each version.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | A | audio | required |
+| input | B | audio | required |
+| output | Report | text |  |
+
+*No parameters.*
+
+#### Aesthetic Score
+
+`score-esthetique` · Visualization → Analysis
+
+*Scores a sound on four axes — enjoyment, usefulness, complexity, production quality — with each axis' curve over time.*
+
+Scores a sound with Audiobox Aesthetics (Meta, 2025), a model trained on 97,000 speech, music and sound-effect clips rated by listeners, on four axes from 1 to 10. ENJOYMENT (CE): listening pleasure, emotional impact. USEFULNESS (CU): how likely the sound is to be reused as material for creation. COMPLEXITY (PC): the number of components in the sound scene. QUALITY (PQ): the technical quality of the production — clarity, dynamics, spectrum, spatialization. The model listens in 10 s windows; the overall score is their average, weighted by each window's actual length, and the view shows each axis' CURVE: it tells where a track weakens, which the average hides — in the demo collection, a track with an overall PQ of 7.7 has a window at 5.6. The report gives, per axis, the lowest window and its difference from the overall score. WORTH KNOWING BEFORE INTERPRETING. PQ judges technical cleanliness, not music: a pure sine scores 7.0 in quality and 2.9 in enjoyment. PQ has learned that a good sound is clean and natural: a deliberately destructive effect (distortion, Cantor dust, inversion mirror) will score low, which says nothing about its artistic value. According to the paper, PC does not correlate with perceived speech quality: for a voice, ignore it. CE and CU are averages of annotators' tastes, tendencies rather than verdicts. Scoring takes about 0.6 s per window on CPU, around ten seconds for a 3-minute song. The model runs as published, and was measured against Meta's PyTorch code: the same scores within 0.00002 over 317 windows, and a conversion to 16 kHz identical to torchaudio's within 2·10⁻⁷ — which matters, as a coarser interpolation shifts the scores by up to 0.13. In the app, two files of the demo collection give the reference scores to the hundredth. Weights licensed CC-BY 4.0 (Meta Platforms).
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio | required |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+*No parameters.*
 
 #### Analysis Player
 

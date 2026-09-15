@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "3.2.2",
-  "description": "Visual node-editor for AI-powered music and sound design — 260 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 262 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -49,6 +49,7 @@
     "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant",
     "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs",
     "download:gtcrn": "node scripts/download-gtcrn.cjs",
+    "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
     "verify:resources": "node scripts/verify-bundled-resources.cjs"
   },

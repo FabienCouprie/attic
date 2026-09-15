@@ -88,6 +88,7 @@ describe("configuration réelle", () => {
   it("le workflow de release récupère la collection et vérifie les ressources avant et après packaging", () => {
     const wf = readFileSync(join(__dirname, "..", ".github/workflows/release.yml"), "utf8").replace(/\r\n/g, "\n");
     expect(wf).toContain("npm run download:music-collection");
+    expect(wf).toContain("npm run download:audiobox-aesthetics");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs\n");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs --paquet release/win-unpacked/resources");
   });
@@ -100,6 +101,19 @@ describe("configuration réelle", () => {
       expect(f.octets).toBeGreaterThan(0);
       expect(f.sha256).toMatch(/^[0-9a-f]{64}$/);
     }
+  });
+});
+
+describe("modèle Audiobox Aesthetics", () => {
+  const { SHA256, OCTETS, NOM } = require("./download-audiobox-aesthetics.cjs");
+  const local = join(__dirname, "..", "public", "oonx", NOM);
+
+  // Ignoré sans le modèle (CI avant téléchargement). En local, il garantit que l'empreinte
+  // attendue par le script est celle du modèle avec lequel les nœuds ont été vérifiés.
+  it.skipIf(!existsSync(local))("l'empreinte attendue par le script est celle du modèle local", () => {
+    const octets = readFileSync(local);
+    expect(octets.length).toBe(OCTETS);
+    expect(sha(octets)).toBe(SHA256);
   });
 });
 

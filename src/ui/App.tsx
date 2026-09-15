@@ -130,6 +130,8 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "generateur-script-ia") return { width: 380, height: 400 };
   if (def.id === "detecteur-accords") return { width: 320, height: 340 };
   if (def.id === "vu-metre") return { width: 300, height: 260 };
+  if (def.id === "score-esthetique") return { width: 420, height: 380 };
+  if (def.id === "comparaison-esthetique") return { width: 380, height: 300 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 300, height: 420 };
   if (def.id === "attracteur-ifs") return { width: 320, height: 320 };

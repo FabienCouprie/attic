@@ -8,6 +8,7 @@ const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
+const { noterTranche: noterTrancheEsthetique, FICHIER_MODELE: MODELE_ESTHETIQUE } = require("./esthetique.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
@@ -531,6 +532,26 @@ ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
     return { ok: true, ...result };
   } catch (err) {
     console.error("[attic] stable-audio-3:continuer erreur:", err);
+    return { ok: false, erreur: String(err && err.message ? err.message : err) };
+  }
+});
+
+// --- IPC : Audiobox Aesthetics, une tranche de 10 s (process principal, onnxruntime-node) ---
+// Le rendu prépare les tranches (mono, 16 kHz) et appelle une fois par tranche, ce qui
+// lui laisse afficher la progression. La session est gardée entre les appels.
+ipcMain.handle("esthetique:noter-tranche", async (_event, options) => {
+  try {
+    const candidats = [
+      path.join(__dirname, "..", "public", "oonx", MODELE_ESTHETIQUE),
+      path.join(__dirname, "..", "dist", "oonx", MODELE_ESTHETIQUE),
+      path.join(process.resourcesPath || "", "oonx", MODELE_ESTHETIQUE),
+    ];
+    const cheminModele = candidats.find((p) => p && fs.existsSync(p));
+    if (!cheminModele) return { ok: false, modeleAbsent: true, erreur: `Modèle introuvable : oonx/${MODELE_ESTHETIQUE}` };
+    const signal = options.signal instanceof Float32Array ? options.signal : Float32Array.from(options.signal);
+    const scores = await noterTrancheEsthetique(cheminModele, signal, options.utiles);
+    return { ok: true, scores };
+  } catch (err) {
     return { ok: false, erreur: String(err && err.message ? err.message : err) };
   }
 });

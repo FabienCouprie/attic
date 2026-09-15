@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 260 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 262 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **260 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **262 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -132,7 +132,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (260 nodes)
+  plugins/       # Plugin node definitions (262 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -164,6 +164,8 @@ Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workfl
 The bundled AI models (`public/oonx`) and SoundFont (`public/sf2`) are **not stored in Git**. They are packaged as `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. The workflow downloads and extracts this archive before building.
 
 If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release. **Nothing checks this**: the workflow extracts whatever `assets.zip` currently holds, so a forgotten upload silently ships an installer with stale models — no warning, no build failure.
+
+The **Audiobox Aesthetics** model used by the Aesthetic Score and Aesthetic Comparison nodes (`audiobox-aesthetics.onnx`, 420 MB) is published on its own on the same release and fetched by `npm run download:audiobox-aesthetics`, which checks its size and SHA-256 before installing it into `public/oonx`. To regenerate it, see `scripts/export-audiobox-aesthetics.py`; a new file means a new expected SHA-256 in the download script.
 
 The demo **`music collection`** — opened by default by the Music player, Sound Map and Music explorer, and used by the training exercises — is not in Git either. It is published as `music-collection.zip` on the same release, and `scripts/music-collection.manifest.json` (versioned) lists the name, size and SHA-256 of every file. `npm run download:music-collection` fetches what is missing and refuses an archive that does not match the manifest; it never overwrites a local file that differs. **If you change the collection**, run `node scripts/download-music-collection.cjs --pack <path>.zip`, which rewrites the manifest and builds the archive, upload the archive with `gh release upload assets <path>.zip --clobber`, and commit the manifest.
 

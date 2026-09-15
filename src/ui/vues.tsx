@@ -25,6 +25,7 @@ import { SequenceurMelodique } from "./SequenceurMelodique";
 import { SequenceurAccords } from "./SequenceurAccords";
 import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
+import { VueScoreEsthetique, VueComparaisonEsthetique } from "./ScoreEsthetique";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
 import { EditeurFormule } from "./EditeurFormule";
@@ -1385,6 +1386,19 @@ function VueColorSynth({ data }: VueProps) {
 }
 
 // ── VU-mètre / LUFS (bargraphes de niveau) ──
+// ── Score et comparaison esthétiques ──
+// Affichés seulement une fois le nœud terminé : `_esthetique` survit à une
+// réinitialisation (les champs `_` ne sont pas effacés), et une courbe périmée
+// affichée à côté d'un nœud « en attente » se lirait comme le résultat courant.
+function VueEsthetique({ data }: VueProps) {
+  const d = data as { statut?: string; _esthetique?: any };
+  return d.statut === "termine" ? <VueScoreEsthetique analyse={d._esthetique} /> : null;
+}
+function VueComparaisonEsth({ data }: VueProps) {
+  const d = data as { statut?: string; _comparaisonEsthetique?: { a: any; b: any } };
+  return d.statut === "termine" ? <VueComparaisonEsthetique a={d._comparaisonEsthetique?.a} b={d._comparaisonEsthetique?.b} /> : null;
+}
+
 function VueVuMetre({ data }: VueProps) {
   return <VuMetre audioUrl={data.audioResultatUrl} />;
 }
@@ -1562,6 +1576,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("couleur-suno-ia"), vue: VueCouleurSunoIA, position: "avant" },
   { correspond: parId("detecteur-accords"), vue: VueDetecteurAccords, position: "avant", masqueMessage: true },
   { correspond: parId("vu-metre"), vue: VueVuMetre, position: "avant" },
+  { correspond: parId("score-esthetique"), vue: VueEsthetique, position: "avant" },
+  { correspond: parId("comparaison-esthetique"), vue: VueComparaisonEsth, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
   { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },

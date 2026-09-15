@@ -10,6 +10,7 @@ import { fiches as f_sorties } from "./sorties";
 import { fiches as f_sortie_texte } from "./sortie-texte";
 import { fiches as f_modifier_texte } from "./modifier-texte";
 import { fiches as f_debruitage_ia } from "./debruitage-ia";
+import { fiches as f_esthetique } from "./esthetique";
 import { fiches as f_entrees_extra } from "./entrees-extra";
 import { fiches as f_generateurs } from "./generateurs";
 import { fiches as f_montage } from "./montage";
@@ -116,6 +117,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sortie_texte,
   ...f_modifier_texte,
   ...f_debruitage_ia,
+  ...f_esthetique,
   ...f_entrees_extra,
   ...f_generateurs,
   ...f_montage,

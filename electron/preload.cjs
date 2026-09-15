@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("api", {
   genererStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:generer", options),
   continuerStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:continuer", options),
   genererImageSdxs: (options) => ipcRenderer.invoke("sdxs-image:generer", options),
+  noterTrancheEsthetique: (options) => ipcRenderer.invoke("esthetique:noter-tranche", options),
   genererSongsee: (options) => ipcRenderer.invoke("songsee:generer", options),
 
   sauvegarderFichier: (options) => ipcRenderer.invoke("fichier:sauvegarder", options),
