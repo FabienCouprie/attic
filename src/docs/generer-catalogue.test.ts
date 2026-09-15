@@ -27,6 +27,26 @@ it.skipIf(!ecrire)("écrit COMPONENTS.md", () => {
   console.log(`COMPONENTS.md : ${toutesLesFiches.length} composants, ${md.split("\n").length} lignes.`);
 });
 
+it.skipIf(ecrire)("le README et package.json annoncent le nombre réel de nœuds et d'effets", () => {
+  // Ils annonçaient 247 nœuds quand le catalogue en comptait 260 : le nombre
+  // était recopié à la main à quatre endroits, et rien ne le vérifiait.
+  const sources = {
+    "README.md": readFileSync(join(process.cwd(), "README.md"), "utf8"),
+    "package.json (description)": JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")).description as string,
+  };
+  for (const [nom, texte] of Object.entries(sources)) {
+    const annonces = [...texte.matchAll(/\b(\d+) (?:plugin )?nodes\b/g)].map((m) => Number(m[1]));
+    expect(annonces.length, `${nom} : aucun nombre de nœuds trouvé`).toBeGreaterThan(0);
+    expect(annonces, `${nom} doit annoncer ${toutesLesFiches.length} nœuds`).toEqual(annonces.map(() => toutesLesFiches.length));
+  }
+  // Même chose pour les effets : le README en annonçait 85 quand la famille
+  // Traitement → Effets en comptait 94.
+  const effets = toutesLesFiches.filter((f) => f.univers === "Traitement" && f.famille === "Effets").length;
+  const annoncesEffets = [...sources["README.md"].matchAll(/\b(\d+) effects\b/g)].map((m) => Number(m[1]));
+  expect(annoncesEffets.length, "README.md : aucun nombre d'effets trouvé").toBeGreaterThan(0);
+  expect(annoncesEffets, `README.md doit annoncer ${effets} effets`).toEqual(annoncesEffets.map(() => effets));
+});
+
 it.skipIf(ecrire)("COMPONENTS.md correspond au registre", () => {
   expect(existsSync(CHEMIN), "COMPONENTS.md est absent : lancez « npm run docs:components »").toBe(true);
   // Git peut rendre le fichier avec des fins de ligne Windows : on compare le texte.
