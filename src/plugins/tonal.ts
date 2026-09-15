@@ -259,7 +259,10 @@ export const fiches: FicheAudio[] = ([
  },
   {
     id: "tonal-analyse", nom: "Analyse harmonique", nomEn: "Harmonic Analysis",
-    univers: "Traitement", famille: "Analyse",
+    // Avec les autres analyses (Détecteur d'accords, Analyse audio) : il en était
+    // le seul exemplaire rangé dans « Traitement », où il formait à lui seul une
+    // famille « Analyse ». Il ne transforme pas le son, il le décrit.
+    univers: "Visualisation", famille: "Analyse",
     resume: "Détecte la tonalité d'un morceau et suggère une progression.",
     resumeEn: "Detects the key of a song and suggests a chord progression.",
     entrees: [{ nom: "Audio", type: "audio", requis: true }],

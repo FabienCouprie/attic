@@ -403,6 +403,77 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} passages · jusqu'à {__VAR_1__} st · {__VAR_2__} s",
     en: "{__VAR_0__} passes · down to {__VAR_1__} st · {__VAR_2__} s",
   },
+  "msg.moebius.var_0_var_1_var_2_var_3": {
+    fr: "{__VAR_0__} tours · {__VAR_1__} s · {__VAR_2__} · {__VAR_3__}",
+    en: "{__VAR_0__} laps · {__VAR_1__} s · {__VAR_2__} · {__VAR_3__}",
+  },
+  "msg.moebius.fin_referme": { fr: "anneau refermé", en: "strip closed" },
+  "msg.moebius.fin_autre_face": { fr: "finit sur l'autre face", en: "ends on the other side" },
+  "msg.moebius.detail_bord": { fr: "son sans largeur posé sur le bord", en: "sound with no width placed on the edge" },
+  "msg.moebius.detail_stereo": { fr: "image stéréo retournée à chaque tour", en: "stereo image flipped every lap" },
+  "msg.moebius.detail_phase_var_0": { fr: "décalage équivalent {__VAR_0__} Hz", en: "equivalent shift {__VAR_0__} Hz" },
+  "msg.tore.var_0_var_1_var_2": { fr: "{__VAR_0__} tours · {__VAR_1__} s · {__VAR_2__}", en: "{__VAR_0__} laps · {__VAR_1__} s · {__VAR_2__}" },
+  "msg.tore.refermee_var_0": { fr: "trajectoire refermée (fermeture au tour {__VAR_0__})", en: "trajectory closed (closes at lap {__VAR_0__})" },
+  "msg.tore.pas_refermee_var_0": { fr: "pas encore refermée : il faut un multiple de {__VAR_0__} tours", en: "not closed yet: it takes a multiple of {__VAR_0__} laps" },
+  "msg.tore.jamais_var_0_var_1": { fr: "ne se referme jamais · plus proche retour au tour {__VAR_0__}, à {__VAR_1__}°", en: "never closes · closest return at lap {__VAR_0__}, {__VAR_1__}° off" },
+  "progress.tore.var_0": { fr: "Rotation sur {__VAR_0__} tours…", en: "Rotating over {__VAR_0__} laps…" },
+  "msg.cantor.var_0_var_1_var_2_var_3": { fr: "{__VAR_0__} étages · {__VAR_1__} fragments de {__VAR_2__} ms · {__VAR_3__} % du son gardé", en: "{__VAR_0__} levels · {__VAR_1__} fragments of {__VAR_2__} ms · {__VAR_3__}% of the sound kept" },
+  "progress.cantor.var_0": { fr: "Découpage sur {__VAR_0__} étages…", en: "Cutting over {__VAR_0__} levels…" },
+  "msg.klein.var_0_var_1_var_2": { fr: "{__VAR_0__} voix · un tour d'étendue en {__VAR_1__} s · {__VAR_2__}", en: "{__VAR_0__} voices · one lap of the range in {__VAR_1__} s · {__VAR_2__}" },
+  "msg.klein.retour_entendu_var_0": { fr: "retour complet à {__VAR_0__} s", en: "full return at {__VAR_0__} s" },
+  "msg.klein.retour_coupe_var_0": { fr: "durée trop courte pour le retour complet, qui demande {__VAR_0__} s", en: "too short for the full return, which takes {__VAR_0__} s" },
+  "progress.klein.var_0": { fr: "Glissando en miroir sur {__VAR_0__} voix…", en: "Mirrored glissando over {__VAR_0__} voices…" },
+  "msg.dirac.var_0_var_1_var_2": { fr: "{__VAR_0__} tours · {__VAR_1__} s · {__VAR_2__}", en: "{__VAR_0__} laps · {__VAR_1__} s · {__VAR_2__}" },
+  "msg.dirac.annulation_var_0": { fr: "s'annule contre le témoin à {__VAR_0__} s, revient intact au tour suivant", en: "cancels against the witness at {__VAR_0__} s, back intact the next lap" },
+  "msg.dirac.sans_temoin": { fr: "sans témoin, le changement de signe est inaudible", en: "without a witness, the sign change is inaudible" },
+  "progress.dirac.var_0": { fr: "Rotation sur {__VAR_0__} tours…", en: "Rotating over {__VAR_0__} laps…" },
+  "msg.tresse.var_0_var_1_var_2": { fr: "{__VAR_0__} brins · {__VAR_1__} croisements · {__VAR_2__}", en: "{__VAR_0__} strands · {__VAR_1__} crossings · {__VAR_2__}" },
+  "msg.tresse.revenus_var_0": { fr: "brins revenus à leur place (tous les {__VAR_0__} motifs)", en: "strands back in place (every {__VAR_0__} patterns)" },
+  "msg.tresse.pas_revenus_var_0": { fr: "brins pas encore revenus : il faut un multiple de {__VAR_0__} motifs", en: "strands not back yet: it takes a multiple of {__VAR_0__} patterns" },
+  "msg.tresse.mot_invalide_var_0_var_1": { fr: "Mot de tresse invalide près de « {__VAR_0__} » : des entiers non nuls entre -{__VAR_1__} et {__VAR_1__}, séparés par des espaces (ex. « 1 -2 »).", en: "Invalid braid word near « {__VAR_0__} »: non-zero integers between -{__VAR_1__} and {__VAR_1__}, separated by spaces (e.g. « 1 -2 »)." },
+  "progress.tresse.var_0": { fr: "Tressage de {__VAR_0__} bandes…", en: "Braiding {__VAR_0__} bands…" },
+  "msg.miroir.var_0_var_1_var_2": { fr: "pivot {__VAR_0__} Hz · tout ce qui est sous {__VAR_1__} Hz sort de la bande · {__VAR_2__} % de l'énergie perdue", en: "pivot {__VAR_0__} Hz · everything below {__VAR_1__} Hz leaves the band · {__VAR_2__}% of the energy lost" },
+  "progress.miroir.var_0": { fr: "Inversion autour de {__VAR_0__} Hz…", en: "Inverting around {__VAR_0__} Hz…" },
+  "msg.abc.var_0_var_1_var_2_var_3_var_4_var_5": { fr: "{__VAR_0__} · {__VAR_1__} · {__VAR_2__} · {__VAR_3__} BPM · {__VAR_4__} notes · {__VAR_5__} s", en: "{__VAR_0__} · {__VAR_1__} · {__VAR_2__} · {__VAR_3__} BPM · {__VAR_4__} notes · {__VAR_5__} s" },
+  "msg.midi_abc.var_0_var_1_var_2_var_3_var_4": { fr: "{__VAR_0__} notes · {__VAR_1__} voix · {__VAR_2__} · {__VAR_3__} · {__VAR_4__}", en: "{__VAR_0__} notes · {__VAR_1__} voices · {__VAR_2__} · {__VAR_3__} · {__VAR_4__}" },
+  "msg.midi_abc.tonalite_auto_var_0_var_1": { fr: "K:{__VAR_0__} déduite (confiance {__VAR_1__})", en: "K:{__VAR_0__} inferred (confidence {__VAR_1__})" },
+  "msg.midi_abc.grille_exacte_var_0": { fr: "grille exacte de {__VAR_0__} par noire, aucune note déplacée", en: "exact grid of {__VAR_0__} per quarter, no note moved" },
+  "msg.midi_abc.grille_var_0_var_1": { fr: "grille de {__VAR_0__} par noire, {__VAR_1__} note(s) déplacée(s)", en: "grid of {__VAR_0__} per quarter, {__VAR_1__} note(s) moved" },
+  "msg.abc_reprise.var_0_var_1_var_2_var_3": { fr: "Reprise « {__VAR_0__} » · {__VAR_1__} BPM · accompagnement {__VAR_2__} notes · basse {__VAR_3__} notes", en: "« {__VAR_0__} » cover · {__VAR_1__} BPM · accompaniment {__VAR_2__} notes · bass {__VAR_3__} notes" },
+  "msg.abc_reprise.melodie_intacte": { fr: "mélodie et accords vérifiés intacts", en: "melody and chords verified intact" },
+  "msg.abc_reprise.aucun_abc": { fr: "Aucune partition ABC connectée.", en: "No ABC score connected." },
+  "progress.abc_reprise.rendu": { fr: "Rendu de la reprise…", en: "Rendering the cover…" },
+  "msg.abc_contraintes.qualite_var_0_var_1": { fr: "temps forts dans l'accord : {__VAR_0__} · notes dans la gamme : {__VAR_1__}", en: "strong beats in the chord: {__VAR_0__} · notes in the scale: {__VAR_1__}" },
+  "msg.abc_contraintes.entrees": { fr: "Connectez la partition d'origine et la partition modifiée (texte ABC).", en: "Connect the original score and the edited score (ABC text)." },
+  "msg.abc_contraintes.illisible_var_0": { fr: "Partition {__VAR_0__} illisible : aucune note ABC trouvée.", en: "{__VAR_0__} score unreadable: no ABC note found." },
+  "msg.abc_contraintes.origine": { fr: "d'origine", en: "Original" },
+  "msg.abc_contraintes.modifie": { fr: "modifiée", en: "Edited" },
+  "msg.abc_contraintes.inconnus_var_0": { fr: "Invariants inconnus : {__VAR_0__}. Possibles : mesures, métrique, tonalité, mélodie, rythme, accords, ambitus.", en: "Unknown invariants: {__VAR_0__}. Possible: mesures, métrique, tonalité, mélodie, rythme, accords, ambitus." },
+  "msg.abc_contraintes.conforme": { fr: "Conforme : tout ce qui devait rester fixe l'est resté.", en: "Compliant: everything that had to stay fixed did." },
+  "msg.abc_contraintes.non_conforme_var_0": { fr: "Non conforme : {__VAR_0__} violation(s).", en: "Not compliant: {__VAR_0__} violation(s)." },
+  "msg.abc_edition.aucun_abc": { fr: "Aucune partition ABC connectée.", en: "No ABC score connected." },
+  "msg.abc_edition.aucune_consigne": { fr: "Aucune consigne : renseignez le paramètre ou connectez l'entrée Consigne.", en: "No instruction: fill in the parameter or connect the Instruction input." },
+  "msg.abc_edition.reussi_var_0_var_1": { fr: "Retouche acceptée au bout de {__VAR_0__} essai(s), en {__VAR_1__} s", en: "Edit accepted after {__VAR_0__} attempt(s), in {__VAR_1__} s" },
+  "msg.abc_edition.echec_var_0": { fr: "Retouche refusée : {__VAR_0__}", en: "Edit rejected: {__VAR_0__}" },
+  "msg.abc_edition.essai_refuse_var_0_var_1": { fr: "- essai {__VAR_0__} refusé : {__VAR_1__}", en: "- attempt {__VAR_0__} rejected: {__VAR_1__}" },
+  "msg.abc_edition.essai_accepte_var_0": { fr: "- essai {__VAR_0__} accepté", en: "- attempt {__VAR_0__} accepted" },
+  "msg.abc_edition.accords_retires": { fr: "accords chiffrés d'origine retirés : la tonalité a changé", en: "original chord symbols removed: the key changed" },
+  "progress.abc_edition.var_0_var_1": { fr: "{__VAR_0__} : {__VAR_1__}…", en: "{__VAR_0__}: {__VAR_1__}…" },
+  "msg.midi_abc.raccourcies_var_0": { fr: " · {__VAR_0__} note(s) raccourcie(s) : aller-retour non exact", en: " · {__VAR_0__} note(s) shortened: round trip not exact" },
+  "msg.midi_abc.aucun_midi": { fr: "Aucun fichier MIDI connecté.", en: "No MIDI file connected." },
+  "msg.midi_abc.illisible_var_0": { fr: "Fichier MIDI illisible : {__VAR_0__}", en: "Unreadable MIDI file: {__VAR_0__}" },
+  "msg.midi_abc.aucune_note_var_0": { fr: "Aucune note à écrire ({__VAR_0__} note(s) de batterie ignorée(s)).", en: "No note to write ({__VAR_0__} drum note(s) ignored)." },
+  "msg.abc.sans_titre": { fr: "Sans titre", en: "Untitled" },
+  "msg.abc.morceau_var_0_var_1": { fr: " · morceau {__VAR_0__} sur {__VAR_1__}", en: " · tune {__VAR_0__} of {__VAR_1__}" },
+  "msg.abc.avertissements_var_0_var_1": { fr: " · {__VAR_0__} élément(s) non lu(s) : {__VAR_1__}", en: " · {__VAR_0__} item(s) not read: {__VAR_1__}" },
+  "msg.abc.aucun_morceau": { fr: "Aucune partition ABC trouvée : le texte ne contient ni note ni champ X:.", en: "No ABC score found: the text contains neither notes nor an X: field." },
+  "msg.abc.aucune_note_var_0": { fr: "Partition ABC sans aucune note lisible. Éléments non lus : {__VAR_0__}", en: "ABC score with no readable note. Items not read: {__VAR_0__}" },
+  "progress.abc.rendu": { fr: "Rendu de la partition ABC…", en: "Rendering the ABC score…" },
+  "msg.geometrie.trop_long_var_0_var_1": {
+    fr: "Sortie de {__VAR_0__} min, au-delà des {__VAR_1__} min autorisées : réduisez les tours ou raccourcissez le son.",
+    en: "{__VAR_0__} min output, beyond the {__VAR_1__} min allowed: reduce the laps or shorten the sound.",
+  },
+  "progress.moebius.var_0": { fr: "Torsion sur {__VAR_0__} tours…", en: "Twisting over {__VAR_0__} laps…" },
   "progress.tonalite_progressive_var_0": {
     fr: "Transposition de {__VAR_0__} passages…",
     en: "Transposing {__VAR_0__} passes…",
@@ -771,6 +842,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 export const CLES_CONNUES: ReadonlySet<string> = new Set([
   ...Object.keys(DICO), ...Object.keys(DICO_RUNTIME),
 ]);
+
+/**
+ * Libellé dans une langue DONNÉE, et non celle de l'interface. Pour ce qui est
+ * produit hors de l'app — le catalogue COMPONENTS.md est en anglais quelle que
+ * soit la langue de celui qui le régénère. Rend la clé si elle n'existe pas.
+ */
+export function traduireDans(langue: Langue, cle: string): string {
+  return DICO_RUNTIME[cle]?.[langue] ?? DICO[cle]?.[langue] ?? cle;
+}
 
 export function traduire(cle: string, ...args: (string | number)[]): string {
   const lang = langueCourante();

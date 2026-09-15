@@ -99,5 +99,6 @@ scripts/audit-params.mjs
 TERMS_OF_USE.md
 
 # Generated / internal docs (not distributed)
-COMPONENTS.md
+# COMPONENTS.md est versionné : le README y renvoie, et un test vérifie qu'il
+# correspond au registre (src/docs/generer-catalogue.test.ts).
 EXERCISE-WORKBOOK.md
