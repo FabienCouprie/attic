@@ -843,6 +843,15 @@ export const CLES_CONNUES: ReadonlySet<string> = new Set([
   ...Object.keys(DICO), ...Object.keys(DICO_RUNTIME),
 ]);
 
+/**
+ * Libellé dans une langue DONNÉE, et non celle de l'interface. Pour ce qui est
+ * produit hors de l'app — le catalogue COMPONENTS.md est en anglais quelle que
+ * soit la langue de celui qui le régénère. Rend la clé si elle n'existe pas.
+ */
+export function traduireDans(langue: Langue, cle: string): string {
+  return DICO_RUNTIME[cle]?.[langue] ?? DICO[cle]?.[langue] ?? cle;
+}
+
 export function traduire(cle: string, ...args: (string | number)[]): string {
   const lang = langueCourante();
   const s = DICO_RUNTIME[cle]?.[lang] ?? DICO_RUNTIME[cle]?.fr ?? DICO[cle]?.[lang] ?? DICO[cle]?.fr ?? cle;

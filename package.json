@@ -38,7 +38,7 @@
     "publish:electron": "npm run build && npm run ensure-songsee && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
     "ensure-songsee": "node scripts/ensure-songsee.cjs",
     "preview": "vite preview",
-    "docs:components": "vite-node scripts/generate-components-md.ts",
+    "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",
