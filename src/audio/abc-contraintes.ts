@@ -12,6 +12,7 @@
 // chose, et ne doit pas être compté en faute.
 
 import { Note } from "tonal";
+import { traduire } from "../i18n";
 import { decouperMorceaux, lireMorceau, normaliserAccord, type MorceauAbc, type NoteAbc } from "./abc";
 
 export const INVARIANTS = ["mesures", "metrique", "tonalite", "melodie", "rythme", "accords", "ambitus"] as const;
@@ -115,34 +116,36 @@ export function verifierContraintes(origine: MorceauAbc, modifie: MorceauAbc, in
   const inv = new Set(invariants);
 
   if (inv.has("mesures")) {
-    if (dM.length !== dO.length) v.push(`${dM.length} mesures au lieu de ${dO.length}`);
+    if (dM.length !== dO.length) v.push(traduire("msg.abc_contraintes.v_mesures_var_0_var_1", dM.length, dO.length));
     const LM = longueurMesure(modifie);
     dM.forEach((d, k) => {
       // La première et la dernière mesure peuvent être incomplètes — levée,
       // fin écourtée — mais seulement si l'original l'était au même endroit.
       const attendu = dO[k] ?? LM;
-      if (Math.abs(d - attendu) > 1e-6) v.push(`mesure ${k + 1} : ${fmt(d)} temps au lieu de ${fmt(attendu)}`);
+      if (Math.abs(d - attendu) > 1e-6) v.push(traduire("msg.abc_contraintes.v_duree_mesure_var_0_var_1_var_2", k + 1, fmt(d), fmt(attendu)));
     });
   }
   if (inv.has("metrique") && (origine.metrique?.texte ?? "—") !== (modifie.metrique?.texte ?? "—")) {
-    v.push(`métrique ${modifie.metrique?.texte ?? "absente"} au lieu de ${origine.metrique?.texte ?? "absente"}`);
+    const absente = traduire("msg.abc_contraintes.absente");
+    v.push(traduire("msg.abc_contraintes.v_metrique_var_0_var_1", modifie.metrique?.texte ?? absente, origine.metrique?.texte ?? absente));
   }
   if (inv.has("tonalite") && origine.tonalite.nom !== modifie.tonalite.nom) {
-    v.push(`tonalité ${modifie.tonalite.nom} au lieu de ${origine.tonalite.nom}`);
+    v.push(traduire("msg.abc_contraintes.v_tonalite_var_0_var_1", modifie.tonalite.nom, origine.tonalite.nom));
   }
   const mo = origine.voix[0]?.notes ?? [], mm = modifie.voix[0]?.notes ?? [];
   if (inv.has("melodie")) {
     const k = premiereDifference(mo.map(cleNote), mm.map(cleNote));
     if (k >= 0) {
       const t = (mo[k] ?? mm[k]).debut;
-      v.push(`mélodie modifiée à partir de la mesure ${mesureDe(t, L)} (note ${k + 1} : ${mo[k] ? nom(mo[k].midi) : "—"} → ${mm[k] ? nom(mm[k].midi) : "—"})`);
+      v.push(traduire("msg.abc_contraintes.v_melodie_var_0_var_1_var_2_var_3",
+        mesureDe(t, L), k + 1, mo[k] ? nom(mo[k].midi) : "—", mm[k] ? nom(mm[k].midi) : "—"));
     }
   }
   if (inv.has("rythme")) {
     const k = premiereDifference(mo.map(cleRythme), mm.map(cleRythme));
     if (k >= 0) {
       const t = (mo[k] ?? mm[k]).debut;
-      v.push(`rythme modifié à partir de la mesure ${mesureDe(t, L)} (${mm.length} notes au lieu de ${mo.length})`);
+      v.push(traduire("msg.abc_contraintes.v_rythme_var_0_var_1_var_2", mesureDe(t, L), mm.length, mo.length));
     }
   }
   if (inv.has("accords")) {
@@ -150,7 +153,7 @@ export function verifierContraintes(origine: MorceauAbc, modifie: MorceauAbc, in
     const k = premiereDifference(cle(origine), cle(modifie));
     if (k >= 0) {
       const t = (origine.accords[k] ?? modifie.accords[k]).debut;
-      v.push(`accords modifiés à partir de la mesure ${mesureDe(t, L)}`);
+      v.push(traduire("msg.abc_contraintes.v_accords_var_0", mesureDe(t, L)));
     }
   }
   if (inv.has("ambitus")) {
@@ -159,12 +162,12 @@ export function verifierContraintes(origine: MorceauAbc, modifie: MorceauAbc, in
     if (o.length && m.length) {
       const bas = Math.min(...o), haut = Math.max(...o);
       const hors = m.filter((h) => h < bas || h > haut);
-      if (hors.length) v.push(`${hors.length} note(s) hors de l'ambitus d'origine ${nom(bas)}–${nom(haut)}`);
+      if (hors.length) v.push(traduire("msg.abc_contraintes.v_ambitus_var_0_var_1_var_2", hors.length, nom(bas), nom(haut)));
     }
   }
   // Avertissements de lecture : ce qui n'a pas été lu dans la retouche la rend
   // incomparable à l'endroit concerné.
-  for (const a of modifie.avertissements) v.push(`lecture : ${a}`);
+  for (const a of modifie.avertissements) v.push(traduire("msg.abc_contraintes.v_lecture_var_0", a));
 
   return { ok: v.length === 0, violations: v, mesuresOrigine: dO.length, mesuresModifie: dM.length, qualite: qualiteMusicale(modifie) };
 }
@@ -185,13 +188,25 @@ export const PREREGLAGES: Record<string, Invariant[]> = {
   structure: ["mesures", "metrique"],
 };
 
-/** Lit une liste d'invariants saisie : « mesures, métrique, mélodie ». */
+/**
+ * Noms anglais des invariants, dans l'ordre d'`INVARIANTS`. Ce sont eux que
+ * l'interface anglaise propose et que le message « invariants inconnus » cite ;
+ * les noms français restent acceptés, pour les projets déjà enregistrés.
+ */
+export const INVARIANTS_EN = ["bars", "meter", "key", "melody", "rhythm", "chords", "range"] as const;
+
+/**
+ * Lit une liste d'invariants saisie : « mesures, métrique, mélodie », ou
+ * « bars, meter, melody ». Les deux langues sont acceptées dans les deux sens —
+ * un projet enregistré en français s'ouvre en anglais sans rien casser.
+ */
 export function lireInvariants(texte: string): { invariants: Invariant[]; inconnus: string[] } {
   const sansAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const invariants: Invariant[] = [], inconnus: string[] = [];
   for (const brut of texte.split(/[\s,;]+/).filter(Boolean)) {
     const x = sansAccents(brut);
-    const trouve = INVARIANTS.find((i) => i === x);
+    const iEn = INVARIANTS_EN.indexOf(x as (typeof INVARIANTS_EN)[number]);
+    const trouve = INVARIANTS.find((i) => i === x) ?? (iEn >= 0 ? INVARIANTS[iEn] : undefined);
     if (trouve) { if (!invariants.includes(trouve)) invariants.push(trouve); } else inconnus.push(brut);
   }
   return { invariants, inconnus };

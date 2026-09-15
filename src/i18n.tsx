@@ -448,9 +448,47 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.abc_contraintes.illisible_var_0": { fr: "Partition {__VAR_0__} illisible : aucune note ABC trouvée.", en: "{__VAR_0__} score unreadable: no ABC note found." },
   "msg.abc_contraintes.origine": { fr: "d'origine", en: "Original" },
   "msg.abc_contraintes.modifie": { fr: "modifiée", en: "Edited" },
-  "msg.abc_contraintes.inconnus_var_0": { fr: "Invariants inconnus : {__VAR_0__}. Possibles : mesures, métrique, tonalité, mélodie, rythme, accords, ambitus.", en: "Unknown invariants: {__VAR_0__}. Possible: mesures, métrique, tonalité, mélodie, rythme, accords, ambitus." },
+  "msg.abc_contraintes.inconnus_var_0": { fr: "Invariants inconnus : {__VAR_0__}. Possibles : mesures, métrique, tonalité, mélodie, rythme, accords, ambitus.", en: "Unknown invariants: {__VAR_0__}. Possible: bars, meter, key, melody, rhythm, chords, range." },
   "msg.abc_contraintes.conforme": { fr: "Conforme : tout ce qui devait rester fixe l'est resté.", en: "Compliant: everything that had to stay fixed did." },
   "msg.abc_contraintes.non_conforme_var_0": { fr: "Non conforme : {__VAR_0__} violation(s).", en: "Not compliant: {__VAR_0__} violation(s)." },
+  // Les violations elles-mêmes : elles composent le rapport et le message du
+  // nœud, et restaient en français dans une interface anglaise.
+  "msg.abc_contraintes.v_mesures_var_0_var_1": { fr: "{__VAR_0__} mesures au lieu de {__VAR_1__}", en: "{__VAR_0__} bars instead of {__VAR_1__}" },
+  "msg.abc_contraintes.v_duree_mesure_var_0_var_1_var_2": { fr: "mesure {__VAR_0__} : {__VAR_1__} temps au lieu de {__VAR_2__}", en: "bar {__VAR_0__}: {__VAR_1__} beats instead of {__VAR_2__}" },
+  "msg.abc_contraintes.v_metrique_var_0_var_1": { fr: "métrique {__VAR_0__} au lieu de {__VAR_1__}", en: "meter {__VAR_0__} instead of {__VAR_1__}" },
+  "msg.abc_contraintes.absente": { fr: "absente", en: "none" },
+  "msg.abc_contraintes.v_tonalite_var_0_var_1": { fr: "tonalité {__VAR_0__} au lieu de {__VAR_1__}", en: "key {__VAR_0__} instead of {__VAR_1__}" },
+  "msg.abc_contraintes.v_melodie_var_0_var_1_var_2_var_3": { fr: "mélodie modifiée à partir de la mesure {__VAR_0__} (note {__VAR_1__} : {__VAR_2__} → {__VAR_3__})", en: "melody modified from bar {__VAR_0__} (note {__VAR_1__}: {__VAR_2__} → {__VAR_3__})" },
+  "msg.abc_contraintes.v_rythme_var_0_var_1_var_2": { fr: "rythme modifié à partir de la mesure {__VAR_0__} ({__VAR_1__} notes au lieu de {__VAR_2__})", en: "rhythm modified from bar {__VAR_0__} ({__VAR_1__} notes instead of {__VAR_2__})" },
+  "msg.abc_contraintes.v_accords_var_0": { fr: "accords modifiés à partir de la mesure {__VAR_0__}", en: "chords modified from bar {__VAR_0__}" },
+  "msg.abc_contraintes.v_ambitus_var_0_var_1_var_2": { fr: "{__VAR_0__} note(s) hors de l'ambitus d'origine {__VAR_1__}–{__VAR_2__}", en: "{__VAR_0__} note(s) outside the original range {__VAR_1__}–{__VAR_2__}" },
+  "msg.abc_contraintes.v_lecture_var_0": { fr: "lecture : {__VAR_0__}", en: "reading: {__VAR_0__}" },
+  // Ce que le lecteur ABC n'a pas lu. Ces phrases voyagent : message du nœud
+  // « ABC → MIDI », violations « lecture : … » de « Contraintes ABC », refus en
+  // entrée de l'éditeur LLM et de la reprise.
+  "msg.abc.lecture.cornemuse": { fr: "tonalité de cornemuse (HP/Hp) lue sans armure", en: "bagpipe key (HP/Hp) read without a key signature" },
+  "msg.abc.lecture.armure_max_var_0": { fr: "tonalité {__VAR_0__} au-delà de 7 altérations, ramenée à 7", en: "key {__VAR_0__} beyond 7 accidentals, clamped to 7" },
+  "msg.abc.lecture.element_tonalite_var_0": { fr: "élément de tonalité non lu : « {__VAR_0__} »", en: "key field element not read: « {__VAR_0__} »" },
+  "msg.abc.lecture.ornements": { fr: "notes d'ornement {…} ignorées", en: "grace notes {…} ignored" },
+  "msg.abc.lecture.volta_var_0_var_1": { fr: "fin alternative multiple « [{__VAR_0__}{__VAR_1__} » lue comme « [{__VAR_0__} »", en: "multiple alternative ending « [{__VAR_0__}{__VAR_1__} » read as « [{__VAR_0__} »" },
+  "msg.abc.lecture.caractere_var_0": { fr: "caractère non lu : « {__VAR_0__} »", en: "character not read: « {__VAR_0__} »" },
+  "msg.abc.lecture.reprises_imbriquees": { fr: "reprises trop imbriquées : lecture interrompue", en: "repeats nested too deeply: reading stopped" },
+  "msg.abc.lecture.tempo_var_0": { fr: "tempo non lu : « {__VAR_0__} »", en: "tempo not read: « {__VAR_0__} »" },
+  "msg.abc.lecture.changement_tempo": { fr: "changement de tempo en cours de morceau ignoré", en: "tempo change within the tune ignored" },
+  "msg.abc.lecture.directives_midi": { fr: "directives %%MIDI ignorées", en: "%%MIDI directives ignored" },
+  "msg.abc.lecture.k_absent": { fr: "champ K: absent : le corps commence sans tonalité déclarée, lu en do majeur", en: "K: field missing: the body starts with no declared key, read as C major" },
+  "msg.abc.lecture.accord_var_0": { fr: "accord chiffré non reconnu : « {__VAR_0__} »", en: "chord symbol not recognized: « {__VAR_0__} »" },
+  // Ce que l'écriture MIDI → ABC n'a pas pu rendre fidèlement.
+  "msg.midi_abc.ecriture.batterie_var_0": { fr: "batterie ignorée ({__VAR_0__} notes sur le canal 10)", en: "drums ignored ({__VAR_0__} notes on channel 10)" },
+  "msg.midi_abc.ecriture.tempos": { fr: "changements de tempo ignorés : seul le premier est écrit", en: "tempo changes ignored: only the first is written" },
+  "msg.midi_abc.ecriture.ligne_seule": { fr: "tonalité déduite d'une ligne seule, peu fiable : imposez-la, ou convertissez le fichier complet ou les accords", en: "key inferred from a single line, unreliable: set it, or convert the whole file or the chords" },
+  "msg.midi_abc.ecriture.accord_grille_var_0": { fr: "accord « {__VAR_0__} » hors de la grille, arrondi", en: "chord « {__VAR_0__} » off the grid, rounded" },
+  "msg.midi_abc.ecriture.duree_fraction": { fr: "durée hors triolet non binaire écrite en fraction (non standard)", en: "non-binary, non-triplet duration written as a fraction (non-standard)" },
+  "msg.midi_abc.ecriture.tempo_absent": { fr: "tempo absent du fichier : 120 écrit par défaut", en: "tempo missing from the file: 120 written by default" },
+  // Communes au vérificateur, à l'éditeur LLM et à la reprise.
+  "msg.abc.illisible_entree": { fr: "aucune partition ABC lisible en entrée", en: "no readable ABC score on the input" },
+  "msg.abc.entree_incomplete_var_0": { fr: "partition d'entrée incomplètement lue : {__VAR_0__}", en: "input score not fully read: {__VAR_0__}" },
+  "msg.abc.levee_non_geree": { fr: "les morceaux qui commencent par une levée ne sont pas gérés", en: "tunes that start with a pickup bar are not supported" },
   "msg.abc_edition.aucun_abc": { fr: "Aucune partition ABC connectée.", en: "No ABC score connected." },
   "msg.abc_edition.aucune_consigne": { fr: "Aucune consigne : renseignez le paramètre ou connectez l'entrée Consigne.", en: "No instruction: fill in the parameter or connect the Instruction input." },
   "msg.abc_edition.reussi_var_0_var_1": { fr: "Retouche acceptée au bout de {__VAR_0__} essai(s), en {__VAR_1__} s", en: "Edit accepted after {__VAR_0__} attempt(s), in {__VAR_1__} s" },
@@ -459,6 +497,15 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.abc_edition.essai_accepte_var_0": { fr: "- essai {__VAR_0__} accepté", en: "- attempt {__VAR_0__} accepted" },
   "msg.abc_edition.accords_retires": { fr: "accords chiffrés d'origine retirés : la tonalité a changé", en: "original chord symbols removed: the key changed" },
   "progress.abc_edition.var_0_var_1": { fr: "{__VAR_0__} : {__VAR_1__}…", en: "{__VAR_0__}: {__VAR_1__}…" },
+  "msg.abc_edition.essai_var_0": { fr: "essai {__VAR_0__}", en: "attempt {__VAR_0__}" },
+  "msg.abc_edition.tonalite_cible_var_0": { fr: "tonalité cible illisible : {__VAR_0__}", en: "target key unreadable: {__VAR_0__}" },
+  "msg.abc_edition.echec_essais_var_0": { fr: "échec après {__VAR_0__} essai(s)", en: "failed after {__VAR_0__} attempt(s)" },
+  "msg.abc_edition.assemblage_illisible": { fr: "assemblage illisible (défaut d'Attic, pas du modèle)", en: "unreadable assembly (an Attic defect, not the model's)" },
+  "msg.abc_edition.assemblage_non_conforme_var_0": { fr: "assemblage non conforme (défaut d'Attic, pas du modèle) : {__VAR_0__}", en: "non-compliant assembly (an Attic defect, not the model's): {__VAR_0__}" },
+  "msg.abc_reprise.sans_accords": { fr: "la partition n'a pas d'accords chiffrés : ajoutez-les, ou réharmonisez-la d'abord avec « Édition ABC par LLM »", en: "the score has no chord symbols: add them, or reharmonize it first with « ABC Editing by LLM »" },
+  "msg.abc_reprise.style_metrique_var_0_var_1": { fr: "le style « {__VAR_0__} » ne s'applique pas à une mesure en {__VAR_1__}", en: "the « {__VAR_0__} » style does not apply to a bar in {__VAR_1__}" },
+  "msg.abc_reprise.arrangement_illisible": { fr: "arrangement illisible (défaut d'Attic)", en: "unreadable arrangement (an Attic defect)" },
+  "msg.abc_reprise.arrangement_non_conforme_var_0": { fr: "arrangement non conforme (défaut d'Attic) : {__VAR_0__}", en: "non-compliant arrangement (an Attic defect): {__VAR_0__}" },
   "msg.midi_abc.raccourcies_var_0": { fr: " · {__VAR_0__} note(s) raccourcie(s) : aller-retour non exact", en: " · {__VAR_0__} note(s) shortened: round trip not exact" },
   "msg.midi_abc.aucun_midi": { fr: "Aucun fichier MIDI connecté.", en: "No MIDI file connected." },
   "msg.midi_abc.illisible_var_0": { fr: "Fichier MIDI illisible : {__VAR_0__}", en: "Unreadable MIDI file: {__VAR_0__}" },
@@ -863,6 +910,16 @@ export function traduire(cle: string, ...args: (string | number)[]): string {
 
 export function defautParametre(p: Pick<ParametreDef, "defaut" | "defautEn">, lang: Langue): string | number {
   return lang === "en" && p.defautEn !== undefined ? p.defautEn : p.defaut;
+}
+
+/**
+ * Unité d'un paramètre dans la langue demandée. Une unité qui ne se traduit pas
+ * (Hz, dB, ms, %, BPM…) n'a pas de `uniteEn` et sort telle quelle ; celles qui
+ * sont des mots — « temps », « demi-tons », « cellules » — en ont une, sans quoi
+ * l'interface anglaise affichait « 2 temps » (cf. anglais-registre.test.ts).
+ */
+export function uniteParametre(p: Pick<ParametreDef, "unite" | "uniteEn">, lang: Langue): string | undefined {
+  return lang === "en" && p.uniteEn !== undefined ? p.uniteEn : p.unite;
 }
 
 /**

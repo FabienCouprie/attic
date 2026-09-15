@@ -4,6 +4,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+- **Du français s'affichait dans l'interface anglaise, et COMPONENTS.md l'exposait.** Les fiches portent un champ français et son doublon anglais (`nom`/`nomEn`, `doc`/`docEn`, `defaut`/`defautEn`…) ; quand le doublon manque, il n'y a ni erreur de compilation — les champs `…En` sont optionnels — ni échec de test : la valeur française est affichée telle quelle. Étaient concernés : **les unités**, qu'aucun mécanisme ne traduisait du tout (« 2 temps », « 3 demi-tons », « 2 mesures », « 16 cellules », « 32 pas », « 0,3 niveau », « 2048 éch. », « 1 pts/éch », « -1 = tous », « 0 ½-ton ») ; **les ports** « Texte » (OCR), « Mesures » (VU-mètre / LUFS), « Centroïde » (Centroïde spectral) et « Chemin » (Export image, Export SVG) ; **les valeurs par défaut de texte** « Garder » (Édition ABC par LLM) et « mesures, métrique » (Contraintes ABC), ainsi que les commentaires français des codes d'exemple Python et Julia.
+- **Un nouveau champ `uniteEn`** porte l'unité anglaise, lu par l'inspecteur, par la vue Collections et par le catalogue. Une unité qui ne se traduit pas (Hz, dB, ms, %, BPM…) n'en a pas besoin.
+- **Les violations de « Contraintes ABC » étaient écrites en dur en français** — « mesure 4 : 3.5 temps au lieu de 4 », « mélodie modifiée à partir de la mesure 4 », « tonalité … au lieu de … », « lecture : … » — et remontaient telles quelles dans le message et le rapport des nœuds « Contraintes ABC » et « Édition ABC par LLM ». Même chose pour les refus de « Édition ABC par LLM » et de « Reprise ABC » (« aucune partition ABC lisible en entrée », « les morceaux qui commencent par une levée ne sont pas gérés », « échec après N essai(s) »…), et pour **les avertissements du lecteur ABC et de l'écrivain MIDI → ABC** (« notes d'ornement {…} ignorées », « accord chiffré non reconnu : … », « batterie ignorée … », « tempo absent du fichier … »), qui voyagent jusque dans ces rapports. Tout passe désormais par le dictionnaire.
+- **Les invariants de « Contraintes ABC » s'écrivent maintenant en anglais** (`bars, meter, key, melody, rhythm, chords, range`) et le message « invariants inconnus » les cite dans la bonne langue. Les noms français restent acceptés à la lecture, dans les deux sens : un projet enregistré en français s'ouvre en anglais sans rien casser. De même, « Tonalité du résultat » accepte « Keep » comme « Garder ».
+
+### Added
+- **`src/docs/anglais-registre.test.ts` : un garde-fou contre le français qui reste.** Il parcourt la projection anglaise de chaque fiche — exactement les chaînes que l'application et le catalogue affichent en anglais, défaut d'un choix résolu vers `optionsEn` compris — et la refuse si elle porte une lettre accentuée du français ou un mot d'une liste relevée sur le terrain (« temps », « tous », « garder »…). Il vérifie aussi le dictionnaire : aucune traduction anglaise restée en français, et les mêmes variables `{__VAR_n__}` dans les deux langues. Le message nomme la fiche, le champ et le texte fautif.
+
 ## [3.2.2] — 2026-09-15
 
 ### Changed

@@ -27,7 +27,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Sauvegarde une image sur disque et retourne son chemin.",
     resumeEn: "Saves an image to disk and returns its path.",
     entrees: [{ nom: "Image", type: "image" }],
-    sorties: [{ nom: "Chemin", type: "texte" }],
+    sorties: [{ nom: "Chemin", nomEn: "Path", type: "texte" }],
     parametres: [
       {
         nom: "Nom",

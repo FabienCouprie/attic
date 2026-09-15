@@ -500,7 +500,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
         doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
-      { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous",
+      { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
         doc: "Canal MIDI à afficher (-1 pour tous les canaux).", docEn: "MIDI channel to display (-1 for all channels)." },
       { nom: "Quantification", nomEn: "Quantization", type: "choix", options: ["1/4", "1/8", "1/16", "1/32"], defaut: "1/16",
         doc: "Résolution de la grille de quantification.", docEn: "Quantization grid resolution.", optionsEn: ["1/4", "1/8", "1/16", "1/32"], defautEn: "1/16" },

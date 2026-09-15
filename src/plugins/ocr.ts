@@ -57,7 +57,7 @@ const ocrPlugins: FicheAudio[] = [
     resume: "Reconnaît le texte dans une image avec Tesseract.js (multi-alphabets).",
     resumeEn: "Recognizes text in an image using Tesseract.js (multi-alphabet).",
     entrees: [{ nom: "Image", type: "image" }],
-    sorties: [{ nom: "Texte", type: "texte" }],
+    sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       {
         nom: "Langues",

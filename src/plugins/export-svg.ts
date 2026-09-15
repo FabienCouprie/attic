@@ -20,7 +20,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Sauvegarde un fichier SVG sur disque et retourne son chemin.",
     resumeEn: "Saves an SVG file to disk and returns its path.",
     entrees: [{ nom: "SVG", type: "image" }],
-    sorties: [{ nom: "Chemin", type: "texte" }],
+    sorties: [{ nom: "Chemin", nomEn: "Path", type: "texte" }],
     parametres: [
       {
         nom: "Nom",

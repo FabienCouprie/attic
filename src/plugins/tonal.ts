@@ -204,7 +204,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
-      { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t",
+      { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t", uniteEn: "beats",
         doc: "Durée de chaque accord en temps.", docEn: "Duration of each chord in beats." },
       { nom: "Octave", nomEn: "Octave", plage: [2, 5], pas: 1, defaut: 3,
         doc: "Octave de base des accords.", docEn: "Base octave for chords." },

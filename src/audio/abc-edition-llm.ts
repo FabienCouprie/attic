@@ -20,6 +20,7 @@
 // Ce qui ne peut pas être cassé par construction est tout de même vérifié à la
 // fin : c'est un filet contre un défaut d'assemblage, pas contre le modèle.
 
+import { traduire } from "../i18n";
 import { morceauVersMidi, hauteursAccord, lireTonalite, type MorceauAbc, type NoteAbc } from "./abc";
 import { midiVersAbc } from "./midi-vers-abc";
 import {
@@ -33,7 +34,7 @@ export type OptionsEdition = {
   operation: OperationEdition;
   consigne: string;
   essais: number;
-  /** « garder » ou un champ K: pour le résultat de « hauteurs ». */
+  /** « garder » / « keep » ou un champ K: pour le résultat de « hauteurs ». */
   tonaliteCible: string;
 };
 
@@ -97,14 +98,14 @@ function reecrire(m: MorceauAbc, voix1: NoteAbc[], cle: string, accords: { debut
 export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLlm, surProgres?: (message: string) => void): Promise<ResultatEdition> {
   const vide = (erreur: string): ResultatEdition => ({ ok: false, abc: null, essais: [], verification: null, accordsRetires: false, erreur });
   const origine = lireAbcUnique(texte);
-  if (!origine) return vide("aucune partition ABC lisible en entrée");
-  if (origine.avertissements.length) return vide(`partition d'entrée incomplètement lue : ${origine.avertissements.join(" · ")}`);
+  if (!origine) return vide(traduire("msg.abc.illisible_entree"));
+  if (origine.avertissements.length) return vide(traduire("msg.abc.entree_incomplete_var_0", origine.avertissements.join(" · ")));
 
   const L = longueurMesure(origine);
   const durees = dureesMesures(origine);
   // Une levée décalerait les mesures entre ce que voit le modèle et ce que pose
   // l'assemblage : le cas n'est pas géré, et il est refusé plutôt que mal traité.
-  if (durees.length > 1 && Math.abs(durees[0] - L) > 1e-6) return vide("les morceaux qui commencent par une levée ne sont pas gérés");
+  if (durees.length > 1 && Math.abs(durees[0] - L) > 1e-6) return vide(traduire("msg.abc.levee_non_geree"));
 
   const nbMesures = durees.length;
   const melodie = origine.voix[0].notes;
@@ -131,7 +132,7 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
       + `Use standard chord symbols such as G, Em7, Cmaj7, D7, Am, Bm7b5, D/F#. Answer as JSON: {"bars": [[...], ...]}.`;
 
     for (let n = 1; n <= Math.max(1, o.essais); n++) {
-      surProgres?.(`essai ${n}`);
+      surProgres?.(traduire("msg.abc_edition.essai_var_0", n));
       const r = await appel(prompt + retour, format);
       if (r.erreur) return { ...vide(r.erreur), essais };
       const erreurs: string[] = [];
@@ -163,14 +164,14 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
       essais.push({ numero: n, erreurs: [] });
       return terminer(origine, resultat, ["mesures", "metrique", "tonalite", "melodie"], essais, false);
     }
-    return { ...vide(`échec après ${essais.length} essai(s)`), essais };
+    return { ...vide(traduire("msg.abc_edition.echec_essais_var_0", essais.length)), essais };
   }
 
   // ── Réécrire les hauteurs ──
-  const cle = /^garder$/i.test(o.tonaliteCible.trim()) || !o.tonaliteCible.trim() ? cleDepuisNomTonalite(origine.tonalite.nom) : o.tonaliteCible.trim();
+  const cle = /^(?:garder|keep)$/i.test(o.tonaliteCible.trim()) || !o.tonaliteCible.trim() ? cleDepuisNomTonalite(origine.tonalite.nom) : o.tonaliteCible.trim();
   let avertTonalite = "";
   lireTonalite(cle, (m) => (avertTonalite = m));
-  if (avertTonalite) return vide(`tonalité cible illisible : ${avertTonalite}`);
+  if (avertTonalite) return vide(traduire("msg.abc_edition.tonalite_cible_var_0", avertTonalite));
   const nomCible = lireTonalite(cle, () => {}).nom;
   const format = {
     type: "object",
@@ -183,7 +184,7 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
     + `Give exactly ${melodie.length} pitches, one per original note, in the same order: the rhythm is kept as it is. Answer as JSON: {"notes": ["C4", ...]}.`;
 
   for (let n = 1; n <= Math.max(1, o.essais); n++) {
-    surProgres?.(`essai ${n}`);
+    surProgres?.(traduire("msg.abc_edition.essai_var_0", n));
     const r = await appel(prompt + retour, format);
     if (r.erreur) return { ...vide(r.erreur), essais };
     const erreurs: string[] = [];
@@ -211,17 +212,17 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
     essais.push({ numero: n, erreurs: [] });
     return terminer(origine, resultat, ["mesures", "metrique", "rythme"], essais, !garderAccords && origine.accords.length > 0);
   }
-  return { ...vide(`échec après ${essais.length} essai(s)`), essais };
+  return { ...vide(traduire("msg.abc_edition.echec_essais_var_0", essais.length)), essais };
 }
 
 function terminer(origine: MorceauAbc, resultat: { abc: string; morceau: MorceauAbc | null }, invariants: Invariant[], essais: Essai[], accordsRetires: boolean): ResultatEdition {
-  if (!resultat.morceau) return { ok: false, abc: null, essais, verification: null, accordsRetires, erreur: "assemblage illisible (défaut d'Attic, pas du modèle)" };
+  if (!resultat.morceau) return { ok: false, abc: null, essais, verification: null, accordsRetires, erreur: traduire("msg.abc_edition.assemblage_illisible") };
   // Le texte rendu est EXACTEMENT celui qui vient d'être relu et vérifié.
   const verification = verifierContraintes(origine, resultat.morceau, invariants);
   return {
     ok: verification.ok,
     abc: verification.ok ? resultat.abc : null,
     essais, verification, accordsRetires,
-    erreur: verification.ok ? null : `assemblage non conforme (défaut d'Attic, pas du modèle) : ${verification.violations.join(" · ")}`,
+    erreur: verification.ok ? null : traduire("msg.abc_edition.assemblage_non_conforme_var_0", verification.violations.join(" · ")),
   };
 }

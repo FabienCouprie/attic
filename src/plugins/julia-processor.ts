@@ -105,6 +105,43 @@ wavwrite(audio, sample_rate, output_path)
 println("Traité: $(size(audio, 1)) samples, $channels canaux")
 `;
 
+// Même script, commentaires et trace en anglais : le code par défaut est posé
+// dans le nœud à sa création (App.tsx), donc dans la langue de l'interface.
+const CODE_DEFAUT_EN = `# Julia Processor — audio processing
+# Environment variables:
+# - ATTIC_OUTPUT_PATH: path of the output WAV
+# - ATTIC_SAMPLE_RATE: sample rate (default: 44100)
+# - ATTIC_CHANNELS: number of channels (1=mono, 2=stereo)
+# - ATTIC_TEXT_INPUT: input text (if connected)
+# sys.argv[2]: path of the input WAV (if connected)
+
+using WAV
+
+input_path = length(ARGS) >= 2 ? ARGS[2] : nothing
+output_path = get(ENV, "ATTIC_OUTPUT_PATH", "output.wav")
+sample_rate = parse(Int, get(ENV, "ATTIC_SAMPLE_RATE", "44100"))
+channels = parse(Int, get(ENV, "ATTIC_CHANNELS", "2"))
+
+if input_path !== nothing
+    audio, sr = wavread(input_path)
+    audio = Float32.(audio)
+else
+    # No input — generate 2s of silence
+    audio = zeros(Float32, sample_rate * 2, channels)
+end
+
+# === PROCESSING ===
+# Example: double the volume
+audio = audio .* 2.0
+# Avoid clipping
+audio = clamp.(audio, -1.0, 1.0)
+
+# Write the output WAV
+wavwrite(audio, sample_rate, output_path)
+
+println("Processed: $(size(audio, 1)) samples, $channels channels")
+`;
+
 export const fiches: FicheAudio[] = ([
   {
     id: "julia-processor", nom: "Julia Processor", nomEn: "Julia Processor",
@@ -118,7 +155,7 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
-      { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT,
+      { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT, defautEn: CODE_DEFAUT_EN,
         doc: "Code Julia à exécuter. Variables : ARGS[2] = WAV d'entrée, ENV[\"ATTIC_OUTPUT_PATH\"] = WAV de sortie, ENV[\"ATTIC_SAMPLE_RATE\"], ENV[\"ATTIC_CHANNELS\"]. Nécessite le package WAV.jl.",
         docEn: "Julia code to execute. Variables: ARGS[2] = input WAV, ENV[\"ATTIC_OUTPUT_PATH\"] = output WAV, ENV[\"ATTIC_SAMPLE_RATE\"], ENV[\"ATTIC_CHANNELS\"]. Requires WAV.jl package." },
       { nom: "Timeout", nomEn: "Timeout", plage: [5, 120], pas: 5, defaut: 30, unite: "s",
