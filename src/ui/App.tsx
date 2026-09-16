@@ -25,6 +25,7 @@ import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
+import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
@@ -219,18 +220,6 @@ function Atelier() {
   const rfInstanceRef = useRef(rfInstance);
   rfInstanceRef.current = rfInstance;
 
-  // Un seul onglet wf-1. Le bouton × vide le canevas.
-  const fermerOnglet = useCallback((id: string) => {
-    void id;
-    setNodes([]);
-    setEdges([]);
-    cacheExec.current.clear();
-    setSel(null);
-    setPile([]);
-    grapheRacineRef.current = null;
-    setCurrentFilePath(null);
-  }, [setNodes, setEdges]);
-
   const wrapperRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const resumeAudio = useCallback(async () => {
@@ -318,15 +307,14 @@ function Atelier() {
     dy: number;
   };
   const pressePapierRef = useRef<PressePapierItem[] | null>(null);
-  const historiqueRef = useRef<{ nodes: any[]; edges: any[] }[]>([]);
+  const historiqueRef = useRef<EntreeHistorique<any, any>[]>([]);
   const MAX_HISTORIQUE = 50;
 
-  const pushHistorique = useCallback(() => {
-    historiqueRef.current.push({
-      nodes: JSON.parse(JSON.stringify(noeudsRef.current.map((n) => ({ ...n, data: { ...n.data } })))),
-      edges: JSON.parse(JSON.stringify(aretesRef.current)),
-    });
-    if (historiqueRef.current.length > MAX_HISTORIQUE) historiqueRef.current.shift();
+  // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
+  // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le
+  // canevas. La copie garde les fichiers chargés par référence (voir ui/historique.ts).
+  const pushHistorique = useCallback((contexte?: ContexteHistorique<any, any>) => {
+    empiler(historiqueRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
   }, []);
 
   const undo = useCallback(() => {
@@ -339,9 +327,41 @@ function Atelier() {
     if (!cbs) return;
     setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
     setEdges(prev.edges);
+    if (prev.contexte) {
+      // Le graphe racine mis de côté porte, lui aussi, des nœuds sans gestionnaires.
+      grapheRacineRef.current = prev.contexte.racine
+        ? { nodes: prev.contexte.racine.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })), edges: prev.contexte.racine.edges }
+        : null;
+      setPile(prev.contexte.pile);
+      setCurrentFilePath(prev.contexte.cheminFichier);
+    }
     setSel(null);
     cacheExec.current.clear();
   }, [setNodes, setEdges]);
+
+  // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.
+  //
+  // Il vidait sans confirmation et sans passer par l'historique : un clic à côté de
+  // « Sauvegarder » perdait le graphe entier, sans recours. L'instantané emporte aussi la
+  // navigation dans les méta-composants et le fichier ouvert, que le ✕ remet à zéro :
+  // vidé depuis l'intérieur d'un méta, le canevas revient au même endroit, avec son
+  // graphe racine. Un canevas déjà vide n'ajoute rien à l'historique.
+  //
+  // Les URL de résultats ne sont PAS révoquées ici, contrairement à une suppression de
+  // nœud : ce sont elles que Ctrl+Z doit rendre, lecteurs compris. Elles restent tenues
+  // par l'historique, qui en garde au plus MAX_HISTORIQUE.
+  const fermerOnglet = useCallback((id: string) => {
+    void id;
+    if (noeudsRef.current.length === 0 && pile.length === 0) return;
+    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
+    setNodes([]);
+    setEdges([]);
+    cacheExec.current.clear();
+    setSel(null);
+    setPile([]);
+    grapheRacineRef.current = null;
+    setCurrentFilePath(null);
+  }, [setNodes, setEdges, pushHistorique, pile, currentFilePath]);
 
   // Auto-load SF2 au démarrage
   useEffect(() => {

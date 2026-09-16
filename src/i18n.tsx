@@ -59,7 +59,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   // Infobulle du bouton × de l'onglet. Malgré son nom, ce bouton ne ferme rien :
   // il vide le canevas pour repartir d'un workflow neuf (cf. `fermerOnglet`,
   // App.tsx). Le libellé le dit explicitement, pour éviter un clic destructeur.
-  "workflow.nouveauTitre": { fr: "Nouveau workflow (vide le canevas)", en: "New workflow (clears the canvas)" },
+  "workflow.nouveauTitre": { fr: "Nouveau workflow (vide le canevas — Ctrl+Z pour annuler)", en: "New workflow (clears the canvas — Ctrl+Z to undo)" },
   // Clés révélées par `i18n.test.ts` : elles étaient citées dans l'interface
   // sans exister ici, donc affichées telles quelles à l'écran (« python.titre »…).
   "btn.chargerEchantillon": { fr: "Charger un échantillon", en: "Load a sample" },
