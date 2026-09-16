@@ -25,6 +25,7 @@
 // en tonalité à dièses et des bémols en tonalité à bémols.
 
 import { parseMidi } from "midi-file";
+import { traduire } from "../i18n";
 import { lireTonalite, type Armure } from "./abc";
 import { tonaliteDepuisChroma } from "./accords";
 
@@ -198,8 +199,8 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
   const lu = lireNotesMidi(octets);
   const batterie = lu.notes.filter((n) => n.canal === 9);
   const notes = lu.notes.filter((n) => n.canal !== 9);
-  if (batterie.length > 0) avertissements.add(`batterie ignorée (${batterie.length} notes sur le canal 10)`);
-  if (lu.temposDistincts > 1) avertissements.add("changements de tempo ignorés : seul le premier est écrit");
+  if (batterie.length > 0) avertissements.add(traduire("msg.midi_abc.ecriture.batterie_var_0", batterie.length));
+  if (lu.temposDistincts > 1) avertissements.add(traduire("msg.midi_abc.ecriture.tempos"));
 
   // Métrique.
   let metrique = lu.metrique ?? { numerateur: 4, denominateur: 4 };
@@ -260,7 +261,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
     cle = t.type === "major" ? NOMS_MAJEUR[t.tonique] : NOMS_MINEUR[t.tonique];
     tonaliteAuto = { confiance: t.confiance, marge: t.marge };
     if (ligneSeule && quantifiees.length > 0) {
-      avertissements.add("tonalité déduite d'une ligne seule, peu fiable : imposez-la, ou convertissez le fichier complet ou les accords");
+      avertissements.add(traduire("msg.midi_abc.ecriture.ligne_seule"));
     }
   } else {
     cle = o.tonalite.trim();
@@ -313,7 +314,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
   const accordsGrille = new Map<number, string>();
   for (const a of o.accords ?? []) {
     const g = a.debut * s;
-    if (Math.abs(g - Math.round(g)) > 1e-6) avertissements.add(`accord « ${a.symbole} » hors de la grille, arrondi`);
+    if (Math.abs(g - Math.round(g)) > 1e-6) avertissements.add(traduire("msg.midi_abc.ecriture.accord_grille_var_0", a.symbole));
     accordsGrille.set(Math.round(g), a.symbole);
   }
   const coupuresAccords = [...accordsGrille.keys()].sort((a, b) => a - b);
@@ -380,7 +381,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
             i += 2;
             continue;
           }
-          avertissements.add("durée hors triolet non binaire écrite en fraction (non standard)");
+          avertissements.add(traduire("msg.midi_abc.ecriture.duree_fraction"));
         }
         const t = Math.floor((m.debut - k * mesure) / temps);
         // Espace à chaque nouveau temps : les notes d'un même temps restent
@@ -400,7 +401,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
   });
 
   const tempo = lu.tempo ?? 120;
-  if (lu.tempo === null) avertissements.add("tempo absent du fichier : 120 écrit par défaut");
+  if (lu.tempo === null) avertissements.add(traduire("msg.midi_abc.ecriture.tempo_absent"));
   const titre = o.titre.trim() || lu.titre || "Sans titre";
   const entete = [
     "X:1",

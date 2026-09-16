@@ -1,7 +1,7 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
-import { useI18n, defautParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
+import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 import { SaisieCouleurs } from "./SaisieCouleurs";
 import { TexteAvecLiens } from "./texteAvecLiens";
@@ -179,7 +179,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                   que le curseur seul rend difficile à atteindre sur une large plage. */}
               <ChampNombre p={p} valeur={Number(params[p.nom] ?? defautP)}
                 onChanger={(v) => onChangerParametre(p.nom, v)} />
-              {p.unite ? <span className="inspecteur-unite">{p.unite}</span> : null}
+              {p.unite ? <span className="inspecteur-unite">{uniteParametre(p, lang)}</span> : null}
             </div>
           )}
         </div>

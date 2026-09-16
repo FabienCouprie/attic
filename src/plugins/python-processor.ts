@@ -131,6 +131,60 @@ with wave.open(output_path, 'wb') as w:
 print(f"Traité: {len(audio)} samples, {channels} canaux")
 `;
 
+// Même script, commentaires et trace en anglais : le code par défaut est posé
+// dans le nœud à sa création (App.tsx), donc dans la langue de l'interface.
+// Seuls les commentaires et le `print` changent — le code, lui, est identique.
+const CODE_DEFAUT_EN = `import numpy as np
+import wave
+import os
+import sys
+
+# input_path = sys.argv[1]  (input WAV)
+# output_path = os.environ["ATTIC_OUTPUT_PATH"]  (WAV to produce)
+# sample_rate = int(os.environ.get("ATTIC_SAMPLE_RATE", 44100))
+
+input_path = sys.argv[1] if len(sys.argv) > 1 else None
+output_path = os.environ.get("ATTIC_OUTPUT_PATH", "output.wav")
+sample_rate = int(os.environ.get("ATTIC_SAMPLE_RATE", 44100))
+
+# Read the input WAV
+if input_path:
+    with wave.open(input_path, 'rb') as w:
+        channels = w.getnchannels()
+        sr = w.getframerate()
+        frames = w.readframes(w.getnframes())
+    audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+    if channels > 1:
+        audio = audio.reshape(-1, channels)
+else:
+    # No input — generate 2s of silence
+    audio = np.zeros(sample_rate * 2, dtype=np.float32)
+    channels = 1
+    sr = sample_rate
+
+# === PROCESSING ===
+# Example: double the volume
+audio = audio * 2.0
+# Avoid clipping
+audio = np.clip(audio, -1.0, 1.0)
+
+# Write the output WAV
+if audio.ndim == 1:
+    channels = 1
+    audio_int = (audio * 32767).astype(np.int16)
+else:
+    channels = audio.shape[1]
+    audio_int = (audio * 32767).astype(np.int16)
+
+with wave.open(output_path, 'wb') as w:
+    w.setnchannels(channels)
+    w.setsampwidth(2)
+    w.setframerate(sample_rate)
+    w.writeframes(audio_int.tobytes())
+
+print(f"Processed: {len(audio)} samples, {channels} channels")
+`;
+
 export const fiches: FicheAudio[] = ([
   {
     id: "python-processor", nom: "Python Processor", nomEn: "Python Processor",
@@ -144,7 +198,7 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
-      { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT,
+      { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT, defautEn: CODE_DEFAUT_EN,
         doc: "Code Python à exécuter. Variables : sys.argv[1] = WAV d'entrée, ATTIC_OUTPUT_PATH = WAV de sortie, ATTIC_SAMPLE_RATE, ATTIC_CHANNELS. Nécessite numpy + wave.",
         docEn: "Python code to execute. Variables: sys.argv[1] = input WAV, ATTIC_OUTPUT_PATH = output WAV, ATTIC_SAMPLE_RATE, ATTIC_CHANNELS. Requires numpy + wave." },
       { nom: "Timeout", nomEn: "Timeout", plage: [5, 120], pas: 5, defaut: 30, unite: "s",

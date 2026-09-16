@@ -74,7 +74,8 @@ export const fiches: FicheAudio[] = ([
           sorties: nodeDef.sorties,
           parametres: nodeDef.parametres.map((p: any) => ({
             nom: p.nom, nomEn: p.nomEn, type: p.type, options: p.options, optionsEn: p.optionsEn,
-            plage: p.plage, pas: p.pas, defaut: p.defaut, unite: p.unite, doc: p.doc, docEn: p.docEn,
+            plage: p.plage, pas: p.pas, defaut: p.defaut, defautEn: p.defautEn, unite: p.unite, uniteEn: p.uniteEn, doc: p.doc, docEn: p.docEn,
+            placeholder: p.placeholder, placeholderEn: p.placeholderEn,
           })),
           dependencies: [] as string[],
         };

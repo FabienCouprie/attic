@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
-import { useI18n, defautParametre, traduire } from "../i18n";
+import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { copierTexte } from "./copier";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
@@ -661,7 +661,7 @@ function VueCollections({ id, data, def }: VueProps) {
               }} className="attic-node-fichier-btn" title={t("btn.parcourir")}>…</button>
             </div>
           ) : (
-            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{data.parametres?.[p.nom] ?? defautP}{p.unite ? ` ${p.unite}` : ""}</span>
+            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{data.parametres?.[p.nom] ?? defautP}{p.unite ? ` ${uniteParametre(p, lang)}` : ""}</span>
           )}
         </div>
       );

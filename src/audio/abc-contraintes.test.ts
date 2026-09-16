@@ -113,6 +113,15 @@ describe("saisie et lecture", () => {
     expect(lireInvariants("mesures harmonie").inconnus).toEqual(["harmonie"]);
   });
 
+  it("accepte aussi les noms anglais, et les deux mélangés", () => {
+    // L'interface anglaise propose « bars, meter » ; un projet enregistré en
+    // français doit rester lisible, d'où les deux listes acceptées.
+    expect(lireInvariants("bars, meter, key, melody, rhythm, chords, range").invariants)
+      .toEqual(["mesures", "metrique", "tonalite", "melodie", "rythme", "accords", "ambitus"]);
+    expect(lireInvariants("bars, métrique").invariants).toEqual(["mesures", "metrique"]);
+    expect(lireInvariants("bars harmony").inconnus).toEqual(["harmony"]);
+  });
+
   it("lit le premier morceau d'une réponse de modèle", () => {
     expect(lireAbcUnique("Voici :\n```abc\nX:1\nK:C\nCDE\n```")?.voix[0].notes.length).toBe(3);
     expect(lireAbcUnique("pas de partition")).toBeNull();
@@ -131,5 +140,51 @@ describe("accords posés par l'écrivain MIDI → ABC", () => {
     // La ronde de do est coupée à mi-mesure et liée : relue, c'est toujours une ronde.
     expect(relu.voix[0].notes.map((n) => [n.midi, n.debut, n.duree])).toEqual([[60, 0, 4], [62, 4, 2], [64, 6, 2]]);
     expect(r.abc).toMatch(/"C"C4- "Am"C4/);
+  });
+});
+
+/**
+ * Les violations sont ce que le nœud « Contraintes ABC » met dans son message et
+ * dans son rapport. Elles étaient écrites en dur en français : une interface
+ * anglaise lisait « mesure 4 : 3.5 temps au lieu de 4 ». Elles passent désormais
+ * par le dictionnaire, comme les avertissements de lecture qu'elles reprennent.
+ */
+describe("langue des violations", () => {
+  const avecLangue = <T>(langue: string, f: () => T): T => {
+    const avant = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      value: { getItem: (c: string) => (c === "attic-lang" ? langue : null), setItem: () => {} },
+      configurable: true, writable: true,
+    });
+    try { return f(); } finally {
+      if (avant) Object.defineProperty(globalThis, "localStorage", avant);
+      else delete (globalThis as unknown as Record<string, unknown>).localStorage;
+    }
+  };
+  const violations = (langue: string) => avecLangue(langue, () =>
+    verifierContraintes(lireMorceau(ORIGINAL), lireMorceau(ORIGINAL.replace("G4|", "G6|").replace('"D"dcBA', '"Dm"dcBc')),
+      ["mesures", "metrique", "tonalite", "melodie", "accords"]).violations);
+
+  it("les dit en français quand l'interface l'est", () => {
+    expect(violations("fr")).toEqual([
+      "mesure 4 : 5 temps au lieu de 4",
+      "mélodie modifiée à partir de la mesure 3 (note 20 : A4 → C5)",
+      "accords modifiés à partir de la mesure 3",
+    ]);
+  });
+
+  it("les dit en anglais quand l'interface l'est", () => {
+    expect(violations("en")).toEqual([
+      "bar 4: 5 beats instead of 4",
+      "melody modified from bar 3 (note 20: A4 → C5)",
+      "chords modified from bar 3",
+    ]);
+  });
+
+  it("traduit aussi les avertissements de lecture qu'elles reprennent", () => {
+    const lecture = (langue: string) => avecLangue(langue, () =>
+      verifierContraintes(lireMorceau(ORIGINAL), lireMorceau(`K:G\n{g}GABG`), ["mesures"]).violations.join(" | "));
+    expect(lecture("fr")).toMatch(/lecture : notes d'ornement/);
+    expect(lecture("en")).toMatch(/reading: grace notes/);
   });
 });

@@ -305,9 +305,9 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Custom rule | number | 90 | 0 – 255, step 1 | 1D rule number used when Rule = Custom. Ignored in 2D mode. |
 | Voice mode | choice | Polyphony | Polyphony / Melody / Arpeggio | Polyphony plays all active cells. Melody picks one per step. Arpeggio plays them in order. |
 | Mapping | choice | Pitch | Pitch / Velocity / Duration / Pitch + velocity | What the position of active cells represents. Pitch + velocity combines both. |
-| Width | number | 16 cellules | 4 – 64 cellules, step 1 | Number of cells per row. |
-| Height | number | 16 cellules | 4 – 64 cellules, step 1 | Grid height in 2D mode. In 1D, use Generations. |
-| Generations | number | 32 pas | 4 – 256 pas, step 1 | Number of steps / generations of the automaton (1D) or grid iterations (2D). |
+| Width | number | 16 cells | 4 – 64 cells, step 1 | Number of cells per row. |
+| Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. In 1D, use Generations. |
+| Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of steps / generations of the automaton (1D) or grid iterations (2D). |
 | Seed | number | 0 | 0 – 9999, step 1 | 0 = simple centered seed. Otherwise random initialization. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Key of the scale used to map cells to notes. |
 | Scale | choice | Major pentatonic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to convert cell positions into note pitches. |
@@ -339,7 +339,7 @@ Generates a chord progression from the key, scale and genre. Each chord is arpeg
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style determines the chord progression. Choose « Custom » to enter your own progression below. |
 | Progression | text | `I-IV-V-I` |  | Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV. Used only when Genre = Custom. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
-| Chord duration | number | 2 temps | 1 – 8 temps, step 1 | Duration per chord in beats. |
+| Chord duration | number | 2 beats | 1 – 8 beats, step 1 | Duration per chord in beats. |
 | Chord count | number | 8 | 2 – 32, step 1 | Total number of chords. |
 | Extension | choice | None | None / 7th / 6th | Adds a diatonic 7th or 6th (per the chosen scale) to each chord. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -459,7 +459,7 @@ Generates a note using frequency modulation (FM) or amplitude modulation (AM) vi
 | Modulation index | number | 10 | 0 – 100, step 1 | Modulation depth (FM only). |
 | Attack | number | 0.01 s | 0 – 1 s, step 0.001 | Envelope attack time (0 = instantaneous). |
 | Decay | number | 0.1 s | 0 – 2 s, step 0.01 | Envelope decay time to the sustain level. |
-| Sustain | number | 0.3 niveau | 0 – 1 niveau, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
+| Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
 | Release | number | 0.5 s | 0 – 3 s, step 0.01 | Envelope release time after the note ends. |
 
 #### Fractal Music
@@ -578,7 +578,7 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style that determines the chord progression. Choose « Custom » to enter the progression. |
 | Progression | text | `I-V-vi-IV` |  | Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V-I). Used only when Genre = Custom. |
 | Tempo | number | 110 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
-| Chord duration | number | 2 temps | 1 – 8 temps, step 1 | Duration of each chord in beats (4 beats = 1 4/4 bar). |
+| Chord duration | number | 2 beats | 1 – 8 beats, step 1 | Duration of each chord in beats (4 beats = 1 4/4 bar). |
 | Chord count | number | 8 | 2 – 32, step 1 | Total number of chords / loop length. |
 | Extension | choice | None | None / 7th / 6th | Adds a diatonic 7th or 6th (per the chosen scale) to each chord, and to the melodic reservoir note when it snaps to the chord. |
 | Rhythm style | choice | Pop dance | Rock / Four-on-the-floor / Funk / Hip-hop / Jazz / Reggae / House / Techno / Pop dance / Bossa Nova | Drum pattern applied to the loop. |
@@ -620,9 +620,9 @@ Generates a polyrhythmic arpeggio from the Koch snowflake. The three sides of th
 | Chord | choice | Major | Major / Minor / Augmented / Diminished / Sus4 | Triad type forming the base triangle of the snowflake. |
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursive subdivisions of the Koch snowflake. |
 | Direction | choice | alternating | alternating / outward / inward | Direction of the Koch peaks on each voice. |
-| Height | number | 3 demi-tons | 1 – 12 demi-tons, step 1 | Height of the Koch bump in semitones. |
+| Height | number | 3 semitones | 1 – 12 semitones, step 1 | Height of the Koch bump in semitones. |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Tempo of the arpeggio in beats per minute. |
-| Bars | number | 2 mesures | 1 – 8 mesures, step 1 | Number of bars over which the arpeggio is spread. |
+| Bars | number | 2 bars | 1 – 8 bars, step 1 | Number of bars over which the arpeggio is spread. |
 | Note duration | number | 0.25 s | 0.05 – 1 s, step 0.05 | Maximum duration of each note. |
 | Timbre | choice | Soft | Soft / Bright / Percussive | Waveform for FM synthesis. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
@@ -833,7 +833,7 @@ Four neural reservoirs in network, each with a distinct musical role: melody (le
 | Rhythm neurons | number | 12 | 5 – 30, step 1 | Rhythm reservoir neurons (determines when others play). |
 | Rhythm density | number | 50 % | 10 – 100 %, step 1 | Rhythm pattern density. |
 | Drum kit | SoundFont preset | bank 128, program 0 |  | Preset of the loaded global SoundFont to use for the rhythm MIDI track. Select a percussion kit (bank 128). |
-| Drum transpose | number | 0 demi-tons | -36 – 36 demi-tons, step 1 | Transpose the drum MIDI notes if the SoundFont drum kit is not mapped to General MIDI notes. |
+| Drum transpose | number | 0 semitones | -36 – 36 semitones, step 1 | Transpose the drum MIDI notes if the SoundFont drum kit is not mapped to General MIDI notes. |
 | Influence | number | 50 % | 0 – 100 %, step 1 | Cross-influence of rhythm on other voices. 0 = independent, 100% = others only play on rhythmic steps. |
 
 #### Music Generator
@@ -996,7 +996,7 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 | Waveform | choice | triangle | sine / square / sawtooth / triangle | Oscillator waveform. |
 | Attack | number | 0.01 s | 0 – 1 s, step 0.001 | Envelope attack time (0 = instantaneous). |
 | Decay | number | 0.1 s | 0 – 2 s, step 0.01 | Envelope decay time to the sustain level. |
-| Sustain | number | 0.3 niveau | 0 – 1 niveau, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
+| Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
 | Release | number | 1 s | 0 – 3 s, step 0.01 | Envelope release time after the note ends. |
 
 #### Pulsar Synthesis
@@ -1373,7 +1373,7 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Scale | choice | major | major / minor | Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. |
 | Octave | number | 3 | 1 – 6, step 1 | Octave of the root note of the generated chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
-| Duration per chord | number | 1 temps | 0.25 – 8 temps, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
+| Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
 
 #### MIDI Transcriber
 
@@ -2378,7 +2378,7 @@ Formant shifting via LPC analysis. Separates voice into glottal source (pitch) a
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pitch | number | 0  ½-ton | -12 – 12  ½-ton, step 1 | Pitch transposition in semitones. +12 = 1 octave higher. Applied to the glottal source without changing formants. |
+| Pitch | number | 0 st | -12 – 12 st, step 1 | Pitch transposition in semitones. +12 = 1 octave higher. Applied to the glottal source without changing formants. |
 | Formants | number | 100 % | 50 – 200 %, step 1 | Formant shift (vocal tract filter) in %. 100% = no change. >100% = higher formants (brighter/higher voice). &lt;100% = lower formants (darker/lower voice). For male→female: Pitch +12, Formants 120%. For female→male: Pitch −12, Formants 80%. |
 
 #### Fractal Reverb
@@ -2464,7 +2464,7 @@ Iterative audio signal reconstruction from its magnitude spectrogram using the G
 | Iterations | number | 60 | 1 – 300, step 1 | Number of Griffin-Lim iterations. Higher values produce more coherent phase and cleaner output. |
 | Initial phase | choice | Random | Random / Zero / Original | Starting phase for reconstruction. Random = creative texture; Zero = initial pulse; Original = reconstruct the original signal. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the initial phases; no effect outside the « Random » mode. The default is FIXED: a reconstruction that changes on every run would be a defect. |
-| FFT | number | 2048 éch. | 64 – 8192 éch., step 64 | FFT size (rounded up to next power of 2). |
+| FFT | number | 2048 samples | 64 – 8192 samples, step 64 | FFT size (rounded up to next power of 2). |
 | Overlap | choice | 75 % | 50 % / 75 % | Overlap between frames. 75% gives a smoother result. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
 
@@ -2790,7 +2790,7 @@ Takes a MIDI file and transforms it: transposition (±24 semitones) and/or rhyth
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Transpose | number | 0  ½-ton | -24 – 24  ½-ton, step 1 | Transposition in semitones (−24 to +24). 0 = no transposition. |
+| Transpose | number | 0 st | -24 – 24 st, step 1 | Transposition in semitones (−24 to +24). 0 = no transposition. |
 | Quantization | choice | 1/16 | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid. |
 | Quantize ends | choice | No | No / Yes | If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes). |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -3371,7 +3371,7 @@ Modifies the signal spectrum by mathematical expressions applied to each frequen
 | Magnitude | text | `mag * 2` |  | Expression for the magnitude of each spectral bin. Variables: mag, phase, freq (Hz), bin, N (FFT size), sr. |
 | Phase | text | `phase + 0.5` |  | Expression for the phase of each bin (leave empty to leave unchanged). Example: phase + 0.5 shifts the phase by 0.5 radian. Variables: mag, phase, freq, bin, N, sr. |
 | Volume | number | 30 % | 0 – 100 % | Output gain. |
-| FFT | number | 2048 éch. | 64 – 8192 éch., step 64 | FFT size (rounded up to next power of 2). |
+| FFT | number | 2048 samples | 64 – 8192 samples, step 64 | FFT size (rounded up to next power of 2). |
 
 #### Stereo Delay
 
@@ -3664,7 +3664,7 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
 | Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
-| Duration | number | 1 t | 0.25 – 4 t, step 0.25 | Duration of each chord in beats. |
+| Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
 | Mode | choice | Block | Block / Arpeggio | Block plays all notes at once, Arpeggio plays them as eighth notes. |
 
@@ -3703,7 +3703,7 @@ Optical character recognition (OCR) using Tesseract.js (WASM). Connect an image 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Image | image |  |
-| output | Texte | text |  |
+| output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -3833,8 +3833,8 @@ Renders a chaotic attractor or iterated function system (IFS) as image AND sound
 | Format | choice | PNG | PNG / JPEG | Output image file format. |
 | Audio duration | number | 4 s | 1 – 30 s, step 0.5 | Duration of the sound generated from the trajectory. |
 | Base frequency | number | 220 Hz | 20 – 2000 Hz, step 1 | Base frequency for sonifying the X/Y coordinates. |
-| Pitch range | number | 24 demi-tons | 0 – 48 demi-tons, step 1 | Pitch range in semitones of the audio pitch modulation. |
-| Audio decimation | number | 1 pts/éch | 1 – 100 pts/éch, step 1 | One audio point out of N is used to slow down the frequency variation. |
+| Pitch range | number | 24 semitones | 0 – 48 semitones, step 1 | Pitch range in semitones of the audio pitch modulation. |
+| Audio decimation | number | 1 pts/sample | 1 – 100 pts/sample, step 1 | One audio point out of N is used to slow down the frequency variation. |
 | Audio volume | number | 80 % | 0 – 100 %, step 1 | Output audio signal volume. |
 
 #### Audio Analysis
@@ -3955,8 +3955,8 @@ Computes the average RMS (Root Mean Square) level of the signal using Meyda. The
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | number | 2048 éch. | 64 – 8192 éch., step 64 | Analysis window size (rounded up to the next power of 2). |
-| Hop | number | 1024 éch. | 64 – 4096 éch., step 64 | Hop size between analysis frames. |
+| Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
+| Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
 
 #### Songsee Visualizer
@@ -3994,12 +3994,12 @@ Computes the spectral centroid of the signal using the Meyda library. The centro
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Centroïde | text |  |
+| output | Centroid | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | number | 2048 éch. | 64 – 8192 éch., step 64 | Analysis window size (rounded up to the next power of 2). |
-| Hop | number | 1024 éch. | 64 – 4096 éch., step 64 | Hop size between analysis frames. |
+| Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
+| Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
 
 #### Spectral Rolloff (Meyda)
@@ -4018,8 +4018,8 @@ Computes the spectral rolloff of the signal using Meyda: the frequency below whi
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | number | 2048 éch. | 64 – 8192 éch., step 64 | Analysis window size (rounded up to the next power of 2). |
-| Hop | number | 1024 éch. | 64 – 4096 éch., step 64 | Hop size between analysis frames. |
+| Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
+| Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
 
 #### Spectrogram
@@ -4070,7 +4070,7 @@ Measures and displays audio levels in real time. Four vertical bargraphs: RMS (a
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Mesures | text |  |
+| output | Readings | text |  |
 
 *No parameters.*
 
@@ -4106,8 +4106,8 @@ Counts the number of zero crossings of the signal in each analysis frame using M
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | number | 2048 éch. | 64 – 8192 éch., step 64 | Analysis window size (rounded up to the next power of 2). |
-| Hop | number | 1024 éch. | 64 – 4096 éch., step 64 | Hop size between analysis frames. |
+| Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
+| Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
 
 ### Image
@@ -4149,7 +4149,7 @@ Displays an image received on its input and passes it through unchanged on its o
 
 *Checks that an edit of an ABC score kept what had to stay fixed: bars, meter, key, melody, rhythm, chords.*
 
-Compares an original ABC score with an edited version, and says whether what had to stay fixed did: number and length of bars, meter, key, melody or rhythm of the first voice, chord symbols, range. Each violation is named and located — « mesure 4 : 3.5 temps au lieu de 4 », « melody modified from bar 4 (note 29: A4 → F#4) ». The « Validated ABC » output only passes the edit on if it complies: placed before « ABC → MIDI », it prevents a faulty edit from being played. Comparisons apply to what is PLAYED, repeats unrolled: repeats rewritten in full are not a fault. Why this node: measured on local language models rewriting a whole tune, none of 19 edits was correct, and one that looked right had lost a note while placing a chord. Nothing flagged it. The node depends on no model: it applies just as well to a hand-made edit. Two quality indicators accompany the verdict — share of strong beats whose note belongs to the chord, share of notes in the scale — because guaranteed structure says nothing about the music.
+Compares an original ABC score with an edited version, and says whether what had to stay fixed did: number and length of bars, meter, key, melody or rhythm of the first voice, chord symbols, range. Each violation is named and located — « bar 4: 3.5 beats instead of 4 », « melody modified from bar 4 (note 29: A4 → F#4) ». The « Validated ABC » output only passes the edit on if it complies: placed before « ABC → MIDI », it prevents a faulty edit from being played. Comparisons apply to what is PLAYED, repeats unrolled: repeats rewritten in full are not a fault. Why this node: measured on local language models rewriting a whole tune, none of 19 edits was correct, and one that looked right had lost a note while placing a chord. Nothing flagged it. The node depends on no model: it applies just as well to a hand-made edit. Two quality indicators accompany the verdict — share of strong beats whose note belongs to the chord, share of notes in the scale — because guaranteed structure says nothing about the music.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4161,7 +4161,7 @@ Compares an original ABC score with an edited version, and says whether what had
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Check | choice | Reharmonization | Reharmonization / Pitch change / Variation / Structure only / Custom | What must stay fixed, depending on the edit. Reharmonization: bars, meter, key and melody. Pitch change: bars, meter and rhythm. Variation: bars, meter and key. Structure only: bars and meter. Custom: the list in the Invariants parameter. |
-| Invariants | text | `mesures, métrique` |  | Used with Check « Custom ». Among: mesures (bars), métrique (meter), tonalité (key), mélodie (melody), rythme (rhythm), accords (chords), ambitus (range). Melody and rhythm apply to the first voice; range checks that no note leaves the original's span. |
+| Invariants | text | `bars, meter` |  | Used with Check « Custom ». Among: bars, meter, key, melody, rhythm, chords, range. Melody and rhythm apply to the first voice; range checks that no note leaves the original's span. |
 
 #### MIDI → ABC
 
@@ -4201,7 +4201,7 @@ Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output fr
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
-| Channel | number | -1 -1 = tous | -1 – 15 -1 = tous, step 1 | MIDI channel to display (-1 for all channels). |
+| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display (-1 for all channels). |
 | Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 | Quantization grid resolution. |
 | Clef | choice | treble | treble / bass / alto / tenor | Staff clef. |
 | Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
@@ -4311,7 +4311,7 @@ Saves an image file to the working directory. Connect the 'Image' output of a So
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Image | image |  |
-| output | Chemin | text |  |
+| output | Path | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -4328,7 +4328,7 @@ Saves an SVG file to disk and returns its path. Connect an 'Image' output produc
 | Port | Name | Type | |
 |---|---|---|---|
 | input | SVG | image |  |
-| output | Chemin | text |  |
+| output | Path | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -4856,7 +4856,7 @@ Julia code editor with syntax highlighting for audio, MIDI and text processing. 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Code | text | `# Julia Processor — traitement audio # Variables d'enviro…` |  | Julia code to execute. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"]. Requires WAV.jl package. |
+| Code | text | `# Julia Processor — audio processing # Environment variab…` |  | Julia code to execute. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"]. Requires WAV.jl package. |
 | Timeout | number | 30 s | 5 – 120 s, step 5 | Maximum script execution time (in seconds). |
 
 #### Pixeltone
@@ -5360,7 +5360,7 @@ Edits an ABC score with a local language model (Ollama), in a way that prevents 
 |---|---|---|---|---|
 | Operation | choice | Reharmonize | Reharmonize / Rewrite pitches | Reharmonize: the model only returns the chords of each bar, then placed on the original melody, which it therefore cannot damage. Rewrite pitches: it only returns one pitch per note, placed on the original rhythm — change of mode, key, contour. There is NO free rhythmic variation: measured on two local models, it failed 10 times out of 10, the models getting bar lengths wrong. |
 | Instruction | text | `Reharmonize with a different, richer harmonization (seven…` |  | What is asked of the model, preferably in English. Ignored if the Instruction input is connected. For « Rewrite pitches », for instance: « Rewrite this melody in E minor, keeping its contour. » |
-| Result key | text | `Garder` |  | For « Rewrite pitches »: « Garder » (keep), or an ABC K: field (« Em », « Ddor »). It sets the result's key signature and is given to the model. If it changes, the original chord symbols are removed, since they no longer apply — the report says so. |
+| Result key | text | `Keep` |  | For « Rewrite pitches »: « Keep », or an ABC K: field (« Em », « Ddor »). It sets the result's key signature and is given to the model. If it changes, the original chord symbols are removed, since they no longer apply — the report says so. |
 | Model | text | `gemma4:12b` |  | Installed Ollama model. Measured on reharmonization and switching to minor: gemma4:12b and qwen3:4b both succeed 10 times out of 10; gemma4:12b is more musical (idiomatic chords, 91–100% of notes in the scale) but takes 20 to 80 s; qwen3:4b answers in 2 to 9 s with odder choices (out-of-key chords, 83–88% of notes in the scale). |
 | Temperature | number | 0.7 | 0 – 2, step 0.1 | Variety of answers. Low: close to a safe answer; high: more invention, more retries. |
 | Attempts | number | 3 | 1 – 5, step 1 | Maximum number of calls to the model. A rejected answer — unreadable JSON, unknown chord, copy of the original — is sent back to the model with the precise list of problems. |

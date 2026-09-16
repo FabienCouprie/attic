@@ -91,7 +91,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo écrit en tête de la notation. Il sert aussi à convertir les durées en secondes de l'analyse vers des temps.",
         docEn: "Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats." },
-      { nom: "Durée par accord", nomEn: "Duration per chord", plage: [0.25, 8], pas: 0.25, defaut: 1, unite: "temps",
+      { nom: "Durée par accord", nomEn: "Duration per chord", plage: [0.25, 8], pas: 0.25, defaut: 1, unite: "temps", uniteEn: "beats",
         doc: "Durée attribuée à chaque accord quand la source ne fournit pas de durée (cas de la Progression).",
         docEn: "Duration given to each chord when the source provides none (Progression case)." },
     ],

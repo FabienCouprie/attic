@@ -338,7 +338,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Expression pour la phase de chaque bin (laissez vide pour ne pas la modifier). Exemple : phase + 0.5 décale la phase de 0.5 radian. Variables : mag, phase, freq, bin, N, sr.",
         docEn: "Expression for the phase of each bin (leave empty to leave unchanged). Example: phase + 0.5 shifts the phase by 0.5 radian. Variables: mag, phase, freq, bin, N, sr.", defautEn: "phase + 0.5" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
-      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
     ],
     async executer(ctx: any) {
@@ -563,7 +563,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI", type: "midi" }],
     sorties: [{ nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Transposition", nomEn: "Transpose", plage: [-24, 24], pas: 1, defaut: 0, unite: " ½-ton",
+      { nom: "Transposition", nomEn: "Transpose", plage: [-24, 24], pas: 1, defaut: 0, unite: " ½-ton", uniteEn: "st",
         doc: "Transposition en demi-tons (−24 à +24). 0 = aucune transposition.",
         docEn: "Transposition in semitones (−24 to +24). 0 = no transposition." },
       { nom: "Quantisation", nomEn: "Quantization", type: "choix",
@@ -738,7 +738,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Hauteur", nomEn: "Pitch", plage: [-12, 12], pas: 1, defaut: 0, unite: " ½-ton",
+      { nom: "Hauteur", nomEn: "Pitch", plage: [-12, 12], pas: 1, defaut: 0, unite: " ½-ton", uniteEn: "st",
         doc: "Transposition de hauteur en demi-tons. +12 = 1 octave plus haut. S'applique à la source glottale sans changer les formants.",
         docEn: "Pitch transposition in semitones. +12 = 1 octave higher. Applied to the glottal source without changing formants." },
       { nom: "Formants", nomEn: "Formants", plage: [50, 200], pas: 1, defaut: 100, unite: "%",
@@ -1287,7 +1287,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
         doc: "Graine des phases initiales, sans effet hors du mode « Aléatoire ». Valeur par défaut FIXE : une reconstruction qui change à chaque exécution serait un défaut.",
         docEn: "Seed for the initial phases; no effect outside the « Random » mode. The default is FIXED: a reconstruction that changes on every run would be a defect." },
-      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.",
+      { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
       { nom: "Recouvrement", nomEn: "Overlap", type: "choix",
         options: ["50 %", "75 %"],
