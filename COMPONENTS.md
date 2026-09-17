@@ -10,7 +10,7 @@ Attic ships **262 components** in **7 categories** and **28 families**. Every na
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 55 | [Audio](#audio) (6) · [Generation](#generation) (39) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 116 | [Conversion](#conversion) (4) · [Editing](#editing) (14) · [Effects](#effects) (94) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 116 | [Conversion](#conversion) (4) · [Editing](#editing) (15) · [Effects](#effects) (93) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 27 | [Analysis](#analysis) (19) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
@@ -1441,6 +1441,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Extract Zone](#extract-zone) | Extracts a portion with fade and returns the Zone object. |
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
 | [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
+| [Loop](#loop) | Repeats the whole signal a given number of times. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
@@ -1561,6 +1562,24 @@ Connect two audio tracks. The first track's weight decreases along a logistic cu
 | Center | number | 50 % | 0 – 100 %, step 1 | 50/50 mix position (0 = start, 100 = end). |
 | Steepness | number | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve. Higher value = faster transition. |
 | Volume | number | 100 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Loop
+
+`simple-boucle` · Processing → Editing
+
+*Repeats the whole signal a given number of times.*
+
+Replays the whole input « Repeats » times in a row. The Fade parameter can smooth each join; at 0 ms the join is hard.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Repeats | number | 4 | 1 – 32, step 1 | Number of times the input is replayed in a row. |
+| Fade | number | 0 ms | 0 – 100 ms | Crossfade at each join between two repetitions. 0 = no crossfade (hard join). |
 
 #### MIDI Join
 
@@ -1754,7 +1773,6 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Logistic Paulstretch](#logistic-paulstretch) | Extreme time-stretch that grows in progressively. |
 | [Logistic tremolo](#logistic-tremolo) | Tremolo whose depth grows following a logistic curve. |
 | [Logistic vibrato](#logistic-vibrato) | Vibrato whose depth grows following a logistic curve. |
-| [Loop](#loop) | Repeats the whole signal a given number of times. |
 | [Lucier Room](#lucier-room) | Feeds the sound back into the same room until only its resonances remain. |
 | [MIDI Arpeggiator](#midi-arpeggiator) | Arpeggiates chords from a MIDI file according to a pattern and direction. |
 | [MIDI Sampler](#midi-sampler) | Plays incoming MIDI notes with an audio sample loaded from the inspector. |
@@ -2691,24 +2709,6 @@ Vibrato whose modulation depth rises along a logistic curve: the vibrato is inau
 | Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
 | Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-
-#### Loop
-
-`simple-boucle` · Processing → Effects
-
-*Repeats the whole signal a given number of times.*
-
-Replays the whole input « Repeats » times in a row. The Fade parameter can smooth each join; at 0 ms the join is hard.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Repeats | number | 4 | 1 – 32, step 1 | Number of times the input is replayed in a row. |
-| Fade | number | 0 ms | 0 – 100 ms | Crossfade at each join between two repetitions. 0 = no crossfade (hard join). |
 
 #### Lucier Room
 

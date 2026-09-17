@@ -32,7 +32,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
-- **94 effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
+- **93 effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 
 ## Architecture

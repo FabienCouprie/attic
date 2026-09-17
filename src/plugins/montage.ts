@@ -299,7 +299,10 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Effets",
+    // Rangé dans « Montage » et non dans « Effets » : il ne transforme pas le son,
+    // il le remet bout à bout — comme « Assemblage audio » et « Boucle MIDI », ses
+    // voisins de fichier, avec lesquels il se cherchait dans deux familles différentes.
+    id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Montage",
     resume: "Répète l'intégralité du signal un nombre de fois donné.",
     resumeEn: "Repeats the whole signal a given number of times.",
     notice: "Rejoue toute l'entrée « Répétitions » fois à la suite. Le paramètre Fondu permet d'adoucir chaque jonction ; à 0 ms le raccord est sec.",
