@@ -56,6 +56,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "btn.device": { fr: "Périphérique", en: "Device" },
   "btn.notes": { fr: "notes", en: "notes" },
   "btn.detacher": { fr: "Détacher", en: "Detach" },
+  "btn.detacherFichier": { fr: "Détacher du fichier : nouveau projet, canevas conservé — Ctrl+Z pour annuler", en: "Detach from file: new project, canvas kept — Ctrl+Z to undo" },
   // Infobulle du bouton × de l'onglet. Malgré son nom, ce bouton ne ferme rien :
   // il vide le canevas pour repartir d'un workflow neuf (cf. `fermerOnglet`,
   // App.tsx). Le libellé le dit explicitement, pour éviter un clic destructeur.

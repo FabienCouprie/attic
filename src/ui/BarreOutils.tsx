@@ -13,6 +13,7 @@ interface Props {
   onImporter: (f?: File) => void;
   onDetacher: () => void;
   onSauvegarder: () => void;
+  onDetacherFichier: () => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
   nbPlugins: number;
@@ -43,7 +44,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -104,7 +105,13 @@ export function BarreOutils(props: Props) {
       <button className="attic-btn-icon" title={t("btn.sauvegarder")} onClick={() => onSauvegarder()}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h8l2 2v10H3V2z"/><path d="M5 2v4h5V2"/><path d="M5 9h6v5H5z"/></svg>
       </button>
-      {nomFichier && <span className="attic-nom-fichier" title={currentFilePath ?? undefined}>{nomFichier}</span>}
+      {nomFichier && (
+        <span className="attic-nom-fichier" title={currentFilePath ?? undefined}>
+          {nomFichier}
+          <button className="attic-nom-fichier-detacher" title={t("btn.detacherFichier")}
+            aria-label={t("btn.detacherFichier")} onClick={onDetacherFichier}>×</button>
+        </span>
+      )}
       <button className="attic-btn-icon" title={t("btn.exporter")} onClick={onExporter}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2v9M4 7l4 4 4-4M3 14h10"/></svg>
       </button>

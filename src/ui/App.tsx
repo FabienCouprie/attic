@@ -363,6 +363,17 @@ function Atelier() {
     setCurrentFilePath(null);
   }, [setNodes, setEdges, pushHistorique, pile, currentFilePath]);
 
+  // Détacher le projet de son fichier SANS toucher au canevas : l'équivalent d'un
+  // « nouveau projet » qui garde le graphe. Le nom disparaît de la barre d'outils,
+  // l'auto-save toutes les 30 s s'arrête — c'est le but : plus rien n'est écrit dans
+  // l'ancien fichier — et le prochain Ctrl+S redemande où enregistrer. Annulable, comme
+  // le vidage : l'instantané ne garde que le chemin, les nœuds ne bougeant pas.
+  const detacherFichier = useCallback(() => {
+    if (!currentFilePath) return;
+    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
+    setCurrentFilePath(null);
+  }, [currentFilePath, pushHistorique, pile]);
+
   // Auto-load SF2 au démarrage
   useEffect(() => {
     (async () => {
@@ -1027,6 +1038,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onAjouterCommentaire={ajouterCommentaire}
           onAjouterCadre={ajouterCadre}
           onSauvegarder={sauvegarder}
+          onDetacherFichier={detacherFichier}
           onImporter={importer}
         />
         <div className="attic-onglets">
