@@ -7,6 +7,7 @@ import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";
 import { NoteSequence } from "@magenta/music/esm/protobuf";
 import { parseMidi, writeMidi } from "midi-file";
+import { comparerEvenementsMidi } from "../audio/midi";
 import * as tf from "@tensorflow/tfjs";
 
 tf.disableDeprecationWarnings();
@@ -167,7 +168,9 @@ function noteSequenceToMidiEvents(ns: any) {
     { tick: timeToTicks(n.startTime), channel: n.channel, type: "noteOn", noteNumber: n.pitch, velocity: n.velocity },
     { tick: Math.max(timeToTicks(n.startTime) + 1, timeToTicks(n.endTime)), channel: n.channel, type: "noteOff", noteNumber: n.pitch, velocity: 0 },
   ]);
-  events.sort((a: any, b: any) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  // Note-off avant note-on à tick égal (voir `comparerEvenementsMidi`) : sinon une note
+  // qui se rejoue à la même hauteur est refermée à l'instant où elle s'ouvre.
+  events.sort((a: any, b: any) => comparerEvenementsMidi(a, b));
 
   let lastTick = 0;
   for (const e of events) {

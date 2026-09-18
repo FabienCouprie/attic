@@ -12,6 +12,7 @@ export * from "./effets-dynamique";
 export * from "./effets-spectral";
 export * from "./effets-montage";
 export * from "./generation";
+export * from "./mixage";
 export * from "./midi";
 export * from "./analyse";
 export * from "./batterie";

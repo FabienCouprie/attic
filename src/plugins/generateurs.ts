@@ -8,6 +8,7 @@ import {
   genererAccords, rendreAvecEchantillon,
   analyserMidi, rendreAvecSF2, genererBruit,
   genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes, filtrerCanauxMidi,
+  normaliserPic, limiterPic,
   appliquerInstrumentsParCanal,
   rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
@@ -27,6 +28,7 @@ import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { optionsPatrons } from "./patrons-rythme";
 import { avecDoc } from "./notices";
 import { creerAleatoire, hasardDuNoeud } from "../core";
 
@@ -410,7 +412,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
-      { nom:"Patron", nomEn:"Pattern", type:"choix", options:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionIds:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Marche militaire","Pop ballade","Pop dance","Pop latino","Pop folk","Pop R&B","Pop punk","Valse","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], optionsEn:["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","Samba","House","Techno","Drum & Bass","Trap","Disco","Ska","Bossa Nova","Tango","Calypso","Military march","Pop ballad","Pop dance","Pop latin","Pop folk","Pop R&B","Pop punk","Waltz","Bolero","Afrobeat","Rumba","Flamenco","Merengue","Breakbeat","Electro","Detroit techno","Minimal","Dubstep","Moombahton","Dembow","Reggaeton","Cumbia","Bachata","Blues shuffle","Gospel","Metal","Punk","Grunge","Trance","Hardstyle","Lo-fi hip hop","Boom bap","Drill","Trip hop","Amapiano","Salsa","Highlife","Baile funk","Tech house"], defaut:"Rock", defautEn: "Rock" },
+      { nom:"Patron", nomEn:"Pattern", type:"choix", ...optionsPatrons(), defaut:"Rock", defautEn: "Rock" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
@@ -939,6 +941,15 @@ export const fiches: FicheAudio[] = ([
         doc: "Neurones du réservoir rythme (détermine quand les autres jouent).", docEn: "Rhythm reservoir neurons (determines when others play)." },
       { nom: "Rythme densité", nomEn: "Rhythm density", plage: [10, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Densité du pattern rythmique.", docEn: "Rhythm pattern density." },
+      { ...PARAMETRE_SYNTHESE,
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon la synthèse interne. Le SoundFont joue les instruments choisis ci-dessous ; la synthèse interne, elle, garde ses timbres d'oscillateur et ignore ces choix.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, otherwise the built-in synthesis. The SoundFont plays the instruments chosen below; the built-in synthesis keeps its oscillator timbres and ignores those choices." },
+      { ...PARAMETRE_INSTRUMENT_SF2_SUIVI, nom: "Instrument mélodie", nomEn: "Melody instrument",
+        doc: "Preset du SoundFont global écrit dans la sortie « Mélodie MIDI », pour que l'instrument voyage avec le fichier : un nœud qui rend ce MIDI en aval suivra ce choix. « Suivre le MIDI » n'écrit rien. Au SoundFont, c'est aussi ce qu'on entend dans la sortie audio ; en synthèse interne, le nœud garde ses timbres d'oscillateur.", docEn: "Preset of the global SoundFont written into the « Melody MIDI » output, so the instrument travels with the file: a node rendering this MIDI downstream will follow it. « Follow MIDI » writes nothing. With the SoundFont, it is also what the audio output plays; with the built-in synthesis, the node keeps its oscillator timbres." },
+      { ...PARAMETRE_INSTRUMENT_SF2_SUIVI, nom: "Instrument basse", nomEn: "Bass instrument",
+        doc: "Preset du SoundFont global écrit dans la sortie « Basse MIDI », pour que l'instrument voyage avec le fichier : un nœud qui rend ce MIDI en aval suivra ce choix. « Suivre le MIDI » n'écrit rien. Au SoundFont, c'est aussi ce qu'on entend dans la sortie audio ; en synthèse interne, le nœud garde ses timbres d'oscillateur.", docEn: "Preset of the global SoundFont written into the « Bass MIDI » output, so the instrument travels with the file: a node rendering this MIDI downstream will follow it. « Follow MIDI » writes nothing. With the SoundFont, it is also what the audio output plays; with the built-in synthesis, the node keeps its oscillator timbres." },
+      { ...PARAMETRE_INSTRUMENT_SF2_SUIVI, nom: "Instrument harmonie", nomEn: "Harmony instrument",
+        doc: "Preset du SoundFont global écrit dans la sortie « Harmonie MIDI », pour que l'instrument voyage avec le fichier : un nœud qui rend ce MIDI en aval suivra ce choix. « Suivre le MIDI » n'écrit rien. Au SoundFont, c'est aussi ce qu'on entend dans la sortie audio ; en synthèse interne, le nœud garde ses timbres d'oscillateur.", docEn: "Preset of the global SoundFont written into the « Harmony MIDI » output, so the instrument travels with the file: a node rendering this MIDI downstream will follow it. « Follow MIDI » writes nothing. With the SoundFont, it is also what the audio output plays; with the built-in synthesis, the node keeps its oscillator timbres." },
       { ...PARAMETRE_INSTRUMENT_SF2, nom: "Kit de batterie", nomEn: "Drum kit", defaut: 16384,
         doc: "Preset du SoundFont global à utiliser pour la piste rythme MIDI. Sélectionnez un kit de percussion (banque 128).", docEn: "Preset of the loaded global SoundFont to use for the rhythm MIDI track. Select a percussion kit (bank 128)." },
       { nom: "Transpose batterie", nomEn: "Drum transpose", plage: [-36, 36], pas: 1, defaut: 0, unite: "demi-tons", uniteEn: "semitones",
@@ -971,14 +982,32 @@ export const fiches: FicheAudio[] = ([
         harmonieConnectivite: ctx.paramNombre("Harm. connectivité", 20),
         rythmeNeurones: ctx.paramNombre("Rythme neurones", 12),
         rythmeDensite: ctx.paramNombre("Rythme densité", 50),
+        melodieInstrument: ctx.paramNombre("Instrument mélodie", -1),
+        basseInstrument: ctx.paramNombre("Instrument basse", -1),
+        harmonieInstrument: ctx.paramNombre("Instrument harmonie", -1),
         rythmeInstrument: ctx.paramNombre("Kit de batterie", 0),
         rythmeTranspose: ctx.paramNombre("Transpose batterie", 0),
         influence: ctx.paramNombre("Influence", 50) / 100,
       };
       ctx.onProgress(traduire("progress.g_n_ration_multi_r_servoirs"));
       const { buffer, details, midis } = genererMultiReservoir(config);
+
+      // Le nœud rendait TOUJOURS son audio avec sa synthèse interne — oscillateurs et
+      // enveloppe maison —, si bien que les instruments choisis ne s'entendaient nulle
+      // part : ils ne partaient que dans les fichiers MIDI, pour un nœud en aval. Au
+      // SoundFont, on joue maintenant les quatre parties réunies, chacune sur son canal
+      // avec son programme, exactement comme la Groove Box.
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const auSoundFont = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
+      let audio = buffer;
+      if (auSoundFont) {
+        const { fusionnerMidis, rendreMidiDepuisBytes } = await import("../audio");
+        const parties = await Promise.all([midis.melody, midis.bass, midis.harmony, midis.rhythm]
+          .map(async (f) => new Uint8Array(await f.arrayBuffer())));
+        audio = await rendreMidiDepuisBytes(fusionnerMidis(parties), "SoundFont", config.volume);
+      }
       return {
-        valeurs: [buffer, midis.melody, midis.bass, midis.harmony, midis.rhythm],
+        valeurs: [audio, midis.melody, midis.bass, midis.harmony, midis.rhythm],
         message: traduire("msg.var_0_graine_var_1", details, config.graine > 0 ? config.graine : "auto"),
       };
     },
@@ -1109,24 +1138,27 @@ export const fiches: FicheAudio[] = ([
         nom: "Extension",
         nomEn: "Extension",
         type: "choix",
-        options: ["Aucune", "7e", "6e"],
-        optionsEn: ["None", "7th", "6th"],
-        optionIds: ["aucune", "septieme", "sixte"],
+        options: ["Aucune", "Idiomatique"],
+        optionsEn: ["None", "Idiomatic"],
+        optionIds: ["aucune", "idiomatique"],
         defaut: "Aucune",
         defautEn: "None",
-        doc: "Ajoute une 7e ou une 6e diatonique (selon la gamme choisie) à chaque accord, ainsi qu'à la note du réservoir mélodique quand elle se cale sur l'accord.",
-        docEn: "Adds a diatonic 7th or 6th (per the chosen scale) to each chord, and to the melodic reservoir note when it snaps to the chord.",
+        doc: "Ajoute une septième diatonique là où le genre la place, et non à tous les accords : sur la dominante seule en pop, rock, classique ou reggae ; sur chaque accord en jazz et en blues, dont c'est l'idiome ; sur la tonique et la sous-dominante en ambient. La note ajoutée vaut aussi pour le réservoir mélodique quand il se cale sur l'accord. Les anciens réglages « 7e » et « 6e », qui coloraient tous les accords, sont lus comme « Idiomatique ».",
+        docEn: "Adds a diatonic seventh where the genre puts it, rather than on every chord: on the dominant only for pop, rock, classical and reggae; on every chord for jazz and blues, whose idiom it is; on the tonic and subdominant for ambient. The added note also applies to the melodic reservoir when it snaps to the chord. The former « 7th » and « 6th » settings, which coloured every chord, are read as « Idiomatic »."
       },
       {
         nom: "Style rythmique",
         nomEn: "Rhythm style",
         type: "choix",
-        options: ["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","House","Techno","Pop dance","Bossa Nova"],
-        optionsEn: ["Rock","Four-on-the-floor","Funk","Hip-hop","Jazz","Reggae","House","Techno","Pop dance","Bossa Nova"],
+        // La même liste que la Boîte à rythmes, restreinte à ce que la boucle sait jouer :
+        // sa grille est en 4/4, et un patron qui n'a que du 3/4 y retombait en silence sur
+        // un patron de secours. Dix patrons étaient recopiés ici à la main ; ils sont
+        // cinquante-trois à savoir jouer en 4/4.
+        ...optionsPatrons("4/4"),
         defaut: "Pop dance",
         defautEn: "Pop dance",
-        doc: "Pattern de batterie appliqué sur la boucle.",
-        docEn: "Drum pattern applied to the loop.",
+        doc: "Patron de batterie appliqué sur la boucle, choisi parmi ceux de la Boîte à rythmes qui se jouent en 4/4.",
+        docEn: "Drum pattern applied to the loop, chosen among the Drum Machine's patterns that play in 4/4.",
       },
       {
         nom: "Neurones",
@@ -1243,8 +1275,8 @@ export const fiches: FicheAudio[] = ([
         pas: 1,
         defaut: 100,
         unite: "%",
-        doc: "Volume de la batterie, relatif aux trois parties mélodiques. À 100, elle sort MESURÉE À +8,5 dB au-dessus d'elles : la batterie n'est pas normalisée alors que le rendu SoundFont l'est, et le mix est ensuite ramené sous le plafond, ce qui écrase d'autant les accords, la basse et la mélodie. Changer leur instrument s'entend alors à peine. Compter 50 pour +2,5 dB, 30 pour un équilibre.",
-        docEn: "Drum volume, relative to the three melodic parts. At 100 they come out MEASURED AT +8.5 dB above them: drums are not normalized whereas the SoundFont render is, and the mix is then brought back under the ceiling, squashing the chords, bass and melody by as much. Changing their instrument then barely registers. Reckon 50 for +2.5 dB, 30 for a balance.",
+        doc: "Volume de la batterie, relatif aux parties mélodiques. Les deux bus sont mis à niveau séparément avant d'être additionnés : les parties mélodiques à 0,80 de pic, la batterie à 0,50 à 100 %. Le niveau de la mélodie ne dépend donc plus de la batterie — auparavant le mix entier était ramené au pic des frappes, et les parties mélodiques sortaient 9 dB plus bas avec la batterie à 100 qu'à 0. Au-delà de 100 la batterie domine, à 0 elle disparaît.",
+        docEn: "Drum volume, relative to the melodic parts. The two buses are levelled separately before being summed: the melodic parts to a 0.80 peak, the drums to 0.50 at 100%. The melody's level therefore no longer depends on the drums — the whole mix used to be scaled down to the drum hits' peak, and the melodic parts came out 9 dB lower with drums at 100 than at 0. Above 100 the drums dominate; at 0 they are gone.",
       },
       {
         ...PARAMETRE_SYNTHESE,
@@ -1418,6 +1450,25 @@ export const fiches: FicheAudio[] = ([
       // de frontière pour 150 s de musique. Mesuré : 2215 ms contre 55 ms, un
       // facteur 40 pour un résultat identique au bit.
       const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
+
+      // Normalisation : un pic par BUS, avant la somme.
+      //
+      // Le mix entier était ramené à 0,9 de son pic, et ce pic, ce sont les frappes de
+      // batterie : tout le reste descendait avec elles. Mesuré dans l'application, même
+      // graine, le mix sortait à −23,1 dB RMS avec la batterie à 100 et à −13,9 dB sans
+      // elle — 9 dB de moins pour les parties mélodiques à cause des transitoires de la
+      // caisse claire. Baisser « Volume batterie » n'y suffisait pas : à 25 % il restait
+      // 4,5 dB d'écart, parce que la frappe porte toujours le pic.
+      //
+      // Chaque bus est donc amené à son propre pic — les parties mélodiques à 0,80, la
+      // batterie à 0,50 pour « Volume batterie » à 100 — avant d'être additionnés. Le
+      // niveau de la mélodie ne dépend plus de la batterie, et « Volume batterie » règle
+      // vraiment un rapport entre les deux. La somme ne peut dépasser 1,30 ; une
+      // normalisation de sécurité ne touche alors qu'aux rares instants où les deux
+      // culminent ensemble.
+      normaliserPic(melodicBuf, 0.80);
+      normaliserPic(drumBuf, 0.50 * Math.max(0, volumeBatterie) / 100);
+
       const melL = melodicBuf.getChannelData(0), melR = melodicBuf.getChannelData(1);
       const batL = drumBuf.getChannelData(0), batR = drumBuf.getChannelData(1);
       const nMel = Math.min(melL.length, master.length);
@@ -1425,22 +1476,8 @@ export const fiches: FicheAudio[] = ([
       for (let i = 0; i < nMel; i++) { mixL[i] += melL[i]; mixR[i] += melR[i]; }
       for (let i = 0; i < nBat; i++) { mixL[i] += batL[i]; mixR[i] += batR[i]; }
 
-      // Normalisation douce du mix
-      let pic = 1e-9;
-      for (let c = 0; c < 2; c++) {
-        const ch = master.getChannelData(c);
-        for (let i = 0; i < ch.length; i++) {
-          const a = Math.abs(ch[i]);
-          if (a > pic) pic = a;
-        }
-      }
-      if (pic > 0.001) {
-        const g = 0.9 / pic;
-        for (let c = 0; c < 2; c++) {
-          const ch = master.getChannelData(c);
-          for (let i = 0; i < ch.length; i++) ch[i] *= g;
-        }
-      }
+      // Sécurité : seulement si la somme dépasse le plafond (voir audio/mixage.ts).
+      limiterPic(master, 0.95);
 
       return {
         valeurs: [master, fichierBatterie, fichierAccords, fichierBasse, fichierMelodie],

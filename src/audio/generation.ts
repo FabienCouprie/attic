@@ -1,5 +1,5 @@
 // audio/generation.ts — Extrait de l'ancien monolithe DSP.
-import type { NoteEvenement } from "./midi";
+import { comparerEvenementsMidi, type NoteEvenement } from "./midi";
 import { writeMidi } from "midi-file";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 import { caractereTimbre, type CaractereTimbreId } from "./timbres";
@@ -951,7 +951,12 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
 
   // Trier chaque piste par temps absolu puis convertir en deltaTimes
   function trierPiste(events: any[]): any[] {
-    events.sort((a, b) => a.deltaTime - b.deltaTime || (a.type === "noteOff" ? 1 : -1));
+    // Réglages, note-off, puis note-on à l'intérieur d'un même tick : voir
+    // `comparerEvenementsMidi`. L'ordre inverse faisait taire toute note relancée à la
+    // même hauteur sur le même canal — un accord ou un pad tenu jusqu'au suivant.
+    events.sort((a, b) =>
+      comparerEvenementsMidi({ tick: a.deltaTime, type: a.type }, { tick: b.deltaTime, type: b.type }),
+    );
     let tick = 0;
     const sorted: any[] = [];
     for (const e of events) {
@@ -1069,7 +1074,12 @@ export function genererAccords(
   }
 
   function trierPiste(events: any[]): any[] {
-    events.sort((a, b) => a.deltaTime - b.deltaTime || (a.type === "noteOff" ? 1 : -1));
+    // Réglages, note-off, puis note-on à l'intérieur d'un même tick : voir
+    // `comparerEvenementsMidi`. L'ordre inverse faisait taire toute note relancée à la
+    // même hauteur sur le même canal — un accord ou un pad tenu jusqu'au suivant.
+    events.sort((a, b) =>
+      comparerEvenementsMidi({ tick: a.deltaTime, type: a.type }, { tick: b.deltaTime, type: b.type }),
+    );
     let tick = 0;
     const sorted: any[] = [];
     for (const e of events) {

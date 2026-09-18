@@ -86,6 +86,44 @@ describe("genererMultiReservoir", () => {
     expect(res1.midis.rhythm.size).toBe(res2.midis.rhythm.size);
   });
 
+  it("écrit l'instrument choisi dans la sortie MIDI de chaque partie", async () => {
+    // Défaut corrigé : seule la piste de rythme portait son instrument. Les autres
+    // sorties partaient sans changement de programme, donc le nœud qui les rendait en
+    // aval retombait sur le piano par défaut, et les cases n'avaient aucun effet.
+    // 24 = guitare nylon, 33 = basse doigtée, 48 = ensemble de cordes.
+    const res = genererMultiReservoir({ ...config(), melodieInstrument: 24, basseInstrument: 33, harmonieInstrument: 48 } as never);
+    const programme = async (fichier: File) => {
+      const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      const ev = midi.tracks.flat().find((e) => e.type === "programChange") as { programNumber?: number; channel?: number } | undefined;
+      return ev ? { programme: ev.programNumber, canal: ev.channel } : null;
+    };
+    expect(await programme(res.midis.melody)).toEqual({ programme: 24, canal: 0 });
+    expect(await programme(res.midis.bass)).toEqual({ programme: 33, canal: 1 });
+    expect(await programme(res.midis.harmony)).toEqual({ programme: 48, canal: 2 });
+  });
+
+  it("n'écrit aucun instrument quand on laisse « Suivre le MIDI »", async () => {
+    const res = genererMultiReservoir(config() as never);
+    for (const fichier of [res.midis.melody, res.midis.bass, res.midis.harmony]) {
+      const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      expect(midi.tracks.flat().some((e) => e.type === "programChange")).toBe(false);
+    }
+  });
+
+  it("donne un canal à chaque partie, pour qu'elles ne se disputent pas le même instrument", async () => {
+    // Assez long pour que les quatre parties jouent : sur deux mesures, l'harmonie
+    // peut ne produire aucune note, et le test ne vérifierait rien.
+    const res = genererMultiReservoir({ ...config(), mesures: 8 } as never);
+    const canaux = async (fichier: File) => {
+      const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      return new Set(midi.tracks.flat().filter((e) => e.type === "noteOn").map((e) => (e as { channel: number }).channel));
+    };
+    for (const [nom, fichier, canal] of [["mélodie", res.midis.melody, 0], ["basse", res.midis.bass, 1],
+                                         ["harmonie", res.midis.harmony, 2], ["rythme", res.midis.rhythm, 9]] as [string, File, number][]) {
+      expect(await canaux(fichier), nom).toEqual(new Set([canal]));
+    }
+  });
+
   it("mappe la piste rythmique sur une batterie General MIDI", async () => {
     const res = genererMultiReservoir(config() as any);
     const bytes = new Uint8Array(await res.midis.rhythm.arrayBuffer());

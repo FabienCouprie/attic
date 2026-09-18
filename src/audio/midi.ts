@@ -20,6 +20,34 @@ export interface InstrumentCanal {
   banque: number;
 }
 
+/**
+ * Rang d'un événement à l'intérieur d'un même tick : réglages, puis note-off, puis note-on.
+ *
+ * L'ordre comptait, et il était inversé. Une note qui se rejoue à la même hauteur sur le
+ * même canal — un accord tenu jusqu'au suivant, une basse qui répète sa fondamentale —
+ * porte un note-off exactement au tick du note-on qui la relance. Le note-off écrit
+ * APRÈS refermait la note qui venait de s'ouvrir : durée nulle, et `rendreAvecSF2`
+ * écarte tout ce qui dure moins d'une milliseconde. En blues, dont la progression est
+ * I–I–I–I, les huit accords portent les mêmes hauteurs : on n'entendait que le premier,
+ * puis plus rien — et la basse suivait le même sort dès qu'un degré se répétait.
+ *
+ * Le note-off d'abord referme l'ancienne note à sa durée, le note-on relance ensuite :
+ * les deux notes existent, et l'attaque se réentend à chaque accord.
+ */
+function rangEvenement(type: string): number {
+  if (type === "noteOn") return 2;
+  if (type === "noteOff") return 1;
+  return 0; // setTempo, timeSignature, controller, programChange : avant les notes.
+}
+
+/** Comparateur d'événements MIDI absolus : par tick, puis par rang dans le tick. */
+export function comparerEvenementsMidi(
+  a: { tick: number; type: string },
+  b: { tick: number; type: string },
+): number {
+  return a.tick - b.tick || rangEvenement(a.type) - rangEvenement(b.type);
+}
+
 export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   notes: NoteMidi[];
   dureeTotale: number;
@@ -276,7 +304,7 @@ export function notesVersFichierMidi(
     lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: n.note, velocity: 0 });
   }
 
-  lignes.sort((a, b) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  lignes.sort(comparerEvenementsMidi);
 
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
@@ -339,6 +367,33 @@ export async function appliquerInstrumentMidi(
  * l'emporteraient sinon, et le réglage resterait sans effet. Les anciens
  * changements du canal visé sont donc retirés.
  */
+/**
+ * Réunit plusieurs fichiers MIDI en un seul, une piste par fichier.
+ *
+ * Un nœud qui produit une sortie MIDI par partie — le Multi-réservoir, la Groove Box —
+ * doit aussi pouvoir les jouer ensemble, avec l'instrument de chacune. Les pistes sont
+ * reprises telles quelles : chaque partie garde son canal et son changement de programme.
+ *
+ * La résolution (ticks par noire) du PREMIER fichier fait foi : elle est la même pour
+ * tous ceux que ce projet écrit. Un fichier de résolution différente serait rejoué à la
+ * mauvaise vitesse, donc il est refusé plutôt que mal joué.
+ */
+export function fusionnerMidis(fichiers: Uint8Array[]): Uint8Array {
+  const lus = fichiers.map((octets) => parseMidi(octets));
+  if (lus.length === 0) throw new Error("Aucun MIDI à fusionner.");
+  const tpm = lus[0].header.ticksPerBeat;
+  for (const m of lus) {
+    if (m.header.ticksPerBeat !== tpm) {
+      throw new Error(`Résolutions MIDI différentes : ${m.header.ticksPerBeat} et ${tpm} ticks par noire.`);
+    }
+  }
+  const pistes = lus.flatMap((m) => m.tracks);
+  return new Uint8Array(writeMidi({
+    header: { format: 1 as const, numTracks: pistes.length, ticksPerBeat: tpm },
+    tracks: pistes,
+  } as never));
+}
+
 export function appliquerInstrumentsParCanal(
   bytes: Uint8Array,
   parCanal: Map<number, number>,
@@ -758,7 +813,12 @@ export async function transposerQuantifierMidi(
         }
       }
 
-      eventsAbsolus.sort((a, b) => a.tick - b.tick || (a.evt.type === "noteOff" ? 1 : -1));
+      // Un note-on de vélocité nulle vaut un note-off : il doit être rangé comme tel.
+      const typeReel = (evt: any) =>
+        evt.type === "noteOn" && evt.velocity === 0 ? "noteOff" : evt.type;
+      eventsAbsolus.sort((a, b) =>
+        comparerEvenementsMidi({ tick: a.tick, type: typeReel(a.evt) }, { tick: b.tick, type: typeReel(b.evt) }),
+      );
       let prevTick = 0;
       for (const ea of eventsAbsolus) {
         ea.evt.deltaTime = Math.max(0, ea.tick - prevTick);
@@ -919,7 +979,7 @@ export async function arpegerMidi(
     lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: 0, noteNumber: n.note, velocity: 0 });
   }
 
-  lignes.sort((a, b) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  lignes.sort(comparerEvenementsMidi);
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
   for (const l of lignes) {

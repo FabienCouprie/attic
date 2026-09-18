@@ -206,12 +206,28 @@ function noteDepuisLecture(lecture: number, moyenne: number, ecartType: number,
   return baseMidi + intervalles[degre] + octDecal * 12;
 }
 
-// Mappe l'énergie du réservoir vers une vélocité
-function etatVersVelocite(res: Reservoir): number {
+/** Énergie du réservoir : RMS des activations. */
+function energieReservoir(res: Reservoir): number {
   let energie = 0;
   for (let i = 0; i < res.n; i++) energie += res.etats[i] * res.etats[i];
-  energie = Math.sqrt(energie / res.n); // RMS des activations
-  return Math.max(20, Math.min(127, Math.round(energie * 100)));
+  return Math.sqrt(energie / res.n);
+}
+
+/**
+ * Énergie → vélocité, RAPPORTÉE au morceau, comme la hauteur.
+ *
+ * L'énergie était multipliée par 100 et plafonnée à 20 en bas : les activations
+ * tenant autour de 0,4, la mélodie sortait autour de 45 de vélocité, quand
+ * l'accompagnement de la Groove Box est écrit entre 60 et 95. Mesuré sur le rendu,
+ * la mélodie sortait 10 dB sous les accords : on ne l'entendait plus.
+ *
+ * Centrée sur 100 avec 25 d'amplitude, elle reste au-dessus d'un accompagnement sans
+ * saturer, et garde ses nuances : c'est l'écart à la moyenne du morceau qui module,
+ * pas la valeur absolue de l'énergie, qui dépend des réglages du réseau.
+ */
+function velociteDepuisEnergie(energie: number, moyenne: number, ecartType: number): number {
+  const z = ecartType > 1e-9 ? Math.tanh((energie - moyenne) / (2 * ecartType)) : 0;
+  return Math.max(20, Math.min(127, Math.round(100 + 25 * z)));
 }
 
 export interface NoteGeneree {
@@ -236,16 +252,21 @@ export function genererReservoirMusical(config: ConfigReservoir): { notes: NoteG
   // Elle précède l'écriture des notes parce que la conversion en hauteurs se fait par
   // rapport à la distribution du morceau entier (voir noteDepuisLecture).
   const lectures: number[] = [];
-  const velocites: number[] = [];
+  const energies: number[] = [];
   for (let pas = 0; pas < totalPas; pas++) {
     // Impulsion rythmique : 1 aux temps, 0,3 ailleurs
     stepReservoir(res, pas % config.pasParBeat === 0 ? 1.0 : 0.3);
     lectures.push(lectureReservoir(res));
-    velocites.push(etatVersVelocite(res));
+    energies.push(energieReservoir(res));
   }
-  const moyenne = lectures.reduce((a, b) => a + b, 0) / Math.max(1, lectures.length);
-  const variance = lectures.reduce((a, b) => a + (b - moyenne) ** 2, 0) / Math.max(1, lectures.length);
-  const ecartType = Math.sqrt(variance);
+  const stat = (xs: number[]) => {
+    const moyenne = xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
+    const variance = xs.reduce((a, b) => a + (b - moyenne) ** 2, 0) / Math.max(1, xs.length);
+    return { moyenne, ecartType: Math.sqrt(variance) };
+  };
+  const { moyenne, ecartType } = stat(lectures);
+  const energieStat = stat(energies);
+  const velocites = energies.map((e) => velociteDepuisEnergie(e, energieStat.moyenne, energieStat.ecartType));
 
   // SECONDE PASSE : les tirages — silence, répétition, densité — dans le même ordre
   // qu'avant, pour qu'une graine donne toujours le même morceau.
