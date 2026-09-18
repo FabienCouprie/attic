@@ -24,6 +24,7 @@
   --text-badge: #a99bb8;
   --success: #9d4edd;
   --success-dim: #5e2a7e;
+  --arret: #e0576f;
   --accent: #a855f7;
   --etiquette-bg: #2a1f3d;
   --cat-entree: #4c6ef5;
@@ -62,6 +63,7 @@
   --text-badge: #cfe2fb;
   --success: #34d399;
   --success-dim: #1f6d54;
+  --arret: #fb7185;
   --accent: #5eb3f5;
   --etiquette-bg: #1a3f7f;
 }
@@ -95,6 +97,7 @@
   --text-badge: #999;
   --success: #40c057;
   --success-dim: #2b5a35;
+  --arret: #e76f51;
   --execution-outline: #36a2eb;
 }
 
@@ -151,6 +154,37 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .palette-composant-puce { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .palette-composant-nom { flex: 1; }
 
+/* ── Infobulle du catalogue ──
+   Remplace l'attribut `title`, qui mettait une seconde à paraître et ne savait afficher
+   qu'un bloc de texte. Position fixe : la palette défile et rogne, le panneau doit
+   pouvoir la déborder. Le placement est calculé dans `infobulle-fiche.ts`. */
+.attic-infobulle {
+  position: fixed; z-index: 100; width: 300px; max-width: 90vw;
+  padding: 10px 12px; border-radius: 8px;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  color: var(--text-primary); font-size: 12px; line-height: 1.45;
+  pointer-events: none; /* le panneau ne doit jamais voler le survol à l'entrée */
+}
+.attic-infobulle-nom { font-weight: 700; font-size: 13px; color: var(--text-title); }
+.attic-infobulle-resume { margin-top: 4px; color: var(--text-secondary); }
+.attic-infobulle-ports {
+  display: flex; gap: 12px; margin-top: 9px; padding-top: 8px;
+  border-top: 1px solid var(--border-divider);
+}
+.attic-infobulle-col { flex: 1; min-width: 0; }
+.attic-infobulle-col-titre {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted); margin-bottom: 3px;
+}
+.attic-infobulle-port { display: flex; align-items: center; gap: 5px; padding: 1px 0; }
+.attic-infobulle-puce { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.attic-infobulle-port-nom {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.attic-infobulle-port-type { color: var(--text-muted); font-size: 10.5px; flex-shrink: 0; }
+.attic-infobulle-port-vide { color: var(--text-muted); }
+
 /* Bouton de repli global de la palette */
 .palette-titre {
   display: flex; justify-content: space-between; align-items: center;
@@ -179,6 +213,15 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-nb { font-size: 11px; opacity: 0.5; font-weight: 400; }
 .attic-sf2-check { font-size: 9px; position: absolute; bottom: 2px; right: 2px; color: var(--text-muted); }
 .attic-sep { width: 1px; height: 22px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
+/* Les outils sont rangés par famille — fichier, édition, ressources, affichage,
+   application, exécution — séparées par un trait. Les boutons d'une même famille sont
+   serrés entre eux et espacés des voisines : le regroupement se voit avant de se lire. */
+.attic-groupe { display: flex; align-items: center; gap: 1px; flex-shrink: 0; }
+/* Un outil coupé — la sauvegarde automatique — s'affiche en retrait : l'icône barrée dit
+   déjà l'état, la couleur le confirme sans crier. */
+.attic-btn-coupe { color: var(--text-muted); }
+.attic-btn-coupe:hover { color: var(--text-secondary); }
+.attic-groupe + .attic-sep { margin: 0 4px; }
 .attic-spacer { flex: 1; }
 .attic-btn-icon {
   display: inline-flex; align-items: center; justify-content: center;
@@ -217,6 +260,18 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-btn-lancer:hover { filter: brightness(1.08); }
 .attic-btn-lancer:active { transform: scale(0.97); }
 .attic-btn-lancer:disabled { background: var(--success-dim); cursor: default; transform: none; filter: none; }
+/* Pendant un run, le même bouton arrête : il change de couleur pour qu'on ne le
+   confonde pas avec un lancement, et il pulse doucement — c'est le seul endroit de la
+   barre qui dit que quelque chose tourne, depuis qu'il ne montre plus « … ». */
+.attic-btn-arreter { background: var(--arret, #e76f51); }
+.attic-btn-arreter:hover { filter: brightness(1.08); }
+@media (prefers-reduced-motion: no-preference) {
+  .attic-btn-arreter { animation: attic-pulse-arret 1.6s ease-in-out infinite; }
+}
+@keyframes attic-pulse-arret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
 
 /* ── Onglets ── */
 .attic-onglets {
@@ -742,6 +797,20 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .inspecteur-param label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
 .inspecteur-param-ligne { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .inspecteur-param-ligne label { margin-bottom: 0; }
+/* Un paramètre dont la valeur n'est plus celle du défaut : nom en gras et plus clair,
+   plus un point de couleur dont l'infobulle rappelle le défaut. Les deux, parce que le
+   gras seul se remarque mal dans une colonne de noms déjà en demi-gras. */
+.inspecteur-param-modifie label { font-weight: 800; color: var(--text-primary); }
+/* Le point est aussi le bouton qui remet le défaut : il s'entoure d'un halo au survol
+   pour qu'on voie qu'il se clique, sans grossir la ligne. */
+.inspecteur-puce-modifie {
+  width: 6px; height: 6px; border-radius: 50%; flex: none; padding: 0;
+  border: none; cursor: pointer;
+  background: var(--accent); box-shadow: 0 0 4px var(--accent);
+  transition: box-shadow 0.15s;
+}
+.inspecteur-puce-modifie:hover { box-shadow: 0 0 0 3px var(--bg-hover-accent), 0 0 6px var(--accent); }
+.inspecteur-puce-modifie:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .inspecteur-doc-btn {
   width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border);
   background: var(--bg-btn); color: var(--text-secondary); font-size: 10px;

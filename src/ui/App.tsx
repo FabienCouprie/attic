@@ -24,6 +24,7 @@ import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
+import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
@@ -201,6 +202,16 @@ function Atelier() {
   const [enExecution, setEnExecution] = useState(false);
   const enExecRef = useRef(false);
   const [paletteOuverte, setPaletteOuverte] = useState(() => localStorage.getItem("attic-palette-ouverte") !== "false");
+  // Sauvegarde automatique : bascule du groupe Fichier, retenue d'une session à l'autre.
+  // Coupée, elle l'est pour de bon — ni au battement des 30 s, ni à la fermeture.
+  const [sauvegardeAutoActive, setSauvegardeAutoActive] = useState(() => lirePreference());
+  const basculerSauvegardeAuto = useCallback(() => {
+    setSauvegardeAutoActive((prev) => {
+      const suivant = !prev;
+      try { localStorage.setItem(CLE_PREFERENCE, suivant ? "1" : "0"); } catch {}
+      return suivant;
+    });
+  }, []);
   const togglePalette = useCallback(() => {
     setPaletteOuverte((prev) => {
       const next = !prev;
@@ -466,7 +477,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
+  const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -916,7 +927,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
-  const { sauvegarder, exporter, importer } = usePersistance({
+  const { sauvegarder, sauvegarderAuto, exporter, importer } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
@@ -924,15 +935,53 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     currentFilePath, setCurrentFilePath,
   });
 
-  // ── Auto-save périodique ──
-  // Sauvegarde le fichier courant toutes les 30 secondes si un fichier est ouvert.
+  // ── Sauvegarde automatique ──
+  //
+  // Toutes les 30 secondes, en silence, tant qu'un fichier de projet est ouvert — et
+  // seulement si le graphe a changé depuis la dernière écriture.
+  //
+  // Le minuteur est monté UNE FOIS par fichier. Il dépendait auparavant de `sauvegarder`,
+  // dont l'identité change à chaque rendu : chaque modification du graphe démontait
+  // l'effet et relançait le compte à zéro, si bien que la sauvegarde n'avait lieu qu'au
+  // repos. Mesuré dans l'application avant correction : dix changements de paramètre
+  // espacés de dix secondes, cent une secondes de travail, aucune écriture. Elle
+  // sauvegardait quand on ne faisait rien, et pas quand on travaillait.
+  //
+  // La fonction appelée est lue dans une ref, pour que le minuteur garde le graphe à
+  // jour sans avoir à se remonter.
+  //
+  // La bascule est lue dans une ref elle aussi : le minuteur n'a pas à se remonter quand
+  // on la change, et `sauvegarderAuto` s'abstient d'écrire si elle est coupée.
+  const sauvegardeAutoActiveRef = useRef(sauvegardeAutoActive);
+  sauvegardeAutoActiveRef.current = sauvegardeAutoActive;
+  const sauvegarderAutoRef = useRef(sauvegarderAuto);
+  sauvegarderAutoRef.current = () => sauvegarderAuto(sauvegardeAutoActiveRef.current);
   useEffect(() => {
     if (!currentFilePath) return;
     const id = setInterval(() => {
-      sauvegarder().catch((err) => console.error("[attic] Auto-save failed", err));
-    }, 30000);
+      sauvegarderAutoRef.current().catch((err) => console.error("[attic] Sauvegarde automatique échouée", err));
+    }, PERIODE_SAUVEGARDE_MS);
     return () => clearInterval(id);
-  }, [currentFilePath, sauvegarder]);
+  }, [currentFilePath]);
+
+  // Et une dernière fois à la fermeture : entre deux battements, jusqu'à trente secondes
+  // de travail ne tiennent qu'en mémoire. Le processus principal interrompt la fermeture,
+  // envoie cette demande et attend la réponse — puis ferme, quoi qu'il arrive : une
+  // fenêtre qui refuserait de se fermer serait pire que la perte qu'on évite. La réponse
+  // part donc dans tous les cas, y compris si la sauvegarde échoue ou n'a pas lieu d'être.
+  useEffect(() => {
+    const api = (window as any).api;
+    if (!api?.fermetureDemandeSauvegarde) return;
+    api.fermetureDemandeSauvegarde(async () => {
+      try {
+        await sauvegarderAutoRef.current();
+      } catch (err) {
+        console.error("[attic] Sauvegarde à la fermeture échouée", err);
+      } finally {
+        api.fermeturePrete?.();
+      }
+    });
+  }, []);
 
   // ── Filet de sécurité anti-curseur collé ──
   // Si le bouton souris est relâché hors de la fenêtre (second écran, Alt-Tab,
@@ -1014,6 +1063,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             await lancer();
             rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
           }}
+          onArreter={arreter}
           onReinitialiser={reinitialiserTout}
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
@@ -1039,6 +1089,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onAjouterCadre={ajouterCadre}
           onSauvegarder={sauvegarder}
           onDetacherFichier={detacherFichier}
+          sauvegardeAuto={sauvegardeAutoActive}
+          onBasculerSauvegardeAuto={basculerSauvegardeAuto}
           onImporter={importer}
         />
         <div className="attic-onglets">

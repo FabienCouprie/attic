@@ -127,6 +127,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
   const enCoursRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  /**
+   * Arrêter l'exécution en cours, sans rien effacer.
+   *
+   * Le moteur savait déjà s'annuler — `reinitialiser*` s'en sert —, mais rien ne
+   * l'exposait : une fois lancé, un graphe allait jusqu'au bout, et le seul recours
+   * devant un nœud long était de fermer l'application. Ce que le bouton « Arrêter »
+   * appelle. Les résultats déjà calculés restent en place : arrêter n'est pas
+   * réinitialiser.
+   *
+   * L'arrêt est demandé, pas immédiat : le nœud en cours reçoit `signal` et s'arrête
+   * quand il le consulte ; la boucle, elle, n'enchaîne plus le suivant. Renvoie `false`
+   * si rien ne tournait.
+   */
+  const arreter = useCallback(() => {
+    if (!enCoursRef.current) return false;
+    abortControllerRef.current?.abort();
+    return true;
+  }, []);
+
   async function obtenirAudio() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
     if (audioCtxRef.current.state === "suspended") {
@@ -754,9 +773,28 @@ export function useExecutionGraphe(o: OptionsExecution) {
     } finally {
       enCoursRef.current = false;
       if (abortControllerRef.current === controller) abortControllerRef.current = null;
+      // Le nœud qui tournait à l'instant de l'arrêt garde le statut « en cours » : la
+      // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
+      // remettait tout à « attente », mais un arrêt simple ne touche à rien — le nœud
+      // resterait donc à tourner à l'écran, indéfiniment, sans que rien ne tourne.
+      if (controller.signal.aborted) {
+        setNodes((nds) => nds.map((n) => (
+          n.data.statut === "en_cours"
+            ? { ...n, data: { ...n.data, statut: "attente", progression: undefined } }
+            : n
+        )));
+      }
       // Seul le run global a positionné le spinner/flag ; une exécution ciblée
       // (nœud prioritaire) ne doit PAS effacer l'état d'un run global encore en cours.
-      if (estGlobal) setEnExecution(false);
+      //
+      // La ref est remise à faux ICI, et pas seulement par l'effet qui la synchronise sur
+      // l'état React : `lancer` la lit pour refuser un second run, et le début de cette
+      // fonction la met à vrai de la même façon, sans attendre React. Sans cette ligne,
+      // relancer aussitôt après la fin d'un run — ce qu'on fait naturellement après avoir
+      // cliqué sur « Arrêter » — tombait dans le garde-fou anti-double-clic et ne faisait
+      // rien du tout. Un test de bout en bout l'a pris sur le fait : après un arrêt, la
+      // barre d'espace laissait les quatorze nœuds « en attente ».
+      if (estGlobal) { enExecRef.current = false; setEnExecution(false); }
       // Lire la valeur LIVE (pas la closure, périmée quand onDefinirPrioritaire vient
       // de la fixer) pour toujours effacer la priorité après le run — sinon le run
       // global suivant reste filtré sur l'ancien nœud prioritaire.
@@ -764,5 +802,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [prioritaire, repertoire, t]);
 
-  return { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
+  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
 }

@@ -77,4 +77,10 @@ contextBridge.exposeInMainWorld("api", {
   majSauvegarderBackup: (data) => ipcRenderer.invoke("maj:sauvegarder-backup", data),
   majRestaurerBackupSync: () => ipcRenderer.sendSync("maj:restaurer-backup-sync"),
   majBackupDemande: (callback) => ipcRenderer.on("maj:backup-demande", () => callback()),
+
+  // Fermeture de la fenêtre : le processus principal l'interrompt, demande la sauvegarde
+  // du projet — ce que le renderer ne peut pas faire depuis `beforeunload`, l'écriture
+  // passant par IPC — puis ferme dès que `fermeturePrete` lui répond.
+  fermetureDemandeSauvegarde: (callback) => ipcRenderer.on("fermeture:sauvegarder", () => callback()),
+  fermeturePrete: () => ipcRenderer.send("fermeture:prete"),
 });

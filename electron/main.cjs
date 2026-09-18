@@ -13,6 +13,7 @@ const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
+const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 
 // Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
@@ -217,6 +218,11 @@ async function creerFenetre() {
     if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url);
     return { action: "deny" };
   });
+
+  // Sauvegarder le projet avant de fermer : la sauvegarde automatique écrit toutes les
+  // 30 secondes, et ce qui a été fait depuis le dernier battement ne tient qu'en mémoire.
+  // La séquence vit dans `fermeture-sauvegarde.cjs`, avec ses tests.
+  installerSauvegardeAvantFermeture({ fenetre, ipcMain });
 
   if (DEV) {
     // En dev, forcer un rechargement sans cache du renderer pour éviter qu'un

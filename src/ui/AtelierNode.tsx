@@ -10,6 +10,7 @@ import { useI18n } from "../i18n";
 import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
+import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
@@ -153,7 +154,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const statutClasse = data.statut === "en_cours" ? "en-cours" : data.statut === "termine" ? "termine" : data.statut === "erreur" ? "erreur" : "attente";
   const statutLabel = data.statut === "termine" ? t("statut.termine") : data.statut === "en_cours" ? (data.progression ?? t("statut.en_cours")) : data.statut === "erreur" ? t("statut.erreur") : t("statut.attente");
   const nodeClassName = data.statut === "en_cours" ? "running" : data.statut === "termine" ? "termine" : data.statut === "erreur" ? "erreur" : "attente";
-  const descriptionTooltip = def ? (lang === "en" && def.resumeEn ? def.resumeEn : def.resume) : undefined;
+  const descriptionTooltip = def ? resumeFiche(def, lang) : undefined;
 
   // ── Stabilité des handles ──
   const { getEdges, deleteElements, setNodes } = useReactFlow();
@@ -412,8 +413,8 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {docOpen && (def?.notice || def?.resume) && (
             <div className="attic-node-doc">
               <TexteAvecLiens texte={def.notice
-                ? (lang === "en" && def.noticeEn ? def.noticeEn : def.notice)
-                : (lang === "en" && def.resumeEn ? def.resumeEn : def.resume)} />
+                ? noticeFiche(def, lang)
+                : resumeFiche(def, lang)} />
             </div>
           )}
 
