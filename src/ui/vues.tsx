@@ -12,6 +12,10 @@ import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { copierTexte } from "./copier";
+import { NOTE_MAX, NOTE_MIN, disposition, nomNote, noteALaPosition } from "./clavier-disposition";
+import { DUREE_NOTE_LIVE, instrumentClavier, modeRenduClavier, volumeClavier } from "./clavier-son";
+import { sf2Chargee } from "../plugins/soundfontGlobal";
+import { rendreSequence } from "../audio/midi";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
@@ -717,31 +721,31 @@ function VueExport({ data }: VueProps) {
 }
 
 // ── Clavier mélodie (instrument jouable + enregistrement de séquence) ──
-function ClavierMelodie({ id }: VueProps) {
+function ClavierMelodie({ id, data }: VueProps) {
   const { t } = useI18n();
-  const OCTAVE_DEPART = 3, NB_OCTAVES = 5, BLANCHES_PAR_OCT = 7;
-  const totalBlanches = NB_OCTAVES * BLANCHES_PAR_OCT;
+  // Un 88 touches complet, La0 a Do8, comme un vrai clavier : il etait jusqu'ici limite
+  // a cinq octaves. La geometrie et le choix de la touche sous le curseur vivent dans
+  // `clavier-disposition.ts`, teste — les touches noires y sont enfin jouables.
   const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
-  const [larg, setLarg] = useState(0);
+  const [hauteurTouches, setHauteurTouches] = useState(90);
   useEffect(() => {
-    const el = contRef.current; if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setLarg(entry.contentRect.width));
+    const el = touchesRef.current; if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setHauteurTouches(entry.contentRect.height));
     ro.observe(el); return () => ro.disconnect();
   }, []);
-  const NOTES = useMemo(() => {
-    const arr: { note: number; noir: boolean }[] = [];
-    for (let o = OCTAVE_DEPART; o < OCTAVE_DEPART + NB_OCTAVES; o++) {
-      for (const [n, noir] of [[0, false], [1, true], [2, false], [3, true], [4, false], [5, false], [6, true], [7, false], [8, true], [9, false], [10, true], [11, false]] as const)
-        arr.push({ note: o * 12 + n, noir });
-    }
-    return arr;
-  }, []);
-  const blanches = useMemo(() => NOTES.filter((k) => !k.noir), [NOTES]);
-  const noires = useMemo(() => NOTES.filter((k) => k.noir).map((k) => ({
-    ...k, idxBlanche: blanches.findIndex((b) => b.note === k.note - 1),
-  })).filter((k) => k.idxBlanche >= 0), [NOTES, blanches]);
-  const NB = Math.max(22, larg > 0 ? larg / totalBlanches : 22), totalWidth = NB * totalBlanches;
-  const ctxRef = useRef<AudioContext | null>(null), activesRef = useRef<Map<number, OscillatorNode>>(new Map());
+  const LARGEUR_BLANCHE = 24, PROPORTION_NOIRE = 0.62;
+  const dispo = useMemo(() => disposition(NOTE_MIN, NOTE_MAX, LARGEUR_BLANCHE), []);
+  const blanches = dispo.blanches, noires = dispo.noires, totalWidth = dispo.largeurTotale;
+  // Les 88 touches debordent toujours du noeud : on arrive centre sur le do3, la ou se
+  // joue une melodie, plutot que sur le la0 tout en bas du piano.
+  useEffect(() => {
+    const el = touchesRef.current; if (!el) return;
+    const do3 = dispo.blanches.find((k) => k.note === 48);
+    if (do3) el.scrollLeft = Math.max(0, do3.x - LARGEUR_BLANCHE);
+  }, [dispo]);
+  // Une note en train de sonner, quel que soit le chemin — oscillateur ou echantillon du
+  // SoundFont : on ne garde que de quoi l'arreter.
+  const ctxRef = useRef<AudioContext | null>(null), activesRef = useRef<Map<number, { arreter: () => void }>>(new Map());
   const debutRef = useRef(0), enRegRef = useRef(false), dernierePresseRef = useRef(0);
   const seqRef = useRef<{ note: number; velocite: number; debut: number; fin: number }[]>([]);
   const [enReg, setEnReg] = useState(false), [touches, setTouches] = useState<Set<number>>(new Set());
@@ -749,36 +753,100 @@ function ClavierMelodie({ id }: VueProps) {
   const seq = seqRef.current;
   const pointerEnfonce = useRef(false);
   function getCtx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
-  function nomNote(n: number) { return ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][n % 12] + Math.floor(n / 12 - 1); }
   function calculerVelocite(): number { const now = performance.now(), delta = now - dernierePresseRef.current; dernierePresseRef.current = now; if (delta < 80) return 120; if (delta < 150) return 100; if (delta < 300) return 80; return 60; }
-  function jouer(note: number) { const ctx = getCtx(), osc = ctx.createOscillator(), gain = ctx.createGain(); osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12); gain.gain.setValueAtTime(0.12, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.5); activesRef.current.set(note, osc); }
-  function arreter(note: number) { const o = activesRef.current.get(note); if (o) { try { o.stop(); } catch {} activesRef.current.delete(note); } }
+  /** Les reglages du noeud, lus a chaque note : ils peuvent changer entre deux touches. */
+  function reglages() {
+    const params = data.parametres as Record<string, unknown> | undefined;
+    return {
+      mode: modeRenduClavier(params, !!sf2Chargee()),
+      instrument: instrumentClavier(params),
+      volume: volumeClavier(params),
+    };
+  }
+  /** La synthese interne, inchangee : immediate, et toujours disponible. */
+  function jouerFM(note: number, ctx: AudioContext) {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.5);
+    return { arreter: () => { try { osc.stop(); } catch {} } };
+  }
+  /**
+   * La meme note, rendue par le SoundFont choisi — c'est-a-dire par le chemin qui rendra
+   * l'audio du noeud. Le rendu est asynchrone : si la touche est relachee avant qu'il
+   * arrive, on n'emet rien plutot que de faire sonner une note deja finie.
+   */
+  function jouerSoundFont(note: number, ctx: AudioContext, r: ReturnType<typeof reglages>) {
+    let source: AudioBufferSourceNode | null = null;
+    let annule = false;
+    void (async () => {
+      try {
+        const buf = await rendreSequence(
+          [{ note, velocite: 100, debut: 0, fin: DUREE_NOTE_LIVE }],
+          "SoundFont", r.volume, r.instrument.programme, r.instrument.banque,
+        );
+        if (annule) return;
+        source = ctx.createBufferSource();
+        source.buffer = buf;
+        source.connect(ctx.destination);
+        source.start();
+      } catch (e) {
+        console.error("[attic] Clavier : rendu SoundFont impossible, retour a la synthese interne", e);
+        if (!annule) jouerFM(note, ctx);
+      }
+    })();
+    return { arreter: () => { annule = true; try { source?.stop(); } catch {} } };
+  }
+  function jouer(note: number) {
+    const ctx = getCtx(), r = reglages();
+    activesRef.current.set(note, r.mode === "SoundFont" ? jouerSoundFont(note, ctx, r) : jouerFM(note, ctx));
+  }
+  function arreter(note: number) { const o = activesRef.current.get(note); if (o) { o.arreter(); activesRef.current.delete(note); } }
   function presser(note: number) { setTouches((p) => new Set(p).add(note)); jouer(note); if (enRegRef.current) { seqRef.current.push({ note, velocite: calculerVelocite(), debut: (performance.now() - debutRef.current) / 1000, fin: 0 }); setVersion((v) => v + 1); } }
   function relacher(note: number) { setTouches((p) => { const n = new Set(p); n.delete(note); return n; }); arreter(note); if (enRegRef.current) { for (const s of seqRef.current) if (s.note === note && s.fin === 0) { s.fin = (performance.now() - debutRef.current) / 1000; break; } setVersion((v) => v + 1); } }
-  function trouverNoteDepuisPointer(e: React.PointerEvent): number | null { const el = touchesRef.current; if (!el) return null; const rect = el.getBoundingClientRect(), x = e.clientX - rect.left + el.scrollLeft, idx = Math.floor(x / NB); if (idx < 0 || idx >= blanches.length) return null; return blanches[idx].note; }
+  function trouverNoteDepuisPointer(e: React.PointerEvent): number | null {
+    const el = touchesRef.current; if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    // Le noeud vit dans un canevas que React Flow met a l'echelle : `getBoundingClientRect`
+    // rend des pixels ECRAN, quand la disposition des touches et `scrollLeft` sont en
+    // pixels de mise en page. Sans cette division, un clic tombait plusieurs touches plus
+    // loin des que le zoom n'etait pas exactement 1 — mesure dans l'application, viser le
+    // do diese 4 enfoncait le sol diese 4.
+    const echelle = el.offsetWidth > 0 ? rect.width / el.offsetWidth : 1;
+    // `clientLeft`/`clientTop` : l'epaisseur des bordures du conteneur — dont la
+    // garniture de 4 px au-dessus des touches —, que `rect` compte mais que ni
+    // `scrollLeft` ni la disposition des touches ne comptent.
+    const x = (e.clientX - rect.left) / (echelle || 1) - el.clientLeft + el.scrollLeft;
+    const y = (e.clientY - rect.top) / (echelle || 1) - el.clientTop;
+    return noteALaPosition(x, y, hauteurTouches, dispo, PROPORTION_NOIRE);
+  }
   function onPointerDown(e: React.PointerEvent) { if (e.button !== 0) return; e.preventDefault(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); pointerEnfonce.current = true; const note = trouverNoteDepuisPointer(e); if (note !== null) presser(note); }
   function onPointerMove(e: React.PointerEvent) { if (!pointerEnfonce.current) return; if (e.buttons === 0) { onPointerUp(); return; } const note = trouverNoteDepuisPointer(e); if (note !== null && !touches.has(note)) presser(note); }
   function onPointerUp() { pointerEnfonce.current = false; for (const note of activesRef.current.keys()) relacher(note); }
   function demarrerEnreg() { seqRef.current = []; setVersion((v) => v + 1); enRegRef.current = true; debutRef.current = performance.now(); setEnReg(true); }
   function arreterEnreg() { enRegRef.current = false; setEnReg(false); const now = performance.now(); for (const s of seqRef.current) if (s.fin === 0) s.fin = (now - debutRef.current) / 1000; setNodes((nds) => nds.map((nd) => nd.id === id ? { ...nd, data: { ...nd.data, sequenceNotes: [...seqRef.current] } } : nd)); setVersion((v) => v + 1); }
   function effacer() { seqRef.current = []; setVersion((v) => v + 1); for (const [n] of activesRef.current) arreter(n); setTouches(new Set()); setNodes((nds) => nds.map((nd) => nd.id === id ? { ...nd, data: { ...nd.data, sequenceNotes: [] } } : nd)); }
-  function jouerNoteSynthetisee(ctx: AudioContext, note: number, debut: number, duree: number, velocite: number) {
-    const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
-    const vol = 0.12 * (velocite / 127);
-    const t = ctx.currentTime + debut + 0.05;
-    g.gain.setValueAtTime(0, t - 0.02);
-    g.gain.linearRampToValueAtTime(vol, t + 0.01);
-    g.gain.setValueAtTime(vol, t + duree - 0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t + duree);
-    osc.connect(g).connect(ctx.destination);
-    osc.start(t); osc.stop(t + duree + 0.05);
-  }
-  function rejouer() {
+  /**
+   * « Rejouer » fait entendre CE QUE LE NOEUD RENDRA : la sequence passe par
+   * `rendreSequence`, la meme fonction que l'execution, avec le meme mode et le meme
+   * instrument. Elle etait auparavant rejouee a l'oscillateur, si bien qu'on ne pouvait
+   * pas s'ecouter avant de lancer le graphe.
+   */
+  async function rejouer() {
     const ctx = getCtx();
-    for (const s of seqRef.current) {
-      if (s.fin <= s.debut) continue;
-      jouerNoteSynthetisee(ctx, s.note, s.debut, s.fin - s.debut, s.velocite);
+    const notes = seqRef.current.filter((s) => s.fin > s.debut);
+    if (notes.length === 0) return;
+    const r = reglages();
+    try {
+      const buf = await rendreSequence(notes, r.mode, r.volume, r.instrument.programme, r.instrument.banque);
+      const source = ctx.createBufferSource();
+      source.buffer = buf;
+      source.connect(ctx.destination);
+      source.start();
+    } catch (e) {
+      console.error("[attic] Clavier : rejeu impossible", e);
     }
   }
   const [octaveClavier, setOctaveClavier] = useState(4);
@@ -795,17 +863,29 @@ function ClavierMelodie({ id }: VueProps) {
         <span className="clavier-nb">{seq.length} {t("clavier.notes")}</span>
         <span className="clavier-octave">←↑→ {nomNote(octaveClavier * 12)}–{nomNote(octaveClavier * 12 + 11)}</span>
       </div>
-      <div className={"clavier-touches" + (larg > 0 && totalWidth > larg ? " avec-scroll" : "")}
-        ref={touchesRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onLostPointerCapture={onPointerUp}
-        style={{ width: "100%", minHeight: 70 }}>
-        <div className="clavier-interieure" style={{ width: totalWidth, position: "relative", height: "100%" }}>
-          {blanches.map((b, i) => (
-            <div key={b.note} className={"clavier-blanche" + (touches.has(b.note) ? " enfoncee" : "")}
-              style={{ position: "absolute", left: i * NB, width: NB - 1, height: "100%", top: 0 }} />
+      {/* Chaque touche est un vrai bouton, portant sa hauteur et son etat enfonce : on
+          peut la lire, la cibler au clavier, et la designer dans un test. Le pointeur,
+          lui, est traite sur le conteneur pour que le glissando fonctionne. */}
+      <div className="clavier-touches"
+        ref={touchesRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onLostPointerCapture={onPointerUp}>
+        {/* Hauteurs en PIXELS, tirees d'une seule mesure : en pourcentage, elles se
+            resolvaient a zero — aucun parent n'ayant de hauteur definie, les touches
+            noires ne se voyaient pas. Le meme nombre sert au test de position, si bien
+            que ce qu'on voit et ce qu'on joue ne peuvent plus diverger. */}
+        <div className="clavier-interieure" style={{ width: totalWidth, position: "relative", height: hauteurTouches }}>
+          {blanches.map((b) => (
+            <button key={b.note} type="button" tabIndex={-1}
+              className={"clavier-blanche" + (touches.has(b.note) ? " enfoncee" : "")}
+              data-note={b.note} data-pitch={nomNote(b.note)} aria-pressed={touches.has(b.note)}
+              style={{ position: "absolute", left: b.x, width: b.largeur - 1, height: hauteurTouches, top: 0 }}>
+              {b.note % 12 === 0 && <span className="clavier-etiquette">{nomNote(b.note)}</span>}
+            </button>
           ))}
           {noires.map((k) => (
-            <div key={k.note} className={"clavier-noire" + (touches.has(k.note) ? " enfoncee" : "")}
-              style={{ position: "absolute", left: (k.idxBlanche + 1) * NB - NB * 0.3, width: NB * 0.55, height: "60%", top: 0 }} />
+            <button key={k.note} type="button" tabIndex={-1}
+              className={"clavier-noire" + (touches.has(k.note) ? " enfoncee" : "")}
+              data-note={k.note} data-pitch={nomNote(k.note)} aria-pressed={touches.has(k.note)}
+              style={{ position: "absolute", left: k.x, width: k.largeur, height: Math.round(hauteurTouches * PROPORTION_NOIRE), top: 0 }} />
           ))}
         </div>
       </div>
@@ -1361,8 +1441,10 @@ function VuePochette({ data }: VueProps) {
   );
 }
 
-// ── Songsee (image de visualisation audio) ──
-function VueSongsee({ data }: VueProps) {
+// ── Image engendree a partir d'un audio (Songsee, goniometre...) ──
+// Le composant est le meme que pour les autres images ; seul le message d'attente change,
+// puisque ces noeuds attendent un son et non une image.
+function VueImageDepuisAudio({ data }: VueProps) {
   const { t } = useI18n();
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.audio")} />;
 }
@@ -1580,7 +1662,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("comparaison-esthetique"), vue: VueComparaisonEsth, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
-  { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
+  { correspond: parId("visualisation-songsee"), vue: VueImageDepuisAudio, position: "avant" },
+  { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },

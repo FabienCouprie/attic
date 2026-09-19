@@ -13,16 +13,48 @@
 .clavier-controles button.actif { background: #e44; color: #fff; }
 .clavier-nb { font-size: 11px; color: var(--text-secondary); }
 .clavier-octave { font-size: 10px; color: var(--text-tertiary); margin-left: auto; }
-.clavier-touches { overflow-x: auto; }
-.clavier-touches.avec-scroll { overflow-x: scroll; }
-.clavier-interieure { position: relative; }
+
+/* Le clavier compte 88 touches : il déborde toujours, et défile.
+   Le liseré sombre en haut est la garniture d'un vrai clavier — c'est ce qui donne aux
+   touches leur assise, et il est ici en dégradé plutôt qu'en image. */
+/* Le conteneur prend la hauteur que le nœud lui laisse ; les touches, elles, sont
+   dimensionnées en pixels d'après cette hauteur mesurée — un pourcentage se résolvait
+   à zéro, faute de parent à hauteur définie, et les noires ne se voyaient pas. */
+.clavier-touches {
+  overflow-x: auto; overflow-y: hidden;
+  flex: 1 1 auto; min-height: 76px;
+  background: var(--bg-surface-alt);
+  border-radius: 3px;
+  /* La garniture d'un vrai clavier. Portee par le conteneur, et non par l'interieur :
+     une bordure sur l'interieur decalerait les touches sans decaler le test de position
+     — le rendu et le jeu doivent partager le meme repere. */
+  border-top: 4px solid #4a2a2a;
+}
+
 .clavier-blanche {
-  background: var(--bg-input); border: 1px solid var(--border);
+  padding: 0; border: 1px solid #8c8c96; border-top: none;
   border-radius: 0 0 4px 4px; cursor: pointer;
+  background: linear-gradient(180deg, #fbfbfd 0%, #f2f2f5 78%, #dcdce2 100%);
+  box-shadow: inset -2px 0 3px -2px rgba(0,0,0,0.35);
+  display: flex; align-items: flex-end; justify-content: center;
 }
-.clavier-blanche.enfoncee { background: var(--accent); }
+.clavier-blanche.enfoncee {
+  background: linear-gradient(180deg, var(--accent) 0%, #f2f2f5 160%);
+  box-shadow: inset 0 3px 6px -2px rgba(0,0,0,0.45);
+}
+/* Le nom de l'octave sous les do : de quoi se repérer sur sept octaves sans compter. */
+.clavier-etiquette {
+  font-size: 8px; color: #8c8c96; padding-bottom: 3px;
+  pointer-events: none; user-select: none; letter-spacing: -0.02em;
+}
+
 .clavier-noire {
-  background: var(--text-title); border-radius: 0 0 3px 3px;
+  padding: 0; border: none; border-radius: 0 0 3px 3px;
   cursor: pointer; z-index: 2;
+  background: linear-gradient(180deg, #4a4a52 0%, #1b1b20 62%, #303038 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset -1px 0 1px rgba(255,255,255,0.12);
 }
-.clavier-noire.enfoncee { background: var(--accent); }
+.clavier-noire.enfoncee {
+  background: linear-gradient(180deg, var(--accent) 0%, #1b1b20 140%);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.6);
+}
