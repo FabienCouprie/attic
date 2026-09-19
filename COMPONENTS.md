@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **306 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **308 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 59 | [Audio](#audio) (6) · [Generation](#generation) (43) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 143 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (118) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Inputs](#inputs) | 60 | [Audio](#audio) (6) · [Generation](#generation) (44) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 144 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (119) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
@@ -154,6 +154,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Chord Sequencer](#chord-sequencer) | Programs a chord progression on a step grid. |
+| [Curve](#curve) | Builds a modulation curve: oscillator, ramp, logistic sequence or random walk. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Drum Machine](#drum-machine) | Generates a drum pattern. |
 | [Drum Sequencer](#drum-sequencer) | Programs a drum pattern on a step grid (synthesized). |
@@ -375,6 +376,26 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. |
+
+#### Curve
+
+`generateur-courbe` · Inputs → Generation
+
+*Builds a modulation curve: oscillator, ramp, logistic sequence or random walk.*
+
+Builds a modulation curve to plug into an effect's Modulation input. A curve carries values between zero and one; the effect decides what zero and one mean at its end. The LOGISTIC SEQUENCE deserves an explanation, because it is this node's reason for being as much as the other shapes: seven Attic nodes each reimplemented it on their own — logistic echo, logistic tremolo, logistic vibrato, logistic auto-pan, logistic chopper, logistic Paulstretch, logistic mixer. Seven implementations of the same sequence, and for seven effects only. A single source plugged into any effect does the same work, and for every effect that accepts a modulation. The sequence itself is x next = r x (1 - x): below 3 it settles on one value, around 3.45 it alternates between two then four, and beyond 3.57 it turns chaotic and never repeats — that is where the Chaos setting gets interesting. The periodic shapes give the ordinary tremolo, vibrato and sweep; the ramp gives the « progressive » effects; the random walk gives a gentle drift that never comes back to the same place.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Curve | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Shape | choice | Sine | Sine / Triangle / Square / Ramp / Logistic / Random | The shape of the modulation. The LOGISTIC SEQUENCE is here for a precise reason: seven Attic nodes each reimplemented it on their own — logistic echo, logistic tremolo, and five others. A single source plugged into any effect does the same work, and on all of them rather than on seven. |
+| Duration | slider | 10 s | 0.5 – 120 s, step 0.5 | Length of the curve. It need not match the sound's: the effect stretches it to cover it, so a ramp stays a ramp whatever the sound's length. |
+| Frequency | slider | 0.5 Hz | 0.01 – 20 Hz, step 0.01 | Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. |
+| Chaos | slider | 3.9 | 2.5 – 4, step 0.01 | The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats. |
+| Seed | number | 1 | 1 – 999999, step 1 | Seed of the random walk. |
 
 #### Custom Sampler
 
@@ -1909,6 +1930,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Equalizer](#equalizer) | 9-band equalizer. |
 | [Exciter / Aural Enhancer](#exciter--aural-enhancer) | Adds presence via harmonic distortion in the high mids. |
 | [Fade](#fade) | Fade in/out. |
+| [Feature Follower](#feature-follower) | Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it. |
 | [Filter + Response](#filter--response) | Filters the signal AND displays the frequency response curve. |
 | [Flanger](#flanger) | Variable delay modulation. |
 | [Formant Shift](#formant-shift) | Formant shifting via LPC — change pitch and timbre independently (voice conversion). |
@@ -2072,11 +2094,14 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Gain | number | 0 dB | -60 – 60 dB | Gain applied to the signal, in decibels. |
+| Gain | number | 0 dB | -60 – 60 dB | Gain applied when no curve is connected to the Modulation input. |
+| Modulation min | number | -24 dB | -60 – 60 dB | What the curve's zero means. With no curve connected, this setting does nothing. |
+| Modulation max | number | 0 dB | -60 – 60 dB | What the curve's one means. |
 
 #### Audio Inverter
 
@@ -2545,6 +2570,26 @@ Applies a fade-in at the start and a fade-out at the end of the track, with adju
 | In | number | 0.5 s |  | Fade-in duration. |
 | Out | number | 0.5 s |  | Fade-out duration. |
 
+#### Feature Follower
+
+`suiveur-caracteristique` · Processing → Effects
+
+*Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it.*
+
+Extracts a feature from a sound to drive an effect with it. After Vincent Verfaille, Udo Zolzer and Daniel Arfib, « Adaptive Digital Audio Effects (A-DAFx): A New Class of Sound Transformations », IEEE Transactions on Audio, Speech and Language Processing 14(5), 2006, and « Implementation Strategies for Adaptive Digital Audio Effects », DAFx-02. Their idea is that an effect becomes something else when its setting stops being a fixed number and becomes a feature of the sound ITSELF: brightness opening its own filter, energy lengthening its own delay. No Attic node could do this. The four features say different things and do not replace one another. ENERGY follows the player's gesture, and is the most immediate. BRIGHTNESS — the spectrum's centre of gravity — follows timbre: it rises as the sound gets harsh, even at constant volume. FLATNESS tells a note from a noise, zero for a sine and one for white noise: it serves to treat breath and notes differently. FLUX marks attacks and falls back during sustains. INERTIA deserves a word: without it, an energy curve makes the parameter jump at every attack and the result chatters. The smoothing runs FORWARDS THEN BACKWARDS, never one way only — a one-way smoothing would delay the curve relative to the sound that produced it, and the filter would open after the note instead of with it. The node also passes the audio through unchanged, so it slots into a chain without cutting it. A curve always carries values between zero and one: the consumer decides what zero and one mean at its end, through its « Modulation min » and « Modulation max » settings.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Curve | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Feature | choice | Energy | Energy / Brightness / Flatness / Flux | What is followed, and the four say different things. ENERGY follows the player's gesture. BRIGHTNESS — the spectrum's centre of gravity — follows timbre and rises as the sound gets harsh. FLATNESS tells a note from a noise: zero for a sine, one for white noise. FLUX marks attacks and falls back during sustains. |
+| Inertia | slider | 70 % | 0 – 99 %, step 1 | Smoothing of the curve. Without it, an energy curve makes the parameter jump at every attack. The smoothing runs forwards then backwards so that it does not DELAY the curve: without that care, the filter would open after the note instead of with it. |
+| Rate | slider | 200 /s | 20 – 1000 /s, step 10 | Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates. |
+
 #### Filter + Response
 
 `reponse-filtre` · Processing → Effects
@@ -2556,6 +2601,7 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2563,6 +2609,8 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Type | choice | Lowpass | Lowpass / Highpass / Bandpass / Notch | Filter type. Lowpass passes lows, highpass passes highs, bandpass keeps a band, notch removes a band. |
 | Cutoff | number | 1000 Hz | 20 – 20000 Hz, step 1 | Filter hinge frequency (cutoff or band center). |
 | Resonance | number | 0.7 Q | 0.5 – 12 Q, step 0.1 | Quality factor Q: higher = a sharper peak at the cutoff. |
+| Modulation min | number | 200 Hz | 20 – 20000 Hz, step 1 | Cutoff that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | number | 6000 Hz | 20 – 20000 Hz, step 1 | Cutoff that the curve's one means. Feeding the sound's own BRIGHTNESS into this input gives the paper's adaptive effect: the filter opens as the sound gets harsh. |
 
 #### Flanger
 
@@ -4244,12 +4292,15 @@ Amplitude modulation: varies the volume periodically. Adjust the rate (vibration
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation rate (vibrations per second). |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). |
+| Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
 | Shape | choice | Sine | Sine / Square / Triangle / Sawtooth | LFO waveform shape. |
 
 #### Velvet Reverb

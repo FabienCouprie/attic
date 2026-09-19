@@ -420,6 +420,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.markov.tropCourt": { fr: "Morceau trop court pour cet ordre : baissez « Ordre ».", en: "Piece too short for this order: lower « Order »." },
   "msg.markov.stats": { fr: "{__VAR_0__} contextes · {__VAR_1__} transitions · {__VAR_2__} % sans choix", en: "{__VAR_0__} contexts · {__VAR_1__} transitions · {__VAR_2__}% with no choice" },
   "msg.markov.resultat": { fr: "{__VAR_0__} notes · {__VAR_1__} contextes appris · graine {__VAR_2__}", en: "{__VAR_0__} notes · {__VAR_1__} contexts learned · seed {__VAR_2__}" },
+  "msg.courbe.suivi": { fr: "{__VAR_0__} valeurs · {__VAR_1__}/s", en: "{__VAR_0__} values · {__VAR_1__}/s" },
+  "msg.courbe.engendree": { fr: "{__VAR_0__} valeurs · {__VAR_1__} s", en: "{__VAR_0__} values · {__VAR_1__} s" },
   "msg.velours.resultat": { fr: "queue de {__VAR_0__} s · {__VAR_1__} impulsions/s · {__VAR_2__} % mouillé", en: "{__VAR_0__} s tail · {__VAR_1__} impulses/s · {__VAR_2__} % wet" },
   "msg.velours.canal": { fr: "canal {__VAR_0__}/{__VAR_1__}", en: "channel {__VAR_0__}/{__VAR_1__}" },
   "msg.sms.resultat": { fr: "{__VAR_0__} partiels suivis · {__VAR_1__}", en: "{__VAR_0__} partials tracked · {__VAR_1__}" },

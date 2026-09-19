@@ -8,6 +8,7 @@ import {
   fusionnerPistes, bouclerAudio,
 } from "../audio";
 import { avecDoc } from "./notices";
+import { valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
 
 function zonesValides(z: any) {
@@ -101,13 +102,32 @@ export const fiches: FicheAudio[] = ([
   {
     id: "amplificateur", nom: "Amplificateur", univers: "Traitement", famille: "Effets",
     resume: "Amplification/atténuation du signal.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{nom:"Gain",plage:[-60,60],defaut:0,unite:"dB", nomEn: "Gain"}],
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+    ],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      {nom:"Gain",plage:[-60,60],defaut:0,unite:"dB", nomEn: "Gain",
+        doc: "Gain appliqué quand aucune courbe n'est branchée sur l'entrée Modulation.",
+        docEn: "Gain applied when no curve is connected to the Modulation input."},
+      {nom:"Modulation min",nomEn:"Modulation min",plage:[-60,60],defaut:-24,unite:"dB",
+        doc: "Ce que le zéro de la courbe veut dire. Sans courbe branchée, ce réglage ne sert pas.",
+        docEn: "What the curve's zero means. With no curve connected, this setting does nothing."},
+      {nom:"Modulation max",nomEn:"Modulation max",plage:[-60,60],defaut:0,unite:"dB",
+        doc: "Ce que le un de la courbe veut dire.",
+        docEn: "What the curve's one means."},
+    ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
-      const g = Math.pow(10, ctx.paramNombre("Gain",0)/20);
+      // UN SEUL CHEMIN DE CALCUL : sans courbe branchée, `valeursParametre` rend une constante à
+      // la valeur du réglage. Il n'existe donc pas de version « ordinaire » qui pourrait diverger
+      // de la version modulée — c'est l'invariant, tenu par construction plutôt que promis.
+      const decibels = valeursParametre(ctx.entree(1), a.length, ctx.paramNombre("Gain",0),
+        { min: ctx.paramNombre("Modulation min",-24), max: ctx.paramNombre("Modulation max",0) });
+      const gains = Float32Array.from(decibels, (db) => Math.pow(10, db/20));
       const r = new AudioBuffer({numberOfChannels:a.numberOfChannels,length:a.length,sampleRate:a.sampleRate});
-      for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*g; }
+      for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*gains[i]; }
       return { valeurs:[r] };
    }, nomEn: "Amplifier", resumeEn: "Amplification/ attenuation of the signal.",
  },

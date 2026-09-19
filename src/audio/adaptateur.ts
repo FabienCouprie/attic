@@ -22,6 +22,7 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
   registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
   registre.enregistrerTypeFlux({ id: "image", couleur: "#d63384", libelle: "Image" });
+  registre.enregistrerTypeFlux({ id: "courbe", couleur: "#b06fe0", libelle: "Courbe" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

@@ -121,6 +121,7 @@ import { fiches as f_decaleur } from "./decaleur-frequence";
 import { fiches as f_texture } from "./texture-statistique";
 import { fiches as f_sms } from "./sms";
 import { fiches as f_velours } from "./velours";
+import { fiches as f_courbe } from "./courbe";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -146,6 +147,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_texture,
   ...f_sms,
   ...f_velours,
+  ...f_courbe,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,
