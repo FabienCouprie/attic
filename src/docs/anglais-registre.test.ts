@@ -32,12 +32,13 @@ import "../audio/adaptateur";
 /**
  * Noms propres : leur accent n'est pas du français. « Möbius » et « Rössler » s'écrivent
  * ainsi dans les deux langues ; « bembé », le rythme d'Afrique de l'Ouest, aussi — c'est
- * son nom, et l'écrire « bembe » en anglais ne serait pas une traduction.
+ * son nom, et l'écrire « bembe » en anglais ne serait pas une traduction. « de Cheveigné »,
+ * auteur de YIN, relève du même cas : c'est ainsi qu'il signe ses articles en anglais.
  */
 // La limite finale est une négation et non un `\b` : en JavaScript, « é » n'est pas un
 // caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, » — le tréma de
 // Möbius, lui, est au milieu et ne posait pas ce problème.
-const TOLERES = /\b(?:möbius|rössler|bembé)(?![a-zà-ÿ])/gi;
+const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

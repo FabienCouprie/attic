@@ -139,3 +139,91 @@ describe("montage plugin", () => {
     expect(res.message).toContain("Aucune zone");
   });
 });
+
+// Les trois fins de boucle reçoivent EXACTEMENT la même chose — une arête par tour, dans
+// l'ordre des tours, le dépliage ne les distinguant pas (core/boucle-graphe.ts). Ce qui les
+// sépare est ce qu'elles en font, et c'est donc cela, et seulement cela, qu'on éprouve ici,
+// sur les mêmes entrées pour les trois.
+describe("fins de boucle A, B et C", () => {
+  const SR_B = 8000;
+
+  /** Un tour : une valeur constante reconnaissable, et sa propre durée. */
+  function tour(valeur: number, duree: number) {
+    const b = new AudioBuffer({ numberOfChannels: 1, length: Math.round(duree * SR_B), sampleRate: SR_B });
+    b.getChannelData(0).fill(valeur);
+    return b;
+  }
+
+  const ctxBoucle = (tours: AudioBuffer[], params: Record<string, number> = {}) => ({
+    entree: (i: number) => tours[i] ?? null,
+    entrees: () => tours,
+    paramTexte: (_nom: string, def: string) => def,
+    paramNombre: (nom: string, def: number) => params[nom] ?? def,
+    onProgress: () => {},
+    noeud: { data: {} },
+    runtime: null,
+  });
+
+  const trois = () => [tour(1, 0.5), tour(0.5, 0.5), tour(0.25, 0.25)];
+
+  it("A met les tours bout à bout : la durée est leur somme", async () => {
+    const f = registre.trouverDef("boucle-graphe-fin")!;
+    const res = await f.executer(ctxBoucle(trois()) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(out.duration).toBeCloseTo(0.5 + 0.5 + 0.25, 2);
+    // Et les tours sont dans l'ordre : on retrouve chaque valeur à sa place.
+    const d = out.getChannelData(0);
+    expect(d[10]).toBeCloseTo(1, 2);
+    expect(d[Math.round(0.6 * SR_B)]).toBeCloseTo(0.5, 2);
+    expect(d[Math.round(1.1 * SR_B)]).toBeCloseTo(0.25, 2);
+    expect(res.message).toContain("3");
+  });
+
+  it("B ne garde que le dernier tour — le même objet, sans le retoucher", async () => {
+    const f = registre.trouverDef("boucle-graphe-fin-b")!;
+    const tours = trois();
+    const res = await f.executer(ctxBoucle(tours) as any);
+    expect(res.valeurs[0]).toBe(tours[2]);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(out.duration).toBeCloseTo(0.25, 2);
+    expect(out.getChannelData(0)[0]).toBeCloseTo(0.25, 5);
+    expect(res.message).toContain("3");
+  });
+
+  it("C empile les tours : la durée est celle du plus long, et les tours s'additionnent", async () => {
+    const f = registre.trouverDef("boucle-graphe-fin-c")!;
+    const res = await f.executer(ctxBoucle(trois()) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    // Le plus long tour fait 0,5 s : la somme ne s'allonge pas, contrairement à A.
+    expect(out.duration).toBeCloseTo(0.5, 2);
+    const d = out.getChannelData(0);
+    expect(d[10]).toBeCloseTo(1 + 0.5 + 0.25, 2);      // les trois sonnent ensemble
+    expect(d[Math.round(0.4 * SR_B)]).toBeCloseTo(1 + 0.5, 2); // le troisième est fini
+  });
+
+  it("C annonce la crête, parce qu'empiler des tours dépasse 1 sans le dire", async () => {
+    const f = registre.trouverDef("boucle-graphe-fin-c")!;
+    const res = await f.executer(ctxBoucle([tour(1, 0.2), tour(1, 0.2)]) as any);
+    expect(res.message).toContain("2.00");
+  });
+
+  it("C baisse la somme quand on le lui demande", async () => {
+    const f = registre.trouverDef("boucle-graphe-fin-c")!;
+    const res = await f.executer(ctxBoucle([tour(1, 0.2), tour(1, 0.2)], { Niveau: -6 }) as any);
+    const out = res.valeurs[0] as AudioBuffer;
+    expect(out.getChannelData(0)[10]).toBeCloseTo(2 * Math.pow(10, -6 / 20), 2);
+  });
+
+  for (const id of ["boucle-graphe-fin", "boucle-graphe-fin-b", "boucle-graphe-fin-c"]) {
+    it(`${id} : le dit plutôt que de rendre du vide quand rien n'arrive`, async () => {
+      const f = registre.trouverDef(id)!;
+      const res = await f.executer(ctxBoucle([]) as any);
+      expect(res.valeurs[0]).toBeNull();
+      expect(res.message).toBeTruthy();
+    });
+  }
+
+  it("l'identifiant historique de A reste résolu, pour les graphes déjà enregistrés", () => {
+    expect(registre.trouverDef("boucle-graphe-fin-a")?.id).toBe("boucle-graphe-fin");
+  });
+});

@@ -5,7 +5,10 @@
 // qui comptent — les effets s'ACCUMULENT d'un tour à l'autre, et la fin de boucle reçoit
 // les n résultats DANS L'ORDRE — ainsi que les cas où l'utilisateur se trompe de câblage.
 import { describe, expect, it } from "vitest";
-import { FICHE_DEBUT, FICHE_FIN, TOURS_MAX, deplierBoucles } from "./boucle-graphe";
+import {
+  FICHES_FIN, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C, TOURS_MAX,
+  deplierBoucles, estFinDeBoucle,
+} from "./boucle-graphe";
 import type { AreteG, NoeudG } from "./meta";
 
 const n = (id: string, ficheId: string, parametres: Record<string, unknown> = {}): NoeudG =>
@@ -177,5 +180,61 @@ describe("câblages fautifs", () => {
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "x").length).toBe(2);
     expect(r.noeuds.filter((x) => x.data.ficheId === "y").length).toBe(3);
+  });
+});
+
+// Trois fins de boucle, un seul dépliage : c'est la promesse à tenir ici. Ce que chacune
+// fait des n résultats se vérifie sur son exécution (plugins/montage.test.ts) ; ce que le
+// dépliage doit garantir, c'est que B et C reçoivent exactement ce que reçoit A.
+describe("les trois fins de boucle", () => {
+  for (const [nomVariante, fiche] of [["B", FICHE_FIN_B], ["C", FICHE_FIN_C]] as const) {
+    it(`déplie une boucle refermée par la variante ${nomVariante} comme par A`, () => {
+      const avecA = deplierBoucles(
+        [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN)],
+        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+      );
+      const avecVariante = deplierBoucles(
+        [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", fiche)],
+        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+      );
+      expect(avecVariante.problemes).toEqual([]);
+      // Les trois tours sont bien recopiés, et les trois résultats arrivent sur la fin.
+      expect(avecVariante.noeuds.filter((x) => x.data.ficheId === "x").length).toBe(3);
+      expect(avecVariante.aretes.filter((x) => x.target === "f").length).toBe(3);
+      // Et le dépliage est le MÊME qu'avec A, à l'identifiant de fiche de la fin près.
+      expect(avecVariante.aretes).toEqual(avecA.aretes);
+    });
+  }
+
+  it("chaîne les tours vers B comme vers A : le dernier tour part bien du précédent", () => {
+    const r = deplierBoucles(
+      [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN_B)],
+      [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+    );
+    // La copie du tour 2 est alimentée par celle du tour 1, et par rien d'autre.
+    const versDernier = r.aretes.filter((x) => x.target === "d#2::m");
+    expect(versDernier.length).toBe(1);
+    expect(versDernier[0].source).toBe("d#1::m");
+  });
+
+  it("refuse une variante imbriquée dans une autre, comme pour deux A", () => {
+    const noeuds = [
+      n("d1", FICHE_DEBUT), n("d2", FICHE_DEBUT), n("m", "x"), n("f2", FICHE_FIN_C), n("f1", FICHE_FIN_B),
+    ];
+    const aretes = [a("e1", "d1", "d2"), a("e2", "d2", "m"), a("e3", "m", "f2"), a("e4", "f2", "f1")];
+    const r = deplierBoucles(noeuds, aretes);
+    expect(r.problemes.some((p) => p.code === "boucle-imbriquee" || p.code === "debuts-multiples")).toBe(true);
+  });
+
+  it("signale une variante sans début, plutôt que de la laisser passer pour un montage", () => {
+    const r = deplierBoucles([n("src", "gen"), n("f", FICHE_FIN_C)], [a("e", "src", "f")]);
+    expect(r.problemes).toEqual([{ noeudId: "f", code: "fin-sans-debut" }]);
+  });
+
+  it("reconnaît une fin de boucle quelle que soit sa variante, et rien d'autre", () => {
+    for (const fiche of FICHES_FIN) expect(estFinDeBoucle(fiche)).toBe(true);
+    expect(FICHES_FIN).toContain(FICHE_FIN); // l'identifiant historique de A reste une fin
+    expect(estFinDeBoucle("simple-boucle")).toBe(false);
+    expect(estFinDeBoucle(undefined)).toBe(false);
   });
 });

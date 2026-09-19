@@ -35,6 +35,10 @@ const ALIAS: Record<string, string> = {
   "fusionneur": "melangeur",
   "entree-micro": "enregistreur-audio",
   "reservoir-midi": "reservoir-musical",
+  // « Fin de boucle » est devenue « Fin de boucle A » quand B et C sont arrivées. Son
+  // identifiant n'a pas bougé — les graphes enregistrés le portent —, mais qui écrit un
+  // graphe à la main attend le suffixe du nom.
+  "boucle-graphe-fin-a": "boucle-graphe-fin",
 };
 
 function resoudre(id: string): string {

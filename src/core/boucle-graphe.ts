@@ -8,7 +8,8 @@
 //
 // C'est exactement la sémantique demandée. Si la chaîne interne transpose d'un demi-ton,
 // la deuxième copie transpose le résultat déjà transposé : au deuxième tour, deux
-// demi-tons. Et les n résultats arrivent tous sur le nœud de fin, qui les met bout à bout.
+// demi-tons. Et les n résultats arrivent tous sur le nœud de fin, qui en fait ce que sa
+// variante annonce — bout à bout (A), le dernier seul (B), ou empilés (C).
 //
 // Le même procédé sert déjà aux méta-composants (`aplatirGraphe`) : le graphe exécuté
 // n'est pas celui qu'on voit, et c'est sans conséquence puisque les statuts remontent aux
@@ -17,7 +18,26 @@ import { ancetres, descendants } from "./graphe";
 import type { AreteG, NoeudG } from "./meta";
 
 export const FICHE_DEBUT = "boucle-graphe-debut";
+
+// Trois fins de boucle, et UN SEUL dépliage. Ce qui les sépare n'est pas la façon de
+// répéter la chaîne — elle est identique — mais ce que chacune fait des n résultats une
+// fois qu'ils sont là : A les met bout à bout, B ne garde que le dernier, C les empile.
+// Le dépliage n'a donc pas à les distinguer : il lui suffit de savoir qu'un nœud referme
+// une boucle, d'où l'ensemble plutôt que la comparaison à une constante.
+//
+// L'identifiant de A reste `boucle-graphe-fin`, sans suffixe : les graphes déjà enregistrés
+// le portent, et un renommage d'identifiant les casserait. Un alias `boucle-graphe-fin-a`
+// est déclaré dans le registre pour qui l'écrirait de la façon attendue.
 export const FICHE_FIN = "boucle-graphe-fin";
+export const FICHE_FIN_B = "boucle-graphe-fin-b";
+export const FICHE_FIN_C = "boucle-graphe-fin-c";
+
+export const FICHES_FIN: readonly string[] = [FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C];
+
+const FINS = new Set(FICHES_FIN);
+
+/** Ce nœud referme-t-il une boucle, quelle que soit sa façon de rassembler les tours ? */
+export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has(ficheId ?? "");
 
 export const TOURS_MIN = 1;
 export const TOURS_MAX = 32;
@@ -56,7 +76,7 @@ const nombreDeTours = (n: NoeudG): number => {
  * doit rien coûter.
  */
 export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepliage {
-  const fins = noeuds.filter((n) => n.data.ficheId === FICHE_FIN);
+  const fins = noeuds.filter((n) => estFinDeBoucle(n.data.ficheId));
   const debuts = noeuds.filter((n) => n.data.ficheId === FICHE_DEBUT);
   if (fins.length === 0 && debuts.length === 0) {
     return { noeuds, aretes, origines: new Map(), problemes: [] };
@@ -83,7 +103,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
 
     if (interieur.some((id) => {
       const f = courantN.find((n) => n.id === id)?.data.ficheId;
-      return f === FICHE_DEBUT || f === FICHE_FIN;
+      return f === FICHE_DEBUT || estFinDeBoucle(f);
     })) {
       problemes.push({ noeudId: debutId, code: "boucle-imbriquee" });
       continue;

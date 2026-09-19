@@ -122,6 +122,16 @@ import { fiches as f_texture } from "./texture-statistique";
 import { fiches as f_sms } from "./sms";
 import { fiches as f_velours } from "./velours";
 import { fiches as f_courbe } from "./courbe";
+import { fiches as f_hauteur } from "./hauteur";
+import { fiches as f_stn } from "./stn";
+import { fiches as f_retard_spectral } from "./retard-spectral";
+import { fiches as f_declipper } from "./declipper";
+import { fiches as f_inpainting } from "./inpainting";
+import { fiches as f_pghi } from "./pghi";
+import { fiches as f_fdn } from "./fdn";
+import { fiches as f_clavier_banque } from "./clavier-banque";
+import { fiches as f_export_sfz } from "./export-sfz";
+import { fiches as f_instrument } from "./instrument-graphe";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -148,6 +158,16 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sms,
   ...f_velours,
   ...f_courbe,
+  ...f_hauteur,
+  ...f_stn,
+  ...f_retard_spectral,
+  ...f_declipper,
+  ...f_inpainting,
+  ...f_pghi,
+  ...f_fdn,
+  ...f_clavier_banque,
+  ...f_export_sfz,
+  ...f_instrument,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,

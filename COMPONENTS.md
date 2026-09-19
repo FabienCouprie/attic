@@ -3,16 +3,16 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **308 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **322 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 60 | [Audio](#audio) (6) · [Generation](#generation) (44) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 144 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (119) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Inputs](#inputs) | 61 | [Audio](#audio) (6) · [Generation](#generation) (45) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 156 | [Conversion](#conversion) (4) · [Editing](#editing) (19) · [Effects](#effects) (129) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
-| [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
+| [Outputs](#outputs) | 9 | [Export](#export) (3) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Others](#others) | 53 | [Csound wrapper](#csound-wrapper) (5) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (6) |
@@ -166,6 +166,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [GENDYN (Xenakis)](#gendyn-xenakis) | Stochastic synthesis: the waveform itself is a bounded random walk. |
 | [Groove Box](#groove-box) | Generates a groove loop: deterministic chord progression + reservoir melody + drums. |
 | [Infinity Series (Nørgård)](#infinity-series-nørgård) | Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon. |
+| [Instrument Note](#instrument-note) | Carries the played note into an instrument chain: audio excitation, one-note MIDI, and the pitch as a curve. |
 | [Koch Snowflake Arpeggiator](#koch-snowflake-arpeggiator) | Generates a polyrhythmic arpeggio from the Koch snowflake. |
 | [L-system](#l-system) | Generates a melody from a self-rewriting grammar (Lindenmayer). |
 | [Mandelbrot Mapper](#mandelbrot-mapper) | Generates a melody from the Mandelbrot set. |
@@ -677,6 +678,28 @@ Generates Per Nørgård's infinity series, discovered in 1959 and the entire mat
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Instrument Note
+
+`frontiere-note` · Inputs → Generation
+
+*Carries the played note into an instrument chain: audio excitation, one-note MIDI, and the pitch as a curve.*
+
+Carries the played note into an instrument chain. This is the BOUNDARY: everything wired between this node and « Instrument End » is the instrument's recipe, and the engine copies it once per keyboard note before execution, injecting the note into each copy. NOTHING IS TRANSPOSED: each note is computed at its own pitch, which is the difference between a synthesiser and a sampler. On its own — with no end downstream — the node renders the note set in the inspector: enough to listen to and tune the instrument at one pitch before spreading it across the eighty-eight keys. THREE OUTPUTS, and none replaces the other two. AUDIO: an excitation at the note's frequency — sawtooth to give a filter something to bite on, impulse to excite a resonator like a plucked string, noise for a breathy sound or a percussion. MIDI: a one-note file, for the nodes that play notes themselves — Csound instrument, physical models, SoundFont, drum synth. CURVE: the pitch normalised over the keyboard range, on a logarithmic scale, to drive a parameter with the note — a filter opening toward the treble, for instance. Offering only the first would have shut out the other two families of instruments.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Pitch | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Note | slider | 60 | 21 – 108, step 1 | MIDI note rendered (60 = middle C). This is the instrument's BOUNDARY: when an « Instrument End » is connected downstream, the engine copies the chain once per keyboard note and REPLACES this setting in each copy. On its own, the node renders the note set here — enough to listen to and tune the instrument at one pitch before spreading it across the 88 keys. |
+| Waveform | choice | Sawtooth | Sine / Sawtooth / Square / Triangle / Impulse / Noise | Shape of the excitation on the Audio output. The SAWTOOTH holds every harmonic, giving a filter something to work with; the IMPULSE excites a resonator like a plucked string; NOISE serves breathy sounds and percussion. The MIDI and Pitch outputs do not depend on this setting. |
+| Duration | slider | 1.5 s | 0.1 – 8 s, step 0.1 | Length of the excitation, hence of each sample in the bank. It decides the instrument's weight: eighteen zones of a second and a half come to about two megabytes. |
+| Volume | slider | 60 % | 0 – 100 %, step 1 | Level of the excitation. Keep it low if the chain resonates: a high-resonance filter can multiply the level tenfold. |
+| Velocity | slider | 100 | 1 – 127, step 1 | Velocity written into the MIDI output, for the nodes that take it into account. |
 
 #### Koch Snowflake Arpeggiator
 
@@ -1580,7 +1603,9 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
 | [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
 | [Loop](#loop) | Repeats the whole signal a given number of times. |
-| [Loop End](#loop-end) | Closes a graph loop and puts every pass's result end to end. |
+| [Loop End A](#loop-end-a) | Closes a graph loop and puts every pass's result end to end. |
+| [Loop End B](#loop-end-b) | Closes a graph loop and keeps only the last pass's result. |
+| [Loop End C](#loop-end-c) | Closes a graph loop and stacks the passes on top of one another, like the mixer. |
 | [Loop Start](#loop-start) | Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
@@ -1721,13 +1746,13 @@ Replays the whole input « Repeats » times in a row. The Fade parameter can smo
 | Repeats | number | 4 | 1 – 32, step 1 | Number of times the input is replayed in a row. |
 | Fade | number | 0 ms | 0 – 100 ms | Crossfade at each join between two repetitions. 0 = no crossfade (hard join). |
 
-#### Loop End
+#### Loop End A
 
 `boucle-graphe-fin` · Processing → Editing
 
 *Closes a graph loop and puts every pass's result end to end.*
 
-Closes a graph loop opened by « Loop Start », and puts every pass's result end to end: the output holds the N successive states, in the order they were produced. « Fade » smooths the join between two passes; at 0 ms they follow each other exactly. If this node has no « Loop Start » upstream, nothing is unrolled: it then behaves as a plain join of whatever it receives.
+Closes a graph loop opened by « Loop Start », and puts every pass's result end to end: the output holds the N successive states, in the order they were produced — its duration is therefore the sum of the passes. This is the loop end that lets you hear the TRANSFORMATION itself: you follow the sound drifting pass after pass. « Fade » smooths the join between two passes; at 0 ms they follow each other exactly. The two other ends do the same loop work and differ only in what they keep: « Loop End B » returns the last pass only, « Loop End C » stacks the passes on top of one another. A loop has a single end: choosing it is how you choose the result. If this node has no « Loop Start » upstream, nothing is unrolled: it then behaves as a plain join of whatever it receives.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1738,13 +1763,28 @@ Closes a graph loop opened by « Loop Start », and puts every pass's result end
 |---|---|---|---|---|
 | Fade | number | 0 ms | 0 – 500 ms, step 5 | Crossfade between two passes. 0 = hard join, the passes follow each other exactly. |
 
-#### Loop Start
+#### Loop End B
 
-`boucle-graphe-debut` · Processing → Editing
+`boucle-graphe-fin-b` · Processing → Editing
 
-*Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.*
+*Closes a graph loop and keeps only the last pass's result.*
 
-Opens a graph loop. Everything wired between this node and « Loop End » is played « Passes » times, and EACH PASS STARTS FROM THE PREVIOUS RESULT: if the chain transposes by a semitone, the second pass transposes an already transposed signal, so by two semitones in total, the third by three, and so on. « Loop End » then puts the passes end to end: the output contains the N successive states, in order. Attic's engine only runs acyclic graphs: the loop is therefore UNROLLED before execution — the inner chain is copied as many times as there are passes, and each copy is wired to the previous one. It shows in the computation time, which is that of N passes, not one. Anything entering the loop from outside through another port — a setting, a second source — feeds every pass identically. Anything leaving it other than through « Loop End » leaves only once, on the last pass. Limits: a loop cannot contain another loop, and a loop end can only have one start upstream. In those cases nothing is unrolled and the node says so instead of producing nonsense.
+Closes a graph loop opened by « Loop Start » and keeps only the LAST pass's result. The earlier passes are computed — they must be, each starting from the previous result — but they do not come out here: the output lasts a single pass. This is what you want when the loop is there to ITERATE rather than to let the iteration be heard: five passes of a light saturation to get the saturation a single pass cannot give, ten passes of a smoothing for a polished sound, a reverb applied again and again until nothing is left but a wash. « Loop End A » would keep the ten successive states end to end and return ten times the duration; here only the final state is kept. No setting: there is nothing to decide, and the number of passes is set on « Loop Start ». If this node has no « Loop Start » upstream, nothing is unrolled: it then returns what it receives.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+*No parameters.*
+
+#### Loop End C
+
+`boucle-graphe-fin-c` · Processing → Editing
+
+*Closes a graph loop and stacks the passes on top of one another, like the mixer.*
+
+Closes a graph loop opened by « Loop Start » and STACKS the passes: they all sound at once, summed from time zero, exactly as the mixer sums tracks. The output lasts as long as the longest pass, not the sum of the passes. This is what makes audible together what a loop produces one after the other: a canon if the chain delays the sound, a chord if it transposes, a choir if it detunes slightly. The mixer has no level setting because each track's level is set on the node producing it; here that is impossible — the passes are copies of a single chain and share their settings — hence the « Level » setting, applied to the sum. The message reports the PEAK reached: stacking ten passes of the same sound goes above 1, and that should be visible on the node rather than audible on playback; lower the level then. If this node has no « Loop Start » upstream, nothing is unrolled: it behaves as a mixer of whatever it receives.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1753,7 +1793,24 @@ Opens a graph loop. Everything wired between this node and « Loop End » is pla
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and « Loop End » is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
+| Level | number | 0 dB | -24 – 6 dB, step 0.5 | Level applied to the sum of the passes. At 0 dB they add up as they are, as on the mixer. |
+
+#### Loop Start
+
+`boucle-graphe-debut` · Processing → Editing
+
+*Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.*
+
+Opens a graph loop. Everything wired between this node and a « Loop End » — A, B or C — is played « Passes » times, and EACH PASS STARTS FROM THE PREVIOUS RESULT: if the chain transposes by a semitone, the second pass transposes an already transposed signal, so by two semitones in total, the third by three, and so on. The loop end then decides what is kept of the N successive states: « Loop End A » puts them end to end, « B » keeps only the last one, « C » stacks them on top of one another like the mixer. Attic's engine only runs acyclic graphs: the loop is therefore UNROLLED before execution — the inner chain is copied as many times as there are passes, and each copy is wired to the previous one. It shows in the computation time, which is that of N passes, not one. Anything entering the loop from outside through another port — a setting, a second source — feeds every pass identically. Anything leaving it other than through « Loop End » leaves only once, on the last pass. Limits: a loop cannot contain another loop, and a loop end can only have one start upstream. In those cases nothing is unrolled and the node says so instead of producing nonsense.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
 
 #### MIDI Join
 
@@ -1906,6 +1963,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [AI Denoise](#ai-denoise) | Denoises speech with the GTCRN model, with no noise profile to provide. |
 | [AI Separator](#ai-separator) | Separates audio sources via AI (Demucs 4/6 stems, MDX-Net). |
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
+| [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
 | [Audio Inverter](#audio-inverter) | Inverts the signal. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Beat Repeat / Stutter](#beat-repeat--stutter) | Captures and repeats a short segment at rhythmic intervals (stutter effect). |
@@ -1922,6 +1980,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Corpus Mosaicing](#corpus-mosaicing) | Rebuilds one sound from another's grains: the target's shape, the corpus's material. |
 | [DDSP Tone Transfer](#ddsp-tone-transfer) | Transfers the timbre of an audio clip to an instrument via a DDSP model (violin, flute, saxophone, trumpet). |
 | [De-esser](#de-esser) | Dynamic sibilance compression. |
+| [Declipper](#declipper) | Rebuilds the clipped peaks of a saturated sound, by looking for the simplest signal that accounts for what is left. |
 | [Dereverb](#dereverb) | Reverb attenuation. |
 | [Dirac Belt](#dirac-belt) | Spins the sound around the listener: after one lap it comes back inverted and cancels, after two it is intact. |
 | [Distortion](#distortion) | Saturation / overdrive. |
@@ -1931,6 +1990,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Exciter / Aural Enhancer](#exciter--aural-enhancer) | Adds presence via harmonic distortion in the high mids. |
 | [Fade](#fade) | Fade in/out. |
 | [Feature Follower](#feature-follower) | Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it. |
+| [Feedback Delay Network Reverb](#feedback-delay-network-reverb) | A reverb whose decay time is set separately for the low and the high end — as every real room behaves. |
 | [Filter + Response](#filter--response) | Filters the signal AND displays the frequency response curve. |
 | [Flanger](#flanger) | Variable delay modulation. |
 | [Formant Shift](#formant-shift) | Formant shifting via LPC — change pitch and timbre independently (voice conversion). |
@@ -1943,6 +2003,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Harmonic/Percussive Separation](#harmonicpercussive-separation) | Separates what sustains from what strikes, by median filtering the spectrogram (Fitzgerald, DAFx-10). |
 | [Harmonizer / Octaver](#harmonizer--octaver) | Adds pitch-shifted voices (octave, fifth…) under the original. |
 | [Impose Rhythm](#impose-rhythm) | Applies one MIDI file's rhythmic grid to another's pitches. |
+| [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [Inversion Mirror](#inversion-mirror) | Flips the spectrum around a pivot frequency: lows become highs and highs become lows. |
 | [Inversions and Voicings](#inversions-and-voicings) | Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
@@ -1961,6 +2022,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [MIDI Transposer/Quantizer](#midi-transposerquantizer) | Transposes and/or quantizes a MIDI file. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
 | [Modal Bar](#modal-bar) | Marimba, vibraphone, glockenspiel, tubular bell or bowl, by modal synthesis on published ratios. |
+| [Multi-Zone Sampler](#multi-zone-sampler) | Plays MIDI with a keyboard bank: each note takes its nearest zone. |
 | [Multiband Compressor](#multiband-compressor) | 3-band compressor with independent thresholds/ratios. |
 | [Negative Harmony](#negative-harmony) | Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6. |
 | [Noise Profile](#noise-profile) | Captures the spectral profile of a noise. |
@@ -1969,11 +2031,13 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Note Echo](#note-echo) | Layers time-shifted copies of a pattern, with decreasing velocity. |
 | [Octaver](#octaver) | Adds an upper and/or lower octave. |
 | [Paulstretch](#paulstretch) | Extreme phase-randomization time-stretch (stereo). |
+| [Phase Reconstruction (PGHI)](#phase-reconstruction-pghi) | Rebuilds a sound from its spectrogram magnitudes alone, without iterating: the phase is read from the magnitude's gradient. |
 | [Phase Vocoder Pitch](#phase-vocoder-pitch) | Transposes pitch via phase vocoder (frequency-domain), without changing duration. |
 | [Phase Vocoder Tempo](#phase-vocoder-tempo) | Changes tempo via phase vocoder (frequency-domain), with transient detection. |
 | [Phaser](#phaser) | All-pass filter cascade modulated by LFO (sweeping effect). |
 | [Ping-Pong Echo](#ping-pong-echo) | Stereo ping-pong echo. |
 | [Pitch ↔ Rhythm Continuum](#pitch--rhythm-continuum) | Slows a sound until its pitch turns into a pulse. |
+| [Pitch Follower](#pitch-follower) | Follows a sound's pitch instant by instant, to drive an effect with it. |
 | [Pitch Glissando](#pitch-glissando) | Pitch glissando from one pitch to another. |
 | [Pitch Shift](#pitch-shift) | Pitch shift. |
 | [Ply and Rotate](#ply-and-rotate) | Repeats each note within its own duration, and shifts the pitches along the grid. |
@@ -1993,12 +2057,15 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Scanned Synthesis](#scanned-synthesis) | Reads the shape of a slowly moving mechanical object as a wavetable: the timbre evolves endlessly while the note stays in tune. |
 | [Serial Operations](#serial-operations) | Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix. |
 | [Shakers](#shakers) | Shaken percussion — maracas, cabasa, tambourine, sleigh bells — from a stochastic particle model. |
+| [Sines + Transients + Noise (STN)](#sines--transients--noise-stn) | Splits a sound into three materials — what sustains, what strikes, what breathes — losing nothing. |
 | [Sinusoids + Noise (SMS)](#sinusoids--noise-sms) | Tracks a sound's partials and sets the rest aside: transpose the harmony without touching the breath. |
 | [Slide Stretch](#slide-stretch) | Time-stretch with a factor that gradually changes from start to end. |
 | [SoundTouch Pitch](#soundtouch-pitch) | Changes pitch while preserving duration (quality pitch-shift). |
 | [SoundTouch Rate](#soundtouch-rate) | Changes playback rate (tempo + pitch together), like a tape player. |
 | [SoundTouch Tempo](#soundtouch-tempo) | Changes tempo while preserving pitch (quality time-stretch). |
+| [Spectral Delay](#spectral-delay) | Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
+| [Spread Across Keyboard](#spread-across-keyboard) | Turns one sound into a sample bank playable across the 88 keys, in zones. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound — rain, fire, crowd — without copying a single sample of it. |
 | [Stereo Delay](#stereo-delay) | Independent left/right delay. |
 | [Stereo Spatialization](#stereo-spatialization) | Positions the sound in stereo space (left/right). |
@@ -2102,6 +2169,29 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 | Gain | number | 0 dB | -60 – 60 dB | Gain applied when no curve is connected to the Modulation input. |
 | Modulation min | number | -24 dB | -60 – 60 dB | What the curve's zero means. With no curve connected, this setting does nothing. |
 | Modulation max | number | 0 dB | -60 – 60 dB | What the curve's one means. |
+
+#### Audio Inpainting
+
+`remplissage-trou` · Processing → Effects
+
+*Rebuilds a missing passage by continuing the sound's own resonance from both sides.*
+
+Rebuilds a missing passage by continuing the sound's own resonance from both sides. After Amir Adler, Valentin Emiya, Maria G. Jafari, Michael Elad, Remi Gribonval and Mark D. Plumbley, « Audio Inpainting », IEEE Transactions on Audio, Speech and Language Processing 20(3), 2012, which gave the problem its name; the method used is the one that remains the reference for short gaps, the autoregressive interpolation of Janssen, Veldhuis and Vries (1986), revisited in 2024 by Mokry and Rajmic as « Janssen 2.0 », which confirms it still stands up to sparse and neural methods on gaps of a few tens of milliseconds. WHAT WAS MISSING: « Click Removal » interpolates SHORT clicks, a few samples. Nothing rebuilt a gap of twenty or fifty milliseconds — a network dropout, a scratch, a blank to make disappear. Yet the Multi-Zone Selector is already there to POINT AT the passage: select it, and the node rebuilds it. THE IDEA: the sound is assumed autoregressive, that is, each sample is roughly a linear combination of the preceding ones. This is not a fancy — it is what an instrument does, its material imposing a resonance. The problem bites its own tail, since the sound would be needed to estimate the model and the model to remake the sound; Janssen sidesteps this by ALTERNATING: estimate the model on the current sound, gap filled as best one can, then recompute the gap that minimises this model's prediction error, and start again. Each pass improves both, and computation stops as soon as the gap stops moving. WHY IT WORKS SO WELL ON A NOTE: a sine is exactly a second-order autoregressive process — x[n] = 2·cos(w)·x[n-1] - x[n-2] — so an order of thirty carries fifteen partials with no approximation at all, phases included. MEASURED, as signal-to-distortion ratio computed on the gap only, against a linear interpolation, which is what one would do by hand: on a 2 ms gap, 12 dB for the straight line against 59 dB; at 5 ms, -4 against 65; at 10 ms, -3 against 62; at 20 ms, -3 against 53; at 50 ms, -6 against 41; at 100 ms, -6 against 34. The method therefore does not lose its superiority as gaps grow, it only loses precision. THE COST, on the other hand, grows as gap length times the square of the order: 90 ms of computation for a 20 ms gap, two and a half seconds for a 100 ms one — hence the « Max gap » setting, which leaves oversized gaps as they are and says so. ON NOISE there is nothing to predict and the reconstruction cannot be right; what is guaranteed is that it does not DIVERGE and stays within the sound's amplitudes. Nothing outside the gaps is touched.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Zones | control |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Gaps | choice | Connected zones | Connected zones / Detected silences | Where the gaps to fill come from. « Connected zones » takes them from the Zones input — the Multi-Zone Selector is made for this: select the passage to rebuild, and the node rebuilds it. « Detected silences » looks for mute passages itself, which suits recording dropouts, being exactly at zero. |
+| Silence threshold | slider | -60 dB | -90 – -20 dB, step 1 | Level below which a sample counts as missing, in automatic detection. Not strict zero: a file that has been through an encoder leaves values of a thousandth instead of exact silence. |
+| Minimum length | slider | 1 ms | 0.2 – 20 ms, step 0.1 | Length below which a silence is not taken for a gap, in automatic detection. Without it, every zero crossing of a sine would be taken for a gap — the exact mistake a naive detector makes. |
+| Order | slider | 0 | 0 – 256, step 8 | Order of the autoregressive model, that is, on how many past samples each sample depends. At ZERO it is chosen automatically: three times the gap length, capped at 256, which is the paper's rule. A useful landmark: a sine is exactly a second-order process, so an order of thirty carries fifteen partials with no approximation. |
+| Passes | slider | 12 | 1 – 40, step 1 | Alternations between estimating the model and computing the gap. Computation stops of its own accord as soon as the gap stops moving, so raising this number costs nothing when it is not needed. |
+| Max gap | slider | 120 ms | 5 – 500 ms, step 5 | Beyond this, the gap is left as it is and the node says so. This is not a limit of principle but of TIME: computation grows as gap length times the square of the order — 90 ms for a 20 ms gap, two and a half seconds for a 100 ms one. And quality drops: 53 dB at 20 ms, 34 dB at 100 ms. |
 
 #### Audio Inverter
 
@@ -2415,6 +2505,28 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Attack | number | 1 ms | 0.1 – 50 ms, step 0.1 | Reaction time (short = precise, long = smooth). |
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
 
+#### Declipper
+
+`restauration-ecretage` · Processing → Effects
+
+*Rebuilds the clipped peaks of a saturated sound, by looking for the simplest signal that accounts for what is left.*
+
+Rebuilds the clipped peaks of a saturated sound. After Srdan Kitic, Nancy Bertin and Remi Gribonval, « Sparsity and cosparsity for audio declipping: a flexible non-convex approach », LVA/ICA 2015 — the A-SPADE algorithm; the measurements follow the overview by Pavel Zaviska, Pavel Rajmic, Alexey Ozerov and Lucas Rencker, IEEE/ACM TASLP 2021. WHAT WAS MISSING: Attic could remove clicks, reduce noise, dereverberate, but no node repaired a CLIPPED sound — the Normalizer only changes gain, and turning a clipped sound down merely gives a quieter clipped sound. Yet clipping is the commonest fault of amateur recordings, and Attic can produce it itself: « Loop End C » goes past 1 as soon as three passes of the same sound are stacked. THE IDEA: a clipped sample is not unknown. We know it was AT LEAST the threshold, and we know its unclipped neighbours are right. So this is an inverse problem under constraints — find a signal that leaves the reliable samples as they are, goes above the threshold where it clipped, and is SPARSE in time-frequency, that is, sounds like a sound. Without that third condition there would be infinitely many solutions, each uglier than the last. HOW: two gestures alternate — make the spectrum sparse by keeping only the strongest lines, then put the signal back inside its constraints. Neither suffices alone, the first spoiling the constraints and the second the sparsity. Sparsity starts tight and loosens by one line per pass: the simplest explanation is tried first. WHAT IT GIVES, AND WHERE IT STOPS — measured as signal-to-distortion ratio computed on the clipped samples only, the overview's measure: 8 % of samples cut gives +7.5 dB, 14 % +13.5 dB, 24 % +16.8 dB, 41 % +15.3 dB, then 57 % gives only +2.7 dB. The gain peaks around a quarter of samples cut and COLLAPSES beyond half: what holds the signal is the RELIABLE samples, and once they are in the minority there are no longer enough constraints to single out a solution. Iterating more does not make up for it. TWO PROMISES KEPT WHATEVER HAPPENS, because the constraints are reimposed after the frames are joined: a sample that was not clipped comes out EXACTLY as it was, and a clipped sample always comes out above the threshold. The repaired sound therefore exceeds the threshold that bounded it — that is the point — and may leave the [-1, 1] range: the peak is announced in the message, and a Normalizer downstream sets that right. WHAT IT GIVES, AND WHERE IT STOPS — measured on two sounds of equal peak clipped at various thresholds, as signal-to-distortion ratio computed on the clipped samples only. On a FIVE-harmonic sound: +25 dB at threshold 0.8, +14 dB at 0.6, +13 dB at 0.5, +3 to +5 dB below. On a HUNDRED-harmonic SAWTOOTH: +2 dB at 0.8, but -10 dB at 0.6 and -5 dB at 0.5, then +1 to +6 dB again lower down. THE METHOD IS RELIABLE ON A SPARSE SOUND AND ERRATIC ON A DENSE ONE. The reason is not energy density — a sawtooth concentrates its own in its first lines and passes for sparse on every energy measure tried. It is that reconstruction has a FLOOR specific to each sound: rebuilding a sawtooth's corner from a few dozen lines takes exact phases, and the model cannot manage it. When the clipping damage is milder than that floor, repairing harms. This is consistent with the literature, which reports AVERAGE gains over music corpora rather than a per-signal guarantee: compare with the original before keeping the result. TWO SAFEGUARDS that are not in the paper, and are stated as such: a CEILING on reconstructed samples, because the error of a model that explains nothing takes refuge in the free samples — without it the peak ran to three times the threshold; and the RESIDUAL, announced in the message, which is the only thing the node can say about the quality of its own repair, having no original to compare against. High, the model did not account for the sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Threshold | choice | Automatic | Automatic / Manual | In automatic mode the threshold is guessed from PLATEAU length: a clipped sound holds consecutive samples at the same value, where an intact sine only grazes its peak one sample at a time. With no plateau, the node says so and returns the sound unchanged. |
+| Manual threshold | slider | 0.5 | 0.05 – 1, step 0.01 | Value above which a sample counts as clipped. Only used in manual mode. |
+| Window | choice | 1024 | 512 / 1024 / 2048 | Frame length. Long, the model has more spectral lines to account for the sound and repairs better; short, it follows a fast-changing sound better. |
+| Passes | slider | 60 | 10 – 200, step 5 | Maximum passes per frame. Sparsity loosens by ONE LINE per pass: the number of passes is therefore also the number of lines the model will eventually allow itself. Measured at 41 % clipped samples: 3.4 dB gained in ten passes, 11.2 in thirty, 15.3 in sixty. |
+| Max overshoot | slider | 2 | 1.1 – 4, step 0.1 | How many times the threshold a reconstructed sample may reach. This is not in the paper, and is stated as such: when the model no longer explains the sound, its error takes refuge in the FREE samples — precisely those being reconstructed — and the peak ran up to three times the threshold. The ceiling bounds the damage without changing anything when the method works: on a five-harmonic sound the reconstructed peak stays under 1.5 times the threshold. |
+| Tolerance | slider | 0.01 | 0.001 – 0.3, step 0.001 | Gap below which a frame is deemed explained, and computation stops. This setting matters more than it looks: measured on a sound clipped at 24 %, 0.01 gives 16.8 dB where 0.1 gives only 8.5 — stopping early was cutting convergence far too short. |
+
 #### Dereverb
 
 `dereverberation` · Processing → Effects
@@ -2589,6 +2701,32 @@ Extracts a feature from a sound to drive an effect with it. After Vincent Verfai
 | Feature | choice | Energy | Energy / Brightness / Flatness / Flux | What is followed, and the four say different things. ENERGY follows the player's gesture. BRIGHTNESS — the spectrum's centre of gravity — follows timbre and rises as the sound gets harsh. FLATNESS tells a note from a noise: zero for a sine, one for white noise. FLUX marks attacks and falls back during sustains. |
 | Inertia | slider | 70 % | 0 – 99 %, step 1 | Smoothing of the curve. Without it, an energy curve makes the parameter jump at every attack. The smoothing runs forwards then backwards so that it does not DELAY the curve: without that care, the filter would open after the note instead of with it. |
 | Rate | slider | 200 /s | 20 – 1000 /s, step 10 | Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates. |
+
+#### Feedback Delay Network Reverb
+
+`reverbe-reseau` · Processing → Effects
+
+*A reverb whose decay time is set separately for the low and the high end — as every real room behaves.*
+
+A reverb whose decay time is set separately for the low and the high end. After Jean-Marc Jot and Antoine Chaigne, « Digital delay networks for designing artificial reverberators », AES Convention 90, 1991 — the feedback delay network and, above all, the way to control reverberation time explicitly within it; exact RT60 control was taken up and refined by Sebastian J. Schlecht and Emanuel A. P. Habets, DAFx-17. WHAT WAS MISSING, and it is the only real gap among the five reverbs already present: NONE has a frequency-dependent decay. Convolution needs a response file; the others — simple, fractal, progressive, velvet — decay at one single rate everywhere. Yet that is exactly what a room does not do: air and materials absorb the high end far faster than the low, so a real reverb tail DARKENS as it dies. Without that, a reverb sounds like an effect rather than a place. HOW: eight delay lines looped into one another by a Hadamard matrix, which is UNITARY — it preserves energy, so the network would never die out by itself. It is the attenuation placed on each line that decides the decay, and separating diffusion from absorption in this way is the paper's idea: RT60 becomes adjustable without touching anything else. The delay lengths are PRIME, since two delays sharing a divisor would make their echoes coincide periodically — heard as a metallic ringing. THE ABSORPTION CALCULATION is derived rather than copied: a line of m samples is traversed fs/m times per second, so to lose 60 dB in T seconds each pass must cost 60·m/(T·fs) decibels; a first-order lowpass on each line then suffices to make that cost frequency-dependent, and its two coefficients solve exactly. MEASURED, by the Schroeder integral on the resulting response, band by band: for 2.00 s requested at the low end and 0.50 s at 8 kHz, one reads 1.96 s at 125 Hz, 1.90 at 500 Hz, 1.54 at 2 kHz and 0.58 at 8 kHz; for 1.00 s everywhere, one reads 0.98, 0.98, 1.01, 0.99 and 1.00. The transition between the two is gradual, like a first-order filter's, not a step. THE NODE MEASURES WHAT IT PRODUCES and announces it: enough to know whether the room requested is the room obtained, without having to measure it oneself. TWO PRECAUTIONS FOUND BY MEASURING. The first: solving the filter at Nyquist is simpler but makes the setting misleading — 0.73 s was measured at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to; hence the « High reference » setting. The second: asking for a high end LONGER than the low can be physically impossible, the loop's magnitude then exceeding unity — measured, a response whose peak reached 1.2 × 10^13 instead of dying out. A safeguard now bounds the absorption. Measured in the application with 0.5 s at the low end and 2 s at the high: the tail stays FLAT at 0.5 s in every band — the bound eats the inversion. This direction of the setting therefore does almost nothing, and it was better written down than left to be hunted for by ear. One output returns the IMPULSE RESPONSE itself, to look at or to feed the convolution reverb. Cost: 20 ms for two seconds of sound at eight lines.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio (stereo) |  |
+| output | Impulse response | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Low RT60 | slider | 2 s | 0.1 – 12 s, step 0.1 | Time the low end takes to lose 60 dB. This is the duration the ear calls « room size », and here it is requested rather than endured: the network holds it. Measured by the Schroeder integral on the resulting response — 1.96 s for 2.00 requested. |
+| High RT60 | slider | 0.7 s | 0.1 – 12 s, step 0.1 | Decay time at the reference frequency. THIS IS THE SETTING THE OTHER FIVE ATTIC REVERBS LACKED: none of them decays at anything but one single rate everywhere, whereas a room absorbs the high end far faster than the low — a real tail DARKENS as it dies. Setting it LONGER than the low end gives an effect no room produces, and stability then bounds severely what can be asked: the loop's magnitude cannot exceed unity, on pain of the reverb swelling instead of dying out. Measured in the application with 0.5 s at the low end and 2 s at the high: the tail stays FLAT at 0.5 s throughout, the difference being eaten by the bound. In other words this direction of the setting does almost nothing, and it is better read here than hunted for by ear. |
+| High reference | slider | 8000 Hz | 1000 – 16000 Hz, step 100 | Frequency at which « High RT60 » is exact. It exists because the first version solved the filter at Nyquist, which is simpler but makes the setting misleading: 0.73 s was measured at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to. Placed here, the setting announces what one hears. |
+| Delay lines | choice | 8 | 4 / 8 / 16 | Number of delay lines looped into one another. The more there are, the denser and smoother the tail; four is enough for a small room, sixteen gives a large hall. Their lengths are taken PRIME: two delays sharing a divisor would make their echoes coincide periodically, which is heard as a metallic ringing. |
+| Shortest delay | slider | 23 ms | 5 – 60 ms, step 1 | Length of the shortest line: this is what gives the apparent size of the place, even before the duration. |
+| Longest delay | slider | 79 ms | 20 – 200 ms, step 1 | Length of the longest line. The gap between the two makes the density of early echoes; narrow it and you hear a corridor, widen it and a cathedral. |
+| Width | slider | 100 % | 0 – 100 %, step 1 | Difference between the two channels. At zero the reverb is mono; the two channels come from different sign combinations of the same lines, which decorrelates them at no cost. |
+| Mix | slider | 35 % | 0 – 100 %, step 1 | Proportion of reverb. At 0 %, the output is the input. |
+| Tail | slider | 0 s | 0.2 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s — a reverb that stopped with the sound would not be one. |
 
 #### Filter + Response
 
@@ -2834,6 +2972,28 @@ Separates pitch from rhythm, then marries them again. The first input supplies a
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Instrument End
+
+`instrument-fin` · Processing → Effects
+
+*Closes an instrument chain and gathers every note's render into a keyboard bank.*
+
+Closes an instrument chain and gathers every note's render into a keyboard bank, playable by « Multi-Zone Sampler » and exportable as SFZ. THE ENGINE HAS ALREADY DONE THE WORK: before execution it copied the chain between « Instrument Note » and this node once per note, and each copy deposits its render here, IN NOTE ORDER. This node therefore only sets the zone bounds and the loops. HOW THIS DIFFERS FROM « SPREAD ACROSS KEYBOARD »: there, a recorded sound is TRANSPOSED to each zone, and a sound transposed by four octaves remains a sound transposed by four octaves. Here the recipe is REPLAYED at each pitch: there is no transposition artefact at all, and the zone width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. THE COST is the other side: the chain runs once per note, so eighteen times at ±2 semitones over 88 keys. The unrolling refuses beyond sixty-four notes, and says so, rather than launching hundreds of renders. The copies are INDEPENDENT — an instrument does not chain its notes, unlike a graph loop. Whatever leaves the chain other than through this node leaves only once, from the lowest note's copy.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Bank | bank |  |
+| output | Preview | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Zone width | slider | 2  semitones | 1 – 12  semitones, step 1 | Gap between two rendered notes. This is the setting that decides the COST: the chain is replayed once per note, so eighteen times at ±2 semitones over 88 keys, six times at ±6. Unlike spreading by transposition, the width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. |
+| Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0. |
+| Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8. |
+| Sustain loop | choice | Yes | Yes / No | Places in each zone a loop replayed while the key is held. Useful if the excitation is short and held notes are wanted. |
+| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample — after the attack, then. |
 
 #### Inversion Mirror
 
@@ -3227,6 +3387,27 @@ Definite-pitched percussion by modal synthesis. A bar does not vibrate like a st
 | Duration | number | 3 s | 0.1 – 15 s, step 0.1 | Length of the stroke, when no MIDI is connected. The Tibetan bowl needs several seconds for its beating to be heard. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
+#### Multi-Zone Sampler
+
+`sampler-multizones` · Processing → Effects
+
+*Plays MIDI with a keyboard bank: each note takes its nearest zone.*
+
+Plays a MIDI file with a keyboard bank built by « Spread Across Keyboard ». Each note takes its nearest zone and is resampled only by the gap between them — at most the zone width chosen at build time. The message reports the MAXIMUM SHIFT encountered: if it exceeds the width, the MIDI reaches outside the keyboard the bank covers, and the note was played by the nearest zone, hence transposed further. RELEASE is the fade-out time after the key is lifted; LOOP CROSSFADE, the length of the join when a held note outlasts its sample. The MIDI output passes the notes through unchanged, for chaining other nodes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| input | Bank | bank |  |
+| output | Audio | audio (stereo) |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Output level. Each note's velocity scales it. |
+| Release | slider | 50 ms | 1 – 2000 ms, step 1 | Fade-out time after the key is released. Short, notes cut off; long, they overlap. |
+| Loop crossfade | slider | 20 ms | 1 – 200 ms, step 1 | Length of the crossfade at the sustain loop's join. Too short, a click is heard on every turn; too long, the loop starts to breathe. |
+
 #### Multiband Compressor
 
 `compresseur-multibande` · Processing → Effects
@@ -3394,6 +3575,26 @@ Paulstretch: extreme time-stretch by randomizing the phases of the STFT. The sig
 | Window | number | 0.25 s | 0.01 – 1 s, step 0.01 | STFT window size in seconds. Large = smooth texture, small = more transients. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the phase randomization. The default is FIXED: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. |
 
+#### Phase Reconstruction (PGHI)
+
+`phase-pghi` · Processing → Effects
+
+*Rebuilds a sound from its spectrogram magnitudes alone, without iterating: the phase is read from the magnitude's gradient.*
+
+Rebuilds a sound from its spectrogram magnitudes alone, without iterating. After Zdenek Prusa, Peter Balazs and Peter L. Sondergaard, « A Noniterative Method for Reconstruction of Phase from STFT Magnitude », IEEE/ACM Transactions on Audio, Speech and Language Processing 25(5), 2017 — the PGHI algorithm. WHAT EXISTED BADLY: Attic has a Griffin-Lim node, which iterates — it projects alternately onto the wanted magnitudes and onto the set of true spectrograms, sixty times, starting from a randomly drawn phase. That is the 1984 method, and it has two faults no number of iterations fixes: it starts from nothing, and it falls into a local minimum that depends on the initial randomness — two renders never give the same sound. PGHI'S IDEA: phase is not independent of magnitude. For a GAUSSIAN window the two are linked exactly — the phase's derivative in time equals the angular frequency plus the log-magnitude's derivative in frequency divided by the window's parameter; and the phase's derivative in frequency equals minus the log-magnitude's derivative in time times that same parameter. The phase GRADIENT can therefore be read off the magnitude, which is known, and all that remains is to integrate it. THE SECOND MOVE in the paper is what separates it from a naive integration: integration does not proceed in an arbitrary order but STARTING FROM THE STRONGEST MAGNITUDES, through a priority heap, stopping where energy falls below the tolerance. The reason is that the gradient is reliable where there is energy and meaningless where there is none: integrating across an empty region would propagate noise through everything else. Hence the name: phase gradient heap integration. Regions separated by emptiness are integrated independently — the node reports their number as ISLANDS — which is of no consequence, only phase differences being audible. MEASURED, as spectral convergence, the paper's measure: on a harmonic sound, PGHI alone gives -18 dB in 30 ms, ten Griffin-Lim passes -6 dB in 40 ms, a hundred passes -21 dB in 350 ms, and PGHI FOLLOWED BY TEN PASSES -26 dB in 70 ms. In other words: better than a hundred passes, for a fifth of the time. ITS LIMIT, stated rather than left to be discovered: on NOISE the phase-magnitude relation is worth nothing, there being no structure to follow — measured, -8 dB for PGHI against -14 for ten Griffin-Lim passes. Refinement makes up for it, which is why the node refines by default. The node MEASURES its own reconstruction and announces it in decibels: enough to know what the result is worth without having to listen to it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Window | choice | 1024 | 512 / 1024 / 2048 / 4096 | Transform size. The window is GAUSSIAN rather than the Hann used elsewhere in Attic: it is the only one for which the relation between phase and magnitude is exact, and that relation is the whole algorithm. |
+| Refinement | slider | 10  passes | 0 – 60  passes, step 1 | Griffin-Lim passes applied AFTER PGHI, as the paper recommends: PGHI does not replace iteration, it gives it a starting point that makes sense. Measured on a harmonic sound: PGHI alone gives −18 dB of spectral convergence, ten Griffin-Lim passes alone −6, a hundred passes −21, and PGHI followed by ten passes −26, for a fifth of the hundred passes' computation time. At zero, you hear PGHI on its own. |
+| Tolerance | choice | 10⁻⁶ | 10⁻⁸ / 10⁻⁶ / 10⁻⁴ / 10⁻² | Below this fraction of the strongest magnitude, a point is not integrated and keeps zero phase. This is no detail: integrating across an empty region would propagate noise through the rest of the spectrogram, and that is precisely what the paper avoids by starting from the strongest magnitudes. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reconstructed sound. At 0 %, the output is the input. |
+
 #### Phase Vocoder Pitch
 
 `phase-vocoder-tonalite` · Processing → Effects
@@ -3486,6 +3687,29 @@ After the discovery Karlheinz Stockhausen formulated while composing "Kontakte" 
 | Duration | number | 30 s | 2 – 300 s, step 1 | Length of the crossing. Long, it gives time to hear the flip; short, it produces a falling effect. |
 | Octaves | number | 10 | 2 – 16, step 1 | Span of the sweep. Ten octaves is a factor of a thousand: a 200 Hz source ends at 0.2 Hz, one beat every five seconds. Below 5 you stay in the pitch domain and the demonstration does not work. |
 | Loop crossfade | number | 20 ms | 0 – 500 ms, step 5 | Crossfade so the source loops without a click. Slowed a thousandfold it would otherwise supply a fraction of a millisecond of material. |
+
+#### Pitch Follower
+
+`suiveur-hauteur` · Processing → Effects
+
+*Follows a sound's pitch instant by instant, to drive an effect with it.*
+
+Follows a sound's pitch instant by instant and returns it as a modulation curve. After Alain de Cheveigné and Hideki Kawahara, « YIN, a fundamental frequency estimator for speech and music », Journal of the Acoustical Society of America 111(4), 2002; and Matthias Mauch and Simon Dixon, « pYIN: a fundamental frequency estimator using probabilistic threshold distributions », ICASSP 2014. This is the feature the Feature Follower was missing, and it is not just one more: Verfaille's paper on adaptive effects cites pitch FIRST among the features that drive, and it is the one that yields the effects everyone quotes — a filter following the melody, a delay tuned to the note being played. Attic could detect chords and analyse a harmony; no node returned pitch instant by instant. HOW IT WORKS: YIN looks for how far the sound must be shifted to resemble itself most — that duration is the period, and its inverse the pitch. Its finding is the cumulative-mean normalisation: without it a sound resembles itself just as much shifted by TWO periods, and nothing tells a note from its octave. WHY TWO DECODINGS: YIN returns a single estimate per frame, and on a frame where the fundamental weakens that estimate is the octave — the curve jumps, and no smoothing repairs it since the right value was never produced. pYIN keeps several candidates weighted by a prior distribution over the threshold, then picks the most likely path over the whole sound: an ambiguous frame is settled by its neighbours. Measured on a held note broken by two weak passages: 17 faulty frames out of 119 with YIN, none with pYIN. The setting keeps both so that it can be heard rather than believed. THE PITCH CONTINUES THROUGH SILENCES instead of dropping to zero — the path goes through the « unvoiced » state of the pitch it was on — so an effect driven by the melody crosses a silence without slamming shut; it is the CONFIDENCE output that says where nothing was played, and it can be used to let an effect act on notes only. The curve's scale is logarithmic between « Lowest pitch » and « Highest pitch »: an octave is worth the same interval wherever it falls. The cost is one transform per frame: about 112 ms of computation per second of sound at the default rate.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Pitch | curve |  |
+| output | Audio | audio |  |
+| output | Confidence | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Lowest pitch | slider | 55 Hz | 27.5 – 500 Hz, step 0.5 | The lowest pitch searched for, and what the curve's ZERO means. It also decides the cost: the analysis window spans two of its periods, so the lower it is, the longer the analysis and the less it follows a fast gesture. |
+| Highest pitch | slider | 1760 Hz | 100 – 4000 Hz, step 10 | The highest pitch searched for, and what the curve's ONE means. The scale between the two is LOGARITHMIC: an octave is worth the same curve interval wherever it falls. |
+| Decoding | choice | pYIN (most likely path) | pYIN (most likely path) / YIN (plain threshold) | pYIN keeps several candidates per frame and picks the most likely path over the whole sound: an ambiguous frame is settled by its neighbours. YIN keeps a single candidate, and jumps an octave whenever the fundamental weakens. The second is here so the difference can be HEARD rather than taken on trust: on a held note broken by two weak passages, YIN returns 17 faulty frames out of 119, pYIN none. |
+| Inertia | slider | 30 % | 0 – 99 %, step 1 | Smoothing of the pitch curve, forwards then backwards so as not to shift it. At zero, vibrato passes through as is; high, only the melodic line remains. |
+| Rate | slider | 100 /s | 20 – 400 /s, step 10 | Frames per second. This is the setting that decides the cost, and it matters more here than elsewhere: one transform per frame, that is about 60 ms of computation per second of sound at rate 50, 112 ms at 100 and 182 ms at 200. |
 
 #### Pitch Glissando
 
@@ -3894,6 +4118,30 @@ Shaken percussion from a stochastic particle model. Perry Cook posed the problem
 | Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound — which no real tambourine does, and which is needed here. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
+#### Sines + Transients + Noise (STN)
+
+`stn-sinus-transitoires-bruit` · Processing → Effects
+
+*Splits a sound into three materials — what sustains, what strikes, what breathes — losing nothing.*
+
+Splits a sound into THREE materials — what sustains, what strikes, what breathes — and loses nothing on the way. After Leonardo Fierro and Vesa Valimaki, « Enhanced Fuzzy Decomposition of Sound Into Sines, Transients, and Noise », Journal of the Audio Engineering Society 71(7-8), 2023, pp. 468-480; the three-way decomposition goes back to Scott Levine and Julius O. Smith III (AES 1998), and the median filtering that makes it so simple to Derry Fitzgerald (DAFx-10). WHAT WAS MISSING: Attic already split in two, twice — harmonic/percussive by median filtering, and SMS into deterministic plus stochastic — but neither ISOLATES TRANSIENTS: harmonic/percussive separation files them with the percussive part, SMS with the noise. Yet the attack is what makes an instrument recognisable, and it is the material one wants to treat on its own: stretching a sound without smearing its attacks, softening a percussion without killing its tail, bringing out breath without detuning what carries it. TWO WINDOWS, AND THAT IS THE WHOLE PROBLEM: a partial only shows on a LONG window — it takes time to establish that a frequency lasts — and an attack only on a SHORT one, since in a long window it is already diluted into the tens of milliseconds around it. A single analysis therefore cannot do both: first remove what sustains, then look for what strikes in what remains. The order cannot be swapped — the other way round would take the beginning of every sustained note for an attack. THE FUZZINESS is the paper's contribution: a spectrogram point is not necessarily sinusoidal OR noisy, it can be both, and the mask goes from zero to one along a raised-cosine ramp rather than a step — which avoids clicks on points crossing the boundary. RECONSTRUCTION IS PERFECT: the three masks sum to one at every point, so the three outputs added together give back the original sound, sample for sample (measured: 6.4e-8 maximum deviation, that is floating-point rounding and nothing else). This is not an elegance, it is what allows one material to be reworked and the whole reassembled without the sum betraying the split. MEASURED: on one and the same sound with attacks added, the transient path swells nineteenfold while the sine path does not move (x1.00); adding breath, the noise path swells thirty-sixfold, the sines still unmoved. How this node differs from SMS: SMS TRACKS each partial through time, which lets one transpose it without touching the breath; it is slower and says nothing about attacks. STN tracks nothing, cuts in three by texture, and costs three tenths of a second for two seconds of sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Sines | audio |  |
+| output | Transients | audio |  |
+| output | Noise | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Sines window | choice | 4096 | 2048 / 4096 / 8192 | Window of the first pass. It must be LONG: it takes time to establish that a frequency lasts. Too short, and partials no longer stand out from the rest. |
+| Transients window | choice | 512 | 256 / 512 / 1024 | Window of the second pass. It must be SHORT: in a long window an attack is already diluted into the tens of milliseconds around it. This is why there are two passes — a single analysis cannot see both at once. |
+| Time filter | slider | 17  frames | 3 – 51  frames, step 2 | Length of the median filter along time, which erases what does not last. |
+| Frequency filter | slider | 17  bins | 3 – 51  bins, step 2 | Length of the median filter along frequency, which erases what is narrow — a partial — and keeps what is wide, the noise of an attack. |
+| Threshold | slider | 0.7 | 0.5 – 0.95, step 0.01 | How outspoken a spectrogram point must be to fall into a material. High, only the clearest material is kept and the rest goes to noise; low, all three paths fill up quickly. |
+| Fuzziness | slider | 0.2 | 0 – 0.6, step 0.01 | Width of the zone where a point belongs to BOTH materials at once, in proportion — this is the paper's contribution. At zero the split goes back to all-or-nothing: cleaner-cut, and noisier on material that is frankly neither. In both cases the three outputs, added together, give back the original sound. |
+
 #### Sinusoids + Noise (SMS)
 
 `sms-sinusoides-bruit` · Processing → Effects
@@ -3988,6 +4236,31 @@ Changes audio tempo while preserving pitch, using the SoundTouch algorithm (adva
 |---|---|---|---|---|
 | Tempo | number | 1 x | 0.25 – 4 x, step 0.01 | Tempo factor. 1 = original, 2 = 2x faster, 0.5 = 2x slower. |
 
+#### Spectral Delay
+
+`retard-spectral` · Processing → Effects
+
+*Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out.*
+
+Delays the low end more than the high end — or the other way round — without cutting anything. After Vesa Valimaki, Jonathan S. Abel and Julius O. Smith III, « Spectral Delay Filters », Journal of the Audio Engineering Society 57(7-8), 2009, pp. 521-531; feedback and time-varying coefficients come from Jussi Pekonen and Vesa Valimaki, « Spectral Delay Filters with Feedback and Time-Varying Coefficients », DAFx-09. WHAT WAS MISSING, and this is why this effect was chosen: out of a hundred and twenty-one effects, none delays one FREQUENCY more than another. Flanger, phaser, echo, stereo delay all delay the whole signal by the same amount — they vary the amount, never its distribution across the spectrum. Here the low end can arrive eighty milliseconds after the high end, and yet nothing is filtered: the sound is not cut, it is SPREAD OUT. HOW: a first-order allpass changes no amplitude — hence its name — but delays each frequency by a different time, given by tau(w) = (1 - a^2)/(1 + 2a·cos w + a^2) samples. One section does almost nothing; put two hundred of them and the delays add up. MEASURED at 44.1 kHz with two hundred sections and a dispersion of 0.9: 85.5 ms of delay at 100 Hz, 73.5 ms at 300 Hz, 30.5 ms at 1 kHz, 2.9 ms at 4 kHz and 0.6 ms at 10 kHz — theory predicted 84.6, 74.0, 30.5, 2.9 and 0.6. THE DIRECTION needs nothing but the sign of the coefficient: the formula swaps its two ends along with it. THE TWO DIRECTIONS ARE NOT EQUALS, and a measurement showed it rather than a reading: the delay gathers in a bump that is NARROW IN FREQUENCY, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves — 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature. It is also why the node's message reports the delay at 100 Hz and at 10 kHz rather than at the two mathematical ends of the spectrum: announcing « 86 ms » on the high side would promise an effect the ear will not hear. FEEDBACK returns the output into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. MODULATION is the second paper: dispersion itself becomes a gesture, driven by a curve — a feature follower, a logistic sequence, a ramp. With no curve connected, the node returns exactly what the setting gives: there is only one computation path. MAX TAIL is not a comfort setting: the tail grows as (1+a)/(1-a), hence without bound as dispersion approaches one — at 0.999 and four hundred sections it is eighteen seconds, which feedback repeats again, and rendering would become endless. The output is LONGER than the input, and that is intended: the slow end's tail comes out after the sound has finished.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Sections | slider | 200 | 1 – 1000, step 1 | Number of cascaded allpass sections. One section does almost nothing — a few samples — and the delays add up: this setting sets the SCALE of the effect. It also decides the cost, the computation being proportional to sections times duration: 0.05 s for two seconds of sound at 200 sections, 0.14 s at 500. |
+| Dispersion | slider | 0.9 | 0 – 0.99, step 0.01 | Strength of the spreading, that is the allpass coefficient. At zero the cascade becomes a plain delay of « Sections » samples, the same for every frequency. Near one, the gap between the two ends of the spectrum explodes — and so does the tail, which grows as (1+a)/(1−a). |
+| Direction | choice | Low end delayed | Low end delayed / High end delayed | Which end of the spectrum arrives last. Nothing else needs changing to reverse the effect: it is the SIGN of the coefficient, and the group-delay formula swaps its two ends with it. THE TWO DIRECTIONS ARE NOT EQUALS, and it is better to know it: the delay gathers in a bump that is narrow in frequency, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves — measured at 44.1 kHz, 200 sections, dispersion 0.9: 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature, not a botched setting. |
+| Feedback | slider | 0 % | 0 – 0.95 %, step 0.01 | Feeds the output back into the cascade, giving a series of echoes each MORE dispersed than the last: the first is still a sound, the tenth a streak. This is the addition of the 2009 paper's DAFx-09 sequel. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+| Max tail | slider | 4 s | 0.5 – 20 s, step 0.5 | Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable. |
+| Modulation min | slider | 0.2 | 0 – 0.99, step 0.01 | Dispersion that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 0.95 | 0 – 0.99, step 0.01 | Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach. |
+
 #### Spectral Formula
 
 `formule-spectrale` · Processing → Effects
@@ -4007,6 +4280,32 @@ Modifies the signal spectrum by mathematical expressions applied to each frequen
 | Phase | text | `phase + 0.5` |  | Expression for the phase of each bin (leave empty to leave unchanged). Example: phase + 0.5 shifts the phase by 0.5 radian. Variables: mag, phase, freq, bin, N, sr. |
 | Volume | number | 30 % | 0 – 100 % | Output gain. |
 | FFT | number | 2048 samples | 64 – 8192 samples, step 64 | FFT size (rounded up to next power of 2). |
+
+#### Spread Across Keyboard
+
+`banque-clavier` · Processing → Effects
+
+*Turns one sound into a sample bank playable across the 88 keys, in zones.*
+
+Turns one sound into a sample bank playable across the 88 keys. THE PROBLEM, IN FIGURES: an 88-key keyboard runs from A0 (27.5 Hz) to C8 (4186 Hz), a ratio of 152 — seven octaves and a minor third. A sampler that resamples a single sound from a single reference note, as « MIDI Sampler » does, therefore reads between 0.105 and 16 times speed: a two-second sound lasts nineteen seconds at the bottom of the keyboard and a hundred and twenty-five milliseconds at the top, and a 5 ms attack becomes 48 ms of mush at the bottom and 0.3 ms of click at the top. That is the « chipmunk » effect, and no setting makes up for it. THE SOLUTION SEPARATES TWO TRANSPOSITIONS that are often confused. Building the bank: the sound is transposed to each root by a CONSTANT-DURATION method, since the intervals reach four octaves. Playing a note: the nearest zone is resampled by a few semitones only, which is exact in pitch by construction and changes duration by just 12 % at ±2. THE ZONE RULE comes from sample-library practice: do not resample by more than two or three semitones — the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys. ONE ZONE IS ALWAYS THE SOUND ITSELF: the root grid is anchored on the source note, so at least one zone undergoes no transposition at all — one line of code, a free gain. THE SOURCE NOTE IS MEASURED rather than declared: the pitch follower finds it, and it will be right. THREE TRANSPOSITION METHODS are offered, and they are not equals: constant duration (phase vocoder), tape (resampling, the chipmunk effect when it is wanted), and ATTACK PRESERVED — the sound is split into sines, transients and noise, only the first two are transposed, and the transients are put back untouched, so the attack neither smears nor turns into a click. KEY TRACKING shortens notes toward the treble, as every instrument does: a bass piano string rings for twenty seconds, a treble one for less than one. THE SUSTAIN LOOP lets a held key sound beyond the sample; its join is crossfaded, failing which each turn would leave a click. The PREVIEW output plays each zone's root one after the other: enough to hear the bank without connecting a keyboard. MEASURED: over eight keys spread from A0 to A7, a note's duration varies by a factor below 2 — where a single sample would spread it by 152 — and the pitch lands within a third of a semitone of the requested note, verified by the pitch follower.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Bank | bank |  |
+| output | Preview | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source note | choice | Automatic | Automatic / Manual | In automatic mode the sound's pitch is MEASURED by the pitch follower — no need to declare it, and it will be right. It is also what anchors the zone grid, so that at least one zone plays the sound with no transposition at all. |
+| Manual note | slider | 60 | 21 – 108, step 1 | MIDI note matching the sound's pitch (60 = middle C). Only used in manual mode — useful for an inharmonic sound, whose pitch cannot be measured. |
+| Zone width | slider | 2  semitones | 1 – 6  semitones, step 1 | By how many semitones a zone is resampled at most, either side of its root. This is THE quality setting: sample-library practice does not exceed two or three semitones — the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one zone per octave, and the seams are audible. |
+| Transposition | choice | Constant duration | Constant duration / Tape / Attack preserved | How each zone is built. CONSTANT DURATION: phase vocoder — pitch changes, duration stays, which is what intervals of up to four octaves require. TAPE: resampling, like speeding up a tape — duration follows pitch, the « chipmunk » effect one usually wants to avoid, though sometimes it is the point. ATTACK PRESERVED: the sound is first split into sines, transients and noise, only the first two are transposed, and the TRANSIENTS are put back untouched — the attack neither smears nor turns into a click. |
+| Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0, the lowest of an 88-key piano. |
+| Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8, the highest. |
+| Key tracking | slider | 50 % | 0 – 100 %, step 1 | By how much a note shortens toward the treble. At 100 %, duration halves with every octave up, which is a piano's order of magnitude — a bass string rings for twenty seconds, a treble one for less than one. At 0 %, every key lasts as long, which sounds like a sampler rather than an instrument. |
+| Sustain loop | choice | Yes | Yes / No | Places in each zone a loop replayed while the key is held: without it, a held note stops at the end of the sample. The join is crossfaded, failing which each turn would leave a click — the wave not returning to the same phase. |
+| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample. After the attack, then: a loop enclosing it would repeat it on every turn. |
 
 #### Statistical Texture
 
@@ -5251,6 +5550,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 | Component | Summary |
 |---|---|
 | [Image Export](#image-export) | Saves an image to disk and returns its path. |
+| [SFZ Export](#sfz-export) | Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler. |
 | [SVG Export](#svg-export) | Saves an SVG file to disk and returns its path. |
 
 #### Image Export
@@ -5269,6 +5569,24 @@ Saves an image file to the working directory. Connect the 'Image' output of a So
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Name | text | `export.png` |  | Output image filename (in the working directory). The extension is adapted to the actual image format. |
+
+#### SFZ Export
+
+`export-sfz` · Outputs → Export
+
+*Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler.*
+
+Writes a keyboard bank as SFZ: a text file describing the regions, and the samples in a folder beside it — one WAV per zone, named after its root note. SFZ is read by almost every sampler (Sforzando, LinuxSampler, Bitwig, Renoise, and by conversion most others), and it is a TEXT format: it can be opened, read back, corrected by hand. That is also what makes it VERIFIABLE — the tests read back what the node writes and rebuild the keyboard coverage from the regions, to make sure all eighty-eight keys are covered exactly once. An SF2 would be another undertaking: a binary format with its tables and generators. THREE FIELDS CARRY EVERYTHING: « pitch_keycenter » says at which note the sample is in tune, « lokey » and « hikey » bound the zone, and the sampler derives the transposition — at most the zone width chosen at build time. When the bank has a sustain loop it is written in samples with « loop_mode=loop_sustain »: it then turns only while the key is held, exactly as Attic's Multi-Zone Sampler does. THE SAMPLES ARE WRITTEN FIRST and the SFZ file only afterwards: were one of them to fail, an already-written SFZ would point at a missing file and the sampler would fall silent without saying why. The node reports how many samples were written and their total size. Requires Electron, like the other export nodes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Bank | bank |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Name | text | `banque.sfz` |  | Name of the SFZ file, written in the working directory. The samples go into a folder of the same name beside it — one WAV file per zone, named after its root note. |
+| Release | slider | 300 ms | 10 – 3000 ms, step 10 | Release written into the SFZ's global envelope (`ampeg_release`). It does not change the samples: the sampler will apply it. |
 
 #### SVG Export
 

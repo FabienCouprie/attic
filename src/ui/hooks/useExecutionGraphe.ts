@@ -15,6 +15,7 @@ import {
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
 import { deplierBoucles } from "../../core/boucle-graphe";
+import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { publierGrapheCourant } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
@@ -277,6 +278,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
       aretesRef.current as unknown as AreteG[],
       trouverMeta,
     );
+    // Puis DÉPLIE les instruments : tout ce qui est branché entre « Note d'instrument » et
+    // « Fin d'instrument » est recopié une fois PAR NOTE du clavier, la note étant injectée dans
+    // chaque copie. C'est ainsi qu'une recette devient un instrument : rien n'est transposé, chaque
+    // note est calculée à sa hauteur. Avant le dépliage des boucles, de sorte qu'une chaîne
+    // d'instrument puisse elle-même contenir une boucle — chaque copie en porte alors une, et le
+    // dépliage suivant les traite comme autant de boucles indépendantes.
+    // Voir `core/instrument-graphe.ts`, testé.
+    const instruments = deplierInstruments(plat.noeuds, plat.aretes);
+    for (const [copie, origine] of instruments.origines) {
+      plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
+    }
+    for (const p of instruments.problemes) {
+      console.warn(`[attic] Instrument de graphe : ${p.code} sur ${p.noeudId}`);
+    }
+    plat.noeuds = instruments.noeuds;
+    plat.aretes = instruments.aretes;
+
     // Puis DÉPLIE les boucles de graphe : une boucle est un cycle, et le moteur n'exécute
     // que des graphes acycliques. Les nœuds compris entre « Début de boucle » et « Fin de
     // boucle » sont recopiés autant de fois qu'il y a de tours, chaque copie recevant le
@@ -373,6 +391,26 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     };
 
+    // ── Les statuts des nœuds DÉPLIÉS ──
+    //
+    // Un graphe déplié — boucle ou instrument — n'exécute pas les nœuds qu'on voit : il exécute des
+    // COPIES, aux identifiants fabriqués. `definirStatut` cherchant le nœud par son id dans la liste
+    // visible, ces copies ne posaient aucun statut, et les nœuds de la chaîne restaient affichés « en
+    // attente » alors que leur travail était fait — constaté dans l'application : « note=attente |
+    // filtre=attente » pendant que la fin d'instrument annonçait ses deux notes rendues.
+    //
+    // `expansions` relie une copie au nœud visible dont elle vient : on traduit donc l'id avant de
+    // poser le statut. Le moteur exécutant les copies l'une après l'autre, la dernière à finir
+    // décide de l'état affiché, ce qui est le bon comportement — sauf pour une ERREUR, qu'une copie
+    // suivante ne doit pas effacer : un nœud dont une seule note a échoué a échoué.
+    const visiblesEnErreur = new Set<string>();
+    const poserStatut = (nodeId: string, statut: string, progression?: string) => {
+      const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+      if (statut === "erreur") visiblesEnErreur.add(visibleId);
+      else if (visiblesEnErreur.has(visibleId)) return;
+      definirStatut(visibleId, statut, progression);
+    };
+
     const tempsParVisible = new Map<string, number>();
 
     for (let i = 0; i < ordreFiltre.length; i++) {
@@ -393,7 +431,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (entreeFautive) {
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
-        definirStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", entreeFautive.source));
+        poserStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", entreeFautive.source));
         marquerMetaEnEchec(nodeId);
         continue;
       }
@@ -424,7 +462,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         if (entreeCache.message) messages.set(nodeId, entreeCache.message);
-        definirStatut(nodeId, "termine");
+        poserStatut(nodeId, "termine");
         if (typeof entreeCache.tempsExecution === "number") {
           const visibleId = plat.expansions.get(nodeId) ?? nodeId;
           tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + entreeCache.tempsExecution);
@@ -435,7 +473,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
       // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
       // donnait l'impression que le modèle Qwen redémarrait inutilement.
-      definirStatut(nodeId, "en_cours", t("execution.etape").replace("{i}", String(i + 1)).replace("{total}", String(ordreFiltre.length)));
+      poserStatut(nodeId, "en_cours", t("execution.etape").replace("{i}", String(i + 1)).replace("{total}", String(ordreFiltre.length)));
 
       // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
@@ -446,7 +484,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
-      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); definirStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
+      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
       const ajouterTemps = (ms: number) => {
@@ -493,7 +531,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // dessus l'état « attente » que le reset vient de poser, sans plus
           // jamais être corrigé (l'application du résultat final est, elle,
           // déjà court-circuitée par la garde juste après cet appel).
-          onProgress: (msg: string) => { if (!controller.signal.aborted) definirStatut(nodeId, "en_cours", msg); },
+          onProgress: (msg: string) => { if (!controller.signal.aborted) poserStatut(nodeId, "en_cours", msg); },
           signal: controller.signal,
         });
         // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
@@ -514,14 +552,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const defRes = trouverDef(node.data.ficheId as string);
         if (estResultatEnErreur(defRes, res as { valeurs: TypeValeur[]; erreur?: boolean })) {
           noeudsEnErreur.add(nodeId);
-          definirStatut(nodeId, "erreur", res.message);
+          poserStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
           cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
-          definirStatut(nodeId, "termine");
+          poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
         }
       } catch (e: any) {
@@ -535,7 +573,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
-        definirStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
+        poserStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
         marquerMetaEnEchec(nodeId, node.data.ficheId as string);
         ajouterTemps(elapsed);
       }

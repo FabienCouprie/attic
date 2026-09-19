@@ -309,8 +309,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
-        doc: "Nombre de fois où la chaîne comprise entre ce nœud et « Fin de boucle » est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
-        docEn: "How many times the chain between this node and « Loop End » is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
+        doc: "Nombre de fois où la chaîne comprise entre ce nœud et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
+        docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
     ],
     async executer(ctx: any) {
       // Ce nœud n'est normalement JAMAIS exécuté : le moteur déplie la boucle avant
@@ -322,7 +322,13 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "boucle-graphe-fin", nom: "Fin de boucle", nomEn: "Loop End", univers: "Traitement", famille: "Montage",
+    // Les trois fins de boucle referment la même boucle et reçoivent les mêmes n résultats :
+    // elles ne diffèrent que par ce qu'elles en font. Le choix se fait donc en posant la
+    // variante voulue, et non en réglant un paramètre « Mode » sur un nœud unique — un
+    // paramètre qu'il faudrait ouvrir pour savoir ce que la boucle produit, alors que le nom
+    // du nœud le dit depuis le graphe. L'identifiant de A reste `boucle-graphe-fin` : les
+    // graphes enregistrés le portent (voir l'alias dans core/registre.ts).
+    id: "boucle-graphe-fin", nom: "Fin de boucle A", nomEn: "Loop End A", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et met bout à bout les résultats de tous les tours.",
     resumeEn: "Closes a graph loop and puts every pass's result end to end.",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -342,6 +348,58 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [resultat],
         message: traduire("msg.boucle.tours", entrees.length, resultat.duration.toFixed(2)),
+      };
+    },
+  },
+  {
+    id: "boucle-graphe-fin-b", nom: "Fin de boucle B", nomEn: "Loop End B", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et ne garde que le résultat du dernier tour.",
+    resumeEn: "Closes a graph loop and keeps only the last pass's result.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [],
+    async executer(ctx: any) {
+      // Les tours arrivent dans l'ordre : le dernier est le dernier de la liste. Les tours
+      // précédents sont bel et bien calculés — ils doivent l'être, chacun partant du
+      // résultat du précédent —, mais ils ne ressortent pas d'ici.
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const dernier = entrees[entrees.length - 1];
+      return {
+        valeurs: [dernier],
+        message: traduire("msg.boucle.dernier", entrees.length, dernier.duration.toFixed(2)),
+      };
+    },
+  },
+  {
+    id: "boucle-graphe-fin-c", nom: "Fin de boucle C", nomEn: "Loop End C", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et empile les tours l'un sur l'autre, comme le mélangeur.",
+    resumeEn: "Closes a graph loop and stacks the passes on top of one another, like the mixer.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      // Le mélangeur n'a pas de niveau : « le niveau de chaque piste se règle sur le nœud
+      // qui la produit ». Ici c'est impossible — les tours sont des copies d'une seule
+      // chaîne, ils partagent donc leurs réglages. D'où ce niveau de sortie, et la crête
+      // annoncée dans le message : empiler dix tours d'un même son dépasse 1, et cela doit
+      // se voir sur le nœud plutôt que s'entendre à la lecture.
+      { nom: "Niveau", nomEn: "Level", type: "nombre", plage: [-24, 6], pas: 0.5, defaut: 0, unite: "dB",
+        doc: "Niveau appliqué à la somme des tours. À 0 dB, les tours s'additionnent tels quels, comme sur le mélangeur.",
+        docEn: "Level applied to the sum of the passes. At 0 dB they add up as they are, as on the mixer." },
+    ],
+    async executer(ctx: any) {
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      // Un seul chemin, même pour un tour unique : rien qui puisse diverger du cas général.
+      const resultat = await melangerPistes(entrees, ctx.paramNombre("Niveau", 0));
+      let crete = 0;
+      for (let c = 0; c < resultat.numberOfChannels; c++) {
+        const d = resultat.getChannelData(c);
+        for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > crete) crete = v; }
+      }
+      return {
+        valeurs: [resultat],
+        message: traduire("msg.boucle.empile", entrees.length, resultat.duration.toFixed(2), crete.toFixed(2)),
       };
     },
   },
