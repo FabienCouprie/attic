@@ -115,6 +115,12 @@ import { fiches as f_theorie_avancee } from "./theorie-avancee";
 import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
 import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
+import { fiches as f_vitesse_midi } from "./vitesse-midi";
+import { fiches as f_hpss } from "./hpss";
+import { fiches as f_decaleur } from "./decaleur-frequence";
+import { fiches as f_texture } from "./texture-statistique";
+import { fiches as f_sms } from "./sms";
+import { fiches as f_velours } from "./velours";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -134,6 +140,12 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_collections,
   ...f_documentation,
   ...f_clavier_apprentissage,
+  ...f_vitesse_midi,
+  ...f_hpss,
+  ...f_decaleur,
+  ...f_texture,
+  ...f_sms,
+  ...f_velours,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,
