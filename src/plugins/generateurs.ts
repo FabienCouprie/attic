@@ -27,6 +27,7 @@ import {
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
+import { motifEnTexte, motifEuclidien, nomTraditionnel, notesEuclidiennes } from "../audio/euclidien";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { optionsPatrons } from "./patrons-rythme";
 import { avecDoc } from "./notices";
@@ -423,6 +424,74 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60),4,4,creerAleatoire(ctx.paramNombre("Graine",42)))] };
+    },
+  },
+  {
+    id: "rythme-euclidien", nom: "Rythme euclidien", nomEn: "Euclidean Rhythm", univers: "Entrées", famille: "Génération",
+    resume: "Répartit N frappes le plus régulièrement possible sur M pas (algorithme de Bjorklund).",
+    resumeEn: "Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm).",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }],
+    parametres: [
+      { nom: "Pas", nomEn: "Steps", type: "nombre", plage: [1, 32], pas: 1, defaut: 8,
+        doc: "Longueur du cycle, en pas. C'est le « M » de E(N, M).",
+        docEn: "Cycle length, in steps. The « M » of E(N, M)." },
+      { nom: "Frappes", nomEn: "Onsets", type: "nombre", plage: [0, 32], pas: 1, defaut: 3,
+        doc: "Nombre de frappes à répartir sur le cycle. C'est le « N » de E(N, M). Trois frappes sur huit pas donnent le tresillo cubain, cinq sur huit le cinquillo, sept sur douze le bembé.",
+        docEn: "Number of onsets to spread over the cycle. The « N » of E(N, M). Three onsets over eight steps give the Cuban tresillo, five over eight the cinquillo, seven over twelve the bembé." },
+      { nom: "Rotation", nomEn: "Rotation", type: "nombre", plage: [0, 31], pas: 1, defaut: 0,
+        doc: "Décale le départ du cycle sans changer les intervalles. Le même motif entendu depuis un autre pas : le tresillo tourné de 3 donne la figure qui commence sur le contretemps.",
+        docEn: "Shifts the cycle's start without changing the intervals. The same pattern heard from another step: the tresillo rotated by 3 gives the figure that starts off-beat." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Vitesse, en battements par minute.", docEn: "Speed, in beats per minute." },
+      { nom: "Durée d'un pas", nomEn: "Step length", type: "choix",
+        options: ["Noire", "Croche", "Double-croche", "Triolet de croches"],
+        optionsEn: ["Quarter", "Eighth", "Sixteenth", "Eighth triplet"],
+        optionIds: ["noire", "croche", "double", "triolet"],
+        defaut: "Croche", defautEn: "Eighth",
+        doc: "Valeur rythmique d'un pas du cycle.", docEn: "Rhythmic value of one step of the cycle." },
+      { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 32], pas: 1, defaut: 4,
+        doc: "Nombre de fois que le cycle est joué.", docEn: "How many times the cycle is played." },
+      { nom: "Percussion", nomEn: "Drum", type: "choix",
+        options: ["Grosse caisse", "Caisse claire", "Charley fermé", "Charley ouvert", "Clave", "Cloche", "Tom grave", "Tom aigu"],
+        optionsEn: ["Kick", "Snare", "Closed hi-hat", "Open hi-hat", "Clave", "Cowbell", "Low tom", "High tom"],
+        optionIds: ["36", "38", "42", "46", "75", "56", "41", "48"],
+        defaut: "Grosse caisse", defautEn: "Kick",
+        doc: "Note de percussion jouée (canal 9). Superposez plusieurs nœuds sur des percussions différentes pour obtenir une polyrythmie.",
+        docEn: "Drum note played (channel 9). Stack several nodes on different drums to build a polyrhythm." },
+      { nom: "Vélocité", nomEn: "Velocity", type: "nombre", plage: [1, 127], pas: 1, defaut: 90,
+        doc: "Force des frappes.", docEn: "Strength of the onsets." },
+      { nom: "Accent", nomEn: "Accent", type: "nombre", plage: [0, 40], pas: 1, defaut: 20,
+        doc: "Supplément de vélocité sur le premier pas de chaque cycle, pour qu'on entende où le cycle recommence.",
+        docEn: "Extra velocity on the first step of each cycle, so the cycle's start can be heard." },
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume du rendu audio.", docEn: "Output volume." },
+    ],
+    async executer(ctx: any) {
+      const DUREES: Record<string, number> = { noire: 1, croche: 0.5, double: 0.25, triolet: 1 / 3 };
+      const config = {
+        pas: ctx.paramNombre("Pas", 8),
+        frappes: ctx.paramNombre("Frappes", 3),
+        rotation: ctx.paramNombre("Rotation", 0),
+        tempo: ctx.paramNombre("Tempo", 120),
+        pasParNoire: DUREES[ctx.paramTexte("Durée d'un pas", "croche")] ?? 0.5,
+        repetitions: ctx.paramNombre("Répétitions", 4),
+        notePercussion: parseInt(ctx.paramTexte("Percussion", "36"), 10) || 36,
+        velocite: ctx.paramNombre("Vélocité", 90),
+        accent: ctx.paramNombre("Accent", 20),
+      };
+      const motif = motifEuclidien(config.pas, config.frappes, config.rotation);
+      const notes = notesEuclidiennes(config);
+      if (notes.length === 0) {
+        return { valeurs: [null, null], message: traduire("msg.euclidien.aucune_frappe") };
+      }
+      const buffer = await rendreBatterieMidi({ notes, volume: ctx.paramNombre("Volume", 80) });
+      const midiFile = notesVersFichierMidi(notes, config.tempo, 9);
+      const nom = nomTraditionnel(config.pas, config.frappes);
+      const rotation = config.rotation > 0 ? ` · rotation ${config.rotation}` : "";
+      return {
+        valeurs: [buffer, midiFile],
+        message: `E(${config.frappes},${config.pas}) ${motifEnTexte(motif)}${rotation}${nom ? ` · ${nom}` : ""}`,
+      };
     },
   },
   {

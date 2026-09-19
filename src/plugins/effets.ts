@@ -1,7 +1,7 @@
 // plugins/effets.ts — Nœuds d'effets audio
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire, hasardDuNoeud } from "../core";
 import { parseMidi } from "midi-file";
@@ -40,7 +40,9 @@ import {
    bouclerMidi,
    analyserMidi,
 } from "../audio";
-import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
+import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
+import { quadrafuzz } from "../audio/quadrafuzz";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
@@ -101,6 +103,20 @@ export const fiches: FicheAudio[] = ([
      param("Fréquence", 22050, "Rate", "Hz", "Fréquence d'échantillonnage simulée. Plus basse = son plus cassé/aliased.", "Simulated sample rate. Lower = more broken/aliased sound.", [1000, 44100], 100),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet. 100% = effet seul.", "Dry/wet balance. 100% = effect only.")],
     (a,bits,freq,mix) => bitcrusher(a, bits, freq, mix)),
+  effet("quadrafuzz", "Quadrafuzz", "Quadrafuzz",
+    "Distorsion à quatre bandes : chaque registre sature séparément.",
+    "Four-band distortion: each register saturates independently.",
+    [param("Graves", 60, "Low", "%", "Saturation de la bande grave, sous la première coupure.", "Saturation of the low band, below the first crossover.", [0, 100], 1),
+     param("Bas médiums", 40, "Low mids", "%", "Saturation entre la première et la deuxième coupure.", "Saturation between the first and second crossovers.", [0, 100], 1),
+     param("Hauts médiums", 40, "High mids", "%", "Saturation entre la deuxième et la troisième coupure.", "Saturation between the second and third crossovers.", [0, 100], 1),
+     param("Aigus", 20, "High", "%", "Saturation de la bande aiguë, au-dessus de la troisième coupure. À garder basse : c'est elle qui rend un fuzz strident.", "Saturation of the high band, above the third crossover. Keep it low: this is what makes a fuzz shrill.", [0, 100], 1),
+     param("Coupure 1", 160, "Crossover 1", "Hz", "Limite entre graves et bas médiums.", "Boundary between low and low mids.", [40, 800], 10),
+     param("Coupure 2", 1000, "Crossover 2", "Hz", "Limite entre bas et hauts médiums.", "Boundary between low mids and high mids.", [200, 4000], 50),
+     param("Coupure 3", 4000, "Crossover 3", "Hz", "Limite entre hauts médiums et aigus.", "Boundary between high mids and high.", [1000, 12000], 100),
+     param("Mix", 100, "Mix", "%", "Équilibre signal original / effet. 0 % rend le signal d'origine tel quel.", "Dry/wet balance. 0% returns the original signal untouched.", [0, 100], 1),
+     param("Sortie", -6, "Output", "dB", "Gain de sortie. Une saturation fait monter le niveau : ce réglage le rattrape.", "Output gain. Saturation raises the level: this brings it back.", [-24, 12], 0.5)],
+    (a, graves, basMediums, hautsMediums, aigus, f1, f2, f3, mix, sortie) =>
+      quadrafuzz(a, { graves, basMediums, hautsMediums, aigus, f1, f2, f3, mix, sortie })),
   effet("exciter", "Exciter / Aural enhancer", "Exciter / Aural Enhancer", "Ajoute de la présence par distorsion harmonique dans les hauts médiums.", "Adds presence via harmonic distortion in the high mids.",
     [param("Amount", 50, "Amount", "%", "Intensité de la distorsion asymétrique.", "Intensity of the asymmetrical distortion.", [0, 100], 1), param("Fréquence", 3000, "Frequency", "Hz", "Fréquence de coupure du passe-haut après distorsion.", "High-pass cutoff after distortion.", [500, 10000], 100), param("Mix", 30, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, amount, freq, mix) => exciter(a, amount, freq, mix)),
@@ -555,6 +571,62 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
    },
  },
+  {
+    id: "temperament", nom: "Tempérament", nomEn: "Temperament",
+    univers: "Traitement", famille: "Effets",
+    resume: "Rejoue un MIDI dans un tempérament historique ou en intonation juste, au lieu du tempérament égal.",
+    resumeEn: "Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Écarts", nomEn: "Deviations", type: "texte" }],
+    parametres: [
+      { nom: "Tempérament", nomEn: "Temperament", type: "choix",
+        options: TEMPERAMENTS.map((t) => t.fr),
+        optionsEn: TEMPERAMENTS.map((t) => t.en),
+        optionIds: TEMPERAMENTS.map((t) => t.id),
+        defaut: "Intonation juste", defautEn: "Just intonation",
+        doc: "L'accord employé. « Égal » est celui de tous les autres nœuds ; les autres donnent à chaque tonalité une couleur propre.",
+        docEn: "The tuning used. « Equal » is the one every other node uses; the others give each key its own colour." },
+      { nom: "Tonique", nomEn: "Tonic", type: "choix",
+        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"],
+        optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
+        optionIds: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+        defaut: "Do", defautEn: "C",
+        doc: "La note sur laquelle le tempérament est accordé. C'est elle qui sonne pure ; les tonalités éloignées s'écartent d'autant plus.",
+        docEn: "The note the temperament is tuned on. It is the one that sounds pure; distant keys drift the further away." },
+      { ...PARAMETRE_SYNTHESE, doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.", docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
+      PARAMETRE_INSTRUMENT_SF2,
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume du rendu.", docEn: "Output volume." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const { analyserMidi, rendreSequence } = await import("../audio");
+      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const temp = temperament(ctx.paramTexte("Tempérament", "juste"));
+      const tonique = parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0;
+      // Les hauteurs deviennent FRACTIONNAIRES : c'est l'écart qui s'entend. Les deux
+      // rendus d'Attic l'acceptent, puisqu'ils en tirent une fréquence ou un rapport de
+      // lecture d'échantillon.
+      const temperees = notes.map((n: any) => ({
+        note: noteTemperee(n.note, tonique, temp),
+        velocite: n.velociete ?? 90,
+        debut: n.debut,
+        fin: n.fin,
+      }));
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const buffer = await rendreSequence(temperees, modeRendu, ctx.paramNombre("Volume", 80), programme, banque);
+      const nom = langueCourante() === "en" ? temp.en : temp.fr;
+      const explication = langueCourante() === "en" ? temp.noteEn : temp.noteFr;
+      return {
+        valeurs: [buffer, [nom, tableEcarts(temp), "", explication].join("\n")],
+        message: `${nom} · ${notes.length} notes`,
+      };
+    },
+  },
   {
     id: "transposeur-quantiseur-midi", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
     univers: "Traitement", famille: "Effets",

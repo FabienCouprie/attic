@@ -3,15 +3,15 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **262 components** in **7 categories** and **28 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **270 components** in **7 categories** and **28 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 55 | [Audio](#audio) (6) · [Generation](#generation) (39) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 116 | [Conversion](#conversion) (4) · [Editing](#editing) (15) · [Effects](#effects) (93) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 27 | [Analysis](#analysis) (19) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Inputs](#inputs) | 56 | [Audio](#audio) (6) · [Generation](#generation) (40) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 120 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (95) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Visualization](#visualization) | 30 | [Analysis](#analysis) (22) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -157,6 +157,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Drum Machine](#drum-machine) | Generates a drum pattern. |
 | [Drum Sequencer](#drum-sequencer) | Programs a drum pattern on a step grid (synthesized). |
+| [Euclidean Rhythm](#euclidean-rhythm) | Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm). |
 | [FM / AM Synth](#fm--am-synth) | Generates a note with frequency modulation (FM) or amplitude modulation (AM). |
 | [Fractal Music](#fractal-music) | Generates a fractal melody from a repeated motif and scale. |
 | [Fractal Spectrogram](#fractal-spectrogram) | Generates a fractal spectrogram and its associated audio. |
@@ -437,6 +438,32 @@ Programs a drum pattern on a step grid: click cells to trigger each instrument (
 | Pattern | text | `1000000010000000\|0000100000001000\|1010101010101010\|000000…` |  | Encoded pattern (edited via the node grid): 5 step rows separated by « \| », each step 1 (on) or 0. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run. |
 
+#### Euclidean Rhythm
+
+`rythme-euclidien` · Inputs → Generation
+
+*Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm).*
+
+Spreads N onsets as evenly as possible over M steps, using Bjorklund's algorithm — the one that spaces pulses in a particle accelerator. Godfried Toussaint showed in 2005 that these patterns are those of attested traditional rhythms: E(3,8) is the Cuban tresillo, E(5,8) the cinquillo, E(2,5) the Persian khafif-e-ramal, E(7,12) the West African bembé, E(5,16) the bossa-nova. The message shows the resulting pattern and, when the pair is a known one, its usual name. « Rotation » shifts the cycle's start without touching the intervals: the tresillo rotated by three steps gives the figure that starts off-beat. One node plays a single drum: for a polyrhythm, stack several — kick on E(3,8), hi-hat on E(5,8) — and mix their audio outputs, or merge their MIDI outputs. Audio is rendered with the internal synthesized drums, without a SoundFont; the MIDI output carries the notes on channel 10 (percussion), ready for another node.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Steps | number | 8 | 1 – 32, step 1 | Cycle length, in steps. The « M » of E(N, M). |
+| Onsets | number | 3 | 0 – 32, step 1 | Number of onsets to spread over the cycle. The « N » of E(N, M). Three onsets over eight steps give the Cuban tresillo, five over eight the cinquillo, seven over twelve the bembé. |
+| Rotation | number | 0 | 0 – 31, step 1 | Shifts the cycle's start without changing the intervals. The same pattern heard from another step: the tresillo rotated by 3 gives the figure that starts off-beat. |
+| Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed, in beats per minute. |
+| Step length | choice | Eighth | Quarter / Eighth / Sixteenth / Eighth triplet | Rhythmic value of one step of the cycle. |
+| Repeats | number | 4 | 1 – 32, step 1 | How many times the cycle is played. |
+| Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clave / Cowbell / Low tom / High tom | Drum note played (channel 9). Stack several nodes on different drums to build a polyrhythm. |
+| Velocity | number | 90 | 1 – 127, step 1 | Strength of the onsets. |
+| Accent | number | 20 | 0 – 40, step 1 | Extra velocity on the first step of each cycle, so the cycle's start can be heard. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### FM / AM Synth
 
 `fm-synth` · Inputs → Generation
@@ -715,7 +742,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 
 *Plays a keyboard-recorded sequence and also exports a MIDI file.*
 
-Replays a sequence of notes recorded on the block's virtual keyboard and synthesizes it to audio.
+Replays a sequence of notes recorded on the block's virtual keyboard and synthesizes it to audio. The keyboard has 88 keys, from A0 to C8, and scrolls; black keys play from their upper part, white keys below. You can also play from the computer keyboard — the zxcvbnm row for white keys, sdghj for black ones — and change octave with the up and down arrows.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1446,6 +1473,8 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
 | [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
 | [Loop](#loop) | Repeats the whole signal a given number of times. |
+| [Loop End](#loop-end) | Closes a graph loop and puts every pass's result end to end. |
+| [Loop Start](#loop-start) | Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
@@ -1584,6 +1613,40 @@ Replays the whole input « Repeats » times in a row. The Fade parameter can smo
 |---|---|---|---|---|
 | Repeats | number | 4 | 1 – 32, step 1 | Number of times the input is replayed in a row. |
 | Fade | number | 0 ms | 0 – 100 ms | Crossfade at each join between two repetitions. 0 = no crossfade (hard join). |
+
+#### Loop End
+
+`boucle-graphe-fin` · Processing → Editing
+
+*Closes a graph loop and puts every pass's result end to end.*
+
+Closes a graph loop opened by « Loop Start », and puts every pass's result end to end: the output holds the N successive states, in the order they were produced. « Fade » smooths the join between two passes; at 0 ms they follow each other exactly. If this node has no « Loop Start » upstream, nothing is unrolled: it then behaves as a plain join of whatever it receives.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fade | number | 0 ms | 0 – 500 ms, step 5 | Crossfade between two passes. 0 = hard join, the passes follow each other exactly. |
+
+#### Loop Start
+
+`boucle-graphe-debut` · Processing → Editing
+
+*Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.*
+
+Opens a graph loop. Everything wired between this node and « Loop End » is played « Passes » times, and EACH PASS STARTS FROM THE PREVIOUS RESULT: if the chain transposes by a semitone, the second pass transposes an already transposed signal, so by two semitones in total, the third by three, and so on. « Loop End » then puts the passes end to end: the output contains the N successive states, in order. Attic's engine only runs acyclic graphs: the loop is therefore UNROLLED before execution — the inner chain is copied as many times as there are passes, and each copy is wired to the previous one. It shows in the computation time, which is that of N passes, not one. Anything entering the loop from outside through another port — a setting, a second source — feeds every pass identically. Anything leaving it other than through « Loop End » leaves only once, on the last pass. Limits: a loop cannot contain another loop, and a loop end can only have one start upstream. In those cases nothing is unrolled and the node says so instead of producing nonsense.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and « Loop End » is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
 
 #### MIDI Join
 
@@ -1797,6 +1860,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Pitch Shift](#pitch-shift) | Pitch shift. |
 | [Progressive Pitch](#progressive-pitch) | Repeats the sound, shifting it one step further each time, with silences in between. |
 | [Progressive Reverb](#progressive-reverb) | Progressive reverb (dry→wet). |
+| [Quadrafuzz](#quadrafuzz) | Four-band distortion: each register saturates independently. |
 | [Random Slice](#random-slice) | Slices a track into equal parts and rearranges them (random, original or reverse order). |
 | [Reich Phasing](#reich-phasing) | Lets several copies of a pattern drift apart from one another. |
 | [Resonance Audio](#resonance-audio) | Binaural 3D spatialization of a sound using Resonance Audio (HRTF + room model). |
@@ -1815,6 +1879,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Stereo Spatialization](#stereo-spatialization) | Positions the sound in stereo space (left/right). |
 | [Stereo Width / MS](#stereo-width--ms) | Adjusts stereo width and Mid level. |
 | [Swap Channels](#swap-channels) | Swaps left/right channels. |
+| [Temperament](#temperament) | Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament. |
 | [Tempo Canon (Nancarrow)](#tempo-canon-nancarrow) | Layers a pattern against itself at a fixed tempo ratio. |
 | [Tempo Change](#tempo-change) | Time-stretch via phase vocoder. |
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
@@ -3105,6 +3170,31 @@ Reverb whose mix gradually evolves from dry to wet over an adjustable fade durat
 | Fade | number | 8 s |  | Duration of the progressive fade. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is FIXED: a reverb that moves to a different room on every run would be a defect. |
 
+#### Quadrafuzz
+
+`quadrafuzz` · Processing → Effects
+
+*Four-band distortion: each register saturates independently.*
+
+Four-band distortion. An ordinary distortion crushes the whole spectrum together: the low end, which carries the most energy, saturates first and smothers the rest — which is why a bass through a fuzz turns to mush. Here the signal is split into four registers by three adjustable crossover frequencies, each is saturated separately, then everything is summed. So you can bite into the mids while leaving the bass clean, or give grit to the low end without making the cymbals harsh. Measured: saturating the highs fully moves an 80 Hz tone by six thousandths, while saturating the lows multiplies its third harmonic by seventy. That independence is the whole point of the node. « High » is deliberately low by default: it is the band that makes a fuzz shrill. « Output » sits at -6 dB, because saturation raises the level and it has to be brought back. At « Mix » 0%, the original signal comes out untouched. A note on the split: it uses real filters — one lowpass, two bandpass, one highpass — so the sum of the four bands does not exactly reproduce the input, even with no saturation. A subtractive split would reconstruct perfectly but separate poorly, and separation is what one comes for.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Low | number | 60 % | 0 – 100 %, step 1 | Saturation of the low band, below the first crossover. |
+| Low mids | number | 40 % | 0 – 100 %, step 1 | Saturation between the first and second crossovers. |
+| High mids | number | 40 % | 0 – 100 %, step 1 | Saturation between the second and third crossovers. |
+| High | number | 20 % | 0 – 100 %, step 1 | Saturation of the high band, above the third crossover. Keep it low: this is what makes a fuzz shrill. |
+| Crossover 1 | number | 160 Hz | 40 – 800 Hz, step 10 | Boundary between low and low mids. |
+| Crossover 2 | number | 1000 Hz | 200 – 4000 Hz, step 50 | Boundary between low mids and high mids. |
+| Crossover 3 | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Boundary between high mids and high. |
+| Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. 0% returns the original signal untouched. |
+| Output | number | -6 dB | -24 – 12 dB, step 0.5 | Output gain. Saturation raises the level: this brings it back. |
+
 #### Random Slice
 
 `decoupe-aleatoire` · Processing → Effects
@@ -3448,6 +3538,28 @@ Swaps the left and right channels of a stereo signal.
 
 *No parameters.*
 
+#### Temperament
+
+`temperament` · Processing → Effects
+
+*Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament.*
+
+Replays a MIDI file in a tuning other than equal temperament, and renders it to audio. Every other node in Attic plays in equal temperament: twelve rigorously identical semitones, which sound in tune nowhere but equally out of tune everywhere. That is neither natural nor ancient — it is a compromise generalised in the 19th century. Seven tunings are offered, from just intonation (exact 5/4 third and 3/2 fifth, a purity no piano gives, but the neighbouring key becomes unusable) to Renaissance quarter-comma meantone, by way of Werckmeister III, Kirnberger III and Vallotti, where every key is playable without any two sounding alike — it is those tunings that give « The Well-Tempered Clavier » its title, well-tempered not meaning equal. « Tonic » picks the note the tuning is built on: that one sounds pure, and distant keys drift the further away. The text output lists the twelve deviations from equal temperament, in cents. The node outputs AUDIO rather than MIDI, deliberately: a MIDI file cannot carry a pitch in cents without per-channel pitch bend, which not every player honours. Here the pitches become fractional and the renderer — FM or SoundFont — plays them exactly.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | Deviations | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Temperament | choice | Just intonation | Equal / Pythagorean / Just intonation / Quarter-comma meantone / Werckmeister III / Kirnberger III / Vallotti | The tuning used. « Equal » is the one every other node uses; the others give each key its own colour. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The note the temperament is tuned on. It is the one that sounds pure; distant keys drift the further away. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Tempo Canon (Nancarrow)
 
 `canon-nancarrow` · Processing → Effects
@@ -3751,13 +3863,16 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [ColorSynth](#colorsynth) | Derives a color palette from the audio spectrum (see the timbre). |
 | [Emotional Analysis](#emotional-analysis) | Associates an emotion with a track from its music alone (tempo, mode, energy, timbre) — no text or lyrics analyzed. |
 | [Genre Classifier](#genre-classifier) | Identifies the musical genre of a song via AI or heuristics. |
+| [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
+| [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [RMS (Meyda)](#rms-meyda) | Computes the average RMS level of the signal in dBFS using Meyda. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
 | [Spectral Centroid (Meyda)](#spectral-centroid-meyda) | Computes the spectral centroid of the signal using the Meyda library. |
 | [Spectral Rolloff (Meyda)](#spectral-rolloff-meyda) | Computes the spectral rolloff frequency using Meyda. |
 | [Spectrogram](#spectrogram) | Shows how the spectrum evolves over time (time × frequency × intensity). |
 | [Spectrum Analyzer](#spectrum-analyzer) | Decomposes the signal into frequencies (FFT) and displays its spectrum. |
+| [Tempo Detector](#tempo-detector) | Estimates an audio track's tempo and outputs it as a reusable value. |
 | [VU-meter / LUFS](#vu-meter--lufs) | Measures and displays audio levels: RMS, peak, true peak, LUFS. |
 | [Waveform Viewer](#waveform-viewer) | Displays the waveform with zoom and scrollbar. |
 | [ZCR (Meyda)](#zcr-meyda) | Counts zero crossings per frame using Meyda. |
@@ -3924,6 +4039,25 @@ Identifies the musical genre of the track, via an ONNX model or heuristics on au
 | Mode | choice | AI (ONNX) | AI (ONNX) / Heuristic | Method used (AI model or heuristic). |
 | Duration | number | 30 s | 5 – 120 s | Generated duration, in seconds. |
 
+#### Goniometer
+
+`goniometre` · Visualization → Analysis
+
+*Measures stereo width, phase correlation and what the mix would lose in mono.*
+
+Measures what the two channels do to each other, and shows it. The figure is a goniometer: each sample becomes a point whose vertical axis carries the sum of the channels — what survives in mono — and whose horizontal axis carries their difference, what disappears. A VERTICAL line is mono, a round cloud is wide stereo, a HORIZONTAL line is out of phase. Below the figure, Pearson's correlation, from -1 to +1: above 0.95 the mix is mono or nearly so; near 0 the channels are independent; below -0.2 they oppose each other and the mono sum cancels them. The report also gives each channel's level and the level of the mono sum: the « loss in mono » is how many decibels the mix leaves behind when heard on a single speaker. Three decibels are normal for wide stereo; beyond ten, something is cancelling. Audio passes through unchanged: this node measures, it does not correct. A mono file is reported as mono, which is the truth and not an error.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+| output | Goniometer | image |  |
+| output | Measurements | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Points | number | 3000 | 200 – 20000, step 100 | Number of points drawn in the figure. More points means a denser cloud — and a heavier SVG. |
+
 #### Harmonic Analysis
 
 `tonal-analyse` · Visualization → Analysis
@@ -3942,6 +4076,27 @@ Analyses audio and estimates its global key, then suggests a fitting progression
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Style | choice | Pop | Pop / Jazz / Blues | Suggested progression style, adapted to the detected mode (major or minor). |
+
+#### MusicXML
+
+`musicxml` · Visualization → Analysis
+
+*Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.*
+
+Converts a MIDI file into a MusicXML score — the interchange format read by MuseScore, Finale, Sibelius and Dorico. Attic already wrote ABC and drew with VexFlow, but nothing it produced would open in a score editor. The text output gives the XML, the file output a .musicxml ready to save. Notes starting together become a chord, gaps become rests, and every bar is filled exactly — a bar that does not add up is rejected by MuseScore. « Quantization » sets the smallest value written: a note played between two slots is snapped to the grid. That is what makes the score readable, and also what loses the detail of the performance. « Tempo » does not change the pitches, but a wrong tempo gives wrong durations. What the export cannot do, and no automatic transcription can: slurs, dynamics, expression marks, and the composer's enharmonic choice — a C sharp is written sharp, never D flat. A note longer than a bar is truncated, for lack of a tie. It is a starting point to edit, not an engraving.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | MusicXML | text |  |
+| output | File | file |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Title | text | `Attic` |  | Title written into the score. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
+| Time signature | choice | 4/4 | 4/4 / 3/4 / 2/4 / 6/8 | Time signature of the score. It decides how bars are cut. |
+| Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
 
 #### RMS (Meyda)
 
@@ -4061,6 +4216,27 @@ Decomposes the signal into its frequencies (fast Fourier transform) and displays
 |---|---|---|---|---|
 | Window | choice | 4096 | 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). |
 | Scale | choice | Logarithmic | Logarithmic / Linear | Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies. |
+
+#### Tempo Detector
+
+`detecteur-tempo` · Visualization → Analysis
+
+*Estimates an audio track's tempo and outputs it as a reusable value.*
+
+Estimates a recording's tempo and outputs it as a VALUE, connectable to another node's Tempo parameter — which is how a generated loop gets aligned to an imported excerpt. The measurement is the one Attic already uses in « Audio Analysis »: onset envelope, autocorrelation and spectral flux. « Octave correction » deals with the classic weakness of every tempo detector: nothing tells 80 BPM from a 160 BPM counted every other beat, both periods explain the signal equally well. Folding brings the value into the adjustable range, which does not change the rhythm heard, only how it is counted; the report recalls the raw value and the other plausible readings. Reliability is reported in three levels rather than as a percentage: the autocorrelation peak is not a probability, and two decimals would be invented precision. What the measurement is worth, in figures: on click trains, 90, 100, 120 and 140 BPM are recovered within one beat. On drum-machine patterns, 100 and 75 BPM are right, but a 140 pattern comes out as 70 — an octave error, which the report flags by offering 140 among the plausible readings. A rubato or percussionless piece measures poorly, and the reported reliability says so.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Tempo | control |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Octave correction | choice | Fold into range | Fold into range / None | Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70 — but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Set « None » for a track you know to be slow. |
+| Range low | number | 80 | 40 – 140, step 1 | Lower bound of the folding range. |
+| Range high | number | 160 | 80 – 240, step 1 | Upper bound of the folding range. |
 
 #### VU-meter / LUFS
 

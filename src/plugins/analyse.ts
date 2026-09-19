@@ -5,6 +5,9 @@ import { avecDoc } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";;
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
+import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
+import { notesVersMusicXML } from "../audio/musicxml";
 
 function noeudMeyda(
   id: string,
@@ -55,6 +58,129 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [audio, resultat.description] };
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
  },
+  {
+    id: "musicxml", nom: "MusicXML", nomEn: "MusicXML", univers: "Visualisation", famille: "Analyse",
+    resume: "Convertit un MIDI en partition MusicXML, le format que lisent MuseScore, Finale et Sibelius.",
+    resumeEn: "Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: [{ nom: "MusicXML", nomEn: "MusicXML", type: "texte" }, { nom: "Fichier", nomEn: "File", type: "fichier" }],
+    parametres: [
+      { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Attic", defautEn: "Attic",
+        doc: "Titre inscrit dans la partition.", docEn: "Title written into the score." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [20, 300], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Tempo servant à convertir les secondes en valeurs de note. Un tempo faux ne change pas les hauteurs, mais donne des durées fausses.",
+        docEn: "Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations." },
+      { nom: "Métrique", nomEn: "Time signature", type: "choix",
+        options: ["4/4", "3/4", "2/4", "6/8"], optionsEn: ["4/4", "3/4", "2/4", "6/8"],
+        optionIds: ["4/4", "3/4", "2/4", "6/8"], defaut: "4/4", defautEn: "4/4",
+        doc: "Métrique de la partition. Elle décide du découpage en mesures.",
+        docEn: "Time signature of the score. It decides how bars are cut." },
+      { nom: "Quantification", nomEn: "Quantization", type: "choix",
+        options: ["Double-croche", "Croche", "Noire"], optionsEn: ["Sixteenth", "Eighth", "Quarter"],
+        optionIds: ["16", "8", "4"], defaut: "Double-croche", defautEn: "Sixteenth",
+        doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation.",
+        docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const { analyserMidi } = await import("../audio");
+      const { parseMidi } = await import("midi-file");
+      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const [num, den] = ctx.paramTexte("Métrique", "4/4").split("/").map((v: string) => parseInt(v, 10));
+      const xml = notesVersMusicXML(
+        notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velociete })),
+        {
+          titre: ctx.paramTexte("Titre", "Attic"),
+          tempo: ctx.paramNombre("Tempo", 120),
+          metrique: [num || 4, den || 4],
+          quantification: parseInt(ctx.paramTexte("Quantification", "16"), 10) || 16,
+        },
+      );
+      const nom = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
+      const sortie = new File([xml], nom, { type: "application/vnd.recordare.musicxml+xml" });
+      const mesures = (xml.match(/<measure /g) ?? []).length;
+      return { valeurs: [xml, sortie], message: `${notes.length} notes · ${mesures} mesures` };
+    },
+  },
+  {
+    id: "detecteur-tempo", nom: "Détecteur de tempo", nomEn: "Tempo Detector", univers: "Visualisation", famille: "Analyse",
+    resume: "Estime le tempo d'un audio et le rend comme valeur réutilisable.",
+    resumeEn: "Estimates an audio track's tempo and outputs it as a reusable value.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Tempo", nomEn: "Tempo", type: "controle" },
+      { nom: "Rapport", nomEn: "Report", type: "texte" },
+    ],
+    parametres: [
+      { nom: "Correction d'octave", nomEn: "Octave correction", type: "choix",
+        options: ["Ramener dans la plage", "Aucune"],
+        optionsEn: ["Fold into range", "None"],
+        optionIds: ["plage", "aucune"],
+        defaut: "Ramener dans la plage", defautEn: "Fold into range",
+        doc: "Une détection de tempo ne distingue pas 70 BPM d'un 140 BPM compté un temps sur deux : les deux expliquent le signal, et AUCUNE règle ne tranche à tous les coups. Mesuré sur des motifs de boîte à rythmes, la détection brute divise volontiers par deux : 100 ressort à 50, 140 à 70 — mais un vrai 75 ressort bien à 75. Replier dans 80–160 redresse les deux premiers et double le troisième. Le repli est donc actif par défaut, parce que c'est le cas le plus fréquent quand on veut alimenter un paramètre Tempo, mais rien n'est caché : le rapport donne toujours la valeur brute et les lectures également plausibles. Mettez « Aucune » pour un morceau que vous savez lent.",
+        docEn: "Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70 — but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Set « None » for a track you know to be slow." },
+      { nom: "Plage basse", nomEn: "Range low", type: "nombre", plage: [40, 140], pas: 1, defaut: 80,
+        doc: "Borne basse de la plage de repli.", docEn: "Lower bound of the folding range." },
+      { nom: "Plage haute", nomEn: "Range high", type: "nombre", plage: [80, 240], pas: 1, defaut: 160,
+        doc: "Borne haute de la plage de repli.", docEn: "Upper bound of the folding range." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
+      const brut = analyserAudio(audio);
+      const correction = ctx.paramTexte("Correction d'octave", "plage");
+      const bas = ctx.paramNombre("Plage basse", 80), haut = ctx.paramNombre("Plage haute", 160);
+      const bpm = correction === "aucune" ? Math.round(brut.tempo) : ramenerDansPlage(brut.tempo, bas, haut);
+      const fiabilite = traduire(`msg.tempo.${fiabiliteTempo(brut.tempoConfiance, brut.tempo)}`);
+      const autres = candidatsOctave(bpm).filter((v) => v !== bpm);
+      const rapport = [
+        `${bpm} BPM — ${fiabilite}`,
+        `${traduire("msg.tempo.brut")} ${Math.round(brut.tempo)} BPM`,
+        `${traduire("msg.tempo.autres")} ${autres.join(", ")} BPM`,
+      ].join("\n");
+      return { valeurs: [audio, bpm, rapport], message: `${bpm} BPM · ${fiabilite}` };
+    },
+  },
+  {
+    id: "goniometre", nom: "Goniomètre", nomEn: "Goniometer", univers: "Visualisation", famille: "Analyse",
+    resume: "Mesure la largeur stéréo, la corrélation de phase et ce que le mix perdrait en mono.",
+    resumeEn: "Measures stereo width, phase correlation and what the mix would lose in mono.",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Goniomètre", nomEn: "Goniometer", type: "image" },
+      { nom: "Mesures", nomEn: "Measurements", type: "texte" },
+    ],
+    parametres: [
+      { nom: "Points", nomEn: "Points", type: "nombre", plage: [200, 20000], pas: 100, defaut: 3000,
+        doc: "Nombre de points dessinés dans la figure. Plus il y en a, plus le nuage est dense — et plus le SVG est lourd.",
+        docEn: "Number of points drawn in the figure. More points means a denser cloud — and a heavier SVG." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
+      const gauche = audio.getChannelData(0);
+      // Un fichier mono n'a qu'un canal : c'est alors le même des deux côtés, et la
+      // mesure dira « mono » — ce qui est la vérité, et non une erreur.
+      const droite = audio.numberOfChannels > 1 ? audio.getChannelData(1) : gauche;
+      const mesure = mesurerStereo(gauche, droite);
+      const points = pointsGoniometre(gauche, droite, ctx.paramNombre("Points", 3000));
+      const svg = new File([genererSvgGoniometre(mesure, points)], "goniometre.svg", { type: "image/svg+xml" });
+      const verdict = traduire(`msg.stereo.${verdictStereo(mesure.correlation)}`);
+      const rapport = [
+        `${traduire("msg.stereo.correlation")} ${mesure.correlation.toFixed(3)} — ${verdict}`,
+        `L ${mesure.rmsGauche.toFixed(1)} dB · R ${mesure.rmsDroite.toFixed(1)} dB · mono ${mesure.rmsMono.toFixed(1)} dB`,
+        `${traduire("msg.stereo.perteMono")} ${mesure.perteMono.toFixed(1)} dB`,
+      ].join("\n");
+      return {
+        valeurs: [audio, svg, rapport],
+        message: `r = ${mesure.correlation.toFixed(2)} · ${verdict}`,
+      };
+    },
+  },
   {
     id: "analyse-emotionnelle", nom: "Analyse émotionnelle", nomEn: "Emotional Analysis", univers: "Visualisation", famille: "Analyse",
     resume: "Associe une émotion à un morceau à partir de sa musique seule (tempo, mode, énergie, timbre) — aucun texte ni parole analysés.",

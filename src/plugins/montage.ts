@@ -282,6 +282,50 @@ export const fiches: FicheAudio[] = ([
    }, nomEn: "Mixer", resumeEn: "Sums several tracks into one. Each track's level is set on the node that produces it.",
  },
   {
+    id: "boucle-graphe-debut", nom: "Début de boucle", nomEn: "Loop Start", univers: "Traitement", famille: "Montage",
+    resume: "Marque le début d'une boucle de graphe : ce qui suit est rejoué N fois, chaque tour partant du résultat du précédent.",
+    resumeEn: "Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
+        doc: "Nombre de fois où la chaîne comprise entre ce nœud et « Fin de boucle » est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
+        docEn: "How many times the chain between this node and « Loop End » is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
+    ],
+    async executer(ctx: any) {
+      // Ce nœud n'est normalement JAMAIS exécuté : le moteur déplie la boucle avant
+      // l'exécution et le remplace par les copies de la chaîne. S'il s'exécute, c'est
+      // que le dépliage n'a pas eu lieu — presque toujours faute de « Fin de boucle »
+      // en aval. On laisse alors passer le signal, et on le dit.
+      const a = ctx.entree(0);
+      return { valeurs: [a ?? null], message: traduire("msg.boucle.nonDepliee") };
+    },
+  },
+  {
+    id: "boucle-graphe-fin", nom: "Fin de boucle", nomEn: "Loop End", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et met bout à bout les résultats de tous les tours.",
+    resumeEn: "Closes a graph loop and puts every pass's result end to end.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Fondu", nomEn: "Fade", type: "nombre", plage: [0, 500], pas: 5, defaut: 0, unite: "ms",
+        doc: "Fondu enchaîné entre deux tours. 0 = raccord sec, les tours se suivent exactement.",
+        docEn: "Crossfade between two passes. 0 = hard join, the passes follow each other exactly." },
+    ],
+    async executer(ctx: any) {
+      // Après dépliage, ce nœud reçoit UNE arête par tour, dans l'ordre des tours.
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const fondu = ctx.paramNombre("Fondu", 0) / 1000;
+      let resultat = entrees[0];
+      for (let i = 1; i < entrees.length; i++) resultat = await fusionnerPistes(resultat, entrees[i], fondu);
+      return {
+        valeurs: [resultat],
+        message: traduire("msg.boucle.tours", entrees.length, resultat.duration.toFixed(2)),
+      };
+    },
+  },
+  {
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",
     resume: "Place deux pistes l'une après l'autre avec un fondu enchaîné.",
     resumeEn: "Places two tracks one after the other with a crossfade.",

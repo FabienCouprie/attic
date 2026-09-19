@@ -14,6 +14,7 @@ import {
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
+import { deplierBoucles } from "../../core/boucle-graphe";
 import { registre } from "../../audio/adaptateur";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
@@ -267,8 +268,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
       aretesRef.current as unknown as AreteG[],
       trouverMeta,
     );
-    const nds = plat.noeuds as unknown as any[];
-    const aretes = plat.aretes as unknown as Edge[];
+    // Puis DÉPLIE les boucles de graphe : une boucle est un cycle, et le moteur n'exécute
+    // que des graphes acycliques. Les nœuds compris entre « Début de boucle » et « Fin de
+    // boucle » sont recopiés autant de fois qu'il y a de tours, chaque copie recevant le
+    // résultat de la précédente — c'est ainsi que les effets s'accumulent d'un tour à
+    // l'autre. Voir `core/boucle-graphe.ts`, testé.
+    const deplie = deplierBoucles(plat.noeuds, plat.aretes);
+    for (const [copie, origine] of deplie.origines) {
+      plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
+    }
+    for (const p of deplie.problemes) {
+      console.warn(`[attic] Boucle de graphe : ${p.code} sur ${p.noeudId}`);
+    }
+    const nds = deplie.noeuds as unknown as any[];
+    const aretes = deplie.aretes as unknown as Edge[];
     const priorite = noeudPrioritaireId ?? prioritaireRef.current;
 
     // Topologie (logique pure testée — cf. core/graphe.ts)
