@@ -28,6 +28,7 @@ import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { motifEnTexte, motifEuclidien, nomTraditionnel, notesEuclidiennes } from "../audio/euclidien";
+import { EXEMPLES, interpreter, lireRegles, reecrire } from "../audio/lsysteme";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { optionsPatrons } from "./patrons-rythme";
 import { avecDoc } from "./notices";
@@ -424,6 +425,71 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60),4,4,creerAleatoire(ctx.paramNombre("Graine",42)))] };
+    },
+  },
+  {
+    id: "l-systeme", nom: "L-système", nomEn: "L-system", univers: "Entrées", famille: "Génération",
+    resume: "Engendre une mélodie par une grammaire qui se réécrit (Lindenmayer).",
+    resumeEn: "Generates a melody from a self-rewriting grammar (Lindenmayer).",
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }, { nom: "Mot", nomEn: "Word", type: "texte" }],
+    parametres: [
+      { nom: "Exemple", nomEn: "Example", type: "choix",
+        options: ["Écrit à la main", ...EXEMPLES.map((e) => e.fr)],
+        optionsEn: ["Hand-written", ...EXEMPLES.map((e) => e.en)],
+        optionIds: ["manuel", ...EXEMPLES.map((e) => e.id)],
+        defaut: "Algues de Lindenmayer", defautEn: "Lindenmayer's algae",
+        doc: "Charge une grammaire connue à la place de l'axiome et des règles saisis. Choisissez « Écrit à la main » pour employer les vôtres.",
+        docEn: "Loads a known grammar instead of the axiom and rules typed below. Pick « Hand-written » to use your own." },
+      { nom: "Axiome", nomEn: "Axiom", type: "texte", defaut: "A", defautEn: "A",
+        doc: "Le mot de départ, réécrit à chaque tour.", docEn: "The starting word, rewritten on every pass." },
+      { nom: "Règles", nomEn: "Rules", type: "texte", defaut: "A=AB, B=A", defautEn: "A=AB, B=A",
+        doc: "Les remplacements, sous la forme « A=AB », séparés par des virgules ou des retours à la ligne. Une lettre sans règle se réécrit en elle-même. Les signes + et − montent et descendent d'un degré, les crochets ouvrent et ferment une broderie, > et < allongent et raccourcissent le pas, le point est un silence.",
+        docEn: "The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and < lengthen and shorten the step, a dot is a rest." },
+      { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [0, 12], pas: 1, defaut: 5,
+        doc: "Nombre de réécritures. Le mot grandit vite : une règle qui double sa longueur atteint le millier en dix tours.",
+        docEn: "Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes." },
+      { nom: "Clé", nomEn: "Key", type: "choix",
+        options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+        optionsEn: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+        defaut: "C", defautEn: "C", doc: "Tonique de la gamme.", docEn: "Tonic of the scale." },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS,
+        defaut: "Majeur", defautEn: "Major",
+        doc: "Les degrés que + et − parcourent : le mot ne sort jamais de la gamme.",
+        docEn: "The degrees that + and − walk through: the word never leaves the scale." },
+      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 7], pas: 1, defaut: 4,
+        doc: "Octave de la note de départ.", docEn: "Octave of the starting note." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Vitesse : un pas vaut une croche.", docEn: "Speed: one step is an eighth note." },
+      { ...PARAMETRE_SYNTHESE, doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.", docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
+      PARAMETRE_INSTRUMENT_SF2,
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume du rendu.", docEn: "Output volume." },
+    ],
+    async executer(ctx: any) {
+      const choix = ctx.paramTexte("Exemple", "algues");
+      const exemple = EXEMPLES.find((e) => e.id === choix);
+      const axiome = exemple ? exemple.axiome : ctx.paramTexte("Axiome", "A");
+      const regles = lireRegles(exemple ? exemple.regles : ctx.paramTexte("Règles", "A=AB, B=A"));
+      const mot = reecrire(axiome, regles, ctx.paramNombre("Itérations", 5));
+      const notes = interpreter(mot, {
+        degres: degresGammeMelodie(ctx.paramTexte("Gamme", "majeur")),
+        depart: (ctx.paramNombre("Octave", 4) + 1) * 12 + (DEMI_TONS_CLE[ctx.paramTexte("Clé", "C")] ?? 0),
+        dureePas: (60 / ctx.paramNombre("Tempo", 120)) / 2,
+        velocite: 90,
+        noteMin: 21,
+        noteMax: 108,
+      });
+      if (notes.length === 0) return { valeurs: [null, null, mot], message: traduire("msg.lsysteme.aucuneNote") };
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const buffer = await rendreSequence(notes, modeRendu, ctx.paramNombre("Volume", 80), programme, banque);
+      const midi = notesVersFichierMidi(notes, ctx.paramNombre("Tempo", 120));
+      return {
+        valeurs: [buffer, midi, mot],
+        message: traduire("msg.lsysteme.resultat", mot.length, notes.length),
+      };
     },
   },
   {

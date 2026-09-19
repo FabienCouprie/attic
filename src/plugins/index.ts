@@ -108,6 +108,7 @@ import { fiches as f_stockhausen } from "./stockhausen";
 import { fiches as f_nancarrow } from "./nancarrow";
 import { fiches as f_pulsars } from "./pulsars";
 import { fiches as f_cribles } from "./cribles";
+import { fiches as f_theorie_composition } from "./theorie-composition";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -215,4 +216,5 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_nancarrow,
   ...f_pulsars,
   ...f_cribles,
+  ...f_theorie_composition,
 ];

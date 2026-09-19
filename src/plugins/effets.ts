@@ -39,10 +39,18 @@ import {
     joindreMidi,
    bouclerMidi,
    analyserMidi,
+   notesVersFichierMidi,
+   rendreSequence,
 } from "../audio";
+import { rendreBatterieMidi } from "../audio/tone-synths";
+import {
+  eclaircir, echoNotes, evenements, imposerRythme, palindrome, repeterEtTourner,
+  type NoteMotif, type SensMotif,
+} from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
 import { quadrafuzz } from "../audio/quadrafuzz";
+import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
@@ -84,6 +92,79 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
    },
   };
 }
+
+/**
+ * Lit un MIDI d'entrée en notes de motif.
+ *
+ * Les quatre nœuds de motifs partagent cette lecture, donc la même tolérance et le même
+ * message quand il n'y a rien à lire. Le champ de vélocité s'appelle `velociete` dans le
+ * domaine — une coquille ancienne, gardée pour ne pas casser les graphes enregistrés.
+ */
+async function notesDuMidi(fichier: unknown): Promise<NoteMotif[] | null> {
+  if (!(fichier instanceof File)) return null;
+  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+  return notes.map((n) => ({
+    note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
+  }));
+}
+
+/** Le canal le plus représenté : une percussion doit ressortir en percussion. */
+function canalDominant(notes: NoteMotif[]): number {
+  const compte = new Map<number, number>();
+  for (const n of notes) {
+    const c = n.canal ?? 0;
+    compte.set(c, (compte.get(c) ?? 0) + 1);
+  }
+  let meilleur = 0, max = -1;
+  for (const [canal, n] of compte) if (n > max) { max = n; meilleur = canal; }
+  return meilleur;
+}
+
+/**
+ * Rend le motif transformé en AUDIO et en MIDI.
+ *
+ * L'audio n'est pas un supplément : sans lui, le nœud n'a pas de lecteur et l'on ne peut
+ * pas entendre ce qu'on vient de régler sans lui brancher un point d'écoute. Le canal 9
+ * passe par la synthèse de batterie — un MIDI de percussion joué en FM donnerait des sons
+ * de flûte sur les notes de grosse caisse —, et l'instrument mélodique n'est alors pas
+ * imposé au fichier, ce qui ferait taire la batterie chez les autres lecteurs.
+ */
+async function rendreMotif(
+  ctx: any, notes: NoteMotif[], canal: number,
+): Promise<[AudioBuffer, File]> {
+  const tempo = ctx.paramNombre("Tempo", 120);
+  const volume = ctx.paramNombre("Volume", 80);
+  const brut = notesVersFichierMidi(notes, tempo, canal);
+  if (canal === 9) {
+    return [await rendreBatterieMidi({ notes, volume }), brut];
+  }
+  const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+  const modeRendu: "FM/Oscillateurs" | "SoundFont" =
+    mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+  const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+  return [
+    await rendreSequence(notes, modeRendu, volume, programme, banque),
+    await appliquerInstrumentMidi(brut, ctx.paramNombre("Instrument", 0)),
+  ];
+}
+
+/** Les réglages de rendu communs aux nœuds de motifs : écouter d'abord, exporter ensuite. */
+const PARAMETRES_RENDU_MOTIF = [
+  { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
+    doc: "Tempo inscrit dans le fichier MIDI produit. Les durées, elles, sont en secondes et ne changent pas.",
+    docEn: "Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change." },
+  { ...PARAMETRE_SYNTHESE,
+    doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. Sans effet sur une piste de percussion, qui passe toujours par la synthèse de batterie.",
+    docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis." },
+  PARAMETRE_INSTRUMENT_SF2,
+  { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
+    doc: "Volume du rendu audio.", docEn: "Output volume." },
+];
+
+const SORTIES_MOTIF = [
+  { nom: "Audio", type: "audio" as const },
+  { nom: "MIDI", nomEn: "MIDI", type: "midi" as const },
+];
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
@@ -571,6 +652,238 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
    },
  },
+  {
+    id: "motif-imposer-rythme", nom: "Imposer un rythme", nomEn: "Impose Rhythm",
+    univers: "Traitement", famille: "Effets",
+    resume: "Plaque la grille rythmique d'un MIDI sur les hauteurs d'un autre.",
+    resumeEn: "Applies one MIDI file's rhythmic grid to another's pitches.",
+    entrees: [
+      { nom: "Hauteurs", nomEn: "Pitches", type: "midi" },
+      { nom: "Rythme", nomEn: "Rhythm", type: "midi" },
+    ],
+    sorties: SORTIES_MOTIF,
+    parametres: PARAMETRES_RENDU_MOTIF,
+    async executer(ctx: any) {
+      const hauteurs = await notesDuMidi(ctx.entree(0));
+      const grille = await notesDuMidi(ctx.entree(1));
+      if (!hauteurs || !grille) return { valeurs: [null, null], message: traduire("msg.motif.deuxMidi") };
+      const sortie = imposerRythme(hauteurs, grille);
+      if (sortie.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const [audio, midi] = await rendreMotif(ctx, sortie, canalDominant(hauteurs));
+      return {
+        valeurs: [audio, midi],
+        // On annonce des ÉVÉNEMENTS et non des notes : ce qui tourne en boucle, ce sont
+        // les accords, et ce qui commande la longueur, ce sont les frappes.
+        message: traduire("msg.motif.imposer", sortie.length, evenements(grille).length, evenements(hauteurs).length),
+      };
+    },
+  },
+  {
+    id: "motif-echo-notes", nom: "Écho de notes", nomEn: "Note Echo",
+    univers: "Traitement", famille: "Effets",
+    resume: "Superpose des copies décalées d'un motif, de vélocité décroissante.",
+    resumeEn: "Layers time-shifted copies of a pattern, with decreasing velocity.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: SORTIES_MOTIF,
+    parametres: [
+      { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [0, 16], pas: 1, defaut: 3,
+        doc: "Nombre de copies ajoutées après chaque note. Les copies qui descendraient sous la vélocité 1 ne sont pas écrites.",
+        docEn: "Number of copies added after each note. Copies that would fall below velocity 1 are not written." },
+      { nom: "Décalage", nomEn: "Offset", type: "nombre", plage: [0.01, 4], pas: 0.01, defaut: 0.25, unite: "s",
+        doc: "Écart entre deux copies successives.", docEn: "Gap between two successive copies." },
+      { nom: "Atténuation", nomEn: "Feedback", type: "nombre", plage: [0, 100], pas: 1, defaut: 60, unite: "%",
+        doc: "Part de la vélocité que chaque copie garde de la précédente. 100 % = copies aussi fortes que l'original.",
+        docEn: "Share of the velocity each copy keeps from the previous one. 100 % = copies as loud as the original." },
+      { nom: "Transposition", nomEn: "Transpose", type: "nombre", plage: [-12, 12], pas: 1, defaut: 0, unite: " ½-ton", uniteEn: "st",
+        doc: "Transposition cumulée à chaque copie : +7 fait monter l'écho de quinte en quinte. Une copie qui sortirait du clavier MIDI arrête la série.",
+        docEn: "Transposition accumulated at each copy: +7 sends the echo up fifth by fifth. A copy that would leave the MIDI range ends the series." },
+      ...PARAMETRES_RENDU_MOTIF,
+    ],
+    async executer(ctx: any) {
+      const notes = await notesDuMidi(ctx.entree(0));
+      if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const sortie = echoNotes(notes, {
+        repetitions: ctx.paramNombre("Répétitions", 3),
+        decalage: ctx.paramNombre("Décalage", 0.25),
+        attenuation: ctx.paramNombre("Atténuation", 60) / 100,
+        transposition: ctx.paramNombre("Transposition", 0),
+      });
+      const [audio, midi] = await rendreMotif(ctx, sortie, canalDominant(notes));
+      return {
+        valeurs: [audio, midi],
+        message: traduire("msg.motif.echo", notes.length, sortie.length - notes.length),
+      };
+    },
+  },
+  {
+    id: "motif-eclaircir", nom: "Éclaircir", nomEn: "Thin Out",
+    univers: "Traitement", famille: "Effets",
+    resume: "Retire une part des notes au hasard, de façon reproductible.",
+    resumeEn: "Removes a share of the notes at random, reproducibly.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: SORTIES_MOTIF,
+    parametres: [
+      { nom: "Proportion", nomEn: "Amount", type: "nombre", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
+        doc: "Part des événements retirés. Le tirage se fait par événement et non par note : un accord part entier ou reste entier.",
+        docEn: "Share of events removed. The draw is per event, not per note: a chord leaves whole or stays whole." },
+      { nom: "Garder les temps", nomEn: "Keep beats", type: "choix",
+        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        defaut: "Oui", defautEn: "Yes",
+        doc: "Épargne les événements qui tombent sur un temps. Une trame éclaircie entièrement au hasard perd sa pulsation ; on veut souvent l'alléger sans la dissoudre.",
+        docEn: "Spares the events that land on a beat. A texture thinned purely at random loses its pulse; one often wants to lighten it without dissolving it." },
+      { nom: "Durée d'un temps", nomEn: "Beat length", type: "nombre", plage: [0.05, 4], pas: 0.05, defaut: 0.5, unite: "s",
+        doc: "Ce qui compte pour un temps, en secondes. À 120 BPM, la noire fait 0,5 s.",
+        docEn: "What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "0 = tirée au sort à chaque exécution, et affichée dans le message. Toute autre valeur rejoue exactement le même éclaircissement.",
+        docEn: "0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning." },
+      ...PARAMETRES_RENDU_MOTIF,
+    ],
+    async executer(ctx: any) {
+      const notes = await notesDuMidi(ctx.entree(0));
+      if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      const sortie = eclaircir(notes, ctx.paramNombre("Proportion", 30) / 100, aleatoire, {
+        preserverPremierTemps: ctx.paramTexte("Garder les temps", "oui") === "oui",
+        dureeTemps: ctx.paramNombre("Durée d'un temps", 0.5),
+      });
+      if (sortie.length === 0) return { valeurs: [null, null], message: traduire("msg.motif.toutRetire") };
+      const [audio, midi] = await rendreMotif(ctx, sortie, canalDominant(notes));
+      return {
+        valeurs: [audio, midi],
+        message: traduire("msg.motif.eclaircir", notes.length - sortie.length, notes.length, graine),
+      };
+    },
+  },
+  {
+    id: "motif-retrograde", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
+    univers: "Traitement", famille: "Effets",
+    resume: "Joue un motif à l'envers, ou en aller-retour.",
+    resumeEn: "Plays a pattern backwards, or there and back.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: SORTIES_MOTIF,
+    parametres: [
+      { nom: "Sens", nomEn: "Direction", type: "choix",
+        options: ["Rétrograde", "Aller-retour", "Retour-aller"],
+        optionsEn: ["Retrograde", "There and back", "Back and there"],
+        optionIds: ["retrograde", "aller-retour", "retour-aller"],
+        defaut: "Aller-retour", defautEn: "There and back",
+        doc: "« Rétrograde » ne rend que le motif à l'envers. « Aller-retour » met le motif puis son rétrograde à la suite, ce qui donne un palindrome. « Retour-aller » commence par le rétrograde, ce qui fait entendre le motif d'origine comme une résolution.",
+        docEn: "« Retrograde » outputs the reversed pattern only. « There and back » puts the pattern then its retrograde one after the other, giving a palindrome. « Back and there » starts with the retrograde, which makes the original pattern sound like a resolution." },
+      { nom: "Rejouer la charnière", nomEn: "Repeat the hinge", type: "choix",
+        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        defaut: "Non", defautEn: "No",
+        doc: "Sort de l'événement du retournement. Do-ré-mi suivi de son rétrograde donne do-ré-mi-mi-ré-do, où le mi est joué deux fois ; le palindrome qu'on écrit en musique est do-ré-mi-ré-do, avec un seul mi au sommet. La répétition marque le retournement, son absence le rend fluide. Sans effet en mode « Rétrograde ».",
+        docEn: "What becomes of the turning event. C-D-E followed by its retrograde gives C-D-E-E-D-C, where the E is played twice; the palindrome one writes in music is C-D-E-D-C, with a single E at the top. Repeating marks the turn, dropping it makes it flow. No effect in « Retrograde » mode." },
+      ...PARAMETRES_RENDU_MOTIF,
+    ],
+    async executer(ctx: any) {
+      const notes = await notesDuMidi(ctx.entree(0));
+      if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const sens = ctx.paramTexte("Sens", "aller-retour") as SensMotif;
+      const pivot = ctx.paramTexte("Rejouer la charnière", "non") === "oui";
+      const sortie = palindrome(notes, sens, pivot);
+      const [audio, midi] = await rendreMotif(ctx, sortie, canalDominant(notes));
+      return {
+        valeurs: [audio, midi],
+        message: traduire("msg.motif.retrograde", evenements(sortie).length, evenements(notes).length),
+      };
+    },
+  },
+  {
+    id: "motif-repeter-tourner", nom: "Répéter et tourner", nomEn: "Ply and Rotate",
+    univers: "Traitement", famille: "Effets",
+    resume: "Répète chaque note dans sa propre durée, et décale les hauteurs sur la grille.",
+    resumeEn: "Repeats each note within its own duration, and shifts the pitches along the grid.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: SORTIES_MOTIF,
+    parametres: [
+      { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
+        doc: "Nombre de fois que chaque événement est joué à l'intérieur de sa durée d'origine. La grille ne se déplace pas : elle se remplit. 1 = aucune répétition.",
+        docEn: "How many times each event is played inside its original duration. The grid does not move: it fills up. 1 = no repetition." },
+      { nom: "Rotation", nomEn: "Rotation", type: "nombre", plage: [-32, 32], pas: 1, defaut: 0,
+        doc: "Décale la suite des hauteurs sur la grille rythmique, sans toucher aux départs : le rythme reste, la mélodie glisse. La rotation s'applique APRÈS les répétitions, donc sur le motif densifié.",
+        docEn: "Shifts the pitch sequence along the rhythmic grid without touching the onsets: the rhythm stays, the melody slides. The rotation applies AFTER the repeats, hence on the densified pattern." },
+      ...PARAMETRES_RENDU_MOTIF,
+    ],
+    async executer(ctx: any) {
+      const notes = await notesDuMidi(ctx.entree(0));
+      if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const repetitions = ctx.paramNombre("Répétitions", 2);
+      const rotation = ctx.paramNombre("Rotation", 0);
+      const sortie = repeterEtTourner(notes, repetitions, rotation);
+      const [audio, midi] = await rendreMotif(ctx, sortie, canalDominant(notes));
+      return {
+        valeurs: [audio, midi],
+        message: traduire("msg.motif.repeter", sortie.length, repetitions, rotation),
+      };
+    },
+  },
+  {
+    id: "markov-midi", nom: "Chaîne de Markov", nomEn: "Markov Chain",
+    univers: "Traitement", famille: "Effets",
+    resume: "Apprend les enchaînements de notes d'un MIDI et en engendre de nouveaux, avec la table de transitions en clair.",
+    resumeEn: "Learns a MIDI file's note transitions and generates new ones, with the transition table in plain sight.",
+    entrees: [{ nom: "MIDI", type: "midi" }],
+    sorties: [
+      { nom: "Audio", type: "audio" },
+      { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+      { nom: "Table", nomEn: "Table", type: "texte" },
+    ],
+    parametres: [
+      { nom: "Ordre", nomEn: "Order", type: "nombre", plage: [1, 4], pas: 1, defaut: 2,
+        doc: "Nombre de notes regardées en arrière. À 1, le morceau ressort dans sa tonalité mais sans phrase ; à 2 ou 3, ses tournures réapparaissent ; au-delà, la chaîne n'a plus le choix et recopie la source. La sortie texte indique la part de contextes sans choix, qui mesure ce sur-apprentissage.",
+        docEn: "How many notes are looked back on. At 1, the piece comes out in its key but without phrasing; at 2 or 3, its turns of phrase reappear; beyond that, the chain has no choice left and copies the source. The text output gives the share of contexts with no choice, which measures that overfitting." },
+      { nom: "Notes", nomEn: "Notes", type: "nombre", plage: [4, 2000], pas: 1, defaut: 64,
+        doc: "Nombre de notes engendrées.", docEn: "Number of notes generated." },
+      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300], pas: 1, defaut: 120, unite: "BPM",
+        doc: "Vitesse du MIDI produit. Les durées de la source ne sont pas apprises : le nœud n'imite que les hauteurs, et les joue en croches.",
+        docEn: "Speed of the produced MIDI. The source's durations are not learned: the node imitates pitches only, and plays them as eighth notes." },
+      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "0 = tirée au sort à chaque exécution, et affichée dans le message. Toute autre valeur rejoue exactement la même suite.",
+        docEn: "0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sequence." },
+      { ...PARAMETRE_SYNTHESE,
+        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.",
+        docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
+      PARAMETRE_INSTRUMENT_SF2,
+      { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume du rendu audio.", docEn: "Output volume." },
+    ],
+    async executer(ctx: any) {
+      const fichier = ctx.entree(0);
+      if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      const ordre = ctx.paramNombre("Ordre", 2);
+      const table = apprendre(
+        notes.map((n: any) => ({ note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin })),
+        ordre,
+      );
+      if (table.size === 0) return { valeurs: [null, null, null], message: traduire("msg.markov.tropCourt") };
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      const hauteurs = engendrer(table, ordre, ctx.paramNombre("Notes", 64), aleatoire);
+      const tempo = ctx.paramNombre("Tempo", 120);
+      const pas = (60 / tempo) / 2;
+      const engendrees = hauteurs.map((note, i) => ({ note, velocite: 90, debut: i * pas, fin: i * pas + pas * 0.9 }));
+      const stats = statistiques(table);
+      const rapport = [
+        traduire("msg.markov.stats", stats.contextes, stats.transitions, Math.round(stats.partSansChoix * 100)),
+        "",
+        tableEnTexte(table),
+      ].join("\n");
+      // La chaîne n'apprend que des hauteurs : elle ne reprend donc jamais le canal de
+      // la source, et sa sortie est mélodique même apprise sur une piste de batterie.
+      const [audio, midi] = await rendreMotif(ctx, engendrees, 0);
+      return {
+        valeurs: [audio, midi, rapport],
+        message: traduire("msg.markov.resultat", engendrees.length, stats.contextes, graine),
+      };
+    },
+  },
   {
     id: "temperament", nom: "Tempérament", nomEn: "Temperament",
     univers: "Traitement", famille: "Effets",
