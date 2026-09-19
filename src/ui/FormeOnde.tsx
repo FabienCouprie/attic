@@ -7,6 +7,13 @@ import { useI18n } from "../i18n";
 
 export type Zone = { debut: number; duree: number };
 
+// Les deux teintes d'origine — vert d'eau pour le sélecteur, bleu pour le visualiseur —,
+// éclaircies au cœur et effacées vers les crêtes.
+const BORD_VERT = "rgba(42,157,143,0.28)";
+const COEUR_VERT = "rgba(94,214,199,0.95)";
+const BORD_BLEU = "rgba(76,110,245,0.28)";
+const COEUR_BLEU = "rgba(138,164,255,0.95)";
+
 interface Props {
   audioUrl?: string;
   multi: boolean;
@@ -19,6 +26,36 @@ function formatTemps(sec: number): string {
   const s = Math.floor(sec % 60);
   const ms = Math.floor((sec % 1) * 100);
   return `${m}:${s.toString().padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
+}
+
+/**
+ * La couleur de l'onde : dense près de la ligne médiane, transparente vers les crêtes.
+ *
+ * L'onde était d'un aplat opaque, qui la posait sur le nœud comme un autocollant et cachait la
+ * grille. WaveSurfer remplit du centre vers les extrêmes : un dégradé vertical donne donc un
+ * corps nourri là où l'énergie est, et des crêtes qui s'évanouissent — le même effet que le
+ * cœur efficace dessiné dans le sélecteur multizone, obtenu ici sans toucher au rendu.
+ *
+ * La teinte change en même temps que l'opacité, et c'est ce qui fait l'effet : un dégradé qui
+ * ne jouerait que sur l'alpha ne se voit presque pas sur un signal de transitoires, dont les
+ * crêtes traversent toute la hauteur — essayé, mesuré à l'œil sur un rythme euclidien, il n'y
+ * avait pas de quoi toucher au code. Le cœur est donc plus CLAIR que le bord, comme la valeur
+ * efficace l'est dans le sélecteur.
+ *
+ * Le dégradé se construit sur un canvas jetable : il vit dans l'espace utilisateur et suit donc
+ * la mise à l'échelle que WaveSurfer applique au sien. Si le contexte 2D manque — canvas refusé,
+ * environnement sans rendu —, on retombe sur une couleur translucide simple, qui garde
+ * l'intention sans le relief.
+ */
+function degradeOnde(bord: string, coeur: string, hauteur: number): CanvasGradient | string {
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!ctx) return coeur;
+  const d = ctx.createLinearGradient(0, 0, 0, hauteur);
+  d.addColorStop(0, bord);
+  d.addColorStop(0.38, coeur);
+  d.addColorStop(0.62, coeur);
+  d.addColorStop(1, bord);
+  return d;
 }
 
 export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
@@ -48,8 +85,11 @@ export function FormeOnde({ audioUrl, multi, zones, onZonesChange }: Props) {
     if (!waveRef.current) return;
     const ws = WaveSurfer.create({
       container: waveRef.current,
-      waveColor: multi ? "#2a9d8f" : "#4c6ef5",
-      progressColor: multi ? "#2a9d8f" : "#4c6ef5",
+      // Vert d'eau pour le sélecteur, bleu pour le visualiseur : ce sont les couleurs d'origine,
+      // reprises en dégradé translucide. La partie déjà jouée reste la même teinte — c'est la
+      // grille et le fond qu'on veut voir à travers, pas la position de lecture.
+      waveColor: multi ? degradeOnde(BORD_VERT, COEUR_VERT, hauteur) : degradeOnde(BORD_BLEU, COEUR_BLEU, hauteur),
+      progressColor: multi ? degradeOnde(BORD_VERT, COEUR_VERT, hauteur) : degradeOnde(BORD_BLEU, COEUR_BLEU, hauteur),
       cursorColor: "#e76f51",
       cursorWidth: 2,
       height: hauteur,

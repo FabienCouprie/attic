@@ -1,6 +1,10 @@
 // audio/klein.test.ts — La bouteille de Klein : un miroir par recollement, caché
 // dans le silence, et un retour complet en deux tours d'étendue.
-import "node-web-audio-api/polyfill.js";
+// Le conteneur seul, en JavaScript pur : ni `klein.ts` ni `risset.ts` n'ouvrent de contexte
+// audio, et c'est le module NATIF de node-web-audio-api qui faisait s'effondrer le processus
+// de ce fichier — violation d'accès 0xC0000005, un lancement de la suite sur trois. Voir
+// audio/polyfill-audiobuffer.ts.
+import "./polyfill-audiobuffer";
 import { describe, it, expect } from "vitest";
 import { recollements, coteVoix, periodeRetourSec, rendreKlein } from "./klein";
 import { voixRisset } from "./risset";

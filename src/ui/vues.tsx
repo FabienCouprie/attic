@@ -19,6 +19,7 @@ import { rendreSequence } from "../audio/midi";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
+import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
@@ -721,6 +722,17 @@ function VueExport({ data }: VueProps) {
 }
 
 // ── Clavier mélodie (instrument jouable + enregistrement de séquence) ──
+// ── Clavier d'apprentissage : le MIDI reçu, montré main par main ──
+function VueApprentissage({ data }: VueProps) {
+  return (
+    <VueClavierApprentissage
+      midi={data.midiFichierSortie as File | undefined}
+      audioUrl={data.audioResultatUrl as string | undefined}
+      anticipation={Number((data.parametres as Record<string, unknown> | undefined)?.["Anticipation"] ?? 3) || 3}
+    />
+  );
+}
+
 function ClavierMelodie({ id, data }: VueProps) {
   const { t } = useI18n();
   // Un 88 touches complet, La0 a Do8, comme un vrai clavier : il etait jusqu'ici limite
@@ -1694,6 +1706,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },
+  { correspond: parId("clavier-apprentissage"), vue: VueApprentissage, position: "apres" },
 ];
 
 export function vuesPourNoeud(ficheId: string, position: "avant" | "apres"): Vue[] {

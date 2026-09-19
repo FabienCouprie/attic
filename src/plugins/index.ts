@@ -109,6 +109,12 @@ import { fiches as f_nancarrow } from "./nancarrow";
 import { fiches as f_pulsars } from "./pulsars";
 import { fiches as f_cribles } from "./cribles";
 import { fiches as f_theorie_composition } from "./theorie-composition";
+import { fiches as f_modeles_physiques } from "./modeles-physiques";
+import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
+import { fiches as f_theorie_avancee } from "./theorie-avancee";
+import { fiches as f_csound } from "./csound";
+import { fiches as f_documentation } from "./documentation";
+import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -126,6 +132,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sortie_conversion,
   ...f_separation,
   ...f_collections,
+  ...f_documentation,
+  ...f_clavier_apprentissage,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,
@@ -217,4 +225,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_pulsars,
   ...f_cribles,
   ...f_theorie_composition,
+  ...f_modeles_physiques,
+  ...f_syntheses_exotiques,
+  ...f_theorie_avancee,
+  ...f_csound,
 ];

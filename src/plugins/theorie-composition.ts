@@ -99,7 +99,7 @@ function rapportAnalyse(a: Analyse, titre: string): string {
 export const fiches: FicheAudio[] = ([
   {
     id: "serie-dodecaphonique", nom: "Opérations sérielles", nomEn: "Serial Operations",
-    univers: "Autres", famille: "Théorie",
+    univers: "Traitement", famille: "Effets",
     resume: "Joue les quatre formes d'une série — originale, rétrograde, inversion, rétrograde de l'inversion — et écrit sa matrice.",
     resumeEn: "Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix.",
     entrees: [{ nom: "MIDI", type: "midi", requis: false }],
@@ -238,7 +238,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "harmonie-negative", nom: "Harmonie négative", nomEn: "Negative Harmony",
-    univers: "Autres", famille: "Théorie",
+    univers: "Traitement", famille: "Effets",
     resume: "Réfléchit les hauteurs autour de l'axe tonique-dominante : do majeur devient do mineur, sol septième devient fa mineur sixte.",
     resumeEn: "Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6.",
     entrees: [{ nom: "MIDI", type: "midi" }],
@@ -281,7 +281,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "voicings-accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
-    univers: "Autres", famille: "Théorie",
+    univers: "Traitement", famille: "Effets",
     resume: "Renverse, écarte et enchaîne les accords d'un MIDI en bougeant le moins de voix possible.",
     resumeEn: "Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible.",
     entrees: [{ nom: "MIDI", type: "midi" }],

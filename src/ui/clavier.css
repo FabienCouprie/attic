@@ -58,3 +58,27 @@
   background: linear-gradient(180deg, var(--accent) 0%, #1b1b20 140%);
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.6);
 }
+
+/* ── Clavier d'apprentissage : une couleur par main ──
+   Voir la musique se séparer en deux est tout l'intérêt du nœud ; les deux teintes reprennent
+   celles des flux d'Attic — le vert d'eau de l'audio pour la gauche, le bleu du texte pour la
+   droite —, assez saturées pour se lire sur une touche blanche comme sur une noire. */
+.clavier-blanche.enfoncee-gauche { background: linear-gradient(180deg, #2a9d8f 0%, #a8ded6 150%); }
+.clavier-blanche.enfoncee-droite { background: linear-gradient(180deg, #4c6ef5 0%, #b9c6ff 150%); }
+.clavier-noire.enfoncee-gauche { background: linear-gradient(180deg, #47c9b8 0%, #14564e 140%); }
+.clavier-noire.enfoncee-droite { background: linear-gradient(180deg, #8aa4ff 0%, #22307e 140%); }
+
+.clavier-lecteur { height: 28px; max-width: 260px; }
+.clavier-position { font-variant-numeric: tabular-nums; color: var(--texte-doux, #9a9aa5); font-size: 11px; }
+.clavier-legende { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--texte-doux, #9a9aa5); }
+.clavier-legende i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 8px; }
+.clavier-legende .pastille-gauche { background: #2a9d8f; }
+.clavier-legende .pastille-droite { background: #4c6ef5; }
+
+/* La pluie de notes : un fond sombre dans lequel les barres colorées descendent vers leur
+   propre touche. Elle est dans le même conteneur défilant que le clavier, donc au même repère. */
+.clavier-pluie {
+  background: linear-gradient(180deg, #0b0b10 0%, #12121a 70%, #171722 100%);
+  border-radius: 6px 6px 0 0;
+  pointer-events: none;
+}

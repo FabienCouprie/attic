@@ -8,6 +8,17 @@ import { actionBoutonLecture } from "./lecteur-onde";
 
 export type Zone = { debut: number; duree: number };
 
+// ── Couleurs de la forme d'onde ──
+//
+// L'onde était peinte d'un seul vert opaque, qui masquait la grille temporelle et donnait une
+// masse plate où rien ne se distinguait. Elle est maintenant dessinée en DEUX COUCHES, comme le
+// font les stations audio : l'enveloppe crête à crête en translucide — la grille et les teintes
+// de zone la traversent —, et par-dessus un cœur à la valeur efficace, plus dense. Ce cœur est
+// ce qui empêche la transparence de délaver le dessin : les passages forts restent nourris, les
+// passages faibles s'effacent, et l'on LIT le niveau au lieu de deviner une silhouette.
+const ONDE_ENVELOPPE = "rgba(42,157,143,0.42)";
+const ONDE_COEUR = "rgba(94,214,199,0.85)";
+
 interface Props {
   audioUrl?: string;
   zones: Zone[];
@@ -165,8 +176,6 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
     const debutEch = Math.max(0, Math.floor(debutVisible * sampleRate));
     const echParPixel = Math.max(1, (finVisible - debutVisible) * sampleRate / largeurCSS);
     const canaux = buffer.numberOfChannels;
-    const couleurOnde = "#2a9d8f";
-    ctx.strokeStyle = couleurOnde;
     ctx.lineWidth = 1;
 
     // Pour meilleure qualité, dessiner avec fill pour les zones denses
@@ -178,19 +187,28 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
       const dPixel = debutEch + Math.floor(x * echParPixel);
       const fPixel = Math.min(buffer.length, debutEch + Math.floor((x + barWidth) * echParPixel));
       if (dPixel >= buffer.length) break;
-      let min = 0, max = 0;
+      let min = 0, max = 0, sommeCarres = 0, nbEch = 0;
       for (let c = 0; c < canaux; c++) {
         const canal = buffer.getChannelData(c);
         for (let e = dPixel; e < fPixel && e < canal.length; e++) {
           const v = canal[e];
           if (v < min) min = v;
           if (v > max) max = v;
+          sommeCarres += v * v;
+          nbEch++;
         }
       }
       const yMin = centre + min * amplitude;
       const yMax = centre + max * amplitude;
-      ctx.fillStyle = couleurOnde;
+      ctx.fillStyle = ONDE_ENVELOPPE;
       ctx.fillRect(x, yMin, barWidth, Math.max(1, yMax - yMin));
+      // Le cœur : la valeur efficace du même pixel, centrée. Elle se calcule dans la boucle
+      // ci-dessus, donc sans second passage sur les échantillons.
+      const rms = nbEch > 0 ? Math.sqrt(sommeCarres / nbEch) * amplitude : 0;
+      if (rms > 0.5) {
+        ctx.fillStyle = ONDE_COEUR;
+        ctx.fillRect(x, centre - rms, barWidth, rms * 2);
+      }
     }
 
     // Zones mémorisées

@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **281 components** in **7 categories** and **28 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **300 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 57 | [Audio](#audio) (6) · [Generation](#generation) (41) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 126 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (101) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 30 | [Analysis](#analysis) (22) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Inputs](#inputs) | 59 | [Audio](#audio) (6) · [Generation](#generation) (43) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 137 | [Conversion](#conversion) (4) · [Editing](#editing) (17) · [Effects](#effects) (112) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 8 | [Export](#export) (2) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 49 | [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (15) · [Theory](#theory) (8) |
+| [Others](#others) | 53 | [Csound wrapper](#csound-wrapper) (5) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (6) |
 
 ## How to read this catalog
 
@@ -164,6 +164,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Frequency Generator](#frequency-generator) | Generates a pure tone at a given frequency (Hz) or note. |
 | [GENDYN (Xenakis)](#gendyn-xenakis) | Stochastic synthesis: the waveform itself is a bounded random walk. |
 | [Groove Box](#groove-box) | Generates a groove loop: deterministic chord progression + reservoir melody + drums. |
+| [Infinity Series (Nørgård)](#infinity-series-nørgård) | Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon. |
 | [Koch Snowflake Arpeggiator](#koch-snowflake-arpeggiator) | Generates a polyrhythmic arpeggio from the Koch snowflake. |
 | [L-system](#l-system) | Generates a melody from a self-rewriting grammar (Lindenmayer). |
 | [Mandelbrot Mapper](#mandelbrot-mapper) | Generates a melody from the Mandelbrot set. |
@@ -188,6 +189,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
 | [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
+| [Tiling Canon](#tiling-canon) | Builds a rhythmic canon where each pulse is struck by one voice and one only. |
 
 #### ABC → MIDI
 
@@ -626,6 +628,34 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Bass instrument | SoundFont preset | follow MIDI |  | SoundFont preset for the bass, or « Follow MIDI » to keep the one the node assigns (fingered bass). The choice is also written into the « MIDI bass » output, so whichever node renders it next will use it. |
 | Melody instrument | SoundFont preset | follow MIDI |  | SoundFont preset for the melody, or « Follow MIDI » to keep the one the node assigns (square lead). The choice is also written into the « MIDI melody » output, so whichever node renders it next will use it. |
 | Drum kit | SoundFont preset | follow MIDI |  | A fourth slot, for the fourth output. « Follow MIDI » keeps the internal drum synth — synthesized percussion, always audible even with no SoundFont loaded, and the default. Picking a preset renders the drums with that SoundFont kit instead; choose one from bank 128. Either way the « MIDI drums » output carries the chosen kit, so whichever node renders it next will use it. |
+
+#### Infinity Series (Nørgård)
+
+`serie-infinie` · Inputs → Generation
+
+*Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon.*
+
+Generates Per Nørgård's infinity series, discovered in 1959 and the entire material of his Second Symphony (1970). Its definition fits in three lines: s(0) = 0, s(2n) = −s(n), s(2n+1) = s(n) + 1. The first terms are 0, 1, −1, 2, 1, 0, −2, 3, −1, 2, 0, 1, 2, −1, −3, 4… and the sequence never repeats. It is nevertheless SELF-SIMILAR, and exactly rather than approximately: every second note gives back the inverted series, every fourth note gives back the series itself, identically. One can therefore layer the melody over its own four-times-slower version and obtain a perfectly coherent counterpoint — which is exactly what Nørgård does, and why his symphony can be a single melody from beginning to end without ever sounding repetitive. The « Voices » setting does precisely that, and is therefore not a layering effect: the slow voice IS the same melody. Two readings are offered, which change the whole character without touching the structure: in semitones the sequence unfolds chromatically and leaves any key behind, which is Nørgård's reading; in degrees each integer counts a scale step and the result stays tonal. The sequence is unbounded but rises slowly — a thousand terms fit within some twenty degrees — and pitches that would leave the keyboard are folded by octaves. It is catalogued as A004718 in the encyclopedia of integer sequences, which allows its first terms to be checked elsewhere than here.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Sequence | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Notes | number | 64 | 4 – 1000, step 1 | Number of terms generated. |
+| Voices | number | 1 | 1 – 3, step 1 | Superimposes the sequence taken every term, every two and every four. This is not an effect: at stride 4 the sequence comes back IDENTICAL to itself, so the slow voice is the same melody and the counterpoint holds by itself. It is the procedure of the Second Symphony. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The note the sequence starts from, its first term always being zero. |
+| Octave | number | 4 | 2 – 6, step 1 | Octave of the tonic. |
+| Reading | choice | Semitones | Semitones / Scale degrees | In semitones the sequence unfolds chromatically and leaves any key behind: that is Nørgård's reading. In degrees each integer counts a scale step and the result stays tonal — same structure, quite another character. |
+| Scale | choice | Major | Major / Minor / Pentatonic / Chromatic | The scale used when reading by degrees. |
+| Note length | number | 0.25 s | 0.05 – 2 s, step 0.05 | Length of each note of the fast voice. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Koch Snowflake Arpeggiator
 
@@ -1209,6 +1239,33 @@ Renders a simple text notation into a MIDI file and synthesized audio. One line 
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Synthesized audio volume. |
+
+#### Tiling Canon
+
+`canon-pavage` · Inputs → Generation
+
+*Builds a rhythmic canon where each pulse is struck by one voice and one only.*
+
+Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, offset. A tiling canon adds a constraint of arithmetical severity: at each pulse of the cycle, one voice and one only must strike — never two together, never none. The motif and the voice entries therefore interlock exactly, like tiles covering a floor with no gap and no overlap. The question goes back to the 1950s in mathematics (Hajós, de Bruijn); Dan Tudor Vuza restated it musically in 1991, and Moreno Andreatta and Emmanuel Amiot implemented it at IRCAM in OpenMusic. The entries are found by exact cover: take the smallest still-free pulse — someone has to strike it — try every way of placing a voice there, and repeat; no branch is missed. The most sought-after case is the one where NEITHER the motif NOR the entries are periodic: a Vuza canon. Those exist only from a cycle of 72 pulses upwards, every shorter tiling having a hidden regularity — the node checks this and says so in its report. Giving each voice a different pitch is not an ornament: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Grid | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pulses | number | 12 | 2 – 48, step 1 | Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number. |
+| Motif | text | `0 1 2` |  | The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself. |
+| Searched size | number | 3 | 2 – 12, step 1 | Number of onsets per voice, when the motif is left empty. It must divide the number of pulses. |
+| Step length | number | 0.2 s | 0.05 – 1 s, step 0.05 | Length of one pulse. |
+| Repeats | number | 4 | 1 – 16, step 1 | Number of cycles played. |
+| Pitches | text | `60 64 67 72` |  | One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse — which is exactly what every tiling canon is — without hearing that it is shared. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 ### Image
 
@@ -1841,6 +1898,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Click Removal](#click-removal) | Click detection and removal. |
 | [Compressor](#compressor) | Feed-forward compressor. |
 | [Convolution Reverb (IR)](#convolution-reverb-ir) | Convolution reverb with synthetic IR (adjustable) or external IR file. |
+| [Corpus Mosaicing](#corpus-mosaicing) | Rebuilds one sound from another's grains: the target's shape, the corpus's material. |
 | [DDSP Tone Transfer](#ddsp-tone-transfer) | Transfers the timbre of an audio clip to an instrument via a DDSP model (violin, flute, saxophone, trumpet). |
 | [De-esser](#de-esser) | Dynamic sibilance compression. |
 | [Dereverb](#dereverb) | Reverb attenuation. |
@@ -1862,6 +1920,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Harmonizer / Octaver](#harmonizer--octaver) | Adds pitch-shifted voices (octave, fifth…) under the original. |
 | [Impose Rhythm](#impose-rhythm) | Applies one MIDI file's rhythmic grid to another's pitches. |
 | [Inversion Mirror](#inversion-mirror) | Flips the spectrum around a pivot frequency: lows become highs and highs become lows. |
+| [Inversions and Voicings](#inversions-and-voicings) | Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
 | [Limiter](#limiter) | Peak limiter for mastering. |
 | [Logistic auto-pan](#logistic-auto-pan) | Left-to-right sweep following a logistic curve. |
@@ -1876,7 +1935,9 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [MIDI Sampler](#midi-sampler) | Plays incoming MIDI notes with an audio sample loaded from the inspector. |
 | [MIDI Transposer/Quantizer](#midi-transposerquantizer) | Transposes and/or quantizes a MIDI file. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
+| [Modal Bar](#modal-bar) | Marimba, vibraphone, glockenspiel, tubular bell or bowl, by modal synthesis on published ratios. |
 | [Multiband Compressor](#multiband-compressor) | 3-band compressor with independent thresholds/ratios. |
+| [Negative Harmony](#negative-harmony) | Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6. |
 | [Noise Profile](#noise-profile) | Captures the spectral profile of a noise. |
 | [Noise Reduction](#noise-reduction) | Spectral noise subtraction. |
 | [Normalizer](#normalizer) | Level normalization. |
@@ -1904,6 +1965,9 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Risset Glissando](#risset-glissando) | Turns a sound into a pitch that falls (or rises) endlessly. |
 | [Risset Rhythm](#risset-rhythm) | Turns a loop into a pulse that speeds up (or slows down) endlessly. |
 | [Sample Formula](#sample-formula) | Applies a mathematical expression to each sample of the signal. |
+| [Scanned Synthesis](#scanned-synthesis) | Reads the shape of a slowly moving mechanical object as a wavetable: the timbre evolves endlessly while the note stays in tune. |
+| [Serial Operations](#serial-operations) | Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix. |
+| [Shakers](#shakers) | Shaken percussion — maracas, cabasa, tambourine, sleigh bells — from a stochastic particle model. |
 | [Slide Stretch](#slide-stretch) | Time-stretch with a factor that gradually changes from start to end. |
 | [SoundTouch Pitch](#soundtouch-pitch) | Changes pitch while preserving duration (quality pitch-shift). |
 | [SoundTouch Rate](#soundtouch-rate) | Changes playback rate (tempo + pitch together), like a tape player. |
@@ -1912,11 +1976,13 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Stereo Delay](#stereo-delay) | Independent left/right delay. |
 | [Stereo Spatialization](#stereo-spatialization) | Positions the sound in stereo space (left/right). |
 | [Stereo Width / MS](#stereo-width--ms) | Adjusts stereo width and Mid level. |
+| [Sung Vowel (FOF)](#sung-vowel-fof) | Synthesises a vowel from its formants, after Peterson and Barney's table: pitch and timbre never touch. |
 | [Swap Channels](#swap-channels) | Swaps left/right channels. |
 | [Temperament](#temperament) | Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament. |
 | [Tempo Canon (Nancarrow)](#tempo-canon-nancarrow) | Layers a pattern against itself at a fixed tempo ratio. |
 | [Tempo Change](#tempo-change) | Time-stretch via phase vocoder. |
 | [Thin Out](#thin-out) | Removes a share of the notes at random, reproducibly. |
+| [Tonnetz](#tonnetz) | Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice. |
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
 | [Tremolo](#tremolo) | Amplitude modulation (periodic volume variations). |
@@ -1924,7 +1990,9 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Vocoder](#vocoder) | Filterbank vocoder: modulator + carrier → robot voice effect. |
 | [Voice Changer](#voice-changer) | Transforms a voice with preset effects: chipmunk, monster, robot, phone, alien, helium, ghost. |
 | [Wah-wah](#wah-wah) | Modulated bandpass filter (wah pedal effect). |
+| [Wave Terrain](#wave-terrain) | Travels a surface z = f(x, y) along an orbit: the orbit makes the pitch, the relief makes the timbre. |
 | [Wavesets (Wishart)](#wavesets-wishart) | Cuts the sound at zero crossings and replays the segments differently. |
+| [Wind Instrument](#wind-instrument) | Clarinet, flute or brass by waveguide: a bore, a reed, and the timbre that follows. |
 
 #### ADSR Envelope
 
@@ -2251,6 +2319,30 @@ Convolution reverb: generates a synthetic impulse response (IR) from your settin
 | Damping | number | 30 % | 0 – 100 %, step 1 | High-frequency absorption. High = darker/muffled sound. Low = bright sound. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the diffuse tail. Unlike nodes where randomness is the point, the default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. |
+
+#### Corpus Mosaicing
+
+`mosaiquage` · Processing → Effects
+
+*Rebuilds one sound from another's grains: the target's shape, the corpus's material.*
+
+Audio mosaicing, or corpus-based concatenative synthesis. The principle is a mosaic's: a CORPUS — any sound, a sample collection, a whole record — is cut into small grains, each described by a few numbers, the grains of a TARGET sound are described the same way, and each target grain is replaced by the corpus grain that most resembles it. The result has the target's shape and the corpus's material: a spoken phrase played with piano strings, a drum track rebuilt from door noises. This is the method Diemo Schwarz formalised at IRCAM (CataRT, 2006). Attic already had all the pieces without the assembly — descriptors, an audio similarity, samplers: this node does the matching, which is what was missing. Three descriptors are used, deliberately legible so that one can say why a grain was chosen: loudness, the spectral centre of gravity, and the zero-crossing rate that tells a noisy sound from a steady one. They are NORMALISED before comparison, without which the distance would see only the centre of gravity, counted in thousands where the others are below one. « Avoid repeats » deals with the method's most audible defect: too poor a corpus returns the same grain a hundred times, which sounds like a drone — and the output report says so plainly when it happens. « Grain size » is the main trade-off: short grains follow the target closely but lose the corpus's character; long ones make the corpus recognisable but the target barely shows. The joining uses windows overlapping by half, whose sum is exactly one: a corpus identical to the target therefore rebuilds it to better than 2 %, which the node verifies in test.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Target | audio |  |
+| input | Corpus | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Grain size | number | 40 ms | 5 – 200 ms, step 1 | Length of a grain. Short, they follow the target closely but lose the corpus's character; long, the corpus is recognisable but the target barely shows. Between 30 and 60 ms, both are heard. |
+| Loudness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to loudness when searching for the nearest grain. |
+| Brightness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the spectral centre of gravity. It is the descriptor one hears most: raising it follows the target's colours. |
+| Noisiness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the zero-crossing rate, which tells a noisy sound from a steady one. |
+| Avoid repeats | number | 20 % | 0 – 100 %, step 1 | Penalises the grain just used. Without it, a poor corpus returns the same grain a hundred times over, which sounds like a drone — the most audible defect of the method. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### DDSP Tone Transfer
 
@@ -2668,6 +2760,32 @@ Geometric inversion swaps the inside and outside of a circle; the circle stays p
 | Laps | number | 1 | 1 – 8, step 1 | 1: the mirror alone. Above that, mirror and original alternate, one lap each: applied twice, inversion gives the sound back, and you hear it moving from one to the other. |
 | Crossfade | number | 60 ms | 0 – 500 ms, step 5 | Crossfade between mirror and original when Laps is above 1. |
 
+#### Inversions and Voicings
+
+`voicings-accords` · Processing → Effects
+
+*Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible.*
+
+Inverts, spreads and chains a MIDI file's chords. Attic has always built chords the same way: root, third, fifth, seventh, bottom to top, packed inside one octave — the heaviest position there is, the one no pianist plays and no arranger writes. This node does what one does by hand. « Inversion » moves the bottom notes above, one at a time, without changing the chord — only who carries it; pushed as far as the note count, it leaves the chord unchanged rather than driving the music ever upwards. « Voicing » spreads the voices: « Open » raises every other note by an octave, and the « drop » voicings lower the second or third voice FROM THE TOP by an octave, which hollows the chord in the middle and gives it the sound of jazz guitar and four-part brass — it needs at least four notes, and without them the chord comes out unchanged. « Voice leading » is the setting one hears most. Between C major and F major there is a version that moves all three voices by several tones and one that moves a single voice by a semitone; the latter sounds like a harmony moving forward, the former like two unrelated chords. So the node looks, for each chord, for the register that moves the fewest voices from the previous one — by whole octaves only, so that the voicing chosen above is kept exactly. The first chord is never moved: it is the one that sets the register. The search is greedy, with no going back on past choices: a global search would sometimes do better by a semitone, at exponential cost and for a result one would not hear.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Inversion | number | 0 | 0 – 5, step 1 | How many bottom notes move up an octave. 0 = root position. An inversion equal to the chord's note count leaves it unchanged, rather than pushing it upwards. |
+| Voicing | choice | Close | Close / Open / Drop 2 / Drop 3 / Drop 2 and 4 | How the voices are spread. « Open » raises every other note by an octave. The « drop » voicings lower the second or third voice from the top by an octave: this is the writing of jazz guitar and four-part brass, and it needs at least four notes. |
+| Voice leading | choice | Yes | No / Yes | Finds, for each chord, the register that moves the fewest voices from the previous one. The voicing chosen above is kept as is: the leading only shifts chords by whole octaves. |
+| Lowest note | number | 40 | 21 – 60, step 1 | Lowest note the voice leading allows itself. |
+| Highest note | number | 88 | 60 – 108, step 1 | Highest note the voice leading allows itself. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Klein Bottle
 
 `bouteille-klein` · Processing → Effects
@@ -2966,6 +3084,30 @@ Sends the sound around a Möbius strip. One lap lasts the whole sound; as it mov
 | Crossfade | number | 30 ms | 0 – 500 ms, step 5 | Crossfade at each seam between two laps. A sound does not loop by itself: without a crossfade the seam clicks. Capped at a quarter of the sound's length. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | 100%: the twist alone. Below that, the original sound mixes back with the other side. At 50%, the two sides cancel after one lap: on the Phase side the sound fades out completely, on the Stereo side left and right meet in the centre. |
 
+#### Modal Bar
+
+`barre-modale` · Processing → Effects
+
+*Marimba, vibraphone, glockenspiel, tubular bell or bowl, by modal synthesis on published ratios.*
+
+Definite-pitched percussion by modal synthesis. A bar does not vibrate like a string. A string has integer partials — 1, 2, 3, 4 — because it vibrates in one dimension under tension; a free bar vibrates in FLEXION, and its natural modes land on 1, then 2.756, then 5.404, then 8.933. Those non-integer ratios are a published acoustics result, and they are what give the glockenspiel its metallic colour. Instrument makers correct them deliberately: carving an arch under a marimba bar lowers its second mode to FOUR times the first and its third towards ten, so the bar becomes harmonic, hence musical. The tubular bell goes further — its partials sit around 2, 3, 4.16 and 5.43, so the note one hears does NOT exist in the sound: it is a missing fundamental the ear reconstructs, and the node's spectrum indeed carries no trace of it. The Tibetan bowl owes its voice to two nearly coincident modes, at 1 and 1.02, whose spacing produces a slow beating. « Mallet hardness » is the setting that changes the timbre most, and for a physical reason: a hard mallet gives a short impulse, hence rich in highs, which wakes the upper modes, whereas a soft one wakes only the first. A mode whose frequency would exceed half the sampling rate is simply dropped rather than folded down into the bass where it would sound wrong. A MIDI file on the input turns each note into a mallet stroke, and the strokes overlap — which is what gives a vibraphone its halo.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instrument | choice | Marimba | Glockenspiel (free bar) / Marimba / Vibraphone / Tubular bell / Tibetan bowl / Wood block | The instrument, that is, its modal ratios. A free bar vibrates on 1 / 2.756 / 5.404 / 8.933 — non-integer ratios, hence its metallic colour. Carving an arch under a marimba bar brings its second mode to 4 and its third to 10: it becomes harmonic, hence musical. The tubular bell rings on 2 / 3 / 4.16 / 5.43, so the note one hears is not in the sound at all. |
+| Note | text | `C4` |  | Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. |
+| Mallet hardness | number | 50 % | 0 – 100 %, step 1 | A hard mallet gives a short impulse, hence rich in highs, and wakes the upper modes; a soft one wakes only the first. It is the setting that changes the timbre most, and for a physical reason rather than by a tuning curve. |
+| Damping | number | 0 % | 0 – 100 %, step 1 | A hand laid on the bar: shortens every resonance at once. |
+| Tremolo | number | 0 % | 0 – 100 %, step 1 | The vibraphone's tremolo, which comes from the discs spinning in its resonator tubes. No effect on the other instruments, but nothing stops you trying. |
+| Tremolo rate | number | 5 Hz | 0.5 – 12 Hz, step 0.1 | Tremolo speed. |
+| Duration | number | 3 s | 0.1 – 15 s, step 0.1 | Length of the stroke, when no MIDI is connected. The Tibetan bowl needs several seconds for its beating to be heard. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Multiband Compressor
 
 `compresseur-multibande` · Processing → Effects
@@ -2991,6 +3133,30 @@ Compressor split into three bands (low, mid, high). Each band is isolated by a c
 | Release | number | 100 ms | 5 – 1000 ms, step 5 | Common release time for all bands. |
 | Low freq | number | 250 Hz | 40 – 1000 Hz, step 10 | Crossover between low and mid bands. |
 | High freq | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Crossover between mid and high bands. |
+
+#### Negative Harmony
+
+`harmonie-negative` · Processing → Effects
+
+*Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6.*
+
+Reflects pitches around the tonic-dominant axis. The idea comes from Hugo Riemann's dualist harmony, taken up by Ernst Levy in « A Theory of Harmony » (1985), and put back into circulation in recent years under the name negative harmony. It fits in one sentence: reflect the twelve pitches around the axis lying halfway between the tonic and its dominant, and every tonal function turns into its image, giving a harmony that fills the same role by the opposite path. In C, the axis falls between E flat and E — it falls on no note of the keyboard, and therefore has no fixed point: the twelve classes swap in six pairs. The tonic becomes the dominant, E flat and E swap, and C major comes out as C minor. The famous result is G7, which becomes an F minor 6: two chords that nothing relates on paper, and which both call for resolution onto C. The text output gives the six pairs, so one sees what the reflection does before hearing it. « Reflection » offers the procedure's two honest readings. « Classes, register kept » reflects each note within its octave: the harmony changes, the line keeps its contour, and that is what one wants to substitute a chord inside a progression. « True mirror » reflects everything around a single absolute axis, placed in the middle of the piece: intervals change direction, so the melody turns over — which is the real mirror, but rarely what one is after on a melodic line. This node is a generator, not a rule: it offers a substitution, it does not say the substitution is good.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Table | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key whose axis is taken. It is the only setting that matters: the axis lies halfway between this note and its fifth, and everything else follows. |
+| Reflection | choice | Classes, register kept | Classes, register kept / True mirror | « Classes » reflects each note within its octave: the harmony changes, the line keeps its contour — this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Noise Profile
 
@@ -3531,6 +3697,84 @@ Applies a mathematical expression to each sample of the signal. Variables: x (cu
 | Formula | text | `sin(t * 2 * pi * 440) + x` |  | Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate). |
 | Volume | number | 30 % | 0 – 100 % | Output gain. |
 
+#### Scanned Synthesis
+
+`synthese-scanning` · Processing → Effects
+
+*Reads the shape of a slowly moving mechanical object as a wavetable: the timbre evolves endlessly while the note stays in tune.*
+
+Scanned synthesis, after Bill Verplank, Max Mathews and Rob Shaw (CCRMA, 2000). The idea is strange and fits in two sentences. A mechanical object is simulated — here a chain of masses joined by springs, closed into a ring — at a SLOW rate, a few hundred steps per second, so that its motion is on the scale of a gesture: a few hertz, like a string filmed in slow motion. Then the SHAPE of that object is read, mass by mass, as a wavetable, at whatever audio frequency one wants to hear. The consequence is the whole point: pitch and timbre are entirely separate. The pitch depends only on the scanning speed, the waveform only on the mechanics, and it therefore evolves continuously, never repeating, while the note stays in tune. No ordinary wavetable oscillator does this, since its table is frozen — and one can check that here by setting the tension to zero: the chain freezes and an ordinary oscillator is exactly what comes back. Max Mathews, who wrote the first synthesis program in 1957, saw scanning as the culmination of his search for a living timbre without samples. Nothing sustains the motion: it is therefore the initial EXCITATION that decides the whole sound, like the way a string is plucked, and « Plucked » gives displacement without velocity where « Struck » gives velocity without displacement. One implementation detail that was audible: the table is interpolated in time between two mechanical steps, without which it changed all at once and rang at the simulation rate — measured, an A 110 was dominated by a 1 kHz component that was nothing but that artefact.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Note | text | `A2` |  | Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. |
+| Masses | number | 64 | 4 – 256, step 1 | Number of masses in the chain, hence of points in the wavetable. Few masses give an angular shape and a rich sound; many give a smooth one. |
+| Rate | number | 800 /s | 20 – 4000 /s, step 10 | Speed of the mechanical simulation. It does not change the note: it changes how fast the timbre evolves. |
+| Tension | number | 50 % | 0 – 100 %, step 1 | Stiffness of the springs between neighbours: it makes the waves travel along the chain, hence the speed of the shape changes. At zero the shape is frozen and one gets an ordinary wavetable oscillator. |
+| Centering | number | 30 % | 0 – 100 %, step 1 | Force pulling each mass back to rest. It gives the chain a slow natural frequency, hence a cycle to the timbre. |
+| Damping | number | 10 % | 0 – 100 %, step 1 | At zero the motion never stops and the timbre evolves forever. At maximum the chain freezes almost at once and the sound becomes stable. |
+| Excitation | choice | Plucked | Plucked / Struck / Noise / Two humps | The shape given to the chain at the start. Nothing sustains it afterwards: it therefore decides the whole sound, like the way a string is plucked. « Struck » gives velocity without displacement, « Plucked » displacement without velocity. |
+| Force | number | 100 % | 1 – 100 %, step 1 | Excitation amplitude. |
+| Duration | number | 4 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Serial Operations
+
+`serie-dodecaphonique` · Processing → Effects
+
+*Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix.*
+
+Plays a row's four forms and writes its matrix. Twelve-tone writing is a calculating technique before it is an aesthetic: a row of the twelve pitches, and four transformations — original, retrograde, inversion, retrograde inversion — each transposable onto twelve levels, so forty-eight forms drawn from a single material. Schoenberg, Webern and Berg wrote them out by hand in a twelve-by-twelve grid; that grid is what the text output gives, labelled P and I, with the retrogrades read backwards. It can be checked at a glance the way it was taught: the first row is the series, the first column its inversion, and the diagonal never changes. None of this is reserved for serialism — retrograding and inverting a motif are counterpoint operations as old as the canon, and the node accepts a sequence of any length. It merely states, in passing, whether what it was given is a REAL row: twelve distinct classes. « Register » decides how the resulting classes are played: « Closest » takes for each note the octave nearest the previous one, and one hears a line — which is how a row is actually played, the octaves being free; « One octave » stacks everything above the starting note, and one hears the order of the classes. The default row is that of Berg's Violin Concerto, built from alternating thirds that make it almost tonal.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Matrix | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. |
+| Form | choice | Original | Original / Retrograde / Inversion / Retrograde inversion / All four in turn | The transformation played. « All four in turn » chains the four forms, which makes audible at once what the matrix shows. |
+| Transposition | number | 0 | 0 – 11, step 1 | Transposition level of the played form, in semitones. With the forty-eight combinations of form and level, one has everything a row allows. |
+| Register | choice | Closest | Closest / One octave | « Closest » picks, for each note, the octave nearest the previous one, which makes a line audible; « One octave » stacks everything above the starting note, which makes the order of the classes audible. |
+| Starting note | number | 60 | 24 – 96, step 1 | MIDI pitch the row is placed around. |
+| Note length | number | 0.3 s | 0.05 – 2 s, step 0.05 | Length of each note of the row. |
+| Velocity | number | 90 | 1 – 127, step 1 | Note strength. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Shakers
+
+`secoueurs` · Processing → Effects
+
+*Shaken percussion — maracas, cabasa, tambourine, sleigh bells — from a stochastic particle model.*
+
+Shaken percussion from a stochastic particle model. Perry Cook posed the problem the opposite way round to ordinary synthesis: for a maraca one could solve the motion of every seed in the gourd — and he did — but the result is too heavy and, above all, useless, because the ear does not hear trajectories, it hears a STATISTIC. So from his simulations he kept only two numbers: the probability that a collision occurs at a given instant, and the rate at which the system's energy falls. That is PhISEM (« Physically Informed Stochastic Event Modeling », 1996-97), and it fits in fifteen lines. The model has three stages: energy rises with each shake and falls back, a collision occurs with a probability proportional to that energy and to the number of particles, and the burst of noise it deposits passes through resonators, which are the only thing that really tells one instrument from another. « Energy » therefore does not set the volume: the greater it is, the likelier the collisions, hence the denser the grain — it is a physical parameter, not a gain. « Particles » is the setting that turns a countable rattle into a continuous hiss: measured, the cabasa produces more than five times a maraca's collisions at equal energy, and that is all that separates them. A MIDI file on the input turns each note into a shake whose velocity becomes the energy. With a fixed seed the sound replays identically, which no real tambourine does and which a graph you re-run needs.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instrument | choice | Maracas | Maracas / Cabasa / Shekere / Tambourine / Sleigh bells / Water drops | The instrument. What really tells them apart is the number of particles — a few seeds in a maraca, hundreds of beads on a cabasa — and the resonances: the maraca rings around 3 kHz, sleigh bells add metallic modes around 5 and 6 kHz. |
+| Shakes | number | 4 /s | 0.5 – 16 /s, step 0.5 | Shakes per second, when no MIDI is connected. A MIDI file wins: each note becomes a shake, and its velocity sets the energy. |
+| Energy | number | 50 % | 0 – 100 %, step 1 | Strength of each shake. It does not only set the volume: the more energy, the likelier the collisions, hence the denser the grain. |
+| Particles | number | 0 | 0 – 512, step 1 | Overrides the instrument's particle count. 0 = the instrument's own. This is the setting that turns a countable rattle into a continuous hiss. |
+| Duration | number | 4 s | 0.2 – 30 s, step 0.1 | Duration produced, when no MIDI is connected. |
+| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound — which no real tambourine does, and which is needed here. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Slide Stretch
 
 `etirement-glissant` · Processing → Effects
@@ -3676,6 +3920,33 @@ Stereo width and Mid/Side balance control. Decodes the signal into center (Mid =
 | Width | number | 100 % | 0 – 200 %, step 1 | Stereo width. 0% = mono, 100% = original, 200% = widened stereo. |
 | Mid | number | 100 % | 0 – 200 %, step 1 | Mid channel gain. |
 
+#### Sung Vowel (FOF)
+
+`voyelle-fof` · Processing → Effects
+
+*Synthesises a vowel from its formants, after Peterson and Barney's table: pitch and timbre never touch.*
+
+Sung vowel by formant synthesis. A vowel is not a waveform, it is a configuration of RESONANCES: the vocal tract is a tube whose geometry the tongue and lips change, and that geometry places three or four bumps in the spectrum — the formants. They, and they alone, tell an A from an I; the pitch of the voice plays no part, which is exactly why the same vowel is recognisable sung low or high. Xavier Rodet proposed in 1984, with IRCAM's CHANT program, to synthesise this directly: instead of filtering a source, the formants' impulse responses are ADDED. Each formant produces a burst — a sinusoid at its frequency under an envelope that rises fast and decays according to its bandwidth — and all these bursts are retriggered at every period of the fundamental; they overlap, and that overlap is what makes the continuous resonance. This is FOF, « Fonction d'Onde Formantique ». The consequence is the one wanted: changing the note does not move the formants, where transposing a voice sample carries them along and gives the famous « Chipmunk » effect. The « Tract size » control does precisely the opposite: it moves the formants without touching the note, which amounts to changing the singer's size. The frequencies used are Peterson and Barney's (1952), the most cited table in phonetics, measured on men's voices. « Jitter » is what stops the result sounding like an organ: a real voice is never exactly periodic, and a few thousandths of variation from one period to the next are enough to make it alive.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Vowel | choice | A (father) | A (father) / E (bed) / I (beet) / O (bought) / U (boot) / AE (bat) / ER (bird) | The vowel, that is, the position of its first three formants. A has a high first formant and a low second (730 and 1090 Hz), I the opposite (270 and 2290): the sharpest contrast in the table. |
+| Note | text | `A2` |  | Sung pitch when no MIDI is connected. The formants do not move with it — the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. |
+| Attack | number | 3 ms | 0.5 – 20 ms, step 0.5 | Rise time of the formant bursts. Short, it spreads the formants towards the highs and hardens the voice; long, it softens it. |
+| Formant width | number | 100 % | 20 – 400 %, step 5 | Multiplies the bandwidths. Narrowed, the resonances ring and sound artificial; widened, the voice becomes breathy. |
+| Tract size | number | 0 st | -12 – 12 st, step 1 | Shifts all formants together, which amounts to changing the size of the vocal tract: upwards gives a child's voice, downwards a giant's — without touching the sung note. |
+| Vibrato | number | 20 % | 0 – 100 %, step 1 | Depth of the pitch vibrato. |
+| Vibrato rate | number | 5.5 Hz | 1 – 12 Hz, step 0.1 | Vibrato speed. An operatic singer sits around 5 to 6 Hz. |
+| Jitter | number | 15 % | 0 – 100 %, step 1 | Random variation of the period from one period to the next. It is what stops the voice sounding like an organ: a real voice is never exactly periodic. |
+| Duration | number | 3 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the jitter. 0 = drawn at random on every run. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Swap Channels
 
 `echange-canaux` · Processing → Effects
@@ -3774,6 +4045,34 @@ Removes a share of the notes at random, but reproducibly. This is live-coding's 
 | Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Tonnetz
+
+`tonnetz` · Processing → Effects
+
+*Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice.*
+
+Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at the end of the 19th century, a network in which major and minor triads form adjacent triangles — the Tonnetz — and Richard Cohn turned it in the 1990s into an analytical tool for music where chords follow one another without tonality explaining them: Wagner, Liszt, late Schubert, and by extension much film music. Everything rests on three operations, and each moves A SINGLE VOICE. P swaps major and minor on the same root by moving the third a semitone: C major becomes C minor. L moves by a semitone the note not belonging to the neighbouring chord: C major becomes E minor. R moves by a whole tone: C major becomes A minor. This is called parsimonious voice leading, and it is why these progressions sound connected although they have no tonal relation — between two neighbouring chords, two notes out of three do not move at all. The node places the voices so that this can be HEARD: without it, root-position chords would jump from one end of the keyboard to the other and the parsimony would stay theoretical. The « Path » mode finds the shortest route between two chords, which gives a distance no tonal analysis provides: measured over the 576 pairs of triads, any two chords are at most five operations apart. C major and G sharp minor, which share no note, are only three apart — the hexatonic pole, and exactly the kind of neighbourhood the Tonnetz reveals and the circle of fifths hides.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Starting chord | text | `C` |  | The chord to start from: « C » for C major, « Am » for A minor, « F#m » for F sharp minor. A MIDI file on the input wins, and its first triad is used as the start. |
+| Mode | choice | Sequence of operations | Sequence of operations / Path to a chord | « Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives. |
+| Operations | text | `PLRLPR` |  | The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. |
+| Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
+| Chord length | number | 1 s | 0.1 – 4 s, step 0.1 | Length of each chord. |
+| Base note | number | 60 | 36 – 84, step 1 | Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible. |
+| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
@@ -3913,6 +4212,35 @@ Bandpass filter with a LFO-modulated center frequency — the classic wah-wah pe
 | Resonance | slider | 5 Q | 0.5 – 20 Q, step 0.5 | Filter resonance (high Q = pronounced wah, low Q = gentle). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
 
+#### Wave Terrain
+
+`terrain-onde` · Processing → Effects
+
+*Travels a surface z = f(x, y) along an orbit: the orbit makes the pitch, the relief makes the timbre.*
+
+Wave terrain synthesis. A wavetable oscillator reads a one-dimensional curve; this one reads a TWO-dimensional one: a surface z = f(x, y), travelled by an orbit that wanders over it, the sound being the terrain's altitude under the orbit. The idea dates from the 1970s (Bischoff, Gold, Horton; Mitsuhashi, 1982) and Curtis Roads gives the reference account in « The Computer Music Tutorial ». The roles are separate: the ORBIT decides the period, hence the pitch; the TERRAIN decides the waveform, hence the timbre. Widening the orbit over rugged terrain changes the whole spectrum without touching the note, and a drifting orbit evolves the timbre indefinitely. Two consequences surprise, and both are geometry rather than defects. The terrain's SYMMETRY multiplies the frequency: on a saddle z = x² − y², one turn of the orbit passes twice over the same relief, so one hears the octave above the rotation speed — the node verifies this, the half-period repeating there where on the classic terrain it does not. And a terrain of concentric circles is CONSTANT along a centred circle: it then gives no sound at all, and the orbit's centre must be offset to hear it. The « Classic » terrain is the one Mitsuhashi gives as an example and the whole literature reuses; it is hollowed along the lines x = ±1 and y = ±1, and along the diagonal too, so its relief is very uneven from area to area — hence the importance of the radius and the centre.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Terrain | choice | Classic (Mitsuhashi) | Classic (Mitsuhashi) / Saddle / Sine product / Concentric ripples / Formula | The surface travelled. « Classic » is the one of the whole literature, hollowed along the lines x = ±1 and y = ±1. « Saddle » is symmetric, and therefore sounds an octave above the rotation speed. « Concentric ripples » is constant along a centred circle: it gives nothing unless the orbit's centre is offset, and that is geometry, not a defect. |
+| Formula | text | `sin(4*x) * cos(3*y)` |  | Altitude as a function of x and y, for the « Formula » terrain. The usual functions are available (sin, cos, exp, sqrt, abs…). |
+| Orbit | choice | Circle | Circle / Ellipse / Lissajous / Spiral | The path followed on the terrain. A Lissajous with integer ratios closes after several turns and gives a longer waveform; the spiral drifts the radius, hence the timbre. |
+| Note | text | `A2` |  | Note played when no MIDI is connected: it is the number of orbit turns per second. |
+| Radius | number | 80 % | 0 – 300 %, step 1 | Size of the orbit: this is THE timbre control. A small orbit stays in a flat area and gives a poor sound, a large one explores the relief and gives a rich one — without changing the note. |
+| Flattening | number | 50 % | 10 – 100 %, step 1 | Flattening of the ellipse on the y axis. |
+| X ratio | number | 3 | 1 – 8, step 1 | Lissajous orbit frequency on the x axis. |
+| Y ratio | number | 2 | 1 – 8, step 1 | Lissajous orbit frequency on the y axis. |
+| Drift | number | 0 % | -100 – 100 %, step 1 | Variation of the radius over the sound's duration. The timbre then evolves continuously without the note moving. |
+| Centre X | number | 0 % | -200 – 200 %, step 1 | Offsets the orbit on the x axis, hence the area of relief explored. |
+| Centre Y | number | 0 % | -200 – 200 %, step 1 | Offsets the orbit on the y axis. |
+| Duration | number | 3 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
 #### Wavesets (Wishart)
 
 `wavesets-wishart` · Processing → Effects
@@ -3931,6 +4259,31 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | Operation | choice | Repeat | Repeat / Omit / Reverse / Shuffle / Level | "Repeat" plays each segment several times: the pitch drops and the sound lengthens accordingly. "Omit" silences some without shortening the sound. "Reverse" plays each segment backwards: same duration and energy, altered timbre. "Shuffle" reorders segments in groups. "Level" brings every segment to the same level, flattening all dynamics. |
 | Factor | number | 2 | 1 – 16, step 1 | Number of repeats, omission step (1 segment kept out of N), or shuffled group size. No effect on Reverse and Level. |
 | Seed | number | 1 | 1 – 9999, step 1 | Shuffle seed: same seed, same result. No effect on the other operations. |
+
+#### Wind Instrument
+
+`vent-guide-onde` · Processing → Effects
+
+*Clarinet, flute or brass by waveguide: a bore, a reed, and the timbre that follows.*
+
+Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscillator with a filter on it: it is a bore in which a pressure wave travels back and forth, and a reed — or an air jet — that decides, at each return, what it lets through. Julius Smith showed in the 1980s that a single looped delay line with a nonlinearity at its input was enough to simulate this; Perry Cook drew the Synthesis ToolKit instruments from it, which this node follows. The point is not cheap computation but BEHAVIOUR: the sound takes time to settle, the instrument refuses to speak if blown too gently, and the timbre changes with dynamics instead of only the volume. None of that is programmed as an effect; it all falls out of the model. The clarinet's bore is closed at one end, which inverts the reflection and lets only ODD harmonics live: measured, the even ones weigh 0.4 % of the odd, and that is its whole hollow colour. Below 40 % pressure its reed does not start and only breath noise comes out — a real reed's behaviour, not a defect of the node. The flute is nearly sinusoidal, the wind poorest in harmonics. The brass brightens markedly when blown hard, because the wave steepens as it travels: measured, its spectral centre of gravity moves from 1020 to 3393 Hz between 20 % and 100 % pressure. Two corrections were found by measurement and are worth stating, because they explain what the node does: the loss filter's delay is compensated, without which the clarinet gave 218 Hz for 220 asked; and the flute's and brass's bore is PRIMED at the target note, without which the model picked its own partial and an A 440 could come out at 164 Hz — exactly a beginner's problem, embouchure not yet formed. One accepted limit: the flute model only holds its pitch above 85 % pressure, so its pressure setting is remapped into that range and acts on dynamics only.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instrument | choice | Clarinet | Clarinet / Flute / Brass | The model. The clarinet's bore is closed at one end, which lets only odd harmonics live — measured, the even ones weigh 0.4 % of the odd, and that is its whole colour. The flute is nearly sinusoidal. The brass brightens when blown hard, because the wave steepens as it travels. |
+| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. |
+| Breath | number | 80 % | 0 – 100 %, step 1 | Breath pressure. Below 40 %, the clarinet's reed does not start and only noise comes out — that is a real reed's behaviour, not a defect. On the brass, pressure changes the timbre as much as the volume. |
+| Noise | number | 5 % | 0 – 100 %, step 1 | Amount of breath noise mixed into the pressure. A little makes the attack alive; a lot gives the sound of a winded player. |
+| Vibrato | number | 10 % | 0 – 100 %, step 1 | Depth of the breath vibrato. |
+| Vibrato rate | number | 5 Hz | 0.5 – 12 Hz, step 0.1 | Vibrato speed. |
+| Attack | number | 0.05 s | 0.005 – 0.5 s, step 0.005 | Breath rise time. The model also takes its own time to settle: that is the loop filling up. |
+| Duration | number | 2 s | 0.1 – 10 s, step 0.1 | Note duration, when no MIDI is connected. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 ### Generation
 
@@ -4044,7 +4397,9 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
+| [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [RMS (Meyda)](#rms-meyda) | Computes the average RMS level of the signal in dBFS using Meyda. |
+| [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
 | [Spectral Centroid (Meyda)](#spectral-centroid-meyda) | Computes the spectral centroid of the signal using the Meyda library. |
 | [Spectral Rolloff (Meyda)](#spectral-rolloff-meyda) | Computes the spectral rolloff frequency using Meyda. |
@@ -4276,6 +4631,31 @@ Converts a MIDI file into a MusicXML score — the interchange format read by Mu
 | Time signature | choice | 4/4 | 4/4 / 3/4 / 2/4 / 6/8 | Time signature of the score. It decides how bars are cut. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
 
+#### Practice Keyboard
+
+`clavier-apprentissage` · Visualization → Analysis
+
+*Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable.*
+
+Shows a MIDI file played on an eighty-eight-key keyboard, one colour per hand, while playing it back. It is the reverse of the « Melody Keyboard », which is played with the mouse and records: this one watches, and it is made for learning — seeing where the fingers land while you listen. The animation follows the AUDIO ELEMENT and nothing else: a separate clock would drift within seconds, and a keyboard a beat ahead of what you hear teaches nobody anything. The two hands are assigned by the very function that judges playability, and that is what no ordinary MIDI player shows. Then comes the question any file you did not write yourself raises: is it even PLAYABLE on a keyboard? The answer splits in two, and that is the node's whole work. FOUR IMPOSSIBILITIES CAN BE DECIDED, with no arbitrariness: a note outside the 88 keys cannot be displayed; MIDI channel 10 carries percussion instruments rather than pitches, and putting them on a keyboard would be a lie; more than ten notes at once is more than ten fingers; and above all a chord must be SPLITTABLE BETWEEN TWO HANDS — two hands do not cross, so there are only n+1 possible splits and the node tries them all, each side having to fit within five fingers and the configured span. THREE THINGS CANNOT BE DECIDED, and the node gives figures rather than a verdict: speed — measured PER HAND, failing which two alternating hands would yield a rate twice too fast —, the largest jump relative to the time available for it, and notes held under others, which call for the pedal or a finger substitution. The node REFUSES NOTHING: one learns on real repertoire, not on certified files. It shows what it can and names what it cannot, in its Conformance output. Adaptation exists — folding octaves, dropping percussion — but it must be asked for: a silent adaptation would lie about the music, a chosen one is an arrangement. One last point, which comes before all the rest: a piano piece fits on one channel, an orchestral file has sixteen, and showing them all makes the keyboard unreadable. The « Channel » setting picks, and « Automatic » takes the busiest channel while AVOIDING percussion — in an orchestral file the busiest is often the drums. The MIDI output is what is shown and heard, channel and adaptation included, rather than the input copied: the view reads it back to light the keys, so the two cannot diverge.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Conformance | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Channel | choice | Automatic | Automatic / All / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | Which channel to show. A piano piece fits on one channel; an orchestral file has sixteen, and showing them all makes the keyboard unreadable. « Automatic » takes the one with the most notes, avoiding percussion. The report lists every channel in the file, so you can choose. |
+| Hand span | slider | 12  st | 8 – 16  st, step 1 | What one hand can hold, in semitones. Twelve — the octave — is the ordinary reach; a large hand gets a tenth, sixteen. This setting decides whether a chord can be split between two hands, hence whether it is playable. |
+| Adapt | choice | No | No / Fold into range / Fold and drop percussion | Make playable what is not. « No » leaves the file as it is and merely says what is wrong — notes outside the 88 keys are then not shown. Octave folding brings those notes back into range keeping their pitch class, hence the harmony, at the cost of register. Nothing is adapted unless asked for here. |
+| Look ahead | slider | 3 s | 1 – 8 s, step 0.5 | How many seconds of music fall above the keys before being played. Short, the note appears at the last moment; long, the whole phrase is readable but the notes crowd together. Three seconds is the sight-reader's compromise. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
 #### RMS (Meyda)
 
 `rms-meyda` · Visualization → Analysis
@@ -4295,6 +4675,28 @@ Computes the average RMS (Root Mean Square) level of the signal using Meyda. The
 | Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
 | Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
+
+#### Self-Similarity Matrix
+
+`auto-similarite` · Visualization → Analysis
+
+*Draws a piece's form and detects its boundaries, by Foote's method.*
+
+Draws a piece's form and detects its boundaries. Attic could compare two tracks and align them; it could say nothing about the form of ONE piece — where the chorus starts, when the material changes. Jonathan Foote proposed in 1999 a disarmingly simple method that became the basis of all musical structure analysis. The piece is cut into frames, each described by its chromagram — which notes sound — and every frame is compared to every other. The result is a square, symmetric image with a white diagonal: the self-similarity matrix. The form can be read in it by eye, a bright square being a homogeneous passage and an offset diagonal a literal repetition. To go from the image to the boundaries, Foote slides a CHECKERBOARD KERNEL along the diagonal: two bright squares on the diagonal, two dark ones off it. That pattern only matches where « before » resembles « before », « after » resembles « after », and the two do not resemble each other — that is, exactly at a boundary. The resulting curve is called novelty, and its peaks are the articulations. « Frame » is the setting that matters: short, the chord detail shows; long, the large sections do. It is the scale at which the form is looked at, not a precision setting. At both ends of the piece the kernel would hang off the matrix: the curve is left at zero there rather than filled with invented values, which would create false boundaries where there is nothing to detect.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Matrix | image |  |
+| output | Structure | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Frame | number | 0.5 s | 0.1 – 2 s, step 0.1 | Length of one analysis frame. Short, the chord detail shows; long, the large sections do. This setting decides the scale at which the form is looked at. |
+| Kernel size | number | 8  frames | 2 – 40  frames, step 1 | Half-width of the checkerboard kernel slid along the diagonal. It only matches where « before » and « after » each resemble themselves without resembling each other — that is, at boundaries. |
+| Threshold | number | 40 % | 1 – 99 %, step 1 | Minimum peak height to count as a boundary. Low, the cut is fine; high, only the clear articulations remain. |
+| Minimum gap | number | 6  frames | 1 – 40  frames, step 1 | Minimum distance between two boundaries. A broad peak otherwise gives three or four maxima all describing the same articulation. |
 
 #### Songsee Visualizer
 
@@ -5047,6 +5449,142 @@ Inside a meta-component, connect an inner node's output to this block: it create
 
 ## Others
 
+### Csound wrapper
+
+| Component | Summary |
+|---|---|
+| [Csound](#csound) | Runs a Csound orchestra and score, and outputs the audio produced. |
+| [Csound Effect](#csound-effect) | Processes one or two sounds through a Csound orchestra. |
+| [Csound Instrument](#csound-instrument) | Plays a MIDI file with a Csound orchestra: each note becomes a score event. |
+| [Csound Instruments](#csound-instruments) | Perry Cook's instruments as Csound carries them: bowed string, clarinet, flute, brass, plucked string, formants. |
+| [Csound Spectral](#csound-spectral) | Spectral morphing, vocoder and phase-locked stretching, through Csound's streaming spectral opcodes. |
+
+#### Csound
+
+`csound` · Others → Csound wrapper
+
+*Runs a Csound orchestra and score, and outputs the audio produced.*
+
+Runs a Csound orchestra and score. Csound descends from MUSIC V, the line that invented digital synthesis: Barry Vercoe wrote it at MIT in 1986, it now counts some nineteen hundred opcodes, and its WebAssembly port lets it run here with nothing to install. What it brings to Attic is not one more effect, it is a LANGUAGE, where nodes are fixed tools. A Csound program has two parts, and that separation is its signature: the ORCHESTRA defines instruments, the SCORE says when to play them and with which arguments. « i1 0 1 220 0.5 » plays instrument 1 at time zero for one second, passing it 220 and 0.5 as p4 and p5. A few points the node handles for you, and which are worth knowing. The sampling rate is IMPOSED by the sound card, often 48 kHz, and Csound ignores requests to the contrary: do not write sr in your orchestra, the node then brings the result back to 44100 Hz like all of Attic, and that conversion is good — 83 dB signal-to-error at 10 kHz. The output is LIMITED below unity, because Csound bounds nothing and a badly set orchestra returns peaks above two; the original peak is reported. The orchestra and the score are written in the inspector, but they can also COME FROM THE GRAPH: the Orchestra and Score inputs accept text, and a connected input takes precedence over the matching field, which then remains the worked example. Any Attic node that outputs text thus becomes a score source. The score has three possible sources, in this order: a connected MIDI file first — each note becoming an « i1 » event with the frequency in p4, the amplitude in p5 and the note number in p6 —, then the Score input, then the field. The node STATES in its message which of the three it took, and flags a connected input that was not used: it has three and named none. A sound connected to the Audio input is written into Csound's filesystem as « entree1.wav » and is heard ONLY if the orchestra reads it, with « a1 diskin2 "entree1.wav", 1 » — failing which the node warns you that the sound is never read, instead of returning an unchanged sound without a word; it is written in MONO by default, because diskin2 requires the number of outputs asked for to match the file's channel count and refuses the note otherwise — a trap whose only trace is a line buried in the messages. Finally, set the seed if you use random opcodes: Attic requires a render to be reproducible.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | MIDI | MIDI |  |
+| input | Orchestra | text |  |
+| input | Score | text |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Orchestra | text | `; A minimal instrument: p4 = frequency, p5 = amplitude. i…` |  | The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard ONLY if the orchestra reads it, with « a1 diskin2 "entree1.wav", 1 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs. |
+| Score | text | `i1 0.0 1.0 220 0.5 i1 1.0 1.0 277 0.5 i1 2.0 1.5 330 0.6 e` |  | When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field — and the node states in its message which one it took. The final « e » is added if missing. |
+| Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. In stereo, use outs instead of out. |
+| Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples computed per control cycle. Small means finer control signals and slower computation; 32 is the common choice. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. Csound is reproducible as soon as it is fixed, which Attic requires: 0 lets Csound draw its own and the render changes on every run. |
+| Input channels | choice | Mono | Mono / Stereo | Number of channels in the input files written for Csound. In mono, « a1 diskin2 "entree1.wav", 1 » always works; in stereo, diskin2 REQUIRES two outputs — « a1, a2 diskin2 … » — and refuses the note otherwise, which yields a silent render. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
+#### Csound Effect
+
+`csound-effet` · Others → Csound wrapper
+
+*Processes one or two sounds through a Csound orchestra.*
+
+Processes one or two sounds through a Csound orchestra. The inputs are written into Csound's filesystem as « entree1.wav » and « entree2.wav », and read with diskin2 or soundin — they are therefore FILES rather than streams, which has a useful consequence: they can be read back at another speed, looped, reversed, or loaded into a table for block processing. The score's duration is set from the longest input plus the requested tail, which is essential as soon as a delay or a reverb has something to let die away. « Input channels » deserves a word, because it is the trap that costs the most time: diskin2 REQUIRES the number of outputs asked for to match the file's channel count. « a1 diskin2 » on a stereo file refuses the note and returns nothing but silence, with a single line buried in the messages as its only trace. The inputs are therefore downmixed to mono by default; switch to stereo if your orchestra writes « a1, a2 diskin2 ». The default orchestra is a modulated delay, there to show the shape of a process rather than for its musical interest. It is written in the inspector, but it can also COME FROM THE GRAPH: the Orchestra input accepts text and takes precedence over the field, which the node announces in its message. Finally, a connected sound the orchestra never names has NO effect — the file is written, nobody reads it — and that is the most puzzling result there is, since the rendered sound then has nothing to do with the one that was connected; the node therefore checks that « entree1.wav » and « entree2.wav » are really read, comments stripped, and warns you otherwise.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio 1 | audio |  |
+| input | Audio 2 | audio |  |
+| input | Orchestra | text |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Orchestra | text | `; The inputs are files: entree1.wav and entree2.wav. inst…` |  | The processing orchestra, used when no Orchestra input is connected — a connected input replaces it, and the node says so. The input sounds are written into Csound's filesystem as « entree1.wav » and « entree2.wav », and read with diskin2 or soundin; a connected sound the orchestra does not name has no effect, and the node warns you. The score's duration is set from the longest input. |
+| Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. |
+| Tail | number | 1 s | 0 – 20 s, step 0.1 | Time added after the input ends, to let a delay or reverb breathe. |
+| Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples per control cycle. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. |
+| Input channels | choice | Mono | Mono / Stereo | Number of channels in the input files written for Csound. In mono, « a1 diskin2 "entree1.wav", 1 » always works; in stereo, diskin2 REQUIRES two outputs — « a1, a2 diskin2 … » — and refuses the note otherwise, which yields a silent render. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
+#### Csound Instrument
+
+`csound-instrument` · Others → Csound wrapper
+
+*Plays a MIDI file with a Csound orchestra: each note becomes a score event.*
+
+Plays a MIDI file with a Csound orchestra. Each note becomes a score event, and instrument 1 is called for every one of them. The argument convention is that of Csound's own examples, and it avoids any conversion: p4 carries the FREQUENCY in hertz, p5 the amplitude from zero to one, p6 the MIDI note number for whoever needs it. This is what allows any MIDI source in Attic — the L-system, the Markov chain, Nørgård's series, the Tonnetz — to be plugged into an orchestra written once. « Tail » adds time after the last note: without it, a reverb or a resonance would be cut off at the end of the score, which is the commonest flaw of an offline render. Technically that time comes from an « f0 » holding the score open, which is the canonical way to do it in Csound. The orchestra is written in the inspector, but it can also COME FROM THE GRAPH: the Orchestra input accepts text, and a connected input takes precedence over the field, which then remains the worked example — the node announces it in its message, so nobody wonders why the field before their eyes does nothing. As with the general Csound node: do not write sr, the node brings the output back to 44100 Hz, limits it below unity, and set the seed so the render reproduces.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| input | Orchestra | text |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Orchestra | text | `; A minimal instrument: p4 = frequency, p5 = amplitude. i…` |  | Instrument 1 is called for each note. The score passes it the FREQUENCY in hertz in p4, the amplitude from 0 to 1 in p5, and the MIDI note number in p6 — so that no conversion is ever needed. This field is used when no Orchestra input is connected; a connected input replaces it, and the node says so. |
+| Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. |
+| Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples per control cycle. |
+| Tail | number | 0.5 s | 0 – 10 s, step 0.1 | Time added after the last note, so resonances have room to die away. Without it, a reverb is cut off at the end of the score. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes, so the render is reproducible. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
+#### Csound Instruments
+
+`csound-instruments-physiques` · Others → Csound wrapper
+
+*Perry Cook's instruments as Csound carries them: bowed string, clarinet, flute, brass, plucked string, formants.*
+
+Csound's physical-model instruments, adjustable without writing a line of code. These are Perry Cook's and Julius Smith's models, carried into Csound and debugged for thirty years — and the bowed string is precisely the one Attic failed to write by hand: its Helmholtz regime, the thing that separates a bow from a mere resonator, is settled here. Six opcodes: bowed string (wgbow), clarinet (wgclar), flute (wgflute), brass (wgbrass), plucked string (wgpluck2) and formants (fof2). The three controls — Pressure, Position, Vibrato — do not mean the same thing from one instrument to the next, and that is accepted: Pressure is the violin's bow pressure, the clarinet's reed stiffness, the flute's breath, the brass's lip tension, and the plucked string's reflection, which sets its decay. Position is the bow's contact point, the air jet ratio, the attack time or the formant frequency, and it is the most sensitive control of most of them. One detail that is not a detail: each opcode's output gain was MEASURED and corrected in the node, because wgclar is twelve times quieter than wgbow at comparable settings. Without that correction one would spend all one's time chasing the volume when changing instrument, and the library would be unusable.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instrument | choice | Bowed string (wgbow) | Bowed string (wgbow) / Clarinet (wgclar) / Flute (wgflute) / Brass (wgbrass) / Plucked string (wgpluck2) / Formants (fof2) | The opcode used. The bowed string is the one Attic could not write by hand: its Helmholtz model has been debugged here for thirty years. Each instrument uses the three settings below in its own way, detailed in the notice. |
+| Note | text | `A3` |  | Note played when no MIDI is connected. |
+| Pressure | number | 40 % | 0 – 100 %, step 1 | Bow pressure, reed stiffness, breath or lip tension depending on the instrument. |
+| Position | number | 25 % | 0 – 100 %, step 1 | Bow position, air jet ratio, attack time or formant frequency depending on the instrument. It is the most sensitive control of most of them. |
+| Vibrato | number | 20 % | 0 – 100 %, step 1 | Vibrato depth. No effect on the plucked string and the formants. |
+| Vibrato rate | number | 6 Hz | 0.5 – 12 Hz, step 0.1 | Vibrato speed. |
+| Duration | number | 2 s | 0.1 – 20 s, step 0.1 | Note duration, when no MIDI is connected. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
+#### Csound Spectral
+
+`csound-spectral` · Others → Csound wrapper
+
+*Spectral morphing, vocoder and phase-locked stretching, through Csound's streaming spectral opcodes.*
+
+Csound's spectral processes, unmatched elsewhere for simplicity. The « pvs » opcodes work on a spectral STREAM rather than on frames passed by hand: pvsanal analyses, the opcode transforms, pvsynth resynthesises, and a morphing chain is written in four lines. Three processes, and Attic had no equivalent of any of them. The CROSS (pvscross) keeps the first sound's frequencies and imposes the second's levels: a voice taking on a drum kit's dynamics. The VOCODER (pvsvoc) does the opposite — the first gives its spectral envelope, hence its formants, the second its excitation: this is the vocoder proper, the robot-voice one, but done in the spectral domain rather than with a filter bank. The STRETCH (mincer) lengthens a sound without changing its pitch and changes its pitch without touching its length, phase-locked, which avoids the smearing of naive stretches. The window size is the usual trade-off: large gives fine frequency resolution but smeared transients; small the opposite. Two neighbouring opcodes were tried and set aside, and that is worth saying: partikkel, Csound's most complete granular synthesis, refused three formulations of its forty-one arguments; pvsmorph compiles, finishes cleanly, reports no error and writes NOTHING. The general Csound node remains available for whoever can make them speak.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio 1 | audio |  |
+| input | Audio 2 | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Process | choice | Spectral cross (pvscross) | Spectral cross (pvscross) / Spectral vocoder (pvsvoc) / Phase-locked stretch (mincer) | The opcode used. The first three need TWO sounds and cross them; the stretch needs only one. Attic had no spectral morphing before these. |
+| Morph | number | 50 % | 0 – 100 %, step 1 | Amount of crossing between the two sounds. For the stretch, this is the time factor: at 25 %, the sound lasts twice as long. |
+| Transpose | number | 0 st | -24 – 24 st, step 1 | Transposition, used by the stretch only: it changes the pitch without touching the duration, which is the whole point of a phase-locked stretch. |
+| Window | choice | 1024 | 512 / 1024 / 2048 | Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise. |
+| Tail | number | 0.5 s | 0 – 30 s, step 0.5 | Time added to the processed duration. Essential for the stretch, which lengthens the sound. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
 ### Generation
 
 | Component | Summary |
@@ -5688,6 +6226,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | [DistilGPT-2](#distilgpt-2) | Generates text via AI (DistilGPT-2, English). |
 | [Edit Text](#edit-text) | Transforms incoming text: replace, case, whitespace, wrapping. |
 | [Emotions](#emotions) | Outputs a collection of human emotions by category as text. |
+| [Graph Documentation](#graph-documentation) | Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used. |
 | [Instrument Names](#instrument-names) | Outputs a long list of musical instrument names as text. |
 | [Lyrics Generator](#lyrics-generator) | Generates structured song lyrics (verse, chorus, bridge) without AI. |
 | [Multilingual Lyrics (AI)](#multilingual-lyrics-ai) | Generates lyrics in English via DistilGPT-2 then translates them to the chosen language. |
@@ -5804,6 +6343,25 @@ Outputs a collection of human emotions on its « Text » output (about 160, grou
 |---|---|---|---|---|
 | Category | choice | All | All / Joy/Happiness / Sadness/Melancholy / Anger/Frustration / Fear/Anxiety / Love/Tenderness / Surprise/Wonder / Disgust/Rejection / Mixed/Complex | Filters the list by emotion category. |
 | Format | choice | Comma | Comma / Newline / Bullets | Separator of the produced text. |
+
+#### Graph Documentation
+
+`documentation-graphe` · Others → Text
+
+*Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used.*
+
+Documents the graph it sits in, rather than Attic's components in general: the COMPONENTS.md catalog already does that. This node answers another need, that of handing a graph over to someone — a colleague, or an agent that has to build an application on it. It reads the whole graph, records each node's SET VALUES rather than its defaults, recovers its wiring port by port, computes the order in which the engine runs them, and gathers the notice of every component used — once per component, however many instances there are. Two texts come out of the same survey, because two audiences do not read the same thing. The « Documentation » output is dense Markdown, in the order useful to an agent: the graph first, the notices next, and the graph's JSON last, which is enough to rebuild it. The « Site » output is a self-contained HTML page — contents on the left, parameter tables, and a diagram of the graph drawn AT THE NODES' REAL POSITIONS, so that whoever reads the page recognises what they have in front of them in the application. Four things are worth knowing. The node has no input: it has nothing to receive, and where it sits does not matter. It documents the graph AS IT IS COMPOSED, meta-components unexpanded and loops unrolled, because nobody would recognise their work in numbered loop copies. It flags what would stop the graph from running — a required input left free, a component unknown to the registry, a cycle. And it writes nothing to disk until an output folder is given. One limit, finally, stated rather than worked around: a component's documentation is its notice, its ports and its parameters, not its source code — the shipped application does not contain its sources, and promising the code would be promising what cannot be delivered.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Documentation | text |  |
+| output | Site | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Title | text | — |  | Title of the document. Empty, the document is called « Graph documentation ». |
+| Notices | choice | Full | Full / Summaries only | Each component's full notice, or its summary alone. Full for an agent, to whom they say what each node does and why; summaries for an overview, the document then being four to five times shorter. |
+| Output folder | folder | — |  | Where to write « documentation.md » and « index.html ». Empty, nothing is written to disk and both texts leave through the ports only — enough to feed a language model or a text node. |
 
 #### Instrument Names
 
@@ -6001,12 +6559,10 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 | Component | Summary |
 |---|---|
 | [Chord](#chord) | Detects the chord name from its notes. |
-| [Inversions and Voicings](#inversions-and-voicings) | Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible. |
-| [Negative Harmony](#negative-harmony) | Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6. |
 | [Pitch-Class Sets](#pitch-class-sets) | Analyses a chord or passage as a pitch-class set: normal form, prime form, interval vector. |
 | [Progression](#progression) | Generates a chord progression from a key and roman numerals. |
 | [Scale](#scale) | Lists the notes of a scale from a tonic and a scale type. |
-| [Serial Operations](#serial-operations) | Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix. |
+| [Species Counterpoint](#species-counterpoint) | Checks a first-species counterpoint against Fux's rules and annotates every infringement. |
 | [Transpose](#transpose) | Transposes a note or chord by a given interval. |
 
 #### Chord
@@ -6025,56 +6581,6 @@ Detects a chord name from a list of notes. Example: C E G → C major. Accepts n
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). |
-
-#### Inversions and Voicings
-
-`voicings-accords` · Others → Theory
-
-*Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible.*
-
-Inverts, spreads and chains a MIDI file's chords. Attic has always built chords the same way: root, third, fifth, seventh, bottom to top, packed inside one octave — the heaviest position there is, the one no pianist plays and no arranger writes. This node does what one does by hand. « Inversion » moves the bottom notes above, one at a time, without changing the chord — only who carries it; pushed as far as the note count, it leaves the chord unchanged rather than driving the music ever upwards. « Voicing » spreads the voices: « Open » raises every other note by an octave, and the « drop » voicings lower the second or third voice FROM THE TOP by an octave, which hollows the chord in the middle and gives it the sound of jazz guitar and four-part brass — it needs at least four notes, and without them the chord comes out unchanged. « Voice leading » is the setting one hears most. Between C major and F major there is a version that moves all three voices by several tones and one that moves a single voice by a semitone; the latter sounds like a harmony moving forward, the former like two unrelated chords. So the node looks, for each chord, for the register that moves the fewest voices from the previous one — by whole octaves only, so that the voicing chosen above is kept exactly. The first chord is never moved: it is the one that sets the register. The search is greedy, with no going back on past choices: a global search would sometimes do better by a semitone, at exponential cost and for a result one would not hear.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | MIDI | MIDI |  |
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Inversion | number | 0 | 0 – 5, step 1 | How many bottom notes move up an octave. 0 = root position. An inversion equal to the chord's note count leaves it unchanged, rather than pushing it upwards. |
-| Voicing | choice | Close | Close / Open / Drop 2 / Drop 3 / Drop 2 and 4 | How the voices are spread. « Open » raises every other note by an octave. The « drop » voicings lower the second or third voice from the top by an octave: this is the writing of jazz guitar and four-part brass, and it needs at least four notes. |
-| Voice leading | choice | Yes | No / Yes | Finds, for each chord, the register that moves the fewest voices from the previous one. The voicing chosen above is kept as is: the leading only shifts chords by whole octaves. |
-| Lowest note | number | 40 | 21 – 60, step 1 | Lowest note the voice leading allows itself. |
-| Highest note | number | 88 | 60 – 108, step 1 | Highest note the voice leading allows itself. |
-| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
-
-#### Negative Harmony
-
-`harmonie-negative` · Others → Theory
-
-*Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6.*
-
-Reflects pitches around the tonic-dominant axis. The idea comes from Hugo Riemann's dualist harmony, taken up by Ernst Levy in « A Theory of Harmony » (1985), and put back into circulation in recent years under the name negative harmony. It fits in one sentence: reflect the twelve pitches around the axis lying halfway between the tonic and its dominant, and every tonal function turns into its image, giving a harmony that fills the same role by the opposite path. In C, the axis falls between E flat and E — it falls on no note of the keyboard, and therefore has no fixed point: the twelve classes swap in six pairs. The tonic becomes the dominant, E flat and E swap, and C major comes out as C minor. The famous result is G7, which becomes an F minor 6: two chords that nothing relates on paper, and which both call for resolution onto C. The text output gives the six pairs, so one sees what the reflection does before hearing it. « Reflection » offers the procedure's two honest readings. « Classes, register kept » reflects each note within its octave: the harmony changes, the line keeps its contour, and that is what one wants to substitute a chord inside a progression. « True mirror » reflects everything around a single absolute axis, placed in the middle of the piece: intervals change direction, so the melody turns over — which is the real mirror, but rarely what one is after on a melodic line. This node is a generator, not a rule: it offers a substitution, it does not say the substitution is good.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | MIDI | MIDI |  |
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-| output | Table | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key whose axis is taken. It is the only setting that matters: the axis lies halfway between this note and its fifth, and everything else follows. |
-| Reflection | choice | Classes, register kept | Classes, register kept / True mirror | « Classes » reflects each note within its octave: the harmony changes, the line keeps its contour — this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over. |
-| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Pitch-Class Sets
 
@@ -6131,34 +6637,24 @@ Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available
 | Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Starting tonic. |
 | Type | choice | major | major / minor / dorian / mixolydian / lydian / phrygian / locrian | Scale type. |
 
-#### Serial Operations
+#### Species Counterpoint
 
-`serie-dodecaphonique` · Others → Theory
+`contrepoint-especes` · Others → Theory
 
-*Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix.*
+*Checks a first-species counterpoint against Fux's rules and annotates every infringement.*
 
-Plays a row's four forms and writes its matrix. Twelve-tone writing is a calculating technique before it is an aesthetic: a row of the twelve pitches, and four transformations — original, retrograde, inversion, retrograde inversion — each transposable onto twelve levels, so forty-eight forms drawn from a single material. Schoenberg, Webern and Berg wrote them out by hand in a twelve-by-twelve grid; that grid is what the text output gives, labelled P and I, with the retrogrades read backwards. It can be checked at a glance the way it was taught: the first row is the series, the first column its inversion, and the diagonal never changes. None of this is reserved for serialism — retrograding and inverting a motif are counterpoint operations as old as the canon, and the node accepts a sequence of any length. It merely states, in passing, whether what it was given is a REAL row: twelve distinct classes. « Register » decides how the resulting classes are played: « Closest » takes for each note the octave nearest the previous one, and one hears a line — which is how a row is actually played, the octaves being free; « One octave » stacks everything above the starting note, and one hears the order of the classes. The default row is that of Berg's Violin Concerto, built from alternating thirds that make it almost tonal.
+Checks a first-species counterpoint. This is Attic's first node that CORRECTS rather than produces. Johann Joseph Fux published in 1725 the « Gradus ad Parnassum », where counterpoint is learned by species: in the first, note against note, which isolates the question of harmony and motion between two voices without rhythm interfering. Haydn, Mozart and Beethoven all worked through it, and the rules have not changed since. They amount to few things and each can be checked mechanically: only consonances are allowed — and the fourth is not one in two voices, which always surprises — parallel fifths and octaves are forbidden, as are those reached by similar motion, one begins and ends on a perfect consonance, large leaps are answered by contrary stepwise motion, and the cadence is by contrary motion to the octave. The node rewrites nothing: it ANNOTATES, separating prohibitions from mere recommendations. That is what a teacher does, and it is more useful than an automatic correction, which would deprive one of the only thing that matters — understanding why the rule exists. The exercise offered by default is correct: the node must find nothing in it, and that is the module's first test. An over-zealous checker is unusable, since one stops reading it.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | MIDI | MIDI |  |
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-| output | Matrix | text |  |
+| output | Report | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. |
-| Form | choice | Original | Original / Retrograde / Inversion / Retrograde inversion / All four in turn | The transformation played. « All four in turn » chains the four forms, which makes audible at once what the matrix shows. |
-| Transposition | number | 0 | 0 – 11, step 1 | Transposition level of the played form, in semitones. With the forty-eight combinations of form and level, one has everything a row allows. |
-| Register | choice | Closest | Closest / One octave | « Closest » picks, for each note, the octave nearest the previous one, which makes a line audible; « One octave » stacks everything above the starting note, which makes the order of the classes audible. |
-| Starting note | number | 60 | 24 – 96, step 1 | MIDI pitch the row is placed around. |
-| Note length | number | 0.3 s | 0.05 – 2 s, step 0.05 | Length of each note of the row. |
-| Velocity | number | 90 | 1 – 127, step 1 | Note strength. |
-| Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+| Lower voice | text | `C4 D4 E4 F4 E4 D4 C4` |  | The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. |
+| Upper voice | text | `G4 F4 G4 A4 G4 B4 C5` |  | The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. |
+| Inner unisons | choice | Forbidden | Forbidden / Allowed | Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard. |
 
 #### Transpose
 

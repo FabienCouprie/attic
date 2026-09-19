@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "3.2.2",
-  "description": "Visual node-editor for AI-powered music and sound design — 281 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 300 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -134,6 +134,7 @@
     }
   },
   "dependencies": {
+    "@csound/browser": "^6.17.3",
     "@firecrawl/pdf-inspector-wasm": "^0.1.3",
     "@huggingface/tokenizers": "^0.1.3",
     "adm-zip": "^0.6.0",

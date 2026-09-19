@@ -56,6 +56,7 @@ included in Attic.
 | `soundtouchjs` | LGPL-2.1 | SoundTouchJS contributors |
 | `time-stretch` | MIT | Dmitry Iv. |
 | `libpd-wasm` | BSD-3-Clause | hyrfilm / libpd-wasm contributors |
+| `@csound/browser` | LGPL-2.1 | The Csound developers — Csound compiled to WebAssembly (https://github.com/csound/csound/tree/master/wasm/browser). The library is used unmodified, as a separate file (`dist/csound.js`) loaded at runtime; the LGPL-2.1 text reproduced below for `soundtouchjs` applies to it as well. Note that version 7.x of this package is published under Apache 2.0; Attic pins 6.17.3, which is LGPL-2.1. |
 | `meyda` | MIT | Meyda contributors |
 | `mathjs` | Apache 2.0 | Jos de Jong |
 | `wavesurfer.js` | BSD-3-Clause | katspaugh and contributors |

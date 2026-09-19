@@ -16,6 +16,7 @@ import {
 import { estResultatEnErreur } from "../../core/execution";
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { registre } from "../../audio/adaptateur";
+import { publierGrapheCourant } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
@@ -260,6 +261,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
+    // Le graphe TEL QU'IL EST COMPOSÉ est mis à disposition des nœuds qui le documentent —
+    // avant l'aplatissement, donc avec ses méta-nœuds et ses boucles intactes : c'est ce que
+    // l'utilisateur voit et ce qu'un fichier de projet contient. Le contrat d'exécution du
+    // cœur ne porte pas le graphe, et n'a pas à le porter ; voir plugins/grapheGlobal.ts.
+    publierGrapheCourant({
+      noeuds: noeudsRef.current as unknown as NoeudG[],
+      aretes: aretesRef.current as unknown as AreteG[],
+    });
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.

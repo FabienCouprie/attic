@@ -250,5 +250,10 @@ describe("chaînes critiques", () => {
     const blob = bufferVersWavBlob(out);
     const { samples } = await lirePcmWav(blob);
     expect(Math.max(...samples[0].map(Math.abs))).toBeGreaterThan(0.001);
-  });
+    // Soixante itérations de Griffin-Lim sur deux secondes de stéréo prennent une bonne
+    // dizaine de secondes : ce test frôlait le délai par défaut, et tombait dès que la
+    // machine tournait à plein — donc de plus en plus souvent à mesure que la suite
+    // grossissait. Le délai est relevé plutôt que le test allégé : c'est le réglage réel du
+    // nœud qu'on veut couvrir.
+  }, 60_000);
 });
