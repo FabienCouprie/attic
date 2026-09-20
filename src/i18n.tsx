@@ -468,6 +468,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.banque.muettes": { fr: "{__VAR_0__} sans son dans le kit", en: "{__VAR_0__} with no sound in the kit" },
   "msg.banque.transposee": { fr: "transpose de {__VAR_0__}", en: "transposed by {__VAR_0__}" },
   "msg.banque.horsPlage": { fr: "Aucune note dans la plage {__VAR_1__}-{__VAR_2__} : les {__VAR_0__} notes recues sont toutes en dehors.", en: "No note within the {__VAR_1__}-{__VAR_2__} range: all {__VAR_0__} incoming notes are outside." },
+  "msg.batterie.midi": { fr: "MIDI : {__VAR_0__} notes", en: "MIDI: {__VAR_0__} notes" },
   "msg.banque.absente": { fr: "Branchez une banque : « Étaler sur le clavier » en fabrique une à partir d'un son.", en: "Connect a bank: « Spread Across Keyboard » builds one from a sound." },
   "msg.fdn.mesure": { fr: "RT60 mesuré : grave {__VAR_0__} s · aigu {__VAR_1__} s · durée {__VAR_2__} s", en: "Measured RT60: low {__VAR_0__} s · high {__VAR_1__} s · length {__VAR_2__} s" },
   "msg.pghi.fait": { fr: "Convergence {__VAR_0__} dB · {__VAR_1__} îlot(s) · {__VAR_2__} % intégré", en: "Convergence {__VAR_0__} dB · {__VAR_1__} island(s) · {__VAR_2__} % integrated" },

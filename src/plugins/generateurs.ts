@@ -12,6 +12,8 @@ import {
   appliquerInstrumentsParCanal,
   rendreAttracteurImageEtAudio, normaliserTypeAttracteur,
   genererRythmeCantor,
+  genererGrilleCantor,
+  grilleBoiteRythmes,
   genererMusiqueMandelbrot,
   genererArpegeKoch,
   rendreSpectrogrammeFractal,
@@ -24,6 +26,7 @@ import {
   DEMI_TONS_CLE,
   type NoteEvenement,
 } from "../audio";
+import { CANAL_PERCUSSION, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -409,9 +412,11 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "boite-rythmes", nom: "Boîte à rythmes", nomEn: "Drum Machine", univers: "Entrées", famille: "Génération",
-    resume: "Génère une piste rythmique.",
-    resumeEn: "Generates a drum pattern.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    resume: "Génère une piste rythmique, et sort le même rythme en MIDI pour pouvoir changer les sons dessous.",
+    resumeEn: "Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed.",
+    // La sortie MIDI est AJOUTÉE À LA FIN : les prises sont identifiées par leur rang, et l'insérer
+    // avant l'audio aurait déplacé les branchements de tous les graphes déjà enregistrés.
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:120, unite:"BPM" },
       { nom:"Patron", nomEn:"Pattern", type:"choix", ...optionsPatrons(), defaut:"Rock", defautEn: "Rock" },
@@ -424,7 +429,30 @@ export const fiches: FicheAudio[] = ([
         docEn:"Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
-      return { valeurs: [await genererBoiteRythmes(ctx.paramNombre("Tempo",120),ctx.paramTexte("Patron","Rock"),ctx.paramNombre("Mesures",2),ctx.paramNombre("Kick",80),ctx.paramNombre("Caisse claire",70),ctx.paramNombre("Charley",60),4,4,creerAleatoire(ctx.paramNombre("Graine",42)))] };
+      const tempo = ctx.paramNombre("Tempo", 120);
+      const patron = ctx.paramTexte("Patron", "Rock");
+      const mesures = ctx.paramNombre("Mesures", 2);
+      const niveauKick = ctx.paramNombre("Kick", 80);
+      const niveauSnare = ctx.paramNombre("Caisse claire", 70);
+      const niveauCharley = ctx.paramNombre("Charley", 60);
+      const buffer = await genererBoiteRythmes(tempo, patron, mesures, niveauKick, niveauSnare,
+        niveauCharley, 4, 4, creerAleatoire(ctx.paramNombre("Graine", 42)));
+      // LE MÊME PATRON, EN MIDI, pour pouvoir changer les sons dessous — kit SFZ, SoundFont, orchestre
+      // Csound. La grille vient de la fonction QUE LE RENDU EMPLOIE, et non d'une seconde lecture du
+      // patron : c'est la seule façon d'être sûr que les deux sorties frappent aux mêmes instants.
+      // Les niveaux des pistes deviennent des vélocités, un fichier MIDI n'ayant pas de volume.
+      const grille = grilleBoiteRythmes(patron, mesures, 4, 4);
+      const notesMidi = notesDepuisFrappes(frappesDePistesBooleennes([
+        { piste: 0, pas: grille.kick, niveau: niveauKick },
+        { piste: 1, pas: grille.snare, niveau: niveauSnare },
+        { piste: 2, pas: grille.hat, niveau: niveauCharley },
+        { piste: 3, pas: grille.hatOuvert, niveau: niveauCharley },
+      ]), { tempo, pasParMesure: grille.pasMesure, mesures });
+      const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
+      return {
+        valeurs: [buffer, midi],
+        message: `${buffer.duration.toFixed(1)} s · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
+      };
     },
   },
   {
@@ -562,9 +590,11 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "rythme-cantor", nom: "Rythme de Cantor", nomEn: "Cantor Rhythm", univers: "Entrées", famille: "Génération",
-    resume: "Génère une groove rythmique auto-similaire par récursion sur une grille de pas.",
-    resumeEn: "Generates a self-similar rhythmic groove by recursively removing beats from a grid.",
-    entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
+    resume: "Génère une groove rythmique auto-similaire par récursion sur une grille de pas, et la sort aussi en MIDI.",
+    resumeEn: "Generates a self-similar rhythmic groove by recursively removing beats from a grid, and also outputs it as MIDI.",
+    // Sortie MIDI ajoutée À LA FIN, pour la même raison que sur la boîte à rythmes : les prises sont
+    // des rangs, et les graphes enregistrés pointent sur eux.
+    entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM", doc: "Vitesse du groove en battements par minute.", docEn: "Groove speed in beats per minute." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de niveaux de récursion de la suppression de pas (plus = plus fractal).", docEn: "Number of recursion levels of beat removal (higher = more fractal)." },
@@ -584,18 +614,40 @@ export const fiches: FicheAudio[] = ([
       const subdivision = parseInt(ctx.paramTexte("Subdivision", "3"), 10);
       const subdivisionValide = [3, 5, 7].includes(subdivision) ? subdivision : 3;
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
-      const buffer = await genererRythmeCantor(
-        ctx.paramNombre("Tempo", 120),
-        ctx.paramNombre("Profondeur", 3),
-        subdivisionValide,
-        partieValide,
-        ctx.paramNombre("Mesures", 2),
-        ctx.paramTexte("Instrument", "all") as any,
-        ctx.paramNombre("Volume", 80),
-        ctx.paramNombre("Swing", 0),
-        aleatoire,
-      );
-      return { valeurs: [buffer], message: `${buffer.duration.toFixed(1)} s · grille Cantor · graine ${graine}` };
+      const tempo = ctx.paramNombre("Tempo", 120);
+      const profondeur = ctx.paramNombre("Profondeur", 3);
+      const mesures = Math.max(1, Math.round(ctx.paramNombre("Mesures", 2)));
+      const instrument = ctx.paramTexte("Instrument", "all") as string;
+      const volume = ctx.paramNombre("Volume", 80);
+      const swing = ctx.paramNombre("Swing", 0);
+      const buffer = await genererRythmeCantor(tempo, profondeur, subdivisionValide, partieValide,
+        mesures, instrument as any, volume, swing, aleatoire);
+      // LE MÊME RYTHME, EN MIDI. La grille est RECONSTRUITE avec un générateur NEUF de la même graine :
+      // le rendu tire la sienne avant ses rafales de bruit, donc un générateur déjà consommé donnerait
+      // une autre grille en mode « Aléatoire » — et le MIDI ne serait plus le rythme entendu.
+      const PAS_CANTOR = 64;
+      const grille = genererGrilleCantor(PAS_CANTOR, Math.max(1, profondeur), subdivisionValide,
+        partieValide, creerAleatoire(graine));
+      // Trois pistes, comme le rendu : le niveau de récursion module l'instrument en mode « Tous ».
+      const pistes = [0, 1, 2].map(() => new Array(mesures * PAS_CANTOR).fill(false));
+      for (let m = 0; m < mesures; m++) {
+        for (let p = 0; p < PAS_CANTOR; p++) {
+          const niveau = grille[p];
+          if (niveau < 0) continue;
+          const piste = instrument === "all" ? niveau % 3
+            : instrument === "kick" ? 0 : instrument === "snare" ? 1 : 2;
+          pistes[piste][m * PAS_CANTOR + p] = true;
+        }
+      }
+      const notesMidi = notesDepuisFrappes(
+        frappesDePistesBooleennes(pistes.map((pas, piste) => ({ piste, pas, niveau: volume }))),
+        { tempo, pasParMesure: PAS_CANTOR, mesures, swing });
+      const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
+      return {
+        valeurs: [buffer, midi],
+        message: `${buffer.duration.toFixed(1)} s · grille Cantor · graine ${graine}`
+          + ` · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
+      };
     },
   },
   {

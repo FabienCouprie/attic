@@ -169,14 +169,14 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 |---|---|
 | [ABC → MIDI](#abc--midi) | Reads a score in ABC notation — melody, chord symbols, repeats, several voices — and renders it to MIDI and audio. |
 | [ABC Cover](#abc-cover) | Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass — ballad, pop, waltz, march, bossa nova. |
-| [Advanced Drum Sequencer](#advanced-drum-sequencer) | Programs an 8-track drum pattern with per-step velocity (synthesized). |
-| [Cantor Rhythm](#cantor-rhythm) | Generates a self-similar rhythmic groove by recursively removing beats from a grid. |
+| [Advanced Drum Sequencer](#advanced-drum-sequencer) | Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed. |
+| [Cantor Rhythm](#cantor-rhythm) | Generates a self-similar rhythmic groove by recursively removing beats from a grid, and also outputs it as MIDI. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Chord Sequencer](#chord-sequencer) | Programs a chord progression on a step grid. |
 | [Curve](#curve) | Builds a modulation curve: oscillator, ramp, logistic sequence or random walk. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
-| [Drum Machine](#drum-machine) | Generates a drum pattern. |
+| [Drum Machine](#drum-machine) | Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed. |
 | [Euclidean Rhythm](#euclidean-rhythm) | Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm). |
 | [FM / AM Synth](#fm--am-synth) | Generates a note with frequency modulation (FM) or amplitude modulation (AM). |
 | [Fractal Music](#fractal-music) | Generates a fractal melody from a repeated motif and scale. |
@@ -270,13 +270,14 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 `sequenceur-batterie-avance` · Inputs → Generation
 
-*Programs an 8-track drum pattern with per-step velocity (synthesized).*
+*Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed.*
 
-Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). Click a cell to turn it on or off, as in the other sequencers; nuance is on the modifiers — Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Set tempo, number of steps (16 or 32), swing and bars; the audio output loops the pattern.
+Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). Click a cell to turn it on or off, as in the other sequencers; nuance is on the modifiers — Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Set tempo, number of steps (16 or 32), swing and bars; the audio output loops the pattern. A second output gives the SAME rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): connect it to the SFZ keyboard, to a SoundFont player or to a Csound orchestra to play exactly the same rhythm with other sounds. The grid's nuances become velocities there and swing is applied: the groove survives the change of sounds.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | output | Audio | audio |  |
+| output | MIDI | MIDI |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -292,13 +293,14 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 
 `rythme-cantor` · Inputs → Generation
 
-*Generates a self-similar rhythmic groove by recursively removing beats from a grid.*
+*Generates a self-similar rhythmic groove by recursively removing beats from a grid, and also outputs it as MIDI.*
 
-Generates a self-similar rhythmic groove by Cantor recursion on a 64-step grid per bar. At each depth level, the central (or left/right/random) part of each remaining interval is removed. Surviving steps trigger drums: in 'All' mode, kick = levels 0, 3, 6…, snare = levels 1, 4…, hi-hat = levels 2, 5…, creating a fractal rhythmic texture.
+Generates a self-similar rhythmic groove by Cantor recursion on a 64-step grid per bar. At each depth level, the central (or left/right/random) part of each remaining interval is removed. Surviving steps trigger drums: in 'All' mode, kick = levels 0, 3, 6…, snare = levels 1, 4…, hi-hat = levels 2, 5…, creating a fractal rhythmic texture. A second output gives the SAME rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): connect it to the SFZ keyboard, to a SoundFont player or to a Csound orchestra to play exactly the same rhythm with other sounds. Swing and volume are kept there, the volume becoming the velocity of the hits.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | output | Audio | audio |  |
+| output | MIDI | MIDI |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -444,13 +446,14 @@ Uses an audio sample as a melodic instrument: the sample is pitched to play a me
 
 `boite-rythmes` · Inputs → Generation
 
-*Generates a drum pattern.*
+*Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed.*
 
-Generates a drum track from a pattern (Rock, Funk, House…), with per-drum volume control.
+Generates a drum track from a pattern (Rock, Funk, House…), with per-drum volume control. A second output gives the SAME rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): connect it to the SFZ keyboard, to a SoundFont player or to a Csound orchestra to play exactly the same rhythm with other sounds. Each drum's volume becomes a velocity there, since a MIDI file has no volume.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | output | Audio | audio |  |
+| output | MIDI | MIDI |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|

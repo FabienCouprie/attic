@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "../audio";
+import { CANAL_PERCUSSION, frappesDeGrilleVelocite, notesDepuisFrappes } from "../audio/batterie-midi";
 import { creerAleatoire } from "../core";
 import {
   rendreSequenceurMelodique, decoderMotifMelodique,
@@ -186,10 +187,12 @@ export const fiches: FicheAudio[] = ([
   {
     id: "sequenceur-batterie-avance", nom: "Séquenceur de batterie avancé", nomEn: "Advanced Drum Sequencer",
     univers: "Entrées", famille: "Génération",
-    resume: "Programme un motif de batterie sur 8 pistes avec velocity par pas (synthèse).",
-    resumeEn: "Programs an 8-track drum pattern with per-step velocity (synthesized).",
+    resume: "Programme un motif de batterie sur 8 pistes avec velocity par pas, et sort le rythme en MIDI pour pouvoir changer les sons dessous.",
+    resumeEn: "Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed.",
     entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    // La sortie MIDI est AJOUTÉE À LA FIN : les identifiants des prises sont des rangs (« out:0 »),
+    // et l'insérer avant aurait déplacé les branchements de tous les graphes déjà enregistrés.
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM" },
       // Huit pas viennent de l'ancien séquenceur binaire, supprimé : sa résolution la plus grossière
@@ -218,8 +221,20 @@ export const fiches: FicheAudio[] = ([
       const grille = decoderMotifVelocite(ctx.paramTexte("Motif", MOTIF_AVANCE_DEFAUT), 8, nbPas);
       const buf = await rendreSequenceurBatterieAvance(grille, tempo, nbPas, swing, mesures, volume,
         creerAleatoire(ctx.paramNombre("Graine", 42)));
+      // LE MÊME RYTHME, EN MIDI : c'est ce qui permet de changer les sons dessous — kit SFZ,
+      // SoundFont, orchestre Csound, modèle physique. Les instants viennent de la même formule que le
+      // rendu, SWING COMPRIS, faute de quoi le groove disparaîtrait au changement de sons : même
+      // rythme sur le papier, autre musique à l'oreille, et rien pour le signaler.
+      const notesMidi = notesDepuisFrappes(frappesDeGrilleVelocite(grille, nbPas, mesures), {
+        tempo, pasParMesure: nbPas, mesures, swing,
+      });
+      const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
       const frappes = grille.reduce((s: number, row: number[]) => s + row.filter((v) => v > 0).length, 0);
-      return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes) };
+      return {
+        valeurs: [buf, midi],
+        message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes)
+          + ` · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
+      };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

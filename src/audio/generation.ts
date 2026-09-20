@@ -553,6 +553,40 @@ function genererPatronDefaut(tempsParMesure: number, uniteBattement: number): Pa
 }
 
 
+/**
+ * La grille d'une boîte à rythmes : quatre pistes de booléens, dépliées sur toutes les mesures.
+ *
+ * EXTRAITE DU GÉNÉRATEUR pour que le rendu audio et la sortie MIDI voient LA MÊME grille. Les deux la
+ * recopieraient sinon, et une correction faite d'un côté manquerait de l'autre — le genre de
+ * divergence qui fait qu'un même patron ne sonne pas pareil selon qu'on l'écoute ou qu'on le rejoue.
+ */
+export function grilleBoiteRythmes(
+  patronNom: string,
+  mesures: number,
+  tempsParMesure: number = 4,
+  uniteBattement: number = 4,
+): { kick: boolean[]; snare: boolean[]; hat: boolean[]; hatOuvert: boolean[]; pasMesure: number; totalPas: number } {
+  const pasMesure = tempsParMesure * 4;
+  const totalPas = mesures * pasMesure;
+  const entree = PATRONS_RYTHME[patronNom];
+  const signatureCle = `${tempsParMesure}/${uniteBattement}`;
+  const patron: Patron = entree && entree.signatures.includes(signatureCle)
+    ? entree.positions[signatureCle]!
+    : genererPatronDefaut(tempsParMesure, uniteBattement);
+  const kick = Array.from({ length: totalPas }, () => false);
+  const snare = Array.from({ length: totalPas }, () => false);
+  const hat = Array.from({ length: totalPas }, () => false);
+  const hatOuvert = Array.from({ length: totalPas }, () => false);
+  for (let m = 0; m < mesures; m++) {
+    const decalage = m * pasMesure;
+    for (const p of patron.kick) kick[decalage + p] = true;
+    for (const p of patron.snare) snare[decalage + p] = true;
+    for (const p of patron.hat) hat[decalage + p] = true;
+    for (const p of patron.hatOuvert) hatOuvert[decalage + p] = true;
+  }
+  return { kick, snare, hat, hatOuvert, pasMesure, totalPas };
+}
+
 export async function genererBoiteRythmes(
   tempo: number,
   patronNom: string,
@@ -573,25 +607,8 @@ export async function genererBoiteRythmes(
   const duree = totalPas * tempsPas;
   const offline = new OfflineAudioContext(2, Math.ceil(duree * sr), sr);
 
-  const entree = PATRONS_RYTHME[patronNom];
-  const signatureCle = `${tempsParMesure}/${uniteBattement}`;
-  let patron: Patron;
-  if (entree && entree.signatures.includes(signatureCle)) {
-    patron = entree.positions[signatureCle]!;
-  } else {
-    patron = genererPatronDefaut(tempsParMesure, uniteBattement);
-  }
-  const kick = Array.from({ length: totalPas }, () => false);
-  const snare = Array.from({ length: totalPas }, () => false);
-  const hat = Array.from({ length: totalPas }, () => false);
-  const hatOuvert = Array.from({ length: totalPas }, () => false);
-  for (let m = 0; m < mesures; m++) {
-    const decalage = m * pasMesure;
-    for (const p of patron.kick) kick[decalage + p] = true;
-    for (const p of patron.snare) snare[decalage + p] = true;
-    for (const p of patron.hat) hat[decalage + p] = true;
-    for (const p of patron.hatOuvert) hatOuvert[decalage + p] = true;
-  }
+  const { kick, snare, hat, hatOuvert } = grilleBoiteRythmes(
+    patronNom, mesures, tempsParMesure, uniteBattement);
   const triggers = { kick, snare, hat, hatOuvert };
 
   function jouerKick(debut: number, vol: number) {

@@ -14,8 +14,10 @@
 // LES NOTES SONT CELLES DU GENERAL MIDI, et ce n'est pas un détail : c'est ce qui fait qu'un fichier
 // MIDI trouvé n'importe où, dont le canal 10 suit la convention, joue juste — 36 la grosse caisse,
 // 38 la caisse claire, 42 le charley fermé. Choisir d'autres numéros aurait obligé à transposer
-// chaque fichier à la main.
+// chaque fichier à la main. Elles sont DÉCLARÉES UNE FOIS, dans `batterie-midi.ts`, d'où les
+// séquenceurs les tirent aussi pour écrire leur MIDI : les deux ne peuvent donc pas dériver.
 import { bufferVersWavBlob } from "./io";
+import { NOTES_PERCUSSION_GM } from "./batterie-midi";
 import { rendreSequenceurBatterieAvance } from "./batterie";
 
 /** Où le kit est posé, en chemin RELATIF — le seul que le main sache résoudre des deux côtés. */
@@ -43,14 +45,14 @@ export interface VoixKit {
  * contigus à leurs voisins : c'est la norme qui en décide, pas nous.
  */
 export const VOIX_KIT: readonly VoixKit[] = [
-  { fichier: "grosse-caisse.wav", note: 36, piste: 0, nom: "Grosse caisse", nomEn: "Kick", duree: 0.5 },
-  { fichier: "caisse-claire.wav", note: 38, piste: 1, nom: "Caisse claire", nomEn: "Snare", duree: 0.4 },
-  { fichier: "charley-ferme.wav", note: 42, piste: 2, nom: "Charley fermé", nomEn: "Closed hi-hat", duree: 0.2 },
-  { fichier: "charley-ouvert.wav", note: 46, piste: 3, nom: "Charley ouvert", nomEn: "Open hi-hat", duree: 0.5 },
-  { fichier: "clap.wav", note: 39, piste: 4, nom: "Clap", nomEn: "Clap", duree: 0.3 },
-  { fichier: "crash.wav", note: 49, piste: 5, nom: "Crash", nomEn: "Crash", duree: 1.2 },
-  { fichier: "tom-grave.wav", note: 45, piste: 6, nom: "Tom grave", nomEn: "Low tom", duree: 0.5 },
-  { fichier: "tom-aigu.wav", note: 50, piste: 7, nom: "Tom aigu", nomEn: "High tom", duree: 0.5 },
+  { fichier: "grosse-caisse.wav", note: NOTES_PERCUSSION_GM[0], piste: 0, nom: "Grosse caisse", nomEn: "Kick", duree: 0.5 },
+  { fichier: "caisse-claire.wav", note: NOTES_PERCUSSION_GM[1], piste: 1, nom: "Caisse claire", nomEn: "Snare", duree: 0.4 },
+  { fichier: "charley-ferme.wav", note: NOTES_PERCUSSION_GM[2], piste: 2, nom: "Charley fermé", nomEn: "Closed hi-hat", duree: 0.2 },
+  { fichier: "charley-ouvert.wav", note: NOTES_PERCUSSION_GM[3], piste: 3, nom: "Charley ouvert", nomEn: "Open hi-hat", duree: 0.5 },
+  { fichier: "clap.wav", note: NOTES_PERCUSSION_GM[4], piste: 4, nom: "Clap", nomEn: "Clap", duree: 0.3 },
+  { fichier: "crash.wav", note: NOTES_PERCUSSION_GM[5], piste: 5, nom: "Crash", nomEn: "Crash", duree: 1.2 },
+  { fichier: "tom-grave.wav", note: NOTES_PERCUSSION_GM[6], piste: 6, nom: "Tom grave", nomEn: "Low tom", duree: 0.5 },
+  { fichier: "tom-aigu.wav", note: NOTES_PERCUSSION_GM[7], piste: 7, nom: "Tom aigu", nomEn: "High tom", duree: 0.5 },
 ];
 
 /**
