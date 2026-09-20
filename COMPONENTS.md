@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **342 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **345 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 62 | [Audio](#audio) (7) · [Generation](#generation) (45) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Inputs](#inputs) | 63 | [Audio](#audio) (7) · [Generation](#generation) (46) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
 | [Processing](#processing) | 166 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (138) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 33 | [Analysis](#analysis) (25) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Visualization](#visualization) | 34 | [Analysis](#analysis) (26) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 60 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (9) |
+| [Others](#others) | 61 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
 
 ## How to read this catalog
 
@@ -206,6 +206,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
 | [Random Melody](#random-melody) | Generates a random melody. |
+| [Resultant (Schillinger)](#resultant-schillinger) | The rhythm that arises from superposing two regular pulses. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
 | [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play. |
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
@@ -1199,6 +1200,26 @@ Composes a random melody in the chosen key and scale, over the given number of b
 | Seed | number | 0 | 0 – 999999, step 1 | Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### Resultant (Schillinger)
+
+`resultante-schillinger` · Inputs → Generation
+
+*The rhythm that arises from superposing two regular pulses.*
+
+After Joseph Schillinger, « The Schillinger System of Musical Composition », Carl Fischer, 1946, book I: « Theory of Rhythm ». Attic already generates rhythm in six ways: Euclidean, Cantor, cellular automaton, L-system, Xenakis sieves, Roads pulsars. The resultant is none of them, and the contrast with the Euclidean is sharp. The latter spreads onsets as evenly as possible over a cycle; the former superposes two periods and lets the pattern fall where it falls. One seeks regularity, the other produces it by accident — and from that governed chance come the figures Schillinger pursued. Two pulses of 3 and 2 give 2-1-1-2, the system's most recognisable figure. It is palindromic, and that is no accident: the resultant of two coprime numbers always is, by symmetry of the cycle about its midpoint. What to know before setting it. The cycle lasts the product of the two periods, but if they share a factor they fall together before the end and the pattern repeats inside itself: the resultant of 4 and 2 is no richer than that of 2 and 1, it is the same, played twice as slowly. The node says so rather than letting one believe in a setting with no effect. What this node does not do: fractioning, by which Schillinger enriches his resultants and obtains self-similar structures. The sources consulted name the technique without giving its rule, and an operation bearing his name that could not be checked against a published figure would have been an invention under a borrowed authority.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Analysis | text |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pulse A | slider | 3 | 1 – 16, step 1 | Period of the first pulse, in beats. With 3 and 2 one gets the system's basic figure. |
+| Pulse B | slider | 2 | 1 – 16, step 1 | Period of the second. Take it coprime with the first: otherwise the pattern repeats inside the cycle, and the node will say so. |
+| Tempo | slider | 120 bpm | 30 – 300 bpm, step 1 | Beat speed, for the rendered MIDI. |
+| Note | slider | 38 | 21 – 108, step 1 | MIDI note of the onsets. 38 is the General MIDI snare. |
 
 #### Risset Bell
 
@@ -5142,6 +5163,7 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Genre Classifier](#genre-classifier) | Identifies the musical genre of a song via AI or heuristics. |
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
+| [Masking](#masking) | Says what one track makes inaudible in another, critical band by critical band. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [RMS (Meyda)](#rms-meyda) | Computes the average RMS level of the signal in dBFS using Meyda. |
@@ -5356,6 +5378,26 @@ Analyses audio and estimates its global key, then suggests a fitting progression
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Style | choice | Pop | Pop / Jazz / Blues | Suggested progression style, adapted to the detected mode (major or minor). |
+
+#### Masking
+
+`masquage` · Visualization → Analysis
+
+*Says what one track makes inaudible in another, critical band by critical band.*
+
+After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) for the critical-band scale, and Manfred Schroeder, Brian Atal and Joseph Hall (same journal, 66, 1979) for the spreading function — the one perceptual coders have used since. Attic could say what a mix loses in mono, that is the goniometer, and measured level, centroid, rolloff, phase correlation. No node said what one track hides. Yet that is the question one asks of a mix that will not clear: not « is this track too loud » but « what is it making inaudible ». The model, and its asymmetry. A loud sound raises the hearing threshold around it, and not equally on both sides: it masks far more towards the treble than towards the bass, because the wave travels from bass to treble in the cochlea. Hence the kick that eats the low mids without touching the cymbals, and the voice that covers everything above it. The figures, computed: at one critical band, a masker lowers by 4.3 decibels upwards against 7.9 downwards; at three bands, by 21.4 against 50.7. The gap widens with distance, and that is where the model becomes clear-cut. The trigger does not come out of the node: only the masked sound is returned, together with what has been taken from it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Masked | audio |  |
+| input | Masker | audio |  |
+| output | Analysis | text |  |
+| output | Curve | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Masker nature | choice | In between | Tonal / Noisy / In between | A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is. |
+| Resolution | choice | Ordinary (2048) | Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates the low bands better, where they are narrow. |
 
 #### MusicXML
 
@@ -7478,6 +7520,7 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 | [Species Counterpoint](#species-counterpoint) | Checks a first-species counterpoint against Fux's rules and annotates every infringement. |
 | [Transpose](#transpose) | Transposes a note or chord by a given interval. |
 | [Voice-Leading Distance](#voice-leading-distance) | Measures in semitones what each chord change costs, and says which one flows and which one strains. |
+| [World Scales](#world-scales) | Maqamat, ragas and gamelan scales, in cents — the degrees a keyboard cannot play. |
 
 #### Chord
 
@@ -7646,3 +7689,21 @@ After Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 
 |---|---|---|---|---|
 | Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C – A minor – F – G – C. A MIDI file on the input wins. |
 | Tolerance | slider | 0.05 s | 0.01 – 0.5 s, step 0.01 | Gap below which two notes of a MIDI file are taken as simultaneous, hence members of the same chord. With no MIDI connected, this setting does nothing. |
+
+#### World Scales
+
+`gammes-monde` · Others → Theory
+
+*Maqamat, ragas and gamelan scales, in cents — the degrees a keyboard cannot play.*
+
+The Scale node knew seven church modes and two pentatonics; the Temperament node, the historical Western temperaments. Neither maqam, nor raga, nor gamelan. This was not an oversight in a list: these systems do not fit in twelve equal semitones. Maqam Rast has a third midway between major and minor; the Indian shrutis divide the octave into twenty-two unequal degrees; Javanese slendro has neither a just octave nor an equal interval. Writing them takes cents, not note numbers — and that is why this node returns frequencies and never keys. Where the figures come from. The maqamat follow the quarter-tone division adopted at the 1932 Cairo Congress, which remains the written reference even where practitioners depart from it. The ragas are given in just intonation, as the shrutis define them: Bhairav's third is at 386 cents, the pure third, not the piano's 400. The gamelan scales are averages — each ensemble is tuned for itself, and two gamelans do not play the same scale. That is a property of the genre, not an imprecision of the measurement. And this answers the dissonance curve. Sethares' central example is precisely the gamelan: metallophones have inharmonic spectra, and both slendro and pelog follow those spectra rather than the harmonic series. Slendro's octave is 1208 cents and not 1200 — it is stretched, as those spectra are. Feeding a gamelan recording into « Dissonance Curve » and comparing the dips obtained to the degrees listed here is the verification Sethares himself proposes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Scale | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | Maqam Rast | Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The system to read. Each carries its own note, saying what one should know before using it. |
+| Tonic | slider | 220 Hz | 55 – 880 Hz, step 1 | Frequency of the first degree. In hertz and not as a note, because these scales do not sit on a keyboard. |
+| Tolerance | slider | 20 cents | 1 – 50 cents, step 1 | Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. |
