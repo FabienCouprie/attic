@@ -102,3 +102,29 @@ TERMS_OF_USE.md
 # COMPONENTS.md est versionné : le README y renvoie, et un test vérifie qu'il
 # correspond au registre (src/docs/generer-catalogue.test.ts).
 EXERCISE-WORKBOOK.md
+
+# UNE INSTALLATION D'ATTIC DANS LE DOSSIER DES SOURCES.
+#
+# La racine du dépôt contient une application Attic installée — `Attic.exe`, son désinstalleur, les
+# `.pak` et les DLL de Chromium, `locales/`, et un dossier `resources/` de 2,7 Go. Ce n'est pas une
+# sortie de build : c'est l'installeur qui a été pointé sur `E:\attic`.
+#
+# Deux conséquences, et la seconde est la plus sournoise : `git status` mélange ces fichiers avec le
+# travail en cours — un `git add -A` distrait committerait `Attic.exe` —, et le LINTER PARCOURAIT
+# les copies de sources dans `resources/app/`, signalant des défauts à un endroit où les corriger
+# n'aurait servi à rien.
+#
+# Les ignorer évite l'accident. Cela ne remplace pas de désinstaller l'application d'ici.
+resources/
+resources.pak
+Attic.exe
+Uninstall Attic.exe
+locales/
+*.pak
+*.dll
+*.bin
+icudtl.dat
+LICENSE.electron.txt
+LICENSES.chromium.html
+vk_swiftshader_icd.json
+/version
