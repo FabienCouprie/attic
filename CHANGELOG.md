@@ -2,7 +2,7 @@
 
 All notable changes to Attic. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [4.0.0] — 2026-09-20
 
 ### Fixed
 - **LES SEPT NŒUDS MAGENTA N'ABOUTISSAIENT PLUS : un import de trop tuait leur worker.** Ils restaient « en cours » indéfiniment — aucune erreur, aucun message, rien à lire. La cause : `magenta-helpers.ts` avait gagné un import de `audio/midi.ts` (une comparaison d'événements de douze lignes), lequel tire `i18n.tsx` derrière lui. Or Vite équipe tout module `.tsx` du **préambule de React Fast Refresh**, qui touche `window` — absent d'un worker. Et le shim `self.window = self` posé en tête du worker arrive **trop tard** : les imports d'un module ES sont évalués AVANT son corps. Le worker mourait donc à l'import, avant même d'installer son `onmessage`. La fonction vit maintenant dans `audio/midi-ordre.ts`, un module **sans aucun import**, réexporté par `audio/midi.ts` pour que les sept écrivains MIDI ne changent pas d'adresse. Vérifié dans l'application : **7 nœuds sur 7 aboutissent**, en 60 s pour la famille entière, sans une alerte.
