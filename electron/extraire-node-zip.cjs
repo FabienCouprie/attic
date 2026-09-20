@@ -14,11 +14,17 @@
 // vérifiée.
 //
 // À NOTER sur adm-zip : on n'appelle JAMAIS `extractAllTo` ni `extractEntryTo`.
-// C'est cette API-là que vise l'avis de sécurité GHSA sur le suivi des liens
-// symboliques à l'extraction, et pour laquelle aucun correctif n'existe (0.6.0
-// est la dernière version publiée). Ici, chaque entrée est lue puis écrite
-// nous-mêmes, après validation du chemin — la bibliothèque ne décide d'aucune
-// destination.
+// C'est cette API-là que vise l'avis GHSA-vwc7-r8mq-g2x9 sur le suivi des liens
+// symboliques à l'extraction. Ici, chaque entrée est lue puis écrite nous-mêmes,
+// après validation du chemin — la bibliothèque ne décide d'aucune destination.
+//
+// Ce commentaire a longtemps ajouté que l'avis était « sans correctif, 0.6.0
+// étant la dernière version publiée ». C'était vrai, et ce ne l'est plus :
+// 0.6.1 corrige les deux avis — le suivi des liens symboliques et l'allocation
+// mémoire non bornée d'après la taille déclarée. Le projet est dessus, par sa
+// dépendance ET par son `overrides`, qui force aussi les copies transitives
+// d'onnxruntime-node. La précaution ci-dessus reste : elle ne coûte rien et ne
+// dépend d'aucune version.
 const fs = require("fs");
 const path = require("path");
 
