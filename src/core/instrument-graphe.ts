@@ -80,6 +80,59 @@ export function racinesInstrument(noeudFin: NoeudG): number[] {
  * Les graphes sans nœud d'instrument ressortent INCHANGÉS — c'est le cas courant, et il ne doit
  * rien coûter.
  */
+export interface Appariement<T> {
+  /** Un rendu par racine, dans l'ordre des notes. */
+  paires: { racine: number; valeur: T }[];
+  /** Racines dont aucune copie n'a livré de rendu. */
+  manquantes: number[];
+  /** Combien d'entrées par note : 1 normalement, n si n nœuds de la chaîne nourrissent la fin. */
+  parCopie: number;
+  /**
+   * Vrai quand le nombre d'entrées ne correspond PAS au dépliage.
+   *
+   * C'est le signe qu'aucun dépliage n'a eu lieu — pas de « Note d'instrument » en amont, deux
+   * notes en amont, ou rien entre la note et la fin —, ou qu'un nœud étranger à la chaîne nourrit
+   * la fin. Dans les deux cas l'appariement note ↔ rendu est faux, et il vaut mieux le dire que
+   * rendre une banque désaccordée.
+   */
+  nonDeplie: boolean;
+}
+
+/**
+ * Apparie les rendus reçus par la fin d'instrument avec les notes auxquelles ils appartiennent.
+ *
+ * POURQUOI CE N'EST PAS UNE SIMPLE LISTE FILTRÉE. Le moteur livre une entrée PAR ARÊTE, dans
+ * l'ordre des copies, et une copie qui a échoué livre `null`. Filtrer les nulls puis prendre les
+ * `n` premières racines — ce que faisait ce nœud — décale toutes les notes suivantes dès qu'une
+ * copie du MILIEU échoue : la banque sort alors juste dans son nombre de zones et fausse dans ses
+ * hauteurs, ce qui ne se voit dans aucun message. L'indice de l'entrée est la seule chose qui dit à
+ * quelle note un rendu appartient ; on le garde donc.
+ */
+export function apparierRendus<T>(
+  entrees: readonly unknown[], racines: readonly number[], estRendu: (v: unknown) => v is T,
+): Appariement<T> {
+  if (racines.length === 0) return { paires: [], manquantes: [], parCopie: 0, nonDeplie: false };
+  const parCopie = entrees.length / racines.length;
+  if (!Number.isInteger(parCopie) || parCopie < 1) {
+    return { paires: [], manquantes: [...racines], parCopie, nonDeplie: true };
+  }
+  const paires: { racine: number; valeur: T }[] = [];
+  const manquantes: number[] = [];
+  racines.forEach((racine, k) => {
+    // Plusieurs nœuds de la chaîne peuvent aboutir à la fin ; une note n'a qu'un échantillon, on
+    // garde donc le premier rendu du groupe — celui de la première arête, donc de la même branche
+    // pour toutes les notes.
+    let trouve: T | null = null;
+    for (let j = 0; j < parCopie && trouve === null; j++) {
+      const v = entrees[k * parCopie + j];
+      if (estRendu(v)) trouve = v;
+    }
+    if (trouve === null) manquantes.push(racine);
+    else paires.push({ racine, valeur: trouve });
+  });
+  return { paires, manquantes, parCopie, nonDeplie: false };
+}
+
 export function deplierInstruments(noeuds: NoeudG[], aretes: AreteG[]): ResultatInstrument {
   const fins = noeuds.filter((n) => n.data.ficheId === FICHE_FIN);
   const notes = noeuds.filter((n) => n.data.ficheId === FICHE_NOTE);

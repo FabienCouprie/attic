@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **322 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **328 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 61 | [Audio](#audio) (6) · [Generation](#generation) (45) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 156 | [Conversion](#conversion) (4) · [Editing](#editing) (19) · [Effects](#effects) (129) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Inputs](#inputs) | 63 | [Audio](#audio) (7) · [Generation](#generation) (46) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 156 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (128) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
-| [Outputs](#outputs) | 9 | [Export](#export) (3) · [Monitoring](#monitoring) (6) |
+| [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 53 | [Csound wrapper](#csound-wrapper) (5) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (6) |
+| [Others](#others) | 56 | [Csound wrapper](#csound-wrapper) (8) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (6) |
 
 ## How to read this catalog
 
@@ -45,6 +45,7 @@ An input marked **required** must be connected for the component to run. **Param
 | [MIDI Player](#midi-player) | Loads a MIDI file from the inspector, synthesizes it and passes the MIDI along. |
 | [Music explorer](#music-explorer) | Loads an audio file from the explorer. |
 | [Recorder](#recorder) | Passes a microphone recording as audio source. |
+| [SFZ Bank](#sfz-bank) | Loads an SFZ sample bank — the drum kit shipped with Attic, or a file from disk — with no keyboard. |
 | [System Audio Capture](#system-audio-capture) | Captures system audio (other app, browser, etc.). |
 
 #### Audio input
@@ -129,6 +130,25 @@ Records from the microphone or line input. Pick the device, start then stop reco
 
 *No parameters.*
 
+#### SFZ Bank
+
+`banque-sfz` · Inputs → Audio
+
+*Loads an SFZ sample bank — the drum kit shipped with Attic, or a file from disk — with no keyboard.*
+
+Loads an SFZ sample bank and hands it to the graph, with no keyboard. THE MISSING PATH: until now, bringing a .sfz from disk went through « SFZ Keyboard », whose eighty-eight keys are pointless in an arrangement — four parts meant four keyboards eating the canvas for nothing. THE DRUMS SHIP WITH ATTIC: the built-in kit, this node's default source, holds eight sounds on General MIDI notes — 36 kick, 38 snare, 39 clap, 42 closed hi-hat, 45 low tom, 46 open hi-hat, 49 crash, 50 high tom. Those sounds are SYNTHESIZED BY ATTIC itself, the advanced drum sequencer's own, rendered to files and bundled with the application just like the default SoundFont: three hundred and seventy kilobytes, no third-party samples, no download, and the node gives a playable drum kit with nothing to set. THE BANK TYPE IS WHAT MAKES THE DRUMS RIGHT, and it is this node's most important distinction. A PITCHED bank always looks for the nearest zone: measured on a real kit read that way, key 37 — absent from General MIDI — played the kick a semitone higher, and key 60 played the crash an octave and a half up. A KIT transposes nothing and leaves a key with no sound silent. The file says so itself — single-key regions, or a « pitch_keytrack=0 » — and automatic mode detects it; forcing either remains possible, including to get a deliberately transposed kit. VELOCITY LAYERS ARE KEPT. A seriously sampled piano has three to eight recordings per key — played softly the hammer brushes the string, played hard it slams — and that is not a matter of level: a forte sample turned down twenty decibels remains a forte sample. Each layer becomes a zone with its velocity range, and the message reports how many there are. If the file declares « amp_veltrack », it is honoured: at zero, velocity only picks the layer and no longer touches the level, which avoids the double effect that made notes played piano nearly inaudible. THE PREVIEW plays each sound one after another — one note per key, not one per zone — then, when there are layers, a STAIRCASE OF DYNAMICS on a single key, from softest to loudest: the only way to hear what the layers bring without wiring a keyboard or a MIDI file.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Bank | bank |  |
+| output | Preview | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source | choice | Built-in kit | Built-in kit / SFZ file | BUILT-IN KIT: the drum kit shipped with Attic — eight sounds on General MIDI notes (36 kick, 38 snare, 42 closed hi-hat…), synthesized by Attic and bundled with the application, hence available with no network and no download. SFZ FILE: a `.sfz` from disk, chosen with the node's 📂 button; its samples are read beside it. |
+| Bank type | choice | Automatic | Automatic / Pitched / Kit | How the bank plays. AUTOMATIC: the file decides — single-key regions, or a `pitch_keytrack=0`, mark a kit. PITCHED: a key is a pitch; the nearest zone is resampled and no key stays silent. KIT: a key is a SOUND; nothing is transposed, and a key with no sound plays nothing. Forcing « Pitched » on a kit makes key 37 play the kick a semitone higher — sometimes that is the effect you want, but better to know it. |
+| Preview | choice | Yes | Yes / No | Renders an audio preview: one note per key of the bank, one after another — not one per zone, otherwise a layered bank would sound the same note three times. If there are velocity layers, a STAIRCASE OF DYNAMICS follows on a single key, from softest to loudest: the only way to hear what they bring. |
+
 #### System Audio Capture
 
 `capture-systeme-audio` · Inputs → Audio
@@ -157,7 +177,6 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Curve](#curve) | Builds a modulation curve: oscillator, ramp, logistic sequence or random walk. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Drum Machine](#drum-machine) | Generates a drum pattern. |
-| [Drum Sequencer](#drum-sequencer) | Programs a drum pattern on a step grid (synthesized). |
 | [Euclidean Rhythm](#euclidean-rhythm) | Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm). |
 | [FM / AM Synth](#fm--am-synth) | Generates a note with frequency modulation (FM) or amplitude modulation (AM). |
 | [Fractal Music](#fractal-music) | Generates a fractal melody from a repeated motif and scale. |
@@ -186,8 +205,10 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Poly Synth](#poly-synth) | Generates a polyphonic chord with an ADSR envelope. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
+| [Random Csound Score](#random-csound-score) | Draws a Csound score at random: onsets as a Poisson process, pitches and durations from distributions, and the statistics of what came out. |
 | [Random Melody](#random-melody) | Generates a random melody. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play. |
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
 | [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
@@ -260,7 +281,7 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
-| Steps | choice | 16 | 16 / 32 | Steps per bar. |
+| Steps | choice | 16 | 8 / 16 / 32 | Steps per bar. |
 | Swing | number | 0 % | 0 – 60 % | Delays off-beats for a shuffle groove. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -439,28 +460,6 @@ Generates a drum track from a pattern (Rock, Funk, House…), with per-drum volu
 | Kick | number | 80 % | 0 – 100 % | Kick drum volume, from 0 to 100%. |
 | Snare | number | 70 % | 0 – 100 % | Snare volume, from 0 to 100%. |
 | Hi-hat | number | 60 % | 0 – 100 % | Hi-hat volume, from 0 to 100%. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run. |
-
-#### Drum Sequencer
-
-`sequenceur-batterie` · Inputs → Generation
-
-*Programs a drum pattern on a step grid (synthesized).*
-
-Programs a drum pattern on a step grid: click cells to trigger each instrument (kick, snare, hi-hats, clap) on each step. Sounds are synthesized (drum-machine style), no SoundFont. Set tempo, number of steps, swing and bars; the audio output loops the pattern.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
-| Steps | choice | 16 | 8 / 16 / 32 | Steps per bar (rhythmic resolution). |
-| Swing | number | 0 % | 0 – 60 % | Slightly delays off-beats for a shuffle groove. |
-| Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
-| Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Pattern | text | `1000000010000000\|0000100000001000\|1010101010101010\|000000…` |  | Encoded pattern (edited via the node grid): 5 step rows separated by « \| », each step 1 (on) or 0. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run. |
 
 #### Euclidean Rhythm
@@ -1174,6 +1173,40 @@ Generates audio by running a Pure Data patch (.pd). The patch is interpreted by 
 | Ignore GUI objects | choice | no | yes / no | Removes graphical objects (buttons, sliders, faders, arrays…) from the patch before execution. Some desktop patches use these for the UI but they are not supported by libpd in headless mode. |
 | Patch | text | — |  | Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes. |
 
+#### Random Csound Score
+
+`partition-aleatoire-csound` · Inputs → Generation
+
+*Draws a Csound score at random: onsets as a Poisson process, pitches and durations from distributions, and the statistics of what came out.*
+
+Draws a Csound score at random. WHY A NODE OF ITS OWN, rather than « a random melody then a translator »: a MIDI file carries only pitch, velocity and duration, and it is tied to a grid; a Csound score carries as many p-fields as you want and has no grid at all. It is even the HISTORICAL use of this family of languages — Iannis Xenakis wrote his stochastic pieces, the ST series in 1962 on an IBM 7090, by drawing the onsets from an exponential law, that is to say a Poisson process, and the pitches and durations from other laws. THE POISSON PROCESS, in one sentence: events arrive at random, without memory, at a given mean density, and the interval between neighbours then follows an exponential law. Its signature is MEASURABLE, and the Statistics output measures it: the standard deviation of the intervals EQUALS their mean, where a regular grid has it at zero. That is the whole difference between a cloud and a pulse, and it is as audible as it is computable. A CONNECTED CURVE MODULATES THE DENSITY over time — a cloud that thickens then disperses — and it does so by THINNING, the method of Lewis and Shedler (1979): draw at the maximum density, then keep each onset with the probability the curve gives. Varying the density inside the draw itself would bias the law, and the result would no longer be a Poisson process but a nameless deformation. THE FREE FIELD is what a score has that MIDI does not: an extra p-field, drawn from its own law for every event, which the orchestra reads as it likes — a stereo position, a modulation index, a bandwidth. WHAT IS NOT DRAWN matters just as much: the scale, the range, the number of instruments and the duration bounds are constraints, and an unconstrained draw makes noise rather than music — which is precisely what Xenakis constrained most. THE STATISTICS REPORT WHAT WAS PRODUCED, not what was asked: eight seconds at four events per second do not make thirty-two events but a number that varies from draw to draw. The seed, finally, makes a draw reproducible: zero draws a new one on each run and shows it in the message, any other value gives exactly the same score again.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Curve | curve |  |
+| output | Score | text |  |
+| output | Statistics | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | number | 8 s | 0.5 – 300 s, step 0.5 | Length of the generated score. |
+| Density | number | 4 /s | 0.2 – 50 /s, step 0.1 | Events per second, ON AVERAGE. A draw does not yield the requested count: eight seconds at four per second do not make thirty-two events but a number that varies from draw to draw, which is what randomness means. The Statistics output reports the REAL count. |
+| Distribution | choice | Poisson (cloud) | Poisson (cloud) / Regular grid | How the onsets are spread. POISSON: they arrive at random, without memory, at the requested density — the interval between neighbours then follows an exponential law, which is what Xenakis used for his stochastic pieces (the ST series, 1962). Its signature is measurable: the standard deviation of the intervals EQUALS their mean, and the Statistics output checks it. GRID: one event every 1/density, zero standard deviation. That is the difference between a cloud and a pulse. |
+| Instruments | number | 1 | 1 – 8, step 1 | How many instruments to spread the events over — `i1` to `iN`, drawn at random. To be matched with « Csound Orchestra », which numbers its own in the order of the ticked boxes. |
+| Lowest note | slider | 48 | 12 – 120, step 1 | Lowest note the draw can produce. 48 = C2. |
+| Highest note | slider | 84 | 12 – 120, step 1 | Highest note. 84 = C6. |
+| Scale | choice | Chromatic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | The allowed notes. Each drawn pitch is moved to the nearest one belonging to the scale. AN UNCONSTRAINED DRAW DOES NOT MAKE MUSIC: this is precisely what Xenakis constrained most, his distributions being held by chosen registers and densities. |
+| Pitch distribution | choice | Uniform | Uniform / Gaussian | UNIFORM: every note of the range is equally likely. GAUSSIAN: notes cluster around the centre of the range, with a standard deviation of a quarter of it — two thirds fall in the central half, and the edges stay reachable. Out-of-range values are FOLDED back rather than clipped, which would otherwise pile them onto the two extreme notes. |
+| Shortest | number | 0.2 s | 0.01 – 20 s, step 0.01 | Shortest duration an event can take. |
+| Longest | number | 1 s | 0.01 – 20 s, step 0.01 | Longest duration. Longer than the mean interval, events OVERLAP — which is how a mass is obtained rather than a succession. |
+| Lowest velocity | slider | 60 | 1 – 127, step 1 | Lowest velocity. It becomes the amplitude, divided by 127. |
+| Highest velocity | slider | 110 | 1 – 127, step 1 | Highest velocity. |
+| Pitch as | choice | cps (hertz) | cps (hertz) / pch (8.09) / oct (8.75) / midi (69) | The convention the pitch is written in, in p4, as in « Csound Score » — an orchestra written for one does not work with another, and feeding hertz to an orchestra expecting pch produces neither sound nor error. |
+| Free field | choice | None | None / Uniform / Gaussian | One MORE p-field, drawn at random for each event and written as p6. This is what a score has that MIDI does not: the orchestra can read whatever it likes there — a stereo position, a modulation index, a bandwidth — and each note gets its own value. No MIDI file can carry that. |
+| Free min | number | 0 | -10000 – 10000, step 0.01 | Lower bound of the free field. |
+| Free max | number | 1 | -10000 – 10000, step 0.01 | Upper bound of the free field. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives EXACTLY the same score again — which is how a draw you like is kept. |
+
 #### Random Melody
 
 `melodie-aleatoire` · Inputs → Generation
@@ -1218,6 +1251,29 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre — useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### SFZ Keyboard
+
+`clavier-sfz` · Inputs → Generation
+
+*Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play.*
+
+An eighty-eight-key keyboard, playable with the mouse or the computer keyboard, that sounds a SAMPLE BANK. Attic could already write SFZ — « SFZ Export » — but nothing could read it back: the application's only playable keyboard plays a GLOBALLY loaded SF2, one file for the whole session. This node reads a .sfz at NODE level, and the instrument may differ from one node to the next within a single graph. TWO SOURCES, and that is the double point. THE FILE: the 📂 button picks a .sfz, its samples are read beside it, and the path is kept in the graph — enough to check what you have just exported, or to play a bank from elsewhere. THE BANK INPUT: « Spread Across Keyboard » or « Instrument End » wired straight in, with no disk round trip; the graph must then have been run once for the keyboard to have something to play. WHAT YOU PLAY IS RECORDED, and the node outputs three things: the sequence's audio, its MIDI, and the bank itself, which can therefore be chained on to « SFZ Export » or « Multi-Zone Sampler ». THE PLAYBACK RATIOS ARE THE RENDER'S: the same function serves live playing and the graph's audio, so what you hear while listening to yourself is what will come out. WHAT IS READ FROM THE FORMAT: regions, opcode inheritance through &lt;global>, &lt;master> and &lt;group>, note names as well as numbers, default_path, sustain loops, tune, volume and transpose. WHAT IS NOT is stated in the node's message rather than guessed: ignored opcodes are counted and named, missing samples too, and VELOCITY LAYERS are kept: one key may carry three to eight recordings — piano, mezzo, forte — and the played velocity picks which one sounds. On the keyboard, velocity comes from the striking rhythm: playing fast brings out the loud layer. An #include is reported, not followed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Bank | bank |  |
+| output | Audio | audio (stereo) |  |
+| output | MIDI | MIDI |  |
+| output | Bank | bank |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source | choice | Automatic | Automatic / SFZ file / Incoming bank | Where the instrument comes from. AUTOMATIC: the incoming bank if one is connected, otherwise the `.sfz` file chosen in the node's view. SFZ FILE: always the file, even if a bank arrives — useful to compare what was exported with what the graph produces now. INCOMING BANK: always the input. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Output level. Each note's velocity scales it, and an SFZ region's `volume` adds to it. |
+| Release | slider | 150 ms | 1 – 2000 ms, step 1 | Fade-out time after the key is released. If the SFZ file declares an `ampeg_release`, it is shown in the node's message — but this setting is what applies, so the node stays in charge of what it renders. |
+| Loop crossfade | slider | 20 ms | 1 – 200 ms, step 1 | Length of the crossfade at the sustain loop's join, for the render. Too short, a click is heard on every turn; too long, the loop starts to breathe. Live playing loops through the audio hardware and does not crossfade the join. |
+| Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo written into the output MIDI file. It does not change the audio: what was played was played at the time it was played. |
 
 #### Sieve (Xenakis)
 
@@ -1609,6 +1665,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Loop Start](#loop-start) | Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
+| [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts — one per instrument — to play them with four different banks. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
 | [Multi-Zone Selector](#multi-zone-selector) | Selects multiple audio zones and passes them as a list. |
 | [Place sound on zones](#place-sound-on-zones) | Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration. |
@@ -1848,6 +1905,31 @@ Repeats a MIDI file several times in a row. The Fade parameter sets the overlap 
 | Repeats | number | 4 | 1 – 32, step 1 | Number of times the MIDI file is replayed in a row. |
 | Fade | number | 0 ms | 0 – 1000 ms, step 1 | Overlap between two repetitions. 0 = no overlap (hard join). |
 
+#### MIDI Splitter
+
+`repartiteur-midi` · Processing → Editing
+
+*Splits a MIDI file into parts — one per instrument — to play them with four different banks.*
+
+Splits a MIDI file into parts, one per instrument, so that a full arrangement can be played by several sample banks — the melody by one, the chords by another, the bass by a third, the drums by a kit. THIS WAS THE MISSING LINK: « Multi-Zone Sampler » plays a MIDI file with ONE bank, so a four-channel file sent all four parts into the same instrument — a piano playing the kick drum too, two octaves too high. Notes have always carried their channel; nothing used it. WHAT THIS NODE GUARANTEES, and what four separate sequencers do not: the parts come from the SAME file, hence the same tempo and the same time origin — there is nothing to synchronise, and a tempo change follows all of them. CHANNEL 10 IS SPECIAL: General MIDI reserves it for percussion, where the note number means an instrument rather than a pitch — 36 kick, 38 snare, 42 hi-hat. It therefore always goes to the Drums output, which needs a different kind of bank, a kit, where a key is a sound and not a pitch. THREE MODES. Automatic: the node inventories the file and splits on its own, in channel order. By channels: you write each part's channels, counted from 1 to 16 as on a device, with ranges (« 1-3 ») and lists (« 1,4 »). By tracks: the same boxes mean track numbers, which is what files whose voices share a channel need — a notation program often writes a choir's four voices on channel 1, separated by tracks; the tempo is then kept in every part even when the track that carried it is not one of them. THE « REST » OUTPUT exists so that no note vanishes silently: any channel or track that plays and was assigned to no part ends up there, and the node's message names it. That message also says what went where, with each part's note count: a part that is silent because it received nothing is then not mistaken for a badly set sampler.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Part 1 | MIDI |  |
+| output | Part 2 | MIDI |  |
+| output | Part 3 | MIDI |  |
+| output | Drums | MIDI |  |
+| output | Rest | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Split by | choice | Automatic | Automatic / By channels / By tracks | AUTOMATIC: the node looks at what the file holds and splits on its own — channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. BY CHANNELS: you write each part's channels below. BY TRACKS: the same boxes then mean TRACK numbers, which is what files whose voices share a channel need — a notation program often writes a choir's four voices on channel 1, separated by tracks. |
+| Part 1 | text | `1` |  | Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. |
+| Part 2 | text | `2` |  | Channels (or tracks) of the second part. |
+| Part 3 | text | `3` |  | Channels (or tracks) of the third part. |
+| Drums | text | `10` |  | Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank — a kit, where a key is a sound and not a pitch — hence its name. |
+
 #### Mixer
 
 `melangeur` · Processing → Editing
@@ -2003,7 +2085,6 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Harmonic/Percussive Separation](#harmonicpercussive-separation) | Separates what sustains from what strikes, by median filtering the spectrogram (Fitzgerald, DAFx-10). |
 | [Harmonizer / Octaver](#harmonizer--octaver) | Adds pitch-shifted voices (octave, fifth…) under the original. |
 | [Impose Rhythm](#impose-rhythm) | Applies one MIDI file's rhythmic grid to another's pitches. |
-| [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [Inversion Mirror](#inversion-mirror) | Flips the spectrum around a pivot frequency: lows become highs and highs become lows. |
 | [Inversions and Voicings](#inversions-and-voicings) | Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
@@ -2973,28 +3054,6 @@ Separates pitch from rhythm, then marries them again. The first input supplies a
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
-#### Instrument End
-
-`instrument-fin` · Processing → Effects
-
-*Closes an instrument chain and gathers every note's render into a keyboard bank.*
-
-Closes an instrument chain and gathers every note's render into a keyboard bank, playable by « Multi-Zone Sampler » and exportable as SFZ. THE ENGINE HAS ALREADY DONE THE WORK: before execution it copied the chain between « Instrument Note » and this node once per note, and each copy deposits its render here, IN NOTE ORDER. This node therefore only sets the zone bounds and the loops. HOW THIS DIFFERS FROM « SPREAD ACROSS KEYBOARD »: there, a recorded sound is TRANSPOSED to each zone, and a sound transposed by four octaves remains a sound transposed by four octaves. Here the recipe is REPLAYED at each pitch: there is no transposition artefact at all, and the zone width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. THE COST is the other side: the chain runs once per note, so eighteen times at ±2 semitones over 88 keys. The unrolling refuses beyond sixty-four notes, and says so, rather than launching hundreds of renders. The copies are INDEPENDENT — an instrument does not chain its notes, unlike a graph loop. Whatever leaves the chain other than through this node leaves only once, from the lowest note's copy.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Bank | bank |  |
-| output | Preview | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Zone width | slider | 2  semitones | 1 – 12  semitones, step 1 | Gap between two rendered notes. This is the setting that decides the COST: the chain is replayed once per note, so eighteen times at ±2 semitones over 88 keys, six times at ±6. Unlike spreading by transposition, the width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. |
-| Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0. |
-| Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8. |
-| Sustain loop | choice | Yes | Yes / No | Places in each zone a loop replayed while the key is held. Useful if the excitation is short and held notes are wanted. |
-| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample — after the attack, then. |
-
 #### Inversion Mirror
 
 `miroir-inversion` · Processing → Effects
@@ -3393,7 +3452,7 @@ Definite-pitched percussion by modal synthesis. A bar does not vibrate like a st
 
 *Plays MIDI with a keyboard bank: each note takes its nearest zone.*
 
-Plays a MIDI file with a keyboard bank built by « Spread Across Keyboard ». Each note takes its nearest zone and is resampled only by the gap between them — at most the zone width chosen at build time. The message reports the MAXIMUM SHIFT encountered: if it exceeds the width, the MIDI reaches outside the keyboard the bank covers, and the note was played by the nearest zone, hence transposed further. RELEASE is the fade-out time after the key is lifted; LOOP CROSSFADE, the length of the join when a held note outlasts its sample. The MIDI output passes the notes through unchanged, for chaining other nodes.
+Plays a MIDI file with a keyboard bank — the one from « Spread Across Keyboard », the one from an « SFZ Bank » read from disk, or the drum kit shipped with Attic. Each note takes its nearest zone and is resampled only by the gap between them; the message reports the MAXIMUM SHIFT encountered, and if it exceeds the zone width, the MIDI reaches outside the keyboard the bank covers. VELOCITY LAYERS ARE PLAYED: if the bank has any, each note's velocity picks the recording, and the message says how many layers were USED out of those available — a MIDI file whose velocities are all 100 will only ever wake one layer, and better to see it than to guess. WITH A KIT, none of that applies: a key is a sound, nothing is transposed, and a key with no sound plays nothing — the message then counts the SILENT notes, which is the only way to see that a drum file asks for percussion the kit does not have. FOUR SETTINGS TURN THIS NODE INTO AN ORCHESTRA PART, and they live here because Attic's mixer has no per-track setting. PAN: places the part in the stereo field, with a cosine law — a moved sound keeps the same perceived level when passing through the centre, where a linear pan would lose three decibels. TRANSPOSE: shifts incoming notes, useful for a bass written an octave too high; on a kit it changes instrument rather than pitch. LOWEST KEY and HIGHEST KEY: notes outside are ignored and counted, which splits one MIDI file between two banks — a bass below C3, a piano above — without touching the file. The range applies to the WRITTEN notes, before transposition: what you read on the score is what you bound. SAMPLE RATES ARE ALIGNED: a zone recorded at 48 kHz played in a bank rendered at 44.1 came out 147 cents flat — a semitone and a half — which happens as soon as an SFZ library mixes two rates. The MIDI output passes the notes through unchanged, for chaining other nodes.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3407,6 +3466,10 @@ Plays a MIDI file with a keyboard bank built by « Spread Across Keyboard ». Ea
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Output level. Each note's velocity scales it. |
 | Release | slider | 50 ms | 1 – 2000 ms, step 1 | Fade-out time after the key is released. Short, notes cut off; long, they overlap. |
 | Loop crossfade | slider | 20 ms | 1 – 200 ms, step 1 | Length of the crossfade at the sustain loop's join. Too short, a click is heard on every turn; too long, the loop starts to breathe. |
+| Pan | slider | 0 % | -100 – 100 %, step 1 | Places the part in the stereo field: −100 hard left, 0 centre, +100 hard right. This is what lets four instruments be spread apart without adding four spatialization nodes — the mixer itself has no per-track setting. The law is a cosine one: a moved sound keeps the same perceived level when passing through the centre, where a linear pan would lose three decibels. |
+| Transpose | slider | 0  semitones | -24 – 24  semitones, step 1 | Shifts incoming notes before playing them, in semitones. Useful for a bass written an octave too high, or to align a bank whose root was not the expected one. On a KIT it changes INSTRUMENT rather than pitch — shifting by two plays the snare instead of the kick, which is rarely the intent. |
+| Lowest key | slider | 0 | 0 – 127, step 1 | First note this bank plays. Notes below are IGNORED, and the message counts them. Together with « Highest key », this splits one MIDI file between two banks — a bass below C3, a piano above — without touching the file. |
+| Highest key | slider | 127 | 0 – 127, step 1 | Last note this bank plays. Notes above are ignored. |
 
 #### Multiband Compressor
 
@@ -5550,6 +5613,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 | Component | Summary |
 |---|---|
 | [Image Export](#image-export) | Saves an image to disk and returns its path. |
+| [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [SFZ Export](#sfz-export) | Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler. |
 | [SVG Export](#svg-export) | Saves an SVG file to disk and returns its path. |
 
@@ -5569,6 +5633,28 @@ Saves an image file to the working directory. Connect the 'Image' output of a So
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Name | text | `export.png` |  | Output image filename (in the working directory). The extension is adapted to the actual image format. |
+
+#### Instrument End
+
+`instrument-fin` · Outputs → Export
+
+*Closes an instrument chain and gathers every note's render into a keyboard bank.*
+
+Closes an instrument chain and gathers every note's render into a keyboard bank, playable by « Multi-Zone Sampler » and exportable as SFZ. THE ENGINE HAS ALREADY DONE THE WORK: before execution it copied the chain between « Instrument Note » and this node once per note, and each copy deposits its render here, IN NOTE ORDER. This node therefore only sets the zone bounds and the loops. HOW THIS DIFFERS FROM « SPREAD ACROSS KEYBOARD »: there, a recorded sound is TRANSPOSED to each zone, and a sound transposed by four octaves remains a sound transposed by four octaves. Here the recipe is REPLAYED at each pitch: there is no transposition artefact at all, and the zone width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. THE COST is the other side: the chain runs once per note, so eighteen times at ±2 semitones over 88 keys. The unrolling refuses beyond sixty-four notes, and says so, rather than launching hundreds of renders. The copies are INDEPENDENT — an instrument does not chain its notes, unlike a graph loop. Whatever leaves the chain other than through this node leaves only once, from the lowest note's copy.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Bank | bank |  |
+| output | Preview | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Zone width | slider | 2  semitones | 1 – 12  semitones, step 1 | Gap between two rendered notes. This is the setting that decides the COST: the chain is replayed once per note, so eighteen times at ±2 semitones over 88 keys, six times at ±6. Unlike spreading by transposition, the width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback. |
+| Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0. |
+| Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8. |
+| Sustain loop | choice | Yes | Yes / No | Places in each zone a loop replayed while the key is held. Useful if the excitation is short and held notes are wanted. |
+| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample — after the attack, then. |
 
 #### SFZ Export
 
@@ -5966,8 +6052,11 @@ Inside a meta-component, connect an inner node's output to this block: it create
 |---|---|
 | [Csound](#csound) | Runs a Csound orchestra and score, and outputs the audio produced. |
 | [Csound Effect](#csound-effect) | Processes one or two sounds through a Csound orchestra. |
+| [Csound Formulas](#csound-formulas) | Eight complete orchestras to choose from — FM, subtractive, granular, reverb bus — each with its own test score. |
 | [Csound Instrument](#csound-instrument) | Plays a MIDI file with a Csound orchestra: each note becomes a score event. |
 | [Csound Instruments](#csound-instruments) | Perry Cook's instruments as Csound carries them: bowed string, clarinet, flute, brass, plucked string, formants. |
+| [Csound Orchestra](#csound-orchestra) | Composes a Csound orchestra by ticking several instruments, and outputs a playable test score that sounds each one in turn. |
+| [Csound Score](#csound-score) | Translates MIDI into a Csound score: one note per line, with a choice of pitch convention and p-fields. |
 | [Csound Spectral](#csound-spectral) | Spectral morphing, vocoder and phase-locked stretching, through Csound's streaming spectral opcodes. |
 
 #### Csound
@@ -6023,6 +6112,24 @@ Processes one or two sounds through a Csound orchestra. The inputs are written i
 | Input channels | choice | Mono | Mono / Stereo | Number of channels in the input files written for Csound. In mono, « a1 diskin2 "entree1.wav", 1 » always works; in stereo, diskin2 REQUIRES two outputs — « a1, a2 diskin2 … » — and refuses the note otherwise, which yields a silent render. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
 
+#### Csound Formulas
+
+`formules-csound` · Others → Csound wrapper
+
+*Eight complete orchestras to choose from — FM, subtractive, granular, reverb bus — each with its own test score.*
+
+Eight COMPLETE Csound orchestras to choose from, each with its own test score. The Csound node's Orchestra field already carried one example formula — a vibrato oscillator — and there was only one: this node offers a list. HOW THIS DIFFERS FROM « CSOUND ORCHESTRA »: there, instruments sharing the same contract — p4 the pitch, p5 the amplitude — are assembled so that a multi-part score can address them by number; that is made for ARRANGING. Here, each entry is a whole orchestra demonstrating a TECHNIQUE, with its own p-fields: the modulation index for FM, the filter cutoff for subtractive, the grain density for granular. It is made for learning, listening, and starting from something. THE EIGHT: vibrato oscillator, frequency modulation with variable index (Chowning, 1973), subtractive with swept Moog filter, additive with counted harmonics, Karplus-Strong string (1983), ring modulation, granular cloud (after Gabor, 1947, taken up by Roads and Truax), and an instrument paired with a REVERB BUS — two instruments and a global variable, the structure of nearly every serious piece, and the one thing a single-instrument orchestra cannot show. THE TEST SCORE IS NOT AN ORNAMENT: p-fields differ from one formula to the next, and a score written for FM means nothing for the granular one. The one that comes out with each formula DEMONSTRATES what it can do — FM sweeps its index from 1 to 12 then moves to an irrational ratio, subtractive sweeps its cutoff both ways, granular thickens its cloud from eight to four hundred grains per second. Wire both outputs to the Csound node and you hear the technique. THE LEVEL is written into the orchestra as a global variable « gkNiveau » that every output line multiplies: it is visible in the text, hence editable by hand by whoever reads it. TWO THINGS TO KNOW. The reverb bus outputs in STEREO: set the Csound node accordingly, or half the render is lost. And the granular density MULTIPLIES the level — overlapping grains add up — which is why its test score lowers the amplitude as it thickens the cloud: at four hundred grains per second, amplitude 0.4 clipped, with a measured peak of 0.95, that is to say the limiter.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Orchestra | text |  |
+| output | Test score | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Formula | choice | Vibrato oscillator — Synthesis | Vibrato oscillator — Synthesis / FM with variable index — Synthesis / Subtractive with swept filter — Synthesis / Additive with counted harmonics — Synthesis / Karplus-Strong string — Synthesis / Ring modulation — Synthesis / Granular cloud — Synthesis / Instrument and reverb (global bus) — Structure | The orchestra produced. Each one is COMPLETE and demonstrates a technique: vibrato oscillator (the one the Csound node carried by default), FM with variable index, subtractive with swept filter, additive with counted harmonics, Karplus-Strong string, ring modulation, granular cloud, and an instrument with a reverb bus. The p-fields DIFFER from one formula to the next — modulation index, filter cutoff, grain density — which is why each carries its own test score. |
+| Level | slider | 100 % | 0 – 100 %, step 1 | Output level, written into the orchestra as a global variable `gkNiveau` that every output line multiplies. It is visible in the text: whoever reads it can change it by hand. |
+
 #### Csound Instrument
 
 `csound-instrument` · Others → Csound wrapper
@@ -6071,6 +6178,53 @@ Csound's physical-model instruments, adjustable without writing a line of code. 
 | Vibrato rate | number | 6 Hz | 0.5 – 12 Hz, step 0.1 | Vibrato speed. |
 | Duration | number | 2 s | 0.1 – 20 s, step 0.1 | Note duration, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
+
+#### Csound Orchestra
+
+`orchestre-csound` · Others → Csound wrapper
+
+*Composes a Csound orchestra by ticking several instruments, and outputs a playable test score that sounds each one in turn.*
+
+Composes a Csound orchestra by ticking instruments in a list rather than writing code. THE ORCHESTRA IS HALF THE LANGUAGE — Csound separates the instruments, which say HOW to sound, from the score, which says WHEN to play what — and Attic offered only one at a time until now. A four-part arrangement needs four instruments in the SAME orchestra, each numbered: that is what this node does. THE SECOND OUTPUT IS A TEST SCORE, not a comment: wired to the Csound node's Score input, it sounds each ticked instrument in turn, one second of A4 each — so the orchestra is auditioned with a single wire, without writing a line. It also carries, as comments Csound ignores, each instrument's number and description along with the tables created: copy it into the Score field and edit it, and you have the skeleton of your own score with the p-fields already in place. THE ORDER OF THE TICKED BOXES DECIDES THE NUMBERS: the first becomes « instr 1 », the second « instr 2 », which matches « Csound Score »'s « one instrument per channel » option, numbering the MIDI channels present the same way. THREE TRAPS ARE CLOSED HERE, each of which makes a combined orchestra fail. First NUMBERING: two instruments both named « instr 1 » raise no error, the second simply replaces the first and the score plays the wrong sound. Second FUNCTION TABLES, which used to be declared in the score — « f1 0 16384 10 1 » — and would clash between instruments; they go through « ftgen » in the orchestra, with a number assigned by Csound and held in a variable, so no collision is possible any more and one table serves everyone who asks for it. Third the CHANNEL COUNT: an instrument writing « out » mixed with one writing « outs » yields a half-silent render — so all are written the same way, and the Channels setting must MATCH the Csound node's. THE P-FIELD CONTRACT is shared: p4 the pitch in hertz, p5 the amplitude between 0 and 1 — « Csound Score »'s defaults, so the two nodes assemble with no setting at all. EVERY INSTRUMENT WAS MEASURED in the application, at three octaves, pitch and peak: « wgbrass » was dropped, holding no pitch at any of the eight settings tried; the bowed string and the flute were rescued by a measured tuning compensation — the string overblows by an octave and a fifth in the treble at bow pressure 4, and plays 0.034 cent sharp per hertz at pressure 2, which corrects exactly. The gains come from the same measurement: for a requested amplitude of 0.6, peaks ranged from 0.10 to 0.95 depending on the opcode, and each gain brings them back to 0.6. THIS NODE DOES NOT TUNE AN INSTRUMENT: its entries are playable presets, and the envelope is shared — 20 ms attack, 40 ms release, just enough not to click, each model keeping its own decay. To tune a single instrument finely, « Csound Instruments » remains, with its pressure, position and vibrato sliders.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Orchestra | text |  |
+| output | Test score | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instruments | text | `wgbow,foscil` |  | The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the NUMBERS: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier is dropped without failing the rest, and a duplicate is ignored — the same instrument twice would give two numbers to one sound. |
+| Channels | choice | Mono | Mono / Stereo | How every instrument writes its output — `out` in mono, `outs` in stereo. THIS MUST MATCH THE CSOUND NODE'S SETTING: a stereo orchestra rendered by a node set to mono loses every other channel, and the reverse renders silence. The node's message states which one to set. |
+| First instrument | number | 1 | 1 – 90, step 1 | Number of the first `instr`. Leave it at 1 unless the orchestra is assembled with another: « Csound Score » also numbers from 1, and the two must agree. |
+| Level | slider | 100 % | 0 – 100 %, step 1 | Level applied to every instrument, on top of each one's own gain. Those gains come from MEASUREMENT: Csound's opcodes share no amplitude convention — for a requested amplitude of 0.6, measured peaks ranged from 0.10 for the modal resonance to 0.95 for the bowed string, which hit the limiter. |
+
+#### Csound Score
+
+`partition-csound` · Others → Csound wrapper
+
+*Translates MIDI into a Csound score: one note per line, with a choice of pitch convention and p-fields.*
+
+Translates a MIDI file into a Csound score. ONE NODE FOR ALL OF ATTIC'S NOTATIONS: ABC, tablature, drum, melody and chord sequencers, text to MIDI — all already converge on MIDI, so translating it translates them all. The output is TEXT, to be connected to the Csound node's Score input. WHAT A SCORE HAS THAT MIDI DOES NOT: a note is a line « i1 0 1 440 0.5 60 », where every number after the duration is a P-FIELD the orchestra reads as it likes. MIDI carries only pitch, velocity and duration; a score carries as many as you want, and this node lets you choose what goes in each — pitch, amplitude, raw velocity, note number, duration, channel, a constant, or the value of a connected curve, read at each note's onset. THE SETTING THAT DECIDES EVERYTHING is the pitch convention. Csound has four and an orchestra written for one does not work with another: cps in hertz (440 for A4), pch in octave point pitch-class (8.00 middle C, 8.09 the A — MUSIC V's notation, whose hundredths stop at 11), oct in decimal octaves (8.0 middle C, 8.75 the A), and midi as a note number. Feeding hertz to an orchestra that expects pch produces NEITHER SOUND NOR ERROR, and it is the hardest fault to spot in all of Csound — hence this explicit setting rather than a hard-coded value. ONE INSTRUMENT PER CHANNEL makes a whole arrangement playable: each MIDI channel present gets its number, following the previous one — channels 1, 2 and 10 yield instruments 1, 2 and 3, because an orchestra numbers its own consecutively — and the Report output states the mapping, without which the orchestra cannot be written. TIMES ARE IN SECONDS and there is no tempo setting: a Csound score beats at sixty by default, where one beat is one second. Adding a « t » tempo statement would reinterpret those numbers and make the piece run beside what was written. THE FINAL MARGIN, written as « f0 », lets reverb tails ring: without it Csound stops at the last note and cuts them off.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| input | Curve | curve |  |
+| output | Score | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pitch as | choice | cps (hertz) | cps (hertz) / pch (8.09) / oct (8.75) / midi (69) | The convention the pitch is written in, and THIS IS THE SETTING THAT DECIDES WHETHER ANYTHING IS HEARD. Csound has four, and an orchestra written for one does not work with another. CPS: frequency in hertz, 440 for A4 — what `oscili` and Perry Cook's physical models expect. PCH: octave point pitch-class, 8.00 for middle C and 8.09 for the A above — MUSIC V's notation, converted by `cpspch()`; its hundredths only run to 11, 8.11 being followed by 9.00. OCT: octave in decimal, 8.0 for middle C and 8.75 for the A, converted by `cpsoct()` — handy for transposing by simple addition. MIDI: the note number, converted by `cpsmidinn()`. Feeding hertz to an orchestra that expects pch produces neither sound nor error: it is the hardest fault to spot in all of Csound. |
+| Instrument | number | 1 | 1 – 99, step 1 | Number of the first instrument — the `1` in `i1`. It is the one the orchestra must define with `instr 1`. |
+| One instrument per channel | choice | No | No / Yes | YES: each MIDI channel present gets its own instrument number, following the previous one. A file on channels 1, 2 and 10 yields instruments 1, 2 and 3 — not 1, 2 and 10, because an orchestra numbers its instruments consecutively. This is what lets a whole arrangement be played by several Csound instruments, and the Report output states the mapping. NO: everything goes to the same number. |
+| p4 | choice | Pitch | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fourth field of each note carries. PITCH is the custom, and most orchestras read it there. |
+| p5 | choice | Amplitude (velocity ÷ 127) | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fifth field carries. AMPLITUDE — velocity brought to the 0–1 range — is the custom, `0dbfs` being 1 in Attic. |
+| p6 | choice | MIDI note number | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the sixth field carries. The NOTE NUMBER is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. |
+| p7 | choice | Nothing | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the seventh field carries. NOTHING omits it, and any that would follow. |
+| Constant | number | 0 | -1000 – 1000, step 0.01 | Value of the « Constant » field. Used to pass a fixed setting to the orchestra — a table index, a factor, a stereo position. |
+| Final margin | number | 0.5 s | 0 – 30 s, step 0.1 | Seconds added after the last note, written as `f0`. Without them, Csound stops at the last note and CUTS reverb or resonance tails, which is heard as a click. |
 
 #### Csound Spectral
 

@@ -11,8 +11,8 @@ import { changerTonalite } from "../audio/effets-spectral";
 import { separerStn } from "../audio/stn";
 import { hauteurMediane, suivreHauteur } from "../audio/hauteur";
 import {
-  NOTE_DO8, NOTE_LA0, construireBanque, ecartDeZone, planZones, rendreNotes,
-  type Banque, type NoteJouee,
+  NOTE_DO8, NOTE_LA0, appliquerPanoramique, choisirZone, construireBanque, ecartDeZone, planZones,
+  rendreNotes, type Banque, type NoteJouee, type Zone,
 } from "../audio/clavier-banque";
 
 /** La note MIDI la plus proche d'une fréquence. */
@@ -171,6 +171,19 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fondu de boucle", nomEn: "Loop crossfade", type: "curseur", plage: [1, 200], pas: 1, defaut: 20, unite: "ms",
         doc: "Durée du fondu au raccord de la boucle de maintien. Trop court, on entend un clic à chaque tour ; trop long, la boucle se met à respirer.",
         docEn: "Length of the crossfade at the sustain loop's join. Too short, a click is heard on every turn; too long, the loop starts to breathe." },
+      { nom: "Panoramique", nomEn: "Pan", type: "curseur", plage: [-100, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Place la partie dans l'espace stéréo : −100 tout à gauche, 0 au centre, +100 tout à droite. C'est ce qui permet d'écarter quatre instruments les uns des autres sans ajouter quatre nœuds de spatialisation — le mélangeur, lui, n'a aucun réglage par piste. La loi est en cosinus : un son déplacé garde le même niveau perçu en passant par le centre, là où un panoramique linéaire y perd trois décibels.",
+        docEn: "Places the part in the stereo field: −100 hard left, 0 centre, +100 hard right. This is what lets four instruments be spread apart without adding four spatialization nodes — the mixer itself has no per-track setting. The law is a cosine one: a moved sound keeps the same perceived level when passing through the centre, where a linear pan would lose three decibels." },
+      { nom: "Transposition", nomEn: "Transpose", type: "curseur", plage: [-24, 24], pas: 1, defaut: 0,
+        unite: " demi-tons", uniteEn: " semitones",
+        doc: "Décale les notes reçues avant de les jouer, par demi-tons. Utile pour une basse écrite une octave trop haut, ou pour caler une banque dont la racine n'est pas celle qu'on croyait. Sur un KIT, cela change d'INSTRUMENT et non de hauteur — décaler de deux fait jouer la caisse claire à la place de la grosse caisse, ce qui est rarement voulu.",
+        docEn: "Shifts incoming notes before playing them, in semitones. Useful for a bass written an octave too high, or to align a bank whose root was not the expected one. On a KIT it changes INSTRUMENT rather than pitch — shifting by two plays the snare instead of the kick, which is rarely the intent." },
+      { nom: "Note basse", nomEn: "Lowest key", type: "curseur", plage: [0, 127], pas: 1, defaut: 0,
+        doc: "Première note jouée par cette banque. Les notes en dessous sont IGNORÉES, et le message les compte. Avec « Note haute », cela partage un même MIDI entre deux banques — une basse sous le do3, un piano au-dessus — sans toucher au fichier.",
+        docEn: "First note this bank plays. Notes below are IGNORED, and the message counts them. Together with « Highest key », this splits one MIDI file between two banks — a bass below C3, a piano above — without touching the file." },
+      { nom: "Note haute", nomEn: "Highest key", type: "curseur", plage: [0, 127], pas: 1, defaut: 127,
+        doc: "Dernière note jouée par cette banque. Les notes au-dessus sont ignorées.",
+        docEn: "Last note this bank plays. Notes above are ignored." },
     ],
     async executer(ctx: any) {
       const midiFile = ctx.entree(0);
@@ -183,22 +196,58 @@ export const fiches: FicheAudio[] = ([
       const { notes } = analyserMidi(parseMidi(bytes));
       if (!notes.length) return { valeurs: [null, midiFile], message: traduire("msg.aucune_note_dans_le_midi") };
 
-      const jouees: NoteJouee[] = notes.map((n: any) => ({
-        note: n.note, velocite: n.velocite ?? n.velociete ?? 100, debut: n.debut, fin: n.fin,
-      }));
-      const audio = rendreNotes(jouees, banque, {
+      // La plage de touches D'ABORD, sur les notes ÉCRITES : c'est ce qu'on lit sur la partition, et
+      // c'est donc ce qu'on veut borner. La transposition vient ensuite, et peut faire sortir une
+      // note de l'étendue de la banque — la zone la plus proche s'en chargera.
+      const basse = Math.round(ctx.paramNombre("Note basse", 0));
+      const haute = Math.max(basse, Math.round(ctx.paramNombre("Note haute", 127)));
+      const transposition = Math.round(ctx.paramNombre("Transposition", 0));
+      let ignorees = 0;
+      const jouees: NoteJouee[] = [];
+      for (const n of notes as any[]) {
+        if (n.note < basse || n.note > haute) { ignorees++; continue; }
+        jouees.push({
+          note: Math.max(0, Math.min(127, n.note + transposition)),
+          velocite: n.velocite ?? n.velociete ?? 100, debut: n.debut, fin: n.fin,
+        });
+      }
+      if (jouees.length === 0) {
+        return {
+          valeurs: [null, midiFile],
+          message: traduire("msg.banque.horsPlage", String(notes.length), String(basse), String(haute)),
+        };
+      }
+      let audio = rendreNotes(jouees, banque, {
         volume: ctx.paramNombre("Volume", 80) / 100,
         relachement: ctx.paramNombre("Relâchement", 50) / 1000,
         fonduBoucle: ctx.paramNombre("Fondu de boucle", 20) / 1000,
       });
+      const panoramique = ctx.paramNombre("Panoramique", 0) / 100;
+      if (panoramique !== 0) audio = appliquerPanoramique(audio, panoramique);
       // L'écart maximal dit si la banque couvre bien ce qu'on lui demande de jouer : une note hors
       // du clavier de la banque serait jouée par la zone la plus proche, donc transposée davantage.
+      // Dans un KIT il n'y a pas de repli : une note sans son ne sonne pas, et c'est ce qu'on compte.
       let ecartMax = 0;
-      for (const n of jouees) ecartMax = Math.max(ecartMax, Math.abs(ecartDeZone(banque, n.note)));
-      return {
-        valeurs: [audio, midiFile],
-        message: traduire("msg.banque.jouee", String(notes.length), String(banque.zones.length), String(ecartMax)),
-      };
+      let muettes = 0;
+      // Les couches TOUCHÉES : c'est ce qui dit si un arrangement exploite une bibliothèque à
+      // nuances ou n'en réveille qu'une seule — un MIDI dont toutes les vélocités valent 100 ne
+      // jouera jamais que la couche du milieu, et mieux vaut le voir que le deviner.
+      const couchesVues = new Set<Zone>();
+      for (const n of jouees) {
+        const zone = choisirZone(banque, n.note, n.velocite);
+        if (!zone) { muettes++; continue; }
+        couchesVues.add(zone);
+        ecartMax = Math.max(ecartMax, Math.abs(ecartDeZone(banque, n.note)));
+      }
+      const morceaux = [traduire("msg.banque.jouee", String(jouees.length), String(banque.zones.length), String(ecartMax))];
+      if (ignorees) morceaux.push(traduire("msg.banque.ignorees", String(ignorees)));
+      if (muettes) morceaux.push(traduire("msg.banque.muettes", String(muettes)));
+      if (transposition) morceaux.push(traduire("msg.banque.transposee", (transposition > 0 ? "+" : "") + transposition));
+      if ((banque.couches ?? 1) > 1) {
+        const distinctes = new Set([...couchesVues].map((z) => `${z.velBasse ?? 0}:${z.velHaute ?? 127}`)).size;
+        morceaux.push(traduire("msg.banque.couchesJouees", String(distinctes), String(banque.couches)));
+      }
+      return { valeurs: [audio, midiFile], message: morceaux.join(" · ") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

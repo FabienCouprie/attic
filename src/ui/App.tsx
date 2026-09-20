@@ -121,6 +121,10 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   const nbParams = def.parametres.length;
   let w = 260;
   if (def.id === "clavier-melodie") return { width: 500, height: 260 };
+  // Un peu plus haut que le precedent : une ligne de plus, qui dit quelle banque est chargee.
+  if (def.id === "clavier-sfz") return { width: 540, height: 300 };
+  // La liste a cocher des instruments : onze lignes et leurs intitules de famille.
+  if (def.id === "orchestre-csound") return { width: 340, height: 420 };
   if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
   if (def.id === "analyseur-spectre") return { width: 420, height: 300 };
   if (def.id === "spectrogramme") return { width: 420, height: 300 };
@@ -153,7 +157,6 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "source-texte") return { width: 280, height: 200 };
   if (def.id === "sortie-texte") return { width: 280, height: 250 };
   if (def.id === "python-processor") return { width: 380, height: 300 };
-  if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
   if (def.id === "sequenceur-accords") return { width: 480, height: 380 };
@@ -441,6 +444,9 @@ function Atelier() {
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
               audioChemin: n.data.audioChemin,
+              sfzChemin: n.data.sfzChemin,
+              sfzNom: n.data.sfzNom,
+              sequenceNotes: n.data.sequenceNotes,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               couleur: n.data.couleur,

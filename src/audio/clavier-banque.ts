@@ -49,6 +49,42 @@ export interface Zone extends PlanZone {
   audio: AudioBuffer;
   /** Boucle de maintien, en échantillons, quand la note doit pouvoir tenir. */
   boucle?: { debut: number; fin: number };
+  /**
+   * Désaccord de la zone, en cents. Les banques construites par Attic n'en ont pas — leurs zones
+   * sont justes par construction —, mais un SFZ lu peut en déclarer un par région (`tune`).
+   */
+  accord?: number;
+  /** Gain de la zone, en facteur linéaire. Vient du `volume` d'une région SFZ, en décibels. */
+  gain?: number;
+  /**
+   * La zone suit-elle la touche jouée ? Vrai par défaut.
+   *
+   * Faux pour un son de percussion : il sort tel qu'il est enregistré, quelle que soit la touche.
+   * C'est ce que le format SFZ écrit `pitch_keytrack=0`, et ce que déclarent la plupart des kits.
+   */
+  suitLaTouche?: boolean;
+  /**
+   * Plage de vélocité de la zone, incluse — sa COUCHE.
+   *
+   * Un piano échantillonné sérieusement a trois à huit enregistrements par touche : joué doucement,
+   * un marteau effleure la corde et le son est rond ; joué fort, il claque. Ce n'est pas une affaire
+   * de niveau — un échantillon fort baissé de vingt décibels reste un échantillon fort, et c'est
+   * précisément ce qu'on entendait : « un piano joué doucement sonne dur ».
+   *
+   * Absentes, ces bornes valent 0 et 127 : la zone couvre toutes les nuances, ce qui est le cas des
+   * banques qu'Attic fabrique lui-même.
+   */
+  velBasse?: number;
+  velHaute?: number;
+  /**
+   * De combien la vélocité fait encore varier le NIVEAU, de 0 à 100.
+   *
+   * `amp_veltrack` du format SFZ. Cent : le niveau suit la vélocité comme avant. Zéro : la vélocité
+   * ne choisit que la couche, et le niveau ne bouge plus. C'est ce que règlent les bibliothèques à
+   * couches, sous peine d'un double effet — la couche douce ET le niveau baissé —, qui rend les notes
+   * jouées piano presque inaudibles.
+   */
+  suiviVelocite?: number;
 }
 
 export interface Banque {
@@ -59,6 +95,22 @@ export interface Banque {
   largeur: number;
   noteBasse: number;
   noteHaute: number;
+  /**
+   * Combien de COUCHES DE VÉLOCITÉ distinctes la banque contient, 1 quand elle n'en a pas.
+   *
+   * Sert à le dire : « 8 zones × 3 couches » n'est pas la même banque que « 24 zones ».
+   */
+  couches?: number;
+  /**
+   * Vrai pour un KIT : une touche est un SON, pas une hauteur.
+   *
+   * C'est la convention des percussions — 36 grosse caisse, 38 caisse claire, 42 charley —, et elle
+   * contredit celle d'une banque de hauteurs sur deux points. D'abord, une touche non couverte ne
+   * joue RIEN : la chercher « la plus proche » ferait entendre la grosse caisse à la place d'un tom
+   * absent, mesuré à un demi-ton près sur un vrai kit. Ensuite, un échantillon de kit se joue tel
+   * qu'il a été enregistré, sans rééchantillonnage.
+   */
+  kit?: boolean;
 }
 
 /**
@@ -153,15 +205,48 @@ export function construireBanque(source: AudioBuffer, o: OptionsBanque): Banque 
   return { zones, racineSource: o.racineSource, largeur, noteBasse, noteHaute };
 }
 
-/** La zone qui couvre cette note, ou la plus proche si la note sort du clavier. */
-export function choisirZone(banque: Banque, note: number): Zone | null {
+/**
+ * La zone qui couvre cette note, ou la plus proche si la note sort du clavier.
+ *
+ * SAUF DANS UN KIT, où il n'y a pas de « plus proche » qui ait un sens : une touche sans son est
+ * silencieuse. Mesuré sur un vrai kit chargé comme une banque de hauteurs, le repli faisait jouer la
+ * grosse caisse un demi-ton plus haut sur la touche 37, et le crash à ×1,888 sur la touche 60.
+ */
+export function choisirZone(banque: Banque, note: number, velocite?: number): Zone | null {
   if (banque.zones.length === 0) return null;
-  const dans = banque.zones.find((z) => note >= z.basse && note <= z.haute);
-  if (dans) return dans;
-  let meilleure = banque.zones[0];
+  const surLaTouche = banque.zones.filter((z) => note >= z.basse && note <= z.haute);
+  if (surLaTouche.length > 0) return parVelocite(surLaTouche, velocite);
+  if (banque.kit) return null;
+  // Aucune zone ne couvre la note : on prend la racine la plus proche, puis la bonne couche parmi
+  // celles qui la partagent — sans quoi une banque à couches jouerait la première venue.
+  let meilleure = surLaTouche[0] ?? banque.zones[0];
   for (const z of banque.zones) {
     if (Math.abs(z.racine - note) < Math.abs(meilleure.racine - note)) meilleure = z;
   }
+  return parVelocite(banque.zones.filter((z) => z.racine === meilleure.racine), velocite);
+}
+
+/**
+ * La couche qui convient à cette vélocité, parmi des zones qui couvrent déjà la même touche.
+ *
+ * SANS VÉLOCITÉ DEMANDÉE, la première : c'est le comportement d'avant les couches, et tous les
+ * appels qui ne parlent que de hauteur — la mesure d'un écart de zone, par exemple — le gardent.
+ *
+ * UNE PLAGE MANQUANTE NE REND PAS MUET. Une bibliothèque peut laisser un trou (couches 1–63 et
+ * 65–127, la vélocité 64 n'appartenant à aucune) : on prend alors la couche la plus PROCHE, plutôt
+ * que de ne rien jouer sur une note qui existe.
+ */
+function parVelocite(zones: Zone[], velocite?: number): Zone {
+  if (zones.length === 1 || velocite === undefined) return zones[0];
+  const v = Math.max(0, Math.min(127, velocite));
+  const dedans = zones.find((z) => v >= (z.velBasse ?? 0) && v <= (z.velHaute ?? 127));
+  if (dedans) return dedans;
+  const distance = (z: Zone) => {
+    const bas = z.velBasse ?? 0, haut = z.velHaute ?? 127;
+    return v < bas ? bas - v : v > haut ? v - haut : 0;
+  };
+  let meilleure = zones[0];
+  for (const z of zones) if (distance(z) < distance(meilleure)) meilleure = z;
   return meilleure;
 }
 
@@ -176,6 +261,96 @@ export interface NoteJouee {
   velocite: number;
   debut: number;
   fin: number;
+}
+
+/**
+ * Ce que la vélocité fait au NIVEAU, une fois la couche choisie.
+ *
+ * `suivi` est `amp_veltrack` en pour-cent : cent, le niveau suit la vélocité comme il l'a toujours
+ * fait ; zéro, la vélocité ne sert qu'à choisir la couche et le niveau reste plein. Entre les deux, on
+ * interpole — une simplification assumée de la courbe en décibels du format, dont l'écart ne se voit
+ * pas à l'oreille et qui garde la fonction lisible.
+ *
+ * POURQUOI CELA EXISTE : sans ce réglage, une bibliothèque à couches subit un DOUBLE effet — la
+ * couche douce est choisie, ET son niveau est encore divisé par trois. Les notes jouées piano
+ * disparaissaient.
+ */
+export function gainVelocite(velocite: number, suivi?: number): number {
+  const v = Math.min(1, Math.max(0, velocite / 127));
+  const k = Math.min(1, Math.max(0, (suivi ?? 100) / 100));
+  return 1 - k + k * v;
+}
+
+/** De quoi jouer une note : la zone, à quelle vitesse la relire, et à quel niveau. */
+export interface Voix {
+  zone: Zone;
+  /** Rapport de lecture de l'échantillon, désaccord de la zone compris. */
+  ratio: number;
+  /** Gain appliqué à l'échantillon, vélocité et gain de zone compris. */
+  gain: number;
+}
+
+/**
+ * Ce qu'il faut pour faire sonner une note.
+ *
+ * Cette fonction est le SEUL endroit où se calcule le rapport de lecture, et c'est voulu : le rendu
+ * hors ligne — « Sampler multi-zones » — et le jeu en direct au clavier du nœud l'appellent tous les
+ * deux. Ailleurs, ce qu'on entend en jouant pouvait diverger de ce que le graphe rendait, et cela ne
+ * se voit à l'oreille que si l'écart dépasse quelques cents.
+ *
+ * `srSortie` DEMANDE LA CONVERSION DE FRÉQUENCE, et seul un lecteur qui recopie les échantillons à la
+ * main en a besoin — c'est-à-dire `rendreNotes`. Le matériel audio, lui, convertit tout seul le
+ * tampon qu'on lui confie : le jeu en direct ne passe donc pas ce paramètre, sous peine de convertir
+ * deux fois. Le défaut mesuré avant cette correction : une zone échantillonnée à 48 kHz dans une
+ * banque rendue à 44,1 kHz sortait à 808,5 Hz au lieu de 880 — **147 cents trop bas**, soit un
+ * demi-ton et demi, ce qui arrive dès qu'une bibliothèque SFZ mélange deux fréquences.
+ */
+export function voixPourNote(
+  banque: Banque, note: number, velocite = 100, volume = 1, srSortie?: number,
+): Voix | null {
+  const zone = choisirZone(banque, note, velocite);
+  if (!zone) return null;
+  // Une zone qui ne suit pas la touche garde sa vitesse : seul son désaccord éventuel s'applique.
+  const demiTons = zone.suitLaTouche === false ? 0 : note - zone.racine;
+  const conversion = srSortie && srSortie > 0 ? zone.audio.sampleRate / srSortie : 1;
+  return {
+    zone,
+    ratio: conversion * Math.pow(2, demiTons / 12 + (zone.accord ?? 0) / 1200),
+    gain: Math.min(1, Math.max(0, volume)) * gainVelocite(velocite, zone.suiviVelocite) * (zone.gain ?? 1),
+  };
+}
+
+/** Ce qu'il faut poser sur un `AudioBufferSourceNode` pour jouer une note en direct. */
+export interface ParametresLecture {
+  audio: AudioBuffer;
+  /** `playbackRate` : le rapport de lecture. */
+  vitesse: number;
+  /** Gain à poser sur le nœud de gain qui suit la source. */
+  gain: number;
+  boucle: boolean;
+  /** `loopStart` et `loopEnd`, en SECONDES — l'unité qu'attend Web Audio, là où la zone les garde
+   *  en échantillons. La conversion oubliée faisait boucler sur les premières millisecondes. */
+  boucleDebut: number;
+  boucleFin: number;
+}
+
+/**
+ * Les réglages de lecture d'une note, prêts pour Web Audio.
+ *
+ * Le jeu en direct — clavier d'un nœud — ne passe pas par `rendreNotes` : il confie l'échantillon au
+ * matériel, qui le relit et le boucle tout seul. Ce qu'il faut lui donner se calcule ici, depuis la
+ * MÊME voix que le rendu hors ligne, pour que les deux ne puissent pas diverger.
+ */
+export function parametresLecture(voix: Voix): ParametresLecture {
+  const sr = voix.zone.audio.sampleRate;
+  return {
+    audio: voix.zone.audio,
+    vitesse: voix.ratio,
+    gain: voix.gain,
+    boucle: !!voix.zone.boucle,
+    boucleDebut: voix.zone.boucle ? voix.zone.boucle.debut / sr : 0,
+    boucleFin: voix.zone.boucle ? voix.zone.boucle.fin / sr : 0,
+  };
 }
 
 export interface OptionsRendu {
@@ -210,12 +385,13 @@ export function rendreNotes(
   const g = sortie.getChannelData(0), d = sortie.getChannelData(1);
 
   for (const n of notes) {
-    const zone = choisirZone(banque, n.note);
-    if (!zone || n.fin <= n.debut) continue;
-    const ratio = Math.pow(2, (n.note - zone.racine) / 12);
+    // `sr` est la fréquence de sortie : la passer ici est ce qui aligne une zone dont l'échantillon
+    // a été enregistré à une autre fréquence.
+    const voix = n.fin > n.debut ? voixPourNote(banque, n.note, n.velocite, volume, sr) : null;
+    if (!voix) continue;
+    const { zone, ratio, gain } = voix;
     const srcG = zone.audio.getChannelData(0);
     const srcD = zone.audio.numberOfChannels > 1 ? zone.audio.getChannelData(1) : srcG;
-    const gain = volume * Math.min(1, Math.max(0, n.velocite / 127));
     const debutEch = Math.max(0, Math.round(n.debut * sr));
     const finEch = Math.min(longueur, Math.round((n.fin + relachement) * sr));
     const finTenue = Math.min(longueur, Math.round(n.fin * sr));
@@ -257,6 +433,35 @@ export function rendreNotes(
   return sortie;
 }
 
+/**
+ * Place un son dans l'espace stéréo, à puissance constante.
+ *
+ * LA LOI EN COSINUS ET NON EN LIGNE DROITE : un panoramique linéaire fait CHUTER le niveau au centre
+ * de trois décibels, parce que deux canaux à 0,5 ne font pas un canal à 1 quand on somme des
+ * puissances. Avec cosinus et sinus, la somme des carrés vaut un partout, et un instrument déplacé de
+ * gauche à droite garde le même niveau perçu en passant par le milieu.
+ *
+ * Le panoramique va de −1 (tout à gauche) à +1 (tout à droite). Un tampon mono devient stéréo.
+ */
+export function appliquerPanoramique(audio: AudioBuffer, panoramique: number): AudioBuffer {
+  const pan = Math.min(1, Math.max(-1, panoramique));
+  if (pan === 0 && audio.numberOfChannels === 2) return audio;
+  const angle = ((pan + 1) * Math.PI) / 4; // −1 → 0, 0 → π/4, +1 → π/2
+  const gG = Math.cos(angle), gD = Math.sin(angle);
+  const sortie = new AudioBuffer({ numberOfChannels: 2, length: audio.length, sampleRate: audio.sampleRate });
+  const srcG = audio.getChannelData(0);
+  const srcD = audio.numberOfChannels > 1 ? audio.getChannelData(1) : srcG;
+  const g = sortie.getChannelData(0), d = sortie.getChannelData(1);
+  // Le facteur √2 rend le centre NEUTRE : cos(π/4) = 0,707, et sans compensation un son centré
+  // perdrait trois décibels par le simple fait de passer par cette fonction.
+  const k = Math.SQRT2;
+  for (let i = 0; i < audio.length; i++) {
+    g[i] = srcG[i] * gG * k;
+    d[i] = srcD[i] * gD * k;
+  }
+  return sortie;
+}
+
 // ── Export SFZ ──────────────────────────────────────────────────────────────────
 
 export interface OptionsSfz {
@@ -268,9 +473,19 @@ export interface OptionsSfz {
   nom?: string;
 }
 
-/** Nom de fichier d'une zone : la racine sur trois chiffres, pour que l'ordre alphabétique suive. */
-export const nomEchantillon = (zone: PlanZone): string =>
-  `zone-${String(zone.racine).padStart(3, "0")}.wav`;
+/**
+ * Nom de fichier d'une zone : la racine sur trois chiffres, pour que l'ordre alphabétique suive.
+ *
+ * UNE COUCHE AJOUTE SA VÉLOCITÉ HAUTE au nom. Sans cela, trois couches d'une même touche portaient le
+ * même nom : l'export écrivait un seul WAV — le dernier — et le fichier SFZ le désignait trois fois.
+ * La banque relue aurait alors eu trois couches identiques, ce qui est pire que pas de couche du tout.
+ */
+export const nomEchantillon = (zone: PlanZone & { velBasse?: number; velHaute?: number }): string => {
+  const base = `zone-${String(zone.racine).padStart(3, "0")}`;
+  const couche = zone.velHaute !== undefined && zone.velHaute < 127 || (zone.velBasse ?? 0) > 0
+    ? `-v${String(zone.velHaute ?? 127).padStart(3, "0")}` : "";
+  return `${base}${couche}.wav`;
+};
 
 /**
  * Le texte SFZ d'une banque.
@@ -288,7 +503,8 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
   const relachement = o.relachement ?? 0.3;
   const lignes: string[] = [
     `// Banque de clavier exportée par Attic${o.nom ? ` — ${o.nom}` : ""}`,
-    `// ${banque.zones.length} zones de ±${banque.largeur} demi-tons, racine du son : ${banque.racineSource}`,
+    `// ${banque.zones.length} zones de ±${banque.largeur} demi-tons, racine du son : ${banque.racineSource}`
+      + (banque.couches && banque.couches > 1 ? ` — ${banque.couches} couches de vélocité` : ""),
     `// Touches couvertes : ${banque.noteBasse} à ${banque.noteHaute}`,
     "",
     "<global>",
@@ -299,6 +515,14 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     lignes.push("<region>");
     lignes.push(`sample=${o.dossier}/${nomEchantillon(zone)}`);
     lignes.push(`lokey=${zone.basse} hikey=${zone.haute} pitch_keycenter=${zone.racine}`);
+    // Les bornes de vélocité ne s'écrivent que si la zone est une couche : un fichier plein de
+    // `lovel=0 hivel=127` se lit moins bien, et ces valeurs sont celles du format par défaut.
+    if ((zone.velBasse ?? 0) > 0 || (zone.velHaute ?? 127) < 127) {
+      lignes.push(`lovel=${zone.velBasse ?? 0} hivel=${zone.velHaute ?? 127}`);
+    }
+    if (zone.suiviVelocite !== undefined && zone.suiviVelocite !== 100) {
+      lignes.push(`amp_veltrack=${Math.round(zone.suiviVelocite)}`);
+    }
     if (zone.boucle) {
       lignes.push("loop_mode=loop_sustain");
       lignes.push(`loop_start=${zone.boucle.debut} loop_end=${zone.boucle.fin}`);

@@ -80,6 +80,12 @@ export function usePersistance(o: OptionsPersistance) {
         svgNom: data.svgNom,
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
+        // Le .sfz designe dans un « Clavier SFZ » : sans lui, un graphe reouvert avait un clavier
+        // sans instrument, alors que le fichier n'avait pas bouge du disque.
+        sfzChemin: data.sfzChemin,
+        sfzNom: data.sfzNom,
+        // Ce qui a ete joue au clavier d'un noeud : perdu jusqu'ici a chaque reouverture.
+        sequenceNotes: data.sequenceNotes,
         nomFichier: data.nomFichier,
         nom: data.nom,
         couleur: data.couleur,
@@ -92,7 +98,7 @@ export function usePersistance(o: OptionsPersistance) {
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
 
     const encours = {
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, nom: n.data.nom, couleur: n.data.couleur } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

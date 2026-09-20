@@ -17,7 +17,7 @@ import { writeMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { NOTE_MAX, NOTE_MIN, racinesInstrument } from "../core/instrument-graphe";
+import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../core/instrument-graphe";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
 
 const TICKS_NOIRE = 480;
@@ -128,7 +128,9 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "instrument-fin", nom: "Fin d'instrument", nomEn: "Instrument End",
-    univers: "Traitement", famille: "Effets",
+    // Dans les SORTIES, avec « Export SFZ » : ce nœud ne traite pas un son, il REFERME une chaîne
+    // et livre une banque — c'est un aboutissement, pas un effet de plus dans le signal.
+    univers: "Sorties", famille: "Export",
     resume: "Referme une chaîne d'instrument et rassemble les rendus de toutes les notes en une banque de clavier.",
     resumeEn: "Closes an instrument chain and gathers every note's render into a keyboard bank.",
     entrees: [{ nom: "Audio", type: "audio", dynamique: true }],
@@ -155,15 +157,28 @@ export const fiches: FicheAudio[] = ([
         docEn: "Where the loop starts within the sample — after the attack, then." },
     ],
     async executer(ctx: any) {
-      const rendus = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      const brutes = ctx.entrees() as unknown[];
+      // Les racines se recalculent ici à l'identique du dépliage : le moteur a livré un rendu par
+      // racine, DANS CET ORDRE, et c'est pourquoi la fonction est partagée. L'appariement garde
+      // l'INDICE de chaque entrée — une copie qui a échoué livre `null`, et décaler les notes
+      // suivantes rendrait une banque fausse sans que rien ne le dise. Voir `core`, testé.
+      const racines = racinesInstrument(ctx.noeud as any);
+      const app = apparierRendus<AudioBuffer>(brutes, racines,
+        (v): v is AudioBuffer => v instanceof AudioBuffer);
+      // Le nombre d'entrées ne correspond pas au dépliage : la chaîne n'a donc PAS été dépliée —
+      // pas de « Note d'instrument » en amont, deux notes en amont, ou rien entre les deux —, ou un
+      // nœud étranger nourrit la fin. Rendre une banque ici serait rendre une banque désaccordée.
+      if (app.nonDeplie) {
+        return {
+          valeurs: [null, null],
+          message: traduire("msg.instrument.nonDeplie", String(brutes.length), String(racines.length)),
+        };
+      }
+      const rendus = app.paires.map((p) => p.valeur);
       if (rendus.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.instrument.sansNote") };
       }
-      // Les racines se recalculent ici à l'identique du dépliage : le moteur a livré un rendu par
-      // racine, DANS CET ORDRE. Un écart entre les deux listes se verrait aussitôt — la banque
-      // n'aurait pas le bon nombre de zones — et c'est pourquoi la fonction est partagée.
-      const racines = racinesInstrument(ctx.noeud as any);
-      const banque: Banque = banqueDepuisRendus(racines.slice(0, rendus.length), rendus, {
+      const banque: Banque = banqueDepuisRendus(app.paires.map((p) => p.racine), rendus, {
         largeur: Math.round(ctx.paramNombre("Largeur de zone", 2)),
         noteBasse: Math.round(ctx.paramNombre("Note basse", NOTE_MIN)),
         noteHaute: Math.round(ctx.paramNombre("Note haute", NOTE_MAX)),
@@ -174,11 +189,15 @@ export const fiches: FicheAudio[] = ([
         banque.zones.map((z, i) => ({ note: z.racine, velocite: 100, debut: i * 0.35, fin: i * 0.35 + 0.33 })),
         banque, { volume: 0.8, relachement: 0.02 },
       );
-      const manquants = racines.length - rendus.length;
+      // Les notes manquantes sont NOMMÉES : c'est ce qui dit où chercher. Toutes sauf une, et le
+      // défaut est en amont de la chaîne ; les plus graves ou les plus aiguës seulement, et c'est un
+      // nœud qui ne tient pas toute l'étendue du clavier. Le nœud fautif de la chaîne, lui, est en
+      // rouge dans le graphe — les statuts des copies remontent au nœud visible.
       return {
         valeurs: [banque, apercu],
-        message: manquants > 0
-          ? traduire("msg.instrument.partielle", String(rendus.length), String(racines.length))
+        message: app.manquantes.length > 0
+          ? traduire("msg.instrument.partielle", String(rendus.length), String(racines.length),
+              app.manquantes.slice(0, 8).join(", ") + (app.manquantes.length > 8 ? "…" : ""))
           : traduire("msg.instrument.faite", String(banque.zones.length), String(racines[0]), String(racines[racines.length - 1])),
       };
     },

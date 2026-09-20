@@ -1,0 +1,39 @@
+// Kit de batterie d'Attic — synthétisé par Attic lui-même, aucun échantillon tiers.
+// 8 sons aux notes du General MIDI. Regénéré par « npm run kit:generer ».
+
+<global>
+ampeg_release=0.050
+pitch_keytrack=0
+loop_mode=one_shot
+
+<region>
+sample=grosse-caisse.wav
+key=36 // Grosse caisse
+
+<region>
+sample=caisse-claire.wav
+key=38 // Caisse claire
+
+<region>
+sample=charley-ferme.wav
+key=42 // Charley fermé
+
+<region>
+sample=charley-ouvert.wav
+key=46 // Charley ouvert
+
+<region>
+sample=clap.wav
+key=39 // Clap
+
+<region>
+sample=crash.wav
+key=49 // Crash
+
+<region>
+sample=tom-grave.wav
+key=45 // Tom grave
+
+<region>
+sample=tom-aigu.wav
+key=50 // Tom aigu

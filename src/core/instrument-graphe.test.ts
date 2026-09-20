@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import {
   FICHE_FIN, FICHE_NOTE, NOTE_MAX, NOTE_MIN, ZONES_MAX,
-  deplierInstruments, racinesInstrument,
+  apparierRendus, deplierInstruments, racinesInstrument,
 } from "./instrument-graphe";
 import type { AreteG, NoeudG } from "./meta";
 
@@ -251,5 +251,64 @@ describe("câblages fautifs", () => {
   it("borne le nombre de zones à une valeur qui reste calculable", () => {
     expect(ZONES_MAX).toBeLessThanOrEqual(88);
     expect(ZONES_MAX).toBeGreaterThanOrEqual(18);
+  });
+});
+
+describe("l'appariement des rendus avec leurs notes", () => {
+  // CE QUI SE JOUE ICI. La fin d'instrument reçoit une entrée PAR ARÊTE, dans l'ordre des copies, et
+  // une copie qui a échoué livre `null`. Filtrer les nulls puis prendre les n premières racines —
+  // ce que faisait le nœud — décale TOUTES les notes suivantes dès qu'une copie du milieu échoue :
+  // la banque a alors le bon nombre de zones et de fausses hauteurs, et aucun message ne le dit.
+  const estNombre = (v: unknown): v is number => typeof v === "number";
+
+  it("apparie chaque rendu à sa note quand tout arrive", () => {
+    const r = apparierRendus([10, 20, 30], [60, 65, 70], estNombre);
+    expect(r.nonDeplie).toBe(false);
+    expect(r.parCopie).toBe(1);
+    expect(r.manquantes).toEqual([]);
+    expect(r.paires).toEqual([
+      { racine: 60, valeur: 10 }, { racine: 65, valeur: 20 }, { racine: 70, valeur: 30 },
+    ]);
+  });
+
+  it("NE DÉCALE PAS les notes suivantes quand une copie du milieu échoue", () => {
+    const r = apparierRendus([10, null, 30], [60, 65, 70], estNombre);
+    expect(r.manquantes).toEqual([65]);
+    // 30 appartient à la note 70, et non à 65 comme le donnait un simple filtrage.
+    expect(r.paires).toEqual([{ racine: 60, valeur: 10 }, { racine: 70, valeur: 30 }]);
+  });
+
+  it("nomme toutes les notes manquantes quand une seule copie survit", () => {
+    const racines = [23, 28, 33, 38, 43];
+    const r = apparierRendus([null, null, 7, null, null], racines, estNombre);
+    expect(r.paires).toEqual([{ racine: 33, valeur: 7 }]);
+    expect(r.manquantes).toEqual([23, 28, 38, 43]);
+  });
+
+  it("DIT que la chaîne n'a pas été dépliée quand le compte ne correspond pas", () => {
+    // Le cas vécu : une fin réglée sur dix-huit notes, mais une seule arête entrante — le dépliage
+    // n'a pas eu lieu, faute de « Note d'instrument » en amont. Rendre une banque ici la rendrait
+    // désaccordée en silence : la note 60 serait étiquetée 23.
+    const r = apparierRendus([42], Array.from({ length: 18 }, (_, i) => 23 + 5 * i), estNombre);
+    expect(r.nonDeplie).toBe(true);
+    expect(r.paires).toEqual([]);
+    expect(r.manquantes.length).toBe(18);
+  });
+
+  it("accepte plusieurs nœuds de la chaîne aboutissant à la fin, et garde le premier de chaque note", () => {
+    // Deux arêtes par copie : [note1-brancheA, note1-brancheB, note2-brancheA, …].
+    const r = apparierRendus([1, 2, 3, 4], [60, 65], estNombre);
+    expect(r.parCopie).toBe(2);
+    expect(r.paires).toEqual([{ racine: 60, valeur: 1 }, { racine: 65, valeur: 3 }]);
+  });
+
+  it("se rabat sur la seconde branche quand la première d'une note a échoué", () => {
+    const r = apparierRendus([null, 2, 3, null], [60, 65], estNombre);
+    expect(r.paires).toEqual([{ racine: 60, valeur: 2 }, { racine: 65, valeur: 3 }]);
+    expect(r.manquantes).toEqual([]);
+  });
+
+  it("ne dit rien d'une liste de racines vide", () => {
+    expect(apparierRendus([], [], estNombre)).toEqual({ paires: [], manquantes: [], parCopie: 0, nonDeplie: false });
   });
 });

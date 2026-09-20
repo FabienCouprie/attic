@@ -3,7 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { rendreSequenceurBatterie, decoderMotif, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "../audio";
+import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "../audio";
 import { creerAleatoire } from "../core";
 import {
   rendreSequenceurMelodique, decoderMotifMelodique,
@@ -13,15 +13,6 @@ import {
   GAMMES_ACCORDS,
 } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
-
-// Motif par défaut (16 pas) : kick sur les temps, snare sur 2 et 4, charley en croches.
-const MOTIF_DEFAUT = [
-  "1000000010000000", // Kick
-  "0000100000001000", // Snare
-  "1010101010101010", // Charley fermé
-  "0000000000000000", // Charley ouvert
-  "0000000000000000", // Clap
-].join("|");
 
 // Motif par défaut du séquenceur avancé (16 pas, 8 pistes) : kick temps, snare 2/4,
 // charley fermé en croches, le reste muet.
@@ -67,42 +58,6 @@ const MOTIF_ACCORDS_DEFAUT = [
 ].join("|");
 
 export const fiches: FicheAudio[] = ([
-  {
-    id: "sequenceur-batterie", nom: "Séquenceur de batterie", nomEn: "Drum Sequencer",
-    univers: "Entrées", famille: "Génération",
-    resume: "Programme un motif de batterie sur une grille pas-à-pas (synthèse).",
-    resumeEn: "Programs a drum pattern on a step grid (synthesized).",
-    entrees: [],
-    sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [
-      { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM" },
-      { nom: "Nombre de pas", nomEn: "Steps", type: "choix", options: ["8", "16", "32"], defaut: "16",
-        doc: "Nombre de pas par mesure (résolution rythmique).", docEn: "Steps per bar (rhythmic resolution).", optionsEn: ["8", "16", "32"], defautEn: "16" },
-      { nom: "Swing", nomEn: "Swing", plage: [0, 60], defaut: 0, unite: "%",
-        doc: "Décale légèrement les contretemps pour un groove ternaire.", docEn: "Slightly delays off-beats for a shuffle groove." },
-      { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,
-        doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
-      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
-      { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_DEFAUT,
-        doc: "Motif encodé (édité par la grille du nœud) : 5 lignes de pas séparées par « | », chaque pas 1 (actif) ou 0.",
-        docEn: "Encoded pattern (edited via the node grid): 5 step rows separated by « | », each step 1 (on) or 0." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
-        doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même motif doit rendre le même fichier à chaque exécution.",
-        docEn: "Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
-    ],
-    async executer(ctx: any) {
-      const tempo = ctx.paramNombre("Tempo", 120);
-      const nbPas = parseInt(ctx.paramTexte("Nombre de pas", "16"), 10) || 16;
-      const swing = ctx.paramNombre("Swing", 0);
-      const mesures = ctx.paramNombre("Mesures", 2);
-      const volume = ctx.paramNombre("Volume", 90);
-      const grille = decoderMotif(ctx.paramTexte("Motif", MOTIF_DEFAUT), 5, nbPas);
-      const buf = await rendreSequenceurBatterie(grille, tempo, nbPas, swing, mesures, volume,
-        creerAleatoire(ctx.paramNombre("Graine", 42)));
-      const frappes = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
-      return { valeurs: [buf], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_frappe_s", nbPas, mesures, tempo, frappes) };
-    },
-  },
   {
     id: "sequenceur-melodique", nom: "Séquenceur mélodique", nomEn: "Melodic Sequencer",
     univers: "Entrées", famille: "Génération",
@@ -237,8 +192,11 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], defaut: 120, unite: "BPM" },
-      { nom: "Nombre de pas", nomEn: "Steps", type: "choix", options: ["16", "32"], defaut: "16",
-        doc: "Nombre de pas par mesure.", docEn: "Steps per bar.", optionsEn: ["16", "32"], defautEn: "16" },
+      // Huit pas viennent de l'ancien séquenceur binaire, supprimé : sa résolution la plus grossière
+      // est reprise ici, faute de quoi le retirer aurait retiré une possibilité — et un graphe
+      // enregistré réglé sur huit pas aurait affiché « 16 » dans l'inspecteur tout en jouant huit.
+      { nom: "Nombre de pas", nomEn: "Steps", type: "choix", options: ["8", "16", "32"], defaut: "16",
+        doc: "Nombre de pas par mesure.", docEn: "Steps per bar.", optionsEn: ["8", "16", "32"], defautEn: "16" },
       { nom: "Swing", nomEn: "Swing", plage: [0, 60], defaut: 0, unite: "%",
         doc: "Décale les contretemps pour un groove ternaire.", docEn: "Delays off-beats for a shuffle groove." },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,

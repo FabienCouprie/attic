@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "3.2.2",
-  "description": "Visual node-editor for AI-powered music and sound design — 322 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 328 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -39,6 +39,7 @@
     "ensure-songsee": "node scripts/ensure-songsee.cjs",
     "preview": "vite preview",
     "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts",
+    "kit:generer": "cross-env ECRIRE_KIT=1 vitest run src/audio/kit-batterie.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",
@@ -86,6 +87,10 @@
       {
         "from": "public/oonx",
         "to": "oonx"
+      },
+      {
+        "from": "public/sfz",
+        "to": "sfz"
       },
       {
         "from": "public/sf2",

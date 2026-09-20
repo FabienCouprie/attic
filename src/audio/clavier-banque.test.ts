@@ -9,7 +9,8 @@ import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import {
   NOTE_DO8, NOTE_LA0, banqueDepuisRendus, choisirZone, construireBanque, ecartDeZone,
-  nomEchantillon, planZones, rendreNotes, versSfz,
+  appliquerPanoramique, nomEchantillon, parametresLecture, planZones, rendreNotes, versSfz,
+  voixPourNote, type Banque, type Zone,
 } from "./clavier-banque";
 import { hauteurMediane, suivreHauteur } from "./hauteur";
 
@@ -315,5 +316,135 @@ describe("une banque faite de rendus", () => {
   it("ignore une racine dont le rendu manque, plutôt que de rendre une zone vide", () => {
     const banque = banqueDepuisRendus([60, 65], [audio(100)], { largeur: 2, noteBasse: 58, noteHaute: 67 });
     expect(banque.zones.length).toBe(1);
+  });
+});
+
+describe("les réglages du jeu en direct", () => {
+  // Le clavier d'un nœud ne passe pas par `rendreNotes` : il confie l'échantillon au matériel audio.
+  // Ce qu'on lui donne se calcule ici, et une seule erreur d'unité suffit à tout gâcher — Web Audio
+  // veut des SECONDES là où une zone garde ses bornes de boucle en échantillons.
+  const zoneAvecBoucle = (sr: number) => {
+    const audio = new AudioBuffer({ numberOfChannels: 1, length: sr, sampleRate: sr });
+    return banqueDepuisRendus([60], [audio], {
+      largeur: 2, noteBasse: 21, noteHaute: 108, boucle: true, boucleDebut: 0.5,
+    });
+  };
+
+  it("convertit les bornes de boucle en secondes", () => {
+    const banque = zoneAvecBoucle(48000);
+    const p = parametresLecture(voixPourNote(banque, 60)!);
+    expect(p.boucle).toBe(true);
+    expect(p.boucleDebut).toBeCloseTo(0.5, 6);      // 24000 échantillons à 48 kHz
+    expect(p.boucleFin).toBeCloseTo(0.95, 6);
+  });
+
+  it("ne déclare pas de boucle quand la zone n'en a pas", () => {
+    const banque = banqueDepuisRendus([60], [new AudioBuffer({ numberOfChannels: 1, length: 1000, sampleRate: 44100 })],
+      { largeur: 2, noteBasse: 21, noteHaute: 108 });
+    const p = parametresLecture(voixPourNote(banque, 60)!);
+    expect(p.boucle).toBe(false);
+    expect(p.boucleDebut).toBe(0);
+  });
+
+  it("donne la vitesse de lecture attendue de part et d'autre de la racine", () => {
+    const banque = zoneAvecBoucle(44100);
+    expect(parametresLecture(voixPourNote(banque, 60)!).vitesse).toBeCloseTo(1, 10);
+    expect(parametresLecture(voixPourNote(banque, 62)!).vitesse).toBeCloseTo(Math.pow(2, 2 / 12), 10);
+    expect(parametresLecture(voixPourNote(banque, 58)!).vitesse).toBeCloseTo(Math.pow(2, -2 / 12), 10);
+  });
+
+  it("module le gain par la vélocité, sans jamais dépasser un", () => {
+    const banque = zoneAvecBoucle(44100);
+    expect(parametresLecture(voixPourNote(banque, 60, 127, 1)!).gain).toBeCloseTo(1, 6);
+    expect(parametresLecture(voixPourNote(banque, 60, 64, 1)!).gain).toBeCloseTo(64 / 127, 6);
+    expect(parametresLecture(voixPourNote(banque, 60, 200, 2)!).gain).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("les fréquences d'échantillonnage qui ne concordent pas", () => {
+  // LE DÉFAUT MESURÉ AVANT CETTE CORRECTION : une zone enregistrée à 48 kHz, jouée dans une banque
+  // rendue à 44,1 kHz, sortait 147 cents trop bas — un demi-ton et demi. Cela n'arrive pas avec les
+  // banques qu'Attic fabrique, dont toutes les zones viennent du même son ; cela arrive dès qu'on lit
+  // une bibliothèque SFZ, où rien n'oblige deux fichiers à partager leur fréquence.
+  const ton = (hz: number, sr: number, duree = 0.5): AudioBuffer => {
+    const n = Math.round(duree * sr);
+    const a = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: sr });
+    const d = a.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = 0.6 * Math.sin((2 * Math.PI * hz * i) / sr);
+    return a;
+  };
+  const banqueMelangee = (): Banque => {
+    const zones: Zone[] = [
+      { racine: 69, basse: 60, haute: 71, audio: ton(440, 44100) },
+      { racine: 81, basse: 72, haute: 90, audio: ton(880, 48000) },
+    ];
+    return { zones, racineSource: 69, largeur: 12, noteBasse: 60, noteHaute: 90 };
+  };
+  const hauteurDe = (b: AudioBuffer) =>
+    hauteurMediane(suivreHauteur(b.getChannelData(0), b.sampleRate, { cadence: 100 }));
+  const cents = (mesure: number, attendu: number) => 1200 * Math.log2(mesure / attendu);
+
+  it("joue JUSTE une zone dont l'échantillon vient d'une autre fréquence", () => {
+    const banque = banqueMelangee();
+    const rendu = rendreNotes([{ note: 81, velocite: 100, debut: 0, fin: 0.3 }], banque, {});
+    expect(rendu.sampleRate).toBe(44100);
+    expect(Math.abs(cents(hauteurDe(rendu), 880))).toBeLessThan(20);
+  });
+
+  it("et ne dérange pas la zone qui était déjà à la bonne fréquence", () => {
+    const rendu = rendreNotes([{ note: 69, velocite: 100, debut: 0, fin: 0.3 }], banqueMelangee(), {});
+    expect(Math.abs(cents(hauteurDe(rendu), 440))).toBeLessThan(20);
+  });
+
+  it("la conversion est DEMANDÉE, pas imposée : le jeu en direct n'en veut pas", () => {
+    // Le matériel audio convertit lui-même le tampon qu'on lui confie ; appliquer la conversion ici
+    // la ferait deux fois, et la note sortirait 8,8 % trop haut au clavier.
+    const banque = banqueMelangee();
+    expect(voixPourNote(banque, 81)!.ratio).toBeCloseTo(1, 10);
+    expect(parametresLecture(voixPourNote(banque, 81)!).vitesse).toBeCloseTo(1, 10);
+    // Demandée, elle vaut exactement le rapport des deux fréquences.
+    expect(voixPourNote(banque, 81, 100, 1, 44100)!.ratio).toBeCloseTo(48000 / 44100, 10);
+  });
+});
+
+describe("le panoramique", () => {
+  const bip = (canaux = 1): AudioBuffer => {
+    const a = new AudioBuffer({ numberOfChannels: canaux, length: 1000, sampleRate: 44100 });
+    for (let c = 0; c < canaux; c++) a.getChannelData(c).fill(0.5);
+    return a;
+  };
+  const crete = (a: AudioBuffer, canal: number) => {
+    let m = 0;
+    for (const v of a.getChannelData(canal)) m = Math.max(m, Math.abs(v));
+    return m;
+  };
+
+  it("rend un tampon stéréo, même depuis un mono", () => {
+    expect(appliquerPanoramique(bip(1), 0).numberOfChannels).toBe(2);
+  });
+
+  it("met tout à gauche, tout à droite, et rien de travers", () => {
+    const gauche = appliquerPanoramique(bip(1), -1);
+    expect(crete(gauche, 0)).toBeGreaterThan(0.7);
+    expect(crete(gauche, 1)).toBeLessThan(1e-6);
+    const droite = appliquerPanoramique(bip(1), 1);
+    expect(crete(droite, 0)).toBeLessThan(1e-6);
+    expect(crete(droite, 1)).toBeGreaterThan(0.7);
+  });
+
+  it("GARDE LE NIVEAU au centre : c'est ce qu'une loi linéaire ratait de trois décibels", () => {
+    const centre = appliquerPanoramique(bip(1), 0);
+    expect(crete(centre, 0)).toBeCloseTo(0.5, 6);
+    expect(crete(centre, 1)).toBeCloseTo(0.5, 6);
+    // Et la puissance totale ne bouge pas quand on déplace le son.
+    const puissance = (a: AudioBuffer) => crete(a, 0) ** 2 + crete(a, 1) ** 2;
+    expect(puissance(appliquerPanoramique(bip(1), -1))).toBeCloseTo(puissance(centre), 6);
+    expect(puissance(appliquerPanoramique(bip(1), 0.5))).toBeCloseTo(puissance(centre), 6);
+  });
+
+  it("borne un réglage hors plage plutôt que d'inverser les canaux", () => {
+    const trop = appliquerPanoramique(bip(1), 5);
+    expect(crete(trop, 0)).toBeLessThan(1e-6);
+    expect(crete(trop, 1)).toBeGreaterThan(0.7);
   });
 });

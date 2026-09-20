@@ -132,6 +132,13 @@ import { fiches as f_fdn } from "./fdn";
 import { fiches as f_clavier_banque } from "./clavier-banque";
 import { fiches as f_export_sfz } from "./export-sfz";
 import { fiches as f_instrument } from "./instrument-graphe";
+import { fiches as f_clavier_sfz } from "./clavier-sfz";
+import { fiches as f_repartiteur_midi } from "./repartiteur-midi";
+import { fiches as f_banque_sfz } from "./banque-sfz";
+import { fiches as f_csound_partition } from "./csound-partition";
+import { fiches as f_csound_orchestre } from "./csound-orchestre";
+import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
+import { fiches as f_csound_formules } from "./csound-formules";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -168,6 +175,13 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_clavier_banque,
   ...f_export_sfz,
   ...f_instrument,
+  ...f_clavier_sfz,
+  ...f_repartiteur_midi,
+  ...f_banque_sfz,
+  ...f_csound_partition,
+  ...f_csound_orchestre,
+  ...f_csound_aleatoire,
+  ...f_csound_formules,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,
