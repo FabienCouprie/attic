@@ -88,7 +88,11 @@ describe.skipIf(ecrire)("le kit embarqué, tel qu'il est versionné", () => {
   it("chargé en banque, il ne transpose rien et ne remplace aucune touche absente", async () => {
     const sfz = analyserSfz(readFileSync(SFZ, "utf-8"));
     // Les WAV versionnés sont décodés par le polyfill : c'est le même chemin que dans l'application.
-    const ctx = new AudioContext({ sampleRate: 44100 });
+    //
+    // UN CONTEXTE HORS LIGNE, ET NON UN `AudioContext` : ce dernier ouvre la carte son, et une machine
+    // d'intégration continue n'en a pas — « DeviceUnavailable: No output device available », un échec
+    // qui ne se voit sur aucun poste de développement. Le décodage est le même des deux côtés.
+    const ctx = new OfflineAudioContext(1, 1, 44100);
     const audios = new Map<string, AudioBuffer>();
     for (const voix of VOIX_KIT) {
       const octets = readFileSync(join(DOSSIER, voix.fichier));
@@ -108,7 +112,7 @@ describe.skipIf(ecrire)("le kit embarqué, tel qu'il est versionné", () => {
     }
     // 37 n'existe pas dans le General MIDI de ce kit : elle doit rester muette.
     expect(choisirZone(banque, 37)).toBeNull();
-    await ctx.close();
+    // Rien à fermer : un contexte hors ligne ne tient aucune ressource du système.
   }, 30000);
 
   it("est déclaré dans l'installeur, faute de quoi il manquerait à l'application installée", () => {
