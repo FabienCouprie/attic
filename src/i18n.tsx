@@ -616,6 +616,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.julia_var_0_var_1": { fr: "Julia {__VAR_0__}{__VAR_1__}", en: "Julia {__VAR_0__}{__VAR_1__}" },
   "msg.magenta_drums_var_0_mesures_var_1_bpm": { fr: "Magenta Drums · {__VAR_0__} mesures · {__VAR_1__} BPM", en: "Magenta Drums · {__VAR_0__} measures · {__VAR_1__} BPM" },
   "msg.erreur_magenta_drums_var_0": { fr: "Erreur Magenta Drums : {__VAR_0__}", en: "Magenta Drums error: {__VAR_0__}" },
+  "msg.magenta.worker": { fr: "Le worker Magenta s'est arrêté : {__VAR_0__}", en: "The Magenta worker stopped: {__VAR_0__}" },
   "msg.magenta_continuation_var_0_pas": { fr: "Magenta Continuation · +{__VAR_0__} pas", en: "Magenta Continuation · +{__VAR_0__} steps" },
   "msg.erreur_magenta_continuation_var_0": { fr: "Erreur Magenta Continuation : {__VAR_0__}", en: "Magenta Continuation error: {__VAR_0__}" },
   "msg.magenta_improvisation_var_0_s_var_1_var_2_bpm": { fr: "Magenta Improvisation · {__VAR_0__}s · {__VAR_1__} · {__VAR_2__} BPM", en: "Magenta Improvisation · {__VAR_0__}s · {__VAR_1__} · {__VAR_2__} BPM" },

@@ -9,9 +9,29 @@ import { MODES, MODES_EN, MODES_IDS } from "./magenta-helpers";
 import { appliquerInstrumentMidi } from "../audio/midi";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { hasardDuNoeud } from "../core";
+import { installerGardeWorker } from "./garde-worker";
 
 let worker: Worker | null = null;
 const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: any }[] = [];
+
+/**
+ * Un worker mort doit FAIRE ÉCHOUER les nœuds, et non les laisser attendre.
+ *
+ * Sans ce filet, une erreur levée à l'IMPORT du worker — donc hors de `onmessage`, qui n'a alors
+ * jamais l'occasion de s'exécuter — ne postait aucun message : la promesse de `runMagenta` ne se
+ * réglait ni dans un sens ni dans l'autre, et les sept nœuds Magenta restaient « en cours » pour
+ * toujours, sans message, sans erreur et sans rien à lire dans l'interface. C'est exactement ce qui
+ * est arrivé : un import de trop faisait entrer un module React dans le worker.
+ *
+ * Le worker est aussi ABANDONNÉ : il ne répondra plus, et le garder ferait attendre pareillement la
+ * prochaine exécution. Le suivant sera reconstruit par `getWorker`.
+ */
+function echouerTout(raison: string) {
+  const erreur = new Error(raison);
+  while (pending.length) pending.shift()!.reject(erreur);
+  try { worker?.terminate(); } catch { /* le worker est peut-être déjà mort */ }
+  worker = null;
+}
 
 function getWorker(): Worker {
   if (!worker) {
@@ -31,6 +51,10 @@ function getWorker(): Worker {
         }
       }
     };
+    // La détection de la mort du worker est celle de tous les autres nœuds à worker d'Attic
+    // (`garde-worker.ts`) ; seule la façon d'échouer diffère ici, la file de Magenta étant numérotée
+    // par ordre d'arrivée et non par identifiant de demande.
+    installerGardeWorker(worker, (raison) => echouerTout(traduire("msg.magenta.worker", raison)));
   }
   return worker;
 }

@@ -4,12 +4,17 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { installerGardeWorker } from "./garde-worker";
 
 let worker: Worker | null = null;
 
 function getWorker(): Worker {
   if (!worker) {
     worker = new Worker(new URL("../workers/image-to-text-worker.js", import.meta.url), { type: "module" });
+    // Le garde-fou transforme la mort du worker en erreur du nœud : sans lui, un worker qui meurt
+    // avant de répondre laisse le nœud « en cours » pour toujours. `worker = null` pour que la
+    // tentative suivante en reconstruise un, au lieu de reparler à un mort.
+    installerGardeWorker(worker, () => { worker = null; });
   }
   return worker;
 }

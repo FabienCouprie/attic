@@ -157,13 +157,17 @@ export function useExecutionGraphe(o: OptionsExecution) {
     return audioCtxRef.current;
   }
 
-  const definirStatut = (nodeId: string, statut: string, progression?: string) => {
+  // `progressionDuNoeud` distingue ce que le NŒUD dit de son avancement (son `onProgress`) de ce que
+  // le MOTEUR pose — « Étape i/total », qui est sa position dans le lot. L'anneau de progression ne
+  // lit que le premier : sans cette distinction, il prenait « Étape 1/1 » pour 100 %.
+  const definirStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
     setNodes((nds) =>
       nds.map((n) => {
         if (n.id !== nodeId) return n;
         // Ne recréer l'objet que si le statut a réellement changé
-        if (n.data.statut === statut && n.data.progression === progression) return n;
-        return { ...n, data: { ...n.data, statut, progression } };
+        if (n.data.statut === statut && n.data.progression === progression
+            && n.data.progressionDuNoeud === progressionDuNoeud) return n;
+        return { ...n, data: { ...n.data, statut, progression, progressionDuNoeud } };
       })
     );
   };
@@ -404,11 +408,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // décide de l'état affiché, ce qui est le bon comportement — sauf pour une ERREUR, qu'une copie
     // suivante ne doit pas effacer : un nœud dont une seule note a échoué a échoué.
     const visiblesEnErreur = new Set<string>();
-    const poserStatut = (nodeId: string, statut: string, progression?: string) => {
+    const poserStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
       const visibleId = plat.expansions.get(nodeId) ?? nodeId;
       if (statut === "erreur") visiblesEnErreur.add(visibleId);
       else if (visiblesEnErreur.has(visibleId)) return;
-      definirStatut(visibleId, statut, progression);
+      definirStatut(visibleId, statut, progression, progressionDuNoeud);
     };
 
     const tempsParVisible = new Map<string, number>();
@@ -531,7 +535,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // dessus l'état « attente » que le reset vient de poser, sans plus
           // jamais être corrigé (l'application du résultat final est, elle,
           // déjà court-circuitée par la garde juste après cet appel).
-          onProgress: (msg: string) => { if (!controller.signal.aborted) poserStatut(nodeId, "en_cours", msg); },
+          onProgress: (msg: string) => { if (!controller.signal.aborted) poserStatut(nodeId, "en_cours", msg, true); },
           signal: controller.signal,
         });
         // Le nœud a été réinitialisé pendant que sa promesse était en vol (le

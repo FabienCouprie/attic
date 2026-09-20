@@ -7,7 +7,10 @@ import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";
 import { NoteSequence } from "@magenta/music/esm/protobuf";
 import { parseMidi, writeMidi } from "midi-file";
-import { comparerEvenementsMidi } from "../audio/midi";
+// `midi-ordre` et NON `audio/midi` : ce fichier est chargé par le worker Magenta, et `audio/midi`
+// tire `i18n.tsx` derrière lui — un module React, que Vite équipe en développement d'un préambule
+// touchant `window`, lequel n'existe pas dans un worker.
+import { comparerEvenementsMidi } from "../audio/midi-ordre";
 import * as tf from "@tensorflow/tfjs";
 
 tf.disableDeprecationWarnings();

@@ -1,6 +1,7 @@
 // audio/midi.ts — Extrait de l'ancien monolithe DSP.
 
 import { parseMidi, writeMidi } from "midi-file";
+import { comparerEvenementsMidi } from "./midi-ordre";
 import type { StructureSF2 } from "./soundfont";
 import { chercherZonesInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
@@ -20,33 +21,10 @@ export interface InstrumentCanal {
   banque: number;
 }
 
-/**
- * Rang d'un événement à l'intérieur d'un même tick : réglages, puis note-off, puis note-on.
- *
- * L'ordre comptait, et il était inversé. Une note qui se rejoue à la même hauteur sur le
- * même canal — un accord tenu jusqu'au suivant, une basse qui répète sa fondamentale —
- * porte un note-off exactement au tick du note-on qui la relance. Le note-off écrit
- * APRÈS refermait la note qui venait de s'ouvrir : durée nulle, et `rendreAvecSF2`
- * écarte tout ce qui dure moins d'une milliseconde. En blues, dont la progression est
- * I–I–I–I, les huit accords portent les mêmes hauteurs : on n'entendait que le premier,
- * puis plus rien — et la basse suivait le même sort dès qu'un degré se répétait.
- *
- * Le note-off d'abord referme l'ancienne note à sa durée, le note-on relance ensuite :
- * les deux notes existent, et l'attaque se réentend à chaque accord.
- */
-function rangEvenement(type: string): number {
-  if (type === "noteOn") return 2;
-  if (type === "noteOff") return 1;
-  return 0; // setTempo, timeSignature, controller, programChange : avant les notes.
-}
-
-/** Comparateur d'événements MIDI absolus : par tick, puis par rang dans le tick. */
-export function comparerEvenementsMidi(
-  a: { tick: number; type: string },
-  b: { tick: number; type: string },
-): number {
-  return a.tick - b.tick || rangEvenement(a.type) - rangEvenement(b.type);
-}
+// L'ordre des événements dans un tick vit dans `midi-ordre.ts`, un module SANS aucun import :
+// le worker Magenta s'en sert, et il ne doit pas tirer `i18n.tsx` derrière lui. Réexporté ici pour
+// que les sept écrivains MIDI qui l'employaient ne changent pas d'adresse.
+export { comparerEvenementsMidi } from "./midi-ordre";
 
 export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   notes: NoteMidi[];

@@ -14,7 +14,10 @@ import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
-  progression?: string; audioResultatUrl?: string; audioResultatMessage?: string;
+  progression?: string;
+  /** Vrai quand `progression` vient du NŒUD lui-même (son `onProgress`), et non du moteur. */
+  progressionDuNoeud?: boolean;
+  audioResultatUrl?: string; audioResultatMessage?: string;
   audioFichier?: File; audioNom?: string; audioUrl?: string; audioChemin?: string;
   audioResultatBuffer?: AudioBuffer;
   midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
@@ -290,7 +293,13 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const vuesApres = vuesPourNoeud(data.ficheId, "apres");
 
   // ── Progression d'exécution ──
-  const texteProgression = data.progression ?? "";
+  //
+  // L'ANNEAU NE LIT QUE CE QUE LE NŒUD DIT DE LUI-MÊME. Le moteur pose d'abord « Étape i/total »,
+  // qui est la position du nœud DANS LE LOT et non son avancement : la lecture des fractions la
+  // prenait pour une progression, si bien qu'un nœud seul affichait un anneau PLEIN dès la première
+  // seconde et le gardait plein pendant tout son calcul. Un nœud qui ne dit rien de son avancement
+  // mérite un anneau indéterminé — c'est la vérité disponible.
+  const texteProgression = data.progressionDuNoeud ? (data.progression ?? "") : "";
   const matchPourcent = texteProgression.match(/(\d+(?:\.\d+)?)\s*%/);
   const matchEtapes = texteProgression.match(/(\d+)\s*\/\s*(\d+)/);
   const pourcentBarre = matchPourcent

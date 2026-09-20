@@ -4,6 +4,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { installerGardeWorker } from "./garde-worker";
 
 const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main";
 const MODEL_DIR = "/sherpa-asr-model";
@@ -45,6 +46,11 @@ function getWorker(): Worker {
     // employé par les douze autres workers du projet, qui sont des modules
     // passant par le graphe de build de Vite.
     worker = new Worker(new URL("sherpa-asr-worker.js", document.baseURI), { type: "classic" });
+    // Le garde-fou commun, en plus de l'écouteur d'erreur que l'initialisation pose déjà : celui-ci
+    // ne couvre que l'initialisation, alors que la transcription, elle, attendait ses trois minutes
+    // de chien de garde avant d'annoncer une « expiration » — un message faux, puisque le worker
+    // était mort. La raison réelle arrive maintenant tout de suite.
+    installerGardeWorker(worker, () => { worker = null; currentConfigHash = null; });
   }
   return worker;
 }

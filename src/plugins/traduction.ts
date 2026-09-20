@@ -4,12 +4,16 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { installerGardeWorker } from "./garde-worker";
 
 let opusWorkers: Map<string, Worker> = new Map();
 
 function getOpusWorker(modelId: string): Worker {
   if (!opusWorkers.has(modelId)) {
     const w = new Worker(new URL("../workers/opus-worker.js", import.meta.url), { type: "module" });
+    // Un worker mort doit faire échouer la traduction, et sortir du cache : sinon le nœud attendrait
+    // indéfiniment, et toutes les traductions suivantes de la même paire aussi.
+    installerGardeWorker(w, () => { opusWorkers.delete(modelId); });
     opusWorkers.set(modelId, w);
   }
   return opusWorkers.get(modelId)!;

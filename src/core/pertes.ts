@@ -57,7 +57,7 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
     // Champs commençant par _ (internes, temporaires) — non purgés, juste ignorés
     if (cle.startsWith("_") || cle.startsWith("on")) continue;
     // Champs de statut runtime (recréés à l'exécution)
-    if (["statut", "progression", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
+    if (["statut", "progression", "progressionDuNoeud", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
          "audioUrl", "enregistrementUrl", "mp3Url", "scriptGenere", "midiFichierSortie",
          "sf2Data", "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "svgFichier",
          "svgNom", "enregistrementBlob",
