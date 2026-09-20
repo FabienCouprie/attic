@@ -38,10 +38,16 @@ export function enregistrerMeta(meta: MetaComposant): void {
   const def: PluginDef<TypeValeur, AudioContext> = {
     id: meta.id,
     nom: meta.nom,
+    // La fiche n'avait aucun champ anglais : un méta-composant gardait son nom et son
+    // résumé français dans le catalogue anglais, jusque dans l'infobulle — alors même
+    // que le méta, lui, porte un `nomEn`, qui était simplement perdu ici.
+    nomEn: meta.nomEn,
     univers: "Méta-composants",
     famille: "Sous-graphes",
     resume: `Sous-graphe : ${meta.sousNoeuds.length} nœud(s), ${meta.entrees.length} entrée(s), ${meta.sorties.length} sortie(s).`,
+    resumeEn: `Subgraph: ${meta.sousNoeuds.length} node(s), ${meta.entrees.length} input(s), ${meta.sorties.length} output(s).`,
     notice: `Méta-composant encapsulant ${meta.sousNoeuds.length} nœud(s) et ${meta.sousAretes.length} connexion(s) internes. Aplati automatiquement à l'exécution. « Dégrouper » pour rouvrir son contenu dans le graphe.`,
+    noticeEn: `Meta-component wrapping ${meta.sousNoeuds.length} node(s) and ${meta.sousAretes.length} internal connection(s). Flattened automatically at run time. Use « Ungroup » to reopen its contents in the graph.`,
     entrees: meta.entrees,
     sorties: meta.sorties,
     parametres: [],

@@ -39,6 +39,11 @@ export interface ConfigMultiReservoir {
   rythmeNeurones: number;
   rythmeDensite: number;
 
+  // Instrument écrit dans la sortie MIDI de chaque partie (bank * 128 + programme).
+  // -1 : rien n'est écrit, le fichier suit ce que le rendu décidera.
+  melodieInstrument?: number;
+  basseInstrument?: number;
+  harmonieInstrument?: number;
   // Kit de batterie pour la sortie MIDI rythme (bank * 128 + programme)
   rythmeInstrument: number;
   // Transposition (en demi-tons) appliquée aux notes de batterie MIDI
@@ -280,6 +285,20 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
 
   const { programme: rythmeProgramme, banque: rythmeBanque } = decoderInstrumentSF2(config.rythmeInstrument ?? 0);
 
+  /**
+   * L'instrument choisi est écrit DANS le fichier MIDI de sa partie, pour qu'il voyage
+   * avec lui : sans cela, le nœud qui rend ce MIDI en aval retombe sur le programme par
+   * défaut, et le réglage ne s'entend nulle part. Seule la piste de rythme était traitée
+   * ainsi — le même défaut que la Groove Box avait pour ses trois autres parties.
+   *
+   * À -1 (« Suivre le MIDI »), aucun changement de programme n'est écrit.
+   */
+  const midiPartie = (notes: NoteGeneree[], nom: string, canal: number, valeur: number | undefined): File => {
+    if (valeur === undefined || valeur < 0) return toMidiFile(notes, nom, canal);
+    const { programme, banque } = decoderInstrumentSF2(valeur);
+    return toMidiFile(notes, nom, canal, banque, programme);
+  };
+
   function toMidiFile(notes: NoteGeneree[], name: string, canal = 0, banque?: number, programme?: number): File {
     const events = notes
       .filter((n) => !n.silence)
@@ -292,10 +311,13 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
     notes: toutesNotes,
     buffer: buf,
     details: `Mélodie: ${nbMel} · Basse: ${nbBasse} · Harmonie: ${nbHarm} · Rythme: ${nbRythme}`,
+    // Un canal par partie, et non le canal 0 pour trois d'entre elles : réunies par
+    // « Jointure MIDI » ou jouées ensemble, elles se disputaient le même canal, donc le
+    // même instrument — la dernière lue l'emportait.
     midis: {
-      melody: toMidiFile(melodieFinale, "multi-melody.mid"),
-      bass: toMidiFile(basseFinale, "multi-bass.mid"),
-      harmony: toMidiFile(harmonieFinale, "multi-harmony.mid"),
+      melody: midiPartie(melodieFinale, "multi-melody.mid", 0, config.melodieInstrument),
+      bass: midiPartie(basseFinale, "multi-bass.mid", 1, config.basseInstrument),
+      harmony: midiPartie(harmonieFinale, "multi-harmony.mid", 2, config.harmonieInstrument),
       rhythm: toMidiFile(rythmeGM, "multi-rhythm.mid", 9, rythmeBanque, rythmeProgramme),
     },
   };

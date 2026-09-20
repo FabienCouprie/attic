@@ -72,6 +72,28 @@ describe("genererGrooveBox", () => {
     }
   });
 
+  it("écrit la mélodie au-dessus de l'accompagnement", () => {
+    // Défaut corrigé : la mélodie venait du réservoir avec une vélocité médiane de 44,
+    // contre 70 pour les accords et 95 pour la basse — mesurée sur le rendu FM, elle
+    // sortait 10 dB sous les accords. Trois notes tenues couvrent une ligne seule : la
+    // mélodie doit dominer en vélocité pour s'entendre.
+    const mediane = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+    const velocites = (canal: number, notes: { canal: number; velocite: number }[]) =>
+      notes.filter((n) => n.canal === canal).map((n) => n.velocite);
+    for (const graine of [1, 7, 42]) {
+      const r = genererGrooveBox({
+        cle: "C", gamme: "majeur", genre: "pop", progression: "I-V-vi-IV", extension: "aucune",
+        tempo: 110, dureeAccord: 2, nbAccords: 8, styleRythme: "Pop dance", neurones: 15,
+        connectivite: 0.3, memoire: 0.3, spectre: 0.9, octave: 4, densite: 0.7,
+        repetition: 0.25, silence: 0.1, graine,
+      } as ConfigGrooveBox);
+      const melodie = mediane(velocites(2, r.notes));
+      expect(melodie, `graine ${graine}`).toBeGreaterThan(mediane(velocites(0, r.notes)));
+      expect(melodie, `graine ${graine}`).toBeGreaterThan(mediane(velocites(1, r.notes)));
+      expect(melodie).toBeLessThanOrEqual(127);
+    }
+  });
+
   it("est déterministe avec la même graine", () => {
     const config: ConfigGrooveBox = {
       cle: "D",
@@ -164,17 +186,75 @@ describe("genererGrooveBox", () => {
     expect(result.description).toContain("I–IV–V–I");
   });
 
-  it("l'extension 7e ajoute une 4e note diatonique aux accords (canal 0)", () => {
-    const config: ConfigGrooveBox = {
-      cle: "C", gamme: "majeur", genre: "personnalisé", progression: "I",
-      extension: "septieme",
-      tempo: 120, dureeAccord: 4, nbAccords: 1, styleRythme: "Rock",
+  // « Extension » ajoutait une 7e ou une 6e à TOUS les accords, ce qui n'a pas de sens
+  // musical : une septième se pose là où le style la pose. Elle est désormais placée
+  // selon le genre et le degré, et ces tests tiennent la règle.
+  const accord = (config: Partial<ConfigGrooveBox>, degres: string) => {
+    const r = genererGrooveBox({
+      cle: "C", gamme: "majeur", genre: "personnalisé", progression: degres,
+      extension: "idiomatique", tempo: 120, dureeAccord: 4, nbAccords: 1, styleRythme: "Rock",
+      neurones: 5, connectivite: 0.3, memoire: 0.3, spectre: 0.9, octave: 4,
+      densite: 0, repetition: 0, silence: 0, graine: 1, ...config,
+    } as ConfigGrooveBox);
+    return [...new Set(r.notes.filter((n) => n.canal === 0).map((n) => ((n.note % 12) + 12) % 12))].sort((a, b) => a - b);
+  };
+
+  it("en pop, seule la dominante reçoit une septième", () => {
+    expect(accord({}, "I")).toEqual([0, 4, 7]);            // Do majeur, triade
+    expect(accord({}, "V")).toEqual([2, 5, 7, 11]);        // Sol 7e de dominante
+  });
+
+  // Hors « personnalisé », le genre impose sa propre progression : on regarde donc les
+  // accords qu'il produit, et non un degré choisi.
+  const taillesParRacine = (genre: string, extension = "idiomatique") => {
+    const r = genererGrooveBox({
+      cle: "C", gamme: "majeur", genre, progression: "I", extension,
+      tempo: 120, dureeAccord: 2, nbAccords: 8, styleRythme: "Rock",
       neurones: 5, connectivite: 0.3, memoire: 0.3, spectre: 0.9, octave: 4,
       densite: 0, repetition: 0, silence: 0, graine: 1,
-    };
-    const result = genererGrooveBox(config);
-    const pitches = [...new Set(result.notes.filter((n) => n.canal === 0).map((n) => ((n.note % 12) + 12) % 12))].sort((a, b) => a - b);
-    expect(pitches).toEqual([0, 4, 7, 11]); // Cmaj7
+    } as ConfigGrooveBox);
+    const parDebut = new Map<number, number[]>();
+    for (const n of r.notes.filter((x) => x.canal === 0)) {
+      if (!parDebut.has(n.debut)) parDebut.set(n.debut, []);
+      parDebut.get(n.debut)!.push(n.note);
+    }
+    return [...parDebut.values()].map((notes) => ({
+      racinePc: ((Math.min(...notes) - 36) % 12 + 12) % 12,
+      taille: notes.length,
+    }));
+  };
+
+  it("en jazz et en blues, chaque accord reçoit sa septième — c'est leur idiome", () => {
+    for (const genre of ["jazz", "blues"]) {
+      const accords = taillesParRacine(genre);
+      expect(accords.length).toBeGreaterThan(0);
+      expect(accords.every((a) => a.taille === 4), genre).toBe(true);
+    }
+  });
+
+  it("en ambient, la tonique et la sous-dominante seulement", () => {
+    const accords = taillesParRacine("ambient");
+    expect(accords.some((a) => a.racinePc === 0 || a.racinePc === 5)).toBe(true);
+    for (const a of accords) {
+      expect(a.taille, `degré ${a.racinePc}`).toBe(a.racinePc === 0 || a.racinePc === 5 ? 4 : 3);
+    }
+  });
+
+  it("en pop, aucun accord hors dominante n'est coloré", () => {
+    for (const a of taillesParRacine("pop")) {
+      expect(a.taille, `degré ${a.racinePc}`).toBe(a.racinePc === 7 ? 4 : 3);
+    }
+  });
+
+  it("« Aucune » laisse des triades partout, même en jazz", () => {
+    expect(accord({ genre: "jazz", extension: "aucune" }, "I")).toEqual([0, 4, 7]);
+  });
+
+  it("lit les anciens réglages « 7e » et « 6e » comme « Idiomatique »", () => {
+    // Un projet enregistré avant ce changement s'ouvre sans erreur, et ses accords
+    // suivent désormais la règle du genre plutôt que de recevoir tous une couleur.
+    expect(accord({ extension: "septieme" as never }, "I")).toEqual([0, 4, 7]);
+    expect(accord({ extension: "sixte" as never }, "V")).toEqual([2, 5, 7, 11]);
   });
 
   it("sans extension, les accords restent des triades pures (comportement inchangé)", () => {

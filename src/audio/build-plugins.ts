@@ -15,6 +15,11 @@ export const audioResolveAliases: any[] = [
   // build Node (lecture locale des .bin). Dans le worker navigateur/Electron,
   // on veut la build web pour éviter les imports fs/promises et path.
   { find: /^kokoro-js$/, replacement: path.resolve(process.cwd(), 'node_modules/kokoro-js/dist/kokoro.web.js') },
+  // @csound/browser ne déclare NI « main » NI « exports », seulement « module ». Vite le
+  // résout au navigateur, mais pas sous vitest, où quatre suites ont soudain échoué sur
+  // « Failed to resolve import "@csound/browser" ». On pointe donc l'entrée réelle, comme
+  // pour @magenta/music juste au-dessus.
+  { find: /^@csound\/browser$/, replacement: path.resolve(process.cwd(), 'node_modules/@csound/browser/dist/csound.js') },
 ];
 
 export const audioBuildPlugins: any[] = [
@@ -45,7 +50,11 @@ export const audioOptimizeDeps: any = {
   // vers sa build web (dist/kokoro.web.js) afin d'éviter les imports fs/promises
   // de la build Node. ephone est aussi exclu car il contient des imports dynamiques
   // de packs de langues et du WASM inline qu'on ne veut pas pré-bundler.
-  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js", "ephone"],
+  // @csound/browser est exclu lui aussi, et l'essai a été net : pré-bundlé par
+  // l'optimiseur de dépendances, il empêche l'application de démarrer — la barre d'outils
+  // n'apparaît jamais. Le fichier fait deux mégaoctets et demi avec son WebAssembly encodé
+  // en base64 à l'intérieur, et l'optimiseur ne s'en sort pas. Exclu, tout charge.
+  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js", "ephone", "@csound/browser"],
   include: [
     "@tensorflow/tfjs",
     "@tensorflow/tfjs-core",

@@ -57,6 +57,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Modèle des nœuds « Score esthétique » et « Comparaison esthétique » (420 Mo),
+      # publié à part sur la release `assets` plutôt que dans assets.zip, et vérifié par
+      # son SHA-256 : une archive de 2 Go à retéléverser pour un seul fichier ajouté
+      # multiplierait les occasions d'en publier une périmée.
+      - name: Download the Audiobox Aesthetics model
+        run: npm run download:audiobox-aesthetics
+
+      # « music collection » est embarquée (extraResources) mais ignorée par git :
+      # absente du checkout, elle était sautée par electron-builder avec un simple
+      # avertissement, et les installeurs 3.x sont partis sans elle. Elle vient de
+      # music-collection.zip sur la release `assets`, vérifiée fichier par fichier
+      # contre scripts/music-collection.manifest.json.
+      - name: Download the demo music collection
+        run: npm run download:music-collection
+
       - name: Build the installer
         shell: pwsh
         run: |
@@ -67,6 +82,10 @@ jobs:
           # Build with the full dev dependency tree.
           npm run build
           npm run ensure-songsee
+          # Chaque source de build.extraResources doit exister et avoir un contenu :
+          # electron-builder n'échoue pas quand l'une manque, il avertit et continue.
+          node scripts/verify-bundled-resources.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Ressource embarquee absente ou vide" }
           # electron-builder scans node_modules when packaging. With the full dependency
           # tree this exhausts the GitHub runner memory. Keep Electron aside, shrink
           # dependencies to only those used by the main process, and prune.
@@ -107,6 +126,10 @@ jobs:
           # un succès. Le téléversement se fait donc à l'étape suivante, avec un
           # outil qui attend la fin et signale les erreurs.
           npm exec -- electron-builder --win -p never
+          if ($LASTEXITCODE -ne 0) { throw "electron-builder a echoue" }
+          # Contrôle a posteriori : ce qui est réellement dans l'application construite.
+          node scripts/verify-bundled-resources.cjs --paquet release/win-unpacked/resources
+          if ($LASTEXITCODE -ne 0) { throw "Ressource embarquee absente ou incomplete dans l'application" }
         env:
           # electron-builder can exceed the default Node heap on larger apps.
           NODE_OPTIONS: --max-old-space-size=14336

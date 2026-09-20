@@ -115,11 +115,28 @@ export function extraitCentre(buffer: AudioBuffer, dureeMaxS: number): AudioBuff
 }
 
 
+/**
+ * Étire la durée sans toucher à la hauteur — vocodeur de phase.
+ *
+ * LE SAUT DE SYNTHÈSE EST BORNÉ, et ce n'est pas un détail de confort. Le recollement additionne des
+ * trames fenêtrées par une Hann et divise par la somme de leurs carrés ; cette somme ne reste
+ * remplie que si les trames se recouvrent d'au moins trois quarts. L'ancienne version fixait le saut
+ * d'ANALYSE et calculait celui de synthèse par `ha × facteur` : à facteur 4, il atteignait la taille
+ * de la fenêtre, le recouvrement tombait à zéro, et l'on divisait par une enveloppe qui touchait
+ * zéro. Mesuré sur un son de crête 0,77 : crête 1,4 à +20 demi-tons, **73 à +24 demi-tons** — c'est-
+ * à-dire à l'intérieur même de la plage du curseur de « Changement de tonalité » —, et jusqu'à 200 à
+ * +36. « Changement de tempo » à 25 % et « Glissando de tonalité » étaient touchés de la même façon.
+ *
+ * On fixe donc le saut du côté qui décide de l'enveloppe : à l'étirement, c'est la SYNTHÈSE qui doit
+ * garder son recouvrement, et le saut d'analyse se déduit du facteur ; au raccourcissement, c'est
+ * l'inverse. Les deux règles se rejoignent à facteur 1.
+ */
 export function etirerDuree(entree: AudioBuffer, facteur: number): AudioBuffer {
   const n = TAILLE_FFT_HAUTEUR;
   const nbBins = n / 2 + 1;
-  const ha = SAUT_ANALYSE_HAUTEUR;
-  const hs = Math.max(1, Math.round(ha * facteur));
+  const saut = SAUT_ANALYSE_HAUTEUR;
+  const ha = facteur >= 1 ? Math.max(1, Math.round(saut / facteur)) : saut;
+  const hs = facteur >= 1 ? saut : Math.max(1, Math.round(saut * facteur));
   const fenetre = creerFenetreHann(n);
   const longueurSortie = Math.max(n, Math.round(entree.length * facteur));
 

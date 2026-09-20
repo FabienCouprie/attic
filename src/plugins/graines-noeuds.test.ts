@@ -108,7 +108,7 @@ describe("nœuds à graine fixe : deux exécutions sans rien régler donnent le 
   // C'est exactement ce qui n'était PAS vrai avant : ces nœuds rendaient un
   // fichier différent à chaque exécution, sans que rien ne le signale.
   const CAS: { id: string; params: Record<string, string | number>; entree?: () => unknown }[] = [
-    { id: "sequenceur-batterie", params: { Tempo: 120, "Nombre de pas": "16", Swing: 0, Mesures: 1, Volume: 90 } },
+    { id: "sequenceur-batterie-avance", params: { Tempo: 120, "Nombre de pas": "16", Swing: 0, Mesures: 1, Volume: 90 } },
     { id: "boite-rythmes", params: { Tempo: 120, Patron: "Rock", Mesures: 1, Kick: 80, "Caisse claire": 70, Charley: 60 } },
     { id: "reverberation", params: { Taille: 50, Decay: 1, Mix: 50 }, entree: () => sinus() },
   ];
@@ -136,8 +136,9 @@ describe("déclaration du paramètre", () => {
     // Garde-fou contre l'oubli le plus bête : câbler `ctx.paramNombre(\"Graine\")`
     // sans déclarer le paramètre. Le nœud fonctionnerait, mais la graine
     // n'apparaîtrait jamais dans l'inspecteur — or c'est tout l'objet.
-    const TIRE_AU_SORT = ["generateur-bruit", "melodie-aleatoire", "rythme-cantor", "camelot", "arpege-midi", "magenta-improvisation"];
-    const FIXE = ["sequenceur-batterie", "sequenceur-batterie-avance", "boite-rythmes", "reverberation",
+    const TIRE_AU_SORT = ["generateur-bruit", "melodie-aleatoire", "rythme-cantor", "camelot", "arpege-midi",
+      "magenta-improvisation", "partition-aleatoire-csound"];
+    const FIXE = ["sequenceur-batterie-avance", "boite-rythmes", "reverberation",
       "reverb-progressive", "paulstretch", "paulstretch-logistique", "griffin-lim", "piece-lucier",
       "palette-harmonique", "dessin-sonore"];
 

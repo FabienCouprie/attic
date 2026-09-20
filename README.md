@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 260 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 328 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **260 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **328 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -22,6 +22,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
   - OPUS-MT — translation (18 language pairs)
   - Demucs 6-stem / MDX-Net — AI source separation (drums, bass, vocals, guitar, piano, other)
   - Ollama — local LLMs (Qwen3, Llama, Mistral…) for text/lyrics generation via a local Ollama server
+- **Csound wrapper** — five nodes running Csound (WebAssembly): free orchestra and score, MIDI-driven instrument, audio effect, physical-model instruments (wgbow, wgclar, wgflute, wgbrass, wgpluck2, fof2) and spectral processing (pvscross, pvsvoc, mincer)
 - **Python Processor** and **Julia Processor** nodes — custom audio/MIDI/text processing in Python or Julia
 - **Bilingual UI** (FR/EN) with React 19 + @xyflow/react
 - **Node import/export** — package custom nodes as `.zip`, share between installations
@@ -32,7 +33,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
-- **94 effects** including: tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
+- **128 effects** including: MIDI pattern transformations (impose rhythm, note echo, thin out, ply and rotate, retrograde and palindrome), physical models (shakers, wind instruments, modal bars), scanned synthesis, wave terrain, FOF vowels, serial operations, negative harmony, voicings, Tonnetz, Markov chains, historical temperaments, tremolo, phaser, vibrato, octaver, chopper, wah-wah, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 
 ## Architecture
@@ -132,7 +133,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (260 nodes)
+  plugins/       # Plugin node definitions (328 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -164,6 +165,12 @@ Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workfl
 The bundled AI models (`public/oonx`) and SoundFont (`public/sf2`) are **not stored in Git**. They are packaged as `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. The workflow downloads and extracts this archive before building.
 
 If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release. **Nothing checks this**: the workflow extracts whatever `assets.zip` currently holds, so a forgotten upload silently ships an installer with stale models — no warning, no build failure.
+
+The **Audiobox Aesthetics** model used by the Aesthetic Score and Aesthetic Comparison nodes (`audiobox-aesthetics.onnx`, 420 MB) is published on its own on the same release and fetched by `npm run download:audiobox-aesthetics`, which checks its size and SHA-256 before installing it into `public/oonx`. To regenerate it, see `scripts/export-audiobox-aesthetics.py`; a new file means a new expected SHA-256 in the download script.
+
+The demo **`music collection`** — opened by default by the Music player, Sound Map and Music explorer, and used by the training exercises — is not in Git either. It is published as `music-collection.zip` on the same release, and `scripts/music-collection.manifest.json` (versioned) lists the name, size and SHA-256 of every file. `npm run download:music-collection` fetches what is missing and refuses an archive that does not match the manifest; it never overwrites a local file that differs. **If you change the collection**, run `node scripts/download-music-collection.cjs --pack <path>.zip`, which rewrites the manifest and builds the archive, upload the archive with `gh release upload assets <path>.zip --clobber`, and commit the manifest.
+
+**Every `build.extraResources` entry is checked twice** by `scripts/verify-bundled-resources.cjs`: before packaging (the source exists and is not empty) and after (`--paquet release/win-unpacked/resources`: same file count and size inside the built app). electron-builder only *warns* when a source is missing, and packages without it — this is how the 3.x installers built by the workflow shipped without `music collection`. Both checks fail the job.
 
 > **Do not build and upload the installer by hand.** It looks equivalent and is not. `electron-builder` emits `latest.yml` alongside the `.exe`, and `electron-updater` fetches that file *first*: without it, every installed client fails its update check with `Cannot find latest.yml in the latest release artifacts`, while the release page still looks complete. Releases 3.1.0 and 3.1.1 shipped that way and had no working auto-update until 3.1.3. A hand-made build also skips what the workflow does on purpose — disabling asar (packaging this app's bundled assets into a single archive exhausts memory) and pruning `dependencies` to the four modules the main process actually loads.
 >

@@ -10,6 +10,7 @@ import { fiches as f_sorties } from "./sorties";
 import { fiches as f_sortie_texte } from "./sortie-texte";
 import { fiches as f_modifier_texte } from "./modifier-texte";
 import { fiches as f_debruitage_ia } from "./debruitage-ia";
+import { fiches as f_esthetique } from "./esthetique";
 import { fiches as f_entrees_extra } from "./entrees-extra";
 import { fiches as f_generateurs } from "./generateurs";
 import { fiches as f_montage } from "./montage";
@@ -107,6 +108,37 @@ import { fiches as f_stockhausen } from "./stockhausen";
 import { fiches as f_nancarrow } from "./nancarrow";
 import { fiches as f_pulsars } from "./pulsars";
 import { fiches as f_cribles } from "./cribles";
+import { fiches as f_theorie_composition } from "./theorie-composition";
+import { fiches as f_modeles_physiques } from "./modeles-physiques";
+import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
+import { fiches as f_theorie_avancee } from "./theorie-avancee";
+import { fiches as f_csound } from "./csound";
+import { fiches as f_documentation } from "./documentation";
+import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
+import { fiches as f_vitesse_midi } from "./vitesse-midi";
+import { fiches as f_hpss } from "./hpss";
+import { fiches as f_decaleur } from "./decaleur-frequence";
+import { fiches as f_texture } from "./texture-statistique";
+import { fiches as f_sms } from "./sms";
+import { fiches as f_velours } from "./velours";
+import { fiches as f_courbe } from "./courbe";
+import { fiches as f_hauteur } from "./hauteur";
+import { fiches as f_stn } from "./stn";
+import { fiches as f_retard_spectral } from "./retard-spectral";
+import { fiches as f_declipper } from "./declipper";
+import { fiches as f_inpainting } from "./inpainting";
+import { fiches as f_pghi } from "./pghi";
+import { fiches as f_fdn } from "./fdn";
+import { fiches as f_clavier_banque } from "./clavier-banque";
+import { fiches as f_export_sfz } from "./export-sfz";
+import { fiches as f_instrument } from "./instrument-graphe";
+import { fiches as f_clavier_sfz } from "./clavier-sfz";
+import { fiches as f_repartiteur_midi } from "./repartiteur-midi";
+import { fiches as f_banque_sfz } from "./banque-sfz";
+import { fiches as f_csound_partition } from "./csound-partition";
+import { fiches as f_csound_orchestre } from "./csound-orchestre";
+import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
+import { fiches as f_csound_formules } from "./csound-formules";
 
 export const toutesLesFiches: FicheAudio[] = [
   ...f_entrees,
@@ -116,6 +148,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sortie_texte,
   ...f_modifier_texte,
   ...f_debruitage_ia,
+  ...f_esthetique,
   ...f_entrees_extra,
   ...f_generateurs,
   ...f_montage,
@@ -123,6 +156,32 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_sortie_conversion,
   ...f_separation,
   ...f_collections,
+  ...f_documentation,
+  ...f_clavier_apprentissage,
+  ...f_vitesse_midi,
+  ...f_hpss,
+  ...f_decaleur,
+  ...f_texture,
+  ...f_sms,
+  ...f_velours,
+  ...f_courbe,
+  ...f_hauteur,
+  ...f_stn,
+  ...f_retard_spectral,
+  ...f_declipper,
+  ...f_inpainting,
+  ...f_pghi,
+  ...f_fdn,
+  ...f_clavier_banque,
+  ...f_export_sfz,
+  ...f_instrument,
+  ...f_clavier_sfz,
+  ...f_repartiteur_midi,
+  ...f_banque_sfz,
+  ...f_csound_partition,
+  ...f_csound_orchestre,
+  ...f_csound_aleatoire,
+  ...f_csound_formules,
   ...f_visualisation,
   ...f_sequenceurs,
   ...f_enveloppe,
@@ -213,4 +272,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_nancarrow,
   ...f_pulsars,
   ...f_cribles,
+  ...f_theorie_composition,
+  ...f_modeles_physiques,
+  ...f_syntheses_exotiques,
+  ...f_theorie_avancee,
+  ...f_csound,
 ];

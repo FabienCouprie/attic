@@ -10,6 +10,7 @@ import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import { filtrerAretesInvalides } from "../validerGraphe";
+import { decisionSauvegardeAuto, type DecisionSauvegarde } from "../sauvegarde-auto";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -43,6 +44,9 @@ export function usePersistance(o: OptionsPersistance) {
   // Référence stable vers le fichier courant pour éviter les stale closures
   // dans les raccourcis clavier / callbacks de la barre d'outils.
   const currentFilePathRef = useRef(o.currentFilePath);
+  // Le dernier contenu écrit : la sauvegarde automatique s'abstient quand rien n'a bougé,
+  // pour ne pas réécrire le même fichier toutes les trente secondes.
+  const dernierJsonRef = useRef<string | null>(null);
   useEffect(() => {
     currentFilePathRef.current = o.currentFilePath;
   }, [o.currentFilePath]);
@@ -76,6 +80,12 @@ export function usePersistance(o: OptionsPersistance) {
         svgNom: data.svgNom,
         sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
+        // Le .sfz designe dans un « Clavier SFZ » : sans lui, un graphe reouvert avait un clavier
+        // sans instrument, alors que le fichier n'avait pas bouge du disque.
+        sfzChemin: data.sfzChemin,
+        sfzNom: data.sfzNom,
+        // Ce qui a ete joue au clavier d'un noeud : perdu jusqu'ici a chaque reouverture.
+        sequenceNotes: data.sequenceNotes,
         nomFichier: data.nomFichier,
         nom: data.nom,
         couleur: data.couleur,
@@ -88,7 +98,7 @@ export function usePersistance(o: OptionsPersistance) {
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
 
     const encours = {
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, nom: n.data.nom, couleur: n.data.couleur } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),
@@ -144,7 +154,40 @@ export function usePersistance(o: OptionsPersistance) {
     try {
       localStorage.setItem("attic-encours", JSON.stringify(encours));
     } catch {}
+    dernierJsonRef.current = json;
   }, [o, buildExportData]);
+
+  /**
+   * Sauvegarde automatique : écrit le fichier courant, sans dialogue et sans rien
+   * afficher, et seulement s'il y a du nouveau.
+   *
+   * Elle est séparée de `sauvegarder` parce qu'elle n'a pas le droit d'ouvrir quoi que ce
+   * soit : sans fichier courant ou sans écriture directe, `sauvegarder` ouvre un dialogue
+   * — en mode web, il déclenche même un téléchargement —, ce qu'un minuteur ne doit
+   * jamais provoquer dans le dos de l'utilisateur. Renvoie ce qu'elle a décidé, ce qui
+   * rend le comportement observable.
+   */
+  const sauvegarderAuto = useCallback(async (active = true): Promise<DecisionSauvegarde> => {
+    const api = (window as any).api;
+    // Coupée : on ne construit même pas l'export, qui parcourt tout le graphe.
+    if (!active) return "desactivee";
+    const { json, encours } = buildExportData();
+    const decision = decisionSauvegardeAuto({
+      active,
+      cheminFichier: currentFilePathRef.current,
+      ecritureDirecte: !!api?.ecrireFichier,
+      json,
+      dernierJson: dernierJsonRef.current,
+    });
+    if (decision !== "a-ecrire") return decision;
+    await api.ecrireFichier(currentFilePathRef.current, json);
+    dernierJsonRef.current = json;
+    // L'en-cours de localStorage suit : c'est lui qui est relu au démarrage.
+    try {
+      localStorage.setItem("attic-encours", JSON.stringify(encours));
+    } catch {}
+    return decision;
+  }, [buildExportData]);
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
@@ -222,5 +265,5 @@ export function usePersistance(o: OptionsPersistance) {
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
   }, [o]);
 
-  return { sauvegarder, exporter, importer };
+  return { sauvegarder, sauvegarderAuto, exporter, importer };
 }

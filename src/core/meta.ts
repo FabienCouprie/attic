@@ -58,7 +58,7 @@ export function indexPort(handle: string | null | undefined, defaut = 0): number
 export function nettoyerNoeud(n: NoeudG): NoeudG {
   const d = n.data as Record<string, unknown>;
   const data: NoeudG["data"] = { ficheId: d.ficheId as string, parametres: (d.parametres as Record<string, unknown>) ?? {} };
-  for (const cle of ["audioFichier", "audioNom", "midiFichier", "midiNom", "imageNom", "svgNom", "enregistrementBlob", "sequenceNotes", "modeleFichier", "sf2InstrumentIdx", "zonesSelectionnees"]) {
+  for (const cle of ["audioFichier", "audioNom", "midiFichier", "midiNom", "imageNom", "svgNom", "enregistrementBlob", "sequenceNotes", "modeleFichier", "sf2InstrumentIdx", "zonesSelectionnees", "sfzChemin", "sfzNom"]) {
     if (d[cle] !== undefined) data[cle] = d[cle];
   }
   return { id: n.id, type: n.type, position: n.position ?? { x: 0, y: 0 }, width: n.width, height: n.height, data };

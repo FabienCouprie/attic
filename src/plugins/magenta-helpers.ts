@@ -7,6 +7,10 @@ import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";
 import { NoteSequence } from "@magenta/music/esm/protobuf";
 import { parseMidi, writeMidi } from "midi-file";
+// `midi-ordre` et NON `audio/midi` : ce fichier est chargé par le worker Magenta, et `audio/midi`
+// tire `i18n.tsx` derrière lui — un module React, que Vite équipe en développement d'un préambule
+// touchant `window`, lequel n'existe pas dans un worker.
+import { comparerEvenementsMidi } from "../audio/midi-ordre";
 import * as tf from "@tensorflow/tfjs";
 
 tf.disableDeprecationWarnings();
@@ -167,7 +171,9 @@ function noteSequenceToMidiEvents(ns: any) {
     { tick: timeToTicks(n.startTime), channel: n.channel, type: "noteOn", noteNumber: n.pitch, velocity: n.velocity },
     { tick: Math.max(timeToTicks(n.startTime) + 1, timeToTicks(n.endTime)), channel: n.channel, type: "noteOff", noteNumber: n.pitch, velocity: 0 },
   ]);
-  events.sort((a: any, b: any) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  // Note-off avant note-on à tick égal (voir `comparerEvenementsMidi`) : sinon une note
+  // qui se rejoue à la même hauteur est refermée à l'instant où elle s'ouvre.
+  events.sort((a: any, b: any) => comparerEvenementsMidi(a, b));
 
   let lastTick = 0;
   for (const e of events) {

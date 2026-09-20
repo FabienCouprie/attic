@@ -12,19 +12,29 @@ import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { copierTexte } from "./copier";
+import { nomNote } from "./clavier-disposition";
+import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
+import { parametresLecture, rendreNotes, voixPourNote, type Banque } from "../audio/clavier-banque";
+import { chargerSfz, dossierDe } from "../audio/sfz";
+import { banqueVive, oublierBanque } from "../audio/banques-vives";
+import { decodeurElectron } from "../plugins/clavier-sfz";
+import { DUREE_NOTE_LIVE, instrumentClavier, modeRenduClavier, volumeClavier } from "./clavier-son";
+import { sf2Chargee } from "../plugins/soundfontGlobal";
+import { rendreSequence } from "../audio/midi";
 import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
+import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
 import { ReponseFiltre } from "./ReponseFiltre";
-import { SequenceurBatterie } from "./SequenceurBatterie";
 import { SequenceurBatterieAvance } from "./SequenceurBatterieAvance";
 import { SequenceurMelodique } from "./SequenceurMelodique";
 import { SequenceurAccords } from "./SequenceurAccords";
 import { EnveloppeADSR } from "./EnveloppeADSR";
 import { VuMetre } from "./VuMetre";
+import { VueScoreEsthetique, VueComparaisonEsthetique } from "./ScoreEsthetique";
 import { ColorSynth } from "./ColorSynth";
 import { PochetteGen } from "./PochetteGen";
 import { EditeurFormule } from "./EditeurFormule";
@@ -36,6 +46,8 @@ import { construireListeTessitures } from "../plugins/tessitures";
 import { tokenizePython } from "../plugins/python-processor";
 import { tokenizeJulia } from "../plugins/julia-processor";
 import { COULEURS, cleCouleur } from "../audio";
+import { registre } from "../audio/adaptateur";
+import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { FicheAudio } from "../audio/types-domaine";
 import type { DonneesNoeud } from "./AtelierNode";
 
@@ -716,97 +728,354 @@ function VueExport({ data }: VueProps) {
 }
 
 // ── Clavier mélodie (instrument jouable + enregistrement de séquence) ──
-function ClavierMelodie({ id }: VueProps) {
-  const { t } = useI18n();
-  const OCTAVE_DEPART = 3, NB_OCTAVES = 5, BLANCHES_PAR_OCT = 7;
-  const totalBlanches = NB_OCTAVES * BLANCHES_PAR_OCT;
-  const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
-  const [larg, setLarg] = useState(0);
-  useEffect(() => {
-    const el = contRef.current; if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setLarg(entry.contentRect.width));
-    ro.observe(el); return () => ro.disconnect();
-  }, []);
-  const NOTES = useMemo(() => {
-    const arr: { note: number; noir: boolean }[] = [];
-    for (let o = OCTAVE_DEPART; o < OCTAVE_DEPART + NB_OCTAVES; o++) {
-      for (const [n, noir] of [[0, false], [1, true], [2, false], [3, true], [4, false], [5, false], [6, true], [7, false], [8, true], [9, false], [10, true], [11, false]] as const)
-        arr.push({ note: o * 12 + n, noir });
-    }
-    return arr;
-  }, []);
-  const blanches = useMemo(() => NOTES.filter((k) => !k.noir), [NOTES]);
-  const noires = useMemo(() => NOTES.filter((k) => k.noir).map((k) => ({
-    ...k, idxBlanche: blanches.findIndex((b) => b.note === k.note - 1),
-  })).filter((k) => k.idxBlanche >= 0), [NOTES, blanches]);
-  const NB = Math.max(22, larg > 0 ? larg / totalBlanches : 22), totalWidth = NB * totalBlanches;
-  const ctxRef = useRef<AudioContext | null>(null), activesRef = useRef<Map<number, OscillatorNode>>(new Map());
-  const debutRef = useRef(0), enRegRef = useRef(false), dernierePresseRef = useRef(0);
-  const seqRef = useRef<{ note: number; velocite: number; debut: number; fin: number }[]>([]);
-  const [enReg, setEnReg] = useState(false), [touches, setTouches] = useState<Set<number>>(new Set());
-  const [, setVersion] = useState(0), { setNodes } = useReactFlow();
-  const seq = seqRef.current;
-  const pointerEnfonce = useRef(false);
-  function getCtx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
-  function nomNote(n: number) { return ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][n % 12] + Math.floor(n / 12 - 1); }
-  function calculerVelocite(): number { const now = performance.now(), delta = now - dernierePresseRef.current; dernierePresseRef.current = now; if (delta < 80) return 120; if (delta < 150) return 100; if (delta < 300) return 80; return 60; }
-  function jouer(note: number) { const ctx = getCtx(), osc = ctx.createOscillator(), gain = ctx.createGain(); osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12); gain.gain.setValueAtTime(0.12, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.5); activesRef.current.set(note, osc); }
-  function arreter(note: number) { const o = activesRef.current.get(note); if (o) { try { o.stop(); } catch {} activesRef.current.delete(note); } }
-  function presser(note: number) { setTouches((p) => new Set(p).add(note)); jouer(note); if (enRegRef.current) { seqRef.current.push({ note, velocite: calculerVelocite(), debut: (performance.now() - debutRef.current) / 1000, fin: 0 }); setVersion((v) => v + 1); } }
-  function relacher(note: number) { setTouches((p) => { const n = new Set(p); n.delete(note); return n; }); arreter(note); if (enRegRef.current) { for (const s of seqRef.current) if (s.note === note && s.fin === 0) { s.fin = (performance.now() - debutRef.current) / 1000; break; } setVersion((v) => v + 1); } }
-  function trouverNoteDepuisPointer(e: React.PointerEvent): number | null { const el = touchesRef.current; if (!el) return null; const rect = el.getBoundingClientRect(), x = e.clientX - rect.left + el.scrollLeft, idx = Math.floor(x / NB); if (idx < 0 || idx >= blanches.length) return null; return blanches[idx].note; }
-  function onPointerDown(e: React.PointerEvent) { if (e.button !== 0) return; e.preventDefault(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); pointerEnfonce.current = true; const note = trouverNoteDepuisPointer(e); if (note !== null) presser(note); }
-  function onPointerMove(e: React.PointerEvent) { if (!pointerEnfonce.current) return; if (e.buttons === 0) { onPointerUp(); return; } const note = trouverNoteDepuisPointer(e); if (note !== null && !touches.has(note)) presser(note); }
-  function onPointerUp() { pointerEnfonce.current = false; for (const note of activesRef.current.keys()) relacher(note); }
-  function demarrerEnreg() { seqRef.current = []; setVersion((v) => v + 1); enRegRef.current = true; debutRef.current = performance.now(); setEnReg(true); }
-  function arreterEnreg() { enRegRef.current = false; setEnReg(false); const now = performance.now(); for (const s of seqRef.current) if (s.fin === 0) s.fin = (now - debutRef.current) / 1000; setNodes((nds) => nds.map((nd) => nd.id === id ? { ...nd, data: { ...nd.data, sequenceNotes: [...seqRef.current] } } : nd)); setVersion((v) => v + 1); }
-  function effacer() { seqRef.current = []; setVersion((v) => v + 1); for (const [n] of activesRef.current) arreter(n); setTouches(new Set()); setNodes((nds) => nds.map((nd) => nd.id === id ? { ...nd, data: { ...nd.data, sequenceNotes: [] } } : nd)); }
-  function jouerNoteSynthetisee(ctx: AudioContext, note: number, debut: number, duree: number, velocite: number) {
-    const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
-    const vol = 0.12 * (velocite / 127);
-    const t = ctx.currentTime + debut + 0.05;
-    g.gain.setValueAtTime(0, t - 0.02);
-    g.gain.linearRampToValueAtTime(vol, t + 0.01);
-    g.gain.setValueAtTime(vol, t + duree - 0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t + duree);
-    osc.connect(g).connect(ctx.destination);
-    osc.start(t); osc.stop(t + duree + 0.05);
-  }
-  function rejouer() {
-    const ctx = getCtx();
-    for (const s of seqRef.current) {
-      if (s.fin <= s.debut) continue;
-      jouerNoteSynthetisee(ctx, s.note, s.debut, s.fin - s.debut, s.velocite);
-    }
-  }
-  const [octaveClavier, setOctaveClavier] = useState(4);
-  const keyMap = useMemo(() => { const m = new Map<string, number>(), blancs = "zxcvbnm", noirs = "sdghj", notesBlanches = [0, 2, 4, 5, 7, 9, 11], notesNoires = [1, 3, 6, 8, 10], base = octaveClavier * 12; for (let i = 0; i < blancs.length; i++) m.set(blancs[i].toUpperCase(), base + notesBlanches[i]); for (let i = 0; i < noirs.length; i++) m.set(noirs[i].toUpperCase(), base + notesNoires[i]); return m; }, [octaveClavier]);
-  useEffect(() => { function onKD(e: KeyboardEvent) { if (e.repeat) return; if (e.key === "ArrowUp" || e.key === "=") { setOctaveClavier((o) => Math.min(o + 1, 7)); return; } if (e.key === "ArrowDown" || e.key === "-") { setOctaveClavier((o) => Math.max(o - 1, 2)); return; } const note = keyMap.get(e.key.toUpperCase()); if (note !== undefined && !activesRef.current.has(note)) presser(note); } function onKU(e: KeyboardEvent) { const note = keyMap.get(e.key.toUpperCase()); if (note !== undefined) relacher(note); } window.addEventListener("keydown", onKD); window.addEventListener("keyup", onKU); return () => { window.removeEventListener("keydown", onKD); window.removeEventListener("keyup", onKU); ctxRef.current?.close(); ctxRef.current = null; }; }, [keyMap]);
+// ── Clavier d'apprentissage : le MIDI reçu, montré main par main ──
+function VueApprentissage({ data }: VueProps) {
   return (
-    <div className="clavier" ref={contRef} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+    <VueClavierApprentissage
+      midi={data.midiFichierSortie as File | undefined}
+      audioUrl={data.audioResultatUrl as string | undefined}
+      anticipation={Number((data.parametres as Record<string, unknown> | undefined)?.["Anticipation"] ?? 3) || 3}
+    />
+  );
+}
+
+function ClavierMelodie({ id, data }: VueProps) {
+  const { t } = useI18n();
+  // Un 88 touches complet, La0 a Do8, comme un vrai clavier. La geometrie, le choix de la
+  // touche sous le curseur et l'enregistrement vivent dans `clavier-jouable.tsx`, partages
+  // avec « Clavier SFZ » : ce qui reste ici est la SEULE chose qui les distingue, la facon
+  // de faire du son.
+  const ctxRef = useRef<AudioContext | null>(null);
+  function getCtx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
+  /** Les reglages du noeud, lus a chaque note : ils peuvent changer entre deux touches. */
+  function reglages() {
+    const params = data.parametres as Record<string, unknown> | undefined;
+    return {
+      mode: modeRenduClavier(params, !!sf2Chargee()),
+      instrument: instrumentClavier(params),
+      volume: volumeClavier(params),
+    };
+  }
+  /** La synthese interne, inchangee : immediate, et toujours disponible. */
+  function jouerFM(note: number, ctx: AudioContext) {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.5);
+    return { arreter: () => { try { osc.stop(); } catch {} } };
+  }
+  /**
+   * La meme note, rendue par le SoundFont choisi — c'est-a-dire par le chemin qui rendra
+   * l'audio du noeud. Le rendu est asynchrone : si la touche est relachee avant qu'il
+   * arrive, on n'emet rien plutot que de faire sonner une note deja finie.
+   */
+  function jouerSoundFont(note: number, ctx: AudioContext, r: ReturnType<typeof reglages>) {
+    let source: AudioBufferSourceNode | null = null;
+    let annule = false;
+    void (async () => {
+      try {
+        const buf = await rendreSequence(
+          [{ note, velocite: 100, debut: 0, fin: DUREE_NOTE_LIVE }],
+          "SoundFont", r.volume, r.instrument.programme, r.instrument.banque,
+        );
+        if (annule) return;
+        source = ctx.createBufferSource();
+        source.buffer = buf;
+        source.connect(ctx.destination);
+        source.start();
+      } catch (e) {
+        console.error("[attic] Clavier : rendu SoundFont impossible, retour a la synthese interne", e);
+        if (!annule) jouerFM(note, ctx);
+      }
+    })();
+    return { arreter: () => { annule = true; try { source?.stop(); } catch {} } };
+  }
+  const clavier = useClavierJouable(id, (note) => {
+    const ctx = getCtx(), r = reglages();
+    return r.mode === "SoundFont" ? jouerSoundFont(note, ctx, r) : jouerFM(note, ctx);
+  });
+  useEffect(() => () => { ctxRef.current?.close(); ctxRef.current = null; }, []);
+  /**
+   * « Rejouer » fait entendre CE QUE LE NOEUD RENDRA : la sequence passe par
+   * `rendreSequence`, la meme fonction que l'execution, avec le meme mode et le meme
+   * instrument. Elle etait auparavant rejouee a l'oscillateur, si bien qu'on ne pouvait
+   * pas s'ecouter avant de lancer le graphe.
+   */
+  async function rejouer() {
+    const ctx = getCtx();
+    const notes = clavier.seqRef.current.filter((s) => s.fin > s.debut);
+    if (notes.length === 0) return;
+    const r = reglages();
+    try {
+      const buf = await rendreSequence(notes, r.mode, r.volume, r.instrument.programme, r.instrument.banque);
+      const source = ctx.createBufferSource();
+      source.buffer = buf;
+      source.connect(ctx.destination);
+      source.start();
+    } catch (e) {
+      console.error("[attic] Clavier : rejeu impossible", e);
+    }
+  }
+  const seq = clavier.seq;
+  return (
+    <div className="clavier" ref={clavier.contRef} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <NodeResizer minWidth={350} minHeight={220} />
       <div className="clavier-controles">
-        <button className={enReg ? "actif" : ""} onClick={demarrerEnreg} disabled={enReg}>⏺ {t("clavier.enreg")}</button>
-        <button onClick={arreterEnreg} disabled={!enReg}>⏹ {t("clavier.arreter")}</button>
-        <button onClick={rejouer} disabled={seq.length === 0 || enReg}>▶ {t("clavier.rejouer")}</button>
-        <button onClick={effacer}>🗑 {t("clavier.effacer")}</button>
+        <button className={clavier.enReg ? "actif" : ""} onClick={clavier.demarrerEnreg} disabled={clavier.enReg}>⏺ {t("clavier.enreg")}</button>
+        <button onClick={clavier.arreterEnreg} disabled={!clavier.enReg}>⏹ {t("clavier.arreter")}</button>
+        <button onClick={rejouer} disabled={seq.length === 0 || clavier.enReg}>▶ {t("clavier.rejouer")}</button>
+        <button onClick={clavier.effacer}>🗑 {t("clavier.effacer")}</button>
         <span className="clavier-nb">{seq.length} {t("clavier.notes")}</span>
-        <span className="clavier-octave">←↑→ {nomNote(octaveClavier * 12)}–{nomNote(octaveClavier * 12 + 11)}</span>
+        <span className="clavier-octave">←↑→ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
       </div>
-      <div className={"clavier-touches" + (larg > 0 && totalWidth > larg ? " avec-scroll" : "")}
-        ref={touchesRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onLostPointerCapture={onPointerUp}
-        style={{ width: "100%", minHeight: 70 }}>
-        <div className="clavier-interieure" style={{ width: totalWidth, position: "relative", height: "100%" }}>
-          {blanches.map((b, i) => (
-            <div key={b.note} className={"clavier-blanche" + (touches.has(b.note) ? " enfoncee" : "")}
-              style={{ position: "absolute", left: i * NB, width: NB - 1, height: "100%", top: 0 }} />
-          ))}
-          {noires.map((k) => (
-            <div key={k.note} className={"clavier-noire" + (touches.has(k.note) ? " enfoncee" : "")}
-              style={{ position: "absolute", left: (k.idxBlanche + 1) * NB - NB * 0.3, width: NB * 0.55, height: "60%", top: 0 }} />
-          ))}
-        </div>
+      <TouchesClavier clavier={clavier} />
+    </div>
+  );
+}
+
+/**
+ * Le clavier qui joue une BANQUE D'ECHANTILLONS : un fichier SFZ du disque, ou la banque
+ * qui arrive par le graphe.
+ *
+ * CE QUI LE DISTINGUE DU PRECEDENT tient en une ligne : une note est ici un
+ * `AudioBufferSourceNode` — le materiel relit l'echantillon et boucle tout seul, ce qui
+ * rend la latence nulle et permet de tenir une note indefiniment quand la zone a une
+ * boucle de maintien. Un SoundFont, lui, demandait un rendu hors ligne par note.
+ *
+ * LES RAPPORTS DE LECTURE VIENNENT DE `voixPourNote`, la meme fonction que le rendu du
+ * graphe : ce qu'on entend en jouant et ce que le noeud rendra ne peuvent donc pas
+ * diverger, ce qui etait tout l'interet de ce clavier.
+ */
+function ClavierSfz({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const ctxRef = useRef<AudioContext | null>(null);
+  const banqueRef = useRef<Banque | null>(null);
+  const [etat, setEtat] = useState<{ zones: number; basse: number; haute: number; nom: string } | null>(null);
+  const [progres, setProgres] = useState("");
+  const [erreur, setErreur] = useState("");
+  const { setNodes } = useReactFlow();
+  function getCtx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
+
+  const adopter = useCallback((banque: Banque, nom: string) => {
+    banqueRef.current = banque;
+    setEtat({ zones: banque.zones.length, basse: banque.noteBasse, haute: banque.noteHaute, nom });
+  }, []);
+
+  // La banque que l'execution vient de deposer, quelle qu'en soit l'origine : un clavier
+  // branche sur « Etaler sur le clavier » n'a alors rien a charger du disque, et un graphe
+  // reouvert avec un chemin memorise retrouve son instrument des la premiere execution —
+  // sans quoi le clavier restait muet jusqu'a ce qu'on recharge le fichier a la main.
+  // `data.statut` change a chaque execution : c'est le seul signal dont la vue dispose.
+  useEffect(() => {
+    const vive = banqueVive(id);
+    if (vive && vive.banque !== banqueRef.current) {
+      adopter(vive.banque, vive.nom || t("clavier.sfz.duGraphe"));
+    }
+  }, [data.statut, id, adopter, t]);
+
+  /** Charge un `.sfz` designe par l'utilisateur, et retient son chemin dans le noeud. */
+  async function choisirFichier() {
+    const api = (window as any).api;
+    if (!api?.ouvrirFichier) { setErreur(traduire("msg.n_cessite_electron")); return; }
+    setErreur("");
+    const choix = await api.ouvrirFichier({ filters: [{ name: "SFZ", extensions: ["sfz"] }] });
+    if (!choix?.chemin || typeof choix.contenu !== "string") return;
+    setProgres(traduire("clavier.sfz.chargement", "0", "?"));
+    try {
+      const charge = await chargerSfz(choix.contenu, dossierDe(choix.chemin),
+        decodeurElectron(api, getCtx()),
+        { surProgres: (faits, total) => setProgres(traduire("clavier.sfz.chargement", String(faits), String(total))) });
+      setProgres("");
+      if (charge.banque.zones.length === 0) {
+        setErreur(traduire("clavier.sfz.echec", choix.nom ?? choix.chemin));
+        return;
+      }
+      adopter(charge.banque, choix.nom ?? choix.chemin);
+      oublierBanque(id);
+      // Le chemin part dans les donnees du noeud : l'execution relira le meme fichier, et
+      // il survit a la sauvegarde du graphe.
+      setNodes((nds) => nds.map((nd) => nd.id === id
+        ? { ...nd, data: { ...nd.data, sfzChemin: choix.chemin, sfzNom: choix.nom } } : nd));
+    } catch (e: any) {
+      setProgres("");
+      setErreur(traduire("clavier.sfz.echec", e?.message ?? String(e)));
+    }
+  }
+
+  const clavier = useClavierJouable(id, (note, velocite) => {
+    const banque = banqueRef.current;
+    if (!banque) return { arreter: () => {} };
+    const voix = voixPourNote(banque, note, velocite, 1);
+    if (!voix) return { arreter: () => {} };
+    const p = parametresLecture(voix);
+    const ctx = getCtx();
+    const source = ctx.createBufferSource();
+    source.buffer = p.audio;
+    source.playbackRate.value = p.vitesse;
+    if (p.boucle) { source.loop = true; source.loopStart = p.boucleDebut; source.loopEnd = p.boucleFin; }
+    const gain = ctx.createGain();
+    gain.gain.value = p.gain;
+    source.connect(gain).connect(ctx.destination);
+    source.start();
+    return {
+      arreter: () => {
+        // Un relachement en douceur : couper la source net laisserait un clic, l'onde etant
+        // arretee en pleine periode. Le temps est celui du parametre du noeud.
+        const relachement = Math.max(0.005, Number((data.parametres as any)?.["Relâchement"] ?? 150) / 1000);
+        try {
+          const fin = ctx.currentTime + relachement;
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.0001, fin);
+          source.stop(fin + 0.01);
+        } catch { try { source.stop(); } catch {} }
+      },
+    };
+  });
+  useEffect(() => () => { ctxRef.current?.close(); ctxRef.current = null; }, []);
+
+  /** « Rejouer » passe par `rendreNotes` : la fonction meme que l'execution du noeud. */
+  function rejouer() {
+    const banque = banqueRef.current;
+    const notes = clavier.seqRef.current.filter((s) => s.fin > s.debut);
+    if (!banque || notes.length === 0) return;
+    const params = data.parametres as Record<string, unknown> | undefined;
+    const buf = rendreNotes(notes, banque, {
+      volume: Number(params?.["Volume"] ?? 80) / 100,
+      relachement: Number(params?.["Relâchement"] ?? 150) / 1000,
+      fonduBoucle: Number(params?.["Fondu de boucle"] ?? 20) / 1000,
+    });
+    const ctx = getCtx();
+    const source = ctx.createBufferSource();
+    source.buffer = buf;
+    source.connect(ctx.destination);
+    source.start();
+  }
+
+  const seq = clavier.seq;
+  return (
+    <div className="clavier" ref={clavier.contRef} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <NodeResizer minWidth={350} minHeight={240} />
+      <div className="clavier-controles">
+        <button onClick={choisirFichier}>📂 {t("clavier.sfz.charger")}</button>
+        <button className={clavier.enReg ? "actif" : ""} onClick={clavier.demarrerEnreg} disabled={clavier.enReg}>⏺ {t("clavier.enreg")}</button>
+        <button onClick={clavier.arreterEnreg} disabled={!clavier.enReg}>⏹ {t("clavier.arreter")}</button>
+        <button onClick={rejouer} disabled={seq.length === 0 || clavier.enReg || !etat}>▶ {t("clavier.rejouer")}</button>
+        <button onClick={clavier.effacer}>🗑 {t("clavier.effacer")}</button>
+        <span className="clavier-nb">{seq.length} {t("clavier.notes")}</span>
+      </div>
+      <div className="clavier-controles" data-role="sfz-etat">
+        {progres && <span className="clavier-nb">{progres}</span>}
+        {!progres && etat && (
+          <span className="clavier-nb" data-zones={etat.zones}>
+            🎹 {etat.nom} — {traduire("clavier.sfz.zones", String(etat.zones), nomNote(etat.basse), nomNote(etat.haute))}
+          </span>
+        )}
+        {!progres && !etat && <span className="clavier-nb">{t("clavier.sfz.rien")}</span>}
+        {erreur && <span className="clavier-nb" style={{ color: "#e06c75" }}>{erreur}</span>}
+        <span className="clavier-octave">←↑→ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
+      </div>
+      <TouchesClavier clavier={clavier} />
+    </div>
+  );
+}
+
+/**
+ * « Banque SFZ » : une ligne, un bouton, aucun clavier.
+ *
+ * La vue ne charge rien — c'est l'execution qui lit le disque et decode les echantillons. Elle ne
+ * sert qu'a DESIGNER le fichier, parce qu'un chemin ne se tape pas a la main : le dialogue natif
+ * d'Electron le rend, et il part dans les donnees du noeud, ou il survit a la sauvegarde.
+ */
+function VueBanqueSfz({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const { setNodes } = useReactFlow();
+  const [erreur, setErreur] = useState("");
+  const params = (data.parametres ?? {}) as Record<string, unknown>;
+  const surFichier = String(params["Source"] ?? "") === "fichier"
+    || String(params["Source"] ?? "") === "Fichier SFZ";
+  const nom = (data.sfzNom as string | undefined) ?? (data.sfzChemin as string | undefined);
+
+  async function choisir() {
+    const api = (window as any).api;
+    if (!api?.ouvrirFichier) { setErreur(traduire("msg.n_cessite_electron")); return; }
+    setErreur("");
+    const choix = await api.ouvrirFichier({ filters: [{ name: "SFZ", extensions: ["sfz"] }] });
+    if (!choix?.chemin) return;
+    setNodes((nds) => nds.map((nd) => nd.id === id
+      ? { ...nd, data: { ...nd.data, sfzChemin: choix.chemin, sfzNom: choix.nom } } : nd));
+  }
+
+  return (
+    <div className="clavier-controles" style={{ padding: "4px 6px" }}
+      onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <button onClick={choisir}>📂 {t("clavier.sfz.charger")}</button>
+      <span className="clavier-nb">
+        {surFichier ? (nom ?? t("banque.sfz.aucun")) : t("banque.sfz.integre")}
+      </span>
+      {erreur && <span className="clavier-nb" style={{ color: "#e06c75" }}>{erreur}</span>}
+    </div>
+  );
+}
+
+/**
+ * La liste a cocher de l'« Orchestre Csound ».
+ *
+ * L'inspecteur n'a pas de type « choix multiple » : le reglage est donc un TEXTE, et cette vue
+ * l'ecrit. Le texte reste lisible, sauvegardable et modifiable a la main — et l'ORDRE y compte,
+ * puisqu'il decide des numeros d'instruments : cocher ajoute a la fin, decocher retire.
+ */
+function VueOrchestreCsound({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const { setNodes } = useReactFlow();
+  const params = (data.parametres ?? {}) as Record<string, unknown>;
+  const brut = String(params["Instruments"] ?? "");
+  const choisis = brut.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
+  const base = Math.max(1, Math.round(Number(params["Premier instrument"] ?? 1)) || 1);
+
+  function basculer(idInstrument: string) {
+    const suivant = choisis.includes(idInstrument)
+      ? choisis.filter((x) => x !== idInstrument)
+      : [...choisis, idInstrument];
+    (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
+      .onChangerParametre?.(id, "Instruments", suivant.join(","));
+    // `onChangerParametre` passe par l'application ; quand il manque — vue isolee —, on ecrit
+    // directement dans le noeud pour que la case reste cochee.
+    setNodes((nds) => nds.map((nd) => nd.id === id
+      ? { ...nd, data: { ...nd.data, parametres: { ...(nd.data.parametres as object), Instruments: suivant.join(",") } } }
+      : nd));
+  }
+
+  const familles = [...new Set(INSTRUMENTS_ORCHESTRE.map((i) => i.famille))];
+  return (
+    <div className="orchestre-csound" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <NodeResizer minWidth={300} minHeight={220} />
+      <div className="clavier-controles">
+        <span className="clavier-nb">🎻 {t("orchestre.csound.titre")}</span>
+        <span className="clavier-nb">
+          {choisis.length === 0 ? t("orchestre.csound.aucun")
+            : traduire("orchestre.csound.compte", String(choisis.length), String(base), String(base + choisis.length - 1))}
+        </span>
+      </div>
+      <div className="orchestre-liste" style={{ overflowY: "auto", maxHeight: "calc(100% - 34px)", padding: "2px 6px" }}>
+        {familles.map((famille) => (
+          <div key={famille}>
+            <div style={{ fontSize: 10, opacity: 0.6, marginTop: 4 }}>{famille}</div>
+            {INSTRUMENTS_ORCHESTRE.filter((i) => i.famille === famille).map((inst) => {
+              const rang = choisis.indexOf(inst.id);
+              return (
+                <label key={inst.id} data-instrument={inst.id}
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, lineHeight: "18px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={rang >= 0} onChange={() => basculer(inst.id)} />
+                  <span style={{ opacity: rang >= 0 ? 1 : 0.75 }}>
+                    {rang >= 0 ? `i${base + rang} · ` : ""}{inst.fr}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -850,21 +1119,6 @@ function VueReponseFiltre({ data }: VueProps) {
       type={String(p["Type"] ?? "Passe-bas")}
       cutoff={Number(p["Fréquence de coupure"] ?? 1000) || 1000}
       q={Number(p["Résonance"] ?? 0.7) || 0.7}
-    />
-  );
-}
-
-// ── Séquenceur de batterie (grille pas-à-pas) ──
-function VueSequenceurBatterie({ id, data }: VueProps) {
-  const p = data.parametres ?? {};
-  const nbPas = parseInt(String(p["Nombre de pas"] ?? "16"), 10) || 16;
-  const motif = String(p["Motif"] ?? "");
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
-  return (
-    <SequenceurBatterie
-      motif={motif}
-      nbPas={nbPas}
-      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
     />
   );
 }
@@ -1360,8 +1614,10 @@ function VuePochette({ data }: VueProps) {
   );
 }
 
-// ── Songsee (image de visualisation audio) ──
-function VueSongsee({ data }: VueProps) {
+// ── Image engendree a partir d'un audio (Songsee, goniometre...) ──
+// Le composant est le meme que pour les autres images ; seul le message d'attente change,
+// puisque ces noeuds attendent un son et non une image.
+function VueImageDepuisAudio({ data }: VueProps) {
   const { t } = useI18n();
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.audio")} />;
 }
@@ -1385,6 +1641,19 @@ function VueColorSynth({ data }: VueProps) {
 }
 
 // ── VU-mètre / LUFS (bargraphes de niveau) ──
+// ── Score et comparaison esthétiques ──
+// Affichés seulement une fois le nœud terminé : `_esthetique` survit à une
+// réinitialisation (les champs `_` ne sont pas effacés), et une courbe périmée
+// affichée à côté d'un nœud « en attente » se lirait comme le résultat courant.
+function VueEsthetique({ data }: VueProps) {
+  const d = data as { statut?: string; _esthetique?: any };
+  return d.statut === "termine" ? <VueScoreEsthetique analyse={d._esthetique} /> : null;
+}
+function VueComparaisonEsth({ data }: VueProps) {
+  const d = data as { statut?: string; _comparaisonEsthetique?: { a: any; b: any } };
+  return d.statut === "termine" ? <VueComparaisonEsthetique a={d._comparaisonEsthetique?.a} b={d._comparaisonEsthetique?.b} /> : null;
+}
+
 function VueVuMetre({ data }: VueProps) {
   return <VuMetre audioUrl={data.audioResultatUrl} />;
 }
@@ -1548,7 +1817,6 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("oscillateur"), vue: VueOscillo, position: "avant" },
   { correspond: parId("reponse-filtre"), vue: VueReponseFiltre, position: "avant" },
   { correspond: parId("comparateur-ab"), vue: VueComparateurAB, position: "avant" },
-  { correspond: parId("sequenceur-batterie"), vue: VueSequenceurBatterie, position: "avant" },
   { correspond: parId("sequenceur-batterie-avance"), vue: VueSequenceurBatterieAvance, position: "avant" },
   { correspond: parId("sequenceur-melodique"), vue: VueSequenceurMelodique, position: "avant" },
   { correspond: parId("sequenceur-accords"), vue: VueSequenceurAccords, position: "avant" },
@@ -1562,9 +1830,12 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("couleur-suno-ia"), vue: VueCouleurSunoIA, position: "avant" },
   { correspond: parId("detecteur-accords"), vue: VueDetecteurAccords, position: "avant", masqueMessage: true },
   { correspond: parId("vu-metre"), vue: VueVuMetre, position: "avant" },
+  { correspond: parId("score-esthetique"), vue: VueEsthetique, position: "avant" },
+  { correspond: parId("comparaison-esthetique"), vue: VueComparaisonEsth, position: "avant" },
   { correspond: parId("colorsynth"), vue: VueColorSynth, position: "avant" },
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
-  { correspond: parId("visualisation-songsee"), vue: VueSongsee, position: "avant" },
+  { correspond: parId("visualisation-songsee"), vue: VueImageDepuisAudio, position: "avant" },
+  { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
@@ -1595,12 +1866,29 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },
+  { correspond: parId("clavier-sfz"), vue: ClavierSfz, position: "apres" },
+  { correspond: parId("banque-sfz"), vue: VueBanqueSfz, position: "apres" },
+  { correspond: parId("orchestre-csound"), vue: VueOrchestreCsound, position: "apres" },
+  { correspond: parId("clavier-apprentissage"), vue: VueApprentissage, position: "apres" },
 ];
 
+/**
+ * L'identifiant sous lequel chercher une vue.
+ *
+ * UN NOEUD PEUT PORTER UN ANCIEN IDENTIFIANT. Le registre resout les alias — « sequenceur-batterie »
+ * ouvre « sequenceur-batterie-avance » —, mais les vues etaient cherchees sur l'identifiant BRUT des
+ * donnees du noeud. Un graphe enregistre s'ouvrait donc sur la bonne fiche, avec le bon titre et la
+ * bonne execution, mais SANS SA GRILLE : plus rien a cliquer, et aucune erreur pour le dire.
+ * Constate dans l'application en verifiant la suppression du sequenceur binaire.
+ */
+const idPourVue = (ficheId: string): string => registre.trouverDef(ficheId)?.id ?? ficheId;
+
 export function vuesPourNoeud(ficheId: string, position: "avant" | "apres"): Vue[] {
-  return REGISTRE.filter((e) => e.position === position && e.correspond(ficheId)).map((e) => e.vue);
+  const id = idPourVue(ficheId);
+  return REGISTRE.filter((e) => e.position === position && e.correspond(id)).map((e) => e.vue);
 }
 
 export function vueAvantMasqueMessage(ficheId: string): boolean {
-  return REGISTRE.some((e) => e.position === "avant" && e.correspond(ficheId) && e.masqueMessage);
+  const id = idPourVue(ficheId);
+  return REGISTRE.some((e) => e.position === "avant" && e.correspond(id) && e.masqueMessage);
 }

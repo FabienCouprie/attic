@@ -3,7 +3,8 @@
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { genererGrilleCantor, genererRythmeCantor, decoderMotifVelocite, encoderMotifVelocite, rendreSequenceurBatterieAvance } from "./batterie";
+import { genererGrilleCantor, genererRythmeCantor, decoderMotifVelocite, encoderMotifVelocite,
+  estMotifBinaire, rendreSequenceurBatterieAvance, PISTES_MOTIF_BINAIRE, VELOCITE_MOTIF_BINAIRE } from "./batterie";
 
 describe("genererGrilleCantor", () => {
   it("produit au moins un pas actif", () => {
@@ -87,5 +88,63 @@ describe("rendreSequenceurBatterieAvance", () => {
     expect(buffer.duration).toBeGreaterThan(0);
     const energy = buffer.getChannelData(0).reduce((a, b) => a + Math.abs(b), 0);
     expect(energy).toBeGreaterThan(0);
+  });
+});
+
+describe("les motifs de l'ancien séquenceur binaire, supprimé", () => {
+  // « Séquenceur de batterie » a été retiré : il faisait cinq pistes sans nuance, là où le
+  // séquenceur avancé fait les MÊMES CINQ, dans le même ordre, plus trois, avec une vélocité par
+  // pas. Un graphe enregistré porte encore ses motifs, et l'alias du registre l'ouvre maintenant
+  // avec le nœud restant : c'est ce décodeur qui décide si ce graphe joue encore ou non.
+  const ANCIEN = [
+    "1000000010000000", // Kick
+    "0000100000001000", // Snare
+    "1010101010101010", // Charley fermé
+    "0000000000000000", // Charley ouvert
+    "0000000000000000", // Clap
+  ].join("|");
+
+  it("reconnaît un motif binaire à son nombre de lignes, pas à ses chiffres", () => {
+    expect(estMotifBinaire(ANCIEN, 8)).toBe(true);
+    // Huit lignes : c'est un motif du séquenceur avancé, même s'il n'a que des 0 et des 1 — un
+    // motif joué tout en douceur est légitime, et le prendre pour un ancien le ferait hurler.
+    const avanceTresDoux = Array(8).fill("1000000010000000").join("|");
+    expect(estMotifBinaire(avanceTresDoux, 8)).toBe(false);
+    // Et on ne « migre » pas quand on ne lit que cinq pistes : c'est le décodage d'une vue à cinq.
+    expect(estMotifBinaire(ANCIEN, PISTES_MOTIF_BINAIRE)).toBe(false);
+  });
+
+  it("relit les cinq pistes de l'ancien motif SUR LES CINQ PREMIÈRES du nouveau", () => {
+    const grille = decoderMotifVelocite(ANCIEN, 8, 16);
+    expect(grille).toHaveLength(8);
+    expect(grille[0][0]).toBe(VELOCITE_MOTIF_BINAIRE);   // kick sur le premier temps
+    expect(grille[1][4]).toBe(VELOCITE_MOTIF_BINAIRE);   // snare sur le deuxième
+    expect(grille[2].filter((v) => v > 0).length).toBe(8); // charley en croches
+    // Les trois pistes que l'ancien n'avait pas restent muettes.
+    expect(grille[5].every((v) => v === 0)).toBe(true);
+    expect(grille[6].every((v) => v === 0)).toBe(true);
+    expect(grille[7].every((v) => v === 0)).toBe(true);
+  });
+
+  it("joue à PLEINE vélocité, pour sonner comme avant et non « comme avant en plus faible »", () => {
+    // La vélocité divise le niveau par neuf dans le rendu avancé : seul 9 reproduit le niveau de
+    // l'ancien nœud, qui n'avait aucune nuance. Un 1 aurait donné un motif onze fois trop discret.
+    expect(VELOCITE_MOTIF_BINAIRE).toBe(9);
+    const grille = decoderMotifVelocite(ANCIEN, 8, 16);
+    for (const ligne of grille) for (const v of ligne) expect(v === 0 || v === 9).toBe(true);
+  });
+
+  it("rend un son audible à partir d'un ancien motif, de bout en bout", async () => {
+    const grille = decoderMotifVelocite(ANCIEN, 8, 16);
+    const buffer = await rendreSequenceurBatterieAvance(grille, 120, 16, 0, 1, 90);
+    const energie = buffer.getChannelData(0).reduce((a, b) => a + Math.abs(b), 0);
+    expect(energie).toBeGreaterThan(0);
+  });
+
+  it("supporte les huit pas de l'ancien séquenceur, sa seule résolution que l'autre n'avait pas", () => {
+    const court = ["10000000", "00001000", "10101010", "00000000", "00000000"].join("|");
+    const grille = decoderMotifVelocite(court, 8, 8);
+    expect(grille[0]).toEqual([9, 0, 0, 0, 0, 0, 0, 0]);
+    expect(grille[2].filter((v) => v > 0).length).toBe(4);
   });
 });

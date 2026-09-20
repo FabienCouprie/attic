@@ -1,8 +1,8 @@
 {
   "name": "attic",
   "private": true,
-  "version": "3.2.2",
-  "description": "Visual node-editor for AI-powered music and sound design — 260 nodes, local ML models, bilingual FR/EN.",
+  "version": "4.0.0",
+  "description": "Visual node-editor for AI-powered music and sound design — 328 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -39,6 +39,7 @@
     "ensure-songsee": "node scripts/ensure-songsee.cjs",
     "preview": "vite preview",
     "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts",
+    "kit:generer": "cross-env ECRIRE_KIT=1 vitest run src/audio/kit-batterie.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",
@@ -48,7 +49,10 @@
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
     "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant",
     "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs",
-    "download:gtcrn": "node scripts/download-gtcrn.cjs"
+    "download:gtcrn": "node scripts/download-gtcrn.cjs",
+    "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
+    "download:music-collection": "node scripts/download-music-collection.cjs",
+    "verify:resources": "node scripts/verify-bundled-resources.cjs"
   },
   "build": {
     "appId": "com.attic.audio",
@@ -83,6 +87,10 @@
       {
         "from": "public/oonx",
         "to": "oonx"
+      },
+      {
+        "from": "public/sfz",
+        "to": "sfz"
       },
       {
         "from": "public/sf2",
@@ -131,6 +139,7 @@
     }
   },
   "dependencies": {
+    "@csound/browser": "^6.17.3",
     "@firecrawl/pdf-inspector-wasm": "^0.1.3",
     "@huggingface/tokenizers": "^0.1.3",
     "adm-zip": "^0.6.1",

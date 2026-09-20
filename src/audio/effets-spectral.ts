@@ -182,10 +182,18 @@ export async function appliquerDistorsion(entree: AudioBuffer, gain: number): Pr
 
 
 
+/**
+ * `frequence` accepte une COURBE en plus d'un nombre.
+ *
+ * Quand c'en est une, elle est confiée à `setValueCurveAtTime` : Web Audio interpole alors
+ * lui-même, à l'échantillon près, ce qu'aucune découpe en tranches ne saurait faire aussi
+ * proprement. C'est ce qui rend la modulation d'un filtre exacte et gratuite — la coupure suit
+ * la courbe sans un craquement, là où changer `.value` par blocs en produirait un à chaque bloc.
+ */
 export async function appliquerFiltre(
   entree: AudioBuffer,
   type: BiquadFilterType,
-  frequence: number,
+  frequence: number | Float32Array,
   q: number
 ): Promise<AudioBuffer> {
   const ctx = new OfflineAudioContext(entree.numberOfChannels, entree.length, entree.sampleRate);
@@ -193,7 +201,19 @@ export async function appliquerFiltre(
   source.buffer = entree;
   const filtre = ctx.createBiquadFilter();
   filtre.type = type;
-  filtre.frequency.value = frequence;
+  if (typeof frequence === "number") {
+    filtre.frequency.value = frequence;
+  } else {
+    // Une courbe d'un seul point n'est pas acceptée par la spécification, et une courbe à la
+    // cadence du son serait démesurée : on la réduit à un millier de points, ce qui suffit
+    // largement pour un paramètre qui ne module pas au-delà de quelques dizaines de hertz.
+    const n = Math.max(2, Math.min(1000, frequence.length));
+    const reduite = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      reduite[i] = frequence[Math.min(frequence.length - 1, Math.round((i * (frequence.length - 1)) / (n - 1)))];
+    }
+    filtre.frequency.setValueCurveAtTime(reduite, 0, entree.duration);
+  }
   filtre.Q.value = q;
   source.connect(filtre);
   filtre.connect(ctx.destination);

@@ -100,6 +100,11 @@ function main() {
     if (status !== 0) cleanup(status ?? 1);
   }
 
+  // Every build.extraResources source must exist and have content: electron-builder
+  // only warns about a missing one and packages without it (see verify-bundled-resources.cjs).
+  const sourcesStatus = runCommand("node", ["scripts/verify-bundled-resources.cjs"]);
+  if (sourcesStatus !== 0) cleanup(sourcesStatus ?? 1);
+
   // Save the Electron binary so electron-builder can still use it after we prune dev deps.
   try {
     fs.cpSync(electronDistSource, electronDistTarget, { recursive: true });
@@ -143,6 +148,10 @@ function main() {
   // Package the app.
   const builderStatus = runCommand("npx", ["electron-builder", "--win"], { NODE_OPTIONS: nodeOptions });
   if (builderStatus !== 0) cleanup(builderStatus ?? 1);
+
+  // Check what actually landed in the packaged app.
+  const packageStatus = runCommand("node", ["scripts/verify-bundled-resources.cjs", "--paquet", "release/win-unpacked/resources"]);
+  if (packageStatus !== 0) cleanup(packageStatus ?? 1);
 
   // Restore the workspace before exiting.
   restorePackageJson();

@@ -28,7 +28,7 @@ export default defineConfig({
   // ReferenceError en un { ok: false } silencieux. Le process principal
   // exécute du code au moins aussi délicat que le renderer — protection Zip
   // Slip comprise — il doit être couvert de la même façon.
-  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts'], testTimeout: 15000 },
+  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'scripts/**/*.test.ts'], testTimeout: 15000 },
 })
 
 // Vite dev server does not always serve .wasm files with the correct MIME type,

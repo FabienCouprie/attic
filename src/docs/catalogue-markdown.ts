@@ -27,6 +27,8 @@ export const ORDRE_UNIVERS = ["Entrées", "Traitement", "Visualisation", "Sortie
 
 const TYPES_PORT: Record<string, string> = {
   audio: "audio", midi: "MIDI", texte: "text", image: "image", controle: "control", fichier: "file", nombre: "number",
+  courbe: "curve",
+  banque: "bank",
 };
 const TYPES_PARAM: Record<string, string> = {
   nombre: "number", curseur: "slider", choix: "choice", texte: "text", dossier: "folder",

@@ -55,7 +55,7 @@ export function mulberry32(graine: number): () => number {
   };
 }
 
-interface Reservoir {
+export interface Reservoir {
   n: number;
   poidsIn: Float32Array;      // poids entrée → réservoir (N)
   poidsRes: Float32Array;     // poids récurrents (N×N)
@@ -64,7 +64,47 @@ interface Reservoir {
   gain: number;
 }
 
-function creerReservoir(config: ConfigReservoir, rng: () => number): Reservoir {
+/**
+ * Rayon spectral de la matrice récurrente, par itération de la puissance.
+ *
+ * Moyenne géométrique des facteurs de croissance plutôt que le dernier : avec une paire
+ * de valeurs propres complexes conjuguées — le cas courant sur une matrice aléatoire —,
+ * la norme oscille d'une itération à l'autre et le dernier facteur serait faux. ‖W^k v‖^(1/k)
+ * converge vers le rayon dans les deux cas.
+ *
+ * Rend 1 pour une matrice nulle (aucune connexion), pour ne pas diviser par zéro : le
+ * réseau est alors sans récurrence, et l'échelle n'a plus d'objet.
+ */
+export function rayonSpectral(poids: Float32Array, n: number, iterations = 120): number {
+  let v = new Float64Array(n).fill(1 / Math.sqrt(n));
+  let sommeLog = 0, compte = 0;
+  for (let it = 0; it < iterations; it++) {
+    const w = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let somme = 0;
+      for (let j = 0; j < n; j++) somme += poids[i * n + j] * v[j];
+      w[i] = somme;
+    }
+    let norme = 0;
+    for (let i = 0; i < n; i++) norme += w[i] * w[i];
+    norme = Math.sqrt(norme);
+    if (norme < 1e-12) return 1;
+    for (let i = 0; i < n; i++) w[i] /= norme;
+    v = w;
+    // Les premières itérations portent le transitoire : on ne moyenne que la suite.
+    if (it >= iterations / 4) { sommeLog += Math.log(norme); compte++; }
+  }
+  const rayon = Math.exp(sommeLog / compte);
+  return rayon > 1e-9 ? rayon : 1;
+}
+
+/**
+ * Construit le réseau. Exporté pour que le test puisse mesurer le rayon spectral
+ * RÉELLEMENT obtenu : c'est la seule façon de voir que le réglage « Spectre » arrive
+ * à destination, la mélodie produite ne le disant pas — sa conversion en notes étant
+ * rapportée à la distribution du morceau, elle reste étalée même sur un réseau inerte.
+ */
+export function creerReservoir(config: ConfigReservoir, rng: () => number): Reservoir {
   const n = config.taille;
   const poidsIn = new Float32Array(n);
   const poidsRes = new Float32Array(n * n);
@@ -83,11 +123,15 @@ function creerReservoir(config: ConfigReservoir, rng: () => number): Reservoir {
     }
   }
 
-  // Normalisation du rayon spectral (approximation : norme de Frobenius)
-  let norm = 0;
-  for (let i = 0; i < n * n; i++) norm += poidsRes[i] * poidsRes[i];
-  norm = Math.sqrt(norm);
-  const facteur = norm > 0 ? config.spectre / norm : 1;
+  // Mise à l'échelle au rayon spectral DEMANDÉ.
+  //
+  // La norme de Frobenius servait d'approximation ; elle vaut plusieurs fois le rayon
+  // spectral et grandit avec la taille du réseau, si bien que le réglage n'arrivait
+  // jamais à destination : mesuré, « Spectre 90 % » donnait 0,23 sur 15 neurones et
+  // 0,16 sur 40, et « 150 % », censé être chaotique, 0,39. Le réservoir ne résonnait
+  // pas — il suivait l'impulsion rythmique — et rendait 3 à 4 hauteurs en tout, déjà
+  // répétées à 88 % : de quoi faire croire que « Répétition » ne servait à rien.
+  const facteur = config.spectre / rayonSpectral(poidsRes, n);
   for (let i = 0; i < n * n; i++) poidsRes[i] *= facteur;
 
   return {
@@ -115,13 +159,8 @@ function stepReservoir(res: Reservoir, entree: number): void {
   res.etats = nouveaux;
 }
 
-// Mappe l'état du réservoir vers une note MIDI
-function etatVersNote(res: Reservoir, cle: string, gamme: string, octave: number): number {
-  const intervalles = GAMMES[gamme] ?? GAMMES["majeur"];
-  const cleIdx = NOTES.indexOf(cle);
-  const baseMidi = (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0);
-
-  // Moyenne pondérée des activations → index dans la gamme
+/** Lecture de sortie : moyenne des activations pondérée par leur amplitude. */
+function lectureReservoir(res: Reservoir): number {
   let somme = 0;
   let poids = 0;
   for (let i = 0; i < res.n; i++) {
@@ -129,23 +168,66 @@ function etatVersNote(res: Reservoir, cle: string, gamme: string, octave: number
     somme += res.etats[i] * a;
     poids += a;
   }
-  const moyenne = poids > 0 ? somme / poids : 0; // [-1, 1]
+  return poids > 0 ? somme / poids : 0;
+}
 
-  // Mapper [-1, 1] vers [0, 2*intervalles.length] (2 octaves de la gamme)
+/**
+ * Lecture → note, RAPPORTÉE à ce que le réservoir a produit sur ce morceau.
+ *
+ * La conversion supposait que la lecture occupe [-1, 1] ; mesurée, elle tient dans
+ * ±0,1 environ, et d'autant plus serré que le réseau est grand — une moyenne sur
+ * plus de neurones. Sur 14 degrés disponibles, 1 à 2 étaient atteints : la mélodie
+ * tenait sur une ou deux notes, et « Répétition » n'avait plus rien à répéter.
+ *
+ * L'écart à la moyenne, en unités d'écart-type, replace la mélodie sur toute la
+ * gamme sans rien inventer : un réservoir qui ne bouge pas donne un écart-type nul,
+ * donc une note fixe — c'est ce qu'il joue. Un classement par rang aurait garanti
+ * toute la gamme même là, en fabriquant une variété que le réseau n'a pas produite ;
+ * mesuré à dynamique égale, le rang utilisait 14 degrés sur 14 quoi qu'il arrive,
+ * l'écart-type 9 à 11.
+ */
+function noteDepuisLecture(lecture: number, moyenne: number, ecartType: number,
+                           cle: string, gamme: string, octave: number): number {
+  const intervalles = GAMMES[gamme] ?? GAMMES["majeur"];
+  const cleIdx = NOTES.indexOf(cle);
+  const baseMidi = (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0);
+
+  // tanh borne les valeurs extrêmes sans écraser le centre : 2 écarts-types couvrent
+  // l'essentiel de la gamme, au-delà on sature plutôt que de dépasser l'ambitus.
+  const z = ecartType > 1e-9 ? Math.tanh((lecture - moyenne) / (2 * ecartType)) : 0;
+
+  // [-1, 1] → deux octaves de la gamme, bornes comprises (et non modulo, qui faisait
+  // repasser l'extrême grave juste au-dessus de l'extrême aigu).
   const plage = intervalles.length * 2;
-  const idx = Math.round(((moyenne + 1) / 2) * plage) % plage;
+  const idx = Math.max(0, Math.min(plage - 1, Math.round(((z + 1) / 2) * (plage - 1))));
   const degre = idx % intervalles.length;
   const octDecal = Math.floor(idx / intervalles.length);
 
   return baseMidi + intervalles[degre] + octDecal * 12;
 }
 
-// Mappe l'énergie du réservoir vers une vélocité
-function etatVersVelocite(res: Reservoir): number {
+/** Énergie du réservoir : RMS des activations. */
+function energieReservoir(res: Reservoir): number {
   let energie = 0;
   for (let i = 0; i < res.n; i++) energie += res.etats[i] * res.etats[i];
-  energie = Math.sqrt(energie / res.n); // RMS des activations
-  return Math.max(20, Math.min(127, Math.round(energie * 100)));
+  return Math.sqrt(energie / res.n);
+}
+
+/**
+ * Énergie → vélocité, RAPPORTÉE au morceau, comme la hauteur.
+ *
+ * L'énergie était multipliée par 100 et plafonnée à 20 en bas : les activations
+ * tenant autour de 0,4, la mélodie sortait autour de 45 de vélocité, quand
+ * l'accompagnement de la Groove Box est écrit entre 60 et 95. Mesuré sur le rendu,
+ * la mélodie sortait 10 dB sous les accords : on ne l'entendait plus.
+ *
+ * Centrée sur 100 avec 25 d'amplitude, elle reste au-dessus d'un accompagnement sans
+ * saturer, et garde ses nuances : c'est l'écart à la moyenne du morceau qui module,
+ * pas la valeur absolue de l'énergie, qui dépend des réglages du réseau.
+ */
+function velociteDepuisEnergie(energie: number, moyenne: number, ecartType: number): number {
+  const z = ecartType > 1e-9 ? Math.tanh((energie - moyenne) / (2 * ecartType)) : 0;
+  return Math.max(20, Math.min(127, Math.round(100 + 25 * z)));
 }
 
 export interface NoteGeneree {
@@ -166,25 +248,38 @@ export function genererReservoirMusical(config: ConfigReservoir): { notes: NoteG
   const totalPas = config.mesures * 4 * config.pasParBeat; // 4 beats par mesure
   const notes: NoteGeneree[] = [];
 
-  let notePrec: number | null = null;
-
+  // PREMIÈRE PASSE : faire tourner le réseau et relever sa lecture à chaque pas.
+  // Elle précède l'écriture des notes parce que la conversion en hauteurs se fait par
+  // rapport à la distribution du morceau entier (voir noteDepuisLecture).
+  const lectures: number[] = [];
+  const energies: number[] = [];
   for (let pas = 0; pas < totalPas; pas++) {
-    // Impulsion rythmique : 1 aux temps, 0 ailleurs (avec un peu de variation)
+    // Impulsion rythmique : 1 aux temps, 0,3 ailleurs
+    stepReservoir(res, pas % config.pasParBeat === 0 ? 1.0 : 0.3);
+    lectures.push(lectureReservoir(res));
+    energies.push(energieReservoir(res));
+  }
+  const stat = (xs: number[]) => {
+    const moyenne = xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
+    const variance = xs.reduce((a, b) => a + (b - moyenne) ** 2, 0) / Math.max(1, xs.length);
+    return { moyenne, ecartType: Math.sqrt(variance) };
+  };
+  const { moyenne, ecartType } = stat(lectures);
+  const energieStat = stat(energies);
+  const velocites = energies.map((e) => velociteDepuisEnergie(e, energieStat.moyenne, energieStat.ecartType));
+
+  // SECONDE PASSE : les tirages — silence, répétition, densité — dans le même ordre
+  // qu'avant, pour qu'une graine donne toujours le même morceau.
+  let notePrec: number | null = null;
+  for (let pas = 0; pas < totalPas; pas++) {
     const estBeat = pas % config.pasParBeat === 0;
-    const impulsion = estBeat ? 1.0 : 0.3;
-
-    // Faire circuler le réseau
-    stepReservoir(res, impulsion);
-
-    // Décider si on produit une note
-    const r = rng();
-    let estSilence = r < config.silence;
+    const estSilence = rng() < config.silence;
 
     // Tendance à répéter la note précédente
     if (!estSilence && notePrec !== null && rng() < config.repetition) {
       notes.push({
         note: notePrec,
-        velocite: Math.max(20, etatVersVelocite(res) - 10),
+        velocite: Math.max(20, velocites[pas] - 10),
         debut: pas * stepDur,
         duree: stepDur * (estBeat ? 1.5 : 1),
         silence: false,
@@ -193,10 +288,10 @@ export function genererReservoirMusical(config: ConfigReservoir): { notes: NoteG
     }
 
     if (!estSilence && rng() < config.probaNote) {
-      const note = etatVersNote(res, config.cle, config.gamme, config.octave);
+      const note = noteDepuisLecture(lectures[pas], moyenne, ecartType, config.cle, config.gamme, config.octave);
       notes.push({
         note,
-        velocite: etatVersVelocite(res),
+        velocite: velocites[pas],
         debut: pas * stepDur,
         duree: stepDur * (estBeat ? 1.5 : 1),
         silence: false,

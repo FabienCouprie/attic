@@ -24,8 +24,11 @@ import { idUnique } from "./ids";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
+import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
+import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
+import { libererGlissement, relachementManque } from "./liberer-glissement";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -118,6 +121,10 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   const nbParams = def.parametres.length;
   let w = 260;
   if (def.id === "clavier-melodie") return { width: 500, height: 260 };
+  // Un peu plus haut que le precedent : une ligne de plus, qui dit quelle banque est chargee.
+  if (def.id === "clavier-sfz") return { width: 540, height: 300 };
+  // La liste a cocher des instruments : onze lignes et leurs intitules de famille.
+  if (def.id === "orchestre-csound") return { width: 340, height: 420 };
   if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
   if (def.id === "analyseur-spectre") return { width: 420, height: 300 };
   if (def.id === "spectrogramme") return { width: 420, height: 300 };
@@ -130,6 +137,9 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "generateur-script-ia") return { width: 380, height: 400 };
   if (def.id === "detecteur-accords") return { width: 320, height: 340 };
   if (def.id === "vu-metre") return { width: 300, height: 260 };
+  if (def.id === "goniometre") return { width: 330, height: 470 };
+  if (def.id === "score-esthetique") return { width: 420, height: 380 };
+  if (def.id === "comparaison-esthetique") return { width: 380, height: 300 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 300, height: 420 };
   if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
@@ -147,7 +157,6 @@ function tailleDefaut(def: FicheAudio): { width: number; height: number } {
   if (def.id === "source-texte") return { width: 280, height: 200 };
   if (def.id === "sortie-texte") return { width: 280, height: 250 };
   if (def.id === "python-processor") return { width: 380, height: 300 };
-  if (def.id === "sequenceur-batterie") return { width: 460, height: 320 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };
   if (def.id === "sequenceur-accords") return { width: 480, height: 380 };
@@ -198,6 +207,16 @@ function Atelier() {
   const [enExecution, setEnExecution] = useState(false);
   const enExecRef = useRef(false);
   const [paletteOuverte, setPaletteOuverte] = useState(() => localStorage.getItem("attic-palette-ouverte") !== "false");
+  // Sauvegarde automatique : bascule du groupe Fichier, retenue d'une session à l'autre.
+  // Coupée, elle l'est pour de bon — ni au battement des 30 s, ni à la fermeture.
+  const [sauvegardeAutoActive, setSauvegardeAutoActive] = useState(() => lirePreference());
+  const basculerSauvegardeAuto = useCallback(() => {
+    setSauvegardeAutoActive((prev) => {
+      const suivant = !prev;
+      try { localStorage.setItem(CLE_PREFERENCE, suivant ? "1" : "0"); } catch {}
+      return suivant;
+    });
+  }, []);
   const togglePalette = useCallback(() => {
     setPaletteOuverte((prev) => {
       const next = !prev;
@@ -216,18 +235,6 @@ function Atelier() {
   const [rfInstance, setRfInstance] = useState<any>(null);
   const rfInstanceRef = useRef(rfInstance);
   rfInstanceRef.current = rfInstance;
-
-  // Un seul onglet wf-1. Le bouton × vide le canevas.
-  const fermerOnglet = useCallback((id: string) => {
-    void id;
-    setNodes([]);
-    setEdges([]);
-    cacheExec.current.clear();
-    setSel(null);
-    setPile([]);
-    grapheRacineRef.current = null;
-    setCurrentFilePath(null);
-  }, [setNodes, setEdges]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -316,15 +323,14 @@ function Atelier() {
     dy: number;
   };
   const pressePapierRef = useRef<PressePapierItem[] | null>(null);
-  const historiqueRef = useRef<{ nodes: any[]; edges: any[] }[]>([]);
+  const historiqueRef = useRef<EntreeHistorique<any, any>[]>([]);
   const MAX_HISTORIQUE = 50;
 
-  const pushHistorique = useCallback(() => {
-    historiqueRef.current.push({
-      nodes: JSON.parse(JSON.stringify(noeudsRef.current.map((n) => ({ ...n, data: { ...n.data } })))),
-      edges: JSON.parse(JSON.stringify(aretesRef.current)),
-    });
-    if (historiqueRef.current.length > MAX_HISTORIQUE) historiqueRef.current.shift();
+  // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
+  // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le
+  // canevas. La copie garde les fichiers chargés par référence (voir ui/historique.ts).
+  const pushHistorique = useCallback((contexte?: ContexteHistorique<any, any>) => {
+    empiler(historiqueRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
   }, []);
 
   const undo = useCallback(() => {
@@ -337,9 +343,52 @@ function Atelier() {
     if (!cbs) return;
     setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
     setEdges(prev.edges);
+    if (prev.contexte) {
+      // Le graphe racine mis de côté porte, lui aussi, des nœuds sans gestionnaires.
+      grapheRacineRef.current = prev.contexte.racine
+        ? { nodes: prev.contexte.racine.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })), edges: prev.contexte.racine.edges }
+        : null;
+      setPile(prev.contexte.pile);
+      setCurrentFilePath(prev.contexte.cheminFichier);
+    }
     setSel(null);
     cacheExec.current.clear();
   }, [setNodes, setEdges]);
+
+  // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.
+  //
+  // Il vidait sans confirmation et sans passer par l'historique : un clic à côté de
+  // « Sauvegarder » perdait le graphe entier, sans recours. L'instantané emporte aussi la
+  // navigation dans les méta-composants et le fichier ouvert, que le ✕ remet à zéro :
+  // vidé depuis l'intérieur d'un méta, le canevas revient au même endroit, avec son
+  // graphe racine. Un canevas déjà vide n'ajoute rien à l'historique.
+  //
+  // Les URL de résultats ne sont PAS révoquées ici, contrairement à une suppression de
+  // nœud : ce sont elles que Ctrl+Z doit rendre, lecteurs compris. Elles restent tenues
+  // par l'historique, qui en garde au plus MAX_HISTORIQUE.
+  const fermerOnglet = useCallback((id: string) => {
+    void id;
+    if (noeudsRef.current.length === 0 && pile.length === 0) return;
+    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
+    setNodes([]);
+    setEdges([]);
+    cacheExec.current.clear();
+    setSel(null);
+    setPile([]);
+    grapheRacineRef.current = null;
+    setCurrentFilePath(null);
+  }, [setNodes, setEdges, pushHistorique, pile, currentFilePath]);
+
+  // Détacher le projet de son fichier SANS toucher au canevas : l'équivalent d'un
+  // « nouveau projet » qui garde le graphe. Le nom disparaît de la barre d'outils,
+  // l'auto-save toutes les 30 s s'arrête — c'est le but : plus rien n'est écrit dans
+  // l'ancien fichier — et le prochain Ctrl+S redemande où enregistrer. Annulable, comme
+  // le vidage : l'instantané ne garde que le chemin, les nœuds ne bougeant pas.
+  const detacherFichier = useCallback(() => {
+    if (!currentFilePath) return;
+    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
+    setCurrentFilePath(null);
+  }, [currentFilePath, pushHistorique, pile]);
 
   // Auto-load SF2 au démarrage
   useEffect(() => {
@@ -395,6 +444,9 @@ function Atelier() {
               statut: "attente",
               zonesSelectionnees: n.data.zonesSelectionnees,
               audioChemin: n.data.audioChemin,
+              sfzChemin: n.data.sfzChemin,
+              sfzNom: n.data.sfzNom,
+              sequenceNotes: n.data.sequenceNotes,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               couleur: n.data.couleur,
@@ -433,7 +485,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
+  const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
@@ -883,7 +935,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
-  const { sauvegarder, exporter, importer } = usePersistance({
+  const { sauvegarder, sauvegarderAuto, exporter, importer } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
@@ -891,57 +943,111 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     currentFilePath, setCurrentFilePath,
   });
 
-  // ── Auto-save périodique ──
-  // Sauvegarde le fichier courant toutes les 30 secondes si un fichier est ouvert.
+  // ── Sauvegarde automatique ──
+  //
+  // Toutes les 30 secondes, en silence, tant qu'un fichier de projet est ouvert — et
+  // seulement si le graphe a changé depuis la dernière écriture.
+  //
+  // Le minuteur est monté UNE FOIS par fichier. Il dépendait auparavant de `sauvegarder`,
+  // dont l'identité change à chaque rendu : chaque modification du graphe démontait
+  // l'effet et relançait le compte à zéro, si bien que la sauvegarde n'avait lieu qu'au
+  // repos. Mesuré dans l'application avant correction : dix changements de paramètre
+  // espacés de dix secondes, cent une secondes de travail, aucune écriture. Elle
+  // sauvegardait quand on ne faisait rien, et pas quand on travaillait.
+  //
+  // La fonction appelée est lue dans une ref, pour que le minuteur garde le graphe à
+  // jour sans avoir à se remonter.
+  //
+  // La bascule est lue dans une ref elle aussi : le minuteur n'a pas à se remonter quand
+  // on la change, et `sauvegarderAuto` s'abstient d'écrire si elle est coupée.
+  const sauvegardeAutoActiveRef = useRef(sauvegardeAutoActive);
+  sauvegardeAutoActiveRef.current = sauvegardeAutoActive;
+  const sauvegarderAutoRef = useRef(sauvegarderAuto);
+  sauvegarderAutoRef.current = () => sauvegarderAuto(sauvegardeAutoActiveRef.current);
   useEffect(() => {
     if (!currentFilePath) return;
     const id = setInterval(() => {
-      sauvegarder().catch((err) => console.error("[attic] Auto-save failed", err));
-    }, 30000);
+      sauvegarderAutoRef.current().catch((err) => console.error("[attic] Sauvegarde automatique échouée", err));
+    }, PERIODE_SAUVEGARDE_MS);
     return () => clearInterval(id);
-  }, [currentFilePath, sauvegarder]);
+  }, [currentFilePath]);
+
+  // Et une dernière fois à la fermeture : entre deux battements, jusqu'à trente secondes
+  // de travail ne tiennent qu'en mémoire. Le processus principal interrompt la fermeture,
+  // envoie cette demande et attend la réponse — puis ferme, quoi qu'il arrive : une
+  // fenêtre qui refuserait de se fermer serait pire que la perte qu'on évite. La réponse
+  // part donc dans tous les cas, y compris si la sauvegarde échoue ou n'a pas lieu d'être.
+  useEffect(() => {
+    const api = (window as any).api;
+    if (!api?.fermetureDemandeSauvegarde) return;
+    api.fermetureDemandeSauvegarde(async () => {
+      try {
+        await sauvegarderAutoRef.current();
+      } catch (err) {
+        console.error("[attic] Sauvegarde à la fermeture échouée", err);
+      } finally {
+        api.fermeturePrete?.();
+      }
+    });
+  }, []);
 
   // ── Filet de sécurité anti-curseur collé ──
-  // Si le bouton souris est relâché hors de la fenêtre (second écran, Alt-Tab,
-  // menu système…), React Flow peut rester en état "drag" quand le curseur
-  // revient. On détecte un pointermove avec buttons===0 alors qu'on pensait le
-  // bouton enfoncé, et on envoie pointerup/pointercancel au canevas pour forcer
-  // la libération.
+  //
+  // Si le bouton souris est relâché sans que la fenêtre le voie — second écran, Alt-Tab, menu
+  // système, fenêtre qui perd le focus pendant le geste —, le nœud reste accroché au curseur : rien
+  // ne vient clore le glissement. Le défaut est rare parce qu'il demande ce concours de
+  // circonstances, mais il est bien réel.
+  //
+  // CE FILET A ÉTÉ REFAIT, l'ancien ne pouvant pas fonctionner, pour deux raisons vérifiées dans la
+  // source de `d3-drag` — la bibliothèque par laquelle React Flow glisse :
+  //
+  //  1. il envoyait `pointerup` et `pointercancel`. Or d3-drag ne termine un geste que sur
+  //     **mouseup** : `select(event.view).on("mouseup.drag", mouseupped, …)`. On envoyait donc un
+  //     événement que personne n'écoutait. Voir `liberer-glissement.ts`, qui envoie le bon, avec le
+  //     `view` dont d3 a besoin pour se désabonner.
+  //  2. il s'armait sur un `pointerdown` écouté en phase de BULLE. Une quinzaine de vues d'Attic
+  //     arrêtent la propagation de cet événement pour ne pas déclencher le glissement du nœud ; le
+  //     filet restait donc DÉSARMÉ précisément sur les nœuds à forme d'onde, à séquenceur ou à
+  //     lecteur audio — ceux sur lesquels on clique le plus. D'où l'écoute en CAPTURE ci-dessous.
+  //
+  // Deux déclencheurs valent mieux qu'un : le mouvement sans bouton, qui attrape le retour du
+  // curseur dans la fenêtre, et la perte de focus, qui libère sans attendre ce retour.
   useEffect(() => {
+    const capture = { capture: true } as const;
+    const derniere = { clientX: 0, clientY: 0, pointerId: 1, pointerType: "mouse" };
+
     const onPointerDown = (e: PointerEvent) => {
-      if (e.isPrimary) pointerDownRef.current = true;
+      if (!e.isPrimary) return;
+      pointerDownRef.current = true;
+      derniere.clientX = e.clientX; derniere.clientY = e.clientY;
+      derniere.pointerId = e.pointerId; derniere.pointerType = e.pointerType;
     };
     const onPointerUp = (e: PointerEvent) => {
       if (e.isPrimary) pointerDownRef.current = false;
     };
-    const onPointerMove = (e: PointerEvent) => {
-      if (!pointerDownRef.current || e.isPrimary === false) return;
-      if (e.buttons === 0 && rfRef.current) {
-        pointerDownRef.current = false;
-        const target = rfRef.current;
-        const init = {
-          bubbles: true,
-          cancelable: true,
-          pointerId: e.pointerId,
-          pointerType: e.pointerType,
-          button: 0,
-          buttons: 0,
-          clientX: e.clientX,
-          clientY: e.clientY,
-        };
-        target.dispatchEvent(new PointerEvent("pointerup", init));
-        target.dispatchEvent(new PointerEvent("pointercancel", init));
-      }
+    const liberer = () => {
+      if (!pointerDownRef.current) return;
+      pointerDownRef.current = false;
+      libererGlissement(rfRef.current ?? window, derniere);
     };
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
-    window.addEventListener("pointermove", onPointerMove);
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.isPrimary === false) return;
+      derniere.clientX = e.clientX; derniere.clientY = e.clientY;
+      derniere.pointerId = e.pointerId; derniere.pointerType = e.pointerType;
+      if (relachementManque(pointerDownRef.current, e.buttons)) liberer();
+    };
+
+    window.addEventListener("pointerdown", onPointerDown, capture);
+    window.addEventListener("pointerup", onPointerUp, capture);
+    window.addEventListener("pointercancel", onPointerUp, capture);
+    window.addEventListener("pointermove", onPointerMove, capture);
+    window.addEventListener("blur", liberer);
     return () => {
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerdown", onPointerDown, capture);
+      window.removeEventListener("pointerup", onPointerUp, capture);
+      window.removeEventListener("pointercancel", onPointerUp, capture);
+      window.removeEventListener("pointermove", onPointerMove, capture);
+      window.removeEventListener("blur", liberer);
     };
   }, []);
 
@@ -981,6 +1087,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             await lancer();
             rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
           }}
+          onArreter={arreter}
           onReinitialiser={reinitialiserTout}
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
@@ -1005,6 +1112,9 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onAjouterCommentaire={ajouterCommentaire}
           onAjouterCadre={ajouterCadre}
           onSauvegarder={sauvegarder}
+          onDetacherFichier={detacherFichier}
+          sauvegardeAuto={sauvegardeAutoActive}
+          onBasculerSauvegardeAuto={basculerSauvegardeAuto}
           onImporter={importer}
         />
         <div className="attic-onglets">

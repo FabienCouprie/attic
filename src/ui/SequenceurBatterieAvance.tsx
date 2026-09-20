@@ -2,9 +2,15 @@
 // L'état du motif est encodé dans une chaîne (paramètre « Motif ») : 8 lignes de
 // pas séparées par « | », chaque pas est un chiffre 0 (off) à 9 (velocity max).
 // La grille lit/écrit cette chaîne via onChange → le nœud la stocke en paramètre.
-import type { CSSProperties, MouseEvent } from "react";
+//
+// Le geste est celui des autres séquenceurs — un clic allume ou éteint la case — et la
+// vélocité, propre à celui-ci, tient sur les modificateurs : Maj monte d'un cran, Alt
+// descend. Voir `pas-velocite.ts` : le clic y montait la vélocité et n'éteignait donc
+// jamais rien.
+import { useRef, type CSSProperties, type MouseEvent } from "react";
 import { useI18n } from "../i18n";
 import { decoderMotifVelocite, encoderMotifVelocite } from "../audio";
+import { gestePas, velociteApresGeste } from "./pas-velocite";
 
 const PISTES = [
   { nom: "Kick", coul: "#e9a13b" },
@@ -20,10 +26,14 @@ const PISTES = [
 export function SequenceurBatterieAvance({ motif, nbPas, onChange }: { motif: string; nbPas: number; onChange: (m: string) => void }) {
   const { t } = useI18n();
   const grille = decoderMotifVelocite(motif, PISTES.length, nbPas);
+  // Dernière nuance connue de chaque case : rallumer un pas lui rend son accent.
+  const nuances = useRef(new Map<string, number>());
 
-  const modifier = (r: number, c: number, decrement: boolean) => {
+  const modifier = (r: number, c: number, e: MouseEvent<HTMLButtonElement>) => {
     const g = grille.map((row) => row.slice());
-    g[r][c] = Math.max(0, Math.min(9, g[r][c] + (decrement ? -1 : 1)));
+    const cle = `${r}:${c}`;
+    if (g[r][c] > 0) nuances.current.set(cle, g[r][c]);
+    g[r][c] = velociteApresGeste(g[r][c], gestePas(e), nuances.current.get(cle));
     onChange(encoderMotifVelocite(g));
   };
 
@@ -51,17 +61,18 @@ export function SequenceurBatterieAvance({ motif, nbPas, onChange }: { motif: st
             {grille[r].map((vel, c) => (
               <button
                 key={c}
-                title={`${t("seq.pas")} ${c + 1}${vel > 0 ? ` — velocity ${vel}` : ""}`}
+                title={`${t("seq.pas")} ${c + 1}${vel > 0 ? ` — velocity ${vel}` : ""} · ${t("seq.geste")}`}
                 style={cell(vel, p.coul, c % 4 === 0 && c > 0)}
                 onClick={(e: MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
-                  modifier(r, c, e.shiftKey);
+                  modifier(r, c, e);
                 }}
               />
             ))}
           </div>
         </div>
       ))}
+      <div style={{ fontSize: 9, opacity: 0.55, paddingLeft: 50 }}>{t("seq.geste")}</div>
     </div>
   );
 }

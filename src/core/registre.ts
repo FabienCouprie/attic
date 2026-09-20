@@ -35,6 +35,15 @@ const ALIAS: Record<string, string> = {
   "fusionneur": "melangeur",
   "entree-micro": "enregistreur-audio",
   "reservoir-midi": "reservoir-musical",
+  // « Fin de boucle » est devenue « Fin de boucle A » quand B et C sont arrivées. Son
+  // identifiant n'a pas bougé — les graphes enregistrés le portent —, mais qui écrit un
+  // graphe à la main attend le suffixe du nom.
+  "boucle-graphe-fin-a": "boucle-graphe-fin",
+  // « Séquenceur de batterie » était un sous-ensemble strict de « Séquenceur de batterie avancé » :
+  // mêmes cinq pistes, dans le même ordre, sans la vélocité ni les trois pistes supplémentaires. Il
+  // a été supprimé ; les graphes enregistrés qui le portent ouvrent donc le second, qui sait relire
+  // leurs motifs binaires (voir `audio/batterie.ts`, `estMotifBinaire`).
+  "sequenceur-batterie": "sequenceur-batterie-avance",
 };
 
 function resoudre(id: string): string {

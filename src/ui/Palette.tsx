@@ -1,8 +1,17 @@
 // ui/Palette.tsx — Catalogue des nœuds
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n } from "../i18n";
+import { registre } from "../audio/adaptateur";
 import { filtrerFiches } from "./recherche-palette";
+import { nomFiche, resumeFiche } from "./libelles-fiche";
+import { contenuInfobulle, type ContenuInfobulle, type Rectangle } from "./infobulle-fiche";
+import { InfobulleFiche } from "./InfobulleFiche";
+
+// Le survol ouvre après un court délai : parcourir la liste à la souris ne doit pas
+// faire clignoter un panneau à chaque entrée traversée. 120 ms se ressent comme
+// immédiat, là où l'infobulle du système demandait près d'une seconde.
+const DELAI_SURVOL_MS = 120;
 
 const COULEURS: Record<string, string> = {
   Entrées: "#4c6ef5", Traitement: "#495057", Sorties: "#e8590c",
@@ -22,7 +31,51 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
   const [q, setQ] = useState("");
   const { t, lang } = useI18n();
 
-  function nomDef(def: FicheAudio) { return lang === "en" && def.nomEn ? def.nomEn : def.nom; }
+  function nomDef(def: FicheAudio) { return nomFiche(def, lang); }
+
+  // ── Infobulle maison ──
+  const [survol, setSurvol] = useState<{ contenu: ContenuInfobulle; cible: Rectangle } | null>(null);
+  const minuterie = useRef<number | null>(null);
+
+  const annulerOuverture = () => {
+    if (minuterie.current !== null) { window.clearTimeout(minuterie.current); minuterie.current = null; }
+  };
+  const fermerInfobulle = () => { annulerOuverture(); setSurvol(null); };
+  const ouvrirInfobulle = (def: FicheAudio, el: HTMLElement) => {
+    annulerOuverture();
+    const r = el.getBoundingClientRect();
+    const cible = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    minuterie.current = window.setTimeout(() => {
+      setSurvol({
+        contenu: contenuInfobulle(def, lang, {
+          couleurFlux: (type) => registre.couleurFlux(type),
+          libelleType: (type) => {
+            // Le libellé du registre est français ; le dictionnaire traduit ceux qu'il
+            // connaît, et un type venu d'un plugin garde le sien plutôt que rien.
+            const cle = `typeFlux.${type}`;
+            const traduit = t(cle);
+            return traduit === cle ? (registre.typeFlux(type)?.libelle ?? type) : traduit;
+          },
+        }),
+        cible,
+      });
+    }, DELAI_SURVOL_MS);
+  };
+
+  // Le panneau est en position fixe : il suivrait mal un défilement ou un
+  // redimensionnement, et resterait affiché pendant un glisser-déposer. On le ferme.
+  useEffect(() => {
+    const fermer = () => fermerInfobulle();
+    window.addEventListener("scroll", fermer, true);
+    window.addEventListener("resize", fermer);
+    window.addEventListener("dragstart", fermer);
+    return () => {
+      window.removeEventListener("scroll", fermer, true);
+      window.removeEventListener("resize", fermer);
+      window.removeEventListener("dragstart", fermer);
+      annulerOuverture();
+    };
+  }, []);
 
   const filtres = useMemo(
     () => filtrerFiches(plugins, q, (famille) => (lang === "en" ? t(`famille.${famille}`) : "")),
@@ -97,7 +150,12 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
                       {ouvert(cle) && fg.defs.map((def) => (
                         <div key={def.id} className="palette-composant" draggable style={{ cursor: "grab" }}
                           onDragStart={(e) => { e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
-                          title={def.resume}
+                          // `title` est parti : l'infobulle du système doublait celle-ci,
+                          // une seconde plus tard. `aria-label` garde le résumé pour qui
+                          // lit la palette autrement qu'à l'œil.
+                          aria-label={`${nomDef(def)} — ${resumeFiche(def, lang)}`}
+                          onMouseEnter={(e) => ouvrirInfobulle(def, e.currentTarget)}
+                          onMouseLeave={fermerInfobulle}
                         >
                           <span className="palette-composant-puce" style={{ background: COULEURS[g.univers] ?? "#999" }} />
                           <span className="palette-composant-nom">{nomDef(def)}</span>
@@ -117,6 +175,7 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
       ) : (
         <button className="palette-toggle palette-toggle--repliee" title={t("palette.deplier")} onClick={onToggle} aria-label={t("palette.deplier")}>›</button>
       )}
+      {survol && <InfobulleFiche contenu={survol.contenu} cible={survol.cible} />}
     </div>
   );
 }

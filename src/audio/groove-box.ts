@@ -4,6 +4,7 @@
 // aux notes de l'accord courant pour rester consonante.
 
 import { writeMidi } from "midi-file";
+import { comparerEvenementsMidi } from "./midi";
 import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 import {
   PROGRESSIONS_GENRE,
@@ -20,7 +21,10 @@ export interface ConfigGrooveBox {
   gamme: string;
   genre: string;
   progression: string;
-  extension: "aucune" | "septieme" | "sixte";
+  // « aucune » : que des triades. « idiomatique » : la couleur est ajoutée là où le
+  // genre la place (voir extensionIdiomatique). Les valeurs « septieme » et « sixte »
+  // des projets enregistrés avant ce changement sont lues comme « idiomatique ».
+  extension: "aucune" | "idiomatique" | "septieme" | "sixte";
   tempo: number;
   dureeAccord: number;
   nbAccords: number;
@@ -78,14 +82,49 @@ function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
 // retombe sur le 3e/5e degré habituel, et cela reste correct sur une gamme
 // pentatonique (5 degrés) où +2/+4 degrés ne correspond plus à une tierce/
 // quinte réelle. Extension optionnelle (7e ou 6e) en 4e note.
-function notesAccord(degre: number, decalage: number, degres: number[], extension: ConfigGrooveBox["extension"] = "aucune"): number[] {
+/**
+ * La couleur ajoutée à un accord, SELON LE GENRE ET LE DEGRÉ — ou rien.
+ *
+ * Le réglage ajoutait une 7e ou une 6e à TOUS les accords. Musicalement cela n'a pas de
+ * sens : une septième se pose là où le style la pose, pas partout. Ici la règle suit
+ * l'usage, et le degré est reconnu par son intervalle à la tonique plutôt que par son
+ * rang, pour rester juste sur une gamme pentatonique où le 5e degré n'est pas la
+ * dominante.
+ *
+ *   jazz, blues   septième sur chaque accord — c'est l'idiome même de ces styles
+ *                 (ii7-V7-Imaj7 en jazz, I7-IV7-V7 en blues) ;
+ *   ambient       septième sur la tonique et la sous-dominante, les accords tenus qu'on
+ *                 colore, et rien sur le reste ;
+ *   les autres    septième sur la dominante seule, la seule que pop, rock, classique ou
+ *                 reggae emploient couramment.
+ *
+ * La QUALITÉ de la note ajoutée n'est pas décidée ici : `degreSeptiemeProche` prend la
+ * septième diatonique, donc mineure sur la dominante — un vrai accord de septième de
+ * dominante — et majeure sur la tonique en majeur.
+ */
+function extensionIdiomatique(genre: string, racinePc: number): "septieme" | undefined {
+  const g = genre.toLowerCase();
+  if (g === "jazz" || g === "blues") return "septieme";
+  if (g === "ambient") return racinePc === 0 || racinePc === 5 ? "septieme" : undefined;
+  return racinePc === 7 ? "septieme" : undefined;
+}
+
+function notesAccord(
+  degre: number,
+  decalage: number,
+  degres: number[],
+  extension: ConfigGrooveBox["extension"] = "aucune",
+  genre = "pop",
+): number[] {
   const racinePc = degres[degre % degres.length];
   const root = 36 + decalage + racinePc + Math.floor(degre / degres.length) * 12;
   const third = root + degreAccordProche(degres, racinePc, 4);
   const fifth = root + degreAccordProche(degres, racinePc, 7);
   const notes = [root, third, fifth];
-  if (extension === "septieme") notes.push(root + degreSeptiemeProche(degres, racinePc));
-  else if (extension === "sixte") notes.push(root + degreAccordProche(degres, racinePc, 9));
+  // « septieme » et « sixte » viennent de projets enregistrés avant : ils demandaient la
+  // couleur partout, on la place désormais là où elle se justifie.
+  const couleur = extension === "aucune" ? undefined : extensionIdiomatique(genre, racinePc);
+  if (couleur === "septieme") notes.push(root + degreSeptiemeProche(degres, racinePc));
   return notes;
 }
 
@@ -103,16 +142,19 @@ function genererNotesAccordsEtBasse(
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
     const deg = progression[i % progression.length];
-    const [root, third, fifth, extension] = notesAccord(deg, decalage, degres, config.extension);
+    const [root, third, fifth, extension] = notesAccord(deg, decalage, degres, config.extension, config.genre);
 
     // Accord (canal 0)
-    notes.push({ note: root, velocite: 75, debut: deb, fin, canal: 0 });
-    notes.push({ note: third, velocite: 70, debut: deb, fin, canal: 0 });
-    notes.push({ note: fifth, velocite: 65, debut: deb, fin, canal: 0 });
-    if (extension !== undefined) notes.push({ note: extension, velocite: 60, debut: deb, fin, canal: 0 });
+    // Vélocités baissées d'environ 2 dB (75 → 60) pour dégager la mélodie : trois notes
+    // tenues ensemble couvrent une ligne seule, et la mesure donnait l'accompagnement
+    // 10 dB au-dessus d'elle. Le rapport entre les degrés de l'accord est conservé.
+    notes.push({ note: root, velocite: 60, debut: deb, fin, canal: 0 });
+    notes.push({ note: third, velocite: 56, debut: deb, fin, canal: 0 });
+    notes.push({ note: fifth, velocite: 52, debut: deb, fin, canal: 0 });
+    if (extension !== undefined) notes.push({ note: extension, velocite: 48, debut: deb, fin, canal: 0 });
 
     // Basse (canal 1)
-    notes.push({ note: root - 12, velocite: 95, debut: deb, fin, canal: 1 });
+    notes.push({ note: root - 12, velocite: 84, debut: deb, fin, canal: 1 });
   }
 
   return notes;
@@ -132,7 +174,7 @@ function quantifierReservoirSurAccord(
     config.nbAccords - 1,
   );
   const deg = progression[idxChord % progression.length];
-  const chordTones = notesAccord(deg, decalage, degres, config.extension);
+  const chordTones = notesAccord(deg, decalage, degres, config.extension, config.genre);
 
   // Trouve la hauteur de l'accord la plus proche de la note du réservoir
   let nearest = chordTones[0];
@@ -190,8 +232,17 @@ function genererNotesBatterie(config: ConfigGrooveBox): NoteGroove[] {
   return notes;
 }
 
+// `deltaTime` porte encore le tick absolu à ce stade : il est converti en délai juste
+// après le tri. L'ordre à l'intérieur d'un tick est celui de `comparerEvenementsMidi` —
+// réglages, note-off, puis note-on. Il était inversé, et une note relancée à la même
+// hauteur sur le même canal était refermée par le note-off de la précédente à l'instant
+// même où elle s'ouvrait : durée nulle, donc silence. Un accord tenu jusqu'au suivant est
+// dans ce cas dès que deux degrés consécutifs partagent une note — et toujours, en blues,
+// dont la progression est I–I–I–I.
 function trierPiste(events: any[]): any[] {
-  events.sort((a, b) => a.deltaTime - b.deltaTime || (a.type === "noteOff" ? 1 : -1));
+  events.sort((a, b) =>
+    comparerEvenementsMidi({ tick: a.deltaTime, type: a.type }, { tick: b.deltaTime, type: b.type }),
+  );
   let tick = 0;
   const sorted: any[] = [];
   for (const e of events) {

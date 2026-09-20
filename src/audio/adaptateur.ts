@@ -22,6 +22,12 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
   registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
   registre.enregistrerTypeFlux({ id: "image", couleur: "#d63384", libelle: "Image" });
+  registre.enregistrerTypeFlux({ id: "courbe", couleur: "#b06fe0", libelle: "Courbe" });
+  // ORANGE FRANC, et non plus l'ambre #c99a2e : mesurée dans Lab, sa distance au MIDI (#e9a13b)
+  // n'était que de 11,9 ΔE — deux tuyaux qu'on ne distingue pas d'un coup d'œil, et c'est ce qui a
+  // été remonté. Celle-ci en est à 22,3 tout en restant à 24,2 du « Contrôle » (#e8590c), l'autre
+  // orange de la palette : c'est le meilleur compromis mesuré entre les deux voisines.
+  registre.enregistrerTypeFlux({ id: "banque", couleur: "#fb8c00", libelle: "Banque" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

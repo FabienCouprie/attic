@@ -5,6 +5,8 @@ import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautC
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 import { SaisieCouleurs } from "./SaisieCouleurs";
 import { TexteAvecLiens } from "./texteAvecLiens";
+import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
+import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modifie";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -86,8 +88,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
   return (
     <div className="inspecteur">
       <div className="inspecteur-entete">
-        <h2>{lang === "en" && def.nomEn ? def.nomEn : def.nom}</h2>
-        <p className="inspecteur-resume">{lang === "en" && def.resumeEn ? def.resumeEn : def.resume}</p>
+        <h2>{nomFiche(def, lang)}</h2>
+        <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>
       </div>
 
       {def.notice && (
@@ -97,7 +99,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             <span className="chevron">{noticeOuverte ? "▴" : "▾"}</span>
           </button>
           {noticeOuverte && (
-            <p className="inspecteur-notice"><TexteAvecLiens texte={lang === "en" && def.noticeEn ? def.noticeEn : def.notice} /></p>
+            <p className="inspecteur-notice"><TexteAvecLiens texte={noticeFiche(def, lang)} /></p>
           )}
         </div>
       )}
@@ -110,10 +112,22 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         const docP = lang === "en" && p.docEn ? p.docEn : p.doc;
         const defautP = defautParametre(p, lang);
         const isOpen = docsOuverts.has(p.nom);
+        // Une valeur réglée ne se distinguait pas d'une valeur par défaut : devant un
+        // nœud à vingt paramètres, rien ne disait lesquels avaient été touchés. Le nom
+        // passe en gras et un point s'allume, dont l'infobulle rappelle le défaut.
+        const modifie = parametreModifie(p, params, lang);
         return (
-        <div key={p.nom} className="inspecteur-param">
+        <div key={p.nom} className={`inspecteur-param${modifie ? " inspecteur-param-modifie" : ""}`}>
           <div className="inspecteur-param-ligne">
             <label>{nomP(p)}</label>
+            {modifie && (
+              // Le point est aussi le bouton qui défait : là où l'on remarque qu'une
+              // valeur a changé est exactement là où l'on veut la remettre.
+              <button className="inspecteur-puce-modifie"
+                title={`${t("inspecteur.modifie")} — ${t("inspecteur.remettre")} ${libelleDefaut(p, lang)}`}
+                aria-label={`${t("inspecteur.remettre")} ${libelleDefaut(p, lang)}`}
+                onClick={() => onChangerParametre(p.nom, valeurDefaut(p, lang))} />
+            )}
             {docP && <button className="inspecteur-doc-btn" onClick={() => toggleDoc(p.nom)}>?</button>}
           </div>
           {isOpen && docP && <p className="inspecteur-param-doc"><TexteAvecLiens texte={docP} /></p>}

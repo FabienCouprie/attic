@@ -8,6 +8,7 @@ import {
   fusionnerPistes, bouclerAudio,
 } from "../audio";
 import { avecDoc } from "./notices";
+import { valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
 
 function zonesValides(z: any) {
@@ -101,13 +102,32 @@ export const fiches: FicheAudio[] = ([
   {
     id: "amplificateur", nom: "Amplificateur", univers: "Traitement", famille: "Effets",
     resume: "Amplification/atténuation du signal.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: [{nom:"Gain",plage:[-60,60],defaut:0,unite:"dB", nomEn: "Gain"}],
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+    ],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      {nom:"Gain",plage:[-60,60],defaut:0,unite:"dB", nomEn: "Gain",
+        doc: "Gain appliqué quand aucune courbe n'est branchée sur l'entrée Modulation.",
+        docEn: "Gain applied when no curve is connected to the Modulation input."},
+      {nom:"Modulation min",nomEn:"Modulation min",plage:[-60,60],defaut:-24,unite:"dB",
+        doc: "Ce que le zéro de la courbe veut dire. Sans courbe branchée, ce réglage ne sert pas.",
+        docEn: "What the curve's zero means. With no curve connected, this setting does nothing."},
+      {nom:"Modulation max",nomEn:"Modulation max",plage:[-60,60],defaut:0,unite:"dB",
+        doc: "Ce que le un de la courbe veut dire.",
+        docEn: "What the curve's one means."},
+    ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
-      const g = Math.pow(10, ctx.paramNombre("Gain",0)/20);
+      // UN SEUL CHEMIN DE CALCUL : sans courbe branchée, `valeursParametre` rend une constante à
+      // la valeur du réglage. Il n'existe donc pas de version « ordinaire » qui pourrait diverger
+      // de la version modulée — c'est l'invariant, tenu par construction plutôt que promis.
+      const decibels = valeursParametre(ctx.entree(1), a.length, ctx.paramNombre("Gain",0),
+        { min: ctx.paramNombre("Modulation min",-24), max: ctx.paramNombre("Modulation max",0) });
+      const gains = Float32Array.from(decibels, (db) => Math.pow(10, db/20));
       const r = new AudioBuffer({numberOfChannels:a.numberOfChannels,length:a.length,sampleRate:a.sampleRate});
-      for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*g; }
+      for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*gains[i]; }
       return { valeurs:[r] };
    }, nomEn: "Amplifier", resumeEn: "Amplification/ attenuation of the signal.",
  },
@@ -282,6 +302,108 @@ export const fiches: FicheAudio[] = ([
    }, nomEn: "Mixer", resumeEn: "Sums several tracks into one. Each track's level is set on the node that produces it.",
  },
   {
+    id: "boucle-graphe-debut", nom: "Début de boucle", nomEn: "Loop Start", univers: "Traitement", famille: "Montage",
+    resume: "Marque le début d'une boucle de graphe : ce qui suit est rejoué N fois, chaque tour partant du résultat du précédent.",
+    resumeEn: "Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
+        doc: "Nombre de fois où la chaîne comprise entre ce nœud et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
+        docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
+    ],
+    async executer(ctx: any) {
+      // Ce nœud n'est normalement JAMAIS exécuté : le moteur déplie la boucle avant
+      // l'exécution et le remplace par les copies de la chaîne. S'il s'exécute, c'est
+      // que le dépliage n'a pas eu lieu — presque toujours faute de « Fin de boucle »
+      // en aval. On laisse alors passer le signal, et on le dit.
+      const a = ctx.entree(0);
+      return { valeurs: [a ?? null], message: traduire("msg.boucle.nonDepliee") };
+    },
+  },
+  {
+    // Les trois fins de boucle referment la même boucle et reçoivent les mêmes n résultats :
+    // elles ne diffèrent que par ce qu'elles en font. Le choix se fait donc en posant la
+    // variante voulue, et non en réglant un paramètre « Mode » sur un nœud unique — un
+    // paramètre qu'il faudrait ouvrir pour savoir ce que la boucle produit, alors que le nom
+    // du nœud le dit depuis le graphe. L'identifiant de A reste `boucle-graphe-fin` : les
+    // graphes enregistrés le portent (voir l'alias dans core/registre.ts).
+    id: "boucle-graphe-fin", nom: "Fin de boucle A", nomEn: "Loop End A", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et met bout à bout les résultats de tous les tours.",
+    resumeEn: "Closes a graph loop and puts every pass's result end to end.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      { nom: "Fondu", nomEn: "Fade", type: "nombre", plage: [0, 500], pas: 5, defaut: 0, unite: "ms",
+        doc: "Fondu enchaîné entre deux tours. 0 = raccord sec, les tours se suivent exactement.",
+        docEn: "Crossfade between two passes. 0 = hard join, the passes follow each other exactly." },
+    ],
+    async executer(ctx: any) {
+      // Après dépliage, ce nœud reçoit UNE arête par tour, dans l'ordre des tours.
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const fondu = ctx.paramNombre("Fondu", 0) / 1000;
+      let resultat = entrees[0];
+      for (let i = 1; i < entrees.length; i++) resultat = await fusionnerPistes(resultat, entrees[i], fondu);
+      return {
+        valeurs: [resultat],
+        message: traduire("msg.boucle.tours", entrees.length, resultat.duration.toFixed(2)),
+      };
+    },
+  },
+  {
+    id: "boucle-graphe-fin-b", nom: "Fin de boucle B", nomEn: "Loop End B", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et ne garde que le résultat du dernier tour.",
+    resumeEn: "Closes a graph loop and keeps only the last pass's result.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [],
+    async executer(ctx: any) {
+      // Les tours arrivent dans l'ordre : le dernier est le dernier de la liste. Les tours
+      // précédents sont bel et bien calculés — ils doivent l'être, chacun partant du
+      // résultat du précédent —, mais ils ne ressortent pas d'ici.
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      const dernier = entrees[entrees.length - 1];
+      return {
+        valeurs: [dernier],
+        message: traduire("msg.boucle.dernier", entrees.length, dernier.duration.toFixed(2)),
+      };
+    },
+  },
+  {
+    id: "boucle-graphe-fin-c", nom: "Fin de boucle C", nomEn: "Loop End C", univers: "Traitement", famille: "Montage",
+    resume: "Referme une boucle de graphe et empile les tours l'un sur l'autre, comme le mélangeur.",
+    resumeEn: "Closes a graph loop and stacks the passes on top of one another, like the mixer.",
+    entrees: [{ nom: "Audio", type: "audio" }],
+    sorties: [{ nom: "Audio", type: "audio" }],
+    parametres: [
+      // Le mélangeur n'a pas de niveau : « le niveau de chaque piste se règle sur le nœud
+      // qui la produit ». Ici c'est impossible — les tours sont des copies d'une seule
+      // chaîne, ils partagent donc leurs réglages. D'où ce niveau de sortie, et la crête
+      // annoncée dans le message : empiler dix tours d'un même son dépasse 1, et cela doit
+      // se voir sur le nœud plutôt que s'entendre à la lecture.
+      { nom: "Niveau", nomEn: "Level", type: "nombre", plage: [-24, 6], pas: 0.5, defaut: 0, unite: "dB",
+        doc: "Niveau appliqué à la somme des tours. À 0 dB, les tours s'additionnent tels quels, comme sur le mélangeur.",
+        docEn: "Level applied to the sum of the passes. At 0 dB they add up as they are, as on the mixer." },
+    ],
+    async executer(ctx: any) {
+      const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
+      if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      // Un seul chemin, même pour un tour unique : rien qui puisse diverger du cas général.
+      const resultat = await melangerPistes(entrees, ctx.paramNombre("Niveau", 0));
+      let crete = 0;
+      for (let c = 0; c < resultat.numberOfChannels; c++) {
+        const d = resultat.getChannelData(c);
+        for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > crete) crete = v; }
+      }
+      return {
+        valeurs: [resultat],
+        message: traduire("msg.boucle.empile", entrees.length, resultat.duration.toFixed(2), crete.toFixed(2)),
+      };
+    },
+  },
+  {
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",
     resume: "Place deux pistes l'une après l'autre avec un fondu enchaîné.",
     resumeEn: "Places two tracks one after the other with a crossfade.",
@@ -299,7 +421,10 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Effets",
+    // Rangé dans « Montage » et non dans « Effets » : il ne transforme pas le son,
+    // il le remet bout à bout — comme « Assemblage audio » et « Boucle MIDI », ses
+    // voisins de fichier, avec lesquels il se cherchait dans deux familles différentes.
+    id: "simple-boucle", nom: "Boucle", nomEn: "Loop", univers: "Traitement", famille: "Montage",
     resume: "Répète l'intégralité du signal un nombre de fois donné.",
     resumeEn: "Repeats the whole signal a given number of times.",
     notice: "Rejoue toute l'entrée « Répétitions » fois à la suite. Le paramètre Fondu permet d'adoucir chaque jonction ; à 0 ms le raccord est sec.",

@@ -306,3 +306,48 @@ describe("spatialiserStereo", () => {
     expect(rmsCanal(out, 1)).toBeGreaterThan(0.01);
   });
 });
+
+describe("le vocodeur de phase et son enveloppe de recollement", () => {
+  // LA GARDE QUI MANQUAIT. Le saut de synthèse valait `saut × facteur` : à facteur 4 — soit
+  // +24 demi-tons, la borne du curseur du nœud, ou un tempo de 25 %, la sienne — il atteignait la
+  // taille de la fenêtre, le recouvrement des trames tombait à zéro et l'on divisait par une
+  // enveloppe qui touchait zéro. Mesuré avant correction sur un son de crête 0,77 : crête 1,4 à
+  // +20 demi-tons, 73 à +24, jusqu'à 200 à +36. Le son ne sortait pas « un peu fort » : il sortait
+  // cent fois trop fort, en saturant tout ce qui suivait.
+  const creteDe = (b: AudioBuffer) => {
+    let m = 0;
+    for (let c = 0; c < b.numberOfChannels; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i]));
+    }
+    return m;
+  };
+
+  it("NE FAIT PAS ENFLER LE SON, sur toute la plage du curseur de tonalité", () => {
+    const source = sinus(220, 0.4);
+    const crete = creteDe(source);
+    for (const demiTons of [-24, -12, -5, 0, 5, 12, 17, 20, 22, 24]) {
+      const obtenue = creteDe(changerTonalite(source, demiTons));
+      expect(obtenue, `${demiTons} demi-tons : crête ${obtenue.toFixed(2)} pour ${crete.toFixed(2)}`)
+        .toBeLessThan(crete * 1.3);
+    }
+  });
+
+  it("ne fait pas enfler le son au-delà non plus, jusqu'à quatre octaves", () => {
+    // La banque de clavier transpose jusqu'à ±48 demi-tons : la garde doit tenir bien plus loin
+    // que la plage du nœud.
+    const source = sinus(220, 0.3);
+    const crete = creteDe(source);
+    for (const demiTons of [-48, -36, 30, 36, 48]) {
+      expect(creteDe(changerTonalite(source, demiTons)), `${demiTons} demi-tons`)
+        .toBeLessThan(crete * 1.3);
+    }
+  });
+
+  it("garde la durée en changeant la hauteur, ce qui est toute sa raison d'être", () => {
+    const source = sinus(220, 0.4);
+    for (const demiTons of [-24, 0, 24]) {
+      expect(changerTonalite(source, demiTons).length).toBe(source.length);
+    }
+  });
+});

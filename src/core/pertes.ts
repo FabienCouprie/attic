@@ -12,6 +12,12 @@ const TYPES_NON_SERIALIZABLE = ["File", "Blob", "AudioBuffer", "ArrayBuffer", "F
 // Liste blanche : champs conservés par usePersistance.exporter.
 export const CHAMPS_CONSERVES = new Set([
   "ficheId", "parametres", "audioNom", "midiNom", "imageNom", "svgNom", "sf2InstrumentIdx", "zonesSelectionnees", "nomFichier",
+  // Le .sfz d'un « Clavier SFZ » : un chemin de disque, donc sérialisable et rechargeable tel quel.
+  "sfzChemin", "sfzNom",
+  // Ce qui a été joué au clavier d'un nœud : un tableau de notes, sérialisable depuis toujours, mais
+  // qui ne survivait ni à l'export ni au rechargement — une mélodie enregistrée disparaissait à la
+  // réouverture du graphe, et rien ne le disait.
+  "sequenceNotes",
 ]);
 
 // Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine
@@ -51,7 +57,7 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
     // Champs commençant par _ (internes, temporaires) — non purgés, juste ignorés
     if (cle.startsWith("_") || cle.startsWith("on")) continue;
     // Champs de statut runtime (recréés à l'exécution)
-    if (["statut", "progression", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
+    if (["statut", "progression", "progressionDuNoeud", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
          "audioUrl", "enregistrementUrl", "mp3Url", "scriptGenere", "midiFichierSortie",
          "sf2Data", "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "svgFichier",
          "svgNom", "enregistrementBlob",

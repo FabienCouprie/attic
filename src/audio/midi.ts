@@ -1,6 +1,7 @@
 // audio/midi.ts — Extrait de l'ancien monolithe DSP.
 
 import { parseMidi, writeMidi } from "midi-file";
+import { comparerEvenementsMidi } from "./midi-ordre";
 import type { StructureSF2 } from "./soundfont";
 import { chercherZonesInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
@@ -19,6 +20,11 @@ export interface InstrumentCanal {
   programme: number;
   banque: number;
 }
+
+// L'ordre des événements dans un tick vit dans `midi-ordre.ts`, un module SANS aucun import :
+// le worker Magenta s'en sert, et il ne doit pas tirer `i18n.tsx` derrière lui. Réexporté ici pour
+// que les sept écrivains MIDI qui l'employaient ne changent pas d'adresse.
+export { comparerEvenementsMidi } from "./midi-ordre";
 
 export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   notes: NoteMidi[];
@@ -276,7 +282,7 @@ export function notesVersFichierMidi(
     lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: n.note, velocity: 0 });
   }
 
-  lignes.sort((a, b) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  lignes.sort(comparerEvenementsMidi);
 
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
@@ -339,6 +345,33 @@ export async function appliquerInstrumentMidi(
  * l'emporteraient sinon, et le réglage resterait sans effet. Les anciens
  * changements du canal visé sont donc retirés.
  */
+/**
+ * Réunit plusieurs fichiers MIDI en un seul, une piste par fichier.
+ *
+ * Un nœud qui produit une sortie MIDI par partie — le Multi-réservoir, la Groove Box —
+ * doit aussi pouvoir les jouer ensemble, avec l'instrument de chacune. Les pistes sont
+ * reprises telles quelles : chaque partie garde son canal et son changement de programme.
+ *
+ * La résolution (ticks par noire) du PREMIER fichier fait foi : elle est la même pour
+ * tous ceux que ce projet écrit. Un fichier de résolution différente serait rejoué à la
+ * mauvaise vitesse, donc il est refusé plutôt que mal joué.
+ */
+export function fusionnerMidis(fichiers: Uint8Array[]): Uint8Array {
+  const lus = fichiers.map((octets) => parseMidi(octets));
+  if (lus.length === 0) throw new Error("Aucun MIDI à fusionner.");
+  const tpm = lus[0].header.ticksPerBeat;
+  for (const m of lus) {
+    if (m.header.ticksPerBeat !== tpm) {
+      throw new Error(`Résolutions MIDI différentes : ${m.header.ticksPerBeat} et ${tpm} ticks par noire.`);
+    }
+  }
+  const pistes = lus.flatMap((m) => m.tracks);
+  return new Uint8Array(writeMidi({
+    header: { format: 1 as const, numTracks: pistes.length, ticksPerBeat: tpm },
+    tracks: pistes,
+  } as never));
+}
+
 export function appliquerInstrumentsParCanal(
   bytes: Uint8Array,
   parCanal: Map<number, number>,
@@ -758,7 +791,12 @@ export async function transposerQuantifierMidi(
         }
       }
 
-      eventsAbsolus.sort((a, b) => a.tick - b.tick || (a.evt.type === "noteOff" ? 1 : -1));
+      // Un note-on de vélocité nulle vaut un note-off : il doit être rangé comme tel.
+      const typeReel = (evt: any) =>
+        evt.type === "noteOn" && evt.velocity === 0 ? "noteOff" : evt.type;
+      eventsAbsolus.sort((a, b) =>
+        comparerEvenementsMidi({ tick: a.tick, type: typeReel(a.evt) }, { tick: b.tick, type: typeReel(b.evt) }),
+      );
       let prevTick = 0;
       for (const ea of eventsAbsolus) {
         ea.evt.deltaTime = Math.max(0, ea.tick - prevTick);
@@ -919,7 +957,7 @@ export async function arpegerMidi(
     lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: 0, noteNumber: n.note, velocity: 0 });
   }
 
-  lignes.sort((a, b) => a.tick - b.tick || (a.type === "noteOff" ? 1 : -1));
+  lignes.sort(comparerEvenementsMidi);
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
   for (const l of lignes) {
