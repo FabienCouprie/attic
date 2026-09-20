@@ -397,8 +397,23 @@ export function documenterGraphe(o: OptionsDocumentation): DocumentationGraphe {
 
 // ── Markdown, pour un agent ──────────────────────────────────────────────────────
 
-/** Texte sûr dans une cellule : les barres verticales couperaient le tableau. */
-const cel = (t: string | undefined): string => String(t ?? "").replace(/\|/g, "\\|").replace(/\r?\n+/g, " ").trim();
+/**
+ * Texte sûr dans une cellule : les barres verticales couperaient le tableau.
+ *
+ * L'ANTISLASH SE PROTÈGE EN PREMIER, et cet ordre est tout le sujet. Protéger la barre seule laissait
+ * un trou : un texte contenant déjà `\|` devenait `\\|`, que Markdown lit comme « un antislash, puis
+ * une barre » — barre redevenue vivante, colonne coupée en deux, tableau faussé à partir de là. Le
+ * cas n'est pas théorique, `valeur` étant un paramètre TEXTE que l'utilisateur écrit lui-même :
+ * une expression régulière, un chemin Windows, un orchestre Csound. En protégeant l'antislash
+ * d'abord, `\|` devient `\\\|` — un antislash littéral suivi d'une barre littérale, ce qui est
+ * exactement ce qui était écrit.
+ */
+const cel = (t: string | undefined): string =>
+  String(t ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n+/g, " ")
+    .trim();
 
 export function documentationVersMarkdown(d: DocumentationGraphe): string {
   const m = MOTS[d.langue];

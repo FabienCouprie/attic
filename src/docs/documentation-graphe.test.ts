@@ -224,6 +224,49 @@ describe("le Markdown, pour un agent", () => {
     expect(documentationVersMarkdown(d)).toContain("a \\| b");
   });
 
+  /**
+   * Les cellules d'une ligne de tableau, lues COMME MARKDOWN LES LIT : `\x` vaut le caractère `x`,
+   * et seule une barre non protégée sépare deux colonnes. C'est ce décodage qui permet d'exiger un
+   * aller-retour — le texte entré doit ressortir tel quel — au lieu de comparer à une chaîne échappée
+   * écrite à la main, qui ne prouverait que l'accord du test avec lui-même.
+   */
+  const cellules = (ligne: string): string[] => {
+    const out: string[] = [];
+    let courante = "";
+    for (let i = 0; i < ligne.length; i++) {
+      if (ligne[i] === "\\" && i + 1 < ligne.length) { courante += ligne[++i]; continue; }
+      if (ligne[i] === "|") { out.push(courante); courante = ""; continue; }
+      courante += ligne[i];
+    }
+    out.push(courante);
+    return out;
+  };
+
+  it("ne coupe pas ses tableaux sur un ANTISLASH suivi d'une barre", () => {
+    // Le trou que CodeQL a vu (js/incomplete-sanitization, alerte 11) : protéger la barre sans
+    // protéger l'antislash transformait « \| » en « \\| », que Markdown lit comme un antislash PUIS
+    // une barre vivante — la colonne se coupait en deux et tout le tableau glissait. Le cas se
+    // rencontre pour de bon, « Programme » étant un paramètre texte que l'utilisateur écrit :
+    // une expression régulière, un chemin Windows, un orchestre Csound.
+    const entree = "a \\| b";
+    const d = doc({ noeuds: [noeud("flt", "filtre", { "Programme": entree })], aretes: [] });
+    const ligne = documentationVersMarkdown(d).split("\n")
+      .find((l) => l.startsWith("| Programme |"))!;
+    expect(ligne, "ligne du paramètre introuvable").toBeDefined();
+    const cols = cellules(ligne);
+    // Quatre colonnes — paramètre, valeur, défaut, plage — plus le vide de chaque extrémité.
+    expect(cols).toHaveLength(6);
+    // Et la valeur ressort EXACTEMENT comme elle est entrée, mise en gras parce qu'elle est réglée.
+    expect(cols[2].trim()).toBe(`**${entree}**`);
+  });
+
+  it("rend un antislash seul tel quel, sans l'avaler", () => {
+    const d = doc({ noeuds: [noeud("flt", "filtre", { "Programme": "C:\\sons\\kit" })], aretes: [] });
+    const ligne = documentationVersMarkdown(d).split("\n")
+      .find((l) => l.startsWith("| Programme |"))!;
+    expect(cellules(ligne)[2].trim()).toBe("**C:\\sons\\kit**");
+  });
+
   it("finit par le JSON du graphe", () => {
     expect(md.trimEnd().endsWith("```")).toBe(true);
     expect(md).toContain("\"ficheId\": \"oscillateur\"");
