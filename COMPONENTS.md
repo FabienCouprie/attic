@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **340 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **342 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,11 +11,11 @@ Attic ships **340 components** in **7 categories** and **29 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 62 | [Audio](#audio) (7) · [Generation](#generation) (45) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
 | [Processing](#processing) | 166 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (138) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Visualization](#visualization) | 33 | [Analysis](#analysis) (25) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 59 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (8) |
+| [Others](#others) | 60 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (9) |
 
 ## How to read this catalog
 
@@ -5145,6 +5145,7 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [RMS (Meyda)](#rms-meyda) | Computes the average RMS level of the signal in dBFS using Meyda. |
+| [Roughness](#roughness) | Measures a sound's sensory dissonance over time, after Plomp and Levelt's model. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
 | [Spectral Centroid (Meyda)](#spectral-centroid-meyda) | Computes the spectral centroid of the signal using the Meyda library. |
@@ -5421,6 +5422,25 @@ Computes the average RMS (Root Mean Square) level of the signal using Meyda. The
 | Window | number | 2048 samples | 64 – 8192 samples, step 64 | Analysis window size (rounded up to the next power of 2). |
 | Hop | number | 1024 samples | 64 – 4096 samples, step 64 | Hop size between analysis frames. |
 | Aggregation | choice | Average | Average / Median / Maximum | Aggregation method for the per-frame values. |
+
+#### Roughness
+
+`rugosite` · Visualization → Analysis
+
+*Measures a sound's sensory dissonance over time, after Plomp and Levelt's model.*
+
+After Reinier Plomp and Willem Levelt, « Tonal Consonance and Critical Bandwidth », Journal of the Acoustical Society of America 38(4), 1965. Attic measured level, centroid, rolloff, zero-crossing rate, phase correlation. Nowhere did it measure perceived dissonance. What the model says. Two neighbouring sounds beat: as long as they fall within the same critical band, the ear does not separate them and hears roughness. It is nil at the unison, greatest at about a quarter of the critical band, and falls away once the two sounds are far enough apart to be heard separately. This is why a low third sounds murky and the same third two octaves higher does not: the critical band widens with frequency. The measure is referred to the energy of the retained partials, and that is necessary: without it a loud passage would be declared rough and a quiet one consonant, when it is the same chord at two dynamics. What is measured is the sound's quality, not its volume.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Analysis | text |  |
+| output | Curve | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Partials | slider | 10 | 2 – 24, step 1 | How many partials to keep at each moment. Faint partials add measurement noise more than audible roughness. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better. |
 
 #### Self-Similarity Matrix
 
@@ -7450,6 +7470,7 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 | Component | Summary |
 |---|---|
 | [Chord](#chord) | Detects the chord name from its notes. |
+| [Dissonance Curve](#dissonance-curve) | Finds the scale a timbre calls for: the dips of its dissonance curve are its intervals. |
 | [Pitch-Class Sets](#pitch-class-sets) | Analyses a chord or passage as a pitch-class set: normal form, prime form, interval vector. |
 | [Progression](#progression) | Generates a chord progression from a key and roman numerals. |
 | [Rhythm Analysis](#rhythm-analysis) | Describes a rhythm the way « Pitch-Class Sets » describes a chord: intervals, evenness, offbeats, necklace. |
@@ -7474,6 +7495,28 @@ Detects a chord name from a list of notes. Example: C E G → C major. Accepts n
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). |
+
+#### Dissonance Curve
+
+`courbe-dissonance` · Others → Theory
+
+*Finds the scale a timbre calls for: the dips of its dissonance curve are its intervals.*
+
+After William Sethares, « Local consonance and the relationship between timbre and scale », Journal of the Acoustical Society of America 94(3), 1993, taken up in « Tuning, Timbre, Spectrum, Scale » (1998). Attic measured spectra and knew about temperaments, without ever connecting the two. Yet this is Sethares' thesis: consonance does not rest on intervals fixed in advance, but on the agreement between a sound's spectrum and the scale applied to it. The procedure. The timbre is sounded against a transposed copy of itself, at every interval within an octave, and the roughness of the whole is measured each time. Where the curve dips, the timbre supports that interval; elsewhere its partials beat. The dips are therefore its scale. What the computation shows, and what is written nowhere in the code: for a harmonic sound the dips fall on the octave, the fifth at 702 cents, the fourth at 498, the thirds at 386 and 316. Just intonation is not a cultural choice — it is the consequence of a harmonic spectrum. And conversely. A timbre whose partials are not whole multiples calls for another scale, whose very octave may no longer sit at 1200 cents. The example Sethares develops is the gamelan: metallophones have inharmonic spectra, and the slendro and pelog scales follow them. Feed in a recording of a bell, a plate or a voice: the scale that comes out has no reason to be ours.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Scale | text |  |
+| output | Curve | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Timbre | choice | Measured from input | Measured from input / Harmonic / Stretched | Where the partials come from. « Measured » takes them from the connected sound, at its loudest moment. « Harmonic » uses a reference timbre, the one whose curve recovers just intonation — the point of comparison. « Stretched » is there to see the process at work: the spectrum is deformed and one watches the scale move with it. |
+| Partials | slider | 8 | 2 – 24, step 1 | How many partials to keep. Few, and the curve is smooth but coarse; many, and it bristles with tiny dips due to faint partials. Between six and ten suits most sounds. |
+| Stretch | slider | 2.1 | 1.5 – 2.6, step 0.05 | Octave stretch factor of the timbre, when « Stretched » is chosen. At 2 the timbre is harmonic and nothing moves. At 2.1, that timbre's octave goes to 1249 cents, and every other dip follows. |
+| Range | slider | 1300 cents | 600 – 2400 cents, step 100 | How far the curve is computed. Ask a little beyond the interval of interest: neither end of a curve can be detected as a dip, having no neighbour on one side, and a curve stopped exactly at 1200 does not return the octave. |
+| Depth | slider | 0.005 | 0.001 – 0.1, step 0.001 | Minimum depth for a dip to be kept, as a fraction of the curve's range. Raising it keeps only the clear intervals; lowering it brings out the degrees the timbre barely supports. |
 
 #### Pitch-Class Sets
 
