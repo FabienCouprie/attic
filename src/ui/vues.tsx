@@ -1842,6 +1842,9 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("visualisation-songsee"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
+  // Le cercle pulsant rend un SVG ANIMÉ : la même vue l'affiche, et l'animation tourne dans la
+  // balise image parce qu'elle est écrite en SMIL et non en feuille de style.
+  { correspond: parId("cercle-pulsant"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },

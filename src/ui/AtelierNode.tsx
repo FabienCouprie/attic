@@ -275,6 +275,55 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     updateNodeInternals(id);
   }, [etatExec.statut, connexions.length, id, updateNodeInternals]);
 
+  // LE CAS QUE LES DEUX REMESURES CI-DESSUS NE COUVRENT PAS : un nœud dont le cadre est figé et
+  // dont le contenu grandit APRÈS la fin de l'exécution.
+  //
+  // Les ports sont collés au bas du nœud (`margin-top: auto`). Tant que le contenu tient dans le
+  // cadre, ils ne bougent pas ; dès qu'il déborde, il les pousse VERS LE BAS, hors du cadre. La
+  // position que ReactFlow a mémorisée est alors trop HAUTE, et l'arête se branche au-dessus de la
+  // prise — c'est le symptôme signalé sur le sélecteur multi-zones, et c'est pourquoi
+  // redimensionner d'un pixel le corrigeait : cela change la taille extérieure, la seule chose que
+  // ReactFlow surveille de lui-même.
+  //
+  // Pourquoi la remesure posée sur la fin d'exécution ne suffit pas : elle part au moment où le
+  // statut passe à « terminé », c'est-à-dire AVANT que le contenu produit — lecteur, image,
+  // sélecteur de zones qui dessine sa forme d'onde — ne soit mis en page. Elle mesure donc un DOM
+  // qui n'a pas encore bougé, et conclut à tort que rien n'a changé.
+  //
+  // Un `ResizeObserver` ne voit rien non plus : les ports ne changent pas de TAILLE, ils se
+  // déplacent — et un observateur de taille ignore les translations.
+  //
+  // D'où cette surveillance-ci : on regarde le DOM du nœud changer, et l'on ne remesure que si la
+  // rangée de ports a vraiment bougé. Le garde sur `offsetTop` est ce qui rend la chose gratuite —
+  // une vue qui se redessine à chaque image mute son DOM sans déplacer quoi que ce soit, et ne
+  // déclenche donc rien.
+  useEffect(() => {
+    const el = nodeRef.current;
+    if (!el) return;
+    let dernierHaut = -1;
+    let planifie = 0;
+    const verifier = () => {
+      planifie = 0;
+      const ports = el.querySelector<HTMLElement>(".attic-node-ports");
+      if (!ports) return;
+      const haut = ports.offsetTop;
+      if (haut === dernierHaut) return;
+      dernierHaut = haut;
+      updateNodeInternals(id);
+    };
+    const planifier = () => {
+      if (planifie) return;
+      planifie = requestAnimationFrame(verifier);
+    };
+    planifier();
+    const obs = new MutationObserver(planifier);
+    obs.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class"] });
+    return () => {
+      obs.disconnect();
+      if (planifie) cancelAnimationFrame(planifie);
+    };
+  }, [id, updateNodeInternals]);
+
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;

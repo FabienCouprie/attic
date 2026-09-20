@@ -3,15 +3,15 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **345 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **348 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 63 | [Audio](#audio) (7) · [Generation](#generation) (46) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
 | [Processing](#processing) | 166 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (138) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 34 | [Analysis](#analysis) (26) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Visualization](#visualization) | 35 | [Analysis](#analysis) (27) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -178,6 +178,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Drum Machine](#drum-machine) | Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed. |
 | [Euclidean Rhythm](#euclidean-rhythm) | Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm). |
+| [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
 | [FM / AM Synth](#fm--am-synth) | Generates a note with frequency modulation (FM) or amplitude modulation (AM). |
 | [Fractal Music](#fractal-music) | Generates a fractal melody from a repeated motif and scale. |
 | [Fractal Spectrogram](#fractal-spectrogram) | Generates a fractal spectrogram and its associated audio. |
@@ -204,6 +205,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Pluck Synth](#pluck-synth) | Generates a plucked string note using Karplus-Strong synthesis. |
 | [Poly Synth](#poly-synth) | Generates a polyphonic chord with an ADSR envelope. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
+| [Pulsing Circle](#pulsing-circle) | An animation and a melody drawn from the same series of pulses: colour gives the key, pulsation the rhythm. |
 | [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
 | [Random Melody](#random-melody) | Generates a random melody. |
 | [Resultant (Schillinger)](#resultant-schillinger) | The rhythm that arises from superposing two regular pulses. |
@@ -490,6 +492,28 @@ Spreads N onsets as evenly as possible over M steps, using Bjorklund's algorithm
 | Velocity | number | 90 | 1 – 127, step 1 | Strength of the onsets. |
 | Accent | number | 20 | 0 – 40, step 1 | Extra velocity on the first step of each cycle, so the cycle's start can be heard. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Feature Synthesis
+
+`synthese-features` · Inputs → Generation
+
+*Builds a sound from the forty measurements that describe it, and shows how close it comes.*
+
+The reverse path of « Track Features »: give it a vector, it returns a sound. What it cannot do, and what should be known first. The vector does not determine a sound: it determines an infinite class of them. Two very different tracks can share their tempo, centroid, chroma and cepstral coefficients. This node therefore reproduces nothing — it builds a sound whose measured vector comes close to the target, and it tells you how close. The four families do not invert equally. Tempo is not a measurement to recover but a setting to impose: one chooses the rate. Chroma is allocated exactly — twelve weights, twelve pitch classes in those proportions. The centroid is solved: for a harmonic series whose amplitudes fall as one over k to the alpha, the centroid is a monotone function of alpha, inverted by bisection on the spectrum actually produced. The cepstral coefficients resist: Meyda computes thirteen of them over twenty-six mel bands, and going back gives a smoothed envelope. That is what MFCCs are for — discarding that detail — and no inversion will restore it. What the round trip gives, measured. The centroid comes back within a few per cent: 797 targeted, 803 obtained. The three dominant pitch classes are the same, in close proportions. The cepstral coefficients come back approximately, which is expected. The tempo needs an explanation. The synthesis places one note every 60 divided by the tempo seconds: the tempo produced IS the one asked for. But the detector often reads a sub-multiple — 40 or 60 for 120 depending on the seed — because notes all of equal strength give it no accent to choose between a beat and its double. The deviation shown for that family therefore comes from the measurement, not from the synthesis.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Vector | text |  |
+| output | Audio | audio |  |
+| output | Deviation | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | slider | 8 s | 1 – 60 s, step 1 | Length of the sound built. Longer, the chroma proportions come out better — enough notes are needed for a twelve-class allocation to show. |
+| Octave | slider | 4 | 1 – 7, step 1 | Octave of the fundamentals. The vector carries no absolute pitch: chroma says which classes, never in which register. The choice is yours, and it moves the centroid obtained. |
+| Partials | slider | 24 | 4 – 48, step 1 | Number of partials per note. Few, and the target centroid may be out of reach — a short series does not reach high enough. Many, and the sound gains richness without the measurement changing much. |
+| Seed | slider | 5 | 0 – 999999, step 1 | Seed for the note order. The chroma proportions do not change with it — they are allocated exactly — only the order does. The same seed replays the same sound. |
+| Verify | choice | Yes | Yes / No | Re-measure the sound produced and show the deviation family by family. It is the only proof the node comes close to anything, and it doubles the computation time. « No » returns the sound only. |
 
 #### FM / AM Synth
 
@@ -1154,6 +1178,36 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 | Shape | choice | Sine | Sine / Square / Sawtooth | Waveform of the pulsaret. Sine gives a clean formant; square and sawtooth add higher replicas of it. |
 | Duration | number | 5 s | 0.2 – 120 s, step 0.1 | Length of the produced sound. |
 | Amplitude | slider | 80 % | 0 – 100 %, step 1 | Output level. |
+
+#### Pulsing Circle
+
+`cercle-pulsant` · Inputs → Generation
+
+*An animation and a melody drawn from the same series of pulses: colour gives the key, pulsation the rhythm.*
+
+A circle that breathes, changes size and colour, and a melody that comes out of it. But not in the sense of sonifying a picture: the two are the same list, looked at twice. The principle, and what sets it apart from decorative sonification. The node computes a single series of pulses — an instant, a size, a colour — then the drawing animates exactly those instants and the melody writes exactly those notes. They cannot drift apart, because there is nothing to synchronise. Hue gives the key through the Camelot wheel, and this is no arbitrary mapping. That wheel lays the twelve keys in a circle — ring A for the minors, B for the majors — following the disc jockeys' mixing rule: a neighbouring position, the same number in the other ring, or seven positions away. Hue is a circle, the wheel is another: matching them means two neighbouring hues give two compatible keys. A continuous gradient therefore produces a sequence of modulations that work. The obvious mapping — hue divided into twelve semitones — would do the opposite: two neighbouring colours would give two unrelated keys, and a gradient would sound like a string of accidents. The rest follows. Saturation chooses the ring: dull for minor, vivid for major, which the eye already reads as sombre or brilliant. Lightness gives the register. The radius at the moment of the stroke gives the scale degree — a large circle is a low note, the sense the eye spontaneously gives a wide shape — and its amplitude gives the dynamic. Silence has a picture. Below the threshold the pulse is seen and not heard: the circle contracts, the music falls silent, and both fall silent together because it is the same decision. The animation comes out as an SVG animated by SMIL rather than by a stylesheet or a script, and that choice has a reason: an SVG animated by SMIL moves even when loaded in an image tag, which is where Attic shows its images. The file is self-contained — no font, no external resource, no script — and opens in any browser.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Animation | image |  |
+| output | MIDI | MIDI |  |
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | slider | 20 s | 2 – 120 s, step 1 | Length of the animation, and of the piece. It is the same: one cannot end before the other. |
+| Initial rate | slider | 1.6 /s | 0.2 – 12 /s, step 0.1 | Beats per second at the start. Below one per second one hears isolated events; beyond five, a texture. |
+| Final rate | slider | 3.2 /s | 0.2 – 12 /s, step 0.1 | Beats per second at the end. Different from the initial one, the rate slides continuously from one to the other: not a tempo change but an acceleration, cut into no steps. |
+| Hue | slider | 210 ° | 0 – 359 °, step 1 | Starting colour. Zero is red, 120 green, 240 blue. Every thirty degrees moves one position on the Camelot wheel, hence one key. |
+| Hue journey | slider | 150 ° | -720 – 720 °, step 15 | How far the colour turns over the whole duration. At zero the piece stays in one key. At 360 it goes round all twelve — and since neighbouring positions are compatible, each passage is a modulation that holds. |
+| Saturation | slider | 70 % | 0 – 100 %, step 1 | Vividness of the colour, and mode of the piece: below 50 %, the minor ring; above, the major. The threshold sits in the middle, and there is no reason to put it elsewhere. |
+| Lightness | slider | 55 % | 0 – 100 %, step 1 | Lightness of the colour, and register of the melody: a dark colour drops an octave, a light one rises an octave. |
+| Breathing | slider | 80 % | 0 – 100 %, step 1 | Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key is heard changing. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale. |
+| Silence threshold | slider | 45 % | 0 – 90 %, step 1 | Size below which the pulse does not sound. This is what lets the piece breathe rather than placing a note on every beat from start to finish. A figure worth knowing: the radius never falls below one hundred minus the breathing, so a threshold lower than that never cuts anything. At 65 % breathing, a threshold under 35 % has no effect — measured, all forty-eight pulses sounded. |
+| Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke. It is the note's decay made visible, and what gives the picture its depth. |
+| Size | slider | 600 px | 200 – 1200 px, step 20 | Side of the square image. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the irregularity of the sizes. The same seed replays the same piece, picture included. |
 
 #### Pure Data
 
@@ -5175,6 +5229,7 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Spectrogram](#spectrogram) | Shows how the spectrum evolves over time (time × frequency × intensity). |
 | [Spectrum Analyzer](#spectrum-analyzer) | Decomposes the signal into frequencies (FFT) and displays its spectrum. |
 | [Tempo Detector](#tempo-detector) | Estimates an audio track's tempo and outputs it as a reusable value. |
+| [Track Features](#track-features) | The forty measurements track classification uses, for a single track. |
 | [VU-meter / LUFS](#vu-meter--lufs) | Measures and displays audio levels: RMS, peak, true peak, LUFS. |
 | [Waveform Viewer](#waveform-viewer) | Displays the waveform with zoom and scrollbar. |
 | [ZCR (Meyda)](#zcr-meyda) | Counts zero crossings per frame using Meyda. |
@@ -5625,6 +5680,25 @@ Estimates a recording's tempo and outputs it as a value, connectable to another 
 | Octave correction | choice | Fold into range | Fold into range / None | Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70 — but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Set « None » for a track you know to be slow. |
 | Range low | number | 80 | 40 – 140, step 1 | Lower bound of the folding range. |
 | Range high | number | 160 | 80 – 240, step 1 | Upper bound of the folding range. |
+
+#### Track Features
+
+`caracteristiques-piste` · Visualization → Analysis
+
+*The forty measurements track classification uses, for a single track.*
+
+« Track classification » reduces each track of a folder to a vector of forty numbers, then compares them with one another. That computation takes one track at a time, but nothing exposed it outside the collection: one could read that a track belonged to group 2 with 84 % probability, without ever seeing what had produced that judgement. What the vector holds. The tempo, in beats per minute. The mean spectral centroid, which says where the sound's centre of gravity sits — the measurement that separates dull from bright. The twelve pitch classes of the chromagram, which say which notes recur, key included. And the mean and variance of thirteen cepstral coefficients, which describe timbre: the mean gives its colour, the variance says whether it moves. This node adds no computation. It calls the same function, on the same excerpt, with the same settings, and that is its whole reason for being: the numbers it shows are those the classification used. It is also why it offers no duration setting — the thirty-second cap comes from the classification, where it exists so that a collection of several hundred tracks stays computable, and changing it here would give a vector the classification would not recognise. The second output returns the same vector as JSON, for another node or another program to use.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Analysis | text |  |
+| output | Vector | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Detail | choice | Whole vector | Whole vector / Summary by family | « Whole vector » writes the forty values, one per line. « Summary by family » groups the chroma and cepstral coefficients to give the dominant key and the shape of the timbre first — easier to read when comparing two tracks by eye. |
+| Decimals | slider | 3 | 0 – 6, step 1 | Digits after the decimal point. Cepstral coefficients play out in tenths, variances in units: three decimals suit both. |
 
 #### VU-meter / LUFS
 

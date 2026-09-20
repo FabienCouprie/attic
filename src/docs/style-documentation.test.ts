@@ -36,6 +36,8 @@ const SIGLES = new Set([
   "DTW", "GMM", "GPT", "GUI", "HSL", "IBM", "ICA", "ICASSP", "IRCAM", "ITU", "JMK", "KSP",
   "LRA", "LUFS", "LVA", "MIT", "NLP", "OCR", "RGB", "RRGGBB", "SDK", "SLT", "TAESD", "TASLP",
   "OPUS", "EVY", "PLPLPL", "CPS", "PCH", "OCT", "FOF", "ARGS", "PPCM", "JPEG",
+  // SMIL : le langage d'animation du W3C, nom d'une norme et non une insistance.
+  "SMIL",
 ]);
 
 /**

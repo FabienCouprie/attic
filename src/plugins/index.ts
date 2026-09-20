@@ -131,6 +131,9 @@ import { fiches as f_deplacement } from "./deplacement";
 import { fiches as f_theorie_rythme_voix } from "./theorie-rythme-voix";
 import { fiches as f_dissonance } from "./dissonance";
 import { fiches as f_masquage_schillinger_gammes } from "./masquage-schillinger-gammes";
+import { fiches as f_caracteristiques_piste } from "./caracteristiques-piste";
+import { fiches as f_synthese_features } from "./synthese-features";
+import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
 import { fiches as f_declipper } from "./declipper";
 import { fiches as f_inpainting } from "./inpainting";
 import { fiches as f_pghi } from "./pghi";
@@ -180,6 +183,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_theorie_rythme_voix,
   ...f_dissonance,
   ...f_masquage_schillinger_gammes,
+  ...f_caracteristiques_piste,
+  ...f_synthese_features,
+  ...f_cercle_pulsant,
   ...f_declipper,
   ...f_inpainting,
   ...f_pghi,
