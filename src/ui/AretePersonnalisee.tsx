@@ -1,5 +1,7 @@
 // ui/AretePersonnalisee.tsx — Arête visuelle personnalisée
 import { BaseEdge, getSimpleBezierPath, type EdgeProps, useStore } from "@xyflow/react";
+import { useStatut } from "./statuts";
+import type { StatutNoeud } from "./flux-arete";
 import { useCallback, useState } from "react";
 import { registre } from "../audio/adaptateur";
 import { validerArete } from "./validerGraphe";
@@ -22,16 +24,11 @@ export function AretePersonnalisee({
   const [edgePath, labelX, labelY] = getSimpleBezierPath({
     sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition,
   });
-  // Un seul sélecteur pour les deux statuts : la règle du flux les lit
-  // ensemble, et la séparer en deux abonnements invitait à les combiner à la
-  // main au point d'usage — c'est ainsi que le OU fautif s'était installé.
-  const enFlux = useStore(useCallback(
-    (state: any) => areteEnFlux(
-      state.nodeLookup.get(source)?.data?.statut,
-      state.nodeLookup.get(target)?.data?.statut,
-    ),
-    [source, target]
-  ));
+  // Les deux statuts viennent du magasin d'exécution, plus du magasin de React Flow : l'état
+  // d'exécution a quitté `node.data` pour que le poser ne coûte plus un passage sur tous les nœuds
+  // (voir `statuts.ts`). La règle du flux, elle, ne change pas — elle lit toujours les deux
+  // ensemble, ce qui est la raison d'être de `areteEnFlux`.
+  const enFlux = areteEnFlux(useStatut(source).statut as StatutNoeud, useStatut(target).statut as StatutNoeud);
   const label = useStore(useCallback(
     (state: any) => {
       const src = state.nodeLookup.get(source);

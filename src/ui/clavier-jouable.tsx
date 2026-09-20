@@ -11,7 +11,8 @@
 // CE QUI RESTE À L'APPELANT est exactement ce qui diffère : `presser` fait sonner une note et rend
 // de quoi l'arrêter. Le reste — quand presser, quelle vélocité, quelle note — est ici.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, useStore } from "@xyflow/react";
+import { clavierDoitJouer } from "./clavier-physique";
 import { NOTE_MAX, NOTE_MIN, disposition, nomNote, noteALaPosition } from "./clavier-disposition";
 
 export const LARGEUR_BLANCHE = 24;
@@ -154,22 +155,40 @@ export function useClavierJouable(id: string, presseur: Presseur) {
     for (let i = 0; i < noirs.length; i++) m.set(noirs[i].toUpperCase(), base + notesNoires[i]);
     return m;
   }, [octaveClavier]);
+  // LE CLAVIER PHYSIQUE N'ÉCOUTE QUE POUR LE NŒUD SÉLECTIONNÉ.
+  //
+  // L'écoute était posée sur `window` sans condition, dès que la vue était montée — or React Flow
+  // monte la vue de TOUS les nœuds du graphe. Un clavier posé ailleurs sonnait donc pendant qu'on
+  // travaillait autre part, deux claviers sonnaient ensemble, et taper du texte dans un paramètre
+  // jouait des notes. La règle et ses raisons vivent dans `clavier-physique.ts`, avec ses tests.
+  const selectionne = useStore(
+    useCallback((etat: any) => Boolean(etat.nodeLookup.get(id)?.selected), [id]),
+  );
   useEffect(() => {
+    if (!selectionne) return;
     function onKD(e: KeyboardEvent) {
-      if (e.repeat) return;
+      if (e.repeat || !clavierDoitJouer({ selectionne: true, cible: e.target })) return;
       if (e.key === "ArrowUp" || e.key === "=") { setOctaveClavier((o) => Math.min(o + 1, 7)); return; }
       if (e.key === "ArrowDown" || e.key === "-") { setOctaveClavier((o) => Math.max(o - 1, 2)); return; }
       const note = keyMap.get(e.key.toUpperCase());
       if (note !== undefined && !activesRef.current.has(note)) presser(note);
     }
     function onKU(e: KeyboardEvent) {
+      // Le relâchement n'est PAS conditionné à la cible : une touche enfoncée sur le clavier puis
+      // relâchée après un clic ailleurs doit s'éteindre, sinon la note reste tenue pour toujours.
       const note = keyMap.get(e.key.toUpperCase());
       if (note !== undefined) relacher(note);
     }
     window.addEventListener("keydown", onKD);
     window.addEventListener("keyup", onKU);
-    return () => { window.removeEventListener("keydown", onKD); window.removeEventListener("keyup", onKU); };
-  }, [keyMap, presser, relacher]);
+    return () => {
+      window.removeEventListener("keydown", onKD);
+      window.removeEventListener("keyup", onKU);
+      // Désélectionner pendant qu'une touche est enfoncée laisserait la note sonner sans personne
+      // pour la relâcher : on éteint tout ce qui sonne en partant.
+      for (const note of [...activesRef.current.keys()]) relacher(note);
+    };
+  }, [keyMap, presser, relacher, selectionne]);
 
   return {
     contRef, touchesRef, dispo, hauteurTouches,

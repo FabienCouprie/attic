@@ -15,7 +15,7 @@ import { Note } from "tonal";
 import { traduire } from "../i18n";
 import { decouperMorceaux, lireMorceau, normaliserAccord, type MorceauAbc, type NoteAbc } from "./abc";
 
-export const INVARIANTS = ["mesures", "metrique", "tonalite", "melodie", "rythme", "accords", "ambitus"] as const;
+const INVARIANTS = ["mesures", "metrique", "tonalite", "melodie", "rythme", "accords", "ambitus"] as const;
 export type Invariant = (typeof INVARIANTS)[number];
 
 /** Le premier morceau d'un texte ABC, ou null. */
@@ -193,7 +193,7 @@ export const PREREGLAGES: Record<string, Invariant[]> = {
  * l'interface anglaise propose et que le message « invariants inconnus » cite ;
  * les noms français restent acceptés, pour les projets déjà enregistrés.
  */
-export const INVARIANTS_EN = ["bars", "meter", "key", "melody", "rhythm", "chords", "range"] as const;
+const INVARIANTS_EN = ["bars", "meter", "key", "melody", "rhythm", "chords", "range"] as const;
 
 /**
  * Lit une liste d'invariants saisie : « mesures, métrique, mélodie », ou

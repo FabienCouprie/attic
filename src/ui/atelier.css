@@ -304,6 +304,15 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 140px;
 }
+/* Le compteur de mémoire, à droite de la réinitialisation. Chiffres à chasse fixe : sans cela,
+   la largeur change à chaque relevé et le bouton « Lancer » tressaute deux fois par seconde. */
+.attic-memoire {
+  font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+  padding: 2px 6px; margin: 0 2px; border-radius: 4px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border);
+  user-select: none; cursor: default;
+}
 .attic-nom-fichier {
   font-size: 11px; color: var(--text-title); white-space: nowrap;
   max-width: 180px; margin-left: 2px; padding: 2px 4px 2px 6px; border-radius: 4px;

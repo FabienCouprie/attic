@@ -13,7 +13,7 @@
 //
 // Fichier FEUILLE : il n'importe que des types du cœur, donc aucun cycle possible
 // avec `audio/index.ts` (que les plugins importent déjà pour le DSP).
-import type { PluginDef, ContexteExecution, FonctionPlugin, TypeValeur } from "../core";
+import type { PluginDef, TypeValeur } from "../core";
 
 /** Ce qui circule sur les arêtes du domaine audio. */
 export type ValeurAudio = TypeValeur;
@@ -24,8 +24,3 @@ export type RuntimeAudio = AudioContext;
 /** Fiche de nœud du domaine audio — à utiliser dans tous les plugins. */
 export type FicheAudio = PluginDef<ValeurAudio, RuntimeAudio>;
 
-/** Contexte d'exécution reçu par un `executer` audio. */
-export type ContexteAudio = ContexteExecution<ValeurAudio, RuntimeAudio>;
-
-/** Signature d'un `executer` audio. */
-export type FonctionAudio = FonctionPlugin<ValeurAudio, RuntimeAudio>;

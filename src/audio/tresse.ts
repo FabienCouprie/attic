@@ -65,7 +65,7 @@ export function ordrePermutation(perm: number[]): number {
 }
 
 /** Fréquences de coupure entre bandes. Espacées de plus de deux octaves : les transitions ne se recouvrent pas. */
-export const COUPURES: Record<number, number[]> = { 3: [250, 2500], 4: [180, 900, 4500] };
+const COUPURES: Record<number, number[]> = { 3: [250, 2500], 4: [180, 900, 4500] };
 
 /** Transition de 0 à 1 sur une demi-octave centrée sur `fc`. */
 function transition(f: number, fc: number): number {

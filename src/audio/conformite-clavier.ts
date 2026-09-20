@@ -77,7 +77,7 @@ export function partitionDeuxMains(
 }
 
 /** Les notes qui sonnent à un instant donné. */
-export function notesALInstant(notes: NoteJouee[], t: number): NoteJouee[] {
+function notesALInstant(notes: NoteJouee[], t: number): NoteJouee[] {
   return notes.filter((n) => n.debut <= t && t < n.fin);
 }
 

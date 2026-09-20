@@ -120,9 +120,9 @@ export const STYLES: Record<string, Style[]> = {
   ],
 };
 
-export const CATEGORIES_STYLES = Object.keys(STYLES);
+const CATEGORIES_STYLES = Object.keys(STYLES);
 
-export const CATEGORIES_LABEL: Record<string, Record<Langue, string>> = {
+const CATEGORIES_LABEL: Record<string, Record<Langue, string>> = {
   Rock: { fr: "Rock", en: "Rock" },
   Métal: { fr: "Métal", en: "Metal" },
   Pop: { fr: "Pop", en: "Pop" },

@@ -209,8 +209,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (off) ou 1–9 (velocity).",
         docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1–9 (velocity)." },
       { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
-        doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même motif doit rendre le même fichier à chaque exécution.",
-        docEn: "Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
+        doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même motif doit rendre le même fichier à chaque exécution.",
+        docEn: "Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo", 120);

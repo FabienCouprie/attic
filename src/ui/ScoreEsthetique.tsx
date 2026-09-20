@@ -8,7 +8,7 @@ import {
   AXES_ESTHETIQUES, formaterHorodatage, type AnalyseEsthetique, type AxeEsthetique,
 } from "../audio/esthetique";
 
-export const COULEURS_AXES: Record<AxeEsthetique, string> = {
+const COULEURS_AXES: Record<AxeEsthetique, string> = {
   CE: "#e9a13b", CU: "#2a9d8f", PC: "#8e6fce", PQ: "#4c9aff",
 };
 

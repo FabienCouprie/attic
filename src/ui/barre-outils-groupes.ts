@@ -47,6 +47,8 @@ export const OUTILS: OutilBarre[] = [
   // clic va faire, et non l'état dans lequel on se trouve.
   { id: "sauvegardeAutoActiver", famille: "fichier", cle: "barre.sauvegardeAutoActiver" },
   { id: "sauvegardeAutoCouper", famille: "fichier", cle: "barre.sauvegardeAutoCouper" },
+  { id: "economieMemoireActiver", famille: "fichier", cle: "barre.economieMemoireActiver" },
+  { id: "economieMemoireCouper", famille: "fichier", cle: "barre.economieMemoireCouper" },
 
   { id: "commentaire", famille: "edition", cle: "barre.commentaire" },
   { id: "cadre", famille: "edition", cle: "barre.cadre" },
@@ -61,6 +63,7 @@ export const OUTILS: OutilBarre[] = [
 
   { id: "doc", famille: "application", cle: "barre.doc" },
   { id: "maj", famille: "application", cle: "barre.maj" },
+  { id: "modeles", famille: "application", cle: "barre.modeles" },
 
   { id: "audio", famille: "execution", cle: "barre.audio" },
   { id: "reinitialiser", famille: "execution", cle: "barre.reinitialiser" },

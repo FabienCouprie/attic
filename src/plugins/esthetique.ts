@@ -28,14 +28,14 @@ class ErreurEsthetique extends Error {}
 const f2 = (x: number) => x.toFixed(2);
 const etiquette = (x: string) => traduire("msg.esthetique.etiquette_var_0", x);
 const signe = (x: number) => `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(2)}`;
-export const ligneScores = (s: ScoresEsthetiques, fmt: (x: number) => string = f2) =>
+const ligneScores = (s: ScoresEsthetiques, fmt: (x: number) => string = f2) =>
   AXES_ESTHETIQUES.map((a) => `${a} ${fmt(s[a])}`).join(" · ");
 
 /**
  * Note un AudioBuffer tranche par tranche. `annonce` précède le numéro de tranche dans
  * la progression (« A », « B » pour la comparaison).
  */
-export async function analyserEsthetique(
+async function analyserEsthetique(
   buffer: AudioBuffer,
   api: ApiEsthetique,
   surProgres: (texte: string) => void,
@@ -58,7 +58,7 @@ export async function analyserEsthetique(
   return agregerTranches(notees);
 }
 
-export function rapportEsthetique(analyse: AnalyseEsthetique): string {
+function rapportEsthetique(analyse: AnalyseEsthetique): string {
   const lignes = [
     traduire("msg.esthetique.rapport_titre"),
     `${etiquette(traduire("msg.esthetique.global"))} ${ligneScores(analyse.global)}`,
@@ -74,7 +74,7 @@ export function rapportEsthetique(analyse: AnalyseEsthetique): string {
   return lignes.join("\n");
 }
 
-export function rapportComparaison(a: AnalyseEsthetique, b: AnalyseEsthetique): string {
+function rapportComparaison(a: AnalyseEsthetique, b: AnalyseEsthetique): string {
   const d = ecartsEsthetiques(a, b);
   return [
     traduire("msg.esthetique.comparaison_titre"),

@@ -10,7 +10,7 @@
 const TYPES_NON_SERIALIZABLE = ["File", "Blob", "AudioBuffer", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
 
 // Liste blanche : champs conservés par usePersistance.exporter.
-export const CHAMPS_CONSERVES = new Set([
+const CHAMPS_CONSERVES = new Set([
   "ficheId", "parametres", "audioNom", "midiNom", "imageNom", "svgNom", "sf2InstrumentIdx", "zonesSelectionnees", "nomFichier",
   // Le .sfz d'un « Clavier SFZ » : un chemin de disque, donc sérialisable et rechargeable tel quel.
   "sfzChemin", "sfzNom",

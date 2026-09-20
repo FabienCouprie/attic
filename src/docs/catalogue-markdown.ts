@@ -23,7 +23,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduireDans } from "../i18n";
 
 /** Ordre des catégories dans le document ; les inconnues suivent, par ordre alphabétique. */
-export const ORDRE_UNIVERS = ["Entrées", "Traitement", "Visualisation", "Sorties", "Collections", "Méta-composants", "Autres"];
+const ORDRE_UNIVERS = ["Entrées", "Traitement", "Visualisation", "Sorties", "Collections", "Méta-composants", "Autres"];
 
 const TYPES_PORT: Record<string, string> = {
   audio: "audio", midi: "MIDI", texte: "text", image: "image", controle: "control", fichier: "file", nombre: "number",

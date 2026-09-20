@@ -275,7 +275,7 @@ export interface NoteJouee {
  * couche douce est choisie, ET son niveau est encore divisé par trois. Les notes jouées piano
  * disparaissaient.
  */
-export function gainVelocite(velocite: number, suivi?: number): number {
+function gainVelocite(velocite: number, suivi?: number): number {
   const v = Math.min(1, Math.max(0, velocite / 127));
   const k = Math.min(1, Math.max(0, (suivi ?? 100) / 100));
   return 1 - k + k * v;

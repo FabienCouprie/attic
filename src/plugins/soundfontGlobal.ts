@@ -115,7 +115,7 @@ export async function chargerSF2Globale(
   return sf2;
 }
 
-export async function chargerSF2DepuisChemin(
+async function chargerSF2DepuisChemin(
   chemin: string,
   lireFichier: (p: string) => Promise<{ donnees: Uint8Array; nom: string } | null>
 ): Promise<StructureSF2 | null> {
@@ -136,7 +136,7 @@ export async function chargerSF2DepuisChemin(
   }
 }
 
-export async function chargerSF2DepuisUrl(url: string): Promise<StructureSF2 | null> {
+async function chargerSF2DepuisUrl(url: string): Promise<StructureSF2 | null> {
   try {
     const rep = await fetch(url);
     if (!rep.ok) return null;

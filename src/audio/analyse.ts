@@ -228,7 +228,7 @@ export type MeydaFeatureSimple =
   | "spectralSpread"
   | "energy";
 
-export function extraireValeursMeyda(
+function extraireValeursMeyda(
   buffer: AudioBuffer,
   feature: MeydaFeatureSimple,
   options: OptionsCentroidSpectral = {},
@@ -289,7 +289,7 @@ export function extraireMFCC(
   return trames;
 }
 
-export function agregerValeurs(
+function agregerValeurs(
   valeurs: number[],
   aggregation: OptionsCentroidSpectral["aggregation"] = "moyenne",
 ): number {
@@ -853,7 +853,7 @@ const GENRE_MODELE_URL =
   "https://huggingface.co/Jeev12/GTZAN_Genre_Classification/resolve/main/model.onnx";
 
 
-export const ETIQUETTES_GENRE = [
+const ETIQUETTES_GENRE = [
   "blues", "classique", "country", "disco", "hip-hop",
   "jazz", "metal", "pop", "reggae", "rock",
 ];

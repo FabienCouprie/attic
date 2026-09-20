@@ -92,18 +92,6 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>
       </div>
 
-      {def.notice && (
-        <div className="inspecteur-notice-bloc">
-          <button className="inspecteur-notice-toggle" onClick={() => setNoticeOuverte((v) => !v)}>
-            <span>ⓘ {noticeOuverte ? t("inspecteur.savoirMoins") : t("inspecteur.savoirPlus")}</span>
-            <span className="chevron">{noticeOuverte ? "▴" : "▾"}</span>
-          </button>
-          {noticeOuverte && (
-            <p className="inspecteur-notice"><TexteAvecLiens texte={noticeFiche(def, lang)} /></p>
-          )}
-        </div>
-      )}
-
       {def.parametres.map((p) => {
         // Paramètres internes (ex: chemin persisté) — pas d'affichage
         if (p.hidden) return null;
@@ -227,6 +215,21 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           </label>
         </div>
       ) : null}
+
+      {/* LA NOTICE EST EN BAS, et les paramètres en haut : on ouvre l'inspecteur pour RÉGLER, et
+          la lecture vient ensuite. Un texte de quinze lignes placé avant les curseurs obligeait
+          à le dépasser à chaque retour sur le nœud. */}
+      {def.notice && (
+        <div className="inspecteur-notice-bloc">
+          <button className="inspecteur-notice-toggle" onClick={() => setNoticeOuverte((v) => !v)}>
+            <span>ⓘ {noticeOuverte ? t("inspecteur.savoirMoins") : t("inspecteur.savoirPlus")}</span>
+            <span className="chevron">{noticeOuverte ? "▴" : "▾"}</span>
+          </button>
+          {noticeOuverte && (
+            <p className="inspecteur-notice"><TexteAvecLiens texte={noticeFiche(def, lang)} /></p>
+          )}
+        </div>
+      )}
 
       <div className="inspecteur-actions">
         <button onClick={onReinitialiser} title={t("btn.reinitialiser")}>↺</button>

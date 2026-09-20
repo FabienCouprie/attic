@@ -52,7 +52,11 @@
     "download:gtcrn": "node scripts/download-gtcrn.cjs",
     "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
-    "verify:resources": "node scripts/verify-bundled-resources.cjs"
+    "verify:resources": "node scripts/verify-bundled-resources.cjs",
+    "modeles:generer": "node scripts/modeles.cjs --generer",
+    "modeles:verifier": "node scripts/modeles.cjs --verifier",
+    "modeles:publier": "node scripts/modeles.cjs --publier",
+    "build:electron:light": "node scripts/build-electron.cjs --light"
   },
   "build": {
     "appId": "com.attic.audio",
@@ -68,8 +72,10 @@
       "dist/**/*",
       "!dist/oonx/**/*",
       "!dist/sf2/**/*",
+      "!dist/sfz/**/*",
       "electron/*.cjs",
       "package.json",
+      "scripts/modeles-manifest.json",
       "!release*/**/*",
       "!release-build*/**/*",
       "!release-prod*/**/*",

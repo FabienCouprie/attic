@@ -8,12 +8,12 @@ import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi
 
 // ─── Cartographie Camelot → symboles d'accords Tonal ───
 
-export const CAMELOT_A: Record<number, string> = {
+const CAMELOT_A: Record<number, string> = {
   1: "Abm", 2: "Ebm", 3: "Bbm", 4: "Fm", 5: "Cm", 6: "Gm",
   7: "Dm", 8: "Am", 9: "Em", 10: "Bm", 11: "F#m", 12: "Dbm",
 };
 
-export const CAMELOT_B: Record<number, string> = {
+const CAMELOT_B: Record<number, string> = {
   1: "B", 2: "F#", 3: "Db", 4: "Ab", 5: "Eb", 6: "Bb",
   7: "F", 8: "C", 9: "G", 10: "D", 11: "A", 12: "E",
 };
@@ -38,7 +38,7 @@ export function camelotToAccord(code: string): string | null {
   return p.ring === "A" ? CAMELOT_A[p.n] : CAMELOT_B[p.n];
 }
 
-export function camelotToString(code: CamelotCode): string {
+function camelotToString(code: CamelotCode): string {
   return `${code.n}${code.ring}`;
 }
 

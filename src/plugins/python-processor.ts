@@ -199,8 +199,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT, defautEn: CODE_DEFAUT_EN,
-        doc: "Code Python à exécuter. Variables : sys.argv[1] = WAV d'entrée, ATTIC_OUTPUT_PATH = WAV de sortie, ATTIC_SAMPLE_RATE, ATTIC_CHANNELS. Nécessite numpy + wave.",
-        docEn: "Python code to execute. Variables: sys.argv[1] = input WAV, ATTIC_OUTPUT_PATH = output WAV, ATTIC_SAMPLE_RATE, ATTIC_CHANNELS. Requires numpy + wave." },
+        doc: "Code Python à exécuter. Variables : sys.argv[1] = WAV d'entrée, Attic_output_path = WAV de sortie, Attic_sample_rate, Attic_channels. Nécessite numpy + wave.",
+        docEn: "Python code to execute. Variables: sys.argv[1] = input WAV, Attic_output_path = output WAV, Attic_sample_rate, Attic_channels. Requires numpy + wave." },
       { nom: "Timeout", nomEn: "Timeout", plage: [5, 120], pas: 5, defaut: 30, unite: "s",
         doc: "Durée maximale d'exécution du script (en secondes).",
         docEn: "Maximum script execution time (in seconds)." },

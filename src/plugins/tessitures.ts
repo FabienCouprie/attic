@@ -9,7 +9,7 @@ import { langueCourante, type Langue, traduire } from "../i18n";
 type Tessiture = { fr: string; en: string; grave: number; aigu: number };
 
 // Plages en Hz (approximatives, Do à Do sur 2 octaves) pour chaque tessiture.
-export const TESSITURES: Record<string, Tessiture[]> = {
+const TESSITURES: Record<string, Tessiture[]> = {
   Hommes: [
     { fr: "Basse contrebasse", en: "Basso profondo", grave: 65, aigu: 196 },
     { fr: "Basse", en: "Bass", grave: 73, aigu: 262 },
@@ -49,9 +49,9 @@ export const TESSITURES: Record<string, Tessiture[]> = {
   ],
 };
 
-export const GROUPES_TESSITURES = Object.keys(TESSITURES);
+const GROUPES_TESSITURES = Object.keys(TESSITURES);
 
-export const GROUPES_TESSITURES_LABEL: Record<string, Record<Langue, string>> = {
+const GROUPES_TESSITURES_LABEL: Record<string, Record<Langue, string>> = {
   Hommes: { fr: "Hommes", en: "Men" },
   Femmes: { fr: "Femmes", en: "Women" },
   Enfants: { fr: "Enfants", en: "Children" },

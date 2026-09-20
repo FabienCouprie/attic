@@ -88,8 +88,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fin", nomEn: "End", defaut: 50, doc: "Mix wet à la fin du fondu.", docEn: "Wet mix after fade completes." },
       { nom: "Fondu", nomEn: "Fade", defaut: 8, unite: "s", doc: "Durée du fondu progressif.", docEn: "Duration of the progressive fade." },
       { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
-        doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut FIXE : une réverbération qui change de pièce à chaque exécution serait un défaut.",
-        docEn: "Seed for the impulse-response noise. The default is FIXED: a reverb that moves to a different room on every run would be a defect." },
+        doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut fixe : une réverbération qui change de pièce à chaque exécution serait un défaut.",
+        docEn: "Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };

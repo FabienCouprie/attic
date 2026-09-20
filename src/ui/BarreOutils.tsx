@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
+import { BoutonModeles } from "./BoutonModeles";
+import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
 
 interface Props {
   theme: string; setTheme: (t: "violet" | "black") => void;
@@ -19,6 +21,9 @@ interface Props {
   /** Sauvegarde automatique : état de la bascule du groupe Fichier. */
   sauvegardeAuto: boolean;
   onBasculerSauvegardeAuto: () => void;
+  /** Économie de mémoire sur les pistes longues : bascule voisine, même groupe. */
+  economieMemoire: boolean;
+  onBasculerEconomieMemoire: () => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
   nbPlugins: number;
@@ -49,7 +54,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -57,6 +62,25 @@ export function BarreOutils(props: Props) {
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
   const [verifEnCours, setVerifEnCours] = useState(false);
   const [etatAudio, setEtatAudio] = useState<string>("");
+
+  // Compteur de mémoire : seul le processus principal connaît le total de l'application, donc
+  // rien ne s'affiche hors d'Electron. Un relevé toutes les deux secondes, arrêté avec le
+  // composant — un minuteur qui survit à son affichage interrogerait une fenêtre fermée.
+  const [memoire, setMemoire] = useState<MesureMemoire | null>(null);
+  useEffect(() => {
+    const api = (window as any).api;
+    if (!api?.mesurerMemoire) return;
+    let vivant = true;
+    const relever = async () => {
+      try {
+        const metriques = await api.mesurerMemoire();
+        if (vivant && Array.isArray(metriques)) setMemoire(agregerMetriques(metriques));
+      } catch { /* le processus principal n'a pas répondu : on retentera au prochain battement */ }
+    };
+    relever();
+    const minuteur = setInterval(relever, PERIODE_MESURE_MS);
+    return () => { vivant = false; clearInterval(minuteur); };
+  }, []);
 
   useEffect(() => {
     const api = (window as any).api;
@@ -142,6 +166,22 @@ export function BarreOutils(props: Props) {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M4 2h8M4 14h8M5 2v3l3 3 3-3V2M5 14v-3l3-3 3 3v3" />
             {!sauvegardeAuto && <path d="M2.5 13.5 13.5 2.5" />}
+          </svg>
+        </button>
+        {/* Une barrette de mémoire — c'est de mémoire vive qu'il s'agit, pas de disque ni de
+            vitesse —, barrée quand le régime économe est coupé. Voisine du sablier parce que
+            les deux réglages se ressemblent : deux automatismes qu'on laisse faire, ou non. */}
+        <button className={`attic-btn-icon${economieMemoire ? "" : " attic-btn-coupe"}`}
+          title={economieMemoire
+            ? eti("economieMemoireCouper", t("barre.economieMemoire.active"))
+            : eti("economieMemoireActiver", t("barre.economieMemoire.coupee"))}
+          aria-label={economieMemoire ? eti("economieMemoireCouper") : eti("economieMemoireActiver")}
+          aria-pressed={economieMemoire}
+          onClick={() => onBasculerEconomieMemoire()}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M2 5h12v6H2z" />
+            <path d="M5 11v2M8 11v2M11 11v2" />
+            {!economieMemoire && <path d="M2.5 13.5 13.5 2.5" />}
           </svg>
         </button>
         {nomFichier && (
@@ -232,6 +272,7 @@ export function BarreOutils(props: Props) {
             </svg>
           )}
         </button>
+        <BoutonModeles etiquette={eti("modeles")} />
       {maj && maj.statut === "verification" && (
         <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>
           {t("maj.verification")}
@@ -315,6 +356,14 @@ export function BarreOutils(props: Props) {
           <path d="M12.5 4v4h-4" />
         </svg>
       </button>
+      {/* La mémoire de l'application, à droite de la réinitialisation : c'est là qu'on la
+          regarde, juste avant de relancer. L'infobulle détaille par processus, parce que le
+          gros du chiffre ne vient pas toujours de celui qui calcule (cf. ui/memoire-vive.ts). */}
+      {memoire && (
+        <span className="attic-memoire" title={`${t("barre.memoire.titre")}\n${detailParProcessus(memoire)}`}>
+          {formaterMo(memoire.total)}
+        </span>
+      )}
       {/* Un seul bouton pour les deux états : pendant l'exécution il devient « Arrêter »,
           au lieu d'un « … » désactivé qui ne laissait aucun moyen d'interrompre un run. */}
       <button

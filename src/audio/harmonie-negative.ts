@@ -28,7 +28,7 @@ export const nomClasse = (n: number): string => NOMS[pc(n)];
  * la tierce majeure. C'est le milieu de la tonique et de sa quinte, et le nombre est
  * volontairement fractionnaire — l'axe ne tombe sur aucune note du clavier.
  */
-export const DEMI_TONS_AXE = 3.5;
+const DEMI_TONS_AXE = 3.5;
 
 /** Les deux notes qui encadrent l'axe : en do, mi bémol et mi. */
 export function notesDeLAxe(tonique: number): [number, number] {

@@ -39,7 +39,7 @@ const FINS = new Set(FICHES_FIN);
 /** Ce nœud referme-t-il une boucle, quelle que soit sa façon de rassembler les tours ? */
 export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has(ficheId ?? "");
 
-export const TOURS_MIN = 1;
+const TOURS_MIN = 1;
 export const TOURS_MAX = 32;
 
 export type ProblemeBoucle =

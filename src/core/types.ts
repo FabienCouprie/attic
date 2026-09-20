@@ -1,6 +1,6 @@
 // core/types.ts — Types du moteur et du registre de plugins
 
-export type StatutExecution = "attente" | "en_cours" | "termine" | "erreur";
+import type { ModeMemoire } from "./memoire";
 
 // Valeur transportée sur les arêtes. Le cœur ne manipule les valeurs que de
 // façon opaque : un autre domaine fournit son propre type via le paramètre
@@ -139,6 +139,14 @@ export interface PluginDef<TValeur, TRuntime> {
   // valeurs de sortie dans les champs d'affichage, pour ne pas écraser cet état.
   // Défaut : false.
   affichageAutonome?: boolean;
+
+  // Ce que le nœud exige de la mémoire PENDANT son calcul (cf. core/memoire.ts).
+  // « totale » : il ne peut pas commencer avant d'avoir le signal entier — un
+  // étirement lit la fin pour écrire le début. « flux » : il avance échantillon
+  // par échantillon et pourra, au-delà de DUREE_LONGUE_S, travailler par blocs.
+  // Défaut : « totale », le comportement d'aujourd'hui — un nœud non typé ne
+  // change donc pas de régime tant que personne n'a lu son algorithme.
+  memoire?: ModeMemoire;
 
   // Une sortie entièrement nulle est un RÉSULTAT VALIDE pour ce nœud (ex. un
   // transcripteur qui n'a rien détecté, un nœud-frontière). Sans ce drapeau, le

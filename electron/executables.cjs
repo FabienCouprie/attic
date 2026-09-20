@@ -61,11 +61,15 @@ function commandeVersion(valeur, existe = fs.existsSync) {
  * @param executer (fichier, args) => sortie — injecté, pour que les tests ne
  *        lancent aucun processus
  */
-function infoExecutable(valeur, executer, existe = fs.existsSync) {
+// ASYNCHRONE, et c'est le point : `execFileSync` bloquait le processus principal jusqu'a cinq
+// secondes — pendant lesquelles aucune fenetre ne repond, aucun menu ne s'ouvre, aucun autre IPC
+// n'est servi. L'executant rend desormais une promesse, et `await` sur une valeur ordinaire reste
+// valide : les doubles synchrones des tests continuent de fonctionner tels quels.
+async function infoExecutable(valeur, executer, existe = fs.existsSync) {
   const commande = commandeVersion(valeur, existe);
   if (!commande) return { disponible: false, chemin: null, version: null };
   try {
-    const version = String(executer(commande.fichier, commande.args)).trim();
+    const version = String(await executer(commande.fichier, commande.args)).trim();
     return { disponible: true, chemin: valeur, version };
   } catch (err) {
     // Le chemin est conservé : savoir QUEL exécutable a échoué vaut mieux que

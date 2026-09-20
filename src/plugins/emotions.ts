@@ -7,7 +7,7 @@ import { langueCourante, type Langue, traduire } from "../i18n";
 
 type Emotion = { fr: string; en: string };
 
-export const EMOTIONS: Record<string, Emotion[]> = {
+const EMOTIONS: Record<string, Emotion[]> = {
   "Joie/Bonheur": [
     { fr: "Joie", en: "Joy" }, { fr: "Bonheur", en: "Happiness" }, { fr: "Allégresse", en: "Gladness" },
     { fr: "Enthousiasme", en: "Enthusiasm" }, { fr: "Euphorie", en: "Euphoria" }, { fr: "Exaltation", en: "Exaltation" },
@@ -91,9 +91,9 @@ export const EMOTIONS: Record<string, Emotion[]> = {
   ],
 };
 
-export const CATEGORIES_EMOTIONS = Object.keys(EMOTIONS);
+const CATEGORIES_EMOTIONS = Object.keys(EMOTIONS);
 
-export const CATEGORIES_EMOTIONS_LABEL: Record<string, Record<Langue, string>> = {
+const CATEGORIES_EMOTIONS_LABEL: Record<string, Record<Langue, string>> = {
   "Joie/Bonheur": { fr: "Joie/Bonheur", en: "Joy/Happiness" },
   "Tristesse/Mélancolie": { fr: "Tristesse/Mélancolie", en: "Sadness/Melancholy" },
   "Colère/Frustration": { fr: "Colère/Frustration", en: "Anger/Frustration" },

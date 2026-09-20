@@ -33,7 +33,7 @@
 import { fft } from "./fft";
 
 /** Nombre de bandes cochléaires par défaut : l'article en emploie une trentaine. */
-export const BANDES_DEFAUT = 28;
+const BANDES_DEFAUT = 28;
 
 // ── Le banc de filtres cochléaire ───────────────────────────────────────────────
 
@@ -173,10 +173,10 @@ const PAS_CORRELATION = 8;
  * dizaines de hertz qu'une enveloppe module : rien de ce qu'on mesure n'est perdu, et tout ce
  * qu'on calcule coûte trente-deux fois moins.
  */
-export const DECIMATION = 32;
+const DECIMATION = 32;
 
 /** Moyenne par blocs : une décimation qui ne laisse pas passer de repliement. */
-export function decimer(e: Float32Array, pas = DECIMATION): Float32Array {
+function decimer(e: Float32Array, pas = DECIMATION): Float32Array {
   const n = Math.max(1, Math.ceil(e.length / pas));
   const d = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -363,7 +363,7 @@ export function synthetiserTexture(
  * pas les distributions autant, et les tours suivants rattrapent. Le test mesure ce qu'elle
  * gagne réellement.
  */
-export function imposerCorrelations(
+function imposerCorrelations(
   enveloppes: Float32Array[], cible: StatistiquesTexture,
 ): Float32Array[] {
   const n = enveloppes.length;

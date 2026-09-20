@@ -1,10 +1,10 @@
 import * as ort from "onnxruntime-web";
 import { fft } from "./audio/fft";
 
-export const TAILLE_TRANCHE = 343980;
+const TAILLE_TRANCHE = 343980;
 export const CHEVAUCHEMENT = 4410;
 
-export const NOMS_STEMS = ["Batterie", "Basse", "Voix", "Autre"] as const;
+const NOMS_STEMS = ["Batterie", "Basse", "Voix", "Autre"] as const;
 
 // Fournisseurs d'exécution réellement disponibles avec l'import par défaut
 // d'onnxruntime-web : le backend « wasm » et, via le même module WASM/JSEP,

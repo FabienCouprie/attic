@@ -14,6 +14,7 @@ import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { copierTexte } from "./copier";
 import { nomNote } from "./clavier-disposition";
 import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
+import { useStatut } from "./statuts";
 import { parametresLecture, rendreNotes, voixPourNote, type Banque } from "../audio/clavier-banque";
 import { chargerSfz, dossierDe } from "../audio/sfz";
 import { banqueVive, oublierBanque } from "../audio/banques-vives";
@@ -424,18 +425,20 @@ function VueLecteurMusique({ id, data }: VueProps) {
     if (audioRef.current && duration) audioRef.current.currentTime = (v / 100) * duration;
   }, [duration]);
 
-  // Déclenchement au run : détecte la transition en_cours -> termine
+  // Déclenchement au run : détecte la transition en_cours -> termine.
+  // Le statut vient du magasin d'exécution, plus de `data` — voir `ui/statuts.ts`.
+  const statutExec = useStatut(id).statut;
   useEffect(() => {
     const prev = prevStatutRef.current;
-    prevStatutRef.current = data.statut ?? "";
-    if (data.statut === "termine" && prev === "en_cours") {
+    prevStatutRef.current = statutExec;
+    if (statutExec === "termine" && prev === "en_cours") {
       if (fichiers && fichiers.length > 0 && !audioUrl) {
         loadTrack(currentIndex >= 0 ? currentIndex : 0, true);
       } else {
         setPendingPlay(true);
       }
     }
-  }, [data.statut, fichiers, audioUrl, currentIndex, loadTrack]);
+  }, [statutExec, fichiers, audioUrl, currentIndex, loadTrack]);
 
   // Lecture automatique dès qu'un audio est prêt et demandé
   useEffect(() => {
@@ -867,13 +870,15 @@ function ClavierSfz({ id, data }: VueProps) {
   // branche sur « Etaler sur le clavier » n'a alors rien a charger du disque, et un graphe
   // reouvert avec un chemin memorise retrouve son instrument des la premiere execution —
   // sans quoi le clavier restait muet jusqu'a ce qu'on recharge le fichier a la main.
-  // `data.statut` change a chaque execution : c'est le seul signal dont la vue dispose.
+  // Le statut change a chaque execution : c'est le seul signal dont la vue dispose. Il vient du
+  // magasin d'execution depuis que l'etat a quitte le tableau des noeuds (`ui/statuts.ts`).
+  const statutClavier = useStatut(id).statut;
   useEffect(() => {
     const vive = banqueVive(id);
     if (vive && vive.banque !== banqueRef.current) {
       adopter(vive.banque, vive.nom || t("clavier.sfz.duGraphe"));
     }
-  }, [data.statut, id, adopter, t]);
+  }, [statutClavier, id, adopter, t]);
 
   /** Charge un `.sfz` designe par l'utilisateur, et retient son chemin dans le noeud. */
   async function choisirFichier() {

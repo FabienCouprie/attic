@@ -8,9 +8,48 @@ const trouverDef = (id: string) => registre.trouverDef(id);
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
 import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
+import { useStatut } from "./statuts";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
+import { bufferVersWavBlob } from "../audio";
+
+/**
+ * Le lecteur d'un intermédiaire sur une piste longue, construit au clic.
+ *
+ * POURQUOI UN BOUTON PLUTÔT QU'UN LECTEUR. Au-delà de dix minutes, le moteur ne fabrique plus
+ * l'aperçu des nœuds que personne ne regarde : 635 Mo par heure de son, multipliés par la chaîne
+ * (cf. core/memoire.ts). Le résultat n'est pas perdu pour autant — le tampon est là, et c'est lui
+ * qu'on convertit ici, au moment où quelqu'un demande à l'entendre.
+ */
+function LecteurALaDemande({ buffer }: { buffer: AudioBuffer }) {
+  const { t } = useI18n();
+  const [url, setUrl] = useState<string | null>(null);
+  // La conversion se fait sur ce tampon-ci : si le nœud est recalculé, on repart de zéro.
+  useEffect(() => {
+    setUrl(null);
+    return () => setUrl((u) => (u && URL.revokeObjectURL(u), null));
+  }, [buffer]);
+  if (!url) {
+    return (
+      <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
+        <button
+          className="attic-node-copy-btn"
+          onClick={(e) => { e.stopPropagation(); setUrl(URL.createObjectURL(bufferVersWavBlob(buffer))); }}
+        >
+          {t("btn.ecouter")}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
+      <IndicateurNiveau buffer={buffer} />
+      <audio key={url} className="attic-node-audio nodrag" controls src={url}
+        onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
+    </div>
+  );
+}
 
 export type DonneesNoeud = {
   ficheId: string; parametres: Record<string, number | string>; statut: string;
@@ -155,9 +194,13 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     ? data.nom
     : ((lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? data.ficheId);
   const [docOpen, setDocOpen] = useState(false);
-  const statutClasse = data.statut === "en_cours" ? "en-cours" : data.statut === "termine" ? "termine" : data.statut === "erreur" ? "erreur" : "attente";
-  const statutLabel = data.statut === "termine" ? t("statut.termine") : data.statut === "en_cours" ? (data.progression ?? t("statut.en_cours")) : data.statut === "erreur" ? t("statut.erreur") : t("statut.attente");
-  const nodeClassName = data.statut === "en_cours" ? "running" : data.statut === "termine" ? "termine" : data.statut === "erreur" ? "erreur" : "attente";
+  // L'ETAT D'EXECUTION NE VIENT PLUS DE `data`. Le poser dans le tableau des nœuds obligeait à
+  // remplacer ce tableau à chaque changement, donc à refaire passer React Flow sur les N nœuds —
+  // 7 ms par nœud présent, à chaque fois. Ici, seul ce composant-ci est prévenu. Voir `statuts.ts`.
+  const etatExec = useStatut(id);
+  const statutClasse = etatExec.statut === "en_cours" ? "en-cours" : etatExec.statut === "termine" ? "termine" : etatExec.statut === "erreur" ? "erreur" : "attente";
+  const statutLabel = etatExec.statut === "termine" ? t("statut.termine") : etatExec.statut === "en_cours" ? (etatExec.progression ?? t("statut.en_cours")) : etatExec.statut === "erreur" ? t("statut.erreur") : t("statut.attente");
+  const nodeClassName = etatExec.statut === "en_cours" ? "running" : etatExec.statut === "termine" ? "termine" : etatExec.statut === "erreur" ? "erreur" : "attente";
   const descriptionTooltip = def ? resumeFiche(def, lang) : undefined;
 
   // ── Stabilité des handles ──
@@ -166,15 +209,15 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [survolPort, setSurvolPort] = useState<string | null>(null);
   const [flash, setFlash] = useState<"termine" | "erreur" | null>(null);
-  const statutPrecedent = useRef(data.statut);
+  const statutPrecedent = useRef(etatExec.statut);
   useEffect(() => {
-    const nouveau = data.statut;
+    const nouveau = etatExec.statut;
     const ancien = statutPrecedent.current;
     if ((nouveau === "termine" || nouveau === "erreur") && nouveau !== ancien) {
       setFlash(nouveau);
     }
     statutPrecedent.current = nouveau;
-  }, [data.statut]);
+  }, [etatExec.statut]);
   useEffect(() => {
     if (!flash) return;
     const t = setTimeout(() => setFlash(null), 700);
@@ -228,9 +271,9 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   // exécution et par nœud), donc le coût est négligeable.
   useEffect(() => {
     if (!connexions.length) return;
-    if (data.statut !== "termine" && data.statut !== "erreur") return;
+    if (etatExec.statut !== "termine" && etatExec.statut !== "erreur") return;
     updateNodeInternals(id);
-  }, [data.statut, connexions.length, id, updateNodeInternals]);
+  }, [etatExec.statut, connexions.length, id, updateNodeInternals]);
 
   useEffect(() => {
     const el = nodeRef.current;
@@ -299,7 +342,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   // prenait pour une progression, si bien qu'un nœud seul affichait un anneau PLEIN dès la première
   // seconde et le gardait plein pendant tout son calcul. Un nœud qui ne dit rien de son avancement
   // mérite un anneau indéterminé — c'est la vérité disponible.
-  const texteProgression = data.progressionDuNoeud ? (data.progression ?? "") : "";
+  const texteProgression = etatExec.progressionDuNoeud ? (etatExec.progression ?? "") : "";
   const matchPourcent = texteProgression.match(/(\d+(?:\.\d+)?)\s*%/);
   const matchEtapes = texteProgression.match(/(\d+)\s*\/\s*(\d+)/);
   const pourcentBarre = matchPourcent
@@ -307,7 +350,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     : matchEtapes
     ? Math.max(0, Math.min(100, (parseInt(matchEtapes[1], 10) / parseInt(matchEtapes[2], 10)) * 100))
     : null;
-  const afficherProgression = data.statut === "en_cours";
+  const afficherProgression = etatExec.statut === "en_cours";
   const RING_CIRCUMFERENCE = 2 * Math.PI * 10;
 
   if (nodeEstCommentaire) {
@@ -438,7 +481,11 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
               <audio key={data.audioResultatUrl} className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>
           )}
-          {!data.audioResultatUrl && data.audioUrl && vuesAvant.length === 0 && (
+          {/* Un tampon sans aperçu : piste longue, nœud intermédiaire. Le lecteur se construit au clic. */}
+          {!data.audioResultatUrl && data.audioResultatBuffer && vuesAvant.length === 0 && (
+            <LecteurALaDemande buffer={data.audioResultatBuffer} />
+          )}
+          {!data.audioResultatUrl && !data.audioResultatBuffer && data.audioUrl && vuesAvant.length === 0 && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>

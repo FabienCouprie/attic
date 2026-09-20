@@ -20,7 +20,7 @@
 // les deux imports peuvent coexister dans le même fichier sans que celui-ci n'écrase celui-là.
 
 /** La part d'AudioBuffer dont se servent les modules d'Attic : le conteneur et ses canaux. */
-export class AudioBufferPur {
+class AudioBufferPur {
   readonly numberOfChannels: number;
   readonly length: number;
   readonly sampleRate: number;

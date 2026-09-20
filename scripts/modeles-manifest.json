@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "modeles": [
+    {
+      "id": "gtcrn",
+      "nom": "Débruitage IA",
+      "nomEn": "AI denoise",
+      "noeuds": [
+        "debruitage-ia"
+      ],
+      "octets": 352084,
+      "source": {
+        "type": "fichier",
+        "url": "https://raw.githubusercontent.com/Xiaobin-Rong/gtcrn/main/stream/onnx_models/gtcrn.onnx",
+        "octets": 352084,
+        "sha256": "f648b02f2d7ff96ebcb0eec2219688a08ed12fe7e3d50f248605a90eba8cad17"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/gtcrn.onnx",
+          "octets": 352084,
+          "sha256": "f648b02f2d7ff96ebcb0eec2219688a08ed12fe7e3d50f248605a90eba8cad17"
+        }
+      ]
+    },
+    {
+      "id": "audiobox-aesthetics",
+      "nom": "Score esthétique",
+      "nomEn": "Aesthetic score",
+      "noeuds": [
+        "score-esthetique",
+        "comparaison-esthetique"
+      ],
+      "octets": 420187384,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/audiobox-aesthetics.onnx",
+        "octets": 420187384,
+        "sha256": "29ccb5c46b7805abdc80a329442fa65048f8b9ef0c4d334e2ff9415d4d4c33af"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/audiobox-aesthetics.onnx",
+          "octets": 420187384,
+          "sha256": "29ccb5c46b7805abdc80a329442fa65048f8b9ef0c4d334e2ff9415d4d4c33af"
+        }
+      ]
+    },
+    {
+      "id": "htdemucs-6s",
+      "nom": "Séparation 6 pistes",
+      "nomEn": "6-stem separation",
+      "noeuds": [
+        "separation-demucs"
+      ],
+      "octets": 258159781,
+      "source": {
+        "type": "fichier",
+        "url": null
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/htdemucs_6s.onnx",
+          "octets": 258159781,
+          "sha256": "48f8e84945579f8ab340e083339e9221e03785dbe733a52c388200b6d3ca779a"
+        }
+      ]
+    },
+    {
+      "id": "htdemucs-fp16",
+      "nom": "Séparation (poids fp16)",
+      "nomEn": "Separation (fp16 weights)",
+      "noeuds": [
+        "separation-demucs"
+      ],
+      "octets": 165612636,
+      "source": {
+        "type": "fichier",
+        "url": null
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/htdemucs_fp16weights.onnx",
+          "octets": 165612636,
+          "sha256": "d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a"
+        }
+      ]
+    },
+    {
+      "id": "genre",
+      "nom": "Classement par genre",
+      "nomEn": "Genre classifier",
+      "noeuds": [
+        "genre-musical"
+      ],
+      "octets": 94843658,
+      "source": {
+        "type": "fichier",
+        "url": null
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/model_genre.onnx",
+          "octets": 94843658,
+          "sha256": "a2d9874671664b44b97f103849fc5ba14294c200ae7016b7091d24d2657aff3a"
+        }
+      ]
+    },
+    {
+      "id": "separation-mdx",
+      "nom": "Séparation voix/instrumental",
+      "nomEn": "Vocal/instrumental separation",
+      "noeuds": [
+        "separation-voix"
+      ],
+      "octets": 29704738,
+      "source": {
+        "type": "fichier",
+        "url": null
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/modele-separation.onnx",
+          "octets": 29704738,
+          "sha256": "9d78f8566fa8198065214ab628be1de966a500c57786695aa4b13e2b27a7727d"
+        }
+      ]
+    },
+    {
+      "id": "sdxs-512",
+      "nom": "Texte → image",
+      "nomEn": "Text → image",
+      "noeuds": [
+        "texte-image"
+      ],
+      "octets": 680441863,
+      "source": {
+        "type": "archive",
+        "url": null
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/sdxs-512-texte-image/README.md",
+          "octets": 4312,
+          "sha256": "7b61a8dd225df56fd9deef4f0f74493e798a8c24b8e5f2dcf7e3029ec50cbd35"
+        },
+        {
+          "chemin": "oonx/sdxs-512-texte-image/onnx/text_encoder_int8.onnx",
+          "octets": 342066926,
+          "sha256": "a9b6c65156474bcc9fd5cf7b586ef58e7a67a1cd424d69a873450f93e53f439c"
+        },
+        {
+          "chemin": "oonx/sdxs-512-texte-image/onnx/unet_int8.onnx",
+          "octets": 329815241,
+          "sha256": "c52bec2bba8095e2ec5ee3bd3f1c62ca271a67b07b49aba71010079f2755fd77"
+        },
+        {
+          "chemin": "oonx/sdxs-512-texte-image/onnx/vae_decoder.onnx",
+          "octets": 4912786,
+          "sha256": "c321b1cc229615629ac31f705e6ae70c433f9cfee793c2903179a1f2ec3325cd"
+        },
+        {
+          "chemin": "oonx/sdxs-512-texte-image/tokenizer/tokenizer.json",
+          "octets": 3642245,
+          "sha256": "39f8b8dd34444cd7a8e6ef638b3302f81c451e4cf1c1a27a02e7a1777700b7af"
+        },
+        {
+          "chemin": "oonx/sdxs-512-texte-image/tokenizer/tokenizer_config.json",
+          "octets": 353,
+          "sha256": "fc7c97446c6d7d5f2637195df8cb9ffc8e1f9d92446dd04b3f780624e0d09dbb"
+        }
+      ]
+    }
+  ]
+}

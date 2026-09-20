@@ -15,7 +15,7 @@ import * as tf from "@tensorflow/tfjs";
 
 tf.disableDeprecationWarnings();
 
-export const CHECKPOINTS = {
+const CHECKPOINTS = {
   drums: "https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/drums_2bar_nade_9_q2",
   continuation: "https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/melody_rnn",
   melody: "https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/melody_rnn",
@@ -29,7 +29,7 @@ export type ModelKind = keyof typeof CHECKPOINTS;
 
 const instances: Partial<Record<ModelKind, any>> = {};
 
-export async function getModel(kind: ModelKind) {
+async function getModel(kind: ModelKind) {
   if (instances[kind]) return instances[kind]!;
   const url = CHECKPOINTS[kind];
   let model: any;
@@ -48,7 +48,7 @@ export async function getModel(kind: ModelKind) {
   return model;
 }
 
-export async function fileToNoteSequence(file: File): Promise<any> {
+async function fileToNoteSequence(file: File): Promise<any> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const midi = parseMidi(bytes);
   const ticksPerQuarter = midi.header.ticksPerBeat ?? 480;
@@ -106,7 +106,7 @@ export async function fileToNoteSequence(file: File): Promise<any> {
   return { notes, tempos, timeSignatures, ticksPerQuarter, totalTime };
 }
 
-export function toPlainNoteSequence(ns: any): any {
+function toPlainNoteSequence(ns: any): any {
   const clone = (v: any): any => {
     if (v === undefined || v === null) return v;
     if (typeof v === "number" || typeof v === "boolean" || typeof v === "string") return v;
@@ -185,7 +185,7 @@ function noteSequenceToMidiEvents(ns: any) {
   return { header: { format: 1 as const, numTracks: 2, ticksPerBeat }, tracks: [track0, track1] };
 }
 
-export async function noteSequenceToMidiFile(ns: any, name: string): Promise<File> {
+async function noteSequenceToMidiFile(ns: any, name: string): Promise<File> {
   const plain = toPlainNoteSequence(ns);
   const toEncode = plain.quantizationInfo ? sequences.unquantizeSequence(plain) : plain;
   const midiData = noteSequenceToMidiEvents(toEncode);
@@ -258,9 +258,9 @@ export async function continuerMidi(file: File, steps: number, temperature: numb
 export const MODES = ["Aléatoire", "Marche", "Montant", "Descendant", "Arpège"];
 export const MODES_EN = ["Random", "Walk", "Up", "Down", "Arpeggio"];
 export const MODES_IDS = ["random", "walk", "up", "down", "arpeggio"];
-export const ARP = [0, 2, 4, 6, 7, 5, 3, 1];
+const ARP = [0, 2, 4, 6, 7, 5, 3, 1];
 
-export function choisirBouton(
+function choisirBouton(
   step: number, mode: string, prev: number,
   hasard: () => number = Math.random,
 ): number {
