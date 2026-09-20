@@ -125,6 +125,10 @@ import { fiches as f_courbe } from "./courbe";
 import { fiches as f_hauteur } from "./hauteur";
 import { fiches as f_stn } from "./stn";
 import { fiches as f_retard_spectral } from "./retard-spectral";
+import { fiches as f_spectral_wishart } from "./spectral-wishart";
+import { fiches as f_brassage } from "./brassage";
+import { fiches as f_deplacement } from "./deplacement";
+import { fiches as f_theorie_rythme_voix } from "./theorie-rythme-voix";
 import { fiches as f_declipper } from "./declipper";
 import { fiches as f_inpainting } from "./inpainting";
 import { fiches as f_pghi } from "./pghi";
@@ -168,6 +172,10 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_hauteur,
   ...f_stn,
   ...f_retard_spectral,
+  ...f_spectral_wishart,
+  ...f_brassage,
+  ...f_deplacement,
+  ...f_theorie_rythme_voix,
   ...f_declipper,
   ...f_inpainting,
   ...f_pghi,

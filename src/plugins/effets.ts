@@ -1269,13 +1269,24 @@ export const fiches: FicheAudio[] = ([
     id: "spatialisation-stereo", nom: "Spatialisation stéréo", nomEn: "Stereo Spatialization", univers: "Traitement", famille: "Effets",
     resume: "Positionne le son dans l'espace stéréo (gauche/droite).",
     resumeEn: "Positions the sound in stereo space (left/right).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      // Ajoutée EN DERNIER : les prises sont identifiées par leur rang, l'insérer avant l'audio
+      // aurait déplacé les branchements de tous les graphes enregistrés.
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Position", nomEn: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: 0, unite: "%",
-        doc: "Position stéréo (-100% = gauche, 0% = centre, 100% = droite).", docEn: "Stereo position (-100% = left, 0% = center, 100% = right)." },
+        doc: "Position stéréo (-100% = gauche, 0% = centre, 100% = droite). Une courbe branchée sur l'entrée Modulation prend la main : le son se déplace alors au lieu de rester posé, et c'est le trajet de la courbe qu'on entend.",
+        docEn: "Stereo position (-100% = left, 0% = center, 100% = right). A curve connected to the Modulation input takes over: the sound then travels instead of sitting still, and what one hears is the curve's path." },
       { nom: "Largeur", nomEn: "Width", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Largeur de l'effet spatial (0% = mono, 100% = spatialisation pleine).", docEn: "Spatial width (0% = mono, 100% = full spatialization)." },
+      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [-100, 100], pas: 1, defaut: -100, unite: "%",
+        doc: "Position que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Position that a connected curve's zero means. With no curve, this setting does nothing." },
+      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [-100, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Position que vaut le un de la courbe.", docEn: "Position that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -1283,7 +1294,10 @@ export const fiches: FicheAudio[] = ([
       const { spatialiserStereo } = await import("../audio");
       const pos = ctx.paramNombre("Position", 0) / 100;
       const larg = ctx.paramNombre("Largeur", 100) / 100;
-      return { valeurs: [await spatialiserStereo(a, pos, larg)] };
+      return { valeurs: [await spatialiserStereo(a, pos, larg, ctx.entree(1), {
+        min: ctx.paramNombre("Modulation min", -100) / 100,
+        max: ctx.paramNombre("Modulation max", 100) / 100,
+      })] };
    },
  },
   {

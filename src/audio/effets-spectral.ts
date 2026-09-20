@@ -1,5 +1,6 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
 import { etirerDuree, reechantillonnerVers, creerFenetreHann } from "./commun";
+import { CADENCE, valeursParametre } from "./courbe";
 
 export function changerTempo(buffer: AudioBuffer, vitessePct: number): AudioBuffer {
   const facteur = 100 / Math.max(1, vitessePct);
@@ -222,10 +223,42 @@ export async function appliquerFiltre(
 }
 
 // Spatialisation stéréo : positionne le son dans l'espace (gauche/droite).
+/**
+ * La trajectoire du point sonore, dans l'unité du panoramiseur.
+ *
+ * POURQUOI CETTE FONCTION EXISTE À PART. Ce qui se passe ensuite — un `PannerNode` en HRTF dans un
+ * contexte hors ligne — ne se teste pas : il n'y a pas de Web Audio dans l'environnement de test.
+ * La trajectoire, elle, est un simple tableau de nombres, et c'est là que vivent les décisions qui
+ * pourraient être fausses : ce que vaut le zéro d'une courbe, ce que vaut son un, et ce que la
+ * largeur fait au parcours. On les éprouve ici, et il ne reste derrière qu'un branchement.
+ *
+ * SANS COURBE, LA TRAJECTOIRE EST UNE CONSTANTE à la valeur du réglage — le même chemin de calcul,
+ * pas un second. C'est ce qui garantit qu'ajouter l'entrée n'a rien changé aux graphes existants.
+ *
+ * @param nPoints nombre de points de la trajectoire ; ils seront étalés sur toute la durée.
+ * @param position réglage « Position », entre -1 (gauche) et 1 (droite).
+ * @param largeur réglage « Largeur », entre 0 (mono) et 1 (pleine).
+ */
+export function trajectoirePanoramique(
+  courbe: unknown,
+  nPoints: number,
+  position: number,
+  largeur: number,
+  plage: { min: number; max: number },
+): Float32Array {
+  const n = Math.max(2, Math.round(nPoints));
+  const positions = valeursParametre(courbe, n, position, plage);
+  // × 5 : l'unité du `PannerNode` est une distance, et cinq mètres de part et d'autre placent la
+  // source assez loin pour que les deux oreilles entendent vraiment autre chose.
+  return Float32Array.from(positions, (p) => p * largeur * 5);
+}
+
 export async function spatialiserStereo(
   buffer: AudioBuffer,
   positionX: number,
   largeur: number,
+  courbe?: unknown,
+  plage: { min: number; max: number } = { min: -1, max: 1 },
 ): Promise<AudioBuffer> {
   const sr = buffer.sampleRate;
   const ctx = new OfflineAudioContext(2, buffer.length, sr);
@@ -241,10 +274,17 @@ export async function spatialiserStereo(
   panner.coneOuterAngle = 0;
   panner.coneOuterGain = 0;
 
+  // La trajectoire est échantillonnée à la cadence des courbes d'Attic, et non à celle du son :
+  // deux cents points par seconde suffisent largement à un déplacement, et en demander 44 100
+  // ferait un tableau de millions d'entrées pour un parcours que l'oreille suit en gros.
+  const duree = buffer.length / sr;
+  const trajet = trajectoirePanoramique(courbe, duree * CADENCE, positionX, largeur, plage);
   if (panner.positionX) {
-    panner.positionX.value = positionX * largeur * 5;
+    // `setValueCurveAtTime` interpole entre les points sur toute la durée. Sans courbe branchée,
+    // le tableau est constant et le résultat est celui d'une position fixe.
+    panner.positionX.setValueCurveAtTime(trajet, 0, Math.max(1 / sr, duree));
   } else {
-    (panner as any).setPosition?.(positionX * largeur * 5, 0, -1);
+    (panner as any).setPosition?.(trajet[0], 0, -1);
   }
   if (panner.positionZ) {
     panner.positionZ.value = -1;

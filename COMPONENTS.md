@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **328 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **340 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 62 | [Audio](#audio) (7) · [Generation](#generation) (45) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 156 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (128) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 166 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (138) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 32 | [Analysis](#analysis) (24) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 57 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (6) |
+| [Others](#others) | 59 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (8) |
 
 ## How to read this catalog
 
@@ -2012,6 +2012,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [ADSR Envelope](#adsr-envelope) | Shapes the sound's volume over time (attack, decay, sustain, release). |
 | [AI Denoise](#ai-denoise) | Denoises speech with the GTCRN model, with no noise profile to provide. |
 | [AI Separator](#ai-separator) | Separates audio sources via AI (Demucs 4/6 stems, MDX-Net). |
+| [Ambisonic Rotation](#ambisonic-rotation) | Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo. |
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
 | [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
 | [Audio Inverter](#audio-inverter) | Inverts the signal. |
@@ -2019,6 +2020,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Beat Repeat / Stutter](#beat-repeat--stutter) | Captures and repeats a short segment at rhythmic intervals (stutter effect). |
 | [Bitcrusher](#bitcrusher) | Bit quantization + downsampling (lo-fi). |
 | [Braid](#braid) | Splits the sound into bands that cross over and under in space, returning to their places after a countable number of patterns. |
+| [Brassage](#brassage) | A single segment engine: stretching, transposition, granulation and scrambling are four settings of the same gesture. |
 | [Cantor Dust](#cantor-dust) | Hollows the sound by removing the middle third of each piece, level after level: a fractal silence. |
 | [Center/Side Extract](#centerside-extract) | Separates stereo center from sides. |
 | [Channel Splitter](#channel-splitter) | Splits a stereo signal into two mono outputs (left and right). |
@@ -2034,8 +2036,11 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Dereverb](#dereverb) | Reverb attenuation. |
 | [Dirac Belt](#dirac-belt) | Spins the sound around the listener: after one lap it comes back inverted and cancels, after two it is intact. |
 | [Distortion](#distortion) | Saturation / overdrive. |
+| [Doppler](#doppler) | A source going past: the pitch rises as it approaches, tips over at the closest point, and falls as it recedes. |
 | [Drum Synth](#drum-synth) | Receives MIDI and plays it with percussion synthesizers (no SoundFont). |
+| [Ducking](#ducking) | One sound steps aside for another: the music backs off under the voice, without the voice being heard. |
 | [Echo](#echo) | Ping-pong delay/echo with feedback. |
+| [Envelope Transfer](#envelope-transfer) | Takes one sound's amplitude contour and lays it on another: one's rhythm, the other's material. |
 | [Equalizer](#equalizer) | 9-band equalizer. |
 | [Exciter / Aural Enhancer](#exciter--aural-enhancer) | Adds presence via harmonic distortion in the high mids. |
 | [Fade](#fade) | Fade in/out. |
@@ -2053,6 +2058,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Harmonic/Percussive Separation](#harmonicpercussive-separation) | Separates what sustains from what strikes, by median filtering the spectrogram (Fitzgerald, DAFx-10). |
 | [Harmonizer / Octaver](#harmonizer--octaver) | Adds pitch-shifted voices (octave, fifth…) under the original. |
 | [Impose Rhythm](#impose-rhythm) | Applies one MIDI file's rhythmic grid to another's pitches. |
+| [Inner Glissando](#inner-glissando) | Keeps the sound's formant envelope and puts an endless glissando underneath: Risset's illusion, dressed in a real timbre. |
 | [Inversion Mirror](#inversion-mirror) | Flips the spectrum around a pivot frequency: lows become highs and highs become lows. |
 | [Inversions and Voicings](#inversions-and-voicings) | Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
@@ -2112,8 +2118,11 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [SoundTouch Pitch](#soundtouch-pitch) | Changes pitch while preserving duration (quality pitch-shift). |
 | [SoundTouch Rate](#soundtouch-rate) | Changes playback rate (tempo + pitch together), like a tape player. |
 | [SoundTouch Tempo](#soundtouch-tempo) | Changes tempo while preserving pitch (quality time-stretch). |
+| [Spectral Blur](#spectral-blur) | Averages the spectrum over neighbouring moments: the sound spreads out in time without changing duration. |
 | [Spectral Delay](#spectral-delay) | Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
+| [Spectral Freeze](#spectral-freeze) | Holds one moment's spectrum for all that follows: a stillness, not a loop. |
+| [Spectral Tracing](#spectral-tracing) | Keeps only the loudest partials of each moment: a complex sound becomes a few interweaving lines. |
 | [Spread Across Keyboard](#spread-across-keyboard) | Turns one sound into a sample bank playable across the 88 keys, in zones. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound — rain, fire, crowd — without copying a single sample of it. |
 | [Stereo Delay](#stereo-delay) | Independent left/right delay. |
@@ -2121,6 +2130,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Stereo Width / MS](#stereo-width--ms) | Adjusts stereo width and Mid level. |
 | [Sung Vowel (FOF)](#sung-vowel-fof) | Synthesises a vowel from its formants, after Peterson and Barney's table: pitch and timbre never touch. |
 | [Swap Channels](#swap-channels) | Swaps left/right channels. |
+| [Tape Machine](#tape-machine) | The four faults of tape: wow, flutter, saturation, dropouts. |
 | [Temperament](#temperament) | Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament. |
 | [Tempo Canon (Nancarrow)](#tempo-canon-nancarrow) | Layers a pattern against itself at a fixed tempo ratio. |
 | [Tempo Change](#tempo-change) | Time-stretch via phase vocoder. |
@@ -2198,6 +2208,28 @@ Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). D
 |---|---|---|---|---|
 | Model | choice | Demucs 6s | Demucs 6s / Demucs (HT) / MDX-Net | Separation architecture. Demucs (HT) = 4 stems, Demucs 6s = 6 stems (+ guitar + piano), MDX-Net = vocals/instrumental. |
 | Model URL | text | — |  | URL of an .onnx model. Empty = default model from public/oonx/. |
+
+#### Ambisonic Rotation
+
+`ambisonique` · Processing → Effects
+
+*Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo.*
+
+After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention. Attic can already place a sound in space — the HRTF panner, Resonance Audio's scene. Both place a source. Neither can take a whole recording and turn it around the listener, which is exactly what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly. Pressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being. What this node does not claim to do: recover the original scene. It reconstitutes a plausible one — two sources at the usual listening angles — and treats it as a field. With no rotation it renders the same two channels, the image narrowed by the decoding.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Rotation | slider | 90 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. A curve connected to the Modulation input turns the scene continuously. |
+| Source spread | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides — and the rotation will be all the more striking. |
+| Decoder width | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre. |
+| Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 360 ° | -360 – 360 °, step 5 | Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle. |
 
 #### Amplifier
 
@@ -2336,6 +2368,29 @@ Splits the sound into 3 or 4 frequency bands — low, mid, high — and makes th
 | Repeats | number | 3 | 1 – 12, step 1 | Number of times the pattern is played, spread over the sound's length. Strands return to their places after a number of patterns set by the word — 3 for the plait: the message tells you. |
 | Relief | number | 100 % | 0 – 100 %, step 1 | Contrast between the strand going over (+3 dB mid-crossing at 100%) and the one going under (−6 dB). At 0%, bands swap places without it being heard which one passes in front. |
 | Width | number | 90 % | 0 – 100 %, step 1 | Distance of the outermost places from the centre. |
+
+#### Brassage
+
+`brassage` · Processing → Effects
+
+*A single segment engine: stretching, transposition, granulation and scrambling are four settings of the same gesture.*
+
+After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Project's `brassage` family. Wishart kept the French word as it stands. This is not one more granulator. Attic already cuts into grains — granular freeze loops a grain, random slice shuffles slices, mosaicing replaces each grain with another sound's. Each does one thing. Brassage is the opposite: a single mechanism, reading segments and gluing them back, whose four settings give four transformations one takes to be distinct. Speed alone stretches or compresses, without touching pitch. Transposition alone changes pitch, without touching duration. Density and segment size move from a sparse cloud to a continuous wall. Strong position scatter shuffles the source, and the order of things is lost. Making it one node rather than four is not a saving in code: it is what makes visible that they are the same gesture. One moves from one to the other by dragging a slider, and hears the path between them — which no chain of four separate nodes shows.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Segment | slider | 0.05 s | 0.002 – 0.5 s, step 0.002 | Length of one segment. Short, one hears grains; long, one hears recognisable pieces of sound. The turn comes around 50 milliseconds, where the ear stops telling events apart and starts hearing a material. |
+| Density | slider | 40 /s | 1 – 400 /s, step 1 | Segments started per second. Beyond the inverse of the segment length they overlap and the sound becomes continuous; below it there are gaps, and one hears a cloud. |
+| Speed | slider | 1 x | 0.01 – 4 x, step 0.01 | Ratio between the output's time and the source's. At 1, the source is traversed at its own pace. At 0.5, two seconds of output are needed to cover one second of source: this is the stretch, and pitch is not affected. Bounded at one hundredth, without which the output would demand tens of gigabytes. |
+| Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | Pitch of the segments. It does not touch the read position: it changes the rate at which each segment is replayed. That is what makes it independent of speed — which a tape player cannot do. |
+| Scatter | slider | 0 s | 0 – 2 s, step 0.01 | Largest random offset on the read position. At zero the segments follow one another in order. High, they come from anywhere in the source, and the order of things is lost. For sound to travel from a distant place, the scatter must exceed the distance to cover. |
+| Pitch scatter | slider | 0 semitones | 0 – 24 semitones, step 0.5 | Largest random offset on each segment's transposition. A few semitones give a shimmer; an octave gives a cloud with no pitch. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed of the draw. The same seed replays exactly the same brassage — useful to find again a result one liked. With no scatter it does nothing: nothing is drawn at random. |
 
 #### Cantor Dust
 
@@ -2631,6 +2686,26 @@ Saturates the signal to add harmonics and grit, from light overdrive to full dis
 |---|---|---|---|---|
 | Gain | number | 50 % |  | Amount of saturation drive. |
 
+#### Doppler
+
+`doppler` · Processing → Effects
+
+*A source going past: the pitch rises as it approaches, tips over at the closest point, and falls as it recedes.*
+
+The effect described by Christian Doppler in 1842. Attic can place sounds in space — the HRTF panner, Resonance Audio's scene — but it cannot move anything: its sources are set down and stay there. This node does not transpose the sound by a computed ratio. It sets the delay equal to the time sound takes to cover the distance, and lets the pitch shift fall out of that on its own. This is what gives the right tipping point at the moment of passing, where a fixed-ratio transposition goes wrong: the radial velocity reverses there, and no constant ratio can describe it. The point worth knowing, because it was measured: the distance is taken at the instant of emission, not of arrival. Taking the arrival instant amounts to moving the listener rather than the source, and gives a pitch too low by twenty-four hundredths of a semitone — enough to be heard on a sustained sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Speed | slider | 30 m/s | 1 – 120 m/s, step 1 | Speed of the source. 30 m/s is 108 km/h, a car's pace on a road. Beyond the speed of sound the effect stops making physical sense: the source would catch up with what it emitted. |
+| Distance | slider | 10 m | 0.5 – 100 m, step 0.5 | How close the pass comes. It decides how abrupt the tipping is: from very close the pitch drops at once; from far away it glides at length. It also decides how fast the image crosses the stereo field. |
+| Speed of sound | slider | 343 m/s | 200 – 500 m/s, step 1 | Speed of sound. 343 m/s at 20 °C at sea level; 331 at zero degrees, 1480 in water. Lowering it exaggerates the effect without changing its shape, which is a handy way of hearing it better. |
+| Attenuation | choice | Yes | Yes / No | Apply the one-over-distance level drop. Without it, one keeps the pitch shift and the movement across the field, but the source seems to stay as close — which is sometimes exactly what one wants. |
+
 #### Drum Synth
 
 `drum-synth` · Processing → Effects
@@ -2650,6 +2725,28 @@ Receives a MIDI file as input and renders it to audio with drum synthesizers (Me
 | MIDI channel | number | 10 | 1 – 16, step 1 | MIDI channel containing the drum notes (10 = GM drum channel). |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the drum kit. |
 
+#### Ducking
+
+`ducking` · Processing → Effects
+
+*One sound steps aside for another: the music backs off under the voice, without the voice being heard.*
+
+Attic has a compressor, a limiter, a multiband, a gate. All listen to the signal they treat: they lower a sound when that sound is loud. None can lower a sound when another is loud. Yet this is the commonest gesture in mixing — the music stepping aside under a voice, the pad backing off at each kick — and no combination of the four produces it. One says « side chain » when speaking of the wiring: the controlling signal comes in from the side, and never comes out. Only the target is rendered. The hold deserves attention. Without it, a hesitating voice lets the music rise between two words, and one hears a panting. The hold keeps the attenuation for a while after the trigger has fallen back, so that a spoken phrase digs one hole rather than twelve.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Target | audio |  |
+| input | Trigger | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Threshold | slider | -30 dB | -60 – 0 dB, step 1 | Level of the trigger above which the attenuation engages. Too high and a soft voice triggers nothing; too low and the microphone's hiss is enough to push the music back. |
+| Reduction | slider | 12 dB | 0 – 40 dB, step 1 | How far the target drops. Six decibels are enough to clear a voice; beyond twenty, the music vanishes rather than backs off. |
+| Attack | slider | 0.01 s | 0.001 – 0.5 s, step 0.001 | Fall time. Short, the first word is cleared but one hears the dip happen; long, the start of the phrase stays buried. |
+| Release | slider | 0.25 s | 0.01 – 2 s, step 0.01 | Rise time, once the hold has elapsed. It is what makes the effect natural: too short and the music jumps back; too long and it takes a second to return. |
+| Hold | slider | 0.1 s | 0 – 1 s, step 0.01 | How long the attenuation is kept after the trigger has fallen back below the threshold. This is the setting that prevents panting between two words. |
+
 #### Echo
 
 `echo` · Processing → Effects
@@ -2668,6 +2765,27 @@ Ping-pong delay/echo with feedback. Time sets the interval between repetitions, 
 | Time | slider | 350 ms | 50 – 2000 ms, step 10 | Delay time between repetitions. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Amount of signal fed back into the delay (more = more repetitions). |
 | Spread | slider | 50 % | 0 – 100 %, step 1 | Stereo width of the echo (0% = mono, 100% = maximum left/right sweep). |
+
+#### Envelope Transfer
+
+`transfert-enveloppe` · Processing → Effects
+
+*Takes one sound's amplitude contour and lays it on another: one's rhythm, the other's material.*
+
+After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Project's `envel extract` and `envel impose`. Attic could build an envelope — the ADSR envelope draws one, the fade applies one at the edges. No node could take one sound's and lay it on another. Yet this is the operation that makes a pad speak: the rhythm of a spoken phrase, the breathing of a drum kit, the attack of a percussion, transferred onto a sound that has none. Why the target must be flattened first, and this is the point one misses doing it by hand. Simply multiplying the target by the model's envelope does not give the model's contour: it gives the product of the two. If the target already has an attack, it survives beneath the one being imposed, and the result has neither one's rhythm. Flattening first brings the target back to a constant amplitude, and what one then hears is indeed the model's contour. The two sounds need not be the same length: the model's envelope is stretched to cover the target.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Target | audio |  |
+| input | Model | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Resolution | slider | 10 ms | 1 – 300 ms, step 1 | How finely the contour is followed. It is the only setting that really changes the nature of the result: at 5 milliseconds one transfers almost the waveform, and the model's grain comes with it; at 200, only its large breaths remain, the phrase alone. |
+| Flatten | choice | Yes | Yes / No | Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer. |
+| Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. |
 
 #### Equalizer
 
@@ -3021,6 +3139,27 @@ Separates pitch from rhythm, then marries them again. The first input supplies a
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Inner Glissando
+
+`glissando-interieur` · Processing → Effects
+
+*Keeps the sound's formant envelope and puts an endless glissando underneath: Risset's illusion, dressed in a real timbre.*
+
+After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissando ». The illusion itself is Roger Shepard's (1964), made continuous by Jean-Claude Risset. What this node adds to the « Risset Glissando » already present. That one produces the illusion bare — a synthetic sound rising endlessly, which sounds like a laboratory demonstration. Here the illusion passes through someone's mouth: the input's formant envelope is kept, and it decides the timbre. A vowel stays the same vowel while the pitch rises without end. Why it works. The formant envelope is what makes a vowel an « ah » or an « oo »: it does not depend on the pitch one sings at. That is exactly why one can change one without touching the other. The node extracts that envelope by smoothing the spectrum — broad bumps survive, fine lines vanish — then places beneath it partials an octave apart whose amplitude follows a fixed bell: each is born low, crosses, dies high, and one never catches either its appearance or its disappearance.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Speed | slider | 0.5 oct/s | -4 – 4 oct/s, step 0.1 | Octaves per second. Positive: it rises endlessly. Negative: it falls. At zero the partials stay put and one hears the sound's timbre laid over a stack of octaves. |
+| Octaves | slider | 6 | 3 – 10, step 1 | How many octaves the illusion stacks. Below three the bell is too narrow and one hears partials appear: the illusion breaks. |
+| Smoothing | slider | 20 | 0 – 80, step 1 | Width of the smoothing that separates formants from partials, in components. Too little and the original's partials survive, blurring the glissando. Too much and the envelope flattens: the timbre vanishes and one falls back on the bare illusion. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
 #### Inversion Mirror
 
@@ -4267,6 +4406,25 @@ Changes audio tempo while preserving pitch, using the SoundTouch algorithm (adva
 |---|---|---|---|---|
 | Tempo | number | 1 x | 0.25 – 4 x, step 0.01 | Tempo factor. 1 = original, 2 = 2x faster, 0.5 = 2x slower. |
 
+#### Spectral Blur
+
+`flou-spectral` · Processing → Effects
+
+*Averages the spectrum over neighbouring moments: the sound spreads out in time without changing duration.*
+
+After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Project's `blur blur`. What it is not: a stretch. Paulstretch and the phase vocoder lengthen the duration, hence move everything that follows. Here the end arrives on time — but one no longer knows when things began. It is a blur in the photographic sense: motion blur, not slow motion. An attack becomes a swell. A note that changes pitch becomes a held chord, the two pitches overlapping. Spoken text loses its consonants and keeps its vowels. The wider the setting, the further the sound spills beyond itself. Phases are not averaged, only energies: phases carry the grain of the sound, and mixing them would give a signal with no relief.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Width | slider | 24 | 1 – 200, step 1 | Number of moments averaged. At 1, nothing changes. How long that is depends on the resolution: at 2048 and 44,100 Hz one moment is 12 ms, so 24 moments spread the sound over roughly three tenths of a second. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+
 #### Spectral Delay
 
 `retard-spectral` · Processing → Effects
@@ -4311,6 +4469,44 @@ Modifies the signal spectrum by mathematical expressions applied to each frequen
 | Phase | text | `phase + 0.5` |  | Expression for the phase of each bin (leave empty to leave unchanged). Example: phase + 0.5 shifts the phase by 0.5 radian. Variables: mag, phase, freq, bin, N, sr. |
 | Volume | number | 30 % | 0 – 100 % | Output gain. |
 | FFT | number | 2048 samples | 64 – 8192 samples, step 64 | FFT size (rounded up to next power of 2). |
+
+#### Spectral Freeze
+
+`gel-spectral` · Processing → Effects
+
+*Holds one moment's spectrum for all that follows: a stillness, not a loop.*
+
+After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Project's `blur freeze`. How it differs from the granular freeze already in Attic. That one loops a piece of signal: one hears the loop, its period and its joins, and the sound keeps the grain of the fragment taken. Here an analysis is held — the energies are those of the chosen moment, but the phases keep advancing as though the sound went on. So there is no period, no join, no beating: the sound stops moving entirely. It is the difference between stopping a record on a groove and stopping time. What precedes the chosen moment passes through untouched; from there on the sound freezes and holds to the end.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Moment | slider | 50 % | 0 – 100 %, step 1 | Where the freeze begins, as a proportion of the duration. What precedes passes through unchanged; from there on, that moment's spectrum is held to the end. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+
+#### Spectral Tracing
+
+`tracage-spectral` · Processing → Effects
+
+*Keeps only the loudest partials of each moment: a complex sound becomes a few interweaving lines.*
+
+After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Project's `spec trace`. At every moment the sound is broken into a few hundred components, and this node keeps only the loudest. It is not a filter, and the difference is what makes the process interesting: a filter keeps a region of the spectrum decided in advance, the same from start to finish; tracing keeps what is loud, wherever it sits, and its choice changes at every moment. It follows the sound instead of cutting it up. With a single component kept, one hears the dominant partial moving — a melody the sound contained without one hearing it, and that nothing else brings out. With sixty or so, one hears the sound stripped of its background noise. In between, one hears lines interweaving: this is what Wishart calls tracing.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Components | slider | 12 | 1 – 200, step 1 | Number of components kept at each moment. At 1, the dominant partial alone. Beyond a hundred or so the effect becomes hard to hear on most sounds: there is not much left to throw away. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
 #### Spread Across Keyboard
 
@@ -4390,12 +4586,15 @@ Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for re
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Position | slider | 0 % | -100 – 100 %, step 1 | Stereo position (-100% = left, 0% = center, 100% = right). |
+| Position | slider | 0 % | -100 – 100 %, step 1 | Stereo position (-100% = left, 0% = center, 100% = right). A curve connected to the Modulation input takes over: the sound then travels instead of sitting still, and what one hears is the curve's path. |
 | Width | slider | 100 % | 0 – 100 %, step 1 | Spatial width (0% = mono, 100% = full spatialization). |
+| Modulation min | slider | -100 % | -100 – 100 %, step 1 | Position that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | -100 – 100 %, step 1 | Position that the curve's one means. |
 
 #### Stereo Width / MS
 
@@ -4456,6 +4655,30 @@ Swaps the left and right channels of a stereo signal.
 | output | Audio | audio |  |
 
 *No parameters.*
+
+#### Tape Machine
+
+`magnetophone` · Processing → Effects
+
+*The four faults of tape: wow, flutter, saturation, dropouts.*
+
+None of the four faults is decorative, and each has a distinct cause. Wow comes from the reel's eccentricity: a slow oscillation, under two hertz, that makes the pitch drift. Flutter comes from the capstan and the rollers: the same thing, but between five and twenty hertz, and the ear hears it as a tremble rather than a drift. Saturation comes from the oxide, which stops responding linearly long before it gives up — hence a gentle compression of the peaks, and harmonics that were not there. Dropouts come from holes in the magnetic coating: the sound vanishes for an instant, without warning. The first two share their machinery with the Doppler node, and it is the same idea: reading the signal at a distance that changes. An ambulance coming closer shortens the distance; a badly turning roller lengthens and shortens it by turns. Saturation is normalised: raising its drive changes the waveshape, not the volume. Without that, one would take it for a fault in the setting.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Wow | slider | 8 % | 0 – 60 %, step 1 | Amplitude of the slow pitch drift. A few per cent are enough to suggest a tired machine; beyond twenty, one hears an instrument detuning itself. |
+| Wow rate | slider | 0.6 Hz | 0.1 – 3 Hz, step 0.1 | Rate of the drift, that is the reel's turn. Under one hertz one hears a breathing; above two it starts to resemble a vibrato. |
+| Flutter | slider | 3 % | 0 – 30 %, step 1 | Amplitude of the fast tremble. It is far less noticeable than wow at equal amplitude, which is why its range goes less high. |
+| Flutter rate | slider | 9 Hz | 4 – 25 Hz, step 0.5 | Rate of the tremble, that is the capstan's turn. |
+| Saturation | slider | 2 | 0 – 12, step 0.5 | Drive of the tape saturation. At zero, none. The level does not change as it is raised — only the waveshape does, and the harmonics that come with it. |
+| Dropouts | slider | 0.5 /s | 0 – 20 /s, step 0.5 | Holes per second in the magnetic coating. Each lasts some twenty milliseconds and opens with a fade, without which one would hear a click rather than an absence. |
+| Hiss | slider | 0.5 % | 0 – 5 %, step 0.1 | Level of tape hiss. It is heard only in the silences, which is exactly its original failing. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed for dropouts and hiss. The same seed replays the same tape. |
 
 #### Temperament
 
@@ -7229,9 +7452,11 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 | [Chord](#chord) | Detects the chord name from its notes. |
 | [Pitch-Class Sets](#pitch-class-sets) | Analyses a chord or passage as a pitch-class set: normal form, prime form, interval vector. |
 | [Progression](#progression) | Generates a chord progression from a key and roman numerals. |
+| [Rhythm Analysis](#rhythm-analysis) | Describes a rhythm the way « Pitch-Class Sets » describes a chord: intervals, evenness, offbeats, necklace. |
 | [Scale](#scale) | Lists the notes of a scale from a tonic and a scale type. |
 | [Species Counterpoint](#species-counterpoint) | Checks a first-species counterpoint against Fux's rules and annotates every infringement. |
 | [Transpose](#transpose) | Transposes a note or chord by a given interval. |
+| [Voice-Leading Distance](#voice-leading-distance) | Measures in semitones what each chord change costs, and says which one flows and which one strains. |
 
 #### Chord
 
@@ -7287,6 +7512,25 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
 | Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. |
 
+#### Rhythm Analysis
+
+`analyse-rythme` · Others → Theory
+
+*Describes a rhythm the way « Pitch-Class Sets » describes a chord: intervals, evenness, offbeats, necklace.*
+
+After Godfried Toussaint, « The Geometry of Musical Rhythm: What Makes a "Good" Rhythm Good? » (2013). Attic analysed pitch in depth — normal and prime forms, interval vector, Forte names, neo-Riemannian transformations — and could do nothing with rhythm but generate it. Toussaint showed that rhythm is described with exactly the same tools: a set of points on a circle, its distances, its symmetries, its evenness. Every measure counts on the circle, because a rhythm repeats: its end touches its beginning. That is what makes a rhythm and its rotations the same object — the son clave and the rumba differ only in where one starts counting, and their necklace says so. What each measure teaches. The successive intervals are how percussionists name their rhythms: the son clave is the 3-3-4-2-4. The distance histogram is the rhythm's interval vector, and two rhythms sharing it resemble each other regardless of rotation. A deep rhythm gives each gap its own rarity, so that no pair of onsets in it is interchangeable. Evenness says how far apart the onsets are, one being perfect regularity. Offbeats are the onsets falling on no regular subdivision — the measure that, according to Toussaint, separates African and Afro-Cuban rhythms from European dance rhythms far better than the usual syncopation measures.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells — « x..x..x. » — or as positions — « 0 3 6 ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. |
+| Steps | slider | 16 | 2 – 64, step 1 | Number of cells in the cycle. Used when the pattern is given as positions, and to quantise a MIDI file. A pattern written as cells imposes its own length. |
+| Cycle | slider | 2 s | 0.25 – 16 s, step 0.25 | Length of one turn, to quantise a MIDI file. With no MIDI connected, this setting does nothing. |
+
 #### Scale
 
 `tonal-gamme` · Others → Theory
@@ -7341,3 +7585,21 @@ Transposes a note by a given interval. Example: C4 + 2M → D4. Uses Tonal inter
 |---|---|---|---|---|
 | Note | text | `C4` |  | Note to transpose (e.g. C4, D#3, F#5). |
 | Interval | choice | 2M | 1P / 2m / 2M / 3m / 3M / 4P / 4A / 5P / 6m / 6M / 7m / 7M / 8P | Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.). |
+
+#### Voice-Leading Distance
+
+`distance-conduite-voix` · Others → Theory
+
+*Measures in semitones what each chord change costs, and says which one flows and which one strains.*
+
+After Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 2006, and « A Geometry of Music » (2011). Attic could already choose a voice leading: « Inversions and Voicings » looks, for each chord, for the register that moves the fewest voices. That is a heuristic, and it returns a chord. What it does not return is a number — and without a number one can neither compare two harmonisations nor find the place in a piece where the movement strains. The Tonnetz, for its part, chains the transformations that move only one voice, but does not say how far the rest moves. The theorem that makes the computation short. One believes one must try every way of pairing the voices — six notes make seven hundred and twenty. Tymoczko proves otherwise: the minimal voice leading between two chords of the same size is always achievable without voice crossings. It therefore suffices to sort both chords and try the rotations of one against the other, and the result is the exact minimum, not an approximation. What the numbers say. The neo-Riemannian transformations P, L and R cost one, one and two semitones — the smoothest chord changes that exist between triads. Six semitones is the maximum between two triads, reached by diametrically opposed chords such as C and F sharp. Between the two, one reads a progression's tension.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C – A minor – F – G – C. A MIDI file on the input wins. |
+| Tolerance | slider | 0.05 s | 0.01 – 0.5 s, step 0.01 | Gap below which two notes of a MIDI file are taken as simultaneous, hence members of the same chord. With no MIDI connected, this setting does nothing. |
