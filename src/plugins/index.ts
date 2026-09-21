@@ -138,6 +138,7 @@ import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_correction_hauteur } from "./correction-hauteur";
 import { fiches as f_stereo_morphing } from "./stereo-morphing";
+import { fiches as f_finitions } from "./finitions";
 import { fiches as f_declipper } from "./declipper";
 import { fiches as f_inpainting } from "./inpainting";
 import { fiches as f_pghi } from "./pghi";
@@ -194,6 +195,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_quiz,
   ...f_correction_hauteur,
   ...f_stereo_morphing,
+  ...f_finitions,
   ...f_declipper,
   ...f_inpainting,
   ...f_pghi,

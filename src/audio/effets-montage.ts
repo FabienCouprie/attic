@@ -199,6 +199,27 @@ export interface CentreCoteResult {
 
 
 
+/**
+ * Deux prises mono réunies en une stéréo : la première à gauche, la seconde à droite.
+ *
+ * L'INVERSE DU SÉPARATEUR DE CANAUX, qui existait seul — on pouvait défaire une stéréo sans
+ * pouvoir en refaire une. C'est le geste de toute prise à deux micros : deux fichiers mono, deux
+ * chaînes de traitement séparées, et une stéréo à la fin.
+ *
+ * LA DURÉE EST CELLE DU PLUS LONG, et le plus court est complété par du silence plutôt que bouclé
+ * ou étiré : deux prises de longueurs différentes ne sont pas la même prise, et faire coïncider
+ * leurs fins inventerait un alignement que personne n'a demandé.
+ */
+export function fusionnerStereo(gauche: AudioBuffer, droite: AudioBuffer): AudioBuffer {
+  const longueur = Math.max(gauche.length, droite.length);
+  const resultat = new AudioBuffer({
+    numberOfChannels: 2, length: longueur, sampleRate: gauche.sampleRate,
+  });
+  resultat.getChannelData(0).set(gauche.getChannelData(0).subarray(0, longueur), 0);
+  resultat.getChannelData(1).set(droite.getChannelData(0).subarray(0, longueur), 0);
+  return resultat;
+}
+
 export function echangerCanaux(buffer: AudioBuffer): AudioBuffer {
   if (buffer.numberOfChannels < 2) return buffer;
   const sampleRate = buffer.sampleRate;

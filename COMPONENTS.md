@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **355 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **359 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 171 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (143) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 175 | [Conversion](#conversion) (4) · [Editing](#editing) (22) · [Effects](#effects) (145) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 36 | [Analysis](#analysis) (28) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
@@ -1706,6 +1706,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Loop End B](#loop-end-b) | Closes a graph loop and keeps only the last pass's result. |
 | [Loop End C](#loop-end-c) | Closes a graph loop and stacks the passes on top of one another, like the mixer. |
 | [Loop Start](#loop-start) | Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result. |
+| [Merge to Stereo](#merge-to-stereo) | Joins two mono takes into one stereo: the first on the left, the second on the right. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts — one per instrument — to play them with four different banks. |
@@ -1714,6 +1715,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Place sound on zones](#place-sound-on-zones) | Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration. |
 | [Reinsert Zone](#reinsert-zone) | Reinserts a treated zone into the original track. |
 | [Track Aligner](#track-aligner) | Aligns a track to a reference length (silence or fade). |
+| [Trim Silence](#trim-silence) | Removes silence at the start and end of a take, and in the middle if asked. |
 | [Zone Mask](#zone-mask) | Depending on the option, mutes the selected zones or keeps only them. |
 
 #### Add Silence
@@ -1912,6 +1914,22 @@ Opens a graph loop. Everything wired between this node and a « Loop End » — 
 |---|---|---|---|---|
 | Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
 
+#### Merge to Stereo
+
+`fusion-stereo` · Processing → Editing
+
+*Joins two mono takes into one stereo: the first on the left, the second on the right.*
+
+The inverse of the channel splitter, which existed alone: one could take a stereo apart without being able to put one together. It is the gesture of every two-microphone take — two mono files, two separate processing chains, and a stereo at the end. The length is that of the longer one, and the shorter is padded with silence rather than looped or stretched: two takes of different lengths are not the same take, and making their ends coincide would invent an alignment nobody asked for. If that alignment is wanted, the « Track Aligner » node does it, and says so.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Left | audio |  |
+| input | Right | audio |  |
+| output | Audio | audio (stereo) |  |
+
+*No parameters.*
+
 #### MIDI Join
 
 `jointure-midi` · Processing → Editing
@@ -2061,6 +2079,26 @@ Aligns a track's length to a reference. Input 1 (top) = reference (passed throug
 |---|---|---|---|---|
 | Position | choice | After | Before / After | Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end). |
 
+#### Trim Silence
+
+`rogner-silences` · Processing → Editing
+
+*Removes silence at the start and end of a take, and in the middle if asked.*
+
+The commonest editing gesture, and it was missing. Attic could add silence, extract a zone, align one track to another — but not remove the blank at the start and end of a take, which is done to every file entering a project. The threshold is counted in decibels, the only honest scale. A linear threshold of 0.01 looks small and is forty decibels below full scale, that is, a level where a breath, a reverb tail or a preamp hiss are still alive. In decibels, one knows what is being cut. The margin exists because a threshold alone always cuts too much. A sound's attack rises out of silence: the first sample above the threshold already arrives after the rise began, and trimming there gives a click and a truncated attack. A few dozen milliseconds given back on either side are enough. What is measured is the envelope, not the sample. A sinusoid crosses zero twice per period: looking at samples alone, every sound contains silences of a few tenths of a millisecond, and the « Everywhere » mode would cut an A 440 into eight hundred and eighty pieces per second. Two ambitions, and the choice is not innocent. At the edges, what happens in the middle is untouched: a silence between two phrases is part of the playing, and removing it changes the music. Everywhere, inner silences longer than the minimum duration are removed too — that is another craft, speech editing. Both channels are always trimmed at the same places, failing which the image would shift.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Threshold | slider | -60 dB | -80 – -20 dB, step 1 | Below this level it is silence. -60 lets through almost everything audible; -40 trims firmly, at the risk of taking a reverb tail with it. |
+| Margin | slider | 50 ms | 0 – 500 ms, step 5 | What is given back on either side. Without a margin the attack is truncated and a click is heard: the first sample above the threshold already arrives after the rise began. |
+| Scope | choice | Edges | Edges / Everywhere | At the edges, the middle is untouched: a silence between two phrases is part of the playing. Everywhere, long enough inner silences are removed too — that is speech editing, and it changes the music. |
+| Minimum length | slider | 0.5 s | 0.1 – 5 s, step 0.1 | In Everywhere mode: the length from which an inner silence is removed. Below it, it is kept. |
+
 #### Zone Mask
 
 `masque-zones` · Processing → Editing
@@ -2127,6 +2165,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Fractal Reverb](#fractal-reverb) | Convolution reverb whose impulse response is generated by a fractal pattern. |
 | [Frequency Shifter](#frequency-shifter) | Adds the same number of hertz to every frequency: the sound stops being harmonic and turns bell-like. |
 | [Gate/Expander](#gateexpander) | Dynamic gate or expander (cuts or attenuates signal below a threshold). |
+| [Gated Reverb](#gated-reverb) | A reverb tail cut dead by a gate driven by the dry sound. |
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
 | [Griffin-Lim](#griffin-lim) | Iterative reconstruction from the magnitude spectrogram. Changes phase to create spectral textures. |
 | [Hard panner](#hard-panner) | Switches the sound fully to the left, center, or right. |
@@ -2190,6 +2229,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Scanned Synthesis](#scanned-synthesis) | Reads the shape of a slowly moving mechanical object as a wavetable: the timbre evolves endlessly while the note stays in tune. |
 | [Serial Operations](#serial-operations) | Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix. |
 | [Shakers](#shakers) | Shaken percussion — maracas, cabasa, tambourine, sleigh bells — from a stochastic particle model. |
+| [Shimmer](#shimmer) | A reverb whose tail rises an octave at each pass, receding as it climbs. |
 | [Sines + Transients + Noise (STN)](#sines--transients--noise-stn) | Splits a sound into three materials — what sustains, what strikes, what breathes — losing nothing. |
 | [Sinusoids + Noise (SMS)](#sinusoids--noise-sms) | Tracks a sound's partials and sets the rest aside: transpose the harmony without touching the breath. |
 | [Slide Stretch](#slide-stretch) | Time-stretch with a factor that gradually changes from start to end. |
@@ -3100,6 +3140,28 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 | Attack | number | 1 ms | 0.1 – 100 ms, step 0.1 | Reaction time when signal drops below threshold. |
 | Release | number | 100 ms | 1 – 1000 ms, step 1 | Recovery time when signal rises above threshold. |
 | Attenuation | number | 40 dB | 0 – 80 dB, step 1 | Maximum floor attenuation. Gate = cut level; Expander = attenuation limit. |
+
+#### Gated Reverb
+
+`reverbe-hachee` · Processing → Effects
+
+*A reverb tail cut dead by a gate driven by the dry sound.*
+
+The drum sound of the eighties, and it is not obtained by putting a gate after a reverb. An ordinary gate listens to what it processes: placed after the tail, it closes when the tail falls below its threshold, that is, late and gradually. One hears a decay where a cleaver was wanted. Here the gate is driven by the dry sound. It opens at the attack, holds for a fixed time, then cuts dead — and that brutal silence is the effect. As long as the dry signal comes back above the threshold the countdown restarts: a roll therefore holds the gate open, and the cleaver falls after the last hit. The catalogue does have a node that listens to another signal, ducking, but it lowers the sound instead of holding it open: the exact opposite of what is needed. The node reports the trail — what the reverb adds after the dry sound ends — before and after gating. Three measures were tried. The energy after closing relative to before spoke of the ungated tail, and would have been the same without a gate. The share of energy discarded is correct but mute: measured at eleven per cent, it suggests a discreet effect, whereas the tail in fact goes from more than a second to four tenths. A tail is heard long after it weighs nothing. Feed it drums, or anything percussive: the effect assumes clear attacks, since it is on them that the gate is set.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Decay | slider | 1.5 s | 0.2 – 4 s, step 0.1 | Length of the tail before gating. It decides the density and colour of what is heard during the hold, not the final length — the hold sets that. |
+| Hold | slider | 0.2 s | 0.02 – 1 s, step 0.01 | How long the gate stays open after the last attack. It sets the length of the tail heard: two tenths of a second give the 1985 snare. |
+| Release | slider | 0.01 s | 0.002 – 0.3 s, step 0.002 | Closing time. Short, it is the cleaver; beyond a hundred milliseconds or so one hears a fade and the effect vanishes. |
+| Threshold | slider | -40 dB | -60 – -10 dB, step 1 | Dry level above which the gate opens. Too low and it stays open on hiss; too high and soft hits no longer trigger anything. |
+| Mix | slider | 60 % | 0 – 100 %, step 1 | Proportion of reverb added. At 0 %, the output is the input. |
+| Seed | slider | 1 | 1 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. |
 
 #### Granular Freeze
 
@@ -4426,6 +4488,28 @@ Shaken percussion from a stochastic particle model. Perry Cook posed the problem
 | Duration | number | 4 s | 0.2 – 30 s, step 0.1 | Duration produced, when no MIDI is connected. |
 | Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound — which no real tambourine does, and which is needed here. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Shimmer
+
+`shimmer` · Processing → Effects
+
+*A reverb whose tail rises an octave at each pass, receding as it climbs.*
+
+A reverb whose tail rises an octave at each pass, receding as it climbs. The effect is associated with Brian Eno's and Daniel Lanois's pads, and its recipe is a loop: the tail is transposed then fed back into the reverb, indefinitely, each pass higher and quieter. An acyclic graph cannot express that — it is feedback, not a chain — which is why it takes a node rather than a patch. The loop is therefore unrolled into generations: the first is the reverb of the sound, the second the reverb of the first transposed, and so on. Four or five are enough; beyond that everything is below the hearing floor, and the node shows each one's level so it can be seen. The first generation is not transposed, and that is what makes the effect recognisable: one hears the room first, then the octave rising inside it. Transposing from the first pass would give an immediate high sound, which sounds like a misconfiguration. One fault found by measuring, and it would have made the node unusable: the reverb response was not unity gain, so every convolution added energy. The fourth generation came out seventy-four decibels above the first, and the feedback setting commanded nothing. The response is now normalised in energy; feedback alone decides the decay.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Decay | slider | 1.2 s | 0.2 – 4 s, step 0.1 | Tail length of each generation. It accumulates: four generations of one second extend well beyond one second. |
+| Feedback | slider | 60 % | 0 – 95 %, step 1 | What goes back into the loop at each pass. It alone decides the decay — since the response was normalised in energy. |
+| Transposition | slider | 12 semitones | -12 – 24 semitones, step 1 | What the loop transposes at each pass. Twelve gives the classic shimmer octave; seven gives a fifth that stacks chords; negative values descend, which thickens instead of brightening. |
+| Generations | slider | 4 | 1 – 8, step 1 | Number of passes unrolled. Beyond four or five everything is below the hearing floor and the computation costs for nothing — the node shows each generation's level so it can be seen. |
+| Mix | slider | 50 % | 0 – 100 %, step 1 | Proportion added to the dry sound. At 0 %, the output is the input. |
+| Seed | slider | 1 | 1 – 999999, step 1 | Seed of the room's response. |
 
 #### Sines + Transients + Noise (STN)
 
