@@ -136,6 +136,9 @@ import { fiches as f_synthese_features } from "./synthese-features";
 import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
+import { fiches as f_parcours } from "./parcours";
+import { fiches as f_ficheTechnique } from "./fiche-technique";
+import { fiches as f_particules } from "./particules";
 import { fiches as f_correction_hauteur } from "./correction-hauteur";
 import { fiches as f_stereo_morphing } from "./stereo-morphing";
 import { fiches as f_finitions } from "./finitions";
@@ -193,6 +196,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_cercle_pulsant,
   ...f_ampleur,
   ...f_quiz,
+  ...f_parcours,
+  ...f_ficheTechnique,
+  ...f_particules,
   ...f_correction_hauteur,
   ...f_stereo_morphing,
   ...f_finitions,

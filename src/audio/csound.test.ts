@@ -317,7 +317,9 @@ describe("bibliothèque d'opcodes", () => {
     }
   });
 
-  it("n'inclut ni partikkel, ni les opcodes à fichiers de données", () => {
+  // `partikkel` n'est pas absent faute de marcher — il a son propre nœud, « Particules », parce
+  // qu'un opcode à quarante arguments ne se règle pas par un curseur unique. Les trois autres, si.
+  it("n'inclut pas partikkel, qui a son nœud, ni les opcodes à fichiers de données", () => {
     const ids = OPCODES.map((o) => o.id);
     expect(ids).not.toContain("partikkel");
     expect(ids).not.toContain("pvsmorph");

@@ -13,7 +13,9 @@ export const fiches: FicheAudio[] = ([
     id: "camelot",
     nom: "Roue de Camelot",
     nomEn: "Camelot Wheel",
-    univers: "Autres",
+    // Une source : il ne reçoit rien et rend du son. Sa place est parmi les entrées, et non
+    // dans « Autres », qui est la rubrique qu'on ne consulte pas en travaillant.
+    univers: "Entrées",
     famille: "Génération",
     resume: "Parcours sonore sur la roue de Camelot pour illustrer les transitions harmoniques.",
     resumeEn: "Musical journey on the Camelot wheel to illustrate harmonic transitions.",

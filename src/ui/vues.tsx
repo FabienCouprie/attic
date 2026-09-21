@@ -27,6 +27,7 @@ import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
 import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { Quiz } from "./Quiz";
+import { Parcours } from "./Parcours";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
@@ -1889,6 +1890,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("orchestre-csound"), vue: VueOrchestreCsound, position: "apres" },
   { correspond: parId("clavier-apprentissage"), vue: VueApprentissage, position: "apres" },
   { correspond: parId("quiz"), vue: Quiz, position: "avant" },
+  { correspond: parId("parcours"), vue: Parcours, position: "avant" },
 ];
 
 /**

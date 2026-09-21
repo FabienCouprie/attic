@@ -1057,3 +1057,59 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-quiz-bonne { color: #3fb27f; font-family: monospace; }
 .attic-quiz-pied { color: var(--text-muted); font-size: 10px; flex-shrink: 0; padding-top: 2px; }
 .attic-quiz-vide { color: var(--text-secondary); padding: 12px 0; }
+
+/* ── Parcours : une étape, une liste qui se coche, une leçon ──
+   Mêmes variables que le quiz, et les deux mêmes teintes : le vert du point tenu et l'accent du
+   bouton qui devient cliquable. Un point NON tenu n'est PAS rouge — il n'est pas encore fait, ce
+   qui n'est pas une faute ; le rouge ne servirait qu'à décourager quelqu'un qui commence. */
+.attic-parcours {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; width: 100%; height: 100%;
+  font-size: 11px; color: var(--text-primary); overflow: hidden;
+}
+.attic-parcours-tete { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.attic-parcours-chapitre {
+  background: var(--bg-input); color: var(--text-secondary);
+  padding: 1px 6px; border-radius: 8px; font-size: 10px; white-space: nowrap;
+}
+.attic-parcours-chapitre.epreuve { background: var(--accent); color: var(--text-inverse); }
+.attic-parcours-avance { color: var(--text-tertiary); font-family: monospace; }
+.attic-parcours-titre-gagne { flex: 1; text-align: right; color: var(--text-secondary); font-size: 10px; font-style: italic; }
+.attic-parcours-btn-outil {
+  background: none; border: none; color: var(--text-tertiary); cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 0 4px; border-radius: 3px;
+}
+.attic-parcours-btn-outil:hover { color: var(--text-title); background: var(--bg-btn-hover); }
+.attic-parcours-jauge { height: 2px; background: var(--bg-input); border-radius: 1px; overflow: hidden; flex-shrink: 0; }
+.attic-parcours-jauge > div { height: 100%; background: var(--accent); transition: width 0.2s ease; }
+.attic-parcours-corps { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.attic-parcours-nom { color: var(--text-title); font-size: 12px; font-weight: 600; }
+.attic-parcours-coche { color: #3fb27f; padding-right: 4px; }
+.attic-parcours-enonce { line-height: 1.35; }
+.attic-parcours-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.attic-parcours-liste li { display: flex; gap: 6px; color: var(--text-secondary); line-height: 1.3; }
+.attic-parcours-liste li.ok { color: #3fb27f; }
+.attic-parcours-puce { font-family: monospace; flex-shrink: 0; }
+.attic-parcours-indice {
+  border-left: 2px solid var(--text-tertiary); padding-left: 6px;
+  color: var(--text-secondary); line-height: 1.4;
+}
+.attic-parcours-lecon {
+  border-left: 2px solid #3fb27f; padding-left: 6px;
+  color: var(--text-primary); line-height: 1.45;
+}
+.attic-parcours-lecon-tete {
+  color: #3fb27f; font-size: 10px; letter-spacing: 0.04em; padding-bottom: 2px;
+}
+.attic-parcours-actions { display: flex; gap: 6px; flex-shrink: 0; padding-top: 2px; }
+.attic-parcours-btn, .attic-parcours-btn-suite {
+  border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 11px;
+  border: 1px solid var(--border-input);
+}
+.attic-parcours-btn { background: var(--bg-input); color: var(--text-secondary); }
+.attic-parcours-btn:hover { background: var(--bg-btn-hover); color: var(--text-title); }
+.attic-parcours-btn-suite { background: var(--accent); color: var(--text-inverse); border-color: transparent; }
+.attic-parcours-btn-suite:hover { background: var(--bg-hover-accent); }
+.attic-parcours-btn-suite.pale { background: var(--bg-input); color: var(--text-muted); cursor: default; }
+.attic-parcours-pied { color: var(--text-muted); font-size: 10px; flex-shrink: 0; font-family: monospace; }
+.attic-parcours-vide { color: var(--text-secondary); padding: 12px 0; }

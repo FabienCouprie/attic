@@ -12,7 +12,9 @@ export const fiches: FicheAudio[] = ([
     id: "spectre-visible",
     nom: "Spectre visible",
     nomEn: "Visible Spectrum",
-    univers: "Autres",
+    // Une source : il ne reçoit rien et rend du son. Sa place est parmi les entrées, et non
+    // dans « Autres », qui est la rubrique qu'on ne consulte pas en travaillant.
+    univers: "Entrées",
     famille: "Génération",
     resume: "Transpose la fréquence d'une couleur visible (longueur d'onde) dans le domaine audible.",
     resumeEn: "Transposes the frequency of a visible color (wavelength) into the audible range.",

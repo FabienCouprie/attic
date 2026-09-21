@@ -12,7 +12,9 @@ export const fiches: FicheAudio[] = ([
     id: "color-looper",
     nom: "Color Looper",
     nomEn: "Color Looper",
-    univers: "Autres",
+    // Une source : il ne reçoit rien et rend du son. Sa place est parmi les entrées, et non
+    // dans « Autres », qui est la rubrique qu'on ne consulte pas en travaillant.
+    univers: "Entrées",
     famille: "Génération",
     resume: "Séquenceur pas-à-pas dont chaque pas est une couleur.",
     resumeEn: "Step sequencer where each step is a color.",
