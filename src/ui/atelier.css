@@ -24,6 +24,12 @@
   --text-badge: #a99bb8;
   --success: #9d4edd;
   --success-dim: #5e2a7e;
+  /* Le bouton « Lancer » a sa propre couleur, distincte de « succès » : dans le thème violet
+     elle vaut la même, si bien que rien n'y bouge ; dans le thème plan technique, elle passe au
+     bleu pendant que les pastilles d'état restent vertes. Sans cette variable, teinter le bouton
+     aurait teint aussi les points d'état, le halo d'exécution et le bouton de priorité d'un nœud. */
+  --lancer: var(--success);
+  --lancer-dim: var(--success-dim);
   --arret: #e0576f;
   --accent: #a855f7;
   --etiquette-bg: #2a1f3d;
@@ -66,6 +72,11 @@
   --arret: #fb7185;
   --accent: #5eb3f5;
   --etiquette-bg: #1a3f7f;
+  /* Le bouton « Lancer » au ton du thème : le vert de « succès » y jurait, seule tache chaude
+     d'une barre entièrement bleue. Le texte reste le bleu nuit du fond, qui tranche franchement
+     sur ce bleu clair. */
+  --lancer: #5eb3f5;
+  --lancer-dim: #2f6c9e;
 }
 
 /* Nœuds : gardent les teintes neutres de l'ancien thème « dark » (demandé
@@ -252,14 +263,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-favs-drop a:hover { background: var(--bg-hover); }
 .attic-btn-lancer {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-left: 8px; background: var(--success); color: var(--text-inverse);
+  margin-left: 8px; background: var(--lancer, var(--success)); color: var(--text-inverse);
   border: none; border-radius: 8px; padding: 8px 18px 8px 14px;
   font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: filter 0.15s, transform 0.1s; flex-shrink: 0;
 }
 .attic-btn-lancer:hover { filter: brightness(1.08); }
 .attic-btn-lancer:active { transform: scale(0.97); }
-.attic-btn-lancer:disabled { background: var(--success-dim); cursor: default; transform: none; filter: none; }
+.attic-btn-lancer:disabled { background: var(--lancer-dim, var(--success-dim)); cursor: default; transform: none; filter: none; }
 /* Pendant un run, le même bouton arrête : il change de couleur pour qu'on ne le
    confonde pas avec un lancement, et il pulse doucement — c'est le seul endroit de la
    barre qui dit que quelque chose tourne, depuis qu'il ne montre plus « … ». */

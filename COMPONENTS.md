@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **352 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **355 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 168 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (140) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 171 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (143) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 36 | [Analysis](#analysis) (28) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
@@ -2091,6 +2091,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
 | [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
+| [Bass Mono](#bass-mono) | Collapses the bass of both channels below a crossover, and leaves the treble untouched. |
 | [Beat Repeat / Stutter](#beat-repeat--stutter) | Captures and repeats a short segment at rhythmic intervals (stutter effect). |
 | [Bitcrusher](#bitcrusher) | Bit quantization + downsampling (lo-fi). |
 | [Braid](#braid) | Splits the sound into bands that cross over and under in space, returning to their places after a countable number of patterns. |
@@ -2166,6 +2167,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Phaser](#phaser) | All-pass filter cascade modulated by LFO (sweeping effect). |
 | [Ping-Pong Echo](#ping-pong-echo) | Stereo ping-pong echo. |
 | [Pitch ↔ Rhythm Continuum](#pitch--rhythm-continuum) | Slows a sound until its pitch turns into a pulse. |
+| [Pitch Correction](#pitch-correction) | Brings every note to the nearest degree of the chosen scale, without moving the formants. |
 | [Pitch Follower](#pitch-follower) | Follows a sound's pitch instant by instant, to drive an effect with it. |
 | [Pitch Glissando](#pitch-glissando) | Pitch glissando from one pitch to another. |
 | [Pitch Shift](#pitch-shift) | Pitch shift. |
@@ -2199,6 +2201,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Spectral Delay](#spectral-delay) | Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
 | [Spectral Freeze](#spectral-freeze) | Holds one moment's spectrum for all that follows: a stillness, not a loop. |
+| [Spectral Morphing](#spectral-morphing) | Travels from one sound to another through the spectrum: in the middle, a timbre that did not exist. |
 | [Spectral Tracing](#spectral-tracing) | Keeps only the loudest partials of each moment: a complex sound becomes a few interweaving lines. |
 | [Spread Across Keyboard](#spread-across-keyboard) | Turns one sound into a sample bank playable across the 88 keys, in zones. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound — rain, fire, crowd — without copying a single sample of it. |
@@ -2368,6 +2371,24 @@ Automatic stereo sweep: the sound moves periodically between left and right. Adj
 |---|---|---|---|---|
 | Rate | slider | 2 Hz | 0.1 – 20 Hz, step 0.1 | Sweep speed (round trips per second). |
 | Depth | slider | 80 % | 0 – 100 %, step 1 | Sweep depth (0% = static, 100% = extreme left to extreme right). |
+
+#### Bass Mono
+
+`mono-grave` · Processing → Effects
+
+*Collapses the bass of both channels below a crossover, and leaves the treble untouched.*
+
+Three reasons to collapse the bass, and none is a studio superstition. Cutting first: a record groove carries the sum of the channels on one axis and their difference on the other, so a decorrelated bass throws the cutting stylus out of the groove — the plant refuses the record or lowers its level. The room next: below a hundred hertz or so, the wavelength exceeds three metres, the ear localises nothing there, and two different basses only produce an energy flutter depending on where one stands. Nothing is lost by joining them. The mono sum last: it is in the bass that cancellations cost the most, because that is where the energy is. The processing is a high-pass on the side, and nothing else. That is the formulation that makes the operation exact, and a first attempt had not found it: it split each channel into two bands and joined the low one. Two faults, both measured by the tests. The high band obtained by subtraction kept a great deal of bass — at 50 Hz under a 120 Hz crossover, half the amplitude remained, because a filter shifts phase and a subtraction does not remove what has been phase-shifted. And the measure returned looked at the internal bands rather than the output: it announced a perfect correlation for a job half done. Written on the side, everything becomes exact. The mid is never filtered, so the mono sum comes out bit for bit whatever the setting — the property one wants most here, and it is free. At zero amount the input comes out as it went in, without even a phase shift. The node says what it did: by how much the low side fell, and what the correlation of the two channels below the crossover becomes. The first figure depends on the distance to the crossover, as with any filter — measured under 120 Hz: -22.7 dB for a side at 50 and 70 Hz, -40.9 dB at 30 and 40 Hz.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Crossover | slider | 120 Hz | 40 – 400 Hz, step 5 | Frequency below which the side vanishes. A hundred and twenty hertz is common practice; a record cut often asks for higher, headphone listening needs less. |
+| Amount | slider | 100 % | 0 – 100 %, step 1 | At 100 % the low side vanishes entirely; at 50 % half of it remains. The setting is useful, because a fully mono bass sometimes tightens a reverberation one had wanted wide. |
 
 #### Beat Repeat / Stutter
 
@@ -3923,6 +3944,29 @@ After the discovery Karlheinz Stockhausen formulated while composing "Kontakte" 
 | Octaves | number | 10 | 2 – 16, step 1 | Span of the sweep. Ten octaves is a factor of a thousand: a 200 Hz source ends at 0.2 Hz, one beat every five seconds. Below 5 you stay in the pitch domain and the demonstration does not work. |
 | Loop crossfade | number | 20 ms | 0 – 500 ms, step 5 | Crossfade so the source loops without a click. Slowed a thousandfold it would otherwise supply a fraction of a millisecond of material. |
 
+#### Pitch Correction
+
+`correction-hauteur` · Processing → Effects
+
+*Brings every note to the nearest degree of the chosen scale, without moving the formants.*
+
+The classic that was missing, and whose parts Attic already had: a pYIN pitch follower returning a frequency per frame with its confidence, scales, temperaments, and ways to transpose. Only the node that links them was missing — which is exactly the shape a growing catalogue's omissions take: what has an author and a paper proposes itself, what is too ordinary to have a parent has nobody to recall it. Two settings do everything, and they are readily confused. Strength says how much of the deviation is corrected: at 100 % the note lands exactly on the degree; at 50 % half the vibrato and the attacks are kept, which is what one wants almost always. Transition says how long the correction takes to settle: at zero the pitch jumps from one degree to the next without passing through — the effect made famous by a 1998 record, and it is an effect, not a fault; at fifty milliseconds the ear hears nothing but tuning restored. The method is pitch-synchronous overlap-add, and that choice has an audible consequence: formants do not follow the note. The signal is cut into two-period grains that are glued back at a different spacing; each grain's content does not move, so a corrected voice does not take on a chipmunk accent — which resampling would have done to it. A first attempt did precisely that and, over the few dozen cents of an ordinary correction, did not even move the pitch: an A at 452 Hz came out at 452.06 instead of 440. Its limit, since it has one: it assumes a periodic sound. On a voice or a sustained instrument that holds; on a chord, a noise or a drum there is no period to glue, and the confidence threshold is there so those passages are not corrected at all. The ratio is bounded to four semitones: beyond that, two copies of one grain cancel — measured, at the octave the dominant line falls to a hundredth of the input level. To transpose in earnest, the catalogue has tools made for it. The maximum deviation is not decorative caution: a pitch follower makes octave errors on rich sounds, and correcting an octave error would move the note by a whole octave. Beyond the bound nothing is corrected — better to leave a note in tune than to manufacture one out of it. The second output returns the applied correction as a curve, to be plugged into the viewer: a half means no correction, the top pulls towards the treble, the bottom towards the bass. It is the most direct way to see what the node did, and where it gave up.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Correction | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Root | choice | C | C / C# / D / E♭ / E / F / F# / G / G# / A / B♭ / B | The scale's root. Without effect in chromatic, which contains every note. |
+| Scale | choice | Chromatic | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The allowed degrees. The more a scale has, the less the correction moves the notes: chromatic restores tuning, pentatonic imposes a colour and is heard as an effect. |
+| Strength | slider | 100 % | 0 – 100 %, step 1 | Share of the deviation corrected. At 100 % the note lands exactly on the degree; at 50 % half the vibrato and the attacks survive, which is almost always what one wants. |
+| Transition | slider | 0 ms | 0 – 200 ms, step 1 | How long the correction takes to settle. At zero the pitch jumps from one degree to the next: that is the 1998 effect, and it is one. Around fifty milliseconds, nothing is heard but tuning restored. |
+| Confidence | slider | 40 % | 10 – 90 %, step 5 | Below this follower confidence, the frame is not corrected. That is what leaves consonants, breaths and drums alone: periods are not glued where there are none. |
+| Max deviation | slider | 1 semitones | 0.2 – 2 semitones, step 0.1 | Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave. |
+
 #### Pitch Follower
 
 `suiveur-hauteur` · Processing → Effects
@@ -4609,6 +4653,29 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Moment | slider | 50 % | 0 – 100 %, step 1 | Where the freeze begins, as a proportion of the duration. What precedes passes through unchanged; from there on, that moment's spectrum is held to the end. |
 | Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+
+#### Spectral Morphing
+
+`morphing-spectral` · Processing → Effects
+
+*Travels from one sound to another through the spectrum: in the middle, a timbre that did not exist.*
+
+This is not a crossfade, and that is the first thing to say. A crossfade makes two sounds heard, one leaving and one arriving; in the middle one hears both. A morph makes only one heard, whose timbre moves. Nor is it the catalogue's vocoder, which does cross-synthesis: that one takes the envelope of one and applies it to the other, an asymmetric operation where there is a modulator and a carrier, and where the carrier provides the matter. Here both sounds have the same role, and the setting travels continuously from one to the other. The interpolation is done on the logarithms of the amplitudes, and that detail is the whole subject. Interpolating linearly would let the louder of the two dominate: halfway between a partial at 1 and a partial at 0.01, the mean is 0.505, that is the loud sound to within half a decibel. In logarithm the same midpoint gives 0.1, that is halfway in decibels — the only way to be in the middle for the ear. The phase comes from the dominant sound, the one being leaned towards, rather than from an interpolation: two averaged phases do not make an intermediate phase but an interference, and the result thins out instead of moving. Amplitudes carry the timbre; phase carries the grain. What the method does not do, and it must be written: it interpolates amplitudes bin by bin, it does not pair partials to glide them from one to the other. Between a 200 Hz sine and a 3000 Hz sine the midpoint therefore does not hold a 775 Hz sine: it holds both, at the geometric mean of their amplitudes. On rich sounds this is heard as an intermediate timbre and the centroid confirms it — measured, it goes from 200 to 2640 then to 3000 Hz as one travels. On two isolated sines, the limit shows. A curve connected to the Modulation input travels along the sound: a ramp starts at the first and arrives at the second, a sine goes there and back.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sound A | audio |  |
+| input | Sound B | audio |  |
+| input | Modulation | curve |  |
+| output | Audio | audio |  |
+| output | Measurements | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Morph | slider | 50 % | 0 – 100 %, step 1 | At 0 % sound A; at 100 % sound B; in between, an intermediate timbre. A curve connected to the Modulation input takes this setting's place. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Morph that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other. |
+| Window | choice | 2048 | 1024 / 2048 / 4096 | Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz. |
 
 #### Spectral Tracing
 

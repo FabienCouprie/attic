@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 352 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 355 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **352 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **355 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -33,7 +33,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
-- **140 effects** including: spectral tracing, spectral blur, spectral freeze, inner glissando, brassage and envelope transfer (after Wishart), Doppler, tape machine, ducking, ambisonic rotation, MIDI pattern transformations (impose rhythm, note echo, thin out, ply and rotate, retrograde and palindrome), physical models (shakers, wind instruments, modal bars), scanned synthesis, wave terrain, FOF vowels, serial operations, negative harmony, voicings, Tonnetz, Markov chains, historical temperaments, tremolo, phaser, vibrato, octaver, chopper, wah-wah, polarity inversion, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, spaciousness (velvet-noise early reflections), convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
+- **143 effects** including: spectral tracing, spectral blur, spectral freeze, inner glissando, brassage and envelope transfer (after Wishart), Doppler, tape machine, ducking, ambisonic rotation, MIDI pattern transformations (impose rhythm, note echo, thin out, ply and rotate, retrograde and palindrome), physical models (shakers, wind instruments, modal bars), scanned synthesis, wave terrain, FOF vowels, serial operations, negative harmony, voicings, Tonnetz, Markov chains, historical temperaments, tremolo, phaser, vibrato, octaver, chopper, wah-wah, polarity inversion, pitch correction, bass mono, spectral morphing, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, spaciousness (velvet-noise early reflections), convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 
 ## Architecture
@@ -133,7 +133,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (352 nodes)
+  plugins/       # Plugin node definitions (355 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN

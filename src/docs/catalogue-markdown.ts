@@ -21,9 +21,10 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduireDans } from "../i18n";
+import { comparerUnivers } from "../audio/ordre-catalogue";
 
-/** Ordre des catégories dans le document ; les inconnues suivent, par ordre alphabétique. */
-const ORDRE_UNIVERS = ["Entrées", "Traitement", "Visualisation", "Sorties", "Collections", "Méta-composants", "Autres"];
+// L'ordre des catégories est celui de `audio/ordre-catalogue.ts` — le même que la palette, depuis
+// qu'une recherche dans celle-ci a montré ce que deux listes séparées finissent par donner.
 
 const TYPES_PORT: Record<string, string> = {
   audio: "audio", midi: "MIDI", texte: "text", image: "image", controle: "control", fichier: "file", nombre: "number",
@@ -114,10 +115,7 @@ const nomEn = (f: FicheAudio) => (f.nomEn ?? f.nom).trim();
  */
 export function genererCatalogueMarkdown(fiches: FicheAudio[]): string {
   const slug = creerSlugger();
-  const univers = [...new Set(fiches.map((f) => f.univers))].sort((a, b) => {
-    const ia = ORDRE_UNIVERS.indexOf(a), ib = ORDRE_UNIVERS.indexOf(b);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
-  });
+  const univers = [...new Set(fiches.map((f) => f.univers))].sort(comparerUnivers);
   const lu = (u: string) => traduireDans("en", `univers.${u}`);
   const lf = (f: string) => traduireDans("en", `famille.${f}`);
   const famillesDe = (u: string) => [...new Set(fiches.filter((f) => f.univers === u).map((f) => f.famille))]

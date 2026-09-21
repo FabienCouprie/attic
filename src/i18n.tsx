@@ -76,7 +76,13 @@ const DICO: Record<string, Record<Langue, string>> = {
   "barre.doc": { fr: "Ouvrir la documentation", en: "Open the documentation" },
   "barre.maj": { fr: "Vérifier les mises à jour", en: "Check for updates" },
   "barre.modeles": { fr: "Récupérer les modèles IA", en: "Fetch the AI models" },
-  "barre.audio": { fr: "Réactiver l'audio", en: "Resume audio" },
+  // CE BOUTON NE RÉACTIVE RIEN QUE LE LANCEMENT NE FASSE DÉJÀ : `obtenirAudio()` crée et reprend
+  // le contexte audio avant chaque exécution, et un clic sur « Lancer » est le geste utilisateur
+  // que le navigateur réclame pour cela. Les aperçus des nœuds, eux, sont des balises <audio> qui
+  // ne passent pas par ce contexte. Il ne lui reste qu'un usage, et c'est celui que le libellé
+  // annonce désormais : dire si une sortie audio peut être ouverte sur cette machine — session
+  // distante, audio désactivé, aucun périphérique — sans avoir à lancer un graphe pour le découvrir.
+  "barre.audio": { fr: "Tester la sortie audio", en: "Test the audio output" },
   "barre.reinitialiser": { fr: "Réinitialiser tous les nœuds", en: "Reset every node" },
   "barre.memoire.titre": { fr: "Mémoire occupée par l'application, tous processus confondus", en: "Memory used by the application, across all processes" },
   "barre.lancer": { fr: "Lancer l'exécution", en: "Run the graph" },
@@ -483,6 +489,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.declip.repare": { fr: "{__VAR_0__} % réparé · seuil {__VAR_1__} · crête {__VAR_2__} · résidu {__VAR_3__} %", en: "{__VAR_0__} % repaired · threshold {__VAR_1__} · peak {__VAR_2__} · residual {__VAR_3__} %" },
   "msg.declip.rien": { fr: "Aucun écrêtage détecté", en: "No clipping detected" },
   "msg.declip.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
+  "msg.monograve.resume": { fr: "côté grave {__VAR_0__} dB · corrélation sous la coupure {__VAR_1__} → {__VAR_2__}", en: "low side {__VAR_0__} dB · correlation below crossover {__VAR_1__} → {__VAR_2__}" },
+  "msg.morphing.resume": { fr: "centroïde A {__VAR_0__} Hz → {__VAR_1__} Hz ← B {__VAR_2__} Hz", en: "centroid A {__VAR_0__} Hz → {__VAR_1__} Hz ← B {__VAR_2__} Hz" },
+  "msg.morphing.centroideLigne": { fr: "Le centroïde du résultat doit tomber entre les deux : c'est ce qui distingue un morphing d'un fondu enchaîné.", en: "The result's centroid must fall between the two: that is what tells a morph from a crossfade." },
+  "msg.correction.resume": { fr: "écart moyen corrigé {__VAR_0__} cents · {__VAR_1__} % des trames", en: "mean deviation corrected {__VAR_0__} cents · {__VAR_1__} % of frames" },
   "msg.normaliseur.crete": { fr: "crête ramenée à {__VAR_0__} dB", en: "peak brought to {__VAR_0__} dB" },
   "msg.normaliseur.sonie": { fr: "sonie {__VAR_0__} → {__VAR_1__} LUFS · gain {__VAR_2__} dB · vrai pic {__VAR_3__} dBTP", en: "loudness {__VAR_0__} → {__VAR_1__} LUFS · gain {__VAR_2__} dB · true peak {__VAR_3__} dBTP" },
   "msg.normaliseur.plafonne": { fr: "cible non atteinte : le plafond de vrai pic a limité le gain", en: "target not reached: the true-peak ceiling limited the gain" },
