@@ -17,9 +17,10 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { contexteDecodage } from "../audio/commun";
+import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { FICHE_LOT_DEBUT, FICHE_LOT_FIN, assainirNomFichier, joindre, lotCourant, nomDeSortie } from "./lotGlobal";
 import { lireProfondeurExport } from "../ui/profondeur-export";
+import { decrire } from "../audio/metadonnees";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -68,7 +69,8 @@ export const fiches: FicheAudio[] = ([
         if (!lu?.url) throw new Error(en ? "no data" : "aucune donnée");
         const reponse = await fetch(lu.url);
         const octets = await reponse.arrayBuffer();
-        const audio = await contexteDecodage().decodeAudioData(octets);
+        // À la fréquence de la source : un lot ne convertit pas ce qu'on ne lui a pas demandé.
+        const audio = await decoderSansReechantillonner(octets);
         return {
           valeurs: [audio, fichier.nom],
           message: `${lot.index + 1}/${lot.fichiers.length} · ${fichier.nom}\n${audio.duration.toFixed(1)} s`,
@@ -168,9 +170,13 @@ export const fiches: FicheAudio[] = ([
         }
 
         const { bufferVersWavBlob, bufferVersMp3Blob } = await import("../audio");
+        // La provenance part avec le fichier : dans le dossier de livraison, chaque sortie dit de
+        // quelle source elle vient — ce qui compte d'autant plus qu'un renommage l'a pu masquer.
+        const bits = lireProfondeurExport();
+        const provenance = { noeud: "Fin de boucle collection", source: fichier.nom, nomFichier: nom };
         const blob = format === "mp3"
-          ? await bufferVersMp3Blob(audio, 192)
-          : bufferVersWavBlob(audio, undefined, false, { bits: lireProfondeurExport() });
+          ? await bufferVersMp3Blob(audio, 192, undefined, decrire(audio, provenance))
+          : bufferVersWavBlob(audio, undefined, false, { bits, ixml: decrire(audio, provenance, bits).ixml });
         await api.ecrireFichier(joindre(dossier, nom), await blob.arrayBuffer());
         lot.nomsEcrits.push(nom.toLowerCase());
 

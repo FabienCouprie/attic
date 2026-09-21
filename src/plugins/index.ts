@@ -147,6 +147,9 @@ import { fiches as f_ecosysteme } from "./ecosysteme";
 import { fiches as f_ssp } from "./ssp";
 import { fiches as f_boucleCollection } from "./boucle-collection";
 import { fiches as f_multicanal } from "./multicanal";
+import { fiches as f_concret } from "./concret";
+import { fiches as f_objetsSonores } from "./objets-sonores";
+import { fiches as f_spectralCdp } from "./spectral-cdp";
 import { fiches as f_correction_hauteur } from "./correction-hauteur";
 import { fiches as f_stereo_morphing } from "./stereo-morphing";
 import { fiches as f_finitions } from "./finitions";
@@ -215,6 +218,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_ssp,
   ...f_boucleCollection,
   ...f_multicanal,
+  ...f_concret,
+  ...f_objetsSonores,
+  ...f_spectralCdp,
   ...f_correction_hauteur,
   ...f_stereo_morphing,
   ...f_finitions,

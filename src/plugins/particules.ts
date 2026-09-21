@@ -137,7 +137,7 @@ export const fiches: FicheAudio[] = ([
       const r = await rendreCsd(csd, entrees);
       const faute = premiereErreur(r.messages);
       if (!r.audio) {
-        return { valeurs: [null, r.messages.join("\n")], message: faute ?? (en ? "Csound produced nothing." : "Csound n'a rien produit.") };
+        return { valeurs: [null, r.messages.join("\n")], erreur: true, message: r.erreur ?? faute ?? (en ? "Csound produced nothing." : "Csound n'a rien produit.") };
       }
       const retombe = espece !== reglages.espece;
       const lignes = [

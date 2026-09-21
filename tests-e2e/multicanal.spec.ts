@@ -46,49 +46,75 @@ test.afterAll(async () => {
 
 test.describe("multicanal", () => {
   test("LA DISPOSITION TRAVERSE UN EFFET ORDINAIRE, et l'export la dit encore", async ({ page }) => {
+    test.setTimeout(90000);
     const graphe = {
       nodes: [
         { id: "osc", position: { x: 0, y: 0 }, data: { ficheId: "oscillateur", parametres: {} } },
         { id: "spat", position: { x: 300, y: 0 }, data: { ficheId: "spatialiseur", parametres: { Disposition: "7.1.4", Azimut: 90 } } },
         { id: "gain", position: { x: 600, y: 0 }, data: { ficheId: "amplificateur", parametres: {} } },
+        { id: "sortie", position: { x: 900, y: 0 }, data: { ficheId: "sortie-audio", parametres: {} } },
       ],
       edges: [
         { id: "e1", source: "osc", target: "spat", sourceHandle: "out:0", targetHandle: "in:0" },
         { id: "e2", source: "spat", target: "gain", sourceHandle: "out:0", targetHandle: "in:0" },
+        { id: "e3", source: "gain", target: "sortie", sourceHandle: "out:0", targetHandle: "in:0" },
       ],
     };
     await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); }, [JSON.stringify(graphe)]);
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 20000 });
-    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 3, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 4, { timeout: 15000 });
     await page.keyboard.press(" ");
     await page.waitForFunction(() => {
-      const n = document.querySelector('.react-flow__node[data-id="gain"] audio') as HTMLAudioElement | null;
+      const n = document.querySelector('.react-flow__node[data-id="sortie"] audio') as HTMLAudioElement | null;
       return !!n?.src;
     }, { timeout: 60000 });
 
-    const entetes = await page.evaluate(async () => {
-      const lire = async (id: string) => {
-        const a = document.querySelector(`.react-flow__node[data-id="${id}"] audio`) as HTMLAudioElement;
-        const ab = await (await fetch(a.src)).arrayBuffer();
-        const v = new DataView(ab);
-        let o = 12;
-        while (o + 8 <= v.byteLength) {
-          const tag = String.fromCharCode(v.getUint8(o), v.getUint8(o + 1), v.getUint8(o + 2), v.getUint8(o + 3));
-          const taille = v.getUint32(o + 4, true);
-          if (tag === "fmt ") return { format: v.getUint16(o + 8, true), canaux: v.getUint16(o + 10, true), masque: v.getUint32(o + 28, true) };
-          o += 8 + taille + (taille % 2);
-        }
-        return null;
-      };
-      return { spat: await lire("spat"), gain: await lire("gain") };
-    });
-    console.log(JSON.stringify(entetes));
+    // L'APERÇU EST UN REPLIEMENT STÉRÉO, LE FICHIER ENREGISTRÉ EST LE 7.1.4. Le lecteur du navigateur
+    // ne sait pas jouer douze canaux ; c'est « Sauvegarder » qui refait le fichier depuis le tampon.
+    const lire = (ab: Buffer) => {
+      const v = new DataView(ab.buffer, ab.byteOffset, ab.byteLength);
+      const r: any = { blocs: [] };
+      for (let o = 12; o + 8 <= v.byteLength; ) {
+        const tag = ab.toString("latin1", o, o + 4), taille = v.getUint32(o + 4, true);
+        r.blocs.push(tag);
+        if (tag === "fmt ") Object.assign(r, { format: v.getUint16(o + 8, true), canaux: v.getUint16(o + 10, true), masque: v.getUint32(o + 28, true) });
+        if (tag === "iXML") r.pistes = [...ab.toString("utf8", o + 8, o + 8 + taille).matchAll(/<NAME>([^<]+)<\/NAME>/g)].map((m) => m[1]);
+        o += 8 + taille + (taille % 2);
+      }
+      return r;
+    };
+    const apercu = lire(Buffer.from(await page.evaluate(async () => {
+      const a = document.querySelector('.react-flow__node[data-id="sortie"] audio') as HTMLAudioElement;
+      return Array.from(new Uint8Array(await (await fetch(a.src)).arrayBuffer()));
+    })));
+    // Le bouton fabrique un lien, le clique et révoque l'adresse aussitôt : on intercepte le clic
+    // pour lire le blob avant sa révocation, plutôt que d'attendre un téléchargement annulé.
+    const enregistrer = async (id: string) => {
+      await page.evaluate(() => {
+        (window as any).__enregistre = null;
+        HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+          const href = this.href;
+          (window as any).__enregistre = fetch(href).then((r) => r.arrayBuffer()).then((ab) => Array.from(new Uint8Array(ab)));
+        };
+      });
+      await page.locator(`.react-flow__node[data-id="${id}"] .attic-node-fichier-btn`).last().click();
+      const octets = await page.evaluate(async () => {
+        for (let i = 0; i < 100 && !(window as any).__enregistre; i++) await new Promise((r) => setTimeout(r, 50));
+        return await (window as any).__enregistre;
+      });
+      return lire(Buffer.from(octets));
+    };
+    const fichier = await enregistrer("sortie");
+    console.log(JSON.stringify({ apercu, fichier }));
 
-    // Le spatialiseur écrit un 7.1.4 : douze canaux, format étendu, douze bits de masque.
-    expect(entetes.spat).toEqual({ format: 0xfffe, canaux: 12, masque: 0x2d63f });
-    // Et l'amplificateur, qui ne sait rien du multicanal, rend un fichier qui le dit encore.
-    expect(entetes.gain).toEqual({ format: 0xfffe, canaux: 12, masque: 0x2d63f });
+    expect(apercu.canaux).toBe(2);
+    // Un spatialiseur 7.1.4, puis un amplificateur qui ne sait rien du multicanal, puis la sortie :
+    // le fichier enregistré dit encore douze canaux, format étendu, douze bits de masque —
+    // et jusqu'aux noms de ses douze pistes dans le bloc iXML.
+    expect(fichier).toMatchObject({ format: 0xfffe, canaux: 12, masque: 0x2d63f });
+    expect(fichier.blocs.slice(0, 2)).toEqual(["fmt ", "data"]);
+    expect(fichier.pistes).toEqual(["L", "R", "C", "LFE", "Lrs", "Rrs", "Lss", "Rss", "Ltf", "Rtf", "Ltr", "Rtr"]);
   });
 
   test("UNE SOURCE À GAUCHE SORT PLUS FORT DANS L'OREILLE GAUCHE — dans les quatre familles", async ({ page }) => {

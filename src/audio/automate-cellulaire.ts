@@ -222,11 +222,10 @@ function appliquerRegle2D(grille: number[][], regle: { naitre: number[]; survie:
 
 function regleEffective(options: OptionsAutomateCellulaire): number | { naitre: number[]; survie: number[] } {
   if (normaliserTopologie(options.topologie) === "1D") {
-    const rp = options.reglePersonnalisee ?? 0;
-    if (options.regle === 0 || rp > 0) {
-      return Math.max(0, Math.min(255, rp || 90));
-    }
-    return REGLES_1D.includes(options.regle) ? options.regle : 90;
+    // La règle arrive déjà résolue par le nœud (le choix du menu, ou la valeur personnalisée quand
+    // le menu dit « Personnalisée »). Elle l'était déjà, mais une « Règle personnalisée » non nulle
+    // — 90 par défaut — reprenait ici la main et le menu n'était jamais suivi.
+    return Math.max(0, Math.min(255, Math.round(options.regle)));
   }
   return REGLES_2D[normaliserTopologie(options.topologie) === "2D Highlife" ? "Highlife" : "Conway"];
 }
@@ -241,16 +240,34 @@ function initialiserLigne1D(largeur: number, graine: number, rnd: () => number):
   return ligne;
 }
 
-function initialiserGrille2D(largeur: number, hauteur: number, graine: number, rnd: () => number): number[][] {
+function initialiserGrille2D(largeur: number, hauteur: number, graine: number, rnd: () => number, highlife = false): number[][] {
   const grille: number[][] = Array.from({ length: hauteur }, () => Array<number>(largeur).fill(0));
   if (graine === 0) {
     const cy = Math.floor(hauteur / 2);
     const cx = Math.floor(largeur / 2);
-    // Clignotant (period-2 oscillator) centré : 3 cellules en ligne.
-    // Oscille entre horizontal et vertical, donnant une activité stable.
-    grille[cy][(cx - 1 + largeur) % largeur] = 1;
-    grille[cy][cx] = 1;
-    grille[cy][(cx + 1) % largeur] = 1;
+    // LE R-PENTOMINO, et non plus le clignotant. Le clignotant — trois cellules qui basculent entre
+    // l'horizontale et la verticale — ne donnait qu'un accord de trois notes ou une seule note
+    // répétée. Le R-pentomino est la plus petite configuration de Conway qui évolue longtemps avant
+    // de se stabiliser (plus de mille générations sur un plan infini) : cinq cellules, déterministes,
+    // qui se déploient en une activité riche.
+    //   . X X
+    //   X X .
+    //   . X .
+    const poser = (dx: number, dy: number) => { grille[(cy + dy + hauteur) % hauteur][(cx + dx + largeur) % largeur] = 1; };
+    if (highlife) {
+      // Sous la règle Highlife, le R-pentomino s'éteint vite. Son motif propre est le RÉPLICATEUR
+      // (Nathan Thompson, 1994) : douze cellules qui se recopient le long d'une diagonale — la
+      // configuration qui a fait connaître cette règle.
+      //   . . X X X
+      //   . X . . X
+      //   X . . . X
+      //   X . . X .
+      //   X X X . .
+      const motif = ["..XXX", ".X..X", "X...X", "X..X.", "XXX.."];
+      motif.forEach((ligne, dy) => [...ligne].forEach((c, dx) => { if (c === "X") poser(dx - 2, dy - 2); }));
+    } else {
+      poser(0, -1); poser(1, -1); poser(-1, 0); poser(0, 0); poser(0, 1);
+    }
   } else {
     for (let y = 0; y < hauteur; y++) {
       for (let x = 0; x < largeur; x++) {
@@ -383,43 +400,81 @@ function genererDepuis1D(options: OptionsAutomateCellulaire): NoteEvenement[] {
   return notes;
 }
 
+/** Nombre d'octaves sur lesquelles s'étagent les rangées de la grille, du bas (grave) au haut (aigu). */
+const OCTAVES_2D = 3;
+
+/**
+ * La hauteur d'une cellule vivante : sa colonne donne le degré dans la gamme (sur deux octaves, comme
+ * en 1D), sa rangée le registre — le haut de la grille sonne à l'aigu.
+ */
+export function hauteurCellule2D(x: number, y: number, largeur: number, hauteur: number, base: number, degres: number[]): number {
+  const bande = Math.min(OCTAVES_2D - 1, Math.floor(((hauteur - 1 - y) * OCTAVES_2D) / Math.max(1, hauteur)));
+  return indexMidiPourX(x, base + 12 * bande, degres, largeur);
+}
+
+/**
+ * LE 2D S'ENTEND DANS LE TEMPS, GÉNÉRATION APRÈS GÉNÉRATION. Chaque génération de la grille est un pas
+ * de la séquence, exactement comme en 1D, et chaque cellule vivante y sonne : sa colonne donne le
+ * degré, sa rangée le registre. Les cellules qui tombent sur la même note s'additionnent : leur
+ * nombre fait la vélocité quand le mapping le demande.
+ *
+ * Auparavant la grille évoluait en silence et seule sa DERNIÈRE génération était lue, rangée par
+ * rangée — un instantané, jamais l'évolution. Avec la graine 0, cet instantané était un clignotant
+ * de trois cellules : un seul accord, ou une seule note répétée.
+ */
 function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
   const largeur = Math.max(4, Math.min(64, options.largeur));
-  const hauteur = Math.max(4, Math.min(64, options.hauteur ?? options.generations));
-  const iterations = Math.max(0, Math.min(64, options.generations));
+  const hauteur = Math.max(4, Math.min(64, options.hauteur ?? 16));
+  const generations = Math.max(4, Math.min(256, options.generations));
   const dureeNote = options.dureeNote;
   const degres = degresGammeMelodie(normaliserGamme(options.gamme));
   const base = 12 + (options.octave * 12) + (DEMI_TONS_CLE[normaliserCle(options.cle)] ?? 0);
   const rnd = randomSeed(options.graine);
   const regle = regleEffective(options) as { naitre: number[]; survie: number[] };
   const probabilite = Math.max(0, Math.min(1, options.probabilite ?? 0));
+  const mode = normaliserModeVoix(options.modeVoix);
+  const mapping = normaliserMapping(options.mapping);
+  const parVelocite = mapping === "Vélocité" || mapping === "Hauteur + vélocité";
+  const parDuree = mapping === "Durée" || mapping === "Hauteur + vélocité";
 
-  let grille = initialiserGrille2D(largeur, hauteur, options.graine, rnd);
+  let grille = initialiserGrille2D(largeur, hauteur, options.graine, rnd, normaliserTopologie(options.topologie) === "2D Highlife");
   grille = muterGrille(grille, probabilite, rnd);
-  for (let i = 0; i < iterations; i++) {
-    grille = appliquerRegle2D(grille, regle);
-    grille = muterGrille(grille, probabilite, rnd);
-  }
 
   const notes: NoteEvenement[] = [];
   let arpegeIndex = 0;
-  for (let y = 0; y < hauteur; y++) {
-    const actives = grille[y].map((v, i) => (v ? i : -1)).filter((i) => i >= 0);
-    if (actives.length > 0) {
-      const t = y * dureeNote;
-      const { notes: n, arpegeIndex: ai } = construireNotesDepuisLigne(
-        options,
-        t,
-        actives,
-        actives.length,
-        base,
-        degres,
-        rnd,
-        arpegeIndex,
-      );
-      notes.push(...n);
-      arpegeIndex = ai;
+  for (let g = 0; g < generations; g++) {
+    // Les notes de cette génération, et combien de cellules chacune rassemble.
+    const poids = new Map<number, number>();
+    for (let y = 0; y < hauteur; y++) {
+      for (let x = 0; x < largeur; x++) {
+        if (!grille[y][x]) continue;
+        const note = hauteurCellule2D(x, y, largeur, hauteur, base, degres);
+        poids.set(note, (poids.get(note) ?? 0) + 1);
+      }
     }
+    if (poids.size > 0) {
+      const t = g * dureeNote;
+      const hauteurs = [...poids.keys()].sort((a, b) => a - b);
+      const plusDense = Math.max(...poids.values());
+      const jouer = (note: number) => {
+        const w = poids.get(note) ?? 1;
+        notes.push({
+          note,
+          velocite: parVelocite ? velocitePourDensite(w, plusDense, options.velocite) : options.velocite,
+          debut: t,
+          fin: t + (parDuree ? dureeNote * (0.5 + 0.5 * (w / plusDense)) : dureeNote),
+        });
+      };
+      if (mode === "Arpège") { jouer(hauteurs[arpegeIndex % hauteurs.length]); arpegeIndex++; }
+      else if (mode === "Mélodie") jouer(hauteurs[Math.floor(rnd() * hauteurs.length)]);
+      else {
+        const max = Math.max(1, options.densiteMax || hauteurs.length);
+        const pas = Math.ceil(hauteurs.length / max);
+        hauteurs.filter((_, i) => i % pas === 0).slice(0, max).forEach(jouer);
+      }
+    }
+    grille = appliquerRegle2D(grille, regle);
+    grille = muterGrille(grille, probabilite, rnd);
   }
   return notes;
 }

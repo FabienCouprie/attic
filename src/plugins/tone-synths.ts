@@ -1,7 +1,7 @@
 // plugins/tone-synths.ts — Nœuds instruments pilotés par Tone.js.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import {
   genererMembraneSynth,
   genererMetalSynth,
@@ -733,8 +733,12 @@ export const fiches: FicheAudio[] = ([
         const data = new Uint8Array(await fichier.arrayBuffer());
         const midi = parseMidi(data);
         const { notes } = analyserMidi(midi);
-        const notesFiltrees = notes
-          .filter((n) => n.canal === canal - 1)
+        // LE CANAL CHOISI VIDE, ON JOUE TOUS LES CANAUX, et on le dit. Un MIDI mélodique sur le canal
+        // 1 donnait un silence sans un mot : « 0 coups », sans savoir que le fichier jouait ailleurs.
+        const surCanal = notes.filter((n) => n.canal === canal - 1);
+        const repli = surCanal.length === 0 && notes.length > 0;
+        const canaux = [...new Set(notes.map((n) => n.canal + 1))].sort((a, b) => a - b);
+        const notesFiltrees = (repli ? notes : surCanal)
           .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
         const buffer = await rendreBatterieMidi({
           notes: notesFiltrees,
@@ -743,7 +747,10 @@ export const fiches: FicheAudio[] = ([
         });
         return {
           valeurs: [buffer, fichier],
-          message: traduire("msg.batterie_var_0_coups_var_1_s", notesFiltrees.length, buffer.duration.toFixed(2)),
+          message: traduire("msg.batterie_var_0_coups_var_1_s", notesFiltrees.length, buffer.duration.toFixed(2))
+            + (repli ? (langueCourante() === "en"
+              ? ` · channel ${canal} empty, all channels played (the file uses ${canaux.join(", ")})`
+              : ` · canal ${canal} vide, tous les canaux joués (le fichier utilise ${canaux.join(", ")})`) : ""),
         };
       } catch (e: any) {
         return {

@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import {
+  hauteurCellule2D,
   genererNotesAutomateCellulaire,
   genererAutomateCellulaire,
   normaliserGamme,
@@ -142,13 +143,14 @@ describe("automate-cellulaire", () => {
     }
   });
 
-  it("utilise une règle personnalisée", () => {
-    const notes = genererNotesAutomateCellulaire({
-      ...defaults,
-      regle: 0,
-      reglePersonnalisee: 184,
-    });
-    expect(notes.length).toBeGreaterThan(0);
+  it("LA RÈGLE DONNÉE EST CELLE QUI JOUE — une « règle personnalisée » non nulle ne la remplace plus", () => {
+    // Le nœud résout la règle (menu, ou valeur personnalisée si le menu dit « Personnalisée ») ;
+    // le générateur la suivait sauf quand reglePersonnalisee > 0, soit toujours (90 par défaut).
+    const r30 = genererNotesAutomateCellulaire({ ...defaults, regle: 30, reglePersonnalisee: 90, graine: 5 });
+    const r90 = genererNotesAutomateCellulaire({ ...defaults, regle: 90, reglePersonnalisee: 90, graine: 5 });
+    const r184 = genererNotesAutomateCellulaire({ ...defaults, regle: 184, reglePersonnalisee: 90, graine: 5 });
+    expect(JSON.stringify(r30)).not.toBe(JSON.stringify(r90));
+    expect(JSON.stringify(r184)).not.toBe(JSON.stringify(r90));
   });
 
   it("produit un AudioBuffer et un fichier MIDI", async () => {
@@ -175,5 +177,54 @@ describe("automate-cellulaire", () => {
     expect(normaliserModeVoix("Melody")).toBe("Mélodie");
     expect(normaliserMapping("Pitch + velocity")).toBe("Hauteur + vélocité");
     expect(normaliserMapping("Velocity")).toBe("Vélocité");
+  });
+});
+
+describe("automate cellulaire 2D : on entend l'évolution de la grille", () => {
+  // Les réglages par défaut du nœud : 16 × 16, 32 générations, graine 0, polyphonie.
+  const deuxD = { ...defaults, generations: 32, densiteMax: 8 };
+  const distinctes = (notes: { note: number }[]) => new Set(notes.map((n) => n.note)).size;
+  const instants = (notes: { debut: number }[]) => new Set(notes.map((n) => n.debut)).size;
+
+  for (const topologie of ["2D Conway", "2D Highlife"] as const) {
+    it(`${topologie.toUpperCase()}, RÉGLAGES PAR DÉFAUT : DES NOTES VARIÉES SUR TOUTE LA DURÉE — et non une seule`, () => {
+      const notes = genererNotesAutomateCellulaire({ ...deuxD, topologie });
+      // Le défaut signalé : une seule note (ou un seul accord) pour toute la séquence.
+      expect(distinctes(notes), "hauteurs distinctes").toBeGreaterThanOrEqual(8);
+      // Chaque génération est un pas : la séquence s'étend dans le temps.
+      expect(instants(notes), "instants distincts").toBeGreaterThanOrEqual(20);
+    });
+  }
+
+  it("EN MÉLODIE ET EN ARPÈGE AUSSI, la ligne bouge", () => {
+    for (const modeVoix of ["Mélodie", "Arpège"] as const) {
+      const notes = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", modeVoix });
+      expect(distinctes(notes), modeVoix).toBeGreaterThanOrEqual(5);
+      expect(instants(notes)).toBe(notes.length);
+    }
+  });
+
+  it("une graine tirée au hasard donne une autre séquence, et la même à graine égale", () => {
+    const a = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", graine: 12 });
+    const b = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", graine: 12 });
+    const c = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", graine: 13 });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(JSON.stringify(a)).not.toBe(JSON.stringify(c));
+  });
+
+  it("LA RANGÉE DONNE LE REGISTRE : le haut de la grille sonne une octave au-dessus du milieu", () => {
+    const degres = degresGammeMelodie("Pentatonique majeure");
+    const haut = hauteurCellule2D(3, 0, 16, 16, 60, degres);
+    const milieu = hauteurCellule2D(3, 8, 16, 16, 60, degres);
+    const bas = hauteurCellule2D(3, 15, 16, 16, 60, degres);
+    expect(haut - milieu).toBe(12);
+    expect(milieu - bas).toBe(12);
+  });
+
+  it("le nombre de générations fait la longueur de la séquence, comme en 1D", () => {
+    const court = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", generations: 8 });
+    const long = genererNotesAutomateCellulaire({ ...deuxD, topologie: "2D Conway", generations: 64 });
+    expect(Math.max(...court.map((n) => n.debut))).toBeLessThan(8 * deuxD.dureeNote);
+    expect(Math.max(...long.map((n) => n.debut))).toBeGreaterThan(30 * deuxD.dureeNote);
   });
 });

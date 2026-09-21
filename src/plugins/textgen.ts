@@ -3,6 +3,7 @@
 // 2. Réservoir textuel : émergence par réseau de neurones aléatoires
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
 
+import { hasardDuNoeud } from "../core";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -209,7 +210,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Random seed (0 = new network each run)." },
     ],
     async executer(ctx: any) {
-      const graine = ctx.paramNombre("Graine", 0);
+      // Graine 0 : tirée une fois ici, passée au calcul et montrée dans le message — la convention
+      // du projet, sans laquelle un résultat réussi ne pouvait pas être rejoué.
+      const { graine } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const neurones = ctx.paramNombre("Neurones", 15);
       const connectivite = ctx.paramNombre("Connectivité", 30) / 100;
       const memoire = ctx.paramNombre("Mémoire", 30);
@@ -218,7 +221,7 @@ export const fiches: FicheAudio[] = ([
       const seedWord = ctx.paramTexte("Mot amorce", "");
       ctx.onProgress(traduire("progress.g_n_ration_du_r_servoir_textuel"));
       const texte = genererTexteReservoir(graine, neurones, connectivite, memoire, nbMots, alphabet, seedWord);
-      const graineUtilisee = graine > 0 ? graine : "auto";
+      const graineUtilisee = graine;
       return { valeurs: [texte], message: traduire("msg.var_0_mots_graine_var_1", texte.split(" ").length, graineUtilisee) };
    },
  },

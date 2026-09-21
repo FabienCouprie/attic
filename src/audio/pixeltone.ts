@@ -98,6 +98,8 @@ export function sonifierDepuisPixels(
   const totalEchantillons = echantillonsParPixel * nbPixels;
   const channels = options.canaux === 1 ? 1 : 2;
   const buffer = new AudioBuffer({ numberOfChannels: channels, length: totalEchantillons, sampleRate: sr });
+  // Les tableaux des canaux, pris une fois : les redemander à chaque échantillon coûtait cher.
+  const sorties = Array.from({ length: channels }, (_, ch) => buffer.getChannelData(ch));
   const data = pixels.data;
 
   const [rMin, rMax] = options.rouge;
@@ -130,9 +132,7 @@ export function sonifierDepuisPixels(
       phase.r += deltaR;
       phase.g += deltaG;
       phase.b += deltaB;
-      for (let ch = 0; ch < channels; ch++) {
-        buffer.getChannelData(ch)[echantillonGlobal] = sample;
-      }
+      for (let ch = 0; ch < channels; ch++) sorties[ch][echantillonGlobal] = sample;
       echantillonGlobal++;
     }
   }

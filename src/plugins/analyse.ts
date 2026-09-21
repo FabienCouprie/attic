@@ -125,7 +125,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Plage basse", nomEn: "Range low", type: "nombre", plage: [40, 140], pas: 1, defaut: 80,
         doc: "Borne basse de la plage de repli.", docEn: "Lower bound of the folding range." },
       { nom: "Plage haute", nomEn: "Range high", type: "nombre", plage: [80, 240], pas: 1, defaut: 160,
-        doc: "Borne haute de la plage de repli.", docEn: "Upper bound of the folding range." },
+        doc: "Borne haute de la plage de repli. La plage doit couvrir au moins une octave (le double de la borne basse) : plus étroite, aucun tempo n'a toujours un double ou une moitié dedans, et le repli est abandonné.", docEn: "Upper bound of the folding range. The range must span at least an octave (twice the lower bound): narrower, no tempo is sure to have its double or half inside, and folding is dropped." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);

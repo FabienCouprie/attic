@@ -380,10 +380,18 @@ describe("bibliothèque d'opcodes", () => {
 
   it("donne à mincer un pointeur de lecture en a-rate, sans quoi il est refusé", () => {
     const orc = orchestreSpectral(opcode("mincer"), { morphing: 0.5, transposition: 7, fenetre: 1024 });
-    expect(orc).toMatch(/atime\s+line/);
+    expect(orc).toMatch(/atime\s+linseg/);
     expect(orc).toContain("mincer atime");
     // Sept demi-tons : un rapport de 1,4983.
     expect(orc).toContain("1.4983");
+  });
+
+  it("LE POINTEUR DE MINCER PARCOURT TOUT LE SON — de 0 à sa durée, en durée / vitesse secondes", () => {
+    // Il allait de 0 à 2 × morphing SECONDES : sur dix secondes à 50 %, seule la première était lue.
+    const normal = orchestreSpectral(opcode("mincer"), { morphing: 0.5, transposition: 0, fenetre: 1024, dureeEntree: 10 });
+    expect(normal).toContain("atime linseg 0, 10.0000, 10.0000");
+    const lent = orchestreSpectral(opcode("mincer"), { morphing: 0.25, transposition: 0, fenetre: 1024, dureeEntree: 10 });
+    expect(lent).toContain("atime linseg 0, 20.0000, 10.0000");
   });
 
   it("borne la taille de fenêtre aux valeurs admises", () => {

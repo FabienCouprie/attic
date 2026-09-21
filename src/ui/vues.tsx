@@ -12,6 +12,7 @@ import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { bufferVersWavBlob } from "../audio/io";
+import { decrire } from "../audio/metadonnees";
 import { lireProfondeurExport } from "./profondeur-export";
 
 /** Le tampon d'un nœud s'il a plus de deux canaux : son aperçu est alors un repliement, pas le fichier. */
@@ -693,6 +694,16 @@ function VueCollections({ id, data, def }: VueProps) {
 }
 
 // ── Export / téléchargement (sorties, convertisseurs) ──
+/**
+ * Profondeur et bloc iXML d'un fichier multicanal refait depuis son tampon. C'est là que l'iXML sert
+ * le plus : ses pistes y sont nommées d'après la disposition — L, R, C, LFE… ou ACN0 à ACN15.
+ */
+function optionsMulticanal(b: AudioBuffer, ficheId: unknown) {
+  const bits = lireProfondeurExport();
+  const id = String(ficheId ?? "");
+  return { bits, ixml: decrire(b, { noeud: registre.trouverDef(id)?.nom ?? id }, bits).ixml };
+}
+
 function VueExport({ data }: VueProps) {
   const { t } = useI18n();
   const [nomFichierLocal, setNomFichierLocal] = useState(String(data.nomFichier ?? ""));
@@ -721,7 +732,7 @@ function VueExport({ data }: VueProps) {
               // pour ne pas peser six à huit fois une stéréo dans le processus principal ; l'enregistrer
               // tel quel livrerait un repliement à la place du 7.1.4 composé.
               const buf = multi
-                ? await bufferVersWavBlob(multi, undefined, false, { bits: lireProfondeurExport() }).arrayBuffer()
+                ? await bufferVersWavBlob(multi, undefined, false, optionsMulticanal(multi, data.ficheId)).arrayBuffer()
                 : await (await fetch(data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl!)).arrayBuffer();
               await api.sauvegarderBinaire({
                 defaultPath: nomOu(`sortie.${ext}`),
@@ -732,7 +743,7 @@ function VueExport({ data }: VueProps) {
           ) : tamponMulticanal(data.audioResultatBuffer) ? (
             <button className="attic-node-fichier-btn" onClick={() => {
               const b = tamponMulticanal(data.audioResultatBuffer)!;
-              const u = URL.createObjectURL(bufferVersWavBlob(b, undefined, false, { bits: lireProfondeurExport() }));
+              const u = URL.createObjectURL(bufferVersWavBlob(b, undefined, false, optionsMulticanal(b, data.ficheId)));
               const a = document.createElement("a"); a.href = u; a.download = nomOu((data.audioResultatNom as string) || "sortie.wav"); a.click();
               setTimeout(() => URL.revokeObjectURL(u), 1000);
             }}>💾 {t("export.sauvegarder").replace("💾 ", "")}</button>

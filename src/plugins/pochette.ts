@@ -2,6 +2,7 @@
 // d'album procédurale en SVG depuis un prompt + titre + artiste.
 // Hors-ligne, instantané, sans GPU. Sortie « Image » (SVG) chaînable.
 
+import { hasardDuNoeud } from "../core";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -83,7 +84,9 @@ export const fiches: FicheAudio[] = ([
       const typographie = ctx.paramTexte("Typographie", "sans-serif");
       const largeur = ctx.paramNombre("Largeur", 512);
       const hauteur = ctx.paramNombre("Hauteur", 512);
-      const graine = ctx.paramNombre("Graine", 0);
+      // Graine 0 : tirée une fois ici, passée au calcul et montrée dans le message — la convention
+      // du projet, sans laquelle un résultat réussi ne pouvait pas être rejoué.
+      const { graine } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const optionsPochette = {
         prompt, titre, artiste, style, palette,
         complexite, bordure, typographie,
@@ -108,7 +111,7 @@ export const fiches: FicheAudio[] = ([
       }
       return {
         valeurs: [fichier],
-        message: traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30)),
+        message: `${traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30))} · graine ${graine}`,
       };
     },
   },

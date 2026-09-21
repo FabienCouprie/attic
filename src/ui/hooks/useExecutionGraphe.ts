@@ -25,6 +25,7 @@ import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
 import { heriterDisposition } from "../../audio/multicanal";
 import { tamponPourApercu } from "../../audio/multicanal-ecoute";
+import { decrire } from "../../audio/metadonnees";
 import { lireProfondeurExport } from "../profondeur-export";
 import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
@@ -32,6 +33,8 @@ import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
 const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
+/** Les nœuds dont l'aperçu est aussi le fichier enregistré, et qui portent donc un bloc iXML. */
+const NOEUDS_EXPORT = ["sortie-audio", "convertisseur-mp3-wav"];
 
 // Champs "signal unique" déjà consommés et effacés (mis à `undefined`) par leurs
 // blocs dédiés plus bas dans `lancer()`, avant la fusion générique des champs
@@ -740,8 +743,16 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // Un tampon multicanal étiqueté est replié en stéréo pour l'aperçu : à douze ou seize
             // canaux, l'aperçu pesait six à huit fois une stéréo dans le processus principal, pour un
             // lecteur incapable de le jouer juste. L'enregistrement, lui, repart du tampon complet.
-            url = URL.createObjectURL(
-              bufferVersWavBlob(tamponPourApercu(audio), grapheExport, securiser, { bits: lireProfondeurExport() }));
+            // Les nœuds d'export disent en plus d'où vient leur fichier (bloc iXML) : c'est ce blob
+            // qu'enregistre leur bouton. Pas les autres — le calcul de l'identifiant parcourt le son,
+            // et un aperçu intermédiaire n'est jamais livré.
+            const ecrit = tamponPourApercu(audio);
+            const bits = lireProfondeurExport();
+            const ficheId = n.data.ficheId as string;
+            const ixml = NOEUDS_EXPORT.includes(ficheId)
+              ? decrire(ecrit, { noeud: trouverDef(ficheId)?.nom ?? ficheId }, bits).ixml
+              : undefined;
+            url = URL.createObjectURL(bufferVersWavBlob(ecrit, grapheExport, securiser, { bits, ixml }));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);

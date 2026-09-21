@@ -1,5 +1,6 @@
 // audio/midi.ts — Extrait de l'ancien monolithe DSP.
 
+import type { CaractereTimbreId } from "./timbres";
 import { parseMidi, writeMidi } from "midi-file";
 import { comparerEvenementsMidi } from "./midi-ordre";
 import type { StructureSF2 } from "./soundfont";
@@ -644,12 +645,25 @@ export interface NoteEvenement {
 }
 
 
+/**
+ * Trois caractères de la synthèse FM, et le réglage d'origine. « Brillante » est ce réglage même
+ * (rapport 2, indice 3) ; « Douce » ramène l'indice près d'un sinus et adoucit l'attaque ;
+ * « Percutante » monte l'indice et laisse la note retomber vite, comme une lame frappée.
+ */
+const CARACTERES_FM: Record<CaractereTimbreId | "origine", { ratio: number; idxMod: number; a: number; d: number; sVal: number; r: number }> = {
+  origine: { ratio: 2, idxMod: 3, a: 0.005, d: 0.08, sVal: 0.7, r: 0.04 },
+  brillante: { ratio: 2, idxMod: 3, a: 0.005, d: 0.08, sVal: 0.7, r: 0.04 },
+  douce: { ratio: 1, idxMod: 0.7, a: 0.02, d: 0.15, sVal: 0.6, r: 0.1 },
+  percutante: { ratio: 2, idxMod: 5, a: 0.001, d: 0.06, sVal: 0.15, r: 0.03 },
+};
+
 export async function rendreSequence(
   notes: NoteEvenement[],
   mode: "FM/Oscillateurs" | "SoundFont",
   volume: number,
   instrument?: number,
   banque?: number,
+  caractere?: CaractereTimbreId,
 ): Promise<AudioBuffer> {
   if (notes.length === 0) {
     const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
@@ -684,14 +698,10 @@ export async function rendreSequence(
     if (dureeNote <= 0.001) continue;
     const freq = 440 * 2 ** ((n.note - 69) / 12);
     const gain = (n.velocite / 127) * vol * 0.4;
-    const ratio = 2;
-    const idxMod = 3;
+    // Le caractère du timbre, s'il est demandé ; sans lui, le réglage d'origine, inchangé.
+    const { ratio, idxMod, a, d, sVal, r } = CARACTERES_FM[caractere ?? "origine"];
     const debutEch = Math.floor(n.debut * srInterne);
     const finEch = Math.min(debutEch + Math.ceil(dureeNote * srInterne), length);
-    const a = 0.005;
-    const d = 0.08;
-    const sVal = 0.7;
-    const r = 0.04;
 
     for (let i = debutEch; i < finEch; i++) {
       const t = (i - debutEch) / srInterne;

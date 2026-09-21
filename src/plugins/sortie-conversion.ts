@@ -3,6 +3,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { bufferVersMp3Blob } from "../audio";
+import { decrire } from "../audio/metadonnees";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -32,11 +33,13 @@ export const fiches: FicheAudio[] = ([
         const qualite = ctx.paramNombre("Qualité", 192);
         const { serialiserGraphe } = await import("../audio/graphe-embarque");
         const graphe = serialiserGraphe() ?? undefined;
-        const blob = await bufferVersMp3Blob(a, qualite, graphe);
+        const blob = await bufferVersMp3Blob(a, qualite, graphe, decrire(a, { noeud: "WAV → MP3" }));
         if ((ctx.noeud.data as any).mp3Url) URL.revokeObjectURL((ctx.noeud.data as any).mp3Url);
         (ctx.noeud.data as any).mp3Url = URL.createObjectURL(blob);
-      } catch {
-        // MP3 encoding failed — pass through audio anyway
+      } catch (e: any) {
+        // L'audio passe quand même : la suite du graphe n'a pas à tomber avec l'encodeur. Mais l'échec
+        // se dit — c'est son silence qui avait caché des MP3 qui n'en étaient pas.
+        return { valeurs: [a, { debut: 0, duree: a.duration }], message: `MP3 : ${e?.message ?? String(e)}` };
       }
       return { valeurs: [a, { debut: 0, duree: a.duration }] };
    },

@@ -163,6 +163,8 @@ export interface ReglagesSpectral {
   transposition: number;
   /** Taille de la transformée : 512, 1024 ou 2048. */
   fenetre: number;
+  /** Durée du son d'entrée, en secondes : mincer doit la parcourir en entier. */
+  dureeEntree?: number;
 }
 
 /**
@@ -184,10 +186,15 @@ export function orchestreSpectral(o: Opcode, r: ReglagesSpectral): string {
   if (o.id === "mincer") {
     // mincer lit une TABLE et non un flux : le pointeur de lecture est un signal, et c'est
     // sa pente qui étire le temps. Mesuré : avec un pointeur en k-rate, l'opcode est refusé.
+    // LE POINTEUR PARCOURT TOUT LE SON, de 0 à sa durée, en durée / vitesse secondes, puis se tient
+    // sur la fin pendant la queue. Il allait de 0 à 2 × morphing SECONDES : sur un son de dix
+    // secondes à 50 %, seule la première était lue, étirée sur toute la note.
     const ratio = 2 ** (r.transposition / 12);
+    const vitesse = Math.max(0.05, m * 2);
+    const duree = Math.max(0.01, r.dureeEntree ?? 1);
     return [
       "instr 1",
-      `  atime line 0, p3, ${Math.max(0.05, m * 2).toFixed(3)}`,
+      `  atime linseg 0, ${(duree / vitesse).toFixed(4)}, ${duree.toFixed(4)}, 0.001, ${duree.toFixed(4)}`,
       `  asig mincer atime, 1, ${ratio.toFixed(4)}, 1, 0.8`,
       `  out asig * ${o.gain}`,
       "endin",

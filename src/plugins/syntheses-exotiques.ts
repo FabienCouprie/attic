@@ -139,7 +139,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Taille de l'orbite : c'est LE réglage de timbre. Une petite orbite reste dans une zone plate et donne un son pauvre, une grande explore le relief et donne un son riche — sans changer la note.",
         docEn: "Size of the orbit: this is the timbre control. A small orbit stays in a flat area and gives a poor sound, a large one explores the relief and gives a rich one — without changing the note." },
       { nom: "Aplatissement", nomEn: "Flattening", type: "nombre", plage: [10, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Écrasement de l'ellipse sur l'axe des y.", docEn: "Flattening of the ellipse on the y axis." },
+        doc: "Écrasement de l'ellipse sur l'axe des y. Ne sert qu'avec l'orbite « ellipse ».", docEn: "Flattening of the ellipse on the y axis." },
       { nom: "Rapport X", nomEn: "X ratio", type: "nombre", plage: [1, 8], pas: 1, defaut: 3,
         doc: "Fréquence de l'orbite de Lissajous sur l'axe des x.", docEn: "Lissajous orbit frequency on the x axis." },
       { nom: "Rapport Y", nomEn: "Y ratio", type: "nombre", plage: [1, 8], pas: 1, defaut: 2,

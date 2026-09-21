@@ -146,6 +146,8 @@ export function detecterAccords(
   const resultats: AccordDetecte[] = [];
   let accordPrec: { root: number; typeIdx: number } | null = null;
   let debutAccord = 0;
+  // La meilleure corrélation du segment en cours : écrite avec lui quand il se termine.
+  let confianceCourante = 0;
 
   for (let f = 0; f < nbFenetres; f++) {
     const debut = f * hop;
@@ -175,19 +177,19 @@ export function detecterAccords(
         duree: t - debutAccord,
         nom: `${NOMS_NOTES[accordPrec.root]} ${tpl.nom}`,
         nomEn: `${NOMS_NOTES[accordPrec.root]}${tpl.nomEn}`,
-        confiance: 0,
+        confiance: confianceCourante,
       });
       accordPrec = { root, typeIdx };
       debutAccord = t;
+      confianceCourante = 0;
     } else if (!accordPrec) {
       accordPrec = { root, typeIdx };
       debutAccord = t;
     }
 
-    // Update confidence of the current segment
-    if (resultats.length > 0 && resultats[resultats.length - 1].temps === debutAccord) {
-      resultats[resultats.length - 1].confiance = Math.max(resultats[resultats.length - 1].confiance, corr);
-    }
+    // La confiance du segment en cours. Elle cherchait le segment dans la liste des résultats, où il
+    // n'est écrit qu'à sa fin : la recherche échouait toujours, et toute confiance valait 0.
+    confianceCourante = Math.max(confianceCourante, corr);
 
     surProgres?.(Math.round(((f + 1) / nbFenetres) * 100));
   }
@@ -201,7 +203,7 @@ export function detecterAccords(
       duree: tFin - debutAccord,
       nom: `${NOMS_NOTES[accordPrec.root]} ${tpl.nom}`,
       nomEn: `${NOMS_NOTES[accordPrec.root]}${tpl.nomEn}`,
-      confiance: 0,
+      confiance: confianceCourante,
     });
   }
 

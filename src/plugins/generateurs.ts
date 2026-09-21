@@ -161,9 +161,18 @@ export const fiches: FicheAudio[] = ([
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
       console.log(`[attic] Mélodie aléatoire : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
+      // Le volume s'appliquait au seul rendu SoundFont : en FM — le rendu par défaut sans banque
+      // chargée — le réglage ne faisait rien. Il s'applique désormais aux deux.
       const audioFinal = useSf2
         ? await rendreSequence(notes, "SoundFont", volume, instrument, banque)
         : audio;
+      if (!useSf2 && audioFinal) {
+        const g = Math.max(0, Math.min(1, volume / 100));
+        for (let c = 0; c < audioFinal.numberOfChannels; c++) {
+          const d = audioFinal.getChannelData(c);
+          for (let i = 0; i < d.length; i++) d[i] *= g;
+        }
+      }
       const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Mélodie aléatoire : audioFinal durée=${audioFinal?.duration ?? 0}`);
       // La graine est AFFICHÉE et pas seulement utilisée : avec le réglage par
@@ -179,7 +188,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionIds: ["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
-      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0.3.7.10" },
+      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0,3,7,10" },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
@@ -201,9 +210,18 @@ export const fiches: FicheAudio[] = ([
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const useSf2 = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee());
       console.log(`[attic] Musique fractale : mode=${mode}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, notes=${notes.length}`);
+      // Le volume s'appliquait au seul rendu SoundFont : en FM — le rendu par défaut sans banque
+      // chargée — le réglage ne faisait rien. Il s'applique désormais aux deux.
       const audioFinal = useSf2
         ? await rendreSequence(notes, "SoundFont", volume, instrument, banque)
         : audio;
+      if (!useSf2 && audioFinal) {
+        const g = Math.max(0, Math.min(1, volume / 100));
+        for (let c = 0; c < audioFinal.numberOfChannels; c++) {
+          const d = audioFinal.getChannelData(c);
+          for (let i = 0; i < d.length; i++) d[i] *= g;
+        }
+      }
       const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFinal] };
@@ -211,23 +229,24 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "mappeur-mandelbrot", nom: "Mappeur Mandelbrot", nomEn: "Mandelbrot Mapper", univers: "Entrées", famille: "Génération",
-    resume: "Génère une mélodie depuis l'ensemble de Mandelbrot.",
-    resumeEn: "Generates a melody from the Mandelbrot set.",
+    resume: "Parcourt une vue de l'ensemble de Mandelbrot et fait de chaque point une note : le nombre d'itérations avant divergence donne la hauteur.",
+    resumeEn: "Scans a view of the Mandelbrot set and turns each point into a note: the number of iterations before divergence sets the pitch.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Centre X", nomEn: "Center X", type: "nombre", plage: [-2.5, 1], pas: 0.01, defaut: -0.5, doc: "Coordonnée réelle X du centre de la vue dans le plan de Mandelbrot.", docEn: "Real X coordinate of the view center in the Mandelbrot plane." },
       { nom: "Centre Y", nomEn: "Center Y", type: "nombre", plage: [-1.5, 1.5], pas: 0.01, defaut: 0, doc: "Coordonnée imaginaire Y du centre de la vue dans le plan de Mandelbrot.", docEn: "Imaginary Y coordinate of the view center in the Mandelbrot plane." },
       { nom: "Zoom", nomEn: "Zoom", type: "nombre", plage: [0.1, 100], pas: 0.1, defaut: 1, doc: "Facteur de zoom sur la région choisie (plus = plus rapproché).", docEn: "Zoom factor on the selected region (higher = closer)." },
       { nom: "Itérations max", nomEn: "Max iterations", type: "nombre", plage: [50, 2000], pas: 10, defaut: 200, doc: "Nombre maximal d'itérations de z = z² + c avant de considérer le point comme dans l'ensemble.", docEn: "Maximum number of z = z² + c iterations before considering the point in the set." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Escape time", "Dwell", "Octave"], optionsEn: ["Escape time", "Dwell", "Octave"], defaut: "Escape time", defautEn: "Escape time", doc: "Escape time = divergence rapide → notes hautes/fortes. Dwell = proche de l'ensemble → plus fort. Octave = la position Y choisit l'octave.", docEn: "Escape time = fast divergence → higher/louder notes. Dwell = close to the set → louder. Octave = Y position selects the octave." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Escape time", "Dwell", "Octave"], optionsEn: ["Escape time", "Dwell", "Octave"], defaut: "Escape time", defautEn: "Escape time", doc: "Escape time : la hauteur suit le nombre d'itérations — les points proches du bord de l'ensemble sonnent à l'aigu. Dwell : même hauteur, et la durée de chaque note suit aussi les itérations, si bien que les points du bord s'attardent. Octave : l'octave vient de la hauteur du point dans l'image (le haut à l'aigu), le degré des itérations ; les points sont alors parcourus colonne par colonne.", docEn: "Escape time: the pitch follows the number of iterations - points near the edge of the set sound high. Dwell: same pitch, and the length of each note follows the iterations too, so the points of the edge linger. Octave: the octave comes from the point's height in the image (top is high), the degree from the iterations; the points are then scanned column by column." },
       { nom: "Notes", nomEn: "Notes", type: "nombre", plage: [8, 256], pas: 1, defaut: 32, unite: "notes", doc: "Nombre de points échantillonnés dans le plan, donc de notes générées.", docEn: "Number of points sampled in the plane, hence notes generated." },
-      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5, doc: "Durée de chaque note exprimée en fraction de temps (1 = 1 temps/noire, 0.5 = croche, 0.25 = double-croche). Le tempo (BPM) détermine la durée réelle.", docEn: "Duration of each note expressed as a fraction of a beat (1 = one beat/quarter note, 0.5 = eighth note, 0.25 = sixteenth note). Tempo (BPM) determines the actual duration." },
+      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5, doc: "Durée de chaque note, en fraction de temps (1 = une noire, 0,5 = une croche). En mode Dwell, c'est la durée moyenne : de la moitié pour les points qui divergent aussitôt au double pour ceux du bord.", docEn: "Length of each note, as a fraction of a beat (1 = a quarter note, 0.5 = an eighth). In Dwell mode it is the average length: from half for points that diverge at once to twice for those of the edge." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de la mélodie en battements par minute.", docEn: "Tempo of the melody in beats per minute." },
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de la gamme.", docEn: "Reference note (tonic) of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les hauteurs de notes.", docEn: "Scale used to quantize note pitches." },
-      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base des notes MIDI générées.", docEn: "Base octave of the generated MIDI notes." },
-      { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1, doc: "Facteur multiplicateur appliqué au nombre d'itérations pour choisir le degré de la gamme.", docEn: "Multiplier applied to the iteration count to select the scale degree." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde utilisée pour la synthèse FM.", docEn: "Waveform used for FM synthesis." },
+      { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de la note la plus grave de la plage. 4 : Do4, la note MIDI 60.", docEn: "Octave of the lowest note of the range. 4: C4, MIDI note 60." },
+      { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1, doc: "Largeur de la plage de hauteurs. À 1, deux octaves de la gamme ; à 0,5, une seule ; à 2, quatre. Le nombre d'itérations y est réparti sur une échelle logarithmique, si bien qu'aucune note ne se bloque en haut du clavier.", docEn: "Width of the pitch range. At 1, two octaves of the scale; at 0.5, one; at 2, four. The iteration count is spread over it on a logarithmic scale, so that no note gets stuck at the top of the keyboard." },
+      { nom: "Intérieur", nomEn: "Inside", type: "choix", options: ["Silence", "Tonique grave"], optionsEn: ["Silence", "Low tonic"], optionIds: ["silence", "tonique"], defaut: "Silence", defautEn: "Silence", doc: "Ce que deviennent les points de l'ensemble lui-même, qui ne divergent jamais — le noir de l'image. Silence : ils se taisent, et le bord de la fractale fait le rythme. Tonique grave : ils tiennent la tonique une octave sous la plage.", docEn: "What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range." },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Caractère de la synthèse FM. Douce : proche d'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l'instrument choisi fait le timbre.", docEn: "Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour la répartition pseudo-aléatoire des points d'échantillonnage.", docEn: "Seed for the pseudo-random distribution of sampling points." },
       { ...PARAMETRE_SYNTHESE,
@@ -250,11 +269,13 @@ export const fiches: FicheAudio[] = ([
         maxIter: ctx.paramNombre("Itérations max", 200),
         mode: ctx.paramTexte("Mode", "Escape time").toLowerCase().split(" ")[0] as any,
         nbNotes: ctx.paramNombre("Notes", 32),
-        dureeNote: ctx.paramNombre("Durée note", 0.25),
+        dureeNote: ctx.paramNombre("Durée note", 0.5),
         tempo: ctx.paramNombre("Tempo", 100),
         cle: ctx.paramTexte("Clé", "Do"),
         gamme: ctx.paramTexte("Gamme", "Majeur"),
-        octaveBase: ctx.paramNombre("Octave", 4) * 12,
+        // Do4 = 60 : la convention des autres nœuds mélodiques. `octave × 12` plaçait tout une octave trop bas.
+        octaveBase: (ctx.paramNombre("Octave", 4) + 1) * 12,
+        interieur: String(ctx.paramTexte("Intérieur", "silence")) === "tonique" ? "tonique" : "silence",
         sensibilite: ctx.paramNombre("Sensibilité", 1),
         timbre: ctx.paramTexte("Timbre", "Douce") as any,
         volume: ctx.paramNombre("Volume", 80),
@@ -267,21 +288,22 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "arpege-koch", nom: "Arpège flocon de Koch", nomEn: "Koch Snowflake Arpeggiator", univers: "Entrées", famille: "Génération",
-    resume: "Génère un arpège polyrythmique depuis le flocon de Koch.",
-    resumeEn: "Generates a polyrhythmic arpeggio from the Koch snowflake.",
+    resume: "Trois voix qui jouent trois niveaux du même flocon de Koch, à trois vitesses : le motif et ses réductions entendus ensemble.",
+    resumeEn: "Three voices playing three levels of the same Koch snowflake at three speeds: the pattern and its reductions heard together.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut: "Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C", doc: "Note de référence (tonique) de l'accord de base.", docEn: "Reference note (tonic) of the base chord." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les notes de l'arpège.", docEn: "Scale used to quantize the arpeggio notes." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base de l'accord.", docEn: "Base octave of the chord." },
       { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major", doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
-      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de subdivisions récursives du flocon de Koch.", docEn: "Number of recursive subdivisions of the Koch snowflake." },
+      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 5], pas: 1, defaut: 3, doc: "Nombre de subdivisions de la voix la plus rapide ; les deux autres en ont une et deux de moins. Chaque niveau quadruple la longueur du cycle : 4 doubles-croches à 1, 64 à 3, 1 024 à 5.", docEn: "Number of subdivisions of the fastest voice; the other two have one and two fewer. Each level multiplies the cycle length by four: 4 sixteenths at 1, 64 at 3, 1024 at 5." },
       { nom: "Direction", nomEn: "Direction", type: "choix", options: ["alternée","extérieure","intérieure"], optionIds: ["alternée","extérieure","intérieure"], defaut: "alternée", optionsEn: ["alternating","outward","inward"], defautEn: "alternating", doc: "Sens des pics de Koch sur chaque voix.", docEn: "Direction of the Koch peaks on each voice." },
-      { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [1, 12], pas: 1, defaut: 3, unite: "demi-tons", uniteEn: "semitones", docEn: "Height of the Koch bump in semitones.", doc: "Hauteur du pic de Koch en demi-tons." },
+      { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [1, 24], pas: 1, defaut: 9, unite: "demi-tons", uniteEn: "semitones", doc: "Hauteur du premier pic, en demi-tons ; chaque niveau suivant en pose de trois fois plus petits. Un pic plus petit qu'un degré de la gamme ne s'entend plus : à 9 demi-tons, trois niveaux restent audibles (9, 3 et 1) ; pour une profondeur 4, montez vers 18 ou 24.", docEn: "Height of the first peak, in semitones; each following level sets peaks three times smaller. A peak smaller than one scale step is no longer heard: at 9 semitones, three levels stay audible (9, 3 and 1); for depth 4, go up towards 18 or 24." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 100, unite: "BPM", doc: "Tempo de l'arpège en battements par minute.", docEn: "Tempo of the arpeggio in beats per minute." },
-      { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 8], pas: 1, defaut: 2, unite: "mesures", uniteEn: "bars", doc: "Nombre de mesures sur lesquelles l'arpège est réparti.", docEn: "Number of bars over which the arpeggio is spread." },
-      { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.25, unite: "s", doc: "Durée maximale de chaque note.", docEn: "Maximum duration of each note." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Forme d'onde pour la synthèse FM.", docEn: "Waveform for FM synthesis." },
+      { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 1, doc: "Nombre de cycles complets du flocon. Un cycle dure 4^profondeur doubles-croches au tempo choisi.", docEn: "Number of complete cycles of the snowflake. A cycle lasts 4^depth sixteenths at the chosen tempo." },
+      { nom: "Articulation", nomEn: "Articulation", type: "curseur", plage: [10, 100], pas: 1, defaut: 85, unite: "%", doc: "Part du pas de chaque note qui sonne. 100 % : legato ; 30 % : piqué. Elle s'applique à chaque voix selon sa vitesse, si bien que la voix lente tient ses notes quatre et seize fois plus longtemps.", docEn: "Share of each note's step that sounds. 100%: legato; 30%: staccato. It applies to each voice at its own speed, so the slow voice holds its notes four and sixteen times longer." },
+      { nom: "Notes répétées", nomEn: "Repeated notes", type: "choix", options: ["Liées", "Rejouées"], optionsEn: ["Tied", "Replayed"], optionIds: ["liees", "rejouees"], defaut: "Liées", defautEn: "Tied", doc: "Ramenées sur la gamme, deux positions voisines tombent parfois sur la même note. Liées : elles n'en font qu'une, plus longue ; rejouées : la note est frappée à nouveau.", docEn: "Once brought onto the scale, two neighbouring positions sometimes land on the same note. Tied: they make a single, longer note; replayed: the note is struck again." },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Caractère de la synthèse FM. Douce : proche d\'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l\'instrument choisi fait le timbre.", docEn: "Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
@@ -297,10 +319,11 @@ export const fiches: FicheAudio[] = ([
         accord: ctx.paramTexte("Accord", "Majeur") as any,
         profondeur: ctx.paramNombre("Profondeur", 3),
         direction: ctx.paramTexte("Direction", "alternée") as any,
-        hauteur: ctx.paramNombre("Hauteur", 3),
+        hauteur: ctx.paramNombre("Hauteur", 9),
         tempo: ctx.paramNombre("Tempo", 100),
-        mesures: ctx.paramNombre("Mesures", 2),
-        dureeNote: ctx.paramNombre("Durée note", 0.25),
+        repetitions: ctx.paramNombre("Répétitions", 1),
+        articulation: ctx.paramNombre("Articulation", 85) / 100,
+        notesRepetees: String(ctx.paramTexte("Notes répétées", "liees")) === "rejouees" ? "rejouees" : "liees",
         timbre: ctx.paramTexte("Timbre", "Douce") as any,
         volume: ctx.paramNombre("Volume", 80),
         instrument,
@@ -1158,7 +1181,8 @@ export const fiches: FicheAudio[] = ([
         mesures: ctx.paramNombre("Mesures", 4),
         volume: ctx.paramNombre("Volume", 80),
         timbre: ctx.paramTexte("Timbre", "Triangle"),
-        graine: ctx.paramNombre("Graine", 0),
+        // Graine 0 : tirée une fois ici et montrée dans le message, pour qu'un réseau réussi se rejoue.
+        graine: hasardDuNoeud(ctx.paramNombre("Graine", 0)).graine,
         melodieNeurones: ctx.paramNombre("Mél. neurones", 15),
         melodieConnectivite: ctx.paramNombre("Mél. connectivité", 30),
         melodieMemoire: ctx.paramNombre("Mél. mémoire", 30),
@@ -1195,7 +1219,7 @@ export const fiches: FicheAudio[] = ([
       }
       return {
         valeurs: [audio, midis.melody, midis.bass, midis.harmony, midis.rhythm],
-        message: traduire("msg.var_0_graine_var_1", details, config.graine > 0 ? config.graine : "auto"),
+        message: traduire("msg.var_0_graine_var_1", details, config.graine),
       };
     },
   },

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **376 components** in **7 categories** and **32 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **388 components** in **7 categories** and **32 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [famille.Générateurs](#famillegénérateurs) (1) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 180 | [Conversion](#conversion) (4) · [Editing](#editing) (23) · [Effects](#effects) (149) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 192 | [Conversion](#conversion) (4) · [Editing](#editing) (26) · [Effects](#effects) (158) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -220,9 +220,9 @@ After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute o
 | [Groove Box](#groove-box) | Generates a groove loop: deterministic chord progression + reservoir melody + drums. |
 | [Infinity Series (Nørgård)](#infinity-series-nørgård) | Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon. |
 | [Instrument Note](#instrument-note) | Carries the played note into an instrument chain: audio excitation, one-note MIDI, and the pitch as a curve. |
-| [Koch Snowflake Arpeggiator](#koch-snowflake-arpeggiator) | Generates a polyrhythmic arpeggio from the Koch snowflake. |
+| [Koch Snowflake Arpeggiator](#koch-snowflake-arpeggiator) | Three voices playing three levels of the same Koch snowflake at three speeds: the pattern and its reductions heard together. |
 | [L-system](#l-system) | Generates a melody from a self-rewriting grammar (Lindenmayer). |
-| [Mandelbrot Mapper](#mandelbrot-mapper) | Generates a melody from the Mandelbrot set. |
+| [Mandelbrot Mapper](#mandelbrot-mapper) | Scans a view of the Mandelbrot set and turns each point into a note: the number of iterations before divergence sets the pitch. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
 | [Melodic Sequencer](#melodic-sequencer) | Programs a melody on a step-by-step piano-roll grid (synthesized). |
 | [Melody Keyboard](#melody-keyboard) | Plays a keyboard-recorded sequence and also exports a MIDI file. |
@@ -386,7 +386,7 @@ Generates a self-similar rhythmic groove by Cantor recursion on a 64-step grid p
 
 *Generates a musical sequence from a 1D or 2D cellular automaton.*
 
-Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90, 110, 126, 150). Each cell generation becomes a time step. Active cells are mapped to a chosen scale and key to form chords (Polyphony mode) or a melody (Melody mode). Audio + MIDI output. Rules 90 and 150 produce fractal structures; rules 30 and 110 yield more chaotic patterns.
+Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90, 110, 126, 150). Each cell generation becomes a time step. Active cells are mapped to a chosen scale and key to form chords (Polyphony mode) or a melody (Melody mode). Audio + MIDI output. Rules 90 and 150 produce fractal structures; rules 30 and 110 yield more chaotic patterns. In 2D (Conway, Highlife), the whole grid evolves, and each generation is a step of the sequence. Every live cell sounds: its column gives the degree in the scale, its row the register, over three octaves - the top of the grid sounds high. Several cells on the same note add up, and their number sets the velocity when the mapping asks for it. One thus hears the life of the grid: a growing pattern fills the spectrum, a pattern that settles repeats its chord, a grid that dies out falls silent. Seed 0 starts from a long-lived pattern: in Conway, the R-pentomino, five cells that unfold before settling; in Highlife, the replicator, twelve cells that copy themselves along a diagonal.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -401,9 +401,9 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Voice mode | choice | Polyphony | Polyphony / Melody / Arpeggio | Polyphony plays all active cells. Melody picks one per step. Arpeggio plays them in order. |
 | Mapping | choice | Pitch | Pitch / Velocity / Duration / Pitch + velocity | What the position of active cells represents. Pitch + velocity combines both. |
 | Width | number | 16 cells | 4 – 64 cells, step 1 | Number of cells per row. |
-| Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. In 1D, use Generations. |
-| Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of steps / generations of the automaton (1D) or grid iterations (2D). |
-| Seed | number | 0 | 0 – 9999, step 1 | 0 = simple centered seed. Otherwise random initialization. |
+| Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D. |
+| Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step. |
+| Seed | number | 0 | 0 – 9999, step 1 | 0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Key of the scale used to map cells to notes. |
 | Scale | choice | Major pentatonic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to convert cell positions into note pitches. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the generated MIDI notes. |
@@ -648,7 +648,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Motif | choice | Major triad | Major triad / Minor triad / 7th arpeggio / Cantus firmus / Custom | Base interval motif repeated recursively. |
-| Intervals | text | `0.3.7.10` |  | Intervals of the custom motif, in semitones separated by commas (e.g. 0,3,7,10). |
+| Intervals | text | `0,3,7,10` |  | Intervals of the custom motif, in semitones separated by commas (e.g. 0,3,7,10). |
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursion levels (higher = denser structure). |
 | Duration | number | 8 s | 2 – 60 s | Generated duration, in seconds. |
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -823,9 +823,9 @@ Carries the played note into an instrument chain. This is the boundary: everythi
 
 `arpege-koch` · Inputs → Generation
 
-*Generates a polyrhythmic arpeggio from the Koch snowflake.*
+*Three voices playing three levels of the same Koch snowflake at three speeds: the pattern and its reductions heard together.*
 
-Generates a polyrhythmic arpeggio from the Koch snowflake. The three sides of the base triangle (root, third, fifth) are interpreted as three independent voices. Each voice is recursively subdivided according to the Koch rule: an interval is replaced by four segments, the middle segment forming a peak of adjustable height. The notes are spread over the total duration, creating a self-similar texture. Audio output + MIDI output.
+Three voices play three levels of the same Koch snowflake. Each starts from one side of the triangle formed by the chord - root to third, third to fifth, fifth to octave - and subdivides it by the Koch rule: the interval is cut into three, and the middle third replaced by a peak, each sub-segment of which in turn receives a peak three times smaller. The resulting pitches are brought onto the chosen scale. The first voice is subdivided at the requested depth and plays in sixteenths; the second, one level less, four times slower; the third, two levels less, sixteen times slower. The three complete together a cycle of 4^depth sixteenths: one hears the pattern, its reduction and the reduction of its reduction at once, in a 1 : 4 : 16 polyrhythm. The height is that of the first peak, in semitones; a peak smaller than one scale step melts into its neighbours, so a great depth calls for a great height. The direction says which way the peaks point. Each level of depth multiplies the cycle length by four; the repeats chain several cycles, and the last note of each voice closes the whole on the chord. The articulation sets how much of each step sounds; two neighbouring notes landing on the same pitch can be tied or replayed. Audio and MIDI output.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -838,13 +838,14 @@ Generates a polyrhythmic arpeggio from the Koch snowflake. The three sides of th
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to quantize the arpeggio notes. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the chord. |
 | Chord | choice | Major | Major / Minor / Augmented / Diminished / Sus4 | Triad type forming the base triangle of the snowflake. |
-| Depth | number | 3 | 1 – 6, step 1 | Number of recursive subdivisions of the Koch snowflake. |
+| Depth | number | 3 | 1 – 5, step 1 | Number of subdivisions of the fastest voice; the other two have one and two fewer. Each level multiplies the cycle length by four: 4 sixteenths at 1, 64 at 3, 1024 at 5. |
 | Direction | choice | alternating | alternating / outward / inward | Direction of the Koch peaks on each voice. |
-| Height | number | 3 semitones | 1 – 12 semitones, step 1 | Height of the Koch bump in semitones. |
+| Height | number | 9 semitones | 1 – 24 semitones, step 1 | Height of the first peak, in semitones; each following level sets peaks three times smaller. A peak smaller than one scale step is no longer heard: at 9 semitones, three levels stay audible (9, 3 and 1); for depth 4, go up towards 18 or 24. |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Tempo of the arpeggio in beats per minute. |
-| Bars | number | 2 bars | 1 – 8 bars, step 1 | Number of bars over which the arpeggio is spread. |
-| Note duration | number | 0.25 s | 0.05 – 1 s, step 0.05 | Maximum duration of each note. |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Waveform for FM synthesis. |
+| Repeats | number | 1 | 1 – 16, step 1 | Number of complete cycles of the snowflake. A cycle lasts 4^depth sixteenths at the chosen tempo. |
+| Articulation | slider | 85 % | 10 – 100 %, step 1 | Share of each note's step that sounds. 100%: legato; 30%: staccato. It applies to each voice at its own speed, so the slow voice holds its notes four and sixteen times longer. |
+| Repeated notes | choice | Tied | Tied / Replayed | Once brought onto the scale, two neighbouring positions sometimes land on the same note. Tied: they make a single, longer note; replayed: the note is struck again. |
+| Timbre | choice | Soft | Soft / Bright / Percussive | Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -881,9 +882,9 @@ Generates a melody from a self-rewriting grammar. Aristid Lindenmayer, a biologi
 
 `mappeur-mandelbrot` · Inputs → Generation
 
-*Generates a melody from the Mandelbrot set.*
+*Scans a view of the Mandelbrot set and turns each point into a note: the number of iterations before divergence sets the pitch.*
 
-Generates a melody by sampling points from the Mandelbrot set. For each point, the algorithm iterates z = z² + c and counts iterations before divergence. The iteration count is mapped to degrees of the chosen scale. Escape time mode = faster divergence yields higher, louder notes. Dwell mode = points close to the set (slow divergence) are loudest. Octave mode = vertical position selects the octave. Audio output + MIDI output.
+Scans a view of the Mandelbrot set and turns each point into a note. For each point c of the view, the node iterates z = z² + c and counts the iterations before z escapes: a few far from the set, hundreds right by its edge. That number sets the pitch, on a logarithmic scale spread over two octaves of the chosen scale (the sensitivity widens or narrows this range); the closer a point is to the edge, the higher and louder it sounds. The points of the set itself, which never escape, are the black of the image: they fall silent, and the edge of the fractal then makes the rhythm, or they hold the tonic an octave lower. Three modes. Escape time: the pitch follows the iterations. Dwell: the note lengths follow them too, and the points of the edge linger. Octave: the octave comes from the point's height in the image, the degree from the iterations, and the view is scanned column by column. The centre and zoom choose the region: the whole view gives a symmetric melody, since the set is symmetric about the real axis; a zoom on the edge, where the fractal branches, gives more agitated lines. Same seed, same points. Audio and MIDI output.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -896,15 +897,16 @@ Generates a melody by sampling points from the Mandelbrot set. For each point, t
 | Center Y | number | 0 | -1.5 – 1.5, step 0.01 | Imaginary Y coordinate of the view center in the Mandelbrot plane. |
 | Zoom | number | 1 | 0.1 – 100, step 0.1 | Zoom factor on the selected region (higher = closer). |
 | Max iterations | number | 200 | 50 – 2000, step 10 | Maximum number of z = z² + c iterations before considering the point in the set. |
-| Mode | choice | Escape time | Escape time / Dwell / Octave | Escape time = fast divergence → higher/louder notes. Dwell = close to the set → louder. Octave = Y position selects the octave. |
+| Mode | choice | Escape time | Escape time / Dwell / Octave | Escape time: the pitch follows the number of iterations - points near the edge of the set sound high. Dwell: same pitch, and the length of each note follows the iterations too, so the points of the edge linger. Octave: the octave comes from the point's height in the image (top is high), the degree from the iterations; the points are then scanned column by column. |
 | Notes | number | 32 notes | 8 – 256 notes, step 1 | Number of points sampled in the plane, hence notes generated. |
-| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Duration of each note expressed as a fraction of a beat (1 = one beat/quarter note, 0.5 = eighth note, 0.25 = sixteenth note). Tempo (BPM) determines the actual duration. |
+| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Length of each note, as a fraction of a beat (1 = a quarter note, 0.5 = an eighth). In Dwell mode it is the average length: from half for points that diverge at once to twice for those of the edge. |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Tempo of the melody in beats per minute. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Reference note (tonic) of the scale. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to quantize note pitches. |
-| Octave | number | 4 | 1 – 6, step 1 | Base octave of the generated MIDI notes. |
-| Sensitivity | number | 1 | 0.1 – 5, step 0.1 | Multiplier applied to the iteration count to select the scale degree. |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Waveform used for FM synthesis. |
+| Octave | number | 4 | 1 – 6, step 1 | Octave of the lowest note of the range. 4: C4, MIDI note 60. |
+| Sensitivity | number | 1 | 0.1 – 5, step 0.1 | Width of the pitch range. At 1, two octaves of the scale; at 0.5, one; at 2, four. The iteration count is spread over it on a logarithmic scale, so that no note gets stuck at the top of the keyboard. |
+| Inside | choice | Silence | Silence / Low tonic | What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range. |
+| Timbre | choice | Soft | Soft / Bright / Percussive | Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the pseudo-random distribution of sampling points. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
@@ -1881,9 +1883,12 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts — one per instrument — to play them with four different banks. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
+| [Montage](#montage) | Lays up to eight sounds on a timeline, each at its own instant and level, with its own fades. |
 | [Multi-Zone Selector](#multi-zone-selector) | Selects multiple audio zones and passes them as a list. |
 | [Place sound on zones](#place-sound-on-zones) | Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration. |
 | [Reinsert Zone](#reinsert-zone) | Reinserts a treated zone into the original track. |
+| [Reorder Objects](#reorder-objects) | Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest. |
+| [Sound Object Segmentation](#sound-object-segmentation) | Finds the sound objects of a recording — by attacks, silences or changes of timbre — and describes them. |
 | [Track Aligner](#track-aligner) | Aligns a track to a reference length (silence or fade). |
 | [Trim Silence](#trim-silence) | Removes silence at the start and end of a take, and in the middle if asked. |
 | [Zone Mask](#zone-mask) | Depending on the option, mutes the selected zones or keeps only them. |
@@ -2202,6 +2207,61 @@ Sums several tracks into a single output. Add as many inputs as needed. There is
 
 *No parameters.*
 
+#### Montage
+
+`montage` · Processing → Editing
+
+*Lays up to eight sounds on a timeline, each at its own instant and level, with its own fades.*
+
+This node lays up to eight sounds out on a timeline and adds them into one. Each track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. Above them, the timeline shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. Widening the inspector over the canvas gives the timeline the room it deserves. Fades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion. A negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than eight sounds, montage montages.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Track 1 | audio |  |
+| input | Track 2 | audio |  |
+| input | Track 3 | audio |  |
+| input | Track 4 | audio |  |
+| input | Track 5 | audio |  |
+| input | Track 6 | audio |  |
+| input | Track 7 | audio |  |
+| input | Track 8 | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Start 1 | number | 0 s | -600 – 3600 s, step 0.01 | Instant at which track 1 starts. Negative: the sound is trimmed by that much. |
+| Gain 1 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 1. |
+| Fade in 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade out. |
+| Start 2 | number | 2 s | -600 – 3600 s, step 0.01 | Instant at which track 2 starts. Negative: the sound is trimmed by that much. |
+| Gain 2 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 2. |
+| Fade in 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade out. |
+| Start 3 | number | 4 s | -600 – 3600 s, step 0.01 | Instant at which track 3 starts. Negative: the sound is trimmed by that much. |
+| Gain 3 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 3. |
+| Fade in 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade out. |
+| Start 4 | number | 6 s | -600 – 3600 s, step 0.01 | Instant at which track 4 starts. Negative: the sound is trimmed by that much. |
+| Gain 4 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 4. |
+| Fade in 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade out. |
+| Start 5 | number | 8 s | -600 – 3600 s, step 0.01 | Instant at which track 5 starts. Negative: the sound is trimmed by that much. |
+| Gain 5 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 5. |
+| Fade in 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade out. |
+| Start 6 | number | 10 s | -600 – 3600 s, step 0.01 | Instant at which track 6 starts. Negative: the sound is trimmed by that much. |
+| Gain 6 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 6. |
+| Fade in 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade out. |
+| Start 7 | number | 12 s | -600 – 3600 s, step 0.01 | Instant at which track 7 starts. Negative: the sound is trimmed by that much. |
+| Gain 7 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 7. |
+| Fade in 7 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 7's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 7 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 7's fade out. |
+| Start 8 | number | 14 s | -600 – 3600 s, step 0.01 | Instant at which track 8 starts. Negative: the sound is trimmed by that much. |
+| Gain 8 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 8. |
+| Fade in 8 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 8's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 8 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 8's fade out. |
+
 #### Multi-Zone Selector
 
 `selecteur-multi-zones` · Processing → Editing
@@ -2255,6 +2315,50 @@ Puts a processed zone back at its original position in the full track, with a cr
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Fade | number | 15 ms | 0 – 100 ms | Crossfade duration at joins, to avoid an audible click. |
+
+#### Reorder Objects
+
+`reordonner-objets` · Processing → Editing
+
+*Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.*
+
+Sorting material by what one hears of it is a compositional gesture in its own right. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. It is CataRT's navigation reduced to one axis, and the approach of the solfege of the object: classify before arranging. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Zones | control |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Order | choice | Brightness | Original / Loudness / Brightness / Noise / Length / Random | The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades. |
+| Direction | choice | Ascending | Ascending / Descending | Ascending: from lowest to highest on the chosen descriptor. No effect at random. |
+| Spacing | slider | 0 ms | -2000 – 5000 ms, step 10 | Silence between two objects; negative, they overlap by that much. |
+| Fade | slider | 10 ms | 0 – 500 ms, step 1 | Fade in and out of each object. |
+| Seed | number | 42 | 1 – 999999, step 1 | For random order: same seed, same order. |
+
+#### Sound Object Segmentation
+
+`decoupage-objets` · Processing → Editing
+
+*Finds the sound objects of a recording — by attacks, silences or changes of timbre — and describes them.*
+
+The sound object is Pierre Schaeffer's unit: a sound perceived as a whole, which can be isolated, described, moved (Traite des objets musicaux, 1966). This node finds the objects of a recording and returns them as zones: each can then be extracted, processed or put back by any node that accepts zones. Three criteria, because three materials. An object is not bounded the same way everywhere, and choosing the criterion is already a compositional gesture. Attacks: for what is struck, plucked, knocked. A boundary is an instant where the spectrum suddenly gains energy; the object runs from one attack to the next, and its resonance belongs to it. The attack is placed to the sample, two milliseconds before the sound, so that no object starts cut off. Silences: for a field recording, a voice, separate events. What falls below the threshold is a silence; a gap under 60 ms is not one, it is a breath inside the object. Change of timbre: for a continuous flow, a wind, a crowd, a pad, which have neither attack nor silence. A boundary is an instant where what comes before and what comes after differ, on three descriptors at once - brightness, noisiness, level. Each object is described by what one hears of it: its loudness, in dB; its brightness, the centre of gravity of its spectrum in hertz; its noisiness, from 0 for a pure note to 1 for white noise; its duration. The report lists them, and each zone carries them along, which makes it possible to sort the objects by what one hears of them.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Zones | control |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Criterion | choice | Attacks | Attacks / Silences / Change of timbre | What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. |
+| Sensitivity | slider | 50 % | 0 – 100 %, step 1 | Higher, more objects: smaller attacks or smaller changes of timbre are enough to make a boundary. No effect on the silence criterion, which its threshold sets. |
+| Min length | slider | 80 ms | 20 – 5000 ms, step 10 | A shorter object is dropped, and two boundaries closer than this make only one - the sharper. It is the setting that keeps a drum roll from being cut note by note, if one wants it whole. |
+| Silence threshold | slider | -40 dB | -90 – -10 dB, step 1 | For the silence criterion: what falls below this level is a silence. No effect on the other criteria. |
 
 #### Track Aligner
 
@@ -2358,6 +2462,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Feature Follower](#feature-follower) | Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it. |
 | [Feedback Delay Network Reverb](#feedback-delay-network-reverb) | A reverb whose decay time is set separately for the low and the high end — as every real room behaves. |
 | [Filter + Response](#filter--response) | Filters the signal and displays the frequency response curve. |
+| [Filter by Spectrum](#filter-by-spectrum) | Filters one sound by another's spectrum, moment by moment: the partials of the second carve the first, or its colour is printed on it. |
 | [Flanger](#flanger) | Variable delay modulation. |
 | [Formant Shift](#formant-shift) | Formant shifting via LPC — change pitch and timbre independently (voice conversion). |
 | [Fractal Reverb](#fractal-reverb) | Convolution reverb whose impulse response is generated by a fractal pattern. |
@@ -2367,6 +2472,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
 | [Griffin-Lim](#griffin-lim) | Iterative reconstruction from the magnitude spectrogram. Changes phase to create spectral textures. |
 | [Hard panner](#hard-panner) | Switches the sound fully to the left, center, or right. |
+| [Harmonic Sieve](#harmonic-sieve) | Keeps - or removes - only the components near chosen harmonics of a fundamental: a noise becomes a chord, a sound loses its even partials. |
 | [Harmonic/Percussive Separation](#harmonicpercussive-separation) | Separates what sustains from what strikes, by median filtering the spectrogram (Fitzgerald, DAFx-10). |
 | [Harmonizer / Octaver](#harmonizer--octaver) | Adds pitch-shifted voices (octave, fifth…) under the original. |
 | [Impose Rhythm](#impose-rhythm) | Applies one MIDI file's rhythmic grid to another's pitches. |
@@ -2417,6 +2523,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Random Slice](#random-slice) | Slices a track into equal parts and rearranges them (random, original or reverse order). |
 | [Reich Phasing](#reich-phasing) | Lets several copies of a pattern drift apart from one another. |
 | [Resonance Audio](#resonance-audio) | Binaural 3D spatialization of a sound using Resonance Audio (HRTF + room model). |
+| [Resonators](#resonators) | A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell. |
 | [Retrograde and Palindrome](#retrograde-and-palindrome) | Plays a pattern backwards, or there and back. |
 | [Reverb](#reverb) | Convolution reverb. |
 | [Reverse Echo](#reverse-echo) | Reverse echo: attenuated repetitions build up before the main sound. |
@@ -2436,12 +2543,14 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [SoundTouch Rate](#soundtouch-rate) | Changes playback rate (tempo + pitch together), like a tape player. |
 | [SoundTouch Tempo](#soundtouch-tempo) | Changes tempo while preserving pitch (quality time-stretch). |
 | [Spaciousness](#spaciousness) | Widens a sound instead of raising it: early reflections that differ for each ear, at constant loudness. |
+| [Spectral Arpeggio](#spectral-arpeggio) | A narrow band sweeps the spectrum and lets only the partials it touches sound: a held sound is picked out partial by partial. |
 | [Spectral Blur](#spectral-blur) | Averages the spectrum over neighbouring moments: the sound spreads out in time without changing duration. |
 | [Spectral Delay](#spectral-delay) | Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
 | [Spectral Freeze](#spectral-freeze) | Holds one moment's spectrum for all that follows: a stillness, not a loop. |
 | [Spectral Morphing](#spectral-morphing) | Travels from one sound to another through the spectrum: in the middle, a timbre that did not exist. |
 | [Spectral Tracing](#spectral-tracing) | Keeps only the loudest partials of each moment: a complex sound becomes a few interweaving lines. |
+| [Spectrum Stretch](#spectrum-stretch) | Spreads or squeezes the partials above a pivot frequency: a harmonic sound becomes inharmonic, gradually if need be. |
 | [Spread Across Keyboard](#spread-across-keyboard) | Turns one sound into a sample bank playable across the 88 keys, in zones. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound — rain, fire, crowd — without copying a single sample of it. |
 | [Stereo Delay](#stereo-delay) | Independent left/right delay. |
@@ -2458,6 +2567,9 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
 | [Tremolo](#tremolo) | Amplitude modulation (periodic volume variations). |
+| [Tuned Combs](#tuned-combs) | Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics. |
+| [Two-Sound Convolution](#two-sound-convolution) | Makes one sound ring through another: only their shared frequencies survive, and their durations add up. |
+| [Varispeed](#varispeed) | The tape you speed up or slow down: pitch and duration tied together, drivable by a curve. |
 | [Velvet Reverb](#velvet-reverb) | Reverb with a free-form tail: exponential like a room, linear, swelling, or two-sloped. |
 | [Vibrato](#vibrato) | Pitch modulation by LFO (note oscillation). |
 | [Vocoder](#vocoder) | Filterbank vocoder: modulator + carrier → robot voice effect. |
@@ -2467,6 +2579,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Wavelets](#wavelets) | Analyses the sound with wavelets — short window in the treble, long in the bass — and keeps only the coefficients that carry something. |
 | [Wavesets (Wishart)](#wavesets-wishart) | Cuts the sound at zero crossings and replays the segments differently. |
 | [Wind Instrument](#wind-instrument) | Clarinet, flute or brass by waveguide: a bore, a reed, and the timbre that follows. |
+| [Window Shuffle](#window-shuffle) | Cuts the sound into very short blocks and moves them in time: the sound becomes a cloud of its own instants. |
 
 #### ADSR Envelope
 
@@ -2625,12 +2738,15 @@ Automatic stereo sweep: the sound moves periodically between left and right. Adj
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rate | slider | 2 Hz | 0.1 – 20 Hz, step 0.1 | Sweep speed (round trips per second). |
 | Depth | slider | 80 % | 0 – 100 %, step 1 | Sweep depth (0% = static, 100% = extreme left to extreme right). |
+| Rate min | slider | 0.5 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the sway that speeds up. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
+| Rate max | slider | 8 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
 
 #### Bass Mono
 
@@ -2799,6 +2915,7 @@ Rhythmic gate that chops the sound periodically — stutter/DJ effect. Adjust th
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2806,6 +2923,8 @@ Rhythmic gate that chops the sound periodically — stutter/DJ effect. Adjust th
 | Rate | slider | 4 Hz | 0.5 – 20 Hz, step 0.5 | Chop speed (cuts per second). |
 | Length | slider | 50 % | 1 – 99 %, step 1 | ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous). |
 | Type | choice | Hard | Hard / Soft | Hard = abrupt cut, Soft = smooth transition. |
+| Rate min | slider | 1 Hz | 0.5 – 20 Hz, step 0.5 | Rate that a curve's zero means on the Rate modulation input: the chop that accelerates into a stutter. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
+| Rate max | slider | 16 Hz | 0.5 – 20 Hz, step 0.5 | Rate that the curve's one means. |
 
 #### Chorus
 
@@ -3101,6 +3220,8 @@ Ping-pong delay/echo with feedback. Time sets the interval between repetitions, 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Time modulation | curve |  |
+| input | Feedback modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3108,6 +3229,10 @@ Ping-pong delay/echo with feedback. Time sets the interval between repetitions, 
 | Time | slider | 350 ms | 50 – 2000 ms, step 10 | Delay time between repetitions. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Amount of signal fed back into the delay (more = more repetitions). |
 | Spread | slider | 50 % | 0 – 100 %, step 1 | Stereo width of the echo (0% = mono, 100% = maximum left/right sweep). |
+| Time min | slider | 100 ms | 50 – 2000 ms, step 10 | Delay that a curve's zero means on the Time modulation input. Moving the delay makes the repeats glide in pitch, like a tape echo whose speed is touched: that is the intended sound. With no curve, this setting does nothing. |
+| Time max | slider | 800 ms | 50 – 2000 ms, step 10 | Delay that the curve's one means. |
+| Feedback min | slider | 0 % | 0 – 95 %, step 1 | Feedback that a curve's zero means on the Feedback modulation input: the echo that dies away, or that runs away. Capped at 95%, like the setting, so the loop never diverges. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Feedback that the curve's one means. |
 
 #### Ecosystem (Di Scipio)
 
@@ -3287,6 +3412,25 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Modulation max | number | 6000 Hz | 20 – 20000 Hz, step 1 | Cutoff that the curve's one means. Feeding the sound's own brightness into this input gives the paper's adaptive effect: the filter opens as the sound gets harsh. |
 | Resonance min | slider | 0.7 Q | 0.5 – 12 Q, step 0.1 | Resonance that a curve's zero means on the Resonance modulation input. |
 | Resonance max | slider | 8 Q | 0.5 – 12 Q, step 0.1 | Resonance that the curve's one means. Two settings of the same filter can move together: the cutoff sweeping while the resonance pinches is what no two filters in series can reproduce. |
+
+#### Filter by Spectrum
+
+`filtrage-spectre` · Processing → Effects
+
+*Filters one sound by another's spectrum, moment by moment: the partials of the second carve the first, or its colour is printed on it.*
+
+At each moment, each component of the first sound is multiplied by the weight of the same frequency in the second. What is strong in the second passes; what is absent from it is removed from the first. The first sound keeps its unfolding and its matter; the second imposes its pitches or its colour on it. Without smoothing, the partials of the second carve the first: a noise filtered by a note takes on that note's pitch and timbre, footsteps filtered by a chord start sounding the chord. With smoothing, the second imposes only its spectral envelope - its formants, its brightness - and the first sound keeps its own pitches: a matter taking on the colour of a voice. The depth doses the effect, from 0 (the first sound untouched) to 100%. If the second sound is shorter, it is read in a loop. The output lasts as long as the first sound. After the spectrum combination operations of the Composers' Desktop Project (« combine »), and Trevor Wishart, « Audible Design », 1994.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sound | audio |  |
+| input | Filter | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Depth | slider | 100 % | 0 – 100 %, step 1 | Share of the filtering. 0: the sound untouched; 100%: fully filtered. |
+| Smoothing | slider | 0 Hz | 0 – 1000 Hz, step 10 | Width over which the filter's spectrum is averaged. 0: its partials carve the sound; a few hundred hertz: only its envelope, its colour, is printed. |
 
 #### Flanger
 
@@ -3469,6 +3613,30 @@ Switches the sound fully to the left, center, or right. Useful for testing a mon
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Position | choice | Center | Left / Center / Right | Pan position: hard left, center, or hard right. |
+
+#### Harmonic Sieve
+
+`crible-harmonique` · Processing → Effects
+
+*Keeps - or removes - only the components near chosen harmonics of a fundamental: a noise becomes a chord, a sound loses its even partials.*
+
+The sieve is a harmonic series: the fundamental and its multiples, whose ranks one chooses - all, odd, even, primes, or a written list. Each component of the sound near a kept rank passes; the others are removed. In remove mode, the reverse. On a noise, the sieve cuts out a chord: the breath takes on the pitch of the fundamental and the timbre of the chosen ranks - odd ones give a hollow, clarinet-like sound; primes, a strange sound, sparse towards the top. On a harmonic sound with the same fundamental, partials are removed, or only some kept. On a sound of another pitch, only the meeting points survive. The tolerance, in cents, says how far from a harmonic a component still passes: narrow, the result is pure and whistling; wide, it keeps some matter around each partial. The fundamental can follow a curve: the sieve then glides, and the chord it cuts glides with it. After the « spec pick » program of the Composers' Desktop Project.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Fundamental modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Fundamental of the harmonic series that forms the sieve. |
+| Ranks | choice | All | All / Odd / Even / Primes / List | The harmonics kept. Primes: 1, 2, 3, 5, 7, 11... List: the ranks written below. |
+| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, separated by spaces or commas. |
+| Tolerance | slider | 30 cents | 2 – 200 cents, step 1 | Distance from a harmonic within which a component passes. |
+| Mode | choice | Keep | Keep / Remove | Keep: only the kept harmonics pass. Remove: only they are taken out. |
+| Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
+| Fundamental max | slider | 220 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that the curve's one means. |
 
 #### Harmonic/Percussive Separation
 
@@ -4236,6 +4404,7 @@ All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving pe
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4244,6 +4413,8 @@ All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving pe
 | Depth | slider | 80 % | 0 – 100 %, step 1 | Frequency sweep range. |
 | Stages | slider | 4 | 2 – 8, step 1 | Number of all-pass stages (more = stronger effect). |
 | Mix | slider | 50 % | 0 – 100 %, step 1 | Mix between dry and wet signal. |
+| Rate min | slider | 0.1 Hz | 0.05 – 10 Hz, step 0.05 | Rate that a curve's zero means on the Rate modulation input: the swirl that tightens. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
+| Rate max | slider | 4 Hz | 0.05 – 10 Hz, step 0.05 | Rate that the curve's one means. |
 
 #### Ping-Pong Echo
 
@@ -4256,6 +4427,8 @@ Echo whose repeats bounce alternately between the left and right channels.
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Time modulation | curve |  |
+| input | Feedback modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4263,6 +4436,10 @@ Echo whose repeats bounce alternately between the left and right channels.
 | Time | number | 250 ms |  | Delay between repeats. |
 | Feedback | number | 35 % |  | Amount fed back. |
 | Pan | number | 80 % |  | Left/right balance. |
+| Time min | slider | 100 ms | 50 – 2000 ms, step 10 | Delay that a curve's zero means on the Time modulation input. Moving the delay makes the repeats glide in pitch, like a tape echo whose speed is touched: that is the intended sound. With no curve, this setting does nothing. |
+| Time max | slider | 800 ms | 50 – 2000 ms, step 10 | Delay that the curve's one means. |
+| Feedback min | slider | 0 % | 0 – 95 %, step 1 | Feedback that a curve's zero means on the Feedback modulation input: the echo that dies away, or that runs away. Capped at 95%, like the setting, so the loop never diverges. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Feedback that the curve's one means. |
 
 #### Pitch ↔ Rhythm Continuum
 
@@ -4440,7 +4617,7 @@ Reverb whose mix gradually evolves from dry to wet over an adjustable fade durat
 | Size | number | 50 |  | Simulated room size. |
 | Start | number | 0 |  | Wet mix at start (0=dry only). |
 | End | number | 50 |  | Wet mix after fade completes. |
-| Fade | number | 8 s |  | Duration of the progressive fade. |
+| Fade | number | 8 s | 0 – 60 s, step 0.5 | Length of the move from dry to wet. Capped at the length of the render - the sound plus the reverb tail -: beyond that, the fade never reaches its end value. 0: over the whole sound. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. |
 
 #### Quadrafuzz
@@ -4531,6 +4708,32 @@ Spatializes a sound in 3D using the Resonance Audio SDK (Google). The input is m
 | Height | slider | 10 | 1 – 100, step 0.5 | Room height (meters). |
 | Depth | slider | 20 | 1 – 100, step 0.5 | Room depth (meters). |
 | Material | choice | plaster-smooth | transparent / acoustic-ceiling-tiles / brick-bare / brick-painted / concrete-block-coarse / concrete-block-painted / curtain-heavy / fiber-glass-insulation / glass-thin / glass-thick / grass / linoleum-on-concrete / marble / metal / plywood / plaster-smooth / wood-panel | Material applied to the six room surfaces. |
+
+#### Resonators
+
+`resonateurs` · Processing → Effects
+
+*A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell.*
+
+Each resonator is a string nobody plucks: it only sounds when something makes it vibrate, and of what it receives it keeps only its own frequency. A bank of resonators therefore tunes any sound. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. It is the Reson tool of GRM Tools, Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Fundamental modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fundamental | slider | 110 Hz | 20 – 4000 Hz, step 1 | Frequency of the first resonator; the others follow from it through the structure. A resonator that would fall beyond half the sample rate is dropped, not folded back. |
+| Structure | choice | Harmonic | Harmonic / Odd / Bar / Chord | Where the resonators sit above the fundamental. Harmonic: 1, 2, 3...; odd: 1, 3, 5...; bar: the inharmonic modes of a free bar; chord: the intervals written below. |
+| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. |
+| Count | slider | 12 | 1 – 32, step 1 | Number of resonators. |
+| Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a resonator takes to lose 60 dB. Short, the sound takes on a colour; long, it fades behind the chord. |
+| Brightness | slider | 50 % | 0 – 100 %, step 1 | Level of the high resonators relative to the low ones. 100%: all at the same level; 0%: the k-th at 1/k², a dark sound. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
+| Fundamental min | slider | 55 Hz | 20 – 4000 Hz, step 1 | Fundamental that a connected curve's zero means. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
+| Fundamental max | slider | 440 Hz | 20 – 4000 Hz, step 1 | Fundamental that the curve's one means. |
 
 #### Retrograde and Palindrome
 
@@ -4933,6 +5136,28 @@ After Vesa Välimäki and colleagues on velvet noise — « A perceptual study o
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A ramp from zero to a hundred per cent opens the room from one end of the sound to the other; a sine makes it breathe. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions. |
 
+#### Spectral Arpeggio
+
+`arpege-spectral` · Processing → Effects
+
+*A narrow band sweeps the spectrum and lets only the partials it touches sound: a held sound is picked out partial by partial.*
+
+A frequency band a few tenths of an octave wide sweeps the spectrum between two bounds, upwards, downwards or both ways. Only the components it covers sound. On a held sound rich in partials - a chord, a voice, a drone - one hears its partials one after another, like an arpeggio the sound contained. The speed says how many sweeps per second; the width, how many partials sound at once. The sweep moves in octaves, so the band spends as long in each octave. The persistence lets a partial ring on after the band has passed: it then decays by 60 dB over the given time. At zero, only what the band touches sounds; long, the partials pile up and the arpeggio becomes a chord building itself. After the « spec arpeg » program of the Composers' Desktop Project.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Speed | slider | 1 Hz | 0.05 – 20 Hz, step 0.05 | Number of sweeps per second. |
+| Width | slider | 0.5 oct | 0.05 – 3 oct, step 0.05 | Width of the band that lets through, in octaves. Narrow, one partial at a time; wide, a group. |
+| Low | slider | 100 Hz | 20 – 10000 Hz, step 1 | Bottom of the sweep. |
+| High | slider | 5000 Hz | 40 – 20000 Hz, step 1 | Top of the sweep. |
+| Direction | choice | Up | Up / Down / Up and down | Upwards, downwards, or both ways. |
+| Persistence | slider | 0 s | 0 – 10 s, step 0.05 | Time a partial takes to lose 60 dB after the band has passed. 0: it falls silent as soon as the band moves on. |
+
 #### Spectral Blur
 
 `flou-spectral` · Processing → Effects
@@ -4971,7 +5196,7 @@ Delays the low end more than the high end — or the other way round — without
 | Sections | slider | 200 | 1 – 1000, step 1 | Number of cascaded allpass sections. One section does almost nothing — a few samples — and the delays add up: this setting sets the scale of the effect. It also decides the cost, the computation being proportional to sections times duration: 0.05 s for two seconds of sound at 200 sections, 0.14 s at 500. |
 | Dispersion | slider | 0.9 | 0 – 0.99, step 0.01 | Strength of the spreading, that is the allpass coefficient. At zero the cascade becomes a plain delay of « Sections » samples, the same for every frequency. Near one, the gap between the two ends of the spectrum explodes — and so does the tail, which grows as (1+a)/(1−a). |
 | Direction | choice | Low end delayed | Low end delayed / High end delayed | Which end of the spectrum arrives last. Nothing else needs changing to reverse the effect: it is the sign of the coefficient, and the group-delay formula swaps its two ends with it. The two directions are not equals, and it is better to know it: the delay gathers in a bump that is narrow in frequency, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves — measured at 44.1 kHz, 200 sections, dispersion 0.9: 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature, not a botched setting. |
-| Feedback | slider | 0 % | 0 – 0.95 %, step 0.01 | Feeds the output back into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. This is the addition of the 2009 paper's DAFx-09 sequel. |
+| Feedback | slider | 0 % | 0 – 95 %, step 1 | Feeds the output back into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. This is the addition of the 2009 paper's DAFx-09 sequel. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 | Max tail | slider | 4 s | 0.5 – 20 s, step 0.5 | Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable. |
 | Modulation min | slider | 0.2 | 0 – 0.99, step 0.01 | Dispersion that a connected curve's zero means. With no curve, this setting does nothing. |
@@ -5058,6 +5283,27 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
+#### Spectrum Stretch
+
+`etirement-spectre` · Processing → Effects
+
+*Spreads or squeezes the partials above a pivot frequency: a harmonic sound becomes inharmonic, gradually if need be.*
+
+Above the pivot frequency, each component f is moved to pivot × (f / pivot)^k, where k is the stretch. At 1, nothing moves. Above 1, the partials spread apart, the more so the higher they are: with a pivot at 200 Hz and k = 1.5, the harmonics at 400, 600 and 800 Hz land at 566, 1039 and 1600 Hz. Below 1, they squeeze together. What lies under the pivot does not move: set on the fundamental, it keeps the pitch of the sound and changes only its timbre. A stretched harmonic sound turns metallic, then bell-like, then comes apart into separate components. A curve connected to the Stretch modulation input varies k over the sound: that is how a sound is made gradually inharmonic, or brought back to harmony. Processing goes through an amplitude and frequency analysis of each bin of the spectrum, then a resynthesis that rebuilds the phases from the moved frequencies; the duration of the sound does not change. After the « stretch spectrum » program of the Composers' Desktop Project, and Trevor Wishart, « Audible Design », 1994.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Stretch modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Stretch | slider | 1.3 | 0.5 – 2, step 0.01 | The exponent k. 1: no change; above, the partials spread; below, they squeeze together. |
+| Pivot | slider | 200 Hz | 20 – 4000 Hz, step 1 | Frequency below which nothing moves. Set on the fundamental of the sound, it keeps its pitch. |
+| Stretch min | slider | 1 | 0.5 – 2, step 0.01 | Stretch that a connected curve's zero means. With no curve, this setting does nothing. |
+| Stretch max | slider | 1.6 | 0.5 – 2, step 0.01 | Stretch that the curve's one means. |
+
 #### Spread Across Keyboard
 
 `banque-clavier` · Processing → Effects
@@ -5142,7 +5388,7 @@ Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for re
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Position | slider | 0 % | -100 – 100 %, step 1 | Stereo position (-100% = left, 0% = center, 100% = right). A curve connected to the Modulation input takes over: the sound then travels instead of sitting still, and what one hears is the curve's path. |
-| Width | slider | 100 % | 0 – 100 %, step 1 | Spatial width (0% = mono, 100% = full spatialization). |
+| Width | slider | 100 % | 0 – 100 %, step 1 | Extent of the movement around the position: 0% leaves the sound in the centre, 100% takes it all the way to the set position. The sound is first folded to mono; no effect when the position is centred and no curve is connected. |
 | Modulation min | slider | -100 % | -100 – 100 %, step 1 | Position that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | -100 – 100 %, step 1 | Position that the curve's one means. |
 
@@ -5289,7 +5535,7 @@ Speeds up or slows down the track while preserving pitch (phase vocoder). Durati
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo (%) | number | 100 % | 25 – 400 %, step 5 | Target tempo. 100=normal, 50=half, 200=double. |
-| Window | number | 50 ms |  | Analysis window size. |
+| Window | number | 50 ms | 5 – 400 ms, step 5 | Analysis window size, rounded to the nearest power of two in samples. Short (10 to 30 ms), attacks stay sharp but low sounds blur; long (80 to 200 ms), held sounds stay smooth but attacks smear. |
 
 #### Thin Out
 
@@ -5381,8 +5627,8 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 |---|---|---|---|---|
 | Attack | number | 0 dB | -12 – 12 dB, step 0.5 | Gain applied to transient attacks. Positive = more punch; negative = less aggressive. |
 | Sustain | number | 0 dB | -12 – 12 dB, step 0.5 | Gain applied to the sustain body. Positive = more sustain; negative = shorter. |
-| Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. |
-| Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. |
+| Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged. |
+| Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
 
 #### Tremolo
 
@@ -5396,15 +5642,80 @@ Amplitude modulation: varies the volume periodically. Adjust the rate (vibration
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation rate (vibrations per second). |
+| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation rate (vibrations per second). A curve connected to the Rate modulation input takes over: the tremolo that speeds up or settles. |
+| Rate min | slider | 1 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long. |
+| Rate max | slider | 10 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
 | Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
 | Shape | choice | Sine | Sine / Square / Triangle / Sawtooth | LFO waveform shape. |
+
+#### Tuned Combs
+
+`peignes-accordes` · Processing → Effects
+
+*Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics.*
+
+A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings. Resonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping. The chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input. After Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Fundamental modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Note of the first comb; the others follow from it through the chord. |
+| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, separated by spaces or commas. « 0 »: a single note. |
+| Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a comb takes to lose 60 dB. |
+| Damping | slider | 20 % | 0 – 95 %, step 1 | Loss of highs on each trip round the loop. 0: bright, metallic; high: round, muffled. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
+| Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
+| Fundamental max | slider | 220 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that the curve's one means. |
+
+#### Two-Sound Convolution
+
+`convolution-deux-sons` · Processing → Effects
+
+*Makes one sound ring through another: only their shared frequencies survive, and their durations add up.*
+
+To convolve is to make one sound ring through another. It is how a sound is placed in a room whose response is known; but the second sound can be anything at all: a voice through a gong, a scrape through a drop, a chord through footsteps. It is a basic tool of electroacoustic composition, from the Composers' Desktop Project to SoundHack. What you hear. Each instant of the first sound triggers a whole copy of the second, at its level. Two consequences decide everything. The spectrum of the result is the product of the two spectra: only the shared frequencies survive, the others cancel - a noise convolved by a note becomes that note, breathed. And the duration is the sum of the two: a long sound through a long sound gives a pad, a short sound through anything gives back nearly that anything, struck once. The operation is symmetric: swapping the two inputs gives the same sound. What tells the first from the second is only the output level, brought back to that of the first sound. A raw convolution of two full-scale sounds adds up thousands of samples and would come out twenty or forty decibels too loud; nothing musical hangs on that figure.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sound | audio |  |
+| input | Second sound | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. |
+
+#### Varispeed
+
+`vitesse-variable` · Processing → Effects
+
+*The tape you speed up or slow down: pitch and duration tied together, drivable by a curve.*
+
+It is the founding gesture of musique concrete: Pierre Schaeffer transposed his discs and tapes by changing their speed, and pitch and duration moved together. An octave up, the sound lasts half as long; an octave down, twice as long, and its grain comes out. It is not a defect to be corrected, it is the material. The speed can stay fixed, or move: a curve connected to the Transposition modulation input then draws the gesture: speeding up a fall, braking a resonance down into the bass, sliding a sound upwards like a record being spun. The curve follows the source, not the output. Its start acts on the start of the original sound, its end on its end: one writes a gesture laid on the material, and the output duration follows from it. Indexing the curve on the output would have made the curve depend on the duration it produces. The travel is in semitones, that is by multiplying the speed: from -12 to +12, the middle of the curve gives back the original speed, and every octave lasts as long on the curve. That is how the ear hears a transposition. Speeding up does not fold the highs back. Pushed two octaves up, an 8 kHz sound would rise to 32 kHz, beyond what a file can hold; a naive reading would make it reappear at 12 kHz, a sound that existed nowhere. Tape does not fold back: the reading therefore filters as it speeds up. At zero semitones the source is returned exactly, sample for sample.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Transposition modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Transposition | slider | -12 semitones | -48 – 48 semitones, step 0.1 | How much the tape is sped up (positive) or slowed down (negative). +12: an octave up and half as long; -12: an octave down and twice as long. Four octaves at most either way. |
+| Transposition min | slider | -12 semitones | -48 – 48 semitones, step 0.1 | Transposition that a connected curve's zero means. With no curve, this setting does nothing. |
+| Transposition max | slider | 12 semitones | -48 – 48 semitones, step 0.1 | Transposition that the curve's one means. |
 
 #### Velvet Reverb
 
@@ -5443,12 +5754,15 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation speed (oscillations per second). |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Pitch modulation depth (0% = none, 100% = ±2 semitones). |
+| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation speed (oscillations per second). A curve connected to the Rate modulation input takes over: the vibrato that speeds up, like a singer holding a note. If the Modulation input is connected too, it wins: it then draws the whole gesture, and there is no LFO left whose speed could be set. |
+| Rate min | slider | 1 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative, as for any frequency. |
+| Rate max | slider | 10 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
+| Depth | slider | 50 % | 0 – 100 %, step 1 | Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it. |
 
 #### Vocoder
 
@@ -5501,6 +5815,7 @@ Bandpass filter with a LFO-modulated center frequency — the classic wah-wah pe
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Rate modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5511,6 +5826,8 @@ Bandpass filter with a LFO-modulated center frequency — the classic wah-wah pe
 | Depth | slider | 100 % | 0 – 100 %, step 1 | Frequency sweep range (0% = static, 100% = full wah). |
 | Resonance | slider | 5 Q | 0.5 – 20 Q, step 0.5 | Filter resonance (high Q = pronounced wah, low Q = gentle). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
+| Rate min | slider | 0.5 Hz | 0.1 – 10 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
+| Rate max | slider | 8 Hz | 0.1 – 10 Hz, step 0.1 | Rate that the curve's one means. |
 
 #### Wave Terrain
 
@@ -5609,6 +5926,25 @@ Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscil
 | Attack | number | 0.05 s | 0.005 – 0.5 s, step 0.005 | Breath rise time. The model also takes its own time to settle: that is the loop filling up. |
 | Duration | number | 2 s | 0.1 – 10 s, step 0.1 | Note duration, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Window Shuffle
+
+`melange-fenetres` · Processing → Effects
+
+*Cuts the sound into very short blocks and moves them in time: the sound becomes a cloud of its own instants.*
+
+The sound is cut into blocks a few tens of milliseconds long, and each block is moved in time, by at most the range. At zero range, nothing moves. Short, the sound blurs in place: a phrase stays recognisable but shivers. Long, the instants mix over the whole duration, and the sound becomes a texture that keeps its timbre and loses its unfolding. The block length sets the grain: short, they melt into a continuous matter; long, one recognises fragments trading places. Each block is resynthesised with phases suited to its new place, so the joins do not click. The sound keeps its duration, and nothing is lost or repeated: every instant of the sound is heard once, elsewhere. Same seed, same shuffle. After the « blur shuffle » program of the Composers' Desktop Project.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Block length | slider | 50 ms | 12 – 2000 ms, step 1 | Length of a moved block. Short, a continuous matter; long, recognisable fragments. |
+| Range | slider | 1 s | 0 – 60 s, step 0.05 | How far a block can move from its place. 0: no movement. |
+| Seed | number | 42 | 1 – 999999, step 1 | Same seed, same shuffle. |
 
 ### Generation
 
@@ -6224,7 +6560,7 @@ Estimates a recording's tempo and outputs it as a value, connectable to another 
 |---|---|---|---|---|
 | Octave correction | choice | Fold into range | Fold into range / None | Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70 — but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Set « None » for a track you know to be slow. |
 | Range low | number | 80 | 40 – 140, step 1 | Lower bound of the folding range. |
-| Range high | number | 160 | 80 – 240, step 1 | Upper bound of the folding range. |
+| Range high | number | 160 | 80 – 240, step 1 | Upper bound of the folding range. The range must span at least an octave (twice the lower bound): narrower, no tempo is sure to have its double or half inside, and folding is dropped. |
 
 #### Track Features
 

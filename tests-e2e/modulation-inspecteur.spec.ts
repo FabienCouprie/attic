@@ -51,7 +51,7 @@ const grapheBranche = {
 };
 const grapheDebranche = { nodes: noeuds, edges: [] };
 
-async function ouvrir(page: any, graphe: unknown) {
+async function ouvrir(page: any, graphe: unknown, nom = "Filtre") {
   await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); },
     [JSON.stringify(graphe)]);
   await page.goto(devUrl);
@@ -59,14 +59,14 @@ async function ouvrir(page: any, graphe: unknown) {
   await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 2, { timeout: 15000 });
   // Selectionner le filtre pour que l inspecteur l affiche. React Flow ecoute la sequence
   // mousedown/mouseup, et non un `click` seul : un clic Playwright sur l en-tete ne selectionne pas.
-  await page.evaluate(() => {
-    const n = [...document.querySelectorAll(".react-flow__node")].find((x) => (x as HTMLElement).innerText.includes("Filtre"))!;
+  await page.evaluate((nom: string) => {
+    const n = [...document.querySelectorAll(".react-flow__node")].find((x) => (x as HTMLElement).innerText.includes(nom))!;
     const r = n.getBoundingClientRect();
     const x = r.x + r.width / 2, y = r.y + 10;
     for (const type of ["mousedown", "mouseup", "click"]) {
       n.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
     }
-  });
+  }, nom);
   await page.waitForTimeout(600);
 }
 
@@ -145,4 +145,99 @@ test.describe("inspecteur, parametre module", () => {
     // La resonance reste un curseur ordinaire, puisque rien ne la pilote.
     expect(r.labels).toContain("Résonance");
   });
+});
+
+// LE TRÉMOLO ET LE VIBRATO : LA FRÉQUENCE DU LFO DEVIENT PILOTABLE. Le graphe est complet — un son,
+// deux courbes — et il est exécuté : l'inspecteur ne suffit pas, il faut que le nœud rende du son.
+const grapheLfo = (ficheId: string, ports: number[]) => ({
+  nodes: [
+    { id: "osc", position: { x: 0, y: 0 }, data: { ficheId: "oscillateur", parametres: {} } },
+    { id: "c1", position: { x: 0, y: 260 }, data: { ficheId: "generateur-courbe", parametres: {} } },
+    { id: "c2", position: { x: 0, y: 520 }, data: { ficheId: "generateur-courbe", parametres: {} } },
+    { id: "lfo", position: { x: 380, y: 0 }, data: { ficheId, parametres: {} } },
+  ],
+  edges: [
+    { id: "e0", source: "osc", target: "lfo", sourceHandle: "out:0", targetHandle: "in:0" },
+    ...ports.map((p, k) => ({ id: `e${p}`, source: `c${k + 1}`, target: "lfo", sourceHandle: "out:0", targetHandle: `in:${p}` })),
+  ],
+});
+
+async function executerEtLire(page: any) {
+  await page.keyboard.press(" ");
+  await page.waitForFunction(() => !!(document.querySelector('.react-flow__node[data-id="lfo"] audio') as HTMLAudioElement | null)?.src,
+    null, { timeout: 60000 });
+  return page.evaluate(async () => {
+    const a = document.querySelector('.react-flow__node[data-id="lfo"] audio') as HTMLAudioElement;
+    const ab = await (await fetch(a.src)).arrayBuffer();
+    return { octets: ab.byteLength, erreur: document.querySelector('.react-flow__node[data-id="lfo"]')?.className.includes("erreur") ?? false };
+  });
+}
+
+test.describe("la fréquence du LFO, pilotée par une courbe", () => {
+  test("LE TRÉMOLO : PROFONDEUR ET FRÉQUENCE, DEUX PLAGES, ET LE NŒUD REND DU SON", async ({ page }) => {
+    test.setTimeout(90000);
+    await ouvrir(page, grapheLfo("tremolo", [1, 2]), "Tremolo");
+    const r = await page.evaluate(etat);
+    console.log("tremolo:", JSON.stringify(r));
+    expect(r.plages).toHaveLength(2);
+    expect(r.curseursDePlage).toBe(4);
+    expect(r.plages.some((p: string) => /%/.test(p))).toBe(true);
+    const frequence = r.plages.find((p: string) => /Hz/.test(p))!;
+    expect(frequence).toContain("1");
+    expect(frequence).toContain("10");
+    expect(r.labels).not.toContain("Fréquence min");
+    expect(r.labels).not.toContain("Fréquence max");
+    const son = await executerEtLire(page);
+    console.log("tremolo son:", JSON.stringify(son));
+    expect(son.erreur).toBe(false);
+    expect(son.octets).toBeGreaterThan(10000);
+  });
+
+  test("LE VIBRATO : LA SEULE FRÉQUENCE BRANCHÉE, UNE PLAGE EN HERTZ", async ({ page }) => {
+    test.setTimeout(90000);
+    await ouvrir(page, grapheLfo("vibrato", [2]), "Vibrato");
+    const r = await page.evaluate(etat);
+    console.log("vibrato:", JSON.stringify(r));
+    expect(r.plages).toHaveLength(1);
+    expect(r.plages[0]).toMatch(/Hz/);
+    expect(r.labels).toContain("Profondeur");
+    const son = await executerEtLire(page);
+    expect(son.erreur).toBe(false);
+    expect(son.octets).toBeGreaterThan(10000);
+  });
+
+  test("sans courbe, le trémolo n'affiche aucune plage", async ({ page }) => {
+    await ouvrir(page, grapheLfo("tremolo", []), "Tremolo");
+    const r = await page.evaluate(etat);
+    expect(r.plages).toHaveLength(0);
+    expect(r.labels).toContain("Fréquence");
+    expect(r.labels).not.toContain("Fréquence min");
+  });
+});
+
+// LA CAMPAGNE ÉTENDUE : chaque nœud, avec sa courbe branchée, affiche sa plage dans son unité et rend
+// du son dans un vrai graphe.
+const CAMPAGNE: { ficheId: string; nom: string; ports: number[]; unites: RegExp[] }[] = [
+  { ficheId: "auto-pan", nom: "Auto-pan", ports: [1], unites: [/Hz/] },
+  { ficheId: "phaser", nom: "Phaser", ports: [1], unites: [/Hz/] },
+  { ficheId: "chopper", nom: "Chopper", ports: [1], unites: [/Hz/] },
+  { ficheId: "wahwah", nom: "Wah-wah", ports: [2], unites: [/Hz/] },
+  { ficheId: "echo", nom: "Echo", ports: [1, 2], unites: [/ms/, /%/] },
+  { ficheId: "echo-ping-pong", nom: "Echo Ping-Pong", ports: [1, 2], unites: [/ms/, /%/] },
+];
+
+test.describe("la campagne étendue", () => {
+  for (const c of CAMPAGNE) {
+    test(`${c.nom} : ${c.ports.length} plage(s) et du son`, async ({ page }) => {
+      test.setTimeout(90000);
+      await ouvrir(page, grapheLfo(c.ficheId, c.ports), c.nom);
+      const r = await page.evaluate(etat);
+      console.log(c.ficheId, JSON.stringify(r.plages));
+      expect(r.plages).toHaveLength(c.ports.length);
+      for (const u of c.unites) expect(r.plages.some((p: string) => u.test(p)), String(u)).toBe(true);
+      const son = await executerEtLire(page);
+      expect(son.erreur).toBe(false);
+      expect(son.octets).toBeGreaterThan(10000);
+    });
+  }
 });

@@ -50,4 +50,14 @@ describe("spectrogramme fractal", () => {
     const b = await rendreSpectrogrammeFractal({ duree: 3, octaves: 2, roughness: 0.5, graine: 1 });
     expect(b.audio.duration).toBeGreaterThan(a.audio.duration);
   });
+
+  it("DEUX GRAINES DONNENT DEUX TEXTURES, et la même graine la même", async () => {
+    // La graine n'avait aucun effet : le bruit ne dépendait que des coordonnées.
+    const empreinte = (b: AudioBuffer) => { const d = b.getChannelData(0); let s = 0; for (let i = 0; i < d.length; i += 11) s += Math.abs(d[i]) * (i % 97 + 1); return s.toFixed(6); };
+    const a = await rendreSpectrogrammeFractal({ duree: 1, octaves: 3, roughness: 0.5, graine: 1 });
+    const a2 = await rendreSpectrogrammeFractal({ duree: 1, octaves: 3, roughness: 0.5, graine: 1 });
+    const b = await rendreSpectrogrammeFractal({ duree: 1, octaves: 3, roughness: 0.5, graine: 2 });
+    expect(empreinte(a.audio)).toBe(empreinte(a2.audio));
+    expect(empreinte(a.audio)).not.toBe(empreinte(b.audio));
+  });
 });

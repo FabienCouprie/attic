@@ -1,6 +1,7 @@
 // audio/couleur-rgb.ts — Synthèse d'une couleur RGB en trois oscillateurs.
 // Chaque canal (R, G, B) pilote une fréquence dans une plage réglable.
 
+import { plafonnerCrete } from "./commun";
 import { frequenceDepuisValeur } from "./commun";
 
 export interface OptionsCouleurRGB {
@@ -32,17 +33,19 @@ export function genererCouleurRGBAudio(options: OptionsCouleurRGB): AudioBuffer 
   const deltaG = (2 * Math.PI * freqG) / sr;
   const deltaB = (2 * Math.PI * freqB) / sr;
 
+  // Les tableaux des canaux sont pris une fois, hors de la boucle : les redemander à chaque
+  // échantillon coûtait 21 s pour 4 s de son sous le moteur audio des tests.
+  const sorties = Array.from({ length: channels }, (_, ch) => buffer.getChannelData(ch));
   for (let i = 0; i < length; i++) {
     const sample = (Math.sin(phase.r) + Math.sin(phase.g) + Math.sin(phase.b)) * vol;
     phase.r += deltaR;
     phase.g += deltaG;
     phase.b += deltaB;
-    for (let ch = 0; ch < channels; ch++) {
-      buffer.getChannelData(ch)[i] = sample;
-    }
+    for (let ch = 0; ch < channels; ch++) sorties[ch][i] = sample;
   }
 
-  return buffer;
+  // Trois sinus à la moitié du volume chacun : jusqu'à 1,2 au volume par défaut.
+  return plafonnerCrete(buffer);
 }
 
 export function parsePlage(texte: string, defaut: [number, number]): [number, number] {

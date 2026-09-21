@@ -1,6 +1,7 @@
 // audio/tone-synths.ts — Synthetiseurs instrumentaux propulses par Tone.js.
 // Rendu offline : aucune sortie haut-parleur, production directe d'AudioBuffer.
 
+import { plafonnerCrete } from "./commun";
 import { Note } from "tonal";
 import {
   cleEchantillon, echantillonsRequis, placerPercussions, secondesDeclenchement,
@@ -131,7 +132,10 @@ export async function genererPolySynth(opts: OptionsPolySynth): Promise<AudioBuf
     sampleRate,
   );
 
-  return audioBufferDepuisTone(toneBuffer);
+  // Trois voix de Tone.js à pleine échelle s'additionnent sans normalisation : 1,71 mesuré dans le
+  // navigateur. Plafonné ici, à la sortie du synthé — et non dans le convertisseur commun, qui sert
+  // aussi aux parties d'un mélange qu'on ne doit pas plafonner une à une.
+  return plafonnerCrete(audioBufferDepuisTone(toneBuffer));
 }
 
 export interface OptionsModulationSynth {
@@ -433,5 +437,6 @@ export async function genererMetalSynth(opts: OptionsMetalSynth): Promise<AudioB
     sampleRate,
   );
 
-  return audioBufferDepuisTone(toneBuffer);
+  // 2,44 mesuré dans le navigateur au réglage par défaut. Plafonné à la sortie du synthé.
+  return plafonnerCrete(audioBufferDepuisTone(toneBuffer));
 }

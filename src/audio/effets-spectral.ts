@@ -1,10 +1,14 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
 import { etirerDuree, reechantillonnerVers, creerFenetreHann } from "./commun";
 import { CADENCE, estCourbe, progressionPour, valeursParametre } from "./courbe";
+import { cyclesAccumules, formeLfo, frequencesModulees, type BornesFrequence } from "./lfo";
 
-export function changerTempo(buffer: AudioBuffer, vitessePct: number): AudioBuffer {
+export function changerTempo(buffer: AudioBuffer, vitessePct: number, fenetreMs?: number): AudioBuffer {
   const facteur = 100 / Math.max(1, vitessePct);
-  return etirerDuree(buffer, facteur);
+  // La fenêtre, en millisecondes, ramenée à la puissance de deux la plus proche par `etirerDuree` :
+  // courte, les attaques restent nettes ; longue, les sons tenus restent lisses.
+  const taille = fenetreMs && fenetreMs > 0 ? Math.round((fenetreMs / 1000) * buffer.sampleRate) : undefined;
+  return etirerDuree(buffer, facteur, taille);
 }
 
 
@@ -393,17 +397,22 @@ export async function autoPan(
   buffer: AudioBuffer,
   frequence: number,
   profondeur: number,
+  courbeFrequence?: unknown,
+  bornesFrequence: BornesFrequence = { min: 0.5, max: 8 },
 ): Promise<AudioBuffer> {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: 2, length: buffer.length, sampleRate: sr });
   const depth = profondeur / 100;
+  // Avec une courbe, la phase intégrée ; sans, le calcul direct d'origine, au bit près.
+  const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
+  const u = f ? cyclesAccumules(f, sr) : null;
 
   for (let c = 0; c < 2; c++) {
     const src = buffer.numberOfChannels > c ? buffer.getChannelData(c) : buffer.getChannelData(0);
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < buffer.length; i++) {
       const t = i / sr;
-      const lfo = Math.sin(2 * Math.PI * frequence * t);
+      const lfo = u ? Math.sin(2 * Math.PI * u[i]) : Math.sin(2 * Math.PI * frequence * t);
       const gain = c === 0
         ? 1 - depth * (lfo + 1) / 2
         : 1 - depth * (1 - lfo) / 2;
@@ -575,6 +584,8 @@ export function wahwah(
   mix: number,
   courbe?: unknown,
   bornes?: { min: number; max: number },
+  courbeFrequence?: unknown,
+  bornesFrequence: BornesFrequence = { min: 0.5, max: 8 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
@@ -590,6 +601,14 @@ export function wahwah(
     centres.set(valeursParametre(courbe, buffer.length, freqMin, {
       min: freqMin, max: freqMax, ...progressionPour({ unite: "Hz" }),
     }));
+  } else if (estCourbe(courbeFrequence)) {
+    // La vitesse du balayage suit une courbe. La courbe de position, si elle est branchée, garde
+    // la priorité : elle remplace le LFO, et il n'y a plus alors de vitesse à régler.
+    const u = cyclesAccumules(frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence)!, sr);
+    for (let i = 0; i < buffer.length; i++) {
+      const lfo = Math.sin(2 * Math.PI * u[i]);
+      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depth) / 2);
+    }
   } else {
     for (let i = 0; i < buffer.length; i++) {
       const lfo = Math.sin((2 * Math.PI * frequence * i) / sr);
@@ -645,12 +664,16 @@ export function phaser(
   profondeur: number,
   etages: number,
   mix: number,
+  courbeFrequence?: unknown,
+  bornesFrequence: BornesFrequence = { min: 0.1, max: 4 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const depth = profondeur / 100;
   const mixVal = mix / 100;
   const nbEtages = Math.max(1, Math.min(8, Math.round(etages)));
+  const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
+  const u = f ? cyclesAccumules(f, sr) : null;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
@@ -659,7 +682,7 @@ export function phaser(
 
     for (let i = 0; i < buffer.length; i++) {
       const t = i / sr;
-      const lfo = Math.sin(2 * Math.PI * frequence * t);
+      const lfo = u ? Math.sin(2 * Math.PI * u[i]) : Math.sin(2 * Math.PI * frequence * t);
       const fc = 200 + 1800 * (1 + lfo * depth) / 2;
       const w0 = 2 * Math.PI * fc / sr;
       const tanW0 = Math.tan(w0 / 2);
@@ -690,46 +713,141 @@ export function phaser(
 // ainsi le geste qu'on veut — une montée lente, un tremblement irrégulier, une hauteur suivie d'un
 // autre son — au lieu de la seule oscillation sinusoïdale. Aucun réglage nouveau n'est donc
 // nécessaire : la profondeur garde exactement le sens qu'elle avait.
+/**
+ * L'amplitude du décalage de lecture, en échantillons, qui donne à un vibrato de fréquence `f` un
+ * écart de hauteur de `cents` au sommet.
+ *
+ * POURQUOI ELLE DÉPEND DE LA FRÉQUENCE. Lire le son avec un décalage D(t) = A · sin(2π f t) le
+ * transpose du rapport 1 − D′(t) : la hauteur ne dépend pas du décalage, mais de sa VITESSE, soit
+ * A · 2π f. À amplitude fixe — ce que faisait le vibrato —, doubler la vitesse doublait l'ampleur : à
+ * 50 % et 5 Hz on entendait ±2,6 demi-tons au lieu du ±1 annoncé, et à 100 % au-delà de 16 Hz le
+ * rapport devenait négatif, la lecture repartait à l'envers. L'amplitude est donc divisée par la
+ * fréquence, et la profondeur dit enfin ce qu'elle promet, à toute vitesse.
+ *
+ * Une lecture décalée monte un peu moins qu'elle ne descend (1 + k contre 1 − k, en rapport) ; k est
+ * choisi pour que la MOYENNE des deux crêtes, en cents, soit la profondeur : +189 et −213 cents pour
+ * ±2 demi-tons.
+ */
+export function amplitudeVibrato(cents: number, frequence: number, sr: number): number {
+  const k = Math.sinh((Math.max(0, cents) * Math.LN2) / 1200);
+  return (sr * k) / (2 * Math.PI * Math.max(1e-3, frequence));
+}
+
+/**
+ * Lit la source avec un décalage variable, par interpolation linéaire. Sans ligne à retard : le rendu
+ * est hors ligne, la source entière est là, et lire un peu en avant ne coûte rien. D'où ni latence —
+ * l'ancienne ligne retardait tout de 10 ms — ni plafond — elle bornait l'amplitude à 10 ms, trop peu
+ * pour un vibrato lent. Hors du son, on lit du silence.
+ */
+function lireDecale(src: Float32Array, decalages: Float64Array, dst: Float32Array): void {
+  const n = src.length;
+  for (let i = 0; i < n; i++) {
+    const pos = i - decalages[i];
+    const i0 = Math.floor(pos), fr = pos - i0;
+    const s0 = i0 >= 0 && i0 < n ? src[i0] : 0;
+    const s1 = i0 + 1 >= 0 && i0 + 1 < n ? src[i0 + 1] : 0;
+    dst[i] = s0 + (s1 - s0) * fr;
+  }
+}
+
 export function vibrato(
   buffer: AudioBuffer,
   frequence: number,
   profondeur: number,
   courbe?: unknown,
+  courbeFrequence?: unknown,
+  bornesFrequence: { min: number; max: number } = { min: 1, max: 10 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const maxCents = profondeur * 2;
-  const delayMax = Math.ceil(sr * 0.02);
 
-  // Le retard lu, échantillon par échantillon. Sans courbe, c'est le LFO d'origine, au bit près.
-  const retards = new Float32Array(buffer.length);
-  const etendue = delayMax / 2;
   if (estCourbe(courbe)) {
-    retards.set(valeursParametre(courbe, buffer.length, etendue, {
+    // LA COURBE DE POSITION DESSINE LE GESTE : elle remplace le LFO, et c'est sa pente qui fait la
+    // hauteur. Ce chemin n'a pas de fréquence dont diviser l'amplitude ; il garde donc sa ligne à
+    // retard et sa plage d'origine, au bit près.
+    const delayMax = Math.ceil(sr * 0.02);
+    const etendue = delayMax / 2;
+    const retards = valeursParametre(courbe, buffer.length, etendue, {
       min: etendue * (1 - maxCents / 200), max: etendue * (1 + maxCents / 200),
-    }));
-  } else {
-    for (let i = 0; i < buffer.length; i++) {
-      const lfo = Math.sin((2 * Math.PI * frequence * i) / sr);
-      retards[i] = etendue * (1 + lfo * (maxCents / 200));
+    });
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const src = buffer.getChannelData(c);
+      const dst = resultat.getChannelData(c);
+      const delayLine = new Float64Array(delayMax);
+      let dlyPos = 0;
+      for (let i = 0; i < buffer.length; i++) {
+        const readPos = dlyPos - retards[i];
+        const idx0 = Math.floor(readPos);
+        const frac = readPos - idx0;
+        const s0 = delayLine[((idx0 % delayMax) + delayMax) % delayMax];
+        const s1 = delayLine[(((idx0 + 1) % delayMax) + delayMax) % delayMax];
+        dst[i] = s0 + (s1 - s0) * frac;
+        delayLine[dlyPos] = src[i];
+        dlyPos = (dlyPos + 1) % delayMax;
+      }
     }
+    return resultat;
   }
 
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c);
-    const dst = resultat.getChannelData(c);
-    const delayLine = new Float64Array(delayMax);
-    let dlyPos = 0;
+  // Le décalage, échantillon par échantillon : un LFO dont l'amplitude suit la fréquence du moment.
+  // Avec une courbe de fréquence, la phase est intégrée (`audio/lfo.ts`) — le vibrato qui s'accélère
+  // garde alors la même largeur, ce qu'un chanteur fait naturellement.
+  const decalages = new Float64Array(buffer.length);
+  const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
+  if (f) {
+    const u = cyclesAccumules(f, sr);
+    for (let i = 0; i < buffer.length; i++) decalages[i] = amplitudeVibrato(maxCents, f[i], sr) * Math.sin(2 * Math.PI * u[i]);
+  } else {
+    const a = amplitudeVibrato(maxCents, frequence, sr);
+    for (let i = 0; i < buffer.length; i++) decalages[i] = a * Math.sin((2 * Math.PI * frequence * i) / sr);
+  }
+  for (let c = 0; c < buffer.numberOfChannels; c++) lireDecale(buffer.getChannelData(c), decalages, resultat.getChannelData(c));
+  return resultat;
+}
 
-    for (let i = 0; i < buffer.length; i++) {
-      const readPos = dlyPos - retards[i];
-      const idx0 = Math.floor(readPos);
-      const frac = readPos - idx0;
-      const s0 = delayLine[((idx0 % delayMax) + delayMax) % delayMax];
-      const s1 = delayLine[(((idx0 + 1) % delayMax) + delayMax) % delayMax];
-      dst[i] = s0 + (s1 - s0) * frac;
-      delayLine[dlyPos] = src[i];
-      dlyPos = (dlyPos + 1) % delayMax;
+/**
+ * Trémolo : modulation d'amplitude par un LFO.
+ *
+ * `profondeurs` est déjà rendu échantillon par échantillon (constant sans courbe). La fréquence, elle,
+ * a deux chemins : sans courbe, le calcul direct d'origine, recopié tel quel pour ne pas changer un
+ * bit ; avec une courbe, la phase intégrée d'`audio/lfo.ts`.
+ */
+export function tremolo(
+  a: AudioBuffer,
+  freq: number,
+  profondeurs: Float32Array,
+  forme: string,
+  courbeFrequence?: unknown,
+  bornesFrequence: { min: number; max: number } = { min: 1, max: 10 },
+): AudioBuffer {
+  const sr = a.sampleRate;
+  const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: a.length, sampleRate: sr });
+  if (estCourbe(courbeFrequence)) {
+    const u = cyclesAccumules(valeursParametre(courbeFrequence, a.length, freq, {
+      min: bornesFrequence.min, max: bornesFrequence.max, ...progressionPour({ unite: "Hz" }),
+    }), sr);
+    const lfo = Float64Array.from(u, (x) => formeLfo(forme, x));
+    for (let c = 0; c < a.numberOfChannels; c++) {
+      const src = a.getChannelData(c);
+      const dst = resultat.getChannelData(c);
+      for (let i = 0; i < a.length; i++) dst[i] = src[i] * (1 - profondeurs[i] * (1 - lfo[i]) / 2);
+    }
+    return resultat;
+  }
+  for (let c = 0; c < a.numberOfChannels; c++) {
+    const src = a.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < a.length; i++) {
+      const t = i / sr;
+      const phase = 2 * Math.PI * freq * t;
+      let lfo: number;
+      if (forme === "Carré" || forme === "Square") lfo = Math.sin(phase) >= 0 ? 1 : -1;
+      else if (forme === "Triangle") lfo = 2 * Math.abs(2 * (freq * t - Math.floor(freq * t + 0.5))) - 1;
+      else if (forme === "Sawtooth") lfo = 2 * (freq * t - Math.floor(freq * t)) - 1;
+      else lfo = Math.sin(phase);
+      const gain = 1 - profondeurs[i] * (1 - lfo) / 2;
+      dst[i] = src[i] * gain;
     }
   }
   return resultat;
@@ -753,30 +871,21 @@ export function vibratoLogistique(
   const centreRel = Math.max(0, Math.min(1, centre / 100));
   const k = Math.max(0.1, pente);
   const n = buffer.length;
-  const delayMax = Math.ceil(sr * 0.02);
 
+  // Même lecture décalée que le vibrato, et même amplitude divisée par la fréquence : la profondeur
+  // atteinte en fin de courbe est un vrai écart en demi-tons (voir `amplitudeVibrato`).
+  const decalages = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1 || 1);
+    const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
+    decalages[i] = amplitudeVibrato(maxCents * p, frequence, sr) * Math.sin(2 * Math.PI * frequence * i / sr);
+  }
+  const humide = new Float32Array(n);
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
-    const delayLine = new Float64Array(delayMax);
-    let dlyPos = 0;
-
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1 || 1);
-      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
-      const envelopeCents = maxCents * p;
-      const lfo = Math.sin(2 * Math.PI * frequence * i / sr);
-      const delaySamples = (delayMax / 2) * (1 + lfo * (envelopeCents / 200));
-      const readPos = dlyPos - delaySamples;
-      const idx0 = Math.floor(readPos);
-      const frac = readPos - idx0;
-      const s0 = delayLine[((idx0 % delayMax) + delayMax) % delayMax];
-      const s1 = delayLine[(((idx0 + 1) % delayMax) + delayMax) % delayMax];
-      const wet = s0 + (s1 - s0) * frac;
-      dst[i] = src[i] * (1 - mixWet) + wet * mixWet;
-      delayLine[dlyPos] = src[i];
-      dlyPos = (dlyPos + 1) % delayMax;
-    }
+    lireDecale(src, decalages, humide);
+    for (let i = 0; i < n; i++) dst[i] = src[i] * (1 - mixWet) + humide[i] * mixWet;
   }
   return resultat;
 }
@@ -918,31 +1027,37 @@ export function chopper(
   frequence: number,
   duree: number,
   type: number,
+  courbeFrequence?: unknown,
+  bornesFrequence: BornesFrequence = { min: 1, max: 16 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const ratioOn = Math.max(1, Math.min(99, duree)) / 100;
   const fadeSamples = type === 1 ? Math.min(256, Math.floor(sr / frequence / 8)) : 1;
+  // Avec une courbe, la position dans le cycle est intégrée, et le fondu suit la fréquence du
+  // moment : un huitième de période, comme à fréquence fixe, plafonné à 256 échantillons.
+  const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
+  const u = f ? cyclesAccumules(f, sr) : null;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < buffer.length; i++) {
       const t = i / sr;
-      const cyclePos = (t * frequence) % 1;
+      const cyclePos = u ? u[i] : (t * frequence) % 1;
+      const fadeRatio = !f ? fadeSamples / (sr / frequence)
+        : (type === 1 ? Math.min(256, Math.floor(sr / f[i] / 8)) : 1) / (sr / f[i]);
       let gain: number;
       if (cyclePos < ratioOn) {
         gain = 1;
         if (type === 1) {
           const fadePos = cyclePos / ratioOn;
-          const fadeRatio = fadeSamples / (sr / frequence);
           if (fadePos < fadeRatio) gain = fadePos / fadeRatio;
         }
       } else {
         gain = 0;
         if (type === 1) {
           const offPos = (cyclePos - ratioOn) / (1 - ratioOn);
-          const fadeRatio = fadeSamples / (sr / frequence);
           if (offPos < fadeRatio) gain = 1 - offPos / fadeRatio;
         }
       }
