@@ -26,6 +26,8 @@ const SIGLES = new Set([
   "PM", "PWM", "CV", "BPM", "GM", "IR", "VST", "DAW", "OSC", "SMS", "MMS",
   // Programmes historiques : le « Sound Synthesis Program » de Koenig s'écrit ainsi.
   "SSP",
+  // Spatialisation : l'ordre des canaux ambisoniques, et l'Union internationale des télécommunications.
+  "ACN", "UIT", "ITU",
   // Apprentissage automatique
   "ONNX", "LLM", "RNN", "VAE", "GAN", "CNN", "PCA", "TTS", "ASR", "STT", "VAD", "DDSP", "SA3",
   "SDXS", "GTCRN", "MDX", "UVR", "WASM", "CPU", "GPU", "RAM",

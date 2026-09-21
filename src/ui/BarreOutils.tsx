@@ -14,6 +14,8 @@ interface Props {
   onLancer: () => void;
   onArreter: () => void;
   onReinitialiser: () => void;
+  /** Recharge la fenêtre après avoir mémorisé le graphe : libère la mémoire sans rien perdre. */
+  onRecharger: () => void;
   onResumeAudio: () => Promise<void>;
   onExporter: () => void;
   onImporter: (f?: File) => void;
@@ -59,7 +61,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -370,6 +372,18 @@ export function BarreOutils(props: Props) {
         <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M13.5 8a5.5 5.5 0 1 0-11 0 5.5 5.5 0 0 0 8.5 4.5" />
           <path d="M12.5 4v4h-4" />
+        </svg>
+      </button>
+      {/* Une fenêtre et une flèche qui tourne dedans : à côté de la réinitialisation, qui porte
+          la seule flèche, il fallait que les deux se distinguent d'un coup d'œil. Réinitialiser
+          remet les nœuds en attente ; recharger refait la fenêtre entière, et c'est ce qui rend la
+          mémoire que des heures de travail ont accumulée. */}
+      <button className="attic-btn-icon" title={eti("recharger")} aria-label={eti("recharger")} onClick={onRecharger}>
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+          <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+          <path d="M1.5 5h13" />
+          <path d="M10.4 8.3a2.6 2.6 0 1 1-.9-1.6" />
+          <path d="M10.2 5.9v1.4H8.8" />
         </svg>
       </button>
       {/* La mémoire de l'application, à droite de la réinitialisation : c'est là qu'on la

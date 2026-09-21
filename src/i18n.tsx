@@ -87,6 +87,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   // distante, audio désactivé, aucun périphérique — sans avoir à lancer un graphe pour le découvrir.
   "barre.audio": { fr: "Tester la sortie audio", en: "Test the audio output" },
   "barre.reinitialiser": { fr: "Réinitialiser tous les nœuds", en: "Reset every node" },
+  "barre.recharger": { fr: "Recharger la fenêtre — le graphe est gardé, la mémoire libérée", en: "Reload the window — the graph is kept, memory is freed" },
+  "barre.recharger.confirmer": { fr: "Une exécution est en cours : recharger l'arrêtera. Le graphe est gardé, les résultats seront à relancer. Recharger quand même ?", en: "A run is in progress: reloading will stop it. The graph is kept, results will need to be run again. Reload anyway?" },
   "barre.memoire.titre": { fr: "Mémoire occupée par l'application, tous processus confondus", en: "Memory used by the application, across all processes" },
   "barre.lancer": { fr: "Lancer l'exécution", en: "Run the graph" },
   "barre.arreter": { fr: "Arrêter l'exécution", en: "Stop the run" },
@@ -226,6 +228,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Lecture": { fr: "Lecture", en: "Playback" },
   "famille.Notation": { fr: "Notation", en: "Notation" },
   "famille.Csound wrapper": { fr: "Csound wrapper", en: "Csound wrapper" },
+  "famille.Multicanal": { fr: "Multicanal", en: "Multichannel" },
   "quiz.score": { fr: "Score", en: "Score" },
   "quiz.suivante": { fr: "Question suivante", en: "Next question" },
   "quiz.recommencer": { fr: "Reprendre la même série à zéro", en: "Retake the same series from the start" },

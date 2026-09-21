@@ -67,6 +67,7 @@ export const OUTILS: OutilBarre[] = [
 
   { id: "audio", famille: "execution", cle: "barre.audio" },
   { id: "reinitialiser", famille: "execution", cle: "barre.reinitialiser" },
+  { id: "recharger", famille: "execution", cle: "barre.recharger" },
   { id: "lancer", famille: "execution", cle: "barre.lancer", raccourci: "Space" },
   { id: "arreter", famille: "execution", cle: "barre.arreter", raccourci: "Space" },
 ];

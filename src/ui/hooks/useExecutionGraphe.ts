@@ -23,6 +23,8 @@ import { registre } from "../../audio/adaptateur";
 import { publierGrapheCourant } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
+import { heriterDisposition } from "../../audio/multicanal";
+import { tamponPourApercu } from "../../audio/multicanal-ecoute";
 import { lireProfondeurExport } from "../profondeur-export";
 import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
@@ -577,6 +579,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // résultat/statut « terminé » ou « erreur » périmé.
         if (controller.signal.aborted) break;
         resultats.set(nodeId, res.valeurs as TypeValeur[]);
+        // LA DISPOSITION VOYAGE AVEC LE SON. Un effet ordinaire fabrique un tampon neuf, et sans
+        // cette ligne il effacerait au passage l'étiquette « 7.1.4 » ou « ambisonie d'ordre 2 » que
+        // son entrée portait — l'export ne saurait plus quel canal est le centre. La règle ne devine
+        // jamais : seul un tampon de même nombre de canaux qu'une entrée étiquetée hérite.
+        heriterDisposition(res.valeurs as unknown[], valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats));
         if (res.message) messages.set(nodeId, res.message);
         // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
         // (entrée manquante, pas assez d'entrées, fichier absent…) : le marquer
@@ -730,8 +737,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // choisie s'applique donc ici, et non au moment de la sauvegarde. Les séparer aurait
             // demandé de réencoder à l'enregistrement, donc de reconstruire le graphe embarqué,
             // que seule cette boucle connaît.
+            // Un tampon multicanal étiqueté est replié en stéréo pour l'aperçu : à douze ou seize
+            // canaux, l'aperçu pesait six à huit fois une stéréo dans le processus principal, pour un
+            // lecteur incapable de le jouer juste. L'enregistrement, lui, repart du tampon complet.
             url = URL.createObjectURL(
-              bufferVersWavBlob(audio, grapheExport, securiser, { bits: lireProfondeurExport() }));
+              bufferVersWavBlob(tamponPourApercu(audio), grapheExport, securiser, { bits: lireProfondeurExport() }));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);

@@ -961,7 +961,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
-  const { sauvegarder, sauvegarderAuto, exporter, importer } = usePersistance({
+  const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
@@ -1115,6 +1115,19 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           }}
           onArreter={arreter}
           onReinitialiser={reinitialiserTout}
+          onRecharger={() => {
+            // Le graphe d'abord, le rechargement ensuite : l'en-cours n'est autrement écrit qu'à
+            // l'enregistrement, et recharger rendrait le graphe du dernier enregistrement.
+            //
+            // PAS DÉSACTIVÉ PENDANT UNE EXÉCUTION, contrairement à la réinitialisation. Recharger
+            // est justement le recours quand une exécution ne rend plus la main, ou quand
+            // l'application s'est mise dans un état qu'aucun autre bouton ne répare ; le griser à
+            // ce moment-là le rendrait inutilisable précisément quand on en a besoin. On demande
+            // seulement confirmation, puisque le calcul en cours sera perdu.
+            if (enExecution && !window.confirm(t("barre.recharger.confirmer"))) return;
+            memoriserEncours();
+            window.location.reload();
+          }}
           onResumeAudio={resumeAudio}
           nbPlugins={nbPlugins}
           sf2Nom={sf2NomState}
