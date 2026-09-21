@@ -25,6 +25,7 @@ import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
+import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
@@ -217,6 +218,21 @@ function Atelier() {
       return suivant;
     });
   }, []);
+  // Économie de mémoire sur les pistes longues : bascule voisine, même groupe. Elle ne change
+  // rien en deçà de dix minutes ; au-delà, elle décide si les nœuds intermédiaires reçoivent
+  // leur aperçu écoutable ou le bouton qui le construit à la demande.
+  const [economieMemoire, setEconomieMemoire] = useState(() => lireEconomieMemoire());
+  const basculerEconomieMemoire = useCallback(() => {
+    setEconomieMemoire((prev) => {
+      const suivant = !prev;
+      ecrireEconomieMemoire(suivant);
+      return suivant;
+    });
+  }, []);
+  // Le moteur la lit au moment où il écrit les résultats, et non à la construction de `lancer` :
+  // une bascule pendant un rendu d'une heure doit valoir pour la suite de ce rendu-là.
+  const economieMemoireRef = useRef(economieMemoire);
+  economieMemoireRef.current = economieMemoire;
   const togglePalette = useCallback(() => {
     setPaletteOuverte((prev) => {
       const next = !prev;
@@ -486,7 +502,8 @@ function Atelier() {
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
-    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
+    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef,
+    pileMetaRef: pileRef,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
       setNodes((nds) => {
@@ -1115,6 +1132,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onDetacherFichier={detacherFichier}
           sauvegardeAuto={sauvegardeAutoActive}
           onBasculerSauvegardeAuto={basculerSauvegardeAuto}
+          economieMemoire={economieMemoire}
+          onBasculerEconomieMemoire={basculerEconomieMemoire}
           onImporter={importer}
         />
         <div className="attic-onglets">

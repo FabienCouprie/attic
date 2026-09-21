@@ -125,6 +125,20 @@ import { fiches as f_courbe } from "./courbe";
 import { fiches as f_hauteur } from "./hauteur";
 import { fiches as f_stn } from "./stn";
 import { fiches as f_retard_spectral } from "./retard-spectral";
+import { fiches as f_spectral_wishart } from "./spectral-wishart";
+import { fiches as f_brassage } from "./brassage";
+import { fiches as f_deplacement } from "./deplacement";
+import { fiches as f_theorie_rythme_voix } from "./theorie-rythme-voix";
+import { fiches as f_dissonance } from "./dissonance";
+import { fiches as f_masquage_schillinger_gammes } from "./masquage-schillinger-gammes";
+import { fiches as f_caracteristiques_piste } from "./caracteristiques-piste";
+import { fiches as f_synthese_features } from "./synthese-features";
+import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
+import { fiches as f_ampleur } from "./ampleur";
+import { fiches as f_quiz } from "./quiz";
+import { fiches as f_correction_hauteur } from "./correction-hauteur";
+import { fiches as f_stereo_morphing } from "./stereo-morphing";
+import { fiches as f_finitions } from "./finitions";
 import { fiches as f_declipper } from "./declipper";
 import { fiches as f_inpainting } from "./inpainting";
 import { fiches as f_pghi } from "./pghi";
@@ -168,6 +182,20 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_hauteur,
   ...f_stn,
   ...f_retard_spectral,
+  ...f_spectral_wishart,
+  ...f_brassage,
+  ...f_deplacement,
+  ...f_theorie_rythme_voix,
+  ...f_dissonance,
+  ...f_masquage_schillinger_gammes,
+  ...f_caracteristiques_piste,
+  ...f_synthese_features,
+  ...f_cercle_pulsant,
+  ...f_ampleur,
+  ...f_quiz,
+  ...f_correction_hauteur,
+  ...f_stereo_morphing,
+  ...f_finitions,
   ...f_declipper,
   ...f_inpainting,
   ...f_pghi,

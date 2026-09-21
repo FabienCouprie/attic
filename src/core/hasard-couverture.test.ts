@@ -33,6 +33,10 @@ const HORS_RENDU = new Set([
   "plugins/vexflow.ts",
   "ui/App.tsx",
   "ui/vues.tsx",
+  // Le bouton « Nouveau tour » du quiz tire une graine et l'ÉCRIT dans le paramètre « Graine » du
+  // nœud, qui reste visible et se sauvegarde avec le projet. Le tirage est donc exactement ce que la
+  // convention demande — retrouvable —, simplement fait depuis la vue plutôt qu'à l'exécution.
+  "ui/Quiz.tsx",
 ]);
 
 // 2. Conformes à la convention : le nœud porte une graine, et `Math.random`

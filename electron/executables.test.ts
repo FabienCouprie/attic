@@ -26,13 +26,13 @@ const rien = () => false;
 const PYTHON_ESPACES = "C:\\Program Files\\Python313\\python.exe";
 
 describe("commandeVersion", () => {
-  it("traite un chemin comme un seul fichier, espaces comprises", () => {
+  it("traite un chemin comme un seul fichier, espaces comprises", async () => {
     // Le cas qui cassait : le shell lisait « C:\\Program » comme la commande.
     expect(commandeVersion(PYTHON_ESPACES, disque(PYTHON_ESPACES)))
       .toEqual({ fichier: PYTHON_ESPACES, args: ["--version"] });
   });
 
-  it("découpe une commande suivie d'arguments", () => {
+  it("découpe une commande suivie d'arguments", async () => {
     // « py -3 » n'est pas un fichier : la détection Python le stocke tel quel
     // quand le lanceur Windows répond. Citer aurait fait chercher un fichier
     // nommé « py -3 ».
@@ -40,7 +40,7 @@ describe("commandeVersion", () => {
       .toEqual({ fichier: "py", args: ["-3", "--version"] });
   });
 
-  it("distingue les deux par le disque, pas par la forme", () => {
+  it("distingue les deux par le disque, pas par la forme", async () => {
     // Même chaîne, deux interprétations selon qu'elle existe ou non : c'est
     // exactement pourquoi aucune règle syntaxique ne pouvait trancher.
     const ambigu = "C:\\mes outils\\python.exe";
@@ -48,15 +48,15 @@ describe("commandeVersion", () => {
     expect(commandeVersion(ambigu, rien).fichier).toBe("C:\\mes");
   });
 
-  it("accepte une commande nue", () => {
+  it("accepte une commande nue", async () => {
     expect(commandeVersion("python3", rien)).toEqual({ fichier: "python3", args: ["--version"] });
   });
 
-  it("ignore les espaces de bordure", () => {
+  it("ignore les espaces de bordure", async () => {
     expect(commandeVersion("  julia  ", rien)).toEqual({ fichier: "julia", args: ["--version"] });
   });
 
-  it("rend null sur une valeur inexploitable", () => {
+  it("rend null sur une valeur inexploitable", async () => {
     for (const v of [null, undefined, "", "   ", 42, {}]) {
       expect(commandeVersion(v as any, rien), JSON.stringify(v)).toBeNull();
     }
@@ -64,46 +64,46 @@ describe("commandeVersion", () => {
 });
 
 describe("infoExecutable", () => {
-  it("rend la version, débarrassée du retour à la ligne", () => {
-    const r = infoExecutable("python3", () => "Python 3.13.1\n", rien);
+  it("rend la version, débarrassée du retour à la ligne", async () => {
+    const r = await infoExecutable("python3", () => "Python 3.13.1\n", rien);
     expect(r).toEqual({ disponible: true, chemin: "python3", version: "Python 3.13.1" });
   });
 
-  it("passe au lanceur un fichier et des arguments séparés", () => {
+  it("passe au lanceur un fichier et des arguments séparés", async () => {
     // La vérification qui garantit l'absence de shell : ce qui sort d'ici va
     // dans execFile, donc aucune citation n'est à faire nulle part.
     let recu: unknown[] = [];
-    infoExecutable(PYTHON_ESPACES, (f: string, a: string[]) => { recu = [f, a]; return "Python 3.13.1"; }, disque(PYTHON_ESPACES));
+    await infoExecutable(PYTHON_ESPACES, (f: string, a: string[]) => { recu = [f, a]; return "Python 3.13.1"; }, disque(PYTHON_ESPACES));
     expect(recu).toEqual([PYTHON_ESPACES, ["--version"]]);
   });
 
-  it("ne lève JAMAIS quand l'exécutable a disparu", () => {
+  it("ne lève JAMAIS quand l'exécutable a disparu", async () => {
     // Le second défaut : l'appel vivait dans le littéral retourné, donc une
     // erreur rejetait la promesse IPC au lieu de rendre « indisponible ».
-    const r = infoExecutable("python3", () => { throw new Error("ENOENT"); }, rien);
+    const r = await infoExecutable("python3", () => { throw new Error("ENOENT"); }, rien);
     expect(r.disponible).toBe(false);
     expect(r.version).toBeNull();
     expect(r.erreur).toContain("ENOENT");
   });
 
-  it("conserve le chemin en cas d'échec", () => {
+  it("conserve le chemin en cas d'échec", async () => {
     // Savoir QUEL exécutable a échoué aide à le reconfigurer ; « indisponible »
     // tout court n'aide pas.
-    const r = infoExecutable(PYTHON_ESPACES, () => { throw new Error("x"); }, disque(PYTHON_ESPACES));
+    const r = await infoExecutable(PYTHON_ESPACES, () => { throw new Error("x"); }, disque(PYTHON_ESPACES));
     expect(r.chemin).toBe(PYTHON_ESPACES);
   });
 
-  it("rend indisponible sans rien lancer quand aucun exécutable n'est configuré", () => {
+  it("rend indisponible sans rien lancer quand aucun exécutable n'est configuré", async () => {
     let lance = false;
-    const r = infoExecutable(null, () => { lance = true; return ""; }, rien);
+    const r = await infoExecutable(null, () => { lance = true; return ""; }, rien);
     expect(r).toEqual({ disponible: false, chemin: null, version: null });
     expect(lance).toBe(false);
   });
 
-  it("accepte une sortie non textuelle sans se plaindre", () => {
+  it("accepte une sortie non textuelle sans se plaindre", async () => {
     // execFileSync rend un Buffer quand on oublie .toString() : le module ne
     // doit pas dépendre de la discipline de son appelant.
-    const r = infoExecutable("julia", () => Buffer.from("julia version 1.11.2\n"), rien);
+    const r = await infoExecutable("julia", () => Buffer.from("julia version 1.11.2\n"), rien);
     expect(r.version).toBe("julia version 1.11.2");
   });
 });

@@ -9,6 +9,7 @@ import { avecDoc } from "./notices";
 export const fiches: FicheAudio[] = ([
   {
     id: "hard-panner",
+    memoire: "flux", // dstL[i] / dstR[i] depuis src[i]
     nom: "Hard panner",
     nomEn: "Hard panner",
     univers: "Traitement",

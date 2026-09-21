@@ -69,12 +69,25 @@ contextBridge.exposeInMainWorld("api", {
 
   captureSources: () => ipcRenderer.invoke("capture:systeme-audio"),
 
+  // Les modèles ONNX téléchargés à la demande. `modelesProgression` rend de quoi se désabonner :
+  // un composant qui se démonte sans le faire laisserait un écouteur par montage.
+  modelesEtat: () => ipcRenderer.invoke("modeles:etat"),
+  modelesTelecharger: (ids) => ipcRenderer.invoke("modeles:telecharger", ids),
+  modelesAnnuler: () => ipcRenderer.invoke("modeles:annuler"),
+  modelesProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("modeles:progression", ecouteur);
+    return () => ipcRenderer.removeListener("modeles:progression", ecouteur);
+  },
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),
   majTelecharger: () => ipcRenderer.invoke("maj:telecharger"),
   majEvenement: (callback) => ipcRenderer.on("maj:info", (_e, info) => callback(info)),
   majSauvegarderBackup: (data) => ipcRenderer.invoke("maj:sauvegarder-backup", data),
+  // blocage accepté : lu au tout debut du chargement de la page, avant qu'il y ait une interface a geler ;
+  // la restauration doit etre connue avant le premier rendu, sans quoi on afficherait un graphe vide.
   majRestaurerBackupSync: () => ipcRenderer.sendSync("maj:restaurer-backup-sync"),
   majBackupDemande: (callback) => ipcRenderer.on("maj:backup-demande", () => callback()),
 
@@ -83,4 +96,9 @@ contextBridge.exposeInMainWorld("api", {
   // passant par IPC — puis ferme dès que `fermeturePrete` lui répond.
   fermetureDemandeSauvegarde: (callback) => ipcRenderer.on("fermeture:sauvegarder", () => callback()),
   fermeturePrete: () => ipcRenderer.send("fermeture:prete"),
+
+  // Mémoire occupée par TOUS les processus de l'application. Seul le processus principal la
+  // connaît : un onglet ne voit que son propre tas, et un tampon audio n'y est pas (cf.
+  // ui/memoire-vive.ts). Interrogée toutes les deux secondes par la barre d'outils.
+  mesurerMemoire: () => ipcRenderer.invoke("memoire:mesurer"),
 });

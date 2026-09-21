@@ -27,9 +27,9 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres",
     famille: "Test zone",
     resume:
-      "[EXPÉRIMENTAL] Prolonge une piste audio en conditionnant Stable Audio 3 small-music par son latent. Qualité limitée : l'encodeur int4 n'est pas parfaitement aligné avec le DiT. Le modèle ONNX (~640 Mo + encodeur) tourne dans le process principal.",
+      "[expérimental] Prolonge une piste audio en conditionnant Stable Audio 3 small-music par son latent. Qualité limitée : l'encodeur int4 n'est pas parfaitement aligné avec le DiT. Le modèle ONNX (~640 Mo + encodeur) tourne dans le process principal.",
     resumeEn:
-      "[EXPERIMENTAL] Extends an audio track by conditioning Stable Audio 3 small-music on its latent. Quality is limited: the int4 encoder is not perfectly aligned with the DiT. The ONNX model (~640 MB + encoder) runs in the main process.",
+      "[experimental] Extends an audio track by conditioning Stable Audio 3 small-music on its latent. Quality is limited: the int4 encoder is not perfectly aligned with the DiT. The ONNX model (~640 MB + encoder) runs in the main process.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
       { nom: "Prompt", nomEn: "Prompt", type: "texte", requis: false },

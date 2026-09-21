@@ -2,7 +2,8 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, echoLogistique, chopperLogistique, spatialiserStereo } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, echoLogistique, chopperLogistique, spatialiserStereo, trajectoirePanoramique } from "./effets-spectral";
+import { engendrer } from "./courbe";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -304,6 +305,91 @@ describe("spatialiserStereo", () => {
     // canaux portent du signal (même si HRTF les balance légèrement).
     expect(rmsCanal(out, 0)).toBeGreaterThan(0.01);
     expect(rmsCanal(out, 1)).toBeGreaterThan(0.01);
+  });
+});
+
+describe("la trajectoire du point sonore", () => {
+  // Ce qui se teste ici n'est pas le rendu HRTF — c'est le parcours qu'on lui donne, et les trois
+  // décisions qui pourraient être fausses : ce que vaut le zéro d'une courbe, ce que vaut son un,
+  // et ce que la largeur fait au trajet.
+  const PLAGE = { min: -1, max: 1 };
+
+  it("sans courbe, la trajectoire est une constante à la valeur du réglage", () => {
+    const t = trajectoirePanoramique(null, 10, 0.5, 1, PLAGE);
+    expect([...t]).toEqual(Array(10).fill(2.5)); // 0,5 × 1 × 5
+  });
+
+  it("une rampe part de « Modulation min » et arrive à « Modulation max »", () => {
+    const t = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "rampe" }), 100, 0, 1, PLAGE);
+    expect(t[0]).toBeCloseTo(-5, 5);
+    expect(t[t.length - 1]).toBeCloseTo(5, 5);
+  });
+
+  it("les bornes se resserrent : une courbe bornée à ±20 % ne sort pas de ±1", () => {
+    const t = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "rampe" }), 100, 0, 1, { min: -0.2, max: 0.2 });
+    expect(Math.max(...t)).toBeCloseTo(1, 5);
+    expect(Math.min(...t)).toBeCloseTo(-1, 5);
+  });
+
+  it("les bornes s'inversent : min au-dessus de max fait voyager de droite à gauche", () => {
+    const t = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "rampe" }), 100, 0, 1, { min: 1, max: -1 });
+    expect(t[0]).toBeCloseTo(5, 5);
+    expect(t[t.length - 1]).toBeCloseTo(-5, 5);
+  });
+
+  it("la largeur à zéro ramène tout le trajet au centre — un mono ne se déplace pas", () => {
+    const t = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "rampe" }), 100, 0.8, 0, PLAGE);
+    expect([...t].every((v) => v === 0)).toBe(true);
+  });
+
+  it("la largeur à moitié fait un trajet deux fois plus court", () => {
+    const plein = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "sinus" }), 50, 0, 1, PLAGE);
+    const moitie = trajectoirePanoramique(engendrer({ dureeSec: 1, forme: "sinus" }), 50, 0, 0.5, PLAGE);
+    for (let i = 0; i < plein.length; i++) expect(moitie[i]).toBeCloseTo(plein[i] / 2, 5);
+  });
+
+  it("jamais moins de deux points : une trajectoire d'un seul point ne s'interpole pas", () => {
+    expect(trajectoirePanoramique(null, 0, 0, 1, PLAGE).length).toBe(2);
+    expect(trajectoirePanoramique(null, 1, 0, 1, PLAGE).length).toBe(2);
+  });
+});
+
+describe("le son se déplace vraiment quand une courbe est branchée", () => {
+  /** Énergie de la première et de la dernière moitié d'un canal. */
+  const moities = (b: AudioBuffer, canal: number) => {
+    const d = b.getChannelData(canal);
+    const mi = Math.floor(d.length / 2);
+    const somme = (a: number, z: number) => {
+      let s = 0;
+      for (let i = a; i < z; i++) s += d[i] * d[i];
+      return Math.sqrt(s / (z - a));
+    };
+    return { debut: somme(0, mi), fin: somme(mi, d.length) };
+  };
+
+  const bruit = () => {
+    const n = Math.floor(SR * 0.4);
+    const b = new AudioBufferNWA({ numberOfChannels: 1, length: n, sampleRate: SR }) as any;
+    const d = b.getChannelData(0);
+    let g = 12345;
+    for (let i = 0; i < n; i++) { g = (g * 1103515245 + 12345) & 0x7fffffff; d[i] = g / 0x3fffffff - 1; }
+    return b;
+  };
+
+  it("une rampe de gauche à droite : le gauche s'éteint pendant que le droit monte", async () => {
+    const out = await spatialiserStereo(bruit(), 0, 1, engendrer({ dureeSec: 0.4, forme: "rampe" }), { min: -1, max: 1 });
+    const g = moities(out, 0);
+    const d = moities(out, 1);
+    expect(g.debut).toBeGreaterThan(g.fin);
+    expect(d.fin).toBeGreaterThan(d.debut);
+  });
+
+  it("sans courbe, rien n'a bougé : les deux moitiés d'un canal pèsent pareil", async () => {
+    const out = await spatialiserStereo(bruit(), -0.8, 1);
+    const g = moities(out, 0);
+    expect(g.fin).toBeCloseTo(g.debut, 1);
+    // Et la position fixe reste entendue : à gauche, le canal gauche domine.
+    expect(rmsCanal(out, 0)).toBeGreaterThan(rmsCanal(out, 1));
   });
 });
 

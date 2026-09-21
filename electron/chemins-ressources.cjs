@@ -40,11 +40,29 @@ const path = require("path");
  * @param empaquete `app.isPackaged`
  * @param racineRessources `process.resourcesPath`
  * @param racineProjet racine du dépôt, en développement
+ * @param dossierUtilisateur dossier inscriptible où les ressources téléchargées sont posées
  * @param existe injecté pour les tests
  */
-function resoudreRessource(chemin, { empaquete, racineRessources, racineProjet, existe = fs.existsSync } = {}) {
+function resoudreRessource(chemin, {
+  empaquete, racineRessources, racineProjet, dossierUtilisateur, existe = fs.existsSync,
+} = {}) {
   if (typeof chemin !== "string" || chemin === "") return null;
   if (path.isAbsolute(chemin)) return chemin;
+
+  // LE DOSSIER DE L'UTILISATEUR PASSE EN PREMIER, et c'est délibéré.
+  //
+  // Les ressources livrées vivent sous `resources/`, c'est-à-dire dans « Program Files » : une
+  // application installée ne peut pas y écrire sans droits d'administrateur. Les modèles
+  // téléchargés à la demande vont donc dans le dossier de données de l'utilisateur, et c'est là
+  // qu'il faut chercher AVANT — sans quoi la version allégée ne trouverait jamais ce qu'elle vient
+  // de télécharger, et un modèle abîmé dans l'installation ne pourrait pas être réparé.
+  //
+  // Pour la version complète, rien ne change : le dossier de l'utilisateur est vide, et le fichier
+  // est trouvé sous `resources/` comme avant.
+  if (dossierUtilisateur) {
+    const chezUtilisateur = path.join(dossierUtilisateur, chemin);
+    if (existe(chezUtilisateur)) return chezUtilisateur;
+  }
 
   const base = empaquete ? racineRessources : racineProjet;
   if (!base) return null;

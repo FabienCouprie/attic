@@ -70,8 +70,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Longueur maximale de la réponse (num_predict). Les modèles avec thinking (Qwen3) ont besoin de plus de tokens.",
         docEn: "Maximum response length (num_predict). Models with thinking mode (Qwen3) need more tokens." },
       { nom: "Délai max", nomEn: "Timeout", plage: [30, 1800], pas: 30, defaut: 600, unite: "s",
-        doc: "Délai avant abandon. Le PREMIER appel à un modèle doit le charger en mémoire : comptez plusieurs minutes pour un gros modèle (Qwen3.6 = 24 Go). Les appels suivants sont bien plus rapides tant que le modèle reste résident.",
-        docEn: "Timeout before aborting. The FIRST call to a model must load it into memory: allow several minutes for a large model (Qwen3.6 = 24 GB). Subsequent calls are much faster while the model stays resident." },
+        doc: "Délai avant abandon. Le premier appel à un modèle doit le charger en mémoire : comptez plusieurs minutes pour un gros modèle (Qwen3.6 = 24 Go). Les appels suivants sont bien plus rapides tant que le modèle reste résident.",
+        docEn: "Timeout before aborting. The first call to a model must load it into memory: allow several minutes for a large model (Qwen3.6 = 24 GB). Subsequent calls are much faster while the model stays resident." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);

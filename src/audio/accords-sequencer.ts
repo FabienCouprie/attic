@@ -9,8 +9,8 @@ import { notesVersFichierMidi, rendreSequence } from "./midi";
 import { degresGammeAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
 
 export const NB_DEGRES_ACCORDS = 7;
-export const EXTENSIONS_ACCORDS = ["aucune", "septieme", "sixte"] as const;
-export const NB_EXTENSIONS_PAR_DEGRE = EXTENSIONS_ACCORDS.length;
+const EXTENSIONS_ACCORDS = ["aucune", "septieme", "sixte"] as const;
+const NB_EXTENSIONS_PAR_DEGRE = EXTENSIONS_ACCORDS.length;
 export const NB_LIGNES_ACCORDS = NB_DEGRES_ACCORDS * NB_EXTENSIONS_PAR_DEGRE;
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -79,7 +79,7 @@ export function qualiteSixte(degres: number[], degre: number): string {
   return "6";
 }
 
-export function suffixePourExtension(
+function suffixePourExtension(
   degres: number[],
   degre: number,
   extension: "aucune" | "septieme" | "sixte",

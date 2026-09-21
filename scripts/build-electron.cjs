@@ -58,6 +58,9 @@ function removeDirectory(dir) {
   }
 }
 
+/** `--light` construit l'installeur sans les modèles ONNX (voir plus bas). */
+const light = process.argv.includes("--light");
+
 function main() {
   originalPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   if (fs.existsSync(packageLockPath)) {
@@ -66,6 +69,30 @@ function main() {
 
   const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   pkg.packageManager = "traversal@1.0.0";
+
+  // ── La version allégée ──────────────────────────────────────────────────────────
+  //
+  // `--light` retire les modèles ONNX des ressources embarquées : 1,5 Go de moins, récupérés
+  // depuis l'application par l'icône « Récupérer les modèles IA ». Tout le reste — le SoundFont,
+  // la collection de démonstration, le kit SFZ, Csound — reste embarqué.
+  //
+  // LE RETRAIT SE FAIT DANS package.json, ET NON EN MÉMOIRE, parce que
+  // `verify-bundled-resources.cjs` lit ce fichier : la vérification d'après packaging doit
+  // contrôler la liste ALLÉGÉE, faute de quoi elle réclamerait des modèles qu'on vient de décider
+  // de ne pas embarquer, et ferait échouer une build correcte.
+  if (light) {
+    const avant = pkg.build.extraResources.length;
+    pkg.build.extraResources = pkg.build.extraResources.filter((r) => r.from !== "public/oonx");
+    if (pkg.build.extraResources.length === avant) {
+      console.error("[build] --light : « public/oonx » n'est plus dans extraResources, rien à retirer.");
+      process.exit(1);
+    }
+    // Un nom distinct, sans quoi les deux installeurs se recouvriraient dans `release/` comme sur
+    // la page de publication.
+    pkg.build.nsis = { ...pkg.build.nsis, artifactName: "${productName}-Setup-${version}-light.${ext}" };
+    console.log("[build] version ALLÉGÉE : les modèles ONNX ne sont pas embarqués.");
+  }
+
   fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   modified = true;
 

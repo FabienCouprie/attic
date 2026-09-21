@@ -24,6 +24,13 @@
   --text-badge: #a99bb8;
   --success: #9d4edd;
   --success-dim: #5e2a7e;
+  /* Le bouton « Lancer » a sa propre couleur, distincte de « succès » : dans le thème violet
+     elle vaut la même, si bien que rien n'y bouge ; dans le thème plan technique, elle passe au
+     bleu pendant que les pastilles d'état restent vertes. Sans cette variable, teinter le bouton
+     aurait teint aussi les points d'état, le halo d'exécution et le bouton de priorité d'un nœud. */
+  --lancer: var(--success);
+  --lancer-dim: var(--success-dim);
+  --lancer-texte: var(--text-inverse);
   --arret: #e0576f;
   --accent: #a855f7;
   --etiquette-bg: #2a1f3d;
@@ -66,6 +73,14 @@
   --arret: #fb7185;
   --accent: #5eb3f5;
   --etiquette-bg: #1a3f7f;
+  /* Le bouton « Lancer » au ton du thème : le vert de « succès » y jurait, seule tache chaude
+     d'une barre entièrement bleue. Bleu SOUTENU et texte blanc plutôt que bleu clair et texte
+     sombre : le bleu clair passait pour un bouton désactivé au milieu d'une barre sombre, là où
+     un bleu dense se lit comme l'action principale. Le blanc sur ce fond tient 6,0 pour 1 en
+     contraste — calculé, pas estimé —, au-dessus des 4,5 exigés pour un texte d'interface. */
+  --lancer: #1e64ac;
+  --lancer-dim: #173f6b;
+  --lancer-texte: #ffffff;
 }
 
 /* Nœuds : gardent les teintes neutres de l'ancien thème « dark » (demandé
@@ -252,14 +267,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-favs-drop a:hover { background: var(--bg-hover); }
 .attic-btn-lancer {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-left: 8px; background: var(--success); color: var(--text-inverse);
+  margin-left: 8px; background: var(--lancer, var(--success)); color: var(--lancer-texte, var(--text-inverse));
   border: none; border-radius: 8px; padding: 8px 18px 8px 14px;
   font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: filter 0.15s, transform 0.1s; flex-shrink: 0;
 }
 .attic-btn-lancer:hover { filter: brightness(1.08); }
 .attic-btn-lancer:active { transform: scale(0.97); }
-.attic-btn-lancer:disabled { background: var(--success-dim); cursor: default; transform: none; filter: none; }
+.attic-btn-lancer:disabled { background: var(--lancer-dim, var(--success-dim)); cursor: default; transform: none; filter: none; }
 /* Pendant un run, le même bouton arrête : il change de couleur pour qu'on ne le
    confonde pas avec un lancement, et il pulse doucement — c'est le seul endroit de la
    barre qui dit que quelque chose tourne, depuis qu'il ne montre plus « … ». */
@@ -303,6 +318,15 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-chemin {
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 140px;
+}
+/* Le compteur de mémoire, à droite de la réinitialisation. Chiffres à chasse fixe : sans cela,
+   la largeur change à chaque relevé et le bouton « Lancer » tressaute deux fois par seconde. */
+.attic-memoire {
+  font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+  padding: 2px 6px; margin: 0 2px; border-radius: 4px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border);
+  user-select: none; cursor: default;
 }
 .attic-nom-fichier {
   font-size: 11px; color: var(--text-title); white-space: nowrap;
@@ -979,3 +1003,57 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-btn-hover);
   color: var(--text-title);
 }
+
+/* ── Quiz : une question, quatre boutons, et pourquoi ──
+   Tout est pris aux variables du thème : le quiz n'invente aucune couleur, sauf les deux
+   teintes du juste et du faux, qui doivent se lire d'un coup d'œil sans avoir à relire le texte. */
+.attic-quiz {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; width: 100%; height: 100%;
+  font-size: 11px; color: var(--text-primary); overflow: hidden;
+}
+.attic-quiz-tete { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.attic-quiz-theme {
+  background: var(--bg-badge); color: var(--text-badge);
+  border-radius: 4px; padding: 1px 6px; font-size: 10px; text-transform: lowercase;
+}
+.attic-quiz-avance { color: var(--text-tertiary); font-family: monospace; }
+.attic-quiz-score { flex: 1; text-align: right; color: var(--text-secondary); font-family: monospace; font-size: 10px; }
+.attic-quiz-btn-outil {
+  background: transparent; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-muted); cursor: pointer; font-size: 11px; padding: 0 5px; line-height: 18px;
+}
+.attic-quiz-btn-outil:hover { color: var(--text-title); background: var(--bg-btn-hover); }
+.attic-quiz-jauge { height: 2px; background: var(--bg-input); border-radius: 1px; overflow: hidden; flex-shrink: 0; }
+.attic-quiz-jauge > div { height: 100%; background: var(--accent); transition: width 0.2s ease; }
+.attic-quiz-enonce { font-size: 12px; line-height: 1.35; color: var(--text-title); flex-shrink: 0; }
+.attic-quiz-choix { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.attic-quiz-prop {
+  display: flex; gap: 6px; align-items: baseline; text-align: left; width: 100%;
+  background: var(--bg-btn); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text-primary); cursor: pointer; font-size: 11px; line-height: 1.3; padding: 5px 7px;
+}
+.attic-quiz-prop:hover:not(:disabled) { background: var(--bg-btn-hover); border-color: var(--accent); }
+.attic-quiz-prop:disabled { cursor: default; }
+.attic-quiz-prop.juste { border-color: #3fb27f; background: rgba(63,178,127,0.14); }
+.attic-quiz-prop.faux { border-color: var(--arret); background: rgba(224,87,111,0.14); }
+.attic-quiz-prop.pale { opacity: 0.45; }
+.attic-quiz-lettre { color: var(--text-muted); font-family: monospace; flex-shrink: 0; }
+.attic-quiz-retour, .attic-quiz-bilan { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.attic-quiz-juste { color: #3fb27f; font-weight: 600; }
+.attic-quiz-rate { color: var(--arret); font-weight: 600; }
+.attic-quiz-pourquoi { color: var(--text-secondary); line-height: 1.4; }
+.attic-quiz-actions { display: flex; gap: 6px; padding-top: 2px; }
+.attic-quiz-btn-suite {
+  background: var(--bg-btn); border: 1px solid var(--accent); border-radius: 5px;
+  color: var(--text-title); cursor: pointer; font-size: 11px; padding: 4px 10px;
+}
+.attic-quiz-btn-suite:hover { background: var(--bg-hover-accent); }
+.attic-quiz-fini { color: var(--text-title); font-size: 12px; font-weight: 600; }
+.attic-quiz-parTheme { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--text-tertiary); font-family: monospace; font-size: 10px; }
+.attic-quiz-revoir { color: var(--text-secondary); text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em; padding-top: 4px; }
+.attic-quiz-manquee { border-left: 2px solid var(--arret); padding-left: 6px; display: flex; flex-direction: column; gap: 2px; }
+.attic-quiz-enonce-petit { color: var(--text-primary); line-height: 1.3; }
+.attic-quiz-bonne { color: #3fb27f; font-family: monospace; }
+.attic-quiz-pied { color: var(--text-muted); font-size: 10px; flex-shrink: 0; padding-top: 2px; }
+.attic-quiz-vide { color: var(--text-secondary); padding: 12px 0; }

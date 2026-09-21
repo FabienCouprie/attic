@@ -9,7 +9,7 @@ import { registre } from "../audio/adaptateur";
 
 const trouverDef = (ficheId: string) => registre.trouverDef(ficheId);
 
-export function indexHandle(handle: string | null | undefined): number | null {
+function indexHandle(handle: string | null | undefined): number | null {
   if (!handle) return null;
   const m = handle.match(/^[^:]+:(\d+)$/);
   if (!m) return null;

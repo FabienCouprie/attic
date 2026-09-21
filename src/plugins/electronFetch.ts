@@ -4,7 +4,7 @@
 // Le processus principal n’a pas les contraintes CSP/CORS du renderer, donc on route les requêtes
 // distantes (tfhub.dev, storage.googleapis.com, kaggle.com, pollinations.ai…) par lui.
 
-export function isModelDownloadUrl(url: string): boolean {
+function isModelDownloadUrl(url: string): boolean {
   return /tfhub\.dev|storage\.googleapis\.com|kagglesdsdata|kaggle\.com|googleusercontent\.com/i.test(url);
 }
 

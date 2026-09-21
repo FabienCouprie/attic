@@ -13,7 +13,7 @@
 // rien ne sort de B tant que C n'a pas démarré. L'animation montrait un flux
 // vers un nœud qui n'allait peut-être jamais s'exécuter.
 
-/** Statut d'exécution d'un nœud, tel que le moteur le pose dans `data.statut`. */
+/** Statut d'exécution d'un nœud, tel que le moteur le pose dans le magasin `ui/statuts.ts`. */
 export type StatutNoeud = "attente" | "en_cours" | "termine" | "erreur" | undefined;
 
 /**

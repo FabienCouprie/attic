@@ -40,7 +40,7 @@ export const FREQUENCE_ECH = 44100;
  * rien — avec quatre millions d'appels, un orchestre sans fin bloquait le graphe un quart
  * d'heure avant d'abandonner, et l'on ne savait pas pourquoi.
  */
-export const BLOCS_MAX = 10_000;
+const BLOCS_MAX = 10_000;
 
 /**
  * Nombre de tentatives par rendu.
@@ -57,7 +57,7 @@ export const BLOCS_MAX = 10_000;
  * ramènent le risque d'un rendu sur dix à un sur mille. Une reprise ne coûte que sur l'échec,
  * et le son est déjà écrit : il ne se réécrit pas.
  */
-export const TENTATIVES = 3;
+const TENTATIVES = 3;
 
 export interface OptionsCsd {
   orchestre: string;

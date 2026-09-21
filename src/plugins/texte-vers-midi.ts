@@ -54,7 +54,7 @@ function parserNotation(texte: string, tempoInitial: number): { notes: NoteEvene
   return { notes, tempo };
 }
 
-const EXEMPLE = "TEMPO 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
+const EXEMPLE = "Tempo 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -62,8 +62,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Convertit une notation texte (note/accord par ligne) en MIDI + audio.",
     resumeEn: "Converts a text notation (one note/chord per line) into MIDI + audio.",
-    notice: "Rend une notation texte simple en fichier MIDI et en audio synthétisé. Une ligne = « note octave durée [vélocité] », ex. « C4 0.5 » ou « C4+E4+G4 1 » (accord), « rest 0.5 » pour un silence, « TEMPO 120 » en tête. Le texte vient de l'entrée (port bleu) ou du paramètre. Idéal branché après un nœud IA (Ollama, GPT-2) à qui l'on demande ce format.",
-    noticeEn: "Renders a simple text notation into a MIDI file and synthesized audio. One line = « note octave duration [velocity] », e.g. « C4 0.5 » or « C4+E4+G4 1 » (chord), « rest 0.5 » for a rest, « TEMPO 120 » at the top. Text comes from the input (blue port) or the parameter. Ideal after an AI node (Ollama, GPT-2) prompted to output this format.",
+    notice: "Rend une notation texte simple en fichier MIDI et en audio synthétisé. Une ligne = « note octave durée [vélocité] », ex. « C4 0.5 » ou « C4+E4+G4 1 » (accord), « rest 0.5 » pour un silence, « Tempo 120 » en tête. Le texte vient de l'entrée (port bleu) ou du paramètre. Idéal branché après un nœud IA (Ollama, GPT-2) à qui l'on demande ce format.",
+    noticeEn: "Renders a simple text notation into a MIDI file and synthesized audio. One line = « note octave duration [velocity] », e.g. « C4 0.5 » or « C4+E4+G4 1 » (chord), « rest 0.5 » for a rest, « Tempo 120 » at the top. Text comes from the input (blue port) or the parameter. Ideal after an AI node (Ollama, GPT-2) prompted to output this format.",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
@@ -71,8 +71,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Notation à convertir, utilisée si aucune entrée texte n'est connectée. Une note/accord par ligne.",
         docEn: "Notation to convert, used when no text input is connected. One note/chord per line." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Tempo par défaut (temps → secondes). Une ligne « TEMPO n » dans le texte le remplace.",
-        docEn: "Default tempo (beats → seconds). A « TEMPO n » line in the text overrides it." },
+        doc: "Tempo par défaut (temps → secondes). Une ligne « Tempo n » dans le texte le remplace.",
+        docEn: "Default tempo (beats → seconds). A « Tempo n » line in the text overrides it." },
       PARAMETRE_SYNTHESE,
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

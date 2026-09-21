@@ -244,7 +244,7 @@ function notationEasyScore(texte: string): { notes: string; totalQuarts: number 
   return { notes: parts.join(", "), totalQuarts };
 }
 
-export function genererPortee(notation: string, clef: string, largeur: number, hauteur: number): string {
+function genererPortee(notation: string, clef: string, largeur: number, hauteur: number): string {
   const { div } = creerRenderer(largeur, hauteur);
   div.id = "vex-" + Math.random().toString(36).slice(2);
   document.body.appendChild(div);

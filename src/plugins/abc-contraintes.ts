@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Opération", nomEn: "Operation", type: "choix",
         options: ["Réharmoniser", "Réécrire les hauteurs"], optionsEn: ["Reharmonize", "Rewrite pitches"],
         optionIds: ["reharmoniser", "hauteurs"], defaut: "Réharmoniser", defautEn: "Reharmonize",
-        doc: "Réharmoniser : le modèle ne rend que les accords de chaque mesure, posés ensuite sur la mélodie d'origine, qu'il ne peut donc pas abîmer. Réécrire les hauteurs : il ne rend qu'une hauteur par note, posée sur le rythme d'origine — changement de mode, de tonalité, de contour. Il n'y a PAS de variation libre du rythme : mesuré sur deux modèles locaux, elle a échoué 10 fois sur 10, les modèles se trompant sur la durée des mesures.",
+        doc: "Réharmoniser : le modèle ne rend que les accords de chaque mesure, posés ensuite sur la mélodie d'origine, qu'il ne peut donc pas abîmer. Réécrire les hauteurs : il ne rend qu'une hauteur par note, posée sur le rythme d'origine — changement de mode, de tonalité, de contour. Il n'y a pas de variation libre du rythme : mesuré sur deux modèles locaux, elle a échoué 10 fois sur 10, les modèles se trompant sur la durée des mesures.",
         docEn: "Reharmonize: the model only returns the chords of each bar, then placed on the original melody, which it therefore cannot damage. Rewrite pitches: it only returns one pitch per note, placed on the original rhythm — change of mode, key, contour. There is NO free rhythmic variation: measured on two local models, it failed 10 times out of 10, the models getting bar lengths wrong." },
       { nom: "Consigne", nomEn: "Instruction", type: "texte",
         defaut: CONSIGNE_DEFAUT, defautEn: CONSIGNE_DEFAUT,

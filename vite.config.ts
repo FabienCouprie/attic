@@ -28,7 +28,15 @@ export default defineConfig({
   // ReferenceError en un { ok: false } silencieux. Le process principal
   // exécute du code au moins aussi délicat que le renderer — protection Zip
   // Slip comprise — il doit être couvert de la même façon.
-  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'scripts/**/*.test.ts'], testTimeout: 15000 },
+  // LE DÉLAI EST CELUI D'UNE MACHINE DONT ON NE CHOISIT PAS LA VITESSE. Une partie de cette suite
+  // rend vraiment du son — Tone.js hors ligne, Griffin-Lim sur deux secondes de stéréo, des
+  // convolutions de réverbération — et ces tests coûtent plusieurs secondes chacun. Tant que la
+  // suite était étroite, quinze secondes suffisaient ; à deux cent quatre-vingts fichiers tournant
+  // en parallèle, deux d'entre eux ont commencé à expirer par intermittence sur cette machine —
+  // et le runner d'intégration continue est plus lent qu'elle. Un échec de délai ne dit alors rien
+  // du code, seulement de la charge, et c'est la pire sorte : il fait douter d'un résultat juste.
+  // Soixante secondes ne coûtent rien — seuls les tests qui se bloquent VRAIMENT les paient.
+  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'scripts/**/*.test.ts'], testTimeout: 60000 },
 })
 
 // Vite dev server does not always serve .wasm files with the correct MIME type,

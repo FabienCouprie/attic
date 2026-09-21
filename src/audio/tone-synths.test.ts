@@ -1,5 +1,11 @@
 // audio/tone-synths.test.ts — Test de rendu offline Tone.js (MembraneSynth, MetalSynth, PolySynth, FM/AM, PluckSynth).
 // Le polyfill Web Audio pour Node.js doit etre charge avant Tone.js.
+//
+// CES TESTS RENDENT VRAIMENT DU SON, et c'est ce qui les rend lents : Tone.js construit une chaîne
+// complète dans un contexte hors ligne, et le polyfill Web Audio de Node n'a pas la vitesse d'un
+// navigateur. Mesuré : sept secondes pour ce seul fichier, quand la suite entière en prend
+// cinquante. C'est pour eux que le délai global de la suite est à soixante secondes plutôt qu'aux
+// quinze par défaut (cf. `vite.config.ts`) : sous charge, ce fichier les dépassait.
 
 // @ts-ignore
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;

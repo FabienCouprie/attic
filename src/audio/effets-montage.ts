@@ -199,6 +199,27 @@ export interface CentreCoteResult {
 
 
 
+/**
+ * Deux prises mono réunies en une stéréo : la première à gauche, la seconde à droite.
+ *
+ * L'INVERSE DU SÉPARATEUR DE CANAUX, qui existait seul — on pouvait défaire une stéréo sans
+ * pouvoir en refaire une. C'est le geste de toute prise à deux micros : deux fichiers mono, deux
+ * chaînes de traitement séparées, et une stéréo à la fin.
+ *
+ * LA DURÉE EST CELLE DU PLUS LONG, et le plus court est complété par du silence plutôt que bouclé
+ * ou étiré : deux prises de longueurs différentes ne sont pas la même prise, et faire coïncider
+ * leurs fins inventerait un alignement que personne n'a demandé.
+ */
+export function fusionnerStereo(gauche: AudioBuffer, droite: AudioBuffer): AudioBuffer {
+  const longueur = Math.max(gauche.length, droite.length);
+  const resultat = new AudioBuffer({
+    numberOfChannels: 2, length: longueur, sampleRate: gauche.sampleRate,
+  });
+  resultat.getChannelData(0).set(gauche.getChannelData(0).subarray(0, longueur), 0);
+  resultat.getChannelData(1).set(droite.getChannelData(0).subarray(0, longueur), 0);
+  return resultat;
+}
+
 export function echangerCanaux(buffer: AudioBuffer): AudioBuffer {
   if (buffer.numberOfChannels < 2) return buffer;
   const sampleRate = buffer.sampleRate;
@@ -253,6 +274,34 @@ export function separerCanaux(buffer: AudioBuffer): SeparateurCanauxResult {
   return { gauche, droite };
 }
 
+/**
+ * Inverse la POLARITÉ : chaque échantillon change de signe.
+ *
+ * À NE PAS CONFONDRE AVEC `inverserAudio`, juste en dessous, qui inverse le TEMPS. La confusion
+ * n'est pas théorique : le nœud de lecture à l'envers s'appelait « Inverseur audio » et se
+ * résumait par « inverse le signal », qui est la formule dont tout le métier désigne la polarité.
+ *
+ * SEUL, CELA NE S'ENTEND PAS, et c'est normal : l'oreille est insensible à la polarité absolue
+ * d'un son. C'est en RELATION que l'opération travaille — additionnez un son et sa polarité
+ * inverse, il ne reste rien, et ce silence est le test le plus sûr qui soit pour savoir si deux
+ * fichiers sont identiques. Retournez un canal sur deux, la somme mono se vide. Retournez le micro
+ * du dessous d'une caisse claire, et la peau cesse de s'annuler avec le timbre.
+ */
+export function inverserPolarite(buffer: AudioBuffer): AudioBuffer {
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < buffer.length; i++) dst[i] = -src[i];
+  }
+  return resultat;
+}
+
+/** Inverse le TEMPS : la piste est lue de la fin vers le début. Voir `inverserPolarite`. */
 export function inverserAudio(buffer: AudioBuffer): AudioBuffer {
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,

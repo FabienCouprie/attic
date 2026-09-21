@@ -104,7 +104,7 @@ export function finUtile(audio: AudioBuffer, seuilRelatif = 0.001): number {
 }
 
 /** Coupe un son à sa longueur utile, avec un fondu court pour ne pas laisser de clic. */
-export function rogner(audio: AudioBuffer, longueur: number, fonduSec = 0.005): AudioBuffer {
+function rogner(audio: AudioBuffer, longueur: number, fonduSec = 0.005): AudioBuffer {
   const n = Math.max(1, Math.min(audio.length, Math.round(longueur)));
   const sortie = new AudioBuffer({
     numberOfChannels: audio.numberOfChannels, length: n, sampleRate: audio.sampleRate,

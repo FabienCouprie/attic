@@ -425,8 +425,8 @@ export const fiches: FicheAudio[] = ([
       { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
       { nom:"Charley", nomEn:"Hi-hat", plage:[0,100], defaut:60, unite:"%" },
       { nom:"Graine", nomEn:"Seed", plage:[1,999999], pas:1, defaut:42,
-        doc:"Graine des rafales de bruit (caisse claire, charley). Valeur par défaut FIXE : le même patron doit rendre le même fichier à chaque exécution.",
-        docEn:"Seed for the noise bursts (snare, hi-hat). The default is FIXED: the same pattern must render the same file on every run." },
+        doc:"Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même patron doit rendre le même fichier à chaque exécution.",
+        docEn:"Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
     ],
     async executer(ctx: any) {
       const tempo = ctx.paramNombre("Tempo", 120);

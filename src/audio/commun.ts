@@ -41,9 +41,9 @@ export const TAILLE_FFT_BRUIT = 8192;
 
 export const SAUT_FFT_BRUIT = TAILLE_FFT_BRUIT / 2;
 
-export const TAILLE_FFT_HAUTEUR = 2048;
+const TAILLE_FFT_HAUTEUR = 2048;
 
-export const SAUT_ANALYSE_HAUTEUR = TAILLE_FFT_HAUTEUR / 4;
+const SAUT_ANALYSE_HAUTEUR = TAILLE_FFT_HAUTEUR / 4;
 
 
 export function frequenceDepuisValeur(v: number, min: number, max: number): number {
@@ -287,7 +287,7 @@ export function tramesDepuisBuffer(
  * dépendait jusqu'ici du matériel de l'utilisateur. Le figer rend le décodage
  * déterministe d'une machine à l'autre, et conserve le comportement observé.
  */
-export const SR_DECODAGE = 48000;
+const SR_DECODAGE = 48000;
 
 export function contexteDecodage(): OfflineAudioContext {
   return new OfflineAudioContext(1, 1, SR_DECODAGE);

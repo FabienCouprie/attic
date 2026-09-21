@@ -9,9 +9,9 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { withElectronFetch } from "./electronFetch";
 
-export const OUTPUT_SR = 48000;
+const OUTPUT_SR = 48000;
 
-export const DDSP_CHECKPOINTS: Record<string, string> = {
+const DDSP_CHECKPOINTS: Record<string, string> = {
   "Violon": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/violin",
   "Flûte": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/flute",
   "Saxophone ténor": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/tenor_saxophone",
@@ -25,7 +25,7 @@ const DDSP_CHECKPOINTS_EN: Record<string, string> = {
   "Trumpet": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/trumpet",
 };
 
-export function resolveDdspCheckpoint(value: string, customUrl: string): string | null {
+function resolveDdspCheckpoint(value: string, customUrl: string): string | null {
   if (customUrl.trim()) return customUrl.trim();
   return DDSP_CHECKPOINTS[value] ?? DDSP_CHECKPOINTS_EN[value] ?? null;
 }
@@ -33,7 +33,7 @@ export function resolveDdspCheckpoint(value: string, customUrl: string): string 
 let spiceInstance: any = null;
 const ddspInstances = new Map<string, any>();
 
-export async function getSpice() {
+async function getSpice() {
   if (!spiceInstance) {
     try {
       const mm = await import("@magenta/music");
@@ -49,7 +49,7 @@ export async function getSpice() {
   return spiceInstance;
 }
 
-export async function getDdsp(url: string) {
+async function getDdsp(url: string) {
   if (!ddspInstances.has(url)) {
     try {
       const mm = await import("@magenta/music");

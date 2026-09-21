@@ -128,7 +128,7 @@ export function differenceNormalisee(
 }
 
 /** Interpolation parabolique autour d'un minimum : la période au sous-échantillon près. */
-export function affinerTau(d: Float64Array, tau: number): number {
+function affinerTau(d: Float64Array, tau: number): number {
   if (tau <= 0 || tau >= d.length - 1) return tau;
   const a = d[tau - 1], b = d[tau], c = d[tau + 1];
   const den = a - 2 * b + c;

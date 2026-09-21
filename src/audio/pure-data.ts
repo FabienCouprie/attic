@@ -46,7 +46,7 @@ function isGuiLine(line: string): { index: number; gui: boolean } | null {
 
 /** Supprime les objets GUI du patch Pd ainsi que les connexions qui les référencent.
  * Retourne le source nettoyé et la liste des objets supprimés. */
-export function filtrerObjetsGUI(patchSource: string): { source: string; supprimes: string[] } {
+function filtrerObjetsGUI(patchSource: string): { source: string; supprimes: string[] } {
   const lines = patchSource.split(/\r?\n/);
   const guiIndices = new Set<number>();
   const supprimes: string[] = [];

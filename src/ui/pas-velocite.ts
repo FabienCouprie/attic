@@ -13,7 +13,7 @@ export type GestePas = "bascule" | "monter" | "descendre";
 /** Vélocité donnée à une case qu'on allume sans en avoir réglé la nuance. */
 export const VELOCITE_PAR_DEFAUT = 6;
 
-export const VELOCITE_MAX = 9;
+const VELOCITE_MAX = 9;
 
 /** Maj monte la vélocité, Alt la descend, le clic nu bascule la case. */
 export function gestePas(e: { shiftKey?: boolean; altKey?: boolean }): GestePas {

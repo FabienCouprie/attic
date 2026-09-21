@@ -40,7 +40,7 @@ export interface PositionPointeur {
 }
 
 /** La fenêtre du document, celle que d3 attend dans `event.view`. */
-export const fenetreCourante = (): Window | null =>
+const fenetreCourante = (): Window | null =>
   typeof document !== "undefined" ? document.defaultView : null;
 
 /**

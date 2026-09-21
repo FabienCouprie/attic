@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const { execSync, execFile, execFileSync } = require("child_process");
+const { execSync, execFile } = require("child_process");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
@@ -15,13 +15,21 @@ const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
+const {
+  inventaire: inventaireModeles, avancement: avancementModeles,
+  telechargerFichier, poser: poserFichier,
+} = require("./telechargement-modeles.cjs");
 
 // Lance un exécutable pour lire sa version. SANS SHELL : `execFile` reçoit un
 // fichier et un tableau d'arguments, donc aucune citation à gérer et aucune
 // injection possible. `execSync` interpolait un chemin nu dans une commande
 // shell, ce qui cassait sur « C:\Program Files\… ».
-const lireVersion = (ms) => (fichier, args) =>
-  execFileSync(fichier, args, { stdio: "pipe", timeout: ms }).toString();
+const lireVersion = (ms) => (fichier, args) => new Promise((resolve, reject) => {
+  // `execFile` ET NON `execFileSync` : la version synchrone gelait le processus principal le temps
+  // du delai — jusqu'a cinq secondes sans fenetre, sans menu et sans IPC, a chaque fois que
+  // l'interface demandait la version de Python ou de Julia.
+  execFile(fichier, args, { timeout: ms }, (err, stdout) => (err ? reject(err) : resolve(stdout)));
+});
 
 // Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
 // répond qu'une fois Electron prêt.
@@ -34,10 +42,22 @@ const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-ba
 // calcul vivaient dans ce fichier, dont une seule avec le repli `public/` du
 // développement : un chemin relatif se résolvait par un gestionnaire et pas par
 // un autre, en développement seulement. Voir chemins-ressources.cjs.
+/**
+ * Où vont les ressources téléchargées à la demande.
+ *
+ * `resources/` est dans « Program Files » : une application installée n'y écrit pas sans droits
+ * d'administrateur. Ce dossier-ci est le seul inscriptible sans rien demander, et il reproduit la
+ * même disposition — `oonx/x.onnx` ici répond au même chemin relatif que `oonx/x.onnx` là-bas —
+ * si bien qu'aucun nœud n'a à savoir d'où vient son modèle. Le résolveur y regarde EN PREMIER,
+ * de sorte qu'un modèle téléchargé répare un modèle livré abîmé.
+ */
+const dossierRessourcesUtilisateur = () => path.join(app.getPath("userData"), "ressources");
+
 const contexteRessources = () => ({
   empaquete: app.isPackaged,
   racineRessources: process.resourcesPath,
   racineProjet: path.resolve(__dirname, ".."),
+  dossierUtilisateur: dossierRessourcesUtilisateur(),
 });
 
 const DEV = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
@@ -100,11 +120,13 @@ function detecterPython() {
     : ["python3", "python"];
   for (const c of candidats) {
     try {
+      // blocage accepté : sonde de demarrage, avant la fenetre : le retard se paie au lancement, jamais en cours de travail.
       execSync(`${c} --version`, { stdio: "pipe", timeout: 3000 });
       if (c.includes(" ")) {
         CHEMIN_PYTHON = c;
       } else {
         try {
+          // blocage accepté : sonde de demarrage, avant la fenetre : le retard se paie au lancement, jamais en cours de travail.
           CHEMIN_PYTHON = execSync(`${c} -c "import sys; print(sys.executable)"`, { stdio: "pipe", timeout: 3000 }).toString().trim();
         } catch {
           CHEMIN_PYTHON = c;
@@ -152,6 +174,7 @@ function detecterJulia() {
 
   // PATH
   try {
+    // blocage accepté : sonde de demarrage, avant la fenetre : le retard se paie au lancement, jamais en cours de travail.
     execSync("julia --version", { stdio: "pipe", timeout: 3000 });
     CHEMIN_JULIA = "julia";
   } catch {}
@@ -619,6 +642,134 @@ ipcMain.handle("telecharger:url", async (_event, urlStr) => {
   }
 });
 
+// ─── Les modèles ONNX, téléchargés à la demande ───
+//
+// L'installeur allégé ne les embarque pas ; l'installeur complet les a déjà. Les deux emploient les
+// mêmes gestionnaires : l'inventaire répond simplement « rien à prendre » sur une installation
+// complète, et l'icône y sert alors à réparer un modèle abîmé.
+
+/** Le manifeste, lu à chaque appel : il est minuscule, et le relire évite un cache à invalider. */
+function lireManifesteModeles() {
+  try {
+    const chemin = path.join(__dirname, "..", "scripts", "modeles-manifest.json");
+    return JSON.parse(fs.readFileSync(chemin, "utf8"));
+  } catch (err) {
+    console.error("[attic] manifeste des modèles illisible :", err.message);
+    return { version: 0, modeles: [] };
+  }
+}
+
+/**
+ * Les sondes de l'inventaire, branchées sur le MÊME résolveur que les nœuds.
+ *
+ * C'est ce qui garantit que « présent » veut dire la même chose pour l'icône et pour le nœud qui
+ * ouvrira le modèle : un fichier vu ici est un fichier que `lireModeleEmbarque` trouvera, qu'il
+ * vienne des ressources livrées ou du dossier de l'utilisateur.
+ */
+function sondesModeles() {
+  const ctx = contexteRessources();
+  const ou = (relatif) => resoudreRessource(relatif, ctx);
+  return {
+    existe: (relatif) => { const p = ou(relatif); return Boolean(p) && fs.existsSync(p); },
+    taille: (relatif) => { try { return fs.statSync(ou(relatif)).size; } catch { return -1; } },
+  };
+}
+
+ipcMain.handle("modeles:etat", () => {
+  const inv = inventaireModeles(lireManifesteModeles(), sondesModeles());
+  return { ...inv, dossier: dossierRessourcesUtilisateur() };
+});
+
+let annulationModeles = null;
+
+ipcMain.handle("modeles:annuler", () => {
+  annulationModeles?.abort();
+  return { ok: true };
+});
+
+ipcMain.handle("modeles:telecharger", async (evenement, ids) => {
+  if (annulationModeles && !annulationModeles.signal.aborted) {
+    return { ok: false, erreur: "Un téléchargement est déjà en cours" };
+  }
+  const manifeste = lireManifesteModeles();
+  const inv = inventaireModeles(manifeste, sondesModeles());
+  const voulus = Array.isArray(ids) && ids.length > 0 ? ids : inv.manquants;
+  const file = manifeste.modeles.filter((m) => voulus.includes(m.id) && m.source?.url);
+  if (file.length === 0) return { ok: true, faits: [], rien: true };
+
+  annulationModeles = new AbortController();
+  const signal = annulationModeles.signal;
+  const racine = dossierRessourcesUtilisateur();
+  const faits = [];
+  const dire = (etat) => evenement.sender.send("modeles:progression", etat);
+
+  try {
+    for (const modele of file) {
+      if (signal.aborted) break;
+      const suivi = (octetsRecus) => dire({
+        phase: "telechargement", modele: modele.id, nom: modele.nom,
+        ...avancementModeles({ faits, courant: modele, octetsRecus, file }),
+      });
+      suivi(0);
+
+      // Une archive descend sous son propre nom, un fichier unique sous le chemin qu'il aura.
+      const archive = modele.source.type === "archive";
+      const destination = archive
+        ? path.join(racine, `${modele.id}.zip`)
+        : path.join(racine, modele.fichiers[0].chemin);
+
+      const res = await telechargerFichier(modele.source.url, destination, { onProgress: suivi, signal });
+      if (!res.ok) {
+        if (res.annule) { dire({ phase: "annule" }); return { ok: false, annule: true, faits }; }
+        dire({ phase: "erreur", modele: modele.id, erreur: res.erreur });
+        return { ok: false, erreur: res.erreur, modele: modele.id, faits };
+      }
+      // L'EMPREINTE EST VÉRIFIÉE ICI, et nulle part ailleurs : c'est le seul moment où l'on tient
+      // les octets. Un modèle qui ne correspond pas est jeté — mieux vaut pas de modèle qu'un
+      // modèle faux, qui se manifesterait par un nœud aux résultats inexplicables.
+      if (modele.source.sha256 && res.sha256 !== modele.source.sha256) {
+        try { fs.unlinkSync(res.temporaire); } catch { /* déjà parti */ }
+        const erreur = `Empreinte incorrecte pour ${modele.id}`;
+        dire({ phase: "erreur", modele: modele.id, erreur });
+        return { ok: false, erreur, modele: modele.id, faits };
+      }
+
+      if (archive) {
+        dire({ phase: "extraction", modele: modele.id, nom: modele.nom,
+          ...avancementModeles({ faits, courant: modele, octetsRecus: modele.octets, file }) });
+        const AdmZip = require("adm-zip");
+        const zip = new AdmZip(res.temporaire);
+        const dossierOonx = path.join(racine, "oonx");
+        fs.mkdirSync(dossierOonx, { recursive: true });
+        // Chaque entrée est posée nous-mêmes, jamais `extractAllTo` : c'est la précaution que
+        // décrit `extraire-node-zip.cjs`, et elle ne dépend pas de la version d'adm-zip.
+        for (const entree of zip.getEntries()) {
+          if (entree.isDirectory) continue;
+          const cible = path.resolve(dossierOonx, entree.entryName);
+          if (!cible.startsWith(path.resolve(dossierOonx) + path.sep)) {
+            throw new Error(`Chemin hors du dossier : ${entree.entryName}`);
+          }
+          fs.mkdirSync(path.dirname(cible), { recursive: true });
+          fs.writeFileSync(cible, entree.getData());
+        }
+        fs.unlinkSync(res.temporaire);
+      } else {
+        poserFichier(res.temporaire, destination);
+      }
+      faits.push(modele);
+    }
+  } catch (err) {
+    dire({ phase: "erreur", erreur: String(err && err.message ? err.message : err) });
+    return { ok: false, erreur: String(err && err.message ? err.message : err), faits };
+  } finally {
+    annulationModeles = null;
+  }
+
+  const apres = inventaireModeles(manifeste, sondesModeles());
+  dire({ phase: "fini", ...avancementModeles({ faits, courant: null, file }) });
+  return { ok: true, faits: faits.map((m) => m.id), etat: apres };
+});
+
 ipcMain.handle("app:quitter", () => app.quit());
 
 // Ouvre la documentation en ligne dans le navigateur par défaut.
@@ -802,7 +953,7 @@ ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
     // version lançait le binaire DEUX fois (contrôle, puis lecture de version)
     // et citait le chemin à la main, là où `python:info` juste au-dessus ne le
     // citait pas : d'où un chemin accepté ici et cassé là.
-    const info = infoExecutable(chemin, lireVersion(3000));
+    const info = await infoExecutable(chemin, lireVersion(3000));
     if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_PYTHON = chemin;
     const dataPath = path.join(app.getPath("userData"), "python-path.txt");
@@ -879,7 +1030,7 @@ ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
   try {
     if (!chemin || !fs.existsSync(chemin)) return { ok: false, erreur: "Fichier introuvable" };
     // Même traitement que Python : un seul lancement, sans shell.
-    const info = infoExecutable(chemin, lireVersion(5000));
+    const info = await infoExecutable(chemin, lireVersion(5000));
     if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_JULIA = chemin;
     const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
@@ -1170,6 +1321,13 @@ ipcMain.handle("maj:sauvegarder-backup", async (_event, data) => {
   return ok;
 });
 
+// Mémoire occupée par l'application entière : navigateur, onglets, GPU, utilitaires.
+// `getAppMetrics` lit des compteurs déjà tenus par le système — pas de processus lancé, pas
+// d'attente : la politique non bloquante du processus principal est respectée.
+ipcMain.handle("memoire:mesurer", async () => {
+  return app.getAppMetrics().map((m) => ({ type: m.type, memory: { workingSetSize: m.memory?.workingSetSize ?? 0 } }));
+});
+
 // Restauration des données après mise à jour (synchrone)
 ipcMain.on("maj:restaurer-backup-sync", (event) => {
   // La sauvegarde n'est supprimée QU'APRÈS analyse réussie. L'ancienne version
@@ -1179,6 +1337,7 @@ ipcMain.on("maj:restaurer-backup-sync", (event) => {
   const { donnees, erreur } = lireSauvegarde(CHEMIN_SAUVEGARDE_MAJ());
   if (erreur) console.error("[attic] Backup non restauré —", erreur);
   else if (donnees) console.log("[attic] Backup restauré (sync)");
+  // blocage accepté : l'etat est demande AVANT que la page ne s'ouvre, il n'y a encore rien a geler, et la reponse doit arriver avant le premier rendu.
   event.returnValue = donnees;
 });
 

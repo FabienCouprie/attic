@@ -23,8 +23,8 @@ export const AXES_ESTHETIQUES = ["CE", "CU", "PC", "PQ"] as const;
 export type AxeEsthetique = (typeof AXES_ESTHETIQUES)[number];
 export type ScoresEsthetiques = Record<AxeEsthetique, number>;
 
-export const FREQUENCE_MODELE = 16000;
-export const SECONDES_TRANCHE = 10;
+const FREQUENCE_MODELE = 16000;
+const SECONDES_TRANCHE = 10;
 export const ECHANTILLONS_TRANCHE = FREQUENCE_MODELE * SECONDES_TRANCHE;
 
 const pgcd = (a: number, b: number): number => (b === 0 ? a : pgcd(b, a % b));

@@ -9,6 +9,7 @@ import { avecDoc } from "./notices";
 export const fiches: FicheAudio[] = ([
   {
     id: "separateur-canaux",
+    memoire: "flux", // recopie canal par canal
     nom: "Séparateur canaux",
     nomEn: "Channel Splitter",
     univers: "Traitement",

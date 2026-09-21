@@ -436,7 +436,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
 }
 
 /** Part des notes dont l'attaque coïncide avec celle d'une autre note. */
-export function partAttaquesSimultanees(notes: { debut: number }[]): number {
+function partAttaquesSimultanees(notes: { debut: number }[]): number {
   const compte = new Map<number, number>();
   for (const n of notes) compte.set(n.debut, (compte.get(n.debut) ?? 0) + 1);
   return notes.length > 0 ? notes.filter((n) => compte.get(n.debut)! > 1).length / notes.length : 0;

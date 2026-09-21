@@ -14,6 +14,9 @@ import {
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
+import { respirer } from "../../core/respirer";
+import { apercuUtile, noeudRegarde } from "../../core/memoire";
+import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
@@ -103,6 +106,10 @@ export interface OptionsExecution {
   prioritaireRef: MutableRefObject<string | null>;
   audioCtxRef: MutableRefObject<AudioContext | null>;
   cacheExec: MutableRefObject<Map<string, any>>;
+  /** La bascule « économiser la mémoire » de la barre d'outils. Absente : active, le défaut sûr. */
+  economieMemoireRef?: MutableRefObject<boolean>;
+  /** Pile de navigation des méta-composants : non vide, on regarde le dedans d'un méta. */
+  pileMetaRef?: MutableRefObject<{ metaId: string; nom: string }[]>;
   edges: Edge[];
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEnExecution: (b: boolean) => void;
@@ -116,7 +123,7 @@ export interface OptionsExecution {
 export function useExecutionGraphe(o: OptionsExecution) {
   const { t } = useI18n();
   const {
-    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec,
+    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef, pileMetaRef,
     setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere, onNodeInstalle,
   } = o;
@@ -160,16 +167,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
   // `progressionDuNoeud` distingue ce que le NŒUD dit de son avancement (son `onProgress`) de ce que
   // le MOTEUR pose — « Étape i/total », qui est sa position dans le lot. L'anneau de progression ne
   // lit que le premier : sans cette distinction, il prenait « Étape 1/1 » pour 100 %.
+  // L'ÉTAT VA DANS SON MAGASIN, PAS DANS LE TABLEAU DES NŒUDS. Le faire passer par `setNodes`
+  // obligeait React Flow à repasser sur les N nœuds à chaque changement — 7 ms par nœud présent,
+  // deux fois par nœud exécuté, soit un gel en N² : 0,6 s sur cinq nœuds, 4,9 s sur vingt. Le
+  // magasin ne prévient que le composant concerné. Voir `ui/statuts.ts`.
   const definirStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
-    setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id !== nodeId) return n;
-        // Ne recréer l'objet que si le statut a réellement changé
-        if (n.data.statut === statut && n.data.progression === progression
-            && n.data.progressionDuNoeud === progressionDuNoeud) return n;
-        return { ...n, data: { ...n.data, statut, progression, progressionDuNoeud } };
-      })
-    );
+    poserStatutNoeud(nodeId, statut, progression, progressionDuNoeud);
   };
 
   // ── Réinitialiser un ensemble de nœuds ──
@@ -190,12 +193,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
       if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
     }
+    // L'état d'exécution vit dans son magasin : le remettre en attente ne passe plus par le
+    // tableau des nœuds (voir `ui/statuts.ts`).
+    reinitialiserStatuts(ids);
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
       const nouvelleData: any = {
         ...n.data,
-        statut: "attente",
-        progression: undefined,
         audioResultatUrl: undefined,
         audioResultatNom: undefined,
         audioResultatBuffer: undefined,
@@ -417,6 +421,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
     const tempsParVisible = new Map<string, number>();
 
+    // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
+    // boucles et les instruments, le publier, calculer l'ordre topologique : tout cela est
+    // synchrone, et mesuré à 286 ms sur un graphe de cinq nœuds qui ne font rien. Pendant ce
+    // temps, le clic sur « Lancer » n'a encore produit aucun retour à l'écran — l'application
+    // paraît n'avoir rien entendu. Une image ici, et le lancement se voit.
+    await respirer();
+    if (controller.signal.aborted) { enCoursRef.current = false; return; }
+
     for (let i = 0; i < ordreFiltre.length; i++) {
       // Run annulé (reset pendant l'exécution) : arrêter d'enchaîner les nœuds
       // suivants. Le nœud éventuellement en cours au moment de l'annulation est
@@ -478,6 +490,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
       // donnait l'impression que le modèle Qwen redémarrait inutilement.
       poserStatut(nodeId, "en_cours", t("execution.etape").replace("{i}", String(i + 1)).replace("{total}", String(ordreFiltre.length)));
+
+      // UNE IMAGE AVANT DE PARTIR. Les nœuds calculent dans le fil de l'interface : un nœud qui ne
+      // rend jamais la main empêche toute image d'être affichée. Sans cette pause, le statut
+      // « en cours » qu'on vient de poser n'apparaissait JAMAIS pendant le calcul du nœud, le
+      // bouton « Arrêter » restait inatteignable, et l'on ne voyait pas qui travaillait — mesuré
+      // sur cinq nœuds ordinaires : 1,4 seconde sans une seule image sur 1,6 seconde d'exécution.
+      //
+      // Elle coûte un millième de seconde par nœud. Elle ne suffit pas à elle seule — un nœud qui
+      // calcule dix secondes d'affilée fige toujours dix secondes —, mais elle rend l'interface
+      // vivante ENTRE les nœuds, et c'est là que se joue la perception d'une application qui répond.
+      await respirer();
+      if (controller.signal.aborted) break;
 
       // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
       // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
@@ -669,8 +693,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
         // démonter/remonter le lecteur à chaque run (cache) et empêche le
         // rechargement gris/0:00 sur les nœuds déjà terminés.
+        // Sur une piste longue, un intermédiaire ne reçoit pas d'aperçu : la copie en 16 bits
+        // pèse 635 Mo par heure de son, et personne ne l'ouvre (cf. core/memoire.ts). Elle sera
+        // construite le jour où l'on clique sur ce nœud — le tampon, lui, reste là.
+        const garderApercu = !audio || apercuUtile({
+          dureeS: audio.duration,
+          regarde: noeudRegarde({
+            id: n.id, selectionne: !!n.selected, aretes: aretesRef.current,
+            dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
+          }),
+          economie: economieMemoireRef?.current ?? true,
+        });
         let url: string | undefined;
-        if (audio) {
+        if (audio && garderApercu) {
           if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
             url = n.data.audioResultatUrl;
           } else {
@@ -715,12 +750,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
                 break;
               }
             }
-            return { statut: "erreur" as const,
-              audioResultatMessage: fautif
+            poserStatutNoeud(n.id, "erreur");
+            return { audioResultatMessage: fautif
                 ? t("execution.brancheEchecSansResultat").replace("{fautif}", fautif)
                 : t("execution.brancheEchecAucunResultat") };
           }
         }
+        // Un méta-composant n'est pas exécuté lui-même : ce sont ses nœuds internes qui tournent.
+        // C'est donc ici, une fois leurs résultats remontés, qu'on le déclare terminé.
+        if (meta) poserStatutNoeud(n.id, "termine");
         return {
           audioResultatUrl: url ?? undefined,
           audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
@@ -730,7 +768,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
           midiFichierSortie: midiFile ?? undefined,
           imageResultatUrl: imageUrl ?? undefined,
           imageResultatFile: imageFile ?? undefined,
-          ...(meta ? { statut: "termine" as const } : {}),
         };
       }
     }
@@ -842,11 +879,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // remettait tout à « attente », mais un arrêt simple ne touche à rien — le nœud
       // resterait donc à tourner à l'écran, indéfiniment, sans que rien ne tourne.
       if (controller.signal.aborted) {
-        setNodes((nds) => nds.map((n) => (
-          n.data.statut === "en_cours"
-            ? { ...n, data: { ...n.data, statut: "attente", progression: undefined } }
-            : n
-        )));
+        for (const id of statutsPoses()) {
+          if (statutDeNoeud(id).statut === "en_cours") reinitialiserStatuts([id]);
+        }
       }
       // Seul le run global a positionné le spinner/flag ; une exécution ciblée
       // (nœud prioritaire) ne doit PAS effacer l'état d'un run global encore en cours.

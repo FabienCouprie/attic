@@ -19,12 +19,12 @@ const GAMMES: Record<string, number[]> = {
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-export function intervallesGamme(nom: string): number[] {
+function intervallesGamme(nom: string): number[] {
   return GAMMES[nom] ?? GAMMES["majeur"];
 }
 
 // Calcule le numéro de note MIDI pour la rangée r (0 = grave, NB_RANGEES-1 = aigu).
-export function noteMidiPourRangee(
+function noteMidiPourRangee(
   r: number,
   cle: string,
   gamme: string,
@@ -37,7 +37,7 @@ export function noteMidiPourRangee(
   return (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0) + intervals[degre] + octDecal * 12;
 }
 
-export function frequenceNoteMidi(midi: number): number {
+function frequenceNoteMidi(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
 

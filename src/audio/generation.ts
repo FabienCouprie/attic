@@ -784,9 +784,9 @@ const INSTRUMENTS_GM: Record<string, number> = {
 };
 
 
-export const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
+const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 
-export const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
+const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
 
 // Gammes disponibles pour les nœuds qui construisent des accords ou
 // mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,

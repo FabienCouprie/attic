@@ -77,10 +77,10 @@ export const INSTRUMENTS: Record<string, Instr[]> = {
   ],
 };
 
-export const FAMILLES_INSTRUMENTS = Object.keys(INSTRUMENTS);
+const FAMILLES_INSTRUMENTS = Object.keys(INSTRUMENTS);
 
 // Noms de familles traduits (pour le message / la vue).
-export const FAMILLES_LABEL: Record<string, Record<Langue, string>> = {
+const FAMILLES_LABEL: Record<string, Record<Langue, string>> = {
   Cordes: { fr: "Cordes", en: "Strings" },
   Bois: { fr: "Bois", en: "Woodwinds" },
   Cuivres: { fr: "Cuivres", en: "Brass" },

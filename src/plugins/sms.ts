@@ -27,8 +27,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Transposition", nomEn: "Transpose", type: "curseur", plage: [-24, 24], pas: 1, defaut: 0,
         unite: " ½-ton", uniteEn: " st",
-        doc: "Transposition des SEULS partiels. Le résidu — souffle, archet, bruit d'attaque — n'en sait rien et reste à sa place : c'est ce qu'aucun transpositeur ne sait faire, et c'est tout l'intérêt du modèle. Dès qu'elle n'est pas nulle, les partiels sont refabriqués par addition d'oscillateurs plutôt que découpés dans le son d'origine.",
-        docEn: "Transposes the PARTIALS only. The residual — breath, bow, attack noise — knows nothing of it and stays where it is: that is what no pitch shifter can do, and it is the whole point of the model. As soon as it is non-zero, the partials are rebuilt by adding oscillators rather than cut out of the original sound." },
+        doc: "Transposition des seuls partiels. Le résidu — souffle, archet, bruit d'attaque — n'en sait rien et reste à sa place : c'est ce qu'aucun transpositeur ne sait faire, et c'est tout l'intérêt du modèle. Dès qu'elle n'est pas nulle, les partiels sont refabriqués par addition d'oscillateurs plutôt que découpés dans le son d'origine.",
+        docEn: "Transposes the partials only. The residual — breath, bow, attack noise — knows nothing of it and stays where it is: that is what no pitch shifter can do, and it is the whole point of the model. As soon as it is non-zero, the partials are rebuilt by adding oscillators rather than cut out of the original sound." },
       { nom: "Gain des partiels", nomEn: "Partials gain", type: "curseur", plage: [0, 200], pas: 5, defaut: 100, unite: "%",
         doc: "Niveau de la partie déterministe. À zéro, il ne reste que le souffle — un instrument sans note.",
         docEn: "Level of the deterministic part. At zero, only the breath remains — an instrument without a note." },

@@ -3,6 +3,8 @@
 // classiques : Lorenz, Rössler, Hénon, Ikeda, fougère de Barnsley,
 // triangle de Sierpiński.
 
+import { respirer } from "../core/respirer";
+
 export type TypeAttracteur = "lorenz" | "rossler" | "henon" | "ikeda" | "barnsley" | "sierpinski";
 
 const TYPES_ATTRACTEURS: TypeAttracteur[] = ["lorenz", "rossler", "henon", "ikeda", "barnsley", "sierpinski"];
@@ -65,6 +67,44 @@ const PALETTES: Record<string, string[]> = {
 function choisirPalette(nom: string): string[] {
   const cle = nom.toLowerCase();
   return PALETTES[cle] ?? PALETTES.classic;
+}
+
+/**
+ * La palette, précalculée en 256 teintes — trois octets par entrée.
+ *
+ * POURQUOI. La boucle de coloriage appelait `interpolerCouleur` PAR PIXEL : deux `parseInt`
+ * hexadécimaux par couleur, la fabrication d'une chaîne « rgb(r,g,b) », puis, chez l'appelant, une
+ * expression régulière et trois `parseInt` pour la relire. Sur une image de six cent quarante mille
+ * pixels, cela faisait **720 ms de gel** mesurés dans l'application — de loin le plus long blocage
+ * d'un graphe ordinaire, et il ne venait pas des mathématiques de l'attracteur (31 ms) mais de la
+ * manipulation de chaînes de caractères.
+ *
+ * Une table de 256 teintes suffit : la palette n'a que six arrêts, et l'œil ne distingue pas deux
+ * cent cinquante-six niveaux d'un dégradé continu. Le coût passe d'un travail par pixel à un
+ * travail par teinte, fait une seule fois.
+ */
+function tablePalette(couleurs: string[], taille = 256): Uint8ClampedArray {
+  const table = new Uint8ClampedArray(taille * 3);
+  for (let i = 0; i < taille; i++) {
+    const [r, g, b] = composantesCouleur(couleurs, i / (taille - 1));
+    table[i * 3] = r;
+    table[i * 3 + 1] = g;
+    table[i * 3 + 2] = b;
+  }
+  return table;
+}
+
+/** L'interpolation elle-même, en nombres : c'est la forme dont la table a besoin. */
+function composantesCouleur(couleurs: string[], t: number): [number, number, number] {
+  const idx = t * (couleurs.length - 1);
+  const i0 = Math.max(0, Math.min(couleurs.length - 1, Math.floor(idx)));
+  const i1 = Math.max(0, Math.min(couleurs.length - 1, Math.ceil(idx)));
+  const frac = i0 === i1 ? 0 : idx - i0;
+  const hex = (h: string, d: number) => parseInt(h.replace("#", "").substring(d, d + 2), 16);
+  const r = Math.round(hex(couleurs[i0], 0) + (hex(couleurs[i1], 0) - hex(couleurs[i0], 0)) * frac);
+  const g = Math.round(hex(couleurs[i0], 2) + (hex(couleurs[i1], 2) - hex(couleurs[i0], 2)) * frac);
+  const b = Math.round(hex(couleurs[i0], 4) + (hex(couleurs[i1], 4) - hex(couleurs[i0], 4)) * frac);
+  return [r, g, b];
 }
 
 function interpolerCouleur(couleurs: string[], t: number): string {
@@ -293,7 +333,7 @@ function rendreHistogrammeSurCanvas(
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
-  const couleurs = choisirPalette(palette);
+  const table = tablePalette(choisirPalette(palette));
   const imageData = ctx.createImageData(width, height);
   const data = imageData.data;
 
@@ -306,15 +346,12 @@ function rendreHistogrammeSurCanvas(
       const count = histogramme[idx];
       const t = maxLog > 0 ? Math.log1p(count * exposureFactor) / maxLog : 0;
       const tGamma = Math.max(0, Math.min(1, t ** (1 / Math.max(0.1, gamma))));
-      const rgbStr = interpolerCouleur(couleurs, tGamma);
-      const match = rgbStr.match(/(\d+),(\d+),(\d+)/);
-      const r = match ? parseInt(match[1], 10) : 0;
-      const g = match ? parseInt(match[2], 10) : 0;
-      const b = match ? parseInt(match[3], 10) : 0;
+      // Une lecture dans la table, là où l'on fabriquait et relisait une chaîne par pixel.
+      const teinte = (tGamma * 255) | 0;
       const offset = idx * 4;
-      data[offset] = r;
-      data[offset + 1] = g;
-      data[offset + 2] = b;
+      data[offset] = table[teinte * 3];
+      data[offset + 1] = table[teinte * 3 + 1];
+      data[offset + 2] = table[teinte * 3 + 2];
       data[offset + 3] = 255;
     }
   }
@@ -405,11 +442,24 @@ export async function rendreAttracteurImageEtAudio(
 
   const iterations = Math.max(1000, Math.min(2_000_000, Math.round(iterationsBrut)));
   const rng = creerRng(graine);
+
+  // UNE IMAGE ENTRE CHAQUE ÉTAPE. Ce nœud calcule deux cent mille points, les range dans un
+  // histogramme, colorie une image et la sonifie — tout cela dans le fil de l'interface, qui ne
+  // rendait plus aucune image pendant **1073 ms**, mesurés dans l'application. C'était, de loin, le
+  // plus gros gel d'un graphe ordinaire : les autres nœuds mesurés restent sous 110 ms.
+  //
+  // Les pauses sont posées ENTRE les étapes plutôt que dans les boucles : elles n'y coûtent qu'un
+  // millième de seconde chacune, ne changent aucune signature, et suffisent à ramener le plus long
+  // blocage à la durée d'une seule étape. Si l'une d'elles venait à grossir, c'est elle qu'il
+  // faudrait faire respirer à l'intérieur.
   const points = collecterPoints(type, iterations, rng);
+  await respirer();
   const bbox = calculerBoundingBox(points, projection);
   const { histogramme, max } = calculerHistogramme(points, width, height, projection, bbox);
+  await respirer();
 
   const canvas = rendreHistogrammeSurCanvas(histogramme, max, width, height, palette, exposure, gamma);
+  await respirer();
   const ext = format === "png" ? "png" : "jpg";
   const nom = `attracteur-${type}-${palette}.${ext}`;
   const image = await fileDepuisCanvas(canvas, format, nom);

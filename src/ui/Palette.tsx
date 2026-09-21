@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n } from "../i18n";
 import { registre } from "../audio/adaptateur";
 import { filtrerFiches } from "./recherche-palette";
+import { grouperFiches } from "./ordre-palette";
 import { nomFiche, resumeFiche } from "./libelles-fiche";
 import { contenuInfobulle, type ContenuInfobulle, type Rectangle } from "./infobulle-fiche";
 import { InfobulleFiche } from "./InfobulleFiche";
@@ -82,24 +83,15 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
     [q, plugins, lang, t],
   );
 
-  const groupes = useMemo(() => {
-    const map = new Map<string, Map<string, FicheAudio[]>>();
-    for (const p of filtres) {
-      if (!map.has(p.univers)) map.set(p.univers, new Map());
-      const fam = map.get(p.univers)!;
-      if (!fam.has(p.famille)) fam.set(p.famille, []);
-      fam.get(p.famille)!.push(p);
-    }
-    // « Autres » est toujours la DERNIÈRE rubrique, « Nouvelles fonctionnalités »
-    // juste avant. Le tri est stable — les autres univers conservent leur ordre.
-    const poids = (u: string) => u === "Autres" ? 2 : u === "Nouvelles fonctionnalités" ? 1 : 0;
-    return [...map]
-      .sort((a, b) => poids(a[0]) - poids(b[0]))
-      .map(([univers, familles]) => ({
-        univers,
-        familles: [...familles].map(([famille, defs]) => ({ famille, defs: [...defs].sort((a, b) => nomDef(a).localeCompare(nomDef(b))) })),
-      }));
-  }, [filtres]);
+  // L'ORDRE DES RUBRIQUES NE DÉPEND PAS DE CE QU'ON CHERCHE, et il le faisait : les univers étaient
+  // rangés dans l'ordre où les fiches retenues se présentaient, si bien que les Entrées, premières
+  // sans recherche, se retrouvaient au milieu dès qu'on tapait trois lettres. Le classement est
+  // dans `ordre-palette.ts`, éprouvé par des tests, et l'ordre des univers vient du même endroit
+  // que celui de COMPONENTS.md.
+  const groupes = useMemo(
+    () => grouperFiches(filtres, nomDef, (famille) => t(`famille.${famille}`)),
+    [filtres, t],
+  );
 
   // Au démarrage, la palette est REPLIÉE au niveau des univers (menu non déployé).
   // L'utilisateur déplie ce dont il a besoin ; une recherche ré-ouvre tout.

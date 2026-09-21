@@ -84,6 +84,50 @@ describe("développement", () => {
   });
 });
 
+describe("le dossier de l'utilisateur, où vont les modèles téléchargés", () => {
+  // POURQUOI IL PASSE AVANT. `resources/` est dans « Program Files » : une application installée
+  // n'y écrit pas sans droits d'administrateur. Les modèles téléchargés à la demande vont donc dans
+  // le dossier de données de l'utilisateur, et c'est là qu'il faut chercher d'abord — sinon la
+  // version allégée ne trouverait jamais ce qu'elle vient de télécharger.
+  const UTILISATEUR = join("C:", "Users", "x", "AppData", "Roaming", "Attic");
+  const avecUtilisateur = (existe: (c: string) => boolean) =>
+    ({ empaquete: true, racineRessources: RESSOURCES, racineProjet: PROJET, dossierUtilisateur: UTILISATEUR, existe });
+
+  it("est préféré quand le fichier s'y trouve", () => {
+    const chezMoi = join(UTILISATEUR, "oonx/gtcrn.onnx");
+    expect(resoudreRessource("oonx/gtcrn.onnx", avecUtilisateur(presents(chezMoi)))).toBe(chezMoi);
+  });
+
+  it("répare un modèle abîmé de l'installation : le téléchargé l'emporte sur le livré", () => {
+    const chezMoi = join(UTILISATEUR, "oonx/gtcrn.onnx");
+    const livre = join(RESSOURCES, "oonx/gtcrn.onnx");
+    expect(resoudreRessource("oonx/gtcrn.onnx", avecUtilisateur(presents(chezMoi, livre)))).toBe(chezMoi);
+  });
+
+  it("laisse passer vers les ressources livrées quand il n'a pas le fichier", () => {
+    // Le cas de la version complète : le dossier de l'utilisateur est vide, rien ne change.
+    expect(resoudreRessource("oonx/gtcrn.onnx", avecUtilisateur(presents())))
+      .toBe(join(RESSOURCES, "oonx/gtcrn.onnx"));
+  });
+
+  it("ne change rien quand il n'est pas fourni", () => {
+    expect(resoudreRessource("oonx/gtcrn.onnx", empaquete()))
+      .toBe(join(RESSOURCES, "oonx/gtcrn.onnx"));
+  });
+
+  it("ne détourne pas un chemin absolu", () => {
+    const abs = join("D:", "modeles", "x.onnx");
+    expect(resoudreRessource(abs, avecUtilisateur(presents(abs)))).toBe(abs);
+  });
+
+  it("vaut aussi en développement, où le dossier de données existe déjà", () => {
+    const chezMoi = join(UTILISATEUR, "oonx/gtcrn.onnx");
+    const options = { empaquete: false, racineRessources: RESSOURCES, racineProjet: PROJET,
+      dossierUtilisateur: UTILISATEUR, existe: presents(chezMoi) };
+    expect(resoudreRessource("oonx/gtcrn.onnx", options)).toBe(chezMoi);
+  });
+});
+
 describe("entrées refusées", () => {
   it("rend null sur une valeur inexploitable", () => {
     for (const v of [null, undefined, "", 42, {}]) {

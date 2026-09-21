@@ -21,8 +21,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Décalage", nomEn: "Shift", type: "curseur", plage: [-1000, 1000], pas: 1, defaut: 100, unite: "Hz",
-        doc: "Hertz ajoutés à TOUTES les fréquences. 200-400-600 décalé de 50 donne 250-450-650 : les rapports ne sont plus entiers, et c'est pourquoi on entend une cloche là où il y avait une note. Quelques hertz seulement suffisent à faire battre un son sans le dénaturer ; au-delà de la centaine, on quitte franchement la hauteur de départ.",
-        docEn: "Hertz added to EVERY frequency. 200-400-600 shifted by 50 gives 250-450-650: the ratios are no longer whole numbers, which is why a note turns into a bell. A few hertz are enough to make a sound beat without disfiguring it; beyond a hundred, the original pitch is frankly left behind." },
+        doc: "Hertz ajoutés à toutes les fréquences. 200-400-600 décalé de 50 donne 250-450-650 : les rapports ne sont plus entiers, et c'est pourquoi on entend une cloche là où il y avait une note. Quelques hertz seulement suffisent à faire battre un son sans le dénaturer ; au-delà de la centaine, on quitte franchement la hauteur de départ.",
+        docEn: "Hertz added to every frequency. 200-400-600 shifted by 50 gives 250-450-650: the ratios are no longer whole numbers, which is why a note turns into a bell. A few hertz are enough to make a sound beat without disfiguring it; beyond a hundred, the original pitch is frankly left behind." },
       { nom: "Écart stéréo", nomEn: "Stereo offset", type: "curseur", plage: [0, 20], pas: 0.5, defaut: 0, unite: "Hz",
         doc: "Hertz ajoutés au canal droit en plus du décalage. Quelques dixièmes suffisent : les deux canaux dérivent alors l'un par rapport à l'autre et le son s'élargit lentement, sans déphasage destructeur. Sans effet sur un son mono.",
         docEn: "Hertz added to the right channel on top of the shift. A few tenths are enough: the two channels then drift apart and the sound widens slowly, with no destructive phasing. No effect on a mono sound." },
