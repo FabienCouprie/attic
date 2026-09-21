@@ -270,6 +270,40 @@ describe("l'éparpillement des grains dans l'espace", () => {
   });
 });
 
+describe("les grainlets", () => {
+  const r = avec({ espece: "grainlets", frequenceHz: 200, transposition: 24, dureeGrainPc: 400 });
+
+  it("LA DURÉE EST LIÉE À LA HAUTEUR : c'est la définition du procédé", () => {
+    const orchestre = orchestreParticules(r);
+    // La fréquence parcourt l'intervalle demandé — deux octaves, donc de 200 à 800 hertz.
+    expect(orchestre).toContain("kfrequence line 200.0, p3, 800.0");
+    // Et la durée la divise : chaque grain porte alors le même nombre de cycles.
+    expect(orchestre).toContain("kduree = 4.0 * 1000 / kfrequence");
+  });
+
+  it("LE NOMBRE DE CYCLES PAR GRAIN NE BOUGE PAS, quelle que soit la hauteur", () => {
+    // C'est l'arithmétique de l'orchestre qui le garantit : durée = cycles / fréquence, donc
+    // cycles = durée × fréquence, constant par construction. À quatre cents pour-cent, quatre
+    // cycles à 200 hertz comme à 800.
+    const cycles = (freq: number) => (4.0 * 1000 / freq) * freq / 1000;
+    expect(cycles(200)).toBeCloseTo(4, 12);
+    expect(cycles(800)).toBeCloseTo(4, 12);
+  });
+
+  it("aucune autre espèce ne lie les deux : leur durée suit la cadence ou une fréquence fixe", () => {
+    expect(orchestreParticules(avec({ espece: "grains" }))).toContain("kduree = 0.5 * 1000 / kdensite");
+    expect(orchestreParticules(avec({ espece: "pulsars", frequenceHz: 200 }))).toContain("kduree = 0.5 * 1000 / 200.0");
+    for (const espece of ["grains", "pulsars", "glissons", "trainlets"] as Espece[]) {
+      expect(orchestreParticules(avec({ espece })), espece).not.toContain("kfrequence line");
+    }
+  });
+
+  it("sans intervalle demandé, la fréquence ne bouge pas — et la durée non plus", () => {
+    expect(orchestreParticules(avec({ espece: "grainlets", frequenceHz: 440, transposition: 0 })))
+      .toContain("kfrequence line 440.0, p3, 440.0");
+  });
+});
+
 describe("la granulation synchrone de la période", () => {
   const r = avec({ espece: "synchrone", avecSource: true, hauteurs: [200, 200, 210, 210] });
 

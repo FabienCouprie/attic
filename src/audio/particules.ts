@@ -48,6 +48,7 @@ export const ESPECES = [
   { id: "trainlets", fr: "Trainlets", en: "Trainlets" },
   { id: "granulation", fr: "Granulation d'un son", en: "Granulating a sound" },
   { id: "synchrone", fr: "Granulation synchrone", en: "Pitch-synchronous granulation" },
+  { id: "grainlets", fr: "Grainlets", en: "Grainlets" },
 ] as const;
 
 export type Espece = (typeof ESPECES)[number]["id"];
@@ -249,6 +250,8 @@ function reglageEspece(espece: Espece): Reglage {
     // Les amplitudes vont par cinq : les quatre formes d'onde, puis le trainlet.
     case "trainlets": return { amplitudes: [0, 0, 0, 0, 1], partiels: 1, balayage: false, source: false };
     case "glissons": return { amplitudes: [1, 0, 0, 0, 0], partiels: 0, balayage: true, source: false };
+    // Le grainlet ne balaie pas DANS le grain — c'est le glisson — mais D'UN grain à l'autre.
+    case "grainlets": return { amplitudes: [1, 0, 0, 0, 0], partiels: 0, balayage: false, source: false };
     case "granulation":
     case "synchrone": return { amplitudes: [1, 0, 0, 0, 0], partiels: 0, balayage: false, source: true };
     default: return { amplitudes: [1, 0, 0, 0, 0], partiels: 0, balayage: false, source: false };
@@ -302,7 +305,15 @@ export function orchestreParticules(r: ReglagesParticules): string {
     "  azero init 0",
   ];
 
-  if (espece === "pulsars") {
+  if (espece === "grainlets") {
+    // LA LIAISON DE PARAMÈTRES, ET C'EST TOUT LE PROCÉDÉ. La fréquence parcourt l'intervalle
+    // demandé au fil de la note, et la durée du grain la SUIT : chaque grain porte alors le même
+    // nombre de cycles, les aigus courts et les graves longs — ce que fait une ondelette. Sans la
+    // liaison, un balayage de deux octaves laisserait les grains graves à deux cycles et les
+    // aigus à huit, et l'on entendrait le grain changer de nature en chemin.
+    lignes.push(`  kfrequence line ${csNombre(frequence)}, p3, ${csNombre(frequence * rapportDemiTons(r.transposition))}`);
+    lignes.push(`  kduree = ${csNombre(dureePc / 100)} * 1000 / kfrequence`);
+  } else if (espece === "pulsars") {
     lignes.push(`  kduree = ${csNombre(dureePc / 100)} * 1000 / ${csNombre(frequence)}`);
   } else if (espece !== "synchrone") {
     // Le synchrone tire la sienne de la hauteur du son, plus bas, une fois celle-ci connue.
@@ -330,7 +341,7 @@ export function orchestreParticules(r: ReglagesParticules): string {
     lignes.push("  kfrequence = 1 / idureeSource");
     lignes.push(`  kcle = ${csNombre(rapportDemiTons(r.transposition))}`);
   } else {
-    lignes.push(`  kfrequence = ${csNombre(frequence)}`);
+    if (espece !== "grainlets") lignes.push(`  kfrequence = ${csNombre(frequence)}`);
     lignes.push("  asamplepos1 = azero");
     lignes.push("  kcle = 1");
   }

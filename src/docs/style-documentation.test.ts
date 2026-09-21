@@ -40,6 +40,9 @@ const SIGLES = new Set([
   "SMIL",
   // EBU : l'Union europeenne de radio-television, dont la norme R 128 fixe la sonie de diffusion.
   "EBU",
+  // GRAIN : le nom d'une famille de programmes du Composers Desktop Project, ecrit ainsi dans sa
+  // documentation. Ce n'est pas le mot « grain » mais le nom du logiciel qui les regroupe.
+  "GRAIN",
 ]);
 
 /**

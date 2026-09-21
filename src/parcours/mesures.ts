@@ -73,12 +73,14 @@ export interface MesureCopie {
   noteProche: string;
 }
 
-// UNE GRANDEUR À NE PAS PRENDRE POUR CIBLE D'ÉPREUVE : `plageDynamiqueDb`. C'est l'écart entre la
-// sonie momentanée la plus forte et la plus faible, tel que le vu-mètre l'affiche — donc une valeur
-// juste, et légitime à lire. Mais un silence dans le son y fait plonger le minimum : mesuré sur une
-// boucle de batterie étirée, elle annonce 103 dB, chiffre exact et sans aucun sens pour qui apprend.
-// Une épreuve écrite dessus se réussissait en laissant traîner un blanc. Constaté dans
-// l'application, et c'est pour cela que l'épreuve de la matière porte sur la densité et la couleur.
+// `plageDynamiqueDb` A ÉTÉ RÉPARÉE DEPUIS, ET L'HISTOIRE VAUT D'ÊTRE GARDÉE. Elle annonçait 103 dB
+// sur une boucle de batterie étirée — chiffre exact au sens où il était bien l'écart entre la sonie
+// momentanée la plus forte et la plus faible, et sans aucun sens pour qui apprend, puisqu'un seul
+// blanc suffisait à l'obtenir. Une épreuve écrite dessus se réussissait en laissant traîner un
+// silence, et c'est pour cela que l'épreuve de la matière porte sur la densité et la couleur.
+// La cause était plus profonde que cette grandeur : la sonie intégrée elle-même moyennait des
+// décibels et ne gardait rien. Depuis sa réparation, la plage suit EBU Tech 3342 — blocs de trois
+// secondes, porte relative, centiles — et vaut zéro sur un son qui ne varie pas.
 
 const FENETRE = 2048;
 const FENETRES_MAX = 8;

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **362 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **366 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 69 | [Audio](#audio) (7) · [Generation](#generation) (52) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 176 | [Conversion](#conversion) (4) · [Editing](#editing) (22) · [Effects](#effects) (146) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Inputs](#inputs) | 70 | [Audio](#audio) (7) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 179 | [Conversion](#conversion) (4) · [Editing](#editing) (23) · [Effects](#effects) (148) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 10 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -213,6 +213,7 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Resultant (Schillinger)](#resultant-schillinger) | The rhythm that arises from superposing two regular pulses. |
 | [RGB Color](#rgb-color) | Synthesizes an RGB color into three oscillators (R, G, B). |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Screens (Xenakis)](#screens-xenakis) | A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain. |
 | [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play. |
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
 | [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
@@ -1379,6 +1380,35 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
 
+#### Screens (Xenakis)
+
+`ecrans-xenakis` · Inputs → Generation
+
+*A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain.*
+
+After Iannis Xenakis, « Formalized Music » (1963), and the pieces « Analogique A and B » (1959) — the first composed granulation in history, ten years before the first computer granulations. What is singular about the idea, and what sets it apart from the rest of the granular catalog: other processes describe a grain — its shape, its duration, its pitch — then repeat it. Here no grain is described at all. A space is described, gridded into cells of frequency and intensity, and each cell is told how many grains per second it should hold; the grains themselves are drawn at random inside their cell. You no longer compose sounds but a probability density, which was exactly Xenakis's point: moving from the point to the statistic. A screen is one state of that grid, held for a brief moment. A book of screens is their succession, and it is the succession that makes the piece. Xenakis chained classes of screens through a transition matrix; here each cell follows its own two-state chain — lit or unlit — with a probability of staying lit and a probability of lighting up. It is an adaptation, and it behaves the same way: the two regimes Xenakis was after appear at the extremes. Strong hold and weak appearance give stable pads; weak hold and strong appearance, a boiling. Measured: at 98 % hold, fewer than 6 % of cells change from one screen to the next; at 30 %, more than 30 % change. The bands are logarithmic, and that is no display convenience: the ear hears ratios. A linear grid would put half its cells between 10 and 11 kilohertz, where almost no difference is heard, and a single cell for the three octaves of the low end. A grain's frequency is drawn logarithmically inside its band, for the same reason. Density is not a count of grains but an average. A quarter of a grain per screen cannot be rendered: rounding would always give zero or always one, and density would stop being adjustable below one grain per screen — which would remove half the process. The fractional part therefore decides on one extra grain, at random, and it is the average that lands right. The first screen is drawn at the chain's equilibrium probability, not on a coin toss. Otherwise every piece would start on a half-full screen whatever the settings: a sparse texture would take seconds to empty out, and a transient nobody asked for would be heard. The second output returns the book in plain text — one column per screen, one line per cell, frequencies in the margin. Stochastic music whose weave cannot be seen cannot be learned; connect it to a « Text Output » and compare what you read with what you hear.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Book | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The piece's duration. The number of screens follows from it: the duration divided by one screen's. |
+| Screen duration | slider | 100 ms | 10 – 1000 ms, step 5 | How long one state of the grid is held. Short, the screens follow too fast to be told apart and a texture is heard; long, the succession of states is heard, that is, a form. |
+| Bands | slider | 8 | 1 – 24, step 1 | The number of frequency bands in the grid, spread logarithmically between the two bounds. Few bands give a thick, coarse cloud; many, a fine sieve. |
+| Levels | slider | 3 | 1 – 6, step 1 | The number of intensity degrees. It is the grid's second axis in Xenakis: a cell is not only a pitch, it is a pitch at a given strength. |
+| Level step | slider | 6 dB | 0 – 24 dB, step 1 | By how much each intensity degree falls below the previous one. At zero, every level sounds the same and the intensity axis vanishes; at twelve, the weak degrees only colour the background. |
+| Lowest frequency | slider | 100 Hz | 20 – 2000 Hz, step 10 | The bottom of the grid. |
+| Highest frequency | slider | 6400 Hz | 200 – 16000 Hz, step 100 | The top of the grid. Between the two bounds, the bands are spread by intervals that are equal to the ear, not in hertz. |
+| Density | slider | 20 grains/s | 0.5 – 200 grains/s, step 0.5 | How many grains per second each lit cell holds. It is Xenakis's third axis, and its value is not a count but an average: a density below one grain per screen is rendered by an occasional grain, drawn at random, and it is the average that lands right. |
+| Grain duration | slider | 30 ms | 5 – 200 ms, step 1 | A grain's duration, window included. Below some fifty milliseconds a grain has no pitch of its own and the cloud is heard as matter; beyond, the cells' pitches start to be told apart. |
+| Hold | slider | 85 % | 0 – 100 %, step 1 | The probability that a lit cell stays lit on the next screen. It is half of the Markov chain, and the setting that decides between the pad and the boiling. |
+| Appearance | slider | 10 % | 0 – 100 %, step 1 | The probability that an unlit cell lights up on the next screen. Together with hold, it sets the grid's equilibrium occupancy: appearance divided by the sum of appearance and extinction. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | The overall level. Grains add up: doubling the density or the number of lit cells moves that much closer to the ceiling. |
+| Seed | slider | 42 | 1 – 999999, step 1 | The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random — without it nothing you liked can be found again. |
+
 #### SFZ Keyboard
 
 `clavier-sfz` · Inputs → Generation
@@ -1808,6 +1838,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Extract duration](#extract-duration) | Measures track duration and passes it along. |
 | [Extract Zone](#extract-zone) | Extracts a portion with fade and returns the Zone object. |
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
+| [Grain Editing](#grain-editing) | Finds a sound's grains — each hit, each syllable — then drops some, repeats them, reverses their order or shuffles them, never cutting in the middle of a sound. |
 | [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
 | [Loop](#loop) | Repeats the whole signal a given number of times. |
 | [Loop End A](#loop-end-a) | Closes a graph loop and puts every pass's result end to end. |
@@ -1917,6 +1948,32 @@ Cuts and joins the zones chosen in the « Multi-Zone Selector ». Connect the se
 |---|---|---|---|---|
 | Mode | choice | Selected zones | Selected zones / Unselected zones | Keep the selected zones, or conversely the parts between them. |
 | Fade | number | 5 ms | 0 – 100 ms | Fade at the edges of each extracted zone to avoid clicks. |
+
+#### Grain Editing
+
+`montage-grains` · Processing → Editing
+
+*Finds a sound's grains — each hit, each syllable — then drops some, repeats them, reverses their order or shuffles them, never cutting in the middle of a sound.*
+
+After the `GRAIN` family of the Composers Desktop Project, developed by Trevor Wishart. What sets it apart from the rest of the granular catalog: the boundaries come from the sound and not from a set rate. Granular freeze, brassage, random slicing and particles all cut on a grid that owes nothing to what it is given; here each hit of a rhythm, each syllable of a voice, each note of an arpeggio becomes a grain that can be dropped, moved or repeated without ever cutting in the middle of a sound. Detection rests on two rules, and the second does the work. The first separates what sounds from what does not, by a threshold in decibels, using the envelope of the silence trimmer — two nodes cutting the same sound should not cut it differently. But that rule fails exactly where the process is useful: on a roll, a held phrase or a pad, the envelope never falls back to silence and you get one single thirty-second grain. The second rule therefore looks for attacks inside what sounds: a clear rise of the envelope after a fall opens a grain, with no silence in front of it. Sensitivity is a setting, and it has to be. It says by how many decibels the envelope must rise for an attack to be seen. Measured on a roll whose hits fall every 240 milliseconds under a 250 millisecond decay: between two of them the envelope only falls by 8.4 decibels. At nine decibels of sensitivity one hit hides in the previous one's tail; at six, all eight come out. The setting reaches towards the sound it is given, it does not guess. The minimum gap is no convenience. An attack is not an instant but a rise of a few milliseconds, where the envelope wavers: without it a single hit gives three or four grains and every manipulation turns to mincemeat. Start with « Count only ». The operation does not touch the sound, and the report says what was found — how many grains, their mean duration, their mean gap, and the list of their onsets in seconds. That is where threshold and sensitivity get set; everything that follows depends on them. Spacing decides what becomes of the rhythm. « As found » puts each grain back at the instant it was found: dropping one hit in two leaves a hole in its place, duration does not move, and the rhythm stays recognisable — which is what you want to thin out a loop. « Butted » glues the grains end to end: the sound shortens accordingly and the rhythm changes. The first keeps duration, the second keeps density. Reversing the order turns the sequence of grains around without turning the grains themselves: the hits follow one another backwards, each of them still forwards. That is a wholly different thing from reversed playback, which would put every attack at the end of its sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Operation | choice | Count only | Count only / Keep n out of m / Reverse the order / Repeat each / Shuffle | What is done with the grains once found. « Count only » does not touch the sound: start there, to set detection against the report before manipulating anything. The others drop, repeat, reverse the order or shuffle — and none cuts in the middle of a sound, since they work on whole grains. |
+| Keep | slider | 1 | 0 – 8, step 1 | For « Keep n out of m »: how many grains are kept in each group. At one out of two, every other hit disappears; at two out of three, one in three. Zero returns silence, which is a fair answer to an absurd request. |
+| Out of | slider | 2 | 1 – 8, step 1 | The size of the group being counted in. With « Keep », it decides the pattern: one out of two thins by half, three out of four drops one grain in four. |
+| Repeats | slider | 2 | 1 – 8, step 1 | For « Repeat each »: how many times each grain is played. With « As found » spacing, the copies overlap the rest and add up; butted, they lengthen the sound accordingly. |
+| Spacing | choice | As found | As found / Butted | Where the grains land. « As found » keeps the instants found in the sound: duration does not move and the rhythm stays recognisable, a dropped grain leaving a hole in its place. « Butted » glues them end to end: the sound shortens and the rhythm changes. The first keeps duration, the second keeps density. |
+| Threshold | slider | -45 dBFS | -80 – -20 dBFS, step 1 | Below this level, there is deemed to be no sound. It is the same threshold, on the same envelope, as the silence trimmer. Too high and only the loud hits are found; too low and hiss is taken for a grain. |
+| Sensitivity | slider | 6 dB | 0 – 24 dB, step 1 | By how much the envelope must rise, after a fall, for an attack to be seen. This is the setting that separates the hits of a roll, whose envelope never falls back to silence. At zero the rule is off and only silences separate grains — which gives one single grain on a sustained sound. |
+| Minimum gap | slider | 40 ms | 1 – 500 ms, step 1 | Two grains cannot start closer than this. An attack is not an instant but a rise of a few milliseconds where the envelope wavers: without this gap, a single hit gives three or four grains. |
+| Seed | slider | 42 | 1 – 999999, step 1 | The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again. |
 
 #### Logistic Mixer
 
@@ -2235,6 +2292,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [AI Separator](#ai-separator) | Separates audio sources via AI (Demucs 4/6 stems, MDX-Net). |
 | [Ambisonic Rotation](#ambisonic-rotation) | Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo. |
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
+| [Atomic Decomposition](#atomic-decomposition) | Describes a sound by the N Gabor grains that best explain it, and returns the resulting sketch and what it left behind, separately. |
 | [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Bass Mono](#bass-mono) | Collapses the bass of both channels below a crossover, and leaves the treble untouched. |
@@ -2307,7 +2365,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
 | [Note Echo](#note-echo) | Layers time-shifted copies of a pattern, with decreasing velocity. |
 | [Octaver](#octaver) | Adds an upper and/or lower octave. |
-| [Particles](#particles) | One generator for six species of particle: grains, pulsars, glissons, trainlets, and the granulation of a connected sound — on a grid, or locked to its period. |
+| [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound — on a grid, or locked to its period. |
 | [Paulstretch](#paulstretch) | Extreme phase-randomization time-stretch (stereo). |
 | [Phase Reconstruction (PGHI)](#phase-reconstruction-pghi) | Rebuilds a sound from its spectrogram magnitudes alone, without iterating: the phase is read from the magnitude's gradient. |
 | [Phase Vocoder Pitch](#phase-vocoder-pitch) | Transposes pitch via phase vocoder (frequency-domain), without changing duration. |
@@ -2374,6 +2432,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Voice Changer](#voice-changer) | Transforms a voice with preset effects: chipmunk, monster, robot, phone, alien, helium, ghost. |
 | [Wah-wah](#wah-wah) | Modulated bandpass filter (wah pedal effect). |
 | [Wave Terrain](#wave-terrain) | Travels a surface z = f(x, y) along an orbit: the orbit makes the pitch, the relief makes the timbre. |
+| [Wavelets](#wavelets) | Analyses the sound with wavelets — short window in the treble, long in the bass — and keeps only the coefficients that carry something. |
 | [Wavesets (Wishart)](#wavesets-wishart) | Cuts the sound at zero crossings and replays the segments differently. |
 | [Wind Instrument](#wind-instrument) | Clarinet, flute or brass by waveguide: a bore, a reed, and the timbre that follows. |
 
@@ -2479,6 +2538,26 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 | Gain | number | 0 dB | -60 – 60 dB | Gain applied when no curve is connected to the Modulation input. |
 | Modulation min | number | -24 dB | -60 – 60 dB | What the curve's zero means. With no curve connected, this setting does nothing. |
 | Modulation max | number | 0 dB | -60 – 60 dB | What the curve's one means. |
+
+#### Atomic Decomposition
+
+`decomposition-atomique` · Processing → Effects
+
+*Describes a sound by the N Gabor grains that best explain it, and returns the resulting sketch and what it left behind, separately.*
+
+After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequency dictionaries », IEEE Transactions on Signal Processing 41(12), 1993, applied to sound by Bob L. Sturm and described by Curtis Roads as microsound's atomic decomposition. What the method does, and what exists nowhere else in the catalog. A Fourier transform cuts the sound into a fixed number of cells, all of the same duration: one single scale for a finger snap as for a held note. Here the sound is described by a sum of Gabor grains — sines under a window — chosen one at a time, each where it explains the most of the remaining signal, and taken from several durations at once. An attack takes a short atom, a held note a long one. And you stop when you like: it is a sketch of the sound, whose number of strokes you set. At ten atoms you hear what is nearly enough to recognise a sound without quite recognising it; at a few hundred, it comes back. The question the node asks is that one: how many strokes does a sound need to stay itself? The method's guarantee is that the residual's energy decreases with every atom, since each time the orthogonal projection of what remains is removed. It is also the trap of its implementation: selecting the best candidate goes through a transform, but its coefficient is approximate — windows overlap and atoms are not orthogonal to one another. The projection is therefore computed exactly in the time domain. Taking the transform's coefficient as is would make the residual rise again, which a test checks step by step. Scales are compared at equal window. A window twice as long gathers twice as many samples and would always win without that scaling: the multi-scale dictionary would then be pointless, every attack being described by long atoms that smear it. The second output returns the residual, and it is the more instructive of the two. The sketch alone does not say what its likeness is made of; the residual says exactly what the atoms failed to explain. Wire both into a comparator, or measure them with the spec sheet. The cost is bounded by the number of atoms, not by the sound's duration: each atom means finding the best candidate at each scale, then recomputing only the frames the removed atom just changed. The rest of the sound is not touched.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Sketch | audio |  |
+| output | Residual | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Atoms | slider | 200 | 1 – 2000, step 1 | How many grains describe the sound. It is the sketch's number of strokes, and the only setting that really matters: at ten, you hear what is nearly enough to recognise the sound; at a few hundred, it comes back. Computation cost is proportional to it. |
+| Scales | choice | All three | Short (5 ms) / Medium (45 ms) / Long (185 ms) / All three | The window durations to search in. Short, the atoms describe attacks well and held notes badly; long, the other way round. « All three » lets the method choose for each stroke, which is the whole point of a Gabor dictionary — and a test checks that a click does take a short window where a held note takes a long one. |
 
 #### Audio Inpainting
 
@@ -3987,9 +4066,9 @@ Generates up to two extra voices — hence the two sliders: "Octave up" sets the
 
 `particules` · Processing → Effects
 
-*One generator for six species of particle: grains, pulsars, glissons, trainlets, and the granulation of a connected sound — on a grid, or locked to its period.*
+*One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound — on a grid, or locked to its period.*
 
-After Oyvind Brandtsegg, Sigurd Saue and Thom Johansen, « Particle synthesis — a unified model for granular synthesis », Linux Audio Conference, 2011 — Csound's `partikkel` opcode. The paper's thesis: the varieties of granular synthesis are not distinct techniques but one generator set differently. This node exposes six of them, and a single choice moves from one to the next. Grains are the ordinary case: a brief waveform, repeated at a rate. The rate gives the pitch heard as soon as it passes some twenty per second; below that, grains can be counted. Pulsars decouple two durations, and therein lies their point. For them the grain duration counts in cycles of the waveform instead of following the rate: the rate then sets the fundamental, and the frequency sets the formant, independently of each other. No acoustic instrument allows this. Glissons give each grain its own frequency trajectory: the grain is no longer a point but a vector. The transposition setting says how far it rises or falls during its brief existence. Trainlets replace the waveform with a band-limited impulse train, whose number of partials is set. They sound like clicks that have a pitch — measured, at twelve partials they carry close to 27 % of their energy above four kilohertz, against two tenths of a percent for a sine grain, and their crest factor rises from 6 to 16 decibels. Granulation takes the sound connected to the input and reads it in grains. That is where position and speed serve: at zero speed the read head stops moving and you get a granular freeze; at one half the sound lasts twice as long without changing pitch; negative, it reads backwards. With no sound connected the species falls back to grains and the node says so rather than failing. Pitch-synchronous granulation locks the grains to the sound's period instead of a regular grid, and that is what separates a clean granulation from one that buzzes. A grid imposes its own rate on the sound: measured on a 220 hertz sawtooth, granulating at sixty grains per second leaves no sustained pitch at all, and at a hundred and fifty the measured pitch drops to 73 hertz — the grid's, not the sound's. Locked to the period, the same granulation returns 220.14 hertz, the original pitch to within three hundredths of a hertz. The period is read by the catalog's pYIN follower, the very one the « Pitch Follower » shows: the two nodes cannot contradict each other. In this species, density and dispersion command nothing, since the sound gives the rate; grain duration, for its part, counts in periods. Spatial width scatters the grains between the two channels: each one gets its own place instead of the whole sound moving as a block. That is what separates granulation from panning — the ear draws a cloud from it, not a direction. Measured on a hundred and twenty grains per second: the correlation of the two channels goes from 1.00 to 0.31 between zero width and full opening, balance stays at nil throughout, and loudness does not move by a hundredth of a decibel — -16.91 LUFS at all four settings tried. Positions come in mirrored pairs, and amplitude is corrected for what the scattering would add in energy: a width that makes things louder gets judged better for the wrong reason. Dispersion disorders the instants. At zero, grains land on a regular grid and the ear hears a pitch; going up, the grid blurs and pitch gives way to texture. That is the passage from synchronous to asynchronous, done here with one slider.
+After Oyvind Brandtsegg, Sigurd Saue and Thom Johansen, « Particle synthesis — a unified model for granular synthesis », Linux Audio Conference, 2011 — Csound's `partikkel` opcode. The paper's thesis: the varieties of granular synthesis are not distinct techniques but one generator set differently. This node exposes seven of them, and a single choice moves from one to the next. Grains are the ordinary case: a brief waveform, repeated at a rate. The rate gives the pitch heard as soon as it passes some twenty per second; below that, grains can be counted. Pulsars decouple two durations, and therein lies their point. For them the grain duration counts in cycles of the waveform instead of following the rate: the rate then sets the fundamental, and the frequency sets the formant, independently of each other. No acoustic instrument allows this. Glissons give each grain its own frequency trajectory: the grain is no longer a point but a vector. The transposition setting says how far it rises or falls during its brief existence. Trainlets replace the waveform with a band-limited impulse train, whose number of partials is set. They sound like clicks that have a pitch — measured, at twelve partials they carry close to 27 % of their energy above four kilohertz, against two tenths of a percent for a sine grain, and their crest factor rises from 6 to 16 decibels. Grainlets tie two settings to one another, which is their whole definition. Frequency travels the interval given by the transposition across the note, and grain duration follows it: each grain then carries the same number of cycles, high ones short and low ones long, as a wavelet does. Without that link, a two-octave sweep would leave the low grains at four cycles and the high ones at sixteen, and the grain would be heard changing nature on the way. It is the quietest of the seven species: it does not make a new timbre, it stops a timbre from drifting. Granulation takes the sound connected to the input and reads it in grains. That is where position and speed serve: at zero speed the read head stops moving and you get a granular freeze; at one half the sound lasts twice as long without changing pitch; negative, it reads backwards. With no sound connected the species falls back to grains and the node says so rather than failing. Pitch-synchronous granulation locks the grains to the sound's period instead of a regular grid, and that is what separates a clean granulation from one that buzzes. A grid imposes its own rate on the sound: measured on a 220 hertz sawtooth, granulating at sixty grains per second leaves no sustained pitch at all, and at a hundred and fifty the measured pitch drops to 73 hertz — the grid's, not the sound's. Locked to the period, the same granulation returns 220.14 hertz, the original pitch to within three hundredths of a hertz. The period is read by the catalog's pYIN follower, the very one the « Pitch Follower » shows: the two nodes cannot contradict each other. In this species, density and dispersion command nothing, since the sound gives the rate; grain duration, for its part, counts in periods. Spatial width scatters the grains between the two channels: each one gets its own place instead of the whole sound moving as a block. That is what separates granulation from panning — the ear draws a cloud from it, not a direction. Measured on a hundred and twenty grains per second: the correlation of the two channels goes from 1.00 to 0.31 between zero width and full opening, balance stays at nil throughout, and loudness does not move by a hundredth of a decibel — -16.91 LUFS at all four settings tried. Positions come in mirrored pairs, and amplitude is corrected for what the scattering would add in energy: a width that makes things louder gets judged better for the wrong reason. Dispersion disorders the instants. At zero, grains land on a regular grid and the ear hears a pitch; going up, the grid blurs and pitch gives way to texture. That is the passage from synchronous to asynchronous, done here with one slider.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3999,11 +4078,11 @@ After Oyvind Brandtsegg, Sigurd Saue and Thom Johansen, « Particle synthesis �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Species | choice | Grains | Grains / Pulsars / Glissons / Trainlets / Granulating a sound / Pitch-synchronous granulation | Five settings of one generator. Grains: a brief waveform repeated. Pulsars: grain duration counts in cycles, so the formant no longer follows the rate. Glissons: each grain sweeps its own frequency. Trainlets: the grain is an impulse train, and « Partials » sets its richness. Granulation: the sound connected to the input is read in grains, and « Position » and « Speed » drive the read head. Pitch-synchronous granulation: the same, but grains lock to the sound's period instead of a grid, which keeps its pitch. |
+| Species | choice | Grains | Grains / Pulsars / Glissons / Trainlets / Granulating a sound / Pitch-synchronous granulation / Grainlets | Five settings of one generator. Grains: a brief waveform repeated. Pulsars: grain duration counts in cycles, so the formant no longer follows the rate. Glissons: each grain sweeps its own frequency. Trainlets: the grain is an impulse train, and « Partials » sets its richness. Grainlets: frequency sweeps the interval given by « Transposition » and grain duration follows it, so every grain carries the same number of cycles. Granulation: the sound connected to the input is read in grains, and « Position » and « Speed » drive the read head. Pitch-synchronous granulation: the same, but grains lock to the sound's period instead of a grid, which keeps its pitch. |
 | Density | slider | 60 grains/s | 1 – 500 grains/s, step 1 | Grains per second — without effect on pitch-synchronous granulation, whose rate comes from the sound. Below some twenty, you count them and the node sounds like a rhythm; above, they fuse and the rate becomes a pitch — the continuum between rhythm and pitch, crossed with one slider. |
 | Grain duration | slider | 50 % | 1 – 400 %, step 1 | A grain's duration, as a percentage of what separates two grains. Below one hundred the grains do not touch and the silence between them is heard; beyond, they overlap and the texture fills in. For a pulsar this percentage counts in cycles of the waveform, which is exactly what detaches the formant from the fundamental. |
 | Frequency | slider | 440 Hz | 20 – 8000 Hz, step 1 | The frequency of the waveform inside the grain. For a pulsar it is the formant position; for a trainlet, the rate of the train's impulses. It does nothing for granulation, whose content comes from the connected sound. |
-| Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | For a glisson, the interval each grain travels during its brief existence: the grain starts at its frequency and arrives here. For granulation, the pitch at which the connected sound's grains are replayed, duration unchanged. It does nothing for the other species. |
+| Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | For a grainlet, the interval frequency travels across the note, and which grain duration follows. For a glisson, the interval each grain travels during its brief existence: the grain starts at its frequency and arrives here. For granulation, the pitch at which the connected sound's grains are replayed, duration unchanged. It does nothing for the other species. |
 | Partials | slider | 8 | 1 – 40, step 1 | A trainlet's number of partials, that is, the bandwidth of its impulse train. At one, only a sine remains; at forty, a sharp click. It does nothing for the other species, which have no train. |
 | Dispersion | slider | 0 % | 0 – 100 %, step 1 | The disorder of the instants, as a percentage of the period. Without effect on pitch-synchronous granulation, where the instants are dictated by the sound. At zero, grains land on a regular grid and the ear draws a pitch from it; going up, the grid blurs and pitch gives way to texture. That is the passage from synchronous to asynchronous granular. |
 | Spatial width | slider | 0 % | 0 – 100 %, step 1 | Scatters the grains between the two channels: each one gets its own place, instead of the whole sound moving as a block. At zero, every grain lands in the centre and both channels come out identical; at one hundred, they take the full width. This is where granulation parts from panning: it is not the sound that is placed but its grains, and the ear draws a cloud from it rather than a direction. The catalog's goniometer shows it — the correlation of the two channels falls as you open up. Positions are drawn from the seed: the same seed replays the same scattering. |
@@ -5397,6 +5476,31 @@ Wave terrain synthesis. A wavetable oscillator reads a one-dimensional curve; th
 | Centre Y | number | 0 % | -200 – 200 %, step 1 | Offsets the orbit on the y axis. |
 | Duration | number | 3 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Wavelets
+
+`ondelettes` · Processing → Effects
+
+*Analyses the sound with wavelets — short window in the treble, long in the bass — and keeps only the coefficients that carry something.*
+
+After Ingrid Daubechies, « Orthonormal bases of compactly supported wavelets », Communications on Pure and Applied Mathematics 41(7), 1988; thresholding comes from David Donoho and Iain Johnstone, « Ideal spatial adaptation by wavelet shrinkage », Biometrika 81(3), 1994, and averaging over shifts from Ronald Coifman and David Donoho, « Translation-invariant de-noising », 1995. What a wavelet has that the Fourier transform has not. A short-term transform imposes one single window on the whole sound: long, it separates pitches finely and smears attacks; short, it places attacks and blurs the bass. You must choose once and for all, and the choice is always wrong somewhere. A wavelet does not choose: it looks at the highest octave through a short window, the next one through a window twice as long, and so on down to the bass. It is the grainlet principle — short highs, long lows — but exact, and reversible. Reconstruction is perfect, and that is the one point that is not negotiable. Without touching the coefficients, the node returns the input sound to within a ten-millionth: that is what « Reconstruct » lets you check for yourself, and what a test demands of each of the four wavelets on noise, the hardest signal there is. What thresholding really brings. Noise spreads over every coefficient; a structured sound concentrates into a few. Erasing the small coefficients therefore erases mostly noise. The risk, when measuring that gain, is to applaud oneself for a plain low-pass: on a held note, cutting the treble alone would win decibels. The decisive test therefore uses broadband clicks, which no band cut can clean — the control that zeroes the very same bands gains 0.01 dB there, and thresholding 11 dB. The difference is what sparsity brings, and nothing else. Shifts are worth their cost. A decimated transform is not translation invariant: the same sound moved forward by one sample does not give the same coefficients, and a characteristic shimmer is left around attacks. Processing the sound at several shifts and averaging removes it, since the artefacts depend on the shift and the sound does not. Four shifts are usually enough; beyond that, cost rises faster than gain. A useful warning. With few levels, the whole bass escapes processing: the node then behaves partly as a filter, and a narrowband sound will look beautifully cleaned without wavelets having much to do with it. The honest setting reaches for enough levels that the sound's own band is thresholded too. The second output returns exactly what was removed. If you hear the sound there rather than the hiss, the threshold is too strong — the ear says so in a second, where no number would.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Removed | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Operation | choice | Denoise | Reconstruct / Denoise / Keep the strongest | What is done with the coefficients. « Reconstruct » leaves them alone, and serves to check that the transform does return the input sound untouched. « Denoise » erases coefficients smaller than Donoho's threshold, estimated from the sound's own noise. « Keep the strongest » retains only a chosen share of them whatever the noise level — a sketch of the sound, in the manner of atomic decomposition but for a cost beyond comparison. |
+| Wavelet | choice | Daubechies (8) | Haar (2) / Daubechies (4) / Daubechies (6) / Daubechies (8) | The shape of the elementary wave, given by its number of coefficients. Haar is a plain step: it sees only jumps, and returns them with their corners. The Daubechies wavelets are smoother the longer they are, and the better they ignore the regular parts of the sound — which concentrates the information into fewer coefficients and makes thresholding more effective. The price is a spread in time: a long wavelet places an attack less sharply. |
+| Levels | slider | 6 | 1 – 12, step 1 | How far down in octaves to go. Each level halves the band that remains: at one level, only the highest octave is analysed; at six, you reach down to around 340 Hz. Everything below is not processed at all — which is the trap of this setting, since a bass-heavy sound will then look cleaned by the mere fact that it was left alone. The report states which bands were actually reached. |
+| Threshold strength | slider | 0.6 | 0 – 2, step 0.05 | Multiplies Donoho's universal threshold, which is the smallest threshold that erases pure noise almost surely. At one it is often too severe on sound and takes attacks away with the hiss; measurements put the optimum near 0.6 for hard thresholding and 0.4 for soft. At zero, nothing is erased. No effect on « Keep the strongest », which sets its threshold otherwise. |
+| Thresholding | choice | Soft | Soft / Hard | Soft subtracts the threshold from the coefficients it keeps instead of cutting sharply. It loses a little of the sound, but avoids the shimmer of a coefficient crossing the line back and forth from one instant to the next. Hard often measures better and often sounds worse: judge it on the « Removed » output. |
+| Shifts | slider | 4 | 1 – 8, step 1 | How many shifted versions of the sound to process before averaging them. A decimated transform is not translation invariant, and the shimmer it leaves around attacks depends on where the sound sits in the file; averaging cancels it. Cost is proportional: four shifts, four times the computation, for about a decibel of gain that then dries up. |
+| Share kept | slider | 5 % | 0 – 100 %, step 0.5 | The share of coefficients that « Keep the strongest » retains. At five per cent, a held sound keeps nearly all its energy and noise keeps only a third: that is the very measure of its sparsity. Going lower gives an ever rougher sketch, and an ever more interesting one to listen to. No effect on the other two operations. |
 
 #### Wavesets (Wishart)
 

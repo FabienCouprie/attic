@@ -51,6 +51,138 @@ function prefilterK(samples: Float32Array, sr: number): Float32Array {
   return out;
 }
 
+/**
+ * La sonie intégrée, selon ITU-R BS.1770-4, et la plage selon EBU Tech 3342.
+ *
+ * TROIS DÉFAUTS ONT ÉTÉ CORRIGÉS ICI, ET LE PREMIER RENDAIT LA MESURE INUTILISABLE.
+ *
+ *  1. ON MOYENNAIT DES DÉCIBELS. La somme se faisait sur les niveaux de bloc en LUFS, puis on
+ *     divisait par leur nombre : c'est une moyenne de logarithmes, là où la norme moyenne les
+ *     PUISSANCES et ne convertit qu'à la fin. Un son moitié à −27 LUFS, moitié silencieux, donnait
+ *     −73 au lieu de −30 — mesuré dans l'application sur un rythme dont le niveau efficace était
+ *     à −24 dBFS et qui s'annonçait à −73 LUFS. Un tel écart n'est pas une imprécision, c'est une
+ *     autre grandeur.
+ *  2. AUCUNE PORTE. La norme en exige deux : une absolue à −70 LUFS, qui écarte le silence, et une
+ *     relative à dix unités sous le niveau non gardé, qui écarte les passages faibles. Sans elles,
+ *     les blancs entre les notes tirent la mesure vers le bas, et deux morceaux de même force
+ *     s'annoncent différemment selon ce qu'ils ont de silence.
+ *  3. UN SEUL CANAL COMPTÉ. La boucle parcourait les canaux mais n'en retenait qu'un, si bien
+ *     qu'une stéréo se lisait trois décibels trop bas — la sonie somme les puissances des canaux,
+ *     et deux canaux identiques valent le double d'un seul.
+ *
+ * LES BLOCS SE RECOUVRENT AUX TROIS QUARTS, comme la norme le demande : sans recouvrement, une
+ * note à cheval sur deux blocs est comptée deux fois à moitié et peut passer sous la porte des
+ * deux côtés. Les sommes sont calculées par quarts de bloc puis additionnées quatre par quatre,
+ * de sorte que le recouvrement ne coûte rien : chaque échantillon n'est lu qu'une fois.
+ */
+const OFFSET = -0.691;
+const PORTE_ABSOLUE = -70;
+const PORTE_RELATIVE = -10;
+const PORTE_RELATIVE_PLAGE = -20;
+
+interface SonieMesuree {
+  integree: number;
+  momentaneeMax: number;
+  momentaneeMin: number;
+  plage: number;
+}
+
+/** Le niveau d'un bloc, à partir de la somme pondérée des puissances de ses canaux. */
+const niveauBloc = (puissance: number): number =>
+  (puissance > 1e-15 ? OFFSET + 10 * Math.log10(puissance) : -Infinity);
+
+/** La moyenne des puissances des blocs retenus, en niveau. */
+function niveauMoyen(puissances: readonly number[]): number {
+  if (puissances.length === 0) return -Infinity;
+  return niveauBloc(puissances.reduce((s, p) => s + p, 0) / puissances.length);
+}
+
+/**
+ * Les puissances pondérées par bloc, pour une durée de bloc et un pas donnés.
+ *
+ * `quarts` porte la somme des carrés de chaque quart de bloc, tous canaux confondus : un bloc en
+ * additionne quatre, et le pas d'un quart donne le recouvrement de trois quarts.
+ */
+function puissancesParBloc(quarts: readonly number[], echantillonsParQuart: number, quartsParBloc: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i + quartsParBloc <= quarts.length; i++) {
+    let somme = 0;
+    for (let j = 0; j < quartsParBloc; j++) somme += quarts[i + j];
+    out.push(somme / (echantillonsParQuart * quartsParBloc));
+  }
+  return out;
+}
+
+/** Le centile demandé d'une liste déjà triée. */
+function centile(triee: readonly number[], part: number): number {
+  if (triee.length === 0) return 0;
+  const rang = Math.min(triee.length - 1, Math.max(0, Math.round(part * (triee.length - 1))));
+  return triee[rang];
+}
+
+export function sonieIntegree(buffer: AudioBuffer, sr: number, nch: number, length: number): SonieMesuree {
+  const echantillonsParQuart = Math.max(1, Math.floor(0.1 * sr));
+  const nbQuarts = Math.floor(length / echantillonsParQuart);
+  if (nbQuarts < 4) return { integree: -Infinity, momentaneeMax: -Infinity, momentaneeMin: -Infinity, plage: 0 };
+
+  // La somme des carrés de chaque quart de bloc, TOUS CANAUX ADDITIONNÉS — la sonie somme les
+  // puissances des canaux, elle ne les moyenne pas.
+  const quarts = new Float64Array(nbQuarts);
+  for (let c = 0; c < nch; c++) {
+    const filtre = prefilterK(buffer.getChannelData(c), sr);
+    // Les canaux arrière d'une diffusion multicanale prèsent 1,41 dans la norme ; jusqu'à deux
+    // canaux, tous pèsent un, ce qui couvre tout ce qu'Attic produit.
+    const poids = 1;
+    for (let q = 0; q < nbQuarts; q++) {
+      let somme = 0;
+      const debut = q * echantillonsParQuart;
+      for (let i = 0; i < echantillonsParQuart; i++) somme += filtre[debut + i] * filtre[debut + i];
+      quarts[q] += somme * poids;
+    }
+  }
+  const parQuart = [...quarts];
+
+  // Blocs momentanés : 400 ms, pas de 100 ms.
+  const puissances = puissancesParBloc(parQuart, echantillonsParQuart, 4);
+  const niveaux = puissances.map(niveauBloc);
+
+  // Première porte : le silence absolu ne compte pas.
+  const gardes1 = puissances.filter((_, i) => niveaux[i] > PORTE_ABSOLUE);
+  if (gardes1.length === 0) {
+    return { integree: -Infinity, momentaneeMax: Math.max(...niveaux), momentaneeMin: Math.min(...niveaux), plage: 0 };
+  }
+  // Seconde porte : dix unités sous le niveau de ce qui reste.
+  const seuilRelatif = niveauMoyen(gardes1) + PORTE_RELATIVE;
+  const gardes2 = puissances.filter((_, i) => niveaux[i] > PORTE_ABSOLUE && niveaux[i] > seuilRelatif);
+  const integree = niveauMoyen(gardes2.length > 0 ? gardes2 : gardes1);
+
+  // La plage, selon EBU Tech 3342 : blocs de trois secondes, porte relative à vingt unités, puis
+  // l'écart entre le dixième et le quatre-vingt-quinzième centile. C'est ce qui remplace l'ancien
+  // « maximum moins minimum », lequel annonçait cent décibels dès qu'un blanc traînait.
+  const puissancesCourtTerme = puissancesParBloc(parQuart, echantillonsParQuart, 30);
+  const niveauxCourtTerme = puissancesCourtTerme.map(niveauBloc);
+  const courtGardes = puissancesCourtTerme.filter((_, i) => niveauxCourtTerme[i] > PORTE_ABSOLUE);
+  let plage = 0;
+  if (courtGardes.length > 0) {
+    const seuil = niveauMoyen(courtGardes) + PORTE_RELATIVE_PLAGE;
+    const retenus = niveauxCourtTerme
+      .filter((n) => n > PORTE_ABSOLUE && n > seuil)
+      .sort((a, b) => a - b);
+    if (retenus.length > 0) plage = centile(retenus, 0.95) - centile(retenus, 0.10);
+  }
+
+  const niveauxGardes = niveaux.filter((n) => n > PORTE_ABSOLUE);
+  return {
+    integree,
+    momentaneeMax: Math.max(...niveaux),
+    // Le minimum est pris parmi les blocs qui portent du son : le silence n'est pas un niveau bas,
+    // c'est l'absence de niveau, et le confondre avec un niveau bas est ce qui donnait cent
+    // décibels de plage sur un son parfaitement ordinaire.
+    momentaneeMin: niveauxGardes.length > 0 ? Math.min(...niveauxGardes) : -Infinity,
+    plage,
+  };
+}
+
 export function mesurerNiveau(buffer: AudioBuffer): MesuresNiveau {
   const sr = buffer.sampleRate;
   const nch = buffer.numberOfChannels;
@@ -74,36 +206,7 @@ export function mesurerNiveau(buffer: AudioBuffer): MesuresNiveau {
   const peakDb = peak > 1e-9 ? 20 * Math.log10(peak) : -120;
   const crestFactorDb = peakDb - rmsDb;
 
-  // LUFS: K-weighted mean square, 400 ms blocks (momentary), 3 s (short-term)
-  // Integrated = average over whole signal
-  let lufsSum = 0;
-  let lufsCount = 0;
-  let lufsMax = -120;
-  let lufsMin = 0;
-
-  const blockSize = Math.floor(0.4 * sr); // 400 ms momentary
-  const hop = blockSize;
-
-  for (let c = 0; c < nch; c++) {
-    const d = buffer.getChannelData(c);
-    const filtered = prefilterK(d, sr);
-    const channelWeight = c === 0 ? 1.0 : 1.0; // equal weight (simplified, no 1.41 for surround)
-    for (let start = 0; start + blockSize <= length; start += hop) {
-      let blockSum = 0;
-      for (let i = 0; i < blockSize; i++) blockSum += filtered[start + i] * filtered[start + i];
-      const meanSq = blockSum / blockSize * channelWeight;
-      const blockLufs = meanSq > 1e-12 ? -0.691 + 10 * Math.log10(meanSq) : -120;
-      if (c === 0) {
-        lufsSum += blockLufs;
-        lufsCount++;
-        if (blockLufs > lufsMax) lufsMax = blockLufs;
-        if (lufsMin === 0 || blockLufs < lufsMin) lufsMin = blockLufs;
-      }
-    }
-  }
-
-  const lufs = lufsCount > 0 ? lufsSum / lufsCount : -120;
-  const plageDynamiqueDb = lufsMax - lufsMin;
+  const mesure = sonieIntegree(buffer, sr, nch, length);
 
   // True peak: 4× interpolation linéaire
   let vraiPic = 0;
@@ -122,11 +225,11 @@ export function mesurerNiveau(buffer: AudioBuffer): MesuresNiveau {
   return {
     rmsDb,
     peakDb,
-    lufs: Math.max(-120, lufs),
-    lufsMax: Math.max(-120, lufsMax),
-    lufsMin: Math.max(-120, lufsMin),
+    lufs: Math.max(-120, mesure.integree),
+    lufsMax: Math.max(-120, mesure.momentaneeMax),
+    lufsMin: Math.max(-120, mesure.momentaneeMin),
     crestFactorDb,
-    plageDynamiqueDb: Math.max(0, plageDynamiqueDb),
+    plageDynamiqueDb: Math.max(0, mesure.plage),
     vraiPicDb,
   };
 }
