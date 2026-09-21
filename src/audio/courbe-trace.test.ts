@@ -96,7 +96,12 @@ describe("le tracé", () => {
     expect(svg).toContain('viewBox="0 0 640 200"');
     expect(svg).not.toContain("<script");
     expect(svg).not.toContain("http://www.w3.org/1999/xlink");
-    expect(svg.includes("http")).toBe(svg.includes("http://www.w3.org/2000/svg"));
+    // L'ESPACE DE NOMS MIS À PART, AUCUNE ADRESSE NE DOIT RESTER. Écrite d'abord comme une
+    // comparaison de sous-chaînes — « le seul http est celui du SVG » —, l'assertion reprenait le
+    // motif d'une validation d'URL par sous-chaîne, que l'analyse statique signale à juste titre :
+    // n'importe quel hôte peut entourer une sous-chaîne. Retirer l'espace de noms puis exiger qu'il
+    // ne reste plus rien dit la même chose, sans le motif, et vérifie davantage.
+    expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', "")).not.toContain("http");
   });
 
   it("porte la bande de la courbe et la ligne de moyenne", () => {

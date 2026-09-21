@@ -31,7 +31,10 @@ const EN = new Map<string, string>([
 const etiquetteEn = (fr: string): string => {
   const direct = EN.get(fr);
   if (direct) return direct;
-  return fr.replace("Chroma ", "Chroma ").replace(" (moyenne)", " (mean)").replace(" (variance)", " (variance)");
+  // « Chroma » et « (variance) » s'écrivent pareil dans les deux langues : les remplacer par
+  // eux-mêmes donnait l'illusion d'une traduction et ne faisait rien — relèvé par l'analyse
+  // statique, qui a raison. Seule la moyenne change de nom.
+  return fr.replace(" (moyenne)", " (mean)");
 };
 
 /** Les quatre familles du vecteur, dans l'ordre où le module les écrit. */
