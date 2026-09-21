@@ -136,6 +136,16 @@ import { fiches as f_synthese_features } from "./synthese-features";
 import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
+import { fiches as f_parcours } from "./parcours";
+import { fiches as f_ficheTechnique } from "./fiche-technique";
+import { fiches as f_particules } from "./particules";
+import { fiches as f_montageGrains } from "./montage-grains";
+import { fiches as f_ecrans } from "./ecrans";
+import { fiches as f_atomes } from "./atomes";
+import { fiches as f_ondelettes } from "./ondelettes";
+import { fiches as f_ecosysteme } from "./ecosysteme";
+import { fiches as f_ssp } from "./ssp";
+import { fiches as f_boucleCollection } from "./boucle-collection";
 import { fiches as f_correction_hauteur } from "./correction-hauteur";
 import { fiches as f_stereo_morphing } from "./stereo-morphing";
 import { fiches as f_finitions } from "./finitions";
@@ -193,6 +203,16 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_cercle_pulsant,
   ...f_ampleur,
   ...f_quiz,
+  ...f_parcours,
+  ...f_ficheTechnique,
+  ...f_particules,
+  ...f_montageGrains,
+  ...f_ecrans,
+  ...f_atomes,
+  ...f_ondelettes,
+  ...f_ecosysteme,
+  ...f_ssp,
+  ...f_boucleCollection,
   ...f_correction_hauteur,
   ...f_stereo_morphing,
   ...f_finitions,

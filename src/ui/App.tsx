@@ -26,6 +26,8 @@ import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
+import { ecrireProfondeurExport, lireProfondeurExport } from "./profondeur-export";
+import type { ProfondeurExport } from "../audio/io";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
@@ -222,6 +224,13 @@ function Atelier() {
   // rien en deçà de dix minutes ; au-delà, elle décide si les nœuds intermédiaires reçoivent
   // leur aperçu écoutable ou le bouton qui le construit à la demande.
   const [economieMemoire, setEconomieMemoire] = useState(() => lireEconomieMemoire());
+  // La profondeur des fichiers ecrits. Elle ne prend effet qu au prochain lancement : le blob
+  // est construit pendant l execution, et les apercus deja en memoire gardent la leur.
+  const [profondeurExport, setProfondeurExport] = useState<ProfondeurExport>(() => lireProfondeurExport());
+  const changerProfondeurExport = useCallback((bits: ProfondeurExport) => {
+    ecrireProfondeurExport(bits);
+    setProfondeurExport(bits);
+  }, []);
   const basculerEconomieMemoire = useCallback(() => {
     setEconomieMemoire((prev) => {
       const suivant = !prev;
@@ -1134,6 +1143,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onBasculerSauvegardeAuto={basculerSauvegardeAuto}
           economieMemoire={economieMemoire}
           onBasculerEconomieMemoire={basculerEconomieMemoire}
+          profondeurExport={profondeurExport}
+          onChangerProfondeurExport={changerProfondeurExport}
           onImporter={importer}
         />
         <div className="attic-onglets">
@@ -1195,6 +1206,19 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       <Inspector
         noeud={nodes.find((n) => n.id === sel?.id) ?? null}
         def={sel ? trouverDef(sel.data.ficheId) : undefined}
+        // Calculé ici et non dans l'inspecteur : retrouver quels ports sont de type courbe demande
+        // de connaître le domaine, et l'inspecteur doit rester générique. Chaque port de modulation
+        // nomme sa cible ; on ne garde que celles dont le port est effectivement branché — un
+        // réglage n'est « piloté » que quand une courbe y arrive vraiment.
+        parametresModules={(() => {
+          if (!sel) return [];
+          const d = trouverDef(sel.data.ficheId);
+          if (!d) return [];
+          return d.entrees.flatMap((port, rang) =>
+            port.module
+            && edges.some((a) => a.target === sel.id && (a.targetHandle ?? `in:${rang}`) === `in:${rang}`)
+              ? [port.module] : []);
+        })()}
         onChangerParametre={(nom, val) => {
           if (!sel) return;
           cacheExec.current.delete(sel.id);

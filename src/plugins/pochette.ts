@@ -12,7 +12,9 @@ export { genererPochetteSVG };
 export const fiches: FicheAudio[] = ([
   {
     id: "generateur-pochette", nom: "Générateur de pochette", nomEn: "Cover Art Generator",
-    univers: "Autres", famille: "Génération",
+    // Auprès de la « Galerie d'exposition », qui fabrique les mêmes pochettes procédurales pour
+    // tout un répertoire : c'est le même geste, sur un seul album.
+    univers: "Collections", famille: "Export",
     resume: "Génère une pochette d'album procédurale en SVG depuis un prompt + titre.",
     resumeEn: "Generates a procedural album cover (SVG) from a prompt + title.",
     entrees: [],

@@ -4,6 +4,8 @@ import { useI18n } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
 import { BoutonModeles } from "./BoutonModeles";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
+import { PROFONDEURS } from "./profondeur-export";
+import type { ProfondeurExport } from "../audio/io";
 
 interface Props {
   theme: string; setTheme: (t: "violet" | "black") => void;
@@ -24,6 +26,9 @@ interface Props {
   /** Économie de mémoire sur les pistes longues : bascule voisine, même groupe. */
   economieMemoire: boolean;
   onBasculerEconomieMemoire: () => void;
+  /** Profondeur des fichiers ecrits : selecteur voisin, meme groupe. */
+  profondeurExport: ProfondeurExport;
+  onChangerProfondeurExport: (bits: ProfondeurExport) => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
   nbPlugins: number;
@@ -54,7 +59,7 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -184,6 +189,17 @@ export function BarreOutils(props: Props) {
             {!economieMemoire && <path d="M2.5 13.5 13.5 2.5" />}
           </svg>
         </button>
+        {/* La profondeur des fichiers écrits. Voisine de la barrette de mémoire parce qu'elle en
+            commande une part : le même blob sert d'aperçu écoutable et de fichier sauvegardé, si
+            bien que monter la profondeur augmente d'autant la mémoire retenue. */}
+        <select className="attic-profondeur-export" value={profondeurExport}
+          title={t("barre.profondeurExport.titre")}
+          aria-label={t("barre.profondeurExport.titre")}
+          onChange={(e) => onChangerProfondeurExport(Number(e.target.value) as ProfondeurExport)}>
+          {PROFONDEURS.map((p) => (
+            <option key={p.valeur} value={p.valeur}>{lang === "en" ? p.en : p.fr}</option>
+          ))}
+        </select>
         {nomFichier && (
           <span className="attic-nom-fichier" title={currentFilePath ?? undefined}>
             {nomFichier}

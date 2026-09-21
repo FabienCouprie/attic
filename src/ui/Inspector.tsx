@@ -7,6 +7,7 @@ import { SaisieCouleurs } from "./SaisieCouleurs";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modifie";
+import { estUniteMultiplicative } from "../audio/courbe";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -17,6 +18,19 @@ interface Props {
   onReinitialiser: () => void;
   onEnregistrer?: (id: string, blob: Blob) => void;
   onEnregistrerMidi?: (id: string, fichier: File) => void;
+  /**
+   * Les paramètres de ce nœud qu'une courbe pilote en ce moment.
+   *
+   * UNE LISTE ET NON UN BOOLÉEN, parce qu'un nœud peut voir plusieurs de ses réglages bouger à la
+   * fois — un vrai wah déplace sa coupure et sa résonance. Chaque port de modulation nomme sa
+   * cible ; l'application ne garde que celles dont le port est effectivement branché.
+   *
+   * L'INSPECTEUR NE CONNAÎT PAS LE CÂBLAGE, ET N'A PAS À LE CONNAÎTRE. Il reçoit un nœud, sa fiche
+   * et des callbacks : lui passer les arêtes l'obligerait à retrouver lui-même quel port est de
+   * type courbe, c'est-à-dire à savoir des choses du domaine. Une liste calculée en amont suffit,
+   * et garde l'inspecteur générique — c'est la règle de `ui/`.
+   */
+  parametresModules?: string[];
 }
 
 // Borne à la plage du paramètre et cale sur son pas. Utilisé par le champ
@@ -66,7 +80,60 @@ function ChampNombre({ p, valeur, onChanger }: {
   );
 }
 
-export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi }: Props) {
+/**
+ * Les deux bornes d'un paramètre modulé, à la place de ce paramètre.
+ *
+ * DEUX CURSEURS CÔTE À CÔTE ET NON UNE PISTE À DEUX POIGNÉES, et c'est un choix assumé. Superposer
+ * deux `input[type=range]` pour simuler une poignée double demande de jouer avec les événements de
+ * pointeur, et l'on y perd le clavier : deux poignées au même endroit ne se distinguent plus à la
+ * tabulation. Deux curseurs nommés « de » et « à » disent la même chose, se règlent au clavier, et
+ * se lisent sans apprentissage.
+ *
+ * LES BORNES NE SE CROISENT PAS. Un minimum passé au-dessus du maximum ne rend pas une course
+ * vide : il rend une course À L'ENVERS, que la courbe parcourt en descendant. C'est utilisable —
+ * un filtre qui se ferme quand le son s'ouvre — et rien n'est donc empêché ; la lecture affiche
+ * simplement une flèche descendante, pour qu'on sache que c'est voulu.
+ */
+function PlageModulation(
+  { p, libelle, bornes, params, lang, onChanger }: {
+    p: any;
+    libelle: string;
+    bornes: { min?: any; max?: any };
+    params: Record<string, unknown>;
+    lang: any;
+    onChanger: (nom: string, val: number) => void;
+  },
+) {
+  const { t } = useI18n();
+  const valeur = (b?: any) => (b ? Number(params[b.nom] ?? b.defaut) : 0);
+  const bas = valeur(bornes.min);
+  const haut = valeur(bornes.max);
+  const echelle = bornes.min ?? p;
+  const [pMin, pMax] = echelle.plage ?? [0, 100];
+  const unite = uniteParametre(p, lang);
+
+  const curseur = (b: any, quoi: "min" | "max") => b ? (
+    <div className="inspecteur-plage-borne">
+      <span className="inspecteur-plage-etiquette">{quoi === "min" ? t("inspecteur.de") : t("inspecteur.a")}</span>
+      <input type="range" min={pMin} max={pMax} step={b.pas ?? 1}
+        aria-label={`${libelle} — ${quoi === "min" ? t("inspecteur.de") : t("inspecteur.a")}`}
+        value={Number(params[b.nom] ?? b.defaut)}
+        onChange={(e) => onChanger(b.nom, calerParametre(b, Number(e.target.value)))} />
+    </div>
+  ) : null;
+
+  return (
+    <div className="inspecteur-plage">
+      <div className="inspecteur-plage-lecture">
+        {bas}{unite ? ` ${unite}` : ""} {haut >= bas ? "→" : "↓"} {haut}{unite ? ` ${unite}` : ""}
+      </div>
+      {curseur(bornes.min, "min")}
+      {curseur(bornes.max, "max")}
+    </div>
+  );
+}
+
+export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi, parametresModules }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
   const [noticeOuverte, setNoticeOuverte] = useState(true);
@@ -75,6 +142,15 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
   }
   const params = noeud.data.parametres as Record<string, number | string>;
   const nomP = (p: any) => lang === "en" && p.nomEn ? p.nomEn : p.nom;
+  // Les bornes rangees sous le parametre qu elles pilotent. Le « min » se reconnait a son nom :
+  // c est la convention de toutes les fiches, et la declaration `modulationDe` dit le reste.
+  const bornes = new Map<string, { min?: any; max?: any }>();
+  for (const b of def.parametres as any[]) {
+    if (!b.modulationDe) continue;
+    const groupe = bornes.get(b.modulationDe) ?? {};
+    if (/min/i.test(b.nom)) groupe.min = b; else groupe.max = b;
+    bornes.set(b.modulationDe, groupe);
+  }
 
   function toggleDoc(nom: string) {
     setDocsOuverts((prev) => {
@@ -95,6 +171,11 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
       {def.parametres.map((p) => {
         // Paramètres internes (ex: chemin persisté) — pas d'affichage
         if (p.hidden) return null;
+        // UNE BORNE DE MODULATION NE S'AFFICHE JAMAIS SEULE. Détachée de ce qu'elle borne, elle ne
+        // veut rien dire — « Modulation min » à 200 ne dit ni de quoi ni en quelle unité. Elle est
+        // rendue avec le paramètre qu'elle pilote, ou pas du tout quand aucune courbe n'est
+        // branchée, auquel cas elle ne sert effectivement à rien.
+        if (p.modulationDe) return null;
         // Cacher conditionnellement certains paramètres selon la valeur d'un autre
         if (def.id === "gestion-nodes" && p.nom === "Node à exporter" && params["Action"] === "Importer") return null;
         const docP = lang === "en" && p.docEn ? p.docEn : p.doc;
@@ -164,9 +245,16 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             </div>
           ) : p.type === "couleurs" ? (
             <SaisieCouleurs valeur={String(params[p.nom] ?? defautP)} onChange={(v) => onChangerParametre(p.nom, v)} />
+          ) : bornes.get(p.nom) && (parametresModules ?? []).includes(p.nom) ? (
+            // LE PARAMÈTRE PILOTÉ DEVIENT SA PROPRE PLAGE. Son curseur d'origine ne commande plus
+            // rien — la courbe a pris la main —, et l'afficher comme un réglage vivant était le
+            // mensonge de l'inspecteur. À sa place, et dans ses unités, les deux bornes que la
+            // courbe parcourt réellement.
+            <PlageModulation p={p} libelle={nomP(p)} bornes={bornes.get(p.nom)!} params={params} lang={lang}
+              onChanger={onChangerParametre} />
           ) : (
             <div className="inspecteur-range">
-              {p.unite === "Hz" ? (
+              {estUniteMultiplicative(p.unite) ? (
                 <input type="range"
                   min={Math.log10(Math.max(1, (p.plage ?? [0,100])[0]))}
                   max={Math.log10((p.plage ?? [0,100])[1])}

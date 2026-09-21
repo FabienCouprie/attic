@@ -9,20 +9,34 @@ describe("ce qu'une piste coûte", () => {
     expect(Mo(octetsTampon(3600))).toBe(1270);
   });
 
-  it("l'aperçu en 16 bits pèse la moitié du tampon", () => {
-    expect(octetsApercu(3600) - 44).toBe(octetsTampon(3600) / 2);
+  it("L'APERÇU COÛTE CE QUE SA PROFONDEUR COÛTE, et ce n'est plus la moitié du tampon", () => {
+    // L'écriture était bloquée en seize bits, où l'aperçu pesait exactement la moitié du tampon.
+    // Elle ne l'est plus : le même blob sert d'aperçu et de fichier livré, si bien que la
+    // profondeur d'écriture se paie ici, en mémoire vive retenue.
+    expect(octetsApercu(3600, 2, 44100, 16) - 44).toBe(octetsTampon(3600) / 2);
+    expect(octetsApercu(3600, 2, 44100, 24) - 44).toBe((octetsTampon(3600) * 3) / 4);
+    // En flottant, l'aperçu est une copie exacte du tampon : même taille, à l'en-tête près.
+    expect(octetsApercu(3600, 2, 44100, 32) - 56).toBe(octetsTampon(3600));
   });
 
-  it("un nœud qui a tourné sur une heure retient les deux, près de 1,9 Go", () => {
-    expect(Mo(octetsTampon(3600) + octetsApercu(3600))).toBe(1905);
+  it("l'en-tête d'un fichier flottant compte douze octets de plus, et on les compte", () => {
+    // Hors PCM, la norme réclame deux octets au bloc `fmt ` et un bloc `fact` entier.
+    expect(octetsApercu(0, 2, 44100, 16)).toBe(44);
+    expect(octetsApercu(0, 2, 44100, 32)).toBe(56);
   });
 
-  it("dix minutes coûtent 318 Mo par nœud, cinq nœuds tiennent sous 1,6 Go", () => {
+  it("un nœud qui a tourné sur une heure retient les deux, près de 2,2 Go au défaut", () => {
+    expect(Mo(octetsTampon(3600) + octetsApercu(3600))).toBe(2223);
+    // Et 1,9 Go si l'on revient à seize bits, ce que le chiffre historique disait.
+    expect(Mo(octetsTampon(3600) + octetsApercu(3600, 2, 44100, 16))).toBe(1905);
+  });
+
+  it("dix minutes coûtent 370 Mo par nœud, cinq nœuds tiennent sous 1,9 Go", () => {
     expect(Mo(octetsTampon(DUREE_LONGUE_S))).toBe(212);
-    expect(Mo(octetsApercu(DUREE_LONGUE_S))).toBe(106);
+    expect(Mo(octetsApercu(DUREE_LONGUE_S))).toBe(159);
     const parNoeud = octetsTampon(DUREE_LONGUE_S) + octetsApercu(DUREE_LONGUE_S);
-    expect(Mo(parNoeud)).toBe(318);
-    expect(Mo(parNoeud * 5)).toBeLessThan(1600);
+    expect(Mo(parNoeud)).toBe(370);
+    expect(Mo(parNoeud * 5)).toBeLessThan(1900);
   });
 
   it("le mono coûte la moitié du stéréo", () => {
@@ -47,9 +61,12 @@ describe("garder ou non l'aperçu écoutable", () => {
     expect(apercuUtile({ dureeS: 3600, regarde: true })).toBe(true);
   });
 
-  it("une heure sur cinq intermédiaires : 3,1 Go d'aperçus évités", () => {
+  it("une heure sur cinq intermédiaires : 4,8 Go d'aperçus évités au défaut", () => {
     const evites = [1, 2, 3, 4, 5].filter(() => !apercuUtile({ dureeS: 3600, regarde: false })).length;
-    expect(Mo(evites * octetsApercu(3600))).toBe(3175);
+    // Le seuil rapporte d'autant plus que la profondeur monte : 3,2 Go évités en seize bits,
+    // 4,8 en vingt-quatre. Porter l'écriture à vingt-quatre le rend plus nécessaire, pas moins.
+    expect(Mo(evites * octetsApercu(3600, 2, 44100, 16))).toBe(3175);
+    expect(Mo(evites * octetsApercu(3600))).toBe(4763);
   });
 });
 

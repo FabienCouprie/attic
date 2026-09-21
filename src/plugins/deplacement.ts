@@ -187,7 +187,7 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention.\n\nAttic can already place a sound in space — the HRTF panner, Resonance Audio's scene. Both place a source. Neither can take a whole recording and turn it around the listener, which is exactly what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly.\n\nPressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being.\n\nWhat this node does not claim to do: recover the original scene. It reconstitutes a plausible one — two sources at the usual listening angles — and treats it as a field. With no rotation it renders the two channels in the right order, the image narrowed by the decoding and the level multiplied by 1.5 — measured, that is 3.5 dB more: encoding followed by decoding is not unity gain, and this node does not normalise, failing which the rotation would only be heard as a level change.\n\nA mono take has no scene to turn, and that is the first thing to know before trying. Two identical channels give a field whose left-right component is L−R, hence zero: only one direction remains, and turning it moves the source to one side instead of turning anything. Measured on a frequency generator: at 90°, 9.5 dB between the channels — a plain pan, which is audible; at 180°, strictly nothing, since swapping two identical channels leaves them identical, only the level dropping. The node therefore shows the directional share of the field it received: at zero, no angle will change its output. To hear it turn, give it an image that already exists — two panned sources, a widener upstream — and a curve on the Modulation input.",
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Rotation" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -200,10 +200,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Ouverture", nomEn: "Decoder width", type: "curseur", plage: [30, 180], pas: 5, defaut: 90, unite: "°",
         doc: "Angle entre les deux microphones virtuels du décodage. Faible, l'image est étroite mais cohérente ; large, elle sépare davantage au prix d'un creux au centre.",
         docEn: "Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre." },
-      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [-360, 360], pas: 5, defaut: 0, unite: "°",
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Rotation", type: "curseur", plage: [-360, 360], pas: 5, defaut: 0, unite: "°",
         doc: "Rotation que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Rotation that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [-360, 360], pas: 5, defaut: 360, unite: "°",
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Rotation", type: "curseur", plage: [-360, 360], pas: 5, defaut: 360, unite: "°",
         doc: "Rotation que vaut le un de la courbe. De zéro à 360°, une rampe fait faire un tour complet à la scène.",
         docEn: "Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle." },
     ],

@@ -36,6 +36,18 @@ import { creerAleatoire } from "../core/hasard";
 /** La plus grande valeur d'un entier 16 bits signé. */
 export const PLEINE_ECHELLE_16 = 32767;
 
+/** Les profondeurs entières que le projet sait écrire. Le 32 bits flottant ne se quantifie pas. */
+export type BitsEntiers = 16 | 24;
+
+/**
+ * La plus grande valeur d'un entier signé de `bits` bits.
+ *
+ * L'ÉCHELLE RESTE SYMÉTRIQUE À TOUTE PROFONDEUR, pour la raison donnée plus bas : gagner le dernier
+ * code négatif rendrait asymétrique une onde qui ne l'est pas, et ajouterait précisément les
+ * harmoniques paires que le dither vient de retirer.
+ */
+export const pleineEchelle = (bits: BitsEntiers): number => 2 ** (bits - 1) - 1;
+
 export interface OptionsQuantification {
   /** Ajouter le bruit de dither avant l'arrondi. Défaut : vrai. */
   dither?: boolean;
@@ -54,21 +66,31 @@ export interface OptionsQuantification {
  * harmoniques paires à ce qu'on vient précisément de nettoyer. Le code −32768 reste atteignable
  * par la borne, il n'est simplement pas fabriqué par l'échelle.
  */
-export function creerQuantificateur16(o: OptionsQuantification = {}): (echantillon: number) => number {
+export function creerQuantificateur(bits: BitsEntiers, o: OptionsQuantification = {}): (echantillon: number) => number {
   const avecDither = o.dither !== false;
   const alea = creerAleatoire(o.graine ?? 20260921);
+  const haut = pleineEchelle(bits);
+  const bas = -(haut + 1);
   return (echantillon: number) => {
     const x = Number.isFinite(echantillon) ? echantillon : 0;
     // Deux tirages uniformes soustraits : densité triangulaire sur ±1 LSB.
+    //
+    // LE LSB EST CELUI DE LA PROFONDEUR VISÉE, et c'est tout ce qui change d'une profondeur à
+    // l'autre. À vingt-quatre bits le bruit ajouté descend à −144 dBFS, très en dessous de tout
+    // plancher audible : il n'est plus là pour être entendu mais pour que l'erreur reste
+    // indépendante du signal, ce qui vaut à n'importe quelle échelle.
     const bruit = avecDither ? alea() - alea() : 0;
     // ARRONDI SYMÉTRIQUE, à l'écart de zéro sur les demis. `Math.round` tranche les égalités vers
     // +l'infini : 16383,5 rendait 16384 et −16383,5 rendait −16383, si bien qu'une onde
     // parfaitement symétrique ressortait décalée d'un LSB d'un côté. Un test l'a attrapé.
-    const echelle = x * PLEINE_ECHELLE_16 + bruit;
+    const echelle = x * haut + bruit;
     const v = Math.sign(echelle) * Math.round(Math.abs(echelle));
-    return Math.max(-32768, Math.min(PLEINE_ECHELLE_16, v));
+    return Math.max(bas, Math.min(haut, v));
   };
 }
+
+/** Le quantificateur seize bits, nommé pour les appels qui n'ont pas à choisir. */
+export const creerQuantificateur16 = (o: OptionsQuantification = {}) => creerQuantificateur(16, o);
 
 /**
  * L'erreur de quantification d'un signal, en LSB — l'outil de mesure des tests.
@@ -77,8 +99,10 @@ export function creerQuantificateur16(o: OptionsQuantification = {}): (echantill
  * cette erreur cesse de ressembler au signal.
  */
 export function erreurQuantification(
-  signal: Float32Array, o: OptionsQuantification = {},
+  signal: Float32Array, o: OptionsQuantification & { bits?: BitsEntiers } = {},
 ): Float32Array {
-  const quantifier = creerQuantificateur16(o);
-  return Float32Array.from(signal, (x) => quantifier(x) - x * PLEINE_ECHELLE_16);
+  const bits = o.bits ?? 16;
+  const quantifier = creerQuantificateur(bits, o);
+  const haut = pleineEchelle(bits);
+  return Float32Array.from(signal, (x) => quantifier(x) - x * haut);
 }

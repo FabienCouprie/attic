@@ -6,9 +6,13 @@
 // ligne de code.
 //
 // Le choix n'est pas arbitraire : chacun de ces orchestres a été ESSAYÉ, et seuls ceux qui
-// rendent du son figurent ici. Trois formulations de `partikkel` ont été refusées par le
-// compilateur — quarante-et-un arguments dont les types doivent tomber juste — et il n'est
-// donc pas dans la liste ; le nœud Csound général reste là pour qui sait l'écrire.
+// rendent du son figurent ici. `partikkel` n'y est pas, et son histoire vaut d'être dite : trois
+// formulations avaient été refusées par le compilateur, et on avait conclu ici qu'il fallait y
+// renoncer. C'était une erreur de lecture — l'opcode est bien présent dans le portage
+// WebAssembly, et son refus parlait des TYPES d'arguments, non de son absence. Il en prend
+// quarante obligatoires, dont six exigent une variable à taux audio qu'une constante ne remplace
+// pas. Il a désormais son propre nœud, « Particules », dont l'orchestre est construit et testé
+// dans `audio/particules.ts` : sa place n'est plus dans cette liste d'opcodes à un réglage.
 // `hrtfmove2` et `lpread` ont été essayés aussi : ils réclament des fichiers de données
 // externes, absents du portage WebAssembly, et l'un d'eux exige même une analyse préalable
 // par un utilitaire hors ligne. Ce n'est pas une question de réglage, c'est une question de

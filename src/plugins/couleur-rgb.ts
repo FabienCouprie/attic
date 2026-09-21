@@ -11,7 +11,9 @@ export const fiches: FicheAudio[] = ([
     id: "couleur-rgb",
     nom: "Couleur RGB",
     nomEn: "RGB Color",
-    univers: "Autres",
+    // Une source : il ne reçoit rien et rend du son. Sa place est parmi les entrées, et non
+    // dans « Autres », qui est la rubrique qu'on ne consulte pas en travaillant.
+    univers: "Entrées",
     famille: "Génération",
     resume: "Synthétise une couleur RGB en trois oscillateurs (R, G, B).",
     resumeEn: "Synthesizes an RGB color into three oscillators (R, G, B).",

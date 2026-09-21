@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **359 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **370 components** in **7 categories** and **31 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 175 | [Conversion](#conversion) (4) · [Editing](#editing) (22) · [Effects](#effects) (145) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 36 | [Analysis](#analysis) (28) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [famille.Générateurs](#famillegénérateurs) (1) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 180 | [Conversion](#conversion) (4) · [Editing](#editing) (23) · [Effects](#effects) (149) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
-| [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
+| [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 62 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Learning](#learning) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
+| [Others](#others) | 58 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
 
 ## How to read this catalog
 
@@ -163,6 +163,37 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 
 *No parameters.*
 
+### famille.Générateurs
+
+| Component | Summary |
+|---|---|
+| [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
+
+#### SSP (Koenig)
+
+`ssp-koenig` · Inputs → famille.Générateurs
+
+*Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points.*
+
+After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute of Sonology, Utrecht, in the 1970s, whose selection principles come from his programs Project 1 (1964) and Project 2 (1966). See also Luc Dobereiner, « Models of Constructed Sound: Nonstandard Synthesis as an Aesthetic Perspective », Computer Music Journal 35(3), 2011. What « nonstandard » means. All ordinary synthesis starts from a model: an oscillator, a waveform, a spectrum, an envelope, an instrument. Here there is none of that. You give two lists of numbers — amplitudes and durations — and principles for drawing from them. The pairs so drawn are points, and the sound is the line joining them. No pitch, no note, no timbre: the pitch you will hear is a consequence of the durations you wrote, never a setting. Koenig's thesis, and what makes this node unlike the others. The same principles hold at every scale: what orders the points of a waveform also orders the sections of a piece. That is why the same choice of five words is offered for the amplitudes, for the durations and for the order of the sections. A series means exactly the same thing at all three scales — each element once before any repeats — and you can hear it. The warning that must be given. SSP has a reputation for being impossible to steer. Koenig himself found that the program resisted musical intention, and the overwhelming majority of settings return noise. But two things really are under your command, and they can be measured. The durations make the treble: measured, the spectrum's centre of gravity runs from 9 Hz for durations of a thousand samples to 4,419 Hz for durations of two or three, close to five hundred to one. The amplitudes make the crest: from 1.81 dB for two extreme values to 8.38 dB for many small ones and one large. And the two axes are separate — changing the amplitudes does not move the treble, changing the durations does not change the crest — which forbids saying that this node has but a single noise knob. How to use it without getting lost. Write the durations first, which decide the region where the sound will sit: around three samples for a high whistle, around fifty for a middle register, beyond five hundred for reliefs you hear going past rather than sounding. Then write the amplitudes, which decide the relief: two extreme values give a full, straight sound, a mixture of small and large gives a hollowed one. The principles come last, and that is where composition begins. One case worth knowing. A tendency applied to the amplitudes draws a ramp crossing the set from end to end, not a sound: at the scale of a whole section it is heard only as a slow drift. Tendency comes into its own at the scale of form, which is where Koenig used it. At equal seed the node returns the same sound twice; at a different seed, two unrelated sounds drawn from the same material.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
+| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
+| Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other — applied to amplitudes, it draws a ramp rather than a sound. |
+| Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations gives strict periodicity, hence a clear pitch; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. |
+| Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
+| Sections | slider | 4 | 1 – 24, step 1 | How many distinct sections to compose before ordering them. At one, the piece is of a single piece and the form principle has nothing to act on. Beyond a dozen, each section becomes too brief to be identified, and the order stops being audible. |
+| Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
+| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
+| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. |
+
 ### Generation
 
 | Component | Summary |
@@ -170,10 +201,12 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [ABC → MIDI](#abc--midi) | Reads a score in ABC notation — melody, chord symbols, repeats, several voices — and renders it to MIDI and audio. |
 | [ABC Cover](#abc-cover) | Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass — ballad, pop, waltz, march, bossa nova. |
 | [Advanced Drum Sequencer](#advanced-drum-sequencer) | Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed. |
+| [Camelot Wheel](#camelot-wheel) | Musical journey on the Camelot wheel to illustrate harmonic transitions. |
 | [Cantor Rhythm](#cantor-rhythm) | Generates a self-similar rhythmic groove by recursively removing beats from a grid, and also outputs it as MIDI. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Chord Sequencer](#chord-sequencer) | Programs a chord progression on a step grid. |
+| [Color Looper](#color-looper) | Step sequencer where each step is a color. |
 | [Curve](#curve) | Builds a modulation curve: oscillator, ramp, logistic sequence or random walk. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Drum Machine](#drum-machine) | Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed. |
@@ -209,12 +242,15 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
 | [Random Melody](#random-melody) | Generates a random melody. |
 | [Resultant (Schillinger)](#resultant-schillinger) | The rhythm that arises from superposing two regular pulses. |
+| [RGB Color](#rgb-color) | Synthesizes an RGB color into three oscillators (R, G, B). |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Screens (Xenakis)](#screens-xenakis) | A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain. |
 | [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play. |
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
 | [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
 | [Tiling Canon](#tiling-canon) | Builds a rhythmic canon where each pulse is struck by one voice and one only. |
+| [Visible Spectrum](#visible-spectrum) | Transposes the frequency of a visible color (wavelength) into the audible range. |
 
 #### ABC → MIDI
 
@@ -290,6 +326,34 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1–9 (velocity). |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. |
+
+#### Camelot Wheel
+
+`camelot` · Inputs → Generation
+
+*Musical journey on the Camelot wheel to illustrate harmonic transitions.*
+
+Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each slot (4B, 7A, 12B…) maps to a key (ring A = minor, B = major). The node generates an audio/MIDI journey plus an SVG visualization: full circle, compatible moves (+1, -1, same number, +7) or random walk. Chords are played as block or arpeggio. Connect the MIDI output to a MIDI output node to listen, or use the direct Audio output. The Image output can be connected to an Image Renderer or SVG Export.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Image | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. |
+| Journey | choice | Full | Full / Neighbors / Random | Full = around the wheel; Neighbors = compatible moves (+1, -1, same number, +7); Random = random walk between neighbors. |
+| Steps | number | 12 | 1 – 24, step 1 | Number of chords generated. |
+| Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
+| Tempo | number | 120 BPM | 40 – 240 BPM | Journey speed. |
+| Note duration | number | 0.75 | 0.05 – 2, step 0.05 | Duration of each chord as a fraction of a beat (1 = quarter, 0.5 = eighth). |
+| Mode | choice | Block | Block / Arpeggio | Block = chord notes together; Arpeggio = notes played sequentially. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 % | Output volume. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect outside the "Random" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. |
 
 #### Cantor Rhythm
 
@@ -402,6 +466,34 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. |
+
+#### Color Looper
+
+`color-looper` · Inputs → Generation
+
+*Step sequencer where each step is a color.*
+
+Step sequencer where each step is a color. Enter a list of colors (hex or rgb), comma-separated; the node loops over the colors and generates a note (or chord) per step. Hue determines the scale degree, lightness the octave, saturation the velocity. Parameters: color list, key, scale, mode, octave, range, tempo, note duration, number of bars, synthesis, instrument and volume. Audio output + MIDI output.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Colors | colour list | #e63946,#2a9d8f,#e9c46a,#8e6fce |  | Color palette. Each color = one step of the sequencer. |
+| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the scale. |
+| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatonic | Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic). |
+| Mode | choice | Melody | Melody / Harmony / Arpeggios | Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession. |
+| Octave | number | 4 | 2 – 6, step 1 | Base octave. |
+| Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
+| Tempo | number | 120 BPM | 40 – 240 BPM | Sequencer speed. |
+| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth). |
+| Bars | number | 2 | 1 – 16, step 1 | Number of repetitions of the color pattern. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | number | 80 % | 0 – 100 % | Output volume. |
 
 #### Curve
 
@@ -1275,6 +1367,30 @@ After Joseph Schillinger, « The Schillinger System of Musical Composition », C
 | Tempo | slider | 120 bpm | 30 – 300 bpm, step 1 | Beat speed, for the rendered MIDI. |
 | Note | slider | 38 | 21 – 108, step 1 | MIDI note of the onsets. 38 is the General MIDI snare. |
 
+#### RGB Color
+
+`couleur-rgb` · Inputs → Generation
+
+*Synthesizes an RGB color into three oscillators (R, G, B).*
+
+Synthesizes an RGB color into three sine-wave oscillators. Each channel (red, green, blue) controls the frequency of one oscillator within an adjustable range. Ideal for hearing a color as a composite timbre: gray = three close frequencies, pure color = one dominant channel. Parameters: Red/Green/Blue (0-255), frequency ranges for each channel, duration, volume and output channels.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Red | number | 128 | 0 – 255, step 1 | Red channel intensity (0-255). |
+| Green | number | 128 | 0 – 255, step 1 | Green channel intensity (0-255). |
+| Blue | number | 128 | 0 – 255, step 1 | Blue channel intensity (0-255). |
+| Red (Hz) | text | `100,1000` |  | Frequency range for the red channel, comma-separated. |
+| Green (Hz) | text | `500,3000` |  | Frequency range for the green channel, comma-separated. |
+| Blue (Hz) | text | `1000,5000` |  | Frequency range for the blue channel, comma-separated. |
+| Duration | number | 4 s | 0.1 – 60 s, step 0.1 | Duration of the generated sound. |
+| Volume | number | 80 % | 0 – 100 % | Output volume. |
+| Channels | choice | Stereo | Mono / Stereo | Number of output audio channels. |
+
 #### Risset Bell
 
 `cloche-risset` · Inputs → Generation
@@ -1294,6 +1410,35 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre — useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### Screens (Xenakis)
+
+`ecrans-xenakis` · Inputs → Generation
+
+*A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain.*
+
+After Iannis Xenakis, « Formalized Music » (1963), and the pieces « Analogique A and B » (1959) — the first composed granulation in history, ten years before the first computer granulations. What is singular about the idea, and what sets it apart from the rest of the granular catalog: other processes describe a grain — its shape, its duration, its pitch — then repeat it. Here no grain is described at all. A space is described, gridded into cells of frequency and intensity, and each cell is told how many grains per second it should hold; the grains themselves are drawn at random inside their cell. You no longer compose sounds but a probability density, which was exactly Xenakis's point: moving from the point to the statistic. A screen is one state of that grid, held for a brief moment. A book of screens is their succession, and it is the succession that makes the piece. Xenakis chained classes of screens through a transition matrix; here each cell follows its own two-state chain — lit or unlit — with a probability of staying lit and a probability of lighting up. It is an adaptation, and it behaves the same way: the two regimes Xenakis was after appear at the extremes. Strong hold and weak appearance give stable pads; weak hold and strong appearance, a boiling. Measured: at 98 % hold, fewer than 6 % of cells change from one screen to the next; at 30 %, more than 30 % change. The bands are logarithmic, and that is no display convenience: the ear hears ratios. A linear grid would put half its cells between 10 and 11 kilohertz, where almost no difference is heard, and a single cell for the three octaves of the low end. A grain's frequency is drawn logarithmically inside its band, for the same reason. Density is not a count of grains but an average. A quarter of a grain per screen cannot be rendered: rounding would always give zero or always one, and density would stop being adjustable below one grain per screen — which would remove half the process. The fractional part therefore decides on one extra grain, at random, and it is the average that lands right. The first screen is drawn at the chain's equilibrium probability, not on a coin toss. Otherwise every piece would start on a half-full screen whatever the settings: a sparse texture would take seconds to empty out, and a transient nobody asked for would be heard. The second output returns the book in plain text — one column per screen, one line per cell, frequencies in the margin. Stochastic music whose weave cannot be seen cannot be learned; connect it to a « Text Output » and compare what you read with what you hear.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Book | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The piece's duration. The number of screens follows from it: the duration divided by one screen's. |
+| Screen duration | slider | 100 ms | 10 – 1000 ms, step 5 | How long one state of the grid is held. Short, the screens follow too fast to be told apart and a texture is heard; long, the succession of states is heard, that is, a form. |
+| Bands | slider | 8 | 1 – 24, step 1 | The number of frequency bands in the grid, spread logarithmically between the two bounds. Few bands give a thick, coarse cloud; many, a fine sieve. |
+| Levels | slider | 3 | 1 – 6, step 1 | The number of intensity degrees. It is the grid's second axis in Xenakis: a cell is not only a pitch, it is a pitch at a given strength. |
+| Level step | slider | 6 dB | 0 – 24 dB, step 1 | By how much each intensity degree falls below the previous one. At zero, every level sounds the same and the intensity axis vanishes; at twelve, the weak degrees only colour the background. |
+| Lowest frequency | slider | 100 Hz | 20 – 2000 Hz, step 10 | The bottom of the grid. |
+| Highest frequency | slider | 6400 Hz | 200 – 16000 Hz, step 100 | The top of the grid. Between the two bounds, the bands are spread by intervals that are equal to the ear, not in hertz. |
+| Density | slider | 20 grains/s | 0.5 – 200 grains/s, step 0.5 | How many grains per second each lit cell holds. It is Xenakis's third axis, and its value is not a count but an average: a density below one grain per screen is rendered by an occasional grain, drawn at random, and it is the average that lands right. |
+| Grain duration | slider | 30 ms | 5 – 200 ms, step 1 | A grain's duration, window included. Below some fifty milliseconds a grain has no pitch of its own and the cloud is heard as matter; beyond, the cells' pitches start to be told apart. |
+| Hold | slider | 85 % | 0 – 100 %, step 1 | The probability that a lit cell stays lit on the next screen. It is half of the Markov chain, and the setting that decides between the pad and the boiling. |
+| Appearance | slider | 10 % | 0 – 100 %, step 1 | The probability that an unlit cell lights up on the next screen. Together with hold, it sets the grid's equilibrium occupancy: appearance divided by the sum of appearance and extinction. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | The overall level. Grains add up: doubling the density or the number of lit cells moves that much closer to the ceiling. |
+| Seed | slider | 42 | 1 – 999999, step 1 | The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random — without it nothing you liked can be found again. |
 
 #### SFZ Keyboard
 
@@ -1409,6 +1554,30 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Visible Spectrum
+
+`spectre-visible` · Inputs → Generation
+
+*Transposes the frequency of a visible color (wavelength) into the audible range.*
+
+Transposes a visible color (wavelength) into the audible range. The color is converted to an approximate wavelength, then the frequency of light is divided by powers of 2 until it becomes audible. The result is a drone whose pitch depends on the color: red = low frequency, violet = high frequency. Parameters: Red/Green/Blue (0-255), optional hex color, transposition octave, duration, volume and output channels.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Red | number | 128 | 0 – 255, step 1 | Red channel intensity. |
+| Green | number | 128 | 0 – 255, step 1 | Green channel intensity. |
+| Blue | number | 128 | 0 – 255, step 1 | Blue channel intensity. |
+| Color | text | — |  | Optional hex color (#RRGGBB). If set, it overrides the RGB sliders. |
+| Octave | number | 3 | 0 – 8, step 1 | Number of octaves to transpose down from the light frequency. |
+| Duration | number | 4 s | 0.1 – 60 s, step 0.1 | Duration of the drone. |
+| Volume | number | 80 % | 0 – 100 % | Output volume. |
+| Channels | choice | Stereo | Mono / Stereo | Number of output channels. |
 
 ### Image
 
@@ -1700,6 +1869,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | [Extract duration](#extract-duration) | Measures track duration and passes it along. |
 | [Extract Zone](#extract-zone) | Extracts a portion with fade and returns the Zone object. |
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
+| [Grain Editing](#grain-editing) | Finds a sound's grains — each hit, each syllable — then drops some, repeats them, reverses their order or shuffles them, never cutting in the middle of a sound. |
 | [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
 | [Loop](#loop) | Repeats the whole signal a given number of times. |
 | [Loop End A](#loop-end-a) | Closes a graph loop and puts every pass's result end to end. |
@@ -1809,6 +1979,32 @@ Cuts and joins the zones chosen in the « Multi-Zone Selector ». Connect the se
 |---|---|---|---|---|
 | Mode | choice | Selected zones | Selected zones / Unselected zones | Keep the selected zones, or conversely the parts between them. |
 | Fade | number | 5 ms | 0 – 100 ms | Fade at the edges of each extracted zone to avoid clicks. |
+
+#### Grain Editing
+
+`montage-grains` · Processing → Editing
+
+*Finds a sound's grains — each hit, each syllable — then drops some, repeats them, reverses their order or shuffles them, never cutting in the middle of a sound.*
+
+After the `GRAIN` family of the Composers Desktop Project, developed by Trevor Wishart. What sets it apart from the rest of the granular catalog: the boundaries come from the sound and not from a set rate. Granular freeze, brassage, random slicing and particles all cut on a grid that owes nothing to what it is given; here each hit of a rhythm, each syllable of a voice, each note of an arpeggio becomes a grain that can be dropped, moved or repeated without ever cutting in the middle of a sound. Detection rests on two rules, and the second does the work. The first separates what sounds from what does not, by a threshold in decibels, using the envelope of the silence trimmer — two nodes cutting the same sound should not cut it differently. But that rule fails exactly where the process is useful: on a roll, a held phrase or a pad, the envelope never falls back to silence and you get one single thirty-second grain. The second rule therefore looks for attacks inside what sounds: a clear rise of the envelope after a fall opens a grain, with no silence in front of it. Sensitivity is a setting, and it has to be. It says by how many decibels the envelope must rise for an attack to be seen. Measured on a roll whose hits fall every 240 milliseconds under a 250 millisecond decay: between two of them the envelope only falls by 8.4 decibels. At nine decibels of sensitivity one hit hides in the previous one's tail; at six, all eight come out. The setting reaches towards the sound it is given, it does not guess. The minimum gap is no convenience. An attack is not an instant but a rise of a few milliseconds, where the envelope wavers: without it a single hit gives three or four grains and every manipulation turns to mincemeat. Start with « Count only ». The operation does not touch the sound, and the report says what was found — how many grains, their mean duration, their mean gap, and the list of their onsets in seconds. That is where threshold and sensitivity get set; everything that follows depends on them. Spacing decides what becomes of the rhythm. « As found » puts each grain back at the instant it was found: dropping one hit in two leaves a hole in its place, duration does not move, and the rhythm stays recognisable — which is what you want to thin out a loop. « Butted » glues the grains end to end: the sound shortens accordingly and the rhythm changes. The first keeps duration, the second keeps density. Reversing the order turns the sequence of grains around without turning the grains themselves: the hits follow one another backwards, each of them still forwards. That is a wholly different thing from reversed playback, which would put every attack at the end of its sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Operation | choice | Count only | Count only / Keep n out of m / Reverse the order / Repeat each / Shuffle | What is done with the grains once found. « Count only » does not touch the sound: start there, to set detection against the report before manipulating anything. The others drop, repeat, reverse the order or shuffle — and none cuts in the middle of a sound, since they work on whole grains. |
+| Keep | slider | 1 | 0 – 8, step 1 | For « Keep n out of m »: how many grains are kept in each group. At one out of two, every other hit disappears; at two out of three, one in three. Zero returns silence, which is a fair answer to an absurd request. |
+| Out of | slider | 2 | 1 – 8, step 1 | The size of the group being counted in. With « Keep », it decides the pattern: one out of two thins by half, three out of four drops one grain in four. |
+| Repeats | slider | 2 | 1 – 8, step 1 | For « Repeat each »: how many times each grain is played. With « As found » spacing, the copies overlap the rest and add up; butted, they lengthen the sound accordingly. |
+| Spacing | choice | As found | As found / Butted | Where the grains land. « As found » keeps the instants found in the sound: duration does not move and the rhythm stays recognisable, a dropped grain leaving a hole in its place. « Butted » glues them end to end: the sound shortens and the rhythm changes. The first keeps duration, the second keeps density. |
+| Threshold | slider | -45 dBFS | -80 – -20 dBFS, step 1 | Below this level, there is deemed to be no sound. It is the same threshold, on the same envelope, as the silence trimmer. Too high and only the loud hits are found; too low and hiss is taken for a grain. |
+| Sensitivity | slider | 6 dB | 0 – 24 dB, step 1 | By how much the envelope must rise, after a fall, for an attack to be seen. This is the setting that separates the hits of a roll, whose envelope never falls back to silence. At zero the rule is off and only silences separate grains — which gives one single grain on a sustained sound. |
+| Minimum gap | slider | 40 ms | 1 – 500 ms, step 1 | Two grains cannot start closer than this. An attack is not an instant but a rise of a few milliseconds where the envelope wavers: without this gap, a single hit gives three or four grains. |
+| Seed | slider | 42 | 1 – 999999, step 1 | The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again. |
 
 #### Logistic Mixer
 
@@ -2127,6 +2323,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [AI Separator](#ai-separator) | Separates audio sources via AI (Demucs 4/6 stems, MDX-Net). |
 | [Ambisonic Rotation](#ambisonic-rotation) | Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo. |
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
+| [Atomic Decomposition](#atomic-decomposition) | Describes a sound by the N Gabor grains that best explain it, and returns the resulting sketch and what it left behind, separately. |
 | [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Bass Mono](#bass-mono) | Collapses the bass of both channels below a crossover, and leaves the treble untouched. |
@@ -2153,6 +2350,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Drum Synth](#drum-synth) | Receives MIDI and plays it with percussion synthesizers (no SoundFont). |
 | [Ducking](#ducking) | One sound steps aside for another: the music backs off under the voice, without the voice being heard. |
 | [Echo](#echo) | Ping-pong delay/echo with feedback. |
+| [Ecosystem (Di Scipio)](#ecosystem-di-scipio) | A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling. |
 | [Envelope Transfer](#envelope-transfer) | Takes one sound's amplitude contour and lays it on another: one's rhythm, the other's material. |
 | [Equalizer](#equalizer) | 9-band equalizer. |
 | [Exciter / Aural Enhancer](#exciter--aural-enhancer) | Adds presence via harmonic distortion in the high mids. |
@@ -2199,6 +2397,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
 | [Note Echo](#note-echo) | Layers time-shifted copies of a pattern, with decreasing velocity. |
 | [Octaver](#octaver) | Adds an upper and/or lower octave. |
+| [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound — on a grid, or locked to its period. |
 | [Paulstretch](#paulstretch) | Extreme phase-randomization time-stretch (stereo). |
 | [Phase Reconstruction (PGHI)](#phase-reconstruction-pghi) | Rebuilds a sound from its spectrogram magnitudes alone, without iterating: the phase is read from the magnitude's gradient. |
 | [Phase Vocoder Pitch](#phase-vocoder-pitch) | Transposes pitch via phase vocoder (frequency-domain), without changing duration. |
@@ -2265,6 +2464,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Voice Changer](#voice-changer) | Transforms a voice with preset effects: chipmunk, monster, robot, phone, alien, helium, ghost. |
 | [Wah-wah](#wah-wah) | Modulated bandpass filter (wah pedal effect). |
 | [Wave Terrain](#wave-terrain) | Travels a surface z = f(x, y) along an orbit: the orbit makes the pitch, the relief makes the timbre. |
+| [Wavelets](#wavelets) | Analyses the sound with wavelets — short window in the treble, long in the bass — and keeps only the coefficients that carry something. |
 | [Wavesets (Wishart)](#wavesets-wishart) | Cuts the sound at zero crossings and replays the segments differently. |
 | [Wind Instrument](#wind-instrument) | Clarinet, flute or brass by waveguide: a bore, a reed, and the timbre that follows. |
 
@@ -2370,6 +2570,26 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 | Gain | number | 0 dB | -60 – 60 dB | Gain applied when no curve is connected to the Modulation input. |
 | Modulation min | number | -24 dB | -60 – 60 dB | What the curve's zero means. With no curve connected, this setting does nothing. |
 | Modulation max | number | 0 dB | -60 – 60 dB | What the curve's one means. |
+
+#### Atomic Decomposition
+
+`decomposition-atomique` · Processing → Effects
+
+*Describes a sound by the N Gabor grains that best explain it, and returns the resulting sketch and what it left behind, separately.*
+
+After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequency dictionaries », IEEE Transactions on Signal Processing 41(12), 1993, applied to sound by Bob L. Sturm and described by Curtis Roads as microsound's atomic decomposition. What the method does, and what exists nowhere else in the catalog. A Fourier transform cuts the sound into a fixed number of cells, all of the same duration: one single scale for a finger snap as for a held note. Here the sound is described by a sum of Gabor grains — sines under a window — chosen one at a time, each where it explains the most of the remaining signal, and taken from several durations at once. An attack takes a short atom, a held note a long one. And you stop when you like: it is a sketch of the sound, whose number of strokes you set. At ten atoms you hear what is nearly enough to recognise a sound without quite recognising it; at a few hundred, it comes back. The question the node asks is that one: how many strokes does a sound need to stay itself? The method's guarantee is that the residual's energy decreases with every atom, since each time the orthogonal projection of what remains is removed. It is also the trap of its implementation: selecting the best candidate goes through a transform, but its coefficient is approximate — windows overlap and atoms are not orthogonal to one another. The projection is therefore computed exactly in the time domain. Taking the transform's coefficient as is would make the residual rise again, which a test checks step by step. Scales are compared at equal window. A window twice as long gathers twice as many samples and would always win without that scaling: the multi-scale dictionary would then be pointless, every attack being described by long atoms that smear it. The second output returns the residual, and it is the more instructive of the two. The sketch alone does not say what its likeness is made of; the residual says exactly what the atoms failed to explain. Wire both into a comparator, or measure them with the spec sheet. The cost is bounded by the number of atoms, not by the sound's duration: each atom means finding the best candidate at each scale, then recomputing only the frames the removed atom just changed. The rest of the sound is not touched.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Sketch | audio |  |
+| output | Residual | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Atoms | slider | 200 | 1 – 2000, step 1 | How many grains describe the sound. It is the sketch's number of strokes, and the only setting that really matters: at ten, you hear what is nearly enough to recognise the sound; at a few hundred, it comes back. Computation cost is proportional to it. |
+| Scales | choice | All three | Short (5 ms) / Medium (45 ms) / Long (185 ms) / All three | The window durations to search in. Short, the atoms describe attacks well and held notes badly; long, the other way round. « All three » lets the method choose for each stroke, which is the whole point of a Gabor dictionary — and a test checks that a click does take a short window where a held note takes a long one. |
 
 #### Audio Inpainting
 
@@ -2889,6 +3109,31 @@ Ping-pong delay/echo with feedback. Time sets the interval between repetitions, 
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Amount of signal fed back into the delay (more = more repetitions). |
 | Spread | slider | 50 % | 0 – 100 %, step 1 | Stereo width of the echo (0% = mono, 100% = maximum left/right sweep). |
 
+#### Ecosystem (Di Scipio)
+
+`ecosysteme` · Processing → Effects
+
+*A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling.*
+
+After Agostino Di Scipio, « "Sound is the interface": from interactive to ecosystemic signal processing », Organised Sound 8(3), 2003, and the « Audible Ecosystemics » series (2003-2005); the nonlinear engine comes from « Iterated Nonlinear Functions as a Sound-Generating Engine », Leonardo 34(3), 2001. Last of the paths surveyed in the literature of the grain. This node is not set like the others, and that is its whole point. Everywhere else in the catalog you set an effect and the effect obeys: a density, a threshold, a duration. Here nobody sets the result. You set the coupling — the strength with which the system hears itself — and everything else is decided by the system, from what it measures of its own voice and of the world you give it. The density of the grains, their duration, the place in the past it fetches them from: all of that comes out of the loop, never out of the sliders. This is what Di Scipio calls making sound the interface. The loop lives entirely inside the node, because the Attic graph is acyclic and a node cannot feed back into itself. That is a good thing — a cyclic graph would have no execution order — and it is faithful besides: Di Scipio's devices are closed loops, one single apparatus listening to itself. It is not a compressor, and that can be measured. A compressor too brings a level back to a target. The difference is that observation here does not command a volume but the very shape of the synthesis. Give the system two worlds of rigorously equal level, one of which moves and one of which does not: both outputs come out at the same level, and the two textures have nothing in common. Measured, a calm world gives 24 grains per second of 82 ms, an agitated one 51 grains of 39 ms. A compressor stops at volume; the system changes behaviour. The sound comes from the loop, not from the input. Stop the world after one second and listen to the seven that follow: at zero coupling nothing at all is left, and the level of what remains rises with the coupling, with no gap and no reversal. The node does not granulate its input, it lives from it. The regime cannot be read from the level, and the log is there for that. The homeostat almost always brings the level back to its target: a system holding itself easily and a system at the end of its strength sound at the same volume. What separates them is what it cost, and that is read on the drive curve. Drive pinned at the ceiling, the coupling is too weak and you hear the world barely granulated. Drive at the floor, the system would run away if allowed and the homeostat is merely holding it back: that is where the liveliest textures are found. In between, it holds, or it swings. The background noise, inaudible a hundred decibels below the target, is not a contrivance. Without it zero would be an absorbing state: let the memory vanish once, and no amount of drive could ever amplify exact silence again. Di Scipio makes that noise the starting point of his « Background Noise Study »; it plays the same part here. At equal seed the system returns the same sound twice — without which none of the above would be verifiable. At a different seed it returns two sounds that resemble each other in no sample and in every statistic: it is not an object, it is an instance.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | World | audio |  |
+| output | Audio | audio |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Coupling | slider | 0.8 | 0 – 3, step 0.05 | The strength with which the system hears itself, and the only setting that really matters. At zero it hears only the world and does not survive its silence. Weak, the drive pins itself to the ceiling without ever reaching the target: you hear the world barely granulated. Around one, the system carries itself and the homeostat spends its time holding it back — that is where the liveliest textures are found. The log says which regime the setting led you to, which no number read here can predict. |
+| Balance point | slider | -20 dB | -40 – -6 dB, step 1 | The level the system seeks to hold for its own voice, not for the whole room. The distinction is no subtlety: a system regulating on what it hears would be condemned to silence as soon as the world were louder than the target, the error staying negative whatever it did. |
+| Reactivity | slider | 0.5 | 0 – 1, step 0.05 | How fast the homeostat corrects its error. Slow, the system overshoots its target then takes seconds to come back, in a swing you hear very clearly. Quick, it holds its level closely and leaves less life to the texture. At zero it no longer corrects anything, and the coupling alone decides everything. |
+| Memory | slider | 1.5 s | 0.05 – 8 s, step 0.05 | How deep into the past the grains are drawn from. The system mixes its own voice and the world in there, and chooses the distance itself: agitated, it draws near the present and the sound tightens; calm, it reaches far back and you hear forgotten things return. |
+| Maximum density | slider | 120 /s | 5 – 400 /s, step 5 | The ceiling of grains per second, which the system reaches when it judges itself very agitated. It never stays there long: the density it actually uses is reported in the log, and it is that one which says what it made of the world it was given. |
+| Duration | slider | 15 s | 1 – 120 s, step 1 | The output duration, independent of the world's. This is where the node parts company with an effect: ask for thirty seconds on a one-second input, and listen to what the system becomes once the world has gone. |
+| Homeostat | choice | Connected | Connected / Disconnected | The node's control, and it is made to be disconnected. The same loop, the same grains, the same memory, without the regulation: the system then follows the world's volume instead of holding its own. Measured, three worlds thirty-four decibels apart give three outputs 1.13 dB apart with the homeostat, and 33.19 dB apart without it. |
+| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two sounds that resemble each other in no sample and in every statistic — same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked. |
+
 #### Envelope Transfer
 
 `transfert-enveloppe` · Processing → Effects
@@ -3029,7 +3274,8 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Modulation | curve |  |
+| input | Cutoff modulation | curve |  |
+| input | Resonance modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3039,6 +3285,8 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Resonance | number | 0.7 Q | 0.5 – 12 Q, step 0.1 | Quality factor Q: higher = a sharper peak at the cutoff. |
 | Modulation min | number | 200 Hz | 20 – 20000 Hz, step 1 | Cutoff that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | number | 6000 Hz | 20 – 20000 Hz, step 1 | Cutoff that the curve's one means. Feeding the sound's own brightness into this input gives the paper's adaptive effect: the filter opens as the sound gets harsh. |
+| Resonance min | slider | 0.7 Q | 0.5 – 12 Q, step 0.1 | Resonance that a curve's zero means on the Resonance modulation input. |
+| Resonance max | slider | 8 Q | 0.5 – 12 Q, step 0.1 | Resonance that the curve's one means. Two settings of the same filter can move together: the cutoff sweeping while the resonance pinches is what no two filters in series can reproduce. |
 
 #### Flanger
 
@@ -3873,6 +4121,36 @@ Generates up to two extra voices — hence the two sliders: "Octave up" sets the
 | Octave up | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave above (frequency doubled by rectification). |
 | Octave down | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave below (period doubled by polarity flipping). |
 | Mix | slider | 50 % | 0 – 100 %, step 1 | Dry / added-voices balance. 0% = dry only, 100% = octaves only. |
+
+#### Particles
+
+`particules` · Processing → Effects
+
+*One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound — on a grid, or locked to its period.*
+
+After Oyvind Brandtsegg, Sigurd Saue and Thom Johansen, « Particle synthesis — a unified model for granular synthesis », Linux Audio Conference, 2011 — Csound's `partikkel` opcode. The paper's thesis: the varieties of granular synthesis are not distinct techniques but one generator set differently. This node exposes seven of them, and a single choice moves from one to the next. Grains are the ordinary case: a brief waveform, repeated at a rate. The rate gives the pitch heard as soon as it passes some twenty per second; below that, grains can be counted. Pulsars decouple two durations, and therein lies their point. For them the grain duration counts in cycles of the waveform instead of following the rate: the rate then sets the fundamental, and the frequency sets the formant, independently of each other. No acoustic instrument allows this. Glissons give each grain its own frequency trajectory: the grain is no longer a point but a vector. The transposition setting says how far it rises or falls during its brief existence. Trainlets replace the waveform with a band-limited impulse train, whose number of partials is set. They sound like clicks that have a pitch — measured, at twelve partials they carry close to 27 % of their energy above four kilohertz, against two tenths of a percent for a sine grain, and their crest factor rises from 6 to 16 decibels. Grainlets tie two settings to one another, which is their whole definition. Frequency travels the interval given by the transposition across the note, and grain duration follows it: each grain then carries the same number of cycles, high ones short and low ones long, as a wavelet does. Without that link, a two-octave sweep would leave the low grains at four cycles and the high ones at sixteen, and the grain would be heard changing nature on the way. It is the quietest of the seven species: it does not make a new timbre, it stops a timbre from drifting. Granulation takes the sound connected to the input and reads it in grains. That is where position and speed serve: at zero speed the read head stops moving and you get a granular freeze; at one half the sound lasts twice as long without changing pitch; negative, it reads backwards. With no sound connected the species falls back to grains and the node says so rather than failing. Pitch-synchronous granulation locks the grains to the sound's period instead of a regular grid, and that is what separates a clean granulation from one that buzzes. A grid imposes its own rate on the sound: measured on a 220 hertz sawtooth, granulating at sixty grains per second leaves no sustained pitch at all, and at a hundred and fifty the measured pitch drops to 73 hertz — the grid's, not the sound's. Locked to the period, the same granulation returns 220.14 hertz, the original pitch to within three hundredths of a hertz. The period is read by the catalog's pYIN follower, the very one the « Pitch Follower » shows: the two nodes cannot contradict each other. In this species, density and dispersion command nothing, since the sound gives the rate; grain duration, for its part, counts in periods. Spatial width scatters the grains between the two channels: each one gets its own place instead of the whole sound moving as a block. That is what separates granulation from panning — the ear draws a cloud from it, not a direction. Measured on a hundred and twenty grains per second: the correlation of the two channels goes from 1.00 to 0.31 between zero width and full opening, balance stays at nil throughout, and loudness does not move by a hundredth of a decibel — -16.91 LUFS at all four settings tried. Positions come in mirrored pairs, and amplitude is corrected for what the scattering would add in energy: a width that makes things louder gets judged better for the wrong reason. Dispersion disorders the instants. At zero, grains land on a regular grid and the ear hears a pitch; going up, the grid blurs and pitch gives way to texture. That is the passage from synchronous to asynchronous, done here with one slider.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Species | choice | Grains | Grains / Pulsars / Glissons / Trainlets / Granulating a sound / Pitch-synchronous granulation / Grainlets | Five settings of one generator. Grains: a brief waveform repeated. Pulsars: grain duration counts in cycles, so the formant no longer follows the rate. Glissons: each grain sweeps its own frequency. Trainlets: the grain is an impulse train, and « Partials » sets its richness. Grainlets: frequency sweeps the interval given by « Transposition » and grain duration follows it, so every grain carries the same number of cycles. Granulation: the sound connected to the input is read in grains, and « Position » and « Speed » drive the read head. Pitch-synchronous granulation: the same, but grains lock to the sound's period instead of a grid, which keeps its pitch. |
+| Density | slider | 60 grains/s | 1 – 500 grains/s, step 1 | Grains per second — without effect on pitch-synchronous granulation, whose rate comes from the sound. Below some twenty, you count them and the node sounds like a rhythm; above, they fuse and the rate becomes a pitch — the continuum between rhythm and pitch, crossed with one slider. |
+| Grain duration | slider | 50 % | 1 – 400 %, step 1 | A grain's duration, as a percentage of what separates two grains. Below one hundred the grains do not touch and the silence between them is heard; beyond, they overlap and the texture fills in. For a pulsar this percentage counts in cycles of the waveform, which is exactly what detaches the formant from the fundamental. |
+| Frequency | slider | 440 Hz | 20 – 8000 Hz, step 1 | The frequency of the waveform inside the grain. For a pulsar it is the formant position; for a trainlet, the rate of the train's impulses. It does nothing for granulation, whose content comes from the connected sound. |
+| Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | For a grainlet, the interval frequency travels across the note, and which grain duration follows. For a glisson, the interval each grain travels during its brief existence: the grain starts at its frequency and arrives here. For granulation, the pitch at which the connected sound's grains are replayed, duration unchanged. It does nothing for the other species. |
+| Partials | slider | 8 | 1 – 40, step 1 | A trainlet's number of partials, that is, the bandwidth of its impulse train. At one, only a sine remains; at forty, a sharp click. It does nothing for the other species, which have no train. |
+| Dispersion | slider | 0 % | 0 – 100 %, step 1 | The disorder of the instants, as a percentage of the period. Without effect on pitch-synchronous granulation, where the instants are dictated by the sound. At zero, grains land on a regular grid and the ear draws a pitch from it; going up, the grid blurs and pitch gives way to texture. That is the passage from synchronous to asynchronous granular. |
+| Spatial width | slider | 0 % | 0 – 100 %, step 1 | Scatters the grains between the two channels: each one gets its own place, instead of the whole sound moving as a block. At zero, every grain lands in the centre and both channels come out identical; at one hundred, they take the full width. This is where granulation parts from panning: it is not the sound that is placed but its grains, and the ear draws a cloud from it rather than a direction. The catalog's goniometer shows it — the correlation of the two channels falls as you open up. Positions are drawn from the seed: the same seed replays the same scattering. |
+| Position | slider | 0 % | 0 – 100 %, step 1 | Where to start reading in the connected sound, as a percentage of its duration. Only serves granulation. |
+| Speed | slider | 1 | -2 – 2, step 0.05 | How fast the read head advances through the connected sound. One reads it at its original speed; a half stretches it twofold without transposing it; zero freezes it, which gives the granular freeze; a negative number reads it backwards. Only serves granulation. |
+| Duration | slider | 4 s | 0.5 – 60 s, step 0.5 | The duration of the sound produced. It does not depend on the connected sound's: granulating two seconds of material for a minute is an ordinary use of the process. |
+| Volume | slider | 60 % | 0 – 100 %, step 1 | Each grain's amplitude. Grains add up: doubling the density moves that much closer to the ceiling, which is why a high density calls for a lower volume. |
+| Seed | slider | 42 | 1 – 999999, step 1 | The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again. |
 
 #### Paulstretch
 
@@ -5164,6 +5442,7 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5221,11 +5500,14 @@ Bandpass filter with a LFO-modulated center frequency — the classic wah-wah pe
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rate | slider | 2 Hz | 0.1 – 10 Hz, step 0.1 | Modulation speed (sweeps per second). |
+| Rate | slider | 2 Hz | 0.1 – 10 Hz, step 0.1 | Modulation speed (sweeps per second). No effect when a curve is connected to the Modulation input: it then walks the centre frequency, and the sweep's rhythm is its own. |
+| Sweep from | slider | 200 Hz | 50 – 5000 Hz, step 10 | The low end of the sweep. These two bounds were hard-wired at 200 and 2500 Hz, invisible and unsettable; they hold with or without a curve, since the wah sweeps between them either way. |
+| Sweep to | slider | 2500 Hz | 50 – 8000 Hz, step 10 | The high end of the sweep. A connected curve travels it by multiplying rather than adding — an octave is a doubling — so the sweep does not rush into the treble. |
 | Depth | slider | 100 % | 0 – 100 %, step 1 | Frequency sweep range (0% = static, 100% = full wah). |
 | Resonance | slider | 5 Q | 0.5 – 20 Q, step 0.5 | Filter resonance (high Q = pronounced wah, low Q = gentle). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
@@ -5258,6 +5540,31 @@ Wave terrain synthesis. A wavetable oscillator reads a one-dimensional curve; th
 | Centre Y | number | 0 % | -200 – 200 %, step 1 | Offsets the orbit on the y axis. |
 | Duration | number | 3 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+
+#### Wavelets
+
+`ondelettes` · Processing → Effects
+
+*Analyses the sound with wavelets — short window in the treble, long in the bass — and keeps only the coefficients that carry something.*
+
+After Ingrid Daubechies, « Orthonormal bases of compactly supported wavelets », Communications on Pure and Applied Mathematics 41(7), 1988; thresholding comes from David Donoho and Iain Johnstone, « Ideal spatial adaptation by wavelet shrinkage », Biometrika 81(3), 1994, and averaging over shifts from Ronald Coifman and David Donoho, « Translation-invariant de-noising », 1995. What a wavelet has that the Fourier transform has not. A short-term transform imposes one single window on the whole sound: long, it separates pitches finely and smears attacks; short, it places attacks and blurs the bass. You must choose once and for all, and the choice is always wrong somewhere. A wavelet does not choose: it looks at the highest octave through a short window, the next one through a window twice as long, and so on down to the bass. It is the grainlet principle — short highs, long lows — but exact, and reversible. Reconstruction is perfect, and that is the one point that is not negotiable. Without touching the coefficients, the node returns the input sound to within a ten-millionth: that is what « Reconstruct » lets you check for yourself, and what a test demands of each of the four wavelets on noise, the hardest signal there is. What thresholding really brings. Noise spreads over every coefficient; a structured sound concentrates into a few. Erasing the small coefficients therefore erases mostly noise. The risk, when measuring that gain, is to applaud oneself for a plain low-pass: on a held note, cutting the treble alone would win decibels. The decisive test therefore uses broadband clicks, which no band cut can clean — the control that zeroes the very same bands gains 0.01 dB there, and thresholding 11 dB. The difference is what sparsity brings, and nothing else. Shifts are worth their cost. A decimated transform is not translation invariant: the same sound moved forward by one sample does not give the same coefficients, and a characteristic shimmer is left around attacks. Processing the sound at several shifts and averaging removes it, since the artefacts depend on the shift and the sound does not. Four shifts are usually enough; beyond that, cost rises faster than gain. A useful warning. With few levels, the whole bass escapes processing: the node then behaves partly as a filter, and a narrowband sound will look beautifully cleaned without wavelets having much to do with it. The honest setting reaches for enough levels that the sound's own band is thresholded too. The second output returns exactly what was removed. If you hear the sound there rather than the hiss, the threshold is too strong — the ear says so in a second, where no number would.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Removed | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Operation | choice | Denoise | Reconstruct / Denoise / Keep the strongest | What is done with the coefficients. « Reconstruct » leaves them alone, and serves to check that the transform does return the input sound untouched. « Denoise » erases coefficients smaller than Donoho's threshold, estimated from the sound's own noise. « Keep the strongest » retains only a chosen share of them whatever the noise level — a sketch of the sound, in the manner of atomic decomposition but for a cost beyond comparison. |
+| Wavelet | choice | Daubechies (8) | Haar (2) / Daubechies (4) / Daubechies (6) / Daubechies (8) | The shape of the elementary wave, given by its number of coefficients. Haar is a plain step: it sees only jumps, and returns them with their corners. The Daubechies wavelets are smoother the longer they are, and the better they ignore the regular parts of the sound — which concentrates the information into fewer coefficients and makes thresholding more effective. The price is a spread in time: a long wavelet places an attack less sharply. |
+| Levels | slider | 6 | 1 – 12, step 1 | How far down in octaves to go. Each level halves the band that remains: at one level, only the highest octave is analysed; at six, you reach down to around 340 Hz. Everything below is not processed at all — which is the trap of this setting, since a bass-heavy sound will then look cleaned by the mere fact that it was left alone. The report states which bands were actually reached. |
+| Threshold strength | slider | 0.6 | 0 – 2, step 0.05 | Multiplies Donoho's universal threshold, which is the smallest threshold that erases pure noise almost surely. At one it is often too severe on sound and takes attacks away with the hiss; measurements put the optimum near 0.6 for hard thresholding and 0.4 for soft. At zero, nothing is erased. No effect on « Keep the strongest », which sets its threshold otherwise. |
+| Thresholding | choice | Soft | Soft / Hard | Soft subtracts the threshold from the coefficients it keeps instead of cutting sharply. It loses a little of the sound, but avoids the shimmer of a coefficient crossing the line back and forth from one instant to the next. Hard often measures better and often sounds worse: judge it on the « Removed » output. |
+| Shifts | slider | 4 | 1 – 8, step 1 | How many shifted versions of the sound to process before averaging them. A decimated transform is not translation invariant, and the shimmer it leaves around attacks depends on where the sound sits in the file; averaging cancels it. Cost is proportional: four shifts, four times the computation, for about a decibel of gain that then dries up. |
+| Share kept | slider | 5 % | 0 – 100 %, step 0.5 | The share of coefficients that « Keep the strongest » retains. At five per cent, a held sound keeps nearly all its energy and noise keeps only a third: that is the very measure of its sparsity. Going lower gives an ever rougher sketch, and an ever more interesting one to listen to. No effect on the other two operations. |
 
 #### Wavesets (Wishart)
 
@@ -5422,6 +5729,7 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Roughness](#roughness) | Measures a sound's sensory dissonance over time, after Plomp and Levelt's model. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
+| [Spec Sheet](#spec-sheet) | Returns everything measurable about a sound as text: duration, loudness, true peak, crest factor, band shares, correlation, balance, pitch and tuning — with a compliance verdict. |
 | [Spectral Centroid (Meyda)](#spectral-centroid-meyda) | Computes the spectral centroid of the signal using the Meyda library. |
 | [Spectral Rolloff (Meyda)](#spectral-rolloff-meyda) | Computes the spectral rolloff frequency using Meyda. |
 | [Spectrogram](#spectrogram) | Shows how the spectrum evolves over time (time × frequency × intensity). |
@@ -5801,6 +6109,25 @@ Generates an audio visualization image using the Songsee engine (spectrogram, me
 | Format | choice | JPEG | JPEG / PNG | Output image format. |
 | Start | number | 0 s | 0 – 3600 s, step 0.1 | Start time of the analyzed region (seconds). 0 = from beginning. |
 | Duration | number | 0 s | 0 – 3600 s, step 0.1 | Duration of the analyzed region (seconds). 0 = whole file. |
+
+#### Spec Sheet
+
+`fiche-technique` · Visualization → Analysis
+
+*Returns everything measurable about a sound as text: duration, loudness, true peak, crest factor, band shares, correlation, balance, pitch and tuning — with a compliance verdict.*
+
+One page saying everything the software can measure about a sound, and passing it through unchanged. It drops into the middle of a chain like a VU-meter, with nothing to unplug. This node was born of a flaw. The « Journey » node's trials measure things no node was stating: the share of energy below 200 hertz, the correlation of the two channels, left-right balance, the deviation from the nearest semitone. A learner therefore read a verdict — « correlation 0.24 » — without being able to find it anywhere. The examiner saw more than the user, and a judgement you cannot reproduce teaches nothing: it intimidates. The sheet returns exactly the same figures, through the same functions. The level measurements come from the catalog's VU-meter, the pitch from the pYIN follower: the sheet therefore cannot contradict either. Three delivery targets are offered with their real values — platforms at -14 LUFS, podcast at -16, radio and television at -23 under the EBU R 128 standard —, all with a true-peak ceiling at -1 dBTP. The verdict goes through the same function as the journey's trials: a compliance written separately would eventually drift by a tenth of a decibel, and that is precisely the gap that makes one doubt a measuring tool. What is not shown matters as much. On a mono sound the stereo section is absent instead of announcing a correlation of 1.000 and a balance of 0.00 dB: two exact figures that would suggest a measurement when they only repeat that there is one channel. With no sustained pitch, the sheet says so in a word rather than lining up cents on noise. One label carries its own caveat: the loudness spread counts silences, and one blank is enough for it to announce a hundred decibels. It is the value the VU-meter shows, hence correct; it is written « silence included » because a figure that is correct and misleading is worse than one that is absent. Pitch analysis can be switched off. It needs one transform per frame, bounded to the first eight seconds: negligible on a take, noticeable over a collection of two hundred files, pointless on percussion, which has no pitch to find.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Sheet | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Delivery target | choice | None | None / Platforms (-14 LUFS) / Podcast (-16 LUFS) / Radio and television, EBU R 128 (-23 LUFS) | Adds a compliance verdict to the sheet. The values are the ones in use: -14 LUFS for streaming platforms, -16 for podcasts, -23 for radio and television under EBU R 128, with a true-peak ceiling of -1 dBTP in all three cases. The verdict is produced by the same function as the « Journey » node's trials, so the two cannot contradict each other. |
+| Pitch analysis | choice | Yes | Yes / No | Pitch and tuning need a pYIN track: one transform per frame, bounded to the sound's first eight seconds. That is negligible on a take, noticeable over a collection of two hundred files, and moot on percussion, which has no pitch to find. Switched off, the Pitch section disappears from the sheet. |
 
 #### Spectral Centroid (Meyda)
 
@@ -6410,9 +6737,48 @@ Loads a folder of audio tracks, reduces each to a 40-feature vector (tempo, spec
 
 | Component | Summary |
 |---|---|
+| [Collection Loop End](#collection-loop-end) | Closes a batch: writes each pass's result into the output folder, under the source file's name. |
+| [Collection Loop Start](#collection-loop-start) | Opens a batch: the graph is run once per audio file in the folder, and this node returns the file of the current pass. |
 | [MIDI→MP3 conversion](#midimp3-conversion) | Converts a folder of MIDI files to MP3. |
 | [MP3→WAV conversion](#mp3wav-conversion) | Converts a folder of MP3 files to WAV. |
 | [WAV→MP3 conversion](#wavmp3-conversion) | Converts a folder of audio files to MP3. |
+
+#### Collection Loop End
+
+`boucle-collection-fin` · Collections → Conversion
+
+*Closes a batch: writes each pass's result into the output folder, under the source file's name.*
+
+The « Name » input is optional, and it is what makes batch renaming programmable. Wired, the name it carries replaces the source's; unwired, every file keeps its own. The received name is sanitised before it becomes a path — separators, drive letters, characters the system refuses, names reserved for devices, trailing dots and spaces: all go. That name does not come from typing but from a node, which may have been a language model, and a name holding two dots and a slash would write outside the output folder. If nothing usable is left, the source's name takes its place again. Two sources cannot bear the same name in one folder; two renamings very well can. The node therefore refuses to write the same name twice in a batch, rather than overwriting in silence — that is the classic way to lose a whole batch while believing it processed. Otherwise, this node writes. It is the only thing it does, and that is why it exists: without it a batch would compute thirty results and keep none, each pass erasing the one before. A written file's name is its source's, with the extension replaced. That is what makes a batch readable back: the output folder compares to the input folder file by file, and you see at once what is missing. A suffix can be added to tell two successive runs of the same batch apart. The bit depth is the toolbar's, as for any save — 24-bit by default. A batch meant for delivery has no reason to come out at 16-bit when the rest of the software no longer does. The output folder must differ from the input folder, and the node refuses if they are the same. This is no excess of caution: at identical extension every file would overwrite its own source, and the batch would destroy what it processes — with nothing to say so until the end. The text output is the batch log, one line per file, complete at the last pass. It is what you read back to know which ones went through.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Name | text |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Output folder | folder | — |  | The folder where each result is written. It must differ from the input folder: at identical extension every file would overwrite its own source, and the batch would destroy what it processes. |
+| Format | choice | WAV | WAV / MP3 | The format of the written files. WAV follows the bit depth chosen in the toolbar; MP3 is encoded at 192 kbps, and has no bit depth. |
+| Suffix | text | — |  | Added to the name before the extension. Useful to tell two successive runs of the same batch apart in one folder, or simply to mark what has been processed. |
+
+#### Collection Loop Start
+
+`boucle-collection-debut` · Collections → Conversion
+
+*Opens a batch: the graph is run once per audio file in the folder, and this node returns the file of the current pass.*
+
+This node and « Collection Loop End » bracket a chain, as « Loop Start » and « Instrument Note » bracket theirs. What you put between them is any graph at all — an equaliser, a reverb, a loudness normalisation, a whole chain — and it is that graph which is applied to every file in the folder. The difference from the collection conversions already present comes down to one word: ports. « WAV to MP3 conversion » reads one folder and writes another, but the operation is sealed inside it and nothing can be inserted. Here the processing is yours. The graph is run once per file, one after another, rather than copied as many times as there are files. The distinction is not theoretical: the project's two other repetitions unroll the chain before execution, so every turn lives at once. That is harmless on a two-second note, and would ask for 7.5 GB on thirty three-minute tracks. Here a pass releases its memory before the next one, so the number of files has no ceiling. The order is that of the names, not the one the file system returns: a batch whose order changed between runs would make any log incomparable. The second output gives the name of the current file, and it has one precise destination: the « Name » input of the loop end. Put « Edit Text » between the two and batch renaming becomes programmable — prefix with a date, renumber, lowercase, strip a pattern. Without that wiring the output name stays the source's, which is the common case and needs no setting. One collection loop start per graph. Two nested batches would make no sense here, each wanting to command the number of passes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Name | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Folder | folder | — |  | The folder whose every audio file will be processed. Recognised extensions are wav, wave, ogg, mp3, flac, m4a, aac, aif and aiff; everything else is quietly ignored. The number of passes is the number of files found, and it is shown on this node as soon as the run starts. |
 
 #### MIDI→MP3 conversion
 
@@ -6469,6 +6835,7 @@ Batch-processes a folder: converts all audio files (WAV, OGG…) to MP3 in the o
 | Component | Summary |
 |---|---|
 | [Coordinates on Map](#coordinates-on-map) | Projects 2D coordinates received as input (e.g. the Coordinates output of Track classification) onto a fictional map — same visual engine (style, aesthetic) as Sound Map, but point position reflects upstream-computed similarity instead of being random. |
+| [Cover Art Generator](#cover-art-generator) | Generates a procedural album cover (SVG) from a prompt + title. |
 | [Exhibition Gallery](#exhibition-gallery) | Generates a visual HTML gallery with procedural cover art from a directory of MP3 files. |
 | [Sound Map](#sound-map) | Loads an audio folder and generates an interactive HTML map of a fictional city or a concentric map with several aesthetics, openable in a browser. |
 
@@ -6492,6 +6859,33 @@ A Sound Map variant driven by data instead of a folder: connect a classification
 | Style | choice | Grid city | Grid city / Concentric circles / Organic / Voronoi | Map style. |
 | Aesthetic | choice | Classic | Classic / Baroque / Art Nouveau / Art Deco / Exotic | Visual mood of the map (backdrop: roads, districts, buildings). |
 | Seed | slider | 0 | 0 – 9999, step 1 | Procedural backdrop seed (0 = different backdrop each run). Does not affect point position, which follows the received coordinates. |
+
+#### Cover Art Generator
+
+`generateur-pochette` · Collections → Export
+
+*Generates a procedural album cover (SVG) from a prompt + title.*
+
+Generates procedural album cover art in SVG — offline, instant, no GPU or download. Enter a prompt (colors derived from keywords), a title and artist (inserted in the image), choose a visual style (12 styles), a palette (15 presets or auto), complexity, a border, a typography and dimensions. The « Image » output is a chainable SVG that can be connected to an Image Renderer, Image Export or SVG Export. The seed allows reproducing the exact same cover.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Image | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Prompt | text | `dark ambient night mysterious` |  | Style description. Colors are derived from keywords (fire/red, water/blue, nature/green, night/black, day/yellow, dream/purple, earth/brown…). |
+| Title | text | `Album` |  | Album title (inserted in the image). |
+| Artist | text | — |  | Artist name (inserted below the title). |
+| Style | choice | Bauhaus | Minimalist / Geometric / Waves / Grain / Concentric / Bauhaus / Stripes / Mosaic / Stars / Brutalism / Cyber / Pastel | Visual style. Minimalist = simple gradient; Geometric = shape grid; Waves = layered waves; Grain = noisy texture; Concentric = circles; Bauhaus = primary shapes; Stripes = bands; Mosaic = tiles; Stars = star field; Brutalism = raw shapes; Cyber = grid + glitch; Pastel = soft blobs. |
+| Palette | choice | Auto | Auto / Warm / Cold / Neon / Pastel / Monochrome / Earth / Royal / Synthwave / Sepia / Cyber / Forest / Ocean / Magma / Frost | Color palette. « Auto » derives colors from the prompt. Presets force a fixed mood. |
+| Complexity | number | 50 | 1 – 100, step 1 | Motif density (1 = minimal, 100 = very dense). |
+| Border | choice | None | None / Thin / Thick / Rounded | Decorative border around the cover. |
+| Typography | choice | Sans-serif | Sans-serif / Serif / Mono / Condensed / Bold / Script | Title font style. |
+| Width | number | 512 | 128 – 2048, step 1 | SVG image width in pixels. |
+| Height | number | 512 | 128 – 2048, step 1 | SVG image height in pixels. |
+| Format | choice | SVG | SVG / PNG | SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files. |
+| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new each run). Same seed = same cover. |
 
 #### Exhibition Gallery
 
@@ -6834,45 +7228,12 @@ Draws a Csound score at random. Why a node of its own, rather than « a random m
 
 | Component | Summary |
 |---|---|
-| [Camelot Wheel](#camelot-wheel) | Musical journey on the Camelot wheel to illustrate harmonic transitions. |
 | [Color → Sound AI](#color--sound-ai) | Generates a Suno/Udio script via AI from 1 or 2 colors with variability. |
-| [Color Looper](#color-looper) | Step sequencer where each step is a color. |
-| [Cover Art Generator](#cover-art-generator) | Generates a procedural album cover (SVG) from a prompt + title. |
 | [Harmonic Palette](#harmonic-palette) | Extracts dominant colors from an image and generates a melody, harmony or arpeggio. |
 | [Julia Processor](#julia-processor) | Julia code editor with syntax highlighting for audio processing. |
 | [Pixeltone](#pixeltone) | Converts an image to sound by mapping R, G, B to frequencies. |
 | [Python Processor](#python-processor) | Python code editor with syntax highlighting for audio processing. |
-| [RGB Color](#rgb-color) | Synthesizes an RGB color into three oscillators (R, G, B). |
 | [Sound Drawing](#sound-drawing) | Sonifies the colored shapes of a drawing image into notes or chords. |
-| [Visible Spectrum](#visible-spectrum) | Transposes the frequency of a visible color (wavelength) into the audible range. |
-
-#### Camelot Wheel
-
-`camelot` · Others → Generation
-
-*Musical journey on the Camelot wheel to illustrate harmonic transitions.*
-
-Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each slot (4B, 7A, 12B…) maps to a key (ring A = minor, B = major). The node generates an audio/MIDI journey plus an SVG visualization: full circle, compatible moves (+1, -1, same number, +7) or random walk. Chords are played as block or arpeggio. Connect the MIDI output to a MIDI output node to listen, or use the direct Audio output. The Image output can be connected to an Image Renderer or SVG Export.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-| output | Image | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. |
-| Journey | choice | Full | Full / Neighbors / Random | Full = around the wheel; Neighbors = compatible moves (+1, -1, same number, +7); Random = random walk between neighbors. |
-| Steps | number | 12 | 1 – 24, step 1 | Number of chords generated. |
-| Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
-| Tempo | number | 120 BPM | 40 – 240 BPM | Journey speed. |
-| Note duration | number | 0.75 | 0.05 – 2, step 0.05 | Duration of each chord as a fraction of a beat (1 = quarter, 0.5 = eighth). |
-| Mode | choice | Block | Block / Arpeggio | Block = chord notes together; Arpeggio = notes played sequentially. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | number | 80 % | 0 – 100 % | Output volume. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect outside the "Random" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. |
 
 #### Color → Sound AI
 
@@ -6892,61 +7253,6 @@ Generates a Suno/Udio script via AI by combining color psychology and a LLM (Dis
 | Color 2 | choice | (none) | (none) / Red / Orange / Yellow / Green / Blue / Purple / Pink / Black / White / Brown / Grey | Optional second color. If present, profiles are fused. |
 | Variability | number | 70 % | 0 – 100 %, step 1 | Controls variability of generated scripts. High = LLM is more creative; low = stays close to template. |
 | Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new script each run). Same seed = same script. |
-
-#### Color Looper
-
-`color-looper` · Others → Generation
-
-*Step sequencer where each step is a color.*
-
-Step sequencer where each step is a color. Enter a list of colors (hex or rgb), comma-separated; the node loops over the colors and generates a note (or chord) per step. Hue determines the scale degree, lightness the octave, saturation the velocity. Parameters: color list, key, scale, mode, octave, range, tempo, note duration, number of bars, synthesis, instrument and volume. Audio output + MIDI output.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Colors | colour list | #e63946,#2a9d8f,#e9c46a,#8e6fce |  | Color palette. Each color = one step of the sequencer. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the scale. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatonic | Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic). |
-| Mode | choice | Melody | Melody / Harmony / Arpeggios | Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession. |
-| Octave | number | 4 | 2 – 6, step 1 | Base octave. |
-| Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
-| Tempo | number | 120 BPM | 40 – 240 BPM | Sequencer speed. |
-| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth). |
-| Bars | number | 2 | 1 – 16, step 1 | Number of repetitions of the color pattern. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | number | 80 % | 0 – 100 % | Output volume. |
-
-#### Cover Art Generator
-
-`generateur-pochette` · Others → Generation
-
-*Generates a procedural album cover (SVG) from a prompt + title.*
-
-Generates procedural album cover art in SVG — offline, instant, no GPU or download. Enter a prompt (colors derived from keywords), a title and artist (inserted in the image), choose a visual style (12 styles), a palette (15 presets or auto), complexity, a border, a typography and dimensions. The « Image » output is a chainable SVG that can be connected to an Image Renderer, Image Export or SVG Export. The seed allows reproducing the exact same cover.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Image | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Prompt | text | `dark ambient night mysterious` |  | Style description. Colors are derived from keywords (fire/red, water/blue, nature/green, night/black, day/yellow, dream/purple, earth/brown…). |
-| Title | text | `Album` |  | Album title (inserted in the image). |
-| Artist | text | — |  | Artist name (inserted below the title). |
-| Style | choice | Bauhaus | Minimalist / Geometric / Waves / Grain / Concentric / Bauhaus / Stripes / Mosaic / Stars / Brutalism / Cyber / Pastel | Visual style. Minimalist = simple gradient; Geometric = shape grid; Waves = layered waves; Grain = noisy texture; Concentric = circles; Bauhaus = primary shapes; Stripes = bands; Mosaic = tiles; Stars = star field; Brutalism = raw shapes; Cyber = grid + glitch; Pastel = soft blobs. |
-| Palette | choice | Auto | Auto / Warm / Cold / Neon / Pastel / Monochrome / Earth / Royal / Synthwave / Sepia / Cyber / Forest / Ocean / Magma / Frost | Color palette. « Auto » derives colors from the prompt. Presets force a fixed mood. |
-| Complexity | number | 50 | 1 – 100, step 1 | Motif density (1 = minimal, 100 = very dense). |
-| Border | choice | None | None / Thin / Thick / Rounded | Decorative border around the cover. |
-| Typography | choice | Sans-serif | Sans-serif / Serif / Mono / Condensed / Bold / Script | Title font style. |
-| Width | number | 512 | 128 – 2048, step 1 | SVG image width in pixels. |
-| Height | number | 512 | 128 – 2048, step 1 | SVG image height in pixels. |
-| Format | choice | SVG | SVG / PNG | SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new each run). Same seed = same cover. |
 
 #### Harmonic Palette
 
@@ -7046,30 +7352,6 @@ Python code editor with syntax highlighting for audio processing. Input audio is
 | Code | text | `import numpy as np import wave import os import sys # in…` |  | Python code to execute. Variables: sys.argv[1] = input WAV, Attic_output_path = output WAV, Attic_sample_rate, Attic_channels. Requires numpy + wave. |
 | Timeout | number | 30 s | 5 – 120 s, step 5 | Maximum script execution time (in seconds). |
 
-#### RGB Color
-
-`couleur-rgb` · Others → Generation
-
-*Synthesizes an RGB color into three oscillators (R, G, B).*
-
-Synthesizes an RGB color into three sine-wave oscillators. Each channel (red, green, blue) controls the frequency of one oscillator within an adjustable range. Ideal for hearing a color as a composite timbre: gray = three close frequencies, pure color = one dominant channel. Parameters: Red/Green/Blue (0-255), frequency ranges for each channel, duration, volume and output channels.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Red | number | 128 | 0 – 255, step 1 | Red channel intensity (0-255). |
-| Green | number | 128 | 0 – 255, step 1 | Green channel intensity (0-255). |
-| Blue | number | 128 | 0 – 255, step 1 | Blue channel intensity (0-255). |
-| Red (Hz) | text | `100,1000` |  | Frequency range for the red channel, comma-separated. |
-| Green (Hz) | text | `500,3000` |  | Frequency range for the green channel, comma-separated. |
-| Blue (Hz) | text | `1000,5000` |  | Frequency range for the blue channel, comma-separated. |
-| Duration | number | 4 s | 0.1 – 60 s, step 0.1 | Duration of the generated sound. |
-| Volume | number | 80 % | 0 – 100 % | Output volume. |
-| Channels | choice | Stereo | Mono / Stereo | Number of output audio channels. |
-
 #### Sound Drawing
 
 `dessin-sonore` · Others → Generation
@@ -7100,30 +7382,6 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | Tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the MIDI file. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues. |
 
-#### Visible Spectrum
-
-`spectre-visible` · Others → Generation
-
-*Transposes the frequency of a visible color (wavelength) into the audible range.*
-
-Transposes a visible color (wavelength) into the audible range. The color is converted to an approximate wavelength, then the frequency of light is divided by powers of 2 until it becomes audible. The result is a drone whose pitch depends on the color: red = low frequency, violet = high frequency. Parameters: Red/Green/Blue (0-255), optional hex color, transposition octave, duration, volume and output channels.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | MIDI | MIDI |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Red | number | 128 | 0 – 255, step 1 | Red channel intensity. |
-| Green | number | 128 | 0 – 255, step 1 | Green channel intensity. |
-| Blue | number | 128 | 0 – 255, step 1 | Blue channel intensity. |
-| Color | text | — |  | Optional hex color (#RRGGBB). If set, it overrides the RGB sliders. |
-| Octave | number | 3 | 0 – 8, step 1 | Number of octaves to transpose down from the light frequency. |
-| Duration | number | 4 s | 0.1 – 60 s, step 0.1 | Duration of the drone. |
-| Volume | number | 80 % | 0 – 100 % | Output volume. |
-| Channels | choice | Stereo | Mono / Stereo | Number of output channels. |
-
 ### Installation
 
 | Component | Summary |
@@ -7149,7 +7407,27 @@ Exports an existing node as a .zip archive or imports a node from a .zip. To exp
 
 | Component | Summary |
 |---|---|
+| [Journey](#journey) | Forty-five hands-on exercises that validate against the workshop you build, and ten trials measured on the sound you hand in. |
 | [Quiz](#quiz) | Quizzes you on Attic's acronyms, concepts, formulas, figures and sources, in a random order and without repetition. |
+
+#### Journey
+
+`parcours` · Others → Learning
+
+*Forty-five hands-on exercises that validate against the workshop you build, and ten trials measured on the sound you hand in.*
+
+A journey in ten chapters — the first sound, the ear, level, colour, time, space, pitch, matter, music, the finished work — which never validates on a declaration. An ordinary tutorial flips through pages and asks you to click « next »: it teaches nothing a documentation would not teach better, and it lies on one point, since it claims the gesture was made. Here every step is read off something real. Exercises validate against the workshop. « Place a generator, wire it to a viewer, run » is checked by looking at the nodes and edges you just placed. The checklist ticks itself while you work, and the point left red says precisely what is missing: the absent node, the node placed but not run, the setting beside the mark, or two nodes present and unconnected. Those are four different failures, and folding them into a single « not done » would have removed the whole point. Trials are measured on the sound. They close each chapter and say nothing about the route: wire the result of your work into the « Copy » input, and the node measures it. Loudness, true peak, peak, crest factor, channel correlation, left-right balance, share of energy below 200 Hz, pitch and tuning in cents: the figures come from the same functions as the catalog's VU-meter and Pitch Follower, so a trial cannot declare passed what those nodes would declare failed. The verdict always carries the measured figure, passed or failed. Knowing you are at -24 LUFS when -14 was asked is the only thing that lets you correct; « failed » teaches nothing. Lessons say why, never how. The how is in the hint, which you open if you want. The lesson carries the reason — why the limiter goes after the compressor, why a wide low end cancels in mono, why loudness is not won with gain — and that is what remains once the gesture is forgotten, including in front of another piece of software. Nothing is locked. The order is a proposal: the « Along the journey » setting always leads to the first unfinished exercise, and choosing a chapter goes straight there. Someone who came for spatialization should not have to redo twelve wiring exercises to reach it. Progress is saved with the project, since it lives in a parameter. You close the application halfway through the third chapter and reopen it where you left off. The field reads plainly and clears with one button. Ten titles are earned at the trials, and at the trials alone, from « New ear » to « Journeyman of sound ». They are good for nothing, which is exactly what makes them pleasant to get. Running the node returns the roadmap — the exercises and their instructions, which print and hand out — and the report card, with the per-chapter count and the verdict of the trial under way. Connect them to a « Text Output » to keep them.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Copy | audio |  |
+| output | Roadmap | text |  |
+| output | Report card | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Chapter | choice | Along the journey | Along the journey / The first sound / The ear / Level / Colour / Time / Space / Pitch / Matter / Music / The finished work | « Along the journey » always leads to the first unfinished exercise, across all chapters: that is the route for someone discovering the software. Choosing a chapter goes straight there, demanding nothing of the earlier ones — you do not make someone who came for space redo twelve wiring exercises. |
+| Completed | text | — |  | The steps completed, separated by commas. The view adds one on every success, and it is this field the report card and the title count read — so the two cannot contradict each other. It is saved with the project: an interrupted journey resumes where it stood. Empty it to start over. |
 
 #### Quiz
 

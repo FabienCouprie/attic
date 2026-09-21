@@ -1,6 +1,6 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
 import { etirerDuree, reechantillonnerVers, creerFenetreHann } from "./commun";
-import { CADENCE, valeursParametre } from "./courbe";
+import { CADENCE, estCourbe, progressionPour, valeursParametre } from "./courbe";
 
 export function changerTempo(buffer: AudioBuffer, vitessePct: number): AudioBuffer {
   const facteur = 100 / Math.max(1, vitessePct);
@@ -195,27 +195,31 @@ export async function appliquerFiltre(
   entree: AudioBuffer,
   type: BiquadFilterType,
   frequence: number | Float32Array,
-  q: number
+  q: number | Float32Array
 ): Promise<AudioBuffer> {
   const ctx = new OfflineAudioContext(entree.numberOfChannels, entree.length, entree.sampleRate);
   const source = ctx.createBufferSource();
   source.buffer = entree;
   const filtre = ctx.createBiquadFilter();
   filtre.type = type;
-  if (typeof frequence === "number") {
-    filtre.frequency.value = frequence;
-  } else {
-    // Une courbe d'un seul point n'est pas acceptée par la spécification, et une courbe à la
-    // cadence du son serait démesurée : on la réduit à un millier de points, ce qui suffit
-    // largement pour un paramètre qui ne module pas au-delà de quelques dizaines de hertz.
-    const n = Math.max(2, Math.min(1000, frequence.length));
+  // LA COUPURE ET LA RÉSONANCE SE POSENT DE LA MÊME FAÇON, et c'est pour cela que cette fonction
+  // existe : deux paramètres du même filtre peuvent bouger ensemble, ce qu'aucune mise en série de
+  // deux filtres ne reproduit.
+  //
+  // Une courbe d'un seul point n'est pas acceptée par la spécification, et une courbe à la cadence
+  // du son serait démesurée : on la réduit à un millier de points, ce qui suffit largement pour un
+  // réglage qui ne module pas au-delà de quelques dizaines de hertz.
+  const poser = (cible: AudioParam, valeur: number | Float32Array) => {
+    if (typeof valeur === "number") { cible.value = valeur; return; }
+    const n = Math.max(2, Math.min(1000, valeur.length));
     const reduite = new Float32Array(n);
     for (let i = 0; i < n; i++) {
-      reduite[i] = frequence[Math.min(frequence.length - 1, Math.round((i * (frequence.length - 1)) / (n - 1)))];
+      reduite[i] = valeur[Math.min(valeur.length - 1, Math.round((i * (valeur.length - 1)) / (n - 1)))];
     }
-    filtre.frequency.setValueCurveAtTime(reduite, 0, entree.duration);
-  }
-  filtre.Q.value = q;
+    cible.setValueCurveAtTime(reduite, 0, entree.duration);
+  };
+  poser(filtre.frequency, frequence);
+  poser(filtre.Q, q);
   source.connect(filtre);
   filtre.connect(ctx.destination);
   source.start();
@@ -550,22 +554,48 @@ export async function vocoder(
   return sortie;
 }
 
-// Wah-wah : filtre passe-bande modulé par un LFO.
-// La fréquence centrale oscille entre freqMin et freqMax à la fréquence du LFO.
+// Wah-wah : filtre passe-bande dont la fréquence centrale balaie une plage.
+//
+// LE BALAYAGE PEUT VENIR D'UNE COURBE PLUTÔT QUE DU LFO, et c'est précisément ce que l'en-tête de
+// `audio/courbe.ts` réclamait : un effet n'a pas à exister en deux exemplaires selon la règle qui
+// fait varier son paramètre. Sans courbe branchée, le LFO sinusoïdal d'origine décide, et le son
+// ne bouge pas d'un bit ; avec une courbe, c'est elle qui promène la fréquence centrale, et l'on
+// obtient la pédale actionnée au pied plutôt que l'oscillation régulière.
+//
+// LES BORNES DU BALAYAGE SONT DES RÉGLAGES, ET NON DES BORNES DE MODULATION. La distinction compte
+// pour l'inspecteur : elles veulent dire quelque chose avec ou sans courbe — le wah balaie entre
+// elles dans les deux cas —, là où les bornes d'un paramètre modulé ne servent à rien tant qu'aucune
+// courbe n'est branchée. Elles étaient jusqu'ici câblées à 200 et 2500 Hz, invisibles et
+// irréglables.
 export function wahwah(
   buffer: AudioBuffer,
   frequence: number,
   profondeur: number,
   q: number,
   mix: number,
+  courbe?: unknown,
+  bornes?: { min: number; max: number },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const depth = profondeur / 100;
   const mixVal = mix / 100;
-  // Fréquences centrale min/max (wah-wah classique : 200Hz à 2kHz)
-  const freqMin = 200;
-  const freqMax = 2500;
+  const freqMin = bornes?.min ?? 200;
+  const freqMax = bornes?.max ?? 2500;
+
+  // La fréquence centrale, échantillon par échantillon — une seule fois, et non par canal : elle ne
+  // dépend pas du canal, et la recalculer deux fois coûterait deux fois pour le même résultat.
+  const centres = new Float32Array(buffer.length);
+  if (estCourbe(courbe)) {
+    centres.set(valeursParametre(courbe, buffer.length, freqMin, {
+      min: freqMin, max: freqMax, ...progressionPour({ unite: "Hz" }),
+    }));
+  } else {
+    for (let i = 0; i < buffer.length; i++) {
+      const lfo = Math.sin((2 * Math.PI * frequence * i) / sr);
+      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depth) / 2);
+    }
+  }
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
@@ -574,11 +604,7 @@ export function wahwah(
     let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
 
     for (let i = 0; i < buffer.length; i++) {
-      const t = i / sr;
-      // LFO sinus : -1 à 1
-      const lfo = Math.sin(2 * Math.PI * frequence * t);
-      // Fréquence centrale interpolée
-      const fc = freqMin + (freqMax - freqMin) * (1 + lfo * depth) / 2;
+      const fc = centres[i];
       const w0 = 2 * Math.PI * fc / sr;
       const cosW0 = Math.cos(w0);
       const sinW0 = Math.sin(w0);
@@ -658,15 +684,36 @@ export function phaser(
 }
 
 // Vibrato : modulation de hauteur par LFO (delay modulé).
+//
+// LA COURBE DESSINE LE VIBRATO, ELLE NE LE REMPLACE PAS. Ce qu'elle pilote est la POSITION dans la
+// plage que « Profondeur » fixe déjà : zéro tient le bas de la plage, un le haut, et l'on obtient
+// ainsi le geste qu'on veut — une montée lente, un tremblement irrégulier, une hauteur suivie d'un
+// autre son — au lieu de la seule oscillation sinusoïdale. Aucun réglage nouveau n'est donc
+// nécessaire : la profondeur garde exactement le sens qu'elle avait.
 export function vibrato(
   buffer: AudioBuffer,
   frequence: number,
   profondeur: number,
+  courbe?: unknown,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const maxCents = profondeur * 2;
   const delayMax = Math.ceil(sr * 0.02);
+
+  // Le retard lu, échantillon par échantillon. Sans courbe, c'est le LFO d'origine, au bit près.
+  const retards = new Float32Array(buffer.length);
+  const etendue = delayMax / 2;
+  if (estCourbe(courbe)) {
+    retards.set(valeursParametre(courbe, buffer.length, etendue, {
+      min: etendue * (1 - maxCents / 200), max: etendue * (1 + maxCents / 200),
+    }));
+  } else {
+    for (let i = 0; i < buffer.length; i++) {
+      const lfo = Math.sin((2 * Math.PI * frequence * i) / sr);
+      retards[i] = etendue * (1 + lfo * (maxCents / 200));
+    }
+  }
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
@@ -675,10 +722,7 @@ export function vibrato(
     let dlyPos = 0;
 
     for (let i = 0; i < buffer.length; i++) {
-      const t = i / sr;
-      const lfo = Math.sin(2 * Math.PI * frequence * t);
-      const delaySamples = (delayMax / 2) * (1 + lfo * (maxCents / 200));
-      const readPos = dlyPos - delaySamples;
+      const readPos = dlyPos - retards[i];
       const idx0 = Math.floor(readPos);
       const frac = readPos - idx0;
       const s0 = delayLine[((idx0 % delayMax) + delayMax) % delayMax];

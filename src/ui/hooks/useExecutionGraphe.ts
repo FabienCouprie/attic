@@ -22,6 +22,9 @@ import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { publierGrapheCourant } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
+import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
+import { lireProfondeurExport } from "../profondeur-export";
+import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
@@ -150,7 +153,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * quand il le consulte ; la boucle, elle, n'enchaîne plus le suivant. Renvoie `false`
    * si rien ne tournait.
    */
+  // Arrêter pendant un lot doit arrêter LE LOT, et non la seule passe en cours. Sans ce drapeau,
+  // l'annulation coupait le fichier courant et l'enveloppe enchaînait aussitôt sur le suivant :
+  // le bouton « Arrêter » paraissait alors ne rien faire sur un lot de trente fichiers.
+  const arretLotRef = useRef(false);
+
   const arreter = useCallback(() => {
+    arretLotRef.current = true;
     if (!enCoursRef.current) return false;
     abortControllerRef.current?.abort();
     return true;
@@ -253,7 +262,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     reinitialiserIds(ids);
   }, [reinitialiserIds]);
 
-  const lancer = useCallback(async (noeudPrioritaireId?: string) => {
+  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string) => {
     // Ne pas bloquer si on lance un node individuellement (prioritaire)
     // — seul le bouton Run global (sans prioritaire) est bloqué pendant l'exécution
     if (!noeudPrioritaireId && enExecRef.current) return;
@@ -688,6 +697,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
         const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
         const texte = valsSafe.find((v): v is string => typeof v === "string");
+        // UN APERÇU DE LA COURBE, ET NON LA COURBE. Une courbe de quatre minutes porte quarante-huit
+        // mille valeurs ; les retenir sur chaque nœud pour dessiner un trait de deux cents pixels
+        // serait payer cher un croquis. Deux cent cinquante-six points suffisent à la forme, et ce
+        // sont des nombres ordinaires, donc sérialisables avec le graphe.
+        const courbeProduite = (valsSafe as unknown[]).find(estCourbe);
+        const apercuCourbe = courbeProduite ? echantillonnerPourApercu(courbeProduite.valeurs, 256) : undefined;
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
         const grapheExport = (n.data as any)?._grapheExport as string | undefined;
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
@@ -711,7 +726,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
           } else {
             if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
             const securiser = NOEUDS_AVEC_PLAFOND_PREVIEW.includes(n.data.ficheId as string);
-            url = URL.createObjectURL(bufferVersWavBlob(audio, grapheExport, securiser));
+            // Ce blob est à la fois l'aperçu écoutable et le fichier sauvegardé : la profondeur
+            // choisie s'applique donc ici, et non au moment de la sauvegarde. Les séparer aurait
+            // demandé de réencoder à l'enregistrement, donc de reconstruire le graphe embarqué,
+            // que seule cette boucle connaît.
+            url = URL.createObjectURL(
+              bufferVersWavBlob(audio, grapheExport, securiser, { bits: lireProfondeurExport() }));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);
@@ -765,6 +785,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           audioResultatBuffer: audio ?? undefined,
           audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
           scriptGenere: texte ?? undefined,
+          apercuCourbe,
           midiFichierSortie: midiFile ?? undefined,
           imageResultatUrl: imageUrl ?? undefined,
           imageResultatFile: imageFile ?? undefined,
@@ -900,6 +921,63 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (prioritaireRef.current) setPrioritaire(null);
     }
   }, [prioritaire, repertoire, t]);
+
+  /**
+   * Le traitement par lot : le graphe entier, rejoué une fois par fichier.
+   *
+   * POURQUOI DES PASSES ET NON UN DÉPLIAGE. Les deux autres répétitions du projet — la boucle de
+   * graphe et l'instrument — recopient la chaîne AVANT l'exécution, si bien que tous les tours
+   * vivent ensemble. C'est sans conséquence sur une note de deux secondes ; c'en est une sur un
+   * lot, où les fichiers font des minutes. Un morceau de trois minutes en stéréo pèse 63 Mo par
+   * nœud : quatre nœuds sur trente fichiers demanderaient 7,5 Go. Ici chaque passe rend sa mémoire
+   * avant la suivante — `setNodes` remplace les tampons —, et le nombre de fichiers n'a plus de
+   * plafond.
+   *
+   * CE QUI RESTE DANS `lancerUnePasse`, ET C'EST VOLONTAIRE. Une passe est une exécution entière,
+   * avec ses statuts, son cache, son annulation et son `AbortController`. L'enveloppe ne fait que
+   * la rejouer : elle ne connaît ni la topologie, ni les résultats, ni rien du moteur. C'est la
+   * raison pour laquelle cette mécanique-ci tient en trente lignes là où apprendre au moteur à
+   * revenir en arrière aurait demandé de casser le cache, les statuts et l'annulation — ce que
+   * `core/boucle-graphe.ts` disait déjà, et qui reste vrai.
+   */
+  const lancer = useCallback(async (noeudPrioritaireId?: string) => {
+    arretLotRef.current = false;
+    // La lecture du dossier est asynchrone, la planification ne l'est pas : on lit d'abord, puis
+    // `planifierLot` — pure et testée — décide de tout le reste.
+    const api = (window as any).api;
+    const dossiers = new Map<string, ReturnType<typeof fichiersAudio>>();
+    for (const n of noeudsRef.current) {
+      if ((n.data as { ficheId?: string }).ficheId !== FICHE_LOT_DEBUT) continue;
+      const d = String((n.data as { parametres?: Record<string, unknown> }).parametres?.["Dossier"] ?? "").trim();
+      if (d && !dossiers.has(d)) dossiers.set(d, api?.lireDossier ? fichiersAudio(await api.lireDossier(d)) : []);
+    }
+    const plan = planifierLot(noeudsRef.current, (d) => dossiers.get(d) ?? []);
+
+    // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
+    if (!plan) { publierLot(null); return lancerUnePasse(noeudPrioritaireId); }
+    if (plan.plusieursDebuts) {
+      console.warn("[attic] Deux débuts de boucle collection : chacun voudrait commander le nombre de passes.");
+    }
+
+    const journal: string[] = [];
+    const nomsEcrits: string[] = [];
+    try {
+      for (let index = 0; index < plan.passes; index++) {
+        if (arretLotRef.current) break;
+        publierLot({ debutId: plan.debutId, index, fichiers: plan.fichiers, journal, nomsEcrits });
+        // Le début de boucle et tout son aval doivent rejouer : leur empreinte n'a pas bougé d'une
+        // passe à l'autre — le nœud n'a ni entrée ni paramètre qui change —, et le cache les
+        // sauterait donc tous, le lot rendant trente fois le premier fichier.
+        cacheExec.current.delete(plan.debutId);
+        for (const id of descendants(plan.debutId, aretesRef.current as unknown as AreteG[])) {
+          cacheExec.current.delete(id);
+        }
+        await lancerUnePasse(noeudPrioritaireId);
+      }
+    } finally {
+      publierLot(null);
+    }
+  }, [lancerUnePasse]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
 }

@@ -4,7 +4,7 @@ import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { estCourbe, valeursParametre } from "../audio/courbe";
+import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { creerAleatoire, hasardDuNoeud } from "../core";
 import { parseMidi } from "midi-file";
 import {
@@ -624,7 +624,10 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Filters the signal and displays the frequency response curve.",
     entrees: [
       { nom: "Audio", type: "audio" },
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation coupure", nomEn: "Cutoff modulation", type: "courbe", requis: false, module: "Fréquence de coupure" },
+      // Ajouté EN FIN DE LISTE : les ports se désignent par leur rang, et l'insérer ailleurs
+      // débrancherait l'audio de tous les graphes déjà enregistrés.
+      { nom: "Modulation résonance", nomEn: "Resonance modulation", type: "courbe", requis: false, module: "Résonance" },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -636,25 +639,45 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence charnière du filtre (coupure ou centre de bande).", docEn: "Filter hinge frequency (cutoff or band center)." },
       { nom: "Résonance", nomEn: "Resonance", plage: [0.5, 12], pas: 0.1, defaut: 0.7, unite: "Q",
         doc: "Facteur de qualité Q : plus il est élevé, plus la courbe présente une bosse marquée à la coupure.", docEn: "Quality factor Q: higher = a sharper peak at the cutoff." },
-      { nom: "Modulation min", nomEn: "Modulation min", plage: [20, 20000], pas: 1, defaut: 200, unite: "Hz",
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Fréquence de coupure", plage: [20, 20000], pas: 1, defaut: 200, unite: "Hz",
         doc: "Coupure que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
         docEn: "Cutoff that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", plage: [20, 20000], pas: 1, defaut: 6000, unite: "Hz",
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Fréquence de coupure", plage: [20, 20000], pas: 1, defaut: 6000, unite: "Hz",
         doc: "Coupure que vaut le un de la courbe. Brancher la brillance du son lui-même sur cette entrée donne l'effet adaptatif de l'article : le filtre s'ouvre quand le son devient dur.",
         docEn: "Cutoff that the curve's one means. Feeding the sound's own brightness into this input gives the paper's adaptive effect: the filter opens as the sound gets harsh." },
+      { nom: "Résonance min", nomEn: "Resonance min", modulationDe: "Résonance", type: "curseur", plage: [0.5, 12], pas: 0.1, defaut: 0.7, unite: "Q",
+        doc: "Résonance que vaut le zéro d'une courbe branchée sur l'entrée Modulation résonance.",
+        docEn: "Resonance that a curve's zero means on the Resonance modulation input." },
+      { nom: "Résonance max", nomEn: "Resonance max", modulationDe: "Résonance", type: "curseur", plage: [0.5, 12], pas: 0.1, defaut: 8, unite: "Q",
+        doc: "Résonance que vaut le un de la courbe. Deux réglages du même filtre peuvent bouger ensemble : la coupure qui balaie pendant que la résonance se pince est ce qu'aucune mise en série de deux filtres ne reproduit.",
+        docEn: "Resonance that the curve's one means. Two settings of the same filter can move together: the cutoff sweeping while the resonance pinches is what no two filters in series can reproduce." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const type = ctx.paramTexte("Type", "Passe-bas");
-      const q = ctx.paramNombre("Résonance", 0.7);
+      const modulationQ = ctx.entree(2);
+      const q = estCourbe(modulationQ)
+        ? valeursParametre(modulationQ, a.length, 0, {
+          min: ctx.paramNombre("Résonance min", 0.7), max: ctx.paramNombre("Résonance max", 8),
+          ...progressionPour({ unite: "Q" }),
+        })
+        : ctx.paramNombre("Résonance", 0.7);
       const map: Record<string, BiquadFilterType> = { "Passe-bas": "lowpass", "Passe-haut": "highpass", "Passe-bande": "bandpass", "Coupe-bande": "notch" };
       // Sans courbe branchée, on passe le NOMBRE et non un tableau constant : le filtre garde
       // alors exactement le chemin qu'il avait, et son résultat ne bouge pas d'un bit.
       const modulation = ctx.entree(1);
       const coupure = estCourbe(modulation)
-        ? valeursParametre(modulation, a.length, 0,
-          { min: ctx.paramNombre("Modulation min", 200), max: ctx.paramNombre("Modulation max", 6000) })
+        // LA COUPURE EST UNE FRÉQUENCE, DONC ELLE SE PARCOURT EN MULTIPLIANT. Réparti
+        // linéairement, un balayage de 200 à 6000 Hz mettait sa moitié à 3 100 Hz : l'octave
+        // 200-400, la plus audible du trajet, occupait trois pour-cent de la course, et le
+        // balayage se précipitait puis s'arrêtait. La progression est déduite de l'unité déclarée
+        // par le réglage, et non choisie ici — voir `progressionPour` dans `audio/courbe.ts`.
+        ? valeursParametre(modulation, a.length, 0, {
+          min: ctx.paramNombre("Modulation min", 200),
+          max: ctx.paramNombre("Modulation max", 6000),
+          ...progressionPour({ unite: "Hz", pas: 1 }),
+        })
         : ctx.paramNombre("Fréquence de coupure", 1000);
       return { valeurs: [await appliquerFiltre(a, map[type] ?? "lowpass", coupure, q)] };
    },
@@ -1245,7 +1268,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Amplitude modulation (periodic volume variations).",
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Profondeur" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -1253,10 +1276,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence de la modulation (vibrations par seconde).", docEn: "Modulation rate (vibrations per second)." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Intensité de la modulation (0% = aucun effet, 100% = volume coupé complètement). Une courbe branchée sur l'entrée Modulation prend la main : c'est ainsi qu'on obtient le trémolo dont la profondeur suit une suite logistique, sans qu'il faille un nœud séparé pour cela.", docEn: "Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it." },
-      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
         doc: "Profondeur que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Depth that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Profondeur que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
       { nom: "Forme", nomEn: "Shape", type: "choix", options: ["Sinus", "Carré", "Triangle", "Sawtooth"], optionIds: ["Sinus","Carré","Triangle","Sawtooth"],
         optionsEn: ["Sine", "Square", "Triangle", "Sawtooth"], defaut: "Sinus",
@@ -1319,7 +1342,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", sousType: "stereo" },
       // Ajoutée EN DERNIER : les prises sont identifiées par leur rang, l'insérer avant l'audio
       // aurait déplacé les branchements de tous les graphes enregistrés.
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Position" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -1328,10 +1351,10 @@ export const fiches: FicheAudio[] = ([
         docEn: "Stereo position (-100% = left, 0% = center, 100% = right). A curve connected to the Modulation input takes over: the sound then travels instead of sitting still, and what one hears is the curve's path." },
       { nom: "Largeur", nomEn: "Width", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Largeur de l'effet spatial (0% = mono, 100% = spatialisation pleine).", docEn: "Spatial width (0% = mono, 100% = full spatialization)." },
-      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [-100, 100], pas: 1, defaut: -100, unite: "%",
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: -100, unite: "%",
         doc: "Position que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Position that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [-100, 100], pas: 1, defaut: 100, unite: "%",
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Position que vaut le un de la courbe.", docEn: "Position that the curve's one means." },
     ],
     async executer(ctx: any) {
@@ -1490,11 +1513,21 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // biquad, etat dans quatre scalaires
     resume: "Filtre passe-bande modulé (effet pédale wah).",
     resumeEn: "Modulated bandpass filter (wah pedal effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 2, unite: "Hz",
-        doc: "Vitesse de la modulation (balayages par seconde).", docEn: "Modulation speed (sweeps per second)." },
+        doc: "Vitesse de la modulation (balayages par seconde). Sans effet quand une courbe est branchée sur l'entrée Modulation : c'est alors elle qui promène la fréquence centrale, et le rythme du balayage est le sien.",
+        docEn: "Modulation speed (sweeps per second). No effect when a curve is connected to the Modulation input: it then walks the centre frequency, and the sweep's rhythm is its own." },
+      { nom: "Balayage de", nomEn: "Sweep from", type: "curseur", plage: [50, 5000], pas: 10, defaut: 200, unite: "Hz",
+        doc: "Le grave du balayage. Ces deux bornes étaient câblées à 200 et 2500 Hz, invisibles et irréglables ; elles valent avec ou sans courbe, puisque le wah balaie entre elles dans les deux cas.",
+        docEn: "The low end of the sweep. These two bounds were hard-wired at 200 and 2500 Hz, invisible and unsettable; they hold with or without a curve, since the wah sweeps between them either way." },
+      { nom: "Balayage à", nomEn: "Sweep to", type: "curseur", plage: [50, 8000], pas: 10, defaut: 2500, unite: "Hz",
+        doc: "L'aigu du balayage. Une courbe branchée le parcourt en multipliant et non en ajoutant — une octave est un doublement —, de sorte que le balayage ne se précipite pas dans l'aigu.",
+        docEn: "The high end of the sweep. A connected curve travels it by multiplying rather than adding — an octave is a doubling — so the sweep does not rush into the treble." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Amplitude du balayage en fréquence (0% = fixe, 100% = wah complet).", docEn: "Frequency sweep range (0% = static, 100% = full wah)." },
       { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 5, unite: "Q",
@@ -1506,7 +1539,12 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { wahwah } = await import("../audio");
-      return { valeurs: [wahwah(a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100), ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100))] };
+      return { valeurs: [wahwah(
+        a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100),
+        ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100),
+        ctx.entree(1),
+        { min: ctx.paramNombre("Balayage de", 200), max: ctx.paramNombre("Balayage à", 2500) },
+      )] };
    },
  },
   {
@@ -1538,7 +1576,10 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // ligne a retard bornee a 20 ms
     resume: "Modulation de hauteur par LFO (oscillation de la note).",
     resumeEn: "Pitch modulation by LFO (note oscillation).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
@@ -1550,7 +1591,7 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { vibrato } = await import("../audio");
-      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50))] };
+      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50), ctx.entree(1))] };
    },
  },
   {

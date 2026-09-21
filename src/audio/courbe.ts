@@ -37,6 +37,31 @@ export interface Courbe {
   cadence: number;
 }
 
+/**
+ * Un croquis d'une courbe, pour l'affichage.
+ *
+ * ON PREND LE PIRE DE CHAQUE TRANCHE, ET NON LA MOYENNE. Une courbe qui saute à chaque attaque —
+ * celle d'un suiveur d'énergie, typiquement — a des pointes d'une poignée de valeurs. Moyenner les
+ * aplatirait, et le croquis montrerait une ligne calme là où le paramètre sursaute : exactement
+ * l'information qu'on vient chercher. On garde donc la valeur la plus éloignée du milieu, celle qui
+ * dit l'amplitude réelle du mouvement.
+ */
+export function echantillonnerPourApercu(valeurs: Float32Array, points: number): number[] {
+  const n = Math.max(1, Math.round(points));
+  if (valeurs.length === 0) return [];
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = Math.floor((i * valeurs.length) / n);
+    const b = Math.max(a + 1, Math.floor(((i + 1) * valeurs.length) / n));
+    let pire = valeurs[a];
+    for (let k = a; k < b && k < valeurs.length; k++) {
+      if (Math.abs(valeurs[k] - 0.5) > Math.abs(pire - 0.5)) pire = valeurs[k];
+    }
+    out.push(Math.round(Math.min(1, Math.max(0, pire)) * 1000) / 1000);
+  }
+  return out;
+}
+
 export const estCourbe = (v: unknown): v is Courbe =>
   !!v && typeof v === "object" && ArrayBuffer.isView((v as Courbe).valeurs)
   && typeof (v as Courbe).cadence === "number";
@@ -69,6 +94,17 @@ export function reechantillonner(c: Courbe, n: number): Float32Array {
   return y;
 }
 
+/**
+ * Comment la course de zéro à un se répartit dans l'unité du consommateur.
+ *
+ * LE LINÉAIRE EST LE MAUVAIS DÉFAUT POUR UNE FRÉQUENCE, ET CELA S'ENTENDAIT. Un balayage de 200 à
+ * 6000 Hz réparti linéairement met la moitié de sa course au-dessus de 3 100 Hz : l'octave
+ * 200-400 Hz, qui est la plus audible du trajet, occupe trois pour-cent de la courbe, et le
+ * balayage semble se précipiter puis s'arrêter. L'oreille entend des RAPPORTS — une octave est un
+ * doublement, pas une différence —, et une fréquence doit donc progresser en multipliant.
+ */
+export type Echelle = "lineaire" | "logarithmique";
+
 export interface MiseEnForme {
   /** Ce que zéro veut dire, dans l'unité du consommateur. */
   min: number;
@@ -77,16 +113,34 @@ export interface MiseEnForme {
   /** Courbure : 1 est linéaire, 2 écrase le bas, 0,5 le dilate. */
   puissance?: number;
   inverser?: boolean;
+  /** Répartition de la course. Absente : linéaire, le comportement d'avant. */
+  echelle?: Echelle;
+  /** Pas de quantification, pour un réglage qui n'accepte que des crans. */
+  pas?: number;
 }
 
-/** Traduit une courbe de 0-1 vers l'unité du consommateur. */
+/**
+ * Traduit une courbe de 0-1 vers l'unité du consommateur.
+ *
+ * L'ÉCHELLE LOGARITHMIQUE RETOMBE SUR LE LINÉAIRE QUAND ELLE N'A PAS DE SENS. Elle multiplie, et
+ * l'on ne multiplie pas à partir de zéro ni à travers zéro : un balayage de 0 à 20 000 Hz, ou de
+ * −12 à +12, n'a pas de forme logarithmique. Le faire quand même rendrait des `NaN` sur toute la
+ * course, et un fichier silencieux là où l'on attendait un balayage.
+ */
 export function mettreEnForme(valeurs: Float32Array, o: MiseEnForme): Float32Array {
   const p = o.puissance ?? 1;
+  const log = o.echelle === "logarithmique" && o.min > 0 && o.max > 0;
+  const rapport = log ? o.max / o.min : 1;
+  const pas = o.pas && o.pas > 0 ? o.pas : 0;
   return Float32Array.from(valeurs, (v) => {
     const borne = Math.min(1, Math.max(0, v));
     const courbe = p === 1 ? borne : borne ** p;
     const u = o.inverser ? 1 - courbe : courbe;
-    return o.min + (o.max - o.min) * u;
+    const brut = log ? o.min * rapport ** u : o.min + (o.max - o.min) * u;
+    // Le cran s'applique EN DERNIER, après la mise à l'échelle : quantifier la course de 0 à 1
+    // donnerait des crans dont la taille dépendrait de la plage, ce qui n'est pas ce qu'un pas veut
+    // dire — un demi-ton est un demi-ton quelle que soit l'étendue du balayage.
+    return pas ? Math.round(brut / pas) * pas : brut;
   });
 }
 
@@ -237,6 +291,51 @@ export function engendrer(o: OptionsGenerateur): Courbe {
     }
   }
   return { valeurs: v, cadence };
+}
+
+/**
+ * Les unités qui se parcourent en multipliant, et non en ajoutant.
+ *
+ * ELLES SE LISENT SUR LE REGISTRE, ce qui évite d'avoir à le décider nœud par nœud. Chaque
+ * paramètre du catalogue déclare son unité ; il suffit de savoir lesquelles sont des rapports.
+ * Le hertz en est un — doubler, c'est monter d'une octave —, le battement par minute aussi.
+ * Le décibel et le demi-ton n'en sont PAS, bien qu'ils décrivent des rapports : ils sont déjà
+ * le logarithme d'un rapport, et les traiter à nouveau logarithmiquement les courberait deux fois.
+ */
+const UNITES_MULTIPLICATIVES = new Set(["Hz", "kHz", "BPM"]);
+
+/**
+ * Cette unité se parcourt-elle en multipliant ?
+ *
+ * EXPORTÉE PARCE QUE DEUX ENDROITS EN DÉCIDAIENT SÉPARÉMENT. L'inspecteur traçait déjà un curseur
+ * logarithmique, mais sur la seule comparaison à « Hz » — un réglage en kilohertz ou en battements
+ * par minute y gardait donc un curseur linéaire, pendant que la modulation du même paramètre, elle,
+ * le parcourait logarithmiquement. Deux réponses à la même question, et rien pour les tenir
+ * d'accord à la prochaine unité ajoutée.
+ */
+export const estUniteMultiplicative = (unite?: string): boolean =>
+  UNITES_MULTIPLICATIVES.has((unite ?? "").trim());
+
+/**
+ * La progression qu'un paramètre appelle, déduite de ce qu'il déclare.
+ *
+ * C'EST LE POINT OÙ L'INFORMATION EXISTAIT DÉJÀ SANS SERVIR. Le registre porte pour chaque réglage
+ * son unité, sa plage et son pas ; la bonne répartition d'un balayage s'en déduit, et n'a donc pas
+ * à être choisie à la main sur chaque effet — où elle finirait par être oubliée sur la moitié
+ * d'entre eux.
+ *
+ * Le pas n'est repris que s'il vaut un ou plus. En dessous, c'est une finesse d'affichage du
+ * curseur — un dixième de décibel — et non un cran que le son devrait respecter ; l'imposer
+ * hacherait une modulation continue en escalier pour rien.
+ */
+export function progressionPour(
+  p: { unite?: string; pas?: number } | undefined,
+): { echelle: Echelle; pas?: number } {
+  const unite = (p?.unite ?? "").trim();
+  return {
+    echelle: estUniteMultiplicative(unite) ? "logarithmique" : "lineaire",
+    pas: p?.pas && p.pas >= 1 ? p.pas : undefined,
+  };
 }
 
 /**
