@@ -13,6 +13,7 @@ import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 import { bufferVersWavBlob } from "../audio";
+import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
 /**
  * Le lecteur d'un intermédiaire sur une piste longue, construit au clic.
@@ -35,7 +36,7 @@ function LecteurALaDemande({ buffer }: { buffer: AudioBuffer }) {
       <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
         <button
           className="attic-node-copy-btn"
-          onClick={(e) => { e.stopPropagation(); setUrl(URL.createObjectURL(bufferVersWavBlob(buffer))); }}
+          onClick={(e) => { e.stopPropagation(); setUrl(URL.createObjectURL(bufferVersWavBlob(tamponPourApercu(buffer)))); }}
         >
           {t("btn.ecouter")}
         </button>
@@ -137,6 +138,7 @@ export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
     if (def.famille === "Texte") return "entree";
     if (def.famille === "Théorie") return "analyse";
     if (def.famille === "Csound wrapper") return "generation";
+    if (def.famille === "Multicanal") return "effet";
     if (def.famille === "Test zone") return "analyse";
   }
   return "autre";

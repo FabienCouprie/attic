@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **370 components** in **7 categories** and **31 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **376 components** in **7 categories** and **32 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **370 components** in **7 categories** and **31 families**. Every na
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 58 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
+| [Others](#others) | 64 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
 
 ## How to read this catalog
 
@@ -7602,6 +7602,142 @@ Generates an intermediate MIDI file between two MIDI files with @magenta/music (
 | Interpolations | slider | 5 | 3 – 11, step 2 | Number of interpolation steps between the two MIDI files (odd recommended). |
 | Position | slider | 0.5 | 0 – 1, step 0.05 | Position of the intermediate between MIDI A (0) and MIDI B (1). |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+### Multichannel
+
+| Component | Summary |
+|---|---|
+| [Ambisonic Decoder](#ambisonic-decoder) | Decodes an ambisonic field to a real room: concert ring or channel format. |
+| [Binaural Monitor](#binaural-monitor) | Makes any layout audible on headphones — ring, 7.1.4, ambisonic field — through virtual speakers filtered by the head. |
+| [Declare Layout](#declare-layout) | States what a multichannel file's channels are — a 5.1, a ring, an AmbiX field — so that the rest of the chain knows. |
+| [Object Renderer](#object-renderer) | Renders every connected sound object into a single room, chosen here and changeable at any time. |
+| [Sound Object](#sound-object) | Attaches its trajectory to a sound without choosing a room: the layout will only be decided at render time, for all objects at once. |
+| [Spatialiser](#spatialiser) | Places a sound on a trajectory — azimuth, elevation, distance — in a layout of your choice: concert ring, 5.1 to 7.1.4, or ambisonic field. |
+
+#### Ambisonic Decoder
+
+`decodeur-ambisonique` · Others → Multichannel
+
+*Decodes an ambisonic field to a real room: concert ring or channel format.*
+
+An ambisonic field chooses no room, and that is its strength: written once, it decodes to a ring of eight, of sixteen, a 5.1 or a 7.1.4. This node does that decoding. The decoder is a sampling one: each speaker receives the field read in its own direction. Two precautions make it right. The input's SN3D normalisation is undone at decoding — forgetting it gives a field dominated by its omnidirectional component, where everything seems to come from everywhere. And Zotter and Frank's « max-rE » weights concentrate energy towards the right direction by reducing rear lobes: it is the setting to prefer for listening, and the default. The field's order is read from its label. An AmbiX file loaded from disk is first declared with « Declare Layout ». A higher order localises better, provided there are enough speakers to carry it: an order three on four speakers brings nothing.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Field | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Room | choice | Octophony (ring of 8) | Stereo / Quad / 5.1 / 7.1 / 7.1.4 / Octophony (ring of 8) / Ring of 16 | The speaker layout to decode to. The subwoofer of a 5.1 or 7.1 receives nothing from the field, which has no bass channel. |
+| Weights | choice | max-rE | max-rE / Basic | Max-rE weights concentrate energy towards the source direction and reduce rear lobes; basic weights keep the response most faithful to the field but localise less well. For listening, max-rE. |
+
+#### Binaural Monitor
+
+`ecoute-binaurale` · Others → Multichannel
+
+*Makes any layout audible on headphones — ring, 7.1.4, ambisonic field — through virtual speakers filtered by the head.*
+
+You do not listen to a 7.1.4 on headphones, and yet headphones are where you compose. Without this node, a space written for twelve speakers stays inaudible at the workstation: the browser's player folds everything to stereo by its own rules, which know nothing of ambisonics. Each channel becomes a virtual speaker placed at its direction, filtered by the audio engine's head-related transfer functions. An ambisonic field is first decoded to twenty-six directions spread over the sphere. The process is the same for all four families, so that on headphones you compare comparable things. It is a working monitor, not an export: the subwoofer is added to both ears six decibels lower, and if the sum exceeds full scale the whole render is brought just below it — clipping would mask precisely what you came to hear. The transfer functions are the engine's generic ones: they are not those of your head, and the sense of front and back always suffers a little.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Headphones | audio (stereo) |  |
+
+*No parameters.*
+
+#### Declare Layout
+
+`declarer-disposition` · Others → Multichannel
+
+*States what a multichannel file's channels are — a 5.1, a ring, an AmbiX field — so that the rest of the chain knows.*
+
+A file loaded from disk arrives with a number of channels, and nothing else. Yet four channels is a quad or a first-order ambisonic field: the same number, two worlds, and treating one as the other gives noise. Attic therefore never guesses from the number alone, and this node is what states it. The input's channel count must match the declared layout; otherwise the node refuses, rather than letting a 7.1 pass for a ring of eight. The sound is not changed: only the label is, and it then follows the sound to the export.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Layout | choice | 5.1 | Stereo / Quad / 5.1 / 7.1 / 7.1.4 / Octophony (ring of 8) / Ring of 16 / Ambisonics order 1 (AmbiX) / Ambisonics order 2 (AmbiX) / Ambisonics order 3 (AmbiX) | What the input's channels are. An AmbiX file is declared as ambisonics of the matching order: four channels for order one, nine for two, sixteen for three. |
+
+#### Object Renderer
+
+`rendu-objets` · Others → Multichannel
+
+*Renders every connected sound object into a single room, chosen here and changeable at any time.*
+
+The point where the room is decided. Every connected object — as many as you like, on the same input — is placed on its own trajectory in the chosen layout, then summed. Changing the layout replays the whole piece in another room: a ring of sixteen for concert, a 7.1.4 for broadcast, ambisonics for later decoding, without touching a single object. Objects are rendered at the sample rate of the first of them; objects at different rates should be resampled beforehand, and the node says so rather than mixing seconds that are not the same length.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Objects | objet |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Layout | choice | 7.1.4 | Stereo / Quad / 5.1 / 7.1 / 7.1.4 / Octophony (ring of 8) / Ring of 16 / Ambisonics order 1 (AmbiX) / Ambisonics order 2 (AmbiX) / Ambisonics order 3 (AmbiX) | The render room, for all objects at once. Changing it rewrites nothing: the trajectories stay the objects' own. |
+
+#### Sound Object
+
+`objet-sonore` · Others → Multichannel
+
+*Attaches its trajectory to a sound without choosing a room: the layout will only be decided at render time, for all objects at once.*
+
+The most compositional family, because it separates what is written from where it is played. An object does not know whether it will end in 5.1, a ring of sixteen or on headphones: it only carries its sound and its movement. Connect several objects to one « Object Renderer », and the room is chosen once, for all of them; changing it replays the same piece in another room without rewriting anything. It is the principle of cinema's object formats, brought into the graph. Trajectories are set like the spatialiser's: three modulation inputs, azimuth, elevation, distance, shown in the inspector as their ranges. The output is not audio: it is an object, which cannot be listened to alone and only connects to an object renderer.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Azimuth modulation | curve |  |
+| input | Elevation modulation | curve |  |
+| input | Distance modulation | curve |  |
+| output | Object | objet |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Name | text | — |  | A name to find your way in the renderer, which lists its objects. |
+| Azimuth | slider | 0 ° | -180 – 180 °, step 1 | The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder. |
+| Elevation | slider | 0 ° | -90 – 90 °, step 1 | The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it. |
+| Distance | slider | 1 | 1 – 10, step 0.1 | The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing — an infinitely near source must not become infinitely loud. |
+| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. |
+| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. |
+| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. |
+| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. |
+| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. |
+| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. |
+
+#### Spatialiser
+
+`spatialiseur` · Others → Multichannel
+
+*Places a sound on a trajectory — azimuth, elevation, distance — in a layout of your choice: concert ring, 5.1 to 7.1.4, or ambisonic field.*
+
+The central node of the family. A sound comes in, mono or not — it is first brought down to mono, since it is a source being placed and not a field —, and it comes out in the chosen layout, labelled as such: the layout then travels with it to the export, through any ordinary effect. The three trajectories are modulation inputs. Connect a curve to the azimuth and the source turns; to the elevation, it rises; to the distance, it moves away. Without a curve each setting holds its value. In the inspector, a connected trajectory shows as its range, in its degrees. For a ring or a channel layout, placement follows Ville Pulkki's vector base amplitude panning: a source only excites the speakers framing it, and power stays constant wherever it is — a source passing between two speakers neither dips nor swells. The heights of 7.1.4 are handled by layers, ear level and ceiling. The subwoofer never receives panning: it has no direction. For ambisonics, the source is encoded into the field following the AmbiX convention — ACN channel order, SN3D normalisation —, the one decoders and production tools expect. The field chooses no room: a decoder or the binaural monitor will do so afterwards. The player under this node plays a stereo fold-down computed by Attic, which knows how to decode ambisonics: it resembles the piece at a sixth of its weight, but front and back merge in it, as in any stereo. To hear the composed space on headphones, connect « Binaural Monitor ». The saved file stays multichannel — it is rebuilt from the full buffer, not from the preview.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Azimuth modulation | curve |  |
+| input | Elevation modulation | curve |  |
+| input | Distance modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Layout | choice | 7.1.4 | Stereo / Quad / 5.1 / 7.1 / 7.1.4 / Octophony (ring of 8) / Ring of 16 / Ambisonics order 1 (AmbiX) / Ambisonics order 2 (AmbiX) / Ambisonics order 3 (AmbiX) | The room being written for. Rings and channel formats are real speakers; ambisonics is a field, decoded later to any room. The octophony numbers its channels clockwise starting left of the axis: it is the most widespread convention for concert rings, not the only one. |
+| Azimuth | slider | 0 ° | -180 – 180 °, step 1 | The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder. |
+| Elevation | slider | 0 ° | -90 – 90 °, step 1 | The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it. |
+| Distance | slider | 1 | 1 – 10, step 0.1 | The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing — an infinitely near source must not become infinitely loud. |
+| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. |
+| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. |
+| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. |
+| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. |
+| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. |
+| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. |
 
 ### Speech to Text
 

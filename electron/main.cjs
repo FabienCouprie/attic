@@ -363,14 +363,26 @@ ipcMain.handle("dossier:lire", async (_event, cheminDossier) => {
   }
 });
 
-// --- IPC : lire un fichier audio et retourner son buffer ---
+// --- IPC : lire un fichier audio et retourner ses octets ---
+//
+// LE PROCESSUS PRINCIPAL NE FABRIQUE PLUS L'ADRESSE BASE64, ET C'ÉTAIT UNE FUITE. Il renvoyait le
+// tampon ET le même fichier encodé en base64, une chaîne de 1,33 fois sa taille, avant de copier les
+// deux vers la fenêtre. Mesuré sur une instance neuve : une lecture d'un fichier de 50 Mo faisait
+// passer le processus principal de 48 à 224 Mo, six lectures à 273 Mo, et vingt secondes d'inactivité
+// ne rendaient rien — un processus qui n'alloue presque rien d'autre ne relance pas son ramasse-miettes,
+// et ne rend pas au système le tas qu'une grande chaîne a fait grossir. Recharger la fenêtre n'y
+// pouvait rien, puisque ce n'est pas elle qui retenait. Après quelques heures d'entrées audio et de
+// lots, 1,7 Go. L'adresse est désormais construite côté fenêtre (preload.cjs), qui rend sa mémoire.
+//
+// La lecture est asynchrone : un fichier de plusieurs centaines de mégaoctets lu de façon synchrone
+// figeait tout le processus principal, fenêtres comprises, le temps de la lecture.
 ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
   try {
     const chemin = resoudreRessource(cheminFichier, contexteRessources());
-    const buf = fs.readFileSync(chemin);
+    const donnees = await fs.promises.readFile(chemin);
     const ext = path.extname(cheminFichier).toLowerCase();
     const mime = ext === ".mp3" ? "audio/mpeg" : ext === ".ogg" ? "audio/ogg" : "audio/wav";
-    return { url: `data:${mime};base64,${buf.toString("base64")}`, donnees: buf, nom: path.basename(cheminFichier) };
+    return { donnees, mime, nom: path.basename(cheminFichier) };
   } catch {
     return null;
   }

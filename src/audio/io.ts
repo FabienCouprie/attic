@@ -1,5 +1,6 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
 import { creerQuantificateur } from "./dither";
+import { dispositionDe } from "./multicanal";
 import { Mp3Encoder } from "lamejs";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
@@ -133,7 +134,16 @@ export function bufferVersWavBlob(
   // plus, et la norme exige en outre un bloc `fact` donnant le nombre de trames. Les quarante-quatre
   // octets d'un en-tête PCM ne suffisent donc plus, et les écrire quand même produirait un fichier
   // que la moitié des lecteurs refuserait.
-  const tailleFmt = flottant ? 18 : 16;
+  // AU-DELÀ DE DEUX CANAUX, LE FORMAT ÉTENDU, ET SON MASQUE. Un fichier à six canaux écrit en PCM
+  // simple ne dit pas lequel est le centre ni lequel est le caisson de graves : chaque lecteur
+  // devine, et deux lecteurs devinent différemment. Le format étendu porte un masque qui assigne
+  // chaque canal à un haut-parleur — ou zéro, qui dit explicitement « aucun haut-parleur standard »,
+  // ce qui est la bonne réponse pour un anneau libre ou un champ ambisonique. On s'en tient à plus
+  // de deux canaux : la stéréo et le mono restent au format simple, que tout lecteur connaît et que
+  // les graphes existants produisent déjà.
+  const etendu = nbCanaux > 2;
+  const masque = dispositionDe(buffer)?.masque ?? 0;
+  const tailleFmt = etendu ? 40 : flottant ? 18 : 16;
   const tailleFact = flottant ? 12 : 0;
   const tailleEntete = 12 + 8 + tailleFmt + tailleFact + 8;
   const tailleTotal = tailleEntete + tailleDonnees + grapheChunk.byteLength;
@@ -150,13 +160,22 @@ export function bufferVersWavBlob(
   let tete = 12;
   ecrireChaine(tete, "fmt ");
   vue.setUint32(tete + 4, tailleFmt, true);
-  vue.setUint16(tete + 8, flottant ? 3 : 1, true);
+  vue.setUint16(tete + 8, etendu ? 0xfffe : flottant ? 3 : 1, true);
   vue.setUint16(tete + 10, nbCanaux, true);
   vue.setUint32(tete + 12, frequence, true);
   vue.setUint32(tete + 16, octetsParSeconde, true);
   vue.setUint16(tete + 20, blocAlign, true);
   vue.setUint16(tete + 22, bitsParEchantillon, true);
-  if (flottant) vue.setUint16(tete + 24, 0, true); // cbSize : aucune extension
+  if (etendu) {
+    vue.setUint16(tete + 24, 22, true);                  // cbSize : l'extension fait 22 octets
+    vue.setUint16(tete + 26, bitsParEchantillon, true);  // bits réellement utilisés
+    vue.setUint32(tete + 28, masque >>> 0, true);        // quel canal est quel haut-parleur
+    // Le sous-format : l'identifiant PCM ou virgule flottante, suivi du suffixe commun à tous.
+    const guid = [flottant ? 3 : 1, 0, 0, 0, 0, 0, 0x10, 0, 0x80, 0, 0, 0xaa, 0, 0x38, 0x9b, 0x71];
+    guid.forEach((o, i) => vue.setUint8(tete + 32 + i, o));
+  } else if (flottant) {
+    vue.setUint16(tete + 24, 0, true); // cbSize : aucune extension
+  }
   tete += 8 + tailleFmt;
   if (flottant) {
     ecrireChaine(tete, "fact");

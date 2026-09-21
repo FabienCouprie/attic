@@ -189,6 +189,24 @@ export function usePersistance(o: OptionsPersistance) {
     return decision;
   }, [buildExportData]);
 
+  /**
+   * Mémorise le graphe tel qu'il est, dans l'en-cours relu au démarrage — sans fichier ni dialogue.
+   *
+   * C'EST LA CONDITION D'UN RECHARGEMENT SANS PERTE. L'en-cours n'était écrit qu'à l'enregistrement
+   * manuel, ou par la sauvegarde automatique quand un fichier est ouvert : recharger la fenêtre
+   * aurait donc rendu le graphe du dernier enregistrement, et perdu en silence tout ce qui a été
+   * modifié depuis. Rien n'est écrit sur le disque ici, et aucun fichier courant n'est touché.
+   */
+  const memoriserEncours = useCallback((): boolean => {
+    try {
+      const { encours } = buildExportData();
+      localStorage.setItem("attic-encours", JSON.stringify(encours));
+      return true;
+    } catch {
+      return false;
+    }
+  }, [buildExportData]);
+
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
   const importer = useCallback(async (f?: File) => {
@@ -265,5 +283,5 @@ export function usePersistance(o: OptionsPersistance) {
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
   }, [o]);
 
-  return { sauvegarder, sauvegarderAuto, exporter, importer };
+  return { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours };
 }

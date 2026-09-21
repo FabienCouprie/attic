@@ -11,6 +11,12 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
+import { bufferVersWavBlob } from "../audio/io";
+import { lireProfondeurExport } from "./profondeur-export";
+
+/** Le tampon d'un nœud s'il a plus de deux canaux : son aperçu est alors un repliement, pas le fichier. */
+const tamponMulticanal = (b: unknown): AudioBuffer | null =>
+  typeof AudioBuffer !== "undefined" && b instanceof AudioBuffer && b.numberOfChannels > 2 ? b : null;
 import { copierTexte } from "./copier";
 import { nomNote } from "./clavier-disposition";
 import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
@@ -709,14 +715,26 @@ function VueExport({ data }: VueProps) {
           )}
           {api ? (
             <button className="attic-node-fichier-btn" onClick={async () => {
-              const rep = await fetch(data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl!);
-              const buf = await rep.arrayBuffer();
               const ext = data.ficheId === "convertisseur-audio" ? "mp3" : "wav";
+              const multi = ext === "wav" ? tamponMulticanal(data.audioResultatBuffer) : null;
+              // UN FICHIER MULTICANAL SE REFAIT DEPUIS LE TAMPON. Son aperçu a été replié en stéréo
+              // pour ne pas peser six à huit fois une stéréo dans le processus principal ; l'enregistrer
+              // tel quel livrerait un repliement à la place du 7.1.4 composé.
+              const buf = multi
+                ? await bufferVersWavBlob(multi, undefined, false, { bits: lireProfondeurExport() }).arrayBuffer()
+                : await (await fetch(data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl!)).arrayBuffer();
               await api.sauvegarderBinaire({
                 defaultPath: nomOu(`sortie.${ext}`),
                 filters: [{ name: "Audio", extensions: [ext] }],
                 buffer: buf,
               });
+            }}>💾 {t("export.sauvegarder").replace("💾 ", "")}</button>
+          ) : tamponMulticanal(data.audioResultatBuffer) ? (
+            <button className="attic-node-fichier-btn" onClick={() => {
+              const b = tamponMulticanal(data.audioResultatBuffer)!;
+              const u = URL.createObjectURL(bufferVersWavBlob(b, undefined, false, { bits: lireProfondeurExport() }));
+              const a = document.createElement("a"); a.href = u; a.download = nomOu((data.audioResultatNom as string) || "sortie.wav"); a.click();
+              setTimeout(() => URL.revokeObjectURL(u), 1000);
             }}>💾 {t("export.sauvegarder").replace("💾 ", "")}</button>
           ) : (
             <a className="attic-node-fichier-btn" href={data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl}

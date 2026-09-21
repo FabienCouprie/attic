@@ -284,3 +284,84 @@ describe("la reproductibilité et les cas limites", () => {
     }
   });
 });
+
+describe("AU-DELÀ DE DEUX CANAUX, LE FORMAT ÉTENDU ET SON MASQUE", () => {
+  // Un fichier à six canaux en PCM simple ne dit pas lequel est le centre : chaque lecteur devine.
+  const lireEtendu = async (blob: Blob) => {
+    const ab = await blob.arrayBuffer();
+    const v = new DataView(ab);
+    let o = 12;
+    while (o + 8 <= v.byteLength) {
+      const id = String.fromCharCode(v.getUint8(o), v.getUint8(o + 1), v.getUint8(o + 2), v.getUint8(o + 3));
+      const taille = v.getUint32(o + 4, true);
+      if (id === "fmt ") {
+        return {
+          tag: v.getUint16(o + 8, true), taille, cbSize: v.getUint16(o + 24, true),
+          valides: v.getUint16(o + 26, true), masque: v.getUint32(o + 28, true),
+          sousFormat: v.getUint8(o + 32), suffixe: Array.from({ length: 14 }, (_, i) => v.getUint8(o + 34 + i)),
+        };
+      }
+      o += 8 + taille + (taille % 2);
+    }
+    throw new Error("pas de bloc fmt");
+  };
+  const tampon = (n: number) => faireBuffer(Array.from({ length: n }, () => signal(400)));
+
+  it("UN 5.1 DÉCLARÉ PORTE SON MASQUE : le centre et le caisson de graves sont nommés", async () => {
+    const { etiqueter } = await import("./multicanal");
+    const t = etiqueter(tampon(6), "5.1");
+    const f = await lireEtendu(bufferVersWavBlob(t, undefined, false, { bits: 24 }));
+    expect(f.tag).toBe(0xfffe);
+    expect(f.taille).toBe(40);
+    expect(f.cbSize).toBe(22);
+    expect(f.valides).toBe(24);
+    expect(f.masque).toBe(0x3f);          // L R C LFE Ls Rs
+    expect(f.sousFormat).toBe(1);          // PCM
+    expect(f.suffixe).toEqual([0, 0, 0, 0, 0x10, 0, 0x80, 0, 0, 0xaa, 0, 0x38, 0x9b, 0x71]);
+  });
+
+  it("un 7.1.4 porte ses douze bits, hauteurs comprises", async () => {
+    const { etiqueter } = await import("./multicanal");
+    const f = await lireEtendu(bufferVersWavBlob(etiqueter(tampon(12), "7.1.4"), undefined, false, { bits: 24 }));
+    expect(f.masque).toBe(0x2d63f);
+  });
+
+  it("UN CHAMP AMBISONIQUE DIT « AUCUN HAUT-PARLEUR » — masque nul, et c'est la bonne réponse", async () => {
+    const { etiqueter } = await import("./multicanal");
+    const f = await lireEtendu(bufferVersWavBlob(etiqueter(tampon(4), "foa"), undefined, false, { bits: 24 }));
+    expect(f.tag).toBe(0xfffe);
+    expect(f.masque).toBe(0);
+  });
+
+  it("un multicanal sans disposition déclarée n'invente rien : masque nul", async () => {
+    const f = await lireEtendu(bufferVersWavBlob(tampon(8), undefined, false, { bits: 16 }));
+    expect(f.masque).toBe(0);
+  });
+
+  it("en flottant, le sous-format est flottant et le bloc fact reste là", async () => {
+    const { etiqueter } = await import("./multicanal");
+    const blob = bufferVersWavBlob(etiqueter(tampon(12), "7.1.4"), undefined, false, { bits: 32 });
+    const f = await lireEtendu(blob);
+    expect(f.sousFormat).toBe(3);
+    const lu = await lireWav(blob);
+    expect(lu.blocs).toContain("fact");
+    expect(lu.tailleRiff).toBe(lu.tailleFichier - 8);
+  });
+
+  it("LA STÉRÉO RESTE AU FORMAT SIMPLE, que tout lecteur connaît", async () => {
+    const lu = await lireWav(bufferVersWavBlob(tampon(2), undefined, false, { bits: 24 }));
+    expect(lu.formatCode).toBe(1);
+  });
+
+  it("les données, la taille et le graphe embarqué survivent au format étendu", async () => {
+    const { etiqueter } = await import("./multicanal");
+    const G = JSON.stringify({ noeuds: [{ id: "spatial" }] });
+    const blob = bufferVersWavBlob(etiqueter(tampon(6), "5.1"), G, false, { bits: 24 });
+    const ab = await blob.arrayBuffer();
+    expect(extraireGrapheWav(ab)).toBe(G);
+    const lu = await lireWav(blob);
+    expect(lu.canaux).toBe(6);
+    expect(lu.tailleDonnees).toBe(400 * 6 * 3);
+    expect(lu.tailleRiff).toBe(lu.tailleFichier - 8);
+  });
+});

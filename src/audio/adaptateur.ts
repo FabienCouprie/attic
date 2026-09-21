@@ -29,6 +29,10 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   // été remonté. Celle-ci en est à 22,3 tout en restant à 24,2 du « Contrôle » (#e8590c), l'autre
   // orange de la palette : c'est le meilleur compromis mesuré entre les deux voisines.
   registre.enregistrerTypeFlux({ id: "banque", couleur: "#fb8c00", libelle: "Banque" });
+  // VERT TILLEUL, la seule teinte que la palette n'occupait pas encore : un objet sonore n'est pas de
+  // l'audio — il porte un son ET sa trajectoire, sans salle —, et il ne doit pouvoir se brancher que
+  // sur un rendu d'objets. Un type distinct l'impose ; le teinter comme l'audio inviterait à l'erreur.
+  registre.enregistrerTypeFlux({ id: "objet", couleur: "#82c91e", libelle: "Objet" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

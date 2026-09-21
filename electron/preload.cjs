@@ -24,7 +24,22 @@ contextBridge.exposeInMainWorld("api", {
 
   lireDossier: (chemin) => ipcRenderer.invoke("dossier:lire", chemin),
 
-  lireFichierAudio: (chemin) => ipcRenderer.invoke("fichier:lire-audio", chemin),
+  // L'adresse `data:` que les appelants attendent est fabriquée ICI, dans la fenêtre, et non plus
+  // dans le processus principal, qui gardait la chaîne base64 sans jamais la rendre (cf. main.cjs).
+  // `FileReader` encode nativement, et la fenêtre, elle, libère sa mémoire : mesuré, elle revient à
+  // son niveau de départ en vingt secondes. Les deux champs d'avant sont rendus à l'identique, de
+  // sorte qu'aucun des appelants n'a à changer.
+  lireFichierAudio: async (chemin) => {
+    const r = await ipcRenderer.invoke("fichier:lire-audio", chemin);
+    if (!r) return null;
+    const url = await new Promise((resoudre, rejeter) => {
+      const lecteur = new FileReader();
+      lecteur.onload = () => resoudre(lecteur.result);
+      lecteur.onerror = () => rejeter(lecteur.error);
+      lecteur.readAsDataURL(new Blob([r.donnees], { type: r.mime }));
+    });
+    return { url, donnees: r.donnees, nom: r.nom };
+  },
 
   ecrireFichier: (chemin, buffer) => ipcRenderer.invoke("fichier:ecrire", { chemin, buffer }),
   copierFichier: (source, cible) => ipcRenderer.invoke("fichier:copier", { source, cible }),
