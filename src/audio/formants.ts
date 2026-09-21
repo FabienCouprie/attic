@@ -73,7 +73,24 @@ function decaleEnveloppe(env: Float64Array, ratio: number): Float64Array {
 // Si on veut aussi décaler les formants (formantRatio) :
 //   → diviser par l'enveloppe décalée (pitchRatio) et multiplier par l'enveloppe décalée (formantRatio)
 
+/**
+ * LE SIGNAL EST PROLONGÉ D'UNE TRAME DE SILENCE DE CHAQUE CÔTÉ, puis rogné. Sans cela, les premiers
+ * échantillons ne sont couverts que par le bord d'une seule fenêtre, dont le poids tend vers zéro :
+ * le recollement divise par ce poids, ce qui est exact pour une trame inchangée et explose dès que
+ * le filtre correctif la modifie. Mesuré avant correction : une crête de 24 à l'échantillon 3, pour
+ * un son qui culminait à 0,5.
+ */
 function correctionFormantique(
+  signal: Float32Array,
+  pitchRatio: number,
+  formantRatio: number,
+): Float32Array {
+  const prolonge = new Float32Array(signal.length + 2 * N_FFT);
+  prolonge.set(signal, N_FFT);
+  return correctionFormantiqueBrute(prolonge, pitchRatio, formantRatio).slice(N_FFT, N_FFT + signal.length);
+}
+
+function correctionFormantiqueBrute(
   signal: Float32Array,
   pitchRatio: number,
   formantRatio: number,
@@ -121,7 +138,9 @@ function correctionFormantique(
     // Filtre correctif : multiplier la magnitude par envCible / envActuelle
     const filtre = new Float64Array(NB_BINS);
     for (let b = 0; b < NB_BINS; b++) {
-      filtre[b] = envCible[b] / Math.max(envActuelle[b], 1e-10);
+      // Borné à +24 dB : là où l'enveloppe actuelle est presque nulle, le rapport n'a plus de sens
+      // et ne ferait qu'amplifier du bruit de calcul.
+      filtre[b] = Math.min(16, envCible[b] / Math.max(envActuelle[b], 1e-10));
     }
 
     // Appliquer le filtre (garder la phase originale)

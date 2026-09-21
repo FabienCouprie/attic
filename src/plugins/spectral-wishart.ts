@@ -30,15 +30,27 @@ const tailleDe = (ctx: any): number => {
   return Number.isFinite(t) && t >= 256 ? t : TAILLE_TRAME;
 };
 
-/** Applique une transformation de trames à chaque canal, et rend un tampon de même forme. */
+/**
+ * Applique une transformation de trames à chaque canal, et rend un tampon de même forme.
+ *
+ * LE SON EST PROLONGÉ D'UNE TRAME DE SILENCE DE CHAQUE CÔTÉ avant l'analyse, puis rogné. Sans cela,
+ * les premiers et derniers échantillons ne sont couverts que par le bord d'une seule fenêtre, dont
+ * le poids tend vers zéro ; le recollement divise par ce poids, ce qui est exact tant que la trame
+ * n'est pas modifiée, et explose dès qu'elle l'est. Mesuré avant correction, aux bords seulement :
+ * une crête de 21 au traçage, de 86 au flou, de 465 au gel — pour un son qui culmine à 0,5.
+ */
 function parCanal(entree: AudioBuffer, taille: number, transformer: (t: ReturnType<typeof analyser>) => ReturnType<typeof analyser>): AudioBuffer {
   const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
   const sortie = new AudioBuffer({
     numberOfChannels: entree.numberOfChannels, length: entree.length, sampleRate: entree.sampleRate,
   });
+  const n = entree.length;
   for (let c = 0; c < entree.numberOfChannels; c++) {
-    const trames = analyser(entree.getChannelData(c), taille, saut);
-    sortie.getChannelData(c).set(recoller(transformer(trames), entree.length, taille, saut));
+    const prolonge = new Float32Array(n + 2 * taille);
+    prolonge.set(entree.getChannelData(c), taille);
+    const trames = analyser(prolonge, taille, saut);
+    const recolle = recoller(transformer(trames), prolonge.length, taille, saut);
+    sortie.getChannelData(c).set(recolle.subarray(taille, taille + n));
   }
   return sortie;
 }

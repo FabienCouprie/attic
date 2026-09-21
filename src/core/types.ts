@@ -127,6 +127,11 @@ export interface ParametreDef {
    * qu'elle borne ne veut rien dire.
    */
   modulationDe?: string;
+  /**
+   * Le rang de l'entrée à laquelle ce réglage appartient. Il n'est affiché que si elle est branchée :
+   * un nœud à huit pistes porte trente-deux réglages, dont ceux des pistes vides ne servent à rien.
+   */
+  port?: number;
 }
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et

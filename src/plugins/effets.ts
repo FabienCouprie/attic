@@ -262,11 +262,11 @@ export const fiches: FicheAudio[] = ([
       const relachement = ctx.paramNombre("Relâchement", 100);
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
-      return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expandeur" ? ` · ratio ${ratio}:1` : "") };
+      return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expander" ? ` · ratio ${ratio}:1` : "") };
    },
   },
   effet("transient-shaper", "Transient Shaper", "Transient Shaper", "Contrôle indépendant de l'attaque et du sustain.", "Independent attack and sustain control.",
-    [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires.", "Transient detector reaction time.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain.", "Sustain detector reaction time.", [10, 500], 1)],
+    [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB : le nœud laisse alors passer le son tel quel.", "Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB.", "Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB.", [10, 500], 1)],
     (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain)),
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
     [param("Fréquence", 7000, "Frequency", "Hz", "Fréquence centrale de la bande cible (sibilances : 5-9 kHz).", "Center frequency of the target band (sibilances: 5-9 kHz).", [2000, 12000], 100),
@@ -361,8 +361,8 @@ export const fiches: FicheAudio[] = ([
     [param("Réduction", 60, "Reduction", "%", "Force de l'atténuation de la réverb.", "Reverb reduction strength.")],
     (a,r) => dererverberer(a, r)),
   effet("changement-tempo", "Changement de tempo", "Tempo Change", "Time-stretch via vocodeur de phase.", "Time-stretch via phase vocoder.",
-    [param("Tempo (%)", 100, "Tempo (%)", "%", "Tempo cible. 100=normal, 50=moitié, 200=double.", "Target tempo. 100=normal, 50=half, 200=double.", [25, 400], 5), param("Fenêtre", 50, "Window", "ms", "Taille de la fenêtre d'analyse.", "Analysis window size.")],
-    (a,t) => changerTempo(a, t)),
+    [param("Tempo (%)", 100, "Tempo (%)", "%", "Tempo cible. 100=normal, 50=moitié, 200=double.", "Target tempo. 100=normal, 50=half, 200=double.", [25, 400], 5), param("Fenêtre", 50, "Window", "ms", "Taille de la fenêtre d'analyse, ramenée à la puissance de deux d'échantillons la plus proche. Courte (10 à 30 ms), les attaques restent nettes mais les sons graves se brouillent ; longue (80 à 200 ms), les sons tenus restent lisses mais les attaques s'étalent.", "Analysis window size, rounded to the nearest power of two in samples. Short (10 to 30 ms), attacks stay sharp but low sounds blur; long (80 to 200 ms), held sounds stay smooth but attacks smear.", [5, 400], 5)],
+    (a,t,f) => changerTempo(a, t, f)),
   effet("changement-tonalite", "Changement de tonalité", "Pitch Shift", "Pitch-shift.", "Pitch shift.",
     [param("Demi-tons", 2, "Semitones", "", "Transposition en demi-tons.", "Transposition in semitones.", [-24, 24], 1)],
     (a,d) => changerTonalite(a, d)),
@@ -1269,11 +1269,17 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Profondeur" },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
-        doc: "Fréquence de la modulation (vibrations par seconde).", docEn: "Modulation rate (vibrations per second)." },
+        doc: "Fréquence de la modulation (vibrations par seconde). Une courbe branchée sur l'entrée Modulation fréquence prend la main : le trémolo qui s'accélère ou se calme.", docEn: "Modulation rate (vibrations per second). A curve connected to the Rate modulation input takes over: the tremolo that speeds up or settles." },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 1, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence. La course se parcourt en multipliant : de 1 à 16 Hz, le milieu de la courbe vaut 4 Hz, et chaque octave dure autant.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 10, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Intensité de la modulation (0% = aucun effet, 100% = volume coupé complètement). Une courbe branchée sur l'entrée Modulation prend la main : c'est ainsi qu'on obtient le trémolo dont la profondeur suit une suite logistique, sans qu'il faille un nœud séparé pour cela.", docEn: "Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it." },
       { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
@@ -1293,24 +1299,10 @@ export const fiches: FicheAudio[] = ([
       const profondeurs = valeursParametre(ctx.entree(1), a.length, ctx.paramNombre("Profondeur", 50) / 100,
         { min: ctx.paramNombre("Modulation min", 0) / 100, max: ctx.paramNombre("Modulation max", 100) / 100 });
       const forme = ctx.paramTexte("Forme", "Sinus");
-      const sr = a.sampleRate;
-      const resultat = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: a.length, sampleRate: sr });
-      for (let c = 0; c < a.numberOfChannels; c++) {
-        const src = a.getChannelData(c);
-        const dst = resultat.getChannelData(c);
-        for (let i = 0; i < a.length; i++) {
-          const t = i / sr;
-          const phase = 2 * Math.PI * freq * t;
-          let lfo: number;
-          if (forme === "Carré" || forme === "Square") lfo = Math.sin(phase) >= 0 ? 1 : -1;
-          else if (forme === "Triangle") lfo = 2 * Math.abs(2 * (freq * t - Math.floor(freq * t + 0.5))) - 1;
-          else if (forme === "Sawtooth") lfo = 2 * (freq * t - Math.floor(freq * t)) - 1;
-          else lfo = Math.sin(phase);
-          const gain = 1 - profondeurs[i] * (1 - lfo) / 2;
-          dst[i] = src[i] * gain;
-        }
-      }
-      return { valeurs: [resultat] };
+      const { tremolo } = await import("../audio");
+      return { valeurs: [tremolo(a, freq, profondeurs, forme, ctx.entree(2), {
+        min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 10),
+      })] };
    },
  },
   {
@@ -1350,7 +1342,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Position stéréo (-100% = gauche, 0% = centre, 100% = droite). Une courbe branchée sur l'entrée Modulation prend la main : le son se déplace alors au lieu de rester posé, et c'est le trajet de la courbe qu'on entend.",
         docEn: "Stereo position (-100% = left, 0% = center, 100% = right). A curve connected to the Modulation input takes over: the sound then travels instead of sitting still, and what one hears is the curve's path." },
       { nom: "Largeur", nomEn: "Width", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Largeur de l'effet spatial (0% = mono, 100% = spatialisation pleine).", docEn: "Spatial width (0% = mono, 100% = full spatialization)." },
+        doc: "Ampleur du déplacement autour de la position : 0 % laisse le son au centre, 100 % l'emmène jusqu'à la position réglée. Le son est d'abord ramené en mono ; sans effet quand la position est au centre et qu'aucune courbe n'est branchée.", docEn: "Extent of the movement around the position: 0% leaves the sound in the centre, 100% takes it all the way to the set position. The sound is first folded to mono; no effect when the position is centred and no curve is connected." },
       { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: -100, unite: "%",
         doc: "Position que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Position that a connected curve's zero means. With no curve, this setting does nothing." },
@@ -1374,13 +1366,21 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // dst[i] = src[i] * gain
     resume: "Balayage automatique gauche/droite (panoramique animé).",
     resumeEn: "Automatic left/right sweep (animated panning).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 2, unite: "Hz",
         doc: "Vitesse du balayage (allers-retours par seconde).", docEn: "Sweep speed (round trips per second)." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Amplitude du balayage (0% = fixe, 100% = gauche extrême à droite extrême).", docEn: "Sweep depth (0% = static, 100% = extreme left to extreme right)." },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 0.5, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : le balancement qui s'accélère. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input: the sway that speeds up. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 8, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -1388,7 +1388,7 @@ export const fiches: FicheAudio[] = ([
       const { autoPan } = await import("../audio");
       const freq = ctx.paramNombre("Fréquence", 2);
       const depth = ctx.paramNombre("Profondeur", 80);
-      return { valeurs: [await autoPan(a, freq, depth)] };
+      return { valeurs: [await autoPan(a, freq, depth, ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) })] };
    },
   },
   {
@@ -1418,7 +1418,7 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "vibrato-logistique", nom: "Vibrato logistique", nomEn: "Logistic vibrato", univers: "Traitement", famille: "Effets",
-    memoire: "flux", // ligne a retard bornee a 20 ms
+    memoire: "flux", // lecture decalee bornee, comme le vibrato
     resume: "Vibrato dont la profondeur croît selon une courbe logistique.",
     resumeEn: "Vibrato whose depth grows following a logistic curve.",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
@@ -1516,6 +1516,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -1534,6 +1535,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Résonance du filtre (Q élevé = wah prononcé, Q faible = doux).", docEn: "Filter resonance (high Q = pronounced wah, low Q = gentle)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Mix entre signal original et effet (100% = wah seulement).", docEn: "Mix between dry and wet signal (100% = wah only)." },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 0.5, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : la pédale qui s'emballe. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 8, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -1544,6 +1550,7 @@ export const fiches: FicheAudio[] = ([
         ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100),
         ctx.entree(1),
         { min: ctx.paramNombre("Balayage de", 200), max: ctx.paramNombre("Balayage à", 2500) },
+        ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) },
       )] };
    },
  },
@@ -1552,7 +1559,10 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // passe-tout en cascade, etat par etage
     resume: "Filtres passe-tout en cascade modulés par LFO (effet planant).",
     resumeEn: "All-pass filter cascade modulated by LFO (sweeping effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 0.5, unite: "Hz",
@@ -1563,35 +1573,48 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre d'étages passe-tout (plus = effet plus prononcé).", docEn: "Number of all-pass stages (more = stronger effect)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Mix entre signal original et effet.", docEn: "Mix between dry and wet signal." },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 0.1, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : le tourbillon qui se resserre. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input: the swirl that tightens. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 4, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { phaser } = await import("../audio");
-      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50))] };
+      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50),
+        ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.1), max: ctx.paramNombre("Fréquence max", 4) })] };
    },
  },
   {
     id: "vibrato", nom: "Vibrato", nomEn: "Vibrato", univers: "Traitement", famille: "Effets",
-    memoire: "flux", // ligne a retard bornee a 20 ms
+    memoire: "flux", // lecture decalee bornee : 0,18 s au plus (0,1 Hz, 100 %), en avant comme en arriere
     resume: "Modulation de hauteur par LFO (oscillation de la note).",
     resumeEn: "Pitch modulation by LFO (note oscillation).",
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
-        doc: "Vitesse de la modulation (oscillations par seconde).", docEn: "Modulation speed (oscillations per second)." },
+        doc: "Vitesse de la modulation (oscillations par seconde). Une courbe branchée sur l'entrée Modulation fréquence prend la main : le vibrato qui s'accélère, comme celui d'un chanteur qui tient une note. Si l'entrée Modulation est branchée aussi, c'est elle qui l'emporte : elle dessine alors le geste entier, et il n'y a plus de LFO dont régler la vitesse.", docEn: "Modulation speed (oscillations per second). A curve connected to the Rate modulation input takes over: the vibrato that speeds up, like a singer holding a note. If the Modulation input is connected too, it wins: it then draws the whole gesture, and there is no LFO left whose speed could be set." },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 1, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence. La course se parcourt en multipliant, comme pour toute fréquence.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative, as for any frequency." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 10, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Amplitude de la modulation de hauteur (0% = aucun, 100% = ±2 demi-tons).", docEn: "Pitch modulation depth (0% = none, 100% = ±2 semitones)." },
+        doc: "Écart de hauteur au sommet de l'oscillation (0% = aucun, 100% = ±2 demi-tons), le même à toute vitesse : accélérer le vibrato ne l'élargit pas.", docEn: "Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { vibrato } = await import("../audio");
-      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50), ctx.entree(1))] };
+      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50), ctx.entree(1),
+        ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 10) })] };
    },
  },
   {
@@ -1623,7 +1646,10 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // gain fonction de i seul
     resume: "Gate rythmique qui coupe le son périodiquement (effet stutter/DJ).",
     resumeEn: "Rhythmic gate that chops the sound periodically (stutter/DJ effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "Hz",
@@ -1632,13 +1658,19 @@ export const fiches: FicheAudio[] = ([
         doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionIds: ["Dur","Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
         doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
+      { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 1, unite: "Hz",
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : la coupe qui accélère jusqu'au bégaiement. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input: the chop that accelerates into a stutter. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
+      { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 16, unite: "Hz",
+        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { chopper } = await import("../audio");
       const typeStr = ctx.paramTexte("Type", "Dur");
-      return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0)] };
+      return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0,
+        ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 16) })] };
    },
   },
   {
@@ -1709,7 +1741,11 @@ export const fiches: FicheAudio[] = ([
     id: "echo", nom: "Echo", nomEn: "Echo", univers: "Traitement", famille: "Effets",
     resume: "Delay/écho ping-pong avec feedback.",
     resumeEn: "Ping-pong delay/echo with feedback.",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation temps", nomEn: "Time modulation", type: "courbe", requis: false, module: "Temps" },
+      { nom: "Modulation feedback", nomEn: "Feedback modulation", type: "courbe", requis: false, module: "Feedback" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Temps", nomEn: "Time", type: "curseur", plage: [50, 2000], pas: 10, defaut: 350, unite: "ms",
@@ -1718,11 +1754,25 @@ export const fiches: FicheAudio[] = ([
         doc: "Quantité de signal réinjectée dans le délai (plus = plus de répétitions).", docEn: "Amount of signal fed back into the delay (more = more repetitions)." },
       { nom: "Répartition", nomEn: "Spread", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Largeur stéréo de l'écho (0% = mono, 100% = balayage gauche/droite maximum).", docEn: "Stereo width of the echo (0% = mono, 100% = maximum left/right sweep)." },
+      { nom: "Temps min", nomEn: "Time min", modulationDe: "Temps", type: "curseur", plage: [50, 2000], pas: 10, defaut: 100, unite: "ms",
+        doc: "Retard que vaut le zéro d'une courbe branchée sur l'entrée Modulation temps. Faire bouger le retard fait glisser la hauteur des répétitions, comme un écho à bande dont on touche la vitesse : c'est le son voulu. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Delay that a curve's zero means on the Time modulation input. Moving the delay makes the repeats glide in pitch, like a tape echo whose speed is touched: that is the intended sound. With no curve, this setting does nothing." },
+      { nom: "Temps max", nomEn: "Time max", modulationDe: "Temps", type: "curseur", plage: [50, 2000], pas: 10, defaut: 800, unite: "ms",
+        doc: "Retard que vaut le un de la courbe.", docEn: "Delay that the curve's one means." },
+      { nom: "Feedback min", nomEn: "Feedback min", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 0, unite: "%",
+        doc: "Réinjection que vaut le zéro d'une courbe branchée sur l'entrée Modulation feedback : l'écho qui s'éteint, ou qui s'emballe. Plafonnée à 95 %, comme le réglage, pour que la boucle ne diverge jamais.",
+        docEn: "Feedback that a curve's zero means on the Feedback modulation input: the echo that dies away, or that runs away. Capped at 95%, like the setting, so the loop never diverges." },
+      { nom: "Feedback max", nomEn: "Feedback max", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 80, unite: "%",
+        doc: "Réinjection que vaut le un de la courbe.", docEn: "Feedback that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Répartition", 50))] };
+      return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Répartition", 50),
+      {
+        temps: ctx.entree(1), bornesTemps: { min: ctx.paramNombre("Temps min", 100), max: ctx.paramNombre("Temps max", 800) },
+        feedback: ctx.entree(2), bornesFeedback: { min: ctx.paramNombre("Feedback min", 0), max: ctx.paramNombre("Feedback max", 80) },
+      })] };
    },
   },
   {
@@ -1788,9 +1838,11 @@ export const fiches: FicheAudio[] = ([
       const parts = ctx.paramNombre("Parts", 8);
       const crossfade = ctx.paramNombre("Crossfade", 5);
       const mode = ctx.paramTexte("Mode", "Random");
-      const graine = ctx.paramNombre("Graine", 0);
+      // Graine 0 : tirée une fois ici, passée au calcul et montrée dans le message — la convention
+      // du projet, sans laquelle un résultat réussi ne pouvait pas être rejoué.
+      const { graine } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const out = appliquerDecoupeAleatoire(a, parts, crossfade, mode, graine);
-      return { valeurs: [out], message: `Découpe aléatoire · ${mode}` };
+      return { valeurs: [out], message: `Découpe aléatoire · ${mode} · graine ${graine}` };
     },
   },
   {

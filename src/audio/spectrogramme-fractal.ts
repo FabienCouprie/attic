@@ -83,13 +83,17 @@ function generateSpectrogram(
   forme: "linear" | "logarithmic",
 ): number[][] {
   const rng = creerRng(graine);
+  // LA GRAINE DÉPLACE LE POINT DE LECTURE DANS LE CHAMP DE BRUIT. Le bruit est une fonction fixe des
+  // coordonnées (`hashNoise` ignore le générateur qu'on lui passe) : la graine n'avait donc aucun
+  // effet, et toutes donnaient la même texture. Un décalage tiré de la graine lit une autre région.
+  const ox = rng() * 1000, oy = rng() * 1000;
   const spectro: number[][] = [];
   for (let t = 0; t < frames; t++) {
     const col: number[] = [];
     for (let b = 0; b < bins; b++) {
       const y = forme === "logarithmic" ? Math.log(1 + b) / Math.log(bins) : b / bins;
       const x = t / Math.max(1, frames);
-      const val = bruitFractal(rng, x * 4, y * 4, octaves, roughness);
+      const val = bruitFractal(rng, x * 4 + ox, y * 4 + oy, octaves, roughness);
       // Shape: more energy in low-mid frequencies, less in very highs.
       const shaping = Math.exp(-3 * y) * (1 + 4 * y * Math.exp(-2 * y));
       col.push(Math.max(0, (val + 1) * 0.5 * shaping));

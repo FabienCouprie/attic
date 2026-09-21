@@ -108,8 +108,8 @@ const FICHES: FicheAudio[] = [
         defaut: 16,
         unite: "cellules",
         uniteEn: "cells",
-        doc: "Hauteur de la grille en mode 2D. En 1D, utilisez Générations.",
-        docEn: "Grid height in 2D mode. In 1D, use Generations.",
+        doc: "Hauteur de la grille en mode 2D. Les rangées s'étagent sur trois octaves : le haut de la grille sonne à l'aigu. Sans effet en 1D.",
+        docEn: "Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D.",
       },
       {
         nom: "Générations",
@@ -120,8 +120,8 @@ const FICHES: FicheAudio[] = [
         defaut: 32,
         unite: "pas",
         uniteEn: "steps",
-        doc: "Nombre de pas / générations de l'automate (1D) ou itérations de la grille (2D).",
-        docEn: "Number of steps / generations of the automaton (1D) or grid iterations (2D).",
+        doc: "Nombre de générations, et donc de pas de la séquence : chaque génération, en 1D comme en 2D, est un pas.",
+        docEn: "Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step.",
       },
       {
         nom: "Graine",
@@ -130,8 +130,8 @@ const FICHES: FicheAudio[] = [
         plage: [0, 9999],
         pas: 1,
         defaut: 0,
-        doc: "0 = graine simple au centre. Sinon initialisation aléatoire.",
-        docEn: "0 = simple centered seed. Otherwise random initialization.",
+        doc: "0 : une configuration fixe au centre — une cellule en 1D ; en 2D, un motif qui vit longtemps (le R-pentomino en Conway, le réplicateur en Highlife). Sinon, une grille tirée au hasard à partir de cette graine.",
+        docEn: "0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed.",
       },
       {
         nom: "Clé",

@@ -66,15 +66,34 @@ export const fiches: FicheAudio[] = ([
     id: "echo-ping-pong", nom: "Echo Ping-Pong", nomEn: "Ping-Pong Echo", univers: "Traitement", famille: "Effets",
     resume: "Écho stéréo ping-pong.",
     resumeEn: "Stereo ping-pong echo.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }],
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Modulation temps", nomEn: "Time modulation", type: "courbe", requis: false, module: "Temps" },
+      { nom: "Modulation feedback", nomEn: "Feedback modulation", type: "courbe", requis: false, module: "Feedback" },
+    ],
+    sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Temps", nomEn: "Time", defaut: 250, unite: "ms", doc: "Délai entre les répétitions.", docEn: "Delay between repeats." },
       { nom: "Feedback", nomEn: "Feedback", defaut: 35, unite: "%", doc: "Quantité de signal réinjecté.", docEn: "Amount fed back." },
       { nom: "Pan", nomEn: "Pan", defaut: 80, unite: "%", doc: "Répartition gauche/droite.", docEn: "Left/right balance." },
+      { nom: "Temps min", nomEn: "Time min", modulationDe: "Temps", type: "curseur", plage: [50, 2000], pas: 10, defaut: 100, unite: "ms",
+        doc: "Retard que vaut le zéro d'une courbe branchée sur l'entrée Modulation temps. Faire bouger le retard fait glisser la hauteur des répétitions, comme un écho à bande dont on touche la vitesse : c'est le son voulu. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Delay that a curve's zero means on the Time modulation input. Moving the delay makes the repeats glide in pitch, like a tape echo whose speed is touched: that is the intended sound. With no curve, this setting does nothing." },
+      { nom: "Temps max", nomEn: "Time max", modulationDe: "Temps", type: "curseur", plage: [50, 2000], pas: 10, defaut: 800, unite: "ms",
+        doc: "Retard que vaut le un de la courbe.", docEn: "Delay that the curve's one means." },
+      { nom: "Feedback min", nomEn: "Feedback min", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 0, unite: "%",
+        doc: "Réinjection que vaut le zéro d'une courbe branchée sur l'entrée Modulation feedback : l'écho qui s'éteint, ou qui s'emballe. Plafonnée à 95 %, comme le réglage, pour que la boucle ne diverge jamais.",
+        docEn: "Feedback that a curve's zero means on the Feedback modulation input: the echo that dies away, or that runs away. Capped at 95%, like the setting, so the loop never diverges." },
+      { nom: "Feedback max", nomEn: "Feedback max", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 80, unite: "%",
+        doc: "Réinjection que vaut le un de la courbe.", docEn: "Feedback that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
-      return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps",250), ctx.paramNombre("Feedback",35), ctx.paramNombre("Pan",80))] };
+      return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps",250), ctx.paramNombre("Feedback",35), ctx.paramNombre("Pan",80),
+      {
+        temps: ctx.entree(1), bornesTemps: { min: ctx.paramNombre("Temps min", 100), max: ctx.paramNombre("Temps max", 800) },
+        feedback: ctx.entree(2), bornesFeedback: { min: ctx.paramNombre("Feedback min", 0), max: ctx.paramNombre("Feedback max", 80) },
+      })] };
    },
  },
   {
@@ -86,14 +105,14 @@ export const fiches: FicheAudio[] = ([
       { nom: "Taille", nomEn: "Size", defaut: 50, doc: "Taille de la pièce simulée.", docEn: "Simulated room size." },
       { nom: "Début", nomEn: "Start", defaut: 0, doc: "Mix wet au début (0=sec seulement).", docEn: "Wet mix at start (0=dry only)." },
       { nom: "Fin", nomEn: "End", defaut: 50, doc: "Mix wet à la fin du fondu.", docEn: "Wet mix after fade completes." },
-      { nom: "Fondu", nomEn: "Fade", defaut: 8, unite: "s", doc: "Durée du fondu progressif.", docEn: "Duration of the progressive fade." },
+      { nom: "Fondu", nomEn: "Fade", plage: [0, 60], pas: 0.5, defaut: 8, unite: "s", doc: "Durée du passage du sec au mouillé. Plafonnée à la durée du rendu — le son plus la queue de réverbération — : au-delà, le fondu n'arrive jamais à sa valeur de fin. 0 : sur toute la durée du son.", docEn: "Length of the move from dry to wet. Capped at the length of the render - the sound plus the reverb tail -: beyond that, the fade never reaches its end value. 0: over the whole sound." },
       { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
         doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut fixe : une réverbération qui change de pièce à chaque exécution serait un défaut.",
         docEn: "Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
-      const fondu = ctx.paramNombre("Fondu", 0);
+      const fondu = ctx.paramNombre("Fondu", 8);
       const d = fondu > 0 ? fondu : a.duration;
       return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d,
         creerAleatoire(ctx.paramNombre("Graine", 42)))] };

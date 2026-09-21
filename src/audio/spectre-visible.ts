@@ -47,11 +47,14 @@ export function genererSpectreVisibleAudio(options: OptionsSpectreVisible): Audi
   const { frequence } = frequenceAudibleDepuisCouleur(options.r, options.g, options.b, options.octave);
   const delta = (2 * Math.PI * frequence) / sr;
   let phase = 0;
+  // Les tableaux des canaux sont pris une fois, hors de la boucle : les redemander à chaque
+  // échantillon coûtait 24 s pour quelques secondes de son sous le moteur audio des tests.
+  const sorties = Array.from({ length: channels }, (_, ch) => buffer.getChannelData(ch));
   for (let i = 0; i < length; i++) {
     const sample = Math.sin(phase) * vol;
     phase += delta;
     for (let ch = 0; ch < channels; ch++) {
-      buffer.getChannelData(ch)[i] = sample;
+      sorties[ch][i] = sample;
     }
   }
   return buffer;

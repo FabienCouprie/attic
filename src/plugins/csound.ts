@@ -479,7 +479,7 @@ endin`,
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: ["512", "1024", "2048"], optionsEn: ["512", "1024", "2048"], optionIds: ["512", "1024", "2048"],
         defaut: "1024", defautEn: "1024",
-        doc: "Taille de la transformée. Grande, la résolution fréquentielle est fine et les transitoires s'étalent ; petite, l'inverse. 1024 est le compromis usuel.",
+        doc: "Taille de la transformée. Grande, la résolution fréquentielle est fine et les transitoires s'étalent ; petite, l'inverse. 1024 est le compromis usuel. Sans effet sur l'étirement (mincer), qui ne passe pas par cette analyse.",
         docEn: "Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise." },
       { nom: "Queue", nomEn: "Tail", type: "nombre", plage: [0, 30], pas: 0.5, defaut: 0.5, unite: "s",
         doc: "Temps ajouté à la durée traitée. Indispensable pour l'étirement, qui allonge le son.",
@@ -503,6 +503,7 @@ endin`,
         morphing,
         transposition: ctx.paramNombre("Transposition", 0),
         fenetre: parseInt(ctx.paramTexte("Fenêtre", "1024"), 10) || 1024,
+        dureeEntree: a1.duration,
       });
       // L'étirement allonge le son : sa durée de partition doit suivre, sinon il est coupé.
       const facteur = o.id === "mincer" ? 1 / Math.max(0.05, morphing * 2) : 1;

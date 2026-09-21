@@ -116,7 +116,13 @@ export function dureeQueue(x: Float32Array, frequence: number, sousLaCreteDb = -
   return 0;
 }
 
-export function reverberationHachee(x: Float32Array, o: OptionsHachee): ResultatHachee {
+export function reverberationHachee(entree: Float32Array, o: OptionsHachee): ResultatHachee {
+  // LA SORTIE DURE LE SON, PLUS LE TEMPS QUE LA PORTE MET À SE FERMER. Coupée à la longueur de
+  // l'entrée, elle tranchait la queue de la dernière frappe dès que le son ne finissait pas sur un
+  // silence : la porte n'avait jamais le temps de jouer son maintien et sa chute.
+  const prolongement = Math.round((Math.max(0, o.maintienSec) + Math.max(0, o.chuteSec)) * o.frequence);
+  const x = new Float32Array(entree.length + prolongement);
+  x.set(entree);
   const h = reponseUnitaire({
     duree: Math.max(0.05, o.decroissanceSec), sampleRate: o.frequence,
     densite: o.densite ?? 1500, rt60: Math.max(0.05, o.decroissanceSec),

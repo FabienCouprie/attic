@@ -189,7 +189,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le trémolo du vibraphone, qui vient de ses disques tournants dans les tubes résonateurs. Sans effet sur les autres instruments, mais rien n'interdit d'essayer.",
         docEn: "The vibraphone's tremolo, which comes from the discs spinning in its resonator tubes. No effect on the other instruments, but nothing stops you trying." },
       { nom: "Fréquence trémolo", nomEn: "Tremolo rate", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 5, unite: "Hz",
-        doc: "Vitesse du trémolo.", docEn: "Tremolo speed." },
+        doc: "Vitesse du trémolo. Sans effet tant que Trémolo est à 0.", docEn: "Tremolo speed." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.1, 15], pas: 0.1, defaut: 3, unite: "s",
         doc: "Durée du coup, quand aucun MIDI n'est branché. Le bol tibétain a besoin de plusieurs secondes pour que son battement s'entende.",
         docEn: "Length of the stroke, when no MIDI is connected. The Tibetan bowl needs several seconds for its beating to be heard." },

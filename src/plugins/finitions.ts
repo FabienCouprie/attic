@@ -55,13 +55,11 @@ export const fiches: FicheAudio[] = ([
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,
       };
-      const out = new AudioBuffer({ numberOfChannels: e.numberOfChannels, length: e.length, sampleRate: e.sampleRate });
-      let premier = null as null | ReturnType<typeof reverberationHachee>;
-      for (let c = 0; c < e.numberOfChannels; c++) {
-        const r = reverberationHachee(e.getChannelData(c), o);
-        if (!premier) premier = r;
-        out.getChannelData(c).set(r.audio);
-      }
+      // La sortie est plus longue que l'entrée : la porte se ferme après la dernière frappe.
+      const rendus = Array.from({ length: e.numberOfChannels }, (_, c) => reverberationHachee(e.getChannelData(c), o));
+      const out = new AudioBuffer({ numberOfChannels: e.numberOfChannels, length: rendus[0].audio.length, sampleRate: e.sampleRate });
+      rendus.forEach((r, c) => out.getChannelData(c).set(r.audio));
+      const premier = rendus[0];
       return {
         valeurs: [out],
         message: traduire("msg.hachee.resume", premier!.traineeLibreSec.toFixed(2), premier!.traineeSec.toFixed(2)),

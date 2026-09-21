@@ -829,6 +829,38 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-surface);
   padding: 16px; overflow-y: auto;
 }
+/* La ligne de temps du Montage */
+.ligne-temps { margin: 4px 0 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-surface-alt); overflow: hidden; }
+.ligne-temps svg { display: block; user-select: none; touch-action: none; }
+.ligne-temps-vide, .ligne-temps-note { padding: 8px 10px; font-size: 11px; color: var(--text-tertiary); }
+.ligne-temps-grad { stroke: var(--border); stroke-width: 1; }
+.ligne-temps-zero { stroke: var(--text-tertiary); stroke-width: 1; stroke-dasharray: 3 3; }
+.ligne-temps-texte { font-size: 10px; fill: var(--text-secondary); }
+.ligne-temps-barre { fill: var(--accent); fill-opacity: 0.45; stroke: var(--accent); stroke-width: 1; }
+.ligne-temps-inconnue .ligne-temps-barre { fill-opacity: 0.15; stroke-dasharray: 4 3; }
+.ligne-temps-prise .ligne-temps-barre { fill-opacity: 0.7; }
+.ligne-temps-fondu { fill: var(--bg-surface); fill-opacity: 0.55; }
+.ligne-temps-poignee { fill: var(--bg-surface); stroke: var(--accent); stroke-width: 1.5; }
+.ligne-temps-legende { fill: var(--text-primary); }
+/* L'inspecteur qu'on tire sur le canevas : la colonne garde 280 px, le panneau s'étend par-dessus. */
+.inspecteur-emplacement { position: relative; min-width: 0; }
+.inspecteur-panneau {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  display: flex;
+}
+.inspecteur-panneau > .inspecteur { flex: 1; min-width: 0; }
+/* Le panneau ne passe au-dessus qu'une fois étendu. Replié, il laisse la barre d'outils (z-index 5)
+   passer par-dessus comme avant : sur une fenêtre étroite, elle déborde sous la colonne de
+   l'inspecteur, et un panneau toujours au premier plan couvrait le bouton « Lancer ». */
+.inspecteur-panneau-deploye { z-index: 6; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18); }
+.inspecteur-poignee {
+  width: 6px; margin-right: -6px; flex: none; position: relative; z-index: 1;
+  cursor: col-resize; touch-action: none; background: transparent;
+  transition: background 0.15s;
+}
+.inspecteur-poignee:hover, .inspecteur-poignee:focus-visible, .inspecteur-panneau-deploye .inspecteur-poignee {
+  background: var(--accent, #4c6ef5); opacity: 0.55; outline: none;
+}
 .inspecteur-vide { color: var(--text-tertiary); text-align: center; padding: 20px; }
 .inspecteur-entete h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
 .inspecteur-resume { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }

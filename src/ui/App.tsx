@@ -47,6 +47,7 @@ import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { chargerNodesInstalles } from "../core";
+import { PanneauInspecteur } from "./PanneauInspecteur";
 // Restaure les données de backup si on vient d'une mise à jour (synchrone)
 const api0 = (window as any).api;
 if (api0?.majRestaurerBackupSync) {
@@ -1216,6 +1217,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           <MiniMap pannable zoomable nodeColor={nodeColor} />
         </ReactFlow>
       </div>
+      <PanneauInspecteur>
       <Inspector
         noeud={nodes.find((n) => n.id === sel?.id) ?? null}
         def={sel ? trouverDef(sel.data.ficheId) : undefined}
@@ -1232,6 +1234,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             && edges.some((a) => a.target === sel.id && (a.targetHandle ?? `in:${rang}`) === `in:${rang}`)
               ? [port.module] : []);
         })()}
+        portsBranches={sel ? edges.filter((a) => a.target === sel.id)
+          .map((a) => parseInt(String(a.targetHandle ?? "in:0").split(":")[1], 10)).filter(Number.isFinite) : []}
         onChangerParametre={(nom, val) => {
           if (!sel) return;
           cacheExec.current.delete(sel.id);
@@ -1269,6 +1273,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
         }}
       />
+      </PanneauInspecteur>
     </div>
   );
 }

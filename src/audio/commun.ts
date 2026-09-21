@@ -131,10 +131,11 @@ export function extraitCentre(buffer: AudioBuffer, dureeMaxS: number): AudioBuff
  * garder son recouvrement, et le saut d'analyse se déduit du facteur ; au raccourcissement, c'est
  * l'inverse. Les deux règles se rejoignent à facteur 1.
  */
-export function etirerDuree(entree: AudioBuffer, facteur: number): AudioBuffer {
-  const n = TAILLE_FFT_HAUTEUR;
+export function etirerDuree(entree: AudioBuffer, facteur: number, tailleFenetre: number = TAILLE_FFT_HAUTEUR): AudioBuffer {
+  // La fenêtre d'analyse, en puissance de deux (la transformée l'exige) ; le saut en est le quart.
+  const n = Math.max(256, Math.min(16384, 2 ** Math.round(Math.log2(Math.max(2, tailleFenetre)))));
   const nbBins = n / 2 + 1;
-  const saut = SAUT_ANALYSE_HAUTEUR;
+  const saut = n === TAILLE_FFT_HAUTEUR ? SAUT_ANALYSE_HAUTEUR : n / 4;
   const ha = facteur >= 1 ? Math.max(1, Math.round(saut / facteur)) : saut;
   const hs = facteur >= 1 ? saut : Math.max(1, Math.round(saut * facteur));
   const fenetre = creerFenetreHann(n);
@@ -291,4 +292,27 @@ const SR_DECODAGE = 48000;
 
 export function contexteDecodage(): OfflineAudioContext {
   return new OfflineAudioContext(1, 1, SR_DECODAGE);
+}
+
+/**
+ * Ramène un tampon sous la pleine échelle, s'il la dépasse — et seulement dans ce cas.
+ *
+ * Plusieurs générateurs additionnent des voix ou des bandes sans normaliser : trois voix de synthé
+ * à pleine échelle, quatre bandes saturées, une grosse caisse et un charleston qui tombent ensemble.
+ * Leur crête dépassait 1, et l'export l'écrêtait. Sous 0,99, rien n'est touché : le son d'un nœud
+ * qui restait dans la pleine échelle ne change pas d'un bit.
+ */
+export function plafonnerCrete<T extends { numberOfChannels: number; getChannelData: (c: number) => Float32Array }>(b: T, plafond = 0.99): T {
+  let crete = 0;
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const x = b.getChannelData(c);
+    for (let i = 0; i < x.length; i++) { const a = Math.abs(x[i]); if (a > crete) crete = a; }
+  }
+  if (crete <= plafond) return b;
+  const k = plafond / crete;
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const x = b.getChannelData(c);
+    for (let i = 0; i < x.length; i++) x[i] *= k;
+  }
+  return b;
 }

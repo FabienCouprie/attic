@@ -11,6 +11,7 @@
 // filtres de phases différentes ne se soustraient pas proprement : saturer les aigus
 // modifiait encore le grave de six pour cent. La séparation étant tout l'intérêt du nœud,
 // elle l'emporte sur la reconstruction parfaite.
+import { plafonnerCrete } from "./commun";
 
 /**
  * Courbe de saturation, pour un waveshaper.
@@ -123,5 +124,6 @@ export async function quadrafuzz(buffer: AudioBuffer, r: ReglagesQuadrafuzz): Pr
       dst[i] = (traite * melange + sec[i] * (1 - melange)) * gainSortie;
     }
   }
-  return out;
+  // Quatre bandes saturées chacune à ±1, puis sommées : la crête passait 1 (mesuré 1,23).
+  return plafonnerCrete(out);
 }

@@ -60,8 +60,10 @@ export const fiches: FicheAudio[] = ([
         frequence: e.sampleRate,
       };
       const sortie = new AudioBuffer({ numberOfChannels: e.numberOfChannels, length: e.length, sampleRate: e.sampleRate });
-      // La correction est calculée sur le premier canal et appliquée à tous : deux canaux d'une
-      // même voix doivent bouger ensemble, faute de quoi l'image stéréo se mettrait à flotter.
+      // La correction est calculée canal par canal. Sur une voix enregistrée en stéréo, les deux
+      // suivis de hauteur concordent presque toujours ; là où ils divergeraient, l'image pourrait
+      // flotter. Une correction commune — suivie une fois, appliquée à tous — demande de séparer le
+      // suivi de la resynthèse dans `corrigerHauteur` : relevé à l'audit du 2026-09-22, non fait.
       const premier = corrigerHauteur(e.getChannelData(0), o);
       sortie.getChannelData(0).set(premier.audio);
       for (let c = 1; c < e.numberOfChannels; c++) {

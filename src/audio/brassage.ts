@@ -52,7 +52,7 @@ export interface OptionsBrassage {
   dispersionDemiTons: number;
   /** Durée de la sortie, en secondes. Absente : celle de la source divisée par la vitesse. */
   dureeSec?: number;
-  /** Graine du tirage. Zéro : une graine est tirée au sort (le nœud l'affiche). */
+  /** Graine du tirage. Zéro est traité comme 1 : le tirage est toujours reproductible. */
   graine: number;
 }
 

@@ -86,13 +86,14 @@ describe("la réverbération hachée", () => {
     expect(ouverte.traineeSec).toBeCloseTo(ouverte.traineeLibreSec, 2);
   });
 
-  it("UN MORCEAU QUI SE TERMINE SUR UNE FRAPPE N'A PAS DE TRAÎNÉE NÉGATIVE", () => {
+  it("UN MORCEAU QUI SE TERMINE SUR UNE FRAPPE GARDE SA QUEUE, le temps que la porte se ferme", () => {
     // Le cas mesuré dans l'application : une boîte à rythmes qui joue jusqu'au dernier échantillon.
-    // L'ancienne mesure rendait « 4,80 s → 4,73 s », c'est-à-dire rien du tout.
+    // La sortie coupée à la longueur de l'entrée rendait une traînée nulle ; elle dure désormais
+    // le maintien plus la chute de la porte, et n'est jamais négative.
     const continu = Float32Array.from({ length: SR }, (_, i) => 0.5 * Math.sin((2 * Math.PI * 200 * i) / SR));
     const r = reverberationHachee(continu, base);
-    expect(r.traineeSec).toBe(0);
-    expect(r.traineeLibreSec).toBe(0);
+    expect(r.traineeSec).toBeGreaterThan(0);
+    expect(r.traineeSec).toBeLessThanOrEqual(base.maintienSec + base.chuteSec + 0.005);
   });
 
   it("et la queue existe bien AVANT la fermeture : on n'a pas simplement tout coupé", () => {
@@ -116,9 +117,17 @@ describe("la réverbération hachée", () => {
     for (let i = 0; i < x.length; i += 313) expect(r.audio[i]).toBeCloseTo(x[i], 6);
   });
 
-  it("la durée ne change pas", () => {
+  it("LA SORTIE DURE LE SON PLUS LE TEMPS DE FERMETURE DE LA PORTE — la dernière frappe garde sa queue", () => {
     const x = frappe();
-    expect(reverberationHachee(x, base).audio.length).toBe(x.length);
+    const attendu = x.length + Math.round((base.maintienSec + base.chuteSec) * SR);
+    expect(reverberationHachee(x, base).audio.length).toBe(attendu);
+    // Un son qui s'arrête net sur une frappe : sa réverbération hachée sonne après lui.
+    const finNette = new Float32Array(SR);
+    finNette[SR - 10] = 0.9;
+    const r = reverberationHachee(finNette, base);
+    let apres = 0;
+    for (let i = SR; i < r.audio.length; i++) apres = Math.max(apres, Math.abs(r.audio[i]));
+    expect(apres).toBeGreaterThan(0.001);
   });
 
   it("un silence ne fait ni lever ni rendre des valeurs impossibles", () => {

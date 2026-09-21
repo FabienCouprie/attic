@@ -4,7 +4,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
-import { contexteDecodage } from "../audio/commun";
+import { decoderSansReechantillonner } from "../audio/frequence-source";
+import { decrire } from "../audio/metadonnees";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -34,12 +35,13 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = contexteDecodage();
-          const buf = await actx.decodeAudioData(ab);
+          const buf = await decoderSansReechantillonner(ab);
           const { bufferVersMp3Blob } = await import("../audio");
-          const blob = await bufferVersMp3Blob(buf, qualite);
+          const nomSortie = f.nom.replace(/\.[^.]+$/,"")+".mp3";
+          const blob = await bufferVersMp3Blob(buf, qualite, undefined,
+            decrire(buf, { noeud: "Conversion WAV → MP3", source: f.nom, nomFichier: nomSortie }));
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+f.nom.replace(/\.[^.]+$/,"")+".mp3", arr);
+          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;
@@ -74,15 +76,19 @@ export const fiches: FicheAudio[] = ([
           if (!lu || !lu.url) { err++; errs.push(f.nom + ": pas de données IPC"); continue; }
           const rep = await fetch(lu.url);
           const ab = await rep.arrayBuffer();
-          const actx = contexteDecodage();
-          const buf = await actx.decodeAudioData(ab);
+          const buf = await decoderSansReechantillonner(ab);
           const { bufferVersWavBlob } = await import("../audio");
-          const blob = bufferVersWavBlob(buf);
+          const nomSortie = f.nom.replace(/\.mp3$/i,"")+".wav";
+          // 16 bits : c'est la profondeur que bufferVersWavBlob écrit par défaut, et un MP3 décodé
+          // n'a rien à gagner à davantage.
+          const { ixml } = decrire(buf, { noeud: "Conversion MP3 → WAV", source: f.nom, nomFichier: nomSortie }, 16);
+          const blob = bufferVersWavBlob(buf, undefined, false, { ixml });
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+f.nom.replace(/\.mp3$/,"")+".wav", arr);
+          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;
+          errs.push(f.nom + ": " + (e?.message ?? String(e)));
           ctx.onProgress?.(f.nom + " > " + (e?.message ?? String(e)));
         }
       }
@@ -128,9 +134,11 @@ export const fiches: FicheAudio[] = ([
           const { rendreMidiDepuisBytes } = await import("../audio");
           const buf = await rendreMidiDepuisBytes(new Uint8Array(ab), modeRendu, vol, instrument, banque);
           const { bufferVersMp3Blob } = await import("../audio");
-          const blob = await bufferVersMp3Blob(buf, qualite);
+          const nomSortie = f.nom.replace(/\.[^.]+$/,"")+".mp3";
+          const blob = await bufferVersMp3Blob(buf, qualite, undefined,
+            decrire(buf, { noeud: "Conversion MIDI → MP3", source: f.nom, nomFichier: nomSortie }));
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+f.nom.replace(/\.[^.]+$/,"")+".mp3", arr);
+          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;

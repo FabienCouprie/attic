@@ -1,11 +1,24 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
 import { creerQuantificateur } from "./dither";
 import { dispositionDe } from "./multicanal";
-import { Mp3Encoder } from "lamejs";
+import { blocIxml, etiquetteId3 } from "./metadonnees";
+import { Mp3Encoder } from "./lame";
+import { frequenceDuFichier } from "./frequence-source";
 
+/**
+ * Décode un fichier à SA fréquence, lue dans son en-tête : `decodeAudioData` rééchantillonne vers
+ * celle du contexte, et le contexte de l'application a celle de la carte son — un même fichier
+ * donnait donc un tampon différent d'une machine à l'autre. `ctx` ne sert plus que si l'en-tête est
+ * illisible, ce qui garde alors l'ancien comportement.
+ */
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
-  const donnees = await fichier.arrayBuffer();
-  return ctx.decodeAudioData(donnees);
+  return decoderOctets(await fichier.arrayBuffer(), ctx);
+}
+
+async function decoderOctets(donnees: ArrayBuffer, ctx: BaseAudioContext): Promise<AudioBuffer> {
+  const f = frequenceDuFichier(donnees);
+  const decodeur = f && f !== ctx.sampleRate ? new OfflineAudioContext(1, 1, f) : ctx;
+  return decodeur.decodeAudioData(donnees);
 }
 
 // --- Génération musicale fractale -------------------------------------------
@@ -16,40 +29,9 @@ export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Prom
 
 
 export async function decoderBlob(blob: Blob, ctx: BaseAudioContext): Promise<AudioBuffer> {
-  const donnees = await blob.arrayBuffer();
-  return ctx.decodeAudioData(donnees);
+  return decoderOctets(await blob.arrayBuffer(), ctx);
 }
 
-
-// Encoder un tag ID3v2 avec le graphe embarqué (frame TXXX:ATTIC_GRAPH).
-function encoderId3Graphe(grapheJson: string): Uint8Array {
-  const texteBytes = new TextEncoder().encode("ATTIC_GRAPH\u0000" + grapheJson);
-  // Frame TXXX: "TXXX" + size(4) + flags(2) + data
-  const frameSize = 1 + texteBytes.length; // encoding byte (0=ISO-8859-1) + data
-  const frame = new Uint8Array(10 + frameSize);
-  frame[0] = 0x54; frame[1] = 0x58; frame[2] = 0x58; frame[3] = 0x58; // "TXXX"
-  frame[4] = (frameSize >> 21) & 0x7f; frame[5] = (frameSize >> 14) & 0x7f;
-  frame[6] = (frameSize >> 7) & 0x7f; frame[7] = frameSize & 0x7f; // synchint
-  frame[8] = 0; frame[9] = 0; // flags
-  frame[10] = 0; // encoding = ISO-8859-1
-  frame.set(texteBytes, 11);
-
-  // ID3v2 header: "ID3" + version(2) + flags(1) + size(4 synchint)
-  const totalSize = frame.length;
-  const header = new Uint8Array(10);
-  header[0] = 0x49; header[1] = 0x44; header[2] = 0x33; // "ID3"
-  header[3] = 0x02; header[4] = 0x00; // version 2.0
-  header[5] = 0x00; // flags
-  header[6] = (totalSize >> 21) & 0x7f;
-  header[7] = (totalSize >> 14) & 0x7f;
-  header[8] = (totalSize >> 7) & 0x7f;
-  header[9] = totalSize & 0x7f;
-
-  const result = new Uint8Array(header.length + frame.length);
-  result.set(header, 0);
-  result.set(frame, header.length);
-  return result;
-}
 
 // Extraire le graphe JSON embarqué dans un MP3 (tag ID3v2 TXXX:ATTIC_GRAPH).
 export function extraireGrapheMp3(arrayBuffer: ArrayBuffer): string | null {
@@ -93,6 +75,8 @@ export interface OptionsWav {
   bits?: ProfondeurExport;
   /** Graine du dither. Même graine, mêmes octets. */
   graine?: number;
+  /** Un document iXML à écrire dans le fichier, en bloc « iXML » après les données. */
+  ixml?: string;
 }
 
 export function bufferVersWavBlob(
@@ -146,7 +130,13 @@ export function bufferVersWavBlob(
   const tailleFmt = etendu ? 40 : flottant ? 18 : 16;
   const tailleFact = flottant ? 12 : 0;
   const tailleEntete = 12 + 8 + tailleFmt + tailleFact + 8;
-  const tailleTotal = tailleEntete + tailleDonnees + grapheChunk.byteLength;
+  // L'OCTET DE BOURRAGE APRÈS DES DONNÉES DE TAILLE IMPAIRE, que RIFF exige et qui manquait. Un
+  // 24 bits mono de longueur impaire a des données de taille impaire ; le bloc suivant — le graphe
+  // embarqué, désormais aussi l'iXML — était écrit juste derrière, décalé d'un octet, et tout lecteur
+  // qui saute correctement le bourrage, celui d'Attic compris, le manquait.
+  const bourrage = tailleDonnees % 2;
+  const ixml = options.ixml ? blocIxml(options.ixml) : new Uint8Array(0);
+  const tailleTotal = tailleEntete + tailleDonnees + bourrage + ixml.length + grapheChunk.byteLength;
   const arrayBuffer = new ArrayBuffer(tailleTotal);
   const vue = new DataView(arrayBuffer);
 
@@ -225,7 +215,12 @@ export function bufferVersWavBlob(
     }
   }
 
-  // Ajouter le chunk graphe après les données
+  offset += bourrage;
+  // Les métadonnées implicites, puis le graphe embarqué.
+  if (ixml.length > 0) {
+    new Uint8Array(arrayBuffer).set(ixml, offset);
+    offset += ixml.length;
+  }
   if (grapheChunk.byteLength > 0) {
     const src = new Uint8Array(grapheChunk);
     for (let i = 0; i < src.length; i++) vue.setUint8(offset + i, src[i]);
@@ -270,7 +265,9 @@ export function extraireGrapheWav(arrayBuffer: ArrayBuffer): string | null {
 }
 
 
-export async function bufferVersMp3Blob(buffer: AudioBuffer, bitrate = 192, grapheJson?: string): Promise<Blob> {
+export async function bufferVersMp3Blob(
+  buffer: AudioBuffer, bitrate = 192, grapheJson?: string, etiquette: { titre?: string; ixml?: string } = {},
+): Promise<Blob> {
   const SUPPORTED = [32000, 44100, 48000];
   let buf = buffer;
   if (!SUPPORTED.includes(buf.sampleRate)) {
@@ -305,18 +302,18 @@ export async function bufferVersMp3Blob(buffer: AudioBuffer, bitrate = 192, grap
 
     const total = morceaux.reduce((s, c) => s + c.length, 0);
 
-    // Tag ID3v2 avec graphe embarqué (frame TXXX:ATTIC_GRAPH) si fourni
-    let id3Header: Uint8Array = new Uint8Array(0);
-    if (grapheJson) {
-      id3Header = new Uint8Array(encoderId3Graphe(grapheJson));
-    }
+    // L'étiquette ID3v2.4 : le logiciel toujours, le titre, l'iXML et le graphe s'ils sont fournis.
+    const id3Header = etiquetteId3({ graphe: grapheJson, titre: etiquette.titre, ixml: etiquette.ixml });
 
     const resultat = new Uint8Array(id3Header.length + total);
     resultat.set(id3Header, 0);
     let pos = id3Header.length;
     for (const m of morceaux) { resultat.set(new Uint8Array(m.buffer), pos); pos += m.length; }
     return new Blob([resultat], { type: "audio/mpeg" });
-  } catch {
-    return bufferVersWavBlob(buf);
+  } catch (e) {
+    // PAS DE REPLI EN WAV. Il y en avait un, et il a caché que l'encodeur ne marchait pas du tout :
+    // chaque « .mp3 » écrit était un WAV sous une fausse extension, que la plupart des lecteurs
+    // jouaient sans broncher. Un échec d'encodage doit se voir.
+    throw new Error(`encodage MP3 impossible : ${(e as any)?.message ?? String(e)}`);
   }
 }

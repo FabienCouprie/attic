@@ -237,13 +237,16 @@ export function extraireCentreCote(buffer: AudioBuffer): CentreCoteResult {
   const cote = new AudioBuffer({ numberOfChannels: 2, length: buffer.length, sampleRate });
   const chL = buffer.getChannelData(0);
   const chR = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : chL;
+  // Les tableaux de sortie sont pris une fois, hors de la boucle (4,6 s pour une seconde de son
+  // sous le moteur audio des tests, quand on les redemandait à chaque échantillon).
+  const [cL, cR, sL, sR] = [centre.getChannelData(0), centre.getChannelData(1), cote.getChannelData(0), cote.getChannelData(1)];
   for (let i = 0; i < buffer.length; i++) {
     const mid = (chL[i] + chR[i]) / 2;
     const side = (chL[i] - chR[i]) / 2;
-    centre.getChannelData(0)[i] = mid;
-    centre.getChannelData(1)[i] = mid;
-    cote.getChannelData(0)[i] = side;
-    cote.getChannelData(1)[i] = -side;
+    cL[i] = mid;
+    cR[i] = mid;
+    sL[i] = side;
+    sR[i] = -side;
   }
   return { centre, cote };
 }

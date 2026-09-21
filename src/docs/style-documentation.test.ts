@@ -28,6 +28,8 @@ const SIGLES = new Set([
   "SSP",
   // Spatialisation : l'ordre des canaux ambisoniques, et l'Union internationale des télécommunications.
   "ACN", "UIT", "ITU",
+  // Groupe de recherches musicales (Schaeffer, 1958), dont les GRM Tools.
+  "GRM",
   // Apprentissage automatique
   "ONNX", "LLM", "RNN", "VAE", "GAN", "CNN", "PCA", "TTS", "ASR", "STT", "VAD", "DDSP", "SA3",
   "SDXS", "GTCRN", "MDX", "UVR", "WASM", "CPU", "GPU", "RAM",

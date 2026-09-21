@@ -15,6 +15,7 @@
 // Grille de velocity : chaque cellule vaut 0 (off) ou 1–9 (velocity). La grille
 // est encodée comme le motif binaire : `nRows` lignes séparées par « | », mais
 // chaque pas est un chiffre 0–9.
+import { plafonnerCrete } from "./commun";
 /** Combien de pistes avait l'ancien séquenceur binaire : kick, snare, charley fermé, ouvert, clap. */
 export const PISTES_MOTIF_BINAIRE = 5;
 /**
@@ -206,7 +207,7 @@ export async function rendreSequenceurBatterieAvance(
 
   const rendu = await offline.startRendering();
   const barLen = Math.round(totalPas * stepDur * sr);
-  if (barLen >= rendu.length) return rendu;
+  if (barLen >= rendu.length) return plafonnerCrete(rendu);
   const out = new AudioBuffer({ numberOfChannels: rendu.numberOfChannels, length: barLen, sampleRate: sr });
   for (let c = 0; c < rendu.numberOfChannels; c++) {
     const src = rendu.getChannelData(c);
@@ -214,7 +215,8 @@ export async function rendreSequenceurBatterieAvance(
     dst.set(src.subarray(0, barLen));
     for (let i = barLen; i < src.length; i++) dst[i - barLen] += src[i];
   }
-  return out;
+  // Grosse caisse, clic et charleston tombent ensemble au premier temps : la crête passait 1.
+  return plafonnerCrete(out);
 }
 
 // ── Rythme de Cantor ───────────────────────────────────────────────────────

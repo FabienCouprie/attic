@@ -8,7 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
-import { contexteDecodage } from "../audio/commun";
+import { decoderSansReechantillonner } from "../audio/frequence-source";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -296,8 +296,8 @@ export const fiches: FicheAudio[] = ([
         const rep = await api.lireBinaire(outputPath);
         if (rep?.donnees) {
           const ab = rep.donnees.buffer.slice(rep.donnees.byteOffset, rep.donnees.byteOffset + rep.donnees.byteLength);
-          const ac = contexteDecodage();
-          const decoded = await ac.decodeAudioData(ab);
+          // À la fréquence que le script a écrite, et non 48 kHz imposés.
+          const decoded = await decoderSansReechantillonner(ab);
           sorties[0] = securiserAmplitude(decoded, 0.5);
         }
       } catch {}

@@ -83,8 +83,16 @@ function synthetiserSpectrogramme(
     }
   }
 
+  // UN PLANCHER SOUS LE POIDS DES FENÊTRES. Aux bords, un seul bord de fenêtre couvre les premiers
+  // échantillons et son poids tend vers zéro : diviser par lui est exact pour une trame inchangée,
+  // et explose dès que la reconstruction la modifie — mesuré, une crête de 3 000 pour un son à 0,5.
+  // Sous le dixième du poids maximal, on divise par ce dixième : les bords s'adoucissent au lieu
+  // d'exploser.
+  let normMax = 0;
+  for (let i = 0; i < length; i++) normMax = Math.max(normMax, norm[i]);
+  const plancher = 0.1 * normMax;
   for (let i = 0; i < length; i++) {
-    if (norm[i] > 0) out[i] /= norm[i];
+    if (norm[i] > 0) out[i] /= Math.max(norm[i], plancher);
   }
   return out;
 }
@@ -276,6 +284,11 @@ export async function appliquerPcaNeuronale(
     }
   }
 
+  // Le niveau le plus fort de l'analyse : la reconstruction n'aura pas le droit de le dépasser de
+  // plus de 6 dB (voir plus bas).
+  let dbMax = -Infinity;
+  for (let i = 0; i < matrix.length; i++) if (matrix[i] > dbMax) dbMax = matrix[i];
+
   // Standardisation (z-score) globale
   const mean = new Float32Array(nbBins);
   for (let f = 0; f < totalFrames; f++) {
@@ -322,6 +335,10 @@ export async function appliquerPcaNeuronale(
     verbose: 0,
     callbacks: {
       onEpochEnd: (epoch: number, logs: any) => {
+        // La perte de l'époque qui vient de finir est retenue AVANT tout arrêt : la première époque
+        // comprend la mise en route de TensorFlow et dépasse souvent le budget à elle seule ; elle
+        // s'arrêtait alors sans avoir rien noté, et le message annonçait « perte Infinity ».
+        lastLoss = logs.loss;
         if (signal?.aborted) {
           model.stopTraining = true;
           stoppedByAbort = true;
@@ -332,7 +349,6 @@ export async function appliquerPcaNeuronale(
           stoppedByBudget = true;
           return;
         }
-        lastLoss = logs.loss;
         onProgress?.(`PCA neuronale · époque ${epoch + 1}/${epochs} · perte ${logs.loss.toFixed(4)}`);
       },
     },
@@ -352,7 +368,9 @@ export async function appliquerPcaNeuronale(
       const offsetGlobal = (c * nFrames + f) * nbBins;
       const mag = new Float64Array(nbBins);
       for (let b = 0; b < nbBins; b++) {
-        const db = recon[offsetGlobal + b] * std + mean[b];
+        // Borné à 6 dB au-dessus du plus fort niveau analysé : les magnitudes se reconstruisent en
+        // 10^(dB/20), et une erreur de quelques écarts-types serait sinon amplifiée exponentiellement.
+        const db = Math.min(dbMax + 6, recon[offsetGlobal + b] * std + mean[b]);
         mag[b] = Math.max(0, Math.pow(10, db / 20));
       }
       frames.push({ start: spectrograms[c].frames[f].start, mag, phase: spectrograms[c].frames[f].phase });

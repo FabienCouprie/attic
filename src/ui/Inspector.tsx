@@ -1,5 +1,6 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
+import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
@@ -31,6 +32,8 @@ interface Props {
    * et garde l'inspecteur générique — c'est la règle de `ui/`.
    */
   parametresModules?: string[];
+  /** Les rangs des entrées branchées : un réglage lié à une entrée vide n'est pas affiché. */
+  portsBranches?: number[];
 }
 
 // Borne à la plage du paramètre et cale sur son pas. Utilisé par le champ
@@ -111,6 +114,9 @@ function PlageModulation(
   const echelle = bornes.min ?? p;
   const [pMin, pMax] = echelle.plage ?? [0, 100];
   const unite = uniteParametre(p, lang);
+  // Dans la langue de l'interface : « 0,5 Hz » en français, et non « 0.5 Hz ». Sans séparateur de
+  // milliers, qu'une plage de 200 à 6000 Hz n'a pas besoin d'aérer.
+  const nombre = (v: number) => v.toLocaleString(lang === "en" ? "en-US" : "fr-FR", { maximumFractionDigits: 3, useGrouping: false });
 
   const curseur = (b: any, quoi: "min" | "max") => b ? (
     <div className="inspecteur-plage-borne">
@@ -125,7 +131,7 @@ function PlageModulation(
   return (
     <div className="inspecteur-plage">
       <div className="inspecteur-plage-lecture">
-        {bas}{unite ? ` ${unite}` : ""} {haut >= bas ? "→" : "↓"} {haut}{unite ? ` ${unite}` : ""}
+        {nombre(bas)}{unite ? ` ${unite}` : ""} {haut >= bas ? "→" : "↓"} {nombre(haut)}{unite ? ` ${unite}` : ""}
       </div>
       {curseur(bornes.min, "min")}
       {curseur(bornes.max, "max")}
@@ -133,7 +139,7 @@ function PlageModulation(
   );
 }
 
-export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi, parametresModules }: Props) {
+export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi, parametresModules, portsBranches }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
   const [noticeOuverte, setNoticeOuverte] = useState(true);
@@ -168,6 +174,11 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>
       </div>
 
+      {def.id === "montage" && (
+        <LigneDeTemps pistes={((noeud.data as any)._pistesMontage ?? []) as PisteMontage[]}
+          branchees={portsBranches ?? []} params={params} onChanger={onChangerParametre} />
+      )}
+
       {def.parametres.map((p) => {
         // Paramètres internes (ex: chemin persisté) — pas d'affichage
         if (p.hidden) return null;
@@ -176,6 +187,8 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         // rendue avec le paramètre qu'elle pilote, ou pas du tout quand aucune courbe n'est
         // branchée, auquel cas elle ne sert effectivement à rien.
         if (p.modulationDe) return null;
+        // Un réglage d'entrée ne s'affiche que si l'entrée est branchée.
+        if (typeof p.port === "number" && !(portsBranches ?? []).includes(p.port)) return null;
         // Cacher conditionnellement certains paramètres selon la valeur d'un autre
         if (def.id === "gestion-nodes" && p.nom === "Node à exporter" && params["Action"] === "Importer") return null;
         const docP = lang === "en" && p.docEn ? p.docEn : p.doc;
