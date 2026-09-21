@@ -1,5 +1,6 @@
 // plugins/effets.ts — Nœuds d'effets audio
 
+import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -11,7 +12,7 @@ import {
    appliquerFlanger, appliquerChorus, compresser, normaliser,
    appliquerFiltre, supprimerClics, reduireBruit, reduireBruitNotches, calculerProfilBruit,
   dererverberer, changerTempo, changerTonalite, glissandoTonalite, equaliser,
-  inverserAudio, echangerCanaux, extraireCentreCote,
+  inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote,
   appliquerFondu,
   extraireZone,
   bitcrusher,
@@ -311,9 +312,47 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [out] };
     },
   },
-  effet("normaliseur", "Normaliseur", "Normalizer", "Normalisation de niveau.", "Level normalization.",
-    [param("Niveau", -3, "Level", "dB", "Niveau cible en dB (crête).", "Target peak level in dB.", [-40, 0], 0.5)],
-    (a,niveau) => normaliser(a, niveau)),
+  // DEUX MODES, ET LE SECOND MANQUAIT DEPUIS LE DÉBUT. Attic MESURAIT la sonie — le VU-mètre rend
+  // des LUFS — sans savoir y amener un son : normaliser à la crête est la réponse d'avant 2015.
+  {
+    id: "normaliseur", nom: "Normaliseur", nomEn: "Normalizer",
+    univers: "Traitement", famille: "Effets",
+    resume: "Amène le son à un niveau cible, en crête ou en sonie (LUFS).",
+    resumeEn: "Brings the sound to a target level, by peak or by loudness (LUFS).",
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    parametres: [
+      { nom: "Mode", nomEn: "Mode", type: "choix",
+        options: ["Crête", "Sonie (LUFS)"], optionsEn: ["Peak", "Loudness (LUFS)"],
+        optionIds: ["crete", "sonie"], defaut: "Crête", defautEn: "Peak",
+        doc: "Crête aligne le plus grand échantillon ; sonie aligne ce qui s'entend. Deux morceaux normalisés à la même crête peuvent différer de quinze décibels à l'oreille, une batterie sèche et une nappe compressée culminant toutes deux à 0 dBFS.",
+        docEn: "Peak aligns the largest sample; loudness aligns what is heard. Two pieces normalised to the same peak can differ by fifteen decibels to the ear, a dry drum kit and a compressed pad both topping out at 0 dBFS." },
+      { nom: "Niveau", nomEn: "Level", type: "curseur", plage: [-40, 0], pas: 0.5, defaut: -3, unite: "dB",
+        doc: "Crête cible, en mode Crête. Ce réglage ne sert pas en mode Sonie.",
+        docEn: "Target peak, in Peak mode. This setting does nothing in Loudness mode." },
+      { nom: "Sonie cible", nomEn: "Target loudness", type: "curseur", plage: [-36, -6], pas: 0.5, defaut: -14, unite: "LUFS",
+        doc: "Sonie visée, en mode Sonie. −14 est la cible des plateformes de diffusion, −23 celle de la norme EBU R 128 pour la télévision, −16 un usage courant en balado.",
+        docEn: "Target loudness, in Loudness mode. -14 is the streaming platforms' target, -23 the EBU R 128 broadcast standard, -16 a common podcast value." },
+      { nom: "Plafond", nomEn: "Ceiling", type: "curseur", plage: [-6, 0], pas: 0.1, defaut: -1, unite: "dBTP",
+        doc: "Vrai pic à ne pas dépasser, en mode Sonie. Si la cible demandait de le franchir, le plafond gagne et le nœud annonce que la cible n'est pas atteinte : il préfère le dire plutôt qu'écrêter en silence ou glisser un limiteur derrière un bouton qui promet seulement de normaliser. Mettez un limiteur en amont si vous voulez les deux.",
+        docEn: "True peak not to be exceeded, in Loudness mode. If the target required crossing it, the ceiling wins and the node announces that the target was not reached: it prefers saying so to clipping silently or slipping a limiter behind a button that only promises to normalise. Put a limiter upstream if you want both." },
+    ],
+    async executer(ctx: any) {
+      const audio = ctx.entree(0);
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+      if (ctx.paramTexte("Mode", "crete") === "crete") {
+        const niveau = ctx.paramNombre("Niveau", -3);
+        return { valeurs: [normaliser(audio, niveau)], message: traduire("msg.normaliseur.crete", niveau.toFixed(1)) };
+      }
+      const r = normaliserSonie(audio, ctx.paramNombre("Sonie cible", -14), { plafondDb: ctx.paramNombre("Plafond", -1) });
+      const resume = traduire("msg.normaliseur.sonie",
+        r.lufsAvant.toFixed(1), r.lufsApres.toFixed(1), (r.gainDb >= 0 ? "+" : "") + r.gainDb.toFixed(1), r.vraiPicDb.toFixed(1));
+      return {
+        valeurs: [r.audio],
+        message: r.plafonne ? `${resume} — ${traduire("msg.normaliseur.plafonne")}` : resume,
+      };
+    },
+  },
   effet("suppression-clics", "Suppression de clics", "Click Removal", "Détection et suppression de clicks.", "Click detection and removal.",
     [param("Seuil", 5, "Threshold", "×", "Sensibilité de détection (multiple de la dérivée médiane). Plus élevé = moins sensible (détecte seulement les gros clics). Plus bas = plus sensible.", "Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive.", [1, 50], 1),
      param("Fenêtre", 5, "Window", "ms", "Largeur de la fenêtre de remplacement.", "Replacement window width.")],
@@ -475,7 +514,14 @@ export const fiches: FicheAudio[] = ([
       param("8 kHz", 0, "8 kHz", "dB", "Gain de la bande 8 kHz.", "8 kHz band gain.", [-24, 24], 1),
     ],
     (a, ...gains) => equaliser(a, ...gains)),
-  simple("inverseur-audio", "Inverseur audio", "Audio Inverter", "Inverse le signal.", "Inverts the signal.", inverserAudio),
+  simple("inverseur-audio", "Lecture inversée", "Reverse Playback",
+    "Lit la piste de la fin vers le début.", "Plays the track from end to start.", inverserAudio),
+  // L'INVERSION DE POLARITÉ MANQUAIT, et le nœud ci-dessus la promettait sans la faire : il
+  // s'appelait « Inverseur audio » et se résumait par « inverse le signal », la formule qui désigne
+  // la polarité partout ailleurs. Qui la cherchait le trouvait et obtenait une lecture à l'envers.
+  simple("inversion-polarite", "Inversion de polarité", "Polarity Inversion",
+    "Change le signe de chaque échantillon. Inaudible seule, décisive en relation.",
+    "Flips the sign of every sample. Inaudible on its own, decisive in relation.", inverserPolarite),
   simple("echange-canaux", "Échange canaux", "Swap Channels", "Permute gauche/droite.", "Swaps left/right channels.", echangerCanaux),
   effet("extraction-centre-cote", "Extraction centre/côté", "Center/Side Extract", "Sépare le centre stéréo des côtés.", "Separates stereo center from sides.",
     [param("Centre", 50, "Center", "%", "Niveau du canal central.", "Center channel level."), param("Côté", 50, "Side", "%", "Niveau des canaux latéraux.", "Side channel level.")],

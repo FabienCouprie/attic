@@ -253,6 +253,34 @@ export function separerCanaux(buffer: AudioBuffer): SeparateurCanauxResult {
   return { gauche, droite };
 }
 
+/**
+ * Inverse la POLARITÉ : chaque échantillon change de signe.
+ *
+ * À NE PAS CONFONDRE AVEC `inverserAudio`, juste en dessous, qui inverse le TEMPS. La confusion
+ * n'est pas théorique : le nœud de lecture à l'envers s'appelait « Inverseur audio » et se
+ * résumait par « inverse le signal », qui est la formule dont tout le métier désigne la polarité.
+ *
+ * SEUL, CELA NE S'ENTEND PAS, et c'est normal : l'oreille est insensible à la polarité absolue
+ * d'un son. C'est en RELATION que l'opération travaille — additionnez un son et sa polarité
+ * inverse, il ne reste rien, et ce silence est le test le plus sûr qui soit pour savoir si deux
+ * fichiers sont identiques. Retournez un canal sur deux, la somme mono se vide. Retournez le micro
+ * du dessous d'une caisse claire, et la peau cesse de s'annuler avec le timbre.
+ */
+export function inverserPolarite(buffer: AudioBuffer): AudioBuffer {
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const src = buffer.getChannelData(c);
+    const dst = resultat.getChannelData(c);
+    for (let i = 0; i < buffer.length; i++) dst[i] = -src[i];
+  }
+  return resultat;
+}
+
+/** Inverse le TEMPS : la piste est lue de la fin vers le début. Voir `inverserPolarite`. */
 export function inverserAudio(buffer: AudioBuffer): AudioBuffer {
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,

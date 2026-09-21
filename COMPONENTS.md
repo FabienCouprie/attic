@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **351 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **352 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 167 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (139) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Processing](#processing) | 168 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (140) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 36 | [Analysis](#analysis) (28) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
@@ -2090,7 +2090,6 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Ambisonic Rotation](#ambisonic-rotation) | Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo. |
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
 | [Audio Inpainting](#audio-inpainting) | Rebuilds a missing passage by continuing the sound's own resonance from both sides. |
-| [Audio Inverter](#audio-inverter) | Inverts the signal. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Beat Repeat / Stutter](#beat-repeat--stutter) | Captures and repeats a short segment at rhythmic intervals (stutter effect). |
 | [Bitcrusher](#bitcrusher) | Bit quantization + downsampling (lo-fi). |
@@ -2157,7 +2156,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Negative Harmony](#negative-harmony) | Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6. |
 | [Noise Profile](#noise-profile) | Captures the spectral profile of a noise. |
 | [Noise Reduction](#noise-reduction) | Spectral noise subtraction. |
-| [Normalizer](#normalizer) | Level normalization. |
+| [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
 | [Note Echo](#note-echo) | Layers time-shifted copies of a pattern, with decreasing velocity. |
 | [Octaver](#octaver) | Adds an upper and/or lower octave. |
 | [Paulstretch](#paulstretch) | Extreme phase-randomization time-stretch (stereo). |
@@ -2171,6 +2170,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Pitch Glissando](#pitch-glissando) | Pitch glissando from one pitch to another. |
 | [Pitch Shift](#pitch-shift) | Pitch shift. |
 | [Ply and Rotate](#ply-and-rotate) | Repeats each note within its own duration, and shifts the pitches along the grid. |
+| [Polarity Inversion](#polarity-inversion) | Flips the sign of every sample. Inaudible on its own, decisive in relation. |
 | [Progressive Pitch](#progressive-pitch) | Repeats the sound, shifting it one step further each time, with silences in between. |
 | [Progressive Reverb](#progressive-reverb) | Progressive reverb (dry→wet). |
 | [Quadrafuzz](#quadrafuzz) | Four-band distortion: each register saturates independently. |
@@ -2180,6 +2180,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Retrograde and Palindrome](#retrograde-and-palindrome) | Plays a pattern backwards, or there and back. |
 | [Reverb](#reverb) | Convolution reverb. |
 | [Reverse Echo](#reverse-echo) | Reverse echo: attenuated repetitions build up before the main sound. |
+| [Reverse Playback](#reverse-playback) | Plays the track from end to start. |
 | [Ring Modulator](#ring-modulator) | Ring modulation (carrier multiplication). |
 | [Risset Glissando](#risset-glissando) | Turns a sound into a pitch that falls (or rises) endlessly. |
 | [Risset Rhythm](#risset-rhythm) | Turns a loop into a pulse that speeds up (or slows down) endlessly. |
@@ -2349,21 +2350,6 @@ Rebuilds a missing passage by continuing the sound's own resonance from both sid
 | Order | slider | 0 | 0 – 256, step 8 | Order of the autoregressive model, that is, on how many past samples each sample depends. At zero it is chosen automatically: three times the gap length, capped at 256, which is the paper's rule. A useful landmark: a sine is exactly a second-order process, so an order of thirty carries fifteen partials with no approximation. |
 | Passes | slider | 12 | 1 – 40, step 1 | Alternations between estimating the model and computing the gap. Computation stops of its own accord as soon as the gap stops moving, so raising this number costs nothing when it is not needed. |
 | Max gap | slider | 120 ms | 5 – 500 ms, step 5 | Beyond this, the gap is left as it is and the node says so. This is not a limit of principle but of time: computation grows as gap length times the square of the order — 90 ms for a 20 ms gap, two and a half seconds for a 100 ms one. And quality drops: 53 dB at 20 ms, 34 dB at 100 ms. |
-
-#### Audio Inverter
-
-`inverseur-audio` · Processing → Effects
-
-*Inverts the signal.*
-
-Reverses the signal in time: the track plays from end to start.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Audio | audio |  |
-
-*No parameters.*
 
 #### Auto-pan
 
@@ -3745,7 +3731,7 @@ Subtracts background noise from the signal using a noise profile captured on a s
 
 `normaliseur` · Processing → Effects
 
-*Level normalization.*
+*Brings the sound to a target level, by peak or by loudness (LUFS).*
 
 Adjusts overall gain to bring the signal peak to the target level, without changing dynamics.
 
@@ -3756,7 +3742,10 @@ Adjusts overall gain to bring the signal peak to the target level, without chang
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Level | number | -3 dB | -40 – 0 dB, step 0.5 | Target peak level in dB. |
+| Mode | choice | Peak | Peak / Loudness (LUFS) | Peak aligns the largest sample; loudness aligns what is heard. Two pieces normalised to the same peak can differ by fifteen decibels to the ear, a dry drum kit and a compressed pad both topping out at 0 dBFS. |
+| Level | slider | -3 dB | -40 – 0 dB, step 0.5 | Target peak, in Peak mode. This setting does nothing in Loudness mode. |
+| Target loudness | slider | -14 LUFS | -36 – -6 LUFS, step 0.5 | Target loudness, in Loudness mode. -14 is the streaming platforms' target, -23 the EBU R 128 broadcast standard, -16 a common podcast value. |
+| Ceiling | slider | -1 dBTP | -6 – 0 dBTP, step 0.1 | True peak not to be exceeded, in Loudness mode. If the target required crossing it, the ceiling wins and the node announces that the target was not reached: it prefers saying so to clipping silently or slipping a limiter behind a button that only promises to normalise. Put a limiter upstream if you want both. |
 
 #### Note Echo
 
@@ -4015,6 +4004,21 @@ Two operations on one pattern, which do not touch the same thing. Repeat subdivi
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
+#### Polarity Inversion
+
+`inversion-polarite` · Processing → Effects
+
+*Flips the sign of every sample. Inaudible on its own, decisive in relation.*
+
+Flips the sign of every sample. On its own the operation cannot be heard: the ear is insensitive to the absolute polarity of a sound, which is why it can seem useless. It works only in relation, and three uses make it indispensable. The null test first: add a sound and its inverted polarity in the mixer, and nothing remains. That silence is the surest proof that two files are identical — if something remains, it is exactly what differs, and you can listen to it. Two-microphone takes next: a microphone under a snare receives the head moving away when the one above receives it moving closer, so their sum hollows out; flipping one of the two gives the hit back. Mono compatibility last: flipping every other channel empties the mono sum, and it is the quickest way to check that a goniometer is telling the truth. Not to be confused with « Reverse Playback », which inverts time rather than sign.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+*No parameters.*
+
 #### Progressive Pitch
 
 `pitch-progressif` · Processing → Effects
@@ -4204,6 +4208,21 @@ Reverse echo: attenuated repetitions build up before the main sound. Principle: 
 |---|---|---|---|---|
 | Time | slider | 350 ms | 50 – 2000 ms, step 10 | Delay time between repetitions. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Amount of signal fed back (more = more repetitions and longer build-up). |
+
+#### Reverse Playback
+
+`inverseur-audio` · Processing → Effects
+
+*Plays the track from end to start.*
+
+Reverses the signal in time: the track plays from end to start. Not to be confused with polarity inversion, which flips the sign of the samples without touching the order of time — this node used to be called « Audio Inverter » and summarised as « inverts the signal », which means polarity everywhere else in the craft.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+*No parameters.*
 
 #### Ring Modulator
 

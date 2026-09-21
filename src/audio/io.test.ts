@@ -57,14 +57,17 @@ describe("bufferVersWavBlob", () => {
     left[3] = 0.0;  right[3] = 1.0;
     const blob = bufferVersWavBlob(b);
     const { samples } = await lirePcmWav(blob);
-    expect(samples[0][0]).toBeCloseTo(1.0, 5);
-    expect(samples[1][0]).toBeCloseTo(-1.0, 5);
-    expect(samples[0][1]).toBeCloseTo(-1.0, 5);
-    expect(samples[1][1]).toBeCloseTo(1.0, 5);
+    // TOLÉRANCE DE QUELQUES LSB, ET C'EST VOULU : depuis que l'écriture dithere (cf. dither.ts),
+    // exiger l'exactitude au bit reviendrait à exiger l'ABSENCE de dither. Ce qui se vérifie ici
+    // est le CLAMP, et il se vérifie à trois décimales comme le reste du test.
+    expect(samples[0][0]).toBeCloseTo(1.0, 3);
+    expect(samples[1][0]).toBeCloseTo(-1.0, 3);
+    expect(samples[0][1]).toBeCloseTo(-1.0, 3);
+    expect(samples[1][1]).toBeCloseTo(1.0, 3);
     expect(samples[0][2]).toBeCloseTo(0.5, 3);
     expect(samples[1][2]).toBeCloseTo(-0.25, 3);
-    expect(samples[0][3]).toBeCloseTo(0.0, 5);
-    expect(samples[1][3]).toBeCloseTo(1.0, 5);
+    expect(samples[0][3]).toBeCloseTo(0.0, 3);
+    expect(samples[1][3]).toBeCloseTo(1.0, 3);
   });
 
   it("en mode sécurisé, plafonne les échantillons à [-0.5, 0.5] (-6 dBFS)", async () => {
@@ -84,7 +87,7 @@ describe("bufferVersWavBlob", () => {
     expect(samples[1][1]).toBeCloseTo(0.5, 3);
     expect(samples[0][2]).toBeCloseTo(0.5, 3);
     expect(samples[1][2]).toBeCloseTo(-0.25, 3);
-    expect(samples[0][3]).toBeCloseTo(0.0, 5);
+    expect(samples[0][3]).toBeCloseTo(0.0, 3);
     expect(samples[1][3]).toBeCloseTo(0.5, 3);
     expect(samples[0][4]).toBeCloseTo(0.3, 3);
     expect(samples[1][4]).toBeCloseTo(-0.3, 3);

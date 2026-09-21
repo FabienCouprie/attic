@@ -38,6 +38,8 @@ const SIGLES = new Set([
   "OPUS", "EVY", "PLPLPL", "CPS", "PCH", "OCT", "FOF", "ARGS", "PPCM", "JPEG",
   // SMIL : le langage d'animation du W3C, nom d'une norme et non une insistance.
   "SMIL",
+  // EBU : l'Union europeenne de radio-television, dont la norme R 128 fixe la sonie de diffusion.
+  "EBU",
 ]);
 
 /**

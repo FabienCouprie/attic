@@ -1,4 +1,5 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
+import { creerQuantificateur16 } from "./dither";
 import { Mp3Encoder } from "lamejs";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
@@ -129,13 +130,20 @@ export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, secu
   const canaux: Float32Array[] = [];
   for (let c = 0; c < nbCanaux; c++) canaux.push(buffer.getChannelData(c));
 
+  // LA DERNIÈRE ÉTAPE DE LA CHAÎNE, et elle manquait : `setInt16` tronque vers zéro, si bien que
+  // l'erreur de quantification allait jusqu'à un LSB entier ET suivait le signal — de la
+  // distorsion, et non du bruit, audible sur les fins de fondu et les queues de réverbération.
+  // Le quantificateur arrondit et dithere (cf. `audio/dither.ts`). À graine fixe : deux rendus du
+  // même son donnent deux fichiers identiques.
+  const quantifier = creerQuantificateur16();
+
   const SEUIL_PREVIEW = 0.5; // -6 dBFS
   const maxAbs = securise ? SEUIL_PREVIEW : 1.0;
   let offset = 44;
   for (let i = 0; i < nbEchantillons; i++) {
     for (let c = 0; c < nbCanaux; c++) {
       const echantillon = Math.max(-maxAbs, Math.min(maxAbs, canaux[c][i]));
-      vue.setInt16(offset, echantillon < 0 ? echantillon * 0x8000 : echantillon * 0x7fff, true);
+      vue.setInt16(offset, quantifier(echantillon), true);
       offset += 2;
     }
   }
