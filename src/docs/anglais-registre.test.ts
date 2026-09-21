@@ -38,7 +38,7 @@ import "../audio/adaptateur";
 // La limite finale est une négation et non un `\b` : en JavaScript, « é » n'est pas un
 // caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, » — le tréma de
 // Möbius, lui, est au milieu et ne posait pas ce problème.
-const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné)(?![a-zà-ÿ])/gi;
+const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné|välimäki)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

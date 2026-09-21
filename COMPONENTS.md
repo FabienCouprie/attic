@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **348 components** in **7 categories** and **29 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **351 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 65 | [Audio](#audio) (7) · [Generation](#generation) (48) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 166 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (138) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
-| [Visualization](#visualization) | 35 | [Analysis](#analysis) (27) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Processing](#processing) | 167 | [Conversion](#conversion) (4) · [Editing](#editing) (20) · [Effects](#effects) (139) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Visualization](#visualization) | 36 | [Analysis](#analysis) (28) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 9 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (3) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 61 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
+| [Others](#others) | 62 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (11) · [Installation](#installation) (1) · [Learning](#learning) (1) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
 
 ## How to read this catalog
 
@@ -2193,6 +2193,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [SoundTouch Pitch](#soundtouch-pitch) | Changes pitch while preserving duration (quality pitch-shift). |
 | [SoundTouch Rate](#soundtouch-rate) | Changes playback rate (tempo + pitch together), like a tape player. |
 | [SoundTouch Tempo](#soundtouch-tempo) | Changes tempo while preserving pitch (quality time-stretch). |
+| [Spaciousness](#spaciousness) | Widens a sound instead of raising it: early reflections that differ for each ear, at constant loudness. |
 | [Spectral Blur](#spectral-blur) | Averages the spectrum over neighbouring moments: the sound spreads out in time without changing duration. |
 | [Spectral Delay](#spectral-delay) | Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
@@ -2290,7 +2291,7 @@ Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). D
 
 *Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo.*
 
-After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention. Attic can already place a sound in space — the HRTF panner, Resonance Audio's scene. Both place a source. Neither can take a whole recording and turn it around the listener, which is exactly what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly. Pressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being. What this node does not claim to do: recover the original scene. It reconstitutes a plausible one — two sources at the usual listening angles — and treats it as a field. With no rotation it renders the same two channels, the image narrowed by the decoding.
+After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention. Attic can already place a sound in space — the HRTF panner, Resonance Audio's scene. Both place a source. Neither can take a whole recording and turn it around the listener, which is exactly what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly. Pressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being. What this node does not claim to do: recover the original scene. It reconstitutes a plausible one — two sources at the usual listening angles — and treats it as a field. With no rotation it renders the two channels in the right order, the image narrowed by the decoding and the level multiplied by 1.5 — measured, that is 3.5 dB more: encoding followed by decoding is not unity gain, and this node does not normalise, failing which the rotation would only be heard as a level change. A mono take has no scene to turn, and that is the first thing to know before trying. Two identical channels give a field whose left-right component is L−R, hence zero: only one direction remains, and turning it moves the source to one side instead of turning anything. Measured on a frequency generator: at 90°, 9.5 dB between the channels — a plain pan, which is audible; at 180°, strictly nothing, since swapping two identical channels leaves them identical, only the level dropping. The node therefore shows the directional share of the field it received: at zero, no angle will change its output. To hear it turn, give it an image that already exists — two panned sources, a widener upstream — and a curve on the Modulation input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2300,8 +2301,8 @@ After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal o
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rotation | slider | 90 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. A curve connected to the Modulation input turns the scene continuously. |
-| Source spread | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides — and the rotation will be all the more striking. |
+| Rotation | slider | 90 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible — two identical channels swapped stay identical — and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle. |
+| Source spread | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides. Contrary to expectation, wide is not more striking, and at the extreme it is the opposite: the share of the field a rotation can move is the cosine of half this spread on a mono take — 0.71 at 90°, and zero at 180°, where no angle changes anything any more. On a true stereo take, 180° does not turn the image either: a quarter-turn there makes the two channels identical, measured — it crushes the image instead of turning it. Ninety degrees is the setting that really turns. |
 | Decoder width | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre. |
 | Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 360 ° | -360 – 360 °, step 5 | Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle. |
@@ -4481,6 +4482,32 @@ Changes audio tempo while preserving pitch, using the SoundTouch algorithm (adva
 |---|---|---|---|---|
 | Tempo | number | 1 x | 0.25 – 4 x, step 0.01 | Tempo factor. 1 = original, 2 = 2x faster, 0.5 = 2x slower. |
 
+#### Spaciousness
+
+`ampleur` · Processing → Effects
+
+*Widens a sound instead of raising it: early reflections that differ for each ear, at constant loudness.*
+
+After Vesa Välimäki and colleagues on velvet noise — « A perceptual study on velvet noise and its variants at different pulse densities », IEEE Transactions on Audio, Speech and Language Processing 21(7), 2013. What no existing node does. « Stereo Width / MS » decodes into mid and side then raises the side: on a mono source the side is the difference of the two channels, hence zero, and amplifying zero gives zero. Stereo delay and chorus likewise manipulate a difference that must already exist. No tool in the catalogue can create that difference when there is none. And the six reverbs all have a tail, whereas filling the room is the work of early reflections. The two mechanisms are one. A reflection pattern that differs for each channel decorrelates and gives room body in a single gesture — and that is what a real room does, since your two ears do not receive the same reflections. Early reflections arrive within the precedence window: the ear fuses them with the direct sound rather than hearing them as echoes. The sound grows; nothing repeats. A curve connected to the Modulation input drives the mix, and the room fills or empties along the sound: a ramp opens it from one end to the other, a sine makes it breathe, a curve extracted from the sound itself opens it on the loud passages. It is the mix, and not the four other settings, because those describe the room: it is built once, as a reflection sequence drawn from the given seed. Making them vary continuously would mean rebuilding it at every sample, and « the same seed replays the same room » would no longer mean anything. The mix, for its part, is a gain on what is already computed: it modulates exactly. Loudness moves no more than at a fixed mix — the correction is made on the whole sound, once the mix has been applied. Three figures say whether the promise holds, and the node shows them. Loudness does not move. Each channel returns to its own input level: if the energy rose it would not be spaciousness but gain, the commonest illusion in sound processing. Correlation falls. One means two identical channels, hence a point source wedged between the speakers; zero means a sound with no locatable position. At the default settings it goes from 1.000 to 0.035. The mono sum holds, and that figure must be read correctly. It is not free: a correlation of rho imposes a hold of the square root of (1+rho)/2. Two perfectly decorrelated channels therefore give 0.707, and geometry allows no better — not a loss but the price of width. Measured in the application: a correlation of -0.06 gives 0.68, where the formula predicts 0.686. The node shows both side by side, because it is their gap that signals a fault, never the value alone: a fixed threshold at 0.707 would have cried collapse over a perfectly healthy result.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Modulation | curve |  |
+| output | Audio | audio (stereo) |  |
+| output | Measurements | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Density | slider | 200 /s | 20 – 400 /s, step 10 | Reflections per second. It is the sparseness of velvet noise that lets it decorrelate without colouring: dense noise would be heard as hiss, a regular comb as a timbre. Measured, at 20 reflections per second the correlation barely moves; at 200 it falls to almost nothing. |
+| Window | slider | 80 ms | 5 – 120 ms, step 5 | How long the reflections keep arriving. Below some forty milliseconds the ear firmly fuses them with the direct sound; beyond a hundred they start to be heard as separate echoes. Eighty is where decorrelation is clear without anything standing out. |
+| Pre-delay | slider | 12 ms | 0 – 60 ms, step 1 | Silence before the first reflection. This is the cue to the room's size: the sound takes that long to reach the first wall and return. Three milliseconds give a booth, forty a hall. |
+| Absorption | slider | 50 % | 0 – 100 %, step 1 | Damping of the later reflections. At zero they all keep the same strength — a room with bare walls. At maximum they die away fast: curtains, books, people. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reflections added. At 0 %, the output is the input, unchanged. Loudness does not change at any setting: only the width moves. A curve connected to the Modulation input takes this setting's place, which then serves no purpose. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Mix that a connected curve's zero means. At zero the room vanishes entirely when the curve falls; at twenty, some of it always remains. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A ramp from zero to a hundred per cent opens the room from one end of the sound to the other; a sine makes it breathe. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions. |
+
 #### Spectral Blur
 
 `flou-spectral` · Processing → Effects
@@ -5213,6 +5240,7 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Audio Analysis](#audio-analysis) | Analyse tempo, key, song/instrumental type. |
 | [Chord Detector](#chord-detector) | Detects the chord progression in the audio signal. |
 | [ColorSynth](#colorsynth) | Derives a color palette from the audio spectrum (see the timbre). |
+| [Curve Viewer](#curve-viewer) | Draws a modulation curve and measures it, without altering it. |
 | [Emotional Analysis](#emotional-analysis) | Associates an emotion with a track from its music alone (tempo, mode, energy, timbre) — no text or lyrics analyzed. |
 | [Genre Classifier](#genre-classifier) | Identifies the musical genre of a song via AI or heuristics. |
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
@@ -5360,6 +5388,26 @@ The inverse of the « Color Combination » node: listens to the audio signal and
 | output | Audio | audio |  |
 
 *No parameters.*
+
+#### Curve Viewer
+
+`visualiseur-courbe` · Visualization → Analysis
+
+*Draws a modulation curve and measures it, without altering it.*
+
+The curve type had eight outputs and eight inputs, and all eight consumers were effects: filter, tremolo, spatialisation, amplifier, spectral delay, Csound scores, ambisonic rotation. So one could drive an effect with a curve without ever seeing the curve, and tune it blind by listening to the result. That is all the more awkward because the point of the method is that a curve can come from the sound itself — the brightness that opens its own filter, the energy that lengthens its own delay: a manufactured curve can be guessed at, a curve extracted from a sound cannot. The curve comes out unchanged on the first output, as the goniometer passes its audio through: the viewer sits in the middle of a chain without cutting it. Put it between the modulation source and the effect. The vertical scale is fixed from zero to one and never adjusts to the content. That is the type's convention: the producer returns values between zero and one, the consumer decides what zero and one mean at its end. A curve that only goes from 0.48 to 0.52 must therefore look flat, because that is exactly what the effect will make of it; an auto-scaled plot would show it wide and lie about its effect. Two curves drawn at the same scale can also be compared. The reduction keeps the minimum and maximum of each column, rather than one value in n. A curve carries two hundred values per second: a minute makes twelve thousand of them for six hundred drawing columns, and taking one value in twenty would make a brief spike vanish — a transient's, precisely what one came to look at. The band drawn runs from the lowest to the highest of each column, and loses nothing. Four figures accompany the plot. Minimum, maximum and mean can be read off the drawing; the agitation, in units per second, says what the extremes confuse. A ramp from zero to one over ten seconds is 0.10; a noise covering the same range ten times a second is worth dozens, for identical minimum and maximum.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Curve | curve |  |
+| output | Curve | curve |  |
+| output | Plot | image |  |
+| output | Measurements | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Width | slider | 640 px | 240 – 1280 px, step 20 | Width of the plot. It also sets the number of columns: wider means more detail — up to one column per value, beyond which there is nothing more to gain. |
+| Height | slider | 200 px | 120 – 480 px, step 10 | Height of the plot. The scale stays from zero to one whatever happens: the height changes the room taken, not the reading. |
 
 #### Emotional Analysis
 
@@ -6926,6 +6974,33 @@ Exports an existing node as a .zip archive or imports a node from a .zip. To exp
 |---|---|---|---|---|
 | Action | choice | Export | Export / Import | Export = create a .zip of an existing node. Import = install a node from a .zip. |
 | Node to export | choice |  |  | Select the node to export from the 5 most recently created. The list updates on each run. |
+
+### Learning
+
+| Component | Summary |
+|---|---|
+| [Quiz](#quiz) | Quizzes you on Attic's acronyms, concepts, formulas, figures and sources, in a random order and without repetition. |
+
+#### Quiz
+
+`quiz` · Others → Learning
+
+*Quizzes you on Attic's acronyms, concepts, formulas, figures and sources, in a random order and without repetition.*
+
+Six themes, and one of them is not written by hand. Acronyms, concepts, formulas, figures and sources form a written bank, where each question carries its explanation. The sixth, « Catalog », is computed on the node registry as you play: it draws several hundred questions from it — recognising a node from its summary, placing it in its universe and family — which therefore can neither lie nor age, since they read the same cards the application runs. The series is a permutation, not a run of draws. That settles boredom at the root: you do not see a question again before having seen all the others. Drawing each question independently would have given duplicates very soon — over a hundred questions, the chance of seeing one already seen passes one in two by the twelfth. Themes alternate, and that is the second half of the remedy. A permutation of a bank where one theme weighs two thirds gives series that speak of the same subject six times in a row: technically without repetition, and tiresome all the same. The draw therefore takes turns in each theme present, the order of the themes being itself redrawn each round. Twenty questions over six themes give three or four of each, whatever the bank sizes. The order of the options is drawn too. The bank always writes the correct answer first — a convention that removes a whole class of authoring faults, since one can no longer be off by one while proofreading — so without that second draw the answer would always be A. Two ways to use it. In the node, one question at a time: you click, it says right or wrong and why. By running it, it returns two texts — the questionnaire alone, and the answer key with the explanations and the score. Connect them to a « Text Output » to keep them. The seed is the questionnaire. The same seed gives exactly the same series back, options included: that is what allows retaking the same test, giving it to someone, or resuming an interrupted round. Changing the seed changes the order without touching the content. The answers are a parameter rather than a state of the view, and that choice has a pleasant consequence: they are saved with the project. You can close the application halfway through a round of fifty questions and resume where you left off. The field reads plainly — one letter per question, a dot for a skipped one — and clears with one button.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Questionnaire | text |  |
+| output | Answer key | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Theme | choice | All | All / Acronyms / Concepts / Formulas / Figures / Sources / Catalog | « All » alternates the six themes, which is the setting the draw was designed for. A single theme serves to revise one point: acronyms before an interview, formulas before writing a process. « Catalog » is the only computed theme — it quizzes on the installed nodes, and grows by itself with every node added. |
+| Level | choice | All | All / Beginner / Advanced | « Beginner » keeps what you meet on opening the software, « Advanced » what you have had to go and look for — the masking spreading function, a maqam's neutral third, Tymoczko's theorem. If a theme has nothing at the requested level, the whole bank is returned rather than an empty quiz. |
+| Questions | slider | 20 | 5 – 100, step 5 | The length of the series. Beyond the pool's size a second round starts in a different order — so a question only comes back after all the others have been seen. |
+| Seed | slider | 7 | 1 – 999999, step 1 | The seed is the questionnaire: the same one gives the same series back, options included. Change it for another draw — the view's « New round » button does it and clears the answers in the same gesture. |
+| Answers | text | — |  | One letter per question, in the order of the series; a dot for a skipped question. The view fills it on every click, and it is this field the answer key reads — so the two cannot contradict each other. Empty it to retake the same series from the start. |
 
 ### Magenta
 

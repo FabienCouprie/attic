@@ -988,3 +988,57 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-btn-hover);
   color: var(--text-title);
 }
+
+/* ── Quiz : une question, quatre boutons, et pourquoi ──
+   Tout est pris aux variables du thème : le quiz n'invente aucune couleur, sauf les deux
+   teintes du juste et du faux, qui doivent se lire d'un coup d'œil sans avoir à relire le texte. */
+.attic-quiz {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; width: 100%; height: 100%;
+  font-size: 11px; color: var(--text-primary); overflow: hidden;
+}
+.attic-quiz-tete { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.attic-quiz-theme {
+  background: var(--bg-badge); color: var(--text-badge);
+  border-radius: 4px; padding: 1px 6px; font-size: 10px; text-transform: lowercase;
+}
+.attic-quiz-avance { color: var(--text-tertiary); font-family: monospace; }
+.attic-quiz-score { flex: 1; text-align: right; color: var(--text-secondary); font-family: monospace; font-size: 10px; }
+.attic-quiz-btn-outil {
+  background: transparent; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-muted); cursor: pointer; font-size: 11px; padding: 0 5px; line-height: 18px;
+}
+.attic-quiz-btn-outil:hover { color: var(--text-title); background: var(--bg-btn-hover); }
+.attic-quiz-jauge { height: 2px; background: var(--bg-input); border-radius: 1px; overflow: hidden; flex-shrink: 0; }
+.attic-quiz-jauge > div { height: 100%; background: var(--accent); transition: width 0.2s ease; }
+.attic-quiz-enonce { font-size: 12px; line-height: 1.35; color: var(--text-title); flex-shrink: 0; }
+.attic-quiz-choix { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.attic-quiz-prop {
+  display: flex; gap: 6px; align-items: baseline; text-align: left; width: 100%;
+  background: var(--bg-btn); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text-primary); cursor: pointer; font-size: 11px; line-height: 1.3; padding: 5px 7px;
+}
+.attic-quiz-prop:hover:not(:disabled) { background: var(--bg-btn-hover); border-color: var(--accent); }
+.attic-quiz-prop:disabled { cursor: default; }
+.attic-quiz-prop.juste { border-color: #3fb27f; background: rgba(63,178,127,0.14); }
+.attic-quiz-prop.faux { border-color: var(--arret); background: rgba(224,87,111,0.14); }
+.attic-quiz-prop.pale { opacity: 0.45; }
+.attic-quiz-lettre { color: var(--text-muted); font-family: monospace; flex-shrink: 0; }
+.attic-quiz-retour, .attic-quiz-bilan { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.attic-quiz-juste { color: #3fb27f; font-weight: 600; }
+.attic-quiz-rate { color: var(--arret); font-weight: 600; }
+.attic-quiz-pourquoi { color: var(--text-secondary); line-height: 1.4; }
+.attic-quiz-actions { display: flex; gap: 6px; padding-top: 2px; }
+.attic-quiz-btn-suite {
+  background: var(--bg-btn); border: 1px solid var(--accent); border-radius: 5px;
+  color: var(--text-title); cursor: pointer; font-size: 11px; padding: 4px 10px;
+}
+.attic-quiz-btn-suite:hover { background: var(--bg-hover-accent); }
+.attic-quiz-fini { color: var(--text-title); font-size: 12px; font-weight: 600; }
+.attic-quiz-parTheme { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--text-tertiary); font-family: monospace; font-size: 10px; }
+.attic-quiz-revoir { color: var(--text-secondary); text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em; padding-top: 4px; }
+.attic-quiz-manquee { border-left: 2px solid var(--arret); padding-left: 6px; display: flex; flex-direction: column; gap: 2px; }
+.attic-quiz-enonce-petit { color: var(--text-primary); line-height: 1.3; }
+.attic-quiz-bonne { color: #3fb27f; font-family: monospace; }
+.attic-quiz-pied { color: var(--text-muted); font-size: 10px; flex-shrink: 0; padding-top: 2px; }
+.attic-quiz-vide { color: var(--text-secondary); padding: 12px 0; }

@@ -72,6 +72,37 @@ export function tourner(champ: ChampB, angle: Float32Array): ChampB {
   return { W: champ.W, X, Y, Z: champ.Z };
 }
 
+/**
+ * La part du champ qu'une rotation peut déplacer, de 0 à 1.
+ *
+ * LE CHIFFRE QUI MANQUAIT, ET IL A FALLU UNE QUESTION D'UTILISATEUR POUR S'EN APERCEVOIR : « je
+ * n'entends pas la différence ». Le nœud tournait bien ce qu'on lui donnait — mais ce qu'on lui
+ * donnait n'avait rien à tourner, et il ne le disait pas.
+ *
+ * `W` est la pression, qui n'a pas de direction ; `X` et `Y` sont ce qui tourne. Leur module
+ * rapporté à la pression dit donc exactement ce que la rotation peut faire :
+ *
+ *   · UNE SOURCE PONCTUELLE donne 1 — tout le champ est directionnel, la rotation la promène.
+ *   · UNE PRISE MONO, encodée comme deux sources à ±écart/2, donne cos(écart/2) : les deux `Y`
+ *     s'annulent puisque `Y` vaut L−R, et il ne reste que `X`. Mesuré : 0,707 à l'écart de 90°
+ *     par défaut, et ZÉRO à 180°, où le cosinus s'annule aussi.
+ *   · ZÉRO signifie qu'il n'y a rien à tourner, et la sortie ne dépendra pas de l'angle.
+ *
+ * Ce que la rotation d'une prise mono fait alors, c'est un PANORAMIQUE et non un tour : mesuré
+ * dans l'application, 9,5 dB d'écart entre les canaux à 90° — ce qui s'entend — et strictement
+ * rien à 180°, où échanger deux canaux identiques les laisse identiques.
+ */
+export function partDirectionnelle(champ: ChampB): number {
+  const n = champ.W.length;
+  if (n === 0) return 0;
+  let plan = 0, pression = 0;
+  for (let i = 0; i < n; i++) {
+    plan += champ.X[i] * champ.X[i] + champ.Y[i] * champ.Y[i];
+    pression += champ.W[i] * champ.W[i] * 2; // W porte le facteur 1/√2 de la convention.
+  }
+  return pression > 1e-18 ? Math.sqrt(plan / pression) : 0;
+}
+
 /** Un microphone virtuel cardioïde pointé dans la direction `theta`. */
 export function microphoneVirtuel(champ: ChampB, theta: number): Float32Array {
   const n = champ.W.length;

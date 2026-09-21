@@ -1,10 +1,14 @@
-// plugins/courbe.ts — Les deux sources de modulation : suivre un son, ou fabriquer une courbe.
+// plugins/courbe.ts — Les deux sources de modulation, et de quoi regarder ce qu'elles produisent.
 //
 // D'après Vincent Verfaille, Udo Zölzer et Daniel Arfib, « Adaptive Digital Audio Effects
 // (A-DAFx): A New Class of Sound Transformations », IEEE TASLP 14(5), 2006 ; et « Implementation
 // Strategies for Adaptive Digital Audio Effects », DAFx-02.
 //
-// La logique est dans `audio/courbe.ts`, testée ; ce fichier n'est que la prise.
+// La logique est dans `audio/courbe.ts` et `audio/courbe-trace.ts`, testées ; ce fichier n'est que la prise.
+//
+// LE VISUALISEUR EST ARRIVÉ EN DERNIER, ET IL MANQUAIT DEPUIS LE DÉBUT. Le type `courbe` comptait
+// huit sorties et huit entrées, et les huit consommateurs étaient des EFFETS : on pilotait donc un
+// effet par une courbe sans jamais pouvoir la regarder, et on l'ajustait en écoutant le résultat.
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -13,6 +17,7 @@ import {
   CADENCE, engendrer, lisser, suivre,
   type Caracteristique, type Courbe, type FormeCourbe,
 } from "../audio/courbe";
+import { enveloppe, genererSvgCourbe, mesurerCourbe } from "../audio/courbe-trace";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -96,6 +101,49 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [courbe],
         message: traduire("msg.courbe.engendree", String(courbe.valeurs.length), dureeSec.toFixed(1)),
+      };
+    },
+  },
+  {
+    id: "visualiseur-courbe", nom: "Visualiseur de courbe", nomEn: "Curve Viewer",
+    univers: "Visualisation", famille: "Analyse",
+    resume: "Dessine une courbe de modulation et la mesure, sans la modifier.",
+    resumeEn: "Draws a modulation curve and measures it, without altering it.",
+    notice: "Le type courbe comptait huit sorties et huit entrées, et les huit consommateurs étaient des effets : filtre, trémolo, spatialisation, amplificateur, retard spectral, partitions Csound, rotation ambisonique. On pouvait donc piloter un effet par une courbe sans jamais voir la courbe, et l'ajuster à l'aveugle en écoutant le résultat. C'est d'autant plus gênant que l'intérêt du procédé est qu'une courbe peut venir du son lui-même — la brillance qui ouvre son propre filtre, l'énergie qui allonge son propre délai : une courbe fabriquée se devine, une courbe extraite d'un son ne se devine pas.\n\nLa courbe ressort inchangée sur la première sortie, comme le goniomètre laisse passer son audio : le visualiseur se pose au milieu d'une chaîne sans la couper. Branchez-le entre la source de modulation et l'effet.\n\nL'échelle verticale est fixée de zéro à un et ne s'ajuste jamais au contenu. C'est la convention du type : le producteur rend des valeurs entre zéro et un, le consommateur décide de ce que zéro et un veulent dire chez lui. Une courbe qui ne va que de 0,48 à 0,52 doit donc paraître plate, parce que c'est exactement ce que l'effet en fera ; un tracé auto-ajusté la montrerait ample et mentirait sur son effet. Deux courbes dessinées à la même échelle se comparent, en outre.\n\nLa réduction garde le minimum et le maximum de chaque colonne, et non une valeur sur n. Une courbe porte deux cents valeurs par seconde : une minute en fait douze mille pour six cents colonnes de dessin, et prendre une valeur sur vingt ferait disparaître une pointe brève — celle d'un transitoire, précisément ce qu'on vient regarder. La bande dessinée va du plus bas au plus haut de chaque colonne, et ne perd rien.\n\nQuatre chiffres accompagnent le tracé. Le minimum, le maximum et la moyenne se lisent sur le dessin ; l'agitation, en unités par seconde, dit ce que les extrêmes confondent. Une rampe de zéro à un sur dix secondes vaut 0,10 ; un bruit qui parcourt la même étendue dix fois par seconde en vaut des dizaines, pour un minimum et un maximum identiques.",
+    noticeEn: "The curve type had eight outputs and eight inputs, and all eight consumers were effects: filter, tremolo, spatialisation, amplifier, spectral delay, Csound scores, ambisonic rotation. So one could drive an effect with a curve without ever seeing the curve, and tune it blind by listening to the result. That is all the more awkward because the point of the method is that a curve can come from the sound itself — the brightness that opens its own filter, the energy that lengthens its own delay: a manufactured curve can be guessed at, a curve extracted from a sound cannot.\n\nThe curve comes out unchanged on the first output, as the goniometer passes its audio through: the viewer sits in the middle of a chain without cutting it. Put it between the modulation source and the effect.\n\nThe vertical scale is fixed from zero to one and never adjusts to the content. That is the type's convention: the producer returns values between zero and one, the consumer decides what zero and one mean at its end. A curve that only goes from 0.48 to 0.52 must therefore look flat, because that is exactly what the effect will make of it; an auto-scaled plot would show it wide and lie about its effect. Two curves drawn at the same scale can also be compared.\n\nThe reduction keeps the minimum and maximum of each column, rather than one value in n. A curve carries two hundred values per second: a minute makes twelve thousand of them for six hundred drawing columns, and taking one value in twenty would make a brief spike vanish — a transient's, precisely what one came to look at. The band drawn runs from the lowest to the highest of each column, and loses nothing.\n\nFour figures accompany the plot. Minimum, maximum and mean can be read off the drawing; the agitation, in units per second, says what the extremes confuse. A ramp from zero to one over ten seconds is 0.10; a noise covering the same range ten times a second is worth dozens, for identical minimum and maximum.",
+    entrees: [{ nom: "Courbe", nomEn: "Curve", type: "courbe" }],
+    sorties: [
+      { nom: "Courbe", nomEn: "Curve", type: "courbe" },
+      { nom: "Tracé", nomEn: "Plot", type: "image" },
+      { nom: "Mesures", nomEn: "Measurements", type: "texte" },
+    ],
+    parametres: [
+      { nom: "Largeur", nomEn: "Width", type: "curseur", plage: [240, 1280], pas: 20, defaut: 640, unite: "px",
+        doc: "Largeur du tracé. Elle fixe aussi le nombre de colonnes : plus large, plus de détail — jusqu'à une colonne par valeur, au-delà de quoi il n'y a plus rien à gagner.",
+        docEn: "Width of the plot. It also sets the number of columns: wider means more detail — up to one column per value, beyond which there is nothing more to gain." },
+      { nom: "Hauteur", nomEn: "Height", type: "curseur", plage: [120, 480], pas: 10, defaut: 200, unite: "px",
+        doc: "Hauteur du tracé. L'échelle reste de zéro à un quoi qu'il arrive : la hauteur change la place prise, pas la lecture.",
+        docEn: "Height of the plot. The scale stays from zero to one whatever happens: the height changes the room taken, not the reading." },
+    ],
+    async executer(ctx: any) {
+      const entree = ctx.entree(0);
+      const mesure = mesurerCourbe(entree);
+      if (mesure.nombre === 0) return { valeurs: [null, null, null], message: traduire("msg.courbe.aucune") };
+      const largeur = Math.round(ctx.paramNombre("Largeur", 640));
+      const hauteur = Math.round(ctx.paramNombre("Hauteur", 200));
+      // Une colonne par pixel de la zone de dessin au plus : au-delà, le fichier grossit sans
+      // rien montrer de plus, puisqu'il n'y a plus de pixel pour l'afficher.
+      const svg = genererSvgCourbe(mesure, enveloppe(entree, largeur - 44), { largeur, hauteur });
+      const rapport = [
+        `min ${mesure.min.toFixed(3)} · max ${mesure.max.toFixed(3)} · moyenne ${mesure.moyenne.toFixed(3)}`,
+        `agitation ${mesure.agitation.toFixed(2)} /s`,
+        `${mesure.nombre} valeurs à ${mesure.cadence} /s — ${mesure.dureeSec.toFixed(2)} s`,
+      ].join("\n");
+      return {
+        valeurs: [entree, new File([svg], "courbe.svg", { type: "image/svg+xml" }), rapport],
+        message: traduire("msg.courbe.mesures",
+          mesure.min.toFixed(2), mesure.max.toFixed(2), mesure.moyenne.toFixed(2),
+          mesure.agitation.toFixed(2), mesure.dureeSec.toFixed(1)),
       };
     },
   },

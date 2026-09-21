@@ -26,6 +26,7 @@ import { EditeurCode } from "./EditeurCode";
 import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
 import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
+import { Quiz } from "./Quiz";
 import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
@@ -1627,6 +1628,14 @@ function VueImageDepuisAudio({ data }: VueProps) {
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.audio")} />;
 }
 
+// ── Tracé d'une courbe de modulation ──
+// Une sortie image ne s'affiche pas d'elle-même : il faut une vue enregistrée. Celle-ci est celle
+// du goniomètre à un mot près — ce nœud attend une courbe, non un son.
+function VueTraceCourbe({ data }: VueProps) {
+  const { t } = useI18n();
+  return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.courbe")} />;
+}
+
 // ── Attracteur / IFS (image générée) ──
 function VueAttracteurIFS({ data }: VueProps) {
   const { t } = useI18n();
@@ -1841,6 +1850,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("generateur-pochette"), vue: VuePochette, position: "avant" },
   { correspond: parId("visualisation-songsee"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
+  { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   // Le cercle pulsant rend un SVG ANIMÉ : la même vue l'affiche, et l'animation tourne dans la
   // balise image parce qu'elle est écrite en SMIL et non en feuille de style.
@@ -1878,6 +1888,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("banque-sfz"), vue: VueBanqueSfz, position: "apres" },
   { correspond: parId("orchestre-csound"), vue: VueOrchestreCsound, position: "apres" },
   { correspond: parId("clavier-apprentissage"), vue: VueApprentissage, position: "apres" },
+  { correspond: parId("quiz"), vue: Quiz, position: "avant" },
 ];
 
 /**

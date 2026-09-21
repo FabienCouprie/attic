@@ -10,6 +10,7 @@ import { creerRegistre } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerRegistreNodes } from "../core/nodes-installes";
 import { configurerRegistreGestion } from "../plugins/gestion-nodes";
+import { configurerRegistreQuiz } from "../plugins/quiz";
 import { toutesLesFiches } from "../plugins";
 import type { TypeValeur } from "../core";
 
@@ -38,4 +39,5 @@ for (const fiche of toutesLesFiches) {
 configurerRegistreMeta(registre);
 configurerRegistreNodes(registre);
 configurerRegistreGestion(registre);
+configurerRegistreQuiz(registre);
 
