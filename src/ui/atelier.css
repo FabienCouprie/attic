@@ -30,6 +30,7 @@
      aurait teint aussi les points d'état, le halo d'exécution et le bouton de priorité d'un nœud. */
   --lancer: var(--success);
   --lancer-dim: var(--success-dim);
+  --lancer-texte: var(--text-inverse);
   --arret: #e0576f;
   --accent: #a855f7;
   --etiquette-bg: #2a1f3d;
@@ -73,10 +74,13 @@
   --accent: #5eb3f5;
   --etiquette-bg: #1a3f7f;
   /* Le bouton « Lancer » au ton du thème : le vert de « succès » y jurait, seule tache chaude
-     d'une barre entièrement bleue. Le texte reste le bleu nuit du fond, qui tranche franchement
-     sur ce bleu clair. */
-  --lancer: #5eb3f5;
-  --lancer-dim: #2f6c9e;
+     d'une barre entièrement bleue. Bleu SOUTENU et texte blanc plutôt que bleu clair et texte
+     sombre : le bleu clair passait pour un bouton désactivé au milieu d'une barre sombre, là où
+     un bleu dense se lit comme l'action principale. Le blanc sur ce fond tient 6,0 pour 1 en
+     contraste — calculé, pas estimé —, au-dessus des 4,5 exigés pour un texte d'interface. */
+  --lancer: #1e64ac;
+  --lancer-dim: #173f6b;
+  --lancer-texte: #ffffff;
 }
 
 /* Nœuds : gardent les teintes neutres de l'ancien thème « dark » (demandé
@@ -263,7 +267,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-favs-drop a:hover { background: var(--bg-hover); }
 .attic-btn-lancer {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-left: 8px; background: var(--lancer, var(--success)); color: var(--text-inverse);
+  margin-left: 8px; background: var(--lancer, var(--success)); color: var(--lancer-texte, var(--text-inverse));
   border: none; border-radius: 8px; padding: 8px 18px 8px 14px;
   font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: filter 0.15s, transform 0.1s; flex-shrink: 0;
