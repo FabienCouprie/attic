@@ -4,18 +4,13 @@
 // CES TESTS RENDENT VRAIMENT DU SON, et c'est ce qui les rend lents : Tone.js construit une chaîne
 // complète dans un contexte hors ligne, et le polyfill Web Audio de Node n'a pas la vitesse d'un
 // navigateur. Mesuré : sept secondes pour ce seul fichier, quand la suite entière en prend
-// cinquante. Le délai de quinze secondes par défaut de vitest tenait tant que la suite était moins
-// large ; à deux cent quatre-vingts fichiers en parallèle, il a commencé à être dépassé — un échec
-// qui ne dit rien du code, seulement de la charge de la machine. Le délai est donc fixé ici,
-// généreusement, plutôt que laissé à un défaut qui ne connaît pas ce que ce fichier fait.
+// cinquante. C'est pour eux que le délai global de la suite est à soixante secondes plutôt qu'aux
+// quinze par défaut (cf. `vite.config.ts`) : sous charge, ce fichier les dépassait.
 
 // @ts-ignore
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-
-/** Le rendu hors ligne d'un son par Tone.js sous Node : lent par nature, plus lent sous charge. */
-const DELAI_RENDU_MS = 60000;
 
 describe("genererMembraneSynth", () => {
   it("rend un buffer stéréo non silencieux pour un kick C2", async () => {
@@ -43,7 +38,7 @@ describe("genererMembraneSynth", () => {
       expect(Number.isFinite(gauche[i])).toBe(true);
       expect(Number.isFinite(droite[i])).toBe(true);
     }
-  }, DELAI_RENDU_MS);
+  });
 
   it("respecte la duree demandee quand elle depasse l'enveloppe", async () => {
     const { genererMembraneSynth } = await import("./tone-synths");
@@ -56,7 +51,7 @@ describe("genererMembraneSynth", () => {
       sampleRate: 44100,
     });
     expect(buffer.duration).toBeLessThan(0.5);
-  }, DELAI_RENDU_MS);
+  });
 });
 
 describe("genererMetalSynth", () => {
@@ -85,7 +80,7 @@ describe("genererMetalSynth", () => {
       expect(Number.isFinite(gauche[i])).toBe(true);
       expect(Number.isFinite(droite[i])).toBe(true);
     }
-  }, DELAI_RENDU_MS);
+  });
 
   it("produit un son plus long avec un decay étendu", async () => {
     const { genererMetalSynth } = await import("./tone-synths");
@@ -98,7 +93,7 @@ describe("genererMetalSynth", () => {
       sampleRate: 44100,
     });
     expect(buffer.duration).toBeLessThan(0.8);
-  }, DELAI_RENDU_MS);
+  });
 });
 
 describe("genererPolySynth", () => {
@@ -125,7 +120,7 @@ describe("genererPolySynth", () => {
       expect(Number.isFinite(gauche[i])).toBe(true);
       expect(Number.isFinite(droite[i])).toBe(true);
     }
-  }, DELAI_RENDU_MS);
+  });
 });
 
 describe("genererModulationSynth", () => {
@@ -144,7 +139,7 @@ describe("genererModulationSynth", () => {
       expect(Math.max(...buffer.getChannelData(0))).toBeGreaterThan(0);
       expect(Math.max(...buffer.getChannelData(1))).toBeGreaterThan(0);
     }
-  }, DELAI_RENDU_MS);
+  });
 });
 
 describe("rendreBatterieMidi", () => {
@@ -175,7 +170,7 @@ describe("rendreBatterieMidi", () => {
       expect(Number.isFinite(gauche[i])).toBe(true);
       expect(Number.isFinite(droite[i])).toBe(true);
     }
-  }, DELAI_RENDU_MS);
+  });
 });
 
 describe("genererPluckSynth", () => {
@@ -202,5 +197,5 @@ describe("genererPluckSynth", () => {
       expect(Number.isFinite(gauche[i])).toBe(true);
       expect(Number.isFinite(droite[i])).toBe(true);
     }
-  }, DELAI_RENDU_MS);
+  });
 });
