@@ -3,17 +3,17 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **366 components** in **7 categories** and **30 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **370 components** in **7 categories** and **31 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 70 | [Audio](#audio) (7) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 179 | [Conversion](#conversion) (4) · [Editing](#editing) (23) · [Effects](#effects) (148) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
+| [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [famille.Générateurs](#famillegénérateurs) (1) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 180 | [Conversion](#conversion) (4) · [Editing](#editing) (23) · [Effects](#effects) (149) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
-| [Collections](#collections) | 10 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (3) · [Export](#export-1) (4) · [Playback](#playback) (1) |
+| [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Others](#others) | 58 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
 
@@ -162,6 +162,37 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | output | Audio | audio (stereo) |  |
 
 *No parameters.*
+
+### famille.Générateurs
+
+| Component | Summary |
+|---|---|
+| [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
+
+#### SSP (Koenig)
+
+`ssp-koenig` · Inputs → famille.Générateurs
+
+*Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points.*
+
+After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute of Sonology, Utrecht, in the 1970s, whose selection principles come from his programs Project 1 (1964) and Project 2 (1966). See also Luc Dobereiner, « Models of Constructed Sound: Nonstandard Synthesis as an Aesthetic Perspective », Computer Music Journal 35(3), 2011. What « nonstandard » means. All ordinary synthesis starts from a model: an oscillator, a waveform, a spectrum, an envelope, an instrument. Here there is none of that. You give two lists of numbers — amplitudes and durations — and principles for drawing from them. The pairs so drawn are points, and the sound is the line joining them. No pitch, no note, no timbre: the pitch you will hear is a consequence of the durations you wrote, never a setting. Koenig's thesis, and what makes this node unlike the others. The same principles hold at every scale: what orders the points of a waveform also orders the sections of a piece. That is why the same choice of five words is offered for the amplitudes, for the durations and for the order of the sections. A series means exactly the same thing at all three scales — each element once before any repeats — and you can hear it. The warning that must be given. SSP has a reputation for being impossible to steer. Koenig himself found that the program resisted musical intention, and the overwhelming majority of settings return noise. But two things really are under your command, and they can be measured. The durations make the treble: measured, the spectrum's centre of gravity runs from 9 Hz for durations of a thousand samples to 4,419 Hz for durations of two or three, close to five hundred to one. The amplitudes make the crest: from 1.81 dB for two extreme values to 8.38 dB for many small ones and one large. And the two axes are separate — changing the amplitudes does not move the treble, changing the durations does not change the crest — which forbids saying that this node has but a single noise knob. How to use it without getting lost. Write the durations first, which decide the region where the sound will sit: around three samples for a high whistle, around fifty for a middle register, beyond five hundred for reliefs you hear going past rather than sounding. Then write the amplitudes, which decide the relief: two extreme values give a full, straight sound, a mixture of small and large gives a hollowed one. The principles come last, and that is where composition begins. One case worth knowing. A tendency applied to the amplitudes draws a ramp crossing the set from end to end, not a sound: at the scale of a whole section it is heard only as a slow drift. Tendency comes into its own at the scale of form, which is where Koenig used it. At equal seed the node returns the same sound twice; at a different seed, two unrelated sounds drawn from the same material.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
+| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
+| Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other — applied to amplitudes, it draws a ramp rather than a sound. |
+| Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations gives strict periodicity, hence a clear pitch; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. |
+| Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
+| Sections | slider | 4 | 1 – 24, step 1 | How many distinct sections to compose before ordering them. At one, the piece is of a single piece and the form principle has nothing to act on. Beyond a dozen, each section becomes too brief to be identified, and the order stops being audible. |
+| Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
+| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
+| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. |
 
 ### Generation
 
@@ -2319,6 +2350,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | [Drum Synth](#drum-synth) | Receives MIDI and plays it with percussion synthesizers (no SoundFont). |
 | [Ducking](#ducking) | One sound steps aside for another: the music backs off under the voice, without the voice being heard. |
 | [Echo](#echo) | Ping-pong delay/echo with feedback. |
+| [Ecosystem (Di Scipio)](#ecosystem-di-scipio) | A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling. |
 | [Envelope Transfer](#envelope-transfer) | Takes one sound's amplitude contour and lays it on another: one's rhythm, the other's material. |
 | [Equalizer](#equalizer) | 9-band equalizer. |
 | [Exciter / Aural Enhancer](#exciter--aural-enhancer) | Adds presence via harmonic distortion in the high mids. |
@@ -3077,6 +3109,31 @@ Ping-pong delay/echo with feedback. Time sets the interval between repetitions, 
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Amount of signal fed back into the delay (more = more repetitions). |
 | Spread | slider | 50 % | 0 – 100 %, step 1 | Stereo width of the echo (0% = mono, 100% = maximum left/right sweep). |
 
+#### Ecosystem (Di Scipio)
+
+`ecosysteme` · Processing → Effects
+
+*A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling.*
+
+After Agostino Di Scipio, « "Sound is the interface": from interactive to ecosystemic signal processing », Organised Sound 8(3), 2003, and the « Audible Ecosystemics » series (2003-2005); the nonlinear engine comes from « Iterated Nonlinear Functions as a Sound-Generating Engine », Leonardo 34(3), 2001. Last of the paths surveyed in the literature of the grain. This node is not set like the others, and that is its whole point. Everywhere else in the catalog you set an effect and the effect obeys: a density, a threshold, a duration. Here nobody sets the result. You set the coupling — the strength with which the system hears itself — and everything else is decided by the system, from what it measures of its own voice and of the world you give it. The density of the grains, their duration, the place in the past it fetches them from: all of that comes out of the loop, never out of the sliders. This is what Di Scipio calls making sound the interface. The loop lives entirely inside the node, because the Attic graph is acyclic and a node cannot feed back into itself. That is a good thing — a cyclic graph would have no execution order — and it is faithful besides: Di Scipio's devices are closed loops, one single apparatus listening to itself. It is not a compressor, and that can be measured. A compressor too brings a level back to a target. The difference is that observation here does not command a volume but the very shape of the synthesis. Give the system two worlds of rigorously equal level, one of which moves and one of which does not: both outputs come out at the same level, and the two textures have nothing in common. Measured, a calm world gives 24 grains per second of 82 ms, an agitated one 51 grains of 39 ms. A compressor stops at volume; the system changes behaviour. The sound comes from the loop, not from the input. Stop the world after one second and listen to the seven that follow: at zero coupling nothing at all is left, and the level of what remains rises with the coupling, with no gap and no reversal. The node does not granulate its input, it lives from it. The regime cannot be read from the level, and the log is there for that. The homeostat almost always brings the level back to its target: a system holding itself easily and a system at the end of its strength sound at the same volume. What separates them is what it cost, and that is read on the drive curve. Drive pinned at the ceiling, the coupling is too weak and you hear the world barely granulated. Drive at the floor, the system would run away if allowed and the homeostat is merely holding it back: that is where the liveliest textures are found. In between, it holds, or it swings. The background noise, inaudible a hundred decibels below the target, is not a contrivance. Without it zero would be an absorbing state: let the memory vanish once, and no amount of drive could ever amplify exact silence again. Di Scipio makes that noise the starting point of his « Background Noise Study »; it plays the same part here. At equal seed the system returns the same sound twice — without which none of the above would be verifiable. At a different seed it returns two sounds that resemble each other in no sample and in every statistic: it is not an object, it is an instance.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | World | audio |  |
+| output | Audio | audio |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Coupling | slider | 0.8 | 0 – 3, step 0.05 | The strength with which the system hears itself, and the only setting that really matters. At zero it hears only the world and does not survive its silence. Weak, the drive pins itself to the ceiling without ever reaching the target: you hear the world barely granulated. Around one, the system carries itself and the homeostat spends its time holding it back — that is where the liveliest textures are found. The log says which regime the setting led you to, which no number read here can predict. |
+| Balance point | slider | -20 dB | -40 – -6 dB, step 1 | The level the system seeks to hold for its own voice, not for the whole room. The distinction is no subtlety: a system regulating on what it hears would be condemned to silence as soon as the world were louder than the target, the error staying negative whatever it did. |
+| Reactivity | slider | 0.5 | 0 – 1, step 0.05 | How fast the homeostat corrects its error. Slow, the system overshoots its target then takes seconds to come back, in a swing you hear very clearly. Quick, it holds its level closely and leaves less life to the texture. At zero it no longer corrects anything, and the coupling alone decides everything. |
+| Memory | slider | 1.5 s | 0.05 – 8 s, step 0.05 | How deep into the past the grains are drawn from. The system mixes its own voice and the world in there, and chooses the distance itself: agitated, it draws near the present and the sound tightens; calm, it reaches far back and you hear forgotten things return. |
+| Maximum density | slider | 120 /s | 5 – 400 /s, step 5 | The ceiling of grains per second, which the system reaches when it judges itself very agitated. It never stays there long: the density it actually uses is reported in the log, and it is that one which says what it made of the world it was given. |
+| Duration | slider | 15 s | 1 – 120 s, step 1 | The output duration, independent of the world's. This is where the node parts company with an effect: ask for thirty seconds on a one-second input, and listen to what the system becomes once the world has gone. |
+| Homeostat | choice | Connected | Connected / Disconnected | The node's control, and it is made to be disconnected. The same loop, the same grains, the same memory, without the regulation: the system then follows the world's volume instead of holding its own. Measured, three worlds thirty-four decibels apart give three outputs 1.13 dB apart with the homeostat, and 33.19 dB apart without it. |
+| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two sounds that resemble each other in no sample and in every statistic — same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked. |
+
 #### Envelope Transfer
 
 `transfert-enveloppe` · Processing → Effects
@@ -3217,7 +3274,8 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Modulation | curve |  |
+| input | Cutoff modulation | curve |  |
+| input | Resonance modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3227,6 +3285,8 @@ Filters the signal by the chosen type (lowpass, highpass, bandpass, notch) with 
 | Resonance | number | 0.7 Q | 0.5 – 12 Q, step 0.1 | Quality factor Q: higher = a sharper peak at the cutoff. |
 | Modulation min | number | 200 Hz | 20 – 20000 Hz, step 1 | Cutoff that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | number | 6000 Hz | 20 – 20000 Hz, step 1 | Cutoff that the curve's one means. Feeding the sound's own brightness into this input gives the paper's adaptive effect: the filter opens as the sound gets harsh. |
+| Resonance min | slider | 0.7 Q | 0.5 – 12 Q, step 0.1 | Resonance that a curve's zero means on the Resonance modulation input. |
+| Resonance max | slider | 8 Q | 0.5 – 12 Q, step 0.1 | Resonance that the curve's one means. Two settings of the same filter can move together: the cutoff sweeping while the resonance pinches is what no two filters in series can reproduce. |
 
 #### Flanger
 
@@ -5382,6 +5442,7 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5439,11 +5500,14 @@ Bandpass filter with a LFO-modulated center frequency — the classic wah-wah pe
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rate | slider | 2 Hz | 0.1 – 10 Hz, step 0.1 | Modulation speed (sweeps per second). |
+| Rate | slider | 2 Hz | 0.1 – 10 Hz, step 0.1 | Modulation speed (sweeps per second). No effect when a curve is connected to the Modulation input: it then walks the centre frequency, and the sweep's rhythm is its own. |
+| Sweep from | slider | 200 Hz | 50 – 5000 Hz, step 10 | The low end of the sweep. These two bounds were hard-wired at 200 and 2500 Hz, invisible and unsettable; they hold with or without a curve, since the wah sweeps between them either way. |
+| Sweep to | slider | 2500 Hz | 50 – 8000 Hz, step 10 | The high end of the sweep. A connected curve travels it by multiplying rather than adding — an octave is a doubling — so the sweep does not rush into the treble. |
 | Depth | slider | 100 % | 0 – 100 %, step 1 | Frequency sweep range (0% = static, 100% = full wah). |
 | Resonance | slider | 5 Q | 0.5 – 20 Q, step 0.5 | Filter resonance (high Q = pronounced wah, low Q = gentle). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
@@ -6673,9 +6737,48 @@ Loads a folder of audio tracks, reduces each to a 40-feature vector (tempo, spec
 
 | Component | Summary |
 |---|---|
+| [Collection Loop End](#collection-loop-end) | Closes a batch: writes each pass's result into the output folder, under the source file's name. |
+| [Collection Loop Start](#collection-loop-start) | Opens a batch: the graph is run once per audio file in the folder, and this node returns the file of the current pass. |
 | [MIDI→MP3 conversion](#midimp3-conversion) | Converts a folder of MIDI files to MP3. |
 | [MP3→WAV conversion](#mp3wav-conversion) | Converts a folder of MP3 files to WAV. |
 | [WAV→MP3 conversion](#wavmp3-conversion) | Converts a folder of audio files to MP3. |
+
+#### Collection Loop End
+
+`boucle-collection-fin` · Collections → Conversion
+
+*Closes a batch: writes each pass's result into the output folder, under the source file's name.*
+
+The « Name » input is optional, and it is what makes batch renaming programmable. Wired, the name it carries replaces the source's; unwired, every file keeps its own. The received name is sanitised before it becomes a path — separators, drive letters, characters the system refuses, names reserved for devices, trailing dots and spaces: all go. That name does not come from typing but from a node, which may have been a language model, and a name holding two dots and a slash would write outside the output folder. If nothing usable is left, the source's name takes its place again. Two sources cannot bear the same name in one folder; two renamings very well can. The node therefore refuses to write the same name twice in a batch, rather than overwriting in silence — that is the classic way to lose a whole batch while believing it processed. Otherwise, this node writes. It is the only thing it does, and that is why it exists: without it a batch would compute thirty results and keep none, each pass erasing the one before. A written file's name is its source's, with the extension replaced. That is what makes a batch readable back: the output folder compares to the input folder file by file, and you see at once what is missing. A suffix can be added to tell two successive runs of the same batch apart. The bit depth is the toolbar's, as for any save — 24-bit by default. A batch meant for delivery has no reason to come out at 16-bit when the rest of the software no longer does. The output folder must differ from the input folder, and the node refuses if they are the same. This is no excess of caution: at identical extension every file would overwrite its own source, and the batch would destroy what it processes — with nothing to say so until the end. The text output is the batch log, one line per file, complete at the last pass. It is what you read back to know which ones went through.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Name | text |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Output folder | folder | — |  | The folder where each result is written. It must differ from the input folder: at identical extension every file would overwrite its own source, and the batch would destroy what it processes. |
+| Format | choice | WAV | WAV / MP3 | The format of the written files. WAV follows the bit depth chosen in the toolbar; MP3 is encoded at 192 kbps, and has no bit depth. |
+| Suffix | text | — |  | Added to the name before the extension. Useful to tell two successive runs of the same batch apart in one folder, or simply to mark what has been processed. |
+
+#### Collection Loop Start
+
+`boucle-collection-debut` · Collections → Conversion
+
+*Opens a batch: the graph is run once per audio file in the folder, and this node returns the file of the current pass.*
+
+This node and « Collection Loop End » bracket a chain, as « Loop Start » and « Instrument Note » bracket theirs. What you put between them is any graph at all — an equaliser, a reverb, a loudness normalisation, a whole chain — and it is that graph which is applied to every file in the folder. The difference from the collection conversions already present comes down to one word: ports. « WAV to MP3 conversion » reads one folder and writes another, but the operation is sealed inside it and nothing can be inserted. Here the processing is yours. The graph is run once per file, one after another, rather than copied as many times as there are files. The distinction is not theoretical: the project's two other repetitions unroll the chain before execution, so every turn lives at once. That is harmless on a two-second note, and would ask for 7.5 GB on thirty three-minute tracks. Here a pass releases its memory before the next one, so the number of files has no ceiling. The order is that of the names, not the one the file system returns: a batch whose order changed between runs would make any log incomparable. The second output gives the name of the current file, and it has one precise destination: the « Name » input of the loop end. Put « Edit Text » between the two and batch renaming becomes programmable — prefix with a date, renumber, lowercase, strip a pattern. Without that wiring the output name stays the source's, which is the common case and needs no setting. One collection loop start per graph. Two nested batches would make no sense here, each wanting to command the number of passes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Name | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Folder | folder | — |  | The folder whose every audio file will be processed. Recognised extensions are wav, wave, ogg, mp3, flac, m4a, aac, aif and aiff; everything else is quietly ignored. The number of passes is the number of files found, and it is shown on this node as soon as the run starts. |
 
 #### MIDI→MP3 conversion
 

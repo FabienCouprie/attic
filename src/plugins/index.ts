@@ -143,6 +143,9 @@ import { fiches as f_montageGrains } from "./montage-grains";
 import { fiches as f_ecrans } from "./ecrans";
 import { fiches as f_atomes } from "./atomes";
 import { fiches as f_ondelettes } from "./ondelettes";
+import { fiches as f_ecosysteme } from "./ecosysteme";
+import { fiches as f_ssp } from "./ssp";
+import { fiches as f_boucleCollection } from "./boucle-collection";
 import { fiches as f_correction_hauteur } from "./correction-hauteur";
 import { fiches as f_stereo_morphing } from "./stereo-morphing";
 import { fiches as f_finitions } from "./finitions";
@@ -207,6 +210,9 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_ecrans,
   ...f_atomes,
   ...f_ondelettes,
+  ...f_ecosysteme,
+  ...f_ssp,
+  ...f_boucleCollection,
   ...f_correction_hauteur,
   ...f_stereo_morphing,
   ...f_finitions,

@@ -79,6 +79,18 @@ export interface PortDef {
   // port requis est connecté avant d'exécuter le nœud. Un port optionnel
   // (requis: false) peut être non connecté — le plugin gère le null via entrees().
   requis?: boolean;
+  /**
+   * Ce port de modulation pilote CE paramètre-là.
+   *
+   * POURQUOI SUR LE PORT ET NON AILLEURS. Un nœud doit pouvoir voir plusieurs de ses réglages
+   * bouger à la fois — un vrai wah déplace sa coupure ET sa résonance, et mettre deux filtres en
+   * série ne reproduit pas un filtre dont deux réglages bougent. Un port unique ne le permet pas,
+   * et un port qui accepterait plusieurs courbes ne dirait pas laquelle va où : l'ordre des arêtes
+   * déciderait du son, et réordonner un câble le changerait en silence. Un port par paramètre
+   * modulable, nommant sa cible, enlève toute ambiguïté — et l'inspecteur en tire directement la
+   * liste des réglages effectivement pilotés.
+   */
+  module?: string;
 }
 
 export interface ParametreDef {
@@ -103,6 +115,18 @@ export interface ParametreDef {
   placeholder?: string;
   placeholderEn?: string;
   hidden?: boolean;
+  /**
+   * Ce réglage est une borne de modulation, et nomme le paramètre qu'il encadre.
+   *
+   * POURQUOI LE DIRE AU LIEU DE LE LAISSER DEVINER. Un effet qui accepte une courbe porte trois
+   * réglages dont DEUX sont toujours inertes : quand une courbe est branchée, le réglage d'origine
+   * ne sert plus ; quand elle ne l'est pas, les deux bornes ne servent pas. L'interface les
+   * affichait tous les trois de la même façon, et seule la documentation disait lequel comptait.
+   * Cette déclaration lui permet de les réunir en une seule commande, à la place du paramètre
+   * qu'elles pilotent et dans ses unités — un hertz n'étant pas un Q, une borne détachée de ce
+   * qu'elle borne ne veut rien dire.
+   */
+  modulationDe?: string;
 }
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et

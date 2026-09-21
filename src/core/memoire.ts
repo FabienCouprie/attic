@@ -9,10 +9,12 @@
 //
 // CE QUE CELA COÛTE, MESURÉ. Un `AudioBuffer` stocke des flottants 32 bits, hors du tas JavaScript :
 // une heure en stéréo à 44 100 Hz pèse 3600 × 44100 × 2 × 4 = **1,27 Go**. L'aperçu écouté sous le
-// nœud est une seconde copie, en 16 bits, soit **635 Mo** de plus — allouée d'un bloc par
-// `bufferVersWavBlob`, puis retenue par le Blob. Un nœud qui a tourné sur une heure de son retient
-// donc près de **1,9 Go**, et une chaîne de cinq nœuds en retient dix. C'est ce chiffre-là, et non
-// une intuition, qui fixe le seuil ci-dessous.
+// nœud est une seconde copie, à la profondeur d'écriture choisie — **953 Mo** en vingt-quatre bits,
+// qui est le défaut depuis que l'écriture a cessé d'être bloquée en seize, 635 Mo si l'on revient à
+// seize, 1,27 Go en flottant. Allouée d'un bloc par `bufferVersWavBlob`, puis retenue par le Blob.
+// Un nœud qui a tourné sur une heure de son retient donc près de **2,2 Go**, et une chaîne de cinq
+// nœuds en retient onze. C'est ce chiffre-là, et non une intuition, qui fixe le seuil ci-dessous —
+// et monter la profondeur le rend d'autant plus nécessaire.
 //
 // OÙ CET APERÇU EST RETENU, ET CE QUE CELA CHANGE. Pas dans le processus qui calcule : un Blob est
 // détenu par le processus NAVIGATEUR de Chromium. Mesuré dans une seule session, sur une piste de
@@ -25,8 +27,8 @@
 // est bel et bien en mémoire vive.
 //
 // DIX MINUTES, ET POURQUOI CE NOMBRE. En deçà, une chaîne ordinaire tient dans la mémoire d'une
-// machine courante : dix minutes en stéréo font 212 Mo de tampon et 106 Mo d'aperçu, soit 318 Mo
-// par nœud — cinq nœuds tiennent sous 1,6 Go. Au-delà, la même chaîne dépasse ce qu'on peut
+// machine courante : dix minutes en stéréo font 212 Mo de tampon et 159 Mo d'aperçu, soit 370 Mo
+// par nœud — cinq nœuds tiennent sous 1,9 Go. Au-delà, la même chaîne dépasse ce qu'on peut
 // demander sans rien changer. Le seuil n'est donc pas un goût : c'est l'endroit où le comportement
 // d'aujourd'hui cesse d'être tenable.
 //
@@ -34,7 +36,7 @@
 // PENDANT son calcul — une propriété de l'algorithme, qui ne change jamais. `apercuUtile` dit s'il
 // faut garder une copie écoutable APRÈS — une propriété de la place du nœud dans le graphe, qui
 // change à chaque clic. Un nœud « totale » ne mérite pas plus d'aperçu qu'un autre ; les mêler
-// reviendrait à retenir 635 Mo au motif qu'un étirement lit sa fin avant son début.
+// reviendrait à retenir 953 Mo au motif qu'un étirement lit sa fin avant son début.
 
 /** Ce qu'un nœud exige de la mémoire pendant son calcul. */
 export type ModeMemoire =
@@ -56,9 +58,21 @@ export function octetsTampon(dureeS: number, canaux = 2, frequence = 44100): num
   return Math.round(dureeS * frequence * canaux * 4);
 }
 
-/** Octets de l'aperçu écoutable : le même signal en 16 bits, donc la moitié. */
-export function octetsApercu(dureeS: number, canaux = 2, frequence = 44100): number {
-  return Math.round(dureeS * frequence * canaux * 2) + 44;
+/**
+ * Octets de l'aperçu écoutable, à la profondeur d'écriture choisie.
+ *
+ * LA PROFONDEUR N'EST PLUS FIXE, ET CELA SE PAIE ICI. Le même blob sert d'aperçu et de fichier
+ * sauvegardé : porter l'écriture à vingt-quatre bits — ce qu'exige toute livraison sérieuse —
+ * augmente d'autant ce que les aperçus retiennent, de moitié en vingt-quatre et du double en
+ * trente-deux. Sur une heure de stéréo, l'aperçu passe de 635 Mo à 953 Mo, et c'est très exactement
+ * ce que la bascule d'économie de mémoire est là pour rattraper.
+ *
+ * L'en-tête compte 44 octets en PCM et 56 en virgule flottante, le format hors PCM exigeant deux
+ * octets de plus au bloc `fmt ` et un bloc `fact` entier. Cela ne pèse rien à côté des données, et
+ * on le compte quand même : une fonction qui annonce une taille l'annonce juste.
+ */
+export function octetsApercu(dureeS: number, canaux = 2, frequence = 44100, bits: 16 | 24 | 32 = 24): number {
+  return Math.round(dureeS * frequence * canaux * (bits / 8)) + (bits === 32 ? 56 : 44);
 }
 
 /**
@@ -66,7 +80,7 @@ export function octetsApercu(dureeS: number, canaux = 2, frequence = 44100): num
  *
  * Sur une piste courte, toujours — c'est ce qui permet d'écouter chaque étape, et cela ne coûte
  * rien. Sur une piste longue, seulement pour le nœud que l'on regarde : les intermédiaires
- * retiendraient 635 Mo chacun pour une copie que personne n'ouvre. L'aperçu d'un intermédiaire
+ * retiendraient 953 Mo chacun pour une copie que personne n'ouvre. L'aperçu d'un intermédiaire
  * n'est pas perdu, il est simplement construit au moment où on le demande.
  *
  * `economie` est la bascule de la barre d'outils. Coupée, la durée ne compte plus : chaque nœud

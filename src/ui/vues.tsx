@@ -1817,6 +1817,41 @@ function VueCoordonneesSurCarte({ data }: VueProps) {
   );
 }
 
+
+/**
+ * La courbe qu'un nœud vient de produire, tracée sur le nœud lui-même.
+ *
+ * CE QUI MANQUAIT LE PLUS. On branchait une modulation et rien à l'écran ne disait ce qu'elle
+ * faisait : ni sa forme, ni son amplitude, ni si elle bougeait. Pour une courbe engendrée on
+ * pouvait encore la deviner des réglages ; pour un suiveur de caractéristique — la brillance d'un
+ * son, son énergie — personne ne peut la prévoir, et c'est justement celle-là qu'il faut voir.
+ *
+ * L'échelle verticale est fixe, de zéro à un, et ne se normalise pas. Une courbe qui ne bouge
+ * presque pas DOIT se voir comme une ligne presque plate : l'étirer pour remplir le cadre
+ * montrerait un beau relief là où le paramètre ne bouge pas, ce qui est le contraire du service
+ * rendu. Les deux tirets marquent le tiers et les deux tiers, de quoi juger d'un coup d'œil.
+ */
+function VueCourbe({ data }: VueProps) {
+  const points = (data as unknown as { apercuCourbe?: number[] }).apercuCourbe;
+  if (!points || points.length < 2) return null;
+  const L = 200, H = 46;
+  const trace = points
+    .map((v, i) => `${((i / (points.length - 1)) * L).toFixed(1)},${(H - v * H).toFixed(1)}`)
+    .join(" ");
+  const bas = Math.min(...points), haut = Math.max(...points);
+  return (
+    <div className="attic-node-courbe">
+      <svg viewBox={`0 0 ${L} ${H}`} preserveAspectRatio="none" role="img"
+        aria-label={`Courbe de modulation, de ${bas.toFixed(2)} a ${haut.toFixed(2)}`}>
+        <line x1="0" y1={H / 3} x2={L} y2={H / 3} className="attic-node-courbe-repere" />
+        <line x1="0" y1={(2 * H) / 3} x2={L} y2={(2 * H) / 3} className="attic-node-courbe-repere" />
+        <polyline points={trace} className="attic-node-courbe-trace" />
+      </svg>
+      <div className="attic-node-courbe-bornes"><span>{bas.toFixed(2)}</span><span>{haut.toFixed(2)}</span></div>
+    </div>
+  );
+}
+
 // ── Registre : id (ou prédicat) → vue(s), position relative au lecteur ──
 type Vue = (props: VueProps) => ReactNode;
 interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; position: "avant" | "apres"; masqueMessage?: boolean; }
@@ -1825,6 +1860,7 @@ const parId = (...ids: string[]) => (f: string) => ids.includes(f);
 const REGISTRE: EntreeRegistre[] = [
   // Enregistreur et entrée micro : la logique d'enregistrement est dans l'inspecteur,
   // pas dans une vue avant (évite le décalage du handle de sortie).
+  { correspond: parId("generateur-courbe", "suiveur-caracteristique"), vue: VueCourbe, position: "avant" },
   { correspond: parId("visualiseur-forme-onde"), vue: VueFormeOnde, position: "avant" },
   { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },

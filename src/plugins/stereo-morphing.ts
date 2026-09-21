@@ -54,7 +54,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Son A", nomEn: "Sound A", type: "audio" },
       { nom: "Son B", nomEn: "Sound B", type: "audio" },
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Mélange" },
     ],
     sorties: [
       { nom: "Audio", type: "audio" },
@@ -64,10 +64,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mélange", nomEn: "Morph", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "À 0 %, le son A ; à 100 %, le son B ; au milieu, un timbre intermédiaire. Une courbe branchée sur l'entrée Modulation prend la place de ce réglage.",
         docEn: "At 0 % sound A; at 100 % sound B; in between, an intermediate timbre. A curve connected to the Modulation input takes this setting's place." },
-      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Mélange", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
         doc: "Mélange que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Morph that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mélange", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Mélange que vaut le un de la courbe. Une rampe de zéro à cent traverse entièrement d'un son à l'autre.",
         docEn: "Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",

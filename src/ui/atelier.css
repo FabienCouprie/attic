@@ -342,6 +342,36 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 .attic-nom-fichier-detacher:hover { background: rgba(238,68,68,0.12); color: #e44; }
 
+/* La courbe produite, tracée sur le nœud. Échelle verticale FIXE de zéro à un : une courbe qui ne
+   bouge pas doit se voir plate, et non être étirée pour remplir le cadre. */
+.attic-node-courbe { padding: 4px 8px 2px; }
+.attic-node-courbe svg { width: 100%; height: 46px; display: block; }
+.attic-node-courbe-trace { fill: none; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.attic-node-courbe-repere { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.attic-node-courbe-bornes {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--text-muted); margin-top: 1px;
+}
+
+/* Un paramètre piloté par une courbe : ses deux bornes, à sa place et dans son unité. La lecture
+   passe avant les curseurs — c'est elle qu'on vient chercher, les curseurs ne servent qu'à la régler. */
+.inspecteur-plage { display: flex; flex-direction: column; gap: 3px; }
+.inspecteur-plage-lecture { font-size: 11px; color: var(--text-title); }
+.inspecteur-plage-borne { display: flex; align-items: center; gap: 6px; }
+.inspecteur-plage-borne input[type="range"] { flex: 1; }
+.inspecteur-plage-etiquette {
+  font-size: 10px; color: var(--text-muted); width: 16px; flex: none; text-align: right;
+}
+
+/* La profondeur des fichiers écrits. Discret comme une bascule voisine, et non comme un réglage
+   qu'on vient chercher : c'est une décision qu'on prend une fois. */
+.attic-profondeur-export {
+  font-size: 11px; color: var(--text-secondary); cursor: pointer;
+  padding: 2px 4px; margin-left: 2px; border-radius: 4px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border);
+}
+.attic-profondeur-export:hover { color: var(--text-title); }
+
 /* ── Canevas ── */
 .attic-canevas { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .attic-canevas > .react-flow { flex: 1; min-height: 0; }

@@ -24,6 +24,8 @@ const SIGLES = new Set([
   "FFT", "IFFT", "STFT", "DSP", "LFO", "ADSR", "RMS", "EQ", "BPF", "LPF", "HPF", "FIR", "IIR",
   "RT60", "FDN", "PGHI", "ZCR", "MFCC", "YIN", "HPSS", "STN", "SNR", "THD", "DC", "AM", "FM",
   "PM", "PWM", "CV", "BPM", "GM", "IR", "VST", "DAW", "OSC", "SMS", "MMS",
+  // Programmes historiques : le « Sound Synthesis Program » de Koenig s'écrit ainsi.
+  "SSP",
   // Apprentissage automatique
   "ONNX", "LLM", "RNN", "VAE", "GAN", "CNN", "PCA", "TTS", "ASR", "STT", "VAD", "DDSP", "SA3",
   "SDXS", "GTCRN", "MDX", "UVR", "WASM", "CPU", "GPU", "RAM",

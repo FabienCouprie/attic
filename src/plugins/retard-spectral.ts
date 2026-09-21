@@ -17,7 +17,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Delays the low end more than the high end — or the other way round — without cutting anything: the sound is not filtered, it is spread out.",
     entrees: [
       { nom: "Audio", type: "audio" },
-      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Dispersion" },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -41,10 +41,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Traîne max", nomEn: "Max tail", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "s",
         doc: "Borne de la queue ajoutée après le son. Ce n'est pas un réglage de confort : à forte dispersion, la traîne théorique atteint des dizaines de secondes que le rebouclage répète encore, et le rendu deviendrait interminable. La borne la coupe, et c'est ce qui rend les réglages extrêmes utilisables.",
         docEn: "Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable." },
-      { nom: "Modulation min", nomEn: "Modulation min", type: "curseur", plage: [0, 0.99], pas: 0.01, defaut: 0.2,
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Dispersion", type: "curseur", plage: [0, 0.99], pas: 0.01, defaut: 0.2,
         doc: "Dispersion que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
         docEn: "Dispersion that a connected curve's zero means. With no curve, this setting does nothing." },
-      { nom: "Modulation max", nomEn: "Modulation max", type: "curseur", plage: [0, 0.99], pas: 0.01, defaut: 0.95,
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Dispersion", type: "curseur", plage: [0, 0.99], pas: 0.01, defaut: 0.95,
         doc: "Dispersion que vaut le un de la courbe. C'est aussi ce qui fixe la longueur de la traîne quand une courbe est branchée : elle se mesure sur la dispersion la plus forte que le rendu atteindra.",
         docEn: "Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach." },
     ],

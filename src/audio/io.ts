@@ -1,5 +1,5 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
-import { creerQuantificateur16 } from "./dither";
+import { creerQuantificateur } from "./dither";
 import { Mp3Encoder } from "lamejs";
 
 export async function decoderFichier(fichier: File, ctx: BaseAudioContext): Promise<AudioBuffer> {
@@ -75,12 +75,35 @@ export function extraireGrapheMp3(arrayBuffer: ArrayBuffer): string | null {
   return null;
 }
 
-export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, securise: boolean = false): Blob {
+/**
+ * Les profondeurs que le projet sait écrire.
+ *
+ * SEIZE BITS EST UNE LIVRAISON DE DISQUE COMPACT, ET NON UNE LIVRAISON PROFESSIONNELLE. Tout
+ * livrable de diffusion, de post-production ou d'archivage se rend en vingt-quatre bits au
+ * minimum ; un outil qui mesure en LUFS et en crête vraie et qui ne sait sortir qu'en seize se
+ * contredit lui-même. Le trente-deux bits flottant, lui, ne se quantifie pas du tout : il garde le
+ * tampon tel quel, dépassements compris, ce qui est exactement ce qu'on veut d'un fichier destiné
+ * à être retravaillé ailleurs.
+ */
+export type ProfondeurExport = 16 | 24 | 32;
+
+export interface OptionsWav {
+  /** 16 ou 24 bits entiers, ou 32 bits flottants. Défaut : 16, pour ne rien changer aux appels internes. */
+  bits?: ProfondeurExport;
+  /** Graine du dither. Même graine, mêmes octets. */
+  graine?: number;
+}
+
+export function bufferVersWavBlob(
+  buffer: AudioBuffer, grapheJson?: string, securise: boolean = false, options: OptionsWav = {},
+): Blob {
   const nbCanaux = buffer.numberOfChannels;
   const frequence = buffer.sampleRate;
   const nbEchantillons = buffer.length;
-  const bitsParEchantillon = 16;
-  const blocAlign = (nbCanaux * bitsParEchantillon) / 8;
+  const bitsParEchantillon: ProfondeurExport = options.bits ?? 16;
+  const flottant = bitsParEchantillon === 32;
+  const octetsParEchantillon = bitsParEchantillon / 8;
+  const blocAlign = nbCanaux * octetsParEchantillon;
   const octetsParSeconde = frequence * blocAlign;
   const tailleDonnees = nbEchantillons * blocAlign;
 
@@ -105,7 +128,15 @@ export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, secu
     if (subSize % 2) gv.setUint8(20 + subSize, 0); // pad byte
   }
 
-  const tailleTotal = 44 + tailleDonnees + grapheChunk.byteLength;
+  // L'EN-TÊTE N'EST PLUS À OFFSETS FIXES, et il ne pouvait plus l'être. Un fichier en virgule
+  // flottante n'est pas du PCM : sa balise de format vaut 3, son bloc `fmt ` porte deux octets de
+  // plus, et la norme exige en outre un bloc `fact` donnant le nombre de trames. Les quarante-quatre
+  // octets d'un en-tête PCM ne suffisent donc plus, et les écrire quand même produirait un fichier
+  // que la moitié des lecteurs refuserait.
+  const tailleFmt = flottant ? 18 : 16;
+  const tailleFact = flottant ? 12 : 0;
+  const tailleEntete = 12 + 8 + tailleFmt + tailleFact + 8;
+  const tailleTotal = tailleEntete + tailleDonnees + grapheChunk.byteLength;
   const arrayBuffer = new ArrayBuffer(tailleTotal);
   const vue = new DataView(arrayBuffer);
 
@@ -114,18 +145,28 @@ export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, secu
   }
 
   ecrireChaine(0, "RIFF");
-  vue.setUint32(4, 36 + tailleDonnees + grapheChunk.byteLength, true);
+  vue.setUint32(4, tailleTotal - 8, true);
   ecrireChaine(8, "WAVE");
-  ecrireChaine(12, "fmt ");
-  vue.setUint32(16, 16, true);
-  vue.setUint16(20, 1, true);
-  vue.setUint16(22, nbCanaux, true);
-  vue.setUint32(24, frequence, true);
-  vue.setUint32(28, octetsParSeconde, true);
-  vue.setUint16(32, blocAlign, true);
-  vue.setUint16(34, bitsParEchantillon, true);
-  ecrireChaine(36, "data");
-  vue.setUint32(40, tailleDonnees, true);
+  let tete = 12;
+  ecrireChaine(tete, "fmt ");
+  vue.setUint32(tete + 4, tailleFmt, true);
+  vue.setUint16(tete + 8, flottant ? 3 : 1, true);
+  vue.setUint16(tete + 10, nbCanaux, true);
+  vue.setUint32(tete + 12, frequence, true);
+  vue.setUint32(tete + 16, octetsParSeconde, true);
+  vue.setUint16(tete + 20, blocAlign, true);
+  vue.setUint16(tete + 22, bitsParEchantillon, true);
+  if (flottant) vue.setUint16(tete + 24, 0, true); // cbSize : aucune extension
+  tete += 8 + tailleFmt;
+  if (flottant) {
+    ecrireChaine(tete, "fact");
+    vue.setUint32(tete + 4, 4, true);
+    vue.setUint32(tete + 8, nbEchantillons, true);
+    tete += 12;
+  }
+  ecrireChaine(tete, "data");
+  vue.setUint32(tete + 4, tailleDonnees, true);
+  tete += 8;
 
   const canaux: Float32Array[] = [];
   for (let c = 0; c < nbCanaux; c++) canaux.push(buffer.getChannelData(c));
@@ -135,16 +176,33 @@ export function bufferVersWavBlob(buffer: AudioBuffer, grapheJson?: string, secu
   // distorsion, et non du bruit, audible sur les fins de fondu et les queues de réverbération.
   // Le quantificateur arrondit et dithere (cf. `audio/dither.ts`). À graine fixe : deux rendus du
   // même son donnent deux fichiers identiques.
-  const quantifier = creerQuantificateur16();
+  const quantifier = flottant ? null : creerQuantificateur(bitsParEchantillon, { graine: options.graine });
 
   const SEUIL_PREVIEW = 0.5; // -6 dBFS
-  const maxAbs = securise ? SEUIL_PREVIEW : 1.0;
-  let offset = 44;
+  // EN VIRGULE FLOTTANTE, ON NE BORNE PAS, et c'est le seul intérêt du format. Un tampon qui dépasse
+  // le plein calibre passe tel quel, et se rattrape d'un gain négatif dans l'outil suivant sans
+  // qu'un seul échantillon ait été écrêté. Borner ici reviendrait à détruire ce qu'on est venu
+  // chercher. Le plafond d'aperçu, lui, reste : il protège les oreilles, ce qui prime.
+  const borne = securise ? SEUIL_PREVIEW : flottant ? Infinity : 1.0;
+  let offset = tete;
   for (let i = 0; i < nbEchantillons; i++) {
     for (let c = 0; c < nbCanaux; c++) {
-      const echantillon = Math.max(-maxAbs, Math.min(maxAbs, canaux[c][i]));
-      vue.setInt16(offset, quantifier(echantillon), true);
-      offset += 2;
+      const brut = canaux[c][i];
+      const echantillon = Math.max(-borne, Math.min(borne, Number.isFinite(brut) ? brut : 0));
+      if (flottant) {
+        vue.setFloat32(offset, echantillon, true);
+      } else if (bitsParEchantillon === 24) {
+        // Vingt-quatre bits s'écrivent en trois octets de poids croissant : `DataView` ne connaît
+        // aucune largeur de trois, il faut les poser à la main. Le complément à deux se fait par
+        // le masque, une valeur négative devenant son représentant sur vingt-quatre bits.
+        const v = quantifier!(echantillon) & 0xffffff;
+        vue.setUint8(offset, v & 0xff);
+        vue.setUint8(offset + 1, (v >> 8) & 0xff);
+        vue.setUint8(offset + 2, (v >> 16) & 0xff);
+      } else {
+        vue.setInt16(offset, quantifier!(echantillon), true);
+      }
+      offset += octetsParEchantillon;
     }
   }
 
