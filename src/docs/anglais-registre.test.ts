@@ -26,6 +26,7 @@ import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
 import { toutesLesFiches } from "../plugins/index";
 import { CLES_CONNUES, traduireDans } from "../i18n";
+import { FAMILLES_EFFETS } from "../plugins/familles-effets";
 import type { FicheAudio } from "../audio/types-domaine";
 import "../audio/adaptateur";
 
@@ -165,5 +166,37 @@ describe("familles de la palette", () => {
       }
     }
     expect(doublons).toEqual([]);
+  });
+});
+
+// LES EFFETS RANGÉS PAR STYLE (cf. plugins/familles-effets.ts). Un identifiant mal écrit dans la
+// table ne rangerait rien et ne se verrait nulle part : le nœud resterait dans « Effets », et la
+// famille annoncée serait vide.
+describe("familles de style des effets", () => {
+  it("chaque identifiant de la table existe et a bien reçu sa famille", () => {
+    const parId = new Map(toutesLesFiches.map((f) => [f.id, f]));
+    const inconnus: string[] = [];
+    const malRanges: string[] = [];
+    for (const [famille, ids] of Object.entries(FAMILLES_EFFETS)) {
+      for (const id of ids) {
+        const f = parId.get(id);
+        if (!f) inconnus.push(`${famille} : ${id}`);
+        else if (f.famille !== famille) malRanges.push(`${id} : ${f.famille} au lieu de ${famille}`);
+      }
+    }
+    expect(inconnus).toEqual([]);
+    expect(malRanges).toEqual([]);
+  });
+
+  it("chaque famille de style a son libellé et au moins trois nœuds — en deçà, elle encombre la palette", () => {
+    for (const famille of Object.keys(FAMILLES_EFFETS)) {
+      expect(CLES_CONNUES.has(`famille.${famille}`), famille).toBe(true);
+      expect(toutesLesFiches.filter((f) => f.famille === famille).length, famille).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("aucun nœud n'est rangé deux fois", () => {
+    const tous = Object.values(FAMILLES_EFFETS).flat();
+    expect(tous.length).toBe(new Set(tous).size);
   });
 });

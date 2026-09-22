@@ -168,8 +168,9 @@ import { fiches as f_csound_partition } from "./csound-partition";
 import { fiches as f_csound_orchestre } from "./csound-orchestre";
 import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
 import { fiches as f_csound_formules } from "./csound-formules";
+import { rangerParStyle } from "./familles-effets";
 
-export const toutesLesFiches: FicheAudio[] = [
+export const toutesLesFiches: FicheAudio[] = ([
   ...f_entrees,
   ...f_effets,
   ...f_analyse,
@@ -335,4 +336,4 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_syntheses_exotiques,
   ...f_theorie_avancee,
   ...f_csound,
-];
+] as FicheAudio[]).map(rangerParStyle);

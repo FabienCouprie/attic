@@ -9,7 +9,9 @@
 //
 //  1. Sans entrée, avec une sortie audio ou MIDI → c'est une SOURCE, donc l'univers Entrées.
 //  2. Avec une entrée qui n'est pas du texte et une sortie audio ou MIDI → c'est un
-//     TRAITEMENT, donc la famille Effets.
+//     TRAITEMENT, donc l'univers Traitement — dans « Effets » ou dans l'une des familles de
+//     style qui en sont sorties (cf. plugins/familles-effets.ts : le Tonnetz est rangé dans
+//     « Topologie », et c'est bien un tore).
 //
 // Un nœud qui n'a que des sorties texte reste dans Théorie, quelle que soit son entrée :
 // « Classes de hauteurs » et « Contrepoint d'espèces » prennent un MIDI et rendent une
@@ -66,20 +68,20 @@ describe("règles de rangement de la famille Théorie", () => {
     expect(fautifs, "devraient être dans l'univers Entrées").toEqual([]);
   });
 
-  it("range dans les Effets un nœud à entrée non textuelle qui rend du son ou du MIDI", () => {
+  it("range dans les traitements un nœud à entrée non textuelle qui rend du son ou du MIDI", () => {
     const fautifs = theorieEtVoisins
       .filter((f) => (f.entrees ?? []).length > 0 && !entreeTexteSeule(f) && sortSonore(f)
-        && f.famille !== "Effets")
-      .map((f) => `${f.id} (famille ${f.famille})`);
-    expect(fautifs, "devraient être dans la famille Effets").toEqual([]);
+        && f.univers !== "Traitement")
+      .map((f) => `${f.id} (univers ${f.univers})`);
+    expect(fautifs, "devraient être dans l'univers Traitement").toEqual([]);
   });
 
   it("a bien déplacé les quatre nœuds concernés", () => {
     for (const id of ["serie-dodecaphonique", "harmonie-negative", "voicings-accords", "tonnetz"]) {
       const f = fiches.find((x) => x.id === id);
       expect(f, id).toBeDefined();
-      expect(f!.famille, id).toBe("Effets");
       expect(f!.univers, id).toBe("Traitement");
+      expect(f!.famille, id).not.toBe("Théorie");
     }
   });
 });
