@@ -183,6 +183,11 @@ export interface PluginDef<TValeur, TRuntime> {
   // (cf. FonctionPlugin). Défaut : false.
   sortieNullePermise?: boolean;
 
+  // Les entrées de ce nœud s'affichent À LA DEMANDE : la fiche les déclare toutes, et chaque nœud
+  // n'en dessine que ce qu'il utilise, avec deux boutons pour s'allonger et se raccourcir. Le
+  // moteur, lui, les voit toutes — c'est un fait d'affichage (cf. ui/ports-extensibles.ts).
+  entreesExtensibles?: { min: number; defaut: number };
+
   // Le nœud passe après tous les autres nœuds du run, et un run lancé depuis lui porte sur le
   // graphe entier. Pour un nœud qui rend compte du travail de tout le graphe (cf.
   // plugins/grapheGlobal.ts) sans en recevoir de valeur par une arête. Défaut : false.

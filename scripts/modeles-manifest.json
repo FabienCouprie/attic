@@ -116,13 +116,167 @@
       "octets": 29704738,
       "source": {
         "type": "fichier",
-        "url": null
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/modele-separation.onnx",
+        "octets": 29704738,
+        "sha256": "9d78f8566fa8198065214ab628be1de966a500c57786695aa4b13e2b27a7727d"
       },
       "fichiers": [
         {
           "chemin": "oonx/modele-separation.onnx",
           "octets": 29704738,
           "sha256": "9d78f8566fa8198065214ab628be1de966a500c57786695aa4b13e2b27a7727d"
+        }
+      ]
+    },
+    {
+      "id": "stable-audio-3",
+      "nom": "Stable Audio 3 (musique)",
+      "nomEn": "Stable Audio 3 (music)",
+      "noeuds": [
+        "stable-audio-3"
+      ],
+      "octets": 719073823,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/stable-audio-3.zip",
+        "octets": 603739223,
+        "sha256": "bcaed647028817cec6ac3bbd5164bfff986d97b610462e0ded8d2cb78e697a69"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/stable-audio-3-small-music/LICENSE-STABILITY.md",
+          "octets": 11852,
+          "sha256": "d6f6b1a4dce5c852bd6d7d9482d002baf0ccdb71e662250b73be9eec8764ee8d"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/LICENSE.md",
+          "octets": 11852,
+          "sha256": "d6f6b1a4dce5c852bd6d7d9482d002baf0ccdb71e662250b73be9eec8764ee8d"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/LICENSE_GEMMA.md",
+          "octets": 10541,
+          "sha256": "e77acc0d3163bb7534675045c584b4d04b387b529239fc4b3647da0a01ba4745"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/NOTICE",
+          "octets": 97,
+          "sha256": "66f856d7da72797f528fca46b7c80634ab481f917bfe020960e123d84b19f75f"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/README.md",
+          "octets": 4838,
+          "sha256": "614264a3e9728a3c27d150fef86c647185c57645578bc977705493727bc67664"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/config.json",
+          "octets": 1145,
+          "sha256": "32360d056dcd9b0d1636b5f99bed6fe5e8dd0636f4354f9e800e38bf2368e4b9"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/number_conditioner.npz",
+          "octets": 790548,
+          "sha256": "195a00bb0009a47d1fbfed84e3c53481b8e62de68927fa7a80d757e076316b3a"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/decoder_q4.onnx",
+          "octets": 1653261,
+          "sha256": "c096325b7909ec84ada0b403f66e05c10745799f8ae5daee1f2739d6ff9fccaf"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/decoder_q4_chunk_0.data",
+          "octets": 44894208,
+          "sha256": "d30ef4db0559ac0cb01d1c92816c6a8fceeb5736194636b3dd8aff2a2c7d2e92"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/decoder_q4_chunks.json",
+          "octets": 155,
+          "sha256": "2a2849af84f608b24a549a71b0b3e9af524b0c40c454e92e8b394007131a4072"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4.onnx",
+          "octets": 5929366,
+          "sha256": "28bd338559828e59a24a6a53b0c572be812b6b37c01d128805ad52e1182045e5"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4_chunk_0.data",
+          "octets": 96468992,
+          "sha256": "820a926d7fe530b57858e1f28514e4f73f4b8adace4ea86150af1474ba17e2c4"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4_chunk_1.data",
+          "octets": 99614720,
+          "sha256": "aef2ba5b21b2b075aa4deddd220bdaf3ec62c5d5ec1e0442e289daab8cfc02d8"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4_chunk_2.data",
+          "octets": 99614720,
+          "sha256": "7b18d3acd769c1b071768a4da71f9ade71d75ad1ec49cb043ac899867525b06f"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4_chunk_3.data",
+          "octets": 84451328,
+          "sha256": "4357e4c777f9f90d7e35e805471b7964e7f220716cab92a0c55d1c300f65c622"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/dit_q4_chunks.json",
+          "octets": 367,
+          "sha256": "f980dfc1cdbc150efa2f8b7e2df4f55d692aacfefbf51cf5e7761b16454cffcd"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/encoder_q4.onnx",
+          "octets": 35686439,
+          "sha256": "2384ed22a91f90c55c821fd59a77e8e6eb36363a6d21b3f6b370a223fe43a582"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/number_conditioner.onnx",
+          "octets": 798844,
+          "sha256": "959b835bca06d6224ff67d13a374adcbb322b85f644ddb1b671618483d4399fc"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/number_conditioner_chunks.json",
+          "octets": 84,
+          "sha256": "d889dcecc6f0c5dcf1f1875ca4d8116f41d0a825d0f02e1013236adc84112716"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/shard_summary.json",
+          "octets": 1003,
+          "sha256": "0cfe6c046272efb7c9c52084fbfd403dc1b9e12fa26cf59daae322c70ea2619b"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/text_encoder_q4.onnx",
+          "octets": 2232988,
+          "sha256": "8677dd1e78cb0d587323c71228c3cb5cc5665ae859a5a016b3d4d35d9b4c2c00"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/text_encoder_q4_chunk_0.data",
+          "octets": 98304000,
+          "sha256": "e0ba3442706d7c667737588bdde18f5ea93c586a7f2b9b5e93cb7aab66fb7a84"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/text_encoder_q4_chunk_1.data",
+          "octets": 99418112,
+          "sha256": "f625dbba3a64be52803dc1e0271a19b72c3faee9098d7f1c538f1d79ce44b048"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/text_encoder_q4_chunk_2.data",
+          "octets": 14811136,
+          "sha256": "c201c674073d2d50e0be25813634be7fd80f9d0665de383568e4297c99b482b1"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/onnx/text_encoder_q4_chunks.json",
+          "octets": 330,
+          "sha256": "cae21a64e7605b45888caa8c50ed549e6c914c0e79c5ae7c30a3c2e1e18c853b"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/tokenizer/tokenizer.json",
+          "octets": 34362428,
+          "sha256": "923de64f4705efd22f6880dc5e6a9b2993de2706a03d0d48773e0173e32a074f"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-music/tokenizer/tokenizer_config.json",
+          "octets": 469,
+          "sha256": "af45141062453724afa6a4e8a9352bd714e3405056693552ff0273769e7b6cf1"
         }
       ]
     },
@@ -136,7 +290,9 @@
       "octets": 680441863,
       "source": {
         "type": "archive",
-        "url": null
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/sdxs-512.zip",
+        "octets": 437522353,
+        "sha256": "169e845e3889a6550872c23b039d7b4884811ac018cb567857e4666451b412cf"
       },
       "fichiers": [
         {

@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 390 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 391 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **390 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **391 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -33,7 +33,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **Auto-update** via electron-updater (GitHub Releases) — manual check, no auto-download
 - **System audio capture** — record audio from other applications
 - **Embedded subtractive synthesizer** meta-component example
-- **8 effects** left in the catch-all family; the rest are sorted into fifteen families — reverberation, echo, stretching, spectrum, topology, denoising, tempo, pitch, logistic, equalisation and filters, stereo, distortion and modulation, order and inversions, instruments, MIDI patterns — including: spectrum stretch, spectral arpeggio, window shuffle, harmonic sieve and filtering by a spectrum (after the Composers' Desktop Project), tuned comb filters, varispeed under a curve, two-sound convolution, tuned resonators excited by any sound, self-regulating granular ecosystem (after Di Scipio), wavelet transform with Donoho thresholding, atomic decomposition (matching pursuit on a Gabor dictionary), particle synthesis (Brandtsegg's unified model: grains, pulsars, glissons, trainlets, granulation), spectral tracing, spectral blur, spectral freeze, inner glissando, brassage and envelope transfer (after Wishart), Doppler, tape machine, ducking, ambisonic rotation, MIDI pattern transformations (impose rhythm, note echo, thin out, ply and rotate, retrograde and palindrome), physical models (shakers, wind instruments, modal bars), scanned synthesis, wave terrain, FOF vowels, serial operations, negative harmony, voicings, Tonnetz, Markov chains, historical temperaments, tremolo, phaser, vibrato, octaver, chopper, wah-wah, polarity inversion, pitch correction, bass mono, spectral morphing, gated reverb, shimmer, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, spaciousness (velvet-noise early reflections), convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
+- **9 effects** left in the catch-all family; the rest are sorted into fifteen families — reverberation, echo, stretching, spectrum, topology, denoising, tempo, pitch, logistic, equalisation and filters, stereo, distortion and modulation, order and inversions, instruments, MIDI patterns — including: spectrum stretch, spectral arpeggio, window shuffle, harmonic sieve and filtering by a spectrum (after the Composers' Desktop Project), tuned comb filters, varispeed under a curve, two-sound convolution, tuned resonators excited by any sound, self-regulating granular ecosystem (after Di Scipio), wavelet transform with Donoho thresholding, atomic decomposition (matching pursuit on a Gabor dictionary), particle synthesis (Brandtsegg's unified model: grains, pulsars, glissons, trainlets, granulation), spectral tracing, spectral blur, spectral freeze, inner glissando, brassage and envelope transfer (after Wishart), Doppler, tape machine, ducking, ambisonic rotation, MIDI pattern transformations (impose rhythm, note echo, thin out, ply and rotate, retrograde and palindrome), physical models (shakers, wind instruments, modal bars), scanned synthesis, wave terrain, FOF vowels, serial operations, negative harmony, voicings, Tonnetz, Markov chains, historical temperaments, tremolo, phaser, vibrato, octaver, chopper, wah-wah, polarity inversion, pitch correction, bass mono, spectral morphing, gated reverb, shimmer, stereo spatialization, auto-pan, slide stretch, bitcrusher, ring modulator, de-esser, gate/expander, spaciousness (velvet-noise early reflections), convolution reverb, formant shifter, logistic-map echo/chopper/paulstretch, beat repeat
 - **Multichannel family** — a spatialiser writing trajectories into concert rings (VBAP), 5.1 to 7.1.4 (ITU-R BS.2051) or AmbiX ambisonics up to order 3; an ambisonic decoder (max-rE); sound objects rendered to any layout chosen at render time; binaural monitoring through virtual speakers; the layout travels with the audio through ordinary effects, and multichannel WAV files carry their channel mask
 - **Text → MIDI node** — render a simple text notation (or an LLM's output) to MIDI + synthesized audio, powering the "LLM composer" workflow (Ollama → Text→MIDI)
 
@@ -134,7 +134,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (390 nodes)
+  plugins/       # Plugin node definitions (391 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -180,3 +180,8 @@ The demo **`music collection`** — opened by default by the Music player, Sound
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+Powered by Stability AI — the "Text to music" node runs Stable Audio 3 small-music, licensed under
+the [Stability AI Community License](https://stability.ai/community-license-agreement). Model
+licences and required attributions are listed in [THIRD_PARTY.md](THIRD_PARTY.md); note that the
+Demucs weights are provided for scientific, non-commercial use only

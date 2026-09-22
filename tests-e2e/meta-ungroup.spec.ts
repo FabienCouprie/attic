@@ -125,8 +125,10 @@ test.describe("Copy / paste", () => {
     await page.waitForSelector('.react-flow__node[data-id="b"]', { timeout: 10000 });
 
     // Select the first node, then Control-click the second to multi-select.
-    await page.click('.react-flow__node[data-id="a"]');
-    await page.click('.react-flow__node[data-id="b"]', { modifiers: ["Control"] });
+    // Click the node HEADER, not the node itself: the centre of an audio input node is the button
+    // that opens the file picker, and a click there opens a dialog that swallows the keyboard.
+    await page.click('.react-flow__node[data-id="a"] .attic-node-nom');
+    await page.click('.react-flow__node[data-id="b"] .attic-node-nom', { modifiers: ["Control"] });
 
     // Copy then paste.
     await page.keyboard.press("Control+c");
@@ -205,7 +207,7 @@ test.describe("Global reset", () => {
     await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
 
     // Click the global reset button in the top bar.
-    await page.click('.attic-barre-outils button[title="Réinitialiser"]');
+    await page.click('.attic-barre-outils button[title^="Réinitialiser"]');
 
     // All nodes should return to the waiting state.
     await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.attente', { timeout: 3000 });
@@ -259,8 +261,8 @@ test.describe("Global reset", () => {
     await page.click('.react-flow__node[data-id="a"] .attic-node-btn-prio');
     await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
 
-    // Delete node a, then undo.
-    await page.click('.react-flow__node[data-id="a"]');
+    // Delete node a, then undo. Again by its name: the centre of the node opens the file picker.
+    await page.click('.react-flow__node[data-id="a"] .attic-node-nom');
     await page.keyboard.press("Delete");
     await page.waitForSelector('.react-flow__node[data-id="a"]', { state: "detached", timeout: 3000 });
 
@@ -272,7 +274,7 @@ test.describe("Global reset", () => {
     await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.termine', { timeout: 10000 });
 
     // Click the global reset button.
-    await page.click('.attic-barre-outils button[title="Réinitialiser"]');
+    await page.click('.attic-barre-outils button[title^="Réinitialiser"]');
     await page.waitForSelector('.react-flow__node[data-id="a"] .attic-node-statut-puce.attente', { timeout: 3000 });
 
     const texte = await page.evaluate(() => {

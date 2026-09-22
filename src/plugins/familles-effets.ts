@@ -66,7 +66,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   // Fondus et mélange : ce qu on fait en posant les sons les uns après les autres.
   "Montage": ["fondu"],
   // Dessiner le volume dans le temps, ou le prendre à un son pour le poser sur un autre.
-  "Contrôle d enveloppe": ["enveloppe-adsr", "transfert-enveloppe", "suiveur-caracteristique"],
+  "Contrôle d enveloppe": ["enveloppe-adsr", "transfert-enveloppe"],
   // Ils reçoivent des notes et rendent un son : ce ne sont pas des effets, ce sont des instruments.
   "Instruments": [
     "barre-modale", "secoueurs", "vent-guide-onde", "voyelle-fof", "terrain-onde",

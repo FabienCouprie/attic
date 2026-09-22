@@ -259,7 +259,7 @@ async function generate(options) {
   } = options;
 
   if (!modelDir || !fs.existsSync(modelDir)) {
-    throw new Error(`Modèle introuvable : ${modelDir}`);
+    throw new Error(`Modèle Stable Audio 3 absent (${modelDir}). Il ne vient plus avec l'installeur : prenez-le par l'icône « Récupérer les modèles IA » de la barre d'outils, ou indiquez un dossier dans le réglage « Dossier du modèle ».`);
   }
 
   const T_lat = Math.ceil(((seconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
@@ -337,7 +337,7 @@ async function continueAudio(options) {
   } = options;
 
   if (!modelDir || !fs.existsSync(modelDir)) {
-    throw new Error(`Modèle introuvable : ${modelDir}`);
+    throw new Error(`Modèle Stable Audio 3 absent (${modelDir}). Il ne vient plus avec l'installeur : prenez-le par l'icône « Récupérer les modèles IA » de la barre d'outils, ou indiquez un dossier dans le réglage « Dossier du modèle ».`);
   }
   if (!audio || !audio.channels || audio.channels.length === 0) {
     throw new Error("Audio d'entrée invalide");

@@ -46,12 +46,39 @@ function inventaire(chemin) {
 
 const total = (liste) => liste.reduce((s, f) => s + f.octets, 0);
 
+/**
+ * Le tri qu'electron-builder applique à une ressource, appliqué ici de même.
+ *
+ * POURQUOI LE RELIRE. Une ressource peut être embarquée SAUF un dossier — SDXS, 649 Mo, se
+ * télécharge depuis la release au lieu de gonfler l'installeur. Sans cette lecture, la
+ * vérification comparerait la source entière au paquet allégé et déclarerait manquant ce qu'on
+ * vient de décider de ne pas embarquer.
+ *
+ * On ne lit que la forme employée ici — « **\/* » et des exclusions « !dossier/** » —, et l'on
+ * refuse tout motif qu'on ne sait pas interpréter plutôt que de l'ignorer en silence.
+ */
+function retenu(relatif, filtre) {
+  if (!Array.isArray(filtre)) return true;
+  const chemin = relatif.split(path.sep).join("/");
+  for (const motif of filtre) {
+    if (motif === "**/*") continue;
+    if (!motif.startsWith("!") || !motif.endsWith("/**")) {
+      throw new Error(`Motif de filtre non pris en charge : ${motif}`);
+    }
+    const prefixe = motif.slice(1, -3) + "/";
+    if (chemin.startsWith(prefixe)) return false;
+  }
+  return true;
+}
+
 function verifierSources(racine, extraResources) {
   const problemes = [];
-  for (const { from } of extraResources) {
+  for (const { from, filter: filtre } of extraResources) {
     const source = path.join(racine, from);
     if (!fs.existsSync(source)) { problemes.push(`${from} : source absente`); continue; }
-    const utiles = inventaire(source).filter((f) => !SANS_CONTENU.has(path.basename(f.relatif)) && f.octets > 0);
+    const utiles = inventaire(source)
+      .filter((f) => retenu(f.relatif, filtre))
+      .filter((f) => !SANS_CONTENU.has(path.basename(f.relatif)) && f.octets > 0);
     if (utiles.length === 0) problemes.push(`${from} : source vide`);
   }
   return problemes;
@@ -59,12 +86,12 @@ function verifierSources(racine, extraResources) {
 
 function verifierPaquet(racine, extraResources, dossierRessources) {
   const problemes = [];
-  for (const { from, to } of extraResources) {
+  for (const { from, to, filter: filtre } of extraResources) {
     const source = path.join(racine, from);
     const cible = path.join(dossierRessources, to || from);
     if (!fs.existsSync(cible)) { problemes.push(`${to || from} : absent de l'application construite`); continue; }
     if (!fs.existsSync(source)) { problemes.push(`${from} : source absente, impossible de comparer`); continue; }
-    const s = inventaire(source), c = inventaire(cible);
+    const s = inventaire(source).filter((f) => retenu(f.relatif, filtre)), c = inventaire(cible);
     if (s.length !== c.length || total(s) !== total(c)) {
       problemes.push(`${to || from} : ${c.length} fichier(s) / ${total(c)} octets dans l'application, ${s.length} / ${total(s)} dans la source`);
     }

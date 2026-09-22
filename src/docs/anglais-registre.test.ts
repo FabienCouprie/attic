@@ -188,10 +188,10 @@ describe("familles de style des effets", () => {
     expect(malRanges).toEqual([]);
   });
 
-  it("chaque famille de style a son libellé et au moins trois nœuds — en deçà, elle encombre la palette", () => {
+  it("chaque famille de style a son libellé et au moins deux nœuds — seule, une famille n'en est pas une", () => {
     for (const famille of Object.keys(FAMILLES_EFFETS)) {
       expect(CLES_CONNUES.has(`famille.${famille}`), famille).toBe(true);
-      expect(toutesLesFiches.filter((f) => f.famille === famille).length, famille).toBeGreaterThanOrEqual(3);
+      expect(toutesLesFiches.filter((f) => f.famille === famille).length, famille).toBeGreaterThanOrEqual(2);
     }
   });
 

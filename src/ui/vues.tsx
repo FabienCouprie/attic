@@ -200,6 +200,17 @@ function VueExplorateur({ id, data }: VueProps) {
   const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
   const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
 
+  // RIEN NE DOIT PARAÎTRE CHOISI TANT QUE RIEN NE L'EST. Une liste déroulée (`size` > 1) met sa
+  // première ligne en surbrillance quand aucune option n'est sélectionnée : le nœud semblait tenir
+  // la première piste, et choisir une autre ligne donnait l'impression de revenir à celle-là.
+  // `value=""` ne suffit pas — le navigateur retombe sur l'indice 0 —, on le dit donc au DOM.
+  // Sans tableau de dépendances : n'importe quel rendu — le chargement qui se termine, une autre
+  // piste lue — repose `value=""` sur la liste, et le navigateur y revient à sa première ligne.
+  const listeRef = useRef<HTMLSelectElement>(null);
+  useEffect(() => {
+    if (listeRef.current && selectedIndex < 0) listeRef.current.selectedIndex = -1;
+  });
+
   // Sélection d'une piste, partagée par `onChange` et `onClick` du <select>.
   async function choisirPiste(index: number) {
     const f = fichiersMusique?.[index];
@@ -264,7 +275,7 @@ function VueExplorateur({ id, data }: VueProps) {
             // fichier, et l'exécution répondait « Aucun fichier » alors que la
             // liste montrait bien la piste sélectionnée. Les autres lignes
             // fonctionnaient, elles, puisqu'elles changeaient réellement l'index.
-            <select className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
+            <select ref={listeRef} className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
               value={selectedIndex >= 0 ? String(selectedIndex) : ""}
               onClick={(e) => {
                 const cible = e.target as HTMLElement;
@@ -1620,6 +1631,20 @@ function VueGalerieExposition({ data }: VueProps) {
 }
 
 // ── VexFlow (aperçu SVG de portée, tablature, grille d'accords) ──
+// ── Partition gravée (Verovio) : le SVG est sur la sortie, le message reste lisible ──
+function VueGravure({ data }: VueProps) {
+  const { t } = useI18n();
+  const svg = typeof data.scriptGenere === "string" ? data.scriptGenere : "";
+  if (!svg.includes("<svg")) {
+    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+  }
+  return (
+    <div className="attic-node-vue-vexflow">
+      <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
+  );
+}
+
 function VueVexFlow({ data }: VueProps) {
   const { t } = useI18n();
   const svg = data.audioResultatMessage ?? "";
@@ -1675,6 +1700,17 @@ function VueTraceCourbe({ data }: VueProps) {
 }
 
 // ── Attracteur / IFS (image générée) ──
+// ── Une animation SVG posée par le nœud, et qui ne sort pas par un port ──
+function VueAnimationSvg({ data }: VueProps) {
+  const { t } = useI18n();
+  const svg = typeof data._animationSvg === "string" ? data._animationSvg : "";
+  if (!svg.includes("<svg")) {
+    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+  }
+  // L'animation est écrite en SMIL : posée telle quelle dans la page, elle tourne.
+  return <div className="attic-node-vue-vexflow"><div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} /></div>;
+}
+
 function VueAttracteurIFS({ data }: VueProps) {
   const { t } = useI18n();
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
@@ -1970,13 +2006,12 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
-  // Le cercle pulsant rend un SVG ANIMÉ : la même vue l'affiche, et l'animation tourne dans la
-  // balise image parce qu'elle est écrite en SMIL et non en feuille de style.
-  { correspond: parId("cercle-pulsant"), vue: VueAttracteurIFS, position: "avant" },
+  { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
+  { correspond: parId("partition-verovio"), vue: VueGravure, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
   { correspond: parId("coordonnees-sur-carte"), vue: VueCoordonneesSurCarte, position: "avant" },

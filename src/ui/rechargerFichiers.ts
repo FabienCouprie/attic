@@ -43,7 +43,12 @@ export async function rechargerFichiersPersistes(nodes: NoeudAtelier[]) {
           n.data.imageNom = res.nom;
         }
       } else if (n.data.ficheId === "explorateur-musique" && !n.data.audioFichier) {
-        const cheminAudio = n.data.audioChemin || chemin;
+        // LE CHEMIN DE CE NŒUD EST UN DOSSIER, PAS UNE PISTE. « Chemin » dit où chercher ; la piste
+        // choisie, elle, vit dans `audioChemin`. Se rabattre sur l'un quand l'autre manque revenait
+        // à lire un dossier comme un fichier audio : tant qu'aucune piste n'était choisie, le nœud
+        // se chargeait d'un faux fichier au nom du dossier, et la première exécution échouait sans
+        // que rien à l'écran ne l'explique. Sans piste choisie, il n'y a rien à recharger.
+        const cheminAudio = n.data.audioChemin;
         if (cheminAudio) {
           const res = await api.lireFichierAudio(cheminAudio);
           if (res) {

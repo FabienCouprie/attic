@@ -8,7 +8,9 @@ export const fiches: FicheAudio[] = ([
     id: "pure-data",
     nom: "Pure Data",
     nomEn: "Pure Data",
-    univers: "Entrées",
+    // Un patch Pure Data n'est pas une source d'Attic : c'est un autre logiciel qu'on fait tourner
+    // à côté, dont on récupère le son. Sa place est au laboratoire, avec sa catégorie.
+    univers: "Autres",
     famille: "Génération",
     resume: "Génère un audio en exécutant un patch Pure Data (.pd).",
     resumeEn: "Generates audio by running a Pure Data patch (.pd).",

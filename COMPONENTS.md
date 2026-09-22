@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **390 components** in **7 categories** and **48 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **391 components** in **7 categories** and **48 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [Generation](#generation) (54) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
-| [Processing](#processing) | 192 | [Conversion](#conversion) (4) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (3) · [Equalisation and filters](#equalisation-and-filters) (14) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (8) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (6) |
-| [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
+| [Inputs](#inputs) | 70 | [Audio](#audio) (7) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Processing](#processing) | 192 | [Conversion](#conversion) (4) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (14) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (9) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (6) |
+| [Visualization](#visualization) | 38 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (8) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 66 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (2) |
+| [Other & lab](#other--lab) | 67 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (2) |
 
 ## How to read this catalog
 
@@ -208,7 +208,6 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 | [Poly Synth](#poly-synth) | Generates a polyphonic chord with an ADSR envelope. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Pulsing Circle](#pulsing-circle) | An animation and a melody drawn from the same series of pulses: colour gives the key, pulsation the rhythm. |
-| [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
 | [Random Melody](#random-melody) | Generates a random melody. |
 | [Resultant (Schillinger)](#resultant-schillinger) | The rhythm that arises from superposing two regular pulses. |
 | [RGB Color](#rgb-color) | Synthesizes an RGB color into three oscillators (R, G, B). |
@@ -1249,11 +1248,10 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 
 *An animation and a melody drawn from the same series of pulses: colour gives the key, pulsation the rhythm.*
 
-A circle that breathes, changes size and colour, and a melody that comes out of it. But not in the sense of sonifying a picture: the two are the same list, looked at twice. The principle, and what sets it apart from decorative sonification. The node computes a single series of pulses — an instant, a size, a colour — then the drawing animates exactly those instants and the melody writes exactly those notes. They cannot drift apart, because there is nothing to synchronise. Hue gives the key through the Camelot wheel, and this is no arbitrary mapping. That wheel lays the twelve keys in a circle — ring A for the minors, B for the majors — following the disc jockeys' mixing rule: a neighbouring position, the same number in the other ring, or seven positions away. Hue is a circle, the wheel is another: matching them means two neighbouring hues give two compatible keys. A continuous gradient therefore produces a sequence of modulations that work. The obvious mapping — hue divided into twelve semitones — would do the opposite: two neighbouring colours would give two unrelated keys, and a gradient would sound like a string of accidents. The rest follows. Saturation chooses the ring: dull for minor, vivid for major, which the eye already reads as sombre or brilliant. Lightness gives the register. The radius at the moment of the stroke gives the scale degree — a large circle is a low note, the sense the eye spontaneously gives a wide shape — and its amplitude gives the dynamic. Silence has a picture. Below the threshold the pulse is seen and not heard: the circle contracts, the music falls silent, and both fall silent together because it is the same decision. The animation comes out as an SVG animated by SMIL rather than by a stylesheet or a script, and that choice has a reason: an SVG animated by SMIL moves even when loaded in an image tag, which is where Attic shows its images. The file is self-contained — no font, no external resource, no script — and opens in any browser.
+A circle that breathes, changes size and colour, and a melody that comes out of it. But not in the sense of sonifying a picture: the two are the same list, looked at twice. The principle, and what sets it apart from decorative sonification. The node computes a single series of pulses — an instant, a size, a colour — then the drawing animates exactly those instants and the melody writes exactly those notes. They cannot drift apart, because there is nothing to synchronise. Hue gives the key through the Camelot wheel, and this is no arbitrary mapping. That wheel lays the twelve keys in a circle — ring A for the minors, B for the majors — following the disc jockeys' mixing rule: a neighbouring position, the same number in the other ring, or seven positions away. Hue is a circle, the wheel is another: matching them means two neighbouring hues give two compatible keys. A continuous gradient therefore produces a sequence of modulations that work. The obvious mapping — hue divided into twelve semitones — would do the opposite: two neighbouring colours would give two unrelated keys, and a gradient would sound like a string of accidents. The rest follows. Saturation chooses the ring: dull for minor, vivid for major, which the eye already reads as sombre or brilliant. Lightness gives the register. The radius at the moment of the stroke gives the scale degree — a large circle is a low note, the sense the eye spontaneously gives a wide shape — and its amplitude gives the dynamic. Silence has a picture. Below the threshold the pulse is seen and not heard: the circle contracts, the music falls silent, and both fall silent together because it is the same decision. The animation is watched in the node, and does not leave by a port: it is written as an SVG animated by SMIL, a clock rather than pixels, and no image processing would make anything of it. What the node outputs is what can be connected: the notes, the sound, and the journey through the keys.
 
 | Port | Name | Type | |
 |---|---|---|---|
-| output | Animation | image |  |
 | output | MIDI | MIDI |  |
 | output | Audio | audio |  |
 | output | Journey | text |  |
@@ -1272,27 +1270,6 @@ A circle that breathes, changes size and colour, and a melody that comes out of 
 | Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke. It is the note's decay made visible, and what gives the picture its depth. |
 | Size | slider | 600 px | 200 – 1200 px, step 20 | Side of the square image. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Seed for the irregularity of the sizes. The same seed replays the same piece, picture included. |
-
-#### Pure Data
-
-`pure-data` · Inputs → Generation
-
-*Generates audio by running a Pure Data patch (.pd).*
-
-Generates audio by running a Pure Data patch (.pd). The patch is interpreted by libpd in a WebAssembly AudioWorklet. Load the .pd file from the node button. The patch runs on an empty buffer of the chosen duration and the output is captured from [dac~] objects. Use patches without [adc~]: this node does not receive input audio. Choose the object library (vanilla, cyclone, else, full) depending on the objects used by the patch. GUI objects (buttons, sliders, arrays…) can be ignored with the corresponding option.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Libraries | choice | vanilla | vanilla / cyclone / else / full | Set of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything. |
-| Duration | slider | 1 s | 0.1 – 10 s, step 0.1 | Duration of the audio generated by the patch. The patch runs on an empty buffer of this duration. |
-| Output channels | slider | 2 ch | 1 – 8 ch, step 1 | Number of channels of the audio output. The patch must write to the matching dac~ channels. |
-| Bang on start | choice | yes | yes / no | Send a bang to the [loadbang] object when audio starts. |
-| Ignore GUI objects | choice | no | yes / no | Removes graphical objects (buttons, sliders, faders, arrays…) from the patch before execution. Some desktop patches use these for the UI but they are not supported by libpd in headless mode. |
-| Patch | text | — |  | Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes. |
 
 #### Random Melody
 
@@ -2571,7 +2548,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts — one per instrument — to play them with four different banks. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
-| [Montage](#montage) | Lays up to eight sounds on a timeline, each at its own instant and level, with its own fades. |
+| [Montage](#montage) | Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time. |
 | [Multi-Zone Selector](#multi-zone-selector) | Selects multiple audio zones and passes them as a list. |
 | [Place sound on zones](#place-sound-on-zones) | Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration. |
 | [Reinsert Zone](#reinsert-zone) | Reinserts a treated zone into the original track. |
@@ -2881,9 +2858,9 @@ Sums several tracks into a single output. Add as many inputs as needed. There is
 
 `montage` · Processing → Editing
 
-*Lays up to eight sounds on a timeline, each at its own instant and level, with its own fades.*
+*Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time.*
 
-This node lays up to eight sounds out on a timeline and adds them into one. Each track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. Above them, the timeline shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. Widening the inspector over the canvas gives the timeline the room it deserves. Fades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion. A negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than eight sounds, montage montages.
+This node lays sounds out on a timeline and adds them into one. It shows four tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to sixteen. The « - » refuses while the last track is connected: no cable disappears without being unplugged first. Each track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. Above them, the timeline shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. Widening the inspector over the canvas gives the timeline the room it deserves. Fades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion. A negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than sixteen sounds, montage montages.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2895,6 +2872,14 @@ This node lays up to eight sounds out on a timeline and adds them into one. Each
 | input | Track 6 | audio |  |
 | input | Track 7 | audio |  |
 | input | Track 8 | audio |  |
+| input | Track 9 | audio |  |
+| input | Track 10 | audio |  |
+| input | Track 11 | audio |  |
+| input | Track 12 | audio |  |
+| input | Track 13 | audio |  |
+| input | Track 14 | audio |  |
+| input | Track 15 | audio |  |
+| input | Track 16 | audio |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2931,6 +2916,38 @@ This node lays up to eight sounds out on a timeline and adds them into one. Each
 | Gain 8 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 8. |
 | Fade in 8 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 8's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
 | Fade out 8 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 8's fade out. |
+| Start 9 | number | 16 s | -600 – 3600 s, step 0.01 | Instant at which track 9 starts. Negative: the sound is trimmed by that much. |
+| Gain 9 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 9. |
+| Fade in 9 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 9's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 9 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 9's fade out. |
+| Start 10 | number | 18 s | -600 – 3600 s, step 0.01 | Instant at which track 10 starts. Negative: the sound is trimmed by that much. |
+| Gain 10 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 10. |
+| Fade in 10 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 10's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 10 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 10's fade out. |
+| Start 11 | number | 20 s | -600 – 3600 s, step 0.01 | Instant at which track 11 starts. Negative: the sound is trimmed by that much. |
+| Gain 11 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 11. |
+| Fade in 11 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 11's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 11 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 11's fade out. |
+| Start 12 | number | 22 s | -600 – 3600 s, step 0.01 | Instant at which track 12 starts. Negative: the sound is trimmed by that much. |
+| Gain 12 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 12. |
+| Fade in 12 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 12's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 12 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 12's fade out. |
+| Start 13 | number | 24 s | -600 – 3600 s, step 0.01 | Instant at which track 13 starts. Negative: the sound is trimmed by that much. |
+| Gain 13 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 13. |
+| Fade in 13 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 13's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 13 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 13's fade out. |
+| Start 14 | number | 26 s | -600 – 3600 s, step 0.01 | Instant at which track 14 starts. Negative: the sound is trimmed by that much. |
+| Gain 14 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 14. |
+| Fade in 14 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 14's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 14 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 14's fade out. |
+| Start 15 | number | 28 s | -600 – 3600 s, step 0.01 | Instant at which track 15 starts. Negative: the sound is trimmed by that much. |
+| Gain 15 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 15. |
+| Fade in 15 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 15's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 15 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 15's fade out. |
+| Start 16 | number | 30 s | -600 – 3600 s, step 0.01 | Instant at which track 16 starts. Negative: the sound is trimmed by that much. |
+| Gain 16 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 16. |
+| Fade in 16 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 16's fade in. A few milliseconds avoid a click; several seconds make the sound emerge. |
+| Fade out 16 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 16's fade out. |
 
 #### Multi-Zone Selector
 
@@ -3094,7 +3111,6 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 |---|---|
 | [ADSR Envelope](#adsr-envelope) | Shapes the sound's volume over time (attack, decay, sustain, release). |
 | [Envelope Transfer](#envelope-transfer) | Takes one sound's amplitude contour and lays it on another: one's rhythm, the other's material. |
-| [Feature Follower](#feature-follower) | Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it. |
 
 #### ADSR Envelope
 
@@ -3136,26 +3152,6 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Flatten | choice | Yes | Yes / No | Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer. |
 | Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. |
-
-#### Feature Follower
-
-`suiveur-caracteristique` · Processing → Envelope control
-
-*Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it.*
-
-Extracts a feature from a sound to drive an effect with it. After Vincent Verfaille, Udo Zolzer and Daniel Arfib, « Adaptive Digital Audio Effects (A-DAFx): A New Class of Sound Transformations », IEEE Transactions on Audio, Speech and Language Processing 14(5), 2006, and « Implementation Strategies for Adaptive Digital Audio Effects », DAFx-02. Their idea is that an effect becomes something else when its setting stops being a fixed number and becomes a feature of the sound itself: brightness opening its own filter, energy lengthening its own delay. No Attic node could do this. The four features say different things and do not replace one another. Energy follows the player's gesture, and is the most immediate. Brightness — the spectrum's centre of gravity — follows timbre: it rises as the sound gets harsh, even at constant volume. Flatness tells a note from a noise, zero for a sine and one for white noise: it serves to treat breath and notes differently. Flux marks attacks and falls back during sustains. Inertia deserves a word: without it, an energy curve makes the parameter jump at every attack and the result chatters. The smoothing runs forwards then backwards, never one way only — a one-way smoothing would delay the curve relative to the sound that produced it, and the filter would open after the note instead of with it. The node also passes the audio through unchanged, so it slots into a chain without cutting it. A curve always carries values between zero and one: the consumer decides what zero and one mean at its end, through its « Modulation min » and « Modulation max » settings.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Curve | curve |  |
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Feature | choice | Energy | Energy / Brightness / Flatness / Flux | What is followed, and the four say different things. Energy follows the player's gesture. Brightness — the spectrum's centre of gravity — follows timbre and rises as the sound gets harsh. Flatness tells a note from a noise: zero for a sine, one for white noise. Flux marks attacks and falls back during sustains. |
-| Inertia | slider | 70 % | 0 – 99 %, step 1 | Smoothing of the curve. Without it, an energy curve makes the parameter jump at every attack. The smoothing runs forwards then backwards so that it does not delay the curve: without that care, the filter would open after the note instead of with it. |
-| Rate | slider | 200 /s | 20 – 1000 /s, step 10 | Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates. |
 
 ### Equalisation and filters
 
@@ -4357,6 +4353,7 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | [Cantor Dust](#cantor-dust) | Hollows the sound by removing the middle third of each piece, level after level: a fractal silence. |
 | [Corpus Mosaicing](#corpus-mosaicing) | Rebuilds one sound from another's grains: the target's shape, the corpus's material. |
 | [Ecosystem (Di Scipio)](#ecosystem-di-scipio) | A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling. |
+| [Feature Follower](#feature-follower) | Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it. |
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
 | [Lucier Room](#lucier-room) | Feeds the sound back into the same room until only its resonances remain. |
 | [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound — on a grid, or locked to its period. |
@@ -4430,6 +4427,26 @@ After Agostino Di Scipio, « "Sound is the interface": from interactive to ecosy
 | Duration | slider | 15 s | 1 – 120 s, step 1 | The output duration, independent of the world's. This is where the node parts company with an effect: ask for thirty seconds on a one-second input, and listen to what the system becomes once the world has gone. |
 | Homeostat | choice | Connected | Connected / Disconnected | The node's control, and it is made to be disconnected. The same loop, the same grains, the same memory, without the regulation: the system then follows the world's volume instead of holding its own. Measured, three worlds thirty-four decibels apart give three outputs 1.13 dB apart with the homeostat, and 33.19 dB apart without it. |
 | Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two sounds that resemble each other in no sample and in every statistic — same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked. |
+
+#### Feature Follower
+
+`suiveur-caracteristique` · Processing → Other effects
+
+*Extracts a feature from a sound — energy, brightness, flatness, flux — to drive an effect with it.*
+
+Extracts a feature from a sound to drive an effect with it. After Vincent Verfaille, Udo Zolzer and Daniel Arfib, « Adaptive Digital Audio Effects (A-DAFx): A New Class of Sound Transformations », IEEE Transactions on Audio, Speech and Language Processing 14(5), 2006, and « Implementation Strategies for Adaptive Digital Audio Effects », DAFx-02. Their idea is that an effect becomes something else when its setting stops being a fixed number and becomes a feature of the sound itself: brightness opening its own filter, energy lengthening its own delay. No Attic node could do this. The four features say different things and do not replace one another. Energy follows the player's gesture, and is the most immediate. Brightness — the spectrum's centre of gravity — follows timbre: it rises as the sound gets harsh, even at constant volume. Flatness tells a note from a noise, zero for a sine and one for white noise: it serves to treat breath and notes differently. Flux marks attacks and falls back during sustains. Inertia deserves a word: without it, an energy curve makes the parameter jump at every attack and the result chatters. The smoothing runs forwards then backwards, never one way only — a one-way smoothing would delay the curve relative to the sound that produced it, and the filter would open after the note instead of with it. The node also passes the audio through unchanged, so it slots into a chain without cutting it. A curve always carries values between zero and one: the consumer decides what zero and one mean at its end, through its « Modulation min » and « Modulation max » settings.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Curve | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Feature | choice | Energy | Energy / Brightness / Flatness / Flux | What is followed, and the four say different things. Energy follows the player's gesture. Brightness — the spectrum's centre of gravity — follows timbre and rises as the sound gets harsh. Flatness tells a note from a noise: zero for a sine, one for white noise. Flux marks attacks and falls back during sustains. |
+| Inertia | slider | 70 % | 0 – 99 %, step 1 | Smoothing of the curve. Without it, an energy curve makes the parameter jump at every attack. The smoothing runs forwards then backwards so that it does not delay the curve: without that care, the filter would open after the note instead of with it. |
+| Rate | slider | 200 /s | 20 – 1000 /s, step 10 | Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates. |
 
 #### Granular Freeze
 
@@ -6734,6 +6751,7 @@ Displays an image received on its input and passes it through unchanged on its o
 | Component | Summary |
 |---|---|
 | [ABC Constraints](#abc-constraints) | Checks that an edit of an ABC score kept what had to stay fixed: bars, meter, key, melody, rhythm, chords. |
+| [Engraved Score](#engraved-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules. |
 | [MIDI → ABC](#midi--abc) | Writes a MIDI file in ABC notation: a text score, readable and editable by a language model. |
 | [MIDI Score](#midi-score) | Displays a musical staff from a MIDI file. |
 | [VexFlow Chord Chart](#vexflow-chord-chart) | Displays a chord chart from a list of symbols. |
@@ -6760,6 +6778,28 @@ Compares an original ABC score with an edited version, and says whether what had
 |---|---|---|---|---|
 | Check | choice | Reharmonization | Reharmonization / Pitch change / Variation / Structure only / Custom | What must stay fixed, depending on the edit. Reharmonization: bars, meter, key and melody. Pitch change: bars, meter and rhythm. Variation: bars, meter and key. Structure only: bars and meter. Custom: the list in the Invariants parameter. |
 | Invariants | text | `bars, meter` |  | Used with Check « Custom ». Among: bars, meter, key, melody, rhythm, chords, range. Melody and rhythm apply to the first voice; range checks that no note leaves the original's span. |
+
+#### Engraved Score
+
+`partition-verovio` · Visualization → Notation
+
+*Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.*
+
+This node engraves a score from a notation text, and returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. The engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white. A long piece spans several pages: the « Page » setting says which one to render, and the message gives their number. The SVG goes out on the output and is shown in the node.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Notation | text |  |
+| output | SVG | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Notation | text | `X:1 T:Gamme M:4/4 L:1/4 K:C C D E F \| G A B c \|` |  | The notation to engrave, when no text is connected to the input. |
+| Format | choice | Auto | Auto / ABC / MusicXML / MEI / Humdrum | « Auto » recognises the format from the shape of the text. The others impose it. |
+| Width | slider | 1800 | 600 – 6000, step 50 | Page width, in tenths of a millimetre: 2100 is an A4 sheet. Wider, more bars per line. No effect in unrolled mode. |
+| Scale | slider | 40 % | 10 – 200 %, step 5 | Size of the engraving. Small, the score fits whole in the node; large, it can be read. |
+| Unrolled | choice | No | No / Yes | The whole piece on a single system, as long as needed, instead of pages. |
+| Page | number | 1 | 1 – 200, step 1 | The page to render. Beyond the last one, the last one is rendered. |
 
 #### MIDI → ABC
 
@@ -7643,6 +7683,7 @@ Draws a Csound score at random. Why a node of its own, rather than « a random m
 | [Harmonic Palette](#harmonic-palette) | Extracts dominant colors from an image and generates a melody, harmony or arpeggio. |
 | [Julia Processor](#julia-processor) | Julia code editor with syntax highlighting for audio processing. |
 | [Pixeltone](#pixeltone) | Converts an image to sound by mapping R, G, B to frequencies. |
+| [Pure Data](#pure-data) | Generates audio by running a Pure Data patch (.pd). |
 | [Python Processor](#python-processor) | Python code editor with syntax highlighting for audio processing. |
 | [Sound Drawing](#sound-drawing) | Sonifies the colored shapes of a drawing image into notes or chords. |
 
@@ -7740,6 +7781,27 @@ Converts an image to sound following the pixeltone.js principle: each pixel beco
 | Scan | choice | Horizontal | Horizontal / Vertical / Zigzag | Pixel reading order: row by row, column by column, or horizontal zigzag. |
 | Channels | choice | Stereo | Mono / Stereo | Number of output audio channels. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the sound. |
+
+#### Pure Data
+
+`pure-data` · Other & lab → Generation
+
+*Generates audio by running a Pure Data patch (.pd).*
+
+Generates audio by running a Pure Data patch (.pd). The patch is interpreted by libpd in a WebAssembly AudioWorklet. Load the .pd file from the node button. The patch runs on an empty buffer of the chosen duration and the output is captured from [dac~] objects. Use patches without [adc~]: this node does not receive input audio. Choose the object library (vanilla, cyclone, else, full) depending on the objects used by the patch. GUI objects (buttons, sliders, arrays…) can be ignored with the corresponding option.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Libraries | choice | vanilla | vanilla / cyclone / else / full | Set of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything. |
+| Duration | slider | 1 s | 0.1 – 10 s, step 0.1 | Duration of the audio generated by the patch. The patch runs on an empty buffer of this duration. |
+| Output channels | slider | 2 ch | 1 – 8 ch, step 1 | Number of channels of the audio output. The patch must write to the matching dac~ channels. |
+| Bang on start | choice | yes | yes / no | Send a bang to the [loadbang] object when audio starts. |
+| Ignore GUI objects | choice | no | yes / no | Removes graphical objects (buttons, sliders, faders, arrays…) from the patch before execution. Some desktop patches use these for the UI but they are not supported by libpd in headless mode. |
+| Patch | text | — |  | Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes. |
 
 #### Python Processor
 

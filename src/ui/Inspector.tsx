@@ -198,8 +198,14 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         // nœud à vingt paramètres, rien ne disait lesquels avaient été touchés. Le nom
         // passe en gras et un point s'allume, dont l'infobulle rappelle le défaut.
         const modifie = parametreModifie(p, params, lang);
+        // UN TRAIT ENTRE DEUX ENTRÉES. Un montage à six pistes branchées aligne vingt-quatre
+        // réglages, quatre par piste, tous nommés pareil à un chiffre près : sans séparation, on
+        // règle le fondu de la piste 3 en croyant tenir celui de la piste 2. Le trait paraît au
+        // premier réglage de chaque entrée, et jamais avant le premier.
+        const premierDeSonPort = typeof p.port === "number"
+          && def.parametres.findIndex((q) => q.port === p.port && !q.hidden && !q.modulationDe) === def.parametres.indexOf(p);
         return (
-        <div key={p.nom} className={`inspecteur-param${modifie ? " inspecteur-param-modifie" : ""}`}>
+        <div key={p.nom} className={`inspecteur-param${modifie ? " inspecteur-param-modifie" : ""}${premierDeSonPort ? " inspecteur-param-debut-port" : ""}`}>
           <div className="inspecteur-param-ligne">
             <label>{nomP(p)}</label>
             {modifie && (

@@ -9,6 +9,7 @@ const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
 import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
 import { useStatut } from "./statuts";
+import { etatPorts } from "./ports-extensibles";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
@@ -225,6 +226,30 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     const t = setTimeout(() => setFlash(null), 700);
     return () => clearTimeout(t);
   }, [flash]);
+
+  // ── Entrées affichées à la demande (cf. ui/ports-extensibles.ts) ──
+  //
+  // Les câbles branchés sont lus à CHAQUE rendu : c'est ce qui empêche le « − » de cacher une
+  // piste câblée, et ce qui rallonge le nœud tout seul quand on rouvre un projet plus fourni.
+  const connexionsEntrees = useNodeConnections({ handleType: "target", id });
+  const ports = useMemo(() => etatPorts(
+    def?.entrees.length ?? 0,
+    def?.entreesExtensibles,
+    typeof data.portsVisibles === "number" ? data.portsVisibles : undefined,
+    connexionsEntrees.map((c) => Number(String(c.targetHandle ?? "in:0").split(":")[1])).filter(Number.isFinite),
+  ), [def, data.portsVisibles, connexionsEntrees]);
+
+  // ReactFlow mémorise la position de chaque poignée. Un nœud qui gagne ou perd une entrée change
+  // de hauteur ET déplace celles du dessous : sans cette remesure, les câbles resteraient accrochés
+  // là où les ports étaient. Même raison que la remesure posée après une exécution.
+  useEffect(() => { updateNodeInternals(id); }, [ports.visibles, id, updateNodeInternals]);
+
+  const reglerPortsVisibles = useCallback((n: number) => {
+    setNodes((nds) => nds.map((x) => (x.id === id ? { ...x, data: { ...x.data, portsVisibles: n } } : x)));
+    // ReactFlow mémorise la position des poignées : sans cela, les câbles restent accrochés là où
+    // les ports étaient avant que le nœud ne change de taille.
+    queueMicrotask(() => updateNodeInternals(id));
+  }, [id, setNodes, updateNodeInternals]);
 
   const supprimerAretesHandle = useCallback((handleId: string) => {
     const aretes = getEdges().filter(
@@ -564,7 +589,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
       <div className="attic-node-ports">
         <div className="attic-node-ports-col">
           {(!def?.entrees.length) && <div className="attic-node-port-vide">—</div>}
-          {def?.entrees.map((p, i) => {
+          {def?.entrees.slice(0, ports.visibles).map((p, i) => {
             const hid = `in:${i}`;
             const c = couleurFlux(p.type);
             const libelleType = registre.typeFlux(p.type)?.libelle ?? p.type;
@@ -580,6 +605,15 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
               </div>
             );
           })}
+          {def?.entreesExtensibles && (
+            <div className="attic-node-ports-plus nodrag">
+              <button disabled={!ports.peutRetirer} title={t("ports.retirer")}
+                onClick={(e) => { e.stopPropagation(); reglerPortsVisibles(ports.visibles - 1); }}>−</button>
+              <span>{ports.visibles}</span>
+              <button disabled={!ports.peutAjouter} title={t("ports.ajouter")}
+                onClick={(e) => { e.stopPropagation(); reglerPortsVisibles(ports.visibles + 1); }}>+</button>
+            </div>
+          )}
         </div>
         <div className="attic-node-ports-col right">
           {(!def?.sorties.length) && <div className="attic-node-port-vide">—</div>}

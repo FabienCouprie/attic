@@ -13,6 +13,19 @@
 // dictionnaire — une clé oubliée en anglais se voit donc à la compilation des tests, et non à
 // l'écran d'un anglophone.
 
+/** Un modèle, tel que l'inventaire du processus principal le décrit. */
+export interface ModeleEtat {
+  id: string;
+  nom: string;
+  nomEn?: string;
+  octets: number;
+  complet: boolean;
+  /** Présent à moitié : il se reprend en entier. */
+  partiel: boolean;
+  telechargeable: boolean;
+  noeuds?: string[];
+}
+
 /** L'inventaire tel que le processus principal le rend. */
 export interface EtatModeles {
   complets: number;
@@ -20,6 +33,29 @@ export interface EtatModeles {
   octetsAPrendre: number;
   manquants: string[];
   sansAdresse: string[];
+  modeles?: ModeleEtat[];
+}
+
+/**
+ * Ce que le panneau propose de prendre, du plus lourd au plus léger.
+ *
+ * POURQUOI DU PLUS LOURD. Deux modèles pèsent à eux seuls 1,3 Go sur les 1,9 que l'inventaire peut
+ * proposer : c'est ce que quelqu'un veut voir en premier pour décider s'il le prend maintenant, et
+ * non une liste alphabétique où le poids se découvre en cours de téléchargement.
+ */
+export function aPrendre(etat: EtatModeles | null, anglais = false): ModeleEtat[] {
+  const modeles = etat?.modeles ?? [];
+  return modeles
+    .filter((m) => !m.complet && m.telechargeable)
+    .map((m) => ({ ...m, nom: (anglais && m.nomEn) || m.nom }))
+    .sort((a, b) => b.octets - a.octets);
+}
+
+/** Ce qu'on ne peut pas proposer : présent nulle part et sans adresse pour aller le chercher. */
+export function sansAdresse(etat: EtatModeles | null, anglais = false): ModeleEtat[] {
+  return (etat?.modeles ?? [])
+    .filter((m) => !m.complet && !m.telechargeable)
+    .map((m) => ({ ...m, nom: (anglais && m.nomEn) || m.nom }));
 }
 
 /** Un message de progression du processus principal. */
@@ -97,8 +133,8 @@ export function apparenceModeles(
     return { variante: "inconnu", badge: null, cle: "modeles.verification", vars: [], actionnable: false, interrompt: false };
   }
 
-  const aPrendre = etat.manquants.length;
-  if (aPrendre === 0) {
+  const nombreAPrendre = etat.manquants.length;
+  if (nombreAPrendre === 0) {
     // Rien à prendre, mais il peut rester des modèles sans source publiée : le dire, sinon
     // l'utilisateur d'une version allégée croirait que tout est là alors qu'un nœud restera muet.
     if (etat.sansAdresse.length > 0) {
@@ -115,8 +151,8 @@ export function apparenceModeles(
     };
   }
   return {
-    variante: "manquants", badge: String(aPrendre),
-    cle: "modeles.manquants", vars: [aPrendre, formaterOctets(etat.octetsAPrendre)],
+    variante: "manquants", badge: String(nombreAPrendre),
+    cle: "modeles.manquants", vars: [nombreAPrendre, formaterOctets(etat.octetsAPrendre)],
     actionnable: true, interrompt: false,
   };
 }
