@@ -26,6 +26,7 @@ import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
 import { toutesLesFiches } from "../plugins/index";
 import { CLES_CONNUES, traduireDans } from "../i18n";
+import { FAMILLES_EFFETS } from "../plugins/familles-effets";
 import type { FicheAudio } from "../audio/types-domaine";
 import "../audio/adaptateur";
 
@@ -135,5 +136,67 @@ describe("anglais du dictionnaire", () => {
       .filter((c) => variables(traduireDans("fr", c)) !== variables(traduireDans("en", c)))
       .map((c) => `${c} : fr « ${traduireDans("fr", c)} » / en « ${traduireDans("en", c)} »`);
     expect(ecarts).toEqual([]);
+  });
+});
+
+// LA PALETTE AFFICHE LA FAMILLE PAR SA CLÉ « famille.<nom> ». Une famille sans entrée au dictionnaire
+// s'affichait telle quelle, « famille.Vidéo », et une famille au nom voisin d'une autre ouvrait un
+// second sous-menu : « Générateurs » à côté de « Génération » dans les Entrées. Les deux sont passés
+// inaperçus à la compilation comme aux tests ; constatés dans l'application.
+describe("familles de la palette", () => {
+  it("chaque famille du registre a son libellé au dictionnaire", () => {
+    const manquantes = [...new Set(toutesLesFiches.map((f) => f.famille))].filter((f) => !CLES_CONNUES.has(`famille.${f}`));
+    expect(manquantes).toEqual([]);
+  });
+
+  it("dans un même univers, deux familles ne diffèrent pas que par leur terminaison", () => {
+    const racine = (f: string) => f.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 6);
+    const doublons: string[] = [];
+    const parUnivers = new Map<string, Set<string>>();
+    for (const f of toutesLesFiches) {
+      if (!parUnivers.has(f.univers)) parUnivers.set(f.univers, new Set());
+      parUnivers.get(f.univers)!.add(f.famille);
+    }
+    for (const [u, familles] of parUnivers) {
+      const vues = new Map<string, string>();
+      for (const f of familles) {
+        const r = racine(f);
+        if (vues.has(r)) doublons.push(`${u} : ${vues.get(r)} / ${f}`);
+        else vues.set(r, f);
+      }
+    }
+    expect(doublons).toEqual([]);
+  });
+});
+
+// LES EFFETS RANGÉS PAR STYLE (cf. plugins/familles-effets.ts). Un identifiant mal écrit dans la
+// table ne rangerait rien et ne se verrait nulle part : le nœud resterait dans « Effets », et la
+// famille annoncée serait vide.
+describe("familles de style des effets", () => {
+  it("chaque identifiant de la table existe et a bien reçu sa famille", () => {
+    const parId = new Map(toutesLesFiches.map((f) => [f.id, f]));
+    const inconnus: string[] = [];
+    const malRanges: string[] = [];
+    for (const [famille, ids] of Object.entries(FAMILLES_EFFETS)) {
+      for (const id of ids) {
+        const f = parId.get(id);
+        if (!f) inconnus.push(`${famille} : ${id}`);
+        else if (f.famille !== famille) malRanges.push(`${id} : ${f.famille} au lieu de ${famille}`);
+      }
+    }
+    expect(inconnus).toEqual([]);
+    expect(malRanges).toEqual([]);
+  });
+
+  it("chaque famille de style a son libellé et au moins deux nœuds — seule, une famille n'en est pas une", () => {
+    for (const famille of Object.keys(FAMILLES_EFFETS)) {
+      expect(CLES_CONNUES.has(`famille.${famille}`), famille).toBe(true);
+      expect(toutesLesFiches.filter((f) => f.famille === famille).length, famille).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("aucun nœud n'est rangé deux fois", () => {
+    const tous = Object.values(FAMILLES_EFFETS).flat();
+    expect(tous.length).toBe(new Set(tous).size);
   });
 });

@@ -9,7 +9,7 @@ import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
   aplatirGraphe, trouverMeta,
-  ordreTopologique, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
+  ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
@@ -20,7 +20,7 @@ import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as stat
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
-import { publierGrapheCourant } from "../../plugins/grapheGlobal";
+import { publierGrapheCourant, publierExecutionCourante } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
 import { heriterDisposition } from "../../audio/multicanal";
@@ -331,11 +331,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
     const nds = deplie.noeuds as unknown as any[];
     const aretes = deplie.aretes as unknown as Edge[];
-    const priorite = noeudPrioritaireId ?? prioritaireRef.current;
+    const prioriteDemandee = noeudPrioritaireId ?? prioritaireRef.current;
+    // Un nœud qui passe en dernier rend compte du graphe entier : le lancer seul n'aurait pas de
+    // sens, il n'a pas d'amont. Un run ciblé sur lui devient donc un run global.
+    const estDernier = (id: string) => trouverDef((deplie.noeuds.find((n) => n.id === id)?.data as { ficheId?: string } | undefined)?.ficheId as string)?.executerEnDernier === true;
+    const priorite = prioriteDemandee && estDernier(prioriteDemandee) ? undefined : prioriteDemandee;
 
     // Topologie (logique pure testée — cf. core/graphe.ts)
     const aretesG = aretes as unknown as AreteG[];
-    const ordonnees = ordreTopologique(nds.map((n) => n.id), aretesG);
+    const ordonnees = placerEnDernier(ordreTopologique(nds.map((n) => n.id), aretesG), estDernier, aretesG);
     let ordreFiltre = ordonnees;
     // Périmètre d'un run ciblé (nœud prioritaire) : null = run global (tout le graphe).
     let ancPriorite: Set<string> | null = null;
@@ -399,6 +403,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const resultats = new Map<string, TypeValeur[]>();
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
+    // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
+    publierExecutionCourante({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
 
     // Retour visuel IMMÉDIAT sur le méta propriétaire d'un nœud interne en échec.
     // Sans ça le méta garde son « en cours » (posé en amont) jusqu'à la passe

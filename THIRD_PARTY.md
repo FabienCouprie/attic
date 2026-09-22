@@ -9,14 +9,69 @@ included in Attic.
 
 | File | License | Copyright |
 |---|---|---|
-| `htdemucs_6s.onnx` | MIT | Meta/Facebook — Demucs music source separation |
-| `htdemucs_fp16weights.onnx` | MIT | Meta/Facebook — Demucs (fp16 weights) |
+| `htdemucs_6s.onnx` | **Code MIT ; weights: scientific / non-commercial use only** (see note below) | Copyright (c) Meta Platforms, Inc. — Demucs v4 (HT-Demucs), 6-stem. ONNX export by StemSplit (`StemSplitio/htdemucs-6s-onnx`) |
+| `htdemucs_fp16weights.onnx` | **Code MIT ; weights: scientific / non-commercial use only** (see note below) | Copyright (c) Meta Platforms, Inc. — Demucs v4 (HT-Demucs), fp16 weights |
 | `modele-separation.onnx` | MIT | Ultimate Vocal Remover — MDX-Net UVR_MDXNET_9482 |
-| `model_genre.onnx` | MIT | Copyright (c) 2019 Nicklas Hansen — Music genre classifier |
+| `model_genre.onnx` | **Undeclared** (see note below) | HuBERT fine-tuned for genre classification on GTZAN. Base model: `facebook/hubert-base-ls960` (Apache-2.0). The fine-tune declared no licence, and its repository is no longer reachable |
 | `gtcrn.onnx` | MIT | Copyright (c) 2024 Rong Xiaobin — GTCRN speech enhancement (https://github.com/Xiaobin-Rong/gtcrn), export `stream/onnx_models/gtcrn.onnx` |
 | `audiobox-aesthetics.onnx` | CC-BY 4.0 (weights and most code); MIT (WavLM components derived from microsoft/unilm) | Copyright (c) Meta Platforms, Inc. — Audiobox Aesthetics (https://github.com/facebookresearch/audiobox-aesthetics), weights `facebook/audiobox-aesthetics` on Hugging Face, exported to ONNX (FP32) for Attic. Changes: the positional convolution's weight normalization is folded into a constant weight, and the output de-normalization is included in the graph; scores are unchanged (measured within 2e-5). |
 | `stable-audio-3-small-music/` | Stability AI Community License | Stability AI — Stable Audio 3 small-music (ONNX export by lsb) |
 | `stable-audio-3-small-music/onnx/encoder_q4.onnx` | Stability AI Community License | Stability AI — Stable Audio 3 small-music audio encoder (ONNX export by bgkb) |
+
+#### Note — Demucs weights (`htdemucs_6s.onnx`, `htdemucs_fp16weights.onnx`)
+
+The Demucs **source code** is MIT-licensed. Its **pretrained weights are not**: the author of
+Demucs states that "the model weights are not covered by the MIT license, and are provided only
+for scientific purposes" ([facebookresearch/demucs#327](https://github.com/facebookresearch/demucs/issues/327)).
+The restriction comes from the training data: MUSDB18-HQ is distributed for educational purposes
+only and is not to be used commercially without the copyright holders' permission, and parts of it
+are CC BY-NC-SA.
+
+Attic is free, open-source and **non-commercial**, which is the basis on which these weights are
+used here. Third-party ONNX exports that re-label these weights "MIT" do not grant rights the
+author did not give, and this file does not repeat that claim.
+
+Required attributions:
+
+- Copyright (c) Meta Platforms, Inc. — Demucs, MIT licence for the code
+  (https://github.com/facebookresearch/demucs/blob/main/LICENSE)
+- HT-Demucs paper:
+
+  ```bibtex
+  @inproceedings{rouard2023hybrid,
+    title={Hybrid Transformers for Music Source Separation},
+    author={Rouard, Simon and Massa, Francisco and D{\'e}fossez, Alexandre},
+    booktitle={IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+    year={2023},
+    organization={IEEE}
+  }
+  ```
+
+- Training dataset: Rafii, Z., Liutkus, A., Stöter, F. R., Mimilakis, S. I., & Bittner, R. (2019).
+  *MUSDB18-HQ — An uncompressed version of MUSDB18.* https://doi.org/10.5281/zenodo.3338373
+
+#### Note — Stable Audio 3 (`stable-audio-3-small-music/`)
+
+This Stability AI Model is licensed under the Stability AI Community License, Copyright © Stability
+AI Ltd. All Rights Reserved.
+
+The Community License allows redistribution, and requires three things of anyone who redistributes:
+a copy of the agreement must travel with the model, the notice above must be kept in a notice file
+(this one), and "Powered by Stability AI" must be displayed. It reserves commercial use to
+organisations under one million dollars of annual revenue; Attic is free, open-source and
+non-commercial.
+
+Agreement: https://stability.ai/community-license-agreement — a copy is shipped with the model
+archive as `LICENSE-STABILITY.md`.
+
+ONNX export by lsb (`lsb/stable-audio-3-small-music-onnx`) and bgkb.
+
+#### Note — genre classifier (`model_genre.onnx`)
+
+This file is a HuBERT fine-tune exported to ONNX. Its upstream repository declared no licence and
+is no longer reachable; the base model (`facebook/hubert-base-ls960`) is Apache-2.0, and the GTZAN
+dataset it was fine-tuned on is a research dataset with no formal licence. Because the chain of
+rights cannot be documented, Attic does not redistribute this file from its own release assets.
 
 ### SoundFont
 

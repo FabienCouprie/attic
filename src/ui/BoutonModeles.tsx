@@ -15,7 +15,8 @@
 // ne s'affichent jamais.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { traduire } from "../i18n";
-import { apparenceModeles, type EtatModeles, type ProgressionModeles } from "./etat-modeles";
+import { apparenceModeles, aPrendre, sansAdresse, formaterOctets, type EtatModeles, type ModeleEtat, type ProgressionModeles } from "./etat-modeles";
+import { langueCourante } from "../i18n";
 
 const COULEURS: Record<string, string | undefined> = {
   complet: "#2a9d8f",
@@ -28,6 +29,7 @@ const COULEURS: Record<string, string | undefined> = {
 export function BoutonModeles({ etiquette }: { etiquette: string }) {
   const [etat, setEtat] = useState<EtatModeles | null>(null);
   const [progression, setProgression] = useState<ProgressionModeles | null>(null);
+  const [panneau, setPanneau] = useState(false);
   const enVol = useRef(false);
 
   const rafraichir = useCallback(async () => {
@@ -55,25 +57,41 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
 
   const apparence = apparenceModeles(etat, progression);
 
+  // UN CLIC N'ENGAGE PLUS 1,9 Go D'UN COUP. Deux modèles pèsent à eux seuls 1,3 Go : le bouton
+  // ouvre donc la liste de ce qui manque, avec le poids de chacun, et l'on prend ce qu'on veut —
+  // un modèle, ou tout. Pendant un téléchargement, le bouton redevient ce qu'il était : un clic
+  // l'interrompt.
+  const telecharger = useCallback(async (ids?: string[]) => {
+    const api = (window as any).api;
+    if (!api || enVol.current) return;
+    enVol.current = true;
+    setPanneau(false);
+    setProgression(null);
+    const res = await api.modelesTelecharger?.(ids);
+    enVol.current = false;
+    if (res && !res.ok && !res.annule) setProgression({ phase: "erreur", erreur: res.erreur });
+    await rafraichir();
+  }, [rafraichir]);
+
   const cliquer = async () => {
     const api = (window as any).api;
     if (!apparence.actionnable || !api) return;
     if (apparence.interrompt) { await api.modelesAnnuler?.(); return; }
     if (enVol.current) return;
-    enVol.current = true;
-    setProgression(null);
-    // Sans identifiants, le processus principal prend TOUT ce qui manque, dans l'ordre du
-    // manifeste : c'est le « l'un après l'autre » demandé, et il n'y a rien à cocher.
-    const res = await api.modelesTelecharger?.();
-    enVol.current = false;
-    if (res && !res.ok && !res.annule) setProgression({ phase: "erreur", erreur: res.erreur });
-    await rafraichir();
+    const liste = aPrendre(etat, langueCourante() === "en");
+    if (liste.length === 0) { setPanneau((v) => !v); return; }
+    setPanneau((v) => !v);
   };
 
   const infobulle = `${etiquette} — ${traduire(apparence.cle, ...apparence.vars)}`;
   const couleur = COULEURS[apparence.variante];
 
+  const anglais = langueCourante() === "en";
+  const liste = aPrendre(etat, anglais);
+  const muets = sansAdresse(etat, anglais);
+
   return (
+    <span style={{ position: "relative", display: "inline-flex" }}>
     <button
       className="attic-btn-icon"
       title={infobulle}
@@ -105,5 +123,29 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
         </span>
       )}
     </button>
+    {panneau && (
+      <div className="attic-modeles-panneau" onClick={(e) => e.stopPropagation()}>
+        {liste.length > 0 ? (
+          <>
+            <button className="attic-modeles-tout" onClick={() => telecharger()}>
+              {traduire("modeles.tout", liste.length, formaterOctets(liste.reduce((s, m) => s + m.octets, 0)))}
+            </button>
+            {liste.map((m: ModeleEtat) => (
+              <button key={m.id} className="attic-modeles-ligne" onClick={() => telecharger([m.id])}
+                title={traduire(m.partiel ? "modeles.partiel" : "modeles.prendre", m.nom)}>
+                <span className="attic-modeles-nom">{m.nom}</span>
+                <span className="attic-modeles-poids">{formaterOctets(m.octets)}</span>
+              </button>
+            ))}
+          </>
+        ) : (
+          <div className="attic-modeles-vide">{traduire("modeles.rienAPrendre")}</div>
+        )}
+        {muets.length > 0 && (
+          <div className="attic-modeles-vide">{traduire("modeles.sansAdresse", muets.length)}</div>
+        )}
+      </div>
+    )}
+    </span>
   );
 }

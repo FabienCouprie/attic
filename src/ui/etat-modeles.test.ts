@@ -5,7 +5,7 @@
 // a échoué, on ne sait pas encore — ne se voient que chez quelqu'un qui vient d'installer la
 // version allégée, c'est-à-dire là où l'on ne peut plus corriger.
 import { describe, expect, it } from "vitest";
-import { apparenceModeles, formaterOctets } from "./etat-modeles";
+import { apparenceModeles, aPrendre, sansAdresse, formaterOctets, type EtatModeles } from "./etat-modeles";
 
 const etat = (o: Partial<Parameters<typeof apparenceModeles>[0] & object> = {}) => ({
   complets: 7, total: 7, octetsAPrendre: 0, manquants: [], sansAdresse: [], ...o,
@@ -119,5 +119,48 @@ describe("tant que l'inventaire n'est pas revenu", () => {
   it("une fin ou une annulation rend la main à l'inventaire", () => {
     expect(apparenceModeles(etat(), { phase: "fini" }).variante).toBe("complet");
     expect(apparenceModeles(etat({ manquants: ["a"], octetsAPrendre: 1 }), { phase: "annule" }).variante).toBe("manquants");
+  });
+});
+
+// CE QUE LE PANNEAU PROPOSE. Un clic n'engage plus tout l'inventaire : deux modèles pèsent à eux
+// seuls 1,3 Go, et l'on choisit. La liste est donc celle des modèles qu'on peut vraiment prendre,
+// du plus lourd au plus léger, dans la langue de l'interface.
+describe("aPrendre", () => {
+  const etat = (modeles: unknown[]): EtatModeles => ({
+    complets: 0, total: modeles.length, octetsAPrendre: 0, manquants: [], sansAdresse: [],
+    modeles: modeles as EtatModeles["modeles"],
+  });
+  const m = (id: string, octets: number, o: Record<string, unknown> = {}) =>
+    ({ id, nom: id, octets, complet: false, partiel: false, telechargeable: true, ...o });
+
+  it("les plus lourds d'abord : c'est le poids qui décide si on le prend maintenant", () => {
+    const l = aPrendre(etat([m("a", 100), m("gros", 700_000_000), m("moyen", 28_000_000)]));
+    expect(l.map((x) => x.id)).toEqual(["gros", "moyen", "a"]);
+  });
+
+  it("écarte ce qui est déjà là et ce qu'on ne peut pas aller chercher", () => {
+    const l = aPrendre(etat([m("present", 10, { complet: true }), m("muet", 10, { telechargeable: false }), m("a", 10)]));
+    expect(l.map((x) => x.id)).toEqual(["a"]);
+  });
+
+  it("garde un modèle à moitié présent : il se reprend en entier", () => {
+    const l = aPrendre(etat([m("moitie", 500, { partiel: true })]));
+    expect(l[0]).toMatchObject({ id: "moitie", partiel: true, octets: 500 });
+  });
+
+  it("prend le nom anglais quand l'interface est en anglais", () => {
+    const l = aPrendre(etat([m("a", 10, { nom: "Séparation", nomEn: "Separation" })]), true);
+    expect(l[0].nom).toBe("Separation");
+    expect(aPrendre(etat([m("a", 10, { nom: "Séparation", nomEn: "Separation" })]))[0].nom).toBe("Séparation");
+  });
+
+  it("sans inventaire, rien à proposer plutôt qu'une liste vide trompeuse", () => {
+    expect(aPrendre(null)).toEqual([]);
+    expect(sansAdresse(null)).toEqual([]);
+  });
+
+  it("sansAdresse ne retient que ce qui manque ET n'a pas de source", () => {
+    const l = sansAdresse(etat([m("muet", 10, { telechargeable: false }), m("a", 10), m("la", 10, { complet: true, telechargeable: false })]));
+    expect(l.map((x) => x.id)).toEqual(["muet"]);
   });
 });

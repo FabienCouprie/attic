@@ -1175,3 +1175,62 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-parcours-btn-suite.pale { background: var(--bg-input); color: var(--text-muted); cursor: default; }
 .attic-parcours-pied { color: var(--text-muted); font-size: 10px; flex-shrink: 0; font-family: monospace; }
 .attic-parcours-vide { color: var(--text-secondary); padding: 12px 0; }
+
+/* ── Démonstration filmée : calque posé sur la fenêtre, filmé avec elle ── */
+.demo-calque { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
+.demo-legende {
+  position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%);
+  max-width: 70vw; padding: 12px 22px; border-radius: 10px;
+  background: rgba(16, 18, 22, 0.88); color: #f1eee7; font: 600 20px/1.35 system-ui, "Segoe UI", sans-serif;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); text-align: center;
+}
+.demo-titre {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(12, 13, 16, 0.82); color: #f1eee7; font: 600 44px/1.2 system-ui, "Segoe UI", sans-serif;
+}
+.demo-titre span { border-bottom: 3px solid #e3a347; padding-bottom: 10px; }
+.demo-curseur {
+  position: absolute; left: 0; top: 0; margin: -2px 0 0 -3px;
+  transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+.demo-curseur::after {
+  content: ""; position: absolute; left: -9px; top: -9px; width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid #e3a347; opacity: 0; transform: scale(0.4); transition: opacity 0.15s, transform 0.15s;
+}
+.demo-curseur-appui::after { opacity: 1; transform: scale(1); }
+.attic-demo-filmer { width: 100%; margin-bottom: 6px; }
+.attic-demo-bloc + .attic-demo-bloc { margin-top: 8px; }
+
+/* Deux boutons sous les entrées d'un nœud extensible : une piste de plus, une piste de moins. */
+.attic-node-ports-plus { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.attic-node-ports-plus button {
+  width: 18px; height: 18px; padding: 0; line-height: 1; border-radius: 4px;
+  border: 1px solid var(--border, #2a2e36); background: var(--bg-node, #181b21);
+  color: var(--text-secondary, #8b909a); cursor: pointer; font-size: 13px;
+}
+.attic-node-ports-plus button:hover:not(:disabled) { color: var(--text, #ece9e2); border-color: #6e6a62; }
+.attic-node-ports-plus button:disabled { opacity: 0.35; cursor: default; }
+.attic-node-ports-plus span { font-size: 10px; color: var(--text-muted, #6b7079); min-width: 12px; text-align: center; }
+
+/* Le panneau des modeles IA : ce qui manque, son poids, et ce qu on decide d en prendre. */
+.attic-modeles-panneau {
+  position: absolute; top: 32px; right: 0; z-index: 60; min-width: 260px; max-height: 60vh;
+  overflow-y: auto; padding: 6px; border-radius: 8px;
+  background: var(--bg-node, #181b21); border: 1px solid var(--border, #2a2e36);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45); text-align: left;
+}
+.attic-modeles-tout, .attic-modeles-ligne {
+  display: flex; width: 100%; gap: 10px; align-items: baseline; justify-content: space-between;
+  padding: 6px 8px; border: none; border-radius: 6px; background: transparent;
+  color: var(--text, #ece9e2); font-size: 12px; cursor: pointer; text-align: left;
+}
+.attic-modeles-tout { font-weight: 600; border-bottom: 1px solid var(--border, #2a2e36); border-radius: 6px 6px 0 0; }
+.attic-modeles-tout:hover, .attic-modeles-ligne:hover { background: var(--bg-hover, #22262e); }
+.attic-modeles-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attic-modeles-poids { color: var(--text-muted, #8b909a); font-variant-numeric: tabular-nums; flex: none; }
+.attic-modeles-vide { padding: 8px; font-size: 11px; color: var(--text-muted, #8b909a); }
+
+/* Le premier reglage d une entree ouvre un groupe : un trait l en separe du groupe precedent. */
+.inspecteur-param-debut-port { border-top: 1px solid var(--border, #2a2e36); margin-top: 10px; padding-top: 10px; }
+.inspecteur-param:first-child.inspecteur-param-debut-port { border-top: none; margin-top: 0; padding-top: 0; }

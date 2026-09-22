@@ -34,7 +34,7 @@ const SIGLES = new Set([
   "ONNX", "LLM", "RNN", "VAE", "GAN", "CNN", "PCA", "TTS", "ASR", "STT", "VAD", "DDSP", "SA3",
   "SDXS", "GTCRN", "MDX", "UVR", "WASM", "CPU", "GPU", "RAM",
   // Musique et notation
-  "ABC", "BWV", "IPA", "I", "II", "III", "IV", "V", "VI", "VII",
+  "ABC", "BWV", "IPA", "MEI", "I", "II", "III", "IV", "V", "VI", "VII",
   // Divers
   "API", "URL", "URI", "ID", "UI", "IA", "SHA", "IEEE", "ISO", "UTC", "LSB", "MSB", "HZ", "KHZ",
   "DB", "MS", "NSIS", "ENV", "PID", "TCP", "UDP", "HTTP", "HTTPS", "OK", "USB", "HRTF",

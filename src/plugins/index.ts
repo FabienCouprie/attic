@@ -114,6 +114,8 @@ import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
 import { fiches as f_theorie_avancee } from "./theorie-avancee";
 import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
+import { fiches as f_demonstration } from "./demonstration";
+import { fiches as f_verovio } from "./verovio";
 import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
 import { fiches as f_vitesse_midi } from "./vitesse-midi";
 import { fiches as f_hpss } from "./hpss";
@@ -167,8 +169,9 @@ import { fiches as f_csound_partition } from "./csound-partition";
 import { fiches as f_csound_orchestre } from "./csound-orchestre";
 import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
 import { fiches as f_csound_formules } from "./csound-formules";
+import { rangerParStyle } from "./familles-effets";
 
-export const toutesLesFiches: FicheAudio[] = [
+export const toutesLesFiches: FicheAudio[] = ([
   ...f_entrees,
   ...f_effets,
   ...f_analyse,
@@ -185,6 +188,8 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_separation,
   ...f_collections,
   ...f_documentation,
+  ...f_demonstration,
+  ...f_verovio,
   ...f_clavier_apprentissage,
   ...f_vitesse_midi,
   ...f_hpss,
@@ -333,4 +338,4 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_syntheses_exotiques,
   ...f_theorie_avancee,
   ...f_csound,
-];
+] as FicheAudio[]).map(rangerParStyle);

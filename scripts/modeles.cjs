@@ -39,40 +39,58 @@ const BASE_RELEASE = "https://github.com/FabienCouprie/attic/releases/download/a
 /**
  * Ce que le manifeste sait avant de regarder les fichiers.
  *
- * `stable-audio-3-small-music` n'y est pas : il n'est embarqué dans AUCUN installeur, il a déjà son
- * propre script de récupération, et l'ajouter ferait passer le téléchargement de 1,5 à 2,2 Go sans
- * que personne l'ait demandé.
+ * `stable-audio-3-small-music` y figure depuis le 2026-09-22 : 686 Mo qui partaient jusque-là dans
+ * l'installeur complet — la configuration d'empaquetage prenait `public/oonx` en entier, quoi qu'en
+ * disait ce commentaire. Il est désormais retiré de l'installeur et publié en asset, comme SDXS :
+ * c'est ce qui rend la prochaine release possible sous le plafond de 2 Go.
  */
 const CONNUS = {
   "gtcrn.onnx": {
     id: "gtcrn", nom: "Débruitage IA", nomEn: "AI denoise",
     noeuds: ["debruitage-ia"],
     url: "https://raw.githubusercontent.com/Xiaobin-Rong/gtcrn/main/stream/onnx_models/gtcrn.onnx",
+    licence: { nom: "MIT", credit: "Rong Xiaobin — GTCRN", rediffusable: true },
   },
   "audiobox-aesthetics.onnx": {
     id: "audiobox-aesthetics", nom: "Score esthétique", nomEn: "Aesthetic score",
     noeuds: ["score-esthetique", "comparaison-esthetique"],
     url: `${BASE_RELEASE}/audiobox-aesthetics.onnx`,
+    licence: { nom: "CC-BY 4.0", credit: "Meta Platforms — Audiobox Aesthetics (composants WavLM sous MIT, microsoft/unilm)", rediffusable: true },
   },
   "htdemucs_6s.onnx": {
     id: "htdemucs-6s", nom: "Séparation 6 pistes", nomEn: "6-stem separation",
     noeuds: ["separation-demucs"],
+    licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs) ; citer Rouard, Massa, Défossez, ICASSP 2023, et MUSDB18-HQ", rediffusable: false,
+      raison: "Le code de Demucs est sous licence MIT, PAS ses poids : « The model weights are not covered by the MIT license, and are provided only for scientific purposes » (adefossez, auteur de Demucs, facebookresearch/demucs#327) — la restriction vient de MUSDB18-HQ, jeu de données à usage éducatif. Attic, libre et non commercial, les EMPLOIE ; les héberger sur notre propre release serait une publication de plus, et cette décision-là n'est pas prise." },
   },
   "htdemucs_fp16weights.onnx": {
     id: "htdemucs-fp16", nom: "Séparation (poids fp16)", nomEn: "Separation (fp16 weights)",
     noeuds: ["separation-demucs"],
+    licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs), poids fp16", rediffusable: false,
+      raison: "Mêmes poids que htdemucs-6s, même réserve : usage scientifique et non commercial, hébergement par nous non décidé." },
   },
   "model_genre.onnx": {
     id: "genre", nom: "Classement par genre", nomEn: "Genre classifier",
     noeuds: ["genre-musical"],
+    licence: { nom: "inconnue", credit: "réglage fin de HuBERT (facebook/hubert-base-ls960, Apache-2.0) sur GTZAN", rediffusable: false,
+      raison: "Aucune licence n'a jamais été déclarée pour ce réglage fin, et son dépôt d'origine a disparu (401 depuis le 2026-09-22). La chaîne de droits ne se documente pas : on ne le rediffuse pas." },
   },
   "modele-separation.onnx": {
     id: "separation-mdx", nom: "Séparation voix/instrumental", nomEn: "Vocal/instrumental separation",
     noeuds: ["separation-voix"],
+    licence: { nom: "MIT", credit: "Ultimate Vocal Remover — MDX-Net (Kuielab, Woosung Choi)", rediffusable: true },
+  },
+  "stable-audio-3-small-music": {
+    id: "stable-audio-3", nom: "Stable Audio 3 (musique)", nomEn: "Stable Audio 3 (music)",
+    noeuds: ["stable-audio-3"], archive: true,
+    licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
+      note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
   },
   "sdxs-512-texte-image": {
     id: "sdxs-512", nom: "Texte → image", nomEn: "Text → image",
     noeuds: ["texte-image"], archive: true,
+    licence: { nom: "OpenRAIL++", credit: "IDKiro — SDXS-512-0.9 ; export ONNX par Attic", rediffusable: true,
+      note: "La licence et ses restrictions d'usage voyagent avec le modèle : le README de l'archive les porte." },
   },
 };
 
@@ -160,10 +178,31 @@ function verifier() {
   process.exitCode = ecarts === 0 ? 0 : 1;
 }
 
-function publier() {
+/**
+ * Téléverse sur la release `assets` les modèles nommés en argument — ou tous ceux qui n'ont pas
+ * encore d'adresse, si l'on n'en nomme aucun.
+ *
+ * UN MODÈLE NON REDIFFUSABLE N'EST JAMAIS TÉLÉVERSÉ, même nommé explicitement. Héberger un modèle,
+ * c'est le republier : cela demande une licence qui l'autorise. Les poids de Demucs sont donnés
+ * « pour un usage scientifique seulement », et le classeur de genre n'a jamais eu de licence du
+ * tout — la table `CONNUS` porte la raison, et ce garde-fou la fait respecter plutôt que de
+ * compter sur la mémoire de celui qui lance la commande.
+ */
+function publier(ids = []) {
   const manifeste = JSON.parse(fs.readFileSync(MANIFESTE, "utf8"));
-  const aPublier = manifeste.modeles.filter((m) => !m.source.url);
-  if (aPublier.length === 0) { console.log("Tous les modèles ont une adresse."); return; }
+  const licenceDe = (id) => Object.values(CONNUS).find((c) => c.id === id)?.licence;
+  const refuses = [];
+  let aPublier = manifeste.modeles.filter((m) => (ids.length ? ids.includes(m.id) : !m.source.url));
+  aPublier = aPublier.filter((m) => {
+    const l = licenceDe(m.id);
+    if (l && l.rediffusable === false) { refuses.push({ id: m.id, raison: l.raison }); return false; }
+    return true;
+  });
+  for (const r of refuses) console.error(`REFUSÉ  ${r.id} : ${r.raison}`);
+  const inconnus = ids.filter((id) => !manifeste.modeles.some((m) => m.id === id));
+  for (const id of inconnus) console.error(`INCONNU ${id} : absent du manifeste.`);
+  if (inconnus.length) process.exit(1);
+  if (aPublier.length === 0) { console.log("Rien à publier."); return; }
 
   const tmp = path.join(RACINE, "release");
   fs.mkdirSync(tmp, { recursive: true });
@@ -187,7 +226,10 @@ function publier() {
     }
     const octets = fs.statSync(fichier).size;
     console.log(`téléversement de ${nomAsset} (${mo(octets)} Mo)…`);
-    const r = spawnSync("gh", ["release", "upload", RELEASE, fichier, "--clobber"],
+    // SANS `--clobber` : un asset publié ne se remplace pas en douce. Un modèle qui change de
+    // contenu change de nom, sans quoi les installations déjà faites vérifieraient une empreinte
+    // qui ne correspond plus à ce qu'elles téléchargent.
+    const r = spawnSync("gh", ["release", "upload", RELEASE, fichier],
       { cwd: RACINE, stdio: "inherit", shell: process.platform === "win32" });
     if (r.status !== 0) { console.error(`échec du téléversement de ${nomAsset}`); process.exit(1); }
     m.source = { type: m.source.type, url: `${BASE_RELEASE}/${nomAsset}`, octets, sha256: sha256(fichier) };
@@ -199,9 +241,9 @@ function publier() {
 const arg = process.argv[2];
 if (arg === "--generer") engendrer();
 else if (arg === "--verifier") verifier();
-else if (arg === "--publier") publier();
+else if (arg === "--publier") publier(process.argv.slice(3));
 else {
-  console.log("usage : node scripts/modeles.cjs --generer | --verifier | --publier");
+  console.log("usage : node scripts/modeles.cjs --generer | --verifier | --publier [id…]");
   process.exitCode = 1;
 }
 

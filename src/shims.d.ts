@@ -6,3 +6,7 @@ declare module "resonance-audio";
 
 // Injecté par vite.config.ts (define) depuis la version de package.json.
 declare const __APP_VERSION__: string;
+
+// Verovio : le module WebAssembly et son enveloppe ESM n apportent pas de types.
+declare module "verovio/wasm";
+declare module "verovio/esm";

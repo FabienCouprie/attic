@@ -7,6 +7,7 @@
 // Point d'extension multi-domaines (cf. ARCHITECTURE.md §11) : un autre domaine
 // enregistre ici ses propres vues (aperçu image, grille de données, éditeur…)
 // sans toucher au renderer.
+import { EVENEMENT_FILMER } from "./demo/useRealisateurDemo";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
@@ -108,6 +109,13 @@ function estLog(valeur: unknown): boolean {
 
 function VueUploadAudio({ id, data }: VueProps) {
   const { t } = useI18n();
+  // L'ENTRÉE AUDIO NE MONTRE SON LECTEUR QU'APRÈS LE RUN, et le perd à la réinitialisation, comme
+  // tout nœud qui rend un résultat : au chargement, le bouton et le nom du fichier suffisent.
+  // Demandé par Fabien le 2026-09-22 — le lecteur affiché dès le chargement, et qu'aucune
+  // réinitialisation n'effaçait, se confondait avec un résultat. Le sampler garde son aperçu :
+  // son fichier est un échantillon à vérifier avant de jouer, non la sortie du nœud.
+  const statut = useStatut(id).statut;
+  const lecteurVisible = data.ficheId !== "entree-audio" || statut === "termine";
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
@@ -115,7 +123,7 @@ function VueUploadAudio({ id, data }: VueProps) {
         <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerAudio?.(id, f); }} />
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
-      {data.audioUrl && (
+      {data.audioUrl && lecteurVisible && (
         <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl}
           onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
       )}
@@ -192,6 +200,17 @@ function VueExplorateur({ id, data }: VueProps) {
   const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
   const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
 
+  // RIEN NE DOIT PARAÎTRE CHOISI TANT QUE RIEN NE L'EST. Une liste déroulée (`size` > 1) met sa
+  // première ligne en surbrillance quand aucune option n'est sélectionnée : le nœud semblait tenir
+  // la première piste, et choisir une autre ligne donnait l'impression de revenir à celle-là.
+  // `value=""` ne suffit pas — le navigateur retombe sur l'indice 0 —, on le dit donc au DOM.
+  // Sans tableau de dépendances : n'importe quel rendu — le chargement qui se termine, une autre
+  // piste lue — repose `value=""` sur la liste, et le navigateur y revient à sa première ligne.
+  const listeRef = useRef<HTMLSelectElement>(null);
+  useEffect(() => {
+    if (listeRef.current && selectedIndex < 0) listeRef.current.selectedIndex = -1;
+  });
+
   // Sélection d'une piste, partagée par `onChange` et `onClick` du <select>.
   async function choisirPiste(index: number) {
     const f = fichiersMusique?.[index];
@@ -256,7 +275,7 @@ function VueExplorateur({ id, data }: VueProps) {
             // fichier, et l'exécution répondait « Aucun fichier » alors que la
             // liste montrait bien la piste sélectionnée. Les autres lignes
             // fonctionnaient, elles, puisqu'elles changeaient réellement l'index.
-            <select className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
+            <select ref={listeRef} className="attic-node-select" size={Math.min(fichiersMusique.length, 6)}
               value={selectedIndex >= 0 ? String(selectedIndex) : ""}
               onClick={(e) => {
                 const cible = e.target as HTMLElement;
@@ -1612,6 +1631,20 @@ function VueGalerieExposition({ data }: VueProps) {
 }
 
 // ── VexFlow (aperçu SVG de portée, tablature, grille d'accords) ──
+// ── Partition gravée (Verovio) : le SVG est sur la sortie, le message reste lisible ──
+function VueGravure({ data }: VueProps) {
+  const { t } = useI18n();
+  const svg = typeof data.scriptGenere === "string" ? data.scriptGenere : "";
+  if (!svg.includes("<svg")) {
+    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+  }
+  return (
+    <div className="attic-node-vue-vexflow">
+      <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
+  );
+}
+
 function VueVexFlow({ data }: VueProps) {
   const { t } = useI18n();
   const svg = data.audioResultatMessage ?? "";
@@ -1667,6 +1700,17 @@ function VueTraceCourbe({ data }: VueProps) {
 }
 
 // ── Attracteur / IFS (image générée) ──
+// ── Une animation SVG posée par le nœud, et qui ne sort pas par un port ──
+function VueAnimationSvg({ data }: VueProps) {
+  const { t } = useI18n();
+  const svg = typeof data._animationSvg === "string" ? data._animationSvg : "";
+  if (!svg.includes("<svg")) {
+    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+  }
+  // L'animation est écrite en SMIL : posée telle quelle dans la page, elle tourne.
+  return <div className="attic-node-vue-vexflow"><div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} /></div>;
+}
+
 function VueAttracteurIFS({ data }: VueProps) {
   const { t } = useI18n();
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={t("msg.connecter.image")} />;
@@ -1734,6 +1778,50 @@ function VueSourceTexte({ id, data }: VueProps) {
 }
 
 // ── Sortie de texte (zone de texte redimensionnable + copie) ──
+// ── Démonstration : la vidéo rendue, et de quoi l'enregistrer ──
+/** Une vidéo dans un nœud, et de quoi l'enregistrer. */
+function VideoDeNoeud({ url, nom }: { url: string; nom: string }) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  return (
+    <div className="attic-demo-bloc">
+      <video className="attic-demo-video" src={url} controls style={{ width: "100%", display: "block", background: "#000" }} />
+      {api ? (
+        <button className="attic-node-fichier-btn" onClick={async () => {
+          const buffer = await (await fetch(url)).arrayBuffer();
+          await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "WebM", extensions: ["webm"] }], buffer });
+        }}>{t("demo.sauvegarder")}</button>
+      ) : (
+        <a className="attic-node-fichier-btn" href={url} download={nom}>{t("demo.sauvegarder")}</a>
+      )}
+    </div>
+  );
+}
+
+function VueDemonstration({ data }: VueProps) {
+  const { t } = useI18n();
+  const url = (data as { _demoVideoUrl?: string })._demoVideoUrl;
+  return (
+    <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      {url ? <VideoDeNoeud url={url} nom="demonstration.webm" />
+        : <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("demo.avantLancer")}</div>}
+    </div>
+  );
+}
+
+// ── Film de l'application : le bouton qui le lance, et le film ──
+function VueFilmApplication({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const url = (data as { _demoAppVideoUrl?: string })._demoAppVideoUrl;
+  return (
+    <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <button className="attic-node-fichier-btn attic-demo-filmer" title={t("demo.filmerTitre")}
+        onClick={() => window.dispatchEvent(new CustomEvent(EVENEMENT_FILMER, { detail: { id } }))}>{t("demo.filmer")}</button>
+      {url && <VideoDeNoeud url={url} nom="film-application.webm" />}
+    </div>
+  );
+}
+
 function VueSortieTexte({ data }: VueProps) {
   const { t } = useI18n();
   const texte = data.audioResultatMessage ?? "";
@@ -1918,13 +2006,12 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
-  // Le cercle pulsant rend un SVG ANIMÉ : la même vue l'affiche, et l'animation tourne dans la
-  // balise image parce qu'elle est écrite en SMIL et non en feuille de style.
-  { correspond: parId("cercle-pulsant"), vue: VueAttracteurIFS, position: "avant" },
+  { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
+  { correspond: parId("partition-verovio"), vue: VueGravure, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },
   { correspond: parId("carte-sonore"), vue: VueCarteSonore, position: "avant" },
   { correspond: parId("coordonnees-sur-carte"), vue: VueCoordonneesSurCarte, position: "avant" },
@@ -1933,6 +2020,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
   { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
+  { correspond: parId("demonstration"), vue: VueDemonstration, position: "apres" },
+  { correspond: parId("film-application"), vue: VueFilmApplication, position: "apres" },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },

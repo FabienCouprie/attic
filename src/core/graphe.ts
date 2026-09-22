@@ -31,6 +31,22 @@ export function ordreTopologique(ids: string[], aretes: AreteG[]): string[] {
   return ordonnees;
 }
 
+// Repousse en fin d'ordre les nœuds qui doivent passer APRÈS tous les autres — un nœud qui montre
+// le travail du graphe entier sans en recevoir aucune valeur par ses entrées. Sans entrée, le tri
+// topologique peut le placer n'importe où, y compris en tête ; il n'y a pas d'arête pour le dire.
+// L'ordre relatif est conservé des deux côtés, et un nœud « dernier » qui aurait des descendants
+// les emmène avec lui, pour que l'ordre reste topologique.
+export function placerEnDernier(ordre: string[], estDernier: (id: string) => boolean, aretes: AreteG[] = []): string[] {
+  const derniers = new Set<string>();
+  for (const id of ordre) {
+    if (!estDernier(id)) continue;
+    derniers.add(id);
+    for (const d of descendants(id, aretes)) derniers.add(d);
+  }
+  if (!derniers.size) return ordre;
+  return [...ordre.filter((id) => !derniers.has(id)), ...ordre.filter((id) => derniers.has(id))];
+}
+
 // Ensemble des ancêtres (amont transitif) d'un nœud, le nœud cible INCLUS.
 // Sert au mode « priorité » : n'exécuter que ce dont dépend un nœud donné.
 export function ancetres(cible: string, aretes: AreteG[]): Set<string> {
