@@ -114,6 +114,7 @@ import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
 import { fiches as f_theorie_avancee } from "./theorie-avancee";
 import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
+import { fiches as f_demonstration } from "./demonstration";
 import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
 import { fiches as f_vitesse_midi } from "./vitesse-midi";
 import { fiches as f_hpss } from "./hpss";
@@ -185,6 +186,7 @@ export const toutesLesFiches: FicheAudio[] = [
   ...f_separation,
   ...f_collections,
   ...f_documentation,
+  ...f_demonstration,
   ...f_clavier_apprentissage,
   ...f_vitesse_midi,
   ...f_hpss,

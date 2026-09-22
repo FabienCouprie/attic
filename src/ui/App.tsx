@@ -1,4 +1,5 @@
 // ui/App.tsx — Application principale
+import { useRealisateurDemo } from "./demo/useRealisateurDemo";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
@@ -585,6 +586,10 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     },
   });
   lancerRef.current = lancer;
+  // La démonstration filmée : le scénario joué dans la vraie interface (cf. ui/demo/).
+  const { calque: calqueDemo } = useRealisateurDemo({
+    noeudsRef, aretesRef, setNodes, setEdges, rfInstanceRef, setSel, lancerRef, audioCtxRef, resumeAudio,
+  });
 
   // ── Suppression d'un nœud : nettoyage des URLs de résultat, du cache et cascade aval ──
   const supprimerNoeud = useCallback((ids: string | string[], opts: { filterNodes?: boolean } = {}) => {
@@ -1274,6 +1279,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         }}
       />
       </PanneauInspecteur>
+      {calqueDemo}
     </div>
   );
 }

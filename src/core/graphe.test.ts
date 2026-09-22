@@ -1,12 +1,33 @@
 import { describe, it, expect } from "vitest";
 import {
   ordreTopologique, ancetres, descendants, empreinteEntrees, empreinteParametres,
-  resoudreEntree, valeursEntrantes,
+  resoudreEntree, valeursEntrantes, placerEnDernier,
 } from "./graphe";
 import type { AreteG } from "./meta";
 
 const a = (source: string, target: string, sh = "out:0", th = "in:0"): AreteG =>
   ({ id: `${source}-${target}`, source, target, sourceHandle: sh, targetHandle: th });
+
+describe("placerEnDernier", () => {
+  it("repousse un nœud sans entrée, que le tri avait mis en tête", () => {
+    const ordre = ordreTopologique(["D", "A", "B"], [a("A", "B")]);
+    expect(ordre[0]).toBe("D");
+    expect(placerEnDernier(ordre, (id) => id === "D")).toEqual(["A", "B", "D"]);
+  });
+
+  it("emmène ses descendants avec lui, et garde l'ordre relatif des autres", () => {
+    const aretes = [a("A", "B"), a("D", "E")];
+    const ordre = ordreTopologique(["A", "D", "B", "E", "C"], aretes);
+    const r = placerEnDernier(ordre, (id) => id === "D", aretes);
+    expect(r.slice(-2)).toEqual(["D", "E"]);
+    expect(r.slice(0, 3)).toEqual(ordre.filter((id) => !["D", "E"].includes(id)));
+  });
+
+  it("sans nœud dernier, l'ordre est rendu tel quel", () => {
+    const ordre = ["A", "B"];
+    expect(placerEnDernier(ordre, () => false)).toBe(ordre);
+  });
+});
 
 describe("logique de graphe (filet de sécurité du moteur)", () => {
   it("ordonne topologiquement une chaîne A→B→C", () => {

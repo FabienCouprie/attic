@@ -137,3 +137,33 @@ describe("anglais du dictionnaire", () => {
     expect(ecarts).toEqual([]);
   });
 });
+
+// LA PALETTE AFFICHE LA FAMILLE PAR SA CLÉ « famille.<nom> ». Une famille sans entrée au dictionnaire
+// s'affichait telle quelle, « famille.Vidéo », et une famille au nom voisin d'une autre ouvrait un
+// second sous-menu : « Générateurs » à côté de « Génération » dans les Entrées. Les deux sont passés
+// inaperçus à la compilation comme aux tests ; constatés dans l'application.
+describe("familles de la palette", () => {
+  it("chaque famille du registre a son libellé au dictionnaire", () => {
+    const manquantes = [...new Set(toutesLesFiches.map((f) => f.famille))].filter((f) => !CLES_CONNUES.has(`famille.${f}`));
+    expect(manquantes).toEqual([]);
+  });
+
+  it("dans un même univers, deux familles ne diffèrent pas que par leur terminaison", () => {
+    const racine = (f: string) => f.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 6);
+    const doublons: string[] = [];
+    const parUnivers = new Map<string, Set<string>>();
+    for (const f of toutesLesFiches) {
+      if (!parUnivers.has(f.univers)) parUnivers.set(f.univers, new Set());
+      parUnivers.get(f.univers)!.add(f.famille);
+    }
+    for (const [u, familles] of parUnivers) {
+      const vues = new Map<string, string>();
+      for (const f of familles) {
+        const r = racine(f);
+        if (vues.has(r)) doublons.push(`${u} : ${vues.get(r)} / ${f}`);
+        else vues.set(r, f);
+      }
+    }
+    expect(doublons).toEqual([]);
+  });
+});

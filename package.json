@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "4.1.0",
-  "description": "Visual node-editor for AI-powered music and sound design — 388 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 390 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -150,6 +150,7 @@
     "@huggingface/tokenizers": "^0.1.3",
     "adm-zip": "^0.6.1",
     "electron-updater": "^6.8.9",
+    "mediabunny": "^1.59.0",
     "onnxruntime-node": "^1.27.0"
   },
   "devDependencies": {

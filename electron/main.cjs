@@ -280,6 +280,12 @@ ipcMain.handle("capture:systeme-audio", async () => {
   }
 });
 
+// --- IPC : la source de capture de la fenêtre qui demande (démonstration filmée) ---
+ipcMain.handle("capture:ma-fenetre", (event) => {
+  const fenetre = BrowserWindow.fromWebContents(event.sender);
+  return fenetre ? fenetre.getMediaSourceId() : null;
+});
+
 // --- IPC : enregistrer un fichier (dialogue + écriture) ---
 ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
   const { defaultPath, filters, data } = options;

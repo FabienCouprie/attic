@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **388 components** in **7 categories** and **32 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **390 components** in **7 categories** and **32 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [famille.Générateurs](#famillegénérateurs) (1) · [Generation](#generation) (53) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
+| [Inputs](#inputs) | 71 | [Audio](#audio) (7) · [Generation](#generation) (54) · [Image](#image) (3) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) |
 | [Processing](#processing) | 192 | [Conversion](#conversion) (4) · [Editing](#editing) (26) · [Effects](#effects) (158) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Text](#text-1) (1) |
 | [Visualization](#visualization) | 37 | [Analysis](#analysis) (29) · [Image](#image-2) (1) · [Notation](#notation) (7) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Others](#others) | 64 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) |
+| [Others](#others) | 66 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (6) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (2) |
 
 ## How to read this catalog
 
@@ -163,37 +163,6 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 
 *No parameters.*
 
-### famille.Générateurs
-
-| Component | Summary |
-|---|---|
-| [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
-
-#### SSP (Koenig)
-
-`ssp-koenig` · Inputs → famille.Générateurs
-
-*Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points.*
-
-After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute of Sonology, Utrecht, in the 1970s, whose selection principles come from his programs Project 1 (1964) and Project 2 (1966). See also Luc Dobereiner, « Models of Constructed Sound: Nonstandard Synthesis as an Aesthetic Perspective », Computer Music Journal 35(3), 2011. What « nonstandard » means. All ordinary synthesis starts from a model: an oscillator, a waveform, a spectrum, an envelope, an instrument. Here there is none of that. You give two lists of numbers — amplitudes and durations — and principles for drawing from them. The pairs so drawn are points, and the sound is the line joining them. No pitch, no note, no timbre: the pitch you will hear is a consequence of the durations you wrote, never a setting. Koenig's thesis, and what makes this node unlike the others. The same principles hold at every scale: what orders the points of a waveform also orders the sections of a piece. That is why the same choice of five words is offered for the amplitudes, for the durations and for the order of the sections. A series means exactly the same thing at all three scales — each element once before any repeats — and you can hear it. The warning that must be given. SSP has a reputation for being impossible to steer. Koenig himself found that the program resisted musical intention, and the overwhelming majority of settings return noise. But two things really are under your command, and they can be measured. The durations make the treble: measured, the spectrum's centre of gravity runs from 9 Hz for durations of a thousand samples to 4,419 Hz for durations of two or three, close to five hundred to one. The amplitudes make the crest: from 1.81 dB for two extreme values to 8.38 dB for many small ones and one large. And the two axes are separate — changing the amplitudes does not move the treble, changing the durations does not change the crest — which forbids saying that this node has but a single noise knob. How to use it without getting lost. Write the durations first, which decide the region where the sound will sit: around three samples for a high whistle, around fifty for a middle register, beyond five hundred for reliefs you hear going past rather than sounding. Then write the amplitudes, which decide the relief: two extreme values give a full, straight sound, a mixture of small and large gives a hollowed one. The principles come last, and that is where composition begins. One case worth knowing. A tendency applied to the amplitudes draws a ramp crossing the set from end to end, not a sound: at the scale of a whole section it is heard only as a slow drift. Tendency comes into its own at the scale of form, which is where Koenig used it. At equal seed the node returns the same sound twice; at a different seed, two unrelated sounds drawn from the same material.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | Report | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
-| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
-| Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other — applied to amplitudes, it draws a ramp rather than a sound. |
-| Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations gives strict periodicity, hence a clear pitch; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. |
-| Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
-| Sections | slider | 4 | 1 – 24, step 1 | How many distinct sections to compose before ordering them. At one, the piece is of a single piece and the form principle has nothing to act on. Beyond a dozen, each section becomes too brief to be identified, and the order stops being audible. |
-| Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
-| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
-| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. |
-
 ### Generation
 
 | Component | Summary |
@@ -247,6 +216,7 @@ After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute o
 | [Screens (Xenakis)](#screens-xenakis) | A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain. |
 | [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play. |
 | [Sieve (Xenakis)](#sieve-xenakis) | Builds a scale and a rhythm from modular arithmetic. |
+| [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 | [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
 | [Tiling Canon](#tiling-canon) | Builds a rhythmic canon where each pulse is struck by one voice and one only. |
@@ -1487,6 +1457,31 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 | Subdivision | number | 120 ms | 20 – 1000 ms, step 10 | Duration of one degree on the time axis. Short, the sieve is heard as a texture; long, as a melody. |
 | Note length | slider | 60 % | 10 – 100 %, step 5 | Share of the subdivision actually sounding. Low, notes stand apart; high, they run together. |
 
+#### SSP (Koenig)
+
+`ssp-koenig` · Inputs → Generation
+
+*Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points.*
+
+After Gottfried Michael Koenig, « Sound Synthesis Program » (SSP), Institute of Sonology, Utrecht, in the 1970s, whose selection principles come from his programs Project 1 (1964) and Project 2 (1966). See also Luc Dobereiner, « Models of Constructed Sound: Nonstandard Synthesis as an Aesthetic Perspective », Computer Music Journal 35(3), 2011. What « nonstandard » means. All ordinary synthesis starts from a model: an oscillator, a waveform, a spectrum, an envelope, an instrument. Here there is none of that. You give two lists of numbers — amplitudes and durations — and principles for drawing from them. The pairs so drawn are points, and the sound is the line joining them. No pitch, no note, no timbre: the pitch you will hear is a consequence of the durations you wrote, never a setting. Koenig's thesis, and what makes this node unlike the others. The same principles hold at every scale: what orders the points of a waveform also orders the sections of a piece. That is why the same choice of five words is offered for the amplitudes, for the durations and for the order of the sections. A series means exactly the same thing at all three scales — each element once before any repeats — and you can hear it. The warning that must be given. SSP has a reputation for being impossible to steer. Koenig himself found that the program resisted musical intention, and the overwhelming majority of settings return noise. But two things really are under your command, and they can be measured. The durations make the treble: measured, the spectrum's centre of gravity runs from 9 Hz for durations of a thousand samples to 4,419 Hz for durations of two or three, close to five hundred to one. The amplitudes make the crest: from 1.81 dB for two extreme values to 8.38 dB for many small ones and one large. And the two axes are separate — changing the amplitudes does not move the treble, changing the durations does not change the crest — which forbids saying that this node has but a single noise knob. How to use it without getting lost. Write the durations first, which decide the region where the sound will sit: around three samples for a high whistle, around fifty for a middle register, beyond five hundred for reliefs you hear going past rather than sounding. Then write the amplitudes, which decide the relief: two extreme values give a full, straight sound, a mixture of small and large gives a hollowed one. The principles come last, and that is where composition begins. One case worth knowing. A tendency applied to the amplitudes draws a ramp crossing the set from end to end, not a sound: at the scale of a whole section it is heard only as a slow drift. Tendency comes into its own at the scale of form, which is where Koenig used it. At equal seed the node returns the same sound twice; at a different seed, two unrelated sounds drawn from the same material.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
+| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
+| Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other — applied to amplitudes, it draws a ramp rather than a sound. |
+| Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations gives strict periodicity, hence a clear pitch; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. |
+| Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
+| Sections | slider | 4 | 1 – 24, step 1 | How many distinct sections to compose before ordering them. At one, the piece is of a single piece and the form principle has nothing to act on. Beyond a dozen, each section becomes too brief to be identified, and the order stops being audible. |
+| Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
+| Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
+| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. |
+
 #### Stable Audio 3
 
 `stable-audio-3` · Inputs → Generation
@@ -2322,7 +2317,7 @@ Puts a processed zone back at its original position in the full track, with a cr
 
 *Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.*
 
-Sorting material by what one hears of it is a compositional gesture in its own right. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. It is CataRT's navigation reduced to one axis, and the approach of the solfege of the object: classify before arranging. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
+This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness or length. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2344,7 +2339,7 @@ Sorting material by what one hears of it is a compositional gesture in its own r
 
 *Finds the sound objects of a recording — by attacks, silences or changes of timbre — and describes them.*
 
-The sound object is Pierre Schaeffer's unit: a sound perceived as a whole, which can be isolated, described, moved (Traite des objets musicaux, 1966). This node finds the objects of a recording and returns them as zones: each can then be extracted, processed or put back by any node that accepts zones. Three criteria, because three materials. An object is not bounded the same way everywhere, and choosing the criterion is already a compositional gesture. Attacks: for what is struck, plucked, knocked. A boundary is an instant where the spectrum suddenly gains energy; the object runs from one attack to the next, and its resonance belongs to it. The attack is placed to the sample, two milliseconds before the sound, so that no object starts cut off. Silences: for a field recording, a voice, separate events. What falls below the threshold is a silence; a gap under 60 ms is not one, it is a breath inside the object. Change of timbre: for a continuous flow, a wind, a crowd, a pad, which have neither attack nor silence. A boundary is an instant where what comes before and what comes after differ, on three descriptors at once - brightness, noisiness, level. Each object is described by what one hears of it: its loudness, in dB; its brightness, the centre of gravity of its spectrum in hertz; its noisiness, from 0 for a pure note to 1 for white noise; its duration. The report lists them, and each zone carries them along, which makes it possible to sort the objects by what one hears of them.
+This node finds the sound objects of a recording - sounds each perceived as a whole, in Pierre Schaeffer's sense (Traite des objets musicaux, 1966) - and returns them as zones: each can then be extracted, processed or put back by any node that accepts zones. Three criteria, depending on the material: an object is not bounded the same way everywhere. Attacks: for what is struck, plucked, knocked. A boundary is an instant where the spectrum suddenly gains energy; the object runs from one attack to the next, and its resonance belongs to it. The attack is placed to the sample, two milliseconds before the sound, so that no object starts cut off. Silences: for a field recording, a voice, separate events. What falls below the threshold is a silence; a gap under 60 ms is not one, it is a breath inside the object. Change of timbre: for a continuous flow, a wind, a crowd, a pad, which have neither attack nor silence. A boundary is an instant where what comes before and what comes after differ, on three descriptors at once - brightness, noisiness, level. Each object is described by what one hears of it: its loudness, in dB; its brightness, the centre of gravity of its spectrum in hertz; its noisiness, from 0 for a pure note to 1 for white noise; its duration. The report lists them, and each zone carries them along, which makes it possible to sort the objects by what one hears of them.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4715,7 +4710,7 @@ Spatializes a sound in 3D using the Resonance Audio SDK (Google). The input is m
 
 *A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell.*
 
-Each resonator is a string nobody plucks: it only sounds when something makes it vibrate, and of what it receives it keeps only its own frequency. A bank of resonators therefore tunes any sound. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. It is the Reson tool of GRM Tools, Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.
+This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5703,7 +5698,7 @@ To convolve is to make one sound ring through another. It is how a sound is plac
 
 *The tape you speed up or slow down: pitch and duration tied together, drivable by a curve.*
 
-It is the founding gesture of musique concrete: Pierre Schaeffer transposed his discs and tapes by changing their speed, and pitch and duration moved together. An octave up, the sound lasts half as long; an octave down, twice as long, and its grain comes out. It is not a defect to be corrected, it is the material. The speed can stay fixed, or move: a curve connected to the Transposition modulation input then draws the gesture: speeding up a fall, braking a resonance down into the bass, sliding a sound upwards like a record being spun. The curve follows the source, not the output. Its start acts on the start of the original sound, its end on its end: one writes a gesture laid on the material, and the output duration follows from it. Indexing the curve on the output would have made the curve depend on the duration it produces. The travel is in semitones, that is by multiplying the speed: from -12 to +12, the middle of the curve gives back the original speed, and every octave lasts as long on the curve. That is how the ear hears a transposition. Speeding up does not fold the highs back. Pushed two octaves up, an 8 kHz sound would rise to 32 kHz, beyond what a file can hold; a naive reading would make it reappear at 12 kHz, a sound that existed nowhere. Tape does not fold back: the reading therefore filters as it speeds up. At zero semitones the source is returned exactly, sample for sample.
+This node changes the playback speed of a sound, as one speeds up or slows down a tape: pitch and duration move together. An octave up, the sound lasts half as long; an octave down, twice as long, and its grain comes out. It is how Pierre Schaeffer transposed his discs and tapes. The speed can stay fixed, or move: a curve connected to the Transposition modulation input then draws the gesture: speeding up a fall, braking a resonance down into the bass, sliding a sound upwards like a record being spun. The curve follows the source, not the output. Its start acts on the start of the original sound, its end on its end: one writes a gesture laid on the material, and the output duration follows from it. The travel is in semitones, that is by multiplying the speed: from -12 to +12, the middle of the curve gives back the original speed, and every octave lasts as long on the curve. That is how the ear hears a transposition. Speeding up does not fold the highs back. Pushed two octaves up, an 8 kHz sound would rise to 32 kHz, beyond what a file can hold; a naive reading would make it reappear at 12 kHz, a sound that existed nowhere. Tape does not fold back: the reading therefore filters as it speeds up. At zero semitones the source is returned exactly, sample for sample.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8776,3 +8771,45 @@ The Scale node knew seven church modes and two pentatonics; the Temperament node
 | Scale | choice | Maqam Rast | Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The system to read. Each carries its own note, saying what one should know before using it. |
 | Tonic | slider | 220 Hz | 55 – 880 Hz, step 1 | Frequency of the first degree. In hertz and not as a note, because these scales do not sit on a keyboard. |
 | Tolerance | slider | 20 cents | 1 – 50 cents, step 1 | Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. |
+
+### Video
+
+| Component | Summary |
+|---|---|
+| [Application Film](#application-film) | Films the Attic window while it builds the graph it sits in, runs it and plays each node. |
+| [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
+
+#### Application Film
+
+`film-application` · Others → Video
+
+*Films the Attic window while it builds the graph it sits in, runs it and plays each node.*
+
+This node films the Attic window while it replays the graph it sits in. It connects to nothing; the film starts from its « Film the application » button, not from running the graph.¶First the construction: the canvas empties, then each node appears in its place, captioned with its name and where it sits in the palette; its cables are drawn from the nodes already placed, and its settings open in the inspector. Nodes are placed following the chains of the graph: a node comes right after the one that feeds it. Then the tour: the graph runs, the view moves close to each node in turn, the inspector shows its settings, and its result is heard for the length per node. A drawn cursor shows every gesture. The film ends on the whole graph.¶The title, if filled in, opens the film. Esc stops it. At the end, the graph, the view and the selection are put back as they were, with the results of the run. In Attic, the window films itself; in a browser, the browser asks permission to share the tab. The recorded sound is that of the results played. The film is a WebM, at the size of the window.
+
+*No ports.*
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Length per node | slider | 5 s | 1 – 60 s, step 0.5 | Listening time for each node during the tour. A shorter sound stops earlier; a node that returns neither sound nor picture is skipped. |
+| Title | text | — |  | Title shown for 3 s at the opening of the film. Empty, the film starts straight on the construction. |
+
+#### Demonstration
+
+`demonstration` · Others → Video
+
+*Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown.*
+
+This node makes a video of the graph it sits in. It connects to nothing: it runs after every other node, takes their results and gives each one a segment of the same length. Nodes are shown following the chains of the graph: a node comes right after the one that feeds it, before moving on to another branch. No node is shown before what it receives. Each segment shows the node's name, its summary, its settings, and its result. A sound is played while its waveform scrolls under a playhead; a curve is drawn and traversed; an image is shown; a text is shown, and scrolls if it overflows the frame. A node that returns several things is shown by its sound first, then its image, its curve, its text. A node that returns nothing showable gets no segment. At the bottom of the picture, the chain of steps places the current node: a line joins two steps when the first feeds the second, a dot separates them otherwise. A node's sound starts 0.4 s after the start of its segment and stops 0.3 s before the end; a longer sound is cut with a fade, and the caption gives the excerpt played. Sounds are laid in as they are, without normalisation: one hears the levels the graph produces. The video is rendered offline, frame by frame, and encoded as WebM (VP9 video, Opus sound at 48 kHz): two renders of the same graph give the same video. Running this node alone runs the whole graph. The copies of a node inside a loop get a single segment, showing the result of the last pass.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Video | file |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Length per node | slider | 6 s | 2 – 60 s, step 0.5 | Length of each node's segment. A sound longer than the segment, minus 0.7 s, is cut. |
+| Title | text | — |  | Title shown on a 3 s opening card. Empty, the video starts straight on the first node. |
+| Resolution | choice | 720p | 480p / 720p / 1080p | Picture size: 854 × 480, 1280 × 720 or 1920 × 1080. Rendering time grows with it. |
+| Frames per second | choice | 30 | 24 / 30 / 60 | Video frame rate. 60 makes scrolling smoother and doubles rendering time. |
+| Settings | choice | Shown | Shown / Hidden | Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width. |

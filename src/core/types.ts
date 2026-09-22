@@ -182,4 +182,9 @@ export interface PluginDef<TValeur, TRuntime> {
   // filet du moteur traite « tout-null sur un nœud à sorties » comme un échec
   // (cf. FonctionPlugin). Défaut : false.
   sortieNullePermise?: boolean;
+
+  // Le nœud passe après tous les autres nœuds du run, et un run lancé depuis lui porte sur le
+  // graphe entier. Pour un nœud qui rend compte du travail de tout le graphe (cf.
+  // plugins/grapheGlobal.ts) sans en recevoir de valeur par une arête. Défaut : false.
+  executerEnDernier?: boolean;
 }

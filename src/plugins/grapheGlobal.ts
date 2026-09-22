@@ -41,3 +41,37 @@ export function publierGrapheCourant(graphe: GrapheCourant | null): void {
 export function grapheCourant(): GrapheCourant | null {
   return g.__attic_graphe__ ?? null;
 }
+
+// ── L'exécution en cours ──
+//
+// Un nœud qui MONTRE le travail du graphe — une démonstration qui fait entendre chaque étape —
+// a besoin de plus que la structure : des résultats de chaque nœud, dans l'ordre où ils ont été
+// calculés. Même motif, mêmes limites. Le moteur publie ses tables VIVANTES au début du run :
+// elles se remplissent à mesure, et un nœud déclaré `executerEnDernier` les lit pleines.
+//
+// Ce sont les identifiants du graphe APLATI (copies de boucle, nœuds internes des méta-nœuds) ;
+// `expansions` ramène chacun au nœud visible dont il vient.
+
+export interface ExecutionCourante {
+  /** Ordre d'exécution du run, identifiants aplatis. */
+  ordre: string[];
+  /** Nœuds aplatis : `data.ficheId`, `data.parametres`, `data.label`… */
+  noeuds: { id: string; data: Record<string, unknown> }[];
+  /** Arêtes du graphe aplati. */
+  aretes: { source: string; target: string }[];
+  resultats: Map<string, unknown[]>;
+  messages: Map<string, string>;
+  /** Identifiant aplati → identifiant du nœud visible. Absent : c'est le même. */
+  expansions: Map<string, string>;
+}
+
+type GlobalExecution = typeof globalThis & { __attic_execution__?: ExecutionCourante | null };
+
+export function publierExecutionCourante(execution: ExecutionCourante | null): void {
+  (globalThis as GlobalExecution).__attic_execution__ = execution;
+}
+
+/** L'exécution en cours, ou `null` hors exécution. */
+export function executionCourante(): ExecutionCourante | null {
+  return (globalThis as GlobalExecution).__attic_execution__ ?? null;
+}

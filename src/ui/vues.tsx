@@ -7,6 +7,7 @@
 // Point d'extension multi-domaines (cf. ARCHITECTURE.md §11) : un autre domaine
 // enregistre ici ses propres vues (aperçu image, grille de données, éditeur…)
 // sans toucher au renderer.
+import { EVENEMENT_FILMER } from "./demo/useRealisateurDemo";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
@@ -108,6 +109,13 @@ function estLog(valeur: unknown): boolean {
 
 function VueUploadAudio({ id, data }: VueProps) {
   const { t } = useI18n();
+  // L'ENTRÉE AUDIO NE MONTRE SON LECTEUR QU'APRÈS LE RUN, et le perd à la réinitialisation, comme
+  // tout nœud qui rend un résultat : au chargement, le bouton et le nom du fichier suffisent.
+  // Demandé par Fabien le 2026-09-22 — le lecteur affiché dès le chargement, et qu'aucune
+  // réinitialisation n'effaçait, se confondait avec un résultat. Le sampler garde son aperçu :
+  // son fichier est un échantillon à vérifier avant de jouer, non la sortie du nœud.
+  const statut = useStatut(id).statut;
+  const lecteurVisible = data.ficheId !== "entree-audio" || statut === "termine";
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
@@ -115,7 +123,7 @@ function VueUploadAudio({ id, data }: VueProps) {
         <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerAudio?.(id, f); }} />
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
-      {data.audioUrl && (
+      {data.audioUrl && lecteurVisible && (
         <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl}
           onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }} />
       )}
@@ -1734,6 +1742,50 @@ function VueSourceTexte({ id, data }: VueProps) {
 }
 
 // ── Sortie de texte (zone de texte redimensionnable + copie) ──
+// ── Démonstration : la vidéo rendue, et de quoi l'enregistrer ──
+/** Une vidéo dans un nœud, et de quoi l'enregistrer. */
+function VideoDeNoeud({ url, nom }: { url: string; nom: string }) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  return (
+    <div className="attic-demo-bloc">
+      <video className="attic-demo-video" src={url} controls style={{ width: "100%", display: "block", background: "#000" }} />
+      {api ? (
+        <button className="attic-node-fichier-btn" onClick={async () => {
+          const buffer = await (await fetch(url)).arrayBuffer();
+          await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "WebM", extensions: ["webm"] }], buffer });
+        }}>{t("demo.sauvegarder")}</button>
+      ) : (
+        <a className="attic-node-fichier-btn" href={url} download={nom}>{t("demo.sauvegarder")}</a>
+      )}
+    </div>
+  );
+}
+
+function VueDemonstration({ data }: VueProps) {
+  const { t } = useI18n();
+  const url = (data as { _demoVideoUrl?: string })._demoVideoUrl;
+  return (
+    <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      {url ? <VideoDeNoeud url={url} nom="demonstration.webm" />
+        : <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("demo.avantLancer")}</div>}
+    </div>
+  );
+}
+
+// ── Film de l'application : le bouton qui le lance, et le film ──
+function VueFilmApplication({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const url = (data as { _demoAppVideoUrl?: string })._demoAppVideoUrl;
+  return (
+    <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <button className="attic-node-fichier-btn attic-demo-filmer" title={t("demo.filmerTitre")}
+        onClick={() => window.dispatchEvent(new CustomEvent(EVENEMENT_FILMER, { detail: { id } }))}>{t("demo.filmer")}</button>
+      {url && <VideoDeNoeud url={url} nom="film-application.webm" />}
+    </div>
+  );
+}
+
 function VueSortieTexte({ data }: VueProps) {
   const { t } = useI18n();
   const texte = data.audioResultatMessage ?? "";
@@ -1933,6 +1985,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
   { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
+  { correspond: parId("demonstration"), vue: VueDemonstration, position: "apres" },
+  { correspond: parId("film-application"), vue: VueFilmApplication, position: "apres" },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },

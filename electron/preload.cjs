@@ -83,6 +83,7 @@ contextBridge.exposeInMainWorld("api", {
   ouvrirDoc: () => ipcRenderer.invoke("doc:ouvrir"),
 
   captureSources: () => ipcRenderer.invoke("capture:systeme-audio"),
+  captureMaFenetre: () => ipcRenderer.invoke("capture:ma-fenetre"),
 
   // Les modèles ONNX téléchargés à la demande. `modelesProgression` rend de quoi se désabonner :
   // un composant qui se démonte sans le faire laisserait un écouteur par montage.
