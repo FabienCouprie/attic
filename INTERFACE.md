@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**396 composants**, dont **82** avec une vue propre et **4** sans lecteur générique.
+**399 composants**, dont **82** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -382,6 +382,9 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Spatialiseur | `spatialiseur` | 240 × 184 |
 | Spectre visible | `spectre-visible` | 240 × 140 |
 | Spectrogramme fractal | `spectrogramme-fractal` | 240 × 140 |
+| Spirale logarithmique | `spirale-logarithmique` | 240 × 140 |
+| Spirale des quintes | `spirale-quintes` | 240 × 140 |
+| Spirale spatiale | `spirale-spatiale` | 240 × 118 |
 | SSP (Koenig) | `ssp-koenig` | 240 × 140 |
 | Stable Audio 3 | `stable-audio-3` | 240 × 118 |
 | Sinus + transitoires + bruit (STN) | `stn-sinus-transitoires-bruit` | 240 × 162 |

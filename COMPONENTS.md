@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **396 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **399 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 70 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (11) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 197 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (6) |
+| [Processing](#processing) | 200 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (9) |
 | [Visualization](#visualization) | 38 | [Analysis](#analysis) (15) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -6180,7 +6180,10 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Braid](#braid) | Splits the sound into bands that cross over and under in space, returning to their places after a countable number of patterns. |
 | [Dirac Belt](#dirac-belt) | Spins the sound around the listener: after one lap it comes back inverted and cancels, after two it is intact. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
+| [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
+| [Spatial Spiral](#spatial-spiral) | Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does. |
+| [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [Tonnetz](#tonnetz) | Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice. |
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
 
@@ -6248,6 +6251,30 @@ A Klein bottle is built like a torus (a base circle, and above each point a « f
 | Spread | number | 70 ° | 0 – 90 °, step 1 | Angle of the voices from the centre. 90°: fully right at first, fully left when mirrored. 0°: all centred, and the mirror is no longer heard. |
 | Loop crossfade | number | 50 ms | 0 – 500 ms, step 5 | Crossfade applied to make the source loop without a click. |
 
+#### Logarithmic Spiral
+
+`spirale-logarithmique` · Processing → Topology
+
+*A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself.*
+
+Synthesises a spectrum whose partials are in geometric progression, and makes it glide. One turn of the spiral multiplies every frequency by the same ratio, so that the spectrum then maps onto itself, shifted by one partial. A logarithmic spiral is written r = a·e^(bθ): advancing by a fixed angle multiplies the radius by a fixed factor. It is the only curve whose magnification coincides with a rotation, which earns it the name equiangular spiral. Here the radius carries frequency and the angle carries time: the partials sit one turn apart, at f·ρ^k. The spiral closes for no ratio at all. One returns to the same angle, never to the same radius, and the message gives the self-similarity deviation measured on the rendered trajectory. « Ratio per turn » decides the interval between two neighbouring partials: • at 2, the partials are octaves and the spectrum is a Shepard tone's • at the golden ratio, at e or at 3/2, it is inharmonic and belongs to no scale • a ratio of 1 is excluded: the spiral degenerates into a circle there « Turns » says how far the spiral turns over the whole length. Positive, the spectrum rises; negative, it falls; zero, it holds still. « Rolloff » sets the weight of the high partials: at zero they all weigh the same and the sound is a whistle, at one they fall off like a harmonic series. Each partial's phase is integrated sample by sample rather than recomputed from the current frequency: writing sin(2π·f(t)·t) for a varying frequency gives a wrong pitch, the derivative of f(t)·t not being f(t). Partials that would pass half the sampling rate are dropped, and the message counts them. The « Spectrum » output gives, for each partial kept, its rank, its frequency at the start and at the end, and its amplitude. After the equiangular spiral studied by Jacob Bernoulli, and the motto he wanted on his gravestone, « eadem mutata resurgo ».
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Spectrum | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Ratio per turn | choice | Golden ratio | Golden ratio / Octave (2) / Fifth (3/2) / e / Free | The factor the radius is multiplied by in one turn, hence the interval between two neighbouring partials. At 2 the partials are octaves and the spectrum is a Shepard tone's. At other ratios it is inharmonic, and none closes the spiral. |
+| Free ratio | slider | 1.62 | 1.05 – 4, step 0.01 | The ratio used when « Free » is chosen. One is excluded: the spiral degenerates into a circle there. |
+| Fundamental | slider | 55 Hz | 20 – 440 Hz, step 1 | Frequency of the rank-zero partial, at the start. |
+| Partials | slider | 9 | 1 – 24, step 1 | Number of partials placed on the spiral, one per turn. Partials that pass half the sampling rate are dropped, and the message counts them. |
+| Turns | slider | 2 | -6 – 6, step 0.5 | Number of turns travelled over the whole length. One turn multiplies the whole spectrum by the ratio. Negative to descend, zero to hold the spectrum still. |
+| Length | slider | 12 s | 1 – 60 s, step 1 | Length of the travel. |
+| Rolloff | slider | 1 | 0 – 3, step 0.1 | Amplitude rolloff along the spiral, as a power of the rank. At zero every partial weighs the same and the sound is a whistle; at one they fall off like a harmonic series. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Level of the render. |
+
 #### Möbius Strip
 
 `anneau-moebius` · Processing → Topology
@@ -6267,6 +6294,53 @@ Sends the sound around a Möbius strip. One lap lasts the whole sound; as it mov
 | Laps | number | 2 | 1 – 8, step 1 | Number of laps around the strip; one lap lasts the whole sound. Two laps close the strip and end where they began. An odd number ends on the other side. |
 | Crossfade | number | 30 ms | 0 – 500 ms, step 5 | Crossfade at each seam between two laps. A sound does not loop by itself: without a crossfade the seam clicks. Capped at a quarter of the sound's length. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | 100%: the twist alone. Below that, the original sound mixes back with the other side. At 50%, the two sides cancel after one lap: on the Phase side the sound fades out completely, on the Stereo side left and right meet in the centre. |
+
+#### Spatial Spiral
+
+`spirale-spatiale` · Processing → Topology
+
+*Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does.*
+
+Turns a sound around the listener while moving it away, azimuth and distance linked: one turn multiplies the distance by a fixed ratio. The azimuth closes on every turn, the distance never does. Distance acts in two ways, which must be kept apart: • level follows the inverse square law, doubling the distance costs six decibels; that is geometry, and depends on neither the air nor the room • the air absorbs the high end and only the high end, the more so the greater the distance; it is timbre that tells distance when level lies « Air absorption » sets the second. At zero, receding only lowers the level. The filter is a first-order lowpass whose cutoff follows the distance instant by instant, a fixed filter not telling a movement. The azimuth follows the cosine law, which keeps the perceived level constant through the centre: a linear pan would lose three decibels there, and the rotation would be heard pumping. « Starting distance » sets the reference level: the output equals the input there. « Direction » picks the direction of the radius; approaching multiplies the level instead of dividing it. A ratio of 1 is excluded: the trajectory would be a circle. The message gives the starting and ending distances, the ratio per turn, the loss in decibels and the travel of the air cutoff. The input is brought down to mono, a source placed on a trajectory being a point and not an image.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio | required |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Turns | slider | 3 | 0.5 – 8, step 0.5 | Number of turns travelled over the whole length of the sound. |
+| Ratio per turn | choice | Double (2) | Double (2) / Golden ratio / One and a half / Quadruple (4) / Free | The factor the distance is multiplied by in one turn. At 2, each turn costs six decibels by the inverse square law. |
+| Free ratio | slider | 2 | 1.05 – 8, step 0.05 | The ratio used when « Free » is chosen. One is excluded: the trajectory would be a circle. |
+| Direction | choice | Recedes | Recedes / Approaches | The direction of the radius. Receding divides the level at each turn, approaching multiplies it. |
+| Starting distance | slider | 1 m | 0.5 – 20 m, step 0.5 | Distance at the start of the travel. It sets the reference level: the output equals the input there. |
+| Air absorption | slider | 50 % | 0 – 100 %, step 1 | How far the air closes the high end with distance. At zero, receding only lowers the level, which a plain gain would do too; it is timbre that tells distance when level lies. |
+
+#### Spiral of Fifths
+
+`spirale-quintes` · Processing → Topology
+
+*Stacks just fifths and folds them into one octave: the path never returns to its starting point.*
+
+Stacks fifths and folds each note into one octave. The path never returns to its starting point: what is called the circle of fifths is a spiral. Twelve just fifths, of ratio 3/2, are worth 8,423.96 cents; seven octaves are worth 8,400. The difference is the Pythagorean comma, 531441/524288, that is 23.46 cents. No power of 3/2 is a power of 2, 2 and 3 being coprime: the path closes at no rank at all, and equal temperament closes it by force, shaving 1.955 cent off every fifth. The deviation from equal temperament grows by 1.955 cent per step, exactly. The spiral comes close to closing at certain ranks without ever reaching it: • at the twelfth, 23.46 cents are missing, which is audible • at the forty-first, 19.84 cents on the other side • at the fifty-third, 3.62 cents, which is the reason fifty-three-tone temperament exists « Fifth » picks the one being stacked: • Just, 701.955 cents, never closes the path • Equal, exactly 700 cents, closes it at the twelfth step: a circle then, not a spiral • Quarter-comma meantone, 696.578 cents, closes it from the other side, the spiral turning the other way « Playing » decides how the deviation is heard: • One by one: each fifth sounds alone, and the drift is followed degree by degree • Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read Pitches are fractional, in decimal semitones: a whole degree would erase precisely the deviation the spiral accumulates. The output is audio rather than MIDI, a MIDI file being unable to carry a pitch in cents without per-channel pitch bend. The « Journey » output gives, for each step, the degree reached, its folded pitch in cents and its deviation from the nearest equal degree, then the ranks that come closest to closing. After the comma described by the Pythagoreans, and the account Leonhard Euler gives of it in Tentamen novae theoriae musicae, 1739.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fifths | slider | 12 | 1 – 60, step 1 | Number of stacked fifths. Twelve cover the twelve degrees and miss the closure by 23.46 cents. Fifty-three miss it by only 3.6 cents. |
+| Fifth | choice | Just (3/2) | Just (3/2) / Equal / Quarter-comma meantone | The fifth being stacked. Just is 701.955 cents and never closes the path. Equal is exactly 700 cents and closes it at the twelfth step: a circle then, not a spiral. Meantone is 696.578 cents and closes it from the other side, the spiral turning the other way. |
+| Direction | choice | Up | Up / Down | Up stacks fifths, down stacks fourths. The deviation from equal temperament changes sign with the direction. |
+| Playing | choice | One by one | One by one / Stacked | One by one: each fifth sounds alone, and the drift is followed degree by degree. Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read. |
+| Fundamental | slider | 220 Hz | 55 – 440 Hz, step 1 | Pitch of the tonic, and bottom of the octave everything is folded into. |
+| Note length | slider | 0.45 s | 0.1 – 2 s, step 0.05 | Length of each step of the spiral. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
 
 #### Tonnetz
 
