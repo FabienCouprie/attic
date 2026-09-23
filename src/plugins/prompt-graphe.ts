@@ -366,7 +366,7 @@ export const fiches: FicheAudio[] = ([
   {
     id: "prompt-vers-graphe", nom: "Prompt → graphe", nomEn: "Prompt → graph",
     univers: "Autres", famille: "Texte",
-    resume: "Génère un graphe de nodes depuis un prompt texte en langage naturel.",
+    resume: "Génère un graphe de composants depuis un prompt texte en langage naturel.",
     resumeEn: "Generates a node graph from a natural language text prompt.",
     // Port optionnel : `executer` retombe sur le paramètre Prompt si rien
     // n'est branché (voir plus bas). Sans `requis: false`, validerGraphe
@@ -377,7 +377,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "delay stéréo avec feedback sur une réverbération hall, puis compresseur et sortie audio",
-        doc: "Description en langage naturel du graphe à générer. Le parser reconnaît automatiquement tous les nodes installés (noms, synonymes, alias). Les nouveaux nodes (installés via .zip ou méta-composants) sont reconnus sans redémarrage.",
+        doc: "Description en langage naturel du graphe à générer. Le parser reconnaît automatiquement tous les composants installés (noms, synonymes, alias). Les nouveaux composants (installés via .zip ou méta-composants) sont reconnus sans redémarrage.",
         docEn: "Natural language description of the graph to generate. The parser automatically recognizes all installed nodes (names, synonyms, aliases). Newly installed nodes (.zip or meta-components) are recognized without restart.", defautEn: "stereo delay with feedback on hall reverberation, then compressor and audio output" },
       { nom: "Méthode", nomEn: "Method", type: "choix", options: ["Mots-clés", "Ollama (IA)"], optionsEn: ["Keywords", "Ollama (AI)"], optionIds: ["mots-cles", "ollama"], defaut: "mots-cles",
         doc: "Mots-clés = rapide, hors-ligne, correspondance littérale (~40 mots-clés). Ollama = comprend des tournures libres via un modèle local, mais nécessite « ollama serve ». En cas d'échec Ollama (serveur injoignable, réponse invalide), on retombe automatiquement sur Mots-clés.",

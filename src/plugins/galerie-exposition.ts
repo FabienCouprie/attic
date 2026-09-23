@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { lirePoints, ordonnerParCoordonnees, type SensOrdre } from "../audio/ordre-galerie";
 
 // Couleurs déduites du nom de piste (même logique que le générateur de pochette)
 function palettePiste(nom: string, graine: number): string[] {
@@ -134,9 +135,9 @@ export const fiches: FicheAudio[] = ([
   {
     id: "galerie-exposition", nom: "Galerie d'exposition", nomEn: "Exhibition Gallery",
     univers: "Collections", famille: "Export",
-    resume: "Génère une galerie HTML visuelle avec pochettes procédurales depuis un répertoire de MP3.",
-    resumeEn: "Generates a visual HTML gallery with procedural cover art from a directory of MP3 files.",
-    entrees: [],
+    resume: "Génère une galerie HTML visuelle avec pochettes procédurales depuis un répertoire de MP3, accrochée dans l'ordre du dossier ou dans celui de coordonnées reçues.",
+    resumeEn: "Generates a visual HTML gallery with procedural cover art from a directory of MP3 files, hung in folder order or in the order of received coordinates.",
+    entrees: [{ nom: "Coordonnées", nomEn: "Coordinates", type: "texte", requis: false }],
     sorties: [],
     // Écrit une galerie sur le disque et dépend du contenu d'un répertoire :
     // ni les paramètres ni les entrées ne capturent cet état externe.
@@ -150,6 +151,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répertoire de sortie", nomEn: "Output directory", type: "dossier", defaut: "",
         doc: "Répertoire où générer la galerie (index.html + MP3 copiés).",
         docEn: "Directory where to generate the gallery (index.html + copied MP3s).", defautEn: "" },
+      { nom: "Ordre", nomEn: "Order", type: "choix",
+        options: ["Du dossier", "Coordonnées : X puis Y", "Coordonnées : Y puis X"],
+        optionsEn: ["Folder order", "Coordinates: X then Y", "Coordinates: Y then X"],
+        optionIds: ["dossier", "xy", "yx"], defaut: "Coordonnées : X puis Y", defautEn: "Coordinates: X then Y",
+        doc: "Ordre d'accrochage des pistes. Sans entrée Coordonnées branchée, l'ordre du dossier s'applique dans tous les cas. Avec elle, l'axe choisi mène et l'autre départage les ex æquo.",
+        docEn: "Order in which the tracks are hung. With no Coordinates input connected, folder order applies in every case. With it, the chosen axis leads and the other breaks ties." },
       { nom: "Graine visuelle", nomEn: "Visual seed", plage: [0, 99999], pas: 1, defaut: 0,
         doc: "Graine pour les pochettes procédurales (0 = aléatoire). Même graine = mêmes pochettes.",
         docEn: "Seed for procedural cover art (0 = random). Same seed = same covers." },
@@ -170,6 +177,13 @@ export const fiches: FicheAudio[] = ([
       let fichiers: { nom: string; chemin: string }[] = (await api.lireDossier(repertoire)) ?? [];
       fichiers = fichiers.filter((f: any) => f.nom.toLowerCase().endsWith(".mp3"));
       if (fichiers.length === 0) return { valeurs: [], message: traduire("msg.aucun_mp3_dans_var_0", repertoire) };
+
+      // L'ordre d'accrochage se décide sur les fichiers, avant que les URL ne soient construites :
+      // c'est l'index de la piste qui donne sa pochette procédurale, et il doit suivre l'accrochage.
+      const sens = ctx.paramTexte("Ordre", "xy") as SensOrdre;
+      const points = lirePoints(ctx.entree(0) as string | null);
+      const range = ordonnerParCoordonnees(fichiers, points, sens);
+      fichiers = range.pistes;
 
       const pistes = fichiers.map((f: any, i: number) => {
         const safeNom = f.nom.replace(/[/\\]/g, "_").replace(/^\.+/, "");
@@ -221,7 +235,12 @@ export const fiches: FicheAudio[] = ([
       (ctx.noeud.data as any)._galerieHtmlPath = `${dossierSortie}/index.html`;
       (ctx.noeud.data as any)._galeriePistes = pistes;
 
-      return { valeurs: [], message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
+      // L'ordre d'accrochage se dit : une galerie rangée par coordonnées et une galerie rangée par
+      // le dossier se ressemblent à l'œil, et rien d'autre ne distinguerait les deux.
+      const ordre = range.placees > 0
+        ? ` · ordre ${sens === "yx" ? "Y→X" : "X→Y"} : ${range.placees} placée(s)${range.restantes > 0 ? `, ${range.restantes} sans coordonnées à la suite` : ""}`
+        : "";
+      return { valeurs: [], message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") + ordre };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

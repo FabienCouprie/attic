@@ -7442,7 +7442,7 @@ Batch-processes a folder: converts all audio files (WAV, OGG…) to MP3 in the o
 |---|---|
 | [Coordinates on Map](#coordinates-on-map) | Projects 2D coordinates received as input (e.g. the Coordinates output of Track classification) onto a fictional map — same visual engine (style, aesthetic) as Sound Map, but point position reflects upstream-computed similarity instead of being random. |
 | [Cover Art Generator](#cover-art-generator) | Generates a procedural album cover (SVG) from a prompt + title. |
-| [Exhibition Gallery](#exhibition-gallery) | Generates a visual HTML gallery with procedural cover art from a directory of MP3 files. |
+| [Exhibition Gallery](#exhibition-gallery) | Generates a visual HTML gallery with procedural cover art from a directory of MP3 files, hung in folder order or in the order of received coordinates. |
 | [Sound Map](#sound-map) | Loads an audio folder and generates an interactive HTML map of a fictional city or a concentric map with several aesthetics, openable in a browser. |
 
 #### Coordinates on Map
@@ -7497,17 +7497,20 @@ Generates procedural album cover art in SVG — offline, instant, no GPU or down
 
 `galerie-exposition` · Collections → Export
 
-*Generates a visual HTML gallery with procedural cover art from a directory of MP3 files.*
+*Generates a visual HTML gallery with procedural cover art from a directory of MP3 files, hung in folder order or in the order of received coordinates.*
 
-Generates a visual HTML gallery with cover art from a directory of MP3 files. Each track cover is extracted from the MP3's ID3 tag if available, otherwise procedurally generated (SVG). Requires Electron.
+Generates an HTML gallery from a directory of MP3 files: an index.html at the root of the output directory, and the MP3s copied into an mp3/ subdirectory. Each track gets a cover, taken from the file's ID3 tag when it carries one, drawn otherwise. Settings: • Title: what shows at the top of the page • MP3 directory: the source, of which only .mp3 files are read • Output directory • Order: how the tracks are hung • Visual seed: the one used for the drawn covers The hanging order. By default the tracks appear in directory order. The optional Coordinates input takes a JSON list, one object per track carrying its name, its path and two numbers X and Y — the shape a collection classification produces. The gallery is then hung in the order of those coordinates: the chosen axis leads, the other breaks ties, and directory order settles two points that coincide exactly, so that two runs hang the same collection the same way. What that ordering gives: coordinates coming from a similarity analysis place similar pieces close together, so one moves from a track to the next by neighbourhood rather than by alphabet. A track is matched to its point by path, then by file name — which covers the case where the analysis ran on a copy of the directory, elsewhere on the disk. A track no point speaks of is not dropped: it follows at the end, in directory order, and the message states how many tracks are in that case. Requires Electron, the gallery being written to disk.
 
-*No ports.*
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Coordinates | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Title | text | `My gallery` |  | Title displayed at the top of the gallery. |
 | MP3 directory | folder | — |  | Path to the directory containing MP3 files (.mp3 only). |
 | Output directory | folder | — |  | Directory where to generate the gallery (index.html + copied MP3s). |
+| Order | choice | Coordinates: X then Y | Folder order / Coordinates: X then Y / Coordinates: Y then X | Order in which the tracks are hung. With no Coordinates input connected, folder order applies in every case. With it, the chosen axis leads and the other breaks ties. |
 | Visual seed | number | 0 | 0 – 99999, step 1 | Seed for procedural cover art (0 = random). Same seed = same covers. |
 
 #### Sound Map
