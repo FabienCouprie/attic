@@ -130,7 +130,7 @@ const FICHES: FicheAudio[] = [
         plage: [0, 9999],
         pas: 1,
         defaut: 0,
-        doc: "0 : une configuration fixe au centre — une cellule en 1D ; en 2D, un motif qui vit longtemps (le R-pentomino en Conway, le réplicateur en Highlife). Sinon, une grille tirée au hasard à partir de cette graine.",
+        doc: "0 : une configuration fixe au centre, une cellule en 1D ; en 2D, un motif qui vit longtemps (le R-pentomino en Conway, le réplicateur en Highlife). Sinon, une grille tirée au hasard à partir de cette graine.",
         docEn: "0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed.",
       },
       {

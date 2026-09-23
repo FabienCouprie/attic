@@ -50,8 +50,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "clavier-sfz", nom: "Clavier SFZ", nomEn: "SFZ Keyboard",
     univers: "Entrées", famille: "Génération",
-    resume: "Joue une banque SFZ — fichier du disque ou banque du graphe — sur un clavier de 88 touches, et enregistre ce qu'on joue.",
-    resumeEn: "Plays an SFZ bank — a file from disk or a bank from the graph — on an 88-key keyboard, and records what you play.",
+    resume: "Joue une banque SFZ, fichier du disque ou banque du graphe, sur un clavier de 88 touches, et enregistre ce qu'on joue.",
+    resumeEn: "Plays an SFZ bank, a file from disk or a bank from the graph, on an 88-key keyboard, and records what you play.",
     // `requis: false` : le clavier joue tres bien un fichier du disque sans que rien n'arrive par
     // le graphe. Sans ce drapeau, la validation refusait le noeud avant meme de l'executer — un nœud
     // en erreur, sans message, et le fichier jamais lu.
@@ -66,14 +66,14 @@ export const fiches: FicheAudio[] = ([
         options: ["Automatique", "Fichier SFZ", "Banque entrante"],
         optionsEn: ["Automatic", "SFZ file", "Incoming bank"],
         optionIds: ["auto", "fichier", "entree"], defaut: "Automatique", defautEn: "Automatic",
-        doc: "D'où vient l'instrument. Automatique : la banque entrante si elle est branchée, sinon le fichier `.sfz` désigné dans la vue du composant. Fichier SFZ : toujours le fichier, même si une banque arrive — utile pour comparer ce qui a été exporté avec ce que le graphe produit maintenant. Banque entrante : toujours l'entrée.",
-        docEn: "Where the instrument comes from. Automatic: the incoming bank if one is connected, otherwise the `.sfz` file chosen in the node's view. SFZ file: always the file, even if a bank arrives — useful to compare what was exported with what the graph produces now. Incoming bank: always the input." },
+        doc: "D'où vient l'instrument. Automatique : la banque entrante si elle est branchée, sinon le fichier `.sfz` désigné dans la vue du composant. Fichier SFZ : toujours le fichier, même si une banque arrive, utile pour comparer ce qui a été exporté avec ce que le graphe produit maintenant. Banque entrante : toujours l'entrée.",
+        docEn: "Where the instrument comes from. Automatic: the incoming bank if one is connected, otherwise the `.sfz` file chosen in the node's view. SFZ file: always the file, even if a bank arrives, useful to compare what was exported with what the graph produces now. Incoming bank: always the input." },
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Niveau de sortie. La vélocité de chaque note le module, et le `volume` d'une région SFZ s'y ajoute.",
         docEn: "Output level. Each note's velocity scales it, and an SFZ region's `volume` adds to it." },
       { nom: "Relâchement", nomEn: "Release", type: "curseur", plage: [1, 2000], pas: 1, defaut: 150, unite: "ms",
-        doc: "Temps d'extinction après le relâchement de la touche. Si le fichier SFZ déclare un `ampeg_release`, il est affiché dans le message du composant — mais c'est bien ce réglage qui s'applique, pour que le composant reste maître de ce qu'il rend.",
-        docEn: "Fade-out time after the key is released. If the SFZ file declares an `ampeg_release`, it is shown in the node's message — but this setting is what applies, so the node stays in charge of what it renders." },
+        doc: "Temps d'extinction après le relâchement de la touche. Si le fichier SFZ déclare un `ampeg_release`, il est affiché dans le message du composant, mais c'est bien ce réglage qui s'applique, pour que le composant reste maître de ce qu'il rend.",
+        docEn: "Fade-out time after the key is released. If the SFZ file declares an `ampeg_release`, it is shown in the node's message, but this setting is what applies, so the node stays in charge of what it renders." },
       { nom: "Fondu de boucle", nomEn: "Loop crossfade", type: "curseur", plage: [1, 200], pas: 1, defaut: 20, unite: "ms",
         doc: "Durée du fondu au raccord de la boucle de maintien, pour le rendu. Trop court, on entend un clic à chaque tour ; trop long, la boucle se met à respirer. Le jeu en direct, lui, boucle par le matériel audio et ne fond pas le raccord.",
         docEn: "Length of the crossfade at the sustain loop's join, for the render. Too short, a click is heard on every turn; too long, the loop starts to breathe. Live playing loops through the audio hardware and does not crossfade the join." },

@@ -46,8 +46,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "repartiteur-midi", nom: "Répartiteur MIDI", nomEn: "MIDI Splitter",
     univers: "Traitement", famille: "Montage",
-    resume: "Coupe un fichier MIDI en parties — une par instrument — pour les jouer avec quatre banques différentes.",
-    resumeEn: "Splits a MIDI file into parts — one per instrument — to play them with four different banks.",
+    resume: "Coupe un fichier MIDI en parties, une par instrument, pour les jouer avec quatre banques différentes.",
+    resumeEn: "Splits a MIDI file into parts, one per instrument, to play them with four different banks.",
     entrees: [{ nom: "MIDI", type: "midi" }],
     sorties: [
       { nom: "Partie 1", nomEn: "Part 1", type: "midi" },
@@ -61,8 +61,8 @@ export const fiches: FicheAudio[] = ([
         options: ["Automatique", "Par canaux", "Par pistes"],
         optionsEn: ["Automatic", "By channels", "By tracks"],
         optionIds: ["auto", "canaux", "pistes"], defaut: "Automatique", defautEn: "Automatic",
-        doc: "Automatique : le composant regarde ce que le fichier contient et répartit seul — le canal 10, que le General MIDI réserve aux percussions, part toujours sur la sortie Batterie, et les autres canaux remplissent les parties dans l'ordre de leur numéro. Par canaux : vous écrivez les canaux de chaque partie ci-dessous. Par pistes : les mêmes cases désignent alors des numéros de pistes, ce qu'il faut pour les fichiers dont les voix partagent un canal — un logiciel de notation écrit souvent les quatre voix d'un chœur sur le canal 1, séparées par pistes.",
-        docEn: "Automatic: the node looks at what the file holds and splits on its own — channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. By channels: you write each part's channels below. By tracks: the same boxes then mean track numbers, which is what files whose voices share a channel need — a notation program often writes a choir's four voices on channel 1, separated by tracks." },
+        doc: "Automatique : le composant regarde ce que le fichier contient et répartit seul, le canal 10, que le General MIDI réserve aux percussions, part toujours sur la sortie Batterie, et les autres canaux remplissent les parties dans l'ordre de leur numéro. Par canaux : vous écrivez les canaux de chaque partie ci-dessous. Par pistes : les mêmes cases désignent alors des numéros de pistes, ce qu'il faut pour les fichiers dont les voix partagent un canal, un logiciel de notation écrit souvent les quatre voix d'un chœur sur le canal 1, séparées par pistes.",
+        docEn: "Automatic: the node looks at what the file holds and splits on its own, channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. By channels: you write each part's channels below. By tracks: the same boxes then mean track numbers, which is what files whose voices share a channel need, a notation program often writes a choir's four voices on channel 1, separated by tracks." },
       { nom: "Partie 1", nomEn: "Part 1", type: "texte", defaut: "1",
         doc: "Canaux (ou pistes) de la première partie : « 1 », « 1,2 », « 1-3 ». Les canaux se comptent de 1 à 16, comme sur un appareil. Ignoré en mode automatique.",
         docEn: "Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode." },
@@ -71,8 +71,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Partie 3", nomEn: "Part 3", type: "texte", defaut: "3",
         doc: "Canaux (ou pistes) de la troisième partie.", docEn: "Channels (or tracks) of the third part." },
       { nom: "Batterie", nomEn: "Drums", type: "texte", defaut: "10",
-        doc: "Canaux (ou pistes) de la batterie. 10 par défaut, la convention du General MIDI. Cette sortie demande une banque d'un autre genre — un kit, où une touche est un son et non une hauteur — et c'est pourquoi elle est nommée.",
-        docEn: "Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank — a kit, where a key is a sound and not a pitch — hence its name." },
+        doc: "Canaux (ou pistes) de la batterie. 10 par défaut, la convention du General MIDI. Cette sortie demande une banque d'un autre genre (un kit, où une touche est un son et non une hauteur) et c'est pourquoi elle est nommée.",
+        docEn: "Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank (a kit, where a key is a sound and not a pitch) hence its name." },
     ],
     async executer(ctx: any) {
       const fichier = ctx.entree(0);

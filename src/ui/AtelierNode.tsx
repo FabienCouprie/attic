@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
-import { vuesPourNoeud, vueAvantMasqueMessage } from "./vues";
+import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./vues";
 import { useStatut } from "./statuts";
 import { etatPorts } from "./ports-extensibles";
 import { copierTexte } from "./copier";
@@ -69,6 +69,9 @@ export type DonneesNoeud = {
   pdfFichier?: File; pdfNom?: string;
   prioritaire?: boolean;
   tempsExecution?: number;
+  /** De combien ce composant a change le niveau de son entree, en decibels. Mesure par le
+   *  moteur apres chaque execution ; voir `audio/ecart-niveau.ts`. */
+  ecartNiveau?: number;
   imageResultatUrl?: string;
   imageResultatFile?: File;
   onDefinirPrioritaire?: (id: string) => void;
@@ -200,6 +203,10 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const replie = data.replie === true;
   const categorie = categorieNoeud(data.ficheId, def);
   const categorieClass = categorie !== "autre" ? `attic-node-categorie-${categorie}` : "";
+  // LE LECTEUR GENERIQUE NE DISPARAIT QUE SI UNE VUE DIT LE PORTER. Il se retirait devant TOUTE
+  // vue « avant », au motif qu'une vue custom gere l'audio : c'etait faux pour la plupart, et huit
+  // generateurs rendaient un son que rien ne permettait d'ecouter dans le composant.
+  const lecteurPorteParUneVue = vueAvantPorteLecteur(data.ficheId);
   const nom = (nodeEstMeta && typeof data.nom === "string" && data.nom.trim())
     ? data.nom
     : ((lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? data.ficheId);
@@ -558,17 +565,17 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {vuesAvant.map((Vue, i) => <Vue key={`av-${i}`} id={id} data={data} def={def} />)}
 
           {/* Lecteur + message (générique) — masqué si une vue custom gère déjà l'audio */}
-          {data.audioResultatUrl && vuesAvant.length === 0 && (
+          {data.audioResultatUrl && !lecteurPorteParUneVue && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <IndicateurNiveau buffer={data.audioResultatBuffer} />
               <audio key={data.audioResultatUrl} className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>
           )}
           {/* Un tampon sans aperçu : piste longue, nœud intermédiaire. Le lecteur se construit au clic. */}
-          {!data.audioResultatUrl && data.audioResultatBuffer && vuesAvant.length === 0 && (
+          {!data.audioResultatUrl && data.audioResultatBuffer && !lecteurPorteParUneVue && (
             <LecteurALaDemande buffer={data.audioResultatBuffer} />
           )}
-          {!data.audioResultatUrl && !data.audioResultatBuffer && data.audioUrl && vuesAvant.length === 0 && (
+          {!data.audioResultatUrl && !data.audioResultatBuffer && data.audioUrl && !lecteurPorteParUneVue && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
             </div>
@@ -650,6 +657,16 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
         {typeof data.tempsExecution === "number" && (
           <span className="attic-node-temps" title={t("execution.temps")}>
             {data.tempsExecution < 1000 ? `${Math.round(data.tempsExecution)} ms` : `${(data.tempsExecution / 1000).toFixed(2)} s`}
+          </span>
+        )}
+        {/* L'ECART DE NIVEAU, ET SEULEMENT QUAND IL COMPTE. Sous un decibel, l'ecart n'est pas
+            audible et l'afficher sur tous les composants noierait celui qui merite un regard. */}
+        {typeof data.ecartNiveau === "number" && Math.abs(data.ecartNiveau) >= 1 && (
+          <span
+            className={`attic-node-ecart ${data.ecartNiveau <= -3 ? "baisse" : ""}`}
+            title={t("execution.ecartNiveau")}
+          >
+            {data.ecartNiveau > 0 ? "+" : ""}{data.ecartNiveau.toFixed(1)} dB
           </span>
         )}
       </div>

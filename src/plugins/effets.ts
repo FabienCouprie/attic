@@ -1204,8 +1204,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "shift-formants", nom: "Shift formants", nomEn: "Formant Shift",
     univers: "Traitement", famille: "Effets",
-    resume: "Décalage formantique par LPC — change hauteur et timbre indépendamment (conversion vocale).",
-    resumeEn: "Formant shifting via LPC — change pitch and timbre independently (voice conversion).",
+    resume: "Décalage formantique par LPC, change hauteur et timbre indépendamment (conversion vocale).",
+    resumeEn: "Formant shifting via LPC: change pitch and timbre independently (voice conversion).",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -1527,8 +1527,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Le grave du balayage. Ces deux bornes étaient câblées à 200 et 2500 Hz, invisibles et irréglables ; elles valent avec ou sans courbe, puisque le wah balaie entre elles dans les deux cas.",
         docEn: "The low end of the sweep. These two bounds were hard-wired at 200 and 2500 Hz, invisible and unsettable; they hold with or without a curve, since the wah sweeps between them either way." },
       { nom: "Balayage à", nomEn: "Sweep to", type: "curseur", plage: [50, 8000], pas: 10, defaut: 2500, unite: "Hz",
-        doc: "L'aigu du balayage. Une courbe branchée le parcourt en multipliant et non en ajoutant — une octave est un doublement —, de sorte que le balayage ne se précipite pas dans l'aigu.",
-        docEn: "The high end of the sweep. A connected curve travels it by multiplying rather than adding — an octave is a doubling — so the sweep does not rush into the treble." },
+        doc: "L'aigu du balayage. Une courbe branchée le parcourt en multipliant et non en ajoutant, une octave est un doublement, de sorte que le balayage ne se précipite pas dans l'aigu.",
+        docEn: "The high end of the sweep. A connected curve travels it by multiplying rather than adding, an octave is a doubling, so the sweep does not rush into the treble." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Amplitude du balayage en fréquence (0% = fixe, 100% = wah complet).", docEn: "Frequency sweep range (0% = static, 100% = full wah)." },
       { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 5, unite: "Q",
@@ -1622,8 +1622,8 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // redresseur, etat dans trois scalaires
     resume: "Ajoute une octave supérieure et/ou inférieure.",
     resumeEn: "Adds an upper and/or lower octave.",
-    notice: "Génère jusqu'à deux voix supplémentaires — d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. L'un des deux à 0 n'ajoute qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
-    noticeEn: "Generates up to two extra voices — hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Either one at 0 adds a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
+    notice: "Génère jusqu'à deux voix supplémentaires, d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. L'un des deux à 0 n'ajoute qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
+    noticeEn: "Generates up to two extra voices, hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Either one at 0 adds a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [

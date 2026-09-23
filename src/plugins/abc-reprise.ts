@@ -14,8 +14,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reprise-abc", nom: "Reprise ABC", nomEn: "ABC Cover",
     univers: "Traitement", famille: "Conversion",
-    resume: "Reprend une partition ABC dans un autre style : même mélodie, mêmes accords, avec un accompagnement et une basse — ballade, pop, valse, marche, bossa nova.",
-    resumeEn: "Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass — ballad, pop, waltz, march, bossa nova.",
+    resume: "Reprend une partition ABC dans un autre style : même mélodie, mêmes accords, avec un accompagnement et une basse, ballade, pop, valse, marche, bossa nova.",
+    resumeEn: "Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass, ballad, pop, waltz, march, bossa nova.",
     entrees: [{ nom: "ABC", type: "texte", requis: true }],
     sorties: [
       { nom: "Audio", type: "audio" },
@@ -28,8 +28,8 @@ export const fiches: FicheAudio[] = ([
         options: ["Blocs (accords tenus)", "Ballade (arpèges)", "Pop (accords sur les temps)", "Valse (basse – accord – accord)", "Marche (basse – accord)", "Bossa nova"],
         optionsEn: ["Blocks (held chords)", "Ballad (arpeggios)", "Pop (chords on the beats)", "Waltz (bass – chord – chord)", "March (bass – chord)", "Bossa nova"],
         optionIds: [...STYLES], defaut: "Ballade (arpèges)", defautEn: "Ballad (arpeggios)",
-        doc: "L'habillage de l'accompagnement. Blocs : accords et basse tenus. Ballade : arpège en croches sur la basse tenue. Pop : accord à chaque temps, basse en croches. Valse : basse au premier temps, accords aux suivants. Marche : basse fondamentale puis quinte sur les temps impairs, accords sur les pairs — mesures à nombre pair de temps. Bossa nova : basse en noire pointée et croche, accords syncopés — 4/4 seulement. Un style qui ne s'applique pas à la métrique est refusé, et le message le dit.",
-        docEn: "The accompaniment's style. Blocks: held chords and bass. Ballad: eighth-note arpeggio over a held bass. Pop: a chord on every beat, bass in eighths. Waltz: bass on beat one, chords on the others. March: root then fifth in the bass on odd beats, chords on even beats — bars with an even number of beats. Bossa nova: dotted-quarter-and-eighth bass, syncopated chords — 4/4 only. A style that does not fit the meter is refused, and the message says so." },
+        doc: "L'habillage de l'accompagnement. Blocs : accords et basse tenus. Ballade : arpège en croches sur la basse tenue. Pop : accord à chaque temps, basse en croches. Valse : basse au premier temps, accords aux suivants. Marche : basse fondamentale puis quinte sur les temps impairs, accords sur les pairs, mesures à nombre pair de temps. Bossa nova : basse en noire pointée et croche, accords syncopés, 4/4 seulement. Un style qui ne s'applique pas à la métrique est refusé, et le message le dit.",
+        docEn: "The accompaniment's style. Blocks: held chords and bass. Ballad: eighth-note arpeggio over a held bass. Pop: a chord on every beat, bass in eighths. Waltz: bass on beat one, chords on the others. March: root then fifth in the bass on odd beats, chords on even beats, bars with an even number of beats. Bossa nova: dotted-quarter-and-eighth bass, syncopated chords, 4/4 only. A style that does not fit the meter is refused, and the message says so." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
         doc: "Tempo de la reprise en noires par minute. 0 : celui de la partition.",
         docEn: "Tempo of the cover in quarter notes per minute. 0: the score's own." },

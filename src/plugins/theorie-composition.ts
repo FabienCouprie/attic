@@ -100,8 +100,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "serie-dodecaphonique", nom: "Opérations sérielles", nomEn: "Serial Operations",
     univers: "Traitement", famille: "Effets",
-    resume: "Joue les quatre formes d'une série — originale, rétrograde, inversion, rétrograde de l'inversion — et écrit sa matrice.",
-    resumeEn: "Plays a row's four forms — original, retrograde, inversion, retrograde inversion — and writes its matrix.",
+    resume: "Joue les quatre formes d'une série (originale, rétrograde, inversion, rétrograde de l'inversion) et écrit sa matrice.",
+    resumeEn: "Plays a row's four forms (original, retrograde, inversion, retrograde inversion) and writes its matrix.",
     entrees: [{ nom: "MIDI", type: "midi", requis: false }],
     sorties: [
       { nom: "Audio", type: "audio" },
@@ -188,8 +188,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Découpage", nomEn: "Grouping", type: "choix",
         options: ["Tout l'extrait", "Accord par accord"], optionsEn: ["Whole excerpt", "Chord by chord"],
         optionIds: ["tout", "accords"], defaut: "Tout l'extrait", defautEn: "Whole excerpt",
-        doc: "« Accord par accord » analyse chaque groupe de notes simultanées séparément, puis relève les formes premières qui revenaient — c'est ce qui permet de dire que deux passages emploient le même matériau.",
-        docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred — which is what allows saying that two passages use the same material." },
+        doc: "« Accord par accord » analyse chaque groupe de notes simultanées séparément, puis relève les formes premières qui revenaient ; c'est ce qui permet de dire que deux passages emploient le même matériau.",
+        docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material." },
     ],
     async executer(ctx: any) {
       const entree = await notesDuMidi(ctx.entree(0));
@@ -256,8 +256,8 @@ export const fiches: FicheAudio[] = ([
         options: ["Classes, registre gardé", "Miroir vrai"],
         optionsEn: ["Classes, register kept", "True mirror"],
         optionIds: ["registre", "miroir"], defaut: "Classes, registre gardé", defautEn: "Classes, register kept",
-        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, la ligne garde son contour — c'est ce qu'on veut pour substituer un accord. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens et la mélodie se retourne.",
-        docEn: "« Classes » reflects each note within its octave: the harmony changes, the line keeps its contour — this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over." },
+        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, la ligne garde son contour ; c'est ce qu'on veut pour substituer un accord. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens et la mélodie se retourne.",
+        docEn: "« Classes » reflects each note within its octave: the harmony changes, the line keeps its contour; this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx: any) {

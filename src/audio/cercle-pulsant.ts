@@ -167,6 +167,63 @@ export function notesDepuisPulsations(
   return { notes, codes };
 }
 
+/**
+ * Les accords que la roue prescrit.
+ *
+ * UNE CASE DE LA ROUE DE CAMELOT EST UNE TONALITÉ, DONC UN ACCORD. La teinte parcourt la roue, et
+ * cette suite de cases est une suite d'accords — c'est même l'objet de la roue, dont la règle
+ * d'enchaînement sert aux disc-jockeys à passer d'un morceau au suivant sans heurt harmonique.
+ * Seule la mélodie l'entendait : elle prend ses degrés dans la gamme de la case, mais un degré
+ * isolé ne fait pas entendre la tonalité dont il vient. La triade de tonique, elle, la nomme.
+ *
+ * Elle est posée UNE OCTAVE SOUS LA MÉLODIE, et à une nuance qu'on règle : deux voix dans le même
+ * registre se disputent l'avant-plan, et c'est la mélodie qui doit l'occuper.
+ *
+ * UN SEGMENT SANS PULSATION AUDIBLE NE SONNE PAS. La teinte tourne sans se soucier du seuil de
+ * silence, si bien qu'une case peut être traversée pendant que le cercle est rétracté. Y poser un
+ * accord romprait la propriété qui fait tenir le composant : l'image et la musique se taisent
+ * ensemble, parce que c'est la même décision.
+ */
+export type ModeAccords = "aucun" | "tenus" | "frappes";
+
+export function accordsDepuisPulsations(
+  p: readonly Pulsation[], o: OptionsCercle, mode: ModeAccords, nuance: number, octaveBase = 4,
+): NoteEvenement[] {
+  if (mode === "aucun" || p.length === 0) return [];
+  const velocite = Math.round(Math.min(127, Math.max(1, nuance * 127)));
+  const notes: NoteEvenement[] = [];
+  const codeDe = (i: number) => couleurVersCamelot(p[i].teinte, p[i].saturation);
+
+  let i = 0;
+  while (i < p.length) {
+    const code = codeDe(i);
+    let j = i;
+    while (j + 1 < p.length && codeDe(j + 1) === code) j++;
+
+    const audibles: number[] = [];
+    for (let k = i; k <= j; k++) if (p[k].rayon >= o.seuilSilence) audibles.push(k);
+    if (audibles.length > 0) {
+      const tierce = estMineur(code) ? 3 : 4;
+      const octave = octaveBase + Math.round(p[i].clarte * 2) - 2;
+      const racine = 12 * (octave + 1) + toniqueDeCamelot(code);
+      const finSegment = Math.min(o.dureeSec, j + 1 < p.length ? p[j + 1].temps : p[j].temps + 0.4);
+      const frappes = mode === "frappes" ? audibles : [audibles[0]];
+      for (let f = 0; f < frappes.length; f++) {
+        const debut = p[frappes[f]].temps;
+        const fin = mode === "frappes" && f + 1 < frappes.length
+          ? Math.min(finSegment, p[frappes[f + 1]].temps)
+          : finSegment;
+        if (fin <= debut) continue;
+        for (const demi of [0, tierce, 7]) {
+          notes.push({ note: Math.min(108, Math.max(21, racine + demi)), velocite, debut, fin });
+        }
+      }
+    }
+    i = j + 1;
+  }
+  return notes;
+}
+
 /** Une couleur en notation CSS, depuis les trois composantes d'une pulsation. */
 export const couleurCss = (p: Pulsation, alpha = 1) =>
   `hsl(${(((p.teinte % 360) + 360) % 360).toFixed(1)} ${(p.saturation * 100).toFixed(0)}% ${(30 + p.clarte * 45).toFixed(0)}%${alpha < 1 ? ` / ${alpha}` : ""})`;

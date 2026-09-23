@@ -89,8 +89,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Note", nomEn: "Note", type: "curseur", plage: [21, 108], pas: 1, defaut: 60,
-        doc: "Note MIDI rendue (60 = do central). C'est la frontière de l'instrument : quand une « Fin d'instrument » est branchée en aval, le moteur recopie la chaîne une fois par note du clavier et remplace ce réglage dans chaque copie. Seul, le composant rend la note réglée ici — de quoi écouter et régler l'instrument à une hauteur avant de le décliner sur les 88 touches.",
-        docEn: "MIDI note rendered (60 = middle C). This is the instrument's boundary: when an « Instrument End » is connected downstream, the engine copies the chain once per keyboard note and replaces this setting in each copy. On its own, the node renders the note set here — enough to listen to and tune the instrument at one pitch before spreading it across the 88 keys." },
+        doc: "Note MIDI rendue (60 = do central). C'est la frontière de l'instrument : quand une « Fin d'instrument » est branchée en aval, le moteur recopie la chaîne une fois par note du clavier et remplace ce réglage dans chaque copie. Seul, le composant rend la note réglée ici, de quoi écouter et régler l'instrument à une hauteur avant de le décliner sur les 88 touches.",
+        docEn: "MIDI note rendered (60 = middle C). This is the instrument's boundary: when an « Instrument End » is connected downstream, the engine copies the chain once per keyboard note and replaces this setting in each copy. On its own, the node renders the note set here, enough to listen to and tune the instrument at one pitch before spreading it across the 88 keys." },
       { nom: "Forme", nomEn: "Waveform", type: "choix",
         options: ["Sinus", "Dent de scie", "Carré", "Triangle", "Impulsion", "Bruit"],
         optionsEn: ["Sine", "Sawtooth", "Square", "Triangle", "Impulse", "Noise"],
@@ -141,8 +141,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Largeur de zone", nomEn: "Zone width", type: "curseur", plage: [1, 12], pas: 1, defaut: 2,
         unite: " demi-tons", uniteEn: " semitones",
-        doc: "Écart entre deux notes rendues. C'est le réglage qui décide du coût : la chaîne est rejouée une fois par note, donc dix-huit fois à ±2 demi-tons sur 88 touches, six fois à ±6. Contrairement à l'étalement par transposition, la largeur ne dégrade pas le son de la racine — elle décide seulement de combien de demi-tons les touches voisines seront rééchantillonnées à la lecture.",
-        docEn: "Gap between two rendered notes. This is the setting that decides the cost: the chain is replayed once per note, so eighteen times at ±2 semitones over 88 keys, six times at ±6. Unlike spreading by transposition, the width does not degrade the root's sound — it only decides by how many semitones neighbouring keys will be resampled at playback." },
+        doc: "Écart entre deux notes rendues. C'est le réglage qui décide du coût : la chaîne est rejouée une fois par note, donc dix-huit fois à ±2 demi-tons sur 88 touches, six fois à ±6. Contrairement à l'étalement par transposition, la largeur ne dégrade pas le son de la racine ; elle décide seulement de combien de demi-tons les touches voisines seront rééchantillonnées à la lecture.",
+        docEn: "Gap between two rendered notes. This is the setting that decides the cost: the chain is replayed once per note, so eighteen times at ±2 semitones over 88 keys, six times at ±6. Unlike spreading by transposition, the width does not degrade the root's sound; it only decides by how many semitones neighbouring keys will be resampled at playback." },
       { nom: "Note basse", nomEn: "Lowest key", type: "curseur", plage: [21, 108], pas: 1, defaut: 21,
         doc: "Première touche couverte. 21 = La0.", docEn: "First key covered. 21 = A0." },
       { nom: "Note haute", nomEn: "Highest key", type: "curseur", plage: [21, 108], pas: 1, defaut: 108,
@@ -153,8 +153,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Pose dans chaque zone une boucle relue tant que la touche est tenue. Utile si l'excitation est courte et que l'on veut des notes tenues.",
         docEn: "Places in each zone a loop replayed while the key is held. Useful if the excitation is short and held notes are wanted." },
       { nom: "Début de boucle", nomEn: "Loop start", type: "curseur", plage: [5, 90], pas: 1, defaut: 50, unite: "%",
-        doc: "Où la boucle commence dans l'échantillon — après l'attaque, donc.",
-        docEn: "Where the loop starts within the sample — after the attack, then." },
+        doc: "Où la boucle commence dans l'échantillon, après l'attaque, donc.",
+        docEn: "Where the loop starts within the sample, after the attack, then." },
     ],
     async executer(ctx: any) {
       const brutes = ctx.entrees() as unknown[];

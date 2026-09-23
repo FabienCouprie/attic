@@ -140,6 +140,7 @@ import { fiches as f_masquage_schillinger_gammes } from "./masquage-schillinger-
 import { fiches as f_caracteristiques_piste } from "./caracteristiques-piste";
 import { fiches as f_synthese_features } from "./synthese-features";
 import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
+import { fiches as f_recaler_niveau } from "./recaler-niveau";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_parcours } from "./parcours";
@@ -218,6 +219,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_caracteristiques_piste,
   ...f_synthese_features,
   ...f_cercle_pulsant,
+  ...f_recaler_niveau,
   ...f_ampleur,
   ...f_quiz,
   ...f_parcours,

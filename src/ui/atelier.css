@@ -428,6 +428,32 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-node-vue-vexflow { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 4px 2px; }
 .attic-node-vue-vexflow-inner { flex: 1 1 auto; min-height: 0; background: #fff; border-radius: 4px; overflow: hidden; }
 .attic-node-vue-vexflow-inner svg { width: 100%; height: 100%; display: block; }
+
+/* UNE ANIMATION QUI NE DEPEND D'AUCUNE HAUTEUR AMBIANTE.
+ *
+ * Les trois regles ci-dessus forment un contrat tacite : `height: 100%` sur le noeud, `flex: 1`
+ * sur le conteneur, `height: 100%` sur le SVG. La chaine ne se resout que si un ancetre porte une
+ * hauteur en PIXELS — ce que seuls les noeuds `vexflow-` recoivent, par leur NodeResizer. Un autre
+ * noeud qui emprunte ces classes voit sa vue s'ecraser a zero, sans erreur ni avertissement,
+ * `overflow: hidden` cachant la preuve. C'est arrive au cercle pulsant.
+ *
+ * Ici la hauteur ne vient d'aucun ancetre : elle EST la largeur, par `aspect-ratio`. Le conteneur
+ * ne peut donc pas s'ecraser, quelle que soit la taille du noeud qui l'accueille.
+ *
+ * Et aucun fond blanc : l'image porte le sien, et un fond clair debordait de part et d'autre d'une
+ * animation carree posee dans un cadre qui ne l'etait pas. */
+.attic-node-vue-animation { display: flex; flex-direction: column; padding: 4px 2px; min-width: 0; }
+.attic-node-vue-animation-inner { width: 100%; aspect-ratio: 1 / 1; border-radius: 4px; overflow: hidden; }
+.attic-node-vue-animation-inner svg { width: 100%; height: 100%; display: block; }
+
+/* UNE PARTITION GRAVEE, MEME PIEGE ET MEME REMEDE. Sa hauteur vient du dessin lui-meme — `height:
+ * auto` sur un SVG qui porte ses proportions —, et non d'un ancetre : elle ne peut pas s'ecraser.
+ * Ce qui deborde se fait defiler plutot que de repousser le reste du noeud. Le fond reste blanc :
+ * une gravure se lit sur du papier. */
+.attic-node-vue-gravure { display: flex; flex-direction: column; padding: 4px 2px; min-width: 0; }
+.attic-node-vue-gravure-inner { width: 100%; max-height: 320px; background: #fff; border-radius: 4px; overflow: auto; }
+.attic-node-vue-gravure-inner svg { width: 100%; height: auto; display: block; }
+
 .attic-node-vexflow-resize-line { border-color: rgba(255, 255, 255, 0.2); }
 .attic-node-vexflow-resize-handle { background: rgba(255, 255, 255, 0.35); border: none; }
 .attic-node:has(.attic-node-source-texte) { display: flex; flex-direction: column; height: 100%; }
@@ -788,6 +814,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-badge); border: 1px solid var(--border);
   border-radius: 4px; padding: 1px 5px;
 }
+/* L'ecart de niveau mesure sur le noeud. Discret par defaut, ambre quand la chute passe
+   trois decibels : c'est le seuil a partir duquel une baisse s'entend nettement. */
+.attic-node-ecart { margin-left: 6px; font-size: 10px; opacity: 0.55; font-variant-numeric: tabular-nums; }
+.attic-node-ecart.baisse { color: #e0a458; opacity: 0.95; }
+
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 /* ── Ports — zone réservée en bas ── */
