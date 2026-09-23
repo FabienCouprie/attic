@@ -36,7 +36,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Trous", nomEn: "Gaps", type: "choix",
         options: ["Zones branchées", "Silences détectés"], optionsEn: ["Connected zones", "Detected silences"],
         optionIds: ["zones", "silences"], defaut: "Zones branchées", defautEn: "Connected zones",
-        doc: "D'où viennent les trous à boucher. « Zones branchées » les prend sur l'entrée Zones — le Sélecteur multi-zones est fait pour ça : on sélectionne le passage à refaire, et le nœud le rebâtit. « Silences détectés » cherche lui-même les passages muets, ce qui convient aux décrochages d'enregistrement, qui sont exactement à zéro.",
+        doc: "D'où viennent les trous à boucher. « Zones branchées » les prend sur l'entrée Zones — le Sélecteur multi-zones est fait pour ça : on sélectionne le passage à refaire, et le composant le rebâtit. « Silences détectés » cherche lui-même les passages muets, ce qui convient aux décrochages d'enregistrement, qui sont exactement à zéro.",
         docEn: "Where the gaps to fill come from. « Connected zones » takes them from the Zones input — the Multi-Zone Selector is made for this: select the passage to rebuild, and the node rebuilds it. « Detected silences » looks for mute passages itself, which suits recording dropouts, being exactly at zero." },
       { nom: "Seuil de silence", nomEn: "Silence threshold", type: "curseur", plage: [-90, -20], pas: 1, defaut: -60, unite: "dB",
         doc: "Niveau en dessous duquel un échantillon est tenu pour manquant, en détection automatique. Pas zéro strict : un fichier passé par un encodage laisse des valeurs d'un millième au lieu du silence exact.",
@@ -51,7 +51,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Tours d'alternance entre l'estimation du modèle et le calcul du trou. Le calcul s'arrête de lui-même dès que le trou ne bouge plus, si bien qu'augmenter ce nombre ne coûte rien quand ce n'est pas utile.",
         docEn: "Alternations between estimating the model and computing the gap. Computation stops of its own accord as soon as the gap stops moving, so raising this number costs nothing when it is not needed." },
       { nom: "Trou max", nomEn: "Max gap", type: "curseur", plage: [5, 500], pas: 5, defaut: 120, unite: "ms",
-        doc: "Au-delà, le trou est laissé tel quel et le nœud le dit. Ce n'est pas une limite de principe mais de temps : le calcul croît comme la longueur du trou multipliée par le carré de l'ordre — 90 ms pour un trou de 20 ms, deux secondes et demie pour un trou de 100 ms. Et la qualité baisse : 53 dB à 20 ms, 34 dB à 100 ms.",
+        doc: "Au-delà, le trou est laissé tel quel et le composant le dit. Ce n'est pas une limite de principe mais de temps : le calcul croît comme la longueur du trou multipliée par le carré de l'ordre — 90 ms pour un trou de 20 ms, deux secondes et demie pour un trou de 100 ms. Et la qualité baisse : 53 dB à 20 ms, 34 dB à 100 ms.",
         docEn: "Beyond this, the gap is left as it is and the node says so. This is not a limit of principle but of time: computation grows as gap length times the square of the order — 90 ms for a 20 ms gap, two and a half seconds for a 100 ms one. And quality drops: 53 dB at 20 ms, 34 dB at 100 ms." },
     ],
     async executer(ctx: any) {

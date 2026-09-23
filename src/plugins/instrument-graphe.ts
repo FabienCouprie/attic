@@ -89,7 +89,7 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Note", nomEn: "Note", type: "curseur", plage: [21, 108], pas: 1, defaut: 60,
-        doc: "Note MIDI rendue (60 = do central). C'est la frontière de l'instrument : quand une « Fin d'instrument » est branchée en aval, le moteur recopie la chaîne une fois par note du clavier et remplace ce réglage dans chaque copie. Seul, le nœud rend la note réglée ici — de quoi écouter et régler l'instrument à une hauteur avant de le décliner sur les 88 touches.",
+        doc: "Note MIDI rendue (60 = do central). C'est la frontière de l'instrument : quand une « Fin d'instrument » est branchée en aval, le moteur recopie la chaîne une fois par note du clavier et remplace ce réglage dans chaque copie. Seul, le composant rend la note réglée ici — de quoi écouter et régler l'instrument à une hauteur avant de le décliner sur les 88 touches.",
         docEn: "MIDI note rendered (60 = middle C). This is the instrument's boundary: when an « Instrument End » is connected downstream, the engine copies the chain once per keyboard note and replaces this setting in each copy. On its own, the node renders the note set here — enough to listen to and tune the instrument at one pitch before spreading it across the 88 keys." },
       { nom: "Forme", nomEn: "Waveform", type: "choix",
         options: ["Sinus", "Dent de scie", "Carré", "Triangle", "Impulsion", "Bruit"],
@@ -105,7 +105,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau de l'excitation. À garder bas si la chaîne résonne : un filtre à forte résonance peut multiplier le niveau par dix.",
         docEn: "Level of the excitation. Keep it low if the chain resonates: a high-resonance filter can multiply the level tenfold." },
       { nom: "Vélocité", nomEn: "Velocity", type: "curseur", plage: [1, 127], pas: 1, defaut: 100,
-        doc: "Vélocité écrite dans la sortie MIDI, pour les nœuds qui en tiennent compte.",
+        doc: "Vélocité écrite dans la sortie MIDI, pour les composants qui en tiennent compte.",
         docEn: "Velocity written into the MIDI output, for the nodes that take it into account." },
     ],
     async executer(ctx: any) {

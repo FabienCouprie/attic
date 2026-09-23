@@ -44,10 +44,12 @@ const ctx = (entrees: unknown[], signal?: AbortSignal) => {
 afterEach(() => { delete (globalThis as any).window; });
 
 describe("nœud Score esthétique", () => {
-  it("est rangé dans Visualisation → Analyse et documenté dans les deux langues", () => {
+  it("est rangé dans Visualisation → Descripteurs et documenté dans les deux langues", () => {
     for (const id of ["score-esthetique", "comparaison-esthetique"]) {
       const f = fiche(id);
-      expect([f.univers, f.famille]).toEqual(["Visualisation", "Analyse"]);
+      // Il rend un chiffre sur le son plutôt qu'une image à regarder : sa place est avec les
+      // descripteurs, où Fabien l'a rangé le 2026-09-23.
+      expect([f.univers, f.famille]).toEqual(["Visualisation", "Descripteurs"]);
       expect(f.notice!.length).toBeGreaterThan(400);
       expect(f.noticeEn!.length).toBeGreaterThan(400);
     }

@@ -26,7 +26,7 @@ import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
 import { toutesLesFiches } from "../plugins/index";
 import { CLES_CONNUES, traduireDans } from "../i18n";
-import { FAMILLES_EFFETS } from "../plugins/familles-effets";
+import { FAMILLES_EFFETS, TABLES_PAR_UNIVERS } from "../plugins/familles-palette";
 import type { FicheAudio } from "../audio/types-domaine";
 import "../audio/adaptateur";
 
@@ -39,7 +39,7 @@ import "../audio/adaptateur";
 // La limite finale est une négation et non un `\b` : en JavaScript, « é » n'est pas un
 // caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, » — le tréma de
 // Möbius, lui, est au milieu et ne posait pas ce problème.
-const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné|välimäki)(?![a-zà-ÿ])/gi;
+const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 
@@ -151,6 +151,14 @@ describe("familles de la palette", () => {
 
   it("dans un même univers, deux familles ne diffèrent pas que par leur terminaison", () => {
     const racine = (f: string) => f.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 6);
+    // Une paire voulue, et nommée par Fabien : « Génération » reste le fourre-tout des entrées,
+    // « Générateurs AI » ne tient que ce qui écrit par un modèle appris. Les deux se suivent dans la
+    // palette, ce que cette règle cherche précisément à éviter : l'exception est donc écrite ici,
+    // plutôt que la règle affaiblie.
+    const PAIRES_VOULUES = new Set([
+      "Entrées : Génération / Générateurs AI",
+      "Entrées : Générateurs AI / Génération",
+    ]);
     const doublons: string[] = [];
     const parUnivers = new Map<string, Set<string>>();
     for (const f of toutesLesFiches) {
@@ -161,7 +169,8 @@ describe("familles de la palette", () => {
       const vues = new Map<string, string>();
       for (const f of familles) {
         const r = racine(f);
-        if (vues.has(r)) doublons.push(`${u} : ${vues.get(r)} / ${f}`);
+        const paire = `${u} : ${vues.get(r)} / ${f}`;
+        if (vues.has(r) && !PAIRES_VOULUES.has(paire)) doublons.push(paire);
         else vues.set(r, f);
       }
     }
@@ -169,15 +178,18 @@ describe("familles de la palette", () => {
   });
 });
 
-// LES EFFETS RANGÉS PAR STYLE (cf. plugins/familles-effets.ts). Un identifiant mal écrit dans la
-// table ne rangerait rien et ne se verrait nulle part : le nœud resterait dans « Effets », et la
-// famille annoncée serait vide.
-describe("familles de style des effets", () => {
+// Les deux tables réunies : un identifiant ne doit paraître qu'une fois dans l'ensemble.
+const TOUTES_LES_FAMILLES: Record<string, string[]> = Object.assign({}, ...Object.values(TABLES_PAR_UNIVERS));
+
+// LES FAMILLES DE LA PALETTE (cf. plugins/familles-palette.ts), pour les traitements comme pour les
+// entrées. Un identifiant mal écrit dans une table ne rangerait rien et ne se verrait nulle part : le
+// nœud resterait dans sa famille d'origine, et la famille annoncée serait vide.
+describe("familles de la palette", () => {
   it("chaque identifiant de la table existe et a bien reçu sa famille", () => {
     const parId = new Map(toutesLesFiches.map((f) => [f.id, f]));
     const inconnus: string[] = [];
     const malRanges: string[] = [];
-    for (const [famille, ids] of Object.entries(FAMILLES_EFFETS)) {
+    for (const [famille, ids] of Object.entries(TOUTES_LES_FAMILLES)) {
       for (const id of ids) {
         const f = parId.get(id);
         if (!f) inconnus.push(`${famille} : ${id}`);
@@ -188,15 +200,22 @@ describe("familles de style des effets", () => {
     expect(malRanges).toEqual([]);
   });
 
-  it("chaque famille de style a son libellé et au moins deux nœuds — seule, une famille n'en est pas une", () => {
-    for (const famille of Object.keys(FAMILLES_EFFETS)) {
+  // Une famille à nœud unique est presque toujours un oubli — le reste de sa fratrie n'a pas été
+  // rangé. Presque : « Contrôle » est voulue ainsi, ouverte pour recevoir ce qui pilote sans sonner,
+  // et n'a qu'un générateur de courbe à ce jour. L'exception est donc nommée ici, et une famille qui
+  // se retrouverait seule sans y figurer fait échouer le test.
+  const SEULES_ADMISES = new Set(["Contrôle"]);
+
+  it("chaque famille a son libellé, et au moins deux nœuds sauf exception nommée", () => {
+    for (const famille of Object.keys(TOUTES_LES_FAMILLES)) {
       expect(CLES_CONNUES.has(`famille.${famille}`), famille).toBe(true);
-      expect(toutesLesFiches.filter((f) => f.famille === famille).length, famille).toBeGreaterThanOrEqual(2);
+      const compte = toutesLesFiches.filter((f) => f.famille === famille).length;
+      expect(compte, famille).toBeGreaterThanOrEqual(SEULES_ADMISES.has(famille) ? 1 : 2);
     }
   });
 
   it("aucun nœud n'est rangé deux fois", () => {
-    const tous = Object.values(FAMILLES_EFFETS).flat();
+    const tous = Object.values(TOUTES_LES_FAMILLES).flat();
     expect(tous.length).toBe(new Set(tous).size);
   });
 });

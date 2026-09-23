@@ -15,6 +15,9 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Sépare un son en trois matières — ce qui tient, ce qui claque, ce qui souffle — sans rien perdre.",
     resumeEn: "Splits a sound into three materials — what sustains, what strikes, what breathes — losing nothing.",
+    // Ses sorties audio sont des pairs : aucune ne represente le noeud a elle seule, et un
+    // lecteur generique en designerait une au hasard.
+    sansApercuAudio: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [
       { nom: "Sinus", nomEn: "Sines", type: "audio" },

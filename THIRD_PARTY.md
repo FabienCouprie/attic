@@ -92,6 +92,26 @@ because it is a bundled resource an auditor will find in the installer, not beca
 |---|---|---|
 | `songsee` (CLI) | MIT | Copyright (c) Peter Steinberger / openclaw — Spectrogram/visualization CLI (https://github.com/openclaw/songsee) |
 
+### Csound
+
+Five Attic nodes run **Csound** through its WebAssembly port (`@csound/browser`, LGPL-2.1): a free
+orchestra and score, a MIDI-driven instrument, an audio effect, physical-model instruments and
+spectral processing. The library is used unmodified and loaded at runtime.
+
+Csound was written by **Barry Vercoe** at the MIT Media Lab in 1986, in the line of the MUSIC N
+languages begun by Max Mathews. It has been developed since by a large community, among whom
+**John ffitch**, **Victor Lazzarini**, **Steven Yi**, **Michael Gogins**, **Joachim Heintz**,
+**Øyvind Brandtsegg**, **Iain McCurdy**, **Andrés Cabrera**, **Rory Walsh**, **Richard Boulanger**
+and **François Pinot**. The system is maintained at <https://github.com/csound/csound>.
+
+The reference citation, as the project asks it to be given:
+
+> Lazzarini, V., Yi, S., ffitch, J., Heintz, J., Brandtsegg, Ø., McCurdy, I. (2016).
+> *Csound: A Sound and Music Computing System*. Springer. ISBN 978-3-319-45368-2.
+
+See also Richard Boulanger (ed.), *The Csound Book* (MIT Press, 2000), the standard reference for
+the language.
+
 ## Dependencies (npm)
 
 | Package | License | Copyright |
@@ -118,7 +138,7 @@ because it is a bundled resource an auditor will find in the installer, not beca
 | `soundtouchjs` | LGPL-2.1 | SoundTouchJS contributors |
 | `time-stretch` | MIT | Dmitry Iv. |
 | `libpd-wasm` | BSD-3-Clause | hyrfilm / libpd-wasm contributors |
-| `@csound/browser` | LGPL-2.1 | The Csound developers — Csound compiled to WebAssembly (https://github.com/csound/csound/tree/master/wasm/browser). The library is used unmodified, as a separate file (`dist/csound.js`) loaded at runtime; the LGPL-2.1 text reproduced below for `soundtouchjs` applies to it as well. Note that version 7.x of this package is published under Apache 2.0; Attic pins 6.17.3, which is LGPL-2.1. |
+| `@csound/browser` | LGPL-2.1 | The Csound developers — see the note below — Csound compiled to WebAssembly (https://github.com/csound/csound/tree/master/wasm/browser). The library is used unmodified, as a separate file (`dist/csound.js`) loaded at runtime; the LGPL-2.1 text reproduced below for `soundtouchjs` applies to it as well. Note that version 7.x of this package is published under Apache 2.0; Attic pins 6.17.3, which is LGPL-2.1. |
 | `meyda` | MIT | Meyda contributors |
 | `mathjs` | Apache 2.0 | Jos de Jong |
 | `wavesurfer.js` | BSD-3-Clause | katspaugh and contributors |

@@ -688,10 +688,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
         if (defNode?.affichageAutonome) return null;
         const valsSafe = vals ?? [];
-        // Ne pas créer de lecteur audio générique pour les nodes multi-sorties audio
-        // (ex: séparateur IA) — chaque sortie a son propre lecteur via les ports.
-        const nbSortiesAudio = defNode?.sorties.filter((s: any) => s.type === "audio").length ?? 0;
-        const audio = nbSortiesAudio > 1 ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
+        // L'aperçu joue la PREMIÈRE sortie audio. Les nœuds dont les sorties audio sont des pairs —
+        // les six pistes d'un séparateur — le disent par `sansApercuAudio` et n'en ont aucun.
+        const audio = defNode?.sansApercuAudio ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
         if ((n.data.ficheId as string) === "griffin-lim") {
           const peak0 = audio ? picAbsolu(audio.getChannelData(0)) : 0;
           const peak1 = audio && audio.numberOfChannels > 1 ? picAbsolu(audio.getChannelData(1)) : 0;

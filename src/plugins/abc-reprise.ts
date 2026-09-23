@@ -13,7 +13,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 export const fiches: FicheAudio[] = ([
   {
     id: "reprise-abc", nom: "Reprise ABC", nomEn: "ABC Cover",
-    univers: "Entrées", famille: "Génération",
+    univers: "Traitement", famille: "Conversion",
     resume: "Reprend une partition ABC dans un autre style : même mélodie, mêmes accords, avec un accompagnement et une basse — ballade, pop, valse, marche, bossa nova.",
     resumeEn: "Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass — ballad, pop, waltz, march, bossa nova.",
     entrees: [{ nom: "ABC", type: "texte", requis: true }],

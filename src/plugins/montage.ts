@@ -311,7 +311,7 @@ export const fiches: FicheAudio[] = ([
     // eu de niveau par piste, et un modèle de paramètres à une entrée par
     // connexion n'existe pas. Promettre un réglage absent envoie chercher dans
     // l'inspecteur ce qui se règle en amont — on dit donc où.
-    resume: "Additionne plusieurs pistes en une seule. Le niveau de chaque piste se règle sur le nœud qui la produit.",
+    resume: "Additionne plusieurs pistes en une seule. Le niveau de chaque piste se règle sur le composant qui la produit.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio", dynamique: true }], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
     async executer(ctx: any) {
@@ -328,7 +328,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
-        doc: "Nombre de fois où la chaîne comprise entre ce nœud et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
+        doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
         docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
     ],
     async executer(ctx: any) {

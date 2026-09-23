@@ -291,8 +291,8 @@ export function jugerCibles(cibles: readonly Cible[], m: MesureCopie | null): Po
     if (!m) {
       return {
         satisfait: false,
-        texte: `${c.exigence} — rien n'est encore branché sur l'entrée « Copie », ou rien n'a été lancé.`,
-        texteEn: `${c.exigenceEn} — nothing is wired into the « Copy » input yet, or nothing has been run.`,
+        texte: `${c.exigence} — rien n'est encore branché sur l'entrée « Son à mesurer », ou rien n'a été lancé.`,
+        texteEn: `${c.exigenceEn} — nothing is wired into the « Sound to measure » input yet, or nothing has been run.`,
       };
     }
     const v = valeurJugee(m, c.grandeur);

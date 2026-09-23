@@ -25,8 +25,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "banque-sfz", nom: "Banque SFZ", nomEn: "SFZ Bank",
     univers: "Entrées", famille: "Audio",
-    resume: "Charge une banque d'échantillons SFZ — le kit de batterie livré avec Attic, ou un fichier du disque — sans clavier.",
-    resumeEn: "Loads an SFZ sample bank — the drum kit shipped with Attic, or a file from disk — with no keyboard.",
+    resume: "Charge une banque d'échantillons SFZ — le kit de batterie intégré, ou un fichier du disque — sans clavier.",
+    resumeEn: "Loads an SFZ sample bank — the built-in drum kit, or a file from disk — with no keyboard.",
     entrees: [],
     sorties: [
       { nom: "Banque", nomEn: "Bank", type: "banque" },
@@ -36,8 +36,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Source", nomEn: "Source", type: "choix",
         options: ["Kit intégré", "Fichier SFZ"], optionsEn: ["Built-in kit", "SFZ file"],
         optionIds: ["integre", "fichier"], defaut: "Kit intégré", defautEn: "Built-in kit",
-        doc: "Kit intégré : la batterie livrée avec Attic — huit sons aux notes du General MIDI (36 grosse caisse, 38 caisse claire, 42 charley fermé…), synthétisés par Attic et embarqués dans l'application, donc disponibles sans réseau ni téléchargement. Fichier SFZ : un `.sfz` du disque, désigné par le bouton 📂 du nœud ; ses échantillons sont lus à côté de lui.",
-        docEn: "Built-in kit: the drum kit shipped with Attic — eight sounds on General MIDI notes (36 kick, 38 snare, 42 closed hi-hat…), synthesized by Attic and bundled with the application, hence available with no network and no download. SFZ file: a `.sfz` from disk, chosen with the node's 📂 button; its samples are read beside it." },
+        doc: "Kit intégré : la batterie intégrée — huit sons aux notes du General MIDI (36 grosse caisse, 38 caisse claire, 42 charley fermé…), synthétisés et embarqués dans l'application, donc disponibles sans réseau ni téléchargement. Fichier SFZ : un `.sfz` du disque, désigné par le bouton 📂 du composant ; ses échantillons sont lus à côté de lui.",
+        docEn: "Built-in kit — eight sounds on General MIDI notes (36 kick, 38 snare, 42 closed hi-hat…), synthesized and bundled with the application, hence available with no network and no download. SFZ file: a `.sfz` from disk, chosen with the node's 📂 button; its samples are read beside it." },
       { nom: "Type de banque", nomEn: "Bank type", type: "choix",
         options: ["Automatique", "Hauteurs", "Kit"], optionsEn: ["Automatic", "Pitched", "Kit"],
         optionIds: ["auto", "hauteurs", "kit"], defaut: "Automatique", defautEn: "Automatic",

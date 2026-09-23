@@ -198,7 +198,25 @@ function VueExplorateur({ id, data }: VueProps) {
   }, [data.audioUrl]);
 
   const dossierCourant = String(data.parametres?.["Chemin"] || "music collection");
-  const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === data.audioChemin) ?? -1;
+
+  // LA SURBRILLANCE SUIT LE CLIC, ET NON LA FIN DE LA LECTURE DU FICHIER.
+  //
+  // Elle se déduisait de `data.audioChemin`, qui n'arrive qu'une fois le fichier lu sur le disque.
+  // Entre le clic et cette arrivée, le navigateur mettait bien la ligne cliquée en surbrillance,
+  // puis le rendu suivant de React y reposait l'ANCIENNE valeur — la piste d'avant, ou la première
+  // ligne quand rien n'était encore choisi — et la bonne ligne ne revenait qu'au retour de la
+  // lecture. D'où une surbrillance qui partait ailleurs et revenait, à chaque choix de piste.
+  //
+  // La ligne choisie est donc tenue ici, posée dès le clic, et remise d'accord avec le nœud quand
+  // celui-ci change de chemin — au retour de la lecture, à la réinitialisation, ou au rechargement
+  // d'un projet.
+  const [choisi, setChoisi] = useState<string | null>(data.audioChemin ?? null);
+  const demande = useRef<string | null>(data.audioChemin ?? null);
+  useEffect(() => {
+    setChoisi(data.audioChemin ?? null);
+    demande.current = data.audioChemin ?? null;
+  }, [data.audioChemin]);
+  const selectedIndex = fichiersMusique?.findIndex((f) => f.chemin === choisi) ?? -1;
 
   // RIEN NE DOIT PARAÎTRE CHOISI TANT QUE RIEN NE L'EST. Une liste déroulée (`size` > 1) met sa
   // première ligne en surbrillance quand aucune option n'est sélectionnée : le nœud semblait tenir
@@ -215,9 +233,21 @@ function VueExplorateur({ id, data }: VueProps) {
   async function choisirPiste(index: number) {
     const f = fichiersMusique?.[index];
     if (!f) return;
+    // UN SEUL CLIC FAIT PARTIR `click` ET `change` : sans cette garde, le fichier était lu deux fois
+    // et deux URL étaient créées pour la même piste. Un état ne s'y prête pas — les deux
+    // gestionnaires partent du même rendu et y liraient la même valeur périmée —, d'où la référence.
+    if (demande.current === f.chemin) return;
+    demande.current = f.chemin;
+    setChoisi(f.chemin);                         // la ligne cliquée est en surbrillance dès maintenant
     if (f.chemin === data.audioChemin) return;   // déjà chargée : rien à refaire
     const resultat = await api?.lireFichierAudio(f.chemin);
-    if (!resultat) return;
+    if (!resultat) {
+      // Le fichier n'a pas pu être lu : la surbrillance revient là où elle était, plutôt que de
+      // montrer comme choisie une piste que le nœud n'a pas.
+      demande.current = data.audioChemin ?? null;
+      setChoisi(data.audioChemin ?? null);
+      return;
+    }
     const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
     const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
     const url = URL.createObjectURL(fichier);
@@ -1701,6 +1731,32 @@ function VueTraceCourbe({ data }: VueProps) {
 
 // ── Attracteur / IFS (image générée) ──
 // ── Une animation SVG posée par le nœud, et qui ne sort pas par un port ──
+// ── Le goût d'un son : quatre parts, du plus fort au plus faible ──
+const COULEURS_GOUT: Record<string, string> = {
+  "sucré": "#e08bb5", "acide": "#c9d94a", "amer": "#8a6f4a", "salé": "#7fb3d5",
+};
+
+function VueGout({ data }: VueProps) {
+  const { t } = useI18n();
+  const parts = Array.isArray(data._profilGout) ? (data._profilGout as { gout: string; part: number }[]) : [];
+  if (!parts.length) {
+    return <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("export.avantLancer")}</div>;
+  }
+  return (
+    <div className="attic-gout">
+      {parts.map((p) => (
+        <div key={p.gout} className="attic-gout-ligne">
+          <span className="attic-gout-nom">{p.gout}</span>
+          <span className="attic-gout-barre">
+            <span style={{ width: `${Math.round(p.part * 100)}%`, background: COULEURS_GOUT[p.gout] ?? "var(--text-muted)" }} />
+          </span>
+          <span className="attic-gout-part">{Math.round(p.part * 100)} %</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VueAnimationSvg({ data }: VueProps) {
   const { t } = useI18n();
   const svg = typeof data._animationSvg === "string" ? data._animationSvg : "";
@@ -2007,6 +2063,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant" },
+  { correspond: (f) => f === "gout-du-son" || f === "parfum-motif" || f === "accord-mets-musique", vue: VueGout, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },

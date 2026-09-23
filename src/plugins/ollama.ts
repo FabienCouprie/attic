@@ -52,8 +52,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte via un modèle local Ollama (Llama, Qwen, Mistral…).",
     resumeEn: "Generates text via a local Ollama model (Llama, Qwen, Mistral…).",
-    notice: "Interroge un serveur Ollama local (port 11434). Installez Ollama (ollama.com), lancez « ollama serve », puis tirez un modèle : « ollama pull llama3.2 » ou « ollama pull qwen2.5 ». Le prompt vient du paramètre, ou de l'entrée texte si elle est connectée. Attic ne télécharge aucun modèle — tout est géré par Ollama, hors du renderer.",
-    noticeEn: "Queries a local Ollama server (port 11434). Install Ollama (ollama.com), run « ollama serve », then pull a model: « ollama pull llama3.2 » or « ollama pull qwen2.5 ». The prompt comes from the parameter, or from the text input if connected. Attic downloads no model — Ollama manages everything, outside the renderer.",
+    notice: "Interroge un serveur Ollama local (port 11434). Installez Ollama (ollama.com), lancez « ollama serve », puis tirez un modèle : « ollama pull llama3.2 » ou « ollama pull qwen2.5 ». Le prompt vient du paramètre, ou de l'entrée texte si elle est connectée. ",
+    noticeEn: "Queries a local Ollama server (port 11434). Install Ollama (ollama.com), run « ollama serve », then pull a model: « ollama pull llama3.2 » or « ollama pull qwen2.5 ». The prompt comes from the parameter, or from the text input if connected. ",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [

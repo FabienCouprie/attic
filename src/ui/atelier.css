@@ -1234,3 +1234,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 /* Le premier reglage d une entree ouvre un groupe : un trait l en separe du groupe precedent. */
 .inspecteur-param-debut-port { border-top: 1px solid var(--border, #2a2e36); margin-top: 10px; padding-top: 10px; }
 .inspecteur-param:first-child.inspecteur-param-debut-port { border-top: none; margin-top: 0; padding-top: 0; }
+
+/* Le gout d un son : quatre parts, en barres. */
+.attic-gout { display: flex; flex-direction: column; gap: 3px; padding: 4px 2px; }
+.attic-gout-ligne { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.attic-gout-nom { width: 52px; color: var(--text-secondary, #8b909a); text-align: right; flex: none; }
+.attic-gout-barre { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-hover, #22262e); overflow: hidden; }
+.attic-gout-barre > span { display: block; height: 100%; border-radius: 4px; }
+.attic-gout-part { width: 34px; text-align: right; color: var(--text-muted, #6b7079); font-variant-numeric: tabular-nums; flex: none; }

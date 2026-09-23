@@ -25,7 +25,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["vanilla", "cyclone", "else", "full"],
         defaut: "vanilla",
         doc: "Ensemble d'objets Pd disponibles pour le patch. vanilla = objets de base, cyclone/else = objets externes courants, full = tout.",
-        docEn: "Set of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything.", defautEn: "vanilla",
+        docEn: "The library of Pd objects available to the patch. vanilla = core objects, cyclone/else = common externals, full = everything.", defautEn: "vanilla",
       },
       {
         nom: "Durée",

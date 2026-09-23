@@ -26,7 +26,7 @@ export const fiches: FicheAudio[] = ([
   {
     id: "gestion-nodes", nom: "Gestionnaire de nodes", nomEn: "Node Manager",
     univers: "Autres", famille: "Installation",
-    resume: "Exporte un node en .zip ou importe un node depuis un .zip.",
+    resume: "Exporte un composant en .zip ou importe un composant depuis un .zip.",
     resumeEn: "Exports a node as .zip or imports a node from a .zip.",
     entrees: [],
     sorties: [],
@@ -34,13 +34,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Action", nomEn: "Action", type: "choix",
         options: ["Exporter", "Importer"], optionIds: ["Exporter","Importer"], optionsEn: ["Export", "Import"],
         defaut: "Exporter",
-        doc: "Exporter = créer un .zip d'un node existant. Importer = installer un node depuis un .zip.",
+        doc: "Exporter = créer un .zip d'un composant existant. Importer = installer un composant depuis un .zip.",
         docEn: "Export = create a .zip of an existing node. Import = install a node from a .zip.", defautEn: "Export" },
       { nom: "Node à exporter", nomEn: "Node to export", type: "choix",
         options: [], optionsEn: [],
         defaut: "",
-        doc: "Sélectionnez le node à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
-        docEn: "Select the node to export from the 5 most recently created. The list updates on each run.", defautEn: "" },
+        doc: "Réglages : le composant à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
+        docEn: "The node to export is taken from the 5 most recently created. The list updates on each run.", defautEn: "" },
     ],
     async executer(ctx: any) {
       const action = ctx.paramTexte("Action", "Exporter");

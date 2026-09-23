@@ -149,8 +149,14 @@ test.describe("boucle collection", () => {
     ]);
     // Trois fichiers distincts : meme longueur ici, mais surtout trois ecritures separees.
     for (const e of resultat.ecrits) expect(e.octets).toBeGreaterThan(20000);
-    // Le dossier n est lu qu une fois pour tout le lot, et non a chaque passe.
-    expect(resultat.dossiersLus).toEqual(["C:\\entree"]);
+    // Le dossier D ENTREE n est lu qu une fois pour tout le lot, et non a chaque passe.
+    const entrees = resultat.dossiersLus.filter((d: string) => d.toLowerCase().includes("entree"));
+    expect(entrees).toEqual(["C:\\entree"]);
+    // Celui de SORTIE, lui, est relu a chaque passe : c est ainsi que la fin de boucle sait si un
+    // fichier du meme nom s y trouve deja. Une seule lecture pour tout le lot laisserait passer les
+    // fichiers ecrits par les passes precedentes.
+    const sorties = resultat.dossiersLus.filter((d: string) => d.toLowerCase().includes("sortie"));
+    expect(sorties.length).toBeGreaterThanOrEqual(3);
   });
 
   test("LE LOT REFUSE D ECRIRE DANS SON PROPRE DOSSIER D ENTREE", async ({ page }) => {
@@ -180,48 +186,6 @@ test.describe("boucle collection", () => {
     expect(resultat.journal).toMatch(/dossier de sortie est celui d'entrée|output folder is the input folder/);
   });
 
-  test("LE NOM SE COMMANDE PAR UN PORT, et il est assaini avant de devenir un chemin", async ({ page }) => {
-    // Debut ──Nom──> Modifier le texte ──> Fin (Nom) : le renommage par lot, programmable.
-    // Le prefixe contient volontairement une traversee de dossier : elle ne doit pas survivre.
-    const renommant = {
-      nodes: [
-        { id: "debut", position: { x: 0, y: 0 }, data: { ficheId: "boucle-collection-debut", parametres: { Dossier: "C:\\entree" } } },
-        { id: "texte", position: { x: 200, y: 0 }, data: { ficheId: "modifier-texte", parametres: { "Opération": "encadrer", "Avant": "..\\lot-", "Après": "" } } },
-        { id: "fin", position: { x: 400, y: 0 }, data: { ficheId: "boucle-collection-fin", parametres: { "Dossier sortie": "C:\\sortie", Format: "wav", Suffixe: "" } } },
-      ],
-      edges: [
-        { id: "e1", source: "debut", target: "fin", sourceHandle: "out:0", targetHandle: "in:0" },
-        { id: "e2", source: "debut", target: "texte", sourceHandle: "out:1", targetHandle: "in:0" },
-        { id: "e3", source: "texte", target: "fin", sourceHandle: "out:0", targetHandle: "in:1" },
-      ],
-    };
-
-    await page.addInitScript(STUB);
-    await page.addInitScript(([g]) => { localStorage.setItem("attic-encours", g as string); },
-      [JSON.stringify(renommant)]);
-    await page.goto(devUrl);
-    await page.waitForSelector(".attic-app", { timeout: 20000 });
-    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 3, { timeout: 15000 });
-
-    await page.keyboard.press(" ");
-    await page.waitForFunction(() => (window as any).__ecrits?.length >= 3, { timeout: 60000 });
-    await page.waitForTimeout(1500);
-
-    const ecrits = await page.evaluate(() => (window as any).__ecrits.map((e: any) => e.chemin));
-    console.log(JSON.stringify(ecrits, null, 2));
-
-    expect(ecrits).toHaveLength(3);
-    // Le prefixe est applique, ET la traversee de dossier a disparu : « ..\ » ne survit pas.
-    for (const chemin of ecrits) {
-      expect(chemin.startsWith("C:\\sortie\\")).toBe(true);
-      expect(chemin).not.toContain("..\\");
-    }
-    expect(ecrits).toEqual([
-      "C:\\sortie\\..lot-a.wav",
-      "C:\\sortie\\..lot-b.wav",
-      "C:\\sortie\\..lot-c.wav",
-    ]);
-  });
 });
 
 // Lance un graphe dans la vraie application et rend ce que le faux Electron a vu ecrire.

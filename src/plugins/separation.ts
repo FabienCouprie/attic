@@ -10,8 +10,11 @@ export const fiches: FicheAudio[] = ([
     id: "separateur-ia", nom: "Séparateur IA", nomEn: "AI Separator", univers: "Traitement", famille: "Effets",
     resume: "Sépare les sources audio via IA (Demucs 4/6 stems, MDX-Net).",
     resumeEn: "Separates audio sources via AI (Demucs 4/6 stems, MDX-Net).",
-    notice: "Sépare une piste en stems. Demucs (HT) = 4 pistes (batterie, basse, voix, autre). Demucs 6s = 6 pistes (batterie, basse, voix, autre, guitare, piano). MDX-Net = voix + instrumental. Les modèles par défaut sont embarqués (public/oonx/) et chargés automatiquement. Vous pouvez aussi charger votre propre .onnx via le bouton du nœud ou renseigner une URL.",
-    noticeEn: "Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). Demucs 6s = 6 stems (drums, bass, vocals, other, guitar, piano). MDX-Net = vocals + instrumental. Default models are bundled (public/oonx/) and loaded automatically. You may also load your own .onnx via the node button or provide a URL.",
+    notice: "Sépare une piste en stems. Demucs (HT) = 4 pistes (batterie, basse, voix, autre). Demucs 6s = 6 pistes (batterie, basse, voix, autre, guitare, piano). MDX-Net = voix + instrumental. Les modèles par défaut sont embarqués (public/oonx/) et chargés automatiquement. Un modèle .onnx personnel se charge par le bouton du composant, ou par une URL.",
+    noticeEn: "Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). Demucs 6s = 6 stems (drums, bass, vocals, other, guitar, piano). MDX-Net = vocals + instrumental. Default models are bundled (public/oonx/) and loaded automatically. An .onnx model of one's own is loaded from the node's button, or given by a URL.",
+    // Ses sorties audio sont des pairs : aucune ne represente le noeud a elle seule, et un
+    // lecteur generique en designerait une au hasard.
+    sansApercuAudio: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Batterie", nomEn: "Drums", type: "audio" },{ nom: "Basse", nomEn: "Bass", type: "audio" },{ nom: "Voix", nomEn: "Vocals", type: "audio" },{ nom: "Autre", nomEn: "Other", type: "audio" },{ nom: "Guitare", nomEn: "Guitar", type: "audio" },{ nom: "Piano", nomEn: "Piano", type: "audio" }],
     parametres: [
