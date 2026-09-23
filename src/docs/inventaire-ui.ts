@@ -120,3 +120,36 @@ export function genererInventaireMarkdown(fiches: readonly FicheAudio[]): string
   out.push("");
   return out.join("\n");
 }
+
+/**
+ * La liste que le balayage navigateur consomme.
+ *
+ * POURQUOI ELLE EST GÉNÉRÉE ET NON RECOPIÉE. Le balayage place tous les composants habillés d'une
+ * vue, les exécute et mesure leurs boîtes. S'il portait sa propre liste, elle vieillirait : un
+ * composant ajouté avec une vue échapperait au balayage sans que rien ne le dise. Elle est donc
+ * écrite ici et versionnée, comme INTERFACE.md, et le même test la tient à jour.
+ */
+export interface EntreeBalayage {
+  id: string;
+  vue: string;
+  /** Ce composant accepte un son en entrée : le balayage lui en branche un. */
+  entreeAudio: boolean;
+  /** Il a au moins une entrée obligatoire qu'aucune source audio ne remplit. */
+  entreeRequiseAutre: boolean;
+}
+
+export function listePourBalayage(fiches: readonly FicheAudio[]): EntreeBalayage[] {
+  return inventorier(fiches)
+    .filter((l) => l.vueAvant !== "—" || l.vueApres !== "—")
+    .map((l) => {
+      const f = fiches.find((x) => x.id === l.id)!;
+      const entrees = (f.entrees ?? []) as { type?: string; requis?: boolean }[];
+      const audio = entrees.findIndex((e) => e.type === "audio");
+      return {
+        id: l.id,
+        vue: [l.vueAvant, l.vueApres].filter((v) => v !== "—").join(" + "),
+        entreeAudio: audio === 0,
+        entreeRequiseAutre: entrees.some((e, i) => e.requis !== false && e.type !== "audio" && i !== audio),
+      };
+    });
+}

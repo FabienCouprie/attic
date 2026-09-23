@@ -1,0 +1,494 @@
+[
+  {
+    "id": "accord-mets-musique",
+    "vue": "VueGout",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "analyseur-spectre",
+    "vue": "VueSpectre",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "attracteur-ifs",
+    "vue": "VueAttracteurIFS",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "banque-sfz",
+    "vue": "VueBanqueSfz",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "camelot",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "carte-sonore",
+    "vue": "VueCarteSonore",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "cercle-pulsant",
+    "vue": "VueAnimationSvg",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "classificateur-genre",
+    "vue": "VueUploadOnnx",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "clavier-apprentissage",
+    "vue": "VueApprentissage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "clavier-melodie",
+    "vue": "ClavierMelodie",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "clavier-sfz",
+    "vue": "ClavierSfz",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "collection-lecteur-musique",
+    "vue": "VueLecteurMusique",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "collection-midi-vers-mp3",
+    "vue": "VueCollections",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "collection-mp3-vers-wav",
+    "vue": "VueCollections",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "collection-vers-mp3",
+    "vue": "VueCollections",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "colorsynth",
+    "vue": "VueColorSynth",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "comparaison-esthetique",
+    "vue": "VueComparaisonEsth",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "comparateur-ab",
+    "vue": "VueComparateurAB",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "convertisseur-audio",
+    "vue": "VueExport",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "convertisseur-mp3-wav",
+    "vue": "VueExport",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "coordonnees-sur-carte",
+    "vue": "VueCoordonneesSurCarte",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "couleur-suno-ia",
+    "vue": "VueCouleurSunoIA",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "demonstration",
+    "vue": "VueDemonstration",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "detecteur-accords",
+    "vue": "VueDetecteurAccords",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "emotions",
+    "vue": "VueEmotions",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "entree-audio",
+    "vue": "VueUploadAudio",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "entree-image",
+    "vue": "VueUploadImage + VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "entree-pdf",
+    "vue": "VueUploadPdf",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "enveloppe-adsr",
+    "vue": "VueADSR",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "explorateur-musique",
+    "vue": "VueExplorateur",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "film-application",
+    "vue": "VueFilmApplication",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "formule-echantillons",
+    "vue": "EditeurFormule",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "formule-spectrale",
+    "vue": "EditeurFormule",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "galerie-exposition",
+    "vue": "VueGalerieExposition",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "generateur-audio-mathematique",
+    "vue": "EditeurFormule",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "generateur-courbe",
+    "vue": "VueCourbe",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "generateur-pochette",
+    "vue": "VuePochette",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "generateur-script-ia",
+    "vue": "VueGenerateurScriptIA",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "gestion-nodes",
+    "vue": "VueGestionNodes",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "goniometre",
+    "vue": "VueImageDepuisAudio",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "gout-du-son",
+    "vue": "VueGout",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "julia-processor",
+    "vue": "VueJuliaProcessor",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "lecteur-midi",
+    "vue": "VueUploadMidi + VueSoundFont",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "lecteur-svg",
+    "vue": "VueUploadSvg + VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "noms-instruments",
+    "vue": "VueNomsInstruments",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "orchestre-csound",
+    "vue": "VueOrchestreCsound",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "oscillateur",
+    "vue": "VueOscillo",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "parcours",
+    "vue": "Parcours",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "parfum-motif",
+    "vue": "VueGout",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "partition-verovio",
+    "vue": "VueGravure",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "pure-data",
+    "vue": "VueUploadPd",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "python-processor",
+    "vue": "VuePythonProcessor",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "quiz",
+    "vue": "Quiz",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "rendu-image",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "reponse-filtre",
+    "vue": "VueReponseFiltre",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "reverbe-convolution",
+    "vue": "VueUploadIR",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sampler-personnalise",
+    "vue": "VueUploadAudio",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "score-esthetique",
+    "vue": "VueEsthetique",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "selecteur-multi-zones",
+    "vue": "VueSelecteurMultiZones",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "separateur-ia",
+    "vue": "VueUploadOnnx",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sequenceur-accords",
+    "vue": "VueSequenceurAccords",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sequenceur-batterie-avance",
+    "vue": "VueSequenceurBatterieAvance",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sequenceur-melodique",
+    "vue": "VueSequenceurMelodique",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sortie-audio",
+    "vue": "VueExport",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "sortie-midi",
+    "vue": "VueExport",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "sortie-texte",
+    "vue": "VueSortieTexte",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "source-texte",
+    "vue": "VueSourceTexte",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "spectrogramme",
+    "vue": "VueSpectrogramme",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "styles-musicaux",
+    "vue": "VueStylesMusicaux",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "suiveur-caracteristique",
+    "vue": "VueCourbe",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "tessitures-voix",
+    "vue": "VueTessituresVoix",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "texte-image",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "transcripteur-midi",
+    "vue": "VueTranscription",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "vexflow-grille",
+    "vue": "VueVexFlow",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "vexflow-midi",
+    "vue": "VueVexFlow",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "vexflow-partition",
+    "vue": "VueVexFlow",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "vexflow-portee",
+    "vue": "VueVexFlow",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "vexflow-tab",
+    "vue": "VueVexFlow",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "visualisation-songsee",
+    "vue": "VueImageDepuisAudio",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "visualiseur-courbe",
+    "vue": "VueTraceCourbe",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
+    "id": "visualiseur-forme-onde",
+    "vue": "VueFormeOnde",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "vu-metre",
+    "vue": "VueVuMetre",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  }
+]
