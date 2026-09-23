@@ -61,6 +61,9 @@ const FAUSSE_API = () => {
     ],
     lireFichierAudio: async (chemin: string) => {
       (window as any).__lectures.push(chemin);
+      // Une porte, fermée seulement par le test qui veut regarder l'écran pendant que la lecture
+      // dure : c'est le seul moment où la surbrillance pouvait s'égarer.
+      if ((window as any).__porte) await new Promise<void>((r) => { (window as any).__ouvrir = r; });
       return { url: "", donnees: octets, nom: String(chemin).split("/").pop() };
     },
     choisirDossier: async () => null,
@@ -107,6 +110,46 @@ test.describe("explorateur de musique", () => {
     console.log(JSON.stringify(r));
     expect(r.erreur).toBe(false);
     expect(r.texte).not.toMatch(/Aucun fichier|No file/);
+  });
+
+  test("LA SURBRILLANCE NE PASSE JAMAIS PAR UNE AUTRE LIGNE QUE CELLE QU'ON A CLIQUÉE", async ({ page }) => {
+    test.setTimeout(180000);
+    // LE DÉFAUT SIGNALÉ PAR FABIEN : cliquer une piste faisait brièvement sauter la surbrillance sur
+    // une autre ligne, avant qu'elle ne revienne à la bonne. La surbrillance se déduisait de
+    // `audioChemin`, qui n'arrive qu'une fois le fichier lu : le rendu intermédiaire reposait donc
+    // l'ancienne valeur. On ferme ici la porte de la lecture pour observer exactement cet instant.
+    await page.addInitScript(FAUSSE_API);
+    await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); }, [JSON.stringify(GRAPHE)]);
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 20000 });
+    const noeud = page.locator('.react-flow__node[data-id="x"]');
+    await noeud.locator(".attic-node-fichier-btn").first().click();
+    const liste = noeud.locator("select.attic-node-select");
+    await expect(liste.locator("option")).toHaveCount(3, { timeout: 10000 });
+
+    // Une première piste choisie, porte ouverte : c'est l'état d'où le saut partait.
+    await liste.locator("option").nth(1).click();
+    await expect(liste).toHaveValue("1", { timeout: 5000 });
+
+    // Porte fermée : la lecture de la piste suivante ne rendra plus la main avant qu'on le dise.
+    await page.evaluate(() => { (window as any).__porte = true; });
+    await liste.locator("option").nth(2).click();
+
+    // ICI, LECTURE EN COURS : la ligne cliquée est déjà la seule en surbrillance. Avant correction,
+    // on lisait 1 — la piste d'avant — puisque le nœud n'avait pas encore son nouveau chemin.
+    const pendant = await liste.evaluate((e: HTMLSelectElement) => e.selectedIndex);
+    console.log("PENDANT LA LECTURE selectedIndex=" + pendant);
+    expect(pendant, "la surbrillance doit suivre le clic sans attendre la lecture").toBe(2);
+
+    // La lecture rend la main : la ligne ne bouge pas davantage.
+    await page.evaluate(() => { (window as any).__ouvrir?.(); });
+    await expect(liste).toHaveValue("2", { timeout: 10000 });
+    expect(await liste.evaluate((e: HTMLSelectElement) => e.selectedIndex)).toBe(2);
+
+    // Et le fichier n'a été lu qu'une fois, un même clic faisant partir `click` et `change`.
+    const lectures = await page.evaluate(() => (window as any).__lectures);
+    console.log("LECTURES " + JSON.stringify(lectures));
+    expect(lectures).toEqual(["music collection/deux.wav", "music collection/trois.wav"]);
   });
 
   test("CHOISIR UNE AUTRE PISTE LA GARDE AUSSI", async ({ page }) => {

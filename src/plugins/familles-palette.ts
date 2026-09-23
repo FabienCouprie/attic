@@ -1,4 +1,4 @@
-// plugins/familles-effets.ts — Les effets rangés par style dans la palette.
+// plugins/familles-palette.ts — Les familles de la palette, pour les traitements et pour les entrées.
 //
 // « Traitement › Effets » comptait cent cinquante-huit nœuds sous un seul en-tête : on y cherchait
 // une réverbération parmi les compresseurs et les arpégiateurs. Les familles ci-dessous sortent de
@@ -98,18 +98,80 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   ],
 };
 
-/** Identifiant → famille, construit une fois. */
-const PAR_ID = new Map<string, string>(
-  Object.entries(FAMILLES_EFFETS).flatMap(([famille, ids]) => ids.map((id) => [id, famille] as const)),
+/**
+ * Les familles de « Entrées › Génération ».
+ *
+ * Cinquante-six nœuds sous un seul en-tête : on y cherchait un synthétiseur parmi les cribles et les
+ * métronomes. Le découpage suit ce que le nœud FABRIQUE, non la technique qu'il emploie — un rythme
+ * reste un rythme qu'il vienne d'un crible euclidien ou d'un ensemble de Cantor, et c'est par « je
+ * veux un rythme » qu'on le cherche.
+ *
+ * Ce qui n'est pas ici reste dans « Génération » : les sources élémentaires (oscillateur, bruit,
+ * fréquence, courbe), les modèles de synthèse qui ne sont pas des instruments (pulsars,
+ * caractéristiques, SSP), les générateurs par apprentissage (MusicGen, Stable Audio) et la théorie
+ * harmonique.
+ */
+export const FAMILLES_GENERATION: Record<string, string[]> = {
+  // Les instruments joués par le graphe, un timbre chacun.
+  "Synthétiseurs": ["fm-synth", "membrane-synth", "metal-synth", "pluck-synth", "poly-synth"],
+  // Ce qui se joue en posant des notes.
+  "Claviers": ["clavier-melodie", "clavier-sfz", "frontiere-note", "banque-sfz"],
+  // L'autosimilarité géométrique, et elle seule. Un L-système réécrit une chaîne, la série de Nørgård
+  // se déduit de proche en proche : ni l'un ni l'autre ne fabrique une fractale, et ils rejoignent
+  // les autres générateurs. Les rythmes autosimilaires sont rangés avec les rythmes — c'est par là
+  // qu'on les cherche.
+  "Fractales": ["generateur-fractal", "arpege-koch", "mappeur-mandelbrot", "spectrogramme-fractal"],
+  // Ce qui produit tout seul, de proche en proche ou au tirage.
+  "Réservoirs et aléatoire": ["boite-groove", "generateur-musical", "melodie-aleatoire",
+    "reservoir-musical", "multi-reservoirs"],
+  // Les correspondances entre les sens : la couleur, l'odeur, le goût, le geste visible.
+  "Résonance sensorielle": ["couleur-rgb", "color-looper", "spectre-visible", "parfum-motif",
+    "accord-mets-musique", "cercle-pulsant", "camelot"],
+  // Ce qui déroule une suite dans le temps. Le séquenceur de batterie est avec les rythmes.
+  "Séquenceurs": ["sequenceur-accords", "sequenceur-melodique"],
+  // D'une notation écrite vers du MIDI.
+  "Convertisseurs de notation": ["abc-vers-midi", "reprise-abc", "texte-vers-midi"],
+  // Les trois nœuds d'après Xenakis, qui forment un corpus à eux seuls.
+  "Xenakis": ["crible-xenakis", "ecrans-xenakis", "gendyn-xenakis"],
+  // Tout ce qui produit une figure rythmique, quelle qu'en soit la mécanique.
+  "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
+    "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],
+  // Ce qui écrit de la musique par un modèle appris.
+  "IA": ["musicgen", "stable-audio-3"],
+  // Ce qui ne sonne pas mais pilote : la sortie est une courbe, non un son. Un seul nœud à ce jour,
+  // et la rubrique existe pour recevoir les suivants.
+  "Contrôle": ["generateur-courbe"],
+  // Ce qui engendre par une règle, sans être ni fractale, ni réservoir, ni séquenceur.
+  "Autres générateurs": ["l-systeme", "serie-infinie"],
+};
+
+/**
+ * Les deux tables, chacune dans son univers.
+ *
+ * L'univers fait partie de la clé : un même identifiant ne se range pas au hasard du fichier où il
+ * est écrit, et une table ne peut pas déplacer un nœud d'un univers qu'elle ne concerne pas.
+ */
+export const TABLES_PAR_UNIVERS: Record<string, Record<string, string[]>> = {
+  "Traitement": FAMILLES_EFFETS,
+  "Entrées": FAMILLES_GENERATION,
+};
+
+/** Univers → identifiant → famille, construit une fois. */
+const PAR_UNIVERS = new Map<string, Map<string, string>>(
+  Object.entries(TABLES_PAR_UNIVERS).map(([univers, table]) => [
+    univers,
+    new Map(Object.entries(table).flatMap(([famille, ids]) => ids.map((id) => [id, famille] as const))),
+  ]),
 );
 
 /**
- * La fiche, rangée dans sa famille de style si elle en a une. Ne touche qu'aux traitements — et
- * pas seulement aux effets : « Fusionner en stéréo » était dans le Montage, où personne ne le
- * cherchait, et rejoint les autres outils stéréo.
+ * La fiche, rangée dans sa famille si elle en a une.
+ *
+ * Ne touche qu'aux traitements et aux entrées — et, parmi les traitements, pas seulement aux effets :
+ * « Fusionner en stéréo » était dans le Montage, où personne ne le cherchait, et rejoint les autres
+ * outils stéréo.
  */
 export function rangerParStyle<T extends FicheAudio>(fiche: T): T {
-  const famille = PAR_ID.get(fiche.id);
-  if (!famille || fiche.univers !== "Traitement") return fiche;
-  return { ...fiche, famille };
+  const famille = PAR_UNIVERS.get(fiche.univers)?.get(fiche.id);
+  return famille ? { ...fiche, famille } : fiche;
 }

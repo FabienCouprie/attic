@@ -116,6 +116,10 @@ import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
 import { fiches as f_demonstration } from "./demonstration";
 import { fiches as f_verovio } from "./verovio";
+import { fiches as f_gout } from "./gout";
+import { fiches as f_assaisonnement } from "./assaisonnement";
+import { fiches as f_parfum } from "./parfum";
+import { fiches as f_accordMets } from "./accord-mets";
 import { fiches as f_clavier_apprentissage } from "./clavier-apprentissage";
 import { fiches as f_vitesse_midi } from "./vitesse-midi";
 import { fiches as f_hpss } from "./hpss";
@@ -169,7 +173,7 @@ import { fiches as f_csound_partition } from "./csound-partition";
 import { fiches as f_csound_orchestre } from "./csound-orchestre";
 import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
 import { fiches as f_csound_formules } from "./csound-formules";
-import { rangerParStyle } from "./familles-effets";
+import { rangerParStyle } from "./familles-palette";
 
 export const toutesLesFiches: FicheAudio[] = ([
   ...f_entrees,
@@ -190,6 +194,10 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_documentation,
   ...f_demonstration,
   ...f_verovio,
+  ...f_gout,
+  ...f_assaisonnement,
+  ...f_parfum,
+  ...f_accordMets,
   ...f_clavier_apprentissage,
   ...f_vitesse_midi,
   ...f_hpss,
