@@ -58,8 +58,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Les notices entières de chaque composant, ou leurs seuls résumés. Entières pour un agent, à qui elles disent ce que fait chaque composant et pourquoi ; résumés pour une vue d'ensemble, le document étant alors quatre à cinq fois plus court.",
         docEn: "Each component's full notice, or its summary alone. Full for an agent, to whom they say what each node does and why; summaries for an overview, the document then being four to five times shorter." },
       { nom: "Dossier de sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "",
-        doc: "Où écrire « documentation.md » et « index.html ». Vide, rien n'est écrit sur le disque et les deux textes ne sortent que par les ports — de quoi les brancher sur un modèle de langage ou sur un composant de texte.",
-        docEn: "Where to write « documentation.md » and « index.html ». Empty, nothing is written to disk and both texts leave through the ports only — enough to feed a language model or a text node." },
+        doc: "Où écrire « documentation.md » et « index.html ». Vide, rien n'est écrit sur le disque et les deux textes ne sortent que par les ports, de quoi les brancher sur un modèle de langage ou sur un composant de texte.",
+        docEn: "Where to write « documentation.md » and « index.html ». Empty, nothing is written to disk and both texts leave through the ports only, enough to feed a language model or a text node." },
     ],
     // Son résultat dépend du graphe entier, qu'aucune empreinte de cache ne regarde.
     jamaisCache: true,

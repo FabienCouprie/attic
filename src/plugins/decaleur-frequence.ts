@@ -27,8 +27,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Hertz ajoutés au canal droit en plus du décalage. Quelques dixièmes suffisent : les deux canaux dérivent alors l'un par rapport à l'autre et le son s'élargit lentement, sans déphasage destructeur. Sans effet sur un son mono.",
         docEn: "Hertz added to the right channel on top of the shift. A few tenths are enough: the two channels then drift apart and the sound widens slowly, with no destructive phasing. No effect on a mono sound." },
       { nom: "Mélange", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Part du son décalé dans la sortie. À 50 %, l'original et son décalage battent ensemble — c'est ainsi qu'on obtient les timbres métalliques doux plutôt qu'un dépaysement complet.",
-        docEn: "Share of the shifted sound in the output. At 50 %, the original and its shift beat together — that is how one gets gently metallic timbres rather than a complete displacement." },
+        doc: "Part du son décalé dans la sortie. À 50 %, l'original et son décalage battent ensemble ; c'est ainsi qu'on obtient les timbres métalliques doux plutôt qu'un dépaysement complet.",
+        docEn: "Share of the shifted sound in the output. At 50 %, the original and its shift beat together; that is how one gets gently metallic timbres rather than a complete displacement." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);

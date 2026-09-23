@@ -6,28 +6,34 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  couleurVersCamelot, notesDepuisPulsations, pulsations, svgAnime, type OptionsCercle,
+  accordsDepuisPulsations, couleurVersCamelot, notesDepuisPulsations, pulsations, svgAnime,
+  type ModeAccords, type OptionsCercle,
 } from "../audio/cercle-pulsant";
 import { camelotToAccord } from "../audio/camelot";
+import {
+  sf2Chargee, normaliserModeSynthèse, decoderInstrumentSF2,
+  PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2,
+} from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
   {
     id: "cercle-pulsant", nom: "Cercle pulsant", nomEn: "Pulsing Circle",
     univers: "Entrées", famille: "Génération",
-    resume: "Une animation et une mélodie tirées de la même suite de pulsations : la couleur donne la tonalité, la pulsation le rythme.",
-    resumeEn: "An animation and a melody drawn from the same series of pulses: colour gives the key, pulsation the rhythm.",
-    notice: "Un cercle qui respire, change de taille et de couleur, et une mélodie qui en sort. Mais pas au sens où l'on sonorise une image : les deux sont la même liste, regardée deux fois.\n\nLe principe, et ce qui le distingue d'une sonification décorative. Le composant calcule une seule suite de pulsations — un instant, une taille, une couleur — puis le dessin anime exactement ces instants et la mélodie écrit exactement ces notes. Elles ne peuvent pas diverger, parce qu'il n'y a rien à synchroniser.\n\nLa teinte donne la tonalité par la roue de Camelot, et ce n'est pas un mappage arbitraire. Cette roue dispose les douze tonalités en cercle — anneau A pour les mineurs, B pour les majeurs — selon la règle d'enchaînement des disc-jockeys : une case voisine, le même numéro dans l'autre anneau, ou sept cases plus loin. La teinte est un cercle, la roue en est un autre : les faire correspondre fait que deux teintes voisines donnent deux tonalités compatibles. Un dégradé continu produit donc une suite de modulations qui fonctionnent. Le mappage évident — teinte divisée en douze demi-tons — ferait l'inverse : deux couleurs voisines y donneraient deux tonalités étrangères, et un dégradé sonnerait comme une suite d'accidents.\n\nLe reste suit. La saturation choisit l'anneau : terne pour le mineur, vive pour le majeur, ce que l'œil lit déjà comme sombre ou éclatant. La clarté donne le registre. Le rayon au moment de la frappe donne le degré dans la gamme — un grand cercle est une note grave, le sens que l'œil donne spontanément à une forme large — et son amplitude la nuance.\n\nLe silence a une image. Sous le seuil, la pulsation se voit et ne s'entend pas : le cercle se rétracte, la musique se tait, et les deux se taisent ensemble parce que c'est la même décision.\n\nL'animation se regarde dans le composant, et ne sort pas par un port : elle est écrite en SVG animé par SMIL, une horloge et non des pixels, et aucun traitement d'image n'en ferait quoi que ce soit. Le composant rend ce qui se branche : les notes, le son, et le parcours des tonalités.",
-    noticeEn: "A circle that breathes, changes size and colour, and a melody that comes out of it. But not in the sense of sonifying a picture: the two are the same list, looked at twice.\n\nThe principle, and what sets it apart from decorative sonification. The node computes a single series of pulses — an instant, a size, a colour — then the drawing animates exactly those instants and the melody writes exactly those notes. They cannot drift apart, because there is nothing to synchronise.\n\nHue gives the key through the Camelot wheel, and this is no arbitrary mapping. That wheel lays the twelve keys in a circle — ring A for the minors, B for the majors — following the disc jockeys' mixing rule: a neighbouring position, the same number in the other ring, or seven positions away. Hue is a circle, the wheel is another: matching them means two neighbouring hues give two compatible keys. A continuous gradient therefore produces a sequence of modulations that work. The obvious mapping — hue divided into twelve semitones — would do the opposite: two neighbouring colours would give two unrelated keys, and a gradient would sound like a string of accidents.\n\nThe rest follows. Saturation chooses the ring: dull for minor, vivid for major, which the eye already reads as sombre or brilliant. Lightness gives the register. The radius at the moment of the stroke gives the scale degree — a large circle is a low note, the sense the eye spontaneously gives a wide shape — and its amplitude gives the dynamic.\n\nSilence has a picture. Below the threshold the pulse is seen and not heard: the circle contracts, the music falls silent, and both fall silent together because it is the same decision.\n\nThe animation is watched in the node, and does not leave by a port: it is written as an SVG animated by SMIL, a clock rather than pixels, and no image processing would make anything of it. What the node outputs is what can be connected: the notes, the sound, and the journey through the keys.",
+    resume: "Une animation, une mélodie et ses accords tirés de la même suite de pulsations : la couleur donne la tonalité, la pulsation le rythme.",
+    resumeEn: "An animation, a melody and its chords drawn from the same series of pulses: colour gives the key, pulsation the rhythm.",
+    notice: "Produit une animation, un cercle qui pulse en changeant de taille et de couleur, et la pièce musicale correspondante, à partir d'une même suite de pulsations.\n\nChaque pulsation est définie par trois valeurs : un instant, un rayon et une couleur. L'animation et la musique dérivent de cette suite, de sorte que les notes tombent exactement sur les instants dessinés.\n\nLa couleur détermine la tonalité par la roue de Camelot :\n• la teinte sélectionne la case, une par tranche de trente degrés\n• la saturation sélectionne l'anneau : sous 50 %, l'anneau A (mineur) ; au-dessus, l'anneau B (majeur)\n• la clarté sélectionne le registre, d'une octave en dessous à une octave au-dessus\n\nLa roue de Camelot classe les douze tonalités en cercle suivant la règle d'enchaînement employée par les disc-jockeys : case voisine, même numéro dans l'autre anneau, ou sept cases plus loin. La teinte étant également circulaire, deux teintes voisines correspondent à deux tonalités compatibles, et le réglage « Parcours de teinte » produit une suite de modulations cohérentes. Une correspondance directe entre teinte et demi-tons associerait au contraire deux tonalités sans relation à deux couleurs voisines.\n\nLe rayon détermine la note :\n• le rayon au moment de la pulsation fixe le degré dans la gamme de la case ; un rayon élevé donne une note grave\n• le même rayon fixe la vélocité ; un rayon élevé donne une note forte\n• « Respiration » règle l'amplitude de variation du rayon, donc l'étendue de gamme parcourue\n• en dessous de « Seuil de silence », la pulsation est dessinée mais aucune note n'est émise\n\nLes accords reprennent la triade de tonique de la case, transposée une octave sous la mélodie :\n• « Tenus » : un accord par tonalité, maintenu jusqu'à la modulation suivante\n• « Frappés » : le même accord répété à chaque pulsation audible\n• une case dont toutes les pulsations sont sous le seuil ne reçoit aucun accord\n• « Nuance des accords » règle leur vélocité ; celle de la mélodie varie de 50 à 120\n\nSorties :\n• « Mélodie » et « Accords » : deux fichiers MIDI distincts, instrumentables séparément\n• « Audio » : les deux ensemble, rendus avec le moteur et l'instrument sélectionnés\n• « Parcours » : la liste des tonalités traversées et l'instant de début de chacune\n\nL'animation est affichée dans le composant et n'est pas disponible sur un port de sortie. Elle est produite au format SVG animé par SMIL, c'est-à-dire décrite par des balises temporelles et non par une suite d'images ; les traitements d'image ne s'y appliquent pas.",
+    noticeEn: "Produces an animation (a circle that pulses, changing size and colour) and the corresponding piece of music, from a single series of pulses.\n\nEach pulse is defined by three values: an instant, a radius and a colour. The animation and the music are both derived from this series, so that the notes fall exactly on the instants drawn.\n\nColour determines the key through the Camelot wheel:\n• hue selects the position, one per thirty-degree slice\n• saturation selects the ring: below 50 %, ring A (minor); above, ring B (major)\n• lightness selects the register, from one octave below to one octave above\n\nThe Camelot wheel arranges the twelve keys in a circle following the mixing rule used by disc jockeys: adjacent position, same number in the other ring, or seven positions away. Hue being circular as well, two neighbouring hues correspond to two compatible keys, and the « Hue journey » setting produces a coherent sequence of modulations. A direct mapping from hue to semitones would instead assign two unrelated keys to two neighbouring colours.\n\nThe radius determines the note:\n• the radius at the moment of the pulse sets the degree in the scale of the position; a large radius gives a low note\n• the same radius sets the velocity; a large radius gives a loud note\n• « Breathing » sets the amplitude of the radius variation, hence the range of the scale covered\n• below « Silence threshold », the pulse is drawn but no note is emitted\n\nThe chords use the tonic triad of the position, transposed one octave below the melody:\n• « Held »: one chord per key, sustained until the next modulation\n• « Struck »: the same chord repeated at each audible pulse\n• a position whose pulses are all below the threshold receives no chord\n• « Chord dynamic » sets their velocity; that of the melody ranges from 50 to 120\n\nOutputs:\n• « Melody » and « Chords »: two separate MIDI files, instrumentable independently\n• « Audio »: both together, rendered with the selected engine and instrument\n• « Journey »: the list of keys travelled and the start instant of each\n\nThe animation is displayed in the node and is not available on an output port. It is produced as SVG animated by SMIL, that is described by time tags rather than a sequence of images; image processing does not apply to it.",
     entrees: [],
     sorties: [
-      { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+      { nom: "Mélodie", nomEn: "Melody", type: "midi" },
       { nom: "Audio", type: "audio" },
       { nom: "Parcours", nomEn: "Journey", type: "texte" },
+      { nom: "Accords", nomEn: "Chords", type: "midi" },
     ],
     parametres: [
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [2, 120], pas: 1, defaut: 20, unite: "s",
-        doc: "Durée de l'animation, et de la pièce. C'est la même : l'une ne peut pas finir avant l'autre.",
-        docEn: "Length of the animation, and of the piece. It is the same: one cannot end before the other." },
+        doc: "Durée de l'animation, et de la pièce : les deux sont égales.",
+        docEn: "Length of the animation, and of the piece: the two are equal." },
       { nom: "Pulsation initiale", nomEn: "Initial rate", type: "curseur", plage: [0.2, 12], pas: 0.1, defaut: 1.6, unite: "/s",
         doc: "Battements par seconde au début. Sous un par seconde, on entend des événements isolés ; au-delà de cinq, une texture.",
         docEn: "Beats per second at the start. Below one per second one hears isolated events; beyond five, a texture." },
@@ -38,29 +44,41 @@ export const fiches: FicheAudio[] = ([
         doc: "Couleur de départ. Zéro est le rouge, 120 le vert, 240 le bleu. Chaque trentaine de degrés avance d'une case sur la roue de Camelot, donc d'une tonalité.",
         docEn: "Starting colour. Zero is red, 120 green, 240 blue. Every thirty degrees moves one position on the Camelot wheel, hence one key." },
       { nom: "Parcours de teinte", nomEn: "Hue journey", type: "curseur", plage: [-720, 720], pas: 15, defaut: 150, unite: "°",
-        doc: "De combien la couleur tourne sur toute la durée. À zéro, la pièce reste dans une seule tonalité. À 360, elle fait le tour complet des douze — et comme les cases voisines sont compatibles, chaque passage est une modulation qui tient.",
-        docEn: "How far the colour turns over the whole duration. At zero the piece stays in one key. At 360 it goes round all twelve — and since neighbouring positions are compatible, each passage is a modulation that holds." },
+        doc: "De combien la couleur tourne sur toute la durée. À zéro, la pièce reste dans une seule tonalité. À 360, elle fait le tour complet des douze, et comme les cases voisines sont compatibles, chaque passage est une modulation qui tient.",
+        docEn: "How far the colour turns over the whole duration. At zero the piece stays in one key. At 360 it goes round all twelve, and since neighbouring positions are compatible, each passage is a modulation that holds." },
       { nom: "Saturation", nomEn: "Saturation", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
-        doc: "Vivacité de la couleur, et mode de la pièce : sous 50 %, l'anneau mineur ; au-dessus, le majeur. Le seuil est au milieu, et il n'y a pas de raison de le mettre ailleurs.",
-        docEn: "Vividness of the colour, and mode of the piece: below 50 %, the minor ring; above, the major. The threshold sits in the middle, and there is no reason to put it elsewhere." },
+        doc: "Vivacité de la couleur, et mode de la pièce : sous 50 %, l'anneau mineur ; au-dessus, le majeur.",
+        docEn: "Vividness of the colour, and mode of the piece: below 50 %, the minor ring; above, the major." },
       { nom: "Clarté", nomEn: "Lightness", type: "curseur", plage: [0, 100], pas: 1, defaut: 55, unite: "%",
         doc: "Clarté de la couleur, et registre de la mélodie : une couleur sombre descend d'une octave, une couleur claire monte d'une octave.",
         docEn: "Lightness of the colour, and register of the melody: a dark colour drops an octave, a light one rises an octave." },
       { nom: "Respiration", nomEn: "Breathing", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
-        doc: "Amplitude des variations de taille. À zéro, le cercle garde son diamètre et la mélodie son degré : on n'entend plus que la tonalité changer. Au maximum, le cercle passe du point au disque plein, et la mélodie parcourt toute la gamme.",
-        docEn: "Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key is heard changing. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale." },
+        doc: "Amplitude des variations de taille. À zéro, le cercle garde son diamètre et la mélodie son degré : seule la tonalité change encore. Au maximum, le cercle passe du point au disque plein, et la mélodie parcourt toute la gamme.",
+        docEn: "Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key still changes. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale." },
       { nom: "Seuil de silence", nomEn: "Silence threshold", type: "curseur", plage: [0, 90], pas: 1, defaut: 45, unite: "%",
-        doc: "Taille en deçà de laquelle la pulsation ne sonne pas. C'est ce qui permet à la pièce de respirer plutôt que de poser une note sur chaque battement du début à la fin. Un chiffre à connaître : le rayon ne descend jamais sous cent moins la respiration, si bien qu'un seuil plus bas que cette valeur ne coupe jamais rien. À respiration 65 %, un seuil sous 35 % est sans effet — mesuré, quarante-huit pulsations sonnaient toutes.",
-        docEn: "Size below which the pulse does not sound. This is what lets the piece breathe rather than placing a note on every beat from start to finish. A figure worth knowing: the radius never falls below one hundred minus the breathing, so a threshold lower than that never cuts anything. At 65 % breathing, a threshold under 35 % has no effect — measured, all forty-eight pulses sounded." },
+        doc: "Taille en deçà de laquelle la pulsation ne sonne pas : elle est alors dessinée et muette. Le rayon ne descend jamais sous cent moins la respiration, si bien qu'un seuil plus bas que cette valeur ne coupe rien. À respiration 65 %, un seuil sous 35 % est sans effet.",
+        docEn: "Size below which the pulse does not sound: it is then drawn and silent. The radius never falls below one hundred minus the breathing, so a threshold lower than that cuts nothing. At 65 % breathing, a threshold under 35 % has no effect." },
+      { nom: "Accords", nomEn: "Chords", type: "choix",
+        options: ["Tenus", "Frappés", "Aucun"], optionsEn: ["Held", "Struck", "None"],
+        optionIds: ["tenus", "frappes", "aucun"], defaut: "Tenus", defautEn: "Held",
+        doc: "La triade de tonique de chaque case traversée, une octave sous la mélodie. Tenus : un accord par tonalité, gardé jusqu'à la modulation suivante. Frappés : le même accord rejoué à chaque pulsation audible. Une case traversée pendant que le cercle est rétracté ne sonne pas.",
+        docEn: "The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound." },
+      { nom: "Nuance des accords", nomEn: "Chord dynamic", type: "curseur", plage: [0, 100], pas: 1, defaut: 55, unite: "%",
+        doc: "Force de frappe des accords. La mélodie va de 50 à 120 sur la même échelle : au-delà de ces valeurs, l'harmonie passe devant elle.",
+        docEn: "Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it." },
       { nom: "Échos", nomEn: "Echoes", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
         optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
-        doc: "Laisser un anneau s'ouvrir et s'effacer à chaque frappe audible. C'est la décroissance de la note rendue visible, et ce qui donne son épaisseur à l'image.",
-        docEn: "Let a ring open and fade at each audible stroke. It is the note's decay made visible, and what gives the picture its depth." },
+        doc: "Laisser un anneau s'ouvrir et s'effacer à chaque frappe audible, sur la durée de la note.",
+        docEn: "Let a ring open and fade at each audible stroke, over the length of the note." },
       { nom: "Taille", nomEn: "Size", type: "curseur", plage: [200, 1200], pas: 20, defaut: 600, unite: "px",
         doc: "Côté de l'image carrée.", docEn: "Side of the square image." },
       { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Graine de l'irrégularité des tailles. Une même graine rejoue la même pièce, image comprise.",
         docEn: "Seed for the irregularity of the sizes. The same seed replays the same piece, picture included." },
+      PARAMETRE_SYNTHESE,
+      PARAMETRE_INSTRUMENT_SF2,
+      { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Volume du rendu sonore.", docEn: "Level of the rendered sound." },
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
@@ -77,9 +95,14 @@ export const fiches: FicheAudio[] = ([
         graine: Math.round(ctx.paramNombre("Graine", 7)),
       };
       const p = pulsations(o);
-      if (p.length === 0) return { valeurs: [null, null, null], message: traduire("msg.cerclePulsant.vide") };
+      if (p.length === 0) return { valeurs: [null, null, null, null], message: traduire("msg.cerclePulsant.vide") };
 
       const { notes, codes } = notesDepuisPulsations(p, o);
+      // La roue de Camelot code des TONALITÉS : la suite des cases traversées est une suite
+      // d'accords, et la mélodie seule ne la faisait pas entendre. Voir `audio/cercle-pulsant.ts`.
+      const accords = accordsDepuisPulsations(
+        p, o, ctx.paramTexte("Accords", "tenus") as ModeAccords,
+        ctx.paramNombre("Nuance des accords", 55) / 100);
       const svg = svgAnime(p, o, {
         taille: Math.round(ctx.paramNombre("Taille", 600)),
         echos: ctx.paramTexte("Échos", "oui") !== "non",
@@ -87,8 +110,24 @@ export const fiches: FicheAudio[] = ([
 
       const { notesVersFichierMidi, rendreSequence } = await import("../audio");
       const tempo = 60 * Math.max(0.2, (o.pulsationDebut + o.pulsationFin) / 2);
-      const midi = notesVersFichierMidi(notes, tempo, 0);
-      const audio = await rendreSequence(notes, "FM/Oscillateurs", 80, 0, 0);
+
+      // LE RENDU SE RÈGLE, COMME SUR LES AUTRES GÉNÉRATEURS DE NOTES. Le moteur et l'instrument
+      // étaient écrits en dur — FM, programme 0 —, si bien qu'un SoundFont chargé restait sans
+      // effet sur un composant qui sort pourtant du MIDI.
+      const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+      const modeRendu: "FM/Oscillateurs" | "SoundFont" =
+        mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
+      const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+      const prog = Math.max(0, programme);
+      const banc = Math.max(0, banque);
+      // Le troisième argument est le CANAL, non le programme : instrument et banque sont les
+      // quatrième et cinquième.
+      const midi = notesVersFichierMidi(notes, tempo, 0, banc, prog);
+      const midiAccords = accords.length ? notesVersFichierMidi(accords, tempo, 0, banc, prog) : null;
+      // L'audio du composant est la pièce entière : la mélodie et les accords y sont rendus
+      // ensemble, tandis que les deux sorties MIDI permettent de les instrumenter séparément.
+      const audio = await rendreSequence(
+        [...notes, ...accords], modeRendu, ctx.paramNombre("Volume", 80), prog, banc);
 
       // Le parcours : la suite des tonalités traversées, sans répéter celles qui durent.
       const etapes: { code: string; depuis: number }[] = [];
@@ -106,9 +145,9 @@ export const fiches: FicheAudio[] = ([
       // L'animation se regarde ici, et ne sort pas : voir l'en-tête de ce fichier.
       (ctx.noeud.data as Record<string, unknown>)._animationSvg = svg;
       return {
-        valeurs: [midi, audio, lignes.join("\n")],
+        valeurs: [midi, audio, lignes.join("\n"), midiAccords],
         message: traduire("msg.cerclePulsant.resume",
-          String(p.length), String(notes.length), String(etapes.length)),
+          String(p.length), String(notes.length), String(accords.length / 3), String(etapes.length)),
       };
     },
   },

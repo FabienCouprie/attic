@@ -57,13 +57,14 @@ async function graver(page: any, parametres: Record<string, unknown>) {
   await page.click(".attic-btn-lancer");
   await page.waitForFunction(() => {
     const n = document.querySelector('.react-flow__node[data-id="g"]');
-    // La gravure, et non l'icône d'un bouton : le SVG rendu vit dans la vue du nœud.
+    // La gravure, et non l'icône d'un bouton : le SVG rendu vit dans la vue du nœud, dont les
+    // classes sont propres à la gravure depuis qu'elle a cessé d'emprunter celles des nœuds VexFlow.
     // L'état vit sur la pastille de statut, et non sur l'enveloppe posée par ReactFlow.
-    return !!n && (!!n.querySelector(".attic-node-vue-vexflow-inner svg") || !!n.querySelector(".attic-node-statut-puce.erreur"));
+    return !!n && (!!n.querySelector(".attic-node-vue-gravure-inner svg") || !!n.querySelector(".attic-node-statut-puce.erreur"));
   }, null, { timeout: 90000 });
   return page.evaluate(() => {
     const n = document.querySelector('.react-flow__node[data-id="g"]') as HTMLElement;
-    const svg = n.querySelector(".attic-node-vue-vexflow-inner svg");
+    const svg = n.querySelector(".attic-node-vue-gravure-inner svg");
     return {
       texte: n.innerText.replace(/\s+/g, " "),
       notes: n.querySelectorAll("g.note").length,

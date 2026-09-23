@@ -9,8 +9,8 @@
 //      instants, parce que c'est la même liste.
 import { describe, expect, it } from "vitest";
 import {
-  couleurCss, couleurVersCamelot, estMineur, notesDepuisPulsations, pulsations, svgAnime,
-  toniqueDeCamelot, type OptionsCercle,
+  accordsDepuisPulsations, couleurCss, couleurVersCamelot, estMineur, notesDepuisPulsations,
+  pulsations, svgAnime, toniqueDeCamelot, type OptionsCercle,
 } from "./cercle-pulsant";
 import { parseCamelot } from "./camelot";
 
@@ -238,5 +238,110 @@ describe("la couleur écrite", () => {
 
   it("une teinte hors bornes est ramenée dans le tour", () => {
     expect(couleurCss({ temps: 0, rayon: 1, teinte: -40, saturation: 1, clarte: 1 })).toContain("320.0");
+  });
+});
+
+// ── Les accords : ce que la roue prescrit, et que la mélodie seule ne disait pas ──
+//
+// UNE CASE DE LA ROUE EST UNE TONALITÉ. La mélodie prend ses degrés dans la gamme de la case, mais
+// un degré isolé ne nomme pas la tonalité dont il vient : c'est la triade de tonique qui le fait.
+// Ce qui est tenu ici : la triade est bien celle de la case, elle passe sous la mélodie, et elle
+// se tait là où le cercle se tait.
+describe("les accords de la roue", () => {
+  const p = pulsations(BASE);
+
+  it("« aucun » ne pose rien", () => {
+    expect(accordsDepuisPulsations(p, BASE, "aucun", 0.55)).toEqual([]);
+  });
+
+  it("chaque accord a trois sons, et un accord par tonalité traversée en mode tenu", () => {
+    const o = { ...BASE, teinteParcours: 360 };
+    const q = pulsations(o);
+    const accords = accordsDepuisPulsations(q, o, "tenus", 0.55);
+    expect(accords.length % 3).toBe(0);
+    // Les cases traversées qui portent au moins une pulsation audible.
+    const sonnantes = new Set<string>();
+    for (const pulse of q) {
+      if (pulse.rayon >= o.seuilSilence) sonnantes.add(couleurVersCamelot(pulse.teinte, pulse.saturation));
+    }
+    expect(accords.length / 3).toBe(sonnantes.size);
+  });
+
+  it("la triade est celle de la case : tonique, tierce du mode, quinte", () => {
+    for (const saturation of [0.8, 0.2]) {
+      const o = { ...BASE, saturation, respiration: 0 };
+      const q = pulsations(o);
+      const a = accordsDepuisPulsations(q, o, "tenus", 0.55);
+      expect(a.length).toBe(3);
+      const code = couleurVersCamelot(o.teinteDebut, saturation);
+      const intervalles = a.map((n) => n.note - a[0].note);
+      expect(intervalles).toEqual([0, estMineur(code) ? 3 : 4, 7]);
+      expect(((a[0].note % 12) + 12) % 12).toBe(toniqueDeCamelot(code));
+    }
+  });
+
+  it("DANS UNE MÊME TONALITÉ, la tonique de l'accord est une octave sous celle de la mélodie", () => {
+    // Sans respiration le rayon vaut un, donc le degré est le premier : la mélodie chante la
+    // tonique, et l'accord doit la doubler douze demi-tons plus bas.
+    const o = { ...BASE, respiration: 0 };
+    const q = pulsations(o);
+    const { notes } = notesDepuisPulsations(q, o);
+    const accords = accordsDepuisPulsations(q, o, "tenus", 0.55);
+    expect(accords.length).toBe(3);
+    expect(notes[0].note - accords[0].note).toBe(12);
+  });
+
+  it("l'harmonie tient le registre grave, la mélodie l'avant-plan", () => {
+    // D'une tonalité à l'autre les toniques bougent, si bien que la quinte d'un accord peut
+    // dépasser la note la plus basse d'une autre case. Ce qui se tient, c'est l'écart des deux
+    // voix prises dans leur ensemble.
+    const o = { ...BASE, teinteParcours: 180 };
+    const q = pulsations(o);
+    const mediane = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+    const notes = notesDepuisPulsations(q, o).notes.map((n) => n.note);
+    const accords = accordsDepuisPulsations(q, o, "tenus", 0.55).map((n) => n.note);
+    expect(accords.length).toBeGreaterThan(0);
+    expect(mediane(notes) - mediane(accords)).toBeGreaterThanOrEqual(7);
+  });
+
+  it("une case traversée pendant que le cercle est rétracté ne sonne pas", () => {
+    // Seuil au-dessus de tout rayon possible : plus une seule pulsation audible, donc plus un
+    // seul accord — l'image et la musique se taisent ensemble.
+    const o = { ...BASE, teinteParcours: 360, seuilSilence: 1.01 };
+    const q = pulsations(o);
+    expect(notesDepuisPulsations(q, o).notes).toEqual([]);
+    expect(accordsDepuisPulsations(q, o, "tenus", 0.55)).toEqual([]);
+  });
+
+  it("« frappés » rejoue le même accord à chaque pulsation audible", () => {
+    const o = { ...BASE, teinteParcours: 360 };
+    const q = pulsations(o);
+    const tenus = accordsDepuisPulsations(q, o, "tenus", 0.55);
+    const frappes = accordsDepuisPulsations(q, o, "frappes", 0.55);
+    const audibles = q.filter((x) => x.rayon >= o.seuilSilence).length;
+    expect(frappes.length / 3).toBe(audibles);
+    expect(frappes.length).toBeGreaterThan(tenus.length);
+    // Les hauteurs employées sont les mêmes : seul le découpage dans le temps change.
+    expect(new Set(frappes.map((n) => n.note))).toEqual(new Set(tenus.map((n) => n.note)));
+  });
+
+  it("la nuance règle la force de frappe, et reste dans les bornes MIDI", () => {
+    const douce = accordsDepuisPulsations(p, BASE, "tenus", 0);
+    const forte = accordsDepuisPulsations(p, BASE, "tenus", 1);
+    expect(douce[0].velocite).toBe(1);
+    expect(forte[0].velocite).toBe(127);
+  });
+
+  it("aucun accord ne déborde de la durée demandée, ni ne dure zéro", () => {
+    const o = { ...BASE, teinteParcours: 720 };
+    const q = pulsations(o);
+    for (const mode of ["tenus", "frappes"] as const) {
+      for (const n of accordsDepuisPulsations(q, o, mode, 0.55)) {
+        expect(n.fin).toBeGreaterThan(n.debut);
+        expect(n.fin).toBeLessThanOrEqual(o.dureeSec);
+        expect(n.note).toBeGreaterThanOrEqual(21);
+        expect(n.note).toBeLessThanOrEqual(108);
+      }
+    }
   });
 });

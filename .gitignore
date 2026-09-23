@@ -57,8 +57,10 @@ Desktop.ini
 .env
 .env.*
 
-# Claude / opencode internal
-.claude/
+# Claude / opencode internal. Le contrat de notice est VERSIONNE : il vaut pour le depot,
+# pas pour une machine. Le reste de .claude/ reste personnel.
+.claude/*
+!.claude/settings.json
 
 # Python temp files
 [object Promise]/

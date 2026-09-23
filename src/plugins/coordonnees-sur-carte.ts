@@ -59,8 +59,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "coordonnees-sur-carte", nom: "Coordonnées sur carte", nomEn: "Coordinates on Map",
     univers: "Collections", famille: "Export",
-    resume: "Projette des coordonnées 2D reçues en entrée (ex. sortie Coordonnées de Classification de pistes) sur une carte fictive — même moteur visuel (style, esthétique) que Carte sonore, mais la position des points reflète la similarité calculée en amont plutôt que d'être aléatoire.",
-    resumeEn: "Projects 2D coordinates received as input (e.g. the Coordinates output of Track classification) onto a fictional map — same visual engine (style, aesthetic) as Sound Map, but point position reflects upstream-computed similarity instead of being random.",
+    resume: "Projette des coordonnées 2D reçues en entrée (ex. sortie Coordonnées de Classification de pistes) sur une carte fictive, même moteur visuel (style, esthétique) que Carte sonore, mais la position des points reflète la similarité calculée en amont plutôt que d'être aléatoire.",
+    resumeEn: "Projects 2D coordinates received as input (e.g. the Coordinates output of Track classification) onto a fictional map, same visual engine (style, aesthetic) as Sound Map, but point position reflects upstream-computed similarity instead of being random.",
     affichageAutonome: true,
     entrees: [
       { nom: "Rapport", nomEn: "Report", type: "texte", requis: false },

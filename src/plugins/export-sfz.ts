@@ -27,8 +27,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Chemin", nomEn: "Path", type: "texte" }],
     parametres: [
       { nom: "Nom", nomEn: "Name", type: "texte", defaut: "banque.sfz",
-        doc: "Nom du fichier SFZ, écrit dans le répertoire de travail. Les échantillons vont dans un dossier du même nom, à côté — un fichier WAV par zone, nommé d'après sa note-racine.",
-        docEn: "Name of the SFZ file, written in the working directory. The samples go into a folder of the same name beside it — one WAV file per zone, named after its root note." },
+        doc: "Nom du fichier SFZ, écrit dans le répertoire de travail. Les échantillons vont dans un dossier du même nom, à côté, un fichier WAV par zone, nommé d'après sa note-racine.",
+        docEn: "Name of the SFZ file, written in the working directory. The samples go into a folder of the same name beside it; one WAV file per zone, named after its root note." },
       { nom: "Relâchement", nomEn: "Release", type: "curseur", plage: [10, 3000], pas: 10, defaut: 300, unite: "ms",
         doc: "Relâchement écrit dans l'enveloppe globale du SFZ (`ampeg_release`). Il ne change pas les échantillons : c'est l'échantillonneur qui l'appliquera.",
         docEn: "Release written into the SFZ's global envelope (`ampeg_release`). It does not change the samples: the sampler will apply it." },

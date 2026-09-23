@@ -55,7 +55,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   "Égalisation et filtres": [
     "equaliseur", "reponse-filtre", "filtrage-spectre", "de-esser", "peignes-accordes", "resonateurs",
     "compresseur", "compresseur-multibande", "limiteur", "amplificateur", "normaliseur",
-    "gate-expandeur", "ducking", "transient-shaper",
+    "gate-expandeur", "ducking", "transient-shaper", "recaler-niveau",
   ],
   // Retourner le son, le motif ou le signe — et redistribuer les morceaux.
   "Ordre et inversions": [

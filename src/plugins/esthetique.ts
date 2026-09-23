@@ -95,8 +95,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "score-esthetique", nom: "Score esthétique", nomEn: "Aesthetic Score",
     univers: "Visualisation", famille: "Analyse",
-    resume: "Note un son sur quatre axes — plaisir, intérêt, complexité, qualité de production — avec la courbe de chaque axe dans le temps.",
-    resumeEn: "Scores a sound on four axes — enjoyment, usefulness, complexity, production quality — with each axis' curve over time.",
+    resume: "Note un son sur quatre axes (plaisir, intérêt, complexité, qualité de production) avec la courbe de chaque axe dans le temps.",
+    resumeEn: "Scores a sound on four axes (enjoyment, usefulness, complexity, production quality) with each axis' curve over time.",
     entrees: [{ nom: "Audio", type: "audio", requis: true }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Rapport", nomEn: "Report", type: "texte" }],
     parametres: [],

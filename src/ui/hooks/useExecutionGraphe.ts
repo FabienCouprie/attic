@@ -20,6 +20,7 @@ import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as stat
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
+import { ecartNiveau } from "../../audio/ecart-niveau";
 import { publierGrapheCourant, publierExecutionCourante } from "../../plugins/grapheGlobal";
 import { bufferVersWavBlob, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
@@ -440,6 +441,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     };
 
     const tempsParVisible = new Map<string, number>();
+    // L'ecart de niveau mesure sur chaque noeud, en decibels. Voir le commentaire pose la
+    // ou il est calcule.
+    const ecartsParNoeud = new Map<string, number>();
 
     // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
     // boucles et les instruments, le publier, calculer l'ordre topologique : tout cela est
@@ -593,6 +597,24 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // son entrée portait — l'export ne saurait plus quel canal est le centre. La règle ne devine
         // jamais : seul un tampon de même nombre de canaux qu'une entrée étiquetée hérite.
         heriterDisposition(res.valeurs as unknown[], valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats));
+        // DE COMBIEN CE COMPOSANT A CHANGÉ LE NIVEAU DE CE QU'IL A REÇU.
+        //
+        // Un composant peut rendre un son plus faible que son entrée sans que rien ne le dise : la
+        // chute se découvre à l'oreille, plusieurs composants plus loin, sans qu'on sache lequel en
+        // est la cause. L'écart est donc mesuré ici, où les entrées et les sorties sont toutes
+        // deux disponibles, et porté sur le nœud à côté du temps d'exécution.
+        //
+        // RIEN N'EST CORRIGÉ. Redresser automatiquement casserait les composants dont le niveau
+        // est l'objet, les garanties de reconstruction et l'associativité de la chaîne : voir
+        // l'en-tête d'`audio/ecart-niveau.ts`. Le composant « Recaler le niveau » fait ce travail
+        // là où on le demande.
+        try {
+          const ec = ecartNiveau(
+            res.valeurs as unknown[],
+            valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats) as unknown[],
+            (v): v is AudioBuffer => v instanceof AudioBuffer);
+          if (ec) ecartsParNoeud.set(nodeId, ec.ecart);
+        } catch { /* une mesure ratée ne fait pas échouer une exécution */ }
         if (res.message) messages.set(nodeId, res.message);
         // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
         // (entrée manquante, pas assez d'entrées, fichier absent…) : le marquer
@@ -827,6 +849,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
           const t = tempsParVisible.get(n.id)!;
           if (n.data.tempsExecution === t) return n;
           return { ...n, data: { ...n.data, tempsExecution: t } };
+        })
+      );
+    }
+
+    // L'ecart de niveau, pose sur le noeud comme le temps d'execution l'est.
+    if (ecartsParNoeud.size > 0) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!ecartsParNoeud.has(n.id)) return n;
+          const e = ecartsParNoeud.get(n.id)!;
+          if (n.data.ecartNiveau === e) return n;
+          return { ...n, data: { ...n.data, ecartNiveau: e } };
         })
       );
     }

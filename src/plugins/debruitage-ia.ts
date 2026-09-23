@@ -59,8 +59,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Sortie", nomEn: "Output", type: "choix",
         options: ["Fréquence d'origine", "16 kHz du modèle"], optionsEn: ["Original rate", "Model 16 kHz"],
         optionIds: ["origine", "modele"], defaut: "Fréquence d'origine", defautEn: "Original rate",
-        doc: "Le modèle travaille à 16 kHz. « Fréquence d'origine » rééchantillonne le résultat vers la fréquence d'entrée pour rester raccordable au reste du graphe — sans pour autant restituer les aigus au-dessus de 8 kHz, que le modèle n'a jamais vus. « 16 kHz du modèle » rend le signal tel qu'il sort, sans second rééchantillonnage.",
-        docEn: "The model works at 16 kHz. « Original rate » resamples the result back to the input rate so it stays connectable to the rest of the graph — without restoring anything above 8 kHz, which the model never saw. « Model 16 kHz » returns the signal as it comes out, with no second resampling." },
+        doc: "Le modèle travaille à 16 kHz. « Fréquence d'origine » rééchantillonne le résultat vers la fréquence d'entrée pour rester raccordable au reste du graphe, sans pour autant restituer les aigus au-dessus de 8 kHz, que le modèle n'a jamais vus. « 16 kHz du modèle » rend le signal tel qu'il sort, sans second rééchantillonnage.",
+        docEn: "The model works at 16 kHz. « Original rate » resamples the result back to the input rate so it stays connectable to the rest of the graph, without restoring anything above 8 kHz, which the model never saw. « Model 16 kHz » returns the signal as it comes out, with no second resampling." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);

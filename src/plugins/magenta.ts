@@ -216,8 +216,8 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Graine", nomEn: "Seed", type: "curseur",
         plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Graine de l'improvisation — elle pilote à la fois le modèle et le choix des boutons. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
-        docEn: "Seed for the improvisation — it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here."
+        doc: "Graine de l'improvisation : elle pilote à la fois le modèle et le choix des boutons. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
+        docEn: "Seed for the improvisation; it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here."
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],

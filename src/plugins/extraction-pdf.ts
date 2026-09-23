@@ -34,8 +34,8 @@ const extractionPdfPlugins: FicheAudio[] = [
     nomEn: "PDF Extraction",
     univers: "Traitement",
     famille: "Texte",
-    resume: "Extrait le texte déjà numérique d'un PDF (pas d'OCR) — détecte aussi les PDF scannés/image sans texte récupérable.",
-    resumeEn: "Extracts already-digital text from a PDF (no OCR) — also detects scanned/image PDFs with no recoverable text.",
+    resume: "Extrait le texte déjà numérique d'un PDF (pas d'OCR), détecte aussi les PDF scannés/image sans texte récupérable.",
+    resumeEn: "Extracts already-digital text from a PDF (no OCR), also detects scanned/image PDFs with no recoverable text.",
     entrees: [{ nom: "Fichier PDF", nomEn: "PDF file", type: "fichier", requis: true }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [

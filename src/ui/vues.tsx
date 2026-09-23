@@ -1666,11 +1666,14 @@ function VueGravure({ data }: VueProps) {
   const { t } = useI18n();
   const svg = typeof data.scriptGenere === "string" ? data.scriptGenere : "";
   if (!svg.includes("<svg")) {
-    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+    return <div className="attic-node-vue-gravure" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
   }
+  // La hauteur vient du dessin, pas du nœud : voir `.attic-node-vue-gravure` dans atelier.css. Les
+  // classes VexFlow, qu'elle empruntait, exigent un nœud de taille explicite — ce composant n'en a
+  // pas, et sa gravure était écrasée à zéro.
   return (
-    <div className="attic-node-vue-vexflow">
-      <div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="attic-node-vue-gravure">
+      <div className="attic-node-vue-gravure-inner" dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
 }
@@ -1761,10 +1764,34 @@ function VueAnimationSvg({ data }: VueProps) {
   const { t } = useI18n();
   const svg = typeof data._animationSvg === "string" ? data._animationSvg : "";
   if (!svg.includes("<svg")) {
-    return <div className="attic-node-vue-vexflow" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
+    return <div className="attic-node-vue-animation" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
   }
   // L'animation est écrite en SMIL : posée telle quelle dans la page, elle tourne.
-  return <div className="attic-node-vue-vexflow"><div className="attic-node-vue-vexflow-inner" dangerouslySetInnerHTML={{ __html: svg }} /></div>;
+  //
+  // SA HAUTEUR EST SA LARGEUR, et ne se déduit d'aucun ancêtre : voir `.attic-node-vue-animation`
+  // dans atelier.css. Ces classes-là ne sont pas celles des nœuds VexFlow, qu'elle empruntait et
+  // dont la chaîne de hauteur exige un nœud de taille explicite — d'où une vue écrasée à zéro.
+  //
+  // LE LECTEUR EST POSÉ ICI, ET NON PAR LE NŒUD. Une vue « avant » masque le lecteur générique, au
+  // motif qu'elle porte elle-même l'audio ; celle-ci ne montrait que l'image, et le son sorti par le
+  // composant restait inaudible sans le brancher ailleurs. L'image et la mélodie étant la même
+  // suite de pulsations, elles s'écoutent au même endroit.
+  return (
+    <div className="attic-node-vue-animation">
+      <div className="attic-node-vue-animation-inner" dangerouslySetInnerHTML={{ __html: svg }} />
+      {typeof data.audioResultatUrl === "string" && (
+        <audio
+          key={data.audioResultatUrl}
+          className="attic-node-audio nodrag"
+          style={{ flex: "0 0 auto", marginTop: 4 }}
+          controls
+          src={data.audioResultatUrl}
+          onPointerDown={(e) => e.stopPropagation()}
+          onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }}
+        />
+      )}
+    </div>
+  );
 }
 
 function VueAttracteurIFS({ data }: VueProps) {
@@ -2027,7 +2054,23 @@ function VueCourbe({ data }: VueProps) {
 
 // ── Registre : id (ou prédicat) → vue(s), position relative au lecteur ──
 type Vue = (props: VueProps) => ReactNode;
-interface EntreeRegistre { correspond: (ficheId: string) => boolean; vue: Vue; position: "avant" | "apres"; masqueMessage?: boolean; }
+/**
+ * Une vue du registre.
+ *
+ * `porteLecteur` DIT QUE CETTE VUE DONNE DEJA UN MOYEN D'ECOUTER. Le noeud pose un lecteur audio
+ * generique sous ses vues ; il le retire quand l'une d'elles porte le sien, sans quoi il y en
+ * aurait deux. La regle se lisait auparavant sur la seule PRESENCE d'une vue « avant », au motif
+ * qu'une vue custom gere l'audio : c'etait faux pour la plupart d'entre elles, et huit generateurs
+ * fabriquaient un son que rien ne permettait d'entendre dans le composant. Le fait se declare donc
+ * ici plutot que de se deviner.
+ */
+interface EntreeRegistre {
+  correspond: (ficheId: string) => boolean;
+  vue: Vue;
+  position: "avant" | "apres";
+  masqueMessage?: boolean;
+  porteLecteur?: boolean;
+}
 const parId = (...ids: string[]) => (f: string) => ids.includes(f);
 
 const REGISTRE: EntreeRegistre[] = [
@@ -2062,7 +2105,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("goniometre"), vue: VueImageDepuisAudio, position: "avant" },
   { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
-  { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant" },
+  { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant", porteLecteur: true },
   { correspond: (f) => f === "gout-du-son" || f === "parfum-motif" || f === "accord-mets-musique", vue: VueGout, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
@@ -2079,13 +2122,13 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
   { correspond: parId("demonstration"), vue: VueDemonstration, position: "apres" },
   { correspond: parId("film-application"), vue: VueFilmApplication, position: "apres" },
-  { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant" },
+  { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant", porteLecteur: true },
   { correspond: parId("entree-image"), vue: VueUploadImage, position: "avant" },
   { correspond: parId("entree-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueUploadSvg, position: "avant" },
   { correspond: parId("lecteur-svg"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("entree-pdf"), vue: VueUploadPdf, position: "avant" },
-  { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant" },
+  { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant", porteLecteur: true },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
   { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
@@ -2118,6 +2161,11 @@ const idPourVue = (ficheId: string): string => registre.trouverDef(ficheId)?.id 
 export function vuesPourNoeud(ficheId: string, position: "avant" | "apres"): Vue[] {
   const id = idPourVue(ficheId);
   return REGISTRE.filter((e) => e.position === position && e.correspond(id)).map((e) => e.vue);
+}
+
+/** Une vue « avant » de ce composant donne-t-elle deja un moyen d'ecouter ? */
+export function vueAvantPorteLecteur(ficheId: string): boolean {
+  return REGISTRE.some((e) => e.position === "avant" && e.porteLecteur === true && e.correspond(ficheId));
 }
 
 export function vueAvantMasqueMessage(ficheId: string): boolean {

@@ -15,8 +15,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "texture-statistique", nom: "Texture par statistiques", nomEn: "Statistical Texture",
     univers: "Traitement", famille: "Effets",
-    resume: "Engendre une texture neuve aux statistiques d'un son donné — pluie, feu, foule — sans en recopier un seul échantillon.",
-    resumeEn: "Generates a new texture with the statistics of a given sound — rain, fire, crowd — without copying a single sample of it.",
+    resume: "Engendre une texture neuve aux statistiques d'un son donné (pluie, feu, foule) sans en recopier un seul échantillon.",
+    resumeEn: "Generates a new texture with the statistics of a given sound (rain, fire, crowd) without copying a single sample of it.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -26,8 +26,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Bandes", nomEn: "Bands", type: "choix",
         options: ["16", "20", "28"], optionsEn: ["16", "20", "28"], optionIds: ["16", "20", "28"],
         defaut: "20", defautEn: "20",
-        doc: "Nombre de bandes cochléaires, espacées comme l'oreille les entend — serrées dans le grave, larges dans l'aigu. Plus il y en a, plus la couleur du modèle est suivie de près, et plus le calcul est long : le coût des corrélations croît avec leur carré.",
-        docEn: "Number of cochlear bands, spaced as the ear hears them — narrow in the bass, wide in the treble. The more there are, the more closely the model's colour is followed, and the longer the computation: the cost of the correlations grows with their square." },
+        doc: "Nombre de bandes cochléaires, espacées comme l'oreille les entend, serrées dans le grave, larges dans l'aigu. Plus il y en a, plus la couleur du modèle est suivie de près, et plus le calcul est long : le coût des corrélations croît avec leur carré.",
+        docEn: "Number of cochlear bands, spaced as the ear hears them, narrow in the bass, wide in the treble. The more there are, the more closely the model's colour is followed, and the longer the computation: the cost of the correlations grows with their square." },
       { nom: "Corrélations", nomEn: "Correlations", type: "choix",
         options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
         defaut: "Oui", defautEn: "Yes",
@@ -37,8 +37,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Tours de projections alternées entre distributions et corrélations : imposer les unes abîme les autres, et l'on alterne jusqu'à ce que les deux tiennent à peu près. Au-delà d'une dizaine, le gain devient imperceptible et le calcul double.",
         docEn: "Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles." },
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 1,
-        doc: "Graine du bruit de départ. Deux graines donnent deux textures différentes aux mêmes statistiques — c'est exactement ce que deux enregistrements de la même pluie sont l'un pour l'autre.",
-        docEn: "Seed of the starting noise. Two seeds give two different textures with the same statistics — which is exactly what two recordings of the same rain are to each other." },
+        doc: "Graine du bruit de départ. Deux graines donnent deux textures différentes aux mêmes statistiques ; c'est exactement ce que deux enregistrements de la même pluie sont l'un pour l'autre.",
+        docEn: "Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);

@@ -242,8 +242,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre maximal de groupes testés en recherche automatique (ignoré si Nombre de groupes > 0).",
         docEn: "Maximum number of groups tested in automatic search (ignored if Number of groups > 0)." },
       { nom: "Graine", nomEn: "Seed", plage: [1, 9999], pas: 1, defaut: 1,
-        doc: "Graine d'initialisation (K-means++/GMM) — mêmes pistes et même graine ⇒ même résultat.",
-        docEn: "Initialization seed (K-means++/GMM) — same tracks and same seed ⇒ same result." },
+        doc: "Graine d'initialisation (K-means++/GMM), mêmes pistes et même graine ⇒ même résultat.",
+        docEn: "Initialization seed (K-means++/GMM), same tracks and same seed ⇒ same result." },
     ],
     async executer(ctx: any) {
       const api = (window as any).api;

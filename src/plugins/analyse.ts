@@ -120,8 +120,8 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Fold into range", "None"],
         optionIds: ["plage", "aucune"],
         defaut: "Ramener dans la plage", defautEn: "Fold into range",
-        doc: "Une détection de tempo ne distingue pas 70 BPM d'un 140 BPM compté un temps sur deux : les deux expliquent le signal, et aucune règle ne tranche à tous les coups. Mesuré sur des motifs de boîte à rythmes, la détection brute divise volontiers par deux : 100 ressort à 50, 140 à 70 — mais un vrai 75 ressort bien à 75. Replier dans 80–160 redresse les deux premiers et double le troisième. Le repli est donc actif par défaut, parce que c'est le cas le plus fréquent quand on veut alimenter un paramètre Tempo, mais rien n'est caché : le rapport donne toujours la valeur brute et les lectures également plausibles. Mettez « Aucune » pour un morceau que vous savez lent.",
-        docEn: "Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70 — but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Settings: « None » for a track you know to be slow." },
+        doc: "Une détection de tempo ne distingue pas 70 BPM d'un 140 BPM compté un temps sur deux : les deux expliquent le signal, et aucune règle ne tranche à tous les coups. Mesuré sur des motifs de boîte à rythmes, la détection brute divise volontiers par deux : 100 ressort à 50, 140 à 70, mais un vrai 75 ressort bien à 75. Replier dans 80 : 160 redresse les deux premiers et double le troisième. Le repli est donc actif par défaut, parce que c'est le cas le plus fréquent quand on veut alimenter un paramètre Tempo, mais rien n'est caché : le rapport donne toujours la valeur brute et les lectures également plausibles. Mettez « Aucune » pour un morceau que vous savez lent.",
+        docEn: "Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70, but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Settings: « None » for a track you know to be slow." },
       { nom: "Plage basse", nomEn: "Range low", type: "nombre", plage: [40, 140], pas: 1, defaut: 80,
         doc: "Borne basse de la plage de repli.", docEn: "Lower bound of the folding range." },
       { nom: "Plage haute", nomEn: "Range high", type: "nombre", plage: [80, 240], pas: 1, defaut: 160,
@@ -156,8 +156,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Points", nomEn: "Points", type: "nombre", plage: [200, 20000], pas: 100, defaut: 3000,
-        doc: "Nombre de points dessinés dans la figure. Plus il y en a, plus le nuage est dense — et plus le SVG est lourd.",
-        docEn: "Number of points drawn in the figure. More points means a denser cloud — and a heavier SVG." },
+        doc: "Nombre de points dessinés dans la figure. Plus il y en a, plus le nuage est dense, et plus le SVG est lourd.",
+        docEn: "Number of points drawn in the figure. More points means a denser cloud, and a heavier SVG." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
@@ -183,10 +183,10 @@ export const fiches: FicheAudio[] = ([
   },
   {
     id: "analyse-emotionnelle", nom: "Analyse émotionnelle", nomEn: "Emotional Analysis", univers: "Visualisation", famille: "Analyse",
-    resume: "Associe une émotion à un morceau à partir de sa musique seule (tempo, mode, énergie, timbre) — aucun texte ni parole analysés.",
-    resumeEn: "Associates an emotion with a track from its music alone (tempo, mode, energy, timbre) — no text or lyrics analyzed.",
-    notice: "Estimation heuristique combinant le tempo, le mode majeur/mineur, l'intensité sonore et la brillance spectrale en un score valence/arousal (modèle circomplex de Russell), reprojeté ensuite sur une émotion nommée. Purement acoustique — ne lit ni paroles ni métadonnées.",
-    noticeEn: "Heuristic estimate combining tempo, major/minor mode, loudness and spectral brightness into a valence/arousal score (Russell's circumplex model), then mapped to a named emotion. Purely acoustic — does not read lyrics or metadata.",
+    resume: "Associe une émotion à un morceau à partir de sa musique seule (tempo, mode, énergie, timbre), aucun texte ni parole analysés.",
+    resumeEn: "Associates an emotion with a track from its music alone (tempo, mode, energy, timbre), no text or lyrics analyzed.",
+    notice: "Estimation heuristique combinant le tempo, le mode majeur/mineur, l'intensité sonore et la brillance spectrale en un score valence/arousal (modèle circomplex de Russell), reprojeté ensuite sur une émotion nommée. Purement acoustique : ne lit ni paroles ni métadonnées.",
+    noticeEn: "Heuristic estimate combining tempo, major/minor mode, loudness and spectral brightness into a valence/arousal score (Russell's circumplex model), then mapped to a named emotion. Purely acoustic: does not read lyrics or metadata.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [],
