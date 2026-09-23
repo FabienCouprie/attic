@@ -61,7 +61,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Montage",
     resume: "Mélange deux pistes avec une transition logistique : la première diminue pendant que la seconde augmente.",
     resumeEn: "Mixes two tracks with a logistic transition: the first fades out while the second fades in.",
-    notice: "Branchez deux pistes audio. Le poids de la première piste diminue selon une courbe logistique pendant que celui de la seconde augmente. Le Centre règle le moment où le mix est 50/50, la Pente contrôle la raideur de la transition (pente faible = fondu très doux, pente élevée = transition brutale).",
+    notice: "Les deux entrées reçoivent les pistes à mélanger. Le poids de la première piste diminue selon une courbe logistique pendant que celui de la seconde augmente. Le Centre règle le moment où le mix est 50/50, la Pente contrôle la raideur de la transition (pente faible = fondu très doux, pente élevée = transition brutale).",
     noticeEn: "Connect two audio tracks. The first track's weight decreases along a logistic curve while the second's increases. Center sets the 50/50 mix point, Steepness controls the transition sharpness (low = very smooth fade, high = abrupt switch).",
     entrees: [
       { nom: "Audio 1", nomEn: "Audio 1", type: "audio" },

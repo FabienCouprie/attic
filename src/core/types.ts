@@ -169,6 +169,15 @@ export interface PluginDef<TValeur, TRuntime> {
   // Défaut : false.
   affichageAutonome?: boolean;
 
+  // AUCUN LECTEUR AUDIO GENERIQUE SUR CE NŒUD : ses sorties audio sont des pairs, et aucune ne
+  // représente à elle seule ce que le nœud produit — les six pistes d'un séparateur, les deux
+  // canaux d'un dédoubleur. Ailleurs, l'aperçu joue la PREMIÈRE sortie audio, qui est le résultat
+  // du nœud ; ses autres sorties audio, quand il en a, en sont des sous-produits — la réponse
+  // impulsionnelle d'une réverbération, le résidu d'une analyse. La règle se lisait auparavant sur
+  // le seul NOMBRE de sorties audio, ce qui privait de lecteur des nœuds dont la première sortie
+  // est bel et bien le son traité. Défaut : false.
+  sansApercuAudio?: boolean;
+
   // Ce que le nœud exige de la mémoire PENDANT son calcul (cf. core/memoire.ts).
   // « totale » : il ne peut pas commencer avant d'avoir le signal entier — un
   // étirement lit la fin pour écrire le début. « flux » : il avance échantillon

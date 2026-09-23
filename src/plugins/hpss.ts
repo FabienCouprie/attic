@@ -17,6 +17,9 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Sépare ce qui tient de ce qui claque, par filtre médian sur le spectrogramme (Fitzgerald, DAFx-10).",
     resumeEn: "Separates what sustains from what strikes, by median filtering the spectrogram (Fitzgerald, DAFx-10).",
+    // Ses sorties audio sont des pairs : aucune ne represente le noeud a elle seule, et un
+    // lecteur generique en designerait une au hasard.
+    sansApercuAudio: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [
       { nom: "Harmonique", nomEn: "Harmonic", type: "audio" },

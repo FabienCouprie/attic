@@ -111,13 +111,20 @@ export const COULEURS_CATEGORIE: Record<string, string> = {
   autre: "#64748b",
 };
 
+/** Les familles des « Entrées » qui prennent leur matière dehors, plutôt que de la fabriquer. */
+const SOURCES = new Set(["Audio", "Image", "Texte", "Text to Speech"]);
+
 export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
   if (ficheId === "comment" || ficheId === "frame") return "autre";
   if (estFrontiere(ficheId)) return "autre";
   if (!def) return "autre";
   if (def.univers === "Entrées") {
-    if (def.famille === "Génération") return "generation";
-    return "entree";
+    // CE QUI FAIT UNE SOURCE, ET NON LE NOM DE SA FAMILLE. La couleur se lisait sur la seule famille
+    // « Génération » : le jour où les générateurs se sont rangés en familles — Synthétiseurs, Rythmes,
+    // Xenakis — ils ont tous pris la couleur des entrées sans que rien de leur nature ait changé. On
+    // nomme donc les quatre familles qui lisent VRAIMENT quelque chose du dehors ; tout le reste des
+    // entrées fabrique son matériau, et garde la couleur des générateurs.
+    return SOURCES.has(def.famille) ? "entree" : "generation";
   }
   if (def.univers === "Sorties") {
     if (def.famille === "Génération") return "generation";

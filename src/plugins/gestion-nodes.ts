@@ -39,8 +39,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Node à exporter", nomEn: "Node to export", type: "choix",
         options: [], optionsEn: [],
         defaut: "",
-        doc: "Sélectionnez le node à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
-        docEn: "Select the node to export from the 5 most recently created. The list updates on each run.", defautEn: "" },
+        doc: "Réglages : le node à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
+        docEn: "The node to export is taken from the 5 most recently created. The list updates on each run.", defautEn: "" },
     ],
     async executer(ctx: any) {
       const action = ctx.paramTexte("Action", "Exporter");

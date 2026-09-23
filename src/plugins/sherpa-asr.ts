@@ -341,7 +341,7 @@ export const fiches: FicheAudio[] = ([
         defaut: RESAMPLE_OPTIONS_FR[0],
         defautEn: RESAMPLE_OPTIONS_EN[0],
         doc: "Choix de la qualité du resampling vers 16 kHz. « Haute » utilise Web Audio API (meilleure qualité) avec retour automatique à l'interpolation linéaire si nécessaire. « Standard » conserve l'interpolation linéaire rapide d'origine.",
-        docEn: "Choose the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation.",
+        docEn: "Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation.",
       },
       {
         nom: "Cache modèle",

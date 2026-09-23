@@ -1622,8 +1622,8 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // redresseur, etat dans trois scalaires
     resume: "Ajoute une octave supérieure et/ou inférieure.",
     resumeEn: "Adds an upper and/or lower octave.",
-    notice: "Génère jusqu'à deux voix supplémentaires — d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. Mettez l'un des deux à 0 pour n'ajouter qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
-    noticeEn: "Generates up to two extra voices — hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Set either to 0 to add a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
+    notice: "Génère jusqu'à deux voix supplémentaires — d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. L'un des deux à 0 n'ajoute qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
+    noticeEn: "Generates up to two extra voices — hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Either one at 0 adds a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [

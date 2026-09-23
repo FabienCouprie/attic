@@ -27,7 +27,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Speed of the level circle relative to the position circle. p:q closes at lap q: 2:3 at the third, 5:8 at the eighth. The golden ratio never closes; it comes close to its start at Fibonacci numbers (5, 8, 13…)." },
       { nom: "Tours", nomEn: "Laps", type: "nombre", plage: [1, 13], pas: 1, defaut: 3,
         doc: "Nombre de tours ; un tour dure le son entier. Choisir un multiple de q pour entendre la trajectoire se refermer.",
-        docEn: "Number of laps; one lap lasts the whole sound. Pick a multiple of q to hear the trajectory close." },
+        docEn: "Number of laps; one lap lasts the whole sound. A multiple of q closes the trajectory audibly." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Amplitude du cercle du niveau. 100 % : le son s'éteint entièrement au creux du cercle. 0 % : le niveau ne bouge plus, il ne reste que la rotation de la position.",
         docEn: "Amplitude of the level circle. 100%: the sound fades out completely at the circle's trough. 0%: the level no longer moves, only the position rotation remains." },

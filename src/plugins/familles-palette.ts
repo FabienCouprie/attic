@@ -120,7 +120,8 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   // se déduit de proche en proche : ni l'un ni l'autre ne fabrique une fractale, et ils rejoignent
   // les autres générateurs. Les rythmes autosimilaires sont rangés avec les rythmes — c'est par là
   // qu'on les cherche.
-  "Fractales": ["generateur-fractal", "arpege-koch", "mappeur-mandelbrot", "spectrogramme-fractal"],
+  "Fractales": ["generateur-fractal", "arpege-koch", "l-systeme", "mappeur-mandelbrot",
+    "spectrogramme-fractal", "serie-infinie", "attracteur-ifs"],
   // Ce qui produit tout seul, de proche en proche ou au tirage.
   "Réservoirs et aléatoire": ["boite-groove", "generateur-musical", "melodie-aleatoire",
     "reservoir-musical", "multi-reservoirs"],
@@ -129,20 +130,37 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
     "accord-mets-musique", "cercle-pulsant", "camelot"],
   // Ce qui déroule une suite dans le temps. Le séquenceur de batterie est avec les rythmes.
   "Séquenceurs": ["sequenceur-accords", "sequenceur-melodique"],
-  // D'une notation écrite vers du MIDI.
-  "Convertisseurs de notation": ["abc-vers-midi", "reprise-abc", "texte-vers-midi"],
   // Les trois nœuds d'après Xenakis, qui forment un corpus à eux seuls.
   "Xenakis": ["crible-xenakis", "ecrans-xenakis", "gendyn-xenakis"],
   // Tout ce qui produit une figure rythmique, quelle qu'en soit la mécanique.
   "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
     "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],
   // Ce qui écrit de la musique par un modèle appris.
-  "IA": ["musicgen", "stable-audio-3"],
+  "Générateurs AI": ["musicgen", "stable-audio-3"],
   // Ce qui ne sonne pas mais pilote : la sortie est une courbe, non un son. Un seul nœud à ce jour,
   // et la rubrique existe pour recevoir les suivants.
   "Contrôle": ["generateur-courbe"],
-  // Ce qui engendre par une règle, sans être ni fractale, ni réservoir, ni séquenceur.
-  "Autres générateurs": ["l-systeme", "serie-infinie"],
+};
+
+/**
+ * Les familles de « Visualisation ».
+ *
+ * Trente nœuds tenaient sous « Analyse », du vu-mètre au classificateur de genre. Le découpage
+ * sépare ce qu'on REGARDE — une forme d'onde, un spectre, une matrice — de ce qui rend un CHIFFRE
+ * ou un mot sur le son, et de ce qui répond à une question fermée : quel accord, quel tempo.
+ *
+ * Seul ce qui change de famille figure ici ; le reste demeure dans « Analyse ».
+ */
+export const FAMILLES_VISUALISATION: Record<string, string[]> = {
+  // La bibliothèque Meyda et ses descripteurs, qui vont par quatre.
+  "Meyda": ["centroide-spectral", "rms-meyda", "zcr-meyda", "rolloff-spectral-meyda"],
+  // Ce qui dit QUOI du son plutôt que de le montrer : un chiffre, un mot, une couleur.
+  "Descripteurs": ["gout-du-son", "analyse-emotionnelle", "classificateur-genre", "score-esthetique",
+    "comparaison-esthetique", "colorsynth", "rugosite"],
+  // Ce qui répond à une question fermée.
+  "Détecteurs": ["detecteur-accords", "detecteur-tempo"],
+  // Une partition en XML se lit avec les autres notations.
+  "Notation": ["musicxml"],
 };
 
 /**
@@ -154,6 +172,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
 export const TABLES_PAR_UNIVERS: Record<string, Record<string, string[]>> = {
   "Traitement": FAMILLES_EFFETS,
   "Entrées": FAMILLES_GENERATION,
+  "Visualisation": FAMILLES_VISUALISATION,
 };
 
 /** Univers → identifiant → famille, construit une fois. */

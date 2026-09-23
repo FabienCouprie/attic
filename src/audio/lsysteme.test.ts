@@ -136,4 +136,48 @@ describe("interprétation musicale", () => {
     const a = interpreter(mot, CONFIG), b = interpreter(mot, CONFIG);
     expect(a).toEqual(b);
   });
+  // LE DEFAUT RELEVE PAR FABIEN : le nœud répétait la même note. Une grammaire de réécriture pure
+  // ne porte aucun virage — « A=AB, B=A » n'a ni « + » ni « - » — et toutes ses lettres jouaient
+  // donc le degré courant, qui ne bougeait jamais. Deux des cinq grammaires fournies étaient dans ce
+  // cas, dont celle proposée par défaut.
+  describe("chaque lettre a son degré", () => {
+    it("les algues de Lindenmayer ne jouent plus une seule note", () => {
+      const mot = reecrire("A", regles("A=AB, B=A"), 5);
+      expect(mot).not.toMatch(/[+-]/);           // aucun virage : c'est tout le problème
+      const notes = interpreter(mot, CONFIG);
+      expect(notes.length).toBeGreaterThan(5);
+      const hauteurs = new Set(notes.map((n) => n.note));
+      expect(hauteurs.size, [...hauteurs].join(", ")).toBe(2);   // deux lettres, deux hauteurs
+    });
+
+    it("deux lettres distinctes donnent deux degrés de la gamme, dans l'ordre d'apparition", () => {
+      const notes = interpreter("AB", CONFIG);
+      expect(notes).toHaveLength(2);
+      // La première lettre garde le degré courant, la seconde prend le suivant : en do majeur,
+      // do puis ré, soit deux demi-tons.
+      expect(notes[1].note - notes[0].note).toBe(2);
+      // Et l'ordre d'apparition seul compte, non l'ordre alphabétique.
+      const inverse = interpreter("BA", CONFIG);
+      expect(inverse[1].note - inverse[0].note).toBe(2);
+    });
+
+    it("une grammaire à lettre unique est inchangée : Koch et Cantor sonnent comme avant", () => {
+      // C'est ce qui rend la correction sûre : une tortue ne porte qu'une lettre, son rang vaut
+      // zéro, et tout le dessin reste dans ses virages.
+      for (const mot of ["F+F-F-F+F", "F.F.F", "F[+F]F"]) {
+        const avec = interpreter(mot, CONFIG);
+        // Le degré ne doit rien devoir à la lettre : on le vérifie en remplaçant F par une autre
+        // lettre, qui doit donner exactement les mêmes hauteurs.
+        const autre = interpreter(mot.replace(/F/g, "Z"), CONFIG);
+        expect(autre.map((n) => n.note)).toEqual(avec.map((n) => n.note));
+      }
+    });
+
+    it("les virages continuent de transposer l'ensemble", () => {
+      const sans = interpreter("AB", CONFIG);
+      const avec = interpreter("+AB", CONFIG);
+      expect(avec[0].note).toBeGreaterThan(sans[0].note);
+      expect(avec[1].note - avec[0].note).toBe(sans[1].note - sans[0].note);
+    });
+  });
 });

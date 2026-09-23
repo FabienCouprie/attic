@@ -59,7 +59,7 @@ const EXEMPLE = "Tempo 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
 export const fiches: FicheAudio[] = ([
   {
     id: "texte-vers-midi", nom: "Texte → MIDI", nomEn: "Text → MIDI",
-    univers: "Entrées", famille: "Génération",
+    univers: "Traitement", famille: "Conversion",
     resume: "Convertit une notation texte (note/accord par ligne) en MIDI + audio.",
     resumeEn: "Converts a text notation (one note/chord per line) into MIDI + audio.",
     notice: "Rend une notation texte simple en fichier MIDI et en audio synthétisé. Une ligne = « note octave durée [vélocité] », ex. « C4 0.5 » ou « C4+E4+G4 1 » (accord), « rest 0.5 » pour un silence, « Tempo 120 » en tête. Le texte vient de l'entrée (port bleu) ou du paramètre. Idéal branché après un nœud IA (Ollama, GPT-2) à qui l'on demande ce format.",

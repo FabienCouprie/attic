@@ -16,6 +16,9 @@ export const fiches: FicheAudio[] = ([
     famille: "Effets",
     resume: "Sépare un signal stéréo en deux sorties mono (gauche et droite).",
     resumeEn: "Splits a stereo signal into two mono outputs (left and right).",
+    // Ses sorties audio sont des pairs : aucune ne represente le noeud a elle seule, et un
+    // lecteur generique en designerait une au hasard.
+    sansApercuAudio: true,
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [
       { nom: "Gauche", nomEn: "Left", type: "audio", sousType: "mono" },

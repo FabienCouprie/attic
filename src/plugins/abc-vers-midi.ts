@@ -20,7 +20,7 @@ K:G
 export const fiches: FicheAudio[] = ([
   {
     id: "abc-vers-midi", nom: "ABC → MIDI", nomEn: "ABC → MIDI",
-    univers: "Entrées", famille: "Génération",
+    univers: "Traitement", famille: "Conversion",
     resume: "Lit une partition en notation ABC — mélodie, accords chiffrés, reprises, plusieurs voix — et la rend en MIDI et en audio.",
     resumeEn: "Reads a score in ABC notation — melody, chord symbols, repeats, several voices — and renders it to MIDI and audio.",
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],

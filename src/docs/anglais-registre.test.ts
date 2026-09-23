@@ -151,6 +151,14 @@ describe("familles de la palette", () => {
 
   it("dans un même univers, deux familles ne diffèrent pas que par leur terminaison", () => {
     const racine = (f: string) => f.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 6);
+    // Une paire voulue, et nommée par Fabien : « Génération » reste le fourre-tout des entrées,
+    // « Générateurs AI » ne tient que ce qui écrit par un modèle appris. Les deux se suivent dans la
+    // palette, ce que cette règle cherche précisément à éviter : l'exception est donc écrite ici,
+    // plutôt que la règle affaiblie.
+    const PAIRES_VOULUES = new Set([
+      "Entrées : Génération / Générateurs AI",
+      "Entrées : Générateurs AI / Génération",
+    ]);
     const doublons: string[] = [];
     const parUnivers = new Map<string, Set<string>>();
     for (const f of toutesLesFiches) {
@@ -161,7 +169,8 @@ describe("familles de la palette", () => {
       const vues = new Map<string, string>();
       for (const f of familles) {
         const r = racine(f);
-        if (vues.has(r)) doublons.push(`${u} : ${vues.get(r)} / ${f}`);
+        const paire = `${u} : ${vues.get(r)} / ${f}`;
+        if (vues.has(r) && !PAIRES_VOULUES.has(paire)) doublons.push(paire);
         else vues.set(r, f);
       }
     }

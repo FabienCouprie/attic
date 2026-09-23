@@ -82,7 +82,10 @@ export interface ConfigInterpretation {
 /**
  * Joue le mot, lettre par lettre.
  *
- *   une lettre     une note à la hauteur courante, puis on avance
+ *   une lettre     une note, puis on avance. CHAQUE LETTRE DISTINCTE DU MOT A SON DEGRÉ :
+ *                  la première rencontrée joue le degré courant, la deuxième le suivant, et
+ *                  ainsi de suite — faute de quoi une grammaire sans « + » ni « - », comme les
+ *                  algues de Lindenmayer, répéterait la même note d'un bout à l'autre
  *   `+` / `-`      monter / descendre d'un DEGRÉ de la gamme — jamais d'un demi-ton,
  *                  pour que le résultat reste dans la tonalité
  *   `[` / `]`      entrer dans une broderie et en ressortir : la hauteur, la durée et
@@ -92,6 +95,13 @@ export interface ConfigInterpretation {
  *
  * Toute autre lettre joue une note : c'est ce qui permet d'écrire « A=AB » sans se
  * soucier d'un alphabet imposé.
+ *
+ * POURQUOI LE RANG DE LA LETTRE. Une grammaire de tortue — Koch, Cantor — n'a qu'une lettre, et le
+ * dessin vient de ses virages : son rang vaut alors zéro et rien ne change. Mais une grammaire de
+ * réécriture pure — « A=AB, B=A » — ne porte AUCUN virage : toutes ses lettres jouaient donc la
+ * même note, et le mot avait beau s'allonger, on entendait un bourdon. Le rang donne à chaque
+ * symbole sa hauteur, ce qui est la lecture musicale ordinaire d'un L-système, et laisse les
+ * grammaires à lettre unique exactement où elles étaient.
  */
 export function interpreter(mot: string, config: ConfigInterpretation): NoteL[] {
   const notes: NoteL[] = [];
@@ -101,6 +111,12 @@ export function interpreter(mot: string, config: ConfigInterpretation): NoteL[] 
   let duree = config.dureePas;
   let velocite = config.velocite;
   const pile: { degre: number; duree: number; velocite: number }[] = [];
+
+  // Les lettres du mot, dans leur ordre d'apparition : la première prend le degré courant, la
+  // deuxième le suivant. Une grammaire à lettre unique garde donc le comportement d'avant.
+  const COMMANDES = new Set(["+", "-", ">", "<", "[", "]", "."]);
+  const rangs = new Map<string, number>();
+  for (const c of mot) if (!COMMANDES.has(c) && !rangs.has(c)) rangs.set(c, rangs.size);
 
   const hauteur = (d: number): number => {
     const octave = Math.floor(d / degres.length);
@@ -127,7 +143,7 @@ export function interpreter(mot: string, config: ConfigInterpretation): NoteL[] 
       }
       case ".": t += duree; break;
       default: {
-        const n = hauteur(degre);
+        const n = hauteur(degre + (rangs.get(c) ?? 0));
         if (n >= config.noteMin && n <= config.noteMax) {
           notes.push({ note: n, velocite, debut: t, fin: t + duree * 0.95 });
         }

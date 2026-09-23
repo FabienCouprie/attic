@@ -52,8 +52,8 @@ const FICHES: FicheAudio[] = [
         defaut: "90",
         optionsEn: reglesOptionsEn,
         defautEn: "90",
-        doc: "Règle 1D classique. Choisissez Personnalisée pour utiliser la valeur numérique ci-dessous.",
-        docEn: "Classic 1D rule. Choose Custom to use the numeric value below.",
+        doc: "Règle 1D classique. « Personnalisée » prend la valeur numérique ci-dessous.",
+        docEn: "Classic 1D rule. « Custom » takes the numeric value below.",
       },
       {
         nom: "Règle personnalisée",
