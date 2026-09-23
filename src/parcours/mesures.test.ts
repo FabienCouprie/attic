@@ -140,8 +140,8 @@ describe("le verdict d'une épreuve", () => {
   it("sans rien de branché, il le dit plutôt que de juger", () => {
     const [p] = jugerCibles([exigeSonie], null);
     expect(p.satisfait).toBe(false);
-    expect(p.texte).toContain("Copie");
-    expect(p.texteEn).toContain("Copy");
+    expect(p.texte).toContain("Son à mesurer");
+    expect(p.texteEn).toContain("Sound to measure");
   });
 
   it("les bornes sont inclusives des deux côtés", () => {

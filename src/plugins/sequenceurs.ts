@@ -90,7 +90,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
-        doc: "Motif encodé (édité par la grille du nœud) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
+        doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
         docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
     ],
     async executer(ctx: any) {
@@ -158,7 +158,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_ACCORDS_DEFAUT,
-        doc: "Motif encodé (édité par la grille du nœud) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | ». Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas.",
+        doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | ». Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas.",
         docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step." },
     ],
     async executer(ctx: any) {

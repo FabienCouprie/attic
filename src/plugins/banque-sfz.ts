@@ -36,7 +36,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Source", nomEn: "Source", type: "choix",
         options: ["Kit intégré", "Fichier SFZ"], optionsEn: ["Built-in kit", "SFZ file"],
         optionIds: ["integre", "fichier"], defaut: "Kit intégré", defautEn: "Built-in kit",
-        doc: "Kit intégré : la batterie intégrée — huit sons aux notes du General MIDI (36 grosse caisse, 38 caisse claire, 42 charley fermé…), synthétisés et embarqués dans l'application, donc disponibles sans réseau ni téléchargement. Fichier SFZ : un `.sfz` du disque, désigné par le bouton 📂 du nœud ; ses échantillons sont lus à côté de lui.",
+        doc: "Kit intégré : la batterie intégrée — huit sons aux notes du General MIDI (36 grosse caisse, 38 caisse claire, 42 charley fermé…), synthétisés et embarqués dans l'application, donc disponibles sans réseau ni téléchargement. Fichier SFZ : un `.sfz` du disque, désigné par le bouton 📂 du composant ; ses échantillons sont lus à côté de lui.",
         docEn: "Built-in kit — eight sounds on General MIDI notes (36 kick, 38 snare, 42 closed hi-hat…), synthesized and bundled with the application, hence available with no network and no download. SFZ file: a `.sfz` from disk, chosen with the node's 📂 button; its samples are read beside it." },
       { nom: "Type de banque", nomEn: "Bank type", type: "choix",
         options: ["Automatique", "Hauteurs", "Kit"], optionsEn: ["Automatic", "Pitched", "Kit"],

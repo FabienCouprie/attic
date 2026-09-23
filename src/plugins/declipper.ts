@@ -21,7 +21,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Seuil", nomEn: "Threshold", type: "choix",
         options: ["Automatique", "Manuel"], optionsEn: ["Automatic", "Manual"],
         optionIds: ["auto", "manuel"], defaut: "Automatique", defautEn: "Automatic",
-        doc: "En automatique, le seuil est deviné à la longueur des plateaux : un son écrêté garde des échantillons consécutifs à la même valeur, là où une sinusoïde intacte n'effleure son sommet qu'un échantillon à la fois. Sans plateau, le nœud le dit et rend le son tel quel.",
+        doc: "En automatique, le seuil est deviné à la longueur des plateaux : un son écrêté garde des échantillons consécutifs à la même valeur, là où une sinusoïde intacte n'effleure son sommet qu'un échantillon à la fois. Sans plateau, le composant le dit et rend le son tel quel.",
         docEn: "In automatic mode the threshold is guessed from plateau length: a clipped sound holds consecutive samples at the same value, where an intact sine only grazes its peak one sample at a time. With no plateau, the node says so and returns the sound unchanged." },
       { nom: "Seuil manuel", nomEn: "Manual threshold", type: "curseur", plage: [0.05, 1], pas: 0.01, defaut: 0.5,
         doc: "Valeur au-dessus de laquelle un échantillon est tenu pour écrêté. Ne sert qu'en mode manuel.",

@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Sine", "Triangle", "Square", "Ramp", "Logistic", "Random"],
         optionIds: ["sinus", "triangle", "carre", "rampe", "logistique", "aleatoire"],
         defaut: "Sinus", defautEn: "Sine",
-        doc: "La forme de la modulation. La suite logistique est là pour une raison précise : sept nœuds l'ont chacun réimplémentée dans leur coin — écho logistique, trémolo logistique, et cinq autres. Une source unique branchée sur n'importe quel effet fait le même travail, et sur tous plutôt que sur sept.",
+        doc: "La forme de la modulation. La suite logistique est là pour une raison précise : sept composants l'ont chacun réimplémentée dans leur coin — écho logistique, trémolo logistique, et cinq autres. Une source unique branchée sur n'importe quel effet fait le même travail, et sur tous plutôt que sur sept.",
         docEn: "The shape of the modulation. The logistic sequence is here for a precise reason: seven nodes each reimplemented it on their own — logistic echo, logistic tremolo, and five others. A single source plugged into any effect does the same work, and on all of them rather than on seven." },
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.5, 120], pas: 0.5, defaut: 10, unite: "s",
         doc: "Durée de la courbe. Elle n'a pas à valoir celle du son : l'effet l'étire pour la couvrir, si bien qu'une rampe reste une rampe quelle que soit la longueur du son.",

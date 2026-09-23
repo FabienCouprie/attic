@@ -23,7 +23,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Opération", nomEn: "Operation", type: "choix",
         options: OPERATIONS_FR, optionsEn: OPERATIONS_EN, optionIds: OPERATIONS_IDS,
         defaut: "Remplacer", defautEn: "Replace",
-        doc: "Transformation appliquée. Une seule à la fois : pour en combiner plusieurs, chaînez plusieurs exemplaires de ce nœud.",
+        doc: "Transformation appliquée. Une seule à la fois : pour en combiner plusieurs, chaînez plusieurs exemplaires de ce composant.",
         docEn: "Transformation applied. One at a time: to combine several, chain several copies of this node." },
       { nom: "Chercher", nomEn: "Find", type: "texte", defaut: "", defautEn: "",
         placeholder: "texte à remplacer", placeholderEn: "text to replace",

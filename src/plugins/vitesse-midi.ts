@@ -48,7 +48,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Factor", "Percentage", "Target tempo"],
         optionIds: ["facteur", "pourcentage", "tempo"],
         defaut: "Facteur", defautEn: "Factor",
-        doc: "Comment dire la vitesse. « Facteur » quand on sait ce qu'on veut, « Pourcentage » quand on tâtonne, « Tempo cible » quand on cale un morceau sur un autre — le nœud lit alors le tempo du fichier et fait la division lui-même.",
+        doc: "Comment dire la vitesse. « Facteur » quand on sait ce qu'on veut, « Pourcentage » quand on tâtonne, « Tempo cible » quand on cale un morceau sur un autre — le composant lit alors le tempo du fichier et fait la division lui-même.",
         docEn: "How to state the speed. « Factor » when you know what you want, « Percentage » when you are feeling your way, « Target tempo » when matching one piece to another — the node then reads the file's tempo and does the division itself." },
       { nom: "Facteur", nomEn: "Factor", type: "curseur", plage: [0.1, 8], pas: 0.05, defaut: 1, unite: "×",
         doc: "Vitesse de lecture : 0,5 joue deux fois plus lentement, 2 deux fois plus vite. C'est une vitesse et non un étirement — les durées sont divisées par lui.",

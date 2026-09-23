@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
   {
     id: "documentation-graphe", nom: "Documentation du graphe", nomEn: "Graph Documentation",
     univers: "Autres", famille: "Texte",
-    resume: "Documente le graphe où il est posé : chaque nœud, ses valeurs réglées, son câblage, et la notice de chaque composant employé.",
+    resume: "Documente le graphe où il est posé : chaque composant, ses valeurs réglées, son câblage, et la notice de chaque composant employé.",
     resumeEn: "Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used.",
     entrees: [],
     sorties: [
@@ -55,10 +55,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Notices", nomEn: "Notices", type: "choix",
         options: ["Complètes", "Résumés seuls"], optionsEn: ["Full", "Summaries only"],
         optionIds: ["completes", "resumes"], defaut: "Complètes", defautEn: "Full",
-        doc: "Les notices entières de chaque composant, ou leurs seuls résumés. Entières pour un agent, à qui elles disent ce que fait chaque nœud et pourquoi ; résumés pour une vue d'ensemble, le document étant alors quatre à cinq fois plus court.",
+        doc: "Les notices entières de chaque composant, ou leurs seuls résumés. Entières pour un agent, à qui elles disent ce que fait chaque composant et pourquoi ; résumés pour une vue d'ensemble, le document étant alors quatre à cinq fois plus court.",
         docEn: "Each component's full notice, or its summary alone. Full for an agent, to whom they say what each node does and why; summaries for an overview, the document then being four to five times shorter." },
       { nom: "Dossier de sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "",
-        doc: "Où écrire « documentation.md » et « index.html ». Vide, rien n'est écrit sur le disque et les deux textes ne sortent que par les ports — de quoi les brancher sur un modèle de langage ou sur un nœud de texte.",
+        doc: "Où écrire « documentation.md » et « index.html ». Vide, rien n'est écrit sur le disque et les deux textes ne sortent que par les ports — de quoi les brancher sur un modèle de langage ou sur un composant de texte.",
         docEn: "Where to write « documentation.md » and « index.html ». Empty, nothing is written to disk and both texts leave through the ports only — enough to feed a language model or a text node." },
     ],
     // Son résultat dépend du graphe entier, qu'aucune empreinte de cache ne regarde.

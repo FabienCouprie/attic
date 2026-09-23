@@ -146,10 +146,10 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Orchestre", nomEn: "Orchestra", type: "texte", defaut: ORCHESTRE_EXEMPLE, defautEn: ORCHESTRE_EXEMPLE_EN,
-        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 ». La fréquence d'échantillonnage et 0dbfs sont posés par le nœud : n'écrivez ni sr ni 0dbfs.",
+        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 ». La fréquence d'échantillonnage et 0dbfs sont posés par le composant : n'écrivez ni sr ni 0dbfs.",
         docEn: "The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard only if the orchestra reads it, with « a1 diskin2 \"entree1.wav\", 1 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs." },
       { nom: "Partition", nomEn: "Score", type: "texte", defaut: PARTITION_EXEMPLE, defautEn: PARTITION_EXEMPLE,
-        doc: "Quand jouer quoi. « i1 0 1 220 0.5 » joue l'instrument 1 à l'instant 0 pendant 1 seconde, avec 220 et 0,5 comme p4 et p5. Trois sources possibles, par ordre de priorité : un MIDI branché, puis l'entrée Partition, puis ce champ — et le nœud dit dans son message laquelle il a prise. Le « e » final est ajouté s'il manque.",
+        doc: "Quand jouer quoi. « i1 0 1 220 0.5 » joue l'instrument 1 à l'instant 0 pendant 1 seconde, avec 220 et 0,5 comme p4 et p5. Trois sources possibles, par ordre de priorité : un MIDI branché, puis l'entrée Partition, puis ce champ — et le composant dit dans son message laquelle il a prise. Le « e » final est ajouté s'il manque.",
         docEn: "When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field — and the node states in its message which one it took. The final « e » is added if missing." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
         options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
@@ -246,7 +246,7 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Orchestre", nomEn: "Orchestra", type: "texte", defaut: ORCHESTRE_EXEMPLE, defautEn: ORCHESTRE_EXEMPLE_EN,
-        doc: "L'instrument 1 est appelé pour chaque note. La partition lui passe la fréquence en hertz dans p4, l'amplitude de 0 à 1 dans p5, et le numéro de note MIDI dans p6 — de sorte qu'on n'ait jamais à convertir soi-même. Ce champ sert si aucune entrée Orchestre n'est branchée ; une entrée branchée le remplace, et le nœud le dit.",
+        doc: "L'instrument 1 est appelé pour chaque note. La partition lui passe la fréquence en hertz dans p4, l'amplitude de 0 à 1 dans p5, et le numéro de note MIDI dans p6 — de sorte qu'on n'ait jamais à convertir soi-même. Ce champ sert si aucune entrée Orchestre n'est branchée ; une entrée branchée le remplace, et le composant le dit.",
         docEn: "Instrument 1 is called for each note. The score passes it the frequency in hertz in p4, the amplitude from 0 to 1 in p5, and the MIDI note number in p6 — so that no conversion is ever needed. This field is used when no Orchestra input is connected; a connected input replaces it, and the node says so." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
         options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
@@ -322,7 +322,7 @@ instr 1
   adel  vdelay a1, 300 + 200 * oscili:k(1, 0.3), 600
   out   (a1 + adel * 0.7) * 0.6
 endin`,
-        doc: "L'orchestre de traitement, employé si aucune entrée Orchestre n'est branchée — une entrée branchée le remplace, et le nœud le dit. Les sons d'entrée sont écrits dans le système de fichiers de Csound sous les noms « entree1.wav » et « entree2.wav », et se lisent par diskin2 ou soundin ; un son branché que l'orchestre ne nomme pas n'a aucun effet, et le nœud vous en avertit. La durée de la partition est réglée sur celle de la plus longue entrée.",
+        doc: "L'orchestre de traitement, employé si aucune entrée Orchestre n'est branchée — une entrée branchée le remplace, et le composant le dit. Les sons d'entrée sont écrits dans le système de fichiers de Csound sous les noms « entree1.wav » et « entree2.wav », et se lisent par diskin2 ou soundin ; un son branché que l'orchestre ne nomme pas n'a aucun effet, et le composant vous en avertit. La durée de la partition est réglée sur celle de la plus longue entrée.",
         docEn: "The processing orchestra, used when no Orchestra input is connected — a connected input replaces it, and the node says so. The input sounds are written into Csound's filesystem as « entree1.wav » and « entree2.wav », and read with diskin2 or soundin; a connected sound the orchestra does not name has no effect, and the node warns you. The score's duration is set from the longest input." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
         options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
