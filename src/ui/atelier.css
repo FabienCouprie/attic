@@ -377,6 +377,30 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-canevas > .react-flow { flex: 1; min-height: 0; }
 .attic-canevas-pending .react-flow__pane { cursor: crosshair; }
 
+/* Menu du clic droit. Le premier du canevas : rien n'écoutait `contextmenu` avant lui. */
+.attic-menu-contextuel {
+  position: fixed; z-index: 200;
+  min-width: 160px; padding: 4px;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  display: flex; flex-direction: column;
+}
+.attic-menu-contextuel-item {
+  background: none; border: none; text-align: left;
+  color: var(--text-primary); padding: 7px 10px; border-radius: 6px;
+  font-size: 13px; cursor: pointer;
+}
+.attic-menu-contextuel-item:hover { background: var(--bg-hover-accent); color: var(--text-title); }
+
+/* UNE BULLE PREND LA COULEUR DU CANEVAS, à la demande de Fabien : elle se lit comme un CREUX dans la
+   surface, ce qui est le signal juste pour « ceci est replié ». Le fond ne la distinguant plus de rien,
+   c'est sa bordure et son titre qui la dessinent. */
+.attic-node.bulle {
+  background: var(--bg-app);
+  border-style: dashed;
+}
+.attic-node.bulle.selected { border-style: solid; }
+
 /* Actions méta-composants (§3.8) */
 .attic-meta-actions {
   display: flex; gap: 6px;

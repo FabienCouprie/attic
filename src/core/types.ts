@@ -178,6 +178,17 @@ export interface PluginDef<TValeur, TRuntime> {
   // est bel et bien le son traité. Défaut : false.
   sansApercuAudio?: boolean;
 
+  // HORS CATALOGUE : cette fiche existe pour qu'un nœud se dessine et se câble, jamais pour être
+  // choisie. `trouverDef` la rend, `tousLesPlugins` ne la rend pas.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON DES FILTRES. Ce qui énumère le registre est la palette, mais aussi
+  // le quiz, le vocabulaire de génération de graphe, la documentation et le gestionnaire de nodes.
+  // Filtrer à chacun de ces endroits, c'est autant d'occasions d'en oublier un, et un oubli ne se
+  // voit pas : une fiche qui n'a rien à faire là passe pour un composant. Le fait se déclare donc une
+  // fois, et un seul endroit l'honore. C'est le cas des bulles, dont la fiche est dérivée des membres
+  // et n'existe que dans le projet qui les porte. Défaut : false.
+  horsCatalogue?: boolean;
+
   // Ce que le nœud exige de la mémoire PENDANT son calcul (cf. core/memoire.ts).
   // « totale » : il ne peut pas commencer avant d'avoir le signal entier — un
   // étirement lit la fin pour écrire le début. « flux » : il avance échantillon

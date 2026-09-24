@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
-import { estMeta, estFrontiere } from "../core";
+import { estMeta, estFrontiere, estBulle } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
 
@@ -195,6 +195,9 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const def = getDef(data.ficheId);
   const { t, lang } = useI18n();
   const nodeEstMeta = estMeta(data.ficheId as string);
+  // Une bulle se dessine comme un nœud ordinaire, avec les ports de ses membres, mais dans la couleur
+  // du canevas : elle se lit comme un creux, non comme un composant de plus.
+  const nodeEstBulle = estBulle(data.ficheId as string);
   const nodeEstCommentaire = data.ficheId === "comment";
   const estCadre = data.ficheId === "frame";
   const estVexFlow = data.ficheId.startsWith("vexflow-");
@@ -503,7 +506,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   }
 
   return (
-      <div className={`attic-node ${selected ? "selected" : ""} ${nodeEstMeta ? "meta" : ""} ${nodeEstFrontiere ? "frontiere" : ""} ${categorieClass} ${nodeClassName} ${replie ? "replie" : ""}`} ref={nodeRef}>
+      <div className={`attic-node ${selected ? "selected" : ""} ${nodeEstMeta ? "meta" : ""} ${nodeEstBulle ? "bulle" : ""} ${nodeEstFrontiere ? "frontiere" : ""} ${categorieClass} ${nodeClassName} ${replie ? "replie" : ""}`} ref={nodeRef}>
       {afficherProgression && (
         <svg className="attic-node-progress-ring" viewBox="0 0 24 24">
           <circle className="attic-node-progress-ring-bg" cx="12" cy="12" r="10" />

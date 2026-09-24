@@ -8,7 +8,7 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, trouverMeta,
+  ancetresBulle, aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
@@ -415,6 +415,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (meta && !noeudsEnErreur.has(n.id) && estMetaEnScope(n.id)) {
         definirStatut(n.id, "en_cours");
       }
+    }
+
+    // UNE BULLE DIT CE QUE FONT SES MEMBRES. Elle ne calcule rien, mais un conteneur muet pendant que
+    // son contenu travaille laisserait croire qu'il ne se passe rien. L'appartenance étant explicite,
+    // la remontée est une lecture directe — sans la convention d'identifiant `::` dont dépend celle des
+    // méta-composants, puisque replier ne renomme rien.
+    const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
+    const bullesDuNoeud = new Map<string, string[]>();
+    for (const id of ordreFiltre) bullesDuNoeud.set(id, ancetresBulle(tousNoeudsG, id));
+    for (const n of noeudsRef.current) {
+      if (!estBulle(n.data.ficheId as string) || noeudsEnErreur.has(n.id)) continue;
+      const active = ordreFiltre.some((id) => (bullesDuNoeud.get(id) ?? []).includes(n.id));
+      if (active) definirStatut(n.id, "en_cours");
     }
 
     const ctx = await obtenirAudio();
@@ -965,6 +978,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
           return change ? { ...n, data: { ...n.data, ...champs } } : n;
         })
       );
+    }
+
+    // LE STATUT FINAL D'UNE BULLE EST CELUI DE SES MEMBRES : en erreur si l'un a échoué, terminé si
+    // tous ont fini. La laisser sur « en cours » après le run ferait croire à un calcul qui n'en finit
+    // pas, alors qu'elle n'en mène aucun.
+    for (const n of noeudsRef.current) {
+      if (!estBulle(n.data.ficheId as string)) continue;
+      const membres = ordreFiltre.filter((id) => ancetresBulle(tousNoeudsG, id).includes(n.id));
+      if (membres.length === 0) continue;
+      const statuts = membres.map((id) => statutDeNoeud(id).statut);
+      if (statuts.includes("erreur")) definirStatut(n.id, "erreur");
+      else if (statuts.every((s) => s === "termine")) definirStatut(n.id, "termine");
     }
 
     } catch (e: any) {

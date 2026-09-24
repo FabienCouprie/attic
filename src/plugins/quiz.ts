@@ -32,6 +32,8 @@ export function configurerRegistreQuiz(r: Registre<TypeValeur, AudioContext>): v
 /** Les questions du catalogue, ou aucune si le registre n'est pas là (tests, contextes isolés). */
 export function questionsDuCatalogue(): Question[] {
   if (!registre) return [];
+  // `tousLesPlugins` rend le CATALOGUE : ce qui est inscrit sans y appartenir, comme la fiche dérivée
+  // d'une bulle, n'y figure pas. Rien à filtrer ici.
   return questionsCatalogue(registre.tousLesPlugins() as unknown as FicheQuiz[]);
 }
 
