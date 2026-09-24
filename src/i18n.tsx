@@ -555,6 +555,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.fdn.mesure": { fr: "RT60 mesuré : grave {__VAR_0__} s · aigu {__VAR_1__} s · durée {__VAR_2__} s", en: "Measured RT60: low {__VAR_0__} s · high {__VAR_1__} s · length {__VAR_2__} s" },
   "msg.pghi.fait": { fr: "Convergence {__VAR_0__} dB · {__VAR_1__} îlot(s) · {__VAR_2__} % intégré", en: "Convergence {__VAR_0__} dB · {__VAR_1__} island(s) · {__VAR_2__} % integrated" },
   "msg.pghi.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
+  "msg.correction.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
   "msg.trou.bouches": { fr: "{__VAR_0__} trou(s) bouché(s) · {__VAR_1__} ms reconstruits", en: "{__VAR_0__} gap(s) filled · {__VAR_1__} ms rebuilt" },
   "msg.trou.bouchesEtRenonces": { fr: "{__VAR_0__} trou(s) bouché(s) · {__VAR_1__} ms · {__VAR_2__} trop long(s), laissé(s) tel(s) quel(s)", en: "{__VAR_0__} gap(s) filled · {__VAR_1__} ms · {__VAR_2__} too long, left as is" },
   "msg.trou.aucuneZone": { fr: "Aucune zone branchée : branchez un Sélecteur multi-zones, ou choisissez « Silences détectés ».", en: "No zones connected: connect a Multi-Zone Selector, or choose « Detected silences »." },
