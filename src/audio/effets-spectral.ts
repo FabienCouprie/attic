@@ -2,7 +2,7 @@
 import {
   etirerDuree, etirerDureeVoie, reechantillonnerVers, reechantillonnerVoie, creerFenetreHann,
 } from "./commun";
-import { CADENCE, estCourbe, progressionPour, valeursParametre } from "./courbe";
+import { CADENCE, estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, formeLfo, frequencesModulees, type BornesFrequence } from "./lfo";
 
 export function changerTempo(buffer: AudioBuffer, vitessePct: number, fenetreMs?: number): AudioBuffer {
@@ -1017,16 +1017,20 @@ export function echoLogistique(
 // L'ancienne version était inopérante : la « phase locale » du haut valait
 // constamment 0,5 (jamais de retournement) et le bas ajoutait le signal un
 // échantillon sur deux — une modulation à Nyquist, pas une octave grave.
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE : les octaves ajoutées entrent et sortent au fil du son. Les deux
+ * voix sont calculées comme avant, seul leur dosage varie, si bien que sans courbe branchée la sortie
+ * est celle d'avant, au bit près.
+ */
 export function octaver(
   buffer: AudioBuffer,
   octaveSup: number,
   octaveInf: number,
-  mix: number,
+  mix: number | Float32Array,
 ): AudioBuffer {
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   const nivSup = Math.max(0, Math.min(100, octaveSup)) / 100;
   const nivInf = Math.max(0, Math.min(100, octaveInf)) / 100;
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
@@ -1051,6 +1055,7 @@ export function octaver(
       prec = x;
 
       const voix = hp * 2 * nivSup + x * polarite * nivInf;
+      const mixVal = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
       dst[i] = x * (1 - mixVal) + voix * mixVal;
     }
   }

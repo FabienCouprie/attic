@@ -60,11 +60,23 @@ export interface Mesure {
  */
 export async function mesurerComposant(
   page: Page, url: string, ficheId: string,
-  options: { marqueurs?: string[]; parametres?: Record<string, string | number> } = {},
+  options: {
+    marqueurs?: string[];
+    parametres?: Record<string, string | number>;
+    /**
+     * Les rangs d'entrée qui reçoivent le son d'essai. Par défaut la seule entrée 0.
+     *
+     * UN COMPOSANT QUI EN DEMANDE DEUX NE SE MESURE PAS AVEC UNE. La convolution de deux sons rend
+     * null sans son second son, et son empreinte serait vide. Le rang est déclaré plutôt que deviné
+     * du type des entrées : nourrir toutes les entrées audio par défaut changerait ce que mesurent
+     * les composants à seconde entrée facultative, dont les empreintes sont déjà enregistrées.
+     */
+    entreesAudio?: number[];
+  } = {},
 ): Promise<Mesure> {
   await page.goto(url);
   await page.waitForSelector(".attic-app", { timeout: 15000 });
-  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec]) => {
+  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio]) => {
     const idx = await import("/src/plugins/index.ts");
     // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
     const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
@@ -94,11 +106,12 @@ export async function mesurerComposant(
     }
 
     const reglages = parametres as Record<string, string | number>;
+    const rangs = entreesAudio as number[];
     const ctx = {
       noeud: { id: "banc", data: { ficheId: id, parametres: reglages } },
       runtime: null, repertoireTravail: null,
-      entree: (i: number) => (i === 0 ? buf : null),
-      entrees: () => [buf],
+      entree: (i: number) => (rangs.includes(i) ? buf : null),
+      entrees: () => rangs.map(() => buf),
       paramNombre: (nom: string, def: number) => {
         if (typeof reglages[nom] === "number") return reglages[nom] as number;
         const p = (fiche.parametres || []).find((q: any) => q.nom === nom);
@@ -184,5 +197,6 @@ export async function mesurerComposant(
       message: resultat && typeof resultat.message === "string" ? resultat.message : null,
       empreintes, erreur,
     };
-  }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC] as const);
+  }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
+      options.entreesAudio ?? [0]] as const);
 }

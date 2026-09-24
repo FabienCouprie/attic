@@ -55,7 +55,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Enveloppe ADSR | `enveloppe-adsr` | VueADSR | — | 420 × 300 | non | oui | non |
 | Explorateur musique | `explorateur-musique` | VueExplorateur | — | 240 × 118 | non | non | non |
 | Film de l'application | `film-application` | — | VueFilmApplication | 240 × 118 | non | oui | non |
-| Formule sur échantillons | `formule-echantillons` | EditeurFormule | — | 240 × 118 | non | oui | non |
+| Formule sur échantillons | `formule-echantillons` | EditeurFormule | — | 240 × 140 | non | oui | non |
 | Formule spectrale | `formule-spectrale` | EditeurFormule | — | 240 × 118 | non | oui | non |
 | Galerie d'exposition | `galerie-exposition` | VueGalerieExposition | — | 280 × 280 | non | oui | non |
 | Générateur audio mathématique | `generateur-audio-mathematique` | EditeurFormule | — | 240 × 118 | non | oui | non |
@@ -174,7 +174,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Continuum hauteur ↔ rythme | `continuum-stockhausen` | 240 × 118 |
 | Contraintes ABC | `contraintes-abc` | 240 × 140 |
 | Contrepoint d'espèces | `contrepoint-especes` | 240 × 118 |
-| Convolution de deux sons | `convolution-deux-sons` | 240 × 140 |
+| Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
 | Courbe de dissonance | `courbe-dissonance` | 240 × 140 |
@@ -188,7 +188,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
 | De-esser | `de-esser` | 240 × 140 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
-| Décaleur de fréquence | `decaleur-frequence` | 240 × 118 |
+| Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
 | Déclarer la disposition | `declarer-disposition` | 240 × 118 |
 | Décodeur ambisonique | `decodeur-ambisonique` | 240 × 118 |
 | Décomposition atomique | `decomposition-atomique` | 240 × 162 |
@@ -247,7 +247,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Générateur de fréquence | `generateur-frequence` | 240 × 118 |
 | Générateur musical | `generateur-musical` | 240 × 184 |
 | Générateur de paroles | `generateur-paroles` | 240 × 118 |
-| Glissando intérieur | `glissando-interieur` | 240 × 118 |
+| Glissando intérieur | `glissando-interieur` | 240 × 140 |
 | Glissando de Risset | `glissando-risset` | 240 × 118 |
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
@@ -262,7 +262,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Jointure audio | `jointure-audio` | 240 × 140 |
 | Jointure MIDI | `jointure-midi` | 240 × 140 |
 | L-système | `l-systeme` | 240 × 162 |
-| Largeur stéréo / MS | `largeur-stereo` | 240 × 118 |
+| Largeur stéréo / MS | `largeur-stereo` | 240 × 140 |
 | Lecteur d'analyse | `lecteur-analyse` | 380 × 300 |
 | Légende d'image | `legende-image` | 240 × 118 |
 | Limiteur | `limiteur` | 240 × 118 |
@@ -292,7 +292,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Montage | `montage` | 240 × 448 |
 | Montage par grains | `montage-grains` | 240 × 140 |
 | Morphing spectral | `morphing-spectral` | 240 × 162 |
-| Mosaïquage par corpus | `mosaiquage` | 240 × 140 |
+| Mosaïquage par corpus | `mosaiquage` | 240 × 162 |
 | Écho de notes | `motif-echo-notes` | 240 × 140 |
 | Éclaircir | `motif-eclaircir` | 240 × 140 |
 | Imposer un rythme | `motif-imposer-rythme` | 240 × 140 |
@@ -305,7 +305,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Normaliseur | `normaliseur` | 240 × 118 |
 | Objet sonore | `objet-sonore` | 240 × 184 |
 | OCR | `ocr` | 240 × 118 |
-| Octaver | `octaver` | 240 × 118 |
+| Octaver | `octaver` | 240 × 140 |
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
@@ -389,7 +389,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Stable Audio 3 | `stable-audio-3` | 240 × 118 |
 | Sinus + transitoires + bruit (STN) | `stn-sinus-transitoires-bruit` | 240 × 162 |
 | Suiveur de hauteur | `suiveur-hauteur` | 240 × 162 |
-| Suppression de clics | `suppression-clics` | 240 × 118 |
+| Suppression de clics | `suppression-clics` | 240 × 140 |
 | Synthèse par caractéristiques | `synthese-features` | 240 × 140 |
 | Synthèse par scanning | `synthese-scanning` | 240 × 118 |
 | Tempérament | `temperament` | 240 × 140 |
@@ -406,8 +406,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Tore | `tore` | 240 × 118 |
 | Traçage spectral | `tracage-spectral` | 240 × 118 |
 | Traduction OPUS-MT | `traduction-opus` | 240 × 118 |
-| Transfert d'enveloppe | `transfert-enveloppe` | 240 × 140 |
-| Transient Shaper | `transient-shaper` | 240 × 118 |
+| Transfert d'enveloppe | `transfert-enveloppe` | 240 × 162 |
+| Transient Shaper | `transient-shaper` | 240 × 140 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
 | Tremolo logistique | `tremolo-logistique` | 240 × 118 |

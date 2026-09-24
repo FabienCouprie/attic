@@ -193,6 +193,98 @@
       ],
       "message": null
     },
+    "convolution-deux-sons": {
+      "empreintes": [
+        "0.185414323/0.528780282"
+      ],
+      "message": "3.00 s + 3.00 s → 6.00 s"
+    },
+    "decaleur-frequence": {
+      "empreintes": [
+        "0.269858425/0.574913681"
+      ],
+      "message": "+100 Hz · 100 % de décalé"
+    },
+    "glissando-interieur": {
+      "empreintes": [
+        "0.016100059/0.059272282"
+      ],
+      "message": null
+    },
+    "transfert-enveloppe": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": "contour de 3.00 s étiré sur 3.00 s"
+    },
+    "transient-shaper": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "montage-grains": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "1 grains · écart moyen « durée »"
+    },
+    "suppression-clics": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "doppler": {
+      "empreintes": [
+        "0.104128717/0.296310097"
+      ],
+      "message": "un la 440 s'entend 482 Hz en approchant, 405 Hz en s'éloignant"
+    },
+    "filtrage-spectre": {
+      "empreintes": [
+        "0.230832486/0.387342066"
+      ],
+      "message": null
+    },
+    "largeur-stereo": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "mono-grave": {
+      "empreintes": [
+        "0.260924228/0.647201598"
+      ],
+      "message": "côté grave -0.7 dB · corrélation sous la coupure 0.02 → 0.10"
+    },
+    "shift-formants": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": "pitch inchangé · formants inchangés"
+    },
+    "dereverberation": {
+      "empreintes": [
+        "0.269240563/0.528780282"
+      ],
+      "message": null
+    },
+    "formule-echantillons": {
+      "empreintes": [
+        "0.130597622/0.150000006"
+      ],
+      "message": "Formule appliquée : sin(t * 2 * pi * 440) + x"
+    },
+    "mosaiquage": {
+      "empreintes": [
+        "0.327519178/0.720000029",
+        null
+      ],
+      "message": "162 grains reconstruits · 162 distincts sur 162"
+    },
     "generateur-courbe": {
       "empreintes": [
         "courbe 0.636804686/1.000000000 · 2000 valeurs · 2000 paliers"

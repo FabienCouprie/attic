@@ -4,7 +4,7 @@ import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
+import { estCourbe, progressionPour, valeurA, valeursParametre } from "../audio/courbe";
 import { creerAleatoire, hasardDuNoeud } from "../core";
 import { parseMidi } from "midi-file";
 import {
@@ -380,7 +380,9 @@ export const fiches: FicheAudio[] = ([
   },
   effet("transient-shaper", "Transient Shaper", "Transient Shaper", "Contrôle indépendant de l'attaque et du sustain.", "Independent attack and sustain control.",
     [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB : le nœud laisse alors passer le son tel quel.", "Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB.", "Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB.", [10, 500], 1)],
-    (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain)),
+    (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain),
+    undefined,
+    { parametre: "Attaque", bornes: [-12, 12], unite: "dB" }),
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
     [param("Fréquence", 7000, "Frequency", "Hz", "Fréquence centrale de la bande cible (sibilances : 5-9 kHz).", "Center frequency of the target band (sibilances: 5-9 kHz).", [2000, 12000], 100),
      param("Largeur", 2000, "Width", "Hz", "Largeur de la bande cible (Q = fréquence/largeur).", "Width of the target band (Q = frequency/width).", [200, 6000], 100),
@@ -471,7 +473,9 @@ export const fiches: FicheAudio[] = ([
   effet("suppression-clics", "Suppression de clics", "Click Removal", "Détection et suppression de clicks.", "Click detection and removal.",
     [param("Seuil", 5, "Threshold", "×", "Sensibilité de détection (multiple de la dérivée médiane). Plus élevé = moins sensible (détecte seulement les gros clics). Plus bas = plus sensible.", "Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive.", [1, 50], 1),
      param("Fenêtre", 5, "Window", "ms", "Largeur de la fenêtre de remplacement.", "Replacement window width.")],
-    (a,s,f) => supprimerClics(a, s, f)),
+    (a,s,f) => supprimerClics(a, s, f),
+    undefined,
+    { parametre: "Seuil", bornes: [1, 50], unite: "×" }),
   effet("dereverberation", "Déréverbération", "Dereverb", "Atténuation de la réverbération.", "Reverb attenuation.",
     [param("Réduction", 60, "Reduction", "%", "Force de l'atténuation de la réverb.", "Reverb reduction strength.")],
     (a,r) => dererverberer(a, r)),
@@ -553,23 +557,47 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Applique une expression mathématique à chaque échantillon du signal.",
     resumeEn: "Applies a mathematical expression to each sample of the signal.",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Volume" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440) + x",
         doc: "Expression mathématique donnant la valeur de sortie de chaque échantillon. Variables : x (valeur actuelle), t (temps en secondes), i (index de l'échantillon), c (canal), ch (nombre de canaux), sr (fréquence d'échantillonnage).",
         docEn: "Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * pi * 440) + x" },
-      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%", doc: "Gain de sortie.", docEn: "Output gain." },
+      { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%",
+        doc: "Gain de sortie. Une courbe branchée sur l'entrée Modulation donne cette valeur à chaque instant, à la place du curseur.",
+        docEn: "Output gain. A curve connected to the Modulation input gives this value at each instant, in place of the slider." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Gain que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
+        docEn: "Gain that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Gain que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
+        docEn: "Gain that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440) + x");
       const volume = ctx.paramNombre("Volume", 30);
+      // Sans courbe branchée, le gain reste un nombre et la boucle garde son chemin : à volume plein
+      // elle n'est même pas parcourue, comme avant.
+      const modulation = ctx.entree(1);
+      const courbeVolume = estCourbe(modulation)
+        ? valeursParametre(modulation, audio.length, 0, {
+          min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+        })
+        : null;
       try {
         const out = appliquerFormuleEchantillons(audio, formule);
         const vol = Math.max(0, Math.min(1, volume / 100));
-        if (vol !== 1) {
+        if (courbeVolume) {
+          for (let c = 0; c < out.numberOfChannels; c++) {
+            const d = out.getChannelData(c);
+            for (let i = 0; i < d.length; i++) d[i] *= Math.max(0, Math.min(1, valeurA(courbeVolume, i) / 100));
+          }
+        } else if (vol !== 1) {
           for (let c = 0; c < out.numberOfChannels; c++) {
             const d = out.getChannelData(c);
             for (let i = 0; i < d.length; i++) d[i] *= vol;
@@ -660,7 +688,9 @@ export const fiches: FicheAudio[] = ([
     }),
   effet("largeur-stereo", "Largeur stéréo / MS", "Stereo Width / MS", "Ajuste la largeur stéréo et le niveau Mid.", "Adjusts stereo width and Mid level.",
     [param("Largeur", 100, "Width", "%", "Largeur du champ stéréo. 0% = mono, 100% = original, 200% = stéréo élargi.", "Stereo width. 0% = mono, 100% = original, 200% = widened stereo.", [0, 200], 1), param("Mid", 100, "Mid", "%", "Gain du signal central (Mid).", "Mid channel gain.", [0, 200], 1)],
-    (a, largeur, mid) => ajusterLargeurStereo(a, largeur, mid)),
+    (a, largeur, mid) => ajusterLargeurStereo(a, largeur, mid),
+    undefined,
+    { parametre: "Largeur", bornes: [0, 200], unite: "%" }),
   effet("fondu", "Fondu", "Fade", "Fondu entrée/sortie.", "Fade in/out.",
     [param("Entrée", 0.5, "In", "s", "Durée du fondu d'entrée.", "Fade-in duration."), param("Sortie", 0.5, "Out", "s", "Durée du fondu de sortie.", "Fade-out duration.")],
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),
@@ -1744,7 +1774,10 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Adds an upper and/or lower octave.",
     notice: "Génère jusqu'à deux voix supplémentaires, d'où les deux curseurs : « Octave sup » règle le volume de la voix une octave au-dessus, « Octave inf » celui de la voix une octave en dessous. L'un des deux à 0 n'ajoute qu'une voix. « Mix » équilibre ensuite l'original et les voix ajoutées. Technique monophonique (pédale analogique) : fonctionne le mieux sur une source à note unique (voix, basse, lead).",
     noticeEn: "Generates up to two extra voices, hence the two sliders: \"Octave up\" sets the volume of the voice one octave above, \"Octave down\" the voice one octave below. Either one at 0 adds a single voice. \"Mix\" then balances the original against the added voices. Monophonic technique (analog pedal style): works best on single-note sources (voice, bass, lead).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Mix" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Octave sup", nomEn: "Octave up", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
@@ -1752,13 +1785,28 @@ export const fiches: FicheAudio[] = ([
       { nom: "Octave inf", nomEn: "Octave down", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Volume de la voix ajoutée une octave en dessous (période doublée par inversion de polarité).", docEn: "Volume of the added voice one octave below (period doubled by polarity flipping)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Équilibre original / voix ajoutées. 0 % = original seul, 100 % = octaves seules.", docEn: "Dry / added-voices balance. 0% = dry only, 100% = octaves only." },
+        doc: "Équilibre original / voix ajoutées. 0 % = original seul, 100 % = octaves seules. Une courbe branchée sur l'entrée Modulation donne cette valeur à chaque instant, à la place du curseur.",
+        docEn: "Dry / added-voices balance. 0% = dry only, 100% = octaves only. A curve connected to the Modulation input gives this value at each instant, in place of the slider." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Mélange que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
+        docEn: "Mix that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Mélange que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
+        docEn: "Mix that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { octaver } = await import("../audio");
-      return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), ctx.paramNombre("Mix", 50))] };
+      // Sans courbe branchée, on passe le NOMBRE et non un tableau constant : la boucle garde
+      // exactement le chemin qu'elle avait, et sa sortie ne bouge pas d'un bit.
+      const modulation = ctx.entree(1);
+      const mix = estCourbe(modulation)
+        ? valeursParametre(modulation, a.length, 0, {
+          min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+        })
+        : ctx.paramNombre("Mix", 50);
+      return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), mix)] };
    },
  },
   {

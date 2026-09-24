@@ -6,7 +6,7 @@
 // autre, on accorde un bruit. Aucun ne suppose de modèle — ni note, ni instrument, ni hauteur
 // écrite : chacun prend un son tel qu'il est et le transforme en un autre son.
 
-import { estCourbe, valeursParametre } from "./courbe";
+import { estCourbe, valeurA, valeursParametre } from "./courbe";
 
 // ── Vitesse variable ─────────────────────────────────────────────────────────────────────────
 
@@ -135,7 +135,17 @@ async function reechantillonner(b: AudioBuffer, sr: number): Promise<AudioBuffer
  * chiffre. Le calcul passe par le nœud de convolution du navigateur, qui travaille par blocs en
  * transformée de Fourier.
  */
-export async function convoluerDeuxSons(a: AudioBuffer, b: AudioBuffer, mixPct: number): Promise<AudioBuffer> {
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE, ET ELLE S'ÉTALE SUR LA SORTIE ENTIÈRE. La durée du résultat est la
+ * somme des deux durées, la queue de convolution s'ajoutant à l'entrée : une courbe lue sur la seule
+ * longueur de l'entrée s'arrêterait avant la fin du son et tiendrait sa dernière valeur pendant toute
+ * la queue. Elle est donc rééchelonnée sur la longueur produite.
+ */
+export async function convoluerDeuxSons(
+  a: AudioBuffer,
+  b: AudioBuffer,
+  mixPct: number | Float32Array,
+): Promise<AudioBuffer> {
   if (a.numberOfChannels > 2 || b.numberOfChannels > 2) {
     throw new Error("deux canaux au plus de chaque côté");
   }
@@ -154,13 +164,20 @@ export async function convoluerDeuxSons(a: AudioBuffer, b: AudioBuffer, mixPct: 
   const humide = await off.startRendering();
 
   const niveau = pic(humide) > 0 ? pic(a) / pic(humide) : 0;
-  const mix = Math.max(0, Math.min(1, mixPct / 100));
+  const melangeA = (i: number): number => {
+    if (typeof mixPct === "number") return Math.max(0, Math.min(1, mixPct / 100));
+    const k = mixPct.length <= 1 ? 0 : Math.round((i * (mixPct.length - 1)) / Math.max(1, n - 1));
+    return Math.max(0, Math.min(1, valeurA(mixPct, k) / 100));
+  };
   const sortie = new AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: sr });
   for (let c = 0; c < canaux; c++) {
     const h = humide.getChannelData(Math.min(c, humide.numberOfChannels - 1));
     const s = a.getChannelData(Math.min(c, a.numberOfChannels - 1));
     const d = sortie.getChannelData(c);
-    for (let i = 0; i < n; i++) d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    for (let i = 0; i < n; i++) {
+      const mix = melangeA(i);
+      d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    }
   }
   return sortie;
 }

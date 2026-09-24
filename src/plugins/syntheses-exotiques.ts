@@ -12,6 +12,7 @@ import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import { compile } from "mathjs";
 import { fft } from "../audio/fft";
+import { estCourbe, valeursParametre } from "../audio/courbe";
 import {
   FREQUENCE_ECH, frequenceDe, lireNote, melanger, notesDuMidi, versBuffer,
 } from "./instruments-communs";
@@ -301,6 +302,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Cible", nomEn: "Target", type: "audio" },
       { nom: "Corpus", nomEn: "Corpus", type: "audio" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Volume" },
     ],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Rapport", nomEn: "Report", type: "texte" }],
     parametres: [
@@ -320,7 +322,14 @@ export const fiches: FicheAudio[] = ([
         doc: "Pénalise le grain qui vient d'être employé. Sans cela, un corpus pauvre rend cent fois le même grain, ce qui s'entend comme un bourdonnement ; c'est le défaut le plus audible du procédé.",
         docEn: "Penalises the grain just used. Without it, a poor corpus returns the same grain a hundred times over, which sounds like a drone, the most audible defect of the method." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
-        doc: "Volume de sortie.", docEn: "Output volume." },
+        doc: "Volume de sortie. Une courbe branchée sur l'entrée Modulation donne cette valeur à chaque instant, à la place du curseur.",
+        docEn: "Output volume. A curve connected to the Modulation input gives this value at each instant, in place of the slider." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Volume que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
+        docEn: "Volume that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Volume que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
+        docEn: "Volume that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
     async executer(ctx: any) {
       const cible = ctx.entree(0), corpus = ctx.entree(1);
@@ -337,6 +346,13 @@ export const fiches: FicheAudio[] = ([
       };
       const taille = Math.max(64, Math.round((ctx.paramNombre("Taille des grains", 40) / 1000) * FS));
       const pas = Math.max(32, Math.round(taille / 2));
+      // Sans courbe branchée, le volume reste un nombre et `versBuffer` garde son chemin exact.
+      const modulationVolume = ctx.entree(2);
+      const volumeMosaique = estCourbe(modulationVolume)
+        ? valeursParametre(modulationVolume, cible.length, 0, {
+          min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+        })
+        : ctx.paramNombre("Volume", 80);
       const fftReelle = (re: Float64Array, im: Float64Array) => fft(re, im, false);
       const signalCible = mono(cible), signalCorpus = mono(corpus);
       const grainsCible: Grain[] = decrireGrains(signalCible, FS, taille, pas, fftReelle);
@@ -363,7 +379,7 @@ export const fiches: FicheAudio[] = ([
           : (en ? "The corpus is varied enough." : "Le corpus est assez varié."),
       ].join("\n");
       return {
-        valeurs: [versBuffer(sortie, ctx.paramNombre("Volume", 80)), rapport],
+        valeurs: [versBuffer(sortie, volumeMosaique), rapport],
         message: traduire("msg.mosaique.resultat", r.grainsCible, r.distincts, r.grainsCorpus),
       };
     },

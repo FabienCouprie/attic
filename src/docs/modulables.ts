@@ -39,6 +39,7 @@ export const ECARTES: Record<string, string> = {
   "normaliseur": "le niveau et le plafond visent le fichier entier ; les faire varier détruirait la normalisation",
   "recaler-niveau": "le plafond vise le recalage entier, qui est une mesure globale",
   "rogner-silences": "le seuil décide d'une découpe, pas d'un traitement au fil du son",
+  "montage-grains": "le seuil décide où les grains sont coupés, donc d'une découpe et non d'un traitement au fil du son",
   "auto-similarite": "le seuil règle l'affichage d'une analyse, non un traitement",
   "boucle-graphe-fin-c": "le niveau appartient à la mécanique de boucle du graphe",
   "fiche-technique": "les seuils règlent un rapport de mesure",
@@ -57,6 +58,12 @@ export const ECARTES: Record<string, string> = {
   "tracage-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
   "arpege-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
   "formule-spectrale": "traitement par trames : une valeur par bloc, non par échantillon",
+  // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
+  // d'une famille modulable, et leur cœur travaille par trames comme les sept ci-dessus.
+  "stn-sinus-transitoires-bruit": "traitement par trames : une valeur par bloc, non par échantillon",
+  "dereverberation": "traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon",
+  "shift-formants": "traitement par trames : l'enveloppe est estimée par bloc, non par échantillon",
+  "filtrage-spectre": "traitement par trames : la profondeur est appliquée par trame d'analyse, non par échantillon",
 
   // LES COMPOSANTS LOGISTIQUES RESTENT TELS QU'ILS SONT. Ils portent des réglages d'ajustement qui
   // leur sont propres, que la modulation par courbe ne reproduit pas. Ils ne sont ni retirés du
@@ -77,6 +84,8 @@ export const ECARTES: Record<string, string> = {
   "reverbe-convolution": "le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur",
   "piece-lucier": "le decay et le damping fabriquent la réponse impulsionnelle, une fois, avant les passages",
   "resonance-audio": "la largeur, la hauteur et la profondeur sont les dimensions de la pièce ; la position de la source passe par une méthode du SDK, non par un AudioParam",
+  "doppler": "la distance est la géométrie du passage, dont toute la trajectoire se déduit, et non une valeur lue à chaque instant",
+  "mono-grave": "la coupure fixe les coefficients de quatre biquads et sert aussi à la mesure que le nœud rapporte",
 
   // PLUSIEURS CIBLES À LA FOIS. Une seule entrée Modulation ne peut en piloter qu'une, et choisir
   // laquelle serait décider à la place de celui qui s'en sert. Écartés sur décision de Fabien.

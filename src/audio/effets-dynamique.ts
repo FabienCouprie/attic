@@ -382,7 +382,16 @@ export function dererverberer(
 
 
 
-export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: number): AudioBuffer {
+/**
+ * LE SEUIL DE DÉTECTION ACCEPTE UNE COURBE, et la médiane qui lui sert de référence reste globale.
+ * Le seuil est un multiple de cette médiane, comparé à la dérivée en chaque point : le moduler resserre
+ * ou relâche la détection au fil du son, sur un passage abîmé plutôt que sur tout le fichier.
+ */
+export function supprimerClics(
+  buffer: AudioBuffer,
+  seuil: number | Float32Array,
+  fenetreMs: number,
+): AudioBuffer {
   const fenetre = Math.max(1, Math.round((fenetreMs / 1000) * buffer.sampleRate));
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -406,9 +415,8 @@ export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: nu
 
     // Marquage : seuil est un multiple de la médiane (seuil > 1 = moins sensible)
     const marque = new Uint8Array(n);
-    const seuilAbsolu = seuil * mediane;
     for (let i = 1; i < n; i++) {
-      if (diff[i] > seuilAbsolu) {
+      if (diff[i] > valeurA(seuil, i) * mediane) {
         const debut = Math.max(0, i - fenetre);
         const fin = Math.min(n - 1, i + fenetre);
         for (let j = debut; j <= fin; j++) marque[j] = 1;
@@ -661,9 +669,14 @@ export function limiter(
 // comparés. Leur différence donne une mesure « attaque / sustain » ; un gain en
 // dB est appliqué selon la force de cette composante.
 
+/**
+ * LE GAIN D'ATTAQUE ACCEPTE UNE COURBE, lu par `valeurA` dans la boucle où il l'était déjà : il y
+ * était converti en gain à chaque échantillon, si bien que le chemin ne change pas et que sans
+ * courbe branchée la sortie est celle d'avant, au bit près.
+ */
 export function transientShaper(
   buffer: AudioBuffer,
-  attaqueDb: number,
+  attaqueDb: number | Float32Array,
   sustainDb: number,
   tempsAttaqueMs: number,
   tempsSustainMs: number,
@@ -694,7 +707,7 @@ export function transientShaper(
 
     const maxEnv = Math.max(envAttaque, envSustain, 1e-9);
     const force = (envAttaque - envSustain) / maxEnv;
-    const attaqueGain = Math.pow(10, attaqueDb / 20);
+    const attaqueGain = Math.pow(10, valeurA(attaqueDb, i) / 20);
     const sustainGain = Math.pow(10, sustainDb / 20);
     const gain = force > 0
       ? attaqueGain * force + sustainGain * (1 - force)
@@ -712,9 +725,13 @@ export function transientShaper(
 // (Largeur=0), de conserver l'image stéréo d'origine (Largeur=100) ou de
 // l'élargir (Largeur>100). Le gain Mid agit sur le centre indépendamment.
 
+/**
+ * LA LARGEUR ACCEPTE UNE COURBE : l'image se resserre et s'ouvre au fil du son, au lieu d'être posée
+ * une fois. Le gain du centre n'est pas touché, de sorte que le niveau ne suit pas l'ouverture.
+ */
 export function ajusterLargeurStereo(
   buffer: AudioBuffer,
-  largeurPct: number,
+  largeurPct: number | Float32Array,
   midPct: number,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
@@ -725,10 +742,10 @@ export function ajusterLargeurStereo(
   const srcL = buffer.getChannelData(0);
   const srcR = nch > 1 ? buffer.getChannelData(1) : srcL;
 
-  const width = largeurPct / 100;
   const midGain = midPct / 100;
 
   for (let i = 0; i < buffer.length; i++) {
+    const width = valeurA(largeurPct, i) / 100;
     const l = srcL[i];
     const r = srcR[i];
     const mid = (l + r) * 0.5 * midGain;

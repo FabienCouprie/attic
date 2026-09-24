@@ -6,6 +6,7 @@
 
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio";
+import { valeurA } from "../audio/courbe";
 
 export const FREQUENCE_ECH = 44100;
 
@@ -48,18 +49,31 @@ export function melanger(cible: Float32Array, source: Float32Array, debut: numbe
  * La normalisation est faite ici et non dans les modèles, parce qu'un mélange de plusieurs
  * notes dépasse forcément l'amplitude d'une seule.
  */
-export function versBuffer(mono: Float32Array, volume: number): AudioBuffer {
+export function versBuffer(mono: Float32Array, volume: number | Float32Array): AudioBuffer {
   let crete = 0;
   for (let i = 0; i < mono.length; i++) crete = Math.max(crete, Math.abs(mono[i]));
-  const g = (crete > 0.001 ? 0.9 / crete : 1) * Math.max(0, Math.min(1, volume / 100));
+  const gNorm = crete > 0.001 ? 0.9 / crete : 1;
   const buffer = new AudioBuffer({
     numberOfChannels: 2, length: Math.max(1, mono.length), sampleRate: FREQUENCE_ECH,
   });
   const gauche = buffer.getChannelData(0), droite = buffer.getChannelData(1);
-  for (let i = 0; i < mono.length; i++) {
-    const x = mono[i] * g;
-    gauche[i] = x;
-    droite[i] = x;
+  // DEUX BOUCLES, ET C'EST DÉLIBÉRÉ. Le chemin du nombre garde son produit unique `gNorm × volume`,
+  // calculé une fois : écrire `mono[i] × gNorm × volume` changerait l'ordre des multiplications, et
+  // un flottant n'est pas associatif. La différence serait d'un bit, donc inaudible et invisible, ce
+  // qui est exactement ce qui rendrait irreproductible un rendu déjà enregistré.
+  if (typeof volume === "number") {
+    const g = gNorm * Math.max(0, Math.min(1, volume / 100));
+    for (let i = 0; i < mono.length; i++) {
+      const x = mono[i] * g;
+      gauche[i] = x;
+      droite[i] = x;
+    }
+  } else {
+    for (let i = 0; i < mono.length; i++) {
+      const x = mono[i] * gNorm * Math.max(0, Math.min(1, valeurA(volume, i) / 100));
+      gauche[i] = x;
+      droite[i] = x;
+    }
   }
   return buffer;
 }

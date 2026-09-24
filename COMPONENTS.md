@@ -2018,12 +2018,15 @@ Detects brief clicks and crackles and replaces them with an interpolation of the
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Threshold | number | 5 × | 1 – 50 ×, step 1 | Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive. |
 | Window | number | 5 ms |  | Replacement window width. |
+| Modulation min | slider | 1 × | 1 – 50 ×, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Seuil » that the curve's one means. |
 
 #### Declipper
 
@@ -2445,11 +2448,14 @@ To convolve is to make one sound ring through another. It is how a sound is plac
 |---|---|---|---|
 | input | Sound | audio |  |
 | input | Second sound | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. A curve connected to the Modulation input gives this value at each instant, in place of the slider, spread over the produced duration. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Share that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Share that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Vibrato
 
@@ -3306,6 +3312,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 |---|---|---|---|
 | input | Target | audio |  |
 | input | Model | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3313,7 +3320,9 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Resolution | slider | 10 ms | 1 – 300 ms, step 1 | How finely the contour is followed. It is the only setting that really changes the nature of the result: at 5 milliseconds one transfers almost the waveform, and the model's grain comes with it; at 200, only its large breaths remain, the phrase alone. |
 | Flatten | choice | Yes | Yes / No | Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer. |
 | Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 ### Equalisation and filters
 
@@ -3637,6 +3646,7 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3645,6 +3655,8 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Sustain | number | 0 dB | -12 – 12 dB, step 0.5 | Gain applied to the sustain body. Positive = more sustain; negative = shorter. |
 | Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged. |
 | Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
+| Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that the curve's one means. |
 
 #### Tuned Combs
 
@@ -4579,6 +4591,7 @@ Audio mosaicing, or corpus-based concatenative synthesis. The principle is a mos
 |---|---|---|---|
 | input | Target | audio |  |
 | input | Corpus | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 | output | Report | text |  |
 
@@ -4589,7 +4602,9 @@ Audio mosaicing, or corpus-based concatenative synthesis. The principle is a mos
 | Brightness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the spectral centre of gravity. It is the descriptor one hears most: raising it follows the target's colours. |
 | Noisiness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the zero-crossing rate, which tells a noisy sound from a steady one. |
 | Avoid repeats | number | 20 % | 0 – 100 %, step 1 | Penalises the grain just used. Without it, a poor corpus returns the same grain a hundred times over, which sounds like a drone, the most audible defect of the method. |
-| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Volume that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Volume that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Ecosystem (Di Scipio)
 
@@ -4720,12 +4735,15 @@ Applies a mathematical expression to each sample of the signal. Variables: x (cu
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Formula | text | `sin(t * 2 * pi * 440) + x` |  | Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate). |
-| Volume | number | 30 % | 0 – 100 % | Output gain. |
+| Volume | number | 30 % | 0 – 100 % | Output gain. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Gain that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Gain that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Sonic Seasoning
 
@@ -4834,13 +4852,16 @@ Generates up to two extra voices, hence the two sliders: "Octave up" sets the vo
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Octave up | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave above (frequency doubled by rectification). |
 | Octave down | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave below (period doubled by polarity flipping). |
-| Mix | slider | 50 % | 0 – 100 %, step 1 | Dry / added-voices balance. 0% = dry only, 100% = octaves only. |
+| Mix | slider | 50 % | 0 – 100 %, step 1 | Dry / added-voices balance. 0% = dry only, 100% = octaves only. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Mix that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Phase Vocoder Pitch
 
@@ -5297,6 +5318,7 @@ Adds the same number of hertz to every frequency. After Scott Wardle, « A Hilbe
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5304,6 +5326,8 @@ Adds the same number of hertz to every frequency. After Scott Wardle, « A Hilbe
 | Shift | slider | 100 Hz | -1000 – 1000 Hz, step 1 | Hertz added to every frequency. 200-400-600 shifted by 50 gives 250-450-650: the ratios are no longer whole numbers, which is why a note turns into a bell. A few hertz are enough to make a sound beat without disfiguring it; beyond a hundred, the original pitch is frankly left behind. |
 | Stereo offset | slider | 0 Hz | 0 – 20 Hz, step 0.5 | Hertz added to the right channel on top of the shift. A few tenths are enough: the two channels then drift apart and the sound widens slowly, with no destructive phasing. No effect on a mono sound. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the shifted sound in the output. At 50 %, the original and its shift beat together; that is how one gets gently metallic timbres rather than a complete displacement. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Share that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Share that the curve's one means. A value below Modulation min reverses the direction of travel. The output message then gives the average share. |
 
 #### Griffin-Lim
 
@@ -5383,6 +5407,7 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5392,6 +5417,8 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Smoothing | slider | 20 | 0 – 80, step 1 | Width of the smoothing that separates formants from partials, in components. Too little and the original's partials survive, blurring the glissando. Too much and the envelope flattens: the timbre vanishes and one falls back on the bare illusion. |
 | Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Phase Reconstruction (PGHI)
 
@@ -5875,12 +5902,15 @@ Stereo width and Mid/Side balance control. Decodes the signal into center (Mid =
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Width | number | 100 % | 0 – 200 %, step 1 | Stereo width. 0% = mono, 100% = original, 200% = widened stereo. |
 | Mid | number | 100 % | 0 – 200 %, step 1 | Mid channel gain. |
+| Modulation min | slider | 0 % | 0 – 200 %, step 1 | Value of « Largeur » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Largeur » that the curve's one means. |
 
 #### Swap Channels
 

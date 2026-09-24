@@ -41,7 +41,13 @@ const ecrire = process.env.ECRIRE_EMPREINTES === "1";
  * module partagé a été retouché, entre ici. `couverture-empreintes.test.ts` refuse qu'un worker de
  * calcul existe sans qu'un composant d'ici le réclame : c'est ce qui empêche la liste de vieillir.
  */
-const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, string | number> }[] = [
+const SURVEILLES: {
+  id: string;
+  worker?: string;
+  parametres?: Record<string, string | number>;
+  /** Les rangs d'entrée qui reçoivent le son d'essai, quand une seule ne suffit pas. */
+  entreesAudio?: number[];
+}[] = [
   // Déplacés dans un worker.
   { id: "phase-pghi", worker: "pghi-worker.ts" },
   { id: "stn-sinus-transitoires-bruit", worker: "stn-worker.ts" },
@@ -83,6 +89,29 @@ const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, str
   { id: "flanger" },
   { id: "ring-modulator" },
   { id: "bitcrusher" },
+  // SECOND LOT DE LA CAMPAGNE DE MODULATION : les dix-sept a cible unique. Leur empreinte est
+  // enregistree AVANT qu'ils recoivent une entree Modulation. `octaver` et
+  // `stn-sinus-transitoires-bruit` sont deja surveilles plus haut et ne sont pas repetes ici.
+  // Il lui faut deux sons : sans le second il ne rend rien, et son empreinte serait vide.
+  { id: "convolution-deux-sons", entreesAudio: [0, 1] },
+  { id: "decaleur-frequence" },
+  { id: "glissando-interieur" },
+  // Cible et modele : deux entrees, comme la convolution.
+  { id: "transfert-enveloppe", entreesAudio: [0, 1] },
+  { id: "transient-shaper" },
+  { id: "montage-grains" },
+  { id: "suppression-clics" },
+  { id: "doppler" },
+  // Son et filtre : deux entrees.
+  { id: "filtrage-spectre", entreesAudio: [0, 1] },
+  { id: "largeur-stereo" },
+  { id: "mono-grave" },
+  { id: "shift-formants" },
+  { id: "dereverberation" },
+  { id: "formule-echantillons" },
+  // Cible et corpus : deux entrees. Le corpus est ici le son d'essai lui-meme, ce qui suffit a
+  // mesurer une identite ; ce n'est pas un usage musical du composant.
+  { id: "mosaiquage", entreesAudio: [0, 1] },
   // Le generateur de courbe : une sortie de type courbe, et non audio. Il entre ici sur la forme
   // Logistique, dont l etiquette annoncait une courbe en S et rendait une suite chaotique. Son
   // empreinte porte le nombre de paliers, qui distingue une courbe lisse d un escalier.
@@ -121,7 +150,8 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
   const ecarts: string[] = [];
 
   for (const s of SURVEILLES) {
-    const m = await mesurerComposant(page, devUrl, s.id, { parametres: s.parametres });
+    const m = await mesurerComposant(page, devUrl, s.id,
+      { parametres: s.parametres, entreesAudio: s.entreesAudio });
     expect(m.erreur, `${s.id} a échoué : ${m.erreur}`).toBeNull();
     // Une sortie audio est exigée : un composant qui n'en rend plus est un changement en soi, et
     // sans cette garde il passerait pour « conforme » avec une liste d'empreintes vide.
