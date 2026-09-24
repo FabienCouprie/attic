@@ -14,9 +14,11 @@
 //      Python qui interprète son propre littéral. Le shell n'y est pour rien, et mieux échapper au
 //      niveau du shell ne change donc rien du tout.
 //
-//   3. LES FINS DE LIGNE. Le dépôt est mixte, 554 fichiers en CRLF contre 229 en LF, parce que
-//      `core.autocrlf` vaut `true`. Un motif écrit avec `\n` ne peut pas correspondre à un fichier
-//      CRLF, et le script échoue en annonçant « motif introuvable ».
+//   3. LES FINS DE LIGNE. L'arbre de travail était mixte, 554 fichiers en CRLF contre 229 en LF, non
+//      pas parce que le dépôt l'était — Git y stockait déjà du LF partout — mais parce que
+//      `core.autocrlf=true` convertissait à la sortie selon l'histoire de chaque fichier. Un motif
+//      écrit avec `\n` ne pouvait donc correspondre que sur une partie du dépôt. `.gitattributes`
+//      impose désormais `eol=lf` : cette règle lit cet état au lieu de le supposer, et se tait.
 //
 // CE QUE CE CONTRAT TIENT, ET CE QU'IL NE TIENT PAS. Il refuse les trois formes ci-dessus avant que
 // la commande ne s'exécute. Il ne dit pas quoi écrire à la place : la vraie économie est ailleurs,
@@ -49,6 +51,25 @@ function heredocs(commande) {
   return out;
 }
 
+/**
+ * L'arbre de travail est-il encore mixte ?
+ *
+ * `.gitattributes` avec `eol=lf` fait sortir tous les fichiers en LF, y compris sous Windows : la
+ * règle des fins de ligne perd alors sa raison d'être, et la maintenir refuserait des scripts
+ * légitimes. Le contrat lit donc la règle en vigueur au lieu de tenir pour acquis un état du dépôt
+ * qui a changé le 2026-09-24.
+ */
+function arbreMixte() {
+  try {
+    const { readFileSync } = globalThis.require("node:fs");
+    const { join } = globalThis.require("node:path");
+    const racine = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    return !/eol\s*=\s*lf/.test(readFileSync(join(racine, ".gitattributes"), "utf8"));
+  } catch {
+    return true; // pas de `.gitattributes` : l'arbre suit `core.autocrlf`, donc il peut être mixte.
+  }
+}
+
 const FAUTES = [
   {
     // Le cas mesuré : du source envoyé dans python sans forcer l'UTF-8.
@@ -69,7 +90,8 @@ const FAUTES = [
     // Le cas `\r\n` la contient, donc le chercher séparément serait redondant. Une première version
     // écrivait `\\r?\\n`, où le `?` ne porte que sur le `r` : elle exigeait DEUX antislashs et ne
     // pouvait donc jamais correspondre. La règle est restée muette jusqu'à ce que son test la prenne.
-    voir: (cmd) => heredocs(cmd).some((c) => /\.(replace|index|find|split)\([^)]*\\n/.test(c)),
+    voir: (cmd) => arbreMixte()
+      && heredocs(cmd).some((c) => /\.(replace|index|find|split)\([^)]*\\n/.test(c)),
     dire: "Un motif contenant une fin de ligne ne peut pas correspondre : l'arbre est mixte,"
       + " CRLF et LF. Comparer sans fin de ligne, ou passer par Edit.",
   },

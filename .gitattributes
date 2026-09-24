@@ -1,0 +1,28 @@
+# .gitattributes — un seul caractère de fin de ligne, partout.
+#
+# POURQUOI CE FICHIER. Sans lui, `core.autocrlf=true` donnait un arbre de travail MIXTE : 554
+# fichiers en CRLF contre 229 en LF, selon leur histoire. Un script de retouche qui cherche un motif
+# écrit avec un saut de ligne ne pouvait alors correspondre que sur une partie du dépôt, et échouait
+# sur l'autre en annonçant « motif introuvable ». Cela a coûté du temps plusieurs fois, et le remède
+# n'était pas de mieux échapper mais de supprimer la disparité.
+#
+# `eol=lf` vaut pour l'arbre de travail comme pour le dépôt : les fichiers sont désormais en LF sur
+# le disque aussi, y compris sous Windows. Les outils du projet, Node, Vite, TypeScript et Git Bash,
+# s'en accommodent tous ; le seul programme qui s'en plaindrait est le Bloc-notes des anciennes
+# versions de Windows.
+#
+# LES FICHIERS BINAIRES SONT NOMMÉS, et non laissés à la détection. `text=auto` sait reconnaître un
+# binaire, mais un faux positif corromprait un son ou une image en y remplaçant des octets 0x0D :
+# les extensions présentes dans le dépôt sont donc déclarées explicitement.
+
+* text=auto eol=lf
+
+# Le son, l'image et les archives : jamais touchés.
+*.wav binary
+*.mid binary
+*.zip binary
+*.png binary
+*.ico binary
+*.onnx binary
+*.sf2 binary
+*.bin binary

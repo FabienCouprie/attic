@@ -10,7 +10,9 @@
 // littéral, et le contrat s'est tu à juste titre. C'était le test qui était faux, deux fois. La
 // leçon est celle du contrat lui-même : ne pas faire passer du texte par le shell.
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const CONTRAT = resolve(__dirname, "contrat-heredoc.mjs");
@@ -78,21 +80,32 @@ describe("LE CODE : un source ne passe pas par le shell", () => {
   });
 });
 
-describe("LES FINS DE LIGNE : pas de saut dans un motif tant que l'arbre est mixte", () => {
+describe("LES FINS DE LIGNE : la règle suit l'état réel du dépôt", () => {
   // `\n` LITTÉRAL dans le corps du script, c'est-à-dire les deux caractères barre oblique inversée
   // et n, que Python lira comme un saut. Construit par `String.fromCharCode` pour qu'aucune couche
   // de citation ne puisse le transformer en route.
   const ANTISLASH = String.fromCharCode(92);
-  it("refuse un remplacement dont le motif contient une fin de ligne", () => {
-    const corps = [`s = s.replace("a${ANTISLASH}nb", "c")`];
-    const r = juger(heredoc("PYTHONUTF8=1 python -", corps));
-    expect(r.code).toBe(2);
-    expect(r.dit).toMatch(/arbre est mixte|fin de ligne/);
+  const motif = () => heredoc("PYTHONUTF8=1 python -", [`s = s.replace("a${ANTISLASH}nb", "c")`]);
+
+  // Depuis que `.gitattributes` impose `eol=lf`, l'arbre sort entièrement en LF et un motif avec un
+  // saut de ligne fonctionne : la règle DOIT se taire, sans quoi elle refuserait du travail légitime.
+  it("se tait quand `.gitattributes` impose eol=lf", () => {
+    const attributs = readFileSync(resolve(__dirname, "..", ".gitattributes"), "utf8");
+    expect(attributs, "prémisse du test").toMatch(/eol\s*=\s*lf/);
+    expect(juger(motif()).dit).not.toMatch(/arbre est mixte/);
   });
 
-  it("laisse passer un remplacement sans fin de ligne", () => {
-    const r = juger(heredoc("PYTHONUTF8=1 python -", ['s = s.replace("abc", "def")']));
-    expect(r.dit).not.toMatch(/arbre est mixte/);
+  it("la règle existe et sait tirer quand l'arbre est mixte", () => {
+    // Éprouvée depuis un dossier SANS `.gitattributes`, l'état où le dépôt se trouvait avant.
+    const ailleurs = mkdtempSync(join(tmpdir(), "sans-attributs-"));
+    const charge = JSON.stringify({ tool_name: "Bash", tool_input: { command: motif() } });
+    try {
+      execFileSync("node", [CONTRAT], { input: charge, encoding: "utf8", cwd: ailleurs, env: { ...process.env, CLAUDE_PROJECT_DIR: ailleurs } });
+      throw new Error("la règle n'a pas tiré");
+    } catch (e: any) {
+      expect(e.status).toBe(2);
+      expect(String(e.stderr)).toMatch(/arbre est mixte/);
+    }
   });
 });
 
