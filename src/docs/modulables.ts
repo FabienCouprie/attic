@@ -44,6 +44,34 @@ export const ECARTES: Record<string, string> = {
   "csound": "le volume est passé à un interpréteur externe, qui ne lit pas une valeur par échantillon",
   "csound-effet": "idem, interpréteur externe",
   "csound-spectral": "idem, interpréteur externe",
+
+  // TRAITEMENT PAR TRAMES. Ces composants analysent et resynthétisent par blocs : une courbe n'y
+  // serait lue qu'une fois par trame, non par échantillon, et la modulation n'aurait pas la
+  // résolution qu'elle promet. Écartés sur décision de Fabien.
+  "griffin-lim": "traitement par trames : une valeur par bloc, non par échantillon",
+  "phase-pghi": "traitement par trames : une valeur par bloc, non par échantillon",
+  "gel-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
+  "flou-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
+  "tracage-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
+  "arpege-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
+  "formule-spectrale": "traitement par trames : une valeur par bloc, non par échantillon",
+
+  // LES COMPOSANTS LOGISTIQUES RESTENT TELS QU'ILS SONT. Ils portent des réglages d'ajustement qui
+  // leur sont propres, que la modulation par courbe ne reproduit pas. Ils ne sont ni retirés du
+  // catalogue ni modifiés. Décision de Fabien, définitive.
+  "auto-pan-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "chopper-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "echo-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "melangeur-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "paulstretch-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "tremolo-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+  "vibrato-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
+
+  // PLUSIEURS CIBLES À LA FOIS. Une seule entrée Modulation ne peut en piloter qu'une, et choisir
+  // laquelle serait décider à la place de celui qui s'en sert. Écartés sur décision de Fabien.
+  "shimmer": "quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance",
+  "compresseur": "trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement",
+  "ducking": "trois réglages modulables à la fois : seuil, réduction, attaque et relâchement",
 };
 
 export interface CibleModulable {

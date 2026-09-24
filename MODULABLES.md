@@ -8,32 +8,24 @@ nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont 
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
 - **acceptent déjà une courbe** : 26
-- **restent à faire** : 66 composants, 115 couples composant / famille
-- **écartés** : 9
+- **restent à faire** : 49 composants, 82 couples composant / famille
+- **écartés** : 26
 
 ## Ce qui reste, par famille
 
-### melange · 33
+### melange · 21
 
 - Anneau de Möbius `anneau-moebius` : Mélange
-- Auto-pan logistique `auto-pan-logistique` : Mix
 - Beat Repeat / Stutter `beat-repeat` : Mix
-- Chopper logistique `chopper-logistique` : Mix
 - Chorus `chorus` : Mix
 - Convolution de deux sons `convolution-deux-sons` : Mix
 - Décaleur de fréquence `decaleur-frequence` : Mélange
 - Delay stéréo `delay-stereo` : Mix
-- Écho logistique `echo-logistique` : Mix
 - Exciter / Aural enhancer `exciter` : Mix
 - Flanger `flanger` : Mix
-- Flou spectral `flou-spectral` : Mix
-- Gel spectral `gel-spectral` : Mix
 - Glissando intérieur `glissando-interieur` : Mix
 - Granular freeze `granular-freeze` : Mix
-- Griffin-Lim `griffin-lim` : Mix
 - Octaver `octaver` : Mix
-- Paulstretch logistique `paulstretch-logistique` : Mix
-- Reconstruction de phase (PGHI) `phase-pghi` : Mix
 - Quadrafuzz `quadrafuzz` : Mix
 - Réverbération fractale `reverb-fractale` : Mix
 - Réverbération à convolution (IR) `reverbe-convolution` : Mix
@@ -42,42 +34,14 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Réverbération `reverberation` : Mix
 - Réverbération velours `reverberation-velours` : Mélange
 - Ring modulator `ring-modulator` : Mix
-- Shimmer `shimmer` : Mix
-- Traçage spectral `tracage-spectral` : Mix
 - Transfert d'enveloppe `transfert-enveloppe` : Mix
-- Tremolo logistique `tremolo-logistique` : Mix
-- Vibrato logistique `vibrato-logistique` : Mix
 - Vocoder `vocoder` : Mix
 
-### espace · 18
+### temps · 14
 
-- Arpège spectral `arpege-spectral` : Largeur
-- Brassage `brassage` : Dispersion
-- Chopper logistique `chopper-logistique` : Profondeur
-- Chorus `chorus` : Profondeur
-- De-esser `de-esser` : Largeur
-- Doppler `doppler` : Distance
-- Filtrage par un spectre `filtrage-spectre` : Profondeur
-- Flanger `flanger` : Profondeur
-- Flou spectral `flou-spectral` : Largeur
-- Granular freeze `granular-freeze` : Position
-- Largeur stéréo / MS `largeur-stereo` : Largeur
-- Particules `particules` : Dispersion, Position
-- Resonance Audio `resonance-audio` : Largeur, Profondeur
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
-- Tore `tore` : Profondeur
-- Tremolo logistique `tremolo-logistique` : Profondeur
-- Tresse `tresse` : Largeur
-- Vibrato logistique `vibrato-logistique` : Profondeur
-
-### temps · 18
-
-- Compresseur `compresseur` : Attaque, Relâchement
 - Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
 - De-esser `de-esser` : Attaque, Relâchement
-- Ducking `ducking` : Attaque, Relâchement, Maintien
 - Echo inversé `echo-inverse` : Temps
-- Écho logistique `echo-logistique` : Temps
 - Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
 - Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
 - Limiteur `limiteur` : Relâchement
@@ -88,28 +52,27 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération `reverberation` : Decay
 - Réverbération velours `reverberation-velours` : Chute
-- Shimmer `shimmer` : Décroissance
 - Transient Shaper `transient-shaper` : Attaque
 
-### frequence · 11
+### espace · 13
 
-- Ceinture de Dirac `ceinture-dirac` : Coupure
-- Chopper logistique `chopper-logistique` : Fréquence
-- De-esser `de-esser` : Fréquence
-- Exciter / Aural enhancer `exciter` : Fréquence
-- Grave en mono `mono-grave` : Coupure
-- Particules `particules` : Fréquence
-- Réduction de bruit `reduction-bruit` : Q
-- Ring modulator `ring-modulator` : Fréquence
-- Tremolo logistique `tremolo-logistique` : Fréquence
-- Vibrato logistique `vibrato-logistique` : Fréquence
-- Vocoder `vocoder` : Q
+- Brassage `brassage` : Dispersion
+- Chorus `chorus` : Profondeur
+- De-esser `de-esser` : Largeur
+- Doppler `doppler` : Distance
+- Filtrage par un spectre `filtrage-spectre` : Profondeur
+- Flanger `flanger` : Profondeur
+- Granular freeze `granular-freeze` : Position
+- Largeur stéréo / MS `largeur-stereo` : Largeur
+- Particules `particules` : Dispersion, Position
+- Resonance Audio `resonance-audio` : Largeur, Profondeur
+- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
+- Tore `tore` : Profondeur
+- Tresse `tresse` : Largeur
 
-### dynamique · 10
+### dynamique · 8
 
-- Compresseur `compresseur` : Seuil, Ratio
 - De-esser `de-esser` : Seuil, Ratio
-- Ducking `ducking` : Seuil
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
 - Montage par grains `montage-grains` : Seuil
@@ -118,39 +81,43 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Sinus + transitoires + bruit (STN) `stn-sinus-transitoires-bruit` : Seuil
 - Suppression de clics `suppression-clics` : Seuil
 
-### niveau · 10
+### frequence · 8
 
-- Compresseur `compresseur` : Gain
-- Déréverbération `dereverberation` : Réduction
-- Distorsion `distorsion` : Gain
-- Ducking `ducking` : Réduction
-- Formule sur échantillons `formule-echantillons` : Volume
-- Formule spectrale `formule-spectrale` : Volume
-- Mélangeur logistique `melangeur-logistique` : Volume
-- Mosaïquage par corpus `mosaiquage` : Volume
-- Particules `particules` : Volume
-- Réduction de bruit `reduction-bruit` : Réduction
+- Ceinture de Dirac `ceinture-dirac` : Coupure
+- De-esser `de-esser` : Fréquence
+- Exciter / Aural enhancer `exciter` : Fréquence
+- Grave en mono `mono-grave` : Coupure
+- Particules `particules` : Fréquence
+- Réduction de bruit `reduction-bruit` : Q
+- Ring modulator `ring-modulator` : Fréquence
+- Vocoder `vocoder` : Q
 
-### retroaction · 8
-
-- Beat Repeat / Stutter `beat-repeat` : Feedback
-- Delay stéréo `delay-stereo` : Feedback
-- Echo inversé `echo-inverse` : Feedback
-- Écho logistique `echo-logistique` : Feedback
-- Pièce de Lucier `piece-lucier` : Damping
-- Réverbération fractale `reverb-fractale` : Damping
-- Réverbération à convolution (IR) `reverbe-convolution` : Damping
-- Shimmer `shimmer` : Rebouclage
-
-### hauteur · 7
+### hauteur · 6
 
 - Brassage `brassage` : Transposition
 - Granular freeze `granular-freeze` : Pitch
 - Particules `particules` : Transposition
 - Resonance Audio `resonance-audio` : Hauteur
 - Shift formants `shift-formants` : Hauteur
-- Shimmer `shimmer` : Transposition
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition
+
+### niveau · 6
+
+- Déréverbération `dereverberation` : Réduction
+- Distorsion `distorsion` : Gain
+- Formule sur échantillons `formule-echantillons` : Volume
+- Mosaïquage par corpus `mosaiquage` : Volume
+- Particules `particules` : Volume
+- Réduction de bruit `reduction-bruit` : Réduction
+
+### retroaction · 6
+
+- Beat Repeat / Stutter `beat-repeat` : Feedback
+- Delay stéréo `delay-stereo` : Feedback
+- Echo inversé `echo-inverse` : Feedback
+- Pièce de Lucier `piece-lucier` : Damping
+- Réverbération fractale `reverb-fractale` : Damping
+- Réverbération à convolution (IR) `reverbe-convolution` : Damping
 
 ## Écartés, et pourquoi
 
@@ -163,6 +130,23 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - `csound` : le volume est passé à un interpréteur externe, qui ne lit pas une valeur par échantillon
 - `csound-effet` : idem, interpréteur externe
 - `csound-spectral` : idem, interpréteur externe
+- `griffin-lim` : traitement par trames : une valeur par bloc, non par échantillon
+- `phase-pghi` : traitement par trames : une valeur par bloc, non par échantillon
+- `gel-spectral` : traitement par trames : une valeur par bloc, non par échantillon
+- `flou-spectral` : traitement par trames : une valeur par bloc, non par échantillon
+- `tracage-spectral` : traitement par trames : une valeur par bloc, non par échantillon
+- `arpege-spectral` : traitement par trames : une valeur par bloc, non par échantillon
+- `formule-spectrale` : traitement par trames : une valeur par bloc, non par échantillon
+- `auto-pan-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `chopper-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `echo-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `melangeur-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `paulstretch-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `tremolo-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `vibrato-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `shimmer` : quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance
+- `compresseur` : trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement
+- `ducking` : trois réglages modulables à la fois : seuil, réduction, attaque et relâchement
 
 ## Acceptent déjà une courbe
 
