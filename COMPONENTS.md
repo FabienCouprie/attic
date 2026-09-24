@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **400 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **401 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **400 components** in **7 categories** and **61 families**. Every na
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 67 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (2) |
+| [Other & lab](#other--lab) | 68 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (3) |
 
 ## How to read this catalog
 
@@ -9256,6 +9256,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 |---|---|
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
+| [Video Montage](#video-montage) | Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4. |
 
 #### Application Film
 
@@ -9291,3 +9292,50 @@ This node makes a video of the graph it sits in. It connects to nothing: it runs
 | Resolution | choice | 720p | 480p / 720p / 1080p | Picture size: 854 × 480, 1280 × 720 or 1920 × 1080. Rendering time grows with it. |
 | Frames per second | choice | 30 | 24 / 30 / 60 | Video frame rate. 60 makes scrolling smoother and doubles rendering time. |
 | Settings | choice | Shown | Shown / Hidden | Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width. |
+
+#### Video Montage
+
+`montage-video` · Other & lab → Video
+
+*Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4.*
+
+This node takes a film, adds sounds to it and returns an MP4. « Path » names the file. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. Each track has four settings: the frame at which it starts, its level, its fade in and its fade out. They only appear for connected tracks. Starts are counted in frames, at the frame rate the film declares. A frame is not a thirtieth of a second: at 29.97 frames per second, frame one thousand falls at 33.3667 s, and the gap against a calculation at thirty reaches one second after ten minutes. « Film level » sets the original sound, which is kept and mixed with the tracks. At minus sixty decibels it falls silent. The length of the produced file is the film's. A sound running past the end is cut with a fade. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The output is an MP4 file whose sound is AAC. The node states the memory it has held: the film, its decoded sound and the mix add up, and a long film with six long tracks runs into hundreds of megabytes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Track 1 | audio |  |
+| input | Track 2 | audio |  |
+| input | Track 3 | audio |  |
+| input | Track 4 | audio |  |
+| input | Track 5 | audio |  |
+| input | Track 6 | audio |  |
+| output | Video | file |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | text | — |  | Path of the film. Containers read: MP4, MOV, WebM, MKV, M4V. |
+| Film level | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of the film's own sound, kept and mixed with the tracks. At −60 dB it falls silent. |
+| Frame 1 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 1 starts. |
+| Gain 1 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 1. |
+| Fade in 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade in. |
+| Fade out 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade out. |
+| Frame 2 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 2 starts. |
+| Gain 2 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 2. |
+| Fade in 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade in. |
+| Fade out 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade out. |
+| Frame 3 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 3 starts. |
+| Gain 3 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 3. |
+| Fade in 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade in. |
+| Fade out 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade out. |
+| Frame 4 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 4 starts. |
+| Gain 4 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 4. |
+| Fade in 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade in. |
+| Fade out 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade out. |
+| Frame 5 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 5 starts. |
+| Gain 5 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 5. |
+| Fade in 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade in. |
+| Fade out 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade out. |
+| Frame 6 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 6 starts. |
+| Gain 6 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 6. |
+| Fade in 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade in. |
+| Fade out 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade out. |

@@ -41,6 +41,10 @@ contextBridge.exposeInMainWorld("api", {
     return { url, donnees: r.donnees, nom: r.nom };
   },
 
+  // Les octets tels quels, avec leur type MIME : à la fenêtre d'en faire une adresse `blob:` si elle
+  // en veut une. Rien n'est recopié en base64, contrairement à `lireFichierAudio` ci-dessus.
+  lireFichierBinaire: (chemin) => ipcRenderer.invoke("fichier:lire-binaire", chemin),
+
   ecrireFichier: (chemin, buffer) => ipcRenderer.invoke("fichier:ecrire", { chemin, buffer }),
   copierFichier: (source, cible) => ipcRenderer.invoke("fichier:copier", { source, cible }),
   ouvrirChemin: (chemin) => ipcRenderer.invoke("fichier:ouvrir-chemin", chemin),

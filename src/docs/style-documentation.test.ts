@@ -19,6 +19,8 @@ import { toutesLesFiches } from "../plugins/index";
 const SIGLES = new Set([
   // Formats et fichiers
   "MIDI", "SF2", "SFZ", "WAV", "MP3", "OGG", "FLAC", "AAC", "M4A", "WMA", "PNG", "JPG", "SVG",
+  // Conteneurs vidéo : ceux qu'on lit, et ceux qu'on ne lit pas et qu'il faut pouvoir nommer.
+  "MOV", "MKV", "M4V", "WMV", "AVI", "ASF",
   "PDF", "JSON", "CSV", "TXT", "XML", "YAML", "HTML", "CSS", "ZIP", "GIF", "WEBP", "ASCII", "UTF",
   // Audio, traitement du signal
   "FFT", "IFFT", "STFT", "DSP", "LFO", "ADSR", "RMS", "EQ", "BPF", "LPF", "HPF", "FIR", "IIR",

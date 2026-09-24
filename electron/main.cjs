@@ -394,6 +394,35 @@ ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
   }
 });
 
+// --- IPC : lire un fichier binaire, SANS fabriquer d'adresse `data:` ---
+//
+// POURQUOI UN SECOND LECTEUR. `fichier:lire-audio` rend aussi une adresse `data:`, que la fenêtre
+// construit en base64 : pour une vidéo de 72 Mo, c'est une chaîne de 96 Mo dont un élément `<video>`
+// n'a aucun usage, puisqu'une adresse `blob:` se fabrique depuis les octets et ne les recopie pas.
+// Et le type MIME y est deviné parmi trois formats audio, ce qui étiquetterait un MP4 en `audio/wav`.
+//
+// Le type est déduit de l'extension et rendu tel quel : c'est l'appelant qui décide quoi en faire.
+const MIME_PAR_EXTENSION = {
+  ".mp4": "video/mp4", ".m4v": "video/mp4", ".mov": "video/quicktime",
+  ".webm": "video/webm", ".mkv": "video/x-matroska",
+  ".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".wav": "audio/wav", ".flac": "audio/flac",
+};
+ipcMain.handle("fichier:lire-binaire", async (_event, cheminFichier) => {
+  try {
+    const chemin = resoudreRessource(cheminFichier, contexteRessources());
+    const donnees = await fs.promises.readFile(chemin);
+    const ext = path.extname(cheminFichier).toLowerCase();
+    return {
+      donnees,
+      mime: MIME_PAR_EXTENSION[ext] ?? "application/octet-stream",
+      nom: path.basename(cheminFichier),
+      taille: donnees.byteLength,
+    };
+  } catch (e) {
+    return { erreur: String(e && e.message ? e.message : e) };
+  }
+});
+
 // --- IPC : écrire un fichier binaire à un chemin donné (sans dialogue) ---
 ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
   try {
