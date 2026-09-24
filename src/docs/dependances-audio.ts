@@ -61,7 +61,7 @@ const MARQUEURS_RENDU = [
 ];
 
 /** Une ligne de commentaire ne décide de rien : elle parle du code, elle ne l'exécute pas. */
-function lignesDeCode(source: string): string[] {
+export function lignesDeCode(source: string): string[] {
   const out: string[] = [];
   let dansBloc = false;
   for (const brute of source.split(/\r?\n/)) {

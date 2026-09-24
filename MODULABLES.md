@@ -7,8 +7,13 @@ grandeur continue et audible. Un réglage qui décide de la façon de calculer, 
 nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
+Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une courbe n'y serait lue
+qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
+`coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
+
 - **acceptent déjà une courbe** : 43
 - **restent à faire** : 14 composants, 30 couples composant / famille
+- **dont le cœur travaille par trames** : 2
 - **écartés** : 49, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -38,7 +43,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
 - Réverbération hachée `reverbe-hachee` : Seuil
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil
+- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
 ### espace · 3
 
@@ -48,7 +53,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 
 ### frequence · 3
 
-- Réduction de bruit `reduction-bruit` : Q
+- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 - Ring modulator `ring-modulator` : Fréquence
 - Vocoder `vocoder` : Q
 
@@ -56,7 +61,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 
 - Brassage `brassage` : Transposition
 - Granular freeze `granular-freeze` : Pitch
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition
+- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
 ### retroaction · 2
 
@@ -65,7 +70,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 
 ### niveau · 1
 
-- Réduction de bruit `reduction-bruit` : Réduction
+- Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 
 ## Familles écartées en bloc
 

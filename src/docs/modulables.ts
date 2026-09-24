@@ -170,7 +170,19 @@ export function dejaModulables(fiches: readonly FicheAudio[]): { id: string; cib
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function recensementEnTexte(fiches: readonly FicheAudio[]): string {
+/**
+ * Pour un composant, les cœurs par trames qu'il emploie : le nom, et ce qui l'a décidé.
+ *
+ * LE RECENSEMENT LIT LES NOMS DES RÉGLAGES, NON LES CŒURS, et il a proposé pour cette raison quatre
+ * composants qu'une règle déjà posée écartait. Cette information vient de `coeurs-par-trames.ts`, qui
+ * lit la source ; elle est passée en argument plutôt que calculée ici, pour que ce fichier reste
+ * lisible depuis n'importe où et n'ait pas besoin du système de fichiers.
+ */
+export type CoeursParTrames = ReadonlyMap<string, readonly { nom: string; marqueur: string }[]>;
+
+export function recensementEnTexte(
+  fiches: readonly FicheAudio[], parTrames: CoeursParTrames = new Map(),
+): string {
   const restants = cibles(fiches);
   const deja = dejaModulables(fiches);
   const composants = new Set(restants.map((c) => c.id));
@@ -189,16 +201,25 @@ export function recensementEnTexte(fiches: readonly FicheAudio[]): string {
     "nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur",
     "raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.",
     "",
+    "Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une courbe n'y serait lue",
+    "qu'une fois par trame, non par échantillon. La marque est relevée sur la source par",
+    "`coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.",
+    "",
     `- **acceptent déjà une courbe** : ${deja.length}`,
     `- **restent à faire** : ${composants.size} composants, ${restants.length} couples composant / famille`,
+    `- **dont le cœur travaille par trames** : ${[...composants].filter((id) => parTrames.has(id)).length}`,
     `- **écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
     "",
     "## Ce qui reste, par famille",
     "",
   ];
+  const marque = (id: string): string => {
+    const v = parTrames.get(id);
+    return v ? ` · **⟨trames⟩** ${v.map((x) => `${x.nom} (${x.marqueur})`).join(", ")}` : "";
+  };
   for (const [famille, liste] of familles) {
     lignes.push(`### ${famille} · ${liste.length}`, "");
-    for (const c of liste) lignes.push(`- ${c.nom} \`${c.id}\` : ${c.reglages.join(", ")}`);
+    for (const c of liste) lignes.push(`- ${c.nom} \`${c.id}\` : ${c.reglages.join(", ")}${marque(c.id)}`);
     lignes.push("");
   }
   lignes.push("## Familles écartées en bloc", "");

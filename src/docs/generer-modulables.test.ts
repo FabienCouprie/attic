@@ -10,14 +10,17 @@ import { describe, expect, it } from "vitest";
 
 import { toutesLesFiches } from "../plugins";
 import { FAMILLES_EFFETS } from "../plugins/familles-palette";
+import { coeursParTrames } from "./coeurs-par-trames";
 import { CATEGORIES_ECARTEES, ECARTES, cibles, dejaModulables, idsEcartes, recensementEnTexte } from "./modulables";
 
+const RACINE = resolve(__dirname, "../..");
 const CHEMIN = resolve(__dirname, "../..", "MODULABLES.md");
 const ecrire = process.env.ECRIRE_MODULABLES === "1";
 
 describe("le recensement des effets à rendre modulables", () => {
   it("il est à jour", () => {
-    const texte = recensementEnTexte(toutesLesFiches);
+    const texte = recensementEnTexte(
+      toutesLesFiches, coeursParTrames(RACINE, toutesLesFiches.map((f) => f.id)));
     if (ecrire) { writeFileSync(CHEMIN, texte, "utf8"); return; }
     expect(existsSync(CHEMIN),
       "MODULABLES.md est absent : lancez « npm run docs:modulables »").toBe(true);
