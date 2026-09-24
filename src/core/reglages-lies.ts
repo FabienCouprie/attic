@@ -20,8 +20,17 @@
 // des deux ne profiterait pas à l'autre : c'est exactement la modification incomplète qu'on cherche
 // à rendre impossible. Elle est donc pure, testable, et appelée par les deux.
 
-/** Le nombre de pas par seconde qui rend une suite visible ; les oscillateurs, eux, sont lents. */
-export const FREQUENCE_PAS_PAR_SECONDE = 8;
+/**
+ * Le nombre de pas par seconde qui rend une suite lisible.
+ *
+ * DEUX, ET NON HUIT. Le premier essai posait huit pas par seconde, ce qui corrigeait bien le défaut
+ * de départ, cinq paliers sur dix secondes, mais en créait un autre : quatre-vingts marches tracées
+ * sur deux cents pixels donnent deux pixels et demi chacune, et l'aperçu devient une palissade où
+ * aucune structure ne se lit. À deux pas par seconde, la suite compte vingt paliers sur dix
+ * secondes, et sa signature se voit : des valeurs groupées dans le haut, coupées de chutes brusques
+ * vers le bas, ce qui est la forme de la suite logistique au voisinage de r = 3,9.
+ */
+export const FREQUENCE_PAS_PAR_SECONDE = 2;
 export const FREQUENCE_CYCLES_PAR_SECONDE = 0.5;
 
 /** Les formes du composant « Courbe » dont la fréquence compte des PAS et non des cycles. */

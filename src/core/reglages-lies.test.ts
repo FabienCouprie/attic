@@ -1,13 +1,17 @@
 // core/reglages-lies.test.ts — La liaison ajuste ce qui n'a pas été choisi, et rien d'autre.
 //
 // CE QUI EST TENU :
-//   1. PASSER À LA LOGISTIQUE PORTE LA FRÉQUENCE À HUIT PAS PAR SECONDE. C'est le défaut qui
-//      manquait : à 0,5, la suite ne donnait que cinq paliers sur dix secondes.
+//   1. PASSER À LA LOGISTIQUE PORTE LA FRÉQUENCE À LA CADENCE DES PAS. À 0,5, la suite ne donnait
+//      que cinq paliers sur dix secondes, et se lisait comme un escalier arbitraire.
+//   5. LA CADENCE NATURELLE SE JUGE AU NOMBRE DE PALIERS, et la fourchette est tenue ici : c'est la
+//      seule façon d'éprouver une lisibilité, et elle a déjà servi à refuser une première valeur.
 //   2. UNE VALEUR CHOISIE N'EST JAMAIS RÉÉCRITE. C'est la seule condition qui rend la liaison
 //      acceptable : qui a mis 3 Hz garde 3 Hz en changeant de forme.
 //   3. LE RETOUR À UN OSCILLATEUR REVIENT À 0,5, symétriquement.
 //   4. AUCUN AUTRE COMPOSANT, ET AUCUN AUTRE RÉGLAGE, n'est touché.
 import { describe, expect, it } from "vitest";
+
+import { engendrer } from "../audio/courbe";
 
 import {
   FREQUENCE_CYCLES_PAR_SECONDE, FREQUENCE_PAS_PAR_SECONDE, reglagesApresChangement,
@@ -59,6 +63,25 @@ describe("la liaison forme / fréquence du composant Courbe", () => {
     const avant = { Forme: "sinus", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE };
     const apres = reglagesApresChangement("oscillateur", avant, "Forme", "logistique");
     expect(apres["Fréquence"]).toBe(FREQUENCE_CYCLES_PAR_SECONDE);
+  });
+
+  // LA CADENCE NATURELLE SE JUGE AU NOMBRE DE PALIERS, et non au chiffre lui-même. Trop peu, la
+  // suite ressemble à un escalier arbitraire : à un demi pas par seconde, elle n'en comptait que
+  // cinq sur dix secondes. Trop, le tracé devient une palissade : à huit, quatre-vingts paliers sur
+  // deux cents pixels donnent deux pixels et demi chacun. Ce test tient la fourchette entre les deux.
+  it("À LA CADENCE NATURELLE, la suite compte assez de paliers pour se lire, et pas trop", () => {
+    const courbe = engendrer({
+      dureeSec: 10, forme: "logistique", frequence: FREQUENCE_PAS_PAR_SECONDE,
+      r: 3.9, graine: 1, cadence: 200,
+    });
+    let paliers = 0;
+    let precedent: number | null = null;
+    for (const v of courbe.valeurs) {
+      const arrondi = Math.round(v * 1e6) / 1e6;
+      if (arrondi !== precedent) { paliers++; precedent = arrondi; }
+    }
+    expect(paliers, "trop peu : la suite se lit comme un escalier arbitraire").toBeGreaterThanOrEqual(15);
+    expect(paliers, "trop : le tracé devient une palissade").toBeLessThanOrEqual(45);
   });
 
   it("l'objet reçu n'est jamais modifié", () => {

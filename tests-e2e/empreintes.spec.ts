@@ -61,9 +61,10 @@ const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, str
   { id: "octaver" },
   { id: "changement-tonalite" },
   { id: "paulstretch" },
-  // Le generateur de courbe : une sortie de type courbe, et non audio. Il entre ici parce que son
-  // defaut de cadence logistique a echappe a tout, et que son empreinte porte le nombre de paliers.
-  { id: "generateur-courbe", parametres: { Forme: "Logistique", "Fréquence": 8 } },
+  // Le generateur de courbe : une sortie de type courbe, et non audio. Il entre ici sur la forme
+  // Logistique, dont l etiquette annoncait une courbe en S et rendait une suite chaotique. Son
+  // empreinte porte le nombre de paliers, qui distingue une courbe lisse d un escalier.
+  { id: "generateur-courbe", parametres: { Forme: "Logistique" } },
 ];
 
 interface Ligne {

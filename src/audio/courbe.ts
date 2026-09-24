@@ -238,7 +238,23 @@ export function suivre(
 
 // ── Fabriquer une courbe de toutes pièces ───────────────────────────────────────
 
-export type FormeCourbe = "sinus" | "triangle" | "carre" | "rampe" | "logistique" | "aleatoire";
+/**
+ * Les formes disponibles.
+ *
+ * DEUX OBJETS DIFFÉRENTS PORTENT LE NOM « LOGISTIQUE », et les confondre a été une faute :
+ *
+ *   `sigmoide`    la FONCTION logistique, 1/(1+e^(−k(t−t₀))), une courbe en S qui monte de zéro à
+ *                 un. C'est ce que le mot désigne pour qui trace une courbe, et c'est la forme qui
+ *                 manquait à côté de la rampe.
+ *   `logistique`  la SUITE logistique, la récurrence x → r·x·(1−x), qui n'a pas de forme mais une
+ *                 succession de valeurs, chaotique au-delà de r ≈ 3,57.
+ *
+ * L'identifiant `logistique` reste attaché à la suite : le changer ferait basculer en silence les
+ * graphes enregistrés qui l'emploient, d'une récurrence chaotique vers une courbe en S. Seule
+ * l'étiquette affichée est corrigée, et elle dit désormais « Chaos logistique ».
+ */
+export type FormeCourbe =
+  "sinus" | "triangle" | "carre" | "rampe" | "sigmoide" | "logistique" | "aleatoire";
 
 export interface OptionsGenerateur {
   dureeSec: number;
@@ -247,6 +263,10 @@ export interface OptionsGenerateur {
   frequence?: number;
   /** Paramètre r de la suite logistique. Le chaos commence vers 3,57. */
   r?: number;
+  /** Où la sigmoïde passe par un demi, en part de la durée, de 0 à 1. */
+  centre?: number;
+  /** Raideur de la sigmoïde. Basse, elle monte doucement ; haute, elle approche une marche. */
+  pente?: number;
   graine?: number;
   cadence?: number;
 }
@@ -268,6 +288,12 @@ export function engendrer(o: OptionsGenerateur): Courbe {
   let x = 0.4;
   const r = o.r ?? 3.9;
   let marche = 0.5;
+  // La sigmoïde, et de quoi la ramener exactement de zéro à un sur la durée demandée.
+  const centre = Math.min(1, Math.max(0, o.centre ?? 0.5));
+  const pente = Math.max(0.1, o.pente ?? 10);
+  const bas = 1 / (1 + Math.exp(pente * centre));
+  const haut = 1 / (1 + Math.exp(-pente * (1 - centre)));
+  const etendue = haut - bas > 1e-9 ? haut - bas : 1;
 
   for (let i = 0; i < n; i++) {
     const t = i / cadence;
@@ -277,6 +303,16 @@ export function engendrer(o: OptionsGenerateur): Courbe {
       case "triangle": v[i] = phase < 0.5 ? 2 * phase : 2 - 2 * phase; break;
       case "carre": v[i] = phase < 0.5 ? 0 : 1; break;
       case "rampe": v[i] = n > 1 ? i / (n - 1) : 0; break;
+      case "sigmoide": {
+        // La FONCTION logistique, 1/(1+e^(−k(u−u₀))), parcourue une fois sur toute la durée. Elle
+        // ne consomme pas la fréquence : comme la rampe, elle n'a qu'un seul passage.
+        const u = n > 1 ? i / (n - 1) : 0;
+        const brut = 1 / (1 + Math.exp(-pente * (u - centre)));
+        // Les bords sont ramenés à zéro et un : à pente faible, la courbe ne partirait pas de zéro
+        // et n'atteindrait pas un, et la modulation ne couvrirait pas la plage demandée.
+        v[i] = (brut - bas) / etendue;
+        break;
+      }
       case "logistique":
         // Un pas de la suite par cycle demandé, et non un par valeur : à deux cents valeurs par
         // seconde, la suite défilerait bien trop vite pour s'entendre.
