@@ -96,7 +96,7 @@ export interface PortDef {
 export interface ParametreDef {
   nom: string;
   nomEn?: string;
-  type?: "choix" | "curseur" | "texte" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
+  type?: "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
   options?: string[];
   optionsEn?: string[];
   optionIds?: string[];
@@ -114,6 +114,15 @@ export interface ParametreDef {
   docEn?: string;
   placeholder?: string;
   placeholderEn?: string;
+  /**
+   * Les extensions proposées par le sélecteur d'un paramètre `"fichier"`, sans le point.
+   *
+   * UN CHEMIN NE S'ÉCRIT PAS À LA MAIN. Un paramètre qui désigne un fichier ou un dossier porte le
+   * type `"fichier"` ou `"dossier"`, jamais `"texte"` : le champ reste saisissable, mais un bouton
+   * ouvre le dialogue du système, qui seul donne un chemin exact. Sans extensions déclarées, le
+   * dialogue accepte tout. La règle est vérifiée par `plugins/coherence-chemins.test.ts`.
+   */
+  extensions?: string[];
   hidden?: boolean;
   /**
    * Ce réglage est une borne de modulation, et nomme le paramètre qu'il encadre.

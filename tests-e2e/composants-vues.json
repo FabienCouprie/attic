@@ -180,6 +180,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "extrait-video",
+    "vue": "VueExtraitVideo",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "film-application",
     "vue": "VueFilmApplication",
     "entreeAudio": false,
@@ -261,6 +267,12 @@
     "id": "lecteur-svg",
     "vue": "VueUploadSvg + VueRenduImage",
     "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "montage-video",
+    "vue": "VueMontageVideo",
+    "entreeAudio": true,
     "entreeRequiseAutre": false
   },
   {

@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**401 composants**, dont **83** avec une vue propre et **4** sans lecteur générique.
+**402 composants**, dont **85** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -54,6 +54,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Entrée PDF | `entree-pdf` | VueUploadPdf | — | 240 × 118 | non | oui | non |
 | Enveloppe ADSR | `enveloppe-adsr` | VueADSR | — | 420 × 300 | non | oui | non |
 | Explorateur musique | `explorateur-musique` | VueExplorateur | — | 240 × 118 | non | non | non |
+| Extrait vidéo | `extrait-video` | VueExtraitVideo | — | 480 × 420 | non | oui | non |
 | Film de l'application | `film-application` | — | VueFilmApplication | 240 × 118 | non | oui | non |
 | Formule sur échantillons | `formule-echantillons` | EditeurFormule | — | 240 × 140 | non | oui | non |
 | Formule spectrale | `formule-spectrale` | EditeurFormule | — | 240 × 118 | non | oui | non |
@@ -68,6 +69,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Julia Processor | `julia-processor` | VueJuliaProcessor | — | 240 × 162 | non | oui | non |
 | Lecteur MIDI | `lecteur-midi` | VueUploadMidi + VueSoundFont | — | 240 × 140 | non | oui | non |
 | Lecteur SVG | `lecteur-svg` | VueUploadSvg + VueRenduImage | — | 320 × 320 | oui | oui | non |
+| Montage vidéo | `montage-video` | VueMontageVideo | — | 520 × 560 | non | oui | non |
 | Noms d'instruments | `noms-instruments` | VueNomsInstruments | — | 300 × 320 | non | oui | non |
 | Orchestre Csound | `orchestre-csound` | — | VueOrchestreCsound | 340 × 420 | non | oui | non |
 | Oscillateur | `oscillateur` | VueOscillo | — | 420 × 340 | non | oui | non |
@@ -292,7 +294,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Grave en mono | `mono-grave` | 240 × 118 |
 | Montage | `montage` | 240 × 448 |
 | Montage par grains | `montage-grains` | 240 × 140 |
-| Montage vidéo | `montage-video` | 240 × 228 |
 | Morphing spectral | `morphing-spectral` | 240 × 162 |
 | Mosaïquage par corpus | `mosaiquage` | 240 × 162 |
 | Écho de notes | `motif-echo-notes` | 240 × 140 |

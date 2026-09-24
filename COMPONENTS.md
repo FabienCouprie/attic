@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **401 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **402 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **401 components** in **7 categories** and **61 families**. Every na
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 68 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (3) |
+| [Other & lab](#other--lab) | 69 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (4) |
 
 ## How to read this catalog
 
@@ -160,7 +160,7 @@ Browses a project music folder and loads the chosen file as an audio source (Ele
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Path | text | `music collection` |  | Directory to scan, relative to project folder. |
+| Path | folder | `music collection` |  | Directory to scan, relative to project folder. |
 
 #### Recorder
 
@@ -9256,6 +9256,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 |---|---|
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
+| [Video Excerpt](#video-excerpt) | Keeps a portion of a film, between two frames, with its sound, and returns it as MP4. |
 | [Video Montage](#video-montage) | Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4. |
 
 #### Application Film
@@ -9293,13 +9294,31 @@ This node makes a video of the graph it sits in. It connects to nothing: it runs
 | Frames per second | choice | 30 | 24 / 30 / 60 | Video frame rate. 60 makes scrolling smoother and doubles rendering time. |
 | Settings | choice | Shown | Shown / Hidden | Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width. |
 
+#### Video Excerpt
+
+`extrait-video` · Other & lab → Video
+
+*Keeps a portion of a film, between two frames, with its sound, and returns it as MP4.*
+
+This node keeps a portion of a film and returns that portion as MP4. The film is watched inside the node, and the kept portion is drawn under it on its time axis. A playhead crosses the axis at the instant the picture shows. A click on the axis moves the film to that instant; both edges of the portion are dragged with the mouse. The « Start here » and « End here » buttons set a bound at the instant where the film is stopped. The node is resized by its edges. « Path » names the film's file. The « … » button opens the system selector, and the field also accepts a typed path. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. « Start frame » and « End frame » bound the portion, at the frame rate the film declares. An end that does not exceed the start means the end of the film: both bounds at zero therefore keep the whole film. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. An intermediate frame cannot be decoded without the frames it depends on, so the file also carries the frames from the preceding key frame up to the requested start; they hold negative timestamps, and playback starts at the requested frame. The file is therefore a little heavier than the portion alone. The node's message gives the duration produced beside the requested one. The film's sound is kept over the portion, copied as well, without being re-encoded. A sound that an MP4 file does not accept as it is gets discarded rather than re-encoded, and the node's message says so with its reason. The output is an MP4 file. The « Save the excerpt » button, under the axis, writes it to disk; until it is saved, the file exists only in memory.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Video | file |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | fichier | — |  | The film's file, chosen with the « … » button or typed. Containers read: MP4, MOV, WebM, MKV, M4V. |
+| Start frame | number | 0 | 0 – 2000000, step 1 | First frame kept, at the frame rate the film declares. |
+| End frame | number | 0 | 0 – 2000000, step 1 | Last frame kept. A value that does not exceed the start means the end of the film. |
+
 #### Video Montage
 
 `montage-video` · Other & lab → Video
 
 *Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4.*
 
-This node takes a film, adds sounds to it and returns an MP4. « Path » names the file. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. Each track has four settings: the frame at which it starts, its level, its fade in and its fade out. They only appear for connected tracks. Starts are counted in frames, at the frame rate the film declares. A frame is not a thirtieth of a second: at 29.97 frames per second, frame one thousand falls at 33.3667 s, and the gap against a calculation at thirty reaches one second after ten minutes. « Film level » sets the original sound, which is kept and mixed with the tracks. At minus sixty decibels it falls silent. The length of the produced file is the film's. A sound running past the end is cut with a fade. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The output is an MP4 file whose sound is AAC. The node states the memory it has held: the film, its decoded sound and the mix add up, and a long film with six long tracks runs into hundreds of megabytes.
+This node takes a film, adds sounds to it and returns an MP4. The film is watched inside the node, and the tracks are laid under it on its time axis. A playhead crosses the bands at the instant the picture shows. A click on the bands moves the film to that instant; a band dragged with the mouse changes its « Frame n » setting. The node is resized by its edges, and the view follows its size. A connected track gets a band as soon as it is connected, and its waveform appears there after a run; a disconnected track loses its own at once. After that run, the tracks are heard over the film as it plays, each at its own instant, at its own level and with its fades. The film's own sound is heard with them, at the level « Film level » gives it; a positive level is heard there at zero decibels, and at its value in the produced file. « Path » names the film's file. The « … » button opens the system selector, and the field also accepts a typed path. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. Each track has four settings: the frame at which it starts, its level, its fade in and its fade out. They only appear for connected tracks. Starts are counted in frames, at the frame rate the film declares. A frame is not a thirtieth of a second: at 29.97 frames per second, frame one thousand falls at 33.3667 s, and the gap against a calculation at thirty reaches one second after ten minutes. « Film level » sets the original sound, which is kept and mixed with the tracks. At minus sixty decibels it falls silent. The length of the produced file is the film's. A sound running past the end is cut with a fade. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The output is an MP4 file whose sound is AAC. The « Save the scored film » button, under the tracks, writes it to disk; until it is saved, the file exists only in memory. The film's file is read by ranges, without being loaded whole. The node states the memory it has held: the film's decoded sound, the mix and the produced file add up.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9313,7 +9332,7 @@ This node takes a film, adds sounds to it and returns an MP4. « Path » names t
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Path | text | — |  | Path of the film. Containers read: MP4, MOV, WebM, MKV, M4V. |
+| Path | fichier | — |  | The film's file, chosen with the « … » button or typed. Containers read: MP4, MOV, WebM, MKV, M4V. |
 | Film level | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of the film's own sound, kept and mixed with the tracks. At −60 dB it falls silent. |
 | Frame 1 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 1 starts. |
 | Gain 1 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 1. |

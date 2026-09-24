@@ -131,7 +131,7 @@ const aCourbe = (f: FicheAudio) =>
   ((f as any).entrees ?? []).some((p: any) => p.type === "courbe");
 
 const estContinu = (p: any) =>
-  p.type !== "choix" && p.type !== "texte" && p.type !== "dossier"
+  p.type !== "choix" && p.type !== "texte" && p.type !== "dossier" && p.type !== "fichier"
   && p.type !== "couleurs" && p.type !== "sf2instrument";
 
 /** Ce qui reste à faire : un effet audio vers audio, sans entrée courbe, non écarté. */

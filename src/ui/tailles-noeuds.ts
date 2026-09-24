@@ -62,6 +62,11 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   if (def.id === "lecteur-analyse") return { width: 380, height: 300 };
   if (def.id === "classificateur-genre") return { width: 380, height: 300 };
   if (def.id === "multi-reservoirs") return { width: 280, height: 540 };
+  // Le film en haut, six bandes dessous : un nœud étroit ne montrerait ni l'un ni les autres. Il se
+  // redimensionne ensuite, la vue suivant sa boîte.
+  if (def.id === "montage-video") return { width: 520, height: 560 };
+  // Une seule bande sous l'image, donc moins haut que le montage.
+  if (def.id === "extrait-video") return { width: 480, height: 420 };
   // Nodes standard : largeur fixe, hauteur = contenu réel (en-tête + ports + statut)
   void nbParams; void w;
   return { width: 240, height: nbPorts * 22 + 96 };

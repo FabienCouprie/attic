@@ -98,10 +98,23 @@ Defined in [`src/core/types.ts`](src/core/types.ts).
 | *(omitted)* + `plage` | slider | `plage: [min,max]`, `pas`, `unite` |
 | `"choix"` | dropdown menu | `options: string[]` |
 | `"texte"` | text field | — |
-| `"dossier"` | folder selector (Electron) | — |
+| `"fichier"` | text field **+ system file selector** | `extensions: string[]` (no leading dot) |
+| `"dossier"` | text field **+ system folder selector** | — |
 
 The `defaut` (number or string) is applied at node creation. `doc`/`docEn`
 feed the parameter's "?" tooltip (otherwise falls back to `DOCS_PARAM`).
+
+**A path is never typed by hand.** A parameter that designates an existing file
+takes `type: "fichier"`, one that designates a folder takes `type: "dossier"`;
+`"texte"` is for neither. Both keep the field editable — a relative path, or one
+pasted from elsewhere — and add a `…` button that opens the system dialog, which
+is the only source of an exact path. A hand-typed path is wrong for one capital,
+one accent, one reversed separator or one extra space, and the node then fails on
+a file that exists. `extensions` feeds the dialog's filter, without the dot
+(`["mp4", "mov"]`). Two exceptions: a **hidden** parameter written by the program
+to remember a loaded file, and the **name of a file the node will create**, which
+no open dialog can designate. The rule is enforced by
+[`plugins/coherence-chemins.test.ts`](src/plugins/coherence-chemins.test.ts).
 
 ---
 
