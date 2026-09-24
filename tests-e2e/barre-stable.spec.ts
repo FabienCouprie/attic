@@ -24,8 +24,11 @@ test("la barre d'outils ne bouge pas d'un pixel au changement de langue", async 
   await page.goto(devUrl);
   await page.waitForSelector(".attic-barre-outils", { timeout: 15000 });
 
+  // LES DEUX BARRES, et non la seule du haut : celle des méta-composants portait le même défaut,
+  // « Rename » contre « Renommer ». Une règle qui ne vaudrait que pour une barre en laisserait
+  // passer une autre.
   const releve = () => page.evaluate((): Boite[] =>
-    [...document.querySelectorAll(".attic-barre-outils *")].map((e) => {
+    [...document.querySelectorAll(".attic-barre-outils *, .attic-meta-actions *")].map((e) => {
       const r = e.getBoundingClientRect();
       return { x: r.x, y: r.y, w: r.width, h: r.height };
     }));

@@ -404,7 +404,10 @@ const DICO: Record<string, Record<Langue, string>> = {
   "modeles.extraction": { fr: "Extraction de « {__VAR_0__} »…", en: "Extracting « {__VAR_0__} »…" },
   "modeles.erreur": { fr: "Échec du téléchargement : {__VAR_0__}. Cliquez pour reprendre.", en: "Download failed: {__VAR_0__}. Click to resume." },
   "maj.erreur": { fr: "Erreur de mise à jour", en: "Update error" },
-  "meta.grouper": { fr: "Grouper", en: "Group" },
+  // « Grouper en outil », et non « Grouper » : depuis que les bulles replient le schéma sans rien
+  // ranger au catalogue, le mot seul ne disait plus lequel des deux gestes on demandait. Celui-ci
+  // fabrique un outil réutilisable ; l'autre, une bulle, est au clic droit.
+  "meta.grouper": { fr: "Grouper en outil", en: "Group into tool" },
   "meta.grouperTitle": { fr: "Regrouper les composants sélectionnés en un méta-composant", en: "Group selected nodes into a meta-component" },
   "meta.degrouper": { fr: "Dégrouper", en: "Ungroup" },
   "meta.degrouperTitle": { fr: "Dégrouper le méta-composant sélectionné", en: "Ungroup the selected meta-component" },

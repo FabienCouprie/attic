@@ -430,6 +430,13 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-btn); border: 1px solid var(--border-divider);
   color: var(--text-secondary); border-radius: 6px; padding: 5px 10px;
   font-size: 12px; cursor: pointer;
+  /* MÊME PLANCHER POUR TOUS, POUR LA MÊME RAISON QUE LA BARRE DU HAUT. Ces libellés sont traduits, et
+     un bouton se dimensionne sur son texte : « Rename » contre « Renommer », « Ungroup » contre
+     « Dégrouper », les trois se décalaient de sept à dix-huit pixels au changement de langue. Le
+     plancher tient le plus large des six, « ⊟ Grouper en outil », mesuré à 123,4 px. Une largeur
+     commune plutôt qu'une par bouton : trois boutons de même taille se lisent mieux qu'un alignement
+     qui dépend de la langue. Vérifié par `tests-e2e/barre-stable.spec.ts`. */
+  min-width: 124px;
 }
 .attic-meta-actions button:hover { background: var(--bg-btn-hover); color: var(--text-title); }
 
