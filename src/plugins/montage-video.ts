@@ -76,13 +76,16 @@ export const fiches: FicheAudio[] = ([
             : "Conteneur non lu. Le WMV et l'AVI n'ont pas de décodeur ici ; convertissez en MP4, MOV, WebM ou MKV.",
         };
       }
+      // `lireBinaire` existait déjà : elle rend les octets et le nom, sans fabriquer d'adresse
+      // `data:` comme le fait la lecture audio — ce qui, pour une vidéo de 72 Mo, aurait recopié
+      // 96 Mo de base64 dont personne n'a l'usage.
       const api = (window as any).api;
-      if (!api?.lireFichierBinaire) {
+      if (!api?.lireBinaire) {
         return { valeurs: [null], erreur: true, message: en() ? "Requires the desktop application." : "Nécessite l'application de bureau." };
       }
-      const lu = await api.lireFichierBinaire(chemin);
-      if (!lu || lu.erreur) {
-        return { valeurs: [null], erreur: true, message: `${en() ? "Unreadable file" : "Fichier illisible"} : ${lu?.erreur ?? chemin}` };
+      const lu = await api.lireBinaire(chemin);
+      if (!lu?.donnees) {
+        return { valeurs: [null], erreur: true, message: `${en() ? "Unreadable file" : "Fichier illisible"} : ${chemin}` };
       }
       const octets = lu.donnees instanceof ArrayBuffer
         ? lu.donnees
