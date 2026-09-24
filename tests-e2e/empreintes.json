@@ -41,7 +41,7 @@
     "correction-hauteur": {
       "empreintes": [
         "0.269832396/0.529635847",
-        null
+        "courbe 0.499479878/0.503846884 · 300 valeurs · 299 paliers"
       ],
       "message": "écart moyen corrigé 0 cents · 99 % des trames"
     },
@@ -53,9 +53,9 @@
     },
     "suiveur-hauteur": {
       "empreintes": [
-        null,
+        "courbe 0.400022472/0.400869310 · 300 valeurs · 294 paliers",
         "0.269865992/0.528780282",
-        null
+        "courbe 0.995528251/1.000000000 · 300 valeurs · 5 paliers"
       ],
       "message": "300 trames · 99 % voisé · médiane 220.0 Hz"
     },
@@ -101,6 +101,12 @@
         "0.203754738/0.707945764"
       ],
       "message": null
+    },
+    "generateur-courbe": {
+      "empreintes": [
+        "courbe 0.676148797/0.973603904 · 2000 valeurs · 80 paliers"
+      ],
+      "message": "2000 valeurs · 10.0 s"
     }
   }
 }

@@ -61,6 +61,9 @@ const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, str
   { id: "octaver" },
   { id: "changement-tonalite" },
   { id: "paulstretch" },
+  // Le generateur de courbe : une sortie de type courbe, et non audio. Il entre ici parce que son
+  // defaut de cadence logistique a echappe a tout, et que son empreinte porte le nombre de paliers.
+  { id: "generateur-courbe", parametres: { Forme: "Logistique", "Fréquence": 8 } },
 ];
 
 interface Ligne {
@@ -99,7 +102,8 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
     expect(m.erreur, `${s.id} a échoué : ${m.erreur}`).toBeNull();
     // Une sortie audio est exigée : un composant qui n'en rend plus est un changement en soi, et
     // sans cette garde il passerait pour « conforme » avec une liste d'empreintes vide.
-    expect(m.empreintes.some((e) => e !== null), `${s.id} ne rend aucune sortie audio`).toBe(true);
+    expect(m.empreintes.some((e) => e !== null),
+      `${s.id} ne rend aucune sortie dont on sache prendre l'empreinte`).toBe(true);
 
     const ligne: Ligne = { empreintes: m.empreintes, message: messageComparable(m.message) };
     obtenues[s.id] = ligne;

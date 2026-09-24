@@ -1,5 +1,6 @@
 // ui/App.tsx — Application principale
 import { useRealisateurDemo } from "./demo/useRealisateurDemo";
+import { reglagesApresChangement } from "../core/reglages-lies";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
@@ -622,7 +623,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     onChangerEnregistrement: (nid: string, blob: Blob) => { cacheExec.current.delete(nid); const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); reinitialiserNoeud(nid); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       cacheExec.current.delete(nid);
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
+      // Les liaisons entre réglages passent par `reglagesApresChangement`, et non par ce point
+      // d'appel : il y en a deux dans ce fichier, et une règle écrite ici ne servirait qu'à l'un.
+      setNodes((nds2) => nds2.map((n) => n.id === nid
+        ? { ...n, data: { ...n.data, parametres: reglagesApresChangement(
+            String(n.data.ficheId), n.data.parametres, nom, val) } }
+        : n));
       reinitialiserNoeud(nid);
     },
     // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
@@ -1190,11 +1196,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         onChangerParametre={(nom, val) => {
           if (!sel) return;
           cacheExec.current.delete(sel.id);
+          // Même règle que l'autre point d'appel, et la même fonction : l'inspecteur doit voir
+          // exactement ce que le nœud reçoit, sans quoi un réglage ajusté n'apparaîtrait pas.
+          const suite = reglagesApresChangement(String(sel.data.ficheId), sel.data.parametres, nom, val);
           setNodes((nds) => nds.map((n) => {
             if (n.id !== sel.id) return n;
-            return { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } };
+            return { ...n, data: { ...n.data, parametres: suite } };
           }));
-          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: { ...prev.data.parametres, [nom]: val } } } : null);
+          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: suite } } : null);
           reinitialiserNoeud(sel.id);
         }}
         onChargerFichier={(key, fichier) => {

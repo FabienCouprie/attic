@@ -145,17 +145,35 @@ export async function mesurerComposant(
     }
 
     const empreintes = ((resultat && resultat.valeurs) || []).map((v: any) => {
-      if (!(v instanceof AudioBuffer)) return null;
-      let somme = 0, crete = 0;
-      for (let c = 0; c < v.numberOfChannels; c++) {
-        const d = v.getChannelData(c);
+      if (v instanceof AudioBuffer) {
+        let somme = 0, crete = 0;
+        for (let c = 0; c < v.numberOfChannels; c++) {
+          const d = v.getChannelData(c);
+          for (let i = 0; i < d.length; i++) {
+            somme += d[i] * d[i];
+            crete = Math.max(crete, Math.abs(d[i]));
+          }
+        }
+        const rms = Math.sqrt(somme / (v.length * v.numberOfChannels));
+        return `${rms.toFixed(9)}/${crete.toFixed(9)}`;
+      }
+      // UNE COURBE SE SURVEILLE AUSSI, et le défaut de la suite logistique l'a montré : elle ne
+      // portait que cinq paliers là où l'on en attend des dizaines, et aucune empreinte ne l'aurait
+      // dit. Le nombre de PALIERS est donc relevé en plus du niveau : c'est lui qui distingue une
+      // suite d'un escalier, à valeur efficace presque égale.
+      if (v && ArrayBuffer.isView(v.valeurs) && typeof v.cadence === "number") {
+        const d = v.valeurs as Float32Array;
+        let somme = 0, crete = 0, paliers = 0, prec: number | null = null;
         for (let i = 0; i < d.length; i++) {
           somme += d[i] * d[i];
           crete = Math.max(crete, Math.abs(d[i]));
+          const arrondi = Math.round(d[i] * 1e6) / 1e6;
+          if (arrondi !== prec) { paliers++; prec = arrondi; }
         }
+        const rms = d.length ? Math.sqrt(somme / d.length) : 0;
+        return `courbe ${rms.toFixed(9)}/${crete.toFixed(9)} · ${d.length} valeurs · ${paliers} paliers`;
       }
-      const rms = Math.sqrt(somme / (v.length * v.numberOfChannels));
-      return `${rms.toFixed(9)}/${crete.toFixed(9)}`;
+      return null;
     });
 
     return {
