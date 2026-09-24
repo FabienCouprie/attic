@@ -14,7 +14,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 - **L'HARMONIZER SORT DU FIL, ET LA FABRIQUE D'EFFETS SAIT MAINTENANT LE FAIRE.** Le gel passe d'un blocage total de 577 ms à **3 ms**, pour un son identique, RMS 0,292976511 et crête 0,686969876 avant comme après. La fabrique `effet()`, qui engendre une bonne partie du catalogue, accepte désormais un descripteur facultatif : le calcul par voie et de quoi fabriquer son worker. Les autres effets ne changent pas, et ceux dont le calcul est pur pourront suivre sans remue-ménage.
-- **LE VOICE CHANGER NE RELÈVE PAS DE CE REMÈDE, et la mesure le dit.** Son préréglage par défaut coûte dans `shiftFormants`, du JavaScript pur, mais d'autres préréglages enchaînent des étapes rendues par `OfflineAudioContext`, que l'on ne peut pas transporter. Son cas est donc mixte : il dépend du préréglage choisi, et sera traité par la respiration plutôt que par un worker.
+- **LE VOICE CHANGER SORT DU FIL SUR SES SEPT PRÉRÉGLAGES, EN N'EN DÉPLAÇANT QU'UNE ÉTAPE.** Son cas était mixte : Robot et Phone enchaînent des étapes rendues par `OfflineAudioContext`, qu'un worker ne peut pas accueillir. Mais **ces étapes ne figeaient rien**, le rendu ayant lieu hors du fil principal ; le seul coût qui bloquait était le décalage de formants, du JavaScript pur. C'est donc le seul qui a été déplacé.
+
+| préréglage | avant | après |
+|---|---|---|
+| Chipmunk | 646 ms, 0 message | 745 ms, gel 12 ms |
+| Monster | 430 ms, 0 message | 516 ms, gel 1 ms |
+| Robot | 275 ms, 0 message | 321 ms, gel 5 ms |
+| Phone | 14 ms, gel 9 ms | 9 ms, gel 0 ms |
+
+- **Les quatre empreintes mesurées sont identiques**, 0,256350379, 0,294317133, 0,134896893 et 0,098037385 de RMS avant comme après.
+- **Le décalage de formants est injecté et non importé** : `audio/voice-changer.ts` le reçoit en argument, ce qui laisse la couche de calcul libre de tout import de prise. C'est le même procédé que le transposeur du shimmer, et pour la même raison : une fonction ne traverse pas un worker, elle est choisie du bon côté du fil.
 - **LE VERROU QUI RETENAIT TROIS COMPOSANTS EST LEVÉ, ET IL TENAIT À UN RÉCIPIENT.** `etirerDuree` et `reechantillonnerVers`, dans `audio/commun.ts`, sont des mathématiques pures par canal où `AudioBuffer` ne servait que de récipient ; or c'est lui qui interdisait à tout ce qui en dépend de quitter le fil de l'interface. Elles ont désormais un cœur par voie sur `Float32Array`, les fonctions d'origine devenant de minces enveloppes. `changerTonalite` en hérite, et `transposerAvecDuree` cesse d'envelopper un tableau dans un `AudioBuffer` pour le seul plaisir de le déballer : c'était **le seul emploi du Web Audio de tout `reverbes-etendues.ts`**.
 - **L'IDENTITÉ DU SON EST VÉRIFIÉE SUR SIX COMPOSANTS, dont quatre que je n'ai pas migrés** et qui passent toujours par les enveloppes : shimmer, suiveur de hauteur, harmonizer, voice changer, changement de tonalité et octaver rendent la même empreinte à la neuvième décimale, avant et après. Le corps des boucles est déplacé sans qu'une opération change, et c'est ce que la mesure confirme au lieu de le supposer.
 - **SHIMMER ET LE SUIVEUR DE HAUTEUR SORTENT DU FIL.** Shimmer passe d'un gel total de 1 594 ms à **11 ms**, le suiveur de 311 ms à **1 ms**. Le suiveur le méritait plus que son temps ne le disait : sa notice annonce environ 112 ms de calcul par seconde de son, donc une vingtaine de secondes de gel sur une prise de trois minutes.

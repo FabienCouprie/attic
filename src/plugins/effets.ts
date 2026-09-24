@@ -54,6 +54,7 @@ import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/t
 import { quadrafuzz } from "../audio/quadrafuzz";
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 import { parCanal } from "./hors-fil";
+import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
@@ -1846,7 +1847,11 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const effet = ctx.paramTexte("Effet", "Chipmunk");
-      return { valeurs: [await appliquerVoiceChanger(a, effet)], message: `Voice Changer · ${effet}` };
+      // Le décalage de formants, seule étape qui figeait, est calculé hors du fil.
+      return {
+        valeurs: [await appliquerVoiceChanger(a, effet, decalerFormantsHorsFil)],
+        message: `Voice Changer · ${effet}`,
+      };
    },
   },
   {
