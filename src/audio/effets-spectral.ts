@@ -1,5 +1,7 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
-import { etirerDuree, reechantillonnerVers, creerFenetreHann } from "./commun";
+import {
+  etirerDuree, etirerDureeVoie, reechantillonnerVers, reechantillonnerVoie, creerFenetreHann,
+} from "./commun";
 import { CADENCE, estCourbe, progressionPour, valeursParametre } from "./courbe";
 import { cyclesAccumules, formeLfo, frequencesModulees, type BornesFrequence } from "./lfo";
 
@@ -13,10 +15,29 @@ export function changerTempo(buffer: AudioBuffer, vitessePct: number, fenetreMs?
 
 
 
-export function changerTonalite(buffer: AudioBuffer, demiTons: number): AudioBuffer {
+/**
+ * Le changement de tonalité d'UNE voie, sans `AudioBuffer`.
+ *
+ * Étirer puis rééchantillonner du même rapport : la durée revient à sa valeur et la hauteur a bougé.
+ * Ce cœur existe pour que les composants qui en dépendent puissent quitter le fil de l'interface,
+ * `AudioBuffer` n'existant pas dans un worker. Les opérations sont celles de `changerTonalite`, sans
+ * changement.
+ */
+export function changerTonaliteVoie(x: Float32Array, demiTons: number): Float32Array {
   const ratio = Math.pow(2, demiTons / 12);
-  const etire = etirerDuree(buffer, ratio);
-  return reechantillonnerVers(etire, ratio, buffer.length);
+  return reechantillonnerVoie(etirerDureeVoie(x, ratio), ratio, x.length);
+}
+
+export function changerTonalite(buffer: AudioBuffer, demiTons: number): AudioBuffer {
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    resultat.getChannelData(c).set(changerTonaliteVoie(buffer.getChannelData(c), demiTons));
+  }
+  return resultat;
 }
 
 // Glissando de tonalité : la hauteur évolue continuellement entre deux valeurs

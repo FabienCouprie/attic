@@ -286,6 +286,22 @@ function decoder(
  * millisecondes par seconde de son. La cadence est donc un réglage qui compte, et pas seulement
  * une finesse d'affichage.
  */
+export interface OptionsVoieHauteur extends OptionsHauteur {
+  sampleRate: number;
+}
+
+/**
+ * Le suivi d'une voie, réglages et fréquence d'échantillonnage rassemblés.
+ *
+ * POURQUOI CETTE ENVELOPPE. Le calcul tourne dans un worker, et ce qui traverse un worker doit être
+ * une fonction NOMMÉE : une fermeture qui capturerait `sampleRate` ne peut pas y être transportée.
+ * Elle donne donc à `suivreHauteur` la forme que le socle attend, un tableau et un objet de
+ * réglages, sans rien changer au calcul.
+ */
+export function suivreVoie(x: Float32Array, o: OptionsVoieHauteur): SuiviHauteur {
+  return suivreHauteur(x, o.sampleRate, o);
+}
+
 export function suivreHauteur(
   x: Float32Array, sampleRate: number, o: OptionsHauteur = {},
 ): SuiviHauteur {

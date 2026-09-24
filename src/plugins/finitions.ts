@@ -7,7 +7,11 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { reverberationHachee, shimmer, transposerAvecDuree } from "../audio/reverbes-etendues";
+import {
+  reverberationHachee, shimmerVoie,
+  type OptionsVoieShimmer, type ResultatShimmer,
+} from "../audio/reverbes-etendues";
+import { parCanal } from "./hors-fil";
 import { appliquerRognage, planRognage } from "../audio/silences";
 import { fusionnerStereo } from "../audio/effets-montage";
 
@@ -105,16 +109,17 @@ export const fiches: FicheAudio[] = ([
         melange: ctx.paramNombre("Mix", 50) / 100,
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,
-        // La transposition du catalogue garde la durée, là où celle de secours raccourcit.
-        transposer: transposerAvecDuree,
       };
       const out = new AudioBuffer({ numberOfChannels: e.numberOfChannels, length: e.length, sampleRate: e.sampleRate });
-      let premier = null as null | ReturnType<typeof shimmer>;
-      for (let c = 0; c < e.numberOfChannels; c++) {
-        const r = shimmer(e.getChannelData(c), o);
-        if (!premier) premier = r;
-        out.getChannelData(c).set(r.audio);
-      }
+      // La transposition du catalogue, qui garde la durée, est choisie par `shimmerVoie` : une
+      // fonction ne peut pas traverser un worker, elle est donc désignée du bon côté du fil.
+      const voies = Array.from({ length: e.numberOfChannels }, (_, c) => e.getChannelData(c));
+      const parVoie = await parCanal<OptionsVoieShimmer, ResultatShimmer>(voies, o, {
+        creerWorker: () => new Worker(new URL("../workers/shimmer-worker.ts", import.meta.url), { type: "module" }),
+        calcul: shimmerVoie,
+      });
+      const premier = parVoie[0];
+      for (let c = 0; c < e.numberOfChannels; c++) out.getChannelData(c).set(parVoie[c].audio);
       return {
         valeurs: [out],
         message: traduire("msg.shimmer.resume",
