@@ -8,7 +8,7 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, grapheSansConteneurs, trouverMeta,
+  aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
@@ -285,12 +285,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
     enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
+    // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
+    // traversent et en dessine des substituts vers ses poignées : ce sont des objets d'affichage, et
+    // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
+    // d'un nœud, donc invaliderait son résultat au moindre repli — or ne RIEN invalider est la
+    // propriété qui justifie de replier plutôt que d'extraire. Voir `core/bulles.ts`.
+    const aretesReelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
     const plat = aplatirGraphe(
       noeudsRef.current as unknown as NoeudG[],
-      aretesRef.current as unknown as AreteG[],
+      aretesReelles,
       trouverMeta,
     );
     // LE GRAPHE MIS À DISPOSITION DES NŒUDS QUI LE DOCUMENTENT EST CELUI QUI CALCULE : les
@@ -301,8 +307,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // porter ; voir plugins/grapheGlobal.ts et core/formes-graphe.ts.
     const aDocumenter = grapheSansConteneurs(
       noeudsRef.current as unknown as NoeudG[],
-      aretesRef.current as unknown as AreteG[],
+      aretesReelles,
       trouverMeta,
+      estBulle,
     );
     publierGrapheCourant(aDocumenter);
     for (const id of aDocumenter.conteneursRetires) {
@@ -391,7 +398,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
     // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
     // « erreur », donnant l'illusion d'un run global.
-    const idsDecoratifs = new Set(nds.filter((n: any) => n.data?.ficheId === "comment" || n.data?.ficheId === "frame").map((n: any) => n.id));
+    // Une bulle rejoint le commentaire et le cadre : elle ne calcule rien, ses membres si.
+    const idsDecoratifs = new Set(nds.filter((n: any) =>
+      n.data?.ficheId === "comment" || n.data?.ficheId === "frame" || estBulle(n.data?.ficheId),
+    ).map((n: any) => n.id));
     ordreFiltre = ordreFiltre.filter((id) => !idsDecoratifs.has(id));
     const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
 
