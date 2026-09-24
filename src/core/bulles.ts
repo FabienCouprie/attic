@@ -59,9 +59,16 @@ export const bulleDe = (n: NoeudG): string | undefined => {
   return typeof b === "string" && b ? b : undefined;
 };
 
-/** Une bulle est-elle repliée ? Une bulle sans état l'est : on la crée fermée. */
+/**
+ * Une bulle est-elle repliée ? Une bulle sans état l'est : on la crée fermée.
+ *
+ * LE CHAMP S'APPELLE `bulleOuverte` ET NON `replie`, PARCE QUE `replie` EST DÉJÀ PRIS. `data.replie`
+ * replie le CORPS d'un nœud, ce que fait le bouton « − » de son en-tête. Nommer ainsi l'état d'une
+ * bulle la faisait dessiner corps replié dès qu'elle était fermée : ses ports et son lecteur
+ * disparaissaient. Deux notions voisines, un seul nom, et le défaut ne se voit qu'à l'écran.
+ */
 export const estRepliee = (n: NoeudG): boolean =>
-  estBulle(n.data.ficheId) && (n.data as Record<string, unknown>).replie !== false;
+  estBulle(n.data.ficheId) && (n.data as Record<string, unknown>).bulleOuverte !== true;
 
 /**
  * La chaîne des bulles qui contiennent ce nœud, de la plus proche à la plus lointaine.
@@ -281,6 +288,50 @@ export function traduireConnexion(
   }
   if (source === target) return null;
   return { source, target, sourceHandle, targetHandle };
+}
+
+/**
+ * La sortie qui REPRÉSENTE une bulle, ou `null` quand aucune ne la représente à elle seule.
+ *
+ * POURQUOI PAS SIMPLEMENT LA PREMIÈRE. L'aperçu audio d'un nœud joue sa première sortie. Une bulle
+ * expose celles de tous ses membres, dans l'ordre où ils viennent : la première serait celle du
+ * premier membre venu, c'est-à-dire, le plus souvent, le DÉBUT de la chaîne repliée. C'est le défaut
+ * relevé sur l'aligneur de piste, qui proposait d'écouter son entrée.
+ *
+ * CE QUI REPRÉSENTE UNE BULLE, c'est ce qui en SORT. Si une seule sortie franchit la frontière, elle
+ * est le résultat de la bulle sans ambiguïté. Si rien n'en sort — une bulle posée en bout de chaîne —,
+ * c'est la seule sortie qui n'alimente aucun membre. Dans tous les autres cas on ne devine pas : deux
+ * sorties concurrentes n'ont pas de gagnante, et un aperçu faux vaut moins que pas d'aperçu.
+ */
+export function sortieDeBulle(
+  noeuds: readonly NoeudG[],
+  aretes: readonly AreteG[],
+  bulleId: string,
+  getDef: (ficheId: string) => DefPorts | undefined,
+  nomDe: (n: NoeudG) => string,
+): PortInterne | null {
+  const ports = portsDeBulle(noeuds, bulleId, getDef, nomDe);
+  if (ports.mapSorties.length === 0) return null;
+  const dedans = new Set(ports.mapSorties.map((m) => m.noeudInterne));
+  for (const m of ports.mapEntrees) dedans.add(m.noeudInterne);
+
+  const reelles = aretes.filter((a) => !estSubstitution(a));
+  const cle = (m: PortInterne) => `${m.noeudInterne}#${m.portIndex}`;
+  const sortantes = new Map<string, PortInterne>();
+  const alimentent = new Set<string>();
+  for (const a of reelles) {
+    const m = ports.mapSorties.find(
+      (x) => x.noeudInterne === a.source && x.portIndex === indexPort(a.sourceHandle, 0),
+    );
+    if (!m) continue;
+    alimentent.add(cle(m));
+    if (!dedans.has(a.target)) sortantes.set(cle(m), m);
+  }
+  if (sortantes.size === 1) return [...sortantes.values()][0];
+  if (sortantes.size > 1) return null;
+
+  const libres = ports.mapSorties.filter((m) => !alimentent.has(cle(m)));
+  return libres.length === 1 ? libres[0] : null;
 }
 
 /**

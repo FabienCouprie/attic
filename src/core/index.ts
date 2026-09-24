@@ -7,7 +7,7 @@ export { grapheSansConteneurs } from "./formes-graphe";
 export {
   PREFIXE_FICHE_BULLE, PREFIXE_SUBSTITUTION, ancetresBulle, appliquerRepli, bulleCachante, bulleDe,
   bullesVides, estBulle, estCacheParBulle, estRepliee, estSubstitution, ficheDeBulle,
-  membresDe, noeudDeFicheBulle, portsDeBulle, traduireConnexion,
+  membresDe, noeudDeFicheBulle, portsDeBulle, sortieDeBulle, traduireConnexion,
 } from "./bulles";
 export type { PortsBulle } from "./bulles";
 export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";

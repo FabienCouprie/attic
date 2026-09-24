@@ -8,7 +8,8 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  ancetresBulle, aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, trouverMeta,
+  ancetresBulle, aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, sortieDeBulle,
+  trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
@@ -422,6 +423,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // la remontée est une lecture directe — sans la convention d'identifiant `::` dont dépend celle des
     // méta-composants, puisque replier ne renomme rien.
     const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
+    // Les libellés des ports d'une bulle ne servent qu'à l'affichage, et ce n'est pas ce qu'on lit
+    // ici : seule la table « port de la bulle → nœud réel » compte. L'identifiant suffit donc.
+    const nomDeNoeudBulle = (x: NoeudG) => x.id;
     const bullesDuNoeud = new Map<string, string[]>();
     for (const id of ordreFiltre) bullesDuNoeud.set(id, ancetresBulle(tousNoeudsG, id));
     for (const n of noeudsRef.current) {
@@ -729,12 +733,22 @@ export function useExecutionGraphe(o: OptionsExecution) {
         if (meta && !estMetaEnScope(n.id)) return null;
         // Pour un méta-nœud, on récupère les résultats de ses nœuds internes
         // aplatis (préfixés par l'id du méta-nœud) via ses ports de sortie exposés.
+        // UNE BULLE MONTRE LE RÉSULTAT DE CE QUI EN SORT. Elle ne calcule rien, mais elle expose les
+        // sorties de tous ses membres : donner la liste entière à l'aperçu lui ferait jouer la
+        // première venue, c'est-à-dire le plus souvent le DÉBUT de la chaîne repliée. On ne lui donne
+        // donc que la sortie qui représente la bulle, et rien si aucune ne la représente à elle seule.
+        // Aucun préfixe d'identifiant ici, contrairement au méta-nœud : replier ne renomme personne.
+        const sortie = estBulle(n.data.ficheId as string)
+          ? sortieDeBulle(tousNoeudsG, aretesReelles, n.id, trouverDef, nomDeNoeudBulle)
+          : null;
         const vals = meta
           ? meta.sorties.map((_, i) => {
               const m = meta.mapSorties[i];
               return resultats.get(`${n.id}::${m.noeudInterne}`)?.[m.portIndex] ?? null;
             })
-          : resultats.get(n.id);
+          : estBulle(n.data.ficheId as string)
+            ? (sortie ? [resultats.get(sortie.noeudInterne)?.[sortie.portIndex] ?? null] : [])
+            : resultats.get(n.id);
         const defNode = trouverDef(n.data.ficheId as string);
         if ((!vals || vals.length === 0) && !messages.has(n.id)) return null;
         // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.

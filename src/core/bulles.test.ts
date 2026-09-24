@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   ancetresBulle, appliquerRepli, bulleCachante, bullesVides, estBulle, estCacheParBulle,
-  estSubstitution, ficheDeBulle, membresDe, noeudDeFicheBulle, portsDeBulle, traduireConnexion,
+  estSubstitution, ficheDeBulle, membresDe, noeudDeFicheBulle, portsDeBulle, sortieDeBulle,
+  traduireConnexion,
 } from "./bulles";
 import type { AreteG, DefPorts, NoeudG } from "./meta";
 
@@ -27,7 +28,9 @@ const noeud = (id: string, ficheId: string, bulle?: string, replie?: boolean): N
     ficheId: ficheId === BULLE ? ficheDeBulle(id) : ficheId,
     parametres: {},
     ...(bulle ? { bulle } : {}),
-    ...(replie === undefined ? {} : { replie }),
+    // Le champ porté par le nœud est `bulleOuverte` : `replie` est déjà pris par le repli du CORPS
+    // d'un nœud. Le paramètre garde ici le vocabulaire des tests.
+    ...(replie === undefined ? {} : { bulleOuverte: !replie }),
   },
 });
 const arete = (id: string, source: string, target: string, si = 0, ti = 0): AreteG =>
@@ -210,7 +213,7 @@ describe("le repli appliqué", () => {
     expect((replie.noeuds.find((n) => n.id === "g") as { hidden?: boolean }).hidden).toBe(true);
 
     const ouvert = appliquerRepli(
-      replie.noeuds.map((n) => (n.id === "b" ? { ...n, data: { ...n.data, replie: false } } : n)),
+      replie.noeuds.map((n) => (n.id === "b" ? { ...n, data: { ...n.data, bulleOuverte: true } } : n)),
       replie.aretes, getDef, nomDe,
     );
     // Décaché, explicitement : c'est nous qui l'avions caché, donc c'est à nous de le rendre.
@@ -240,6 +243,44 @@ describe("la traduction d'une connexion", () => {
     const n2 = [noeud("b", BULLE), noeud("g", "gain", "b")];
     expect(traduireConnexion(n2,
       { source: "b", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef, nomDe)).toBeNull();
+  });
+});
+
+describe("la sortie qui représente une bulle", () => {
+  const base = () => [
+    noeud("dehors", "source"),
+    noeud("b", BULLE),
+    noeud("g", "gain", "b"),
+    noeud("m", "melange", "b"),
+    noeud("apres", "gain"),
+  ];
+
+  it("c'est celle qui FRANCHIT la frontière, non la première venue", () => {
+    const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "m", "apres")];
+    // `g` est le premier membre, donc sa sortie est la première de la table : ce n'est pas elle.
+    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
+  });
+
+  it("EN BOUT DE CHAÎNE, c'est la seule sortie qui n'alimente aucun membre", () => {
+    const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m")];
+    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
+  });
+
+  it("DEUX SORTIES CONCURRENTES N'ONT PAS DE GAGNANTE : on ne devine pas", () => {
+    const aretes = [arete("e3", "m", "apres"), arete("e4", "g", "apres", 0, 0)];
+    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toBeNull();
+  });
+
+  it("une bulle sans membre ne représente rien", () => {
+    expect(sortieDeBulle([noeud("b", BULLE)], [], "b", getDef, nomDe)).toBeNull();
+  });
+
+  it("une arête de substitution ne compte pas : elle n'existe que pour l'affichage", () => {
+    const aretes = [
+      arete("e2", "g", "m"),
+      { ...arete("e3", "m", "apres"), id: "sub::e3", source: "b" } as AreteG,
+    ];
+    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
   });
 });
 

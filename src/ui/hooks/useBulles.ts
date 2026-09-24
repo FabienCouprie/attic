@@ -92,7 +92,9 @@ export function useBulles(o: OptionsBulles) {
           parametres: {},
           statut: "attente" as const,
           nom: t("bulle.nom"),
-          replie: true,
+          // Créée fermée. Le champ n'est PAS `replie`, qui replie le corps d'un nœud : voir
+          // `estRepliee` dans core/bulles.ts.
+          bulleOuverte: false,
           ...(parent ? { bulle: parent } : {}),
           ...o.callbacksNoeud(),
         },
@@ -136,7 +138,7 @@ export function useBulles(o: OptionsBulles) {
   const basculerRepli = useCallback((bulleId: string) => {
     o.pushHistorique();
     o.setNodes((nds) => nds.map((n) => (n.id === bulleId
-      ? { ...n, data: { ...n.data, replie: (n.data as { replie?: boolean }).replie === false } }
+      ? { ...n, data: { ...n.data, bulleOuverte: (n.data as { bulleOuverte?: boolean }).bulleOuverte !== true } }
       : n)));
   }, [o]);
 

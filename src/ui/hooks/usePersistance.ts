@@ -93,7 +93,7 @@ export function usePersistance(o: OptionsPersistance) {
         // repliée. Le reste — ce qui est caché, les arêtes de substitution, la fiche et ses ports —
         // est DÉRIVÉ, donc refait à l'ouverture. Voir core/bulles.ts.
         bulle: data.bulle,
-        replie: data.replie,
+        bulleOuverte: data.bulleOuverte,
       },
     }));
     // LES ARÊTES DE SUBSTITUTION NE SE SAUVEGARDENT PAS : ce sont des objets d'affichage, refaits au
@@ -110,7 +110,7 @@ export function usePersistance(o: OptionsPersistance) {
       // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
       // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
       // arêtes de substitution.
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur, bulle: n.data.bulle, replie: n.data.replie } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

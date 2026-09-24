@@ -432,7 +432,7 @@ function Atelier() {
               // Les deux champs d'une bulle. Sans eux, une session reprise rendrait un nœud de bulle
               // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
               bulle: n.data.bulle,
-              replie: n.data.replie,
+              bulleOuverte: n.data.bulleOuverte,
               onSupprimerNoeud: cbs.onSupprimerNoeud,
               onReinitialiser: cbs.onReinitialiser,
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
@@ -926,7 +926,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     const entrees: EntreeMenu[] = [];
     const bulle = noeud && estBulle((noeud.data as { ficheId?: string }).ficheId) ? noeud : undefined;
     if (bulle) {
-      const replie = (bulle.data as { replie?: boolean }).replie !== false;
+      const replie = (bulle.data as { bulleOuverte?: boolean }).bulleOuverte !== true;
       entrees.push({
         cle: "ouvrir", libelle: t(replie ? "bulle.ouvrir" : "bulle.refermer"),
         titre: t("bulle.ouvrirTitle"), action: () => basculerRepli(bulle.id),

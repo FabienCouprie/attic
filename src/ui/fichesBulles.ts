@@ -67,10 +67,9 @@ export function synchroniserFichesBulles(
       entrees: ports.entrees,
       sorties: ports.sorties,
       parametres: [],
-      // AUCUN APERÇU AUDIO : une bulle expose les ports de tous ses membres, et le lecteur générique
-      // joue la PREMIÈRE sortie audio. Ce serait celle du premier membre venu, pas le résultat de la
-      // bulle. C'est le défaut relevé sur l'aligneur de piste, évité d'avance ici.
-      sansApercuAudio: true,
+      // L'APERÇU AUDIO N'EST PAS INTERDIT, IL EST CHOISI AILLEURS. Le lecteur générique joue la
+      // PREMIÈRE sortie audio, qui serait ici celle du premier membre venu ; c'est donc l'exécuteur qui
+      // ne lui donne que la sortie représentant la bulle, celle qui en sort. Voir `sortieDeBulle`.
       // INSCRITE POUR SE DESSINER, JAMAIS POUR ÊTRE CHOISIE. `tousLesPlugins` ne la rend pas, donc la
       // palette, le quiz, le vocabulaire de génération et le gestionnaire de nodes l'ignorent tous,
       // sans qu'aucun d'eux ait eu à filtrer quoi que ce soit.
