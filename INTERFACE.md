@@ -138,7 +138,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
 | Barre modale | `barre-modale` | 240 × 118 |
 | Beat Repeat / Stutter | `beat-repeat` | 240 × 118 |
-| Bitcrusher | `bitcrusher` | 240 × 118 |
+| Bitcrusher | `bitcrusher` | 240 × 140 |
 | Groove Box | `boite-groove` | 240 × 206 |
 | Boîte à rythmes | `boite-rythmes` | 240 × 140 |
 | Début de boucle collection | `boucle-collection-debut` | 240 × 118 |

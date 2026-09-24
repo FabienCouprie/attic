@@ -102,6 +102,42 @@
       ],
       "message": null
     },
+    "reverberation": {
+      "empreintes": [
+        "0.131046675/0.402920425"
+      ],
+      "message": null
+    },
+    "delay-stereo": {
+      "empreintes": [
+        "0.149740224/0.395520091"
+      ],
+      "message": null
+    },
+    "chorus": {
+      "empreintes": [
+        "0.147754564/0.437915623"
+      ],
+      "message": null
+    },
+    "flanger": {
+      "empreintes": [
+        "0.221834505/0.528285444"
+      ],
+      "message": null
+    },
+    "ring-modulator": {
+      "empreintes": [
+        "0.190784400/0.523590028"
+      ],
+      "message": null
+    },
+    "bitcrusher": {
+      "empreintes": [
+        "0.270002222/0.529411793"
+      ],
+      "message": null
+    },
     "generateur-courbe": {
       "empreintes": [
         "courbe 0.636804686/1.000000000 · 2000 valeurs · 2000 paliers"

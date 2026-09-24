@@ -390,6 +390,20 @@ export function valeursParametre(
 }
 
 /**
+ * La valeur d'un réglage à l'échantillon `i`, qu'il soit constant ou piloté par une courbe.
+ *
+ * POURQUOI UN SEUL CHEMIN. Un effet qui accepte une modulation garde toujours son réglage fixe :
+ * sans courbe branchée, il doit rendre EXACTEMENT ce qu'il rendait. Écrire deux branches, une pour
+ * le scalaire et une pour le tableau, c'est accepter qu'elles divergent un jour. Le cœur de l'effet
+ * lit donc toujours par cette fonction, et le scalaire est le cas dégénéré du tableau.
+ *
+ * Au-delà de la fin du tableau, la dernière valeur est tenue : une courbe plus courte que le son ne
+ * doit pas le faire retomber à zéro.
+ */
+export const valeurA = (v: number | Float32Array, i: number): number =>
+  typeof v === "number" ? v : (v[i] ?? v[v.length - 1] ?? 0);
+
+/**
  * Applique un gain qui varie, échantillon par échantillon.
  *
  * Existe ici, et non dans le nœud, pour que L'INVARIANT SOIT TESTABLE : un gain constant doit

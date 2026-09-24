@@ -57,7 +57,38 @@ import { parCanal } from "./hors-fil";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
-type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
+/**
+ * Le calcul d'un effet, ses réglages passés dans l'ordre où la fiche les déclare.
+ *
+ * LES ARGUMENTS NE SONT PAS TYPÉS `number`, ET C'EST DÉLIBÉRÉ. Un effet qui accepte une modulation
+ * reçoit un `Float32Array` à la place du nombre, une valeur par échantillon. Typer la liste en
+ * `number | Float32Array` obligerait une trentaine d'effets non modulés à convertir leurs arguments
+ * un par un, pour un gain nul : la fabrique distribue déjà ses arguments par position, sans que le
+ * type les relie aux paramètres déclarés.
+ */
+type FnEffet = (audio: AudioBuffer, ...args: any[]) => Promise<AudioBuffer> | AudioBuffer;
+
+/**
+ * Le réglage qu'une courbe branchée vient piloter.
+ *
+ * L'ENTRÉE RESTE FACULTATIVE, ET C'EST LA CONDITION. Sans courbe, `valeursParametre` rend une
+ * constante à la valeur du réglage : le cœur de l'effet reçoit exactement ce qu'il recevait, et sa
+ * sortie ne bouge pas d'un chiffre. Les empreintes enregistrées avant l'ajout le vérifient.
+ *
+ * `echelle` suit la nature de la grandeur : une fréquence se parcourt en multipliant, un mélange en
+ * ajoutant.
+ */
+type ModulationEffet = {
+  /** Le nom du réglage piloté, tel qu'il apparaît à l'écran. */
+  parametre: string;
+  /** Bornes des réglages « Modulation min » et « Modulation max », dans l'unité de l'écran. */
+  bornes: [number, number];
+  /** Ce que valent le zéro et le un de la courbe. Par défaut, les bornes elles-mêmes. */
+  defauts?: [number, number];
+  echelle?: "lineaire" | "logarithmique";
+  unite?: string;
+  uniteEn?: string;
+};
 
 /**
  * De quoi faire calculer un effet hors du fil de l'interface, quand son calcul le permet.
@@ -75,22 +106,58 @@ type HorsFilEffet = {
 
 function effet(
   slug: string, nom: string, nomEn: string, resume: string, resumeEn: string,
-  parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet,
+  parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet, modulation?: ModulationEffet,
 ): FicheAudio {
+  const rangModule = modulation ? parametres.findIndex((p) => p.nom === modulation.parametre) : -1;
+  if (modulation && rangModule < 0) {
+    throw new Error(`${slug} : « ${modulation.parametre} » n'est pas un de ses réglages.`);
+  }
+  const bornesDe = (m: ModulationEffet) => [
+    { nom: "Modulation min", nomEn: "Modulation min", modulationDe: m.parametre,
+      type: "curseur" as const, plage: m.bornes, pas: 1,
+      defaut: m.defauts?.[0] ?? m.bornes[0], unite: m.unite, uniteEn: m.uniteEn,
+      doc: `Valeur de « ${m.parametre} » que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.`,
+      docEn: `Value of « ${m.parametre} » that a connected curve's zero means. With no curve, this setting does nothing.` },
+    { nom: "Modulation max", nomEn: "Modulation max", modulationDe: m.parametre,
+      type: "curseur" as const, plage: m.bornes, pas: 1,
+      defaut: m.defauts?.[1] ?? m.bornes[1], unite: m.unite, uniteEn: m.uniteEn,
+      doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
+      docEn: `Value of « ${m.parametre} » that the curve's one means.` },
+  ];
+
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: modulation
+      ? [
+        { nom: "Audio", type: "audio", sousType: "stereo" },
+        { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: modulation.parametre },
+      ]
+      : [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: parametres.map(p => ({
-      nom: p.nom, nomEn: p.nomEn, defaut: p.defaut, doc: p.doc, docEn: p.docEn,
-      unite: p.unite ?? (p.nom.includes("Mix") || p.nom === "Gain" || p.nom === "Réduction" ? "%" : undefined),
-      ...(p.plage ? { plage: p.plage } : {}),
-      ...(p.pas ? { pas: p.pas } : {}),
-    })),
+    parametres: [
+      ...parametres.map(p => ({
+        nom: p.nom, nomEn: p.nomEn, defaut: p.defaut, doc: p.doc, docEn: p.docEn,
+        unite: p.unite ?? (p.nom.includes("Mix") || p.nom === "Gain" || p.nom === "Réduction" ? "%" : undefined),
+        ...(p.plage ? { plage: p.plage } : {}),
+        ...(p.pas ? { pas: p.pas } : {}),
+      })),
+      ...(modulation ? bornesDe(modulation) : []),
+    ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const args = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
+      const args: any[] = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
+      if (modulation) {
+        // UN SEUL CHEMIN, modulé ou non : sans courbe, une constante à la valeur du réglage.
+        args[rangModule] = valeursParametre(
+          ctx.entree(1), audio.length, args[rangModule] as number,
+          {
+            min: ctx.paramNombre("Modulation min", modulation.defauts?.[0] ?? modulation.bornes[0]),
+            max: ctx.paramNombre("Modulation max", modulation.defauts?.[1] ?? modulation.bornes[1]),
+            echelle: modulation.echelle,
+          },
+        );
+      }
       if (hors) {
         const reglages: Record<string, number> = {};
         hors.cles.forEach((cle, i) => { reglages[cle] = args[i]; });
@@ -217,7 +284,9 @@ export const fiches: FicheAudio[] = ([
     [param("Bits", 8, "Bits", "", "Résolution en bits (1-16). 8 = son 8-bit rétro ; 4 = très crunch.", "Bit resolution (1-16). 8 = retro 8-bit sound; 4 = very crunchy.", [1, 16], 1),
      param("Fréquence", 22050, "Rate", "Hz", "Fréquence d'échantillonnage simulée. Plus basse = son plus cassé/aliased.", "Simulated sample rate. Lower = more broken/aliased sound.", [1000, 44100], 100),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet. 100% = effet seul.", "Dry/wet balance. 100% = effect only.")],
-    (a,bits,freq,mix) => bitcrusher(a, bits, freq, mix)),
+    (a, bits, freq, mix) => bitcrusher(a, bits, freq, mix),
+    undefined,
+    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
   effet("quadrafuzz", "Quadrafuzz", "Quadrafuzz",
     "Distorsion à quatre bandes : chaque registre sature séparément.",
     "Four-band distortion: each register saturates independently.",

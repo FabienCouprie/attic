@@ -1,5 +1,6 @@
 // audio/effets-dynamique.ts — Effets (issus du découpage de effets.ts).
 import { fft } from "./fft";
+import { valeurA } from "./courbe";
 import { TAILLE_FFT, SAUT_FFT, TAILLE_FFT_BRUIT, SAUT_FFT_BRUIT, creerFenetreHann } from "./commun";
 
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
@@ -493,17 +494,21 @@ export async function deEsser(
 // --- Bitcrusher : quantification + sous-échantillonnage ---------------------
 // Simule la basse résolution des convertisseurs N/A anciens (8-bit, etc.).
 
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE, et le scalaire en est le cas dégénéré. `valeurA` lit la valeur de
+ * l'échantillon quelle que soit sa forme, si bien qu'il n'y a qu'un seul chemin de calcul : sans
+ * courbe branchée, le nœud passe un nombre et la sortie est celle d'avant, au bit près.
+ */
 export function bitcrusher(
   buffer: AudioBuffer,
   bits: number,
   frequenceEch: number,
-  mix: number,
+  mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const niveauBits = Math.max(1, Math.min(16, Math.round(bits)));
   const niveaux = Math.pow(2, niveauBits) - 1;
   const pas = Math.max(1, Math.round(sr / Math.max(1000, frequenceEch)));
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
 
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -521,7 +526,8 @@ export function bitcrusher(
         const quantifie = Math.round(src[i] * niveaux) / niveaux;
         dernierEch = Math.max(-1, Math.min(1, quantifie));
       }
-      dst[i] = src[i] * (1 - mixVal) + dernierEch * mixVal;
+      const m = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
+      dst[i] = src[i] * (1 - m) + dernierEch * m;
     }
   }
 

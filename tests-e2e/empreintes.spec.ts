@@ -61,6 +61,14 @@ const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, str
   { id: "octaver" },
   { id: "changement-tonalite" },
   { id: "paulstretch" },
+  // PREMIER LOT DE LA CAMPAGNE DE MODULATION. Leur empreinte est enregistree AVANT qu'ils
+  // recoivent une entree Modulation : sans branchement, elle ne doit pas bouger d'un chiffre.
+  { id: "reverberation" },
+  { id: "delay-stereo" },
+  { id: "chorus" },
+  { id: "flanger" },
+  { id: "ring-modulator" },
+  { id: "bitcrusher" },
   // Le generateur de courbe : une sortie de type courbe, et non audio. Il entre ici sur la forme
   // Logistique, dont l etiquette annoncait une courbe en S et rendait une suite chaotique. Son
   // empreinte porte le nombre de paliers, qui distingue une courbe lisse d un escalier.

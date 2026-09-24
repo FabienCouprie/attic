@@ -2158,6 +2158,7 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2165,6 +2166,8 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Bits | number | 8 | 1 – 16, step 1 | Bit resolution (1-16). 8 = retro 8-bit sound; 4 = very crunchy. |
 | Rate | number | 22050 Hz | 1000 – 44100 Hz, step 100 | Simulated sample rate. Lower = more broken/aliased sound. |
 | Mix | number | 100 % |  | Dry/wet balance. 100% = effect only. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Chopper
 
