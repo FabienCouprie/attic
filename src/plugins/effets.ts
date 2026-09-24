@@ -1324,6 +1324,11 @@ export const fiches: FicheAudio[] = ([
   {
     id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
+    // AUCUN LECTEUR ICI. L'aperçu joue la PREMIÈRE sortie audio, et celle-ci est « Référence »,
+    // c'est-à-dire l'entrée rendue telle quelle : le lecteur proposait d'écouter ce qu'on venait de
+    // brancher, et non le travail du nœud. Ses deux sorties sont des pairs, la référence et la piste
+    // mise à sa longueur, et aucune ne représente à elle seule ce qu'il produit.
+    sansApercuAudio: true,
     resume: "Ajuste une piste à la longueur d'une référence (silence ou fade).",
     resumeEn: "Aligns a track to a reference length (silence or fade).",
     entrees: [{ nom: "Référence", nomEn: "Reference", type: "audio" }, { nom: "Piste", nomEn: "Track", type: "audio" }],
