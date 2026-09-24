@@ -2202,6 +2202,7 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2209,6 +2210,8 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Mix | number | 40 % |  | Dry/wet balance. |
 | Speed | number | 0.8 Hz |  | LFO modulation speed. |
 | Depth | number | 5 ms |  | Detuning depth in ms. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Distortion
 
@@ -2238,6 +2241,7 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2245,6 +2249,8 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Amount | number | 50 % | 0 – 100 %, step 1 | Intensity of the asymmetrical distortion. |
 | Frequency | number | 3000 Hz | 500 – 10000 Hz, step 100 | High-pass cutoff after distortion. |
 | Mix | number | 30 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Flanger
 
@@ -2257,6 +2263,7 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2264,6 +2271,8 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Mix | number | 50 % |  | Dry/wet balance. |
 | Speed | number | 0.5 Hz |  | LFO modulation speed. |
 | Depth | number | 3 ms |  | Modulation depth in ms. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Formant Shift
 
@@ -2340,6 +2349,7 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2353,6 +2363,8 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Crossover 3 | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Boundary between high mids and high. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. 0% returns the original signal untouched. |
 | Output | number | -6 dB | -24 – 12 dB, step 0.5 | Output gain. Saturation raises the level: this brings it back. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Ring Modulator
 
@@ -2666,6 +2678,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2674,6 +2687,8 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Time R | number | 375 ms |  | Right channel delay. |
 | Feedback | number | 40 % |  | Amount of signal fed back. |
 | Mix | number | 35 % |  | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 ### Editing
 
@@ -3372,6 +3387,7 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3382,6 +3398,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Ratio | number | 3 ∶1 | 1 – 10 ∶1, step 0.5 | Sibilance reduction ratio. |
 | Attack | number | 1 ms | 0.1 – 50 ms, step 0.1 | Reaction time (short = precise, long = smooth). |
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
+| Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Seuil » that the curve's one means. |
 
 #### Ducking
 

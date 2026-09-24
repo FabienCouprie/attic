@@ -44,6 +44,7 @@ export const ECARTES: Record<string, string> = {
   "csound": "le volume est passé à un interpréteur externe, qui ne lit pas une valeur par échantillon",
   "csound-effet": "idem, interpréteur externe",
   "csound-spectral": "idem, interpréteur externe",
+  "particules": "les réglages partent dans une partition Csound, qui ne lit pas une valeur par échantillon",
 
   // TRAITEMENT PAR TRAMES. Ces composants analysent et resynthétisent par blocs : une courbe n'y
   // serait lue qu'une fois par trame, non par échantillon, et la modulation n'aurait pas la
@@ -67,11 +68,21 @@ export const ECARTES: Record<string, string> = {
   "tremolo-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
   "vibrato-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
 
+  // LE RÉGLAGE N'EST PAS UN `AudioParam`. Le faire varier demanderait de reconstruire le graphe à
+  // chaque valeur, ce qui n'est pas une automation : la table d'un distordeur, la longueur d'une
+  // réponse impulsionnelle. Ces composants ne sont pas modifiés. Décision de Fabien, définitive.
+  "distorsion": "le gain de saturation est la table d'un distordeur, non un réglage automatisable",
+  "reverb-fractale": "le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur",
+  "reverbe-convolution": "le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur",
+  "piece-lucier": "le decay et le damping fabriquent la réponse impulsionnelle, une fois, avant les passages",
+  "resonance-audio": "la largeur, la hauteur et la profondeur sont les dimensions de la pièce ; la position de la source passe par une méthode du SDK, non par un AudioParam",
+
   // PLUSIEURS CIBLES À LA FOIS. Une seule entrée Modulation ne peut en piloter qu'une, et choisir
   // laquelle serait décider à la place de celui qui s'en sert. Écartés sur décision de Fabien.
   "shimmer": "quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance",
   "compresseur": "trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement",
   "ducking": "trois réglages modulables à la fois : seuil, réduction, attaque et relâchement",
+  "compresseur-multibande": "trois seuils et une paire attaque / relâchement : aucune cible unique à piloter",
 };
 
 export interface CibleModulable {

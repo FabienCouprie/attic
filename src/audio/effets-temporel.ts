@@ -62,12 +62,13 @@ export async function appliquerDelay(
   tempsGaucheMs: number,
   tempsDroitMs: number,
   feedbackPct: number,
-  mixPct: number
+  mixPct: number | Float32Array
 ): Promise<AudioBuffer> {
   const tl = Math.max(0.001, tempsGaucheMs) / 1000;
   const tr = Math.max(0.001, tempsDroitMs) / 1000;
   const feedback = Math.max(0, feedbackPct / 100);
-  const mix = Math.max(0, Math.min(1, mixPct / 100));
+  // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
+  const versGain = (x: number) => Math.max(0, Math.min(1, x / 100));
   const dMax = Math.max(tl, tr);
   const rep = feedback > 0.001 && feedback < 0.999 ? Math.ceil(Math.log(1e-4) / Math.log(feedback)) : feedback >= 0.999 ? 40 : 0;
   const coda = Math.max(3, dMax * Math.min(rep, 40));
@@ -78,7 +79,7 @@ export async function appliquerDelay(
   source.buffer = entree;
 
   const dryG = offline.createGain();
-  dryG.gain.value = 1 - mix;
+  poserParam(dryG.gain, mixPct, duree, (x) => 1 - versGain(x));
   source.connect(dryG).connect(offline.destination);
 
   const splitter = offline.createChannelSplitter(2);
@@ -90,7 +91,7 @@ export async function appliquerDelay(
     delai.delayTime.value = dt;
     const fb = offline.createGain(); fb.gain.value = feedback;
     const flt = offline.createBiquadFilter(); flt.type = "lowpass"; flt.frequency.value = 8000;
-    const wet = offline.createGain(); wet.gain.value = mix;
+    const wet = offline.createGain(); poserParam(wet.gain, mixPct, duree, versGain);
     splitter.connect(delai, chan, 0);
     delai.connect(flt).connect(fb).connect(delai);
     flt.connect(wet).connect(merger, 0, chan);
@@ -349,17 +350,19 @@ export async function appliquerFlanger(
   entree: AudioBuffer,
   vitesse: number,
   profondeur: number,
-  mix: number
+  mixPct: number | Float32Array
 ): Promise<AudioBuffer> {
+  // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
+  const versGain = (x: number) => Math.max(0, Math.min(1, x / 100));
   const coda = 0.1;
   const duree = entree.duration + coda;
   const ctx = new OfflineAudioContext(entree.numberOfChannels, Math.ceil(duree * entree.sampleRate), entree.sampleRate);
   const source = ctx.createBufferSource();
   source.buffer = entree;
   const sec = ctx.createGain();
-  sec.gain.value = 1 - mix;
+  poserParam(sec.gain, mixPct, duree, (x) => 1 - versGain(x));
   const humide = ctx.createGain();
-  humide.gain.value = mix;
+  poserParam(humide.gain, mixPct, duree, versGain);
   const delai = ctx.createDelay(0.02);
   delai.delayTime.setValueAtTime(0.002, 0);
   const lfo = ctx.createOscillator();
@@ -384,8 +387,10 @@ export async function appliquerChorus(
   entree: AudioBuffer,
   vitesse: number,
   profondeur: number,
-  mix: number,
+  mixPct: number | Float32Array,
 ): Promise<AudioBuffer> {
+  // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
+  const versGain = (x: number) => Math.max(0, Math.min(1, x / 100));
   const sr = entree.sampleRate;
   const nCh = Math.min(entree.numberOfChannels, 2);
   const duree = entree.duration + 0.2;
@@ -394,7 +399,7 @@ export async function appliquerChorus(
   source.buffer = entree;
 
   const secGain = ctx.createGain();
-  secGain.gain.value = 1 - mix;
+  poserParam(secGain.gain, mixPct, duree, (x) => 1 - versGain(x));
   source.connect(secGain);
   secGain.connect(ctx.destination);
 
@@ -411,7 +416,7 @@ export async function appliquerChorus(
     lfo.connect(lfoGain);
     lfoGain.connect(delai.delayTime);
     const wetGain = ctx.createGain();
-    wetGain.gain.value = mix * 0.4;
+    poserParam(wetGain.gain, mixPct, duree, (x) => versGain(x) * 0.4);
     source.connect(delai);
     delai.connect(wetGain);
     wetGain.connect(ctx.destination);

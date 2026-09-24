@@ -161,7 +161,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
 | Chopper | `chopper` | 240 × 140 |
 | Chopper logistique | `chopper-logistique` | 240 × 118 |
-| Chorus | `chorus` | 240 × 118 |
+| Chorus | `chorus` | 240 × 140 |
 | Classes de hauteurs | `classes-hauteurs` | 240 × 118 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
@@ -186,7 +186,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
-| De-esser | `de-esser` | 240 × 118 |
+| De-esser | `de-esser` | 240 × 140 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 118 |
 | Déclarer la disposition | `declarer-disposition` | 240 × 118 |
@@ -194,7 +194,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Décomposition atomique | `decomposition-atomique` | 240 × 162 |
 | Découpage en objets | `decoupage-objets` | 240 × 162 |
 | Découpe aléatoire | `decoupe-aleatoire` | 240 × 118 |
-| Delay stéréo | `delay-stereo` | 240 × 118 |
+| Delay stéréo | `delay-stereo` | 240 × 140 |
 | Déphasage de Reich | `dephasage-reich` | 240 × 118 |
 | Déréverbération | `dereverberation` | 240 × 118 |
 | Dessin sonore | `dessin-sonore` | 240 × 140 |
@@ -219,7 +219,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étirement temporel (DTW) | `etirement-dtw` | 240 × 140 |
 | Étirement glissant | `etirement-glissant` | 240 × 118 |
 | Étirement du spectre | `etirement-spectre` | 240 × 140 |
-| Exciter / Aural enhancer | `exciter` | 240 × 118 |
+| Exciter / Aural enhancer | `exciter` | 240 × 140 |
 | Export image | `export-image` | 240 × 118 |
 | Export SFZ | `export-sfz` | 240 × 118 |
 | Export SVG | `export-svg` | 240 × 118 |
@@ -230,7 +230,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Extraire zones (sélecteur) | `extraire-zones-selecteur` | 240 × 140 |
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
-| Flanger | `flanger` | 240 × 118 |
+| Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
 | Fondu | `fondu` | 240 × 118 |
@@ -332,7 +332,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Profil de bruit | `profil-bruit` | 240 × 118 |
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
-| Quadrafuzz | `quadrafuzz` | 240 × 118 |
+| Quadrafuzz | `quadrafuzz` | 240 × 140 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
 | Réduction de bruit | `reduction-bruit` | 240 × 140 |

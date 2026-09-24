@@ -7,28 +7,21 @@ grandeur continue et audible. Un réglage qui décide de la façon de calculer, 
 nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
-- **acceptent déjà une courbe** : 27
-- **restent à faire** : 48 composants, 80 couples composant / famille
-- **écartés** : 26
+- **acceptent déjà une courbe** : 33
+- **restent à faire** : 35 composants, 51 couples composant / famille
+- **écartés** : 33
 
 ## Ce qui reste, par famille
 
-### melange · 20
+### melange · 13
 
 - Anneau de Möbius `anneau-moebius` : Mélange
 - Beat Repeat / Stutter `beat-repeat` : Mix
-- Chorus `chorus` : Mix
 - Convolution de deux sons `convolution-deux-sons` : Mix
 - Décaleur de fréquence `decaleur-frequence` : Mélange
-- Delay stéréo `delay-stereo` : Mix
-- Exciter / Aural enhancer `exciter` : Mix
-- Flanger `flanger` : Mix
 - Glissando intérieur `glissando-interieur` : Mix
 - Granular freeze `granular-freeze` : Mix
 - Octaver `octaver` : Mix
-- Quadrafuzz `quadrafuzz` : Mix
-- Réverbération fractale `reverb-fractale` : Mix
-- Réverbération à convolution (IR) `reverbe-convolution` : Mix
 - Réverbération hachée `reverbe-hachee` : Mix
 - Réverbération à réseau (FDN) `reverbe-reseau` : Mix
 - Réverbération velours `reverberation-velours` : Mélange
@@ -36,41 +29,30 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Transfert d'enveloppe `transfert-enveloppe` : Mix
 - Vocoder `vocoder` : Mix
 
-### espace · 13
+### espace · 8
 
 - Brassage `brassage` : Dispersion
-- Chorus `chorus` : Profondeur
-- De-esser `de-esser` : Largeur
 - Doppler `doppler` : Distance
 - Filtrage par un spectre `filtrage-spectre` : Profondeur
-- Flanger `flanger` : Profondeur
 - Granular freeze `granular-freeze` : Position
 - Largeur stéréo / MS `largeur-stereo` : Largeur
-- Particules `particules` : Dispersion, Position
-- Resonance Audio `resonance-audio` : Largeur, Profondeur
 - Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
 - Tore `tore` : Profondeur
 - Tresse `tresse` : Largeur
 
-### temps · 13
+### temps · 8
 
-- Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
-- De-esser `de-esser` : Attaque, Relâchement
 - Echo inversé `echo-inverse` : Temps
 - Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
 - Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
 - Limiteur `limiteur` : Relâchement
-- Pièce de Lucier `piece-lucier` : Decay
-- Réverbération fractale `reverb-fractale` : Decay
-- Réverbération à convolution (IR) `reverbe-convolution` : Decay
 - Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération velours `reverberation-velours` : Chute
 - Transient Shaper `transient-shaper` : Attaque
 
-### dynamique · 8
+### dynamique · 7
 
-- De-esser `de-esser` : Seuil, Ratio
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
 - Montage par grains `montage-grains` : Seuil
@@ -79,43 +61,32 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Sinus + transitoires + bruit (STN) `stn-sinus-transitoires-bruit` : Seuil
 - Suppression de clics `suppression-clics` : Seuil
 
-### frequence · 8
+### frequence · 5
 
 - Ceinture de Dirac `ceinture-dirac` : Coupure
-- De-esser `de-esser` : Fréquence
-- Exciter / Aural enhancer `exciter` : Fréquence
 - Grave en mono `mono-grave` : Coupure
-- Particules `particules` : Fréquence
 - Réduction de bruit `reduction-bruit` : Q
 - Ring modulator `ring-modulator` : Fréquence
 - Vocoder `vocoder` : Q
 
-### hauteur · 6
+### hauteur · 4
 
 - Brassage `brassage` : Transposition
 - Granular freeze `granular-freeze` : Pitch
-- Particules `particules` : Transposition
-- Resonance Audio `resonance-audio` : Hauteur
 - Shift formants `shift-formants` : Hauteur
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition
 
-### niveau · 6
+### niveau · 4
 
 - Déréverbération `dereverberation` : Réduction
-- Distorsion `distorsion` : Gain
 - Formule sur échantillons `formule-echantillons` : Volume
 - Mosaïquage par corpus `mosaiquage` : Volume
-- Particules `particules` : Volume
 - Réduction de bruit `reduction-bruit` : Réduction
 
-### retroaction · 6
+### retroaction · 2
 
 - Beat Repeat / Stutter `beat-repeat` : Feedback
-- Delay stéréo `delay-stereo` : Feedback
 - Echo inversé `echo-inverse` : Feedback
-- Pièce de Lucier `piece-lucier` : Damping
-- Réverbération fractale `reverb-fractale` : Damping
-- Réverbération à convolution (IR) `reverbe-convolution` : Damping
 
 ## Écartés, et pourquoi
 
@@ -128,6 +99,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - `csound` : le volume est passé à un interpréteur externe, qui ne lit pas une valeur par échantillon
 - `csound-effet` : idem, interpréteur externe
 - `csound-spectral` : idem, interpréteur externe
+- `particules` : les réglages partent dans une partition Csound, qui ne lit pas une valeur par échantillon
 - `griffin-lim` : traitement par trames : une valeur par bloc, non par échantillon
 - `phase-pghi` : traitement par trames : une valeur par bloc, non par échantillon
 - `gel-spectral` : traitement par trames : une valeur par bloc, non par échantillon
@@ -142,9 +114,15 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - `paulstretch-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
 - `tremolo-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
 - `vibrato-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
+- `distorsion` : le gain de saturation est la table d'un distordeur, non un réglage automatisable
+- `reverb-fractale` : le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur
+- `reverbe-convolution` : le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur
+- `piece-lucier` : le decay et le damping fabriquent la réponse impulsionnelle, une fois, avant les passages
+- `resonance-audio` : la largeur, la hauteur et la profondeur sont les dimensions de la pièce ; la position de la source passe par une méthode du SDK, non par un AudioParam
 - `shimmer` : quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance
 - `compresseur` : trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement
 - `ducking` : trois réglages modulables à la fois : seuil, réduction, attaque et relâchement
+- `compresseur-multibande` : trois seuils et une paire attaque / relâchement : aucune cible unique à piloter
 
 ## Acceptent déjà une courbe
 
@@ -154,16 +132,22 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - `auto-pan` : Fréquence
 - `bitcrusher` : Mix
 - `chopper` : Fréquence
+- `chorus` : Mix
 - `crible-harmonique` : Fondamentale
+- `de-esser` : Seuil
+- `delay-stereo` : Mix
 - `echo` : Temps
 - `echo-ping-pong` : Temps
 - `etirement-spectre` : Étirement
+- `exciter` : Mix
+- `flanger` : Mix
 - `morphing-spectral` : Mélange
 - `objet-sonore` : Azimut
 - `partition-aleatoire-csound` : (non déclarée)
 - `partition-csound` : (non déclarée)
 - `peignes-accordes` : Fondamentale
 - `phaser` : Fréquence
+- `quadrafuzz` : Mix
 - `reponse-filtre` : Fréquence de coupure
 - `resonateurs` : Fondamentale
 - `retard-spectral` : Dispersion

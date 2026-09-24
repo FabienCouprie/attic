@@ -446,11 +446,17 @@ export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: nu
 // --- Boîte à rythmes (synthèse percussive) ----------------------------------
 
 // --- De-esser : compression dynamique des sibilances ------------------------
+/**
+ * LE SEUIL ACCEPTE UNE COURBE. C'est lui qui décide, échantillon par échantillon, de ce qui est une
+ * sibilance : le faire descendre resserre l'atténuation, le faire remonter la relâche. Il est lu dans
+ * la boucle par `valeurA`, comme un nombre l'était, et sans courbe branchée la sortie est celle
+ * d'avant, au bit près.
+ */
 export async function deEsser(
   buffer: AudioBuffer,
   frequenceCentrale: number,
   largeur: number,
-  seuilDb: number,
+  seuilDb: number | Float32Array,
   ratio: number,
   attaqueMs: number,
   relachementMs: number,
@@ -483,8 +489,9 @@ export async function deEsser(
       const coeff = niveau > env ? attaqueCoeff : relachementCoeff;
       env = coeff * env + (1 - coeff) * niveau;
       const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
+      const seuil = valeurA(seuilDb, i);
       let gainDb = 0;
-      if (envDb > seuilDb) gainDb = (seuilDb - envDb) * (1 - 1 / Math.max(1, ratio));
+      if (envDb > seuil) gainDb = (seuil - envDb) * (1 - 1 / Math.max(1, ratio));
       dst[i] = src[i] * Math.pow(10, gainDb / 20);
     }
   }
@@ -804,11 +811,16 @@ export async function compresserMultiBande(
 // Génère des harmoniques par saturation douce, ne garde que les hautes
 // fréquences, puis mixe avec le signal original pour ajouter de la présence.
 
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE, et le scalaire en est le cas dégénéré, comme pour le bitcrusher :
+ * `valeurA` lit la valeur de l'échantillon quelle que soit sa forme, et sans courbe branchée la
+ * sortie est celle d'avant, au bit près.
+ */
 export async function exciter(
   buffer: AudioBuffer,
   amount: number,
   frequency: number,
-  mix: number,
+  mix: number | Float32Array,
 ): Promise<AudioBuffer> {
   const dist = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -820,13 +832,15 @@ export async function exciter(
     }
   }
   const wet = await filtreBiquadDynamique(dist, "highpass", frequency);
-  const mixVal = mix / 100;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const wetCh = wet.getChannelData(c);
     const dst = resultat.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) dst[i] = src[i] * (1 - mixVal) + wetCh[i] * mixVal;
+    for (let i = 0; i < buffer.length; i++) {
+      const mixVal = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
+      dst[i] = src[i] * (1 - mixVal) + wetCh[i] * mixVal;
+    }
   }
   return resultat;
 }
