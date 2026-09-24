@@ -142,8 +142,23 @@ describe("les enveloppes de worker", () => {
       const creations = (source.match(/new Worker\(/g) ?? []).length;
       if (creations === 0) continue;
       const gardes = (source.match(/installerGardeWorker\(/g) ?? []).length;
-      if (gardes < creations) manquants.push(`${f} : ${creations} worker(s), ${gardes} garde(s)`);
+      // UN WORKER CONFIÉ AU SOCLE EST GARDÉ PAR LUI. `hors-fil.ts` reçoit une fabrique
+      // `creerWorker` et pose le garde-fou lui-même : le composant qui délègue n'a donc pas à
+      // l'écrire, et l'exiger de lui ferait poser deux gardes sur un même worker. Le test suivant
+      // vérifie que ce socle le pose réellement, sans quoi cette tolérance ouvrirait un trou.
+      const delegues = (source.match(/creerWorker:/g) ?? []).length;
+      if (gardes + delegues < creations) {
+        manquants.push(`${f} : ${creations} worker(s), ${gardes} garde(s), ${delegues} délégué(s)`);
+      }
     }
     expect(manquants).toEqual([]);
+  });
+
+  it("le socle qui reçoit les workers délégués pose bien le garde-fou", () => {
+    const socle = readFileSync(resolve(PLUGINS, "hors-fil.ts"), "utf8");
+    expect(socle).toMatch(/installerGardeWorker\(/);
+    // Le garde-fou doit être posé AVANT que l'on attende une réponse : après, un worker déjà mort
+    // n'aurait plus personne pour transformer sa mort en erreur.
+    expect(socle.indexOf("installerGardeWorker(")).toBeLessThan(socle.indexOf("new Promise"));
   });
 });

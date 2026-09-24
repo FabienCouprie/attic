@@ -9,7 +9,10 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { synthetiserTexture } from "../audio/texture-statistique";
+import {
+  traiterVoie, type OptionsVoieTexture, type ResultatTexture,
+} from "../audio/texture-statistique";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -54,15 +57,20 @@ export const fiches: FicheAudio[] = ([
 
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate });
       let ecart = 0;
+      // La graine par canal est appliquée par `traiterVoie`, qui reçoit l'indice : les deux côtés
+      // partagent les statistiques sans partager un échantillon, et la texture est large d'elle-même.
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<OptionsVoieTexture, ResultatTexture>(
+        voies, { longueur, sampleRate, nombreBandes, correlations, iterations, graine },
+        {
+          creerWorker: () => new Worker(new URL("../workers/texture-worker.ts", import.meta.url), { type: "module" }),
+          calcul: traiterVoie,
+          surProgres: (c, n) => ctx.onProgress?.(traduire("msg.texture.canal", String(c), String(n))),
+        },
+      );
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.texture.canal", String(c + 1), String(canaux)));
-        // Une graine par canal : les deux côtés partagent les statistiques sans partager un
-        // échantillon, et la texture est large d'elle-même — ce qu'aucun élargisseur ne donne.
-        const r = synthetiserTexture(entree.getChannelData(c), longueur, sampleRate, {
-          nombreBandes, correlations, iterations, graine: graine + c * 1000,
-        });
-        sortie.copyToChannel(new Float32Array(r.son), c);
-        ecart += r.ecart / canaux;
+        sortie.copyToChannel(new Float32Array(parVoie[c].son), c);
+        ecart += parVoie[c].ecart / canaux;
       }
       return {
         valeurs: [sortie],

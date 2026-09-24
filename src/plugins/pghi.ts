@@ -6,7 +6,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { analyser, convergenceSpectrale, griffinLim, pghi, synthetiser } from "../audio/pghi";
+import { reconstruire, type OptionsReconstruction, type Reconstruction } from "../audio/pghi";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -47,24 +48,28 @@ export const fiches: FicheAudio[] = ([
       const melange = ctx.paramNombre("Mix", 100) / 100;
       const { numberOfChannels: canaux, length, sampleRate } = entree;
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
-      let convergence = 0, ilots = 0, partIntegree = 0;
 
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<OptionsReconstruction, Reconstruction>(
+        voies, { taille, saut, affinage, tolerance, longueur: length },
+        {
+          creerWorker: () => new Worker(new URL("../workers/pghi-worker.ts", import.meta.url), { type: "module" }),
+          calcul: reconstruire,
+          surProgres: (c, n) => ctx.onProgress?.(traduire("msg.pghi.canal", String(c), String(n))),
+        },
+      );
+
+      // L'AGRÉGATION APPARTIENT AU COMPOSANT : moyenne pour la convergence et la part intégrée,
+      // maximum pour les îlots. Un socle commun qui en déciderait rendrait un chiffre faux.
+      let convergence = 0, ilots = 0, partIntegree = 0;
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.pghi.canal", String(c + 1), String(canaux)));
-        const voie = entree.getChannelData(c);
-        const { modules } = analyser(voie, taille, saut);
-        const r = pghi(modules, taille, saut, tolerance);
-        const reconstruit = affinage > 0
-          ? griffinLim(modules, taille, saut, length, affinage, r.phases)
-          : synthetiser({ modules, phases: r.phases, taille, saut, longueur: length });
-        // Le nœud MESURE sa propre reconstruction : on réanalyse et on compare les magnitudes
-        // obtenues à celles qu'on voulait. C'est la mesure de l'article, et elle ne coûte qu'une
-        // analyse de plus — de quoi savoir si le résultat vaut quelque chose sans l'écouter.
-        convergence += convergenceSpectrale(modules, analyser(reconstruit, taille, saut).modules) / canaux;
+        const r = parVoie[c];
+        convergence += r.convergence / canaux;
         ilots = Math.max(ilots, r.ilots);
         partIntegree += r.partIntegree / canaux;
+        const voie = voies[c];
         const dst = sortie.getChannelData(c);
-        for (let i = 0; i < length; i++) dst[i] = melange * reconstruit[i] + (1 - melange) * voie[i];
+        for (let i = 0; i < length; i++) dst[i] = melange * r.reconstruit[i] + (1 - melange) * voie[i];
       }
       return {
         valeurs: [sortie],

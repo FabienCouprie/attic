@@ -6,7 +6,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { separerStn } from "../audio/stn";
+import { separerStn, type ReglagesStn, type ResultatStn } from "../audio/stn";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -68,9 +69,15 @@ export const fiches: FicheAudio[] = ([
       const sinus = faire(), transitoires = faire(), bruit = faire();
       const parts = { sinus: 0, transitoires: 0, bruit: 0 };
 
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<ReglagesStn, ResultatStn>(voies, reglages, {
+        creerWorker: () => new Worker(new URL("../workers/stn-worker.ts", import.meta.url), { type: "module" }),
+        calcul: separerStn,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.stn.canal", String(c), String(n))),
+      });
+
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.stn.canal", String(c + 1), String(canaux)));
-        const r = separerStn(entree.getChannelData(c), reglages);
+        const r = parVoie[c];
         sinus.getChannelData(c).set(r.sinus.subarray(0, length));
         transitoires.getChannelData(c).set(r.transitoires.subarray(0, length));
         bruit.getChannelData(c).set(r.bruit.subarray(0, length));
