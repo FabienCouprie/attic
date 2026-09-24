@@ -4,6 +4,7 @@
 import { KokoroTTS, env } from "kokoro-js";
 import { splitText, trimSilence, mergeAudioBuffers } from "./tts-utils.js";
 import createEphone, { roa } from "ephone";
+import { MODEL_ID, installerMiroirKokoro } from "./kokoro-local.js";
 
 // kokoro-js bundle includes onnxruntime-web@1.22.0-dev, but Vite's default
 // relative WASM resolution picks the root onnxruntime-web@1.27.0 files, which
@@ -30,7 +31,8 @@ env.wasmPaths = {
   wasm: wasmBinary,
 };
 
-const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
+// La voix française du dépôt. Elle n'est pas dans la liste que propose la synthèse anglaise : c'est
+// le seul fichier de voix dont ce worker dépende, et donc celui dont l'absence se verrait le moins.
 const VOICE_FR = "ff_siwis";
 
 let tts = null;
@@ -90,6 +92,8 @@ async function loadTts(requestId, labels) {
   };
 
   sendProgress(formatLoad(0), requestId);
+  // Le miroir local, s'il est là, pour le dépôt du modèle comme pour les voix.
+  await installerMiroirKokoro();
   return KokoroTTS.from_pretrained(MODEL_ID, {
     dtype: "q8",
     device: "wasm",
