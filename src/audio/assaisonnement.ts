@@ -21,6 +21,7 @@
 // on ne fait qu'ôter ce qui bat. C'est dit dans la notice du nœud plutôt que tu.
 
 import { changerTempo, changerTonalite } from "./effets-spectral";
+import { respirer } from "../core/respirer";
 import { mesurer, profil, REGIONS, type DimensionsGout, type Gout } from "./gout";
 
 export interface Assaisonnement {
@@ -171,16 +172,33 @@ export interface ResultatAssaisonnement {
  * avant tout étirement qui la déformerait ; la transposition vient après l'étirement, sans quoi
  * l'un défait ce que l'autre fait ; le gain passe en dernier, pour que rien ne le contredise.
  */
-export function assaisonner(b: AudioBuffer, gout: Gout, dose: number): ResultatAssaisonnement {
+export async function assaisonner(
+  b: AudioBuffer, gout: Gout, dose: number,
+): Promise<ResultatAssaisonnement> {
+  // UNE IMAGE ENTRE CHAQUE ÉTAPE. Ce composant figeait l'interface tout le temps de son calcul, et
+  // son coût est RÉPARTI : mesuré sur trois secondes de stéréo, 312 ms pour chacune des deux mesures
+  // et le reste distribué sur six traitements. Aucune étape ne domine, si bien que rendre la main
+  // entre elles borne le gel à la plus longue au lieu de la somme. Les pauses sont posées ici plutôt
+  // que dans les boucles : elles ne coûtent qu'un millième de seconde chacune et ne changent aucune
+  // signature de traitement. Un worker aurait demandé un cœur par voie pour chacun des cinq
+  // traitements, et `mesurer` n'en a pas : il porte des propriétés globales au son, le registre et
+  // les attaques, qui ne se décomposent pas canal par canal.
   const mesureAvant = mesurer(b);
+  await respirer();
   const reglages = doserAssaisonnement(mesureAvant.dimensions, gout, dose);
   let son = b;
-  if (reglages.porte > 0) son = porter(son, reglages.porte);
-  if (reglages.queue > 0) son = lier(son, reglages.queue);
-  if (reglages.desaccord > 0) son = desaccorder(son, reglages.desaccord);
-  if (reglages.coupure > 0) son = adoucir(son, reglages.coupure);
-  if (Math.abs(reglages.vitesse - 1) > 0.01) son = changerTempo(son, reglages.vitesse * 100);
-  if (Math.abs(reglages.demiTons) > 0.05) son = changerTonalite(son, reglages.demiTons);
+  if (reglages.porte > 0) { son = porter(son, reglages.porte); await respirer(); }
+  if (reglages.queue > 0) { son = lier(son, reglages.queue); await respirer(); }
+  if (reglages.desaccord > 0) { son = desaccorder(son, reglages.desaccord); await respirer(); }
+  if (reglages.coupure > 0) { son = adoucir(son, reglages.coupure); await respirer(); }
+  if (Math.abs(reglages.vitesse - 1) > 0.01) {
+    son = changerTempo(son, reglages.vitesse * 100);
+    await respirer();
+  }
+  if (Math.abs(reglages.demiTons) > 0.05) {
+    son = changerTonalite(son, reglages.demiTons);
+    await respirer();
+  }
   if (Math.abs(reglages.gainDb) > 0.1) {
     const g = Math.pow(10, reglages.gainDb / 20);
     const sortie = memeForme(son);
@@ -189,6 +207,7 @@ export function assaisonner(b: AudioBuffer, gout: Gout, dose: number): ResultatA
       for (let i = 0; i < x.length; i++) y[i] = Math.max(-1, Math.min(1, x[i] * g));
     }
     son = sortie;
+    await respirer();
   }
   const mesureApres = mesurer(son);
   const part = (d: DimensionsGout) => profil(d).find((p) => p.gout === gout)!.part;
