@@ -7,13 +7,13 @@ grandeur continue et audible. Un réglage qui décide de la façon de calculer, 
 nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
-- **acceptent déjà une courbe** : 26
-- **restent à faire** : 49 composants, 82 couples composant / famille
+- **acceptent déjà une courbe** : 27
+- **restent à faire** : 48 composants, 80 couples composant / famille
 - **écartés** : 26
 
 ## Ce qui reste, par famille
 
-### melange · 21
+### melange · 20
 
 - Anneau de Möbius `anneau-moebius` : Mélange
 - Beat Repeat / Stutter `beat-repeat` : Mix
@@ -31,28 +31,10 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Réverbération à convolution (IR) `reverbe-convolution` : Mix
 - Réverbération hachée `reverbe-hachee` : Mix
 - Réverbération à réseau (FDN) `reverbe-reseau` : Mix
-- Réverbération `reverberation` : Mix
 - Réverbération velours `reverberation-velours` : Mélange
 - Ring modulator `ring-modulator` : Mix
 - Transfert d'enveloppe `transfert-enveloppe` : Mix
 - Vocoder `vocoder` : Mix
-
-### temps · 14
-
-- Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
-- De-esser `de-esser` : Attaque, Relâchement
-- Echo inversé `echo-inverse` : Temps
-- Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
-- Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
-- Limiteur `limiteur` : Relâchement
-- Pièce de Lucier `piece-lucier` : Decay
-- Réverbération fractale `reverb-fractale` : Decay
-- Réverbération à convolution (IR) `reverbe-convolution` : Decay
-- Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
-- Réverbération à réseau (FDN) `reverbe-reseau` : Queue
-- Réverbération `reverberation` : Decay
-- Réverbération velours `reverberation-velours` : Chute
-- Transient Shaper `transient-shaper` : Attaque
 
 ### espace · 13
 
@@ -69,6 +51,22 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
 - Tore `tore` : Profondeur
 - Tresse `tresse` : Largeur
+
+### temps · 13
+
+- Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
+- De-esser `de-esser` : Attaque, Relâchement
+- Echo inversé `echo-inverse` : Temps
+- Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
+- Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
+- Limiteur `limiteur` : Relâchement
+- Pièce de Lucier `piece-lucier` : Decay
+- Réverbération fractale `reverb-fractale` : Decay
+- Réverbération à convolution (IR) `reverbe-convolution` : Decay
+- Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
+- Réverbération à réseau (FDN) `reverbe-reseau` : Queue
+- Réverbération velours `reverberation-velours` : Chute
+- Transient Shaper `transient-shaper` : Attaque
 
 ### dynamique · 8
 
@@ -169,6 +167,7 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - `reponse-filtre` : Fréquence de coupure
 - `resonateurs` : Fondamentale
 - `retard-spectral` : Dispersion
+- `reverberation` : Mix
 - `spatialisation-stereo` : Position
 - `spatialiseur` : Azimut
 - `tremolo` : Profondeur

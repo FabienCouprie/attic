@@ -102,6 +102,61 @@
       ],
       "message": null
     },
+    "de-esser": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "particules": {
+      "empreintes": [
+        "0.148725542/0.299995363",
+        null
+      ],
+      "message": "Grains · 60 grains/s · 3.97 s"
+    },
+    "exciter": {
+      "empreintes": [
+        "0.190117981/0.378794730"
+      ],
+      "message": null
+    },
+    "quadrafuzz": {
+      "empreintes": [
+        "0.316877508/0.976775706"
+      ],
+      "message": null
+    },
+    "reverb-fractale": {
+      "empreintes": [
+        "0.091138042/0.302265465"
+      ],
+      "message": null
+    },
+    "reverbe-convolution": {
+      "empreintes": [
+        "0.129225915/0.452502638"
+      ],
+      "message": "Réverbération à convolution (IR : 2.4 s)"
+    },
+    "distorsion": {
+      "empreintes": [
+        "0.930033993/0.988517165"
+      ],
+      "message": null
+    },
+    "piece-lucier": {
+      "empreintes": [
+        "0.042366124/0.528780282"
+      ],
+      "message": "Pièce de Lucier · 20 passages · platitude spectrale -31.3 → -53.0 dB"
+    },
+    "compresseur-multibande": {
+      "empreintes": [
+        "0.083164715/0.388157457"
+      ],
+      "message": null
+    },
     "reverberation": {
       "empreintes": [
         "0.131046675/0.402920425"

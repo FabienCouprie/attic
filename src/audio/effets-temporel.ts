@@ -1,5 +1,6 @@
 // audio/effets-temporel.ts — Effets (issus du découpage de effets.ts).
 import { estCourbe, valeursParametre } from "./courbe";
+import { poserParam } from "./automation";
 import { etirerDuree } from "./commun";
 import { fft } from "./fft";
 import { normaliser } from "./effets-dynamique";
@@ -254,7 +255,7 @@ export async function appliquerReverberation(
   entree: AudioBuffer,
   taille: number,
   decaySec: number,
-  mix: number,
+  mix: number | Float32Array,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
   const dureeImpulsion = 0.2 + (Math.max(0, Math.min(100, taille)) / 100) * 6;
@@ -287,11 +288,13 @@ export async function appliquerReverberation(
   convolueur.buffer = impulsion;
   convolueur.normalize = true;
 
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
+  // Le mélange accepte une courbe. Sans elle, un nombre est posé comme avant, au bit près : c'est
+  // `poserParam` qui tient cette règle, et les empreintes enregistrées avant l'ajout la vérifient.
+  const borne = (x: number) => Math.max(0, Math.min(100, x)) / 100;
   const gainSec = offline.createGain();
-  gainSec.gain.value = 1 - mixVal;
+  poserParam(gainSec.gain, mix, duree, (x) => 1 - borne(x));
   const gainHumide = offline.createGain();
-  gainHumide.gain.value = mixVal;
+  poserParam(gainHumide.gain, mix, duree, borne);
 
   source.connect(gainSec);
   gainSec.connect(offline.destination);

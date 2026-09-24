@@ -5119,6 +5119,7 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5127,6 +5128,8 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Decay | number | 2 s |  | Reverb decay time. |
 | Mix | number | 50 % |  | Dry/wet balance. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Shimmer
 

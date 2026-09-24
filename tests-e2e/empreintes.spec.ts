@@ -61,6 +61,20 @@ const SURVEILLES: { id: string; worker?: string; parametres?: Record<string, str
   { id: "octaver" },
   { id: "changement-tonalite" },
   { id: "paulstretch" },
+  // LES QUATORZE EFFETS RENDUS PAR LE WEB AUDIO. Leur empreinte est enregistree AVANT qu'ils
+  // recoivent une entree Modulation : sans branchement, elle ne doit pas bouger d'un chiffre.
+  { id: "de-esser" },
+  { id: "particules" },
+  // resonance-audio est ecarte de la base : il rend un son DIFFERENT a chaque execution, mesure sur
+  // trois passages, 0,126 puis 0,194 puis 0,171 de valeur efficace. Une empreinte ne peut pas le
+  // surveiller, et un test capricieux finit desactive. Sa modulation sera verifiee autrement.
+  { id: "exciter" },
+  { id: "quadrafuzz" },
+  { id: "reverb-fractale" },
+  { id: "reverbe-convolution" },
+  { id: "distorsion" },
+  { id: "piece-lucier" },
+  { id: "compresseur-multibande" },
   // PREMIER LOT DE LA CAMPAGNE DE MODULATION. Leur empreinte est enregistree AVANT qu'ils
   // recoivent une entree Modulation : sans branchement, elle ne doit pas bouger d'un chiffre.
   { id: "reverberation" },

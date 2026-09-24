@@ -353,7 +353,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
 | Réverbération hachée | `reverbe-hachee` | 240 × 118 |
 | Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 140 |
-| Réverbération | `reverberation` | 240 × 118 |
+| Réverbération | `reverberation` | 240 × 140 |
 | Réverbération velours | `reverberation-velours` | 240 × 140 |
 | Ring modulator | `ring-modulator` | 240 × 118 |
 | RMS (Meyda) | `rms-meyda` | 240 × 140 |
