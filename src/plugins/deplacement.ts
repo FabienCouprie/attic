@@ -191,7 +191,7 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-180, 180], pas: 1, defaut: 90, unite: "°",
+      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-180, 180], pas: 1, defaut: 180, unite: "°",
         doc: "De combien la scène tourne, dans le sens direct. À 180°, la gauche et la droite sont échangées ; à 90°, ce qui était à gauche passe devant. Sur une source mono, cet échange est inaudible, deux canaux identiques échangés restent identiques, et seul le niveau baisse ; c'est à 90° qu'une source mono se déplace, de 9,5 dB. Une courbe branchée sur l'entrée Modulation fait tourner la scène en continu, ce qui s'entend bien mieux qu'un angle fixe.",
         docEn: "How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle." },
       { nom: "Écart des sources", nomEn: "Source spread", type: "curseur", plage: [30, 180], pas: 5, defaut: 90, unite: "°",
@@ -213,7 +213,7 @@ export const fiches: FicheAudio[] = ([
       const rad = (d: number) => (d * Math.PI) / 180;
       const champ = encoderStereo(voie(e, 0), voie(e, 1), rad(ctx.paramNombre("Écart des sources", 90)));
       // Sans courbe, une constante à la valeur du réglage : un seul chemin de calcul.
-      const angles = valeursParametre(ctx.entree(1), e.length, rad(ctx.paramNombre("Rotation", 90)), {
+      const angles = valeursParametre(ctx.entree(1), e.length, rad(ctx.paramNombre("Rotation", 180)), {
         min: rad(ctx.paramNombre("Modulation min", 0)),
         max: rad(ctx.paramNombre("Modulation max", 360)),
       });
