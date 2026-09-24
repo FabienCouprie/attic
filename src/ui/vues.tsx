@@ -20,6 +20,7 @@ import { lireProfondeurExport } from "./profondeur-export";
 const tamponMulticanal = (b: unknown): AudioBuffer | null =>
   typeof AudioBuffer !== "undefined" && b instanceof AudioBuffer && b.numberOfChannels > 2 ? b : null;
 import { copierTexte } from "./copier";
+import { PistesMultiples, type PisteVue } from "./PistesMultiples";
 import { nomNote } from "./clavier-disposition";
 import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
 import { useStatut } from "./statuts";
@@ -66,6 +67,14 @@ export interface VueProps {
   id: string;
   data: DonneesNoeud;
   def?: FicheAudio;
+}
+
+// ── Plusieurs pistes sur un axe commun ──
+// Le nœud pose leurs enveloppes sur lui-même à l'exécution : la vue ne recalcule rien et ne retient
+// aucun son. Voir `plugins/visualiseur-multipiste.ts` et `audio/pistes-visu.ts`.
+function VuePistesMultiples({ data }: VueProps) {
+  const pistes = ((data as unknown as { _pistesVisu?: PisteVue[] })._pistesVisu ?? []);
+  return <PistesMultiples pistes={pistes} />;
 }
 
 // ── Forme d'onde (WaveSurfer.js) ──
@@ -2078,6 +2087,8 @@ const REGISTRE: EntreeRegistre[] = [
   // pas dans une vue avant (évite le décalage du handle de sortie).
   { correspond: parId("generateur-courbe", "suiveur-caracteristique"), vue: VueCourbe, position: "avant" },
   { correspond: parId("visualiseur-forme-onde"), vue: VueFormeOnde, position: "avant" },
+  // Aucun lecteur à déclarer : ce nœud ne rend pas de son, et n'en propose donc pas l'écoute.
+  { correspond: parId("visualiseur-multipiste"), vue: VuePistesMultiples, position: "avant" },
   { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },
   { correspond: parId("spectrogramme"), vue: VueSpectrogramme, position: "avant" },

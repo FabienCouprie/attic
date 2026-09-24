@@ -486,6 +486,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "visualiseur-multipiste",
+    "vue": "VuePistesMultiples",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "vu-metre",
     "vue": "VueVuMetre",
     "entreeAudio": true,

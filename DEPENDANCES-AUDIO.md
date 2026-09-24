@@ -8,7 +8,7 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 61 · fige, transposable après extraction d'un cœur par voie
+- **récipient** : 62 · fige, transposable après extraction d'un cœur par voie
 - **pur** : 116 · transposable tel quel
 
 | module | classe | marqueur |
@@ -154,6 +154,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | percussions-placement.ts | pur | — |
 | pghi.ts | pur | — |
 | phisem.ts | pur | — |
+| pistes-visu.ts | recipient | AudioBuffer |
 | pitch-progressif.ts | recipient | AudioBuffer |
 | pixeltone.ts | recipient | AudioBuffer |
 | polyfill-audiobuffer.ts | recipient | AudioBuffer |

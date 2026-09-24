@@ -78,14 +78,19 @@ export function mesurerCourbe(courbe: unknown): MesureCourbe {
 }
 
 /**
- * La courbe réduite à `colonnes` couples (min, max).
+ * N'IMPORTE QUELLE SUITE DE VALEURS réduite à `colonnes` couples (min, max).
  *
  * Moins de valeurs que de colonnes : chaque valeur a la sienne, et le tracé reste juste — il est
  * seulement moins dense que la place disponible.
+ *
+ * ELLE NE CONNAÎT NI LES COURBES NI LE SON, et c'est ce qui permet de n'en avoir qu'une écriture.
+ * Une courbe s'y réduit pour son tracé, une piste audio pour le visualiseur multipiste : la même
+ * boucle, écrite deux fois, aurait fini par ne plus dire la même chose des deux côtés.
  */
-export function enveloppe(courbe: unknown, colonnes: number): Colonne[] {
-  if (!estCourbe(courbe) || courbe.valeurs.length === 0 || colonnes < 1) return [];
-  const v = courbe.valeurs;
+export function enveloppeDeValeurs(
+  v: ArrayLike<number>, colonnes: number,
+): Colonne[] {
+  if (v.length === 0 || colonnes < 1) return [];
   const k = Math.min(Math.floor(colonnes), v.length);
   const out: Colonne[] = [];
   for (let c = 0; c < k; c++) {
@@ -99,6 +104,12 @@ export function enveloppe(courbe: unknown, colonnes: number): Colonne[] {
     out.push({ min, max });
   }
   return out;
+}
+
+/** La courbe réduite à `colonnes` couples (min, max). */
+export function enveloppe(courbe: unknown, colonnes: number): Colonne[] {
+  if (!estCourbe(courbe)) return [];
+  return enveloppeDeValeurs(courbe.valeurs, colonnes);
 }
 
 export interface OptionsTrace {

@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **399 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **400 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **399 components** in **7 categories** and **61 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 71 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (12) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 199 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (8) |
-| [Visualization](#visualization) | 38 | [Analysis](#analysis) (15) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 39 | [Analysis](#analysis) (16) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -6458,6 +6458,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
 | [Masking](#masking) | Says what one track makes inaudible in another, critical band by critical band. |
+| [Multitrack Viewer](#multitrack-viewer) | Draws up to six sounds one under another, on a shared time axis. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
@@ -6577,6 +6578,25 @@ After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) f
 |---|---|---|---|---|
 | Masker nature | choice | In between | Tonal / Noisy / In between | A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is. |
 | Resolution | choice | Ordinary (2048) | Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates the low bands better, where they are narrow. |
+
+#### Multitrack Viewer
+
+`visualiseur-multipiste` · Visualization → Analysis
+
+*Draws up to six sounds one under another, on a shared time axis.*
+
+Draws the sounds connected to its inputs, one lane per track, one under another on a shared time axis. Every track starts at zero; the axis runs to the longest, so durations compare directly. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. The « - » refuses while the last track is connected. Each lane gives, at every instant, the lowest and the highest the sound reaches there, all channels together: a brief peak stays visible, and what happens on one channel only is seen as well. The track number and its length are written beside it, along with its peak. The drawing keeps two thousand and forty-eight columns per track: over three minutes, one column covers eighty-eight milliseconds. That is enough to compare takes, to align an entry, to see where a sound stops; it is not enough to hunt for a click. The node returns no sound. One output can feed several inputs: a chain is tapped towards it and carries on.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Track 1 | audio |  |
+| input | Track 2 | audio |  |
+| input | Track 3 | audio |  |
+| input | Track 4 | audio |  |
+| input | Track 5 | audio |  |
+| input | Track 6 | audio |  |
+
+*No parameters.*
 
 #### Practice Keyboard
 
