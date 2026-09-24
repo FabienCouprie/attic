@@ -8,7 +8,7 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, trouverMeta,
+  aplatirGraphe, grapheSansConteneurs, trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
@@ -285,14 +285,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
-    // Le graphe TEL QU'IL EST COMPOSÉ est mis à disposition des nœuds qui le documentent —
-    // avant l'aplatissement, donc avec ses méta-nœuds et ses boucles intactes : c'est ce que
-    // l'utilisateur voit et ce qu'un fichier de projet contient. Le contrat d'exécution du
-    // cœur ne porte pas le graphe, et n'a pas à le porter ; voir plugins/grapheGlobal.ts.
-    publierGrapheCourant({
-      noeuds: noeudsRef.current as unknown as NoeudG[],
-      aretes: aretesRef.current as unknown as AreteG[],
-    });
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
@@ -301,6 +293,21 @@ export function useExecutionGraphe(o: OptionsExecution) {
       aretesRef.current as unknown as AreteG[],
       trouverMeta,
     );
+    // LE GRAPHE MIS À DISPOSITION DES NŒUDS QUI LE DOCUMENTENT EST CELUI QUI CALCULE : les
+    // conteneurs dépliés, leur contenu à leur place, les boucles et les instruments PAS ENCORE
+    // recopiés. Il était publié avant l'aplatissement, si bien qu'un méta-composant se documentait
+    // lui-même par la notice que son magasin lui fabrique, et que ses oscillateurs n'étaient
+    // documentés nulle part. Le contrat d'exécution du cœur ne porte pas le graphe et n'a pas à le
+    // porter ; voir plugins/grapheGlobal.ts et core/formes-graphe.ts.
+    const aDocumenter = grapheSansConteneurs(
+      noeudsRef.current as unknown as NoeudG[],
+      aretesRef.current as unknown as AreteG[],
+      trouverMeta,
+    );
+    publierGrapheCourant(aDocumenter);
+    for (const id of aDocumenter.conteneursRetires) {
+      console.warn(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
+    }
     // Puis DÉPLIE les instruments : tout ce qui est branché entre « Note d'instrument » et
     // « Fin d'instrument » est recopié une fois PAR NOTE du clavier, la note étant injectée dans
     // chaque copie. C'est ainsi qu'une recette devient un instrument : rien n'est transposé, chaque

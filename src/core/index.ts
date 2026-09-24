@@ -3,6 +3,8 @@ export type { Registre } from "./registre";
 export { aplatirGraphe, creerMeta, indexPort, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
+export { grapheSansConteneurs } from "./formes-graphe";
+export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";
 export { trouverMeta, tousLesMetas, estMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
 export { ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteValeur, empreinteValeursEntrantes, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
