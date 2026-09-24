@@ -29,8 +29,10 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   // Allonger sans transposer.
   "Étirement": ["paulstretch", "etirement-glissant", "etirement-spectre", "continuum-stockhausen"],
   // Le son promené sur une surface refermée sur elle-même.
+  // « Spirale des quintes » n'y est plus : elle ne reçoit rien et fabrique un son, sa place est dans
+  // « Entrées › Génération ». Décision de Fabien.
   "Topologie": ["anneau-moebius", "bouteille-klein", "tore", "ceinture-dirac", "tresse", "tonnetz",
-    "spirale-quintes", "spirale-logarithmique", "spirale-spatiale"],
+    "spirale-logarithmique", "spirale-spatiale"],
   // Enlever ce qui n'est pas le son.
   "Débruitage": [
     "debruitage-ia", "reduction-bruit", "profil-bruit", "suppression-clics",

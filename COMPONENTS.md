@@ -9,8 +9,8 @@ Attic ships **399 components** in **7 categories** and **61 families**. Every na
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 70 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (11) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 200 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (9) |
+| [Inputs](#inputs) | 71 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (12) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 199 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (8) |
 | [Visualization](#visualization) | 38 | [Analysis](#analysis) (15) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -446,6 +446,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 
 #### Cellular automaton
@@ -667,6 +668,31 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre: useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### Spiral of Fifths
+
+`spirale-quintes` · Inputs → Generation
+
+*Stacks just fifths and folds them into one octave: the path never returns to its starting point.*
+
+Stacks fifths and folds each note into one octave. The path never returns to its starting point: what is called the circle of fifths is a spiral. Twelve just fifths, of ratio 3/2, are worth 8,423.96 cents; seven octaves are worth 8,400. The difference is the Pythagorean comma, 531441/524288, that is 23.46 cents. No power of 3/2 is a power of 2, 2 and 3 being coprime: the path closes at no rank at all, and equal temperament closes it by force, shaving 1.955 cent off every fifth. The deviation from equal temperament grows by 1.955 cent per step, exactly. The spiral comes close to closing at certain ranks without ever reaching it: • at the twelfth, 23.46 cents are missing, which is audible • at the forty-first, 19.84 cents on the other side • at the fifty-third, 3.62 cents, which is the reason fifty-three-tone temperament exists « Fifth » picks the one being stacked: • Just, 701.955 cents, never closes the path • Equal, exactly 700 cents, closes it at the twelfth step: a circle then, not a spiral • Quarter-comma meantone, 696.578 cents, closes it from the other side, the spiral turning the other way « Playing » decides how the deviation is heard: • One by one: each fifth sounds alone, and the drift is followed degree by degree • Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read Pitches are fractional, in decimal semitones: a whole degree would erase precisely the deviation the spiral accumulates. The output is audio rather than MIDI, a MIDI file being unable to carry a pitch in cents without per-channel pitch bend. The « Journey » output gives, for each step, the degree reached, its folded pitch in cents and its deviation from the nearest equal degree, then the ranks that come closest to closing. After the comma described by the Pythagoreans, and the account Leonhard Euler gives of it in Tentamen novae theoriae musicae, 1739.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fifths | slider | 12 | 1 – 60, step 1 | Number of stacked fifths. Twelve cover the twelve degrees and miss the closure by 23.46 cents. Fifty-three miss it by only 3.6 cents. |
+| Fifth | choice | Just (3/2) | Just (3/2) / Equal / Quarter-comma meantone | The fifth being stacked. Just is 701.955 cents and never closes the path. Equal is exactly 700 cents and closes it at the twelfth step: a circle then, not a spiral. Meantone is 696.578 cents and closes it from the other side, the spiral turning the other way. |
+| Direction | choice | Up | Up / Down | Up stacks fifths, down stacks fourths. The deviation from equal temperament changes sign with the direction. |
+| Playing | choice | One by one | One by one / Stacked | One by one: each fifth sounds alone, and the drift is followed degree by degree. Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read. |
+| Fundamental | slider | 220 Hz | 55 – 440 Hz, step 1 | Pitch of the tonic, and bottom of the octave everything is folded into. |
+| Note length | slider | 0.45 s | 0.1 – 2 s, step 0.05 | Length of each step of the spiral. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
 
 #### SSP (Koenig)
 
@@ -6239,7 +6265,6 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
 | [Spatial Spiral](#spatial-spiral) | Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does. |
-| [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [Tonnetz](#tonnetz) | Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice. |
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
 
@@ -6372,31 +6397,6 @@ Turns a sound around the listener while moving it away, azimuth and distance lin
 | Direction | choice | Recedes | Recedes / Approaches | The direction of the radius. Receding divides the level at each turn, approaching multiplies it. |
 | Starting distance | slider | 1 m | 0.5 – 20 m, step 0.5 | Distance at the start of the travel. It sets the reference level: the output equals the input there. |
 | Air absorption | slider | 50 % | 0 – 100 %, step 1 | How far the air closes the high end with distance. At zero, receding only lowers the level, which a plain gain would do too; it is timbre that tells distance when level lies. |
-
-#### Spiral of Fifths
-
-`spirale-quintes` · Processing → Topology
-
-*Stacks just fifths and folds them into one octave: the path never returns to its starting point.*
-
-Stacks fifths and folds each note into one octave. The path never returns to its starting point: what is called the circle of fifths is a spiral. Twelve just fifths, of ratio 3/2, are worth 8,423.96 cents; seven octaves are worth 8,400. The difference is the Pythagorean comma, 531441/524288, that is 23.46 cents. No power of 3/2 is a power of 2, 2 and 3 being coprime: the path closes at no rank at all, and equal temperament closes it by force, shaving 1.955 cent off every fifth. The deviation from equal temperament grows by 1.955 cent per step, exactly. The spiral comes close to closing at certain ranks without ever reaching it: • at the twelfth, 23.46 cents are missing, which is audible • at the forty-first, 19.84 cents on the other side • at the fifty-third, 3.62 cents, which is the reason fifty-three-tone temperament exists « Fifth » picks the one being stacked: • Just, 701.955 cents, never closes the path • Equal, exactly 700 cents, closes it at the twelfth step: a circle then, not a spiral • Quarter-comma meantone, 696.578 cents, closes it from the other side, the spiral turning the other way « Playing » decides how the deviation is heard: • One by one: each fifth sounds alone, and the drift is followed degree by degree • Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read Pitches are fractional, in decimal semitones: a whole degree would erase precisely the deviation the spiral accumulates. The output is audio rather than MIDI, a MIDI file being unable to carry a pitch in cents without per-channel pitch bend. The « Journey » output gives, for each step, the degree reached, its folded pitch in cents and its deviation from the nearest equal degree, then the ranks that come closest to closing. After the comma described by the Pythagoreans, and the account Leonhard Euler gives of it in Tentamen novae theoriae musicae, 1739.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | Journey | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Fifths | slider | 12 | 1 – 60, step 1 | Number of stacked fifths. Twelve cover the twelve degrees and miss the closure by 23.46 cents. Fifty-three miss it by only 3.6 cents. |
-| Fifth | choice | Just (3/2) | Just (3/2) / Equal / Quarter-comma meantone | The fifth being stacked. Just is 701.955 cents and never closes the path. Equal is exactly 700 cents and closes it at the twelfth step: a circle then, not a spiral. Meantone is 696.578 cents and closes it from the other side, the spiral turning the other way. |
-| Direction | choice | Up | Up / Down | Up stacks fifths, down stacks fourths. The deviation from equal temperament changes sign with the direction. |
-| Playing | choice | One by one | One by one / Stacked | One by one: each fifth sounds alone, and the drift is followed degree by degree. Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read. |
-| Fundamental | slider | 220 Hz | 55 – 440 Hz, step 1 | Pitch of the tonic, and bottom of the octave everything is folded into. |
-| Note length | slider | 0.45 s | 0.1 – 2 s, step 0.05 | Length of each step of the spiral. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
 
 #### Tonnetz
 
