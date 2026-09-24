@@ -108,41 +108,64 @@ describe("les ports d'une bulle", () => {
     noeud("m", "melange", "b"),
   ];
 
-  it("ils reprennent TOUS les ports de TOUS les membres, à plat", () => {
-    const p = portsDeBulle(noeuds, "b", getDef, nomDe);
-    expect(p.entrees.map((e) => e.nom)).toEqual(["g ▸ Audio", "m ▸ A", "m ▸ B"]);
+  const avecDehors = [noeud("dehors", "source"), noeud("apres", "gain"), ...noeuds];
+
+  it("UN PORT EXISTE DÈS QU'UN MEMBRE EST RELIÉ AU DEHORS, et seulement alors", () => {
+    const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "m", "apres")];
+    const p = portsDeBulle(avecDehors, aretes, "b", getDef);
+    expect(p.mapEntrees).toEqual([{ noeudInterne: "g", portIndex: 0 }]);
+    expect(p.mapSorties).toEqual([{ noeudInterne: "m", portIndex: 0 }]);
+    // L'arête interne g → m ne crée aucun port : elle ne traverse rien.
+  });
+
+  it("LES PORTS NE SONT PAS NOMMÉS : leur couleur dit leur type", () => {
+    const p = portsDeBulle(avecDehors, [arete("e1", "dehors", "g")], "b", getDef);
+    expect(p.entrees.map((e) => e.nom)).toEqual([""]);
+    expect(p.entrees.map((e) => e.type)).toEqual(["audio"]);
+  });
+
+  it("DEUX BRANCHES PARALLÈLES MONTRENT DEUX PORTS", () => {
+    const aretes = [arete("e1", "dehors", "g"), arete("e2", "dehors", "m"), arete("e3", "dehors", "m", 0, 1)];
+    const p = portsDeBulle(avecDehors, aretes, "b", getDef);
     expect(p.mapEntrees).toEqual([
       { noeudInterne: "g", portIndex: 0 },
       { noeudInterne: "m", portIndex: 0 },
       { noeudInterne: "m", portIndex: 1 },
     ]);
-    expect(p.sorties.map((e) => e.nom)).toEqual(["g ▸ Audio", "m ▸ Audio"]);
   });
 
-  it("AUCUN N'EST OBLIGATOIRE, sans quoi replier interdirait d'exécuter", () => {
-    for (const e of portsDeBulle(noeuds, "b", getDef, nomDe).entrees) expect(e.requis).toBe(false);
+  it("une bulle qu'aucune arête ne traverse n'a aucun port", () => {
+    expect(portsDeBulle(avecDehors, [arete("e2", "g", "m")], "b", getDef))
+      .toEqual({ entrees: [], sorties: [], mapEntrees: [], mapSorties: [] });
   });
 
-  it("L'ORDRE NE DÉPEND PAS DES ARÊTES : brancher ne réordonne pas les poignées", () => {
-    const avant = portsDeBulle(noeuds, "b", getDef, nomDe).mapEntrees;
-    // Le même graphe, une arête de plus : la table ne bouge pas.
-    const apres = portsDeBulle(noeuds, "b", getDef, nomDe).mapEntrees;
-    expect(apres).toEqual(avant);
+  it("AUCUNE ENTRÉE N'EST OBLIGATOIRE, sans quoi replier interdirait d'exécuter", () => {
+    const p = portsDeBulle(avecDehors, [arete("e1", "dehors", "g")], "b", getDef);
+    for (const e of p.entrees) expect(e.requis).toBe(false);
+  });
+
+  it("L'ORDRE SUIT LES MEMBRES, NON L'ORDRE DES ARÊTES", () => {
+    const a1 = [arete("e1", "dehors", "g"), arete("e2", "dehors", "m")];
+    const a2 = [arete("e2", "dehors", "m"), arete("e1", "dehors", "g")];
+    expect(portsDeBulle(avecDehors, a2, "b", getDef).mapEntrees)
+      .toEqual(portsDeBulle(avecDehors, a1, "b", getDef).mapEntrees);
   });
 
   it("une bulle imbriquée n'apparaît pas dans la table : ses descendants réels y sont", () => {
     const imbriquees = [
+      noeud("dehors", "source"),
       noeud("b-ext", BULLE),
       noeud("b-int", BULLE, "b-ext"),
       noeud("g", "gain", "b-int"),
     ];
-    const p = portsDeBulle(imbriquees, "b-ext", getDef, nomDe);
+    const p = portsDeBulle(imbriquees, [arete("e1", "dehors", "g")], "b-ext", getDef);
     expect(p.mapEntrees).toEqual([{ noeudInterne: "g", portIndex: 0 }]);
   });
 
   it("une appartenance circulaire ne fait pas tourner la dérivation", () => {
-    const cycle = [noeud("a", BULLE, "b"), noeud("b", BULLE, "a"), noeud("g", "gain", "a")];
-    expect(portsDeBulle(cycle, "a", getDef, nomDe).mapEntrees).toEqual([{ noeudInterne: "g", portIndex: 0 }]);
+    const cycle = [noeud("dehors", "source"), noeud("a", BULLE, "b"), noeud("b", BULLE, "a"), noeud("g", "gain", "a")];
+    expect(portsDeBulle(cycle, [arete("e1", "dehors", "g")], "a", getDef).mapEntrees)
+      .toEqual([{ noeudInterne: "g", portIndex: 0 }]);
   });
 });
 
@@ -161,7 +184,7 @@ describe("le repli appliqué", () => {
       arete("e2", "g", "m"),               // interne
       arete("e3", "m", "apres"),           // sort de la bulle
     ];
-    const r = appliquerRepli(base(), aretes, getDef, nomDe);
+    const r = appliquerRepli(base(), aretes, getDef);
 
     const cache = (id: string) => (r.noeuds.find((n) => n.id === id) as { hidden?: boolean }).hidden;
     expect(cache("g")).toBe(true);
@@ -181,19 +204,21 @@ describe("le repli appliqué", () => {
 
     const sortant = subs.find((a) => a.target === "apres")!;
     expect(sortant.source).toBe("b");
-    expect(sortant.sourceHandle).toBe("out:1");  // m ▸ Audio, seconde sortie de la table
+    // La sortie de `m` est la SEULE qui traverse, donc la seule de la table : celle de `g`, qui
+    // n'alimente que l'intérieur, n'y figure pas.
+    expect(sortant.sourceHandle).toBe("out:0");
   });
 
   it("UNE ARÊTE INTERNE N'A PAS DE SUBSTITUT : il n'y a rien à montrer entre deux nœuds cachés", () => {
-    const r = appliquerRepli(base(), [arete("e2", "g", "m")], getDef, nomDe);
+    const r = appliquerRepli(base(), [arete("e2", "g", "m")], getDef);
     expect(r.aretes.filter(estSubstitution)).toHaveLength(0);
     expect(r.aretes[0].hidden).toBe(true);
   });
 
   it("elle est idempotente : rejouée, elle rend la même chose", () => {
     const aretes = [arete("e1", "dehors", "g"), arete("e3", "m", "apres")];
-    const une = appliquerRepli(base(), aretes, getDef, nomDe);
-    const deux = appliquerRepli(une.noeuds, une.aretes, getDef, nomDe);
+    const une = appliquerRepli(base(), aretes, getDef);
+    const deux = appliquerRepli(une.noeuds, une.aretes, getDef);
     expect(deux.aretes.map((a) => a.id).sort()).toEqual(une.aretes.map((a) => a.id).sort());
     expect(deux.noeuds.map((n) => (n as { hidden?: boolean }).hidden))
       .toEqual(une.noeuds.map((n) => (n as { hidden?: boolean }).hidden));
@@ -202,19 +227,19 @@ describe("le repli appliqué", () => {
   it("ELLE NE DÉCACHE QUE CE QU'ELLE A CACHÉ : le `hidden` d'un tiers est respecté", () => {
     // Le réalisateur de démonstration cache les nœuds qu'il n'a pas encore révélés.
     const noeuds = base().map((n) => (n.id === "dehors" ? { ...n, hidden: true } : n));
-    const r = appliquerRepli(noeuds, [], getDef, nomDe);
+    const r = appliquerRepli(noeuds, [], getDef);
     expect((r.noeuds.find((n) => n.id === "dehors") as { hidden?: boolean }).hidden).toBe(true);
   });
 
   it("OUVRIR LA BULLE REND SES MEMBRES VISIBLES, et retire les substituts", () => {
     // L'aller-retour complet : replié, puis ouvert, en repassant par la normalisation.
     const aretes = [arete("e1", "dehors", "g"), arete("e3", "m", "apres")];
-    const replie = appliquerRepli(base(), aretes, getDef, nomDe);
+    const replie = appliquerRepli(base(), aretes, getDef);
     expect((replie.noeuds.find((n) => n.id === "g") as { hidden?: boolean }).hidden).toBe(true);
 
     const ouvert = appliquerRepli(
       replie.noeuds.map((n) => (n.id === "b" ? { ...n, data: { ...n.data, bulleOuverte: true } } : n)),
-      replie.aretes, getDef, nomDe,
+      replie.aretes, getDef,
     );
     // Décaché, explicitement : c'est nous qui l'avions caché, donc c'est à nous de le rendre.
     expect((ouvert.noeuds.find((n) => n.id === "g") as { hidden?: boolean }).hidden).toBe(false);
@@ -225,24 +250,26 @@ describe("le repli appliqué", () => {
 });
 
 describe("la traduction d'une connexion", () => {
-  const noeuds = [noeud("dehors", "source"), noeud("b", BULLE), noeud("g", "gain", "b")];
+  const noeuds = [noeud("dehors", "source"), noeud("autre", "source"), noeud("b", BULLE), noeud("g", "gain", "b")];
+  // La poignée n'existe que parce qu'une arête traverse déjà : c'est elle qui la crée.
+  const aretes = [arete("e1", "dehors", "g")];
 
   it("déposée sur une poignée de bulle, elle atteint le nœud réel", () => {
-    const c = traduireConnexion(noeuds,
-      { source: "dehors", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef, nomDe);
-    expect(c).toEqual({ source: "dehors", target: "g", sourceHandle: "out:0", targetHandle: "in:0" });
+    const c = traduireConnexion(noeuds, aretes,
+      { source: "autre", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef);
+    expect(c).toEqual({ source: "autre", target: "g", sourceHandle: "out:0", targetHandle: "in:0" });
   });
 
   it("une poignée qui ne désigne rien est REFUSÉE, non devinée", () => {
     const vide = [noeud("dehors", "source"), noeud("b", BULLE)];
-    expect(traduireConnexion(vide,
-      { source: "dehors", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef, nomDe)).toBeNull();
+    expect(traduireConnexion(vide, [],
+      { source: "dehors", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef)).toBeNull();
   });
 
   it("une connexion d'une bulle vers elle-même est refusée", () => {
     const n2 = [noeud("b", BULLE), noeud("g", "gain", "b")];
-    expect(traduireConnexion(n2,
-      { source: "b", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef, nomDe)).toBeNull();
+    expect(traduireConnexion(n2, [],
+      { source: "b", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef)).toBeNull();
   });
 });
 
@@ -258,21 +285,21 @@ describe("la sortie qui représente une bulle", () => {
   it("c'est celle qui FRANCHIT la frontière, non la première venue", () => {
     const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "m", "apres")];
     // `g` est le premier membre, donc sa sortie est la première de la table : ce n'est pas elle.
-    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
+    expect(sortieDeBulle(base(), aretes, "b", getDef)).toEqual({ noeudInterne: "m", portIndex: 0 });
   });
 
   it("EN BOUT DE CHAÎNE, c'est la seule sortie qui n'alimente aucun membre", () => {
     const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m")];
-    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
+    expect(sortieDeBulle(base(), aretes, "b", getDef)).toEqual({ noeudInterne: "m", portIndex: 0 });
   });
 
   it("DEUX SORTIES CONCURRENTES N'ONT PAS DE GAGNANTE : on ne devine pas", () => {
     const aretes = [arete("e3", "m", "apres"), arete("e4", "g", "apres", 0, 0)];
-    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toBeNull();
+    expect(sortieDeBulle(base(), aretes, "b", getDef)).toBeNull();
   });
 
   it("une bulle sans membre ne représente rien", () => {
-    expect(sortieDeBulle([noeud("b", BULLE)], [], "b", getDef, nomDe)).toBeNull();
+    expect(sortieDeBulle([noeud("b", BULLE)], [], "b", getDef)).toBeNull();
   });
 
   it("une arête de substitution ne compte pas : elle n'existe que pour l'affichage", () => {
@@ -280,7 +307,7 @@ describe("la sortie qui représente une bulle", () => {
       arete("e2", "g", "m"),
       { ...arete("e3", "m", "apres"), id: "sub::e3", source: "b" } as AreteG,
     ];
-    expect(sortieDeBulle(base(), aretes, "b", getDef, nomDe)).toEqual({ noeudInterne: "m", portIndex: 0 });
+    expect(sortieDeBulle(base(), aretes, "b", getDef)).toEqual({ noeudInterne: "m", portIndex: 0 });
   });
 });
 

@@ -26,19 +26,21 @@ const idUnique = (noeuds: readonly { id: string }[]): string => {
   return `n${n}`;
 };
 
-/** Le rectangle qui contient des nœuds, avec une marge, pour poser la bulle dessus. */
-function cadreDe(noeuds: readonly Node[]): { x: number; y: number; width: number; height: number } {
-  const MARGE = 24;
-  const xs = noeuds.map((n) => n.position?.x ?? 0);
-  const ys = noeuds.map((n) => n.position?.y ?? 0);
-  const x2 = noeuds.map((n, i) => (xs[i] ?? 0) + (n.width ?? 230));
-  const y2 = noeuds.map((n, i) => (ys[i] ?? 0) + (n.height ?? 200));
-  const gx = Math.min(...xs) - MARGE, gy = Math.min(...ys) - MARGE;
-  return {
-    x: gx, y: gy,
-    width: Math.max(...x2) - gx + MARGE,
-    height: Math.max(...y2) - gy + MARGE,
-  };
+/**
+ * Où poser la bulle : au centre de ce qu'elle replie, et PETITE.
+ *
+ * Elle couvrait d'abord l'emprise de ses membres, comme un cadre. C'était une contradiction : replier
+ * pour gagner de la place et occuper la même place. Ses membres étant cachés, elle n'a rien à couvrir ;
+ * elle se pose donc au centre, à la taille d'un petit nœud. Décision de Fabien.
+ */
+const TAILLE_BULLE = { width: 170, height: 110 };
+
+function positionDe(noeuds: readonly Node[]): { x: number; y: number } {
+  const xs = noeuds.map((n) => (n.position?.x ?? 0) + (n.width ?? 230) / 2);
+  const ys = noeuds.map((n) => (n.position?.y ?? 0) + (n.height ?? 200) / 2);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return { x: Math.round(cx - TAILLE_BULLE.width / 2), y: Math.round(cy - TAILLE_BULLE.height / 2) };
 }
 
 /**
@@ -71,7 +73,7 @@ export function useBulles(o: OptionsBulles) {
     o.pushHistorique();
     const id = idUnique(o.noeudsRef.current);
     const membres = new Set(selection.map((n) => n.id));
-    const cadre = cadreDe(selection);
+    const position = positionDe(selection);
     // La bulle hérite de l'appartenance commune de ses membres, s'ils en ont une : clarifier trois
     // nœuds d'une même bulle fait une bulle DANS celle-là, et non à côté.
     const parents = new Set(selection.map((n) => bulleDe(n as unknown as NoeudG) ?? ""));
@@ -84,9 +86,9 @@ export function useBulles(o: OptionsBulles) {
       {
         id,
         type: "atelier" as const,
-        position: { x: cadre.x, y: cadre.y },
-        width: cadre.width,
-        height: cadre.height,
+        position,
+        width: TAILLE_BULLE.width,
+        height: TAILLE_BULLE.height,
         data: {
           ficheId: ficheDeBulle(id),
           parametres: {},

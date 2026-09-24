@@ -15,20 +15,36 @@
 // invisible : une bulle oubliée par un filtre se serait glissée dans une rubrique existante. Sous son
 // propre nom, une fuite crée une rubrique qu'on ne peut pas ne pas voir.
 
-import type { PluginDef, Registre, TypeValeur } from "../core";
+import type { AreteG, PluginDef, Registre, TypeValeur } from "../core";
 import {
-  estBulle, ficheDeBulle, noeudDeFicheBulle, portsDeBulle, type NoeudG,
+  estBulle, estSubstitution, ficheDeBulle, noeudDeFicheBulle, portsDeBulle, type NoeudG,
 } from "../core";
 
 export const UNIVERS_BULLES = "Bulles";
 
-/** Ce qui décide de refabriquer les fiches : les bulles, leurs membres, et les ports de ceux-ci. */
-export function signatureBulles(noeuds: readonly NoeudG[], nomDe: (n: NoeudG) => string): string {
+/**
+ * Ce qui décide de refabriquer les fiches : les bulles, leurs membres, et le câblage.
+ *
+ * LE CÂBLAGE EN FAIT PARTIE depuis que les ports d'une bulle sont ceux qui la traversent : brancher
+ * une arête lui donne un port, la débrancher le lui retire. Sans les arêtes ici, la fiche resterait
+ * celle d'avant et les poignées ne suivraient pas.
+ *
+ * SANS AUCUNE BULLE, LA SIGNATURE EST VIDE. C'est le cas de très loin le plus fréquent, et il ne doit
+ * rien coûter : un graphe ordinaire ne recalcule rien en déplaçant ou en branchant.
+ */
+export function signatureBulles(
+  noeuds: readonly NoeudG[], aretes: readonly AreteG[], nomDe: (n: NoeudG) => string,
+): string {
+  if (!noeuds.some((n) => estBulle(n.data.ficheId))) return "";
   const parts: string[] = [];
   for (const n of noeuds) {
     const b = (n.data as Record<string, unknown>).bulle;
     if (estBulle(n.data.ficheId)) parts.push(`B:${n.id}:${nomDe(n)}:${b ?? ""}`);
     else if (typeof b === "string" && b) parts.push(`M:${n.id}:${n.data.ficheId}:${b}`);
+  }
+  for (const a of aretes) {
+    if (estSubstitution(a)) continue;
+    parts.push(`A:${a.source}:${a.sourceHandle ?? ""}:${a.target}:${a.targetHandle ?? ""}`);
   }
   return parts.join("|");
 }
@@ -41,6 +57,7 @@ export function signatureBulles(noeuds: readonly NoeudG[], nomDe: (n: NoeudG) =>
  */
 export function synchroniserFichesBulles(
   noeuds: readonly NoeudG[],
+  aretes: readonly AreteG[],
   registre: Registre<TypeValeur, AudioContext>,
   nomDe: (n: NoeudG) => string,
 ): { inscrites: string[]; retirees: string[] } {
@@ -52,7 +69,7 @@ export function synchroniserFichesBulles(
     if (!estBulle(n.data.ficheId)) continue;
     const ficheId = ficheDeBulle(n.id);
     attendues.add(ficheId);
-    const ports = portsDeBulle(noeuds, n.id, getDef, nomDe);
+    const ports = portsDeBulle(noeuds, aretes, n.id, getDef);
     const nom = nomDe(n);
     const def: PluginDef<TypeValeur, AudioContext> = {
       id: ficheId,

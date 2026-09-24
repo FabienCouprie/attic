@@ -11,7 +11,7 @@ import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
   estFrontiere, estBulle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  surChangementMetas, supprimerMeta, traduireConnexion, type NoeudG } from "../core";
+  surChangementMetas, supprimerMeta, traduireConnexion, type AreteG, type NoeudG } from "../core";
 import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -894,15 +894,18 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     const def = trouverDef(n.data.ficheId);
     return (lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? n.data.ficheId;
   }, [lang]);
-  useRepliBulles({ nodes, edges, setNodes, setEdges, getDef: trouverDef, nomDe: nomDeNoeud });
+  useRepliBulles({ nodes, edges, setNodes, setEdges, getDef: trouverDef });
 
   // La fiche d'une bulle est DÉRIVÉE de ses membres, donc refaite dès qu'ils changent — et retirée du
   // registre quand la bulle disparaît. Rien n'est stocké : le projet ne porte que le nœud et
   // l'appartenance de ses membres.
-  const signatureDesBulles = signatureBulles(nodes as unknown as NoeudG[], nomDeNoeud);
+  const signatureDesBulles = signatureBulles(
+    nodes as unknown as NoeudG[], edges as unknown as AreteG[], nomDeNoeud,
+  );
   useEffect(() => {
     const { inscrites, retirees } = synchroniserFichesBulles(
-      noeudsRef.current as unknown as NoeudG[], registre, nomDeNoeud,
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      registre, nomDeNoeud,
     );
     if (inscrites.length || retirees.length) setPluginsVersion((v) => v + 1);
   }, [signatureDesBulles, nomDeNoeud]);
@@ -983,7 +986,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     // La validité se juge sur la connexion TRADUITE : sur une poignée de bulle, ce sont les types du
     // port réel qui comptent, jamais ceux d'un port de façade.
     const traduite = traduireConnexion(
-      noeudsRef.current as unknown as NoeudG[], conn as any, trouverDef, nomDeNoeud,
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      conn as any, trouverDef,
     );
     if (!traduite) return false;
     const source = noeudsRef.current.find((n) => n.id === traduite.source);
@@ -1003,7 +1007,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     // remplacement d'un port non dynamique, même couleur, même historique. Refusée si la poignée ne
     // désigne rien, plutôt que devinée.
     const traduite = traduireConnexion(
-      noeudsRef.current as unknown as NoeudG[], connBrute as any, trouverDef, nomDeNoeud,
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      connBrute as any, trouverDef,
     );
     if (!traduite) return;
     const conn = { ...connBrute, ...traduite };

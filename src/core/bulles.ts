@@ -122,52 +122,107 @@ export interface PortsBulle {
   mapSorties: PortInterne[];
 }
 
-/**
- * Les ports d'une bulle : TOUS les ports de TOUS ses descendants réels, à plat.
- *
- * POURQUOI TOUS, ET NON LES SEULS PORTS TRAVERSÉS. Les poignées d'une bulle repliée sont
- * connectables, donc il faut pouvoir atteindre un port encore libre. Et l'ordre doit être STABLE :
- * s'il ne dépendait que des arêtes existantes, brancher un câble réordonnerait les poignées et les
- * autres câbles changeraient de port sous les doigts. Ici, seul l'ajout ou le retrait d'un membre
- * réordonne, et c'est un geste délibéré. Le trop-plein est l'affaire de l'affichage, qui sait déjà
- * n'en montrer qu'une partie.
- *
- * LA TABLE POINTE TOUJOURS VERS UN NŒUD RÉEL. Une bulle membre d'une bulle n'apparaît pas dans la
- * table : ses propres descendants y sont, de sorte qu'une arête de substitution atteint directement le
- * nœud qui calcule.
- */
-export function portsDeBulle(
-  noeuds: readonly NoeudG[],
-  bulleId: string,
-  getDef: (ficheId: string) => DefPorts | undefined,
-  nomDe: (n: NoeudG) => string,
-): PortsBulle {
-  const entrees: PortDef[] = [];
-  const sorties: PortDef[] = [];
-  const mapEntrees: PortInterne[] = [];
-  const mapSorties: PortInterne[] = [];
+/** Les descendants réels d'une bulle, à plat, dans l'ordre du tableau de nœuds. */
+export function descendantsDeBulle(noeuds: readonly NoeudG[], bulleId: string): NoeudG[] {
+  const out: NoeudG[] = [];
   const vus = new Set<string>();
-
   const parcourir = (id: string): void => {
     if (vus.has(id)) return;
     vus.add(id);
     for (const m of membresDe(noeuds, id)) {
-      if (estBulle(m.data.ficheId)) { parcourir(m.id); continue; }
-      const def = getDef(m.data.ficheId);
-      if (!def) continue;
-      const nom = nomDe(m);
-      def.entrees.forEach((p: PortDef, i: number) => {
-        entrees.push({ ...p, nom: `${nom} ▸ ${p.nom}`, nomEn: `${nom} ▸ ${p.nomEn ?? p.nom}`, requis: false });
-        mapEntrees.push({ noeudInterne: m.id, portIndex: i });
-      });
-      def.sorties.forEach((p: PortDef, i: number) => {
-        sorties.push({ ...p, nom: `${nom} ▸ ${p.nom}`, nomEn: `${nom} ▸ ${p.nomEn ?? p.nom}` });
-        mapSorties.push({ noeudInterne: m.id, portIndex: i });
-      });
+      if (estBulle(m.data.ficheId)) parcourir(m.id);
+      else out.push(m);
     }
   };
   parcourir(bulleId);
+  return out;
+}
+
+/**
+ * Les ports d'une bulle : ce qui la traverse, et rien d'autre.
+ *
+ * UNE BULLE EST UN MAILLON, PAS UN TABLEAU DE BORD. Elle montrait d'abord tous les ports de tous ses
+ * membres, préfixés du nom de chacun : trois composants de quatre entrées en faisaient douze, et il
+ * fallait lire des étiquettes pour s'y retrouver. Ce n'est pas ce qu'on replie un schéma pour obtenir.
+ *
+ * LA RÈGLE EST CELLE DE LA FRONTIÈRE : une entrée existe dès qu'un membre, quel qu'il soit, est
+ * alimenté par un composant du dehors ; une sortie, dès qu'un membre en alimente un. Elle vaut sans
+ * cas particulier pour une chaîne — un port d'un côté, un de l'autre — comme pour deux branches
+ * parallèles, qui en montrent deux. Règle énoncée par Fabien.
+ *
+ * DEUX CONSÉQUENCES QU'IL FAUT CONNAÎTRE. Aucune arête traversante ne peut manquer de port, puisque
+ * ce sont elles qui les créent : rien ne disparaît à l'affichage. Et une bulle qu'aucune arête ne
+ * traverse n'a aucun port, ce qui est le cas d'un morceau de schéma replié à l'écart.
+ *
+ * LES PORTS NE SONT PAS NOMMÉS : leur couleur dit leur type, ce qui suffit là où il n'y en a qu'un ou
+ * deux. Décision de Fabien.
+ *
+ * L'ORDRE SUIT LES MEMBRES, NON LES ARÊTES : membre par membre dans l'ordre du graphe, puis rang du
+ * port. Deux graphes identiques rendent la même liste, quel que soit l'ordre où les arêtes ont été
+ * posées.
+ *
+ * LA TABLE POINTE TOUJOURS VERS UN NŒUD RÉEL. Une bulle membre d'une bulle n'y figure pas : ce sont
+ * ses propres descendants qu'on voit, de sorte qu'une arête atteint directement le nœud qui calcule.
+ */
+export function portsDeBulle(
+  noeuds: readonly NoeudG[],
+  aretes: readonly AreteG[],
+  bulleId: string,
+  getDef: (ficheId: string) => DefPorts | undefined,
+): PortsBulle {
+  const vide: PortsBulle = { entrees: [], sorties: [], mapEntrees: [], mapSorties: [] };
+  const dedans = descendantsDeBulle(noeuds, bulleId);
+  if (dedans.length === 0) return vide;
+
+  const ids = new Set(dedans.map((n) => n.id));
+  // Un nœud de bulle intérieur compte comme « dedans » : une arête qui le touche ne traverse pas la
+  // frontière de celle-ci.
+  for (const a of ancetresEtDescendantsBulles(noeuds, bulleId)) ids.add(a);
+
+  const cleEntrees = new Set<string>();
+  const cleSorties = new Set<string>();
+  for (const a of aretes) {
+    if (estSubstitution(a)) continue;
+    const source = ids.has(a.source);
+    const cible = ids.has(a.target);
+    if (!source && cible) cleEntrees.add(`${a.target}#${indexPort(a.targetHandle, 0)}`);
+    if (source && !cible) cleSorties.add(`${a.source}#${indexPort(a.sourceHandle, 0)}`);
+  }
+
+  const anonyme = (p: PortDef): PortDef => ({ ...p, nom: "", nomEn: "" });
+  const entrees: PortDef[] = [];
+  const sorties: PortDef[] = [];
+  const mapEntrees: PortInterne[] = [];
+  const mapSorties: PortInterne[] = [];
+  for (const m of dedans) {
+    const def = getDef(m.data.ficheId);
+    if (!def) continue;
+    def.entrees.forEach((p: PortDef, i: number) => {
+      if (!cleEntrees.has(`${m.id}#${i}`)) return;
+      entrees.push({ ...anonyme(p), requis: false });
+      mapEntrees.push({ noeudInterne: m.id, portIndex: i });
+    });
+    def.sorties.forEach((p: PortDef, i: number) => {
+      if (!cleSorties.has(`${m.id}#${i}`)) return;
+      sorties.push(anonyme(p));
+      mapSorties.push({ noeudInterne: m.id, portIndex: i });
+    });
+  }
   return { entrees, sorties, mapEntrees, mapSorties };
+}
+
+/** Les identifiants des nœuds de bulle contenus dans celle-ci, elle comprise. */
+function ancetresEtDescendantsBulles(noeuds: readonly NoeudG[], bulleId: string): string[] {
+  const out: string[] = [bulleId];
+  const vus = new Set<string>([bulleId]);
+  for (let i = 0; i < out.length && i < 10000; i++) {
+    for (const m of membresDe(noeuds, out[i])) {
+      if (!estBulle(m.data.ficheId) || vus.has(m.id)) continue;
+      vus.add(m.id);
+      out.push(m.id);
+    }
+  }
+  return out;
 }
 
 /**
@@ -199,12 +254,11 @@ export function appliquerRepli(
   noeuds: readonly NoeudG[],
   aretes: readonly AreteG[],
   getDef: (ficheId: string) => DefPorts | undefined,
-  nomDe: (n: NoeudG) => string,
 ): { noeuds: NoeudG[]; aretes: AreteG[] } {
   const ports = new Map<string, PortsBulle>();
   const portsPour = (bulleId: string): PortsBulle => {
     let p = ports.get(bulleId);
-    if (!p) { p = portsDeBulle(noeuds, bulleId, getDef, nomDe); ports.set(bulleId, p); }
+    if (!p) { p = portsDeBulle(noeuds, aretes, bulleId, getDef); ports.set(bulleId, p); }
     return p;
   };
 
@@ -263,9 +317,9 @@ export function appliquerRepli(
  */
 export function traduireConnexion(
   noeuds: readonly NoeudG[],
+  aretes: readonly AreteG[],
   conn: { source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null },
   getDef: (ficheId: string) => DefPorts | undefined,
-  nomDe: (n: NoeudG) => string,
 ): { source: string; target: string; sourceHandle: string; targetHandle: string } | null {
   const parId = new Map(noeuds.map((n) => [n.id, n]));
   let { source, target } = conn;
@@ -274,14 +328,14 @@ export function traduireConnexion(
 
   const s = parId.get(source);
   if (s && estBulle(s.data.ficheId)) {
-    const m = portsDeBulle(noeuds, source, getDef, nomDe).mapSorties[indexPort(sourceHandle, -1)];
+    const m = portsDeBulle(noeuds, aretes, source, getDef).mapSorties[indexPort(sourceHandle, -1)];
     if (!m) return null;
     source = m.noeudInterne;
     sourceHandle = `out:${m.portIndex}`;
   }
   const t = parId.get(target);
   if (t && estBulle(t.data.ficheId)) {
-    const m = portsDeBulle(noeuds, target, getDef, nomDe).mapEntrees[indexPort(targetHandle, -1)];
+    const m = portsDeBulle(noeuds, aretes, target, getDef).mapEntrees[indexPort(targetHandle, -1)];
     if (!m) return null;
     target = m.noeudInterne;
     targetHandle = `in:${m.portIndex}`;
@@ -308,29 +362,27 @@ export function sortieDeBulle(
   aretes: readonly AreteG[],
   bulleId: string,
   getDef: (ficheId: string) => DefPorts | undefined,
-  nomDe: (n: NoeudG) => string,
 ): PortInterne | null {
-  const ports = portsDeBulle(noeuds, bulleId, getDef, nomDe);
-  if (ports.mapSorties.length === 0) return null;
-  const dedans = new Set(ports.mapSorties.map((m) => m.noeudInterne));
-  for (const m of ports.mapEntrees) dedans.add(m.noeudInterne);
+  // Les sorties exposées SONT les sorties traversantes : une seule, c'est elle.
+  const ports = portsDeBulle(noeuds, aretes, bulleId, getDef);
+  if (ports.mapSorties.length === 1) return ports.mapSorties[0];
+  if (ports.mapSorties.length > 1) return null;
 
+  // Aucune ne traverse : la bulle est posée en bout de chaîne, et sa sortie est celle qui n'alimente
+  // personne. Plusieurs candidates n'ont pas de gagnante.
+  const dedans = descendantsDeBulle(noeuds, bulleId);
   const reelles = aretes.filter((a) => !estSubstitution(a));
-  const cle = (m: PortInterne) => `${m.noeudInterne}#${m.portIndex}`;
-  const sortantes = new Map<string, PortInterne>();
-  const alimentent = new Set<string>();
-  for (const a of reelles) {
-    const m = ports.mapSorties.find(
-      (x) => x.noeudInterne === a.source && x.portIndex === indexPort(a.sourceHandle, 0),
-    );
-    if (!m) continue;
-    alimentent.add(cle(m));
-    if (!dedans.has(a.target)) sortantes.set(cle(m), m);
+  const libres: PortInterne[] = [];
+  for (const m of dedans) {
+    const def = getDef(m.data.ficheId);
+    if (!def) continue;
+    def.sorties.forEach((_: PortDef, i: number) => {
+      const alimente = reelles.some(
+        (a) => a.source === m.id && indexPort(a.sourceHandle, 0) === i,
+      );
+      if (!alimente) libres.push({ noeudInterne: m.id, portIndex: i });
+    });
   }
-  if (sortantes.size === 1) return [...sortantes.values()][0];
-  if (sortantes.size > 1) return null;
-
-  const libres = ports.mapSorties.filter((m) => !alimentent.has(cle(m)));
   return libres.length === 1 ? libres[0] : null;
 }
 

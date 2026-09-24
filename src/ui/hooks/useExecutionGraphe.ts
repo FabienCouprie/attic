@@ -423,9 +423,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // la remontée est une lecture directe — sans la convention d'identifiant `::` dont dépend celle des
     // méta-composants, puisque replier ne renomme rien.
     const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
-    // Les libellés des ports d'une bulle ne servent qu'à l'affichage, et ce n'est pas ce qu'on lit
-    // ici : seule la table « port de la bulle → nœud réel » compte. L'identifiant suffit donc.
-    const nomDeNoeudBulle = (x: NoeudG) => x.id;
     const bullesDuNoeud = new Map<string, string[]>();
     for (const id of ordreFiltre) bullesDuNoeud.set(id, ancetresBulle(tousNoeudsG, id));
     for (const n of noeudsRef.current) {
@@ -739,7 +736,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // donc que la sortie qui représente la bulle, et rien si aucune ne la représente à elle seule.
         // Aucun préfixe d'identifiant ici, contrairement au méta-nœud : replier ne renomme personne.
         const sortie = estBulle(n.data.ficheId as string)
-          ? sortieDeBulle(tousNoeudsG, aretesReelles, n.id, trouverDef, nomDeNoeudBulle)
+          ? sortieDeBulle(tousNoeudsG, aretesReelles, n.id, trouverDef)
           : null;
         const vals = meta
           ? meta.sorties.map((_, i) => {

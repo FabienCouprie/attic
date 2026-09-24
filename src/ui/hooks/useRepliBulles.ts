@@ -28,22 +28,19 @@ export function useRepliBulles(o: {
   setNodes: (f: (n: any[]) => any[]) => void;
   setEdges: (f: (e: Edge[]) => Edge[]) => void;
   getDef: (ficheId: string) => DefPorts | undefined;
-  nomDe: (n: NoeudG) => string;
 }): void {
-  const { nodes, edges, setNodes, setEdges, getDef, nomDe } = o;
+  const { nodes, edges, setNodes, setEdges, getDef } = o;
   useEffect(() => {
     // Rien à faire tant qu'aucune bulle n'existe : le cas de très loin le plus fréquent.
     const aDesBulles = nodes.some((n) => estBulle((n.data as { ficheId?: string }).ficheId));
     const aDesSubstituts = edges.some((e) => estSubstitution(e as unknown as AreteG));
     if (!aDesBulles && !aDesSubstituts) return;
 
-    const r = appliquerRepli(
-      nodes as unknown as NoeudG[], edges as unknown as AreteG[], getDef, nomDe,
-    );
+    const r = appliquerRepli(nodes as unknown as NoeudG[], edges as unknown as AreteG[], getDef);
     if (signature(r.noeuds, r.aretes) === signature(nodes as unknown as NoeudG[], edges as unknown as AreteG[])) {
       return;
     }
     setNodes(() => r.noeuds as unknown as Node[]);
     setEdges(() => r.aretes as unknown as Edge[]);
-  }, [nodes, edges, setNodes, setEdges, getDef, nomDe]);
+  }, [nodes, edges, setNodes, setEdges, getDef]);
 }
