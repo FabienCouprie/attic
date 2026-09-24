@@ -80,7 +80,24 @@ const FAUTES = [
   },
   {
     // Du code transporté par le shell plutôt qu'écrit dans un fichier.
-    voir: (cmd) => heredocs(cmd).some((c) => /^\s*(import|from|def |class |const |let |function )/m.test(c)),
+    //
+    // LES MOTIFS EXIGENT UNE INSTRUCTION, ET NON UN MOT. La première version cherchait une ligne
+    // COMMENÇANT par `import`, `class` ou `const` : elle a refusé un message de commit dont une
+    // phrase française débutait par « import et signalait le socle… ». Un mot-clé en tête de ligne
+    // n'est pas du code, c'est un substitut pris pour la propriété — la faute même que ce contrat
+    // existe pour empêcher, commise dans le contrat.
+    voir: (cmd) => heredocs(cmd).some((c) => [
+      /^\s*import\s+[\w{*][^\n]*\bfrom\b/m,      // import X from "y"
+      /^\s*import\s+['"]/m,                       // import "y"
+      // `import io`, `import os, sys`, `import numpy as np` : la ligne S'ARRÊTE après les modules.
+      // C'est ce qui la distingue d'une phrase, où « import » serait suivi d'autres mots.
+      /^\s*import\s+[\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*\s*$/m,
+      /^\s*from\s+[\w.]+\s+import\s/m,            // from x import y
+      /^\s*def\s+\w+\s*\(/m,
+      /^\s*class\s+\w+\s*[({:]/m,
+      /^\s*(?:const|let|var)\s+[\w{[]\S*\s*=/m,
+      /^\s*(?:async\s+)?function\s*\w*\s*\(/m,
+    ].some((m) => m.test(c))),
     dire: "Ce heredoc transporte du code. L'écrire avec Write dans un fichier, puis le lancer :"
       + " le shell ne doit pas être sur le chemin d'un source.",
   },

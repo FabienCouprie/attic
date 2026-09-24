@@ -1,0 +1,106 @@
+{
+  "frequence": 48000,
+  "dureeSec": 3,
+  "composants": {
+    "phase-pghi": {
+      "empreintes": [
+        "0.250049789/0.655098379"
+      ],
+      "message": "Convergence -8.6 dB · 0 îlot(s) · 0 % intégré"
+    },
+    "stn-sinus-transitoires-bruit": {
+      "empreintes": [
+        "0.268741559/0.503072202",
+        "0.005003326/0.181165308",
+        "0.017908591/0.135868892"
+      ],
+      "message": "Sinus 100 % · transitoires 0 % · bruit 0 %"
+    },
+    "sms-sinusoides-bruit": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        "0.269146007/0.503524363",
+        "0.017903898/0.183181822"
+      ],
+      "message": "2 partiels suivis · découpés dans le son"
+    },
+    "decomposition-atomique": {
+      "empreintes": [
+        "0.268589638/0.526395142",
+        "0.026862897/0.346627086",
+        null
+      ],
+      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n2673 ms"
+    },
+    "texture-statistique": {
+      "empreintes": [
+        "0.390867573/0.899999976"
+      ],
+      "message": "10.0 s · 20 bandes · écart aux statistiques 57 %"
+    },
+    "correction-hauteur": {
+      "empreintes": [
+        "0.269832396/0.529635847",
+        null
+      ],
+      "message": "écart moyen corrigé 0 cents · 99 % des trames"
+    },
+    "shimmer": {
+      "empreintes": [
+        "0.264298468/0.732867956"
+      ],
+      "message": "générations : 0 · -5 · -8 · -12 dB"
+    },
+    "suiveur-hauteur": {
+      "empreintes": [
+        null,
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "300 trames · 99 % voisé · médiane 220.0 Hz"
+    },
+    "harmonizer": {
+      "empreintes": [
+        "0.292976511/0.686969876"
+      ],
+      "message": null
+    },
+    "voice-changer": {
+      "empreintes": [
+        "0.256350379/0.547027826"
+      ],
+      "message": "Voice Changer · Chipmunk"
+    },
+    "griffin-lim": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": "Griffin-Lim · 60 it. · pic E/S 5.29e-1 / 5.29e-1"
+    },
+    "assaisonnement-sonore": {
+      "empreintes": [
+        "0.046797511/0.182511583",
+        null
+      ],
+      "message": "sucré 61 % → 90 %"
+    },
+    "octaver": {
+      "empreintes": [
+        "0.160525423/0.561292052"
+      ],
+      "message": null
+    },
+    "changement-tonalite": {
+      "empreintes": [
+        "0.269161387/0.538834214"
+      ],
+      "message": null
+    },
+    "paulstretch": {
+      "empreintes": [
+        "0.203754738/0.707945764"
+      ],
+      "message": null
+    }
+  }
+}

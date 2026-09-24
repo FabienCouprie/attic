@@ -72,6 +72,40 @@ describe("LE CODE : un source ne passe pas par le shell", () => {
     }
   });
 
+  // LE CAS OBSERVÉ, et il a refusé un commit légitime : un message dont une phrase française
+  // commençait par « import ». Un mot-clé en tête de ligne n'est pas une instruction.
+  it("LAISSE PASSER DE LA PROSE dont une phrase commence par un mot-clé", () => {
+    const message = [
+      "chore: trois pieces contractualisent la fiabilite",
+      "",
+      "Sa premiere version cherchait un nom au lieu d'un",
+      "import et signalait le socle comme orphelin.",
+      "class et const sont des mots comme les autres dans une phrase.",
+      "function n'est pas davantage une instruction ici.",
+      "from la ligne de depart, rien ne bougeait.",
+    ];
+    const r = juger(heredoc("git commit -F -", message, "MSG"));
+    expect(r.code, r.dit).toBe(0);
+  });
+
+  it("refuse une instruction véritable, quelle que soit la forme", () => {
+    for (const ligne of [
+      'import { a } from "b"',
+      'import "effets-de-bord"',
+      "from pathlib import Path",
+      "def calculer(x):",
+      "class Machine {",
+      "const table = [1, 2]",
+      "let n = 0",
+      "function faire() {",
+      "async function faire() {",
+    ]) {
+      const r = juger(heredoc("PYTHONUTF8=1 python -", [ligne]));
+      expect(r.code, ligne).toBe(2);
+      expect(r.dit, ligne).toMatch(/transporte du code/);
+    }
+  });
+
   it("refuse même quand l'UTF-8 est forcé : les deux fautes sont indépendantes", () => {
     const r = juger(heredoc("PYTHONUTF8=1 python -", ["import io", "print(1)"]));
     expect(r.code).toBe(2);

@@ -58,7 +58,8 @@
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",
     "modeles:publier": "node scripts/modeles.cjs --publier",
-    "build:electron:light": "node scripts/build-electron.cjs --light"
+    "build:electron:light": "node scripts/build-electron.cjs --light",
+    "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts"
   },
   "build": {
     "appId": "com.attic.audio",
