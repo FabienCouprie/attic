@@ -33,7 +33,7 @@ import {
    ajusterLargeurStereo,
    compresserMultiBande,
    exciter,
-   harmoniser,
+   harmoniser, harmoniserVoie, type OptionsHarmoniser,
    vocoder,
    granularFreeze,
     appliquerInstrumentMidi,
@@ -53,11 +53,29 @@ import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, nor
 import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
 import { quadrafuzz } from "../audio/quadrafuzz";
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
+import { parCanal } from "./hors-fil";
 
 type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
 type FnEffet = (audio: AudioBuffer, ...args: number[]) => Promise<AudioBuffer> | AudioBuffer;
 
-function effet(slug: string, nom: string, nomEn: string, resume: string, resumeEn: string, parametres: ParamEffet[], fn: FnEffet): FicheAudio {
+/**
+ * De quoi faire calculer un effet hors du fil de l'interface, quand son calcul le permet.
+ *
+ * SEULS LES EFFETS DONT LE CALCUL EST PUR PEUVENT L'EMPLOYER, c'est-à-dire ceux qui ne touchent pas
+ * au Web Audio : `AudioBuffer` n'existe pas dans un worker. `voix` reçoit un canal et les réglages
+ * dans l'ordre où la fiche les déclare, et c'est cette même fonction que le worker exécute.
+ */
+type HorsFilEffet = {
+  creerWorker: () => Worker;
+  voix: (x: Float32Array, o: Record<string, number>) => Float32Array;
+  /** Les noms sous lesquels les réglages voyagent, dans l'ordre des paramètres de la fiche. */
+  cles: string[];
+};
+
+function effet(
+  slug: string, nom: string, nomEn: string, resume: string, resumeEn: string,
+  parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet,
+): FicheAudio {
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
@@ -72,6 +90,19 @@ function effet(slug: string, nom: string, nomEn: string, resume: string, resumeE
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const args = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
+      if (hors) {
+        const reglages: Record<string, number> = {};
+        hors.cles.forEach((cle, i) => { reglages[cle] = args[i]; });
+        const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
+        const parVoie = await parCanal<Record<string, number>, Float32Array>(voies, reglages, {
+          creerWorker: hors.creerWorker, calcul: hors.voix,
+        });
+        const out = new AudioBuffer({
+          numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate,
+        });
+        for (let c = 0; c < audio.numberOfChannels; c++) out.getChannelData(c).set(parVoie[c]);
+        return { valeurs: [out] };
+      }
       return { valeurs: [await fn(audio, ...args)] };
    },
   };
@@ -372,7 +403,12 @@ export const fiches: FicheAudio[] = ([
     (a,debut,fin) => glissandoTonalite(a, debut, fin)),
   effet("harmonizer", "Harmonizer / Octaver", "Harmonizer / Octaver", "Ajoute des voix pitch-shiftées (octave, quinte…) sous l'original.", "Adds pitch-shifted voices (octave, fifth…) under the original.",
     [param("Voix 1", 12, "Voice 1", "st", "Intervalle de la première voix en demi-tons. 12 = octave supérieure, -12 = octave inférieure, 7 = quinte.", "Interval of first voice in semitones. 12 = octave up, -12 = octave down, 7 = fifth.", [-24, 24], 1), param("Mix 1", 30, "Mix 1", "%", "Niveau de la première voix.", "Level of first voice.", [0, 100], 1), param("Voix 2", -12, "Voice 2", "st", "Intervalle de la deuxième voix en demi-tons.", "Interval of second voice in semitones.", [-24, 24], 1), param("Mix 2", 30, "Mix 2", "%", "Niveau de la deuxième voix.", "Level of second voice.", [0, 100], 1)],
-    (a, v1, m1, v2, m2) => harmoniser(a, v1, m1, v2, m2)),
+    (a, v1, m1, v2, m2) => harmoniser(a, v1, m1, v2, m2),
+    {
+      creerWorker: () => new Worker(new URL("../workers/harmoniser-worker.ts", import.meta.url), { type: "module" }),
+      voix: (x, o) => harmoniserVoie(x, o as unknown as OptionsHarmoniser),
+      cles: ["interval1", "mix1", "interval2", "mix2"],
+    }),
   {
     id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement extrême par randomisation des phases (stéréo).",

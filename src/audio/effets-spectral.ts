@@ -475,6 +475,34 @@ export function panLogistique(
 // --- Harmonizer / Octaver : ajoute des voix pitch-shiftées ---------------------
 // Crée jusqu'à deux voix décalées en demi-tons et les mixe sous l'original.
 
+export interface OptionsHarmoniser {
+  interval1: number;
+  mix1: number;
+  interval2: number;
+  mix2: number;
+}
+
+/**
+ * L'harmonisation d'UNE voie, sans `AudioBuffer`.
+ *
+ * Les voix ajoutées sont indépendantes d'un canal à l'autre, la transposition traitant chaque canal
+ * pour lui-même : le calcul par voie rend donc exactement ce que rendait le calcul par tampon, et la
+ * comparaison d'empreinte le vérifie. C'est ce cœur qui permet au composant de quitter le fil de
+ * l'interface, `AudioBuffer` n'existant pas dans un worker.
+ */
+export function harmoniserVoie(x: Float32Array, o: OptionsHarmoniser): Float32Array {
+  const out = Float32Array.from(x);
+  const ajouterVoix = (interval: number, gainRel: number): void => {
+    if (gainRel <= 0 || interval === 0) return;
+    const voix = changerTonaliteVoie(x, interval);
+    const gain = gainRel / 100;
+    for (let i = 0; i < x.length; i++) out[i] += voix[i] * gain;
+  };
+  ajouterVoix(o.interval1, o.mix1);
+  ajouterVoix(o.interval2, o.mix2);
+  return out;
+}
+
 export function harmoniser(
   buffer: AudioBuffer,
   interval1: number,
@@ -483,23 +511,10 @@ export function harmoniser(
   mix2: number,
 ): AudioBuffer {
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
+  const o = { interval1, mix1, interval2, mix2 };
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    resultat.getChannelData(c).set(buffer.getChannelData(c));
+    resultat.getChannelData(c).set(harmoniserVoie(buffer.getChannelData(c), o));
   }
-
-  function ajouterVoix(interval: number, gainRel: number): void {
-    if (gainRel <= 0 || interval === 0) return;
-    const voix = changerTonalite(buffer, interval);
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const dst = resultat.getChannelData(c);
-      const src = voix.getChannelData(c);
-      const gain = gainRel / 100;
-      for (let i = 0; i < buffer.length; i++) dst[i] += src[i] * gain;
-    }
-  }
-
-  ajouterVoix(interval1, mix1);
-  ajouterVoix(interval2, mix2);
   return resultat;
 }
 
