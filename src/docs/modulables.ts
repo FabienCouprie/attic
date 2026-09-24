@@ -15,6 +15,7 @@
 // d'une analyse, ne se module pas : le faire varier dans le temps ne veut rien dire.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { FAMILLES_EFFETS } from "../plugins/familles-palette";
 
 /** Les huit familles de grandeurs continues, telles que les composants déjà modulables les pilotent. */
 export const FAMILLES: Record<string, RegExp> = {
@@ -85,6 +86,27 @@ export const ECARTES: Record<string, string> = {
   "compresseur-multibande": "trois seuils et une paire attaque / relâchement : aucune cible unique à piloter",
 };
 
+/**
+ * Les familles de la palette écartées en bloc, et pourquoi.
+ *
+ * UNE DÉCISION D'ENSEMBLE SE LIT OÙ ELLE EST DÉCLARÉE. Écarter une famille en recopiant ici les
+ * identifiants de ses membres laisserait entrer le prochain nœud qu'on y range, et le recensement
+ * dirait alors qu'il reste à faire une décision déjà prise. La famille est donc lue dans
+ * `familles-palette.ts`, qui est l'endroit où le rangement de la palette est décidé.
+ */
+export const CATEGORIES_ECARTEES: Record<string, string> = {
+  "Topologie": "la famille entière est écartée : le son y est promené sur une surface refermée sur elle-même, dont la géométrie est le sujet du nœud et non un réglage à faire varier",
+};
+
+/** Les identifiants écartés, nommément ou par leur famille de palette. */
+export function idsEcartes(): Map<string, string> {
+  const out = new Map(Object.entries(ECARTES));
+  for (const [famille, raison] of Object.entries(CATEGORIES_ECARTEES)) {
+    for (const id of FAMILLES_EFFETS[famille] ?? []) if (!out.has(id)) out.set(id, raison);
+  }
+  return out;
+}
+
 export interface CibleModulable {
   id: string;
   nom: string;
@@ -106,10 +128,11 @@ const estContinu = (p: any) =>
 /** Ce qui reste à faire : un effet audio vers audio, sans entrée courbe, non écarté. */
 export function cibles(fiches: readonly FicheAudio[]): CibleModulable[] {
   const out: CibleModulable[] = [];
+  const ecartes = idsEcartes();
   for (const f of fiches) {
     if (!estAudio(f, "entrees") || !estAudio(f, "sorties")) continue;
     if (aCourbe(f)) continue;
-    if (f.id in ECARTES) continue;
+    if (ecartes.has(f.id)) continue;
     const parFamille = new Map<string, string[]>();
     for (const p of ((f as any).parametres ?? [])) {
       if (!estContinu(p)) continue;
@@ -145,6 +168,7 @@ export function recensementEnTexte(fiches: readonly FicheAudio[]): string {
   const parFamille = new Map<string, CibleModulable[]>();
   for (const c of restants) (parFamille.get(c.famille) ?? parFamille.set(c.famille, []).get(c.famille)!).push(c);
   const familles = [...parFamille.entries()].sort((a, b) => b[1].length - a[1].length);
+  const nFamilles = Object.keys(CATEGORIES_ECARTEES).length;
 
   const lignes = [
     "# Effets à rendre modulables",
@@ -158,7 +182,7 @@ export function recensementEnTexte(fiches: readonly FicheAudio[]): string {
     "",
     `- **acceptent déjà une courbe** : ${deja.length}`,
     `- **restent à faire** : ${composants.size} composants, ${restants.length} couples composant / famille`,
-    `- **écartés** : ${Object.keys(ECARTES).length}`,
+    `- **écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
     "",
     "## Ce qui reste, par famille",
     "",
@@ -168,7 +192,12 @@ export function recensementEnTexte(fiches: readonly FicheAudio[]): string {
     for (const c of liste) lignes.push(`- ${c.nom} \`${c.id}\` : ${c.reglages.join(", ")}`);
     lignes.push("");
   }
-  lignes.push("## Écartés, et pourquoi", "");
+  lignes.push("## Familles écartées en bloc", "");
+  for (const [famille, raison] of Object.entries(CATEGORIES_ECARTEES)) {
+    lignes.push(`- **${famille}** : ${raison}`);
+    lignes.push(`  - ${(FAMILLES_EFFETS[famille] ?? []).map((id) => `\`${id}\``).join(", ")}`);
+  }
+  lignes.push("", "## Écartés nommément, et pourquoi", "");
   for (const [id, raison] of Object.entries(ECARTES)) lignes.push(`- \`${id}\` : ${raison}`);
   lignes.push("", "## Acceptent déjà une courbe", "");
   for (const d of deja) lignes.push(`- \`${d.id}\` : ${d.cible}`);

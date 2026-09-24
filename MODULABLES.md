@@ -8,14 +8,13 @@ nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont 
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
 - **acceptent déjà une courbe** : 33
-- **restent à faire** : 35 composants, 51 couples composant / famille
-- **écartés** : 33
+- **restent à faire** : 31 composants, 47 couples composant / famille
+- **écartés** : 42, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### melange · 13
+### melange · 12
 
-- Anneau de Möbius `anneau-moebius` : Mélange
 - Beat Repeat / Stutter `beat-repeat` : Mix
 - Convolution de deux sons `convolution-deux-sons` : Mix
 - Décaleur de fréquence `decaleur-frequence` : Mélange
@@ -28,17 +27,6 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Ring modulator `ring-modulator` : Mix
 - Transfert d'enveloppe `transfert-enveloppe` : Mix
 - Vocoder `vocoder` : Mix
-
-### espace · 8
-
-- Brassage `brassage` : Dispersion
-- Doppler `doppler` : Distance
-- Filtrage par un spectre `filtrage-spectre` : Profondeur
-- Granular freeze `granular-freeze` : Position
-- Largeur stéréo / MS `largeur-stereo` : Largeur
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
-- Tore `tore` : Profondeur
-- Tresse `tresse` : Largeur
 
 ### temps · 8
 
@@ -61,9 +49,17 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Sinus + transitoires + bruit (STN) `stn-sinus-transitoires-bruit` : Seuil
 - Suppression de clics `suppression-clics` : Seuil
 
-### frequence · 5
+### espace · 6
 
-- Ceinture de Dirac `ceinture-dirac` : Coupure
+- Brassage `brassage` : Dispersion
+- Doppler `doppler` : Distance
+- Filtrage par un spectre `filtrage-spectre` : Profondeur
+- Granular freeze `granular-freeze` : Position
+- Largeur stéréo / MS `largeur-stereo` : Largeur
+- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
+
+### frequence · 4
+
 - Grave en mono `mono-grave` : Coupure
 - Réduction de bruit `reduction-bruit` : Q
 - Ring modulator `ring-modulator` : Fréquence
@@ -88,7 +84,12 @@ raison, et la liste décroît d'elle-même à mesure que les entrées Modulation
 - Beat Repeat / Stutter `beat-repeat` : Feedback
 - Echo inversé `echo-inverse` : Feedback
 
-## Écartés, et pourquoi
+## Familles écartées en bloc
+
+- **Topologie** : la famille entière est écartée : le son y est promené sur une surface refermée sur elle-même, dont la géométrie est le sujet du nœud et non un réglage à faire varier
+  - `anneau-moebius`, `bouteille-klein`, `tore`, `ceinture-dirac`, `tresse`, `tonnetz`, `spirale-quintes`, `spirale-logarithmique`, `spirale-spatiale`
+
+## Écartés nommément, et pourquoi
 
 - `normaliseur` : le niveau et le plafond visent le fichier entier ; les faire varier détruirait la normalisation
 - `recaler-niveau` : le plafond vise le recalage entier, qui est une mesure globale

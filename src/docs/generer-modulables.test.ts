@@ -9,7 +9,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { toutesLesFiches } from "../plugins";
-import { ECARTES, cibles, dejaModulables, recensementEnTexte } from "./modulables";
+import { FAMILLES_EFFETS } from "../plugins/familles-palette";
+import { CATEGORIES_ECARTEES, ECARTES, cibles, dejaModulables, idsEcartes, recensementEnTexte } from "./modulables";
 
 const CHEMIN = resolve(__dirname, "../..", "MODULABLES.md");
 const ecrire = process.env.ECRIRE_MODULABLES === "1";
@@ -36,7 +37,7 @@ describe("le recensement des effets à rendre modulables", () => {
 
   it("UN COMPOSANT ÉCARTÉ N'EST PLUS À FAIRE, et sa raison est écrite", () => {
     const restants = new Set(cibles(toutesLesFiches).map((c) => c.id));
-    for (const [id, raison] of Object.entries(ECARTES)) {
+    for (const [id, raison] of idsEcartes()) {
       expect(restants.has(id), `${id} est écarté et figure pourtant à faire`).toBe(false);
       expect(raison.length, `${id} est écarté sans raison écrite`).toBeGreaterThan(20);
     }
@@ -44,8 +45,27 @@ describe("le recensement des effets à rendre modulables", () => {
 
   it("chaque composant écarté existe encore dans le registre", () => {
     const ids = new Set(toutesLesFiches.map((f) => f.id));
-    const disparus = Object.keys(ECARTES).filter((id) => !ids.has(id));
+    const disparus = [...idsEcartes().keys()].filter((id) => !ids.has(id));
     expect(disparus, "une exclusion vise un composant qui n'existe plus").toEqual([]);
+  });
+
+  // UNE FAMILLE ÉCARTÉE PAR UN NOM QUI N'EXISTE PLUS N'ÉCARTE RIEN, en silence : la décision serait
+  // perdue et les nœuds reviendraient à faire sans que personne l'ait demandé.
+  it("chaque famille écartée en bloc existe dans la palette et n'est pas vide", () => {
+    for (const famille of Object.keys(CATEGORIES_ECARTEES)) {
+      expect(FAMILLES_EFFETS[famille], `la famille « ${famille} » est absente de la palette`).toBeDefined();
+      expect((FAMILLES_EFFETS[famille] ?? []).length,
+        `la famille « ${famille} » est écartée mais vide`).toBeGreaterThan(0);
+    }
+  });
+
+  // Un identifiant nommé qui est déjà couvert par sa famille est une répétition qui vieillira mal.
+  it("aucune exclusion nommée ne double une famille écartée", () => {
+    const parFamille = new Set(
+      Object.keys(CATEGORIES_ECARTEES).flatMap((f) => FAMILLES_EFFETS[f] ?? []),
+    );
+    const doubles = Object.keys(ECARTES).filter((id) => parFamille.has(id));
+    expect(doubles, "ces exclusions sont déjà couvertes par leur famille").toEqual([]);
   });
 
   it("le recensement n'est pas vide, et ne couvre pas tout le catalogue", () => {
