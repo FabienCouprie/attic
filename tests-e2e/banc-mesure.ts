@@ -23,6 +23,12 @@
 //      `requestAnimationFrame` ne tire pas du tout dans un onglet caché. Zéro message signifie un gel
 //      TOTAL, non l'absence de gel.
 //   4. L'ENTRÉE EST DÉTERMINISTE, sans quoi deux empreintes ne se comparent pas.
+//   5. LES CHOIX SONT CANONISÉS COMME L'APPLICATION LE FAIT. Un paramètre « choix » porte une
+//      ÉTIQUETTE et un IDENTIFIANT, et le moteur réel canonise l'une vers l'autre. Une première
+//      version de ce banc rendait l'étiquette brute : la tolérance de la reconstruction de phase
+//      valait alors `parseFloat("10⁻⁶")`, c'est-à-dire DIX, les exposants en exposant n'étant pas des
+//      chiffres. Le composant annonçait « 0 % intégré » et je l'ai pris pour un défaut du composant.
+//      Il intègre 99,8 % avec le bon réglage. L'instrument mesurait un chemin que personne n'emprunte.
 
 import type { Page } from "@playwright/test";
 
@@ -60,6 +66,8 @@ export async function mesurerComposant(
   await page.waitForSelector(".attic-app", { timeout: 15000 });
   return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec]) => {
     const idx = await import("/src/plugins/index.ts");
+    // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
+    const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
     const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
@@ -97,9 +105,14 @@ export async function mesurerComposant(
         return typeof p?.defaut === "number" ? p.defaut : def;
       },
       paramTexte: (nom: string, def: string) => {
-        if (typeof reglages[nom] === "string") return reglages[nom] as string;
         const p = (fiche.parametres || []).find((q: any) => q.nom === nom);
-        return typeof p?.defaut === "string" ? p.defaut : def;
+        // Un réglage imposé est canonisé comme le ferait l'inspecteur, pour qu'on puisse l'écrire
+        // sous son étiquette lisible sans que le composant reçoive autre chose que son identifiant.
+        if (typeof reglages[nom] === "string") {
+          return p ? String((defautCanoniqueChoix as any)({ ...p, defaut: reglages[nom] })) : reglages[nom] as string;
+        }
+        if (!p || typeof p.defaut !== "string") return def;
+        return String((defautCanoniqueChoix as any)(p));
       },
       onProgress: () => {},
       signal: new AbortController().signal,

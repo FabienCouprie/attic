@@ -68,6 +68,18 @@ interface Ligne {
   message: string | null;
 }
 
+/**
+ * Le message, débarrassé de ce qui ne peut pas être comparé.
+ *
+ * UN TEMPS DE CALCUL NE SE COMPARE PAS. La décomposition atomique annonce sa durée dans son message,
+ * « 200 atomes · 98.9 % expliqués · 19.6 dB / 2212 ms », et ce nombre change à chaque exécution.
+ * L'enregistrer tel quel rendrait ce test capricieux, et un test capricieux finit désactivé, ce qui
+ * est la pire des issues pour un garde-fou.
+ */
+function messageComparable(message: string | null): string | null {
+  return message === null ? null : message.replace(/\d+(?:[.,]\d+)?\s*ms\b/g, "« durée »");
+}
+
 test("les empreintes des composants surveillés n'ont pas changé", async ({ page }) => {
   test.setTimeout(600_000);
 
@@ -89,7 +101,7 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
     // sans cette garde il passerait pour « conforme » avec une liste d'empreintes vide.
     expect(m.empreintes.some((e) => e !== null), `${s.id} ne rend aucune sortie audio`).toBe(true);
 
-    const ligne: Ligne = { empreintes: m.empreintes, message: m.message };
+    const ligne: Ligne = { empreintes: m.empreintes, message: messageComparable(m.message) };
     obtenues[s.id] = ligne;
     if (ecrire) continue;
 

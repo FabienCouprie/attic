@@ -4,9 +4,9 @@
   "composants": {
     "phase-pghi": {
       "empreintes": [
-        "0.250049789/0.655098379"
+        "0.267149555/0.551848948"
       ],
-      "message": "Convergence -8.6 dB · 0 îlot(s) · 0 % intégré"
+      "message": "Convergence -17.0 dB · 1 îlot(s) · 100 % intégré"
     },
     "stn-sinus-transitoires-bruit": {
       "empreintes": [
@@ -30,7 +30,7 @@
         "0.026862897/0.346627086",
         null
       ],
-      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n2673 ms"
+      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n« durée »"
     },
     "texture-statistique": {
       "empreintes": [
@@ -73,7 +73,7 @@
     },
     "griffin-lim": {
       "empreintes": [
-        "0.269865992/0.528780282"
+        "0.210755351/0.528780282"
       ],
       "message": "Griffin-Lim · 60 it. · pic E/S 5.29e-1 / 5.29e-1"
     },
