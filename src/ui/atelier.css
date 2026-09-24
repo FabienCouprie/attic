@@ -249,6 +249,9 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: transparent; border: 1px solid var(--border); border-radius: 6px;
   padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
   color: var(--text-secondary);
+  /* « FR » et « EN » ne font pas la même largeur : six dixièmes de pixel, qui déplaçaient tout ce qui
+     suit. Le bouton qui CHANGE la langue ne peut pas être celui qui fait bouger la barre. */
+  min-width: 36px;
 }
 .attic-btn-lang:hover { background: var(--bg-btn-hover); }
 
@@ -271,6 +274,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border: none; border-radius: 8px; padding: 8px 18px 8px 14px;
   font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: filter 0.15s, transform 0.1s; flex-shrink: 0;
+  /* LARGEUR PLANCHER, POUR QUATRE LIBELLÉS. Ce bouton porte « Lancer » ou « Arrêter », « Run » ou
+     « Stop » : il changeait donc de largeur au changement de langue ET à chaque exécution, mesuré à
+     dix-huit pixels entre « Run » et « Lancer ». Le plancher tient le plus large des quatre,
+     « Arrêter » : 45 px de texte, plus 57 px d'icône, d'espace et de marges intérieures.
+     L'icône reste CALÉE À GAUCHE et non centrée : centrée, elle se déplaçait de neuf pixels à
+     l'intérieur du bouton quand le libellé raccourcissait. Le bouton ne bougeait plus, son icône si.
+     Vérifié par `tests-e2e/barre-stable.spec.ts`. */
+  min-width: 104px; justify-content: flex-start;
 }
 .attic-btn-lancer:hover { filter: brightness(1.08); }
 .attic-btn-lancer:active { transform: scale(0.97); }
@@ -369,6 +380,13 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; color: var(--text-secondary); cursor: pointer;
   padding: 2px 4px; margin-left: 2px; border-radius: 4px;
   background: var(--bg-surface-alt); border: 1px solid var(--border);
+  /* LARGEUR FIXE, PARCE QU'UN `select` SE DIMENSIONNE SUR SON OPTION LA PLUS LARGE. La plus large
+     passe de « 32 bits flottants » à « 32-bit float » : la liste perdait vingt-deux pixels au
+     passage à l'anglais, et TOUT ce qui la suit dans la barre se décalait d'autant. Mesuré : vingt-
+     six éléments déplacés de −22 px. Une barre d'outils ne bouge pas quand on change de langue, et
+     `tests-e2e/barre-stable.spec.ts` le vérifie. Cette largeur tient le libellé français, le plus
+     long des deux. */
+  width: 112px;
 }
 .attic-profondeur-export:hover { color: var(--text-title); }
 

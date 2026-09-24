@@ -33,13 +33,15 @@ export const UNIVERS_BULLES = "Bulles";
  * rien coûter : un graphe ordinaire ne recalcule rien en déplaçant ou en branchant.
  */
 export function signatureBulles(
-  noeuds: readonly NoeudG[], aretes: readonly AreteG[], nomDe: (n: NoeudG) => string,
+  noeuds: readonly NoeudG[], aretes: readonly AreteG[],
 ): string {
   if (!noeuds.some((n) => estBulle(n.data.ficheId))) return "";
   const parts: string[] = [];
   for (const n of noeuds) {
     const b = (n.data as Record<string, unknown>).bulle;
-    if (estBulle(n.data.ficheId)) parts.push(`B:${n.id}:${nomDe(n)}:${b ?? ""}`);
+    // Le nom lu ici est celui que l'utilisateur a donné, non le nom traduit par défaut : c'est le
+    // seul qui puisse changer sans que la langue change, et la langue ne passe pas par ce chemin.
+    if (estBulle(n.data.ficheId)) parts.push(`B:${n.id}:${n.data.nom ?? ""}:${b ?? ""}`);
     else if (typeof b === "string" && b) parts.push(`M:${n.id}:${n.data.ficheId}:${b}`);
   }
   for (const a of aretes) {
@@ -59,7 +61,6 @@ export function synchroniserFichesBulles(
   noeuds: readonly NoeudG[],
   aretes: readonly AreteG[],
   registre: Registre<TypeValeur, AudioContext>,
-  nomDe: (n: NoeudG) => string,
 ): { inscrites: string[]; retirees: string[] } {
   const getDef = (ficheId: string) => registre.trouverDef(ficheId);
   const attendues = new Set<string>();
@@ -70,11 +71,15 @@ export function synchroniserFichesBulles(
     const ficheId = ficheDeBulle(n.id);
     attendues.add(ficheId);
     const ports = portsDeBulle(noeuds, aretes, n.id, getDef);
-    const nom = nomDe(n);
+    // LE NOM PAR DÉFAUT EST TRADUIT, ET IL NE PEUT PAS L'ÊTRE AILLEURS QU'ICI. Il était écrit sur le
+    // nœud au moment de la création, dans la langue de ce moment-là : une bulle créée en français
+    // restait « Bulle » en anglais. La fiche étant refabriquée à chaque changement, c'est elle qui
+    // porte les deux noms. Un nom donné à la main, lui, passe devant et ne se traduit pas.
+    const propre = typeof n.data.nom === "string" && n.data.nom.trim() ? n.data.nom.trim() : "";
     const def: PluginDef<TypeValeur, AudioContext> = {
       id: ficheId,
-      nom,
-      nomEn: nom,
+      nom: propre || "Bulle",
+      nomEn: propre || "Bubble",
       univers: UNIVERS_BULLES,
       famille: UNIVERS_BULLES,
       resume: `Bulle : ${ports.entrees.length} entrée(s), ${ports.sorties.length} sortie(s).`,

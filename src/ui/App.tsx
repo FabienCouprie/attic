@@ -900,12 +900,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   // registre quand la bulle disparaît. Rien n'est stocké : le projet ne porte que le nœud et
   // l'appartenance de ses membres.
   const signatureDesBulles = signatureBulles(
-    nodes as unknown as NoeudG[], edges as unknown as AreteG[], nomDeNoeud,
+    nodes as unknown as NoeudG[], edges as unknown as AreteG[],
   );
   useEffect(() => {
     const { inscrites, retirees } = synchroniserFichesBulles(
       noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
-      registre, nomDeNoeud,
+      registre,
     );
     if (inscrites.length || retirees.length) setPluginsVersion((v) => v + 1);
   }, [signatureDesBulles, nomDeNoeud]);

@@ -147,8 +147,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   "julia.requis": { fr: "Julia requis", en: "Julia required" },
   "julia.nonDetecte": { fr: "Julia non détecté", en: "Julia not detected" },
   "julia.configurerChemin": { fr: "Configurer le chemin de l'exécutable Julia", en: "Set the Julia executable path" },
-  "bulle.nom": { fr: "Bulle", en: "Bubble" },
-  "bulle.badgeTitle": { fr: "Bulle", en: "Bubble" },
+  // Le nom par défaut d'une bulle n'est PAS ici : il vient de sa fiche, refaite à chaque changement,
+  // de sorte qu'il suit la langue au lieu d'être figé à la création. Voir `ui/fichesBulles.ts`.
   "bulle.clarifier": { fr: "Clarifier", en: "Clarify" },
   "bulle.clarifierTitle": { fr: "Replier les composants sélectionnés dans une bulle", en: "Fold the selected nodes into a bubble" },
   "bulle.clarifierSelection": { fr: "Sélectionnez au moins deux composants à replier.", en: "Select at least two nodes to fold." },

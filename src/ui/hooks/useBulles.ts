@@ -93,7 +93,9 @@ export function useBulles(o: OptionsBulles) {
           ficheId: ficheDeBulle(id),
           parametres: {},
           statut: "attente" as const,
-          nom: t("bulle.nom"),
+          // AUCUN NOM ÉCRIT ICI. Il l'était, dans la langue du moment : une bulle créée en français
+          // restait « Bulle » en anglais. Le nom par défaut vient de sa fiche, qui porte les deux et
+          // qui est refaite à chaque changement ; `data.nom` ne sert qu'au nom donné à la main.
           // Créée fermée. Le champ n'est PAS `replie`, qui replie le corps d'un nœud : voir
           // `estRepliee` dans core/bulles.ts.
           bulleOuverte: false,

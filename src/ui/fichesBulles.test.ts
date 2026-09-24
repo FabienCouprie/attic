@@ -29,8 +29,7 @@ function registrePret() {
   return r;
 }
 
-const nomDe = (n: NoeudG) => n.id;
-const arete = (id: string, source: string, target: string, si = 0, ti = 0): AreteG =>
+const arete =(id: string, source: string, target: string, si = 0, ti = 0): AreteG =>
   ({ id, source, target, sourceHandle: `out:${si}`, targetHandle: `in:${ti}` });
 
 /** Une bulle de deux membres, nourrie du dehors et alimentant le dehors. */
@@ -43,7 +42,7 @@ const ARETES = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "
 describe("la synchronisation des fiches de bulle", () => {
   it("elle inscrit une fiche par bulle, avec les ports qui la traversent", () => {
     const r = registrePret();
-    const { inscrites, retirees } = synchroniserFichesBulles(GRAPHE, ARETES, r, nomDe);
+    const { inscrites, retirees } = synchroniserFichesBulles(GRAPHE, ARETES, r);
 
     expect(inscrites).toEqual([ficheDeBulle("b1")]);
     expect(retirees).toEqual([]);
@@ -56,7 +55,7 @@ describe("la synchronisation des fiches de bulle", () => {
 
   it("ELLE SE DESSINE MAIS NE SE CHOISIT PAS : trouvable par son identifiant, absente du catalogue", () => {
     const r = registrePret();
-    synchroniserFichesBulles(GRAPHE, ARETES, r, nomDe);
+    synchroniserFichesBulles(GRAPHE, ARETES, r);
 
     expect(r.trouverDef(ficheDeBulle("b1"))).toBeDefined();
     // Le catalogue est ce qu'énumèrent la palette, le quiz, le vocabulaire de génération et la
@@ -67,8 +66,8 @@ describe("la synchronisation des fiches de bulle", () => {
 
   it("une bulle disparue voit sa fiche retirée", () => {
     const r = registrePret();
-    synchroniserFichesBulles(GRAPHE, ARETES, r, nomDe);
-    const { retirees } = synchroniserFichesBulles([noeud("g", "gain")], [], r, nomDe);
+    synchroniserFichesBulles(GRAPHE, ARETES, r);
+    const { retirees } = synchroniserFichesBulles([noeud("g", "gain")], [], r);
 
     expect(retirees).toEqual([ficheDeBulle("b1")]);
     expect(r.trouverDef(ficheDeBulle("b1"))).toBeUndefined();
@@ -77,26 +76,26 @@ describe("la synchronisation des fiches de bulle", () => {
   it("UNE ARÊTE BRANCHÉE DONNE UN PORT, et la signature le dit", () => {
     const r = registrePret();
     const avant = ARETES.filter((a) => a.id !== "e3");
-    expect(signatureBulles(GRAPHE, avant, nomDe)).not.toBe(signatureBulles(GRAPHE, ARETES, nomDe));
+    expect(signatureBulles(GRAPHE, avant)).not.toBe(signatureBulles(GRAPHE, ARETES));
 
-    synchroniserFichesBulles(GRAPHE, avant, r, nomDe);
+    synchroniserFichesBulles(GRAPHE, avant, r);
     expect(r.trouverDef(ficheDeBulle("b1"))!.sorties).toHaveLength(0);
-    synchroniserFichesBulles(GRAPHE, ARETES, r, nomDe);
+    synchroniserFichesBulles(GRAPHE, ARETES, r);
     expect(r.trouverDef(ficheDeBulle("b1"))!.sorties).toHaveLength(1);
   });
 
   it("déplacer un nœud ne change pas la signature : la resynchronisation ne se déclenche pas", () => {
     const deplaces = GRAPHE.map((n) => ({ ...n, position: { x: 999, y: 999 } }));
-    expect(signatureBulles(deplaces, ARETES, nomDe)).toBe(signatureBulles(GRAPHE, ARETES, nomDe));
+    expect(signatureBulles(deplaces, ARETES)).toBe(signatureBulles(GRAPHE, ARETES));
   });
 
   it("SANS AUCUNE BULLE, LA SIGNATURE EST VIDE : un graphe ordinaire ne recalcule rien", () => {
-    expect(signatureBulles([noeud("g", "gain")], [arete("e", "g", "g")], nomDe)).toBe("");
+    expect(signatureBulles([noeud("g", "gain")], [arete("e", "g", "g")])).toBe("");
   });
 
   it("AUCUNE ENTRÉE N'EST OBLIGATOIRE, sans quoi replier ferait échouer la validation", () => {
     const r = registrePret();
-    synchroniserFichesBulles(GRAPHE, ARETES, r, nomDe);
+    synchroniserFichesBulles(GRAPHE, ARETES, r);
     for (const e of r.trouverDef(ficheDeBulle("b1"))!.entrees) expect(e.requis).toBe(false);
   });
 });
