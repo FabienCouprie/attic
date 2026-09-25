@@ -74,26 +74,66 @@ function makeTensor(type, data, dims) {
   return new ort.Tensor(type, data, dims);
 }
 
+// LE PAQUET DE STABILITY NE LIVRE PAS DE `tokenizer_config.json`, seulement le `tokenizer.json`.
+// Les deux paquets emploient pourtant LE MEME tokeniseur, celui de T5Gemma : on garde donc ces
+// reglages sous la main plutot que d'exiger un fichier que l'amont ne publie pas. Recopies
+// verbatim de ceux du paquet communautaire, dont ils viennent.
+const CONFIG_TOKENISEUR_DEFAUT = {
+  backend: "tokenizers",
+  bos_token: "<bos>",
+  eos_token: "<eos>",
+  pad_token: "<pad>",
+  unk_token: "<unk>",
+  mask_token: "<mask>",
+  padding_side: "right",
+  clean_up_tokenization_spaces: false,
+  spaces_between_special_tokens: false,
+  tokenizer_class: "GemmaTokenizer",
+};
+
 function loadTokenizer(modelDir) {
   const { Tokenizer } = require("@huggingface/tokenizers");
   const tokenizerJSON = JSON.parse(fs.readFileSync(path.join(modelDir, "tokenizer", "tokenizer.json"), "utf8"));
-  const tokenizerConfig = JSON.parse(fs.readFileSync(path.join(modelDir, "tokenizer", "tokenizer_config.json"), "utf8"));
+  const cheminConfig = path.join(modelDir, "tokenizer", "tokenizer_config.json");
+  const tokenizerConfig = fs.existsSync(cheminConfig)
+    ? JSON.parse(fs.readFileSync(cheminConfig, "utf8"))
+    : CONFIG_TOKENISEUR_DEFAUT;
   return new Tokenizer(tokenizerJSON, tokenizerConfig);
 }
 
+// DEUX PAQUETS, DEUX SIGNATURES DE GRAPHE. Le paquet `-small-music` vient d'un export communautaire
+// en int4 : son DiT prend `cross_attn_cond` et `global_embed`, et un graphe separe transforme la
+// duree en vecteur. Le paquet `-small-sfx` vient de Stability : son DiT prend `t5_hidden`,
+// `t5_mask` et `seconds_total`, et assemble son conditionnement lui-meme, si bien qu'il n'a pas de
+// `number_conditioner`. On ne devine pas lequel on tient, ON LE DEMANDE AU GRAPHE : ses noms
+// d'entree sont la seule source sure, et un paquet renomme ou remplace ne peut pas nous tromper.
+// Voir MODELES-BRUITAGE.md pour ce qui a conduit a ce second paquet.
 async function loadSessions(modelDir) {
   const onnxDir = path.join(modelDir, "onnx");
   const create = (name) => ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: ["cpu"] });
+  const present = (name) => fs.existsSync(path.join(onnxDir, name));
+  const premier = (...noms) => noms.find(present);
+
+  const ditFichier = premier("dit_q4.onnx", "dit_fp16.onnx", "dit.onnx");
+  if (!ditFichier) throw new Error(`Aucun graphe de diffusion dans ${onnxDir}`);
+  const texteFichier = premier("text_encoder_q4.onnx", "text_encoder.onnx");
+  if (!texteFichier) throw new Error(`Aucun encodeur de texte dans ${onnxDir}`);
+  const decodeurFichier = premier("decoder_q4.onnx", "decoder_bf16.onnx", "decoder.onnx");
+  if (!decodeurFichier) throw new Error(`Aucun decodeur dans ${onnxDir}`);
+
   const sessions = {
-    textEncoder: await create("text_encoder_q4.onnx"),
-    numberConditioner: await create("number_conditioner.onnx"),
-    dit: await create("dit_q4.onnx"),
-    decoder: await create("decoder_q4.onnx"),
+    textEncoder: await create(texteFichier),
+    dit: await create(ditFichier),
+    decoder: await create(decodeurFichier),
   };
-  const encoderPath = path.join(onnxDir, "encoder_q4.onnx");
-  if (fs.existsSync(encoderPath)) {
-    sessions.encoder = await create("encoder_q4.onnx");
+  if (present("number_conditioner.onnx")) {
+    sessions.numberConditioner = await create("number_conditioner.onnx");
   }
+  const encodeurFichier = premier("encoder_q4.onnx", "encoder_bf16.onnx");
+  if (encodeurFichier) sessions.encoder = await create(encodeurFichier);
+
+  // La marque du paquet, lue sur le graphe et non sur le nom du dossier.
+  sessions.officiel = sessions.dit.inputNames.includes("t5_hidden");
   return sessions;
 }
 
@@ -172,15 +212,39 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
   const rng = mulberry32(seed);
 
   const { inputIds, attentionMask } = tokenize(tokenizer, prompt);
-  const [textOut, numOut] = await buildTextAndDurationConditioning(
-    sessions.textEncoder,
-    sessions.numberConditioner,
-    { inputIds, attentionMask },
-    seconds
-  );
-  const { crossAttnCond, globalCond } = buildCrossAttentionAndGlobalConditioning(textOut.last_hidden_state.data, numOut.embedding.data);
 
-  const paddingMask = onesUint8([1, T_lat]);
+  // Le conditionnement, selon le paquet. Dans le cas officiel il n'y a rien a assembler : les etats
+  // caches du texte et le masque partent tels quels, et la duree entre par son propre port.
+  let conditionnement;
+  if (sessions.officiel) {
+    // Les deux encodeurs demandent les mêmes deux entrées : les `full_mask` et `sliding_mask` que
+    // laissait entrevoir le fichier ne sont que des tenseurs internes, relevé en le chargeant.
+    const sortie = await sessions.textEncoder.run({
+      input_ids: makeTensor("int64", inputIds, [1, TEXT_LENGTH]),
+      attention_mask: makeTensor("int64", attentionMask, [1, TEXT_LENGTH]),
+    });
+    const caches = sortie[sessions.textEncoder.outputNames[0]].data;
+    const masque = new Float32Array(TEXT_LENGTH);
+    for (let i = 0; i < TEXT_LENGTH; i++) masque[i] = Number(attentionMask[i]);
+    conditionnement = {
+      t5_hidden: makeTensor("float32", Float32Array.from(caches), [1, TEXT_LENGTH, EMBED_DIM]),
+      t5_mask: makeTensor("float32", masque, [1, TEXT_LENGTH]),
+      seconds_total: makeTensor("float32", new Float32Array([seconds]), [1]),
+    };
+  } else {
+    const [textOut, numOut] = await buildTextAndDurationConditioning(
+      sessions.textEncoder,
+      sessions.numberConditioner,
+      { inputIds, attentionMask },
+      seconds
+    );
+    const { crossAttnCond, globalCond } = buildCrossAttentionAndGlobalConditioning(textOut.last_hidden_state.data, numOut.embedding.data);
+    conditionnement = {
+      cross_attn_cond: makeTensor("float32", crossAttnCond, [1, 257, EMBED_DIM]),
+      global_embed: makeTensor("float32", globalCond, [1, EMBED_DIM]),
+      padding_mask: makeTensor("bool", onesUint8([1, T_lat]), [1, T_lat]),
+    };
+  }
 
   let x = randn([1, LATENT_CHANNELS, T_lat], rng);
   const latentShape = [1, LATENT_CHANNELS, T_lat];
@@ -198,12 +262,12 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
     const ditOut = await sessions.dit.run({
       x: makeTensor("float32", x, latentShape),
       t: makeTensor("float32", tTensor, [1]),
-      cross_attn_cond: makeTensor("float32", crossAttnCond, [1, 257, EMBED_DIM]),
-      global_embed: makeTensor("float32", globalCond, [1, EMBED_DIM]),
       local_add_cond: makeTensor("float32", localAddCond, [1, 257, T_lat]),
-      padding_mask: makeTensor("bool", paddingMask, [1, T_lat]),
+      ...conditionnement,
     });
-    const v = ditOut.out.data;
+    // `out` dans l'export communautaire, `velocity` chez Stability : on prend la sortie declaree
+    // plutot que son nom, les deux graphes n'en ayant qu'une.
+    const v = ditOut[sessions.dit.outputNames[0]].data;
 
     const denoised = new Float32Array(x.length);
     for (let j = 0; j < x.length; j++) {
@@ -234,16 +298,39 @@ async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, loc
   }
 
   const decOut = await sessions.decoder.run({
-    latents: makeTensor("float32", x, latentShape),
+    [sessions.decoder.inputNames[0]]: makeTensor("float32", x, latentShape),
   });
-  const audio = decOut.audio.data;
+  const sortie = decOut[sessions.decoder.outputNames[0]];
+  const audio = sortie.data;
+
+  // LES DEUX DÉCODEURS NE RANGENT PAS LEURS CANAUX PAREIL. L'export communautaire rend (1, 2, N),
+  // les deux canaux l'un après l'autre ; celui de Stability rend (1, N, 2), entrelacé, et sa sortie
+  // s'appelle d'ailleurs `pcm`. On lit la forme du tenseur plutôt que de la supposer : se tromper
+  // ici ne casse rien, cela rend un canal gauche fait d'un échantillon sur deux.
+  const dims = sortie.dims ?? [];
+  const entrelace = dims.length === 3 && dims[2] === 2 && dims[1] !== 2;
+
+  // LA SORTIE `pcm` EST EN ENTIERS, ET SON NOM LE DIT. Le decodeur de Stability rend des valeurs
+  // d'echantillon seize bits, releve sur un rendu de deux secondes : min -2949, max 2253, valeur
+  // efficace 170, la ou l'autre decodeur rend des flottants dans [-1, 1]. Prises telles quelles,
+  // ces valeurs etaient ramenees a la butee par le bornage, et donnaient un signal dont la valeur
+  // efficace egalait presque la crete : 0,887 contre 0,891, c'est-a-dire un carre.
+  const echelle = sessions.decoder.outputNames[0] === "pcm" ? 1 / 32768 : 1;
+
+  if (process.env.SA3_TRACE) {
+    let mn = Infinity, mx = -Infinity, sq = 0;
+    for (let i = 0; i < audio.length; i++) { const v = audio[i]; if (v < mn) mn = v; if (v > mx) mx = v; sq += v * v; }
+    console.error(`[sa3] decodeur ${sessions.decoder.outputNames[0]} dims=${JSON.stringify(dims)} n=${audio.length} min=${mn.toFixed(4)} max=${mx.toFixed(4)} rms=${Math.sqrt(sq / audio.length).toFixed(4)} entrelace=${entrelace}`);
+  }
 
   const trimSamples = Math.min(seconds * SAMPLE_RATE, audioLen);
   const left = new Float32Array(trimSamples);
   const right = new Float32Array(trimSamples);
   for (let i = 0; i < trimSamples; i++) {
-    left[i] = Math.max(-1, Math.min(1, audio[i]));
-    right[i] = Math.max(-1, Math.min(1, audio[audioLen + i]));
+    const g = (entrelace ? audio[i * 2] : audio[i]) * echelle;
+    const d = (entrelace ? audio[i * 2 + 1] : audio[audioLen + i]) * echelle;
+    left[i] = Math.max(-1, Math.min(1, g));
+    right[i] = Math.max(-1, Math.min(1, d));
   }
 
   return { left, right, sampleRate: SAMPLE_RATE, duration: trimSamples / SAMPLE_RATE };
@@ -308,11 +395,13 @@ function toStereo44100(channels, sampleRate) {
 }
 
 async function decodeAudio(sessions, latent, T_lat) {
-  const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
+  // `latents` dans l'export communautaire, `latent` chez Stability ; la sortie s'appelle `audio`
+  // chez l'un et autrement chez l'autre. Les deux graphes n'ayant qu'une entree et qu'une sortie,
+  // on les prend par leur rang plutot que par leur nom.
   const decOut = await sessions.decoder.run({
-    latents: makeTensor("float32", latent, [1, LATENT_CHANNELS, T_lat]),
+    [sessions.decoder.inputNames[0]]: makeTensor("float32", latent, [1, LATENT_CHANNELS, T_lat]),
   });
-  return decOut.audio.data;
+  return decOut[sessions.decoder.outputNames[0]].data;
 }
 
 async function encodeAudio(sessions, left, right) {

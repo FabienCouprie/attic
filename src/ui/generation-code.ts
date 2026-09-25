@@ -14,6 +14,19 @@
 export type LangageCode = "python" | "julia";
 
 /**
+ * Les deux sorties que le composant accepte en plus du son, et qui ne servent pas toujours.
+ *
+ * ELLES SONT DITES À PART, ET NON DANS LA LISTE DES ENTRÉES. Le composant les pose dans
+ * l'environnement à chaque exécution, mais un script qui traite du son n'a aucune raison d'y
+ * toucher : les mêler aux variables d'entrée ferait croire au modèle qu'il doit écrire un MIDI
+ * pour être complet. Le programme d'exemple ne les emploie pas, et c'est voulu.
+ */
+const SORTIES_FACULTATIVES: Record<LangageCode, string> = {
+  python: "Sorties facultatives, à n'écrire que si le script produit autre chose qu'un son : os.environ[\"ATTIC_OUTPUT_MIDI\"] pour un MIDI, os.environ[\"ATTIC_OUTPUT_TEXT\"] pour un texte.",
+  julia: "Sorties facultatives, à n'écrire que si le script produit autre chose qu'un son : ENV[\"ATTIC_OUTPUT_MIDI\"] pour un MIDI, ENV[\"ATTIC_OUTPUT_TEXT\"] pour un texte.",
+};
+
+/**
  * Ce que le composant garantit au script, et ce qu'il attend de lui.
  *
  * Recopié du code par défaut de chaque nœud, dans les mêmes termes : ce sont ces noms-là que le
@@ -25,10 +38,13 @@ export const CONTRATS: Record<LangageCode, string> = {
     "- sys.argv[1] : chemin du WAV d'entrée, absent si aucune entrée n'est branchée.",
     "- os.environ[\"ATTIC_OUTPUT_PATH\"] : chemin du WAV à écrire. Obligatoire.",
     "- os.environ[\"ATTIC_SAMPLE_RATE\"] : fréquence d'échantillonnage, par défaut 44100.",
+    "- os.environ[\"ATTIC_CHANNELS\"] : nombre de canaux, 1 pour mono et 2 pour stéréo.",
     "- os.environ[\"ATTIC_TEXT_INPUT\"] : texte d'entrée, si une entrée texte est branchée.",
     "Bibliothèques disponibles : numpy, wave, os, sys. Rien d'autre n'est garanti.",
     "L'audio se lit en int16 et se ramène en float32 entre -1 et 1 ; il se réécrit en int16.",
+    "Un fichier stéréo est entrelacé : les échantillons alternent gauche, droite.",
     "Le script doit écrire le WAV de sortie, sinon le composant ne rend rien.",
+    SORTIES_FACULTATIVES.python,
   ].join("\n"),
   julia: [
     "Le script est lancé par : julia script.jl [chemin_wav_entree]",
@@ -40,7 +56,74 @@ export const CONTRATS: Record<LangageCode, string> = {
     "Bibliothèque disponible : WAV (wavread, wavwrite). Rien d'autre n'est garanti.",
     "L'audio est une matrice Float32 de taille (échantillons, canaux).",
     "Le script doit écrire le WAV de sortie, sinon le composant ne rend rien.",
+    SORTIES_FACULTATIVES.julia,
   ].join("\n"),
+};
+
+/**
+ * Un programme d'exemple par langage, qui respecte le cadre de bout en bout.
+ *
+ * UN PETIT MODÈLE SUIT UN EXEMPLE MIEUX QU'UNE SPÉCIFICATION. Le cadre ci-dessus dit les noms ;
+ * l'exemple montre la forme, la lecture en entiers seize bits, la ramenée entre moins un et un, le
+ * cas où rien n'est branché, et l'écriture finale. Demander « en respectant les conventions
+ * d'entrée et de sortie de cet exemple » donne au modèle un patron à imiter plutôt qu'un contrat à
+ * interpréter. Idée de Fabien.
+ *
+ * COURT À DESSEIN, et non recopié du code par défaut du nœud : ce qu'on veut transmettre, ce sont
+ * les conventions, pas un traitement. Un test vérifie qu'il nomme bien tout ce que le cadre nomme,
+ * sans quoi les deux dériveraient l'un de l'autre.
+ */
+export const EXEMPLES: Record<LangageCode, string> = {
+  python: `import numpy as np
+import wave
+import os
+import sys
+
+input_path = sys.argv[1] if len(sys.argv) > 1 else None
+output_path = os.environ["ATTIC_OUTPUT_PATH"]
+sample_rate = int(os.environ.get("ATTIC_SAMPLE_RATE", 44100))
+texte = os.environ.get("ATTIC_TEXT_INPUT", "")
+
+channels = int(os.environ.get("ATTIC_CHANNELS", 2))
+
+if input_path:
+    with wave.open(input_path, "rb") as w:
+        channels = w.getnchannels()
+        sample_rate = w.getframerate()
+        brut = w.readframes(w.getnframes())
+    audio = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+else:
+    channels = 1
+    audio = np.zeros(sample_rate * 2, dtype=np.float32)
+
+# Le traitement, seule partie à remplacer.
+audio = np.clip(audio * 2.0, -1.0, 1.0)
+
+with wave.open(output_path, "wb") as w:
+    w.setnchannels(channels)
+    w.setsampwidth(2)
+    w.setframerate(sample_rate)
+    w.writeframes((audio * 32767.0).astype(np.int16).tobytes())`,
+  julia: `using WAV
+
+input_path = length(ARGS) >= 2 ? ARGS[2] : nothing
+output_path = get(ENV, "ATTIC_OUTPUT_PATH", "output.wav")
+sample_rate = parse(Int, get(ENV, "ATTIC_SAMPLE_RATE", "44100"))
+channels = parse(Int, get(ENV, "ATTIC_CHANNELS", "2"))
+texte = get(ENV, "ATTIC_TEXT_INPUT", "")
+
+if input_path !== nothing
+    audio, sr = wavread(input_path)
+    audio = Float32.(audio)
+    sample_rate = Int(sr)
+else
+    audio = zeros(Float32, sample_rate * 2, channels)
+end
+
+# Le traitement, seule partie à remplacer.
+audio = clamp.(audio .* 2.0, -1.0, 1.0)
+
+wavwrite(audio, sample_rate, output_path)`,
 };
 
 /** Ce que le modèle doit rendre, et rien d'autre. */
@@ -60,9 +143,14 @@ export interface DemandeCode {
 /**
  * Le texte envoyé au modèle.
  *
- * LE CODE ACTUEL N'EST JOINT QUE S'IL Y EN A UN, et il est alors présenté comme un point de départ
- * à modifier. Joindre un squelette vide ferait croire au modèle qu'il doit le compléter ligne à
- * ligne ; ne rien joindre du tout, sur une demande de retouche, lui ferait tout réécrire.
+ * DEUX SITUATIONS, DEUX DEMANDES. Quand l'éditeur porte déjà du code, la demande est une retouche :
+ * ce code part avec elle, présenté comme un point de départ, et c'est ce qui permet « ajoute un
+ * fondu » au lieu de tout réécrire. Quand l'éditeur est vide, la demande est une écriture : c'est
+ * l'exemple qui part, et la consigne devient « en respectant les conventions d'entrée et de sortie
+ * de cet exemple, écris un programme qui… ».
+ *
+ * JAMAIS LES DEUX À LA FOIS : deux programmes dans un même prompt, l'un à modifier et l'autre à
+ * imiter, laisseraient un petit modèle choisir le mauvais.
  */
 export function construirePrompt(d: DemandeCode): string {
   const nom = d.langage === "python" ? "Python 3" : "Julia";
@@ -76,8 +164,15 @@ export function construirePrompt(d: DemandeCode): string {
   const actuel = (d.codeActuel ?? "").trim();
   if (actuel) {
     morceaux.push("CODE ACTUEL, à modifier :", "", actuel, "");
+    morceaux.push("DEMANDE :", d.consigne.trim());
+  } else {
+    morceaux.push("PROGRAMME D'EXEMPLE, qui respecte le cadre :", "", EXEMPLES[d.langage], "");
+    morceaux.push(
+      "DEMANDE :",
+      `En respectant les conventions d'entrée et de sortie de ce programme d'exemple, écris un programme qui : ${d.consigne.trim()}`,
+    );
   }
-  morceaux.push("DEMANDE :", d.consigne.trim(), "", CONSIGNE_FORME);
+  morceaux.push("", CONSIGNE_FORME);
   return morceaux.join("\n");
 }
 

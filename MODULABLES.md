@@ -14,7 +14,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - **acceptent déjà une courbe** : 43
 - **restent à faire** : 14 composants, 30 couples composant / famille
 - **dont le cœur travaille par trames** : 2
-- **écartés** : 48, dont 1 famille de la palette écartée en bloc
+- **écartés** : 47, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
@@ -75,7 +75,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 ## Familles écartées en bloc
 
 - **Topologie** : la famille entière est écartée : le son y est promené sur une surface refermée sur elle-même, dont la géométrie est le sujet du nœud et non un réglage à faire varier
-  - `anneau-moebius`, `bouteille-klein`, `tore`, `ceinture-dirac`, `tresse`, `tonnetz`, `spirale-logarithmique`, `spirale-spatiale`
+  - `anneau-moebius`, `bouteille-klein`, `tore`, `ceinture-dirac`, `tresse`, `tonnetz`, `spirale-spatiale`
 
 ## Écartés nommément, et pourquoi
 

@@ -53,6 +53,9 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   if (def.id === "sortie-texte") return { width: 280, height: 250 };
   // La même zone qu'une sortie texte, plus la ligne du bouton et du compte.
   if (def.id === "modifier-texte") return { width: 300, height: 280 };
+  // Deux dessins l'un sous l'autre, la barre de défilement et le pied : à la taille d'avant, celui
+  // du bas tombait sous sa hauteur minimale et les deux se serraient à ne plus rien montrer.
+  if (def.id === "visualiseur-multipiste") return { width: 420, height: 340 };
   if (def.id === "python-processor") return { width: 380, height: 300 };
   if (def.id === "sequenceur-batterie-avance") return { width: 480, height: 360 };
   if (def.id === "sequenceur-melodique") return { width: 460, height: 400 };

@@ -144,6 +144,7 @@ import { fiches as f_recaler_niveau } from "./recaler-niveau";
 import { fiches as f_montage_video } from "./montage-video";
 import { fiches as f_extrait_video } from "./extrait-video";
 import { fiches as f_separer_image_son } from "./separer-image-son";
+import { fiches as f_bruitage_ia } from "./bruitage-ia";
 import { fiches as f_visualiseur_multipiste } from "./visualiseur-multipiste";
 import { fiches as f_spirale_quintes } from "./spirale-quintes";
 import { fiches as f_spirale_logarithmique } from "./spirale-logarithmique";
@@ -230,6 +231,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_montage_video,
   ...f_extrait_video,
   ...f_separer_image_son,
+  ...f_bruitage_ia,
   ...f_visualiseur_multipiste,
   ...f_spirale_quintes,
   ...f_spirale_logarithmique,

@@ -319,13 +319,6 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; display: flex; align-items: center; justify-content: center;
 }
 .attic-onglet-fermer:hover { background: rgba(238,68,68,0.1); color: #e44; }
-.attic-onglet-ajouter {
-  width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border);
-  background: transparent; color: var(--text-secondary); cursor: pointer;
-  font-size: 16px; display: flex; align-items: center; justify-content: center;
-  margin-left: 4px;
-}
-.attic-onglet-ajouter:hover { background: var(--bg-hover); }
 .attic-chemin {
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 140px;
@@ -398,12 +391,35 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 /* Les bandes du visualiseur multipiste. Le dessin occupe toute la place que le nœud lui laisse : ses
    six pistes ne tiennent pas dans une hauteur fixe, et c'est le redimensionnement qui les rend
    lisibles. */
+/* Le visualiseur multipiste : deux vues de la même chose, la barre qui les relie, et le pied qui dit
+   où l'on est. Les deux vues se partagent la hauteur à parts égales, la barre et le pied gardant la
+   leur : c'est dans celle du bas qu'on va chercher le détail, elle ne doit donc jamais être écrasée
+   par celle du haut. Le nœud devient une colonne pour cette vue, comme pour le film, sinon les ports
+   tombent sous son bord. */
+.attic-node:has(> .attic-pistes-multiples) { display: flex; flex-direction: column; }
 .attic-pistes-multiples {
-  position: relative; width: 100%; height: 100%; min-height: 120px;
+  display: flex; flex-direction: column; gap: 3px;
+  width: 100%; flex: 1 1 auto; min-height: 0;
+}
+.attic-pistes-vue {
+  position: relative; width: 100%; flex: 1 1 0; min-height: 60px;
   background: var(--bg-surface-alt); border: 1px solid var(--border-divider);
   border-radius: 6px; overflow: hidden;
 }
+.attic-pistes-vue:last-of-type { cursor: ew-resize; }
 .attic-pistes-multiples canvas { display: block; }
+/* Une vraie barre de défilement : l'épaisseur de son ascenseur dit quelle part du son est à l'écran,
+   ce qu'un curseur ne dirait pas. Elle ne fait défiler qu'une bande vide ; le dessin, lui, est refait
+   à la position qu'elle donne. */
+.attic-pistes-barre {
+  flex: 0 0 auto; width: 100%; overflow-x: scroll; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.attic-pistes-pied {
+  display: flex; justify-content: space-between; gap: 8px; flex: 0 0 auto;
+  font-size: 10px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
 .attic-pistes-multiples-vide {
   position: absolute; inset: 0; display: grid; place-items: center;
   color: var(--text-muted); font-size: 12px;

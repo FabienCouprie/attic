@@ -4,7 +4,7 @@
 // code plausible qui n'écrit nulle part, et un bloc mal dépouillé donne un script qui ne s'exécute
 // pas. Dans les deux cas l'utilisateur accuserait le modèle.
 import { describe, it, expect } from "vitest";
-import { CONTRATS, construirePrompt, extraireCode, rangerModeles } from "./generation-code";
+import { CONTRATS, EXEMPLES, construirePrompt, extraireCode, rangerModeles } from "./generation-code";
 
 describe("le cadre imposé au modèle", () => {
   it("nomme les entrées et la sortie de chaque langage", () => {
@@ -39,9 +39,37 @@ describe("le prompt", () => {
     expect(p).toContain("audio .* 2");
   });
 
-  it("ne joint rien quand l'éditeur est vide ou blanc", () => {
+  it("JOINT L'EXEMPLE QUAND L'ÉDITEUR EST VIDE, et demande d'en respecter les conventions", () => {
+    // C'est le cas où un petit modèle a le plus besoin d'un patron : sans code sous les yeux, une
+    // spécification en prose lui laisse inventer les noms.
     const p = construirePrompt({ langage: "python", consigne: "un bruit rose", codeActuel: "   \n  " });
     expect(p).not.toContain("CODE ACTUEL");
+    expect(p).toContain("PROGRAMME D'EXEMPLE");
+    expect(p).toContain(EXEMPLES.python);
+    expect(p).toContain("En respectant les conventions d'entrée et de sortie de ce programme d'exemple, écris un programme qui : un bruit rose");
+  });
+
+  it("NE MET JAMAIS LES DEUX PROGRAMMES : un à modifier ou un à imiter, pas les deux", () => {
+    const p = construirePrompt({ langage: "julia", consigne: "ajoute un fondu", codeActuel: "using WAV\n# mon code" });
+    expect(p).toContain("CODE ACTUEL");
+    expect(p).not.toContain("PROGRAMME D'EXEMPLE");
+    expect(p).not.toContain(EXEMPLES.julia);
+  });
+
+  it("L'EXEMPLE NOMME TOUT CE QUE LE CADRE NOMME, sans quoi les deux dériveraient", () => {
+    // Le cadre annonce des variables d'environnement ; un exemple qui en oublierait une
+    // apprendrait au modèle à s'en passer, et le composant ne recevrait rien.
+    // Les deux sorties facultatives sont écartées : un script qui traite du son n'écrit ni MIDI
+    // ni texte, et l'exemple aurait tort de le faire.
+    const FACULTATIVES = new Set(["ATTIC_OUTPUT_MIDI", "ATTIC_OUTPUT_TEXT"]);
+    for (const langage of ["python", "julia"] as const) {
+      const variables = [...new Set([...CONTRATS[langage].matchAll(/ATTIC_[A-Z_]+/g)].map((m) => m[0]))]
+        .filter((v) => !FACULTATIVES.has(v));
+      expect(variables.length, langage).toBeGreaterThan(3);
+      for (const v of variables) {
+        expect(EXEMPLES[langage], `${langage} : ${v}`).toContain(v);
+      }
+    }
   });
 });
 
