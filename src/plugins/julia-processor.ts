@@ -156,8 +156,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Code", nomEn: "Code", type: "texte", defaut: CODE_DEFAUT, defautEn: CODE_DEFAUT_EN,
-        doc: "Code Julia à exécuter. Variables : ARGS[2] = WAV d'entrée, ENV[\"Attic_output_path\"] = WAV de sortie, ENV[\"Attic_sample_rate\"], ENV[\"Attic_channels\"]. Nécessite le package WAV.jl.",
-        docEn: "Julia code to execute. Variables: ARGS[2] = input WAV, ENV[\"Attic_output_path\"] = output WAV, ENV[\"Attic_sample_rate\"], ENV[\"Attic_channels\"]. Requires WAV.jl package." },
+        doc: "Code Julia à exécuter. Variables : ARGS[2] = WAV d'entrée, ENV[\"ATTIC_OUTPUT_PATH\"] = WAV de sortie, ENV[\"ATTIC_SAMPLE_RATE\"], ENV[\"ATTIC_CHANNELS\"]. Nécessite le package WAV.jl.",
+        docEn: "Julia code to execute. Variables: ARGS[2] = input WAV, ENV[\"ATTIC_OUTPUT_PATH\"] = output WAV, ENV[\"ATTIC_SAMPLE_RATE\"], ENV[\"ATTIC_CHANNELS\"]. Requires WAV.jl package." },
       { nom: "Timeout", nomEn: "Timeout", plage: [5, 120], pas: 5, defaut: 30, unite: "s",
         doc: "Durée maximale d'exécution du script (en secondes).",
         docEn: "Maximum script execution time (in seconds)." },

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **403 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **404 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 71 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (12) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 199 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (8) |
+| [Inputs](#inputs) | 73 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (14) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 198 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 39 | [Analysis](#analysis) (16) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -436,11 +436,13 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 
 | Component | Summary |
 |---|---|
+| [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
 | [Frequency Generator](#frequency-generator) | Generates a pure tone at a given frequency (Hz) or note. |
+| [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
 | [Noise Generator](#noise-generator) | Generates white, pink or brownian noise. |
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
@@ -448,6 +450,29 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
+
+#### AI Sound Effect
+
+`bruitage-ia` · Inputs → Generation
+
+*Generates a sound effect or an ambience from a description, and returns it at the requested level.*
+
+Generates a sound from a description in words: an impact, a creak, an ambience, a crowd, a storm. The description is given in the « Prompt » setting, or arrives on the « Prompt » input, which takes priority when connected. English gives better results than French, the models having been trained on English descriptions. « Model » chooses the engine. « Stable Audio 3 (sound effects) » is the sound-effect variant of its family, a 0.6 billion parameter diffusion transformer, distinct from the music variant used by the music generation node. It is alone for now. The package weighs a gigabyte and a half and is fetched on the first run, which takes several minutes; progress appears on the models button, in the toolbar. Later runs start from disk. A six second render at eight steps takes about fifty seconds, the computation being done on the processor. « Duration » is the requested length. The model adds six seconds of internal headroom, which do not appear in the output. « Steps » is the number of denoising steps. Few steps give a rougher sound and give it faster; beyond a dozen, the gain becomes small. « Seed » fixes the random draw, which allows the same sound to be found again. At minus one, a seed is drawn at each run, and the message says which. « Output » decides the level. « Normalised » brings the peak of the sound to the requested « Peak level »; « As is » returns what the model produced, untouched. Sound effects come out of the model at a much lower level than music, hence normalisation by default. « Peak level » is the peak aimed at, in decibels below full scale. It acts only on the normalised output. The « Audio » output returns the sound in two channels, at 44,100 hertz. The message gives the length, the number of steps, the seed used and the gain applied. The model requires the desktop application: it is read from disk and computed outside the page.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Prompt | text |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Model | choice | Stable Audio 3 (sound effects) | Stable Audio 3 (sound effects) | The engine that generates the sound. Only one is wired so far. |
+| Prompt | text | `a heavy wooden door creaking open slowly, close mic, dry …` |  | Description of the sound to generate, in English. The recording describes itself as much as the sound does: « close mic », « dry room », « field recording » steer the result as much as the subject. |
+| Duration | slider | 6 s | 1 – 30 s, step 1 | Length of the generated sound. The model adds six seconds of internal headroom. |
+| Steps | slider | 8 | 1 – 20, step 1 | Number of denoising steps. Few steps give a rougher sound, and give it faster. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. |
+| Output | choice | Normalised | Normalised / As is | « Normalised » brings the peak to the requested level. « As is » returns the model's sound untouched. |
+| Peak level | slider | -1 dBFS | -30 – 0 dBFS, step 0.5 | Peak aimed at for the normalised output, in decibels below full scale. |
 
 #### Cellular automaton
 
@@ -571,6 +596,30 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 | Waveform | choice | Sine | Sine / Square / Saw / Triangle | Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Logarithmic Spiral
+
+`spirale-logarithmique` · Inputs → Generation
+
+*A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself.*
+
+Synthesises a spectrum whose partials are in geometric progression, and makes it glide. One turn of the spiral multiplies every frequency by the same ratio, so that the spectrum then maps onto itself, shifted by one partial. A logarithmic spiral is written r = a·e^(bθ): advancing by a fixed angle multiplies the radius by a fixed factor. It is the only curve whose magnification coincides with a rotation, which earns it the name equiangular spiral. Here the radius carries frequency and the angle carries time: the partials sit one turn apart, at f·ρ^k. The spiral closes for no ratio at all. One returns to the same angle, never to the same radius, and the message gives the self-similarity deviation measured on the rendered trajectory. « Ratio per turn » decides the interval between two neighbouring partials: • at 2, the partials are octaves and the spectrum is a Shepard tone's • at the golden ratio, at e or at 3/2, it is inharmonic and belongs to no scale • a ratio of 1 is excluded: the spiral degenerates into a circle there « Turns » says how far the spiral turns over the whole length. Positive, the spectrum rises; negative, it falls; zero, it holds still. « Rolloff » sets the weight of the high partials: at zero they all weigh the same and the sound is a whistle, at one they fall off like a harmonic series. Each partial's phase is integrated sample by sample rather than recomputed from the current frequency: writing sin(2π·f(t)·t) for a varying frequency gives a wrong pitch, the derivative of f(t)·t not being f(t). Partials that would pass half the sampling rate are dropped, and the message counts them. The « Spectrum » output gives, for each partial kept, its rank, its frequency at the start and at the end, and its amplitude. After the equiangular spiral studied by Jacob Bernoulli, and the motto he wanted on his gravestone, « eadem mutata resurgo ».
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Spectrum | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Ratio per turn | choice | Golden ratio | Golden ratio / Octave (2) / Fifth (3/2) / e / Free | The factor the radius is multiplied by in one turn, hence the interval between two neighbouring partials. At 2 the partials are octaves and the spectrum is a Shepard tone's. At other ratios it is inharmonic, and none closes the spiral. |
+| Free ratio | slider | 1.62 | 1.05 – 4, step 0.01 | The ratio used when « Free » is chosen. One is excluded: the spiral degenerates into a circle there. |
+| Fundamental | slider | 55 Hz | 20 – 440 Hz, step 1 | Frequency of the rank-zero partial, at the start. |
+| Partials | slider | 9 | 1 – 24, step 1 | Number of partials placed on the spiral, one per turn. Partials that pass half the sampling rate are dropped, and the message counts them. |
+| Turns | slider | 2 | -6 – 6, step 0.5 | Number of turns travelled over the whole length. One turn multiplies the whole spectrum by the ratio. Negative to descend, zero to hold the spectrum still. |
+| Length | slider | 12 s | 1 – 60 s, step 1 | Length of the travel. |
+| Rolloff | slider | 1 | 0 – 3, step 0.1 | Amplitude rolloff along the spiral, as a power of the rank. At zero every partial weighs the same and the sound is a whistle; at one they fall off like a harmonic series. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Level of the render. |
 
 #### Mathematical Audio Generator
 
@@ -6262,7 +6311,6 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Braid](#braid) | Splits the sound into bands that cross over and under in space, returning to their places after a countable number of patterns. |
 | [Dirac Belt](#dirac-belt) | Spins the sound around the listener: after one lap it comes back inverted and cancels, after two it is intact. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
-| [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
 | [Spatial Spiral](#spatial-spiral) | Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does. |
 | [Tonnetz](#tonnetz) | Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice. |
@@ -6331,30 +6379,6 @@ A Klein bottle is built like a torus (a base circle, and above each point a « f
 | Octaves | number | 4 | 3 – 8, step 1 | Range of the glissando, and number of voices. The more there are, the more gradual the migration from one side to the other, and the longer the full return. |
 | Spread | number | 70 ° | 0 – 90 °, step 1 | Angle of the voices from the centre. 90°: fully right at first, fully left when mirrored. 0°: all centred, and the mirror is no longer heard. |
 | Loop crossfade | number | 50 ms | 0 – 500 ms, step 5 | Crossfade applied to make the source loop without a click. |
-
-#### Logarithmic Spiral
-
-`spirale-logarithmique` · Processing → Topology
-
-*A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself.*
-
-Synthesises a spectrum whose partials are in geometric progression, and makes it glide. One turn of the spiral multiplies every frequency by the same ratio, so that the spectrum then maps onto itself, shifted by one partial. A logarithmic spiral is written r = a·e^(bθ): advancing by a fixed angle multiplies the radius by a fixed factor. It is the only curve whose magnification coincides with a rotation, which earns it the name equiangular spiral. Here the radius carries frequency and the angle carries time: the partials sit one turn apart, at f·ρ^k. The spiral closes for no ratio at all. One returns to the same angle, never to the same radius, and the message gives the self-similarity deviation measured on the rendered trajectory. « Ratio per turn » decides the interval between two neighbouring partials: • at 2, the partials are octaves and the spectrum is a Shepard tone's • at the golden ratio, at e or at 3/2, it is inharmonic and belongs to no scale • a ratio of 1 is excluded: the spiral degenerates into a circle there « Turns » says how far the spiral turns over the whole length. Positive, the spectrum rises; negative, it falls; zero, it holds still. « Rolloff » sets the weight of the high partials: at zero they all weigh the same and the sound is a whistle, at one they fall off like a harmonic series. Each partial's phase is integrated sample by sample rather than recomputed from the current frequency: writing sin(2π·f(t)·t) for a varying frequency gives a wrong pitch, the derivative of f(t)·t not being f(t). Partials that would pass half the sampling rate are dropped, and the message counts them. The « Spectrum » output gives, for each partial kept, its rank, its frequency at the start and at the end, and its amplitude. After the equiangular spiral studied by Jacob Bernoulli, and the motto he wanted on his gravestone, « eadem mutata resurgo ».
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Audio | audio |  |
-| output | Spectrum | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Ratio per turn | choice | Golden ratio | Golden ratio / Octave (2) / Fifth (3/2) / e / Free | The factor the radius is multiplied by in one turn, hence the interval between two neighbouring partials. At 2 the partials are octaves and the spectrum is a Shepard tone's. At other ratios it is inharmonic, and none closes the spiral. |
-| Free ratio | slider | 1.62 | 1.05 – 4, step 0.01 | The ratio used when « Free » is chosen. One is excluded: the spiral degenerates into a circle there. |
-| Fundamental | slider | 55 Hz | 20 – 440 Hz, step 1 | Frequency of the rank-zero partial, at the start. |
-| Partials | slider | 9 | 1 – 24, step 1 | Number of partials placed on the spiral, one per turn. Partials that pass half the sampling rate are dropped, and the message counts them. |
-| Turns | slider | 2 | -6 – 6, step 0.5 | Number of turns travelled over the whole length. One turn multiplies the whole spectrum by the ratio. Negative to descend, zero to hold the spectrum still. |
-| Length | slider | 12 s | 1 – 60 s, step 1 | Length of the travel. |
-| Rolloff | slider | 1 | 0 – 3, step 0.1 | Amplitude rolloff along the spiral, as a power of the rank. At zero every partial weighs the same and the sound is a whistle; at one they fall off like a harmonic series. |
-| Volume | slider | 70 % | 0 – 100 %, step 1 | Level of the render. |
 
 #### Möbius Strip
 
@@ -6585,7 +6609,7 @@ After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) f
 
 *Draws up to six sounds one under another, on a shared time axis.*
 
-Draws the sounds connected to its inputs, one lane per track, one under another on a shared time axis. Every track starts at zero; the axis runs to the longest, so durations compare directly. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. The « - » refuses while the last track is connected. Each lane gives, at every instant, the lowest and the highest the sound reaches there, all channels together: a brief peak stays visible, and what happens on one channel only is seen as well. The track number and its length are written beside it, along with its peak. The drawing keeps two thousand and forty-eight columns per track: over three minutes, one column covers eighty-eight milliseconds. That is enough to compare takes, to align an entry, to see where a sound stops; it is not enough to hunt for a click. The node returns no sound. One output can feed several inputs: a chain is tapped towards it and carries on.
+Draws the sounds connected to its inputs, one lane per track, one under another on a shared time axis. Every track starts at zero; the axis runs to the longest, so durations compare directly. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. The « - » refuses while the last track is connected. Each lane gives, at every instant, the lowest and the highest the sound reaches there, all channels together: a brief peak stays visible, and what happens on one channel only is seen as well. The track number and its length are written beside it, along with its peak. The same drawing is made twice. The top one shows everything, from the start to the end of the longest track, and does not move. The bottom one shows the stretch the scrollbar points at; the wheel narrows or widens that stretch around the aimed point, and a light frame drawn on the top one marks its position. The footer gives the bounds of the stretch and its magnification. The stretch is redrawn at every change, not magnified: the drawing keeps sixty-five thousand columns per track, so one column covers two point seven thousandths of a second over three minutes. That is enough to place a click to the millisecond. Once the stretch is narrower than that, the drawing grows without gaining detail. This weight does not depend on the length of the sounds: an hour of recording costs as much as a second, the number of columns being fixed. The node returns no sound. One output can feed several inputs: a chain is tapped towards it and carries on.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8078,7 +8102,7 @@ Extracts the dominant colors of an image and turns them into a musical sequence.
 
 *Julia code editor with syntax highlighting for audio processing.*
 
-Julia code editor with syntax highlighting for audio, MIDI and text processing. Same architecture as the Python Processor. Variables: ARGS[2] = input WAV, ENV["Attic_output_path"] = output WAV, ENV["Attic_sample_rate"], ENV["Attic_channels"]. Requires Julia + WAV.jl package installed.
+Julia code editor with syntax highlighting for audio, MIDI and text processing. Same architecture as the Python Processor. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"], ENV["ATTIC_TEXT_INPUT"], and ENV["ATTIC_OUTPUT_MIDI"] and ENV["ATTIC_OUTPUT_TEXT"] for outputs that are not sound. Requires Julia + WAV.jl package installed.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8091,7 +8115,7 @@ Julia code editor with syntax highlighting for audio, MIDI and text processing. 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Code | text | `# Julia Processor — audio processing # Environment variab…` |  | Julia code to execute. Variables: ARGS[2] = input WAV, ENV["Attic_output_path"] = output WAV, ENV["Attic_sample_rate"], ENV["Attic_channels"]. Requires WAV.jl package. |
+| Code | text | `# Julia Processor — audio processing # Environment variab…` |  | Julia code to execute. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"]. Requires WAV.jl package. |
 | Timeout | number | 30 s | 5 – 120 s, step 5 | Maximum script execution time (in seconds). |
 
 #### Pixeltone
@@ -8145,7 +8169,7 @@ Generates audio by running a Pure Data patch (.pd). The patch is interpreted by 
 
 *Python code editor with syntax highlighting for audio processing.*
 
-Python code editor with syntax highlighting for audio processing. Input audio is converted to a temporary WAV and passed to the script via sys.argv[1]. The script must write the result to the path given by os.environ['attic_output_path']. Available variables: Attic_sample_rate, Attic_channels. The default code reads the WAV, doubles the volume and writes the result. Requires Python + numpy installed on the machine. Python detection is automatic (python, python3, py) or via the Attic_Python environment variable. Adjustable timeout (5-120s).
+Python code editor with syntax highlighting for audio processing. Input audio is converted to a temporary WAV and passed to the script via sys.argv[1]. The script must write the result to the path given by os.environ['ATTIC_OUTPUT_PATH']. Available variables: ATTIC_SAMPLE_RATE, ATTIC_CHANNELS, ATTIC_TEXT_INPUT, and ATTIC_OUTPUT_MIDI and ATTIC_OUTPUT_TEXT for outputs that are not sound. The default code reads the WAV, doubles the volume and writes the result. Requires Python + numpy installed on the machine. Python detection is automatic (python, python3, py) or via the ATTIC_PYTHON environment variable. Adjustable timeout (5-120s).
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8158,7 +8182,7 @@ Python code editor with syntax highlighting for audio processing. Input audio is
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Code | text | `import numpy as np import wave import os import sys # in…` |  | Python code to execute. Variables: sys.argv[1] = input WAV, Attic_output_path = output WAV, Attic_sample_rate, Attic_channels. Requires numpy + wave. |
+| Code | text | `import numpy as np import wave import os import sys # in…` |  | Python code to execute. Variables: sys.argv[1] = input WAV, ATTIC_OUTPUT_PATH = output WAV, ATTIC_SAMPLE_RATE, ATTIC_CHANNELS. Requires numpy + wave. |
 | Timeout | number | 30 s | 5 – 120 s, step 5 | Maximum script execution time (in seconds). |
 
 #### Sound Drawing

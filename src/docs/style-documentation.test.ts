@@ -67,10 +67,23 @@ const MOT_CRIE = /(?<![A-Za-zÀ-ÿŒœŸ])[A-ZÀ-ÖØ-ÞŒŸ]{3,}(?![A-Za-zÀ-ÿ
 /** Un chiffre romain — un siècle, un degré — n'est pas un mot crié. */
 const ROMAIN = /^[IVXLCDM]+$/;
 
-/** Les mots criés d'un texte, sigles et chiffres romains écartés. */
+/**
+ * Un nom de variable d'environnement : des capitales reliées par des soulignés.
+ *
+ * `ATTIC_OUTPUT_PATH` N'EST PAS UN CRI, C'EST UN IDENTIFIANT, et il ne s'écrit pas autrement :
+ * une documentation qui le mettrait en minuscules donnerait un nom que le système ne connaît pas.
+ * Le relevé le coupait en six mots ordinaires, ATTIC, OUTPUT, PATH, SAMPLE, RATE, CHANNELS, qu'il
+ * aurait fallu autoriser un par un, ce qui aurait rendu le contrôle aveugle sur de vrais cris.
+ * Une forme reliée par des soulignés ne s'écrit jamais en prose : c'est elle qu'on écarte, et non
+ * les mots qui la composent.
+ */
+const IDENTIFIANT = /(?<![A-Za-z0-9_])[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+(?![A-Za-z0-9_])/g;
+
+/** Les mots criés d'un texte, sigles, chiffres romains et identifiants écartés. */
 function crie(texte: string | undefined): string[] {
   if (!texte) return [];
-  return [...texte.matchAll(MOT_CRIE)].map((m) => m[0])
+  const sansIdentifiants = texte.replace(IDENTIFIANT, " ");
+  return [...sansIdentifiants.matchAll(MOT_CRIE)].map((m) => m[0])
     .filter((m) => !SIGLES.has(m) && !ROMAIN.test(m));
 }
 
@@ -95,6 +108,14 @@ describe("le ton des documentations", () => {
 
   it("en trouve assez pour que le contrôle ait un sens", () => {
     expect(docs.length).toBeGreaterThan(500);
+  });
+
+  it("L'EXEMPTION DES IDENTIFIANTS EST ÉTROITE : elle ne couvre pas les cris qui les entourent", () => {
+    // Écarter un nom de variable ne doit pas écarter les mots ordinaires de la même phrase, sans
+    // quoi il suffirait d'en glisser un pour crier tout le reste.
+    expect(crie("Écrit dans ATTIC_OUTPUT_PATH, et c'est IMPORTANT.")).toEqual(["IMPORTANT"]);
+    expect(crie("ATTIC_SAMPLE_RATE et ATTIC_CHANNELS.")).toEqual([]);
+    expect(crie("ATTENTION au réglage.")).toEqual(["ATTENTION"]);
   });
 
   it("n'écrit aucun mot ordinaire en capitales — une documentation ne hausse pas la voix", () => {

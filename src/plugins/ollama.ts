@@ -46,6 +46,29 @@ export async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
   }
 }
 
+export interface RepModelesOllama { modeles?: string[]; erreur?: string }
+
+/**
+ * La liste des modèles installés.
+ *
+ * MÊME REPLI QUE `ollamaGenerer`, ET POUR LA MÊME RAISON. La génération savait se passer du
+ * processus principal en appelant le serveur directement ; la liste, elle, ne le savait pas, et
+ * l'éditeur de code annonçait « demande l'application de bureau » hors d'Electron alors que le
+ * serveur répondait très bien. Dans l'application rien ne change, c'est toujours le pont qui sert.
+ */
+export async function ollamaModeles(): Promise<RepModelesOllama> {
+  const api = (window as unknown as { api?: { ollamaModeles?: () => Promise<RepModelesOllama> } }).api;
+  if (api?.ollamaModeles) return api.ollamaModeles();
+  try {
+    const r = await fetch("http://127.0.0.1:11434/api/tags");
+    if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };
+    const d = await r.json();
+    return { modeles: (d?.models ?? []).map((m: { name: string }) => m.name).filter(Boolean) };
+  } catch (e) {
+    return { erreur: `Serveur Ollama injoignable sur :11434 (lancez « ollama serve ») — ${(e as Error)?.message || e}` };
+  }
+}
+
 export const fiches: FicheAudio[] = ([
   {
     id: "ollama-llm", nom: "LLM Ollama", nomEn: "Ollama LLM",

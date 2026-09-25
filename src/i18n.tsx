@@ -27,7 +27,6 @@ const DICO: Record<string, Record<Langue, string>> = {
   "code.ia.generer": { fr: "Générer", en: "Generate" },
   "code.ia.enCours": { fr: "En cours…", en: "Working…" },
   "code.ia.modele": { fr: "Modèle employé", en: "Model used" },
-  "code.ia.horsBureau": { fr: "La génération demande l'application de bureau.", en: "Generation requires the desktop application." },
   "code.ia.aucunModele": { fr: "Aucun modèle Ollama installé. Le code s'écrit à la main comme avant.", en: "No Ollama model installed. Code is written by hand as before." },
   "code.ia.videRetour": { fr: "Le modèle n'a rien rendu d'exploitable.", en: "The model returned nothing usable." },
   "modifierTexte.corrige": { fr: "corrigé à la main", en: "edited by hand" },

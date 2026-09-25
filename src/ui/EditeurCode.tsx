@@ -30,7 +30,7 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "../i18n";
-import { ollamaGenerer } from "../plugins/ollama";
+import { ollamaGenerer, ollamaModeles } from "../plugins/ollama";
 import { construirePrompt, extraireCode, rangerModeles, type LangageCode } from "./generation-code";
 
 export type Token = { text: string; type: string };
@@ -108,9 +108,9 @@ export function EditeurCode({ codeInitial, tokenize, couleurs, onSync, suffixePi
     if (!ouvert || !langage) return;
     let vivant = true;
     (async () => {
-      const api = (window as unknown as { api?: { ollamaModeles?: () => Promise<{ modeles?: string[]; erreur?: string }> } }).api;
-      if (!api?.ollamaModeles) { if (vivant) setErreurIA(t("code.ia.horsBureau")); return; }
-      const r = await api.ollamaModeles();
+      // `ollamaModeles` SAIT SE PASSER DU PROCESSUS PRINCIPAL, comme la génération : il n'y a donc
+      // plus de cas « hors application de bureau », seulement un serveur qui répond ou non.
+      const r = await ollamaModeles();
       if (!vivant) return;
       if (r?.erreur || !r?.modeles?.length) { setErreurIA(r?.erreur ?? t("code.ia.aucunModele")); return; }
       const ranges = rangerModeles(r.modeles);
