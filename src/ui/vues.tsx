@@ -1659,7 +1659,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied={t("python.requis")} titre={t("python.titre")} />
+        suffixePied={t("python.requis")} titre={t("python.titre")} langage="python" />
     </div>
   );
 }
@@ -1721,7 +1721,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied={t("julia.requis")} titre={t("julia.titre")} />
+        suffixePied={t("julia.requis")} titre={t("julia.titre")} langage="julia" />
     </div>
   );
 }

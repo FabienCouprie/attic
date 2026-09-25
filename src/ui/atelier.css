@@ -825,6 +825,12 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border-bottom: 1px solid var(--border-divider);
   max-height: 120px; overflow-y: auto; position: relative;
 }
+/* LA SÉLECTION DOIT LAISSER VOIR LES COULEURS. Le texte saisi est transparent, posé sur le calque
+   coloré : une sélection opaque peindrait par-dessus et effacerait ce qu'on vient de sélectionner.
+   Un fond translucide garde le repère de la sélection ET le texte coloré dessous. */
+.attic-editeur-code-saisie::selection { background: rgba(90, 120, 200, 0.45); }
+.attic-editeur-code-saisie::-moz-selection { background: rgba(90, 120, 200, 0.45); }
+
 .attic-node-copy-btn {
   position: sticky; top: 0; float: right;
   background: transparent; border: 1px solid var(--border); border-radius: 4px;
