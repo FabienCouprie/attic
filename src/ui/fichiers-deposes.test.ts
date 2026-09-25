@@ -4,7 +4,7 @@
 // produit rien, et l'utilisateur ne voit qu'un geste sans effet, sans savoir si c'est son fichier,
 // son geste ou l'application qui est en cause.
 import { describe, it, expect } from "vitest";
-import { estFichierAudio, positionsEnCascade } from "./fichiers-deposes";
+import { estFichierAudio, estFichierMidi, positionsEnCascade, sorteDeposee } from "./fichiers-deposes";
 
 describe("reconnaître un fichier son", () => {
   it("accepte les formats courants par leur extension", () => {
@@ -31,6 +31,36 @@ describe("reconnaître un fichier son", () => {
 
   it("ne se laisse pas prendre par une extension au milieu du nom", () => {
     expect(estFichierAudio("la.wav.txt")).toBe(false);
+  });
+});
+
+describe("reconnaître un fichier MIDI", () => {
+  it("accepte les extensions du format", () => {
+    for (const n of ["theme.mid", "SUITE.MIDI", "vieux.rmi"]) expect(estFichierMidi(n), n).toBe(true);
+  });
+
+  it("accepte aussi sur le type, que les systèmes annoncent de deux façons", () => {
+    expect(estFichierMidi("sans-extension", "audio/midi")).toBe(true);
+    expect(estFichierMidi("sans-extension", "audio/x-midi")).toBe(true);
+  });
+
+  it("UN MIDI N'EST PAS UN SON, même si le système l'annonce en audio", () => {
+    // Le piège du geste : un `.mid` pris pour un son partirait au décodeur audio, qui échouerait
+    // sur un format qu'il ne connaît pas, et l'utilisateur croirait son fichier abîmé.
+    expect(estFichierAudio("theme.mid", "audio/midi")).toBe(false);
+    expect(sorteDeposee("theme.mid", "audio/midi")).toBe("midi");
+  });
+});
+
+describe("choisir le composant selon le fichier", () => {
+  it("un son donne une entrée audio, un MIDI donne un lecteur MIDI", () => {
+    expect(sorteDeposee("prise.wav")).toBe("audio");
+    expect(sorteDeposee("theme.mid")).toBe("midi");
+  });
+
+  it("le reste ne donne rien, et le canevas le laisse passer", () => {
+    expect(sorteDeposee("photo.png", "image/png")).toBeNull();
+    expect(sorteDeposee("film.mp4", "video/mp4")).toBeNull();
   });
 });
 
