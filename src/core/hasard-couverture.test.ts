@@ -45,6 +45,7 @@ const HORS_RENDU = new Set([
 const CONFORME = new Set([
   "audio/multi-reservoir.ts",
   "audio/reservoir.ts",
+  "plugins/bruitage-ia.ts",
   "plugins/carte-sonore.ts",
   "plugins/continuation-stable-audio-3.ts",
   "plugins/coordonnees-sur-carte.ts",

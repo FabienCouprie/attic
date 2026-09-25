@@ -549,23 +549,44 @@ ipcMain.handle("demucs:separer", async (_event, options) => {
 });
 
 // --- IPC : Stable Audio 3 text-to-audio (process principal, onnxruntime-node) ---
-ipcMain.handle("stable-audio-3:generer", async (_event, options) => {
+ipcMain.handle("stable-audio-3:generer", async (evenement, options) => {
   try {
-    const { prompt, seconds, steps, seed, modelPath: cheminExplicite } = options;
-    let modelDir = cheminExplicite;
-    if (!modelDir) {
-      const cible = "stable-audio-3-small-music";
-      const candidats = [
-        path.join(__dirname, "..", "public", "oonx", cible),
-        path.join(__dirname, "..", "dist", "oonx", cible),
-        path.join(process.resourcesPath || "", "oonx", cible),
-      ];
-      modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
-    } else {
-      modelDir = resoudreRessource(modelDir, contexteRessources());
+    const { prompt, seconds, steps, seed, modelPath: cheminExplicite, paquet } = options;
+    // DEUX PAQUETS SOUS LE MÊME MOTEUR. « music » est celui du nœud musical, « sfx » celui du
+    // bruitage. Le renderer nomme celui qu'il veut, il n'écrit pas de chemin : les racines
+    // possibles ne sont connues que d'ici, et elles changent entre le développement et l'installé.
+    const cible = paquet === "sfx" ? "stable-audio-3-small-sfx" : "stable-audio-3-small-music";
+    const idModele = paquet === "sfx" ? "stable-audio-3-sfx" : "stable-audio-3";
+    // `resoudreRessource` PLUTÔT QU'UNE LISTE DE CANDIDATS ÉCRITE ICI : c'est elle qui connaît le
+    // dossier inscriptible où les modèles téléchargés se posent, que la liste précédente ignorait.
+    // Un paquet pris par la barre d'outils n'y aurait donc jamais été trouvé.
+    let modelDir = resoudreRessource(cheminExplicite || path.join("oonx", cible), contexteRessources());
+
+    // LE PAQUET SE PREND TOUT SEUL À LA PREMIÈRE UTILISATION — demandé par Fabien. La règle écrite
+    // en tête de `telechargement-modeles.cjs` était de ne rien prendre sans que l'utilisateur le
+    // décide, et elle vaut toujours pour le bouton de la barre d'outils, qui prend tout. Ici le
+    // composant vient d'être lancé : l'intention est explicite et porte sur UN paquet, et renvoyer
+    // vers un bouton ferait faire deux gestes pour une seule volonté.
+    if (!cheminExplicite && (!modelDir || !fs.existsSync(modelDir))) {
+      const manifeste = lireManifesteModeles();
+      const entree = (manifeste.modeles ?? []).find((m) => m.id === idModele && m.source?.url);
+      if (!entree) {
+        return { ok: false, erreur: `Paquet « ${cible} » introuvable, et absent du manifeste des modèles.` };
+      }
+      if (annulationModeles && !annulationModeles.signal.aborted) {
+        return { ok: false, erreur: "Un téléchargement de modèle est déjà en cours ; relancez quand il sera fini." };
+      }
+      const pris = await telechargerModeles([entree], (etat) => evenement.sender.send("modeles:progression", etat));
+      if (!pris.ok) {
+        return { ok: false, erreur: `Le paquet « ${entree.nom} » n'a pas pu être récupéré : ${pris.erreur ?? "annulé"}` };
+      }
+      modelDir = resoudreRessource(path.join("oonx", cible), contexteRessources());
     }
+
     if (!modelDir || !fs.existsSync(modelDir)) {
-      return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
+      // PAS DE REPLI SUR L'AUTRE PAQUET : le bruitage rendu par le modèle musical est précisément
+      // le défaut qu'on répare ici. Mieux vaut dire ce qui manque que sonner faux sans prévenir.
+      return { ok: false, erreur: `Paquet « ${cible} » introuvable, même après téléchargement.` };
     }
     const result = await genererStableAudio3({ prompt, seconds, steps, seed, modelDir });
     return { ok: true, ...result };
@@ -732,21 +753,19 @@ ipcMain.handle("modeles:annuler", () => {
   return { ok: true };
 });
 
-ipcMain.handle("modeles:telecharger", async (evenement, ids) => {
-  if (annulationModeles && !annulationModeles.signal.aborted) {
-    return { ok: false, erreur: "Un téléchargement est déjà en cours" };
-  }
-  const manifeste = lireManifesteModeles();
-  const inv = inventaireModeles(manifeste, sondesModeles());
-  const voulus = Array.isArray(ids) && ids.length > 0 ? ids : inv.manquants;
-  const file = manifeste.modeles.filter((m) => voulus.includes(m.id) && m.source?.url);
-  if (file.length === 0) return { ok: true, faits: [], rien: true };
-
+/**
+ * Télécharge une file de modèles, et pose ce qu'elle rapporte.
+ *
+ * UN SEUL CHEMIN POUR DEUX APPELANTS. Le bouton « Récupérer les modèles IA » et la récupération
+ * automatique d'un composant passent par ici : la vérification d'empreinte, l'extraction entrée par
+ * entrée et le refus des chemins qui sortent du dossier ne doivent exister qu'une fois. `dire`
+ * reçoit l'avancement ; l'appelant décide où il l'envoie, ou l'ignore.
+ */
+async function telechargerModeles(file, dire = () => {}) {
   annulationModeles = new AbortController();
   const signal = annulationModeles.signal;
   const racine = dossierRessourcesUtilisateur();
   const faits = [];
-  const dire = (etat) => evenement.sender.send("modeles:progression", etat);
 
   try {
     for (const modele of file) {
@@ -810,9 +829,24 @@ ipcMain.handle("modeles:telecharger", async (evenement, ids) => {
     annulationModeles = null;
   }
 
-  const apres = inventaireModeles(manifeste, sondesModeles());
   dire({ phase: "fini", ...avancementModeles({ faits, courant: null, file }) });
-  return { ok: true, faits: faits.map((m) => m.id), etat: apres };
+  return { ok: true, faits: faits.map((m) => m.id) };
+}
+
+ipcMain.handle("modeles:telecharger", async (evenement, ids) => {
+  if (annulationModeles && !annulationModeles.signal.aborted) {
+    return { ok: false, erreur: "Un téléchargement est déjà en cours" };
+  }
+  const manifeste = lireManifesteModeles();
+  const inv = inventaireModeles(manifeste, sondesModeles());
+  const voulus = Array.isArray(ids) && ids.length > 0 ? ids : inv.manquants;
+  const file = manifeste.modeles.filter((m) => voulus.includes(m.id) && m.source?.url);
+  if (file.length === 0) return { ok: true, faits: [], rien: true };
+
+  const res = await telechargerModeles(file, (etat) => evenement.sender.send("modeles:progression", etat));
+  return res.ok
+    ? { ...res, etat: inventaireModeles(lireManifesteModeles(), sondesModeles()) }
+    : res;
 });
 
 ipcMain.handle("app:quitter", () => app.quit());

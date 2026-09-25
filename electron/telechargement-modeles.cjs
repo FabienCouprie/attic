@@ -6,6 +6,13 @@
 // manque se récupère depuis l'application, sur demande — pas au premier usage d'un nœud, où
 // l'attente arriverait au plus mauvais moment, mais quand l'utilisateur le décide.
 //
+// CETTE RÈGLE A UNE EXCEPTION DEPUIS LE 25 SEPTEMBRE 2026, à la demande de Fabien : un composant
+// qui vient d'être lancé et dont le paquet manque le prend lui-même, au lieu de renvoyer vers le
+// bouton de la barre d'outils. La raison du partage : le bouton prend TOUT, et engager 1,9 Go sans
+// qu'on l'ait voulu serait abusif ; un composant lancé, lui, porte une intention explicite et ne
+// concerne qu'un paquet. Voir `stable-audio-3:generer` dans main.cjs, qui passe par
+// `telechargerModeles`, le même chemin que le bouton.
+//
 // CE QUI EST SÉPARÉ, ET POURQUOI. L'inventaire — qu'est-ce qui est là, qu'est-ce qui manque, quel
 // poids reste à prendre — est une fonction PURE, qui reçoit un manifeste et deux sondes. Elle est
 // éprouvable sans réseau ni disque, et c'est elle qui porte les décisions : ce qui compte comme

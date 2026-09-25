@@ -281,6 +281,58 @@
       ]
     },
     {
+      "id": "stable-audio-3-sfx",
+      "nom": "Stable Audio 3 (bruitage)",
+      "nomEn": "Stable Audio 3 (sound effects)",
+      "noeuds": [
+        "bruitage-ia"
+      ],
+      "octets": 1794589344,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/stable-audio-3-small-sfx.zip",
+        "octets": 1497652713,
+        "sha256": "0da20a4d14ea07a9cb1b5018efaf6fa5168f4e8b948d717d0919e1c1148c2dbd"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/LICENSE.md",
+          "octets": 11852,
+          "sha256": "d6f6b1a4dce5c852bd6d7d9482d002baf0ccdb71e662250b73be9eec8764ee8d"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/LICENSE_GEMMA.md",
+          "octets": 10541,
+          "sha256": "e77acc0d3163bb7534675045c584b4d04b387b529239fc4b3647da0a01ba4745"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/NOTICE",
+          "octets": 97,
+          "sha256": "66f856d7da72797f528fca46b7c80634ab481f917bfe020960e123d84b19f75f"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/onnx/decoder_bf16.onnx",
+          "octets": 218677278,
+          "sha256": "ba1e92f888e4ad6caef75858a4dff0bd14d24422ffcfd7a7517fc65f56de5f90"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/onnx/dit_fp16.onnx",
+          "octets": 921133617,
+          "sha256": "8154582d5c8e7efc7154469642cb75ce37bb928e2e7658388e910f7ce75b476f"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/onnx/text_encoder.onnx",
+          "octets": 620393530,
+          "sha256": "dc79684b14c9d5647bf3e7870f388837ac4b8d6708ea3ead82a37a0b39803084"
+        },
+        {
+          "chemin": "oonx/stable-audio-3-small-sfx/tokenizer/tokenizer.json",
+          "octets": 34362429,
+          "sha256": "7794135caa3ea73918949c902a781cc61dab674a4b59c17d85931c77c1114cbd"
+        }
+      ]
+    },
+    {
       "id": "kokoro-82m",
       "nom": "Synthèse vocale Kokoro",
       "nomEn": "Kokoro speech synthesis",
