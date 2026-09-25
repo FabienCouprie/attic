@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**403 composants**, dont **87** avec une vue propre et **4** sans lecteur générique.
+**404 composants**, dont **87** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -109,7 +109,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Visualisation Songsee | `visualisation-songsee` | VueImageDepuisAudio | — | 240 × 118 | non | oui | non |
 | Visualiseur de courbe | `visualiseur-courbe` | VueTraceCourbe | — | 240 × 162 | non | oui | non |
 | Visualiseur | `visualiseur-forme-onde` | VueFormeOnde | — | 420 × 240 | non | oui | non |
-| Visualiseur multipiste | `visualiseur-multipiste` | VuePistesMultiples | — | 240 × 228 | non | oui | non |
+| Visualiseur multipiste | `visualiseur-multipiste` | VuePistesMultiples | — | 420 × 340 | non | oui | non |
 | VU-mètre / LUFS | `vu-metre` | VueVuMetre | — | 300 × 260 | non | oui | non |
 
 ## Les composants sans vue propre
@@ -155,6 +155,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Boucle MIDI | `boucle-midi` | 240 × 118 |
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |
 | Brassage | `brassage` | 240 × 118 |
+| Bruitage IA | `bruitage-ia` | 240 × 118 |
 | Canon de tempo (Nancarrow) | `canon-nancarrow` | 240 × 118 |
 | Canon par pavage | `canon-pavage` | 240 × 162 |
 | Capture MIDI | `capture-midi` | 240 × 140 |
