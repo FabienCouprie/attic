@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DUREE_LONGUE_S, apercuUtile, noeudRegarde, octetsApercu, octetsTampon } from "./memoire";
+import { DUREE_LONGUE_S, apercuUtile, noeudRegarde, octetsApercu, octetsTampon, resultatRetenu } from "./memoire";
 
 // En mégaoctets décimaux, l'unité de l'en-tête du module : 1,27 Go veut dire 1 270 000 000 octets.
 const Mo = (o: number) => Math.round(o / 1e6);
@@ -119,5 +119,50 @@ describe("dans un méta-composant, personne n'est une destination", () => {
   it("sur une piste longue, aucun aperçu ne se construit dans un méta non sélectionné", () => {
     const regarde = noeudRegarde({ id: "dernier", selectionne: false, aretes: dedans, dansUnMeta: true });
     expect(apercuUtile({ dureeS: 3600, regarde })).toBe(false);
+  });
+});
+
+describe("ce qu'une bulle repliée garde de son intérieur", () => {
+  it("un membre caché ne garde pas son résultat", () => {
+    expect(resultatRetenu({ cacheParBulle: true })).toBe(false);
+  });
+
+  it("un nœud ordinaire garde le sien", () => {
+    expect(resultatRetenu({ cacheParBulle: false })).toBe(true);
+  });
+
+  it("l'économie de mémoire coupée, tout est gardé : c'est le même arbitrage que les aperçus", () => {
+    expect(resultatRetenu({ cacheParBulle: true, economie: false })).toBe(true);
+  });
+
+  it("trois membres d'une heure en stéréo, ce sont 3,8 Go de tampons rendus", () => {
+    expect(Mo(3 * octetsTampon(3600))).toBe(3810);
+  });
+});
+
+describe("dans une bulle repliée, personne n'est regardé", () => {
+  const chaine = [{ source: "a" }, { source: "b" }];
+
+  it("un membre caché n'est pas une destination, même s'il termine la chaîne", () => {
+    expect(noeudRegarde({ id: "c", selectionne: false, aretes: chaine, cacheParBulle: true })).toBe(false);
+  });
+
+  it("un membre caché n'est pas regardé même s'il était resté sélectionné", () => {
+    // On ne peut pas cliquer sur un nœud qu'on ne voit pas ; une sélection d'avant le repli ne doit
+    // pas ressusciter un aperçu que le repli vient de rendre inutile.
+    expect(noeudRegarde({ id: "b", selectionne: true, aretes: chaine, cacheParBulle: true })).toBe(false);
+  });
+
+  it("la bulle ouverte, les règles ordinaires reviennent", () => {
+    expect(noeudRegarde({ id: "c", selectionne: false, aretes: chaine, cacheParBulle: false })).toBe(true);
+    expect(noeudRegarde({ id: "b", selectionne: true, aretes: chaine, cacheParBulle: false })).toBe(true);
+  });
+
+  it("sur une heure de stéréo, trois membres repliés cessent de retenir 2,9 Go d'aperçus", () => {
+    const regarde = noeudRegarde({ id: "b", selectionne: false, aretes: chaine, cacheParBulle: true });
+    expect(apercuUtile({ dureeS: 3600, regarde })).toBe(false);
+    // Trois membres, à 953 Mo d'aperçu chacun en stéréo vingt-quatre bits.
+    expect(Mo(octetsApercu(3600, 2, 44100, 24))).toBe(953);
+    expect(Mo(3 * octetsApercu(3600, 2, 44100, 24))).toBe(2858);
   });
 });

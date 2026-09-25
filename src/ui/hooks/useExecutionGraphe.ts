@@ -8,7 +8,8 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  ancetresBulle, aplatirGraphe, estBulle, estSubstitution, grapheSansConteneurs, sortieDeBulle,
+  ancetresBulle, aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
+  sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
@@ -16,7 +17,7 @@ import {
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
 import { respirer } from "../../core/respirer";
-import { apercuUtile, noeudRegarde } from "../../core/memoire";
+import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
@@ -703,6 +704,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // de mémoire. C'est le symptôme « lecteur gris à 0:00 » : il frappe le
     // dernier nœud de la chaîne, quel qu'il soit, et non celui qui aurait un
     // défaut.
+    // CE QUI EST DANS UNE BULLE REPLIÉE N'EST PAS GARDÉ, et le ménage se fait ICI, à la fin du run,
+    // et non au moment où un nœud range son résultat. La raison est qu'un membre qui TROUVE son
+    // résultat en cache n'exécute pas, donc ne range rien, donc ne déclenchait aucun ménage : les
+    // tampons restaient accrochés au cache alors que les données des nœuds les avaient lâchés, et
+    // l'on croyait avoir libéré. Relevé à l'écran, deux exécutions de suite.
+    //
+    // À LA FIN PLUTÔT QU'AU DÉBUT : le run courant garde ses raccourcis de cache, et c'est le
+    // suivant qui refera la bulle. On paie le recalcul une fois par exécution, pas deux.
+    // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti.
+    for (const n of noeudsRef.current) {
+      const garde = resultatRetenu({
+        cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
+        economie: economieMemoireRef?.current ?? true,
+      });
+      if (!garde) cacheExec.current.delete(n.id);
+    }
+
     const correctifs = new Map<string, Record<string, unknown>>();
     for (const n of noeudsRef.current) {
       const patch = calculerCorrectifResultat(n);
@@ -789,14 +807,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Sur une piste longue, un intermédiaire ne reçoit pas d'aperçu : la copie en 16 bits
         // pèse 635 Mo par heure de son, et personne ne l'ouvre (cf. core/memoire.ts). Elle sera
         // construite le jour où l'on clique sur ce nœud — le tampon, lui, reste là.
-        const garderApercu = !audio || apercuUtile({
+        // UN MEMBRE DE BULLE REPLIÉE NE RETIENT RIEN : ni aperçu, ni référence au tampon. Le premier
+        // ne s'écouterait pas, le second annulerait la libération faite plus haut — un tampon qui
+        // reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché.
+        const membreReplie = !resultatRetenu({
+          cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
+          economie: economieMemoireRef?.current ?? true,
+        });
+        const garderApercu = !audio || (!membreReplie && apercuUtile({
           dureeS: audio.duration,
           regarde: noeudRegarde({
             id: n.id, selectionne: !!n.selected, aretes: aretesRef.current,
             dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
+            // Un membre de bulle repliée n'est pas regardé : la bulle, elle, garde son aperçu.
+            cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
           }),
           economie: economieMemoireRef?.current ?? true,
-        });
+        }));
         let url: string | undefined;
         if (audio && garderApercu) {
           if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
@@ -871,7 +898,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         return {
           audioResultatUrl: url ?? undefined,
           audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
-          audioResultatBuffer: audio ?? undefined,
+          audioResultatBuffer: membreReplie ? undefined : (audio ?? undefined),
           audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
           scriptGenere: texte ?? undefined,
           apercuCourbe,
