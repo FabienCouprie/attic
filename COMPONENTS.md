@@ -8719,7 +8719,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | [ABC Editing by LLM](#abc-editing-by-llm) | Edits an ABC score with a local Ollama model (new chords, or new pitches on the same rhythm) without it being able to break what must stay fixed. |
 | [AI Script Generator](#ai-script-generator) | Generates a prompt for a music AI (Suno, Udio…) by randomly combining instruments, styles, emotions and vocal ranges. |
 | [DistilGPT-2](#distilgpt-2) | Generates text via AI (DistilGPT-2, English). |
-| [Edit Text](#edit-text) | Transforms incoming text: replace, case, whitespace, wrapping. |
+| [Edit Text](#edit-text) | Displays incoming text, lets it be edited by hand, and returns what the area contains. |
 | [Emotions](#emotions) | Outputs a collection of human emotions by category as text. |
 | [Graph Documentation](#graph-documentation) | Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used. |
 | [Instrument Names](#instrument-names) | Outputs a long list of musical instrument names as text. |
@@ -8805,9 +8805,9 @@ Generates text via AI using DistilGPT-2 (Transformers.js, ONNX). Connect a « Te
 
 `modifier-texte` · Other & lab → Text
 
-*Transforms incoming text: replace, case, whitespace, wrapping.*
+*Displays incoming text, lets it be edited by hand, and returns what the area contains.*
 
-Sits behind any text output (Sherpa transcription, PDF extraction, LLM output, generated lyrics) to adapt it before whatever comes next: a MusicGen prompt, speech synthesis, a Text to MIDI. It links nodes that produce text to nodes that consume it. One operation at a time, picked from the list: literal replace, regular-expression replace (where $1 and $2 refer to captured groups), upper or lower case, whitespace tidying, or wrapping with a prefix and a suffix. Several copies of the node chain together to combine several operations. An invalid regular expression does not fail the node: the text passes through unchanged and the message gives the reason. Whitespace tidying preserves line breaks: lyrics keep their structure.
+This node displays the text received on its input and returns it on its output after hand editing. The text is written directly in the node's area, which is resized by its edges. On a run, the content of the area is what goes out on the « Text » output. An empty area lets the input text through untouched: a node just placed can therefore be connected without changing anything, and a run drops the received text into it, to be edited afterwards. The « Take the input back » button empties the area and gives the input text back, which undoes the edits. The « Text » setting holds what is written in the area; it is saved with the project and comes back when it is reopened. The « Text » output returns the content of the area, or the input text if the area is empty. The message gives the number of characters returned and whether the text was edited.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8816,11 +8816,7 @@ Sits behind any text output (Sherpa transcription, PDF extraction, LLM output, g
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Operation | choice | Replace | Replace / Replace (regex) / Uppercase / Lowercase / Tidy whitespace / Wrap | Transformation applied. One at a time: to combine several, chain several copies of this node. |
-| Find | text | — |  | What to find. Taken literally in "Replace" mode, treated as a regular expression in "Replace (regex)" mode. Empty = the text passes through unchanged. |
-| Replace with | text | — |  | What takes its place. In regex mode, $1 and $2 refer to captured groups. Empty = deletes what was found. |
-| Before | text | — |  | Text added at the start, in "Wrap" mode. Useful to prefix an instruction to a prompt. |
-| After | text | — |  | Text added at the end, in "Wrap" mode. |
+| Text | text | — |  | The text returned on the output. Empty, the input text passes through unchanged. |
 
 #### Emotions
 

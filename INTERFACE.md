@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**403 composants**, dont **86** avec une vue propre et **4** sans lecteur générique.
+**403 composants**, dont **87** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -69,6 +69,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Julia Processor | `julia-processor` | VueJuliaProcessor | — | 240 × 162 | non | oui | non |
 | Lecteur MIDI | `lecteur-midi` | VueUploadMidi + VueSoundFont | — | 240 × 140 | non | oui | non |
 | Lecteur SVG | `lecteur-svg` | VueUploadSvg + VueRenduImage | — | 320 × 320 | oui | oui | non |
+| Modifier le texte | `modifier-texte` | VueModifierTexte | — | 300 × 280 | non | oui | non |
 | Montage vidéo | `montage-video` | VueMontageVideo | — | 520 × 560 | non | oui | non |
 | Noms d'instruments | `noms-instruments` | VueNomsInstruments | — | 300 × 320 | non | oui | non |
 | Orchestre Csound | `orchestre-csound` | — | VueOrchestreCsound | 340 × 420 | non | oui | non |
@@ -291,7 +292,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Métronome | `metronome` | 240 × 118 |
 | MIDI → ABC | `midi-vers-abc` | 240 × 140 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |
-| Modifier le texte | `modifier-texte` | 240 × 118 |
 | Grave en mono | `mono-grave` | 240 × 118 |
 | Montage | `montage` | 240 × 448 |
 | Montage par grains | `montage-grains` | 240 × 140 |

@@ -270,6 +270,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "modifier-texte",
+    "vue": "VueModifierTexte",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "montage-video",
     "vue": "VueMontageVideo",
     "entreeAudio": true,
