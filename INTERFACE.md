@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**402 composants**, dont **85** avec une vue propre et **4** sans lecteur générique.
+**403 composants**, dont **86** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -86,6 +86,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Score esthétique | `score-esthetique` | VueEsthetique | — | 420 × 380 | non | oui | non |
 | Sélecteur multi-zones | `selecteur-multi-zones` | VueSelecteurMultiZones | — | 460 × 340 | non | oui | non |
 | Séparateur IA | `separateur-ia` | VueUploadOnnx | — | 240 × 228 | non | oui | non |
+| Séparer image et son | `separer-image-son` | — | VueVideoMuette | 240 × 140 | non | oui | non |
 | Séquenceur d'accords | `sequenceur-accords` | VueSequenceurAccords | — | 480 × 380 | non | oui | non |
 | Séquenceur de batterie avancé | `sequenceur-batterie-avance` | VueSequenceurBatterieAvance | — | 480 × 360 | non | oui | non |
 | Séquenceur mélodique | `sequenceur-melodique` | VueSequenceurMelodique | — | 460 × 400 | non | oui | non |

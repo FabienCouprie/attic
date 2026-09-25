@@ -223,6 +223,35 @@ function VueExtraitVideo({ id, data }: VueProps) {
   );
 }
 
+// ── Séparer image et son : récupérer la vidéo muette ──
+//
+// SANS CE BOUTON, LA MOITIÉ IMAGE SERAIT PERDUE. Le son rendu par ce nœud reçoit le lecteur commun
+// et s'enregistre comme tout audio ; la vidéo, elle, n'existe qu'en mémoire tant qu'on ne l'écrit
+// pas, et rien d'autre dans le catalogue ne sait encore écrire un fichier vidéo.
+function VueVideoMuette({ data }: VueProps) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  const n = data as unknown as { _videoMuetteUrl?: string; _videoMuetteNom?: string; _videoMuetteOctets?: number };
+  if (!n._videoMuetteUrl) return null;
+  const nom = n._videoMuetteNom ?? "muet.mp4";
+  return (
+    <div className="attic-vue-film-resultat" onClick={(e) => e.stopPropagation()}>
+      {api?.sauvegarderBinaire ? (
+        <button className="attic-node-fichier-btn" onClick={async () => {
+          const buffer = await (await fetch(n._videoMuetteUrl!)).arrayBuffer();
+          await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
+        }}>💾 {t("separerImageSon.enregistrer")}</button>
+      ) : (
+        <a className="attic-node-fichier-btn" href={n._videoMuetteUrl} download={nom}>
+          💾 {t("separerImageSon.enregistrer")}
+        </a>
+      )}
+      <span>{nom}</span>
+      <span>{((n._videoMuetteOctets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+    </div>
+  );
+}
+
 // ── Forme d'onde (WaveSurfer.js) ──
 function VueFormeOnde({ data }: VueProps) {
   return (
@@ -2248,6 +2277,8 @@ const REGISTRE: EntreeRegistre[] = [
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },
+  // Après le lecteur : le son rendu garde le lecteur commun, la vidéo muette s'enregistre en dessous.
+  { correspond: parId("separer-image-son"), vue: VueVideoMuette, position: "apres" },
   { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },
   { correspond: parId("spectrogramme"), vue: VueSpectrogramme, position: "avant" },

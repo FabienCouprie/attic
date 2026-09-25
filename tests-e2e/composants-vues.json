@@ -372,6 +372,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "separer-image-son",
+    "vue": "VueVideoMuette",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "sequenceur-accords",
     "vue": "VueSequenceurAccords",
     "entreeAudio": false,

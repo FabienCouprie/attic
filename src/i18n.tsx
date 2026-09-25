@@ -21,6 +21,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "extraitVideo.debutIci": { fr: "Début ici", en: "Start here" },
   "extraitVideo.finIci": { fr: "Fin ici", en: "End here" },
   "extraitVideo.enregistrer": { fr: "Enregistrer l'extrait", en: "Save the excerpt" },
+  "separerImageSon.enregistrer": { fr: "Enregistrer la vidéo muette", en: "Save the silent video" },
   "montageVideo.imagesParSeconde": { fr: "im/s", en: "fps" },
   "btn.choisirDossier": { fr: "Choisir un dossier", en: "Choose a folder" },
   "btn.executer": { fr: "Exécuter ce bloc", en: "Run this block" },

@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
       nom: `Piste ${k + 1}`, nomEn: `Track ${k + 1}`, type: "audio" as const, requis: false,
     })),
     entreesExtensibles: { min: 2, defaut: 2 },
-    sorties: [{ nom: "Vidéo", nomEn: "Video", type: "fichier" }],
+    sorties: [{ nom: "Vidéo", nomEn: "Video", type: "video" }],
     // Son résultat dépend d'un fichier du disque, que les empreintes du cache ne regardent pas.
     jamaisCache: true,
     parametres: [

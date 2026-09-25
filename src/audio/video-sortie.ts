@@ -147,6 +147,39 @@ export async function sonDuFilm(
   return sortie;
 }
 
+/**
+ * Le film sans son : l'image recopiée, la piste sonore écartée.
+ *
+ * ÉCARTER N'EST PAS DÉCODER. La piste sonore n'est ni lue ni convertie, elle n'entre simplement pas
+ * dans la sortie ; c'est pourquoi l'opération coûte le temps d'une copie et rien de plus, quelle que
+ * soit la durée du film.
+ */
+export async function ecrireSansSon(
+  video: VideoOuverte,
+  o: { signal?: AbortSignal; onProgress?: (fraction: number) => void } = {},
+): Promise<Blob> {
+  const cible = new BufferTarget();
+  const output = new Output({ format: new Mp4OutputFormat(), target: cible });
+  const conversion = await Conversion.init({
+    input: video.input,
+    output,
+    video: { forceTranscode: false },
+    audio: { discard: true },
+    copy: { mode: "forced" },
+    showWarnings: false,
+  });
+  if (!conversion.isValid) {
+    const raisons = conversion.discardedTracks
+      .filter((d) => d.track.type === "video")
+      .map((d) => d.reason).join(", ");
+    throw new Error(`image non recopiable (${raisons || "raison inconnue"})`);
+  }
+  if (o.onProgress) conversion.onProgress = (f) => o.onProgress?.(f);
+  o.signal?.addEventListener("abort", () => void conversion.cancel(), { once: true });
+  await conversion.execute();
+  return new Blob([cible.buffer!], { type: "video/mp4" });
+}
+
 /** Ce qu'une extraction a produit, et ce qu'elle a dû laisser. */
 export interface ExtraitEcrit {
   blob: Blob;

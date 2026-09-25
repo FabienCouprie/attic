@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **402 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **403 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **402 components** in **7 categories** and **61 families**. Every na
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 69 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (4) |
+| [Other & lab](#other--lab) | 70 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
 
 ## How to read this catalog
 
@@ -9256,6 +9256,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 |---|---|
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
+| [Split Picture and Sound](#split-picture-and-sound) | Takes a film and returns two things: the picture without sound, and the decoded sound. |
 | [Video Excerpt](#video-excerpt) | Keeps a portion of a film, between two frames, with its sound, and returns it as MP4. |
 | [Video Montage](#video-montage) | Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4. |
 
@@ -9294,6 +9295,22 @@ This node makes a video of the graph it sits in. It connects to nothing: it runs
 | Frames per second | choice | 30 | 24 / 30 / 60 | Video frame rate. 60 makes scrolling smoother and doubles rendering time. |
 | Settings | choice | Shown | Shown / Hidden | Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width. |
 
+#### Split Picture and Sound
+
+`separer-image-son` · Other & lab → Video
+
+*Takes a film and returns two things: the picture without sound, and the decoded sound.*
+
+This node takes a film and returns two things: the picture without sound, and the sound. « Video » receives a film from another node's video output. The « Silent video » output returns the same film without its audio track. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The audio track is not decoded, it does not enter the file. The « Save the silent video » button writes it to disk; until it is saved, the file exists only in memory. The « Audio » output returns the film's sound decoded, at its sample rate and with its channel count. A silent film gives an empty sound and the node says so. The node's message gives the duration, the size of the silent video, and the sample rate of the returned sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Video | video | required |
+| output | Silent video | video |  |
+| output | Audio | audio |  |
+
+*No parameters.*
+
 #### Video Excerpt
 
 `extrait-video` · Other & lab → Video
@@ -9304,7 +9321,7 @@ This node keeps a portion of a film and returns that portion as MP4. The film is
 
 | Port | Name | Type | |
 |---|---|---|---|
-| output | Video | file |  |
+| output | Video | video |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9328,7 +9345,7 @@ This node takes a film, adds sounds to it and returns an MP4. The film is watche
 | input | Track 4 | audio |  |
 | input | Track 5 | audio |  |
 | input | Track 6 | audio |  |
-| output | Video | file |  |
+| output | Video | video |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
