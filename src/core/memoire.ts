@@ -110,10 +110,41 @@ export function apercuUtile(
  * Quand le méta est refermé, la question ne se pose même pas : ses nœuds internes ne sont plus
  * dans la liste des nœuds visibles, et le moteur ne leur calcule aucun aperçu.
  */
-export function noeudRegarde(
-  { id, selectionne, aretes, dansUnMeta = false }:
-    { id: string; selectionne: boolean; aretes: readonly { source: string }[]; dansUnMeta?: boolean },
+/**
+ * Faut-il garder le résultat de ce nœud dans le cache d'exécution ?
+ *
+ * UNE BULLE REPLIÉE EST UN ROUAGE, ET UN ROUAGE NE GARDE PAS SES PIÈCES INTERMÉDIAIRES. Ce que l'on
+ * veut d'elle, c'est ce qui en sort ; ce que ses membres se passent entre eux ne sera plus regardé
+ * ni écouté tant qu'elle est fermée, et cela pèse un tampon par membre — 1,27 Go par heure de stéréo
+ * et par nœud.
+ *
+ * LE PRIX EST LE RECALCUL, ET IL FAUT LE DIRE : sans entrée de cache, chaque membre se refait à
+ * l'exécution suivante, et comme le moteur refuse de croire une source qui vient d'être recalculée,
+ * ce qui suit la bulle se refait aussi. On échange du temps contre de la place.
+ *
+ * L'ÉCHANGE SUIT LE RÉGLAGE QUI EXISTE DÉJÀ, l'économie de mémoire, plutôt que d'ajouter un
+ * interrupteur : c'est le même arbitrage que pour les aperçus, et il se défait de la même façon.
+ */
+export function resultatRetenu(
+  { cacheParBulle, economie = true }: { cacheParBulle: boolean; economie?: boolean },
 ): boolean {
+  return !economie || !cacheParBulle;
+}
+
+export function noeudRegarde(
+  { id, selectionne, aretes, dansUnMeta = false, cacheParBulle = false }:
+    {
+      id: string; selectionne: boolean; aretes: readonly { source: string }[];
+      dansUnMeta?: boolean; cacheParBulle?: boolean;
+    },
+): boolean {
+  // DANS UNE BULLE REPLIÉE, PERSONNE N'EST REGARDÉ. Replier, c'est déclarer que ces nœuds forment un
+  // rouage : on ne les voit pas, on ne peut pas les désigner, et ce qu'on écoute est la sortie de la
+  // bulle, à laquelle le moteur construit son propre aperçu. Garder en plus celui de chaque membre,
+  // c'est une seconde copie écoutable par nœud caché — 953 Mo par heure de stéréo et par membre.
+  // Le même raisonnement vaut déjà pour un méta refermé ; une bulle repliée ne s'en distinguait que
+  // par le fait que ses membres restent dans la liste des nœuds, le repli n'extrayant personne.
+  if (cacheParBulle) return false;
   if (selectionne) return true;
   if (dansUnMeta) return false;
   return !aretes.some((a) => a.source === id);

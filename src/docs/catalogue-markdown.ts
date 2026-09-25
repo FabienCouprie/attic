@@ -95,7 +95,9 @@ export function defautParam(p: Param): string {
   if (brut === "" || brut === undefined || brut === null) return "—";
   const texte = String(brut);
   const court = texte.length > 60 ? `${texte.slice(0, 57)}…` : texte;
-  return type === "texte" || type === "dossier" ? `\`${court.replace(/`/g, "'").replace(/\r?\n+/g, " ")}\`` : `${court}${p.unite ? ` ${uniteEn(p)}` : ""}`;
+  return type === "texte" || type === "dossier" || type === "fichier"
+    ? `\`${court.replace(/`/g, "'").replace(/\r?\n+/g, " ")}\``
+    : `${court}${p.unite ? ` ${uniteEn(p)}` : ""}`;
 }
 
 export function valeursParam(p: Param): string {

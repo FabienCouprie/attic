@@ -303,6 +303,44 @@ export function analyserSms(x: Float32Array, sampleRate: number, o: OptionsSms =
  * calculer à partir d'hypothèses, on le MESURE sur le son lui-même : c'est juste par
  * construction, et cela reste juste si la fenêtre change.
  */
+export interface OptionsVoieSms extends OptionsSms {
+  sampleRate: number;
+  /** Longueur du signal rendu, en échantillons. */
+  longueur: number;
+  /** Transposition des partiels, en demi-tons. Zéro laisse la partie déterministe intacte. */
+  transposition: number;
+}
+
+export interface VoieSms {
+  deterministe: Float32Array;
+  residu: Float32Array;
+  /** Nombre de pistes suivies : le composant l'additionne sur ses canaux. */
+  nbPistes: number;
+}
+
+/**
+ * Une voie, de l'analyse à la transposition : tout ce qu'un canal demande, en un seul appel.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. Ce calcul tourne dans un worker, et il doit pouvoir tourner aussi
+ * dans le fil principal là où il n'y a pas de worker. Deux chemins, une seule implémentation : un
+ * repli écrit à part ne garantirait pas le même son, et l'écart n'apparaîtrait que chez celui qui
+ * l'emploie. Elle ne touche à rien du Web Audio, ce qui la rend transportable.
+ *
+ * SANS TRANSPOSITION, la partie déterministe est celle DÉCOUPÉE DANS LE SON : elle est exacte, phase
+ * comprise, et sa somme avec le résidu redonne l'original. Dès qu'on transpose, il faut refabriquer
+ * les partiels par addition, puis les recaler sur l'énergie de ceux qu'on remplace, faute de quoi le
+ * niveau sauterait.
+ */
+export function traiterVoie(x: Float32Array, o: OptionsVoieSms): VoieSms {
+  const r = analyserSms(x, o.sampleRate, o);
+  const deterministe = o.transposition === 0
+    ? r.deterministe
+    : recalerEnergie(
+      synthetiserPistes(r.pistes, o.longueur, o.sampleRate, r.saut, { transposition: o.transposition }),
+      r.deterministe);
+  return { deterministe, residu: r.residu, nbPistes: r.pistes.length };
+}
+
 export function recalerEnergie(y: Float32Array, reference: Float32Array): Float32Array {
   let ey = 0, er = 0;
   for (let i = 0; i < y.length; i++) ey += y[i] * y[i];

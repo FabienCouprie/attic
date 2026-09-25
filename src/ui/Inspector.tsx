@@ -84,6 +84,43 @@ function ChampNombre({ p, valeur, onChanger }: {
 }
 
 /**
+ * Un chemin de fichier ou de dossier, avec le sélecteur du système.
+ *
+ * UN CHEMIN ÉCRIT À LA MAIN EST UN CHEMIN FAUX. Une majuscule, un accent, un séparateur à l'envers,
+ * un espace de trop, et le composant échoue sur un fichier qui existe pourtant. Le dialogue du
+ * système rend le chemin exact, et lui seul. Le champ reste saisissable, pour un chemin relatif au
+ * projet ou un collage venu d'ailleurs.
+ *
+ * SANS L'APPLICATION DE BUREAU, il n'y a pas de chemin à obtenir : un navigateur ne livre que le nom
+ * du fichier choisi. Le bouton disparaît alors au lieu d'ouvrir un dialogue sans effet.
+ */
+function ChampChemin({ p, valeur, titre, onChanger }: {
+  p: { type?: string; extensions?: string[]; nom: string };
+  valeur: string;
+  titre: string;
+  onChanger: (v: string) => void;
+}) {
+  const api = (window as any).api;
+  const dossier = p.type === "dossier";
+  const choisir = dossier ? api?.choisirDossier : api?.choisirFichier;
+  return (
+    <div style={{ display: "flex", gap: 4 }}>
+      <input type="text" value={valeur} onChange={(e) => onChanger(e.target.value)} style={{ flex: 1 }} />
+      {choisir && (
+        <button title={titre} style={{ padding: "2px 6px", cursor: "pointer" }}
+          onClick={async () => {
+            const filtres = p.extensions?.length
+              ? [{ name: p.nom, extensions: p.extensions }, { name: "Tous", extensions: ["*"] }]
+              : undefined;
+            const c = dossier ? await choisir() : await choisir({ filters: filtres, defaultPath: valeur || undefined });
+            if (c) onChanger(c);
+          }}>…</button>
+      )}
+    </div>
+  );
+}
+
+/**
  * Les deux bornes d'un paramètre modulé, à la place de ce paramètre.
  *
  * DEUX CURSEURS CÔTE À CÔTE ET NON UNE PISTE À DEUX POIGNÉES, et c'est un choix assumé. Superposer
@@ -251,17 +288,9 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               placeholder={lang === "en" && p.placeholderEn ? p.placeholderEn : p.placeholder}
               onChange={(e) => onChangerParametre(p.nom, e.target.value)}
             />
-          ) : p.type === "dossier" ? (
-            <div style={{display:"flex", gap:4}}>
-              <input type="text" value={String(params[p.nom] ?? defautP)} onChange={(e) => onChangerParametre(p.nom, e.target.value)} style={{flex:1}} />
-              <button onClick={async () => {
-                const api = (window as any).api;
-                if (api?.choisirDossier) {
-                  const d = await api.choisirDossier();
-                  if (d) onChangerParametre(p.nom, d);
-                }
-              }} title={t("btn.parcourir")} style={{ padding: "2px 6px", cursor: "pointer" }}>…</button>
-            </div>
+          ) : p.type === "fichier" || p.type === "dossier" ? (
+            <ChampChemin p={p} valeur={String(params[p.nom] ?? defautP)} titre={t("btn.parcourir")}
+              onChanger={(v) => onChangerParametre(p.nom, v)} />
           ) : p.type === "couleurs" ? (
             <SaisieCouleurs valeur={String(params[p.nom] ?? defautP)} onChange={(v) => onChangerParametre(p.nom, v)} />
           ) : bornes.get(p.nom) && (parametresModules ?? []).includes(p.nom) ? (

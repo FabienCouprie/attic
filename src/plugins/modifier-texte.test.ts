@@ -2,31 +2,33 @@
 //
 // plugins/modifier-texte.test.ts — Le câblage du nœud.
 //
-// Les transformations elles-mêmes sont testées dans audio/texte.test.ts. Ce qui
-// se vérifie ici est ce qui casse en silence : un nom de paramètre mal
-// orthographié fait rendre sa valeur par défaut à `paramNombre`/`paramTexte`,
-// le nœud tourne, ne signale rien, et le réglage reste sans effet.
+// CE QUI SE VÉRIFIE ICI EST CE QUI CASSE EN SILENCE : un nom de paramètre mal orthographié fait
+// rendre sa valeur par défaut à `paramTexte`, le nœud tourne, ne signale rien, et la zone de texte
+// reste sans effet sur ce qui sort.
+//
+// La règle qui compte est celle du vide : une zone vide laisse passer l'entrée, une zone écrite la
+// remplace. C'est elle qui permet de brancher d'abord et de corriger ensuite.
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 
-function ctx(entree: unknown, params: Record<string, string> = {}) {
+function ctx(entree: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {
   return {
     entree: () => entree,
     entrees: () => [entree],
     paramTexte: (nom: string, def: string) => params[nom] ?? def,
     paramNombre: (_n: string, def: number) => def,
     onProgress: () => {},
-    noeud: { id: "n1", data: {} },
+    noeud: { id: "n1", data },
     runtime: null,
     repertoireTravail: "",
   };
 }
 
-async function executer(entree: unknown, params: Record<string, string> = {}) {
+async function executer(entree: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {
   const f = registre.trouverDef("modifier-texte")!;
-  const r = await f.executer(ctx(entree, params) as any);
-  return { texte: r.valeurs[0] as string | null, message: r.message ?? "" };
+  const r = await f.executer(ctx(entree, params, data) as any);
+  return { texte: r.valeurs[0] as string | null, message: r.message ?? "", data };
 }
 
 describe("nœud « Modifier le texte »", () => {
@@ -38,9 +40,6 @@ describe("nœud « Modifier le texte »", () => {
   });
 
   it("chaque paramètre déclaré est réellement lu par l'exécuteur", () => {
-    // Le garde-fou contre la faute de frappe : un paramètre déclaré dans la
-    // fiche mais lu sous un autre nom resterait affiché dans l'inspecteur sans
-    // rien piloter.
     const def = registre.trouverDef("modifier-texte")!;
     const source = def.executer.toString();
     for (const p of def.parametres) {
@@ -48,29 +47,31 @@ describe("nœud « Modifier le texte »", () => {
     }
   });
 
-  it("transmet le texte transformé sur sa sortie", async () => {
-    const r = await executer("la la la", { "Opération": "remplacer", Chercher: "la", "Remplacer par": "ré" });
-    expect(r.texte).toBe("ré ré ré");
-  });
-
-  it("le message rend compte de ce qui a changé", async () => {
-    // « 0 remplacement » est l'information utile quand un remplacement semble
-    // ne pas marcher — davantage que « terminé ».
-    const rien = await executer("bonjour", { "Opération": "remplacer", Chercher: "absent", "Remplacer par": "X" });
-    expect(rien.message).toMatch(/0 remplacement/);
-    const trois = await executer("la la la", { "Opération": "remplacer", Chercher: "la", "Remplacer par": "ré" });
-    expect(trois.message).toMatch(/3 remplacement/);
-  });
-
-  it("une expression régulière invalide ne fait pas échouer le nœud", async () => {
-    // Le texte continue de circuler : le graphe en aval n'est pas interrompu
-    // pour une parenthèse oubliée.
-    const r = await executer("bonjour", { "Opération": "regex", Chercher: "(non fermée", "Remplacer par": "X" });
+  it("zone vide : le texte d'entrée passe sans changement", async () => {
+    const r = await executer("bonjour");
     expect(r.texte).toBe("bonjour");
-    expect(r.message).toMatch(/invalide/i);
+    expect(r.message).toMatch(/inchangé/);
   });
 
-  it("signale une entrée qui n'est pas du texte", async () => {
+  it("zone écrite : c'est elle qui sort, et le message le dit", async () => {
+    const r = await executer("bonjour", { Texte: "bonsoir" });
+    expect(r.texte).toBe("bonsoir");
+    expect(r.message).toMatch(/corrigé/);
+  });
+
+  it("le texte reçu est déposé sur le nœud, pour que la zone le montre", async () => {
+    // Sans ce dépôt, la zone resterait vide et l'on corrigerait un texte qu'on ne voit pas.
+    const r = await executer("ce qui arrive");
+    expect(r.data._texteRecu).toBe("ce qui arrive");
+  });
+
+  it("la zone écrite sort même sans entrée branchée", async () => {
+    // Le composant peut alors servir de texte à lui seul, ce qui est cohérent avec ce qu'il montre.
+    const r = await executer(null, { Texte: "écrit à la main" });
+    expect(r.texte).toBe("écrit à la main");
+  });
+
+  it("signale une entrée qui n'est pas du texte, zone vide", async () => {
     const r = await executer(null);
     expect(r.texte).toBeNull();
     expect(r.message).toBeTruthy();
@@ -78,13 +79,12 @@ describe("nœud « Modifier le texte »", () => {
 
   it("laisse passer une chaîne vide sans la confondre avec une entrée absente", async () => {
     // `""` est une valeur légitime — un nœud amont qui n'a rien transcrit.
-    // La confondre avec « non connecté » arrêterait la chaîne à tort.
-    const r = await executer("", { "Opération": "majuscules" });
+    const r = await executer("");
     expect(r.texte).toBe("");
   });
 
-  it("retombe sur « Remplacer » si l'opération enregistrée n'existe plus", async () => {
-    const r = await executer("intact", { "Opération": "operation-retiree" });
-    expect(r.texte).toBe("intact");
+  it("le nombre de caractères annoncé est celui du texte rendu", async () => {
+    const r = await executer("court", { Texte: "un texte bien plus long" });
+    expect(r.message).toMatch(/23/);
   });
 });

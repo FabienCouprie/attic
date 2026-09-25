@@ -12,7 +12,9 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   ECHELLES, EST_ECHELLE, decomposer, echellesEnEchantillons, repartition,
+  type Decomposition, type OptionsDecomposition,
 } from "../audio/atomes";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -55,8 +57,17 @@ export const fiches: FicheAudio[] = ([
       let atomes: ReturnType<typeof decomposer>["atomes"] = [];
       let partExpliquee = 0;
       let rapportDb = 0;
+      const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
+      const parVoie = await parCanal<OptionsDecomposition, Decomposition>(
+        voies, { frequence, atomes: voulus, echelles },
+        {
+          creerWorker: () => new Worker(new URL("../workers/atomes-worker.ts", import.meta.url), { type: "module" }),
+          calcul: decomposer,
+          surProgres: (c, n) => ctx.onProgress?.(en ? `Channel ${c}/${n}` : `Canal ${c}/${n}`),
+        },
+      );
       for (let c = 0; c < audio.numberOfChannels; c++) {
-        const d = decomposer(audio.getChannelData(c), { frequence, atomes: voulus, echelles });
+        const d = parVoie[c];
         esquisses.push(d.esquisse);
         residus.push(d.residu);
         // Les chiffres annoncés sont ceux du premier canal : deux canaux d'une même prise donnent

@@ -1,5 +1,6 @@
 // audio/effets-dynamique.ts — Effets (issus du découpage de effets.ts).
 import { fft } from "./fft";
+import { valeurA } from "./courbe";
 import { TAILLE_FFT, SAUT_FFT, TAILLE_FFT_BRUIT, SAUT_FFT_BRUIT, creerFenetreHann } from "./commun";
 
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
@@ -381,7 +382,16 @@ export function dererverberer(
 
 
 
-export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: number): AudioBuffer {
+/**
+ * LE SEUIL DE DÉTECTION ACCEPTE UNE COURBE, et la médiane qui lui sert de référence reste globale.
+ * Le seuil est un multiple de cette médiane, comparé à la dérivée en chaque point : le moduler resserre
+ * ou relâche la détection au fil du son, sur un passage abîmé plutôt que sur tout le fichier.
+ */
+export function supprimerClics(
+  buffer: AudioBuffer,
+  seuil: number | Float32Array,
+  fenetreMs: number,
+): AudioBuffer {
   const fenetre = Math.max(1, Math.round((fenetreMs / 1000) * buffer.sampleRate));
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -405,9 +415,8 @@ export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: nu
 
     // Marquage : seuil est un multiple de la médiane (seuil > 1 = moins sensible)
     const marque = new Uint8Array(n);
-    const seuilAbsolu = seuil * mediane;
     for (let i = 1; i < n; i++) {
-      if (diff[i] > seuilAbsolu) {
+      if (diff[i] > valeurA(seuil, i) * mediane) {
         const debut = Math.max(0, i - fenetre);
         const fin = Math.min(n - 1, i + fenetre);
         for (let j = debut; j <= fin; j++) marque[j] = 1;
@@ -445,11 +454,17 @@ export function supprimerClics(buffer: AudioBuffer, seuil: number, fenetreMs: nu
 // --- Boîte à rythmes (synthèse percussive) ----------------------------------
 
 // --- De-esser : compression dynamique des sibilances ------------------------
+/**
+ * LE SEUIL ACCEPTE UNE COURBE. C'est lui qui décide, échantillon par échantillon, de ce qui est une
+ * sibilance : le faire descendre resserre l'atténuation, le faire remonter la relâche. Il est lu dans
+ * la boucle par `valeurA`, comme un nombre l'était, et sans courbe branchée la sortie est celle
+ * d'avant, au bit près.
+ */
 export async function deEsser(
   buffer: AudioBuffer,
   frequenceCentrale: number,
   largeur: number,
-  seuilDb: number,
+  seuilDb: number | Float32Array,
   ratio: number,
   attaqueMs: number,
   relachementMs: number,
@@ -482,8 +497,9 @@ export async function deEsser(
       const coeff = niveau > env ? attaqueCoeff : relachementCoeff;
       env = coeff * env + (1 - coeff) * niveau;
       const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
+      const seuil = valeurA(seuilDb, i);
       let gainDb = 0;
-      if (envDb > seuilDb) gainDb = (seuilDb - envDb) * (1 - 1 / Math.max(1, ratio));
+      if (envDb > seuil) gainDb = (seuil - envDb) * (1 - 1 / Math.max(1, ratio));
       dst[i] = src[i] * Math.pow(10, gainDb / 20);
     }
   }
@@ -493,17 +509,21 @@ export async function deEsser(
 // --- Bitcrusher : quantification + sous-échantillonnage ---------------------
 // Simule la basse résolution des convertisseurs N/A anciens (8-bit, etc.).
 
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE, et le scalaire en est le cas dégénéré. `valeurA` lit la valeur de
+ * l'échantillon quelle que soit sa forme, si bien qu'il n'y a qu'un seul chemin de calcul : sans
+ * courbe branchée, le nœud passe un nombre et la sortie est celle d'avant, au bit près.
+ */
 export function bitcrusher(
   buffer: AudioBuffer,
   bits: number,
   frequenceEch: number,
-  mix: number,
+  mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const niveauBits = Math.max(1, Math.min(16, Math.round(bits)));
   const niveaux = Math.pow(2, niveauBits) - 1;
   const pas = Math.max(1, Math.round(sr / Math.max(1000, frequenceEch)));
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
 
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -521,7 +541,8 @@ export function bitcrusher(
         const quantifie = Math.round(src[i] * niveaux) / niveaux;
         dernierEch = Math.max(-1, Math.min(1, quantifie));
       }
-      dst[i] = src[i] * (1 - mixVal) + dernierEch * mixVal;
+      const m = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
+      dst[i] = src[i] * (1 - m) + dernierEch * m;
     }
   }
 
@@ -648,9 +669,14 @@ export function limiter(
 // comparés. Leur différence donne une mesure « attaque / sustain » ; un gain en
 // dB est appliqué selon la force de cette composante.
 
+/**
+ * LE GAIN D'ATTAQUE ACCEPTE UNE COURBE, lu par `valeurA` dans la boucle où il l'était déjà : il y
+ * était converti en gain à chaque échantillon, si bien que le chemin ne change pas et que sans
+ * courbe branchée la sortie est celle d'avant, au bit près.
+ */
 export function transientShaper(
   buffer: AudioBuffer,
-  attaqueDb: number,
+  attaqueDb: number | Float32Array,
   sustainDb: number,
   tempsAttaqueMs: number,
   tempsSustainMs: number,
@@ -681,7 +707,7 @@ export function transientShaper(
 
     const maxEnv = Math.max(envAttaque, envSustain, 1e-9);
     const force = (envAttaque - envSustain) / maxEnv;
-    const attaqueGain = Math.pow(10, attaqueDb / 20);
+    const attaqueGain = Math.pow(10, valeurA(attaqueDb, i) / 20);
     const sustainGain = Math.pow(10, sustainDb / 20);
     const gain = force > 0
       ? attaqueGain * force + sustainGain * (1 - force)
@@ -699,9 +725,13 @@ export function transientShaper(
 // (Largeur=0), de conserver l'image stéréo d'origine (Largeur=100) ou de
 // l'élargir (Largeur>100). Le gain Mid agit sur le centre indépendamment.
 
+/**
+ * LA LARGEUR ACCEPTE UNE COURBE : l'image se resserre et s'ouvre au fil du son, au lieu d'être posée
+ * une fois. Le gain du centre n'est pas touché, de sorte que le niveau ne suit pas l'ouverture.
+ */
 export function ajusterLargeurStereo(
   buffer: AudioBuffer,
-  largeurPct: number,
+  largeurPct: number | Float32Array,
   midPct: number,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
@@ -712,10 +742,10 @@ export function ajusterLargeurStereo(
   const srcL = buffer.getChannelData(0);
   const srcR = nch > 1 ? buffer.getChannelData(1) : srcL;
 
-  const width = largeurPct / 100;
   const midGain = midPct / 100;
 
   for (let i = 0; i < buffer.length; i++) {
+    const width = valeurA(largeurPct, i) / 100;
     const l = srcL[i];
     const r = srcR[i];
     const mid = (l + r) * 0.5 * midGain;
@@ -798,11 +828,16 @@ export async function compresserMultiBande(
 // Génère des harmoniques par saturation douce, ne garde que les hautes
 // fréquences, puis mixe avec le signal original pour ajouter de la présence.
 
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE, et le scalaire en est le cas dégénéré, comme pour le bitcrusher :
+ * `valeurA` lit la valeur de l'échantillon quelle que soit sa forme, et sans courbe branchée la
+ * sortie est celle d'avant, au bit près.
+ */
 export async function exciter(
   buffer: AudioBuffer,
   amount: number,
   frequency: number,
-  mix: number,
+  mix: number | Float32Array,
 ): Promise<AudioBuffer> {
   const dist = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -814,13 +849,15 @@ export async function exciter(
     }
   }
   const wet = await filtreBiquadDynamique(dist, "highpass", frequency);
-  const mixVal = mix / 100;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const wetCh = wet.getChannelData(c);
     const dst = resultat.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) dst[i] = src[i] * (1 - mixVal) + wetCh[i] * mixVal;
+    for (let i = 0; i < buffer.length; i++) {
+      const mixVal = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
+      dst[i] = src[i] * (1 - mixVal) + wetCh[i] * mixVal;
+    }
   }
   return resultat;
 }

@@ -1,6 +1,8 @@
 // audio/effets-spectral.ts — Effets (issus du découpage de effets.ts).
-import { etirerDuree, reechantillonnerVers, creerFenetreHann } from "./commun";
-import { CADENCE, estCourbe, progressionPour, valeursParametre } from "./courbe";
+import {
+  etirerDuree, etirerDureeVoie, reechantillonnerVers, reechantillonnerVoie, creerFenetreHann,
+} from "./commun";
+import { CADENCE, estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, formeLfo, frequencesModulees, type BornesFrequence } from "./lfo";
 
 export function changerTempo(buffer: AudioBuffer, vitessePct: number, fenetreMs?: number): AudioBuffer {
@@ -13,10 +15,29 @@ export function changerTempo(buffer: AudioBuffer, vitessePct: number, fenetreMs?
 
 
 
-export function changerTonalite(buffer: AudioBuffer, demiTons: number): AudioBuffer {
+/**
+ * Le changement de tonalité d'UNE voie, sans `AudioBuffer`.
+ *
+ * Étirer puis rééchantillonner du même rapport : la durée revient à sa valeur et la hauteur a bougé.
+ * Ce cœur existe pour que les composants qui en dépendent puissent quitter le fil de l'interface,
+ * `AudioBuffer` n'existant pas dans un worker. Les opérations sont celles de `changerTonalite`, sans
+ * changement.
+ */
+export function changerTonaliteVoie(x: Float32Array, demiTons: number): Float32Array {
   const ratio = Math.pow(2, demiTons / 12);
-  const etire = etirerDuree(buffer, ratio);
-  return reechantillonnerVers(etire, ratio, buffer.length);
+  return reechantillonnerVoie(etirerDureeVoie(x, ratio), ratio, x.length);
+}
+
+export function changerTonalite(buffer: AudioBuffer, demiTons: number): AudioBuffer {
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length,
+    sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    resultat.getChannelData(c).set(changerTonaliteVoie(buffer.getChannelData(c), demiTons));
+  }
+  return resultat;
 }
 
 // Glissando de tonalité : la hauteur évolue continuellement entre deux valeurs
@@ -454,6 +475,34 @@ export function panLogistique(
 // --- Harmonizer / Octaver : ajoute des voix pitch-shiftées ---------------------
 // Crée jusqu'à deux voix décalées en demi-tons et les mixe sous l'original.
 
+export interface OptionsHarmoniser {
+  interval1: number;
+  mix1: number;
+  interval2: number;
+  mix2: number;
+}
+
+/**
+ * L'harmonisation d'UNE voie, sans `AudioBuffer`.
+ *
+ * Les voix ajoutées sont indépendantes d'un canal à l'autre, la transposition traitant chaque canal
+ * pour lui-même : le calcul par voie rend donc exactement ce que rendait le calcul par tampon, et la
+ * comparaison d'empreinte le vérifie. C'est ce cœur qui permet au composant de quitter le fil de
+ * l'interface, `AudioBuffer` n'existant pas dans un worker.
+ */
+export function harmoniserVoie(x: Float32Array, o: OptionsHarmoniser): Float32Array {
+  const out = Float32Array.from(x);
+  const ajouterVoix = (interval: number, gainRel: number): void => {
+    if (gainRel <= 0 || interval === 0) return;
+    const voix = changerTonaliteVoie(x, interval);
+    const gain = gainRel / 100;
+    for (let i = 0; i < x.length; i++) out[i] += voix[i] * gain;
+  };
+  ajouterVoix(o.interval1, o.mix1);
+  ajouterVoix(o.interval2, o.mix2);
+  return out;
+}
+
 export function harmoniser(
   buffer: AudioBuffer,
   interval1: number,
@@ -462,23 +511,10 @@ export function harmoniser(
   mix2: number,
 ): AudioBuffer {
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
+  const o = { interval1, mix1, interval2, mix2 };
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    resultat.getChannelData(c).set(buffer.getChannelData(c));
+    resultat.getChannelData(c).set(harmoniserVoie(buffer.getChannelData(c), o));
   }
-
-  function ajouterVoix(interval: number, gainRel: number): void {
-    if (gainRel <= 0 || interval === 0) return;
-    const voix = changerTonalite(buffer, interval);
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const dst = resultat.getChannelData(c);
-      const src = voix.getChannelData(c);
-      const gain = gainRel / 100;
-      for (let i = 0; i < buffer.length; i++) dst[i] += src[i] * gain;
-    }
-  }
-
-  ajouterVoix(interval1, mix1);
-  ajouterVoix(interval2, mix2);
   return resultat;
 }
 
@@ -981,16 +1017,20 @@ export function echoLogistique(
 // L'ancienne version était inopérante : la « phase locale » du haut valait
 // constamment 0,5 (jamais de retournement) et le bas ajoutait le signal un
 // échantillon sur deux — une modulation à Nyquist, pas une octave grave.
+/**
+ * LE MÉLANGE ACCEPTE UNE COURBE : les octaves ajoutées entrent et sortent au fil du son. Les deux
+ * voix sont calculées comme avant, seul leur dosage varie, si bien que sans courbe branchée la sortie
+ * est celle d'avant, au bit près.
+ */
 export function octaver(
   buffer: AudioBuffer,
   octaveSup: number,
   octaveInf: number,
-  mix: number,
+  mix: number | Float32Array,
 ): AudioBuffer {
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   const nivSup = Math.max(0, Math.min(100, octaveSup)) / 100;
   const nivInf = Math.max(0, Math.min(100, octaveInf)) / 100;
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
@@ -1015,6 +1055,7 @@ export function octaver(
       prec = x;
 
       const voix = hp * 2 * nivSup + x * polarite * nivInf;
+      const mixVal = Math.max(0, Math.min(100, valeurA(mix, i))) / 100;
       dst[i] = x * (1 - mixVal) + voix * mixVal;
     }
   }

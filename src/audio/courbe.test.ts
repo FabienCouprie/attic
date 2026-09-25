@@ -235,4 +235,55 @@ describe("les sources fabriquées", () => {
   it("la cadence par défaut est celle du module", () => {
     expect(engendrer({ dureeSec: 1, forme: "rampe" }).cadence).toBe(CADENCE);
   });
+
+  // LA FONCTION LOGISTIQUE, ET NON LA SUITE. Les deux portaient le même nom et seule la seconde
+  // existait, si bien que l'étiquette « Logistique » annonçait une courbe en S et rendait une
+  // succession de paliers chaotiques.
+  describe("la courbe en S", () => {
+    const S = (o: Partial<Parameters<typeof engendrer>[0]> = {}) =>
+      engendrer({ dureeSec: 4, forme: "sigmoide", ...o } as Parameters<typeof engendrer>[0]).valeurs;
+
+    it("ELLE PART DE ZÉRO ET ARRIVE À UN, quelle que soit la pente", () => {
+      for (const pente of [1, 10, 40]) {
+        const v = S({ pente });
+        expect(v[0], `pente ${pente}`).toBeCloseTo(0, 6);
+        expect(v[v.length - 1], `pente ${pente}`).toBeCloseTo(1, 6);
+      }
+    });
+
+    it("ELLE MONTE SANS JAMAIS REDESCENDRE", () => {
+      const v = S();
+      for (let i = 1; i < v.length; i++) expect(v[i], `indice ${i}`).toBeGreaterThanOrEqual(v[i - 1]);
+    });
+
+    it("elle passe par un demi au centre demandé", () => {
+      for (const centre of [0.25, 0.5, 0.75]) {
+        const v = S({ centre });
+        const i = Math.round(centre * (v.length - 1));
+        expect(v[i], `centre ${centre}`).toBeCloseTo(0.5, 1);
+      }
+    });
+
+    it("UNE PENTE FAIBLE APPROCHE LA DROITE, une pente forte approche la marche", () => {
+      const douce = S({ pente: 1 });
+      const raide = S({ pente: 40 });
+      const milieu = Math.floor(douce.length / 2);
+      // Au quart du parcours, la droite vaut 0,25 ; une marche vaut encore presque zéro.
+      const quart = Math.floor(douce.length / 4);
+      expect(douce[quart]).toBeGreaterThan(0.15);
+      expect(raide[quart]).toBeLessThan(0.02);
+      expect(douce[milieu]).toBeCloseTo(0.5, 1);
+      expect(raide[milieu]).toBeCloseTo(0.5, 1);
+    });
+
+    it("LA FRÉQUENCE NE L'ATTEINT PAS : un seul passage, comme la rampe", () => {
+      expect([...S({ frequence: 0.5 })]).toEqual([...S({ frequence: 20 })]);
+    });
+
+    it("elle ne se confond pas avec la suite chaotique, qui porte un autre identifiant", () => {
+      const s = S();
+      const suite = engendrer({ dureeSec: 4, forme: "logistique", frequence: 2, r: 3.9, graine: 1 }).valeurs;
+      expect([...s]).not.toEqual([...suite]);
+    });
+  });
 });

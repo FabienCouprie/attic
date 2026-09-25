@@ -1,3 +1,8 @@
+// CE FICHIER NE REQUIERT QUE « electron », ET C'EST UNE CONTRAINTE, NON UN STYLE. Le préchargement
+// est exécuté en bac à sable : `require` n'y donne accès ni aux modules de Node ni à un fichier
+// voisin, et une seule ligne fautive fait échouer le fichier ENTIER, donc `window.api` avec lui.
+// L'application perd alors tous ses boutons d'un coup, sans message. Ce qui doit être partagé avec
+// le processus principal passe par l'IPC, ou est réécrit côté fenêtre sous garde d'un test.
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
@@ -21,6 +26,10 @@ contextBridge.exposeInMainWorld("api", {
   sauvegarderBinaire: (options) => ipcRenderer.invoke("fichier:sauvegarder-binaire", options),
 
   choisirDossier: () => ipcRenderer.invoke("dossier:choisir"),
+
+  // Le dialogue qui rend un chemin de fichier, et rien d'autre : ce que demande un paramètre de
+  // type « fichier », là où `ouvrirFichier` et `ouvrirFichierBinaire` lisent tout le contenu.
+  choisirFichier: (options) => ipcRenderer.invoke("fichier:choisir", options),
 
   lireDossier: (chemin) => ipcRenderer.invoke("dossier:lire", chemin),
 
@@ -65,6 +74,9 @@ contextBridge.exposeInMainWorld("api", {
   ollamaGenerer: (options) => ipcRenderer.invoke("ollama:generer", options),
   ollamaModeles: () => ipcRenderer.invoke("ollama:modeles"),
   lireBinaire: (chemin) => ipcRenderer.invoke("fichier:lire-binaire", chemin),
+  // La taille et une plage d'octets : de quoi lire un gros fichier sans le tenir en mémoire.
+  tailleFichier: (chemin) => ipcRenderer.invoke("fichier:taille", chemin),
+  lirePlage: (chemin, debut, fin) => ipcRenderer.invoke("fichier:lire-plage", { chemin, debut, fin }),
   lireTexte: (chemin) => ipcRenderer.invoke("fichier:lire-texte", chemin),
   supprimerFichier: (chemin) => ipcRenderer.invoke("fichier:supprimer", chemin),
 

@@ -125,6 +125,20 @@ describe("chaînes critiques", () => {
     expect(res.message).toContain("ouverture");
   });
 
+  // L'APERÇU JOUE LA PREMIÈRE SORTIE AUDIO, et ici c'est « Référence », l'entrée rendue telle
+  // quelle : un lecteur y proposerait d'écouter ce qu'on vient de brancher, et non le travail du
+  // nœud. Le test tient les deux faits ensemble, le rang de la sortie et la déclaration, parce que
+  // c'est leur conjonction qui justifie l'absence de lecteur.
+  it("Aligneur de piste : aucun lecteur, sa première sortie étant l'entrée telle quelle", async () => {
+    const def = registre.trouverDef("aligneur-piste")!;
+    expect(def.sorties[0].nom).toBe("Référence");
+    expect(def.sansApercuAudio).toBe(true);
+    const ref = makeBuffer(1000, 48000);
+    const piste = makeBuffer(2000, 48000);
+    const res = await def.executer(ctx({} as any, [ref, piste]) as any);
+    expect(res.valeurs[0]).toBe(ref);
+  });
+
   it("Comparateur A/B : alignement activé par id canonique", async () => {
     const def = registre.trouverDef("comparateur-ab")!;
     const a = makeBuffer(1000, 48000);

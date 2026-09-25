@@ -12,6 +12,7 @@
 // modifiait encore le grave de six pour cent. La séparation étant tout l'intérêt du nœud,
 // elle l'emporte sur la reconstruction parfaite.
 import { plafonnerCrete } from "./commun";
+import { valeurA } from "./courbe";
 
 /**
  * Courbe de saturation, pour un waveshaper.
@@ -52,8 +53,8 @@ export interface ReglagesQuadrafuzz {
   f1: number;
   f2: number;
   f3: number;
-  /** Équilibre signal d'origine / signal traité, de 0 à 100. */
-  mix: number;
+  /** Équilibre signal d'origine / signal traité, de 0 à 100. Une courbe le pilote au fil du son. */
+  mix: number | Float32Array;
   /** Gain de sortie, en décibels. */
   sortie: number;
 }
@@ -107,7 +108,6 @@ export async function quadrafuzz(buffer: AudioBuffer, r: ReglagesQuadrafuzz): Pr
   const bandes = await separerEnBandes(buffer, r.f1, r.f2, r.f3);
   const courbes = [r.graves, r.basMediums, r.hautsMediums, r.aigus].map((s) => courbeFuzz(s));
   const gainSortie = 10 ** (r.sortie / 20);
-  const melange = Math.max(0, Math.min(100, r.mix)) / 100;
 
   const out = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -121,6 +121,8 @@ export async function quadrafuzz(buffer: AudioBuffer, r: ReglagesQuadrafuzz): Pr
     for (let i = 0; i < buffer.length; i++) {
       let traite = 0;
       for (let b = 0; b < 4; b++) traite += appliquerCourbe(courbes[b], src[b][i]);
+      // Le mélange accepte une courbe ; `valeurA` lit le nombre comme le tableau, sans second chemin.
+      const melange = Math.max(0, Math.min(100, valeurA(r.mix, i))) / 100;
       dst[i] = (traite * melange + sec[i] * (1 - melange)) * gainSortie;
     }
   }

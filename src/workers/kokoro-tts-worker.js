@@ -2,6 +2,7 @@
 // Charge le modèle Kokoro 82M et génère de la parole à partir d'un texte.
 import { KokoroTTS, env } from "kokoro-js";
 import { splitText, trimSilence, mergeAudioBuffers } from "./tts-utils.js";
+import { MODEL_ID, installerMiroirKokoro } from "./kokoro-local.js";
 // kokoro-js bundle includes onnxruntime-web@1.22.0-dev, but Vite's default
 // relative WASM resolution picks the root onnxruntime-web@1.27.0 files, which
 // are incompatible. Force the runtime to load the bundled WASM files.
@@ -26,8 +27,6 @@ env.wasmPaths = {
   mjs: wasmMjs,
   wasm: wasmBinary,
 };
-
-const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
 
 let tts = null;
 const queue = [];
@@ -65,6 +64,8 @@ async function processRequest(req) {
   try {
     if (!tts) {
       sendProgress(formatLoad(0), requestId);
+      // Le miroir local, s'il est là, pour le dépôt du modèle comme pour les voix.
+      await installerMiroirKokoro();
       tts = await KokoroTTS.from_pretrained(MODEL_ID, {
         dtype: "q8",
         device: "wasm",

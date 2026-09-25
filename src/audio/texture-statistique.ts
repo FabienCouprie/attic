@@ -354,6 +354,28 @@ export function synthetiserTexture(
   return { son, ecart: distanceStatistiques(statsCible, obtenues), iterations };
 }
 
+export interface OptionsVoieTexture extends OptionsTexture {
+  /** Longueur du son à synthétiser, en échantillons. */
+  longueur: number;
+  sampleRate: number;
+}
+
+/**
+ * Une voie : la texture d'un canal, prête à être calculée ailleurs que dans le fil de l'interface.
+ *
+ * LA GRAINE DÉPEND DU CANAL, et c'est le seul rôle de ce paramètre ici : les deux côtés partagent
+ * les statistiques sans partager un échantillon, si bien que la texture est large d'elle-même, ce
+ * qu'aucun élargisseur ne donne. Une graine commune aux deux canaux rendrait deux fois le même
+ * bruit, donc un son mono.
+ */
+export function traiterVoie(
+  x: Float32Array, o: OptionsVoieTexture, canal = 0,
+): ResultatTexture {
+  return synthetiserTexture(x, o.longueur, o.sampleRate, {
+    ...o, graine: (o.graine ?? 1) + canal * 1000,
+  });
+}
+
 /**
  * Rapproche les corrélations entre bandes de celles visées.
  *

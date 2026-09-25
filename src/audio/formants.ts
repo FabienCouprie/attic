@@ -6,7 +6,7 @@
 // et la correction formantique est un simple filtre spectral appliqué frame par frame).
 
 import { fft } from "./fft";
-import { etirerDuree, reechantillonnerVers } from "./commun";
+import { etirerDureeVoie, reechantillonnerVoie } from "./commun";
 
 const N_FFT = 2048;
 const HOP = 512;
@@ -182,36 +182,53 @@ function correctionFormantiqueBrute(
 
 // ─── Fonction principale ───
 
+export interface OptionsFormants {
+  pitchSemiTons: number;
+  formantRatio: number;
+}
+
+/**
+ * Le décalage de formants d'UNE voie, sans `AudioBuffer`.
+ *
+ * Tout le calcul l'était déjà : `AudioBuffer` ne servait que de récipient, et les deux briques de
+ * l'étape de transposition ont maintenant des cœurs par voie. C'est ce qui permet au traitement de
+ * quitter le fil de l'interface, `AudioBuffer` n'existant pas dans un worker. Il est le coût
+ * dominant du voice changer sur ses préréglages les plus employés.
+ */
+export function shiftFormantsVoie(x: Float32Array, o: OptionsFormants): Float32Array {
+  const pitchRatio = Math.pow(2, o.pitchSemiTons / 12);
+  const len = x.length;
+
+  // Étape 1 : pitch shift en domaine temporel (préserve la phase)
+  let pitchShifted = x;
+  if (Math.abs(pitchRatio - 1) > 0.01) {
+    pitchShifted = reechantillonnerVoie(etirerDureeVoie(x, pitchRatio), pitchRatio, len);
+  }
+
+  // Étape 2 : correction formantique en domaine spectral
+  // Si pas de pitch shift et pas de formant shift → retourner tel quel
+  if (Math.abs(pitchRatio - 1) < 0.01 && Math.abs(o.formantRatio - 1) < 0.01) {
+    return x;
+  }
+
+  return correctionFormantique(pitchShifted, pitchRatio, o.formantRatio);
+}
+
 export function shiftFormants(
   buffer: AudioBuffer,
   pitchSemiTons: number,
   formantRatio: number,
 ): AudioBuffer {
-  const sr = buffer.sampleRate;
-  const nCh = buffer.numberOfChannels;
   const pitchRatio = Math.pow(2, pitchSemiTons / 12);
-  const len = buffer.length;
-
-  // Étape 1 : pitch shift en domaine temporel (préserve la phase)
-  let pitchShifted = buffer;
-  if (Math.abs(pitchRatio - 1) > 0.01) {
-    const etire = etirerDuree(buffer, pitchRatio);
-    pitchShifted = reechantillonnerVers(etire, pitchRatio, len);
-  }
-
-  // Étape 2 : correction formantique en domaine spectral
-  // Si pas de pitch shift et pas de formant shift → retourner tel quel
   if (Math.abs(pitchRatio - 1) < 0.01 && Math.abs(formantRatio - 1) < 0.01) {
     return buffer;
   }
-
-  const resultat = new AudioBuffer({ numberOfChannels: nCh, length: len, sampleRate: sr });
-
-  for (let ch = 0; ch < nCh; ch++) {
-    const input = pitchShifted.getChannelData(ch);
-    const output = correctionFormantique(input, pitchRatio, formantRatio);
-    resultat.getChannelData(ch).set(output);
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate,
+  });
+  const o = { pitchSemiTons, formantRatio };
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    resultat.getChannelData(ch).set(shiftFormantsVoie(buffer.getChannelData(ch), o));
   }
-
   return resultat;
 }

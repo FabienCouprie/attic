@@ -10,7 +10,7 @@
 import { EVENEMENT_FILMER } from "./demo/useRealisateurDemo";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ReactNode, CSSProperties } from "react";
-import { useReactFlow, NodeResizer } from "@xyflow/react";
+import { useReactFlow, NodeResizer, useNodeConnections } from "@xyflow/react";
 import { useI18n, defautParametre, uniteParametre, traduire } from "../i18n";
 import { bufferVersWavBlob } from "../audio/io";
 import { decrire } from "../audio/metadonnees";
@@ -20,6 +20,10 @@ import { lireProfondeurExport } from "./profondeur-export";
 const tamponMulticanal = (b: unknown): AudioBuffer | null =>
   typeof AudioBuffer !== "undefined" && b instanceof AudioBuffer && b.numberOfChannels > 2 ? b : null;
 import { copierTexte } from "./copier";
+import { PistesMultiples, type PisteVue } from "./PistesMultiples";
+import { MontageVideo, type InfosFilm } from "./MontageVideo";
+import { ExtraitVideo } from "./ExtraitVideo";
+import { urlMedia } from "./url-media";
 import { nomNote } from "./clavier-disposition";
 import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
 import { useStatut } from "./statuts";
@@ -66,6 +70,186 @@ export interface VueProps {
   id: string;
   data: DonneesNoeud;
   def?: FicheAudio;
+}
+
+// ── Plusieurs pistes sur un axe commun ──
+// Le nœud pose leurs enveloppes sur lui-même à l'exécution : la vue ne recalcule rien et ne retient
+// aucun son. Voir `plugins/visualiseur-multipiste.ts` et `audio/pistes-visu.ts`.
+function VuePistesMultiples({ data }: VueProps) {
+  const pistes = ((data as unknown as { _pistesVisu?: PisteVue[] })._pistesVisu ?? []);
+  return <PistesMultiples pistes={pistes} />;
+}
+
+// ── Montage vidéo : le film, et les sons posés dessous ──
+//
+// LA VUE MESURE LE FILM ELLE-MÊME, sans attendre une exécution : ouvrir un film par plages coûte
+// moins d'un mégaoctet, et la cadence est ce qui permet de compter en images. Sans elle, on placerait
+// des sons sur un axe muet.
+function VueMontageVideo({ id, data }: VueProps) {
+  const params = (data.parametres ?? {}) as Record<string, unknown>;
+  const chemin = String(params.Chemin ?? "").trim();
+  const connexions = useNodeConnections({ handleType: "target", id });
+  const api = (window as { api?: any }).api;
+
+  const dejaConnu = (data as unknown as { _videoMontageInfos?: InfosFilm })._videoMontageInfos ?? null;
+  const [infos, setInfos] = useState<InfosFilm | null>(dejaConnu);
+  const mesure = useRef<string | null>(null);
+  useEffect(() => { setInfos(dejaConnu); }, [dejaConnu]);
+
+  const onMesurer = useCallback(() => {
+    if (!chemin || !api?.tailleFichier || !api?.lirePlage || mesure.current === chemin) return;
+    mesure.current = chemin;
+    (async () => {
+      try {
+        const { ouvrirFilmParPlages } = await import("../audio/video-sortie");
+        const v = await ouvrirFilmParPlages(chemin, api);
+        const releve: InfosFilm = {
+          dureeSec: v.dureeSec, cadence: v.cadence, largeur: v.largeur, hauteur: v.hauteur,
+        };
+        (data as unknown as { _videoMontageInfos?: InfosFilm })._videoMontageInfos = releve;
+        setInfos(releve);
+      } catch {
+        // Un film illisible le dira à l'exécution, avec sa cause ; la vue n'a pas à doubler ce message.
+      }
+    })();
+  }, [chemin, api, data]);
+
+  const branchees = useMemo(
+    () => connexions
+      .map((c) => Number(String(c.targetHandle ?? "in:0").split(":")[1]))
+      .filter((k) => Number.isFinite(k)),
+    [connexions],
+  );
+
+  // DÉBRANCHER UNE ENTRÉE DOIT RENDRE SA MÉMOIRE. La vue ne dessine déjà plus une piste débranchée ;
+  // sans ce ménage, son enveloppe et surtout son tampon resteraient accrochés au nœud jusqu'à la
+  // prochaine exécution, c'est-à-dire peut-être jamais.
+  const cleBranchees = branchees.join(",");
+  useEffect(() => {
+    const n = data as unknown as {
+      _videoMontagePistes?: { piste: number }[];
+      _videoMontageSons?: Record<string, AudioBuffer>;
+    };
+    const vivantes = new Set(branchees);
+    if (Array.isArray(n._videoMontagePistes)) {
+      const reste = n._videoMontagePistes.filter((x) => vivantes.has(x.piste));
+      if (reste.length !== n._videoMontagePistes.length) n._videoMontagePistes = reste;
+    }
+    if (n._videoMontageSons) {
+      for (const k of Object.keys(n._videoMontageSons)) {
+        if (!vivantes.has(Number(k))) delete n._videoMontageSons[k];
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleBranchees]);
+
+  const d = data as unknown as { _videoMontageUrl?: string; _videoMontageNom?: string; _videoMontageOctets?: number };
+  const resultat = d._videoMontageUrl
+    ? { url: d._videoMontageUrl, nom: d._videoMontageNom ?? "montage.mp4", octets: d._videoMontageOctets ?? 0 }
+    : null;
+
+  return (
+    <MontageVideo
+      id={id}
+      chemin={chemin}
+      // L'ADRESSE EST FABRIQUÉE ICI, dans la fenêtre : le préchargement est en bac à sable et ne
+      // peut pas partager le module du processus principal. `url-media.test.ts` tient les deux
+      // écritures d'accord. Sans l'application de bureau, le protocole n'existe pas, donc pas
+      // d'adresse : un navigateur ne montrerait qu'une vidéo cassée.
+      urlFilm={chemin && api ? urlMedia(chemin) : null}
+      resultat={resultat}
+      infos={infos}
+      enveloppes={(data as unknown as { _videoMontagePistes?: any[] })._videoMontagePistes ?? []}
+      sons={(data as unknown as { _videoMontageSons?: Record<number, AudioBuffer> })._videoMontageSons ?? {}}
+      branchees={branchees}
+      imageDePiste={(piste) => Number(params[`Image ${piste + 1}`] ?? 0)}
+      gainFilmDb={Number(params["Gain du film"] ?? 0)}
+      reglagesDePiste={(piste) => ({
+        gainDb: Number(params[`Gain ${piste + 1}`] ?? 0),
+        fonduEntreeMs: Number(params[`Fondu entrée ${piste + 1}`] ?? 10),
+        fonduSortieMs: Number(params[`Fondu sortie ${piste + 1}`] ?? 10),
+      })}
+      onDeplacer={(piste, image) => data.onChangerParametre?.(id, `Image ${piste + 1}`, image)}
+      onMesurer={onMesurer}
+    />
+  );
+}
+
+// ── Extrait vidéo : le film, et la portion qu'on en garde ──
+function VueExtraitVideo({ id, data }: VueProps) {
+  const params = (data.parametres ?? {}) as Record<string, unknown>;
+  const chemin = String(params.Chemin ?? "").trim();
+  const api = (window as { api?: any }).api;
+
+  const n = data as unknown as {
+    _extraitVideoInfos?: InfosFilm; _extraitVideoUrl?: string;
+    _extraitVideoNom?: string; _extraitVideoOctets?: number;
+  };
+  const [infos, setInfos] = useState<InfosFilm | null>(n._extraitVideoInfos ?? null);
+  const mesure = useRef<string | null>(null);
+  useEffect(() => { if (n._extraitVideoInfos) setInfos(n._extraitVideoInfos); }, [n._extraitVideoInfos]);
+
+  const onMesurer = useCallback(() => {
+    if (!chemin || !api?.tailleFichier || !api?.lirePlage || mesure.current === chemin) return;
+    mesure.current = chemin;
+    (async () => {
+      try {
+        const { ouvrirFilmParPlages } = await import("../audio/video-sortie");
+        const v = await ouvrirFilmParPlages(chemin, api);
+        const releve: InfosFilm = {
+          dureeSec: v.dureeSec, cadence: v.cadence, largeur: v.largeur, hauteur: v.hauteur,
+        };
+        n._extraitVideoInfos = releve;
+        setInfos(releve);
+      } catch { /* l'exécution dira la cause, la vue n'a pas à doubler ce message */ }
+    })();
+  }, [chemin, api, n]);
+
+  return (
+    <ExtraitVideo
+      chemin={chemin}
+      urlFilm={chemin && api ? urlMedia(chemin) : null}
+      infos={infos}
+      imageDebut={Number(params["Image de début"] ?? 0)}
+      imageFin={Number(params["Image de fin"] ?? 0)}
+      onBorner={(borne, image) => data.onChangerParametre?.(
+        id, borne === "debut" ? "Image de début" : "Image de fin", image,
+      )}
+      resultat={n._extraitVideoUrl
+        ? { url: n._extraitVideoUrl, nom: n._extraitVideoNom ?? "extrait.mp4", octets: n._extraitVideoOctets ?? 0 }
+        : null}
+      onMesurer={onMesurer}
+    />
+  );
+}
+
+// ── Séparer image et son : récupérer la vidéo muette ──
+//
+// SANS CE BOUTON, LA MOITIÉ IMAGE SERAIT PERDUE. Le son rendu par ce nœud reçoit le lecteur commun
+// et s'enregistre comme tout audio ; la vidéo, elle, n'existe qu'en mémoire tant qu'on ne l'écrit
+// pas, et rien d'autre dans le catalogue ne sait encore écrire un fichier vidéo.
+function VueVideoMuette({ data }: VueProps) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  const n = data as unknown as { _videoMuetteUrl?: string; _videoMuetteNom?: string; _videoMuetteOctets?: number };
+  if (!n._videoMuetteUrl) return null;
+  const nom = n._videoMuetteNom ?? "muet.mp4";
+  return (
+    <div className="attic-vue-film-resultat" onClick={(e) => e.stopPropagation()}>
+      {api?.sauvegarderBinaire ? (
+        <button className="attic-node-fichier-btn" onClick={async () => {
+          const buffer = await (await fetch(n._videoMuetteUrl!)).arrayBuffer();
+          await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
+        }}>💾 {t("separerImageSon.enregistrer")}</button>
+      ) : (
+        <a className="attic-node-fichier-btn" href={n._videoMuetteUrl} download={nom}>
+          💾 {t("separerImageSon.enregistrer")}
+        </a>
+      )}
+      <span>{nom}</span>
+      <span>{((n._videoMuetteOctets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+    </div>
+  );
 }
 
 // ── Forme d'onde (WaveSurfer.js) ──
@@ -715,18 +899,28 @@ function VueCollections({ id, data, def }: VueProps) {
         return (
         <div key={p.nom} className="attic-node-param">
           <label>{lang === "en" && p.nomEn ? p.nomEn : p.nom}</label>
-          {p.type === "dossier" ? (
+          {p.type === "dossier" || p.type === "fichier" ? (
             <div style={{ display: "flex", gap: 4 }}>
               <input type="text" value={String(data.parametres?.[p.nom] ?? defautP)} onChange={(e) => data.onChangerParametre?.(id, p.nom, e.target.value)}
                 style={{ flex: 1, fontSize: 11, background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 3, padding: "2px 4px", color: "var(--text-title)" }} />
               <button onClick={async () => {
                 const api = (window as { api?: any }).api;
-                if (api?.choisirDossier) {
+                if (p.type === "fichier" && api?.choisirFichier) {
+                  const filtres = p.extensions?.length
+                    ? [{ name: p.nom, extensions: p.extensions }, { name: "Tous", extensions: ["*"] }]
+                    : undefined;
+                  const f = await api.choisirFichier({ filters: filtres });
+                  if (f) data.onChangerParametre?.(id, p.nom, f);
+                } else if (api?.choisirDossier) {
                   const d = await api.choisirDossier();
                   if (d) data.onChangerParametre?.(id, p.nom, d);
                 } else {
                   const inp = document.createElement("input");
-                  inp.type = "file"; (inp as { webkitdirectory?: boolean }).webkitdirectory = true;
+                  inp.type = "file";
+                  // Hors application de bureau, un navigateur ne rend que le nom : le repli reste un
+                  // pis-aller, et il ne doit au moins pas demander un dossier pour un fichier.
+                  if (p.type === "dossier") (inp as { webkitdirectory?: boolean }).webkitdirectory = true;
+                  else if (p.extensions?.length) inp.accept = p.extensions.map((e) => `.${e}`).join(",");
                   inp.onchange = () => { const f = inp.files?.[0]; if (f) data.onChangerParametre?.(id, p.nom, (f as { path?: string }).path ?? f.name); };
                   inp.click();
                 }
@@ -1465,7 +1659,7 @@ function VuePythonProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied={t("python.requis")} titre={t("python.titre")} />
+        suffixePied={t("python.requis")} titre={t("python.titre")} langage="python" />
     </div>
   );
 }
@@ -1527,7 +1721,7 @@ function VueJuliaProcessor({ id, data }: VueProps) {
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
         onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
-        suffixePied={t("julia.requis")} titre={t("julia.titre")} />
+        suffixePied={t("julia.requis")} titre={t("julia.titre")} langage="julia" />
     </div>
   );
 }
@@ -1905,6 +2099,15 @@ function VueFilmApplication({ id, data }: VueProps) {
   );
 }
 
+/**
+ * La place que prend un ascenseur vertical, gouttière réservée comprise.
+ *
+ * Mesurée dans l'application plutôt que supposée : Chromium en donne quinze ici. On ne la calcule
+ * pas à chaque rendu, les zones qui s'en servent réservant leur gouttière en permanence : la valeur
+ * ne bouge donc pas selon la longueur du texte, et le bouton ne saute pas quand l'ascenseur paraît.
+ */
+const LARGEUR_ASCENSEUR = 15;
+
 function VueSortieTexte({ data }: VueProps) {
   const { t } = useI18n();
   const texte = data.audioResultatMessage ?? "";
@@ -1912,9 +2115,11 @@ function VueSortieTexte({ data }: VueProps) {
     <div className="nodrag attic-node-sortie-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
       <NodeResizer minWidth={260} minHeight={140} maxWidth={800} maxHeight={600} />
       <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {/* Le bouton se tient à gauche de l'ascenseur, et non dessus : un texte reçu un peu long
+            fait défiler la zone, et un bouton collé au bord droit chevauchait la barre. */}
         <button
           className="attic-node-copy-btn"
-          style={{ position: "absolute", top: 4, right: 4, zIndex: 1 }}
+          style={{ position: "absolute", top: 4, right: LARGEUR_ASCENSEUR + 4, zIndex: 1 }}
           title={t("btn.copier")}
           onClick={(e) => { e.stopPropagation(); copierTexte(texte); }}
         >⧉</button>
@@ -1924,14 +2129,77 @@ function VueSortieTexte({ data }: VueProps) {
           style={{
             width: "100%", flex: "1 1 auto", minHeight: 80,
             resize: "none",
+            scrollbarGutter: "stable",
             fontSize: 12, lineHeight: 1.5, fontFamily: "inherit",
             background: "var(--bg-input, #0d1117)", color: "var(--texte, #cbd5e1)",
             border: "1px solid var(--border, #333)",
-            borderRadius: 4, padding: "6px 8px", outline: "none",
+            borderRadius: 4, padding: "6px 8px", paddingRight: 34, outline: "none",
             boxSizing: "border-box",
           }}
           onClick={(e) => e.stopPropagation()}
         />
+      </div>
+    </div>
+  );
+}
+
+// ── Modifier le texte : ce qui arrive s'affiche, et s'écrit ──
+//
+// LA VALEUR EST TENUE EN LOCAL, ET LE RÉGLAGE SUIT. Écrire dans une zone dont le contenu vient du
+// graphe fait remonter chaque frappe jusqu'au canevas avant de la réafficher : le curseur saute dès
+// que le graphe est un peu gros. La zone garde donc sa valeur pour elle, et n'écrit dans le réglage
+// que pour la sauvegarde et pour l'exécution.
+//
+// TANT QUE LA ZONE EST VIDE, ELLE MONTRE CE QUI ARRIVE. C'est le texte que l'exécution vient d'y
+// déposer ; la première frappe le recopie dans le réglage, et il devient le texte du nœud.
+function VueModifierTexte({ id, data }: VueProps) {
+  const { t } = useI18n();
+  const d = data as { _texteRecu?: string; onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const recu = String(d._texteRecu ?? "");
+  const ecrit = String(data.parametres?.["Texte"] ?? "");
+  const [valeur, setValeur] = useState(ecrit || recu);
+
+  useEffect(() => { if (ecrit === "") setValeur(recu); }, [recu, ecrit]);
+
+  const changer = (v: string) => { setValeur(v); d.onChangerParametre?.(id, "Texte", v); };
+
+  return (
+    <div className="nodrag attic-node-sortie-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
+      <NodeResizer minWidth={260} minHeight={140} maxWidth={800} maxHeight={600} />
+      <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {/* LE BOUTON SE TIENT À GAUCHE DE L'ASCENSEUR, ET NON DESSUS. Une zone où l'on écrit finit
+            par défiler ; un bouton collé au bord droit chevauchait alors la barre de défilement,
+            signalé par Fabien. La gouttière est réservée en permanence, de sorte que la place du
+            bouton ne dépend pas de la longueur du texte, et il se pose juste avant elle. */}
+        <button
+          className="attic-node-copy-btn"
+          style={{ position: "absolute", top: 4, right: LARGEUR_ASCENSEUR + 4, zIndex: 1 }}
+          title={t("btn.copier")}
+          onClick={(e) => { e.stopPropagation(); copierTexte(valeur); }}
+        >⧉</button>
+        <textarea
+          value={valeur}
+          onChange={(e) => changer(e.target.value)}
+          placeholder={t("node.source_texte.placeholder")}
+          style={{
+            width: "100%", flex: "1 1 auto", minHeight: 80,
+            resize: "none",
+            scrollbarGutter: "stable",
+            fontSize: 12, lineHeight: 1.5, fontFamily: "inherit",
+            background: "var(--bg-input, #0d1117)", color: "var(--texte, #cbd5e1)",
+            border: "1px solid var(--border, #333)",
+            borderRadius: 4, padding: "6px 8px", paddingRight: 34, outline: "none",
+            boxSizing: "border-box",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, marginTop: 3, color: "var(--text-muted, #666)" }}>
+        <button className="attic-node-fichier-btn" disabled={ecrit === ""}
+          onClick={(e) => { e.stopPropagation(); changer(""); setValeur(recu); }}>
+          {t("modifierTexte.reprendre")}
+        </button>
+        <span>{traduire("msg.var_0_caract_res", valeur.length)}</span>
       </div>
     </div>
   );
@@ -2078,6 +2346,13 @@ const REGISTRE: EntreeRegistre[] = [
   // pas dans une vue avant (évite le décalage du handle de sortie).
   { correspond: parId("generateur-courbe", "suiveur-caracteristique"), vue: VueCourbe, position: "avant" },
   { correspond: parId("visualiseur-forme-onde"), vue: VueFormeOnde, position: "avant" },
+  // Aucun lecteur à déclarer : ce nœud ne rend pas de son, et n'en propose donc pas l'écoute.
+  { correspond: parId("visualiseur-multipiste"), vue: VuePistesMultiples, position: "avant" },
+  // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
+  { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
+  { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },
+  // Après le lecteur : le son rendu garde le lecteur commun, la vidéo muette s'enregistre en dessous.
+  { correspond: parId("separer-image-son"), vue: VueVideoMuette, position: "apres" },
   { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
   { correspond: parId("analyseur-spectre"), vue: VueSpectre, position: "avant" },
   { correspond: parId("spectrogramme"), vue: VueSpectrogramme, position: "avant" },
@@ -2120,6 +2395,7 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("julia-processor"), vue: VueJuliaProcessor, position: "avant" },
   { correspond: parId("source-texte"), vue: VueSourceTexte, position: "avant" },
   { correspond: parId("sortie-texte"), vue: VueSortieTexte, position: "avant", masqueMessage: true },
+  { correspond: parId("modifier-texte"), vue: VueModifierTexte, position: "avant" },
   { correspond: parId("demonstration"), vue: VueDemonstration, position: "apres" },
   { correspond: parId("film-application"), vue: VueFilmApplication, position: "apres" },
   { correspond: parId("entree-audio", "sampler-personnalise"), vue: VueUploadAudio, position: "avant", porteLecteur: true },

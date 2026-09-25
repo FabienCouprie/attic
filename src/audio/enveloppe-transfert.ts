@@ -22,6 +22,8 @@
 // transporte le grain du modèle ; une fenêtre longue ne garde que ses grandes respirations. À
 // 5 ms, on transfère presque la forme d'onde ; à 200 ms, la phrase seulement.
 
+import { valeurA } from "./courbe";
+
 /**
  * L'enveloppe d'amplitude d'un signal : sa valeur efficace sur une fenêtre glissante.
  *
@@ -62,8 +64,8 @@ export interface OptionsTransfert {
   aplatir: boolean;
   /** Niveau sous lequel on n'aplatit pas : du silence n'est pas un creux à corriger. */
   plancher: number;
-  /** Proportion du contour imposé, entre 0 et 1. */
-  melange: number;
+  /** Proportion du contour imposé, entre 0 et 1. Une courbe la donne à chaque échantillon. */
+  melange: number | Float32Array;
 }
 
 /**
@@ -93,7 +95,8 @@ export function transfererEnveloppe(
       v = e > o.plancher ? (v / e) * reference : v;
     }
     const traite = v * (envModele[i] / (reference || 1));
-    out[i] = cible[i] * (1 - o.melange) + traite * o.melange;
+    const m = Math.max(0, Math.min(1, valeurA(o.melange, i)));
+    out[i] = cible[i] * (1 - m) + traite * m;
   }
   return out;
 }

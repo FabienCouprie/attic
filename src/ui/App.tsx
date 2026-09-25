@@ -1,5 +1,6 @@
 // ui/App.tsx — Application principale
 import { useRealisateurDemo } from "./demo/useRealisateurDemo";
+import { reglagesApresChangement } from "../core/reglages-lies";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
@@ -9,8 +10,8 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
-  estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  surChangementMetas, supprimerMeta } from "../core";
+  estFrontiere, estBulle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
+  surChangementMetas, supprimerMeta, traduireConnexion, type AreteG, type NoeudG } from "../core";
 import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -37,6 +38,10 @@ import { libererGlissement, relachementManque } from "./liberer-glissement";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
+import { MenuContextuel, type EntreeMenu, type EtatMenu } from "./MenuContextuel";
+import { useBulles } from "./hooks/useBulles";
+import { useRepliBulles } from "./hooks/useRepliBulles";
+import { signatureBulles, synchroniserFichesBulles } from "./fichesBulles";
 import { Inspector } from "./Inspector";
 import { nodeTypes as nodeTypesImport, edgeTypes as edgeTypesImport } from "./reactflowTypes";
 import "./atelier.css";
@@ -392,6 +397,7 @@ function Atelier() {
   }, [pile, rfInstance]);
 
   const [pluginsVersion, setPluginsVersion] = useState(0);
+  const [menu, setMenu] = useState<EtatMenu | null>(null);
   const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
 
   // ── Chargement automatique de l'en-cours sauvegardé ──
@@ -423,6 +429,10 @@ function Atelier() {
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               couleur: n.data.couleur,
+              // Les deux champs d'une bulle. Sans eux, une session reprise rendrait un nœud de bulle
+              // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
+              bulle: n.data.bulle,
+              bulleOuverte: n.data.bulleOuverte,
               onSupprimerNoeud: cbs.onSupprimerNoeud,
               onReinitialiser: cbs.onReinitialiser,
               onDefinirPrioritaire: cbs.onDefinirPrioritaire,
@@ -622,7 +632,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     onChangerEnregistrement: (nid: string, blob: Blob) => { cacheExec.current.delete(nid); const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); reinitialiserNoeud(nid); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       cacheExec.current.delete(nid);
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } } : n));
+      // Les liaisons entre réglages passent par `reglagesApresChangement`, et non par ce point
+      // d'appel : il y en a deux dans ce fichier, et une règle écrite ici ne servirait qu'à l'un.
+      setNodes((nds2) => nds2.map((n) => n.id === nid
+        ? { ...n, data: { ...n.data, parametres: reglagesApresChangement(
+            String(n.data.ficheId), n.data.parametres, nom, val) } }
+        : n));
       reinitialiserNoeud(nid);
     },
     // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
@@ -847,6 +862,91 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     setNodes, setEdges, setPile, setSel, callbacksNoeud,
   });
 
+  // ── Bulles : clarifier / développer / ouvrir ──
+  // Rien de commun avec « grouper » : une bulle replie le schéma pour le lire, elle ne range aucun
+  // outil au catalogue. La logique pure vit dans core/bulles.ts.
+  const { clarifier, developper, basculerRepli, retirerBullesVides, developperAvantMeta } = useBulles({
+    noeudsRef, aretesRef, setNodes, setEdges, setSel, pushHistorique, callbacksNoeud,
+  });
+
+  /**
+   * GROUPER DÉVELOPPE D'ABORD LES BULLES DE LA SÉLECTION, et le dit.
+   *
+   * Un méta-composant part au catalogue et voyage entre projets ; une bulle reste dans le sien. Un méta
+   * bâti sur une sélection contenant une bulle serait irrécupérable ailleurs, et la cause ne serait pas
+   * lisible. Un seul instantané d'historique pour l'opération entière : Ctrl+Z ne doit pas laisser le
+   * canevas à moitié développé, sans méta.
+   */
+  const grouperAvecBulles = useCallback(() => {
+    pushHistorique();
+    const { bulles, membres } = developperAvantMeta();
+    if (bulles > 0) {
+      window.alert(t("bulle.developpeeAvantMeta")
+        .replace("{bulles}", String(bulles)).replace("{membres}", String(membres)));
+    }
+    grouper();
+  }, [developperAvantMeta, grouper, pushHistorique, t]);
+
+  // Le repli appliqué en un seul endroit, quel que soit le geste qui l'a provoqué.
+  const nomDeNoeud = useCallback((n: NoeudG): string => {
+    const propre = typeof n.data.nom === "string" && n.data.nom.trim() ? n.data.nom.trim() : "";
+    if (propre) return propre;
+    const def = trouverDef(n.data.ficheId);
+    return (lang === "en" && def?.nomEn ? def.nomEn : def?.nom) ?? n.data.ficheId;
+  }, [lang]);
+  useRepliBulles({ nodes, edges, setNodes, setEdges, getDef: trouverDef });
+
+  // La fiche d'une bulle est DÉRIVÉE de ses membres, donc refaite dès qu'ils changent — et retirée du
+  // registre quand la bulle disparaît. Rien n'est stocké : le projet ne porte que le nœud et
+  // l'appartenance de ses membres.
+  const signatureDesBulles = signatureBulles(
+    nodes as unknown as NoeudG[], edges as unknown as AreteG[],
+  );
+  useEffect(() => {
+    const { inscrites, retirees } = synchroniserFichesBulles(
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      registre,
+    );
+    if (inscrites.length || retirees.length) setPluginsVersion((v) => v + 1);
+  }, [signatureDesBulles, nomDeNoeud]);
+
+  // Une bulle vidée de son dernier membre se supprime d'elle-même.
+  useEffect(() => { retirerBullesVides(); }, [nodes, retirerBullesVides]);
+
+  // LE CLIC DROIT DÉPLACE DÉJÀ LE CANEVAS (`panOnDrag={[2]}`), et l'événement de menu arrive aussi au
+  // relâchement d'un glissement : sans ce garde-fou, déplacer la vue ouvrirait un menu à l'arrivée.
+  // On note où le bouton est descendu, et on n'ouvre que si rien n'a bougé.
+  const origineClicDroit = useRef<{ x: number; y: number } | null>(null);
+  const surPointerDown = useCallback((e: React.PointerEvent) => {
+    if (e.button === 2) origineClicDroit.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const surClicDroit = useCallback((e: React.MouseEvent, noeud?: Node) => {
+    e.preventDefault();
+    const o0 = origineClicDroit.current;
+    origineClicDroit.current = null;
+    if (o0 && Math.hypot(e.clientX - o0.x, e.clientY - o0.y) > 4) { setMenu(null); return; }
+    const entrees: EntreeMenu[] = [];
+    const bulle = noeud && estBulle((noeud.data as { ficheId?: string }).ficheId) ? noeud : undefined;
+    if (bulle) {
+      const replie = (bulle.data as { bulleOuverte?: boolean }).bulleOuverte !== true;
+      entrees.push({
+        cle: "ouvrir", libelle: t(replie ? "bulle.ouvrir" : "bulle.refermer"),
+        titre: t("bulle.ouvrirTitle"), action: () => basculerRepli(bulle.id),
+      });
+      entrees.push({
+        cle: "developper", libelle: t("bulle.developper"),
+        titre: t("bulle.developperTitle"), action: () => developper(bulle.id),
+      });
+    } else if (noeudsRef.current.filter((n) => n.selected).length >= 2) {
+      entrees.push({
+        cle: "clarifier", libelle: t("bulle.clarifier"),
+        titre: t("bulle.clarifierTitle"), action: clarifier,
+      });
+    }
+    setMenu(entrees.length ? { x: e.clientX, y: e.clientY, entrees } : null);
+  }, [t, basculerRepli, developper, clarifier]);
+
   // ── Glisser-déposer ──
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -883,18 +983,35 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [pendingAdd]);
 
   const isValidConnection = useCallback((conn: Connection | Edge) => {
-    const source = noeudsRef.current.find((n) => n.id === conn.source);
-    const target = noeudsRef.current.find((n) => n.id === conn.target);
-    return validerArete(source, target, conn);
-  }, []);
+    // La validité se juge sur la connexion TRADUITE : sur une poignée de bulle, ce sont les types du
+    // port réel qui comptent, jamais ceux d'un port de façade.
+    const traduite = traduireConnexion(
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      conn as any, trouverDef,
+    );
+    if (!traduite) return false;
+    const source = noeudsRef.current.find((n) => n.id === traduite.source);
+    const target = noeudsRef.current.find((n) => n.id === traduite.target);
+    return validerArete(source, target, { ...conn, ...traduite });
+  }, [nomDeNoeud]);
 
   const nodeColor = useCallback((node: any) => {
     const cat = categorieNoeud(node.data?.ficheId, registre.trouverDef(node.data?.ficheId));
     return COULEURS_CATEGORIE[cat] ?? "var(--text-muted)";
   }, []);
 
-  const onConnect: OnConnect = useCallback((conn) => {
-    if (!conn.sourceHandle || !conn.targetHandle) return;
+  const onConnect: OnConnect = useCallback((connBrute) => {
+    if (!connBrute.sourceHandle || !connBrute.targetHandle) return;
+    // UNE POIGNÉE DE BULLE EST CONNECTABLE, et la vraie arête va au membre qu'elle représente : c'est
+    // lui qui calcule. Traduite d'abord, la connexion suit ensuite le chemin ordinaire — même
+    // remplacement d'un port non dynamique, même couleur, même historique. Refusée si la poignée ne
+    // désigne rien, plutôt que devinée.
+    const traduite = traduireConnexion(
+      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
+      connBrute as any, trouverDef,
+    );
+    if (!traduite) return;
+    const conn = { ...connBrute, ...traduite };
     const ficheSource = noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId;
     const ficheTarget = noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId;
     if (ficheSource === "comment" || ficheTarget === "comment") return;
@@ -1046,7 +1163,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           supprimerNoeud(aRetirer);
         }}
       />
-      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
+      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown}>
         <BarreOutils
           theme={theme} setTheme={setTheme}
           enExecution={enExecution}
@@ -1125,7 +1242,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             </>
           ) : (
             <>
-              <button onClick={grouper} title={t("meta.grouperTitle")}>⊟ {t("meta.grouper")}</button>
+              <button onClick={grouperAvecBulles} title={t("meta.grouperTitle")}>⊟ {t("meta.grouper")}</button>
               <button onClick={degrouper} title={t("meta.degrouperTitle")}>⊞ {t("meta.degrouper")}</button>
               <button onClick={renommer} title={t("meta.renommerTitle")}>✎ {t("meta.renommer")}</button>
             </>
@@ -1151,8 +1268,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           onNodeClick={(_, n) => setSel(n)}
           onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
           onPaneClick={onPaneClick}
-          onPaneContextMenu={(e) => e.preventDefault()}
-          onNodeContextMenu={(e) => e.preventDefault()}
+          onPaneContextMenu={(e) => surClicDroit(e as React.MouseEvent)}
+          onNodeContextMenu={(e, n) => surClicDroit(e, n as Node)}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
           panOnDrag={[2]}
@@ -1167,6 +1284,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           <Controls />
           <MiniMap pannable zoomable nodeColor={nodeColor} />
         </ReactFlow>
+        <MenuContextuel etat={menu} onFermer={() => setMenu(null)} />
       </div>
       <PanneauInspecteur>
       <Inspector
@@ -1190,11 +1308,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         onChangerParametre={(nom, val) => {
           if (!sel) return;
           cacheExec.current.delete(sel.id);
+          // Même règle que l'autre point d'appel, et la même fonction : l'inspecteur doit voir
+          // exactement ce que le nœud reçoit, sans quoi un réglage ajusté n'apparaîtrait pas.
+          const suite = reglagesApresChangement(String(sel.data.ficheId), sel.data.parametres, nom, val);
           setNodes((nds) => nds.map((n) => {
             if (n.id !== sel.id) return n;
-            return { ...n, data: { ...n.data, parametres: { ...n.data.parametres, [nom]: val } } };
+            return { ...n, data: { ...n.data, parametres: suite } };
           }));
-          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: { ...prev.data.parametres, [nom]: val } } } : null);
+          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: suite } } : null);
           reinitialiserNoeud(sel.id);
         }}
         onChargerFichier={(key, fichier) => {

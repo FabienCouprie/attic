@@ -4,7 +4,11 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { corrigerHauteur, courbeDeCorrection, degresDe, GAMMES_CORRECTION } from "../audio/correction-hauteur";
+import {
+  corrigerHauteur, courbeDeCorrection, degresDe, GAMMES_CORRECTION,
+  type OptionsCorrection, type ResultatCorrection,
+} from "../audio/correction-hauteur";
+import { parCanal } from "./hors-fil";
 
 const NOTES = ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"];
 const NOTES_EN = ["C", "C#", "D", "E♭", "E", "F", "F#", "G", "G#", "A", "B♭", "B"];
@@ -64,11 +68,14 @@ export const fiches: FicheAudio[] = ([
       // suivis de hauteur concordent presque toujours ; là où ils divergeraient, l'image pourrait
       // flotter. Une correction commune — suivie une fois, appliquée à tous — demande de séparer le
       // suivi de la resynthèse dans `corrigerHauteur` : relevé à l'audit du 2026-09-22, non fait.
-      const premier = corrigerHauteur(e.getChannelData(0), o);
-      sortie.getChannelData(0).set(premier.audio);
-      for (let c = 1; c < e.numberOfChannels; c++) {
-        sortie.getChannelData(c).set(corrigerHauteur(e.getChannelData(c), o).audio);
-      }
+      const voies = Array.from({ length: e.numberOfChannels }, (_, c) => e.getChannelData(c));
+      const parVoie = await parCanal<OptionsCorrection, ResultatCorrection>(voies, o, {
+        creerWorker: () => new Worker(new URL("../workers/correction-hauteur-worker.ts", import.meta.url), { type: "module" }),
+        calcul: corrigerHauteur,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.correction.canal", String(c), String(n))),
+      });
+      const premier = parVoie[0];
+      for (let c = 0; c < e.numberOfChannels; c++) sortie.getChannelData(c).set(parVoie[c].audio);
       return {
         valeurs: [sortie, courbeDeCorrection(premier, ecartMax)],
         message: traduire("msg.correction.resume",

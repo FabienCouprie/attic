@@ -86,6 +86,12 @@ const CONNUS = {
     licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
       note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
   },
+  "kokoro-82m": {
+    id: "kokoro-82m", nom: "Synthèse vocale Kokoro", nomEn: "Kokoro speech synthesis",
+    noeuds: ["tts-kokoro", "tts-francais"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "hexgrad — Kokoro-82M ; export ONNX par onnx-community", rediffusable: true,
+      note: "Le miroir ne prend que le poids quantifié q8, la configuration, le tokeniseur et les 55 voix : les exports fp32, fp16 et q4 du dépôt amont ne sont jamais chargés par l'application. Les deux composants, anglais et français, partagent ce seul dépôt." },
+  },
   "sdxs-512-texte-image": {
     id: "sdxs-512", nom: "Texte → image", nomEn: "Text → image",
     noeuds: ["texte-image"], archive: true,

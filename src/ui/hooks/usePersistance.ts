@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
-import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../../core";
+import { estSubstitution, tousLesMetas, enregistrerMeta, type AreteG, type MetaComposant } from "../../core";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
@@ -89,16 +89,28 @@ export function usePersistance(o: OptionsPersistance) {
         nomFichier: data.nomFichier,
         nom: data.nom,
         couleur: data.couleur,
+        // LES DEUX SEULS CHAMPS D'UNE BULLE : à quelle bulle ce nœud appartient, et si elle est
+        // repliée. Le reste — ce qui est caché, les arêtes de substitution, la fiche et ses ports —
+        // est DÉRIVÉ, donc refait à l'ouverture. Voir core/bulles.ts.
+        bulle: data.bulle,
+        bulleOuverte: data.bulleOuverte,
       },
     }));
-    const cleanEdges = racine.edges.map(({ id, source, target, sourceHandle, targetHandle, type, style }) => ({
-      id, source, target, sourceHandle, targetHandle, type, style,
-    }));
+    // LES ARÊTES DE SUBSTITUTION NE SE SAUVEGARDENT PAS : ce sont des objets d'affichage, refaits au
+    // chargement par la normalisation. Les écrire les ferait s'accumuler d'une sauvegarde à l'autre.
+    const cleanEdges = racine.edges
+      .filter((e: { id: string }) => !estSubstitution(e as unknown as AreteG))
+      .map(({ id, source, target, sourceHandle, targetHandle, type, style }: any) => ({
+        id, source, target, sourceHandle, targetHandle, type, style,
+      }));
     const metas = tousLesMetas().map(serialiserMeta);
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
 
     const encours = {
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur } })),
+      // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
+      // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
+      // arêtes de substitution.
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

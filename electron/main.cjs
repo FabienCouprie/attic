@@ -1,9 +1,10 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, desktopCapturer } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, desktopCapturer, protocol } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
 const { execSync, execFile } = require("child_process");
+const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
@@ -15,6 +16,7 @@ const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
+const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const {
   inventaire: inventaireModeles, avancement: avancementModeles,
   telechargerFichier, poser: poserFichier,
@@ -190,11 +192,20 @@ const CSP = [
   "default-src 'self' display-capture",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net",
   "style-src 'self' 'unsafe-inline'",
-  "media-src 'self' blob: data: stream:",
+  `media-src 'self' blob: data: stream: ${SCHEMA_MEDIA}:`,
   "img-src 'self' blob: data:",
   "worker-src 'self' blob:",
   "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:",
 ].join("; ");
+
+// LE SCHÉMA QUI SERT UN FILM DU DISQUE, déclaré AVANT que l'application soit prête : un schéma
+// enregistré après ne reçoit pas les privilèges, et un élément vidéo refuse alors de s'y déplacer.
+// `stream` est ce qui autorise les réponses partielles, donc le déplacement dans un film ; `secure`
+// et `standard` le font traiter comme une origine ordinaire, sans quoi la CSP le rejette.
+protocol.registerSchemesAsPrivileged([{
+  scheme: SCHEMA_MEDIA,
+  privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, bypassCSP: false },
+}]);
 
 // GESTIONNAIRE DE PERMISSIONS UNIQUE — liste d'autorisation explicite.
 // Ne pas en installer un second ailleurs : setPermissionRequestHandler
@@ -324,6 +335,22 @@ ipcMain.handle("fichier:ouvrir", async (_event, options) => {
   const chemin = resultat.filePaths[0];
   const contenu = fs.readFileSync(chemin, "utf-8");
   return { chemin, contenu, nom: path.basename(chemin) };
+});
+
+// --- IPC : choisir un fichier et n'en rendre QUE le chemin ---
+// Les deux gestionnaires du dessus lisent le fichier entier, l'un en texte, l'autre en binaire :
+// pour un film de soixante-dix mégaoctets, cela retiendrait tout ce que la lecture par plages évite,
+// et en texte cela n'aurait aucun sens. Un paramètre de type « fichier » ne veut que le chemin.
+ipcMain.handle("fichier:choisir", async (_event, options) => {
+  const { defaultPath, filters, title } = options ?? {};
+  const resultat = await dialog.showOpenDialog(fenetre, {
+    title: title || undefined,
+    defaultPath: defaultPath || undefined,
+    filters: filters?.length ? filters : [{ name: "Tous", extensions: ["*"] }],
+    properties: ["openFile"],
+  });
+  if (resultat.canceled || resultat.filePaths.length === 0) return null;
+  return resultat.filePaths[0];
 });
 
 // --- IPC : sauvegarder un fichier binaire (audio WAV) ---
@@ -1188,6 +1215,48 @@ ipcMain.handle("ollama:modeles", async () => {
   }
 });
 
+// --- IPC : la taille d'un fichier, et une PLAGE d'octets ---
+//
+// POURQUOI LIRE PAR PLAGES. Un démultiplexeur n'a pas besoin de tout le fichier : il lit l'index,
+// puis les paquets qu'il recopie, et rien d'autre. Charger un film de 72 Mo pour en recopier l'image
+// retient 72 Mo qui ne servent à personne, et un film de deux gigaoctets ne tiendrait pas du tout.
+// Avec ces deux appels, la bibliothèque média demande ce dont elle a besoin, quand elle en a besoin,
+// et garde huit mébioctets en cache.
+//
+// Le descripteur est ouvert et refermé à chaque plage. C'est un aller-retour de plus par lecture,
+// mais le cache de l'appelant les espace, et un descripteur gardé ouvert survivrait à la fenêtre qui
+// l'a demandé — ce qui, sur un fichier que l'utilisateur voudrait déplacer, se paie plus cher.
+ipcMain.handle("fichier:taille", async (_event, cheminRelatif) => {
+  try {
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
+    return (await fs.promises.stat(chemin)).size;
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle("fichier:lire-plage", async (_event, { chemin: cheminRelatif, debut, fin }) => {
+  try {
+    const chemin = resoudreRessource(cheminRelatif, contexteRessources());
+    if (!chemin || !fs.existsSync(chemin)) return null;
+    const longueur = Math.max(0, Number(fin) - Number(debut));
+    if (longueur === 0) return Buffer.alloc(0);
+    const fd = await fs.promises.open(chemin, "r");
+    try {
+      const tampon = Buffer.alloc(longueur);
+      const { bytesRead } = await fd.read(tampon, 0, longueur, Number(debut));
+      // Une plage tronquée est rendue tronquée : inventer des zéros donnerait un fichier valide en
+      // apparence et faux en contenu.
+      return bytesRead === longueur ? tampon : tampon.subarray(0, bytesRead);
+    } finally {
+      await fd.close();
+    }
+  } catch {
+    return null;
+  }
+});
+
 // --- IPC : Lire un fichier binaire par chemin (sans dialogue) ---
 ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
   try {
@@ -1375,6 +1444,38 @@ app.whenReady().then(() => {
 
   session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
     callback(PERMISSIONS_ACCORDEES.has(permission));
+  });
+
+  // LE FILM EST SERVI PAR MORCEAUX, comme le ferait un serveur : l'en-tête « Range » est honoré et
+  // la réponse est un flux, jamais un tampon. C'est ce qui permet de se déplacer dans un film de
+  // onze minutes sans jamais en tenir plus de quelques centaines de kilo-octets.
+  protocol.handle(SCHEMA_MEDIA, async (requete) => {
+    const chemin = cheminDepuisUrl(requete.url);
+    const type = chemin && typeMedia(chemin);
+    if (!chemin || !type) return new Response("chemin refusé", { status: 400 });
+    let taille;
+    try {
+      taille = (await fs.promises.stat(chemin)).size;
+    } catch {
+      return new Response("fichier introuvable", { status: 404 });
+    }
+    const plage = analyserPlage(requete.headers.get("Range"), taille);
+    if (plage?.invalide) {
+      return new Response("plage hors du fichier", {
+        status: 416, headers: { "Content-Range": `bytes */${taille}` },
+      });
+    }
+    const options = plage ? { start: plage.debut, end: plage.fin } : {};
+    const flux = Readable.toWeb(fs.createReadStream(chemin, options));
+    return new Response(flux, {
+      status: plage ? 206 : 200,
+      headers: {
+        "Content-Type": type,
+        "Accept-Ranges": "bytes",
+        "Content-Length": String(plage ? plage.longueur : taille),
+        ...(plage ? { "Content-Range": `bytes ${plage.debut}-${plage.fin}/${taille}` } : {}),
+      },
+    });
   });
 
   creerFenetre();

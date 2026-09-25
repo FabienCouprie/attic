@@ -96,7 +96,7 @@ export interface PortDef {
 export interface ParametreDef {
   nom: string;
   nomEn?: string;
-  type?: "choix" | "curseur" | "texte" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
+  type?: "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
   options?: string[];
   optionsEn?: string[];
   optionIds?: string[];
@@ -114,6 +114,15 @@ export interface ParametreDef {
   docEn?: string;
   placeholder?: string;
   placeholderEn?: string;
+  /**
+   * Les extensions proposées par le sélecteur d'un paramètre `"fichier"`, sans le point.
+   *
+   * UN CHEMIN NE S'ÉCRIT PAS À LA MAIN. Un paramètre qui désigne un fichier ou un dossier porte le
+   * type `"fichier"` ou `"dossier"`, jamais `"texte"` : le champ reste saisissable, mais un bouton
+   * ouvre le dialogue du système, qui seul donne un chemin exact. Sans extensions déclarées, le
+   * dialogue accepte tout. La règle est vérifiée par `plugins/coherence-chemins.test.ts`.
+   */
+  extensions?: string[];
   hidden?: boolean;
   /**
    * Ce réglage est une borne de modulation, et nomme le paramètre qu'il encadre.
@@ -177,6 +186,17 @@ export interface PluginDef<TValeur, TRuntime> {
   // le seul NOMBRE de sorties audio, ce qui privait de lecteur des nœuds dont la première sortie
   // est bel et bien le son traité. Défaut : false.
   sansApercuAudio?: boolean;
+
+  // HORS CATALOGUE : cette fiche existe pour qu'un nœud se dessine et se câble, jamais pour être
+  // choisie. `trouverDef` la rend, `tousLesPlugins` ne la rend pas.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON DES FILTRES. Ce qui énumère le registre est la palette, mais aussi
+  // le quiz, le vocabulaire de génération de graphe, la documentation et le gestionnaire de nodes.
+  // Filtrer à chacun de ces endroits, c'est autant d'occasions d'en oublier un, et un oubli ne se
+  // voit pas : une fiche qui n'a rien à faire là passe pour un composant. Le fait se déclare donc une
+  // fois, et un seul endroit l'honore. C'est le cas des bulles, dont la fiche est dérivée des membres
+  // et n'existe que dans le projet qui les porte. Défaut : false.
+  horsCatalogue?: boolean;
 
   // Ce que le nœud exige de la mémoire PENDANT son calcul (cf. core/memoire.ts).
   // « totale » : il ne peut pas commencer avant d'avoir le signal entier — un

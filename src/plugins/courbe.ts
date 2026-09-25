@@ -71,18 +71,27 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Courbe", nomEn: "Curve", type: "courbe" }],
     parametres: [
       { nom: "Forme", nomEn: "Shape", type: "choix",
-        options: ["Sinus", "Triangle", "Carré", "Rampe", "Logistique", "Aléatoire"],
-        optionsEn: ["Sine", "Triangle", "Square", "Ramp", "Logistic", "Random"],
-        optionIds: ["sinus", "triangle", "carre", "rampe", "logistique", "aleatoire"],
+        // L'identifiant `logistique` reste attaché à la SUITE : le réaffecter à la courbe en S
+        // ferait basculer en silence les graphes enregistrés qui l'emploient. Seule son étiquette
+        // change, et la courbe en S entre sous l'identifiant `sigmoide`.
+        options: ["Sinus", "Triangle", "Carré", "Rampe", "Logistique", "Chaos logistique", "Aléatoire"],
+        optionsEn: ["Sine", "Triangle", "Square", "Ramp", "Logistic", "Logistic chaos", "Random"],
+        optionIds: ["sinus", "triangle", "carre", "rampe", "sigmoide", "logistique", "aleatoire"],
         defaut: "Sinus", defautEn: "Sine",
-        doc: "La forme de la modulation. La suite logistique est là pour une raison précise : sept composants l'ont chacun réimplémentée dans leur coin, écho logistique, trémolo logistique, et cinq autres. Une source unique branchée sur n'importe quel effet fait le même travail, et sur tous plutôt que sur sept.",
-        docEn: "The shape of the modulation. The logistic sequence is here for a precise reason: seven nodes each reimplemented it on their own, logistic echo, logistic tremolo, and five others. A single source plugged into any effect does the same work, and on all of them rather than on seven." },
+        doc: "La forme de la modulation. Deux entrées portent le nom logistique et ne désignent pas la même chose. « Logistique » est la fonction 1/(1+e^(−k(t−t₀))), une courbe en S qui monte de zéro à un une seule fois sur la durée ; « Centre » et « Pente » la règlent, et « Fréquence » ne l'atteint pas. « Chaos logistique » est la suite x → r·x·(1−x), une succession de paliers que « Chaos » règle et dont la fréquence donne le nombre de pas par seconde.",
+        docEn: "The shape of the modulation. Two entries carry the name logistic and do not denote the same thing. « Logistic » is the function 1/(1+e^(−k(t−t₀))), an S curve rising from zero to one once over the duration; « Centre » and « Steepness » set it, and « Frequency » does not reach it. « Logistic chaos » is the sequence x → r·x·(1−x), a succession of plateaus set by « Chaos » and whose frequency gives the number of steps per second." },
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.5, 120], pas: 0.5, defaut: 10, unite: "s",
         doc: "Durée de la courbe. Elle n'a pas à valoir celle du son : l'effet l'étire pour la couvrir, si bien qu'une rampe reste une rampe quelle que soit la longueur du son.",
         docEn: "Length of the curve. It need not match the sound's: the effect stretches it to cover it, so a ramp stays a ramp whatever the sound's length." },
       { nom: "Fréquence", nomEn: "Frequency", type: "curseur", plage: [0.01, 20], pas: 0.01, defaut: 0.5, unite: "Hz",
-        doc: "Cycles par seconde, pour les formes périodiques ; pour la logistique et l'aléatoire, nombre de pas par seconde.",
-        docEn: "Cycles per second for the periodic shapes; for the logistic and random ones, steps per second." },
+        doc: "Cycles par seconde, pour les formes périodiques ; pour la logistique et l'aléatoire, nombre de pas par seconde. Changer de forme pose la cadence qui convient à la nouvelle : un demi cycle par seconde pour les formes périodiques, deux pas par seconde pour la logistique et l'aléatoire. Une valeur réglée à la main est conservée quand la forme change. Au-delà de quatre pas par seconde, les paliers deviennent trop étroits pour se distinguer dans le tracé.",
+        docEn: "Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. Changing shape sets the rate that suits the new one: half a cycle per second for the periodic shapes, two steps per second for the logistic and random ones. A value set by hand is kept when the shape changes. Beyond four steps per second the plateaus become too narrow to tell apart in the trace." },
+      { nom: "Centre", nomEn: "Centre", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
+        doc: "Où la courbe en S passe par la moitié, en part de la durée. À 50 %, la transition se tient au milieu. Ce réglage n'agit que sur la forme Logistique.",
+        docEn: "Where the S curve passes through half, as a share of the duration. At 50 % the transition sits in the middle. This setting acts on the Logistic shape only." },
+      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [1, 40], pas: 0.5, defaut: 10,
+        doc: "Raideur de la courbe en S. À 1, elle monte presque en ligne droite ; à 40, elle approche une marche. Les extrémités sont ramenées à zéro et à un quelle que soit la valeur, si bien que la course couvre toujours toute la plage. Ce réglage n'agit que sur la forme Logistique.",
+        docEn: "Steepness of the S curve. At 1 it rises almost in a straight line; at 40 it approaches a step. The ends are brought back to zero and one whatever the value, so the travel always covers the whole range. This setting acts on the Logistic shape only." },
       { nom: "Chaos", nomEn: "Chaos", type: "curseur", plage: [2.5, 4], pas: 0.01, defaut: 3.9,
         doc: "Le paramètre r de la suite logistique. En dessous de 3 elle se fixe ; vers 3,45 elle alterne entre deux valeurs, puis quatre ; au-delà de 3,57 elle devient chaotique et ne se répète jamais.",
         docEn: "The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats." },
@@ -96,6 +105,8 @@ export const fiches: FicheAudio[] = ([
         dureeSec, forme,
         frequence: ctx.paramNombre("Fréquence", 0.5),
         r: ctx.paramNombre("Chaos", 3.9),
+        centre: ctx.paramNombre("Centre", 50) / 100,
+        pente: ctx.paramNombre("Pente", 10),
         graine: Math.round(ctx.paramNombre("Graine", 1)),
       });
       return {

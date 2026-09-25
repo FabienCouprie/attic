@@ -249,6 +249,9 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: transparent; border: 1px solid var(--border); border-radius: 6px;
   padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
   color: var(--text-secondary);
+  /* « FR » et « EN » ne font pas la même largeur : six dixièmes de pixel, qui déplaçaient tout ce qui
+     suit. Le bouton qui CHANGE la langue ne peut pas être celui qui fait bouger la barre. */
+  min-width: 36px;
 }
 .attic-btn-lang:hover { background: var(--bg-btn-hover); }
 
@@ -271,6 +274,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border: none; border-radius: 8px; padding: 8px 18px 8px 14px;
   font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: filter 0.15s, transform 0.1s; flex-shrink: 0;
+  /* LARGEUR PLANCHER, POUR QUATRE LIBELLÉS. Ce bouton porte « Lancer » ou « Arrêter », « Run » ou
+     « Stop » : il changeait donc de largeur au changement de langue ET à chaque exécution, mesuré à
+     dix-huit pixels entre « Run » et « Lancer ». Le plancher tient le plus large des quatre,
+     « Arrêter » : 45 px de texte, plus 57 px d'icône, d'espace et de marges intérieures.
+     L'icône reste CALÉE À GAUCHE et non centrée : centrée, elle se déplaçait de neuf pixels à
+     l'intérieur du bouton quand le libellé raccourcissait. Le bouton ne bougeait plus, son icône si.
+     Vérifié par `tests-e2e/barre-stable.spec.ts`. */
+  min-width: 104px; justify-content: flex-start;
 }
 .attic-btn-lancer:hover { filter: brightness(1.08); }
 .attic-btn-lancer:active { transform: scale(0.97); }
@@ -369,6 +380,13 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; color: var(--text-secondary); cursor: pointer;
   padding: 2px 4px; margin-left: 2px; border-radius: 4px;
   background: var(--bg-surface-alt); border: 1px solid var(--border);
+  /* LARGEUR FIXE, PARCE QU'UN `select` SE DIMENSIONNE SUR SON OPTION LA PLUS LARGE. La plus large
+     passe de « 32 bits flottants » à « 32-bit float » : la liste perdait vingt-deux pixels au
+     passage à l'anglais, et TOUT ce qui la suit dans la barre se décalait d'autant. Mesuré : vingt-
+     six éléments déplacés de −22 px. Une barre d'outils ne bouge pas quand on change de langue, et
+     `tests-e2e/barre-stable.spec.ts` le vérifie. Cette largeur tient le libellé français, le plus
+     long des deux. */
+  width: 112px;
 }
 .attic-profondeur-export:hover { color: var(--text-title); }
 
@@ -376,6 +394,92 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-canevas { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .attic-canevas > .react-flow { flex: 1; min-height: 0; }
 .attic-canevas-pending .react-flow__pane { cursor: crosshair; }
+
+/* Les bandes du visualiseur multipiste. Le dessin occupe toute la place que le nœud lui laisse : ses
+   six pistes ne tiennent pas dans une hauteur fixe, et c'est le redimensionnement qui les rend
+   lisibles. */
+.attic-pistes-multiples {
+  position: relative; width: 100%; height: 100%; min-height: 120px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-divider);
+  border-radius: 6px; overflow: hidden;
+}
+.attic-pistes-multiples canvas { display: block; }
+.attic-pistes-multiples-vide {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--text-muted); font-size: 12px;
+}
+
+/* Le montage vidéo : le film occupe la place qui reste, les bandes gardent la leur. Sans la hauteur
+   minimale des bandes, un nœud rétréci donnerait tout au film et l'on reperdrait de vue ce qu'on
+   place. */
+/* LE NŒUD DEVIENT UNE COLONNE POUR CETTE VUE, et pour elle seule. Un nœud est une boîte de bloc :
+   une vue en « height: 100% » y prend TOUTE la hauteur, et pousse les ports et le statut hors du
+   cadre. En colonne, l'en-tête, la vue, les ports et le statut se partagent la hauteur, et c'est la
+   vue qui prend ce qui reste. Mesuré : sans cela, les ports tombaient 23 px sous le bord du nœud. */
+.attic-node:has(> .attic-vue-film) { display: flex; flex-direction: column; }
+.attic-vue-film {
+  display: flex; flex-direction: column; gap: 4px;
+  width: 100%; flex: 1 1 auto; min-height: 0;
+}
+.attic-vue-film video {
+  flex: 1 1 auto; min-height: 90px; width: 100%;
+  background: #000; border-radius: 6px; object-fit: contain;
+}
+.attic-vue-film-vide {
+  flex: 1 1 auto; min-height: 90px;
+  display: grid; place-items: center; text-align: center; padding: 0 8px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-divider);
+  border-radius: 6px; color: var(--text-muted); font-size: 11px;
+}
+.attic-vue-film-temps {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.attic-vue-film-pistes {
+  position: relative; flex: 0 0 auto; width: 100%; height: 44%; min-height: 70px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-divider);
+  border-radius: 6px; overflow: hidden; cursor: crosshair; touch-action: none;
+}
+.attic-vue-film-pistes canvas { display: block; }
+/* L'axe de l'extrait n'a qu'une bande : il lui faut moins de hauteur que six pistes, et une hauteur
+   fixe plutôt qu'une part, pour que l'image garde tout le reste. */
+.attic-vue-film-plage { height: auto; flex: 0 0 56px; min-height: 44px; }
+.attic-vue-film-bornes {
+  display: flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.attic-vue-film-resultat {
+  display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.attic-vue-film-aucune {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--text-muted); font-size: 11px; pointer-events: none;
+}
+
+/* Menu du clic droit. Le premier du canevas : rien n'écoutait `contextmenu` avant lui. */
+.attic-menu-contextuel {
+  position: fixed; z-index: 200;
+  min-width: 160px; padding: 4px;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  display: flex; flex-direction: column;
+}
+.attic-menu-contextuel-item {
+  background: none; border: none; text-align: left;
+  color: var(--text-primary); padding: 7px 10px; border-radius: 6px;
+  font-size: 13px; cursor: pointer;
+}
+.attic-menu-contextuel-item:hover { background: var(--bg-hover-accent); color: var(--text-title); }
+
+/* UNE BULLE PREND LA COULEUR DU CANEVAS, à la demande de Fabien : elle se lit comme un CREUX dans la
+   surface, ce qui est le signal juste pour « ceci est replié ». Le fond ne la distinguant plus de rien,
+   c'est sa bordure et son titre qui la dessinent. */
+.attic-node.bulle {
+  background: var(--bg-app);
+  border-style: dashed;
+}
+.attic-node.bulle.selected { border-style: solid; }
 
 /* Actions méta-composants (§3.8) */
 .attic-meta-actions {
@@ -388,6 +492,13 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-btn); border: 1px solid var(--border-divider);
   color: var(--text-secondary); border-radius: 6px; padding: 5px 10px;
   font-size: 12px; cursor: pointer;
+  /* MÊME PLANCHER POUR TOUS, POUR LA MÊME RAISON QUE LA BARRE DU HAUT. Ces libellés sont traduits, et
+     un bouton se dimensionne sur son texte : « Rename » contre « Renommer », « Ungroup » contre
+     « Dégrouper », les trois se décalaient de sept à dix-huit pixels au changement de langue. Le
+     plancher tient le plus large des six, « ⊟ Grouper en outil », mesuré à 123,4 px. Une largeur
+     commune plutôt qu'une par bouton : trois boutons de même taille se lisent mieux qu'un alignement
+     qui dépend de la langue. Vérifié par `tests-e2e/barre-stable.spec.ts`. */
+  min-width: 124px;
 }
 .attic-meta-actions button:hover { background: var(--bg-btn-hover); color: var(--text-title); }
 
@@ -714,6 +825,12 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   border-bottom: 1px solid var(--border-divider);
   max-height: 120px; overflow-y: auto; position: relative;
 }
+/* LA SÉLECTION DOIT LAISSER VOIR LES COULEURS. Le texte saisi est transparent, posé sur le calque
+   coloré : une sélection opaque peindrait par-dessus et effacerait ce qu'on vient de sélectionner.
+   Un fond translucide garde le repère de la sélection ET le texte coloré dessous. */
+.attic-editeur-code-saisie::selection { background: rgba(90, 120, 200, 0.45); }
+.attic-editeur-code-saisie::-moz-selection { background: rgba(90, 120, 200, 0.45); }
+
 .attic-node-copy-btn {
   position: sticky; top: 0; float: right;
   background: transparent; border: 1px solid var(--border); border-radius: 4px;

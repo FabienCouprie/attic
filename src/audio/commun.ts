@@ -131,7 +131,26 @@ export function extraitCentre(buffer: AudioBuffer, dureeMaxS: number): AudioBuff
  * garder son recouvrement, et le saut d'analyse se déduit du facteur ; au raccourcissement, c'est
  * l'inverse. Les deux règles se rejoignent à facteur 1.
  */
-export function etirerDuree(entree: AudioBuffer, facteur: number, tailleFenetre: number = TAILLE_FFT_HAUTEUR): AudioBuffer {
+/** La longueur que `etirerDureeVoie` rendra, utile pour dimensionner avant de calculer. */
+export function longueurEtiree(
+  longueur: number, facteur: number, tailleFenetre: number = TAILLE_FFT_HAUTEUR,
+): number {
+  const n = Math.max(256, Math.min(16384, 2 ** Math.round(Math.log2(Math.max(2, tailleFenetre)))));
+  return Math.max(n, Math.round(longueur * facteur));
+}
+
+/**
+ * L'étirement d'UNE voie, sans `AudioBuffer`.
+ *
+ * POURQUOI CE CŒUR EST SÉPARÉ. Le calcul n'a jamais eu besoin du Web Audio : `AudioBuffer` ne
+ * servait que de récipient à des `Float32Array`. Or c'est lui qui empêchait ce traitement, et tous
+ * ceux qui en dépendent, de sortir du fil de l'interface : `AudioBuffer` n'existe pas dans un
+ * worker. Le corps de la boucle est déplacé sans qu'une seule opération change, ce qui garantit un
+ * son identique ; les empreintes des composants concernés le vérifient.
+ */
+export function etirerDureeVoie(
+  src: Float32Array, facteur: number, tailleFenetre: number = TAILLE_FFT_HAUTEUR,
+): Float32Array {
   // La fenêtre d'analyse, en puissance de deux (la transformée l'exige) ; le saut en est le quart.
   const n = Math.max(256, Math.min(16384, 2 ** Math.round(Math.log2(Math.max(2, tailleFenetre)))));
   const nbBins = n / 2 + 1;
@@ -139,81 +158,109 @@ export function etirerDuree(entree: AudioBuffer, facteur: number, tailleFenetre:
   const ha = facteur >= 1 ? Math.max(1, Math.round(saut / facteur)) : saut;
   const hs = facteur >= 1 ? saut : Math.max(1, Math.round(saut * facteur));
   const fenetre = creerFenetreHann(n);
-  const longueurSortie = Math.max(n, Math.round(entree.length * facteur));
+  const longueurSortie = Math.max(n, Math.round(src.length * facteur));
 
+  const sortie = new Float64Array(longueurSortie);
+  const enveloppe = new Float64Array(longueurSortie);
+  const phasePrecedente = new Float64Array(nbBins);
+  const phaseSynthese = new Float64Array(nbBins);
+  let premiereTrame = true;
+
+  let posAnalyse = 0;
+  let posSynthese = 0;
+  while (posAnalyse < src.length) {
+    const re = new Float64Array(n);
+    const im = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const idx = posAnalyse + i;
+      re[i] = (idx < src.length ? src[idx] : 0) * fenetre[i];
+    }
+    fft(re, im, false);
+
+    for (let b = 0; b < nbBins; b++) {
+      const magnitude = Math.hypot(re[b], im[b]);
+      const phase = Math.atan2(im[b], re[b]);
+
+      if (premiereTrame) {
+        phaseSynthese[b] = phase;
+      } else {
+        const omegaBin = (2 * Math.PI * b) / n;
+        let deltaPhase = phase - phasePrecedente[b] - omegaBin * ha;
+        deltaPhase -= 2 * Math.PI * Math.round(deltaPhase / (2 * Math.PI));
+        const frequenceInstantanee = omegaBin + deltaPhase / ha;
+        phaseSynthese[b] += frequenceInstantanee * hs;
+      }
+      phasePrecedente[b] = phase;
+
+      re[b] = magnitude * Math.cos(phaseSynthese[b]);
+      im[b] = magnitude * Math.sin(phaseSynthese[b]);
+      if (b > 0 && b < n - b) {
+        re[n - b] = re[b];
+        im[n - b] = -im[b];
+      }
+    }
+    premiereTrame = false;
+
+    fft(re, im, true);
+    for (let i = 0; i < n; i++) {
+      const pos = posSynthese + i;
+      if (pos >= longueurSortie) break;
+      sortie[pos] += re[i] * fenetre[i];
+      enveloppe[pos] += fenetre[i] * fenetre[i];
+    }
+
+    posAnalyse += ha;
+    posSynthese += hs;
+  }
+
+  const out = new Float32Array(longueurSortie);
+  for (let i = 0; i < longueurSortie; i++) {
+    out[i] = enveloppe[i] > 1e-6 ? sortie[i] / enveloppe[i] : 0;
+  }
+  return out;
+}
+
+export function etirerDuree(entree: AudioBuffer, facteur: number, tailleFenetre: number = TAILLE_FFT_HAUTEUR): AudioBuffer {
+  const longueurSortie = longueurEtiree(entree.length, facteur, tailleFenetre);
   const resultat = new AudioBuffer({
     numberOfChannels: entree.numberOfChannels,
     length: longueurSortie,
     sampleRate: entree.sampleRate,
   });
-
   for (let c = 0; c < entree.numberOfChannels; c++) {
-    const src = entree.getChannelData(c);
-    const sortie = new Float64Array(longueurSortie);
-    const enveloppe = new Float64Array(longueurSortie);
-    const phasePrecedente = new Float64Array(nbBins);
-    const phaseSynthese = new Float64Array(nbBins);
-    let premiereTrame = true;
-
-    let posAnalyse = 0;
-    let posSynthese = 0;
-    while (posAnalyse < src.length) {
-      const re = new Float64Array(n);
-      const im = new Float64Array(n);
-      for (let i = 0; i < n; i++) {
-        const idx = posAnalyse + i;
-        re[i] = (idx < src.length ? src[idx] : 0) * fenetre[i];
-      }
-      fft(re, im, false);
-
-      for (let b = 0; b < nbBins; b++) {
-        const magnitude = Math.hypot(re[b], im[b]);
-        const phase = Math.atan2(im[b], re[b]);
-
-        if (premiereTrame) {
-          phaseSynthese[b] = phase;
-        } else {
-          const omegaBin = (2 * Math.PI * b) / n;
-          let deltaPhase = phase - phasePrecedente[b] - omegaBin * ha;
-          deltaPhase -= 2 * Math.PI * Math.round(deltaPhase / (2 * Math.PI));
-          const frequenceInstantanee = omegaBin + deltaPhase / ha;
-          phaseSynthese[b] += frequenceInstantanee * hs;
-        }
-        phasePrecedente[b] = phase;
-
-        re[b] = magnitude * Math.cos(phaseSynthese[b]);
-        im[b] = magnitude * Math.sin(phaseSynthese[b]);
-        if (b > 0 && b < n - b) {
-          re[n - b] = re[b];
-          im[n - b] = -im[b];
-        }
-      }
-      premiereTrame = false;
-
-      fft(re, im, true);
-      for (let i = 0; i < n; i++) {
-        const pos = posSynthese + i;
-        if (pos >= longueurSortie) break;
-        sortie[pos] += re[i] * fenetre[i];
-        enveloppe[pos] += fenetre[i] * fenetre[i];
-      }
-
-      posAnalyse += ha;
-      posSynthese += hs;
-    }
-
-    const canalSortie = resultat.getChannelData(c);
-    for (let i = 0; i < longueurSortie; i++) {
-      canalSortie[i] = enveloppe[i] > 1e-6 ? sortie[i] / enveloppe[i] : 0;
-    }
+    resultat.getChannelData(c).set(etirerDureeVoie(entree.getChannelData(c), facteur, tailleFenetre));
   }
-
   return resultat;
 }
 
 // Changement de tempo : c'est exactement l'étape d'étirement du changement de
 // tonalité, utilisée seule (sans le rééchantillonnage qui suit) — la durée
 // change, la hauteur reste intacte grâce à la correction de phase.
+
+/** Le rééchantillonnage d'UNE voie, sans `AudioBuffer`. Même remarque que `etirerDureeVoie`. */
+export function reechantillonnerVoie(
+  src: Float32Array, ratio: number, longueurCible: number,
+): Float32Array {
+  const dst = new Float32Array(longueurCible);
+  for (let i = 0; i < longueurCible; i++) {
+    const positionSource = i * ratio;
+    const idx = Math.floor(positionSource);
+    const frac = positionSource - idx;
+    // Interpolation cubique Catmull-Rom (4 points)
+    const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
+    const p1 = idx < src.length ? src[idx] : 0;
+    const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
+    const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
+    const t = frac;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    dst[i] = p1
+           + 0.5 * (p2 - p0) * t
+           + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
+           + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
+  }
+  return dst;
+}
 
 export function reechantillonnerVers(buffer: AudioBuffer, ratio: number, longueurCible: number): AudioBuffer {
   const resultat = new AudioBuffer({
@@ -222,25 +269,7 @@ export function reechantillonnerVers(buffer: AudioBuffer, ratio: number, longueu
     sampleRate: buffer.sampleRate,
   });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c);
-    const dst = resultat.getChannelData(c);
-    for (let i = 0; i < longueurCible; i++) {
-      const positionSource = i * ratio;
-      const idx = Math.floor(positionSource);
-      const frac = positionSource - idx;
-      // Interpolation cubique Catmull-Rom (4 points)
-      const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
-      const p1 = idx < src.length ? src[idx] : 0;
-      const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
-      const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
-      const t = frac;
-      const t2 = t * t;
-      const t3 = t2 * t;
-      dst[i] = p1
-             + 0.5 * (p2 - p0) * t
-             + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
-             + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
-    }
+    resultat.getChannelData(c).set(reechantillonnerVoie(buffer.getChannelData(c), ratio, longueurCible));
   }
   return resultat;
 }

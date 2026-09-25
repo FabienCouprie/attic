@@ -305,6 +305,49 @@ export function convergenceSpectrale(voulus: Float32Array[], obtenus: Float32Arr
   return 20 * Math.log10(Math.sqrt(num / den));
 }
 
+export interface OptionsReconstruction {
+  /** Taille de la transformée. */
+  taille: number;
+  /** Saut entre deux trames. */
+  saut: number;
+  /** Tours de Griffin-Lim appliqués après PGHI. Zéro pour entendre PGHI seul. */
+  affinage: number;
+  /** Part de la magnitude la plus forte en dessous de laquelle un point n'est pas intégré. */
+  tolerance: number;
+  /** Longueur du signal rendu, en échantillons. */
+  longueur: number;
+}
+
+export interface Reconstruction {
+  reconstruit: Float32Array;
+  /** Convergence spectrale, en décibels : plus c'est bas, meilleure est la reconstruction. */
+  convergence: number;
+  ilots: number;
+  partIntegree: number;
+}
+
+/**
+ * Une voie, de son analyse à sa mesure : tout ce qu'un canal demande, en un seul appel.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. Ce calcul tourne dans un worker, et il doit pouvoir tourner aussi
+ * dans le fil principal quand il n'y a pas de worker — un test, un environnement qui n'en fournit
+ * pas. Deux chemins, mais une seule implémentation : si le repli était écrit à part, rien ne
+ * garantirait qu'il rende le même son que le worker, et un écart n'apparaîtrait que chez celui qui
+ * emploie le repli. Elle ne touche à rien du Web Audio, ce qui est précisément ce qui la rend
+ * transportable dans un worker.
+ */
+export function reconstruire(voie: Float32Array, o: OptionsReconstruction): Reconstruction {
+  const { modules } = analyser(voie, o.taille, o.saut);
+  const r = pghi(modules, o.taille, o.saut, o.tolerance);
+  const reconstruit = o.affinage > 0
+    ? griffinLim(modules, o.taille, o.saut, o.longueur, o.affinage, r.phases)
+    : synthetiser({ modules, phases: r.phases, taille: o.taille, saut: o.saut, longueur: o.longueur });
+  // Le nœud MESURE sa propre reconstruction : on réanalyse et on compare les magnitudes obtenues à
+  // celles qu'on voulait. C'est la mesure de l'article, et elle ne coûte qu'une analyse de plus.
+  const convergence = convergenceSpectrale(modules, analyser(reconstruit, o.taille, o.saut).modules);
+  return { reconstruit, convergence, ilots: r.ilots, partIntegree: r.partIntegree };
+}
+
 /**
  * Griffin-Lim, sur la même fenêtre et le même saut : le témoin des mesures.
  *

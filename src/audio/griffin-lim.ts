@@ -4,6 +4,7 @@
 // l'audio généré par réseaux qui prédisent uniquement la magnitude.
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { Respiration } from "../core/respirer";
 
 interface SpectralFrame {
   start: number;
@@ -16,15 +17,21 @@ function prochainePuissanceDeDeux(n: number): number {
   return 1 << (32 - Math.clz32(n - 1));
 }
 
-function analyserSignal(
+// LA RESPIRATION EST PAR TRAME, ET NON PAR ITÉRATION. Une itération coûte le signal entier : sur
+// une prise de trois minutes elle dure une dizaine de secondes, et rendre la main entre deux
+// itérations laisserait ce gel-là intact. Une trame, elle, coûte le même temps quelle que soit la
+// longueur de la prise, ce qui borne le gel indépendamment de la durée du son.
+async function analyserSignal(
   signal: Float32Array | Float64Array,
   fftSize: number,
   hop: number,
   window: Float64Array,
-): SpectralFrame[] {
+  souffle: Respiration,
+): Promise<SpectralFrame[]> {
   const frames: SpectralFrame[] = [];
   const nbBins = fftSize / 2 + 1;
   for (let start = 0; start < signal.length; start += hop) {
+    await souffle.tour();
     const re = new Float64Array(fftSize);
     const im = new Float64Array(fftSize);
     for (let i = 0; i < fftSize; i++) {
@@ -44,18 +51,20 @@ function analyserSignal(
   return frames;
 }
 
-function synthetiserSignal(
+async function synthetiserSignal(
   frames: SpectralFrame[],
   fftSize: number,
   hop: number,
   window: Float64Array,
   length: number,
-): Float64Array {
+  souffle: Respiration,
+): Promise<Float64Array> {
   const out = new Float64Array(length);
   const norm = new Float64Array(length);
   const nbBins = fftSize / 2 + 1;
 
   for (const frame of frames) {
+    await souffle.tour();
     const re = new Float64Array(fftSize);
     const im = new Float64Array(fftSize);
     for (let k = 0; k < nbBins; k++) {
@@ -108,6 +117,10 @@ export async function griffinLim(
   onProgress?: (msg: string) => void,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
+  // UNE SEULE RESPIRATION POUR TOUT L'APPEL : elle retient quand elle a rendu la main pour la
+  // dernière fois, si bien que les deux passes et les soixante itérations se partagent un même
+  // rythme au lieu d'en avoir chacune un.
+  const souffle = new Respiration();
   const sr = buffer.sampleRate;
   const nCh = buffer.numberOfChannels;
   const len = buffer.length;
@@ -152,7 +165,7 @@ export async function griffinLim(
     const dryPad = new Float64Array(len + 2 * pad);
     dryPad.set(drySrc, pad);
     const padLen = dryPad.length;
-    const targetFrames = analyserSignal(dryPad, fftSize, hop, window);
+    const targetFrames = await analyserSignal(dryPad, fftSize, hop, window, souffle);
 
     // Phase initiale.
     // Important : la phase aléatoire doit PROGRESSER de façon cohérente d'une
@@ -182,12 +195,11 @@ export async function griffinLim(
       for (const frame of targetFrames) frame.phase.fill(0);
     }
 
-    let currentSignal = synthetiserSignal(targetFrames, fftSize, hop, window, padLen);
+    let currentSignal = await synthetiserSignal(targetFrames, fftSize, hop, window, padLen, souffle);
 
     const itCount = Math.max(0, Math.round(iterations));
-    const yieldEvery = Math.max(1, Math.floor(itCount / 10));
     for (let it = 1; it <= itCount; it++) {
-      const currentFrames = analyserSignal(currentSignal, fftSize, hop, window);
+      const currentFrames = await analyserSignal(currentSignal, fftSize, hop, window, souffle);
       for (let f = 0; f < currentFrames.length; f++) {
         const targetMag = targetFrames[f].mag;
         const currentMag = currentFrames[f].mag;
@@ -195,12 +207,12 @@ export async function griffinLim(
           currentMag[k] = targetMag[k];
         }
       }
-      currentSignal = synthetiserSignal(currentFrames, fftSize, hop, window, padLen);
-      // Relâcher la main à l'event loop pour éviter le freeze sur les longues pistes.
-      if (it < itCount && it % yieldEvery === 0) {
-        if (onProgress) onProgress(`Griffin-Lim · itération ${it}/${itCount}`);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
+      currentSignal = await synthetiserSignal(currentFrames, fftSize, hop, window, padLen, souffle);
+      // L'ANCIENNE RÈGLE RENDAIT LA MAIN DIX FOIS EN TOUT, `it % floor(itCount / 10)` : une fréquence
+      // décidée en nombre de tours, donc aveugle au coût d'un tour. Mesurée sur trois secondes de
+      // stéréo, elle laissait 1,06 seconde de gel entre deux pauses. La fréquence se décide en temps,
+      // et c'est ce que `Respiration` tient.
+      if (onProgress) onProgress(`Griffin-Lim · itération ${it}/${itCount}`);
     }
     if (onProgress && itCount > 0) onProgress(`Griffin-Lim · itération ${itCount}/${itCount}`);
 

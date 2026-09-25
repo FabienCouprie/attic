@@ -67,20 +67,34 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Son", nomEn: "Sound", type: "audio" },
       { nom: "Second son", nomEn: "Second sound", type: "audio" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Mix" },
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     parametres: [
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Part du son convolué. À 0 %, le premier son seul, inchangé ; entre les deux, le son et ce qu'il devient se superposent.",
-        docEn: "Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap." },
+        doc: "Part du son convolué. À 0 %, le premier son seul, inchangé ; entre les deux, le son et ce qu'il devient se superposent. Une courbe branchée sur l'entrée Modulation donne cette valeur à chaque instant, à la place du curseur, et se répartit sur la durée produite.",
+        docEn: "Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. A curve connected to the Modulation input gives this value at each instant, in place of the slider, spread over the produced duration." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Part que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
+        docEn: "Share that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Part que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
+        docEn: "Share that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0), b = ctx.entree(1);
       if (!(a instanceof AudioBuffer) || !(b instanceof AudioBuffer)) {
         return { valeurs: [null], message: en() ? "Two sounds are needed." : "Il faut deux sons." };
       }
+      // Sans courbe branchée, on passe le NOMBRE : la boucle de mélange garde son chemin exact.
+      const modulation = ctx.entree(2);
+      const mix = estCourbe(modulation)
+        ? valeursParametre(modulation, a.length, 0, {
+          min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+        })
+        : ctx.paramNombre("Mix", 100);
       try {
-        const y = await convoluerDeuxSons(a, b, ctx.paramNombre("Mix", 100));
+        const y = await convoluerDeuxSons(a, b, mix);
         return { valeurs: [y], message: `${a.duration.toFixed(2)} s + ${b.duration.toFixed(2)} s → ${y.duration.toFixed(2)} s` };
       } catch (e: any) {
         return { valeurs: [null], message: e?.message ?? String(e) };

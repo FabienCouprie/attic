@@ -14,15 +14,29 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { toutesLesFiches } from "../plugins/index";
 import "../audio/adaptateur";
-import { genererInventaireMarkdown, inventorier } from "./inventaire-ui";
+import { genererInventaireMarkdown, inventorier, listePourBalayage } from "./inventaire-ui";
 
 const CHEMIN = join(process.cwd(), "INTERFACE.md");
+const CHEMIN_BALAYAGE = join(process.cwd(), "tests-e2e", "composants-vues.json");
 const ecrire = process.env.ECRIRE_INVENTAIRE === "1";
 
-it.skipIf(!ecrire)("écrit INTERFACE.md", () => {
+/** Le JSON que le balayage navigateur consomme, écrit et vérifié comme INTERFACE.md. */
+const listeBalayage = () => `${JSON.stringify(listePourBalayage(toutesLesFiches as any), null, 2)}\n`;
+
+it.skipIf(!ecrire)("écrit INTERFACE.md et la liste du balayage", () => {
   const md = genererInventaireMarkdown(toutesLesFiches as any);
   writeFileSync(CHEMIN, md);
+  writeFileSync(CHEMIN_BALAYAGE, listeBalayage());
   console.log(`INTERFACE.md : ${toutesLesFiches.length} composants, ${md.split("\n").length} lignes.`);
+});
+
+it.skipIf(ecrire)("la liste du balayage navigateur correspond au registre", () => {
+  expect(existsSync(CHEMIN_BALAYAGE),
+    "tests-e2e/composants-vues.json est absent : lancez « npm run docs:interface »").toBe(true);
+  const actuel = readFileSync(CHEMIN_BALAYAGE, "utf8").replace(/\r\n/g, "\n");
+  expect(actuel,
+    "La liste des composants habillés d'une vue a changé : lancez « npm run docs:interface » et versionnez.")
+    .toBe(listeBalayage());
 });
 
 it.skipIf(ecrire)("INTERFACE.md correspond aux tables d'affichage", () => {

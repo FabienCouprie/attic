@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "4.1.0",
-  "description": "Visual node-editor for AI-powered music and sound design — 396 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 403 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -53,11 +53,14 @@
     "download:gtcrn": "node scripts/download-gtcrn.cjs",
     "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
+    "download:kokoro": "node scripts/download-kokoro.cjs",
     "verify:resources": "node scripts/verify-bundled-resources.cjs",
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",
     "modeles:publier": "node scripts/modeles.cjs --publier",
-    "build:electron:light": "node scripts/build-electron.cjs --light"
+    "build:electron:light": "node scripts/build-electron.cjs --light",
+    "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts",
+    "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts"
   },
   "build": {
     "appId": "com.attic.audio",
@@ -97,7 +100,8 @@
         "filter": [
           "**/*",
           "!sdxs-512-texte-image/**",
-          "!stable-audio-3-small-music/**"
+          "!stable-audio-3-small-music/**",
+          "!kokoro-82m/**"
         ]
       },
       {

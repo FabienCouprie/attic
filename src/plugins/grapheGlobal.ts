@@ -14,31 +14,34 @@
 //
 // CE QU'IL FAUT SAVOIR DE SES LIMITES, puisqu'un global en a toujours :
 //  - il est écrit au lancement d'un run, avant l'exécution du premier nœud ;
-//  - c'est le graphe TEL QU'IL EST COMPOSÉ, méta-nœuds non dépliés et boucles non déroulées —
-//    autrement dit ce que l'utilisateur voit et ce qu'un fichier de projet contient, et non la
-//    forme aplatie que le moteur exécute. Pour documenter, c'est la bonne : personne ne
-//    reconnaîtrait son graphe dans ses copies de boucle numérotées ;
+//  - c'est le graphe SANS SES CONTENEURS, leur contenu à leur place, et les boucles non déroulées :
+//    on documente ce qui calcule, jamais un conteneur, et personne ne reconnaîtrait son graphe dans
+//    ses copies de boucle numérotées. Les deux formes du graphe et leur opposition sont décrites
+//    dans `core/formes-graphe.ts` ;
 //  - il ne vaut que pour une exécution à la fois. L'interface n'en mène qu'une, et deux runs
 //    concurrents se marcheraient dessus — c'est le prix du motif, et il est assumé ici.
 
-import type { AreteG, NoeudG } from "../core/meta";
+import type { GrapheSansConteneurs } from "../core/formes-graphe";
 
-export interface GrapheCourant {
-  noeuds: NoeudG[];
-  aretes: AreteG[];
-}
-
-type GlobalAttic = typeof globalThis & { __attic_graphe__?: GrapheCourant | null };
+/**
+ * LA FORME PUBLIÉE EST CELLE QUI CALCULE, et le type l'exige désormais.
+ *
+ * Elle portait un `{ noeuds, aretes }` ordinaire, que les deux formes du graphe satisfaisaient
+ * indifféremment ; le moteur y posait le graphe composé, si bien qu'un méta-composant se documentait
+ * lui-même, par la notice que son magasin lui fabrique, et que son contenu n'était documenté nulle
+ * part. Voir `core/formes-graphe.ts` : le compilateur refuse maintenant l'autre forme.
+ */
+type GlobalAttic = typeof globalThis & { __attic_graphe__?: GrapheSansConteneurs | null };
 
 const g = globalThis as GlobalAttic;
 
 /** Posé par le moteur au lancement. `null` efface — utile dans un test. */
-export function publierGrapheCourant(graphe: GrapheCourant | null): void {
+export function publierGrapheCourant(graphe: GrapheSansConteneurs | null): void {
   g.__attic_graphe__ = graphe;
 }
 
 /** Le graphe en cours, ou `null` hors exécution. */
-export function grapheCourant(): GrapheCourant | null {
+export function grapheCourant(): GrapheSansConteneurs | null {
   return g.__attic_graphe__ ?? null;
 }
 

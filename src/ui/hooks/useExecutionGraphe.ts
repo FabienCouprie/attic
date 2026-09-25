@@ -8,14 +8,16 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, trouverMeta,
+  ancetresBulle, aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
+  sortieDeBulle,
+  trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
   resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
 import { respirer } from "../../core/respirer";
-import { apercuUtile, noeudRegarde } from "../../core/memoire";
+import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
@@ -285,22 +287,36 @@ export function useExecutionGraphe(o: OptionsExecution) {
     enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
-    // Le graphe TEL QU'IL EST COMPOSÉ est mis à disposition des nœuds qui le documentent —
-    // avant l'aplatissement, donc avec ses méta-nœuds et ses boucles intactes : c'est ce que
-    // l'utilisateur voit et ce qu'un fichier de projet contient. Le contrat d'exécution du
-    // cœur ne porte pas le graphe, et n'a pas à le porter ; voir plugins/grapheGlobal.ts.
-    publierGrapheCourant({
-      noeuds: noeudsRef.current as unknown as NoeudG[],
-      aretes: aretesRef.current as unknown as AreteG[],
-    });
+    // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
+    // traversent et en dessine des substituts vers ses poignées : ce sont des objets d'affichage, et
+    // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
+    // d'un nœud, donc invaliderait son résultat au moindre repli — or ne RIEN invalider est la
+    // propriété qui justifie de replier plutôt que d'extraire. Voir `core/bulles.ts`.
+    const aretesReelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
     // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
     // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
     // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
     const plat = aplatirGraphe(
       noeudsRef.current as unknown as NoeudG[],
-      aretesRef.current as unknown as AreteG[],
+      aretesReelles,
       trouverMeta,
     );
+    // LE GRAPHE MIS À DISPOSITION DES NŒUDS QUI LE DOCUMENTENT EST CELUI QUI CALCULE : les
+    // conteneurs dépliés, leur contenu à leur place, les boucles et les instruments PAS ENCORE
+    // recopiés. Il était publié avant l'aplatissement, si bien qu'un méta-composant se documentait
+    // lui-même par la notice que son magasin lui fabrique, et que ses oscillateurs n'étaient
+    // documentés nulle part. Le contrat d'exécution du cœur ne porte pas le graphe et n'a pas à le
+    // porter ; voir plugins/grapheGlobal.ts et core/formes-graphe.ts.
+    const aDocumenter = grapheSansConteneurs(
+      noeudsRef.current as unknown as NoeudG[],
+      aretesReelles,
+      trouverMeta,
+      estBulle,
+    );
+    publierGrapheCourant(aDocumenter);
+    for (const id of aDocumenter.conteneursRetires) {
+      console.warn(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
+    }
     // Puis DÉPLIE les instruments : tout ce qui est branché entre « Note d'instrument » et
     // « Fin d'instrument » est recopié une fois PAR NOTE du clavier, la note étant injectée dans
     // chaque copie. C'est ainsi qu'une recette devient un instrument : rien n'est transposé, chaque
@@ -384,7 +400,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
     // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
     // « erreur », donnant l'illusion d'un run global.
-    const idsDecoratifs = new Set(nds.filter((n: any) => n.data?.ficheId === "comment" || n.data?.ficheId === "frame").map((n: any) => n.id));
+    // Une bulle rejoint le commentaire et le cadre : elle ne calcule rien, ses membres si.
+    const idsDecoratifs = new Set(nds.filter((n: any) =>
+      n.data?.ficheId === "comment" || n.data?.ficheId === "frame" || estBulle(n.data?.ficheId),
+    ).map((n: any) => n.id));
     ordreFiltre = ordreFiltre.filter((id) => !idsDecoratifs.has(id));
     const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
 
@@ -398,6 +417,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (meta && !noeudsEnErreur.has(n.id) && estMetaEnScope(n.id)) {
         definirStatut(n.id, "en_cours");
       }
+    }
+
+    // UNE BULLE DIT CE QUE FONT SES MEMBRES. Elle ne calcule rien, mais un conteneur muet pendant que
+    // son contenu travaille laisserait croire qu'il ne se passe rien. L'appartenance étant explicite,
+    // la remontée est une lecture directe — sans la convention d'identifiant `::` dont dépend celle des
+    // méta-composants, puisque replier ne renomme rien.
+    const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
+    const bullesDuNoeud = new Map<string, string[]>();
+    for (const id of ordreFiltre) bullesDuNoeud.set(id, ancetresBulle(tousNoeudsG, id));
+    for (const n of noeudsRef.current) {
+      if (!estBulle(n.data.ficheId as string) || noeudsEnErreur.has(n.id)) continue;
+      const active = ordreFiltre.some((id) => (bullesDuNoeud.get(id) ?? []).includes(n.id));
+      if (active) definirStatut(n.id, "en_cours");
     }
 
     const ctx = await obtenirAudio();
@@ -672,6 +704,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // de mémoire. C'est le symptôme « lecteur gris à 0:00 » : il frappe le
     // dernier nœud de la chaîne, quel qu'il soit, et non celui qui aurait un
     // défaut.
+    // CE QUI EST DANS UNE BULLE REPLIÉE N'EST PAS GARDÉ, et le ménage se fait ICI, à la fin du run,
+    // et non au moment où un nœud range son résultat. La raison est qu'un membre qui TROUVE son
+    // résultat en cache n'exécute pas, donc ne range rien, donc ne déclenchait aucun ménage : les
+    // tampons restaient accrochés au cache alors que les données des nœuds les avaient lâchés, et
+    // l'on croyait avoir libéré. Relevé à l'écran, deux exécutions de suite.
+    //
+    // À LA FIN PLUTÔT QU'AU DÉBUT : le run courant garde ses raccourcis de cache, et c'est le
+    // suivant qui refera la bulle. On paie le recalcul une fois par exécution, pas deux.
+    // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti.
+    for (const n of noeudsRef.current) {
+      const garde = resultatRetenu({
+        cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
+        economie: economieMemoireRef?.current ?? true,
+      });
+      if (!garde) cacheExec.current.delete(n.id);
+    }
+
     const correctifs = new Map<string, Record<string, unknown>>();
     for (const n of noeudsRef.current) {
       const patch = calculerCorrectifResultat(n);
@@ -699,12 +748,22 @@ export function useExecutionGraphe(o: OptionsExecution) {
         if (meta && !estMetaEnScope(n.id)) return null;
         // Pour un méta-nœud, on récupère les résultats de ses nœuds internes
         // aplatis (préfixés par l'id du méta-nœud) via ses ports de sortie exposés.
+        // UNE BULLE MONTRE LE RÉSULTAT DE CE QUI EN SORT. Elle ne calcule rien, mais elle expose les
+        // sorties de tous ses membres : donner la liste entière à l'aperçu lui ferait jouer la
+        // première venue, c'est-à-dire le plus souvent le DÉBUT de la chaîne repliée. On ne lui donne
+        // donc que la sortie qui représente la bulle, et rien si aucune ne la représente à elle seule.
+        // Aucun préfixe d'identifiant ici, contrairement au méta-nœud : replier ne renomme personne.
+        const sortie = estBulle(n.data.ficheId as string)
+          ? sortieDeBulle(tousNoeudsG, aretesReelles, n.id, trouverDef)
+          : null;
         const vals = meta
           ? meta.sorties.map((_, i) => {
               const m = meta.mapSorties[i];
               return resultats.get(`${n.id}::${m.noeudInterne}`)?.[m.portIndex] ?? null;
             })
-          : resultats.get(n.id);
+          : estBulle(n.data.ficheId as string)
+            ? (sortie ? [resultats.get(sortie.noeudInterne)?.[sortie.portIndex] ?? null] : [])
+            : resultats.get(n.id);
         const defNode = trouverDef(n.data.ficheId as string);
         if ((!vals || vals.length === 0) && !messages.has(n.id)) return null;
         // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
@@ -748,14 +807,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Sur une piste longue, un intermédiaire ne reçoit pas d'aperçu : la copie en 16 bits
         // pèse 635 Mo par heure de son, et personne ne l'ouvre (cf. core/memoire.ts). Elle sera
         // construite le jour où l'on clique sur ce nœud — le tampon, lui, reste là.
-        const garderApercu = !audio || apercuUtile({
+        // UN MEMBRE DE BULLE REPLIÉE NE RETIENT RIEN : ni aperçu, ni référence au tampon. Le premier
+        // ne s'écouterait pas, le second annulerait la libération faite plus haut — un tampon qui
+        // reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché.
+        const membreReplie = !resultatRetenu({
+          cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
+          economie: economieMemoireRef?.current ?? true,
+        });
+        const garderApercu = !audio || (!membreReplie && apercuUtile({
           dureeS: audio.duration,
           regarde: noeudRegarde({
             id: n.id, selectionne: !!n.selected, aretes: aretesRef.current,
             dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
+            // Un membre de bulle repliée n'est pas regardé : la bulle, elle, garde son aperçu.
+            cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
           }),
           economie: economieMemoireRef?.current ?? true,
-        });
+        }));
         let url: string | undefined;
         if (audio && garderApercu) {
           if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
@@ -830,7 +898,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         return {
           audioResultatUrl: url ?? undefined,
           audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
-          audioResultatBuffer: audio ?? undefined,
+          audioResultatBuffer: membreReplie ? undefined : (audio ?? undefined),
           audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
           scriptGenere: texte ?? undefined,
           apercuCourbe,
@@ -948,6 +1016,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
           return change ? { ...n, data: { ...n.data, ...champs } } : n;
         })
       );
+    }
+
+    // LE STATUT FINAL D'UNE BULLE EST CELUI DE SES MEMBRES : en erreur si l'un a échoué, terminé si
+    // tous ont fini. La laisser sur « en cours » après le run ferait croire à un calcul qui n'en finit
+    // pas, alors qu'elle n'en mène aucun.
+    for (const n of noeudsRef.current) {
+      if (!estBulle(n.data.ficheId as string)) continue;
+      const membres = ordreFiltre.filter((id) => ancetresBulle(tousNoeudsG, id).includes(n.id));
+      if (membres.length === 0) continue;
+      const statuts = membres.map((id) => statutDeNoeud(id).statut);
+      if (statuts.includes("erreur")) definirStatut(n.id, "erreur");
+      else if (statuts.every((s) => s === "termine")) definirStatut(n.id, "termine");
     }
 
     } catch (e: any) {

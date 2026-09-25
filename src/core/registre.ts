@@ -14,7 +14,16 @@ export interface Registre<TV, TR> {
   enregistrer(def: PluginDef<TV, TR>): void;
   trouverDef(id: string): PluginDef<TV, TR> | undefined;
   trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined;
+  /** Le CATALOGUE : ce qui peut être choisi. Une fiche `horsCatalogue` n'y figure pas. */
   tousLesPlugins(): PluginDef<TV, TR>[];
+  /**
+   * TOUT CE QUI EST INSCRIT, catalogué ou non.
+   *
+   * Un seul besoin le justifie : ce qui pose des fiches dérivées doit pouvoir retirer les siennes
+   * quand ce dont elles dérivent a disparu. Sans cette lecture, `tousLesPlugins` les cachant, elles
+   * s'accumuleraient sans que rien ne puisse les nommer.
+   */
+  tousLesInscrits(): PluginDef<TV, TR>[];
   desenregistrer(id: string): void;
   enregistrerTypeFlux(t: TypeFlux): void;
   typeFlux(id: string): TypeFlux | undefined;
@@ -83,7 +92,17 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     return parId.get(resoudre(id));
   }
 
+  /**
+   * LE CATALOGUE, ET NON TOUT CE QUI EST INSCRIT. Une fiche marquée `horsCatalogue` est inscrite pour
+   * qu'un nœud se dessine et se câble, jamais pour être choisie : `trouverDef` la rend, celle-ci non.
+   * Tout ce qui énumère le registre — palette, quiz, vocabulaire de génération, documentation,
+   * gestionnaire de nodes — en est protégé du même coup, sans avoir à y penser.
+   */
   function tousLesPlugins(): PluginDef<TV, TR>[] {
+    return plugins.filter((p) => p.horsCatalogue !== true);
+  }
+
+  function tousLesInscrits(): PluginDef<TV, TR>[] {
     return plugins;
   }
 
@@ -117,6 +136,6 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     return sourceId === cibleId;
   }
 
-  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, desenregistrer,
+  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
     enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, fluxCompatibles };
 }

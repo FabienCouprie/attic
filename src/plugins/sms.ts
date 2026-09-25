@@ -10,7 +10,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { analyserSms, recalerEnergie, synthetiserPistes } from "../audio/sms";
+import { traiterVoie, type OptionsVoieSms, type VoieSms } from "../audio/sms";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -70,26 +71,24 @@ export const fiches: FicheAudio[] = ([
       const melange = faire(), partiels = faire(), residus = faire();
       let nbPistes = 0;
 
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<OptionsVoieSms, VoieSms>(
+        voies, { ...options, sampleRate, longueur: length, transposition },
+        {
+          creerWorker: () => new Worker(new URL("../workers/sms-worker.ts", import.meta.url), { type: "module" }),
+          calcul: traiterVoie,
+          surProgres: (c, n) => ctx.onProgress?.(traduire("msg.sms.canal", String(c), String(n))),
+        },
+      );
+
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.sms.canal", String(c + 1), String(canaux)));
-        const r = analyserSms(entree.getChannelData(c), sampleRate, options);
-        nbPistes += r.pistes.length;
-
-        // Sans transposition, on garde la partie déterministe DÉCOUPÉE DANS LE SON : elle est
-        // exacte, phase comprise, et sa somme avec le résidu redonne l'original. Dès qu'on
-        // transpose, il faut refabriquer les partiels par addition — et les recaler sur
-        // l'énergie de ceux qu'on remplace, faute de quoi le niveau sauterait.
-        const det = transposition === 0
-          ? r.deterministe
-          : recalerEnergie(
-            synthetiserPistes(r.pistes, length, sampleRate, r.saut, { transposition }),
-            r.deterministe);
-
+        const { deterministe: det, residu, nbPistes: n } = parVoie[c];
+        nbPistes += n;
         const sortie = new Float32Array(length);
-        for (let i = 0; i < length; i++) sortie[i] = det[i] * gainPartiels + r.residu[i] * gainResidu;
+        for (let i = 0; i < length; i++) sortie[i] = det[i] * gainPartiels + residu[i] * gainResidu;
         melange.copyToChannel(new Float32Array(sortie), c);
         partiels.copyToChannel(new Float32Array(det), c);
-        residus.copyToChannel(new Float32Array(r.residu), c);
+        residus.copyToChannel(new Float32Array(residu), c);
       }
 
       return {

@@ -10,6 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 import {
   SAUT, TAILLE_TRAME, analyser, flouter, geler, glissandoInterieur, recoller, tracer,
 } from "../audio/spectral-wishart";
@@ -55,12 +56,23 @@ function parCanal(entree: AudioBuffer, taille: number, transformer: (t: ReturnTy
   return sortie;
 }
 
-const melanger = (sec: AudioBuffer, mouille: AudioBuffer, part: number): AudioBuffer => {
-  if (part >= 1) return mouille;
+/**
+ * LA PART ACCEPTE UNE COURBE, et le scalaire garde son raccourci : à part pleine, le son traité est
+ * rendu tel quel sans que la boucle soit parcourue, exactement comme avant. Les valeurs vont de 0 à 1.
+ */
+const melanger = (sec: AudioBuffer, mouille: AudioBuffer, part: number | Float32Array): AudioBuffer => {
+  if (typeof part === "number" && part >= 1) return mouille;
   for (let c = 0; c < mouille.numberOfChannels; c++) {
     const a = sec.getChannelData(Math.min(c, sec.numberOfChannels - 1));
     const b = mouille.getChannelData(c);
-    for (let i = 0; i < b.length; i++) b[i] = a[i] * (1 - part) + b[i] * part;
+    if (typeof part === "number") {
+      for (let i = 0; i < b.length; i++) b[i] = a[i] * (1 - part) + b[i] * part;
+    } else {
+      for (let i = 0; i < b.length; i++) {
+        const p = Math.max(0, Math.min(1, valeurA(part, i)));
+        b[i] = a[i] * (1 - p) + b[i] * p;
+      }
+    }
   }
   return mouille;
 };
@@ -152,7 +164,10 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Keeps the sound's formant envelope and puts an endless glissando underneath: Risset's illusion, dressed in a real timbre.",
     notice: "D'après Trevor Wishart, « Audible Design » (1994), qui l'appelle « inner glissando ». L'illusion elle-même vient de Roger Shepard (1964), rendue continue par Jean-Claude Risset.\n\nEn quoi cela diffère d'un glissando de Risset. Celui-là produit l'illusion nue, un son de synthèse qui monte sans fin, et qui sonne comme une démonstration de laboratoire. Ici l'illusion passe par la bouche de quelqu'un : l'enveloppe de formants du son d'entrée est conservée, et c'est elle qui décide du timbre. Une voyelle reste la même voyelle pendant que la hauteur monte sans fin.\n\nPourquoi cela marche. L'enveloppe de formants est ce qui fait qu'une voyelle est un « a » ou un « ou » : elle ne dépend pas de la hauteur à laquelle on chante. C'est précisément pour cela qu'on peut changer l'une sans toucher à l'autre. Le composant extrait cette enveloppe en lissant le spectre (les bosses larges survivent, les raies fines disparaissent) puis pose dessous des partiels espacés d'une octave dont l'amplitude suit une cloche fixe : chacun naît en bas, traverse, s'éteint en haut, et l'on ne surprend jamais ni son apparition ni sa disparition.",
     noticeEn: "After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissando ». The illusion itself is Roger Shepard's (1964), made continuous by Jean-Claude Risset.\n\nWhat this node adds to the « Risset Glissando » already present. That one produces the illusion bare, a synthetic sound rising endlessly, which sounds like a laboratory demonstration. Here the illusion passes through someone's mouth: the input's formant envelope is kept, and it decides the timbre. A vowel stays the same vowel while the pitch rises without end.\n\nWhy it works. The formant envelope is what makes a vowel an « ah » or an « oo »: it does not depend on the pitch one sings at. That is exactly why one can change one without touching the other. The node extracts that envelope by smoothing the spectrum (broad bumps survive, fine lines vanish) then places beneath it partials an octave apart whose amplitude follows a fixed bell: each is born low, crosses, dies high, and one never catches either its appearance or its disappearance.",
-    entrees: [{ nom: "Audio", type: "audio" }],
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Mix" },
+    ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Vitesse", nomEn: "Speed", type: "curseur", plage: [-4, 4], pas: 0.1, defaut: 0.5, unite: "oct/s",
@@ -165,6 +180,12 @@ export const fiches: FicheAudio[] = ([
         doc: "Largeur du lissage qui sépare les formants des partiels, en composantes. Trop peu, et les partiels du son d'origine survivent, ce qui brouille le glissando. Trop, et l'enveloppe s'aplatit : le timbre disparaît et l'on retombe sur l'illusion nue.",
         docEn: "Width of the smoothing that separates formants from partials, in components. Too little and the original's partials survive, blurring the glissando. Too much and the envelope flattens: the timbre vanishes and one falls back on the bare illusion." },
       FINESSE, MIX,
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Proportion que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
+        docEn: "Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
+        docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
     async executer(ctx: any) {
       const e = ctx.entree(0);
@@ -178,7 +199,16 @@ export const fiches: FicheAudio[] = ([
         taille, saut, frequence: e.sampleRate,
       };
       const out = parCanal(e, taille, (t) => glissandoInterieur(t, o));
-      return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
+      // Sans courbe branchée, on passe le NOMBRE : le raccourci de `melanger` à part pleine reste
+      // emprunté, et la sortie est celle d'avant.
+      const modulation = ctx.entree(1);
+      const part = estCourbe(modulation)
+        ? valeursParametre(modulation, e.length, 0, {
+          min: ctx.paramNombre("Modulation min", 0) / 100,
+          max: ctx.paramNombre("Modulation max", 100) / 100,
+        })
+        : ctx.paramNombre("Mix", 100) / 100;
+      return { valeurs: [melanger(e, out, part)] };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

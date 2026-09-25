@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **396 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **403 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 70 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (11) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 197 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (6) |
-| [Visualization](#visualization) | 38 | [Analysis](#analysis) (15) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Inputs](#inputs) | 71 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (12) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 199 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (8) |
+| [Visualization](#visualization) | 39 | [Analysis](#analysis) (16) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 67 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (2) |
+| [Other & lab](#other--lab) | 70 | [Csound wrapper](#csound-wrapper) (9) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
 
 ## How to read this catalog
 
@@ -160,7 +160,7 @@ Browses a project music folder and loads the chosen file as an audio source (Ele
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Path | text | `music collection` |  | Directory to scan, relative to project folder. |
+| Path | folder | `music collection` |  | Directory to scan, relative to project folder. |
 
 #### Recorder
 
@@ -210,9 +210,11 @@ Builds a modulation curve to plug into an effect's Modulation input. A curve car
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Shape | choice | Sine | Sine / Triangle / Square / Ramp / Logistic / Random | The shape of the modulation. The logistic sequence is here for a precise reason: seven nodes each reimplemented it on their own, logistic echo, logistic tremolo, and five others. A single source plugged into any effect does the same work, and on all of them rather than on seven. |
+| Shape | choice | Sine | Sine / Triangle / Square / Ramp / Logistic / Logistic chaos / Random | The shape of the modulation. Two entries carry the name logistic and do not denote the same thing. « Logistic » is the function 1/(1+e^(−k(t−t₀))), an S curve rising from zero to one once over the duration; « Centre » and « Steepness » set it, and « Frequency » does not reach it. « Logistic chaos » is the sequence x → r·x·(1−x), a succession of plateaus set by « Chaos » and whose frequency gives the number of steps per second. |
 | Duration | slider | 10 s | 0.5 – 120 s, step 0.5 | Length of the curve. It need not match the sound's: the effect stretches it to cover it, so a ramp stays a ramp whatever the sound's length. |
-| Frequency | slider | 0.5 Hz | 0.01 – 20 Hz, step 0.01 | Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. |
+| Frequency | slider | 0.5 Hz | 0.01 – 20 Hz, step 0.01 | Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. Changing shape sets the rate that suits the new one: half a cycle per second for the periodic shapes, two steps per second for the logistic and random ones. A value set by hand is kept when the shape changes. Beyond four steps per second the plateaus become too narrow to tell apart in the trace. |
+| Centre | slider | 50 % | 0 – 100 %, step 1 | Where the S curve passes through half, as a share of the duration. At 50 % the transition sits in the middle. This setting acts on the Logistic shape only. |
+| Steepness | slider | 10 | 1 – 40, step 0.5 | Steepness of the S curve. At 1 it rises almost in a straight line; at 40 it approaches a step. The ends are brought back to zero and one whatever the value, so the travel always covers the whole range. This setting acts on the Logistic shape only. |
 | Chaos | slider | 3.9 | 2.5 – 4, step 0.01 | The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats. |
 | Seed | number | 1 | 1 – 999999, step 1 | Seed of the random walk. |
 
@@ -444,6 +446,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 
 #### Cellular automaton
@@ -665,6 +668,31 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre: useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### Spiral of Fifths
+
+`spirale-quintes` · Inputs → Generation
+
+*Stacks just fifths and folds them into one octave: the path never returns to its starting point.*
+
+Stacks fifths and folds each note into one octave. The path never returns to its starting point: what is called the circle of fifths is a spiral. Twelve just fifths, of ratio 3/2, are worth 8,423.96 cents; seven octaves are worth 8,400. The difference is the Pythagorean comma, 531441/524288, that is 23.46 cents. No power of 3/2 is a power of 2, 2 and 3 being coprime: the path closes at no rank at all, and equal temperament closes it by force, shaving 1.955 cent off every fifth. The deviation from equal temperament grows by 1.955 cent per step, exactly. The spiral comes close to closing at certain ranks without ever reaching it: • at the twelfth, 23.46 cents are missing, which is audible • at the forty-first, 19.84 cents on the other side • at the fifty-third, 3.62 cents, which is the reason fifty-three-tone temperament exists « Fifth » picks the one being stacked: • Just, 701.955 cents, never closes the path • Equal, exactly 700 cents, closes it at the twelfth step: a circle then, not a spiral • Quarter-comma meantone, 696.578 cents, closes it from the other side, the spiral turning the other way « Playing » decides how the deviation is heard: • One by one: each fifth sounds alone, and the drift is followed degree by degree • Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read Pitches are fractional, in decimal semitones: a whole degree would erase precisely the deviation the spiral accumulates. The output is audio rather than MIDI, a MIDI file being unable to carry a pitch in cents without per-channel pitch bend. The « Journey » output gives, for each step, the degree reached, its folded pitch in cents and its deviation from the nearest equal degree, then the ranks that come closest to closing. After the comma described by the Pythagoreans, and the account Leonhard Euler gives of it in Tentamen novae theoriae musicae, 1739.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fifths | slider | 12 | 1 – 60, step 1 | Number of stacked fifths. Twelve cover the twelve degrees and miss the closure by 23.46 cents. Fifty-three miss it by only 3.6 cents. |
+| Fifth | choice | Just (3/2) | Just (3/2) / Equal / Quarter-comma meantone | The fifth being stacked. Just is 701.955 cents and never closes the path. Equal is exactly 700 cents and closes it at the twelfth step: a circle then, not a spiral. Meantone is 696.578 cents and closes it from the other side, the spiral turning the other way. |
+| Direction | choice | Up | Up / Down | Up stacks fifths, down stacks fourths. The deviation from equal temperament changes sign with the direction. |
+| Playing | choice | One by one | One by one / Stacked | One by one: each fifth sounds alone, and the drift is followed degree by degree. Stacked: every note stays to the end, and the beating between neighbours makes the deviation audible rather than read. |
+| Fundamental | slider | 220 Hz | 55 – 440 Hz, step 1 | Pitch of the tonic, and bottom of the octave everything is folded into. |
+| Note length | slider | 0.45 s | 0.1 – 2 s, step 0.05 | Length of each step of the spiral. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
 
 #### SSP (Koenig)
 
@@ -2016,12 +2044,15 @@ Detects brief clicks and crackles and replaces them with an interpolation of the
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Threshold | number | 5 × | 1 – 50 ×, step 1 | Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive. |
 | Window | number | 5 ms |  | Replacement window width. |
+| Modulation min | slider | 1 × | 1 – 50 ×, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Seuil » that the curve's one means. |
 
 #### Declipper
 
@@ -2156,6 +2187,7 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2163,6 +2195,8 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Bits | number | 8 | 1 – 16, step 1 | Bit resolution (1-16). 8 = retro 8-bit sound; 4 = very crunchy. |
 | Rate | number | 22050 Hz | 1000 – 44100 Hz, step 100 | Simulated sample rate. Lower = more broken/aliased sound. |
 | Mix | number | 100 % |  | Dry/wet balance. 100% = effect only. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Chopper
 
@@ -2197,6 +2231,7 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2204,6 +2239,8 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Mix | number | 40 % |  | Dry/wet balance. |
 | Speed | number | 0.8 Hz |  | LFO modulation speed. |
 | Depth | number | 5 ms |  | Detuning depth in ms. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Distortion
 
@@ -2233,6 +2270,7 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2240,6 +2278,8 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Amount | number | 50 % | 0 – 100 %, step 1 | Intensity of the asymmetrical distortion. |
 | Frequency | number | 3000 Hz | 500 – 10000 Hz, step 100 | High-pass cutoff after distortion. |
 | Mix | number | 30 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Flanger
 
@@ -2252,6 +2292,7 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2259,6 +2300,8 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Mix | number | 50 % |  | Dry/wet balance. |
 | Speed | number | 0.5 Hz |  | LFO modulation speed. |
 | Depth | number | 3 ms |  | Modulation depth in ms. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Formant Shift
 
@@ -2335,6 +2378,7 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2348,6 +2392,8 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Crossover 3 | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Boundary between high mids and high. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. 0% returns the original signal untouched. |
 | Output | number | -6 dB | -24 – 12 dB, step 0.5 | Output gain. Saturation raises the level: this brings it back. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Ring Modulator
 
@@ -2428,11 +2474,14 @@ To convolve is to make one sound ring through another. It is how a sound is plac
 |---|---|---|---|
 | input | Sound | audio |  |
 | input | Second sound | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the convolved sound. At 0%, the first sound alone, unchanged; in between, the sound and what it becomes overlap. A curve connected to the Modulation input gives this value at each instant, in place of the slider, spread over the produced duration. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Share that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Share that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Vibrato
 
@@ -2661,6 +2710,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2669,6 +2719,8 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Time R | number | 375 ms |  | Right channel delay. |
 | Feedback | number | 40 % |  | Amount of signal fed back. |
 | Mix | number | 35 % |  | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 ### Editing
 
@@ -3286,6 +3338,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 |---|---|---|---|
 | input | Target | audio |  |
 | input | Model | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3293,7 +3346,9 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Resolution | slider | 10 ms | 1 – 300 ms, step 1 | How finely the contour is followed. It is the only setting that really changes the nature of the result: at 5 milliseconds one transfers almost the waveform, and the model's grain comes with it; at 200, only its large breaths remain, the phrase alone. |
 | Flatten | choice | Yes | Yes / No | Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer. |
 | Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 ### Equalisation and filters
 
@@ -3367,6 +3422,7 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3377,6 +3433,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Ratio | number | 3 ∶1 | 1 – 10 ∶1, step 0.5 | Sibilance reduction ratio. |
 | Attack | number | 1 ms | 0.1 – 50 ms, step 0.1 | Reaction time (short = precise, long = smooth). |
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
+| Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Seuil » that the curve's one means. |
 
 #### Ducking
 
@@ -3614,6 +3672,7 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3622,6 +3681,8 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Sustain | number | 0 dB | -12 – 12 dB, step 0.5 | Gain applied to the sustain body. Positive = more sustain; negative = shorter. |
 | Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged. |
 | Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
+| Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that the curve's one means. |
 
 #### Tuned Combs
 
@@ -4556,6 +4617,7 @@ Audio mosaicing, or corpus-based concatenative synthesis. The principle is a mos
 |---|---|---|---|
 | input | Target | audio |  |
 | input | Corpus | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 | output | Report | text |  |
 
@@ -4566,7 +4628,9 @@ Audio mosaicing, or corpus-based concatenative synthesis. The principle is a mos
 | Brightness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the spectral centre of gravity. It is the descriptor one hears most: raising it follows the target's colours. |
 | Noisiness weight | number | 100 % | 0 – 100 %, step 1 | Weight given to the zero-crossing rate, which tells a noisy sound from a steady one. |
 | Avoid repeats | number | 20 % | 0 – 100 %, step 1 | Penalises the grain just used. Without it, a poor corpus returns the same grain a hundred times over, which sounds like a drone, the most audible defect of the method. |
-| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Volume that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Volume that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Ecosystem (Di Scipio)
 
@@ -4697,12 +4761,15 @@ Applies a mathematical expression to each sample of the signal. Variables: x (cu
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Formula | text | `sin(t * 2 * pi * 440) + x` |  | Mathematical expression giving the output value of each sample. Variables: x (current value), t (time in seconds), i (sample index), c (channel), ch (channel count), sr (sample rate). |
-| Volume | number | 30 % | 0 – 100 % | Output gain. |
+| Volume | number | 30 % | 0 – 100 % | Output gain. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Gain that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Gain that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Sonic Seasoning
 
@@ -4811,13 +4878,16 @@ Generates up to two extra voices, hence the two sliders: "Octave up" sets the vo
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Octave up | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave above (frequency doubled by rectification). |
 | Octave down | slider | 50 % | 0 – 100 %, step 1 | Volume of the added voice one octave below (period doubled by polarity flipping). |
-| Mix | slider | 50 % | 0 – 100 %, step 1 | Dry / added-voices balance. 0% = dry only, 100% = octaves only. |
+| Mix | slider | 50 % | 0 – 100 %, step 1 | Dry / added-voices balance. 0% = dry only, 100% = octaves only. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Mix that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Phase Vocoder Pitch
 
@@ -5114,6 +5184,7 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5122,6 +5193,8 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Decay | number | 2 s |  | Reverb decay time. |
 | Mix | number | 50 % |  | Dry/wet balance. |
 | Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Shimmer
 
@@ -5271,6 +5344,7 @@ Adds the same number of hertz to every frequency. After Scott Wardle, « A Hilbe
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5278,6 +5352,8 @@ Adds the same number of hertz to every frequency. After Scott Wardle, « A Hilbe
 | Shift | slider | 100 Hz | -1000 – 1000 Hz, step 1 | Hertz added to every frequency. 200-400-600 shifted by 50 gives 250-450-650: the ratios are no longer whole numbers, which is why a note turns into a bell. A few hertz are enough to make a sound beat without disfiguring it; beyond a hundred, the original pitch is frankly left behind. |
 | Stereo offset | slider | 0 Hz | 0 – 20 Hz, step 0.5 | Hertz added to the right channel on top of the shift. A few tenths are enough: the two channels then drift apart and the sound widens slowly, with no destructive phasing. No effect on a mono sound. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the shifted sound in the output. At 50 %, the original and its shift beat together; that is how one gets gently metallic timbres rather than a complete displacement. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Share that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Share that the curve's one means. A value below Modulation min reverses the direction of travel. The output message then gives the average share. |
 
 #### Griffin-Lim
 
@@ -5357,6 +5433,7 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5366,6 +5443,8 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Smoothing | slider | 20 | 0 – 80, step 1 | Width of the smoothing that separates formants from partials, in components. Too little and the original's partials survive, blurring the glissando. Too much and the envelope flattens: the timbre vanishes and one falls back on the bare illusion. |
 | Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
 
 #### Phase Reconstruction (PGHI)
 
@@ -5636,7 +5715,7 @@ After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal o
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rotation | slider | 90 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle. |
+| Rotation | slider | 180 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle. |
 | Source spread | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides. Contrary to expectation, wide is not more striking, and at the extreme it is the opposite: the share of the field a rotation can move is the cosine of half this spread on a mono take, 0.71 at 90°, and zero at 180°, where no angle changes anything any more. On a true stereo take, 180° does not turn the image either: a quarter-turn there makes the two channels identical, measured; it crushes the image instead of turning it. Ninety degrees is the setting that really turns. |
 | Decoder width | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre. |
 | Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
@@ -5849,12 +5928,15 @@ Stereo width and Mid/Side balance control. Decodes the signal into center (Mid =
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Width | number | 100 % | 0 – 200 %, step 1 | Stereo width. 0% = mono, 100% = original, 200% = widened stereo. |
 | Mid | number | 100 % | 0 – 200 %, step 1 | Mid channel gain. |
+| Modulation min | slider | 0 % | 0 – 200 %, step 1 | Value of « Largeur » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Largeur » that the curve's one means. |
 
 #### Swap Channels
 
@@ -6180,7 +6262,9 @@ Extracts already-digital text from a PDF using pdf-inspector (Rust/WASM, https:/
 | [Braid](#braid) | Splits the sound into bands that cross over and under in space, returning to their places after a countable number of patterns. |
 | [Dirac Belt](#dirac-belt) | Spins the sound around the listener: after one lap it comes back inverted and cancels, after two it is intact. |
 | [Klein Bottle](#klein-bottle) | Endless glissando whose voices come back on the other side every lap: it takes two laps for everything to return. |
+| [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Möbius Strip](#möbius-strip) | Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back. |
+| [Spatial Spiral](#spatial-spiral) | Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does. |
 | [Tonnetz](#tonnetz) | Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice. |
 | [Torus](#torus) | Rotates the sound's position and level at two speeds: they only meet again at lap q, or never. |
 
@@ -6248,6 +6332,30 @@ A Klein bottle is built like a torus (a base circle, and above each point a « f
 | Spread | number | 70 ° | 0 – 90 °, step 1 | Angle of the voices from the centre. 90°: fully right at first, fully left when mirrored. 0°: all centred, and the mirror is no longer heard. |
 | Loop crossfade | number | 50 ms | 0 – 500 ms, step 5 | Crossfade applied to make the source loop without a click. |
 
+#### Logarithmic Spiral
+
+`spirale-logarithmique` · Processing → Topology
+
+*A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself.*
+
+Synthesises a spectrum whose partials are in geometric progression, and makes it glide. One turn of the spiral multiplies every frequency by the same ratio, so that the spectrum then maps onto itself, shifted by one partial. A logarithmic spiral is written r = a·e^(bθ): advancing by a fixed angle multiplies the radius by a fixed factor. It is the only curve whose magnification coincides with a rotation, which earns it the name equiangular spiral. Here the radius carries frequency and the angle carries time: the partials sit one turn apart, at f·ρ^k. The spiral closes for no ratio at all. One returns to the same angle, never to the same radius, and the message gives the self-similarity deviation measured on the rendered trajectory. « Ratio per turn » decides the interval between two neighbouring partials: • at 2, the partials are octaves and the spectrum is a Shepard tone's • at the golden ratio, at e or at 3/2, it is inharmonic and belongs to no scale • a ratio of 1 is excluded: the spiral degenerates into a circle there « Turns » says how far the spiral turns over the whole length. Positive, the spectrum rises; negative, it falls; zero, it holds still. « Rolloff » sets the weight of the high partials: at zero they all weigh the same and the sound is a whistle, at one they fall off like a harmonic series. Each partial's phase is integrated sample by sample rather than recomputed from the current frequency: writing sin(2π·f(t)·t) for a varying frequency gives a wrong pitch, the derivative of f(t)·t not being f(t). Partials that would pass half the sampling rate are dropped, and the message counts them. The « Spectrum » output gives, for each partial kept, its rank, its frequency at the start and at the end, and its amplitude. After the equiangular spiral studied by Jacob Bernoulli, and the motto he wanted on his gravestone, « eadem mutata resurgo ».
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Spectrum | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Ratio per turn | choice | Golden ratio | Golden ratio / Octave (2) / Fifth (3/2) / e / Free | The factor the radius is multiplied by in one turn, hence the interval between two neighbouring partials. At 2 the partials are octaves and the spectrum is a Shepard tone's. At other ratios it is inharmonic, and none closes the spiral. |
+| Free ratio | slider | 1.62 | 1.05 – 4, step 0.01 | The ratio used when « Free » is chosen. One is excluded: the spiral degenerates into a circle there. |
+| Fundamental | slider | 55 Hz | 20 – 440 Hz, step 1 | Frequency of the rank-zero partial, at the start. |
+| Partials | slider | 9 | 1 – 24, step 1 | Number of partials placed on the spiral, one per turn. Partials that pass half the sampling rate are dropped, and the message counts them. |
+| Turns | slider | 2 | -6 – 6, step 0.5 | Number of turns travelled over the whole length. One turn multiplies the whole spectrum by the ratio. Negative to descend, zero to hold the spectrum still. |
+| Length | slider | 12 s | 1 – 60 s, step 1 | Length of the travel. |
+| Rolloff | slider | 1 | 0 – 3, step 0.1 | Amplitude rolloff along the spiral, as a power of the rank. At zero every partial weighs the same and the sound is a whistle; at one they fall off like a harmonic series. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Level of the render. |
+
 #### Möbius Strip
 
 `anneau-moebius` · Processing → Topology
@@ -6267,6 +6375,28 @@ Sends the sound around a Möbius strip. One lap lasts the whole sound; as it mov
 | Laps | number | 2 | 1 – 8, step 1 | Number of laps around the strip; one lap lasts the whole sound. Two laps close the strip and end where they began. An odd number ends on the other side. |
 | Crossfade | number | 30 ms | 0 – 500 ms, step 5 | Crossfade at each seam between two laps. A sound does not loop by itself: without a crossfade the seam clicks. Capped at a quarter of the sound's length. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | 100%: the twist alone. Below that, the original sound mixes back with the other side. At 50%, the two sides cancel after one lap: on the Phase side the sound fades out completely, on the Stereo side left and right meet in the centre. |
+
+#### Spatial Spiral
+
+`spirale-spatiale` · Processing → Topology
+
+*Turns the sound around the listener while moving it away: the azimuth closes on every turn, the distance never does.*
+
+Turns a sound around the listener while moving it away, azimuth and distance linked: one turn multiplies the distance by a fixed ratio. The azimuth closes on every turn, the distance never does. Distance acts in two ways, which must be kept apart: • level follows the inverse square law, doubling the distance costs six decibels; that is geometry, and depends on neither the air nor the room • the air absorbs the high end and only the high end, the more so the greater the distance; it is timbre that tells distance when level lies « Air absorption » sets the second. At zero, receding only lowers the level. The filter is a first-order lowpass whose cutoff follows the distance instant by instant, a fixed filter not telling a movement. The azimuth follows the cosine law, which keeps the perceived level constant through the centre: a linear pan would lose three decibels there, and the rotation would be heard pumping. « Starting distance » sets the reference level: the output equals the input there. « Direction » picks the direction of the radius; approaching multiplies the level instead of dividing it. A ratio of 1 is excluded: the trajectory would be a circle. The message gives the starting and ending distances, the ratio per turn, the loss in decibels and the travel of the air cutoff. The input is brought down to mono, a source placed on a trajectory being a point and not an image.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio | required |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Turns | slider | 3 | 0.5 – 8, step 0.5 | Number of turns travelled over the whole length of the sound. |
+| Ratio per turn | choice | Double (2) | Double (2) / Golden ratio / One and a half / Quadruple (4) / Free | The factor the distance is multiplied by in one turn. At 2, each turn costs six decibels by the inverse square law. |
+| Free ratio | slider | 2 | 1.05 – 8, step 0.05 | The ratio used when « Free » is chosen. One is excluded: the trajectory would be a circle. |
+| Direction | choice | Recedes | Recedes / Approaches | The direction of the radius. Receding divides the level at each turn, approaching multiplies it. |
+| Starting distance | slider | 1 m | 0.5 – 20 m, step 0.5 | Distance at the start of the travel. It sets the reference level: the output equals the input there. |
+| Air absorption | slider | 50 % | 0 – 100 %, step 1 | How far the air closes the high end with distance. At zero, receding only lowers the level, which a plain gain would do too; it is timbre that tells distance when level lies. |
 
 #### Tonnetz
 
@@ -6328,6 +6458,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
 | [Masking](#masking) | Says what one track makes inaudible in another, critical band by critical band. |
+| [Multitrack Viewer](#multitrack-viewer) | Draws up to six sounds one under another, on a shared time axis. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
@@ -6447,6 +6578,25 @@ After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) f
 |---|---|---|---|---|
 | Masker nature | choice | In between | Tonal / Noisy / In between | A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is. |
 | Resolution | choice | Ordinary (2048) | Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates the low bands better, where they are narrow. |
+
+#### Multitrack Viewer
+
+`visualiseur-multipiste` · Visualization → Analysis
+
+*Draws up to six sounds one under another, on a shared time axis.*
+
+Draws the sounds connected to its inputs, one lane per track, one under another on a shared time axis. Every track starts at zero; the axis runs to the longest, so durations compare directly. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. The « - » refuses while the last track is connected. Each lane gives, at every instant, the lowest and the highest the sound reaches there, all channels together: a brief peak stays visible, and what happens on one channel only is seen as well. The track number and its length are written beside it, along with its peak. The drawing keeps two thousand and forty-eight columns per track: over three minutes, one column covers eighty-eight milliseconds. That is enough to compare takes, to align an entry, to see where a sound stops; it is not enough to hunt for a click. The node returns no sound. One output can feed several inputs: a chain is tapped towards it and carries on.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Track 1 | audio |  |
+| input | Track 2 | audio |  |
+| input | Track 3 | audio |  |
+| input | Track 4 | audio |  |
+| input | Track 5 | audio |  |
+| input | Track 6 | audio |  |
+
+*No parameters.*
 
 #### Practice Keyboard
 
@@ -8569,7 +8719,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | [ABC Editing by LLM](#abc-editing-by-llm) | Edits an ABC score with a local Ollama model (new chords, or new pitches on the same rhythm) without it being able to break what must stay fixed. |
 | [AI Script Generator](#ai-script-generator) | Generates a prompt for a music AI (Suno, Udio…) by randomly combining instruments, styles, emotions and vocal ranges. |
 | [DistilGPT-2](#distilgpt-2) | Generates text via AI (DistilGPT-2, English). |
-| [Edit Text](#edit-text) | Transforms incoming text: replace, case, whitespace, wrapping. |
+| [Edit Text](#edit-text) | Displays incoming text, lets it be edited by hand, and returns what the area contains. |
 | [Emotions](#emotions) | Outputs a collection of human emotions by category as text. |
 | [Graph Documentation](#graph-documentation) | Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used. |
 | [Instrument Names](#instrument-names) | Outputs a long list of musical instrument names as text. |
@@ -8655,9 +8805,9 @@ Generates text via AI using DistilGPT-2 (Transformers.js, ONNX). Connect a « Te
 
 `modifier-texte` · Other & lab → Text
 
-*Transforms incoming text: replace, case, whitespace, wrapping.*
+*Displays incoming text, lets it be edited by hand, and returns what the area contains.*
 
-Sits behind any text output (Sherpa transcription, PDF extraction, LLM output, generated lyrics) to adapt it before whatever comes next: a MusicGen prompt, speech synthesis, a Text to MIDI. It links nodes that produce text to nodes that consume it. One operation at a time, picked from the list: literal replace, regular-expression replace (where $1 and $2 refer to captured groups), upper or lower case, whitespace tidying, or wrapping with a prefix and a suffix. Several copies of the node chain together to combine several operations. An invalid regular expression does not fail the node: the text passes through unchanged and the message gives the reason. Whitespace tidying preserves line breaks: lyrics keep their structure.
+This node displays the text received on its input and returns it on its output after hand editing. The text is written directly in the node's area, which is resized by its edges. On a run, the content of the area is what goes out on the « Text » output. An empty area lets the input text through untouched: a node just placed can therefore be connected without changing anything, and a run drops the received text into it, to be edited afterwards. The « Take the input back » button empties the area and gives the input text back, which undoes the edits. The « Text » setting holds what is written in the area; it is saved with the project and comes back when it is reopened. The « Text » output returns the content of the area, or the input text if the area is empty. The message gives the number of characters returned and whether the text was edited.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8666,11 +8816,7 @@ Sits behind any text output (Sherpa transcription, PDF extraction, LLM output, g
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Operation | choice | Replace | Replace / Replace (regex) / Uppercase / Lowercase / Tidy whitespace / Wrap | Transformation applied. One at a time: to combine several, chain several copies of this node. |
-| Find | text | — |  | What to find. Taken literally in "Replace" mode, treated as a regular expression in "Replace (regex)" mode. Empty = the text passes through unchanged. |
-| Replace with | text | — |  | What takes its place. In regex mode, $1 and $2 refer to captured groups. Empty = deletes what was found. |
-| Before | text | — |  | Text added at the start, in "Wrap" mode. Useful to prefix an instruction to a prompt. |
-| After | text | — |  | Text added at the end, in "Wrap" mode. |
+| Text | text | — |  | The text returned on the output. Empty, the input text passes through unchanged. |
 
 #### Emotions
 
@@ -9106,6 +9252,9 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 |---|---|
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
+| [Split Picture and Sound](#split-picture-and-sound) | Takes a film and returns two things: the picture without sound, and the decoded sound. |
+| [Video Excerpt](#video-excerpt) | Keeps a portion of a film, between two frames, with its sound, and returns it as MP4. |
+| [Video Montage](#video-montage) | Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4. |
 
 #### Application Film
 
@@ -9141,3 +9290,84 @@ This node makes a video of the graph it sits in. It connects to nothing: it runs
 | Resolution | choice | 720p | 480p / 720p / 1080p | Picture size: 854 × 480, 1280 × 720 or 1920 × 1080. Rendering time grows with it. |
 | Frames per second | choice | 30 | 24 / 30 / 60 | Video frame rate. 60 makes scrolling smoother and doubles rendering time. |
 | Settings | choice | Shown | Shown / Hidden | Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width. |
+
+#### Split Picture and Sound
+
+`separer-image-son` · Other & lab → Video
+
+*Takes a film and returns two things: the picture without sound, and the decoded sound.*
+
+This node takes a film and returns two things: the picture without sound, and the sound. « Video » receives a film from another node's video output. The « Silent video » output returns the same film without its audio track. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The audio track is not decoded, it does not enter the file. The « Save the silent video » button writes it to disk; until it is saved, the file exists only in memory. The « Audio » output returns the film's sound decoded, at its sample rate and with its channel count. A silent film gives an empty sound and the node says so. The node's message gives the duration, the size of the silent video, and the sample rate of the returned sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Video | video | required |
+| output | Silent video | video |  |
+| output | Audio | audio |  |
+
+*No parameters.*
+
+#### Video Excerpt
+
+`extrait-video` · Other & lab → Video
+
+*Keeps a portion of a film, between two frames, with its sound, and returns it as MP4.*
+
+This node keeps a portion of a film and returns that portion as MP4. The film is watched inside the node, and the kept portion is drawn under it on its time axis. A playhead crosses the axis at the instant the picture shows. A click on the axis moves the film to that instant; both edges of the portion are dragged with the mouse. The « Start here » and « End here » buttons set a bound at the instant where the film is stopped. The node is resized by its edges. « Path » names the film's file. The « … » button opens the system selector, and the field also accepts a typed path. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. « Start frame » and « End frame » bound the portion, at the frame rate the film declares. An end that does not exceed the start means the end of the film: both bounds at zero therefore keep the whole film. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. An intermediate frame cannot be decoded without the frames it depends on, so the file also carries the frames from the preceding key frame up to the requested start; they hold negative timestamps, and playback starts at the requested frame. The file is therefore a little heavier than the portion alone. The node's message gives the duration produced beside the requested one. The film's sound is kept over the portion, copied as well, without being re-encoded. A sound that an MP4 file does not accept as it is gets discarded rather than re-encoded, and the node's message says so with its reason. The output is an MP4 file. The « Save the excerpt » button, under the axis, writes it to disk; until it is saved, the file exists only in memory.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Video | video |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | fichier | — |  | The film's file, chosen with the « … » button or typed. Containers read: MP4, MOV, WebM, MKV, M4V. |
+| Start frame | number | 0 | 0 – 2000000, step 1 | First frame kept, at the frame rate the film declares. |
+| End frame | number | 0 | 0 – 2000000, step 1 | Last frame kept. A value that does not exceed the start means the end of the film. |
+
+#### Video Montage
+
+`montage-video` · Other & lab → Video
+
+*Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4.*
+
+This node takes a film, adds sounds to it and returns an MP4. The film is watched inside the node, and the tracks are laid under it on its time axis. A playhead crosses the bands at the instant the picture shows. A click on the bands moves the film to that instant; a band dragged with the mouse changes its « Frame n » setting. The node is resized by its edges, and the view follows its size. A connected track gets a band as soon as it is connected, and its waveform appears there after a run; a disconnected track loses its own at once. After that run, the tracks are heard over the film as it plays, each at its own instant, at its own level and with its fades. The film's own sound is heard with them, at the level « Film level » gives it; a positive level is heard there at zero decibels, and at its value in the produced file. « Path » names the film's file. The « … » button opens the system selector, and the field also accepts a typed path. The containers read are MP4, MOV, WebM, MKV and M4V. A WMV file is not read: neither its container nor its codecs have a decoder in the application's engine or in its media library, and the node says so rather than failing. It shows two tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to six. Each track has four settings: the frame at which it starts, its level, its fade in and its fade out. They only appear for connected tracks. Starts are counted in frames, at the frame rate the film declares. A frame is not a thirtieth of a second: at 29.97 frames per second, frame one thousand falls at 33.3667 s, and the gap against a calculation at thirty reaches one second after ten minutes. « Film level » sets the original sound, which is kept and mixed with the tracks. At minus sixty decibels it falls silent. The length of the produced file is the film's. A sound running past the end is cut with a fade. The picture is copied as it is, without being re-encoded: the definition, the frame rate and the quality are those of the original. The output is an MP4 file whose sound is AAC. The « Save the scored film » button, under the tracks, writes it to disk; until it is saved, the file exists only in memory. The film's file is read by ranges, without being loaded whole. The node states the memory it has held: the film's decoded sound, the mix and the produced file add up.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Track 1 | audio |  |
+| input | Track 2 | audio |  |
+| input | Track 3 | audio |  |
+| input | Track 4 | audio |  |
+| input | Track 5 | audio |  |
+| input | Track 6 | audio |  |
+| output | Video | video |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | fichier | — |  | The film's file, chosen with the « … » button or typed. Containers read: MP4, MOV, WebM, MKV, M4V. |
+| Film level | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of the film's own sound, kept and mixed with the tracks. At −60 dB it falls silent. |
+| Frame 1 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 1 starts. |
+| Gain 1 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 1. |
+| Fade in 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade in. |
+| Fade out 1 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 1's fade out. |
+| Frame 2 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 2 starts. |
+| Gain 2 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 2. |
+| Fade in 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade in. |
+| Fade out 2 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 2's fade out. |
+| Frame 3 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 3 starts. |
+| Gain 3 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 3. |
+| Fade in 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade in. |
+| Fade out 3 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 3's fade out. |
+| Frame 4 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 4 starts. |
+| Gain 4 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 4. |
+| Fade in 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade in. |
+| Fade out 4 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 4's fade out. |
+| Frame 5 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 5 starts. |
+| Gain 5 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 5. |
+| Fade in 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade in. |
+| Fade out 5 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 5's fade out. |
+| Frame 6 | number | 0 | 0 – 2000000, step 1 | Frame of the film at which track 6 starts. |
+| Gain 6 | slider | 0 dB | -60 – 12 dB, step 0.5 | Level of track 6. |
+| Fade in 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade in. |
+| Fade out 6 | number | 10 ms | 0 – 60000 ms, step 1 | Length of track 6's fade out. |

@@ -45,6 +45,12 @@ test.afterAll(async () => {
 });
 
 test.describe("Kokoro TTS plugin", () => {
+  // Le modèle est tiré du réseau au premier appel, et le worker s'accorde 180 s pour cela.
+  // Sans cette ligne, Playwright coupe à 30 s : un chargement à froid, mesuré à une trentaine
+  // de secondes, tombe alors en échec alors que la synthèse aboutit. On aligne le budget du
+  // test sur celui du worker, un test ne devant pas échouer plus tôt que le code qu'il mesure.
+  test.setTimeout(240_000);
+
   test("app loads", async ({ page }) => {
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 10000 });

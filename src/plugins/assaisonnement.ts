@@ -44,7 +44,7 @@ export const fiches: FicheAudio[] = ([
       const anglais = en();
       const gout = PAR_ID[String(ctx.paramTexte("Goût", "sucre"))] ?? "sucré";
       const dose = ctx.paramNombre("Dose", 60) / 100;
-      const r = assaisonner(a, gout, dose);
+      const r = await assaisonner(a, gout, dose);
       const noms: Record<Gout, string> = anglais
         ? { "sucré": "sweet", "acide": "sour", "amer": "bitter", "salé": "salty" }
         : { "sucré": "sucré", "acide": "acide", "amer": "amer", "salé": "salé" };

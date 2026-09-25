@@ -1,0 +1,295 @@
+{
+  "frequence": 48000,
+  "dureeSec": 3,
+  "composants": {
+    "phase-pghi": {
+      "empreintes": [
+        "0.267149555/0.551848948"
+      ],
+      "message": "Convergence -17.0 dB · 1 îlot(s) · 100 % intégré"
+    },
+    "stn-sinus-transitoires-bruit": {
+      "empreintes": [
+        "0.268741559/0.503072202",
+        "0.005003326/0.181165308",
+        "0.017908591/0.135868892"
+      ],
+      "message": "Sinus 100 % · transitoires 0 % · bruit 0 %"
+    },
+    "sms-sinusoides-bruit": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        "0.269146007/0.503524363",
+        "0.017903898/0.183181822"
+      ],
+      "message": "2 partiels suivis · découpés dans le son"
+    },
+    "decomposition-atomique": {
+      "empreintes": [
+        "0.268589638/0.526395142",
+        "0.026862897/0.346627086",
+        null
+      ],
+      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n« durée »"
+    },
+    "texture-statistique": {
+      "empreintes": [
+        "0.390867573/0.899999976"
+      ],
+      "message": "10.0 s · 20 bandes · écart aux statistiques 57 %"
+    },
+    "correction-hauteur": {
+      "empreintes": [
+        "0.269832396/0.529635847",
+        "courbe 0.499479878/0.503846884 · 300 valeurs · 299 paliers"
+      ],
+      "message": "écart moyen corrigé 0 cents · 99 % des trames"
+    },
+    "shimmer": {
+      "empreintes": [
+        "0.264298468/0.732867956"
+      ],
+      "message": "générations : 0 · -5 · -8 · -12 dB"
+    },
+    "suiveur-hauteur": {
+      "empreintes": [
+        "courbe 0.400022472/0.400869310 · 300 valeurs · 294 paliers",
+        "0.269865992/0.528780282",
+        "courbe 0.995528251/1.000000000 · 300 valeurs · 5 paliers"
+      ],
+      "message": "300 trames · 99 % voisé · médiane 220.0 Hz"
+    },
+    "harmonizer": {
+      "empreintes": [
+        "0.292976511/0.686969876"
+      ],
+      "message": null
+    },
+    "voice-changer": {
+      "empreintes": [
+        "0.256350379/0.547027826"
+      ],
+      "message": "Voice Changer · Chipmunk"
+    },
+    "griffin-lim": {
+      "empreintes": [
+        "0.210755351/0.528780282"
+      ],
+      "message": "Griffin-Lim · 60 it. · pic E/S 5.29e-1 / 5.29e-1"
+    },
+    "assaisonnement-sonore": {
+      "empreintes": [
+        "0.046797511/0.182511583",
+        null
+      ],
+      "message": "sucré 61 % → 90 %"
+    },
+    "octaver": {
+      "empreintes": [
+        "0.160525423/0.561292052"
+      ],
+      "message": null
+    },
+    "changement-tonalite": {
+      "empreintes": [
+        "0.269161387/0.538834214"
+      ],
+      "message": null
+    },
+    "paulstretch": {
+      "empreintes": [
+        "0.203754738/0.707945764"
+      ],
+      "message": null
+    },
+    "de-esser": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "particules": {
+      "empreintes": [
+        "0.148725542/0.299995363",
+        null
+      ],
+      "message": "Grains · 60 grains/s · 3.97 s"
+    },
+    "exciter": {
+      "empreintes": [
+        "0.190117981/0.378794730"
+      ],
+      "message": null
+    },
+    "quadrafuzz": {
+      "empreintes": [
+        "0.316877508/0.976775706"
+      ],
+      "message": null
+    },
+    "reverb-fractale": {
+      "empreintes": [
+        "0.091138042/0.302265465"
+      ],
+      "message": null
+    },
+    "reverbe-convolution": {
+      "empreintes": [
+        "0.129225915/0.452502638"
+      ],
+      "message": "Réverbération à convolution (IR : 2.4 s)"
+    },
+    "distorsion": {
+      "empreintes": [
+        "0.930033993/0.988517165"
+      ],
+      "message": null
+    },
+    "piece-lucier": {
+      "empreintes": [
+        "0.042366124/0.528780282"
+      ],
+      "message": "Pièce de Lucier · 20 passages · platitude spectrale -31.3 → -53.0 dB"
+    },
+    "compresseur-multibande": {
+      "empreintes": [
+        "0.083164715/0.388157457"
+      ],
+      "message": null
+    },
+    "reverberation": {
+      "empreintes": [
+        "0.131046675/0.402920425"
+      ],
+      "message": null
+    },
+    "delay-stereo": {
+      "empreintes": [
+        "0.149740224/0.395520091"
+      ],
+      "message": null
+    },
+    "chorus": {
+      "empreintes": [
+        "0.147754564/0.437915623"
+      ],
+      "message": null
+    },
+    "flanger": {
+      "empreintes": [
+        "0.221834505/0.528285444"
+      ],
+      "message": null
+    },
+    "ring-modulator": {
+      "empreintes": [
+        "0.190784400/0.523590028"
+      ],
+      "message": null
+    },
+    "bitcrusher": {
+      "empreintes": [
+        "0.270002222/0.529411793"
+      ],
+      "message": null
+    },
+    "convolution-deux-sons": {
+      "empreintes": [
+        "0.185414323/0.528780282"
+      ],
+      "message": "3.00 s + 3.00 s → 6.00 s"
+    },
+    "decaleur-frequence": {
+      "empreintes": [
+        "0.269858425/0.574913681"
+      ],
+      "message": "+100 Hz · 100 % de décalé"
+    },
+    "glissando-interieur": {
+      "empreintes": [
+        "0.016100059/0.059272282"
+      ],
+      "message": null
+    },
+    "transfert-enveloppe": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": "contour de 3.00 s étiré sur 3.00 s"
+    },
+    "transient-shaper": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "montage-grains": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "1 grains · écart moyen « durée »"
+    },
+    "suppression-clics": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "doppler": {
+      "empreintes": [
+        "0.104128717/0.296310097"
+      ],
+      "message": "un la 440 s'entend 482 Hz en approchant, 405 Hz en s'éloignant"
+    },
+    "filtrage-spectre": {
+      "empreintes": [
+        "0.230832486/0.387342066"
+      ],
+      "message": null
+    },
+    "largeur-stereo": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": null
+    },
+    "mono-grave": {
+      "empreintes": [
+        "0.260924228/0.647201598"
+      ],
+      "message": "côté grave -0.7 dB · corrélation sous la coupure 0.02 → 0.10"
+    },
+    "shift-formants": {
+      "empreintes": [
+        "0.269865992/0.528780282"
+      ],
+      "message": "pitch inchangé · formants inchangés"
+    },
+    "dereverberation": {
+      "empreintes": [
+        "0.269240563/0.528780282"
+      ],
+      "message": null
+    },
+    "formule-echantillons": {
+      "empreintes": [
+        "0.130597622/0.150000006"
+      ],
+      "message": "Formule appliquée : sin(t * 2 * pi * 440) + x"
+    },
+    "mosaiquage": {
+      "empreintes": [
+        "0.327519178/0.720000029",
+        null
+      ],
+      "message": "162 grains reconstruits · 162 distincts sur 162"
+    },
+    "generateur-courbe": {
+      "empreintes": [
+        "courbe 0.636804686/1.000000000 · 2000 valeurs · 2000 paliers"
+      ],
+      "message": "2000 valeurs · 10.0 s"
+    }
+  }
+}

@@ -141,6 +141,13 @@ import { fiches as f_caracteristiques_piste } from "./caracteristiques-piste";
 import { fiches as f_synthese_features } from "./synthese-features";
 import { fiches as f_cercle_pulsant } from "./cercle-pulsant";
 import { fiches as f_recaler_niveau } from "./recaler-niveau";
+import { fiches as f_montage_video } from "./montage-video";
+import { fiches as f_extrait_video } from "./extrait-video";
+import { fiches as f_separer_image_son } from "./separer-image-son";
+import { fiches as f_visualiseur_multipiste } from "./visualiseur-multipiste";
+import { fiches as f_spirale_quintes } from "./spirale-quintes";
+import { fiches as f_spirale_logarithmique } from "./spirale-logarithmique";
+import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_parcours } from "./parcours";
@@ -220,6 +227,13 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_synthese_features,
   ...f_cercle_pulsant,
   ...f_recaler_niveau,
+  ...f_montage_video,
+  ...f_extrait_video,
+  ...f_separer_image_son,
+  ...f_visualiseur_multipiste,
+  ...f_spirale_quintes,
+  ...f_spirale_logarithmique,
+  ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,
   ...f_parcours,

@@ -8,8 +8,10 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { lisser } from "../audio/courbe";
 import {
-  courbeDeConfiance, courbeDepuisHauteur, hauteurMediane, partVoisee, suivreHauteur,
+  courbeDeConfiance, courbeDepuisHauteur, hauteurMediane, partVoisee, suivreVoie,
+  type OptionsVoieHauteur, type SuiviHauteur,
 } from "../audio/hauteur";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -52,11 +54,20 @@ export const fiches: FicheAudio[] = ([
       }
       const fMin = ctx.paramNombre("Hauteur min", 55);
       const fMax = Math.max(fMin * 2, ctx.paramNombre("Hauteur max", 1760));
-      const suivi = suivreHauteur(entree.getChannelData(0), entree.sampleRate, {
-        fMin, fMax,
-        cadence: Math.round(ctx.paramNombre("Cadence", 100)),
-        viterbi: ctx.paramTexte("Décodage", "pyin") !== "yin",
-      });
+      // UNE SEULE VOIE : le suivi porte sur le canal de gauche, une hauteur étant une propriété de
+      // la note jouée et non de l'image stéréo. Le socle n'en reçoit donc qu'une.
+      const [suivi] = await parCanal<OptionsVoieHauteur, SuiviHauteur>(
+        [entree.getChannelData(0)],
+        {
+          sampleRate: entree.sampleRate, fMin, fMax,
+          cadence: Math.round(ctx.paramNombre("Cadence", 100)),
+          viterbi: ctx.paramTexte("Décodage", "pyin") !== "yin",
+        },
+        {
+          creerWorker: () => new Worker(new URL("../workers/hauteur-worker.ts", import.meta.url), { type: "module" }),
+          calcul: suivreVoie,
+        },
+      );
       const brute = courbeDepuisHauteur(suivi, fMin, fMax);
       const inertie = ctx.paramNombre("Inertie", 30) / 100;
       const hauteur = { valeurs: lisser(brute.valeurs, inertie), cadence: brute.cadence };

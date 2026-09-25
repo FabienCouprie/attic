@@ -32,7 +32,7 @@ const GOUTS: Gout[] = ["sucré", "acide", "amer", "salé"];
 describe("doserAssaisonnement", () => {
   const milieu: DimensionsGout = { hauteur: 0.5, articulation: 0.5, vitesse: 0.5, consonance: 0.5, intensite: 0.5 };
 
-  it("à dose nulle, aucun réglage ne bouge", () => {
+  it("à dose nulle, aucun réglage ne bouge", async () => {
     const r = doserAssaisonnement(milieu, "sucré", 0);
     expect(r.demiTons).toBeCloseTo(0, 10);
     expect(r.vitesse).toBe(1);
@@ -48,7 +48,7 @@ describe("doserAssaisonnement", () => {
     expect(doserAssaisonnement(milieu, "acide", 1).demiTons).toBeGreaterThan(10);
   });
 
-  it("creuse les silences pour le salé, les remplit pour le sucré", () => {
+  it("creuse les silences pour le salé, les remplit pour le sucré", async () => {
     const sale = doserAssaisonnement({ ...milieu, articulation: 0.9 }, "salé", 1);
     expect(sale.porte).toBeGreaterThan(0.5);
     expect(sale.queue).toBe(0);
@@ -63,7 +63,7 @@ describe("doserAssaisonnement", () => {
     expect(doserAssaisonnement({ ...milieu, consonance: 0.2 }, "sucré", 1).coupure).toBeLessThan(16000);
   });
 
-  it("la dose fait la moitié du chemin à 50 %", () => {
+  it("la dose fait la moitié du chemin à 50 %", async () => {
     // Un son déjà proche du registre visé : l'écart tient dans l'octave, donc rien n'est borné.
     const proche: DimensionsGout = { ...milieu, hauteur: 0.8 };
     const plein = doserAssaisonnement(proche, "acide", 1);
@@ -112,7 +112,7 @@ describe("les gestes, un par un", () => {
     expect(mesurer(adoucir(neutre(), 400)).registre).toBeLessThan(mesurer(neutre()).registre);
   });
 
-  it("aucun geste ne fabrique de valeur impossible", () => {
+  it("aucun geste ne fabrique de valeur impossible", async () => {
     for (const son of [porter(neutre(), 1), lier(neutre(), 0.4), desaccorder(neutre(), 50), adoucir(neutre(), 800)]) {
       expect(son.getChannelData(0).every(Number.isFinite)).toBe(true);
     }
@@ -120,37 +120,37 @@ describe("les gestes, un par un", () => {
 });
 
 describe("assaisonner", () => {
-  it("rapproche le son du goût visé — les quatre goûts, mesure à l'appui", () => {
+  it("rapproche le son du goût visé — les quatre goûts, mesure à l'appui", async () => {
     for (const gout of GOUTS) {
-      const r = assaisonner(neutre(), gout, 1);
+      const r = await assaisonner(neutre(), gout, 1);
       expect(r.partApres, `${gout} : ${(r.partAvant * 100).toFixed(0)} % → ${(r.partApres * 100).toFixed(0)} %`)
         .toBeGreaterThan(r.partAvant);
     }
   });
 
-  it("à dose nulle, le son et sa place ne bougent pas", () => {
-    const r = assaisonner(neutre(), "acide", 0);
+  it("à dose nulle, le son et sa place ne bougent pas", async () => {
+    const r = await assaisonner(neutre(), "acide", 0);
     expect(r.partApres).toBeCloseTo(r.partAvant, 6);
     expect(r.son.length).toBe(neutre().length);
   });
 
-  it("une demi-dose déplace moins qu'une dose pleine", () => {
-    const moitie = assaisonner(neutre(), "amer", 0.5);
-    const plein = assaisonner(neutre(), "amer", 1);
+  it("une demi-dose déplace moins qu'une dose pleine", async () => {
+    const moitie = await assaisonner(neutre(), "amer", 0.5);
+    const plein = await assaisonner(neutre(), "amer", 1);
     expect(plein.partApres).toBeGreaterThan(moitie.partApres);
   });
 
-  it("rend de quoi vérifier : les réglages, et les dimensions avant et après", () => {
-    const r = assaisonner(neutre(), "amer", 1);
+  it("rend de quoi vérifier : les réglages, et les dimensions avant et après", async () => {
+    const r = await assaisonner(neutre(), "amer", 1);
     // L'amer est grave : la transposition descend, et le registre mesuré aussi.
     expect(r.reglages.demiTons).toBeLessThan(0);
     expect(r.apres.hauteur).toBeLessThan(r.avant.hauteur);
     expect(Object.keys(r.avant).sort()).toEqual(Object.keys(REGIONS["amer"]).sort());
   });
 
-  it("ne rend jamais un son cassé", () => {
+  it("ne rend jamais un son cassé", async () => {
     for (const gout of GOUTS) {
-      const r = assaisonner(clics(), gout, 1);
+      const r = await assaisonner(clics(), gout, 1);
       expect(r.son.length, gout).toBeGreaterThan(0);
       expect(r.son.getChannelData(0).every(Number.isFinite), gout).toBe(true);
       let crete = 0;

@@ -33,6 +33,12 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   // l'audio — il porte un son ET sa trajectoire, sans salle —, et il ne doit pouvoir se brancher que
   // sur un rendu d'objets. Un type distinct l'impose ; le teinter comme l'audio inviterait à l'erreur.
   registre.enregistrerTypeFlux({ id: "objet", couleur: "#82c91e", libelle: "Objet" });
+  // CORAIL CLAIR, choisi par la mesure et non au jugé : sa distance en Lab à la couleur la plus
+  // proche de la palette, le rose de l'image (#d63384), est de 40,5 ΔE, et toutes les autres sont
+  // au-delà. C'était le meilleur des treize candidats essayés, le suivant étant à 38,7. Un film
+  // n'est ni un fichier quelconque ni une image : il porte une durée, et un port qui le dit permet
+  // enfin de brancher une sortie vidéo quelque part.
+  registre.enregistrerTypeFlux({ id: "video", couleur: "#ff8787", libelle: "Vidéo" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

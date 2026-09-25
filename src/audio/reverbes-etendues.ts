@@ -21,7 +21,7 @@
 // la première transposée, et ainsi de suite jusqu'à ce que le gain de rebouclage les éteigne. Quatre
 // ou cinq suffisent ; au-delà, tout est sous le plancher d'audition.
 
-import { changerTonalite } from "./effets-spectral";
+import { changerTonaliteVoie } from "./effets-spectral";
 import { convoluer, reponseVelours, type OptionsVelours } from "./velours";
 
 /**
@@ -175,6 +175,21 @@ export interface ResultatShimmer {
   generationsDb: number[];
 }
 
+/** Les réglages du shimmer, sans le transposeur : une fonction ne traverse pas un worker. */
+export type OptionsVoieShimmer = Omit<OptionsShimmer, "transposer">;
+
+/**
+ * Le shimmer d'une voie, transposeur compris.
+ *
+ * POURQUOI CETTE ENVELOPPE. `shimmer` accepte un transposeur injecté, et le nœud lui passe celui du
+ * catalogue, qui garde la durée. Une FONCTION ne peut pas être transportée dans un worker : elle est
+ * donc choisie ici, du bon côté du fil. C'est aussi ce qui fixe le fait que le nœud emploie toujours
+ * la transposition à durée conservée, là où le défaut de `shimmer` raccourcit.
+ */
+export function shimmerVoie(x: Float32Array, o: OptionsVoieShimmer): ResultatShimmer {
+  return shimmer(x, { ...o, transposer: transposerAvecDuree });
+}
+
 /**
  * Le shimmer, déroulé en générations.
  *
@@ -234,12 +249,16 @@ export function transposerParReechantillonnage(x: Float32Array, demiTons: number
   return out;
 }
 
-/** La transposition du catalogue, qui garde la durée. Utilisée par le nœud. */
+/**
+ * La transposition du catalogue, qui garde la durée. Utilisée par le nœud.
+ *
+ * ELLE N'ENVELOPPE PLUS LE TABLEAU DANS UN `AudioBuffer`. Elle le faisait uniquement pour appeler
+ * `changerTonalite`, et c'était le seul emploi du Web Audio de tout ce module : il interdisait à
+ * `shimmer` de quitter le fil de l'interface, `AudioBuffer` n'existant pas dans un worker. Le calcul
+ * est le même, appelé sur son cœur par voie.
+ */
 export function transposerAvecDuree(
-  x: Float32Array, demiTons: number, frequence: number,
+  x: Float32Array, demiTons: number, _frequence: number,
 ): Float32Array {
-  const tampon = new (globalThis as unknown as { AudioBuffer: new (o: { numberOfChannels: number; length: number; sampleRate: number }) => AudioBuffer }).AudioBuffer(
-    { numberOfChannels: 1, length: x.length, sampleRate: frequence });
-  tampon.getChannelData(0).set(x);
-  return changerTonalite(tampon, demiTons).getChannelData(0);
+  return changerTonaliteVoie(x, demiTons);
 }
