@@ -319,13 +319,6 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 11px; display: flex; align-items: center; justify-content: center;
 }
 .attic-onglet-fermer:hover { background: rgba(238,68,68,0.1); color: #e44; }
-.attic-onglet-ajouter {
-  width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border);
-  background: transparent; color: var(--text-secondary); cursor: pointer;
-  font-size: 16px; display: flex; align-items: center; justify-content: center;
-  margin-left: 4px;
-}
-.attic-onglet-ajouter:hover { background: var(--bg-hover); }
 .attic-chemin {
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 140px;
