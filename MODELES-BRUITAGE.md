@@ -184,8 +184,13 @@ Même prompt, mêmes cinq graines, six secondes, huit étapes.
 **La dispersion est divisée par plus de deux et le cas catastrophique disparaît ; la moyenne ne
 bouge pas.** Il faut le dire ainsi : la mesure détecte la périodicité des attaques, et une porte qui
 grince est périodique. Elle savait repérer une dérive vers la boucle sur un modèle qui en fait ; sur
-un modèle qui n'en fait pas, ce qu'elle mesure est peut-être la structure propre du son. Seule
-l'écoute tranche.
+un modèle qui n'en fait pas, ce qu'elle mesure est peut-être la structure propre du son.
+
+**L'écoute a tranché, et elle est favorable.** Deux paires comparées par Fabien le 26 septembre
+2026, même graine et même prompt, le paquet musical contre le paquet de bruitage : une porte qui
+grince, cas ordinaire, et un impact de verre brisé, cas décisif puisqu'un modèle musical rend une
+cloche là où il faudrait un éclat. Le paquet de bruitage est retenu. **C'est le seul juge que cette
+question ait trouvé** : aucune de mes mesures ne concluait.
 
 Le prix est réel : **quatre fois plus lent**, le paquet officiel étant en fp16 quand l'autre est en
 int4. La piste, si cela gêne à l'usage, serait une quantisation int4 du paquet officiel, ce qui
