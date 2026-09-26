@@ -155,6 +155,7 @@ electron/
 - [`COMPONENTS.md`](COMPONENTS.md) — Generated catalog of every node, with its ports and parameters (regenerate with `npm run docs:components`; a test fails when it no longer matches the registry)
 - [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/`
 - [`MODELES-BRUITAGE.md`](MODELES-BRUITAGE.md) — Working note on sound-effect generation: why the installed Stable Audio bundle drifts to music, what was measured, and the surveyed alternatives with their licences
+- [`COMPOSITION-ASSISTEE.md`](COMPOSITION-ASSISTEE.md) — Evaluation of hosting computer-assisted composition (OpenMusic): what already matches, the one representation that blocks the rest, and why porting is ruled out by licence
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — Historical record of the `App.tsx` → hooks extraction (a completed milestone; `App.tsx` has since grown again as features were added)
 - [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — Guided exercises for learning the app
 - [`SECURITY.md`](SECURITY.md) — Vulnerability reporting policy
