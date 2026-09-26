@@ -21,6 +21,8 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   // La pluie de notes prend la moitie de la hauteur, d'ou un noeud plus haut que les deux autres.
   if (def.id === "clavier-apprentissage") return { width: 660, height: 380 };
   // La liste a cocher des instruments : onze lignes et leurs intitules de famille.
+  // L'arbre se deplie en largeur : une mesure a trois etages ne se lit pas dans 260 pixels.
+  if (def.id === "arbre-rythmique") return { width: 620, height: 280 };
   if (def.id === "orchestre-csound") return { width: 340, height: 420 };
   if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
   if (def.id === "analyseur-spectre") return { width: 420, height: 300 };

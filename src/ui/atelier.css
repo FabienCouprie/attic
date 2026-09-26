@@ -357,6 +357,87 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   font-size: 9px; color: var(--text-muted); margin-top: 1px;
 }
 
+/* L'arbre rythmique, dessiné au trait.
+   ------------------------------------
+   AU TRAIT, ET NON EN APLATS. La première version posait des rectangles pleins en sépia, orange et
+   violet, choisis pour eux-mêmes : dans un thème de plan technique, ils faisaient tache et ne
+   disaient rien de plus. Un dessin industriel se lit à ses filets d'épaisseur constante, à ses
+   hachures et à ses lignes de cote ; l'arbre en emprunte le vocabulaire, qui se trouve être aussi
+   le plus lisible. La demande vient de Fabien.
+   AUCUNE COULEUR N'EST ÉCRITE ICI. Tout passe par les variables, de sorte que la vue suive le
+   thème sans qu'on y revienne, y compris les teintes neutres que les nœuds réassignent chez eux.
+   `non-scaling-stroke` tient les filets à un pixel quelle que soit la largeur du nœud : sans lui,
+   l'étirement du repère les épaissirait, et le dessin cesserait d'être un dessin au trait. */
+/* LA HIÉRARCHIE DES TRAITS EST CELLE D'UN PLAN, ET ELLE EST MESURÉE. Un dessin industriel
+   distingue le trait d'objet, fort, le trait de construction, faible, et le quadrillage, presque
+   absent. Contrastes calculés sur le fond d'un nœud, #1a1a1e : `--border` n'y tient que 1,22 pour
+   1 et disparaît — la première version l'employait pour les branches, et le dessin s'effaçait.
+   `--text-tertiary` donne 3,02, le minimum exigé d'un élément graphique ; `--text-secondary`
+   donne 6,09 ; `--text-primary` 12,24 ; l'accent 4,72. Chaque rôle reçoit donc le ton que sa
+   fonction demande, et non celui qui se trouvait porter le bon nom. */
+.arbre-svg { display: block; width: 100%; }
+.arbre-fond { fill: var(--bg-input); }
+/* Le quadrillage doit être à peine là : c'est son office. */
+.arbre-grille { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+/* Une branche est un contour ; son intérieur reste vide mais reçoit le clic. */
+.arbre-branche {
+  fill: none; pointer-events: all; cursor: pointer;
+  stroke: var(--text-secondary); stroke-width: 1; vector-effect: non-scaling-stroke;
+}
+.arbre-branche:hover { stroke: var(--text-primary); }
+/* Une branche divisée ne sonne pas : elle porte d'autres branches. Trait de construction, donc,
+   plus faible et tireté, comme sur un plan où l'on distingue l'objet de ce qui sert à le poser. */
+.arbre-branche.est-divisee { stroke: var(--text-tertiary); stroke-dasharray: 3 2; }
+.arbre-branche.est-choisie { stroke: var(--accent); stroke-width: 2; fill: var(--bg-hover-accent); }
+/* Le trait qui descend d'une branche vers ses parts : c'est lui qui montre le dépliage. */
+.arbre-attache { stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.arbre-barre { stroke: var(--text-secondary); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.arbre-etiquette { fill: var(--text-primary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.arbre-metrique { fill: var(--text-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+/* La ligne de cote : ce qu'on entendra, mesuré comme sur un plan. */
+.arbre-cote { stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.arbre-cote-tick { stroke: var(--text-secondary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.arbre-cote-note { stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.arbre-cote-silence { stroke: var(--text-tertiary); stroke-width: 2; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+/* Un groupe irrégulier s'annonce comme en musique : un crochet et son chiffre. */
+.arbre-crochet { fill: none; stroke: var(--accent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.arbre-crochet-nombre { fill: var(--accent); font-size: 10px; font-variant-numeric: tabular-nums; }
+.arbre-hachure { stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+/* Le menu du clic droit : un cartouche, et non une bulle.
+   IL AVAIT ÉTÉ OUBLIÉ quand le reste est passé au trait, et il y répétait la faute que la mesure
+   venait de corriger ailleurs : un cadre en `--border`, 1,22 pour 1 sur le fond d'un nœud, donc
+   invisible, posé sur un fond `--bg-surface` identique à celui du dessin — un menu qu'on ne
+   distinguait pas de ce qu'il recouvrait. Le cadre passe au ton du trait d'objet, `--text-tertiary`,
+   et le fond à `--bg-btn`, qui est le seul plan plus clair que les nœuds réassignent chez eux.
+   ANGLES VIFS ET LIGNES RÉGLÉES, comme un cartouche de plan : les coins arrondis et les espaces
+   entre les entrées appartiennent à une autre langue graphique que celle du reste de la vue. */
+.arbre-menu {
+  position: absolute; z-index: 10; display: flex; flex-direction: column;
+  min-width: 140px; padding: 0; border-radius: 0;
+  background: var(--bg-btn); border: 1px solid var(--text-tertiary);
+}
+.arbre-menu button {
+  display: block; width: 100%; text-align: left; margin: 0;
+  border: 0; border-radius: 0; background: transparent; color: var(--text-primary);
+  font-size: 11px; font-variant-numeric: tabular-nums; padding: 3px 8px; cursor: pointer;
+}
+.arbre-menu button + button { border-top: 1px solid var(--border-divider); }
+.arbre-menu button:hover { background: var(--bg-hover-accent); color: var(--accent); }
+/* Le trait qui sépare les divisions du reste : plus fort, comme un filet de cartouche. */
+.arbre-menu .arbre-menu-coupure { border-top: 1px solid var(--text-tertiary); }
+.arbre-erreur { color: var(--arret); font-size: 10px; padding: 0 4px; }
+/* L'ÉTAT SE MONTRE, IL NE SE DEVINE PAS. Un filet à l'accent plutôt qu'un aplat : la marque d'un
+   bouton actif doit appartenir à la même langue que le dessin qu'il commande. Le rouge d'actif des
+   claviers dirait « enregistrement en cours », ce qui n'a rien à voir. */
+.arbre-rythmique-vue .clavier-controles button.arbre-etat-actif,
+.arbre-menu button.arbre-etat-actif {
+  color: var(--accent); background: var(--bg-hover-accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.arbre-rythmique-vue .clavier-controles button:disabled,
+.arbre-menu button:disabled { opacity: 0.35; cursor: default; }
+.arbre-menu button:disabled:hover { background: transparent; color: var(--text-primary); }
+
 /* Un paramètre piloté par une courbe : ses deux bornes, à sa place et dans son unité. La lecture
    passe avant les curseurs — c'est elle qu'on vient chercher, les curseurs ne servent qu'à la régler. */
 .inspecteur-plage { display: flex; flex-direction: column; gap: 3px; }

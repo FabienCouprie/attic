@@ -148,6 +148,12 @@ import { fiches as f_bruitage_ia } from "./bruitage-ia";
 import { fiches as f_visualiseur_multipiste } from "./visualiseur-multipiste";
 import { fiches as f_spirale_quintes } from "./spirale-quintes";
 import { fiches as f_spirale_logarithmique } from "./spirale-logarithmique";
+import { fiches as f_harmonie_spectrale } from "./harmonie-spectrale";
+import { fiches as f_sequence } from "./sequence";
+import { fiches as f_midi_vers_sequence } from "./midi-vers-sequence";
+import { fiches as f_sequence_formes } from "./sequence-formes";
+import { fiches as f_series_morphologie } from "./series-morphologie";
+import { fiches as f_arbre_rythmique } from "./arbre-rythmique";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -235,6 +241,12 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_visualiseur_multipiste,
   ...f_spirale_quintes,
   ...f_spirale_logarithmique,
+  ...f_harmonie_spectrale,
+  ...f_sequence,
+  ...f_midi_vers_sequence,
+  ...f_sequence_formes,
+  ...f_series_morphologie,
+  ...f_arbre_rythmique,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,

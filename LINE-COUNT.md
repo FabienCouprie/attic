@@ -3,23 +3,23 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**880 files, 159854 lines.** The table lists the 246 files of 200 lines or more;
-the remaining 634 account for 67486 lines.
+**912 files, 165391 lines.** The table lists the 256 files of 200 lines or more;
+the remaining 656 account for 70112 lines.
 
 | File | Lines |
 |---|---:|
-| src/ui/vues.tsx | 2451 |
-| src/plugins/effets.ts | 2093 |
+| src/ui/vues.tsx | 2454 |
+| src/plugins/effets.ts | 2107 |
 | src/plugins/carte-sonore.ts | 1863 |
 | src/plugins/generateurs.ts | 1700 |
-| src/ui/atelier.css | 1409 |
+| src/ui/atelier.css | 1490 |
 | src/ui/App.tsx | 1406 |
-| src/i18n.tsx | 1352 |
+| src/i18n.tsx | 1367 |
 | src/audio/analyse.ts | 1210 |
 | src/audio/effets-spectral.ts | 1165 |
 | src/audio/generation.ts | 1130 |
 | src/ui/hooks/useExecutionGraphe.ts | 1124 |
-| src/audio/midi.ts | 982 |
+| src/audio/midi.ts | 1017 |
 | src/audio/effets-dynamique.ts | 866 |
 | src/audio/effets-temporel.ts | 791 |
 | src/plugins/tone-synths.ts | 765 |
@@ -33,8 +33,8 @@ the remaining 634 account for 67486 lines.
 | src/audio/sfz.test.ts | 619 |
 | src/audio/csound.ts | 577 |
 | src/audio/clavier-banque.ts | 574 |
+| src/plugins/vexflow.ts | 558 |
 | src/plugins/montage.ts | 549 |
-| src/plugins/vexflow.ts | 548 |
 | src/ui/SelecteurMultiZones.tsx | 539 |
 | src/plugins/csound.ts | 523 |
 | src/plugins/pochette-svg.ts | 508 |
@@ -45,12 +45,13 @@ the remaining 634 account for 67486 lines.
 | src/audio/continuation-spectrale.ts | 482 |
 | src/audio/sfz.ts | 467 |
 | src/ia.ts | 466 |
+| src/audio/midi-vers-abc.ts | 461 |
 | src/plugins/magenta.ts | 456 |
-| src/audio/midi-vers-abc.ts | 452 |
 | src/audio/clavier-banque.test.ts | 451 |
 | src/plugins/generateurs.test.ts | 449 |
 | src/audio/tone-synths.ts | 443 |
 | src/audio/effets-spectral.test.ts | 440 |
+| src/audio/soundfont.ts | 440 |
 | src/audio/conformite-clavier.ts | 435 |
 | src/plugins/theorie-avancee.ts | 429 |
 | src/ui/EditeurCode.tsx | 426 |
@@ -63,19 +64,20 @@ the remaining 634 account for 67486 lines.
 | src/ui/BarreOutils.tsx | 415 |
 | src/audio/effets-montage.ts | 414 |
 | src/audio/particules.ts | 412 |
-| src/audio/soundfont.ts | 412 |
 | src/audio/texture-statistique.ts | 412 |
 | src/plugins/sherpa-asr.ts | 411 |
 | src/audio/csound.test.ts | 410 |
 | src/ui/MontageVideo.tsx | 407 |
 | src/audio/pca-neuronale.ts | 397 |
 | src/core/bulles.ts | 397 |
+| src/plugins/analyse.ts | 397 |
 | src/plugins/notices.ts | 394 |
 | src/audio/hauteur.ts | 393 |
 | src/plugins/textgen.ts | 393 |
 | src/audio/batterie.ts | 390 |
 | src/core/domaine-nombre.test.ts | 389 |
 | src/plugins/syntheses-exotiques.ts | 388 |
+| src/plugins/index.ts | 380 |
 | src/audio/groove-box.ts | 378 |
 | src/audio/pghi.ts | 377 |
 | src/audio/reservoir.ts | 375 |
@@ -83,16 +85,15 @@ the remaining 634 account for 67486 lines.
 | src/audio/effets-verification.test.ts | 370 |
 | src/ui/demo/useRealisateurDemo.tsx | 369 |
 | src/audio/io-profondeur.test.ts | 368 |
-| src/plugins/index.ts | 368 |
+| src/audio/commun.ts | 364 |
 | src/audio/couleurs.ts | 357 |
 | src/audio/csound-orchestre.ts | 355 |
 | src/audio/sms.ts | 352 |
 | src/docs/documentation-graphe.test.ts | 352 |
-| src/plugins/analyse.ts | 349 |
 | src/audio/cercle-pulsant.test.ts | 348 |
-| src/audio/commun.ts | 348 |
 | src/plugins/algebre-musicale.ts | 346 |
 | src/audio/accords.ts | 345 |
+| src/audio/harmonie-spectrale.test.ts | 344 |
 | src/plugins/python-processor.ts | 344 |
 | src/audio/motifs-midi.test.ts | 339 |
 | src/audio/objets-sonores.ts | 339 |
@@ -117,6 +118,7 @@ the remaining 634 account for 67486 lines.
 | src/parcours/mesures.ts | 307 |
 | src/audio/abc.test.ts | 306 |
 | src/audio/synthese-features.ts | 305 |
+| src/plugins/arbre-rythmique.ts | 300 |
 | src/ui/hooks/usePersistance.ts | 300 |
 | src/audio/risset.test.ts | 298 |
 | src/audio/spectral-wishart.ts | 297 |
@@ -130,6 +132,8 @@ the remaining 634 account for 67486 lines.
 | src/audio/inpainting.ts | 285 |
 | src/audio/spectral-wishart.test.ts | 285 |
 | src/audio/concret.ts | 284 |
+| src/audio/harmonie-spectrale.ts | 284 |
+| src/ui/ArbreRythmiqueVue.tsx | 283 |
 | src/core/meta.ts | 281 |
 | src/plugins/julia-processor.ts | 280 |
 | src/quiz/sigles.ts | 278 |
@@ -143,6 +147,7 @@ the remaining 634 account for 67486 lines.
 | src/plugins/rythme-vers-midi.test.ts | 264 |
 | src/plugins/spectral-cdp.ts | 263 |
 | src/audio/correction-hauteur.ts | 261 |
+| src/audio/musicxml-arbre.ts | 261 |
 | src/plugins/automate-cellulaire.ts | 261 |
 | src/ui/ExtraitVideo.tsx | 261 |
 | src/audio/deplacement.test.ts | 259 |
@@ -152,16 +157,18 @@ the remaining 634 account for 67486 lines.
 | src/plugins/clavier-banque.ts | 257 |
 | src/audio/csound-aleatoire.ts | 255 |
 | src/audio/vitesse-midi.test.ts | 255 |
+| src/ui/ClavierApprentissage.tsx | 255 |
 | src/ui/PistesMultiples.tsx | 254 |
 | src/audio/grains.test.ts | 253 |
 | src/audio/guides-onde.ts | 253 |
+| src/audio/microtons.test.ts | 251 |
 | src/audio/ampleur.test.ts | 250 |
 | src/core/instrument-graphe.ts | 250 |
-| src/ui/ClavierApprentissage.tsx | 250 |
 | src/audio/demonstration.ts | 249 |
 | src/audio/conformite-clavier.test.ts | 248 |
 | src/audio/dissonance.test.ts | 248 |
 | src/plugins/deplacement.ts | 248 |
+| src/ui/clavier-jouable.tsx | 248 |
 | src/audio/csound-orchestre.test.ts | 247 |
 | src/plugins/galerie-exposition.ts | 247 |
 | src/workers/kokoro-local.test.ts | 247 |
@@ -171,6 +178,7 @@ the remaining 634 account for 67486 lines.
 | src/plugins/soundfontGlobal.ts | 245 |
 | src/quiz/tour.test.ts | 243 |
 | src/audio/abc-reprise.ts | 242 |
+| src/audio/arbre-rythmique.ts | 241 |
 | src/audio/metadonnees.test.ts | 241 |
 | src/core/boucle-graphe.test.ts | 241 |
 | src/plugins/modeles-physiques.ts | 241 |
@@ -180,8 +188,8 @@ the remaining 634 account for 67486 lines.
 | src/audio/griffin-lim.ts | 240 |
 | src/audio/csound-aleatoire.test.ts | 239 |
 | src/audio/midi-vers-abc.test.ts | 239 |
-| src/ui/clavier-jouable.tsx | 238 |
 | src/docs/modulables.ts | 237 |
+| src/audio/abc-edition-llm.ts | 236 |
 | src/audio/camelot.ts | 236 |
 | src/audio/concatenatif.test.ts | 236 |
 | src/audio/vumetre.ts | 236 |
@@ -192,10 +200,10 @@ the remaining 634 account for 67486 lines.
 | src/audio/automate-cellulaire.test.ts | 231 |
 | src/audio/midi.test.ts | 231 |
 | src/plugins/montage.test.ts | 230 |
-| src/audio/abc-edition-llm.ts | 229 |
 | src/audio/accords-sequencer.ts | 229 |
 | src/audio/dissonance.ts | 229 |
 | src/quiz/tour.ts | 229 |
+| src/audio/arbre-rythmique.test.ts | 227 |
 | src/audio/moebius.test.ts | 227 |
 | src/audio/sms.test.ts | 227 |
 | src/audio/ambisonique.test.ts | 226 |
@@ -213,6 +221,7 @@ the remaining 634 account for 67486 lines.
 | src/docs/catalogue-markdown.ts | 220 |
 | src/ui/generation-code.ts | 219 |
 | src/ui/hooks/useBulles.ts | 219 |
+| src/audio/arbre-disposition.ts | 216 |
 | src/audio/repartition-midi.test.ts | 216 |
 | src/audio/dessin-sonore.ts | 215 |
 | src/audio/fof.test.ts | 215 |
@@ -225,6 +234,7 @@ the remaining 634 account for 67486 lines.
 | src/audio/classification-pistes.ts | 212 |
 | src/audio/reverbes-etendues.test.ts | 212 |
 | src/parcours/exercices.test.ts | 212 |
+| src/audio/musicxml.ts | 211 |
 | src/ui/hooks/useMetaComposants.ts | 211 |
 | src/audio/rythme-analyse.test.ts | 210 |
 | src/audio/phisem.ts | 208 |

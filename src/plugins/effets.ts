@@ -1126,7 +1126,16 @@ export const fiches: FicheAudio[] = ([
     resume: "Rejoue un MIDI dans un tempérament historique ou en intonation juste, au lieu du tempérament égal.",
     resumeEn: "Replays a MIDI file in a historical temperament or just intonation, instead of equal temperament.",
     entrees: [{ nom: "MIDI", type: "midi" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Écarts", nomEn: "Deviations", type: "texte" }],
+    // UNE TROISIÈME SORTIE, APRÈS LES DEUX AUTRES : les arêtes enregistrées visent les ports zéro
+    // et un, qui ne bougent pas. Le nœud calculait déjà des hauteurs fractionnaires et les jetait
+    // après les avoir rendues en son : aucune ne sortait, donc rien ne pouvait être enchaîné ni
+    // gravé. Elles sortent maintenant sur le flux qui sait les porter, et la même intonation juste
+    // peut aller vers une partition, vers un autre traitement, ou vers les deux.
+    sorties: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Écarts", nomEn: "Deviations", type: "texte" },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence" },
+    ],
     parametres: [
       { nom: "Tempérament", nomEn: "Temperament", type: "choix",
         options: TEMPERAMENTS.map((t) => t.fr),
@@ -1149,10 +1158,10 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const { analyserMidi, rendreSequence } = await import("../audio");
       const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
       const temp = temperament(ctx.paramTexte("Tempérament", "juste"));
       const tonique = parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0;
       // Les hauteurs deviennent FRACTIONNAIRES : c'est l'écart qui s'entend. Les deux
@@ -1170,9 +1179,14 @@ export const fiches: FicheAudio[] = ([
       const buffer = await rendreSequence(temperees, modeRendu, ctx.paramNombre("Volume", 80), programme, banque);
       const nom = langueCourante() === "en" ? temp.en : temp.fr;
       const explication = langueCourante() === "en" ? temp.noteEn : temp.noteFr;
+      const horsTempere = temperees.filter((n) => !Number.isInteger(n.note)).length;
       return {
-        valeurs: [buffer, [nom, tableEcarts(temp), "", explication].join("\n")],
-        message: `${nom} · ${notes.length} notes`,
+        valeurs: [
+          buffer,
+          [nom, tableEcarts(temp), "", explication].join("\n"),
+          { notes: temperees, titre: nom },
+        ],
+        message: `${nom} · ${notes.length} notes · ${horsTempere} ${langueCourante() === "en" ? "off the keyboard" : "hors du clavier"}`,
       };
     },
   },

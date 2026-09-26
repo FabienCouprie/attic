@@ -55,6 +55,13 @@ OpenMusic porte autre chose.
 dans `temperaments`, `gammes-monde` et « Gammes du monde », mais **pas dans le flux qui circule
 entre les nœuds** : dès qu'une note passe d'un nœud au suivant, le microton est perdu.
 
+> **Corrigé depuis, et la cause n'était pas celle-ci.** La sonde `audio/microtons.test.ts` a mesuré
+> la chaîne chemin par chemin. Le champ de hauteur est **déjà un nombre à virgule**, et
+> `440 × 2^((n − 69) / 12)` accepte 69,5 : les midicents n'apportaient rien. Ce qui perdait le
+> microton était le **câble**, un port `midi` portant un fichier `.mid` dont le numéro de note est
+> un octet — 69,9 en ressortait à 69. Le flux `sequence` transporte désormais les notes elles-mêmes,
+> et cinq fonctions de notation qui arrondissaient en silence ont été réparées.
+
 **Des arbres rythmiques.** Une durée notée, hiérarchique, avec ses divisions et ses n-olets. Attic
 n'a de rythme noté qu'au bord, à la conversion vers ABC, MusicXML ou VexFlow.
 
@@ -115,15 +122,15 @@ les deux catalogues sont arrivés aux mêmes objets par le même chemin, celui d
 | ce qui manque | ce qui l'empêche |
 | --- | --- |
 | les objets de partition : `chord-seq`, `voice`, `poly`, `multi-seq` | la représentation |
-| les arbres rythmiques, et Rewrite qui les réécrit | la représentation |
+| ~~les arbres rythmiques~~, et Rewrite qui les réécrit | **structure faite** ; leur réécriture reste à venir |
 | la quantification, la bibliothèque RQ | la représentation |
-| Esquisse, OMTristan : l'harmonie spectrale **symbolique** | la représentation, faute de midicents |
-| OM-JI : l'intonation juste | la représentation, faute de midicents |
-| Profile : le contrôle des profils mélodiques | la représentation |
+| ~~Esquisse, OMTristan : l'harmonie spectrale **symbolique**~~ | **fait** : nœud « Harmonie spectrale », série, distorsion, anneau, modulation de fréquence |
+| ~~OM-JI : l'intonation juste~~ | **faite**, et elle existait à moitié : le nœud « Tempérament » la calculait déjà, mais rendait du son. Il rend maintenant aussi une séquence, donc elle s'enchaîne et se grave |
+| ~~Profile : le contrôle des profils mélodiques~~ | **fait** : nœud « Profil mélodique », piloté par le flux `courbe` qui existait déjà |
 | Streamsep : la séparation de voix **symbolique** | la représentation |
 | la maquette, et la Sheet | un conteneur temporel, à écrire |
 | Situation, OMCS, OMRC, Cluster Engine, OMGecode : les solveurs de contraintes | un solveur, à écrire. Attic ne sait que **vérifier**, avec `contrepoint-especes` et « Contraintes ABC » |
-| Morphologie : l'analyse contrastive de suites | un algorithme, à écrire |
+| ~~Morphologie : l'analyse contrastive de suites~~ | **faite** : nœud « Morphologie », profil primaire et distance d'édition |
 | OM-Darwin, GA : les algorithmes génétiques | un algorithme, à écrire |
 | class-array : la matrice de paramètres d'OMChroma | une structure, à écrire |
 | Orchidee : l'orchestration assistée | un serveur et une base de timbres, hors de portée |
@@ -136,9 +143,15 @@ regarde pas Attic.
 
 ### Ce qui serait bon marché une fois la représentation posée
 
-Petit, publié, sans dépendance : les calculs d'intervalles et de fréquences d'Esquisse et d'OMTristan,
-les profils mélodiques, l'intonation juste, les séries à tous les intervalles, l'analyse contrastive
-de Morphologie, les filtres de listes.
+Petit, publié, sans dépendance : ~~les calculs d'intervalles et de fréquences d'Esquisse~~ et
+d'OMTristan, ~~les profils mélodiques~~, ~~l'intonation juste~~, ~~les séries à tous les intervalles~~,
+~~l'analyse contrastive de Morphologie~~, ~~les filtres de listes~~.
+
+**Les six sont faits**, et trois d'entre eux ont coûté moins que prévu parce que le calcul
+existait déjà quelque part : `noteTemperee` retempérait sans que rien ne sorte, le flux `courbe`
+attendait un consommateur de hauteurs. Les deux derniers ont demandé un peu plus : une recherche par élagage
+pour les séries, une distance d'édition pour la ressemblance. Les deux se contrôlent par des
+nombres publiés, 3856 séries et la distance de trois entre « kitten » et « sitting ».
 
 ### Ce qui resterait difficile
 
@@ -149,14 +162,27 @@ n'a pas d'équivalent dans un graphe acyclique.
 
 ## 6. Le chemin, par incréments
 
-Le seul investissement qui rende le reste possible est **un type de flux « partition »**. Tant qu'il
-n'existe pas, chaque fonction reprise est un cul-de-sac ; une fois qu'il existe, elles s'ajoutent
-une par une et se composent.
+Le seul investissement qui rende le reste possible est **un type de flux qui porte des notes**, et
+non un fichier. Tant qu'il n'existe pas, chaque fonction reprise est un cul-de-sac ; une fois qu'il
+existe, elles s'ajoutent une par une et se composent. Il s'appelle `sequence` et non « partition » :
+ce dernier mot désigne déjà la partition Csound, la partition gravée et le verbe partitionner, et il
+promettrait une notation là où ne circule qu'un convoi d'événements.
 
-1. **Le passage en midicents** du flux de notes, avec compatibilité descendante : un demi-ton entier
-   devient cent fois lui-même. Petit, et cela débloque la microtonalité sur tout le catalogue
-   existant.
-2. **L'arbre rythmique** comme structure, plus sa conversion vers ce qu'Attic sait déjà graver.
+1. ~~**Le passage en midicents** du flux de notes, avec compatibilité descendante.~~ **Fait
+   autrement, et la mesure a montré que cette étape était inutile.** Multiplier toute hauteur par
+   cent aurait touché chaque nœud et chaque graphe enregistré, pour rien : le champ est déjà un
+   flottant. Ce qui a été posé à la place est un **type de flux `sequence`**, qui porte des notes
+   au lieu d'un fichier, avec son premier producteur, « Harmonie spectrale », et son rendu. Additif :
+   aucun nœud existant n'a changé de port, et le nœud MusicXML a reçu une seconde entrée après la
+   première. Reste que la microtonalité ne se propage que **sur ce flux** : un nœud qui ne parle que
+   MIDI arrondit toujours, et c'est la limite du format et non du chaînage.
+2. ~~**L'arbre rythmique** comme structure~~ **fait** : structure, notation en listes avec silences et
+   liaisons, déroulement exact en secondes, et un nœud qui pose le rythme sur des hauteurs reçues.
+   Chaque événement porte le rang et la nature de la division qui le porte, ce dont la gravure aura
+   besoin. **Cette étape est close** : le n-olet est relevé ET écrit, le
+   graveur ayant appris `time-modification` et le crochet de n-olet. L'unité de la partition se
+   déduit du plus petit commun multiple des dénominateurs, de sorte qu'un tiers de noire s'écrive
+   en durée entière ; un triolet s'entend juste ET se grave en croches sous un crochet 3:2.
 3. **La quantification** : une liste de durées vers un rythme noté. C'est la fonction la plus
    demandée d'OpenMusic, et la plus difficile à écrire soi-même.
 4. **Les objets composés**, `chord-seq` puis `voice`, une fois que 1 et 2 tiennent.

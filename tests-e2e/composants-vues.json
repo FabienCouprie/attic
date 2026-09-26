@@ -12,6 +12,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "arbre-rythmique",
+    "vue": "ArbreRythmiqueVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "attracteur-ifs",
     "vue": "VueAttracteurIFS",
     "entreeAudio": false,
