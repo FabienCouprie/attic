@@ -349,8 +349,19 @@ async function generate(options) {
     throw new Error(`Modèle Stable Audio 3 absent (${modelDir}). Il ne vient plus avec l'installeur : prenez-le par l'icône « Récupérer les modèles IA » de la barre d'outils, ou indiquez un dossier dans le réglage « Dossier du modèle ».`);
   }
 
-  const T_lat = Math.ceil(((seconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
   const { tokenizer, sessions } = await getResources(modelDir);
+
+  // LA MARGE N'EXISTE QUE POUR LE PAQUET COMMUNAUTAIRE, et le paquet officiel s'en passe. Le
+  // runtime de reference de Stability calcule sa toile ainsi, sans rien ajouter :
+  //
+  //     T_lat = ceil(seconds * SAMPLE_RATE / SAMPLES_PER_LATENT)
+  //
+  // Nous en couvrions « seconds + 6 » tout en annoncant « seconds » au conditionnement : le modele
+  // recevait donc une toile deux fois plus longue que la duree qu'on lui disait de remplir, et la
+  // seconde moitie etait calculee puis jetee. Deux consequences, l'une entendue et l'autre mesuree :
+  // ce qu'il fait de cette moitie non annoncee, et un temps de rendu double pour rien.
+  const marge = sessions.officiel ? 0 : HEADROOM_SECONDS;
+  const T_lat = Math.ceil(((seconds + marge) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
   const localAddCond = zeros([1, 257, T_lat]);
 
   return diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, null);
