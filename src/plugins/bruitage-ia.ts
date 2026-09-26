@@ -172,7 +172,10 @@ export const fiches: FicheAudio[] = ([
           : `${en() ? "gain" : "gain"} ${(20 * Math.log10(Math.max(gain, 1e-9))).toFixed(1)} dB`;
         return {
           valeurs: [buf],
-          message: `${(length / rep.sampleRate).toFixed(2)} s · ${steps} ${en() ? "steps" : "étapes"} · ${en() ? "seed" : "graine"} ${seed} · ${dit}`,
+          // LE PAQUET EN TÊTE DU MESSAGE : c'est le moteur qui le nomme, et non le réglage. Un
+          // processus principal resté sur une version antérieure servait l'autre modèle sans que
+          // rien ne le dise, le réglage affichant pourtant le bon nom.
+          message: `${String(rep.paquet ?? "?")} · ${(length / rep.sampleRate).toFixed(2)} s · ${steps} ${en() ? "steps" : "étapes"} · ${en() ? "seed" : "graine"} ${seed} · ${dit}`,
         };
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: String(err?.message ?? err) };

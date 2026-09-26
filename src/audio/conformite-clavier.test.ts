@@ -13,7 +13,7 @@ import {
 import { NOTE_MAX, NOTE_MIN } from "../ui/clavier-disposition";
 
 const n = (note: number, debut: number, fin = debut + 0.5, canal = 0): NoteJouee =>
-  ({ note, debut, fin, canal, velociete: 90 });
+  ({ note, debut, fin, canal, velocite: 90 });
 
 /** Un accord plaqué, toutes les notes au même instant. */
 const accord = (hauteurs: number[], debut = 0, duree = 1): NoteJouee[] =>

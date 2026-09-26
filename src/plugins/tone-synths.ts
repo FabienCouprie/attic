@@ -739,7 +739,7 @@ export const fiches: FicheAudio[] = ([
         const repli = surCanal.length === 0 && notes.length > 0;
         const canaux = [...new Set(notes.map((n) => n.canal + 1))].sort((a, b) => a - b);
         const notesFiltrees = (repli ? notes : surCanal)
-          .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+          .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
         const buffer = await rendreBatterieMidi({
           notes: notesFiltrees,
           volume,

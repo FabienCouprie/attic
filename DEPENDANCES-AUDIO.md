@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 65 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 116 · transposable tel quel
+- **pur** : 127 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -26,6 +26,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | ampleur.ts | pur | — |
 | analyse.ts | recipient | AudioBuffer |
 | apercu-video.ts | recipient | AudioBuffer |
+| arbre-disposition.ts | pur | — |
+| arbre-rythmique.ts | pur | — |
+| arbres-catalogue.ts | pur | — |
 | assaisonnement.ts | recipient | AudioBuffer |
 | atomes.ts | pur | — |
 | attracteurs.ts | rendu | OfflineAudioContext |
@@ -108,6 +111,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | gtcrn.ts | pur | — |
 | guides-onde.ts | pur | — |
 | harmonie-negative.ts | pur | — |
+| harmonie-spectrale.ts | pur | — |
 | hauteur.ts | pur | — |
 | hpss.ts | pur | — |
 | index.ts | pur | — |
@@ -134,15 +138,19 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | moebius.ts | recipient | AudioBuffer |
 | mono-grave.ts | pur | — |
 | morphing-spectral.ts | pur | — |
+| morphologie.ts | pur | — |
 | motif-crossmodal.ts | recipient | AudioBuffer |
 | motifs-midi.ts | pur | — |
 | multi-reservoir.ts | recipient | AudioBuffer |
 | multicanal-ecoute.ts | rendu | OfflineAudioContext |
 | multicanal.ts | recipient | AudioBuffer |
+| musicxml-arbre.ts | pur | — |
 | musicxml.ts | pur | — |
 | nancarrow.ts | recipient | AudioBuffer |
+| nom-note.ts | pur | — |
 | norgard.ts | pur | — |
 | normalisation-sonie.ts | recipient | AudioBuffer |
+| note.ts | pur | — |
 | objets-sonores.ts | rendu | OfflineAudioContext |
 | ondelettes.ts | pur | — |
 | ordre-catalogue.ts | pur | — |
@@ -175,6 +183,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | rythme-analyse.ts | pur | — |
 | scanning.ts | pur | — |
 | schillinger.ts | pur | — |
+| sequence-formes.ts | pur | — |
+| sequence.ts | pur | — |
+| series-intervalles.ts | pur | — |
 | sfz.ts | recipient | AudioBuffer |
 | silences.ts | pur | — |
 | sms.ts | pur | — |

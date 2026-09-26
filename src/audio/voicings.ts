@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/voicings.ts — Renversements, voicings et conduite des voix.
 //
 // Attic sait fabriquer des accords, et il les empile depuis toujours de la même façon :
@@ -13,13 +14,7 @@
 // accords sans rapport. Le module choisit, pour chaque accord, la disposition la plus
 // proche de la précédente.
 
-export interface NoteAccord {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-  canal?: number;
-}
+export type NoteAccord = Note;
 
 /** Les notes qui commencent ensemble forment un accord — même seuil que pour les motifs. */
 export function accords(notes: NoteAccord[], seuil = 0.02): NoteAccord[][] {

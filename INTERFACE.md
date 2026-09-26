@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**404 composants**, dont **87** avec une vue propre et **4** sans lecteur générique.
+**413 composants**, dont **88** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -26,15 +26,16 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Accord mets-musique | `accord-mets-musique` | VueGout | — | 240 × 162 | non | oui | non |
 | Analyseur de spectre | `analyseur-spectre` | VueSpectre | — | 420 × 300 | non | oui | non |
+| Arbre rythmique | `arbre-rythmique` | ArbreRythmiqueVue | — | 620 × 280 | non | oui | non |
 | Attracteur / IFS | `attracteur-ifs` | VueAttracteurIFS | — | 320 × 320 | oui | oui | non |
 | Banque SFZ | `banque-sfz` | — | VueBanqueSfz | 240 × 140 | non | oui | non |
 | Roue de Camelot | `camelot` | VueRenduImage | — | 240 × 162 | oui | oui | non |
 | Carte sonore | `carte-sonore` | VueCarteSonore | — | 240 × 118 | non | oui | non |
 | Cercle pulsant | `cercle-pulsant` | VueAnimationSvg | — | 300 × 500 | non | non | non |
 | Classificateur de genre | `classificateur-genre` | VueUploadOnnx | — | 380 × 300 | non | oui | non |
-| Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 240 × 162 | non | oui | non |
-| Clavier mélodie | `clavier-melodie` | — | ClavierMelodie | 500 × 260 | non | oui | non |
-| Clavier SFZ | `clavier-sfz` | — | ClavierSfz | 540 × 300 | non | oui | non |
+| Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 660 × 380 | non | oui | non |
+| Clavier mélodie | `clavier-melodie` | — | ClavierMelodie | 660 × 260 | non | oui | non |
+| Clavier SFZ | `clavier-sfz` | — | ClavierSfz | 660 × 300 | non | oui | non |
 | Lecteur musique | `collection-lecteur-musique` | — | VueLecteurMusique | 380 × 320 | non | oui | non |
 | Conversion MIDI→MP3 | `collection-midi-vers-mp3` | — | VueCollections | 380 × 280 | non | oui | non |
 | Conversion MP3→WAV | `collection-mp3-vers-wav` | — | VueCollections | 380 × 280 | non | oui | non |
@@ -236,6 +237,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Extraire zones (sélecteur) | `extraire-zones-selecteur` | 240 × 140 |
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
+| Filtre de séquence | `filtre-sequence` | 240 × 140 |
 | Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
@@ -261,6 +263,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
+| Harmonie spectrale | `harmonie-spectrale` | 240 × 140 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
 | Lecture inversée | `inverseur-audio` | 240 × 118 |
@@ -292,11 +295,13 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Metal Synth | `metal-synth` | 240 × 118 |
 | Métronome | `metronome` | 240 × 118 |
 | MIDI → ABC | `midi-vers-abc` | 240 × 140 |
+| MIDI → séquence | `midi-vers-sequence` | 240 × 140 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |
 | Grave en mono | `mono-grave` | 240 × 118 |
 | Montage | `montage` | 240 × 448 |
 | Montage par grains | `montage-grains` | 240 × 140 |
 | Morphing spectral | `morphing-spectral` | 240 × 162 |
+| Morphologie | `morphologie` | 240 × 140 |
 | Mosaïquage par corpus | `mosaiquage` | 240 × 162 |
 | Écho de notes | `motif-echo-notes` | 240 × 140 |
 | Éclaircir | `motif-eclaircir` | 240 × 140 |
@@ -305,7 +310,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Rétrograde et palindrome | `motif-retrograde` | 240 × 140 |
 | Multi-réservoirs | `multi-reservoirs` | 280 × 540 |
 | MusicGen | `musicgen` | 240 × 118 |
-| MusicXML | `musicxml` | 240 × 140 |
+| MusicXML | `musicxml` | 240 × 162 |
 | Paroles multilingues (IA) | `nllb-paroles` | 240 × 118 |
 | Normaliseur | `normaliseur` | 240 × 118 |
 | Objet sonore | `objet-sonore` | 240 × 184 |
@@ -335,6 +340,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Poly Synth | `poly-synth` | 240 × 118 |
 | Poussière de Cantor | `poussiere-cantor` | 240 × 118 |
 | Profil de bruit | `profil-bruit` | 240 × 118 |
+| Profil mélodique | `profil-melodique` | 240 × 140 |
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
 | Quadrafuzz | `quadrafuzz` | 240 × 140 |
@@ -344,6 +350,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
+| Rendu de séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
 | Répartiteur MIDI | `repartiteur-midi` | 240 × 206 |
 | Reprise ABC | `reprise-abc` | 240 × 184 |
@@ -368,6 +375,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Rythme de Cantor | `rythme-cantor` | 240 × 140 |
 | Rythme euclidien | `rythme-euclidien` | 240 × 140 |
 | Rythme de Risset | `rythme-risset` | 240 × 118 |
+| Rythme sur hauteurs | `rythme-sur-hauteurs` | 240 × 162 |
 | Sampler MIDI | `sampler-midi` | 240 × 140 |
 | Sampler multi-zones | `sampler-multizones` | 240 × 140 |
 | Secoueurs | `secoueurs` | 240 × 118 |
@@ -375,6 +383,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Séparation harmonique / percussive | `separation-harmonique-percussive` | 240 × 140 |
 | Opérations sérielles | `serie-dodecaphonique` | 240 × 162 |
 | Série de l'infini (Nørgård) | `serie-infinie` | 240 × 162 |
+| Série à tous les intervalles | `serie-tous-intervalles` | 240 × 140 |
 | Sherpa ASR | `sherpa-asr` | 240 × 118 |
 | Shift formants | `shift-formants` | 240 × 118 |
 | Shimmer | `shimmer` | 240 × 118 |
@@ -397,7 +406,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Suppression de clics | `suppression-clics` | 240 × 140 |
 | Synthèse par caractéristiques | `synthese-features` | 240 × 140 |
 | Synthèse par scanning | `synthese-scanning` | 240 × 118 |
-| Tempérament | `temperament` | 240 × 140 |
+| Tempérament | `temperament` | 240 × 162 |
 | Terrain d'onde | `terrain-onde` | 240 × 118 |
 | Texte → MIDI | `texte-vers-midi` | 240 × 140 |
 | Texture par statistiques | `texture-statistique` | 240 × 118 |

@@ -64,6 +64,7 @@ import { COULEURS, cleCouleur } from "../audio";
 import { registre } from "../audio/adaptateur";
 import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { FicheAudio } from "../audio/types-domaine";
+import { ArbreRythmiqueVue } from "./ArbreRythmiqueVue";
 import type { DonneesNoeud } from "./AtelierNode";
 
 export interface VueProps {
@@ -2345,6 +2346,8 @@ const REGISTRE: EntreeRegistre[] = [
   // Enregistreur et entrée micro : la logique d'enregistrement est dans l'inspecteur,
   // pas dans une vue avant (évite le décalage du handle de sortie).
   { correspond: parId("generateur-courbe", "suiveur-caracteristique"), vue: VueCourbe, position: "avant" },
+  // L'arbre rythmique se dessine : la notation en listes reste la source de verite, la vue l'ecrit.
+  { correspond: parId("arbre-rythmique"), vue: ArbreRythmiqueVue, position: "avant" },
   { correspond: parId("visualiseur-forme-onde"), vue: VueFormeOnde, position: "avant" },
   // Aucun lecteur à déclarer : ce nœud ne rend pas de son, et n'en propose donc pas l'écoute.
   { correspond: parId("visualiseur-multipiste"), vue: VuePistesMultiples, position: "avant" },

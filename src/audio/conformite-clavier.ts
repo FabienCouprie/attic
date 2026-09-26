@@ -32,7 +32,7 @@ export interface NoteJouee {
   debut: number;
   fin: number;
   canal?: number;
-  velociete?: number;
+  velocite?: number;
 }
 
 export type Main = "gauche" | "droite";

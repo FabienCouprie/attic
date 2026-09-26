@@ -1,3 +1,5 @@
+import { nomNote } from "./nom-note";
+import type { Note } from "./note";
 // audio/markov.ts — Chaîne de Markov apprise sur un MIDI.
 //
 // Attic sait déjà continuer une mélodie par réseau de neurones (Magenta). Il lui manquait
@@ -13,12 +15,7 @@
 // n'ait plus le choix et recopie la source. C'est le compromis à régler, et le nœud le
 // montre en affichant combien de contextes n'ont qu'une seule suite possible.
 
-export interface NoteMarkov {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteMarkov = Note;
 
 /** Une table : pour chaque contexte, les suites observées et leur nombre d'occurrences. */
 export type TableMarkov = Map<string, Map<number, number>>;
@@ -121,8 +118,11 @@ export function statistiques(table: TableMarkov): StatsMarkov {
   };
 }
 
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const nomNote = (n: number) => NOMS[((n % 12) + 12) % 12] + (Math.floor(n / 12) - 1);
+// LA TABLE EST FAITE POUR ÊTRE LUE, et une hauteur qui ne tombe pas sur un demi-ton doit s'y lire.
+// Le nom était calculé ici, par un modulo douze qui prenait 9,5 pour rang de tableau : la ligne
+// affichait `NaN` alors que l'apprentissage, lui, était juste. Le nom commun dit l'écart en cents,
+// ce qui garde distinctes deux entrées voisines — sans quoi la table nommerait pareil deux lignes
+// qu'elle compte à part.
 
 /** La table, lisible : les contextes les plus fréquents et leurs suites. */
 export function tableEnTexte(table: TableMarkov, maxLignes = 20): string {

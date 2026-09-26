@@ -114,7 +114,7 @@ export const fiches: FicheAudio[] = ([
           if (!nc.length) continue;
           const instCanal = canauxInstrument.get(canal)??{programme:0,banque:0};
           const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
-          const an = nc.map((n:any)=>({note:n.note,velocite:n.velociete,debut:n.debut,fin:n.fin}));
+          const an = nc.map((n:any)=>({note:n.note,velocite:n.velocite,debut:n.debut,fin:n.fin}));
           const layer = rendreAvecSF2(sf2, an, vol, idx, instCanal.banque);
           // Canaux sortis de la boucle : quatrième et dernière occurrence du motif,
           // mesuré 40× plus lent pour un résultat identique au bit. Le master et
@@ -1246,7 +1246,7 @@ export const fiches: FicheAudio[] = ([
       if (!notes.length) return { valeurs: [null, midiFile], message: traduire("msg.aucune_note_dans_le_midi") };
       const vol = ctx.paramNombre("Volume", 80);
       const noteRef = ctx.paramNombre("Note référence", 60);
-      const adapt = notes.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      const adapt = notes.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
       const buf = rendreAvecEchantillon(adapt, sample, vol, noteRef);
       return { valeurs: [buf, midiFile], message: traduire("msg.var_0_notes_chantillon_var_1", notes.length, audioFichier.name) };
     },
@@ -1620,7 +1620,7 @@ export const fiches: FicheAudio[] = ([
       } else {
         const melodic = notesMidi
           .filter((n) => n.canal !== 9)
-          .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+          .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
         melodicBuf = await rendreSequence(melodic, "FM/Oscillateurs", volume);
       }
 
@@ -1646,7 +1646,7 @@ export const fiches: FicheAudio[] = ([
       // de batterie est alors vide, et le mix ci-dessous n'ajoute rien.
       const drums = batterieAuSoundFont ? [] : notesMidi
         .filter((n) => n.canal === 9)
-        .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
       const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
 
       const dureeMix = Math.max(dureeTotale, drumBuf.duration, melodicBuf.duration, 0.5);

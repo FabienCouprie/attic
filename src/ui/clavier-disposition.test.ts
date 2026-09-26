@@ -7,8 +7,49 @@
 // curseur.
 import { describe, expect, it } from "vitest";
 import {
-  NOTE_MAX, NOTE_MIN, disposition, estNoire, nomNote, noteALaPosition,
+  BLANCHES_88, LARGEUR_BLANCHE_MIN, NOTE_MAX, NOTE_MIN, disposition, estNoire, largeurBlanchePour,
+  nomNote, noteALaPosition,
 } from "./clavier-disposition";
+
+describe("la largeur d'une touche, déduite de la place", () => {
+  // À vingt-quatre pixels fixes, les quatre-vingt-huit touches en faisaient 1248, dans des nœuds
+  // qui en font six cent soixante : on n'en voyait que la moitié, et il fallait défiler pour
+  // trouver une note. La largeur suit maintenant la place offerte.
+  it("LES QUATRE-VINGT-HUIT TOUCHES TIENNENT DANS LA PLACE OFFERTE", () => {
+    for (const place of [420, 500, 660, 900, 1300]) {
+      const d = disposition(NOTE_MIN, NOTE_MAX, largeurBlanchePour(place));
+      expect(d.blanches.length).toBe(BLANCHES_88);
+      expect(d.largeurTotale, `${place} px`).toBeLessThanOrEqual(place);
+    }
+  });
+
+  it("emploie la place, à moins d'un pixel par touche près", () => {
+    // La largeur est un entier de pixels : l'arrondi perd au plus une fraction de pixel par
+    // blanche, donc moins de cinquante-deux en tout. À 660 px il reste 36 px, soit six pour cent
+    // de la largeur, invisibles. Répartir ce reste demanderait des touches de largeurs inégales,
+    // et le test de position devrait suivre : cela ne vaut pas six pour cent.
+    for (const place of [420, 660, 900]) {
+      const d = disposition(NOTE_MIN, NOTE_MAX, largeurBlanchePour(place));
+      expect(place - d.largeurTotale, `${place} px`).toBeLessThan(BLANCHES_88);
+    }
+  });
+
+  it("S'ARRÊTE DE RÉTRÉCIR AU LIEU DE RENDRE UN TRAIT, et le clavier redéfile alors", () => {
+    // Sous la largeur minimale, mieux vaut un clavier qui dépasse que des touches qu'on ne
+    // distingue plus : c'est le seul cas où le défilement garde un rôle.
+    const d = disposition(NOTE_MIN, NOTE_MAX, largeurBlanchePour(120));
+    expect(d.largeurBlanche).toBe(LARGEUR_BLANCHE_MIN);
+    expect(d.largeurTotale).toBeGreaterThan(120);
+  });
+
+  it("ne rend pas de largeur absurde sur une mesure absente ou nulle", () => {
+    // Le premier rendu précède la mesure : la largeur y vaut zéro, et un zéro propagé donnerait
+    // des touches de largeur nulle, donc un clavier invisible jusqu'au premier redimensionnement.
+    for (const mauvais of [0, -10, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(largeurBlanchePour(mauvais), String(mauvais)).toBe(LARGEUR_BLANCHE_MIN);
+    }
+  });
+});
 
 describe("étendue du clavier", () => {
   it("compte 88 touches, dont 52 blanches et 36 noires — un piano complet", () => {

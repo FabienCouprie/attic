@@ -80,6 +80,20 @@ function lireQuatreCc(v: DataView, pos: number): string {
   return String.fromCharCode(v.getUint8(pos), v.getUint8(pos + 1), v.getUint8(pos + 2), v.getUint8(pos + 3));
 }
 
+/**
+ * Le nom que la banque se donne : le sous-chunk `INAM` de sa liste `INFO`.
+ *
+ * Rend la chaîne vide quand le fichier n'en porte pas, à charge de l'appelant de se replier.
+ * Exportée pour être tenue par un test sans charger un fichier de cent cinquante mégaoctets.
+ */
+export function nomDeBanqueSF2(v: DataView, limite: number): string {
+  const info = chercherList(v, 12, limite, "INFO");
+  if (!info) return "";
+  const inam = chercherSousChunk(v, info.pos, info.pos + info.taille, "INAM");
+  if (!inam || inam.taille === 0) return "";
+  return lireChaine(v, inam.pos, Math.min(inam.taille, 256));
+}
+
 function lireChaine(v: DataView, pos: number, taille: number): string {
   let s = "";
   for (let i = 0; i < taille; i++) {
@@ -334,9 +348,23 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
     });
   }
   const programme = presets.length > 0 ? presets[0].programme : 0;
-  const nomPreset = presets.length > 0 ? presets[0].nom : "";
 
-  return { programme, nom: nomPreset, presets, echantillons, instruments, smpl, bufferOriginal: buffer };
+  // LE NOM DE LA BANQUE EST CELUI DE LA BANQUE, ET NON DE SON PREMIER PRESET.
+  //
+  // Il était pris sur `presets[0]`, c'est-à-dire sur le premier preset dans l'ORDRE DU FICHIER, qui
+  // n'a aucune raison d'être représentatif. Relevé par Fabien sur une banque General MIDI de cent
+  // quatre-vingt-neuf presets : son premier est « Gun Shot », le programme 127, et c'est donc « Gun
+  // Shot » que l'interface annonçait pour la banque entière — pendant qu'elle affichait par
+  // ailleurs « Yamaha Grand Piano », le preset réellement retenu pour le programme 0. Deux noms
+  // pour deux choses différentes, dont un faux, et de quoi croire que le moteur joue autre chose
+  // que ce qu'on lui demande.
+  //
+  // LE VRAI NOM EST DANS LE FICHIER : le sous-chunk `INAM` de la liste `INFO`, que la spécification
+  // SF2 réserve précisément à cela. Le repli sur le premier preset ne sert plus que pour un fichier
+  // qui n'en porterait pas.
+  const nom = nomDeBanqueSF2(v, limite) || (presets.length > 0 ? presets[0].nom : "");
+
+  return { programme, nom, presets, echantillons, instruments, smpl, bufferOriginal: buffer };
 }
 
 export function chercherZonesInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {

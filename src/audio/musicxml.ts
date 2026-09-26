@@ -33,10 +33,25 @@ const DEGRES: { pas: string; alter: number }[] = [
   { pas: "G", alter: 1 }, { pas: "A", alter: 0 }, { pas: "B", alter: -1 }, { pas: "B", alter: 0 },
 ];
 
+/**
+ * Le degré, l'altération et l'octave d'une hauteur, pour une partition MusicXML.
+ *
+ * L'ALTÉRATION ACCEPTE LES FRACTIONS, ET LE MICROTON PASSE. Le champ `alter` compte en demi-tons,
+ * et la spécification prévoit qu'il ne soit pas entier : 0,5 est un quart de ton haut. La fonction
+ * arrondissait à la note la plus proche, ce qui jetait en silence ce que le format savait garder.
+ *
+ * L'ÉCART SE COMPTE DEPUIS LE DEGRÉ RETENU, et non depuis la note ronde. Le si bémol s'écrit
+ * « B » avec une altération de moins un ; un quart de ton au-dessus de lui vaut donc moins un
+ * demi, et non plus un demi, sans quoi la partition dirait une autre note.
+ */
 export function nomMusicXML(noteMidi: number): { pas: string; alter: number; octave: number } {
-  const n = Math.max(0, Math.min(127, Math.round(noteMidi)));
+  const borne = Math.max(0, Math.min(127, noteMidi));
+  const n = Math.round(borne);
   const d = DEGRES[n % 12];
-  return { pas: d.pas, alter: d.alter, octave: Math.floor(n / 12) - 1 };
+  // Arrondi au centième de demi-ton : un cent près, ce qui est la finesse de l'oreille, et ce qui
+  // évite d'écrire 0,49999999999 dans une partition.
+  const ecart = Math.round((borne - n) * 100) / 100;
+  return { pas: d.pas, alter: d.alter + ecart, octave: Math.floor(n / 12) - 1 };
 }
 
 /** Les valeurs de note que MusicXML nomme, de la ronde à la quadruple-croche. */

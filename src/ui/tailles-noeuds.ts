@@ -11,10 +11,18 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
   const nbParams = def.parametres.length;
   let w = 260;
-  if (def.id === "clavier-melodie") return { width: 500, height: 260 };
+  // LES TROIS CLAVIERS NAISSENT ASSEZ LARGES POUR MONTRER LEURS QUATRE-VINGT-HUIT TOUCHES, demande
+  // de Fabien. La largeur d'une blanche se deduit de la place offerte : a 660 px de noeud, elle
+  // fait douze pixels, ce qui se joue encore a la souris. En dessous de 500, les touches se
+  // resserrent jusqu'a huit pixels, puis le clavier se remet a defiler.
+  if (def.id === "clavier-melodie") return { width: 660, height: 260 };
   // Un peu plus haut que le precedent : une ligne de plus, qui dit quelle banque est chargee.
-  if (def.id === "clavier-sfz") return { width: 540, height: 300 };
+  if (def.id === "clavier-sfz") return { width: 660, height: 300 };
+  // La pluie de notes prend la moitie de la hauteur, d'ou un noeud plus haut que les deux autres.
+  if (def.id === "clavier-apprentissage") return { width: 660, height: 380 };
   // La liste a cocher des instruments : onze lignes et leurs intitules de famille.
+  // L'arbre se deplie en largeur : une mesure a trois etages ne se lit pas dans 260 pixels.
+  if (def.id === "arbre-rythmique") return { width: 620, height: 280 };
   if (def.id === "orchestre-csound") return { width: 340, height: 420 };
   if (def.id === "visualiseur-forme-onde") return { width: 420, height: 240 };
   if (def.id === "analyseur-spectre") return { width: 420, height: 300 };

@@ -106,9 +106,18 @@ export function grilleExacte(notes: NoteBrute[], ppq: number): number | null {
 const NATUREL: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const LETTRES = "CDEFGAB";
 
-/** Lettre et altération d'une hauteur, selon l'armure. */
+/**
+ * Lettre et altération d'une hauteur, selon l'armure.
+ *
+ * LA HAUTEUR EST ARRONDIE AU DEMI-TON, et c'est la limite de la notation ABC. Une hauteur peut ne
+ * pas tomber sur un demi-ton, la conversion en fréquence étant continue ; ABC, lui, n'a pas
+ * d'altération pour le quart de ton. Sans cet arrondi, `69,5 % 12` donnait 9,5, qu'aucune lettre
+ * ne porte : la fonction tombait dans son repli et rendait un DO, onze demi-tons plus bas, sans
+ * rien signaler. Le repli reste pour ce qu'il était censé couvrir, et n'est plus le chemin ordinaire
+ * d'un microton.
+ */
 export function epeler(hauteur: number, armure: Armure): { lettre: string; alteration: number } {
-  const pc = ((hauteur % 12) + 12) % 12;
+  const pc = ((Math.round(hauteur) % 12) + 12) % 12;
   for (const L of LETTRES) {
     if ((((NATUREL[L] + (armure.alterations[L] ?? 0)) % 12) + 12) % 12 === pc) return { lettre: L, alteration: armure.alterations[L] ?? 0 };
   }

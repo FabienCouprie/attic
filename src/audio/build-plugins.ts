@@ -22,20 +22,52 @@ export const audioResolveAliases: any[] = [
   { find: /^@csound\/browser$/, replacement: path.resolve(process.cwd(), 'node_modules/@csound/browser/dist/csound.js') },
 ];
 
+/**
+ * Les dossiers de `dist/` que le paquetage jette, déduits de `build.files`.
+ *
+ * POURQUOI LA LISTE SE DÉDUIT AU LIEU DE S'ÉCRIRE. Vite recopie tout `public/` dans `dist/`, puis
+ * electron-builder écarte une partie de `dist/` de l'archive au moyen de motifs `!dist/x/**` : ces
+ * ressources sont livrées par `extraResources`, depuis `public/`, et n'ont donc rien à faire dans
+ * `dist/`. Deux listes tenues à la main auraient divergé au premier ajout ; celle-ci se lit dans
+ * `package.json`, qui est déjà l'autorité.
+ *
+ * CE QUE CELA A COÛTÉ, MESURÉ. Le plugin qui précédait ne supprimait que les fichiers `.onnx`
+ * posés À LA RACINE de `dist/oonx`, alors que les modèles vivent dans des sous-dossiers : il
+ * annonçait épargner 450 Mo et n'en épargnait presque aucun. Relevé sur cet arbre de travail,
+ * `dist/` pesait 1699 Mo, dont 1335 pour `oonx`, 142 pour `sf2` et 1 pour `sfz` — soit près d'un
+ * gigaoctet et demi recopié à chaque construction pour être aussitôt écarté du paquet.
+ */
+export function dossiersJetesParLePaquetage(motifs: readonly string[]): string[] {
+  const dossiers: string[] = [];
+  for (const motif of motifs) {
+    const m = /^!(dist\/[^/*!]+)\/\*\*(\/\*)?$/.exec(motif);
+    if (m) dossiers.push(m[1]);
+  }
+  return dossiers;
+}
+
+/** Ce que `package.json` déclare aujourd'hui, ou rien si le champ manque. */
+function motifsDuPaquetage(): string[] {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf-8"));
+    return Array.isArray(pkg?.build?.files) ? pkg.build.files : [];
+  } catch {
+    return [];
+  }
+}
+
 export const audioBuildPlugins: any[] = [
   {
-    name: "exclude-oonx-from-build",
+    name: "attic-sans-les-ressources-que-le-paquet-jette",
     apply: "build",
-    generateBundle() {
-      // Les modèles .onnx sont livrés via extraResources (electron-builder),
-      // pas dans dist/ — on les retire du bundle pour éviter de dupliquer ~450 MB.
-    },
-    writeBundle(_opts: any, _bundle: any) {
-      const oonxDir = path.resolve("dist", "oonx");
-      if (fs.existsSync(oonxDir)) {
-        for (const f of fs.readdirSync(oonxDir)) {
-          if (f.endsWith(".onnx")) fs.unlinkSync(path.join(oonxDir, f));
-        }
+    writeBundle() {
+      // LA SUPPRESSION EST SÛRE PARCE QUE RIEN NE LIT CES DOSSIERS DANS `dist/`. Sous Electron, la
+      // banque et les modèles sont lus par le processus principal dans `resources/`, et en
+      // développement dans `public/` ; `dist/` n'est qu'un intermédiaire de paquetage, et aucun
+      // déploiement web ne le sert.
+      for (const dossier of dossiersJetesParLePaquetage(motifsDuPaquetage())) {
+        const complet = path.resolve(dossier);
+        if (fs.existsSync(complet)) fs.rmSync(complet, { recursive: true, force: true });
       }
     },
   },

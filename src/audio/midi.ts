@@ -8,9 +8,10 @@ import { chercherZonesInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
 
+import type { Note } from "./note";
 export interface NoteMidi {
   note: number;
-  velociete: number;
+  velocite: number;
   debut: number;
   fin: number;
   canal: number;
@@ -85,7 +86,7 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
 
   for (const piste of midi.tracks) {
     let tick = 0;
-    const actifs = new Map<string, { note: number; debut: number; velociete: number; canal: number }>();
+    const actifs = new Map<string, { note: number; debut: number; velocite: number; canal: number }>();
 
     for (const evt of piste) {
       tick += evt.deltaTime;
@@ -97,7 +98,7 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
           notes.push({ ...existant, fin: t });
           if (t > dureeMax) dureeMax = t;
         }
-        actifs.set(cle, { note: evt.noteNumber, debut: t, velociete: evt.velocity, canal: evt.channel });
+        actifs.set(cle, { note: evt.noteNumber, debut: t, velocite: evt.velocity, canal: evt.channel });
       }
       if (evt.type === "noteOff" || (evt.type === "noteOn" && evt.velocity === 0)) {
         const t = tickEnSecondes(tick);
@@ -279,8 +280,14 @@ export function notesVersFichierMidi(
     const tickDebut = secEnTicks(n.debut);
     const tickFin = secEnTicks(n.fin);
     if (tickDebut < 0) continue;
-    lignes.push({ tick: tickDebut, type: "noteOn", channel: canal, noteNumber: n.note, velocity: Math.max(1, n.velocite) });
-    lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: n.note, velocity: 0 });
+    // LE NUMÉRO DE NOTE EST UN OCTET, ET IL S'ARRONDIT ICI. Une hauteur peut ne pas tomber sur un
+    // demi-ton, la conversion en fréquence étant continue ; le format MIDI, lui, ne sait pas porter
+    // de cents. L'écriture tronquait : 69,5 partait en 69, soit jusqu'à quatre-vingt-dix-neuf cents
+    // trop bas au lieu de cinquante au pire. Arrondir ne rend pas le microton, cela cesse
+    // seulement de le fausser dans un seul sens.
+    const numero = Math.round(n.note);
+    lignes.push({ tick: tickDebut, type: "noteOn", channel: canal, noteNumber: numero, velocity: Math.max(1, n.velocite) });
+    lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: numero, velocity: 0 });
   }
 
   lignes.sort(comparerEvenementsMidi);
@@ -584,7 +591,7 @@ export async function rendreMidiDepuisBytes(
         const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
         const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
         console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
-        const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        const an = nc.map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
         const layer = rendreAvecSF2(sf2Global, an, volume, prog, bq);
         // Canaux sortis de la boucle : appeler `getChannelData` par échantillon
         // coûtait 40× le temps du même calcul, pour un résultat identique.
@@ -608,7 +615,7 @@ export async function rendreMidiDepuisBytes(
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
     const freq = 440 * 2 ** ((n.note - 69) / 12);
-    const gain = (n.velociete / 127) * vol * 0.4;
+    const gain = (n.velocite / 127) * vol * 0.4;
     const ratio = 2;
     const idxMod = 3;
     const debutEch = Math.floor(n.debut * sr);
@@ -637,12 +644,7 @@ export async function rendreMidiDepuisBytes(
 }
 
 
-export interface NoteEvenement {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteEvenement = Note;
 
 
 /**
@@ -650,12 +652,35 @@ export interface NoteEvenement {
  * (rapport 2, indice 3) ; « Douce » ramène l'indice près d'un sinus et adoucit l'attaque ;
  * « Percutante » monte l'indice et laisse la note retomber vite, comme une lame frappée.
  */
-const CARACTERES_FM: Record<CaractereTimbreId | "origine", { ratio: number; idxMod: number; a: number; d: number; sVal: number; r: number }> = {
+/**
+ * Les timbres de la synthèse locale. `idxMod` est l'indice de modulation de fréquence.
+ *
+ * `pur` EST UNE SINUSOÏDE, ET IL A ÉTÉ AJOUTÉ POUR UNE RAISON MESURÉE. Les autres caractères
+ * modulent : à l'indice trois du timbre d'origine, chaque note engendre une huitaine de bandes
+ * latérales, et ce qu'on entend n'est plus la note mais son cortège. Pour une mélodie c'est un
+ * timbre ; pour un AGRÉGAT CALCULÉ, c'est une falsification. Sur une série harmonique de douze
+ * partiels à 110 Hz, dont les plus forts sont les plus graves, le timbre d'origine laisse **1,2 %
+ * de l'énergie sous 500 Hz et en porte 98,8 % entre 500 Hz et 4 kHz** : le spectre entendu n'est
+ * pas celui qui a été calculé. À indice nul, la note est la sinusoïde qu'on lui a demandée.
+ */
+const CARACTERES_FM: Record<CaractereTimbreId | "origine" | "pur", { ratio: number; idxMod: number; a: number; d: number; sVal: number; r: number }> = {
   origine: { ratio: 2, idxMod: 3, a: 0.005, d: 0.08, sVal: 0.7, r: 0.04 },
+  pur: { ratio: 1, idxMod: 0, a: 0.02, d: 0.05, sVal: 1, r: 0.15 },
   brillante: { ratio: 2, idxMod: 3, a: 0.005, d: 0.08, sVal: 0.7, r: 0.04 },
   douce: { ratio: 1, idxMod: 0.7, a: 0.02, d: 0.15, sVal: 0.6, r: 0.1 },
   percutante: { ratio: 2, idxMod: 5, a: 0.001, d: 0.06, sVal: 0.15, r: 0.03 },
 };
+
+/** Le même son, dans un tampon plus long : le silence qui suit fait partie de la pièce. */
+function allongerA(buffer: AudioBuffer, duree: number): AudioBuffer {
+  const longueur = Math.ceil(duree * buffer.sampleRate);
+  if (longueur <= buffer.length) return buffer;
+  const sortie = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels, length: longueur, sampleRate: buffer.sampleRate,
+  });
+  for (let c = 0; c < buffer.numberOfChannels; c++) sortie.copyToChannel(buffer.getChannelData(c), c, 0);
+  return sortie;
+}
 
 export async function rendreSequence(
   notes: NoteEvenement[],
@@ -663,14 +688,18 @@ export async function rendreSequence(
   volume: number,
   instrument?: number,
   banque?: number,
-  caractere?: CaractereTimbreId,
+  caractere?: CaractereTimbreId | "pur",
+  dureeMin?: number,
 ): Promise<AudioBuffer> {
   if (notes.length === 0) {
     const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
     return ctx.startRendering();
   }
 
-  const duree = Math.max(notes.reduce((m, n) => Math.max(m, n.fin), 0), 0.5);
+  // UNE PIÈCE NE FINIT PAS FORCÉMENT SUR UNE NOTE. La longueur se prenait sur la dernière ; un
+  // rythme qui se termine par un silence perdait donc ce silence, mesuré à 1,5 seconde rendue pour
+  // une mesure de 2. L'appelant qui connaît la durée voulue la dit, et elle l'emporte.
+  const duree = Math.max(notes.reduce((m, n) => Math.max(m, n.fin), 0), dureeMin ?? 0, 0.5);
   const vol = Math.max(0, Math.min(1, volume / 100));
 
   if (mode === "SoundFont") {
@@ -683,7 +712,9 @@ export async function rendreSequence(
     const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
     const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
     console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, programme ${prog}, preset "${preset?.nom ?? "?"}" -> instrument "${nomInst}" (${notes.length} notes)`);
-    return rendreAvecSF2(sf2Global, notes, volume, prog, banque ?? 0);
+    // La voie SoundFont calcule sa propre longueur sur les notes : on la rallonge si la durée
+    // voulue va plus loin, plutôt que de reprendre ce calcul à deux endroits.
+    return allongerA(rendreAvecSF2(sf2Global, notes, volume, prog, banque ?? 0), duree);
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing
@@ -859,10 +890,10 @@ export async function arpegerMidi(
     const dernier = accords[accords.length - 1];
     if (dernier && Math.abs(n.debut - dernier.temps) < tol) {
       dernier.notes.push(n.note);
-      dernier.velocite = Math.max(dernier.velocite, n.velociete);
+      dernier.velocite = Math.max(dernier.velocite, n.velocite);
       dernier.duree = Math.max(dernier.duree, n.fin - n.debut);
     } else {
-      accords.push({ temps: n.debut, notes: [n.note], velocite: n.velociete, duree: n.fin - n.debut });
+      accords.push({ temps: n.debut, notes: [n.note], velocite: n.velocite, duree: n.fin - n.debut });
     }
   }
 

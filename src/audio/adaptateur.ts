@@ -39,6 +39,22 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   // n'est ni un fichier quelconque ni une image : il porte une durée, et un port qui le dit permet
   // enfin de brancher une sortie vidéo quelque part.
   registre.enregistrerTypeFlux({ id: "video", couleur: "#ff8787", libelle: "Vidéo" });
+  // SÉPIA, et c'est la seule famille de teintes que la palette n'occupait pas : dix couleurs y
+  // sont posées, du turquoise au corail, aucune n'est brune. Mesurée comme les deux précédentes,
+  // en Lab : sa distance à la plus proche des dix, l'ambre du MIDI, est de 39,1 ΔE, la deuxième
+  // étant à 42,6 — là où le dépôt a accepté 22,3 pour la banque. Et 69,2 ΔE du fond du canevas,
+  // #0a1a40, quand la moins détachée des dix en est à 58,9 : les indigos d'encre tombaient tous
+  // sous ce seuil et disparaissaient sur le bleu nuit.
+  //
+  // UN PORT QUI PORTE DES NOTES ET NON UN FICHIER. Le type « midi » transporte un `.mid`, dont le
+  // numéro de note est un octet : une hauteur qui ne tombe pas sur un demi-ton n'y survit pas.
+  // Voir `audio/sequence.ts` pour ce que cela empêchait.
+  //
+  // IL S'EST APPELÉ « PARTITION » LE TEMPS D'UNE HEURE, et Fabien a relevé la collision : quatre
+  // ports Csound portent déjà ce nom pour un texte au format `sco`, et deux ports homonymes de
+  // deux couleurs se seraient côtoyés dans la palette. Le mot promettait en outre une notation,
+  // quand ce flux n'est qu'un convoi d'événements.
+  registre.enregistrerTypeFlux({ id: "sequence", couleur: "#8b5a2b", libelle: "Séquence" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

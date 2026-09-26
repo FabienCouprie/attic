@@ -8,6 +8,7 @@ import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
 import { notesVersMusicXML } from "../audio/musicxml";
+import { estSequence } from "../audio/sequence";
 
 function noeudMeyda(
   id: string,
@@ -62,7 +63,19 @@ export const fiches: FicheAudio[] = ([
     id: "musicxml", nom: "MusicXML", nomEn: "MusicXML", univers: "Visualisation", famille: "Analyse",
     resume: "Convertit un MIDI en partition MusicXML, le format que lisent MuseScore, Finale et Sibelius.",
     resumeEn: "Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.",
-    entrees: [{ nom: "MIDI", type: "midi" }],
+    // UNE SECONDE ENTRÉE, APRÈS LA PREMIÈRE ET NON À SA PLACE : les arêtes enregistrées visent le
+    // port zéro, qui reste le MIDI. Elle existe parce que ce format est le SEUL des trois que le
+    // composant sait écrire à savoir porter un quart de ton, son champ d'altération acceptant les
+    // fractions de demi-ton ; un fichier MIDI, lui, arrondit avant même d'arriver ici.
+    // UNE TROISIÈME ENTRÉE, ENCORE APRÈS LES AUTRES. L'arbre rythmique porte ce qu'une suite de
+    // durées ne dit pas : qu'un tiers de temps est un triolet et non un arrondi. Sans lui, la
+    // gravure ramène tout sur une grille binaire et écrit trois durées approchées là où la pièce
+    // en a trois exactes. Avec lui, elle écrit un triolet.
+    entrees: [
+      { nom: "MIDI", type: "midi", requis: false },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence", requis: false },
+      { nom: "Arbre", nomEn: "Tree", type: "texte", requis: false },
+    ],
     sorties: [{ nom: "MusicXML", nomEn: "MusicXML", type: "texte" }, { nom: "Fichier", nomEn: "File", type: "fichier" }],
     parametres: [
       { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Attic", defautEn: "Attic",
@@ -83,14 +96,49 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const { analyserMidi } = await import("../audio");
-      const { parseMidi } = await import("midi-file");
-      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      const recue = ctx.entree(1);
+      const arbreTexte = ctx.entree(2);
+      // L'ARBRE PASSE AVANT TOUT LE RESTE, quand il est branché : lui seul sait qu'un tiers de
+      // temps est un triolet, et c'est la seule information que ni un fichier MIDI ni une suite de
+      // durées ne peuvent rendre.
+      if (typeof arbreTexte === "string" && arbreTexte.trim().length > 0) {
+        const { lireArbre } = await import("../audio/arbre-rythmique");
+        const { arbreVersMusicXML } = await import("../audio/musicxml-arbre");
+        let mesures;
+        try {
+          mesures = lireArbre(arbreTexte);
+        } catch (err: any) {
+          return { valeurs: [null, null], erreur: true, message: String(err?.message ?? err) };
+        }
+        if (mesures.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+        const hauteurs = estSequence(recue) ? recue.notes.map((n) => n.note) : [60];
+        const xmlArbre = arbreVersMusicXML(mesures, hauteurs, {
+          titre: ctx.paramTexte("Titre", "Attic"),
+          tempo: ctx.paramNombre("Tempo", 120),
+        });
+        const nomA = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
+        const nolets = [...xmlArbre.matchAll(/<tuplet type="start"/g)].length;
+        return {
+          valeurs: [xmlArbre, new File([xmlArbre], nomA, { type: "application/vnd.recordare.musicxml+xml" })],
+          message: `${mesures.length} mesures · ${[...xmlArbre.matchAll(/<note>/g)].length} notes · ${nolets} n-olets`,
+        };
+      }
+      // LA SÉQUENCE PASSE D'ABORD, quand elle est branchée : elle porte les cents que l'autre
+      // entrée a déjà perdus, et les reprendre depuis le MIDI reviendrait à les jeter deux fois.
+      let notes: { note: number; debut: number; fin: number; velocite: number }[];
+      if (estSequence(recue)) {
+        notes = recue.notes;
+      } else if (fichier instanceof File) {
+        const { analyserMidi } = await import("../audio");
+        const { parseMidi } = await import("midi-file");
+        notes = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer()))).notes;
+      } else {
+        return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      }
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
       const [num, den] = ctx.paramTexte("Métrique", "4/4").split("/").map((v: string) => parseInt(v, 10));
       const xml = notesVersMusicXML(
-        notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velociete })),
+        notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velocite })),
         {
           titre: ctx.paramTexte("Titre", "Attic"),
           tempo: ctx.paramNombre("Tempo", 120),

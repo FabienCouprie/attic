@@ -22,11 +22,12 @@ import {
   analyser, enCrochets, nomClasse as nomClasseEns, type Analyse,
 } from "../audio/classes-hauteurs";
 import { refleterNotes, tableReflets, type ModeReflet } from "../audio/harmonie-negative";
+import type { Note } from "../audio/note";
 import {
   accords, conduireVoix, remplacerHauteurs, renverser, voicing, type TypeVoicing,
 } from "../audio/voicings";
 
-interface NoteSimple { note: number; velocite: number; debut: number; fin: number; canal?: number }
+type NoteSimple = Note;
 
 /** Lit un MIDI d'entrée, ou rend null si rien n'est branché. */
 async function notesDuMidi(fichier: unknown): Promise<NoteSimple[] | null> {
@@ -34,7 +35,7 @@ async function notesDuMidi(fichier: unknown): Promise<NoteSimple[] | null> {
   const { analyserMidi } = await import("../audio");
   const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
   return notes.map((n) => ({
-    note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
+    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
   }));
 }
 

@@ -589,7 +589,12 @@ ipcMain.handle("stable-audio-3:generer", async (evenement, options) => {
       return { ok: false, erreur: `Paquet « ${cible} » introuvable, même après téléchargement.` };
     }
     const result = await genererStableAudio3({ prompt, seconds, steps, seed, modelDir });
-    return { ok: true, ...result };
+    // LE PAQUET EMPLOYÉ REMONTE AVEC LE SON, et le nœud l'affiche. Fabien a écouté un rendu du
+    // modèle musical alors que le réglage annonçait celui de bruitage : le processus principal
+    // n'avait pas été relancé, donc il ignorait encore le nom du paquet demandé. L'interface
+    // promettait ce que le moteur ne faisait pas, et rien ne le disait. Désormais c'est le moteur
+    // qui parle, et un décalage se voit à la première exécution.
+    return { ok: true, ...result, paquet: cible };
   } catch (err) {
     console.error("[attic] stable-audio-3:generer erreur:", err);
     return { ok: false, erreur: String(err && err.message ? err.message : err) };

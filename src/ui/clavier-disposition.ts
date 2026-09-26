@@ -20,12 +20,14 @@ export function estNoire(note: number): boolean {
   return NOIRES.has(((note % 12) + 12) % 12);
 }
 
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-/** Nom d'usage d'une note MIDI : 60 → « C4 ». */
-export function nomNote(note: number): string {
-  return NOMS[((note % 12) + 12) % 12] + (Math.floor(note / 12) - 1);
-}
+/**
+ * Le nom d'usage d'une note MIDI — 60 → « C4 » —, et son écart au tempérament s'il y en a un.
+ *
+ * Le calcul vit dans `audio/nom-note.ts`, où il est écrit une seule fois : il était recopié ici, et
+ * dans deux modules audio qui n'ont rien à voir avec un clavier. Réexporté pour que les appels
+ * d'ici gardent leur adresse.
+ */
+export { nomNote } from "../audio/nom-note";
 
 export interface Touche {
   note: number;
@@ -40,6 +42,30 @@ export interface DispositionClavier {
   noires: Touche[];
   largeurTotale: number;
   largeurBlanche: number;
+}
+
+/** Le nombre de blanches d'un clavier de quatre-vingt-huit touches, du la0 au do8. */
+export const BLANCHES_88 = 52;
+
+/** En deçà, une blanche n'est plus une touche mais un trait : la noire y ferait 6 px. */
+export const LARGEUR_BLANCHE_MIN = 8;
+
+/**
+ * La largeur de blanche qui fait tenir tout le clavier dans la place offerte.
+ *
+ * LES QUATRE-VINGT-HUIT TOUCHES SE VOIENT D'UN COUP, ET C'EST TOUT L'OBJET. À vingt-quatre pixels
+ * la blanche, le clavier en fait mille deux cent quarante-huit, quand les nœuds qui le portent en
+ * font cinq cents : on n'en voyait que le tiers, et il fallait le faire défiler pour trouver une
+ * note. Demandé par Fabien, pour l'œil.
+ *
+ * En deçà de la largeur minimale, le clavier déborde encore et le défilement reprend son rôle :
+ * mieux vaut un clavier qui dépasse qu'un clavier dont les touches ne se distinguent plus.
+ */
+export function largeurBlanchePour(largeurDisponible: number, blanches = BLANCHES_88): number {
+  if (!Number.isFinite(largeurDisponible) || largeurDisponible <= 0 || blanches <= 0) {
+    return LARGEUR_BLANCHE_MIN;
+  }
+  return Math.max(LARGEUR_BLANCHE_MIN, Math.floor(largeurDisponible / blanches));
 }
 
 /**

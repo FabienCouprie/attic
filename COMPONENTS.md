@@ -3,15 +3,15 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **404 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **413 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 73 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (14) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 198 | [Conversion](#conversion) (7) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 39 | [Analysis](#analysis) (16) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Inputs](#inputs) | 76 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (17) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 203 | [Conversion](#conversion) (12) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (25) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Visualization](#visualization) | 40 | [Analysis](#analysis) (17) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 10 | [Export](#export) (4) · [Monitoring](#monitoring) (6) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -437,6 +437,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | Component | Summary |
 |---|---|
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
+| [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
@@ -447,7 +448,9 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Noise Generator](#noise-generator) | Generates white, pink or brownian noise. |
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
+| [Rhythm Tree](#rhythm-tree) | Picks or draws a rhythm written by divisions, and the pitches that go with it. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Spectral Harmony](#spectral-harmony) | Computes a spectrum and returns it as pitches, keeping the deviations from equal temperament. |
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 
@@ -473,6 +476,28 @@ Generates a sound from a description in words: an impact, a creak, an ambience, 
 | Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. |
 | Output | choice | Normalised | Normalised / As is | « Normalised » brings the peak to the requested level. « As is » returns the model's sound untouched. |
 | Peak level | slider | -1 dBFS | -30 – 0 dBFS, step 0.5 | Peak aimed at for the normalised output, in decibels below full scale. |
+
+#### All-Interval Series
+
+`serie-tous-intervalles` · Inputs → Generation
+
+*Generates a twelve-note series whose eleven intervals are all different.*
+
+Generates a twelve-note series whose eleven successive intervals are all different, and returns it on a « Sequence » output. An ordinary twelve-tone series orders the twelve pitch classes without guaranteeing anything about its motions: it may rise six times by a semitone. An all-interval series also exhausts the eleven possible intervals, each once, so that the material is as varied in its gestures as in its pitches. The series of Alban Berg's « Lyric Suite » is its most studied example. There are 3856 of them beginning on C, counted by Seymour Bauer-Mengelberg and Melvin Ferentz in 1965. The last note is always a tritone from the first: the sum of the eleven intervals is 66, and 66 modulo 12 is 6. « Number » selects the series among those the search meets, in its order. A number beyond the catalogue comes back to the first. « Starting note » transposes the whole series. The intervals do not change. « Form » applies one of the four serial operations: prime, retrograde, inversion, retrograde inversion. « Octave » places the series on the keyboard. « Duration » is the length of each note, « Velocity » their velocity. The « Sequence » output returns the twelve notes. The « Analysis » output gives the pitch names, then the eleven intervals in their order of appearance. The message recalls the number, the form and the starting note.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Sequence | sequence |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Number | number | 0 | 0 – 3855, step 1 | The series chosen among the 3856. Beyond, it comes back to the first. |
+| Starting note | number | 0 | 0 – 11, step 1 | Transposes the whole series, without changing its intervals. |
+| Form | choice | Prime | Prime / Retrograde / Inversion / Retrograde inversion | The serial operation applied to the series. |
+| Octave | number | 4 | 1 – 7, step 1 | The octave where the series is placed. |
+| Duration | number | 0.5 s | 0.05 – 4 s, step 0.05 | The length of each note. |
+| Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
 
 #### Cellular automaton
 
@@ -698,6 +723,39 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 | Duration | number | 5 s | 0.2 – 120 s, step 0.1 | Length of the produced sound. |
 | Amplitude | slider | 80 % | 0 – 100 %, step 1 | Output level. |
 
+#### Rhythm Tree
+
+`arbre-rythmique` · Inputs → Generation
+
+*Picks or draws a rhythm written by divisions, and the pitches that go with it.*
+
+Produces a rhythm written by successive divisions, and a series of pitches of the same length, both as text. A rhythm is described as a divided measure, not as a list of durations. A measure carries a time signature and a list of proportions; each proportion is a note, a rest when negative, or a division when it carries a list of its own. Proportions have no unit: only their ratio counts. The list 1 1 2 gives one beat, one beat and two beats on a four-beat measure, and three quarters, three quarters and a beat and a half on a three-beat one. « Source » selects how the tree is obtained. « Catalogue » runs through the trees with a single level of division, listed in an order that does not change from one version to the next. With four slots and at most three parts, rests included, there are 340 of them. « Number » designates the one returned; beyond the last, the count starts again at the first. « Draw » generates a tree at random within the given limits. « Seed » fixes the draw: the same seed gives the same rhythm. « Time signature » sets the measure. « Measures » generates several in a row. « Slots » is the number of divisions at the top of each measure. « Depth » is the number of division levels allowed. At zero, the measure has no division. « Divisions » lists the numbers of parts allowed, separated by spaces: 2 3 4 allows binary, triplet and division in four. « Density » is the chance that a slot divides rather than staying a note. It is the inequality between what divides and what does not that makes a rhythm; at one hundred percent, the measure is uniformly chopped. « Rests » and « Ties » are the shares of slots that become a rest or a note tied to the previous one. Pitches are drawn in a number equal to that of the notes of the tree, rests excluded. « Scale » and « Tonic » restrict the pitches to the degrees of a scale. « Low » and « High » bound the range. « Maximum leap » bounds the interval between two consecutive notes; without it, a uniform draw jumps an octave at every note and is not heard as a line. The « Tree » output returns the list notation. The « Pitches » output returns the MIDI numbers separated by spaces. Both can be edited with a text component before being received by « Rhythm on Pitches ». The message gives the source, the number of notes, the number of rests and the duration.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Tree | text |  |
+| output | Pitches | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source | choice | Catalogue | Catalogue / Draw / Drawing | Catalogue runs through the listed trees; Draw generates one at random. |
+| Number | number | 0 | 0 – 339, step 1 | The catalogue tree returned. Beyond the last, the count starts again at the first. |
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. |
+| Time signature | choice | 4/4 | 2/4 / 3/4 / 4/4 / 5/4 / 6/8 / 7/8 / 12/8 | The measure used. |
+| Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect on the catalogue. |
+| Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. |
+| Depth | number | 1 | 0 – 3, step 1 | The division levels allowed. At zero, no division. |
+| Divisions | text | `2 3 4` |  | The numbers of parts allowed, separated by spaces. |
+| Density | number | 35 % | 0 – 100 %, step 1 | The chance that a slot divides rather than staying a note. |
+| Rests | number | 15 % | 0 – 100 %, step 1 | The share of slots that become a rest. |
+| Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. |
+| Seed | number | 1 | 0 – 9999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. |
+| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
+| Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | The tonic of the scale. |
+| Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
+| High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
+| Maximum leap | number | 7 | 0 – 24, step 1 | The maximum interval between two consecutive notes. At zero, no restraint. |
+
 #### Risset Bell
 
 `cloche-risset` · Inputs → Generation
@@ -717,6 +775,33 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre: useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### Spectral Harmony
+
+`harmonie-spectrale` · Inputs → Generation
+
+*Computes a spectrum and returns it as pitches, keeping the deviations from equal temperament.*
+
+Computes a series of pitches from a spectrum and returns it on a « Sequence » output that other components can play or engrave. The resulting pitches do not fall on the keys of a keyboard, and that is the whole point: the seventh partial of a harmonic series is thirty-one cents below the equal-tempered minor seventh, the eleventh forty-nine cents below the augmented fourth. Those deviations are kept all the way to the sound. « Process » selects the calculation. « Harmonic series » places partial k at k times the fundamental. It is the spectrum of a sustained tone, and the reference for the other three. « Distorted spectrum » places partial k at the fundamental times k raised to the distortion coefficient. At one, it is the harmonic series. Below, partials draw together and the whole thickens towards the bass. Above, they spread and the perceived fundamental dissolves. The same calculation describes the inharmonicity of a piano string, whose high partials rise beyond their rank. « Ring modulation » returns every sum and every difference between the partials of the fundamental and the second frequency. The result is harmonic on neither side, which gives it its colour between chord and timbre. A negative difference folds back, a frequency having no sign. « Frequency modulation » places components at the carrier plus or minus a multiple of the modulator, each weighted by the Bessel function of the index. At index zero only the carrier remains, and the number of audible sidebands grows roughly as the index plus one. The carrier is the fundamental. « Fundamental » is the starting frequency, in hertz. « Partials » is the number of ranks computed. It has no effect on frequency modulation, whose number of sidebands comes from the index. « Distortion » is the coefficient of the distorted spectrum. « Second frequency » is the modulating frequency of the ring modulation. « Modulator » and « Index » set the frequency modulation. « Duration » is the length of the lowest partial. « Decay » decides how much sooner high partials die away than it does, following a power of their frequency: at zero they all last the same and the aggregate sounds like an organ stop, at one a partial twice as high lasts half as long. The onsets do not move, and that is what preserves fusion: what makes a single sound rather than a chord is the common attack. « Spread » delays the start of each partial relative to the previous one: at zero everything is struck together as an aggregate; above, the spectrum arpeggiates. « Velocity » is the velocity of the loudest partial; the others follow their amplitude. Pitches falling outside the range of a piano are dropped rather than folded to the octave, which would invent degrees the calculation did not produce. Two partials less than one cent apart are merged into one. The « Analysis » output gives, for each partial, its frequency, its pitch in semitones, its deviation from equal temperament and the frequency of the nearest key. The message recalls the process, the number of partials kept and the virtual fundamental of the set, that is the pitch the ear attributes to the aggregate even when it is not played in it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Sequence | sequence |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Process | choice | Harmonic series | Harmonic series / Distorted spectrum / Ring modulation / Frequency modulation | The calculation applied. Each one is described in the notice. |
+| Fundamental | number | 110 Hz | 20 – 2000 Hz, step 1 | The starting frequency, and the carrier of the frequency modulation. |
+| Partials | number | 12 | 1 – 64, step 1 | The number of ranks computed. No effect on frequency modulation. |
+| Distortion | number | 1 | 0.5 – 2, step 0.01 | The exponent of the distorted spectrum. One gives the harmonic series. |
+| Second frequency | number | 165 Hz | 20 – 2000 Hz, step 1 | The frequency the partials are ring modulated with. |
+| Modulator | number | 110 Hz | 1 – 2000 Hz, step 1 | The spacing between two sidebands of the frequency modulation. |
+| Index | number | 3 | 0 – 20, step 0.1 | The width of the frequency modulation. At zero, only the carrier remains. |
+| Duration | number | 3 s | 0.1 – 30 s, step 0.1 | The length of each note. |
+| Decay | number | 0.5 | 0 – 2, step 0.05 | How much sooner high partials die away than the low one. At zero they all last the same and the aggregate sounds like an organ stop. At one, a partial twice as high lasts half as long. The onsets do not move. |
+| Spread | number | 0 s | 0 – 2 s, step 0.01 | The delay between two successive partials. At zero, the aggregate is struck together. |
+| Velocity | number | 100 | 1 – 127, step 1 | The velocity of the loudest partial; the others follow their amplitude. |
 
 #### Spiral of Fifths
 
@@ -1895,8 +1980,13 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 | [ABC → MIDI](#abc--midi) | Reads a score in ABC notation (melody, chord symbols, repeats, several voices) and renders it to MIDI and audio. |
 | [ABC Cover](#abc-cover) | Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass, ballad, pop, waltz, march, bossa nova. |
 | [Chords → MIDI Notation](#chords--midi-notation) | Converts Harmonic Analysis output into the notation expected by Text → MIDI. |
+| [Melodic Profile](#melodic-profile) | Gives a sequence the profile of a curve, and also returns the profile it had. |
+| [MIDI → Sequence](#midi--sequence) | Reads the notes of a MIDI file and returns them on the sequence flow. |
 | [MIDI Transcriber](#midi-transcriber) | Transcribes an audio signal into MIDI notes. |
 | [MP3 → WAV](#mp3--wav) | Converts an audio stream to downloadable WAV. |
+| [Rhythm on Pitches](#rhythm-on-pitches) | Lays a rhythm written by divisions on a series of pitches, and returns a sequence. |
+| [Sequence Filter](#sequence-filter) | Splits the notes of a sequence by pitch, duration, velocity or channel. |
+| [Sequence Renderer](#sequence-renderer) | Plays a note sequence keeping its deviations from equal temperament, and also returns the MIDI. |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
 | [WAV → MP3](#wav--mp3) | Converts an audio stream to downloadable MP3. |
 
@@ -1975,6 +2065,47 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
 | Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
 
+#### Melodic Profile
+
+`profil-melodique` · Processing → Conversion
+
+*Gives a sequence the profile of a curve, and also returns the profile it had.*
+
+Gives the pitches of a sequence the profile of a curve, without touching its rhythms. Starts, ends and velocities are those of the sequence received; only the pitches change. The curve is read at the middle of each note, that is while it sounds. « Strength » sets the passage from one to the other. At zero the sequence comes out unchanged. At one it follows the curve and its original profile disappears. Between the two, the original profile bends without disappearing, and that is the range where a melody keeps its characteristic intervals while following another line. « Low » and « High » are the pitches, in semitones, that zero and one on the curve stand for. Giving them the other way round turns the profile over. « Pitches » decides the fineness. « Continuous » keeps the fractions of a semitone the curve produces, and MusicXML engraving preserves them. « Semitones » rounds. With no curve connected, the sequence comes out as it is and only the profile read is computed. The « Sequence » output returns the transformed notes. The « Profile » output returns the curve of the pitches of the sequence received, scaled between zero and one from its lowest note to its highest; it connects wherever a curve connects. The message gives the number of notes, the strength applied and the range covered.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| input | Curve | curve |  |
+| output | Sequence | sequence |  |
+| output | Profile | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Strength | number | 100 % | 0 – 100 %, step 1 | At zero the sequence does not change; at one hundred it follows the curve. |
+| Low | number | 48 | 0 – 127, step 1 | The pitch that zero on the curve stands for. |
+| High | number | 84 | 0 – 127, step 1 | The pitch that one on the curve stands for. |
+| Pitches | choice | Continuous | Continuous / Semitones | Continuous keeps the fractions of a semitone the curve produces; Semitones rounds. |
+
+#### MIDI → Sequence
+
+`midi-vers-sequence` · Processing → Conversion
+
+*Reads the notes of a MIDI file and returns them on the sequence flow.*
+
+Reads the notes of a MIDI file and returns them on a « Sequence » output. A sequence carries the notes themselves rather than a file. Its pitch need not fall on a semitone, which a MIDI note number cannot do, its number fitting in one byte. The pitches read here are therefore whole; they stay so until a treatment moves them, and that is when the sequence keeps what the file would have lost. « Channel » selects what is read. At minus one, every channel is taken together. A number from zero to fifteen keeps only the notes of that channel. « Tempo » is written into the sequence, where it serves engraving: the times of a sequence are in seconds, and a note value follows from them only with a tempo. The tempo read in the file takes priority when there is one. The « Sequence » output returns the notes, with their pitch, velocity, start and end in seconds. The « MIDI » output returns the file received as it is, to continue an existing chain without interrupting it. The message gives the number of notes, the duration, the number of channels met and the tempo kept.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | Sequence | sequence |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Channel | number | -1 | -1 – 15, step 1 | The MIDI channel kept. At minus one, every channel is taken together. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The tempo written into the sequence, used for engraving. The one in the file takes priority. |
+
 #### MIDI Transcriber
 
 `transcripteur-midi` · Processing → Conversion
@@ -2012,6 +2143,76 @@ Makes the signal available as a downloadable WAV, while passing it through on th
 | output | Duration | control |  |
 
 *No parameters.*
+
+#### Rhythm on Pitches
+
+`rythme-sur-hauteurs` · Processing → Conversion
+
+*Lays a rhythm written by divisions on a series of pitches, and returns a sequence.*
+
+Lays a rhythm written by divisions on a series of pitches, and returns the result on a « Sequence » output. The rhythm is read in list notation. « (4/4 (1 1 1 1)) » is a measure of four quarter notes. « (4/4 (1 (1 (1 1 1)) 1 1)) » divides the second beat into a triplet. « (4/4 (1 -2 1)) » replaces the two middle beats with a rest. « (4/4 (1 1.0 1 1)) » ties the second note to the first, which then lasts two beats. Several measures are written one after another. A syntax error is reported with the position of the offending sign. The tree comes from the « Tree » input when connected, otherwise from the setting of the same name. The pitches come from the « Pitches » input, then from the « Sequence » input, then from the setting, in that order. They are read in a loop if the tree asks for more notes than are supplied. The rhythms of a received sequence are not used: the tree alone decides them. The message states where the pitches that served came from. « Tempo » sets the length of a quarter note. « Repeats » plays the whole tree again, end to end. « Velocity » is the velocity of the notes. The « Sequence » output returns the notes obtained. The « Analysis » output lists the events with their start, their duration and the division that carries them. The message gives the number of notes, the number of rests, the total duration and the number of groups that are not binary divisions.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Tree | text |  |
+| input | Pitches | text |  |
+| input | Sequence | sequence |  |
+| output | Sequence | sequence |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. |
+| Pitches | text | `60 62 64 65 67` |  | The MIDI numbers used, read in a loop, when no input supplies them. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. |
+| Repeats | number | 1 | 1 – 16, step 1 | How many times the whole tree is played again, end to end. |
+| Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
+
+#### Sequence Filter
+
+`filtre-sequence` · Processing → Conversion
+
+*Splits the notes of a sequence by pitch, duration, velocity or channel.*
+
+Splits the notes of a sequence in two: those that satisfy the criteria and those that do not. Both outputs exist so that nothing disappears. « Kept » returns the notes retained, « Dropped » returns the others; their two counts always make the total received. Both can be treated separately then reunited, which is the ordinary way of treating one register differently from another. « Minimum pitch » and « Maximum pitch » bound the pitch in semitones, bounds included. A pitch need not fall on a semitone, and the comparison accounts for that. « Minimum duration » and « Maximum duration » bound the duration in seconds, bounds included. « Minimum velocity » and « Maximum velocity » bound the velocity, from zero to one hundred and twenty-seven. « Channel » keeps only the notes of the chosen channel. At minus one, every channel passes. A criterion left at its starting value does not filter: the starting bounds cover the whole possible range. The message gives the number of notes kept and dropped.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| output | Kept | sequence |  |
+| output | Dropped | sequence |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Minimum pitch | number | 0 | 0 – 127, step 1 | Lower bound of the pitch, in semitones, included. |
+| Maximum pitch | number | 127 | 0 – 127, step 1 | Upper bound of the pitch, in semitones, included. |
+| Minimum duration | number | 0 s | 0 – 30 s, step 0.01 | Lower bound of the duration, included. |
+| Maximum duration | number | 30 s | 0 – 30 s, step 0.01 | Upper bound of the duration, included. |
+| Minimum velocity | number | 0 | 0 – 127, step 1 | Lower bound of the velocity, included. |
+| Maximum velocity | number | 127 | 0 – 127, step 1 | Upper bound of the velocity, included. |
+| Channel | number | -1 | -1 – 15, step 1 | The channel kept. At minus one, every channel passes. |
+
+#### Sequence Renderer
+
+`rendu-sequence` · Processing → Conversion
+
+*Plays a note sequence keeping its deviations from equal temperament, and also returns the MIDI.*
+
+Plays a note sequence received on its input, and returns a MIDI file of it. The pitches of a sequence need not fall on a semitone. Both synthesis paths respect them: the FM path computes the frequency straight from the pitch received, the SoundFont path derives a sample playback rate from it. A quarter tone is therefore heard at its exact frequency, not at that of the neighbouring key. The MIDI output does round. The note number of a MIDI file is one byte, and the format cannot carry cents. The message states how many pitches lose their deviation there, so the loss is visible rather than guessed. To keep the deviations in a written score, engrave to MusicXML, whose alteration field accepts fractions of a semitone. « Synthesis » selects the engine, and local synthesis is taken by default, unlike the usage elsewhere. A SoundFont brings each partial the whole spectrum of a sampled instrument: twelve partials become twelve pianos struck across three octaves, and the computed aggregate vanishes beneath them. It remains available for an ordinary melody. « Auto » takes it as soon as an SF2 file is loaded. The message starts with the engine that actually rendered, not with the setting: « Auto » does not say which one served. « Instrument » selects the SoundFont program, when it is used. « Timbre » decides what each note becomes in local synthesis, and the choice is not decorative. « Sine » renders exactly the pitch asked for, a sine wave and nothing else: a computed aggregate is then heard as it was written. The other three modulate the frequency, which adds some eight partials each note did not have. On a harmonic series of twelve partials at 110 hertz, whose strongest are the lowest, the bright timbre leaves one percent of the energy below 500 hertz and puts ninety-nine between 500 hertz and 4 kilohertz: what is heard is no longer the computed spectrum. Those timbres suit a melody, not a spectrum. « Volume » sets the level of the rendering. « Tempo » has no effect on what is heard, the times of a sequence being in seconds. It is written into the MIDI file, where it decides the note values on reading back. The message gives the number of notes, the duration, and how many pitches the MIDI output rounds.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Synthesis | choice | FM/Oscillators | Auto / FM/Oscillators / SoundFont | Local synthesis by default: it is the only one that renders a note as a sine wave, hence an aggregate as it was computed. The SoundFont brings each partial the whole spectrum of a sampled instrument. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Timbre | choice | Sine | Sine / Soft / Bright / Percussive | The timbre of each note in local synthesis. « Sine » renders only the pitch asked for; the other three modulate and add partials of their own. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | The level of the rendering. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Written into the MIDI file; no effect on what is heard. |
 
 #### Text → MIDI
 
@@ -5085,6 +5286,7 @@ Replays a MIDI file in a tuning other than equal temperament, and renders it to 
 | input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 | output | Deviations | text |  |
+| output | Sequence | sequence |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -6482,6 +6684,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
 | [Masking](#masking) | Says what one track makes inaudible in another, critical band by critical band. |
+| [Morphology](#morphology) | Reports the shape of a sequence, its recurring figures, and what it shares with another. |
 | [Multitrack Viewer](#multitrack-viewer) | Draws up to six sounds one under another, on a shared time axis. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
@@ -6602,6 +6805,28 @@ After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) f
 |---|---|---|---|---|
 | Masker nature | choice | In between | Tonal / Noisy / In between | A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is. |
 | Resolution | choice | Ordinary (2048) | Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates the low bands better, where they are narrow. |
+
+#### Morphology
+
+`morphologie` · Visualization → Analysis
+
+*Reports the shape of a sequence, its recurring figures, and what it shares with another.*
+
+Analyses the shape of a sequence: the way it rises and falls, the figures that recur in it, and what it shares with a second sequence. The primary profile is the building block. Each pair of successive values is replaced by the sign of their difference: up, down, or level. Only the gesture remains, stripped of pitch and interval, and two passages compare on what they do rather than on what they use. A melody and its transposition have the same profile. The resemblance of two sequences is measured by Vladimir Levenshtein's edit distance, published in 1966: the minimum number of insertions, deletions and substitutions leading from one to the other, divided by the length of the longer. It is given twice, on the values and on the profiles, and the gap between the two is the information: values that resemble little with profiles that resemble much signal the same figure transposed. « On what » selects what is analysed: pitches, durations or velocities. « Tolerance » is the gap below which two successive values are held equal, hence the profile level. At zero, the slightest motion counts. « Minimum figure length » and « Minimum occurrences » filter the figures reported. A figure entirely contained in a longer one already kept is not repeated. The « Report » output describes what was found. The « Profile » output returns the primary profile as a curve, which connects wherever a curve connects. With no second sequence, only the first is analysed. The procedure measures a shape, not an impression: timbre, register and tempo, which weigh in perception, do not enter it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| input | Sequence B | sequence |  |
+| output | Report | text |  |
+| output | Profile | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| On what | choice | Pitches | Pitches / Durations / Velocities | What is analysed: pitches, durations or velocities. |
+| Tolerance | number | 0 | 0 – 12, step 0.25 | The gap below which two successive values are held equal. |
+| Minimum figure length | number | 3 | 2 – 12, step 1 | Below this, a figure is not reported. |
+| Minimum occurrences | number | 2 | 2 – 8, step 1 | How many times a figure must recur to be reported. |
 
 #### Multitrack Viewer
 
@@ -7193,6 +7418,8 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 | Port | Name | Type | |
 |---|---|---|---|
 | input | MIDI | MIDI |  |
+| input | Sequence | sequence |  |
+| input | Tree | text |  |
 | output | MusicXML | text |  |
 | output | File | file |  |
 

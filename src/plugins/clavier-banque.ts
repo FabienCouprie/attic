@@ -208,7 +208,7 @@ export const fiches: FicheAudio[] = ([
         if (n.note < basse || n.note > haute) { ignorees++; continue; }
         jouees.push({
           note: Math.max(0, Math.min(127, n.note + transposition)),
-          velocite: n.velocite ?? n.velociete ?? 100, debut: n.debut, fin: n.fin,
+          velocite: n.velocite ?? n.velocite ?? 100, debut: n.debut, fin: n.fin,
         });
       }
       if (jouees.length === 0) {

@@ -23,6 +23,7 @@
 import { traduire } from "../i18n";
 import { morceauVersMidi, hauteursAccord, lireTonalite, type MorceauAbc, type NoteAbc } from "./abc";
 import { midiVersAbc } from "./midi-vers-abc";
+import { nomNoteRond } from "./nom-note";
 import {
   lireAbcUnique, verifierContraintes, dureesMesures, longueurMesure, type ResultatContraintes, type Invariant,
 } from "./abc-contraintes";
@@ -50,8 +51,14 @@ export type ResultatEdition = {
   erreur: string | null;
 };
 
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-export const nomNote = (midi: number) => `${NOMS[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+/**
+ * Le nom d'une hauteur pour le modèle, sans écart : c'est un format qui se relit.
+ *
+ * `hauteurDepuisNom` n'accepte qu'une lettre, une altération et un chiffre ; un « A#4−50 » y serait
+ * rejeté, et l'édition repartirait pour un essai qu'elle perdrait trois fois. La forme arrondie est
+ * donc la bonne ici, et c'est pourquoi elle porte un nom à part dans `nom-note.ts`.
+ */
+export const nomNote = nomNoteRond;
 const PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 /** « F#4 », « Bb3 » → hauteur MIDI ; null si illisible ou hors du clavier. */

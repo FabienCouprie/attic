@@ -296,10 +296,10 @@ describe("genererGrooveBox", () => {
 
     const melodic = notesMidi
       .filter((n) => n.canal !== 9)
-      .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
     const drums = notesMidi
       .filter((n) => n.canal === 9)
-      .map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+      .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
 
     expect(drums.length).toBeGreaterThan(0);
 

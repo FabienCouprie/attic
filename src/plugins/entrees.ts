@@ -151,7 +151,7 @@ const entrees: FicheAudio[] = [
           if (!nc.length) continue;
           const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
           const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
-          const an = nc.map((n: any) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+          const an = nc.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
           const layer = rendreAvecSF2(sf2, an, volume, idx, instCanal.banque);
           // Canaux sortis de la boucle : troisième occurrence du même motif,
           // mesuré 40× plus lent pour un résultat identique.

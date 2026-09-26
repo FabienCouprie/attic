@@ -23,8 +23,10 @@
 // par 64/127 (écart maximal mesuré : 0), et de même pour Volume 50 contre 100.
 // Une copie mise à l'échelle est donc exactement ce que produisait l'ancien code.
 
+import type { Note } from "./note";
+
 /** Une frappe de batterie, telle que le MIDI la donne. */
-export type Frappe = { note: number; velocite: number; debut: number; fin: number };
+export type Frappe = Note;
 
 /**
  * Un déclenchement de synthé.

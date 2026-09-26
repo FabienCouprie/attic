@@ -29,6 +29,7 @@
 
 import { bufferVersWavBlob } from "./io";
 
+import type { Note } from "./note";
 /** Fréquence d'échantillonnage d'Attic. Csound rend à celle de la carte, on ramène ici. */
 export const FREQUENCE_ECH = 44100;
 
@@ -182,12 +183,7 @@ export function orchestreLit(orchestre: string, nom: string): boolean {
   return sansCommentaires.includes(nom);
 }
 
-export interface NoteCsound {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteCsound = Note;
 
 /**
  * Écrit une partition depuis des notes MIDI.

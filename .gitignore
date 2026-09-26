@@ -39,6 +39,10 @@ music collection/
 soundbank/
 midi_bank/
 
+# Films used to exercise the video nodes: 124 MB of user media, not source code.
+# A `git add -A` swept them into the index once; ignoring them puts that out of reach.
+video example/
+
 # Presets (user-generated, kept locally)
 presets/
 

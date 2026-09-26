@@ -86,7 +86,7 @@ export const fiches: FicheAudio[] = ([
       if (brutes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
 
       const toutes: NoteJouee[] = brutes.map((n) => ({
-        note: n.note, debut: n.debut, fin: n.fin, canal: n.canal, velociete: n.velociete ?? 90,
+        note: n.note, debut: n.debut, fin: n.fin, canal: n.canal, velocite: n.velocite ?? 90,
       }));
       const ecartMax = Math.round(ctx.paramNombre("Écart de main", 12));
 
@@ -129,7 +129,7 @@ export const fiches: FicheAudio[] = ([
       ].filter(Boolean).join("\n");
 
       const evenements: NoteEvenement[] = retenues.map((n) => ({
-        note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin,
+        note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
       }));
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));

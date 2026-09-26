@@ -97,11 +97,11 @@ export const fiches: FicheAudio[] = ([
       if (notes.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.aucune_note_dans_le_midi") };
       }
-      // `analyserMidi` nomme la vélocité `velociete` — la faute de frappe est ancienne et le champ
+      // `analyserMidi` nomme la vélocité `velocite` — la faute de frappe est ancienne et le champ
       // circule tel quel dans le reste d'Attic. On la traduit ici plutôt que de la propager.
       const avecCanal: NoteAvecCanal[] = notes.map((n: any) => ({
         note: n.note, debut: n.debut, fin: n.fin,
-        velocite: n.velocite ?? n.velociete ?? 90,
+        velocite: n.velocite ?? n.velocite ?? 90,
         canal: n.canal ?? 0,
       }));
       const courbeEntrante = ctx.entree(1);

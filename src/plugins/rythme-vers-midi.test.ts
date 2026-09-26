@@ -163,9 +163,9 @@ describe("la boîte à rythmes", () => {
       Tempo: 120, Mesures: 1, Kick: 100, "Caisse claire": 50, Charley: 20,
     }));
     const notes = analyserMidi(parseMidi(new Uint8Array(await (res.valeurs[1] as File).arrayBuffer()))).notes;
-    // `velociete` : le nom du champ de `NoteMidi`, coquille comprise — elle est là depuis longtemps et
+    // `velocite` : le nom du champ de `NoteMidi`, coquille comprise — elle est là depuis longtemps et
     // la renommer toucherait tout le lecteur MIDI, ce qui n'a rien à faire dans ce lot.
-    const velocite = (note: number) => notes.find((n) => n.note === note)?.velociete;
+    const velocite = (note: number) => notes.find((n) => n.note === note)?.velocite;
     expect(velocite(36)).toBe(127);
     expect(velocite(38)).toBe(velociteMidiDepuisNuance(Math.round(0.5 * 9)));
     expect(velocite(42)).toBe(velociteMidiDepuisNuance(Math.round(0.2 * 9)));
