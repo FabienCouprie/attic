@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 65 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 127 · transposable tel quel
+- **pur** : 130 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -125,6 +125,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | lsysteme.ts | pur | — |
 | lucier.ts | recipient | AudioBuffer |
 | mandelbrot.ts | recipient | AudioBuffer |
+| maquette.ts | pur | — |
 | markov.ts | pur | — |
 | masquage.ts | pur | — |
 | math-formules.ts | recipient | AudioBuffer |
@@ -170,6 +171,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | pulsars.ts | recipient | AudioBuffer |
 | pure-data.ts | rendu | OfflineAudioContext |
 | quadrafuzz.ts | rendu | OfflineAudioContext |
+| quantification.ts | pur | — |
 | random-slice.ts | recipient | AudioBuffer |
 | recaler-niveau.ts | recipient | AudioBuffer |
 | reetirage-dtw.ts | recipient | AudioBuffer |
@@ -223,5 +225,6 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | vitesse-midi.ts | pur | — |
 | voice-changer.ts | recipient | AudioBuffer |
 | voicings.ts | pur | — |
+| voix.ts | pur | — |
 | vumetre.ts | recipient | AudioBuffer |
 | wishart.ts | recipient | AudioBuffer |

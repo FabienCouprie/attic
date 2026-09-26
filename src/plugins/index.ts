@@ -154,6 +154,9 @@ import { fiches as f_midi_vers_sequence } from "./midi-vers-sequence";
 import { fiches as f_sequence_formes } from "./sequence-formes";
 import { fiches as f_series_morphologie } from "./series-morphologie";
 import { fiches as f_arbre_rythmique } from "./arbre-rythmique";
+import { fiches as f_quantification } from "./quantification";
+import { fiches as f_voix } from "./voix";
+import { fiches as f_maquette } from "./maquette";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -247,6 +250,9 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_sequence_formes,
   ...f_series_morphologie,
   ...f_arbre_rythmique,
+  ...f_quantification,
+  ...f_voix,
+  ...f_maquette,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,

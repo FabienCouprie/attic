@@ -58,6 +58,38 @@ export interface Sequence {
   duree?: number;
   /** Un titre, quand le nœud qui l'a produite en connaît un. */
   titre?: string;
+  /**
+   * L'écriture mesurée de ces notes, en notation de listes, quand elle est connue.
+   *
+   * C'EST LE RÉGIME PULSÉ, À CÔTÉ DU LINÉAIRE ET NON À SA PLACE. Les temps restent en secondes et
+   * rien de ce qui existait ne change ; l'arbre dit en plus ce qu'une suite de durées ne peut pas
+   * dire, qu'un tiers de temps est un triolet et non un arrondi. Il voyageait jusqu'ici sur un port
+   * de texte séparé, qu'il fallait garder en phase avec les notes à la main.
+   *
+   * IL NE SE POSE ET NE SE LIT QUE PAR `audio/voix.ts`, qui vérifie qu'il décrit encore ces notes.
+   * Une transformation qui déplace une attaque le rend caduc, et un arbre caduc gravé tel quel
+   * donne une partition fausse qui paraît juste.
+   */
+  arbre?: string;
+  /**
+   * Ce que chaque voix porte de plus que ses notes : son nom, et son écriture mesurée.
+   *
+   * L'APPARTENANCE EST SUR LA NOTE, CE TABLEAU NE PORTE QUE LE RESTE. Savoir quelles notes forment
+   * la deuxième voix se lit dans les notes elles-mêmes ; ce qui ne peut pas s'y loger est ce qui
+   * vaut pour la voix entière, un nom de portée et un arbre rythmique. Absent, la séquence est
+   * d'une seule voix et `arbre` la décrit, ce qui reste le cas ordinaire.
+   */
+  voix?: InfoVoix[];
+}
+
+/** Ce qu'une voix porte en propre. */
+export interface InfoVoix {
+  /** Le numéro que les notes de cette voix portent. */
+  numero: number;
+  /** Le nom de la portée, quand on en connaît un. */
+  nom?: string;
+  /** L'écriture mesurée de cette seule voix, en notation de listes. */
+  arbre?: string;
 }
 
 /**
@@ -74,6 +106,7 @@ export function estSequence(valeur: unknown): valeur is Sequence {
   const s = valeur as Sequence;
   if (!Array.isArray(s.notes)) return false;
   if (s.tempo !== undefined && !Number.isFinite(s.tempo)) return false;
+  if (s.arbre !== undefined && typeof s.arbre !== "string") return false;
   return s.notes.every((n) =>
     n !== null && typeof n === "object"
     && Number.isFinite(n.note) && Number.isFinite(n.velocite)

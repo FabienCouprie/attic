@@ -14,6 +14,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { estCourbe } from "../audio/courbe";
 import { estSequence, type Sequence } from "../audio/sequence";
+import { poserArbre } from "../audio/voix";
 import { filtrerNotes, imposerProfil, profilDeSequence } from "../audio/sequence-formes";
 
 const en = () => langueCourante() === "en";
@@ -120,7 +121,12 @@ export const fiches: FicheAudio[] = ([
         grave, aigu, force,
         arrondir: ctx.paramTexte("Hauteurs", "continues") === "demi-tons",
       });
-      const sortie: Sequence = { notes, tempo: entree.tempo, titre: entree.titre };
+      // SEULES LES HAUTEURS CHANGENT, donc tout le reste suit : la durée voulue, qui portait le
+      // silence final et se perdait ici, et l'écriture mesurée, qui décrit toujours ces attaques.
+      const sortie: Sequence = poserArbre(
+        { notes, tempo: entree.tempo, duree: entree.duree, titre: entree.titre },
+        entree.arbre,
+      );
       const basse = Math.min(...notes.map((n) => n.note));
       const haute = Math.max(...notes.map((n) => n.note));
       return {

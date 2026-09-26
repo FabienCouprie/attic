@@ -23,6 +23,8 @@ import {
 } from "../audio/classes-hauteurs";
 import { refleterNotes, tableReflets, type ModeReflet } from "../audio/harmonie-negative";
 import type { Note } from "../audio/note";
+import { estSequence, type Sequence } from "../audio/sequence";
+import { poserArbre } from "../audio/voix";
 import {
   accords, conduireVoix, remplacerHauteurs, renverser, voicing, type TypeVoicing,
 } from "../audio/voicings";
@@ -37,6 +39,35 @@ async function notesDuMidi(fichier: unknown): Promise<NoteSimple[] | null> {
   return notes.map((n) => ({
     note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
   }));
+}
+
+/**
+ * Les notes reçues, de la séquence s'il y en a une, du MIDI sinon.
+ *
+ * LA SÉQUENCE PASSE DEVANT, ET C'EST TOUT L'INTÉRÊT. Un port MIDI porte un fichier dont le numéro
+ * de note est un octet : une hauteur qui ne tombe pas sur un demi-ton n'y entre pas. Les
+ * renversements, les dispositions et la conduite des voix, elles, ne font que des additions
+ * d'octaves et de demi-tons sur les hauteurs reçues, et laissent donc les fractions intactes.
+ * Elles ne les voyaient jamais.
+ *
+ * LA PROVENANCE EST RENDUE AVEC LES NOTES, pour que le message la dise. Deux sources qui se
+ * recouvrent sans que rien à l'écran n'annonce laquelle a servi, c'est la confusion qui a déjà
+ * coûté deux écoutes ailleurs.
+ */
+async function notesEntrantes(sequence: unknown, midi: unknown): Promise<
+  { notes: NoteSimple[]; tempo?: number; duree?: number; arbre?: string; provenance: string } | null
+> {
+  const en = () => langueCourante() === "en";
+  if (estSequence(sequence) && sequence.notes.length > 0) {
+    return {
+      notes: sequence.notes.map((n) => ({ ...n })),
+      tempo: sequence.tempo, duree: sequence.duree, arbre: sequence.arbre,
+      provenance: en() ? "sequence input" : "entrée Séquence",
+    };
+  }
+  const duMidi = await notesDuMidi(midi);
+  if (!duMidi) return null;
+  return { notes: duMidi, provenance: en() ? "MIDI input" : "entrée MIDI" };
 }
 
 /**
@@ -179,13 +210,16 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Théorie",
     resume: "Analyse un accord ou un passage en ensemble de classes de hauteurs : forme normale, forme première, vecteur d'intervalles.",
     resumeEn: "Analyses a chord or passage as a pitch-class set: normal form, prime form, interval vector.",
-    entrees: [{ nom: "MIDI", type: "midi", requis: false }],
+    entrees: [
+      { nom: "MIDI", type: "midi", requis: false },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence", requis: false },
+    ],
     sorties: [{ nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [
       { nom: "Notes", nomEn: "Notes", type: "texte", defaut: "C E G B",
         defautEn: "C E G B",
-        doc: "Les notes à analyser, en noms ou en chiffres de 0 à 11. Un MIDI branché en entrée l'emporte.",
-        docEn: "The notes to analyse, as names or numbers from 0 to 11. A MIDI file on the input wins." },
+        doc: "Les notes à analyser, en noms ou en chiffres de 0 à 11. Une séquence branchée en entrée l'emporte, puis un MIDI.",
+        docEn: "The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file." },
       { nom: "Découpage", nomEn: "Grouping", type: "choix",
         options: ["Tout l'extrait", "Accord par accord"], optionsEn: ["Whole excerpt", "Chord by chord"],
         optionIds: ["tout", "accords"], defaut: "Tout l'extrait", defautEn: "Whole excerpt",
@@ -193,7 +227,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material." },
     ],
     async executer(ctx: any) {
-      const entree = await notesDuMidi(ctx.entree(0));
+      const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
+      const entree = recu?.notes ?? null;
       const en = langueCourante() === "en";
       if (!entree || entree.length === 0) {
         const notes = lireSuite(ctx.paramTexte("Notes", "C E G B"));
@@ -208,7 +243,7 @@ export const fiches: FicheAudio[] = ([
         const a = analyser(entree.map((n) => n.note));
         return {
           valeurs: [rapportAnalyse(a, en ? "Excerpt" : "Extrait")],
-          message: `${enCrochets(a.premiere)}${a.nom ? ` · ${a.nom.forte}` : ""}`,
+          message: `${enCrochets(a.premiere)}${a.nom ? ` · ${a.nom.forte}` : ""} · ${recu!.provenance}`,
         };
       }
       const groupes = accords(entree);
@@ -233,7 +268,7 @@ export const fiches: FicheAudio[] = ([
       ].filter((l) => l !== "").join("\n\n");
       return {
         valeurs: [rapport],
-        message: traduire("msg.ensembles.resultat", groupes.length, comptes.size),
+        message: `${traduire("msg.ensembles.resultat", groupes.length, comptes.size)} · ${recu!.provenance}`,
       };
     },
   },
@@ -283,10 +318,16 @@ export const fiches: FicheAudio[] = ([
   {
     id: "voicings-accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
     univers: "Traitement", famille: "Effets",
-    resume: "Renverse, écarte et enchaîne les accords d'un MIDI en bougeant le moins de voix possible.",
-    resumeEn: "Inverts, spreads and chains a MIDI file's chords while moving as few voices as possible.",
-    entrees: [{ nom: "MIDI", type: "midi" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
+    resume: "Renverse, écarte et enchaîne les accords en bougeant le moins de voix possible.",
+    resumeEn: "Inverts, spreads and chains chords while moving as few voices as possible.",
+    entrees: [
+      { nom: "MIDI", type: "midi", requis: false },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence", requis: false },
+    ],
+    sorties: [
+      { nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence" },
+    ],
     parametres: [
       { nom: "Renversement", nomEn: "Inversion", type: "nombre", plage: [0, 5], pas: 1, defaut: 0,
         doc: "Nombre de notes basses qui montent d'une octave. 0 = position fondamentale. Un renversement égal au nombre de notes de l'accord le rend inchangé, plutôt que de le faire monter.",
@@ -310,9 +351,10 @@ export const fiches: FicheAudio[] = ([
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx: any) {
-      const notes = await notesDuMidi(ctx.entree(0));
-      if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
+      if (!recu) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      const notes = recu.notes;
+      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
       const groupes = accords(notes);
       const renversement = Math.round(ctx.paramNombre("Renversement", 0));
       const type = ctx.paramTexte("Disposition", "serre") as TypeVoicing;
@@ -325,9 +367,20 @@ export const fiches: FicheAudio[] = ([
       const sortie = groupes.flatMap((g, i) => remplacerHauteurs(g, places[i]));
       const accordsMultiples = groupes.filter((g) => g.length > 1).length;
       const [audio, midi] = await rendreEtEcrire(ctx, sortie);
+      // LES DÉPARTS ET LES DURÉES NE BOUGENT PAS, seules les hauteurs : la durée voulue de la
+      // séquence reçue est donc encore la bonne, silence final compris.
+      const sequence: Sequence = poserArbre({
+        notes: [...sortie].sort((a, b) => a.debut - b.debut || a.note - b.note),
+        tempo: recu.tempo, duree: recu.duree,
+      }, recu.arbre);
+      const fractions = sortie.filter((n) => !Number.isInteger(n.note)).length;
+      const en = langueCourante() === "en";
       return {
-        valeurs: [audio, midi],
-        message: traduire("msg.voicings.resultat", groupes.length, accordsMultiples),
+        valeurs: [audio, midi, sequence],
+        message: `${traduire("msg.voicings.resultat", groupes.length, accordsMultiples)} · ${recu.provenance}`
+          + (fractions > 0
+            ? ` · ${fractions} ${en ? "pitches off the semitone, rounded in the MIDI" : "hauteurs hors du demi-ton, arrondies dans le MIDI"}`
+            : ""),
       };
     },
   },

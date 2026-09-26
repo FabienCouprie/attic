@@ -108,8 +108,9 @@ function declarationsDeNote(): Declaration[] {
 // une note de partition : ce sont des réglages de synthèse et une voix de kit, qui portent un champ
 // `note` pour dire quelle hauteur jouer, et qui n'ont rien à mutualiser.
 const FORMES_ADMISES = new Set([
-  // La note canonique, et sa variante dont le canal est connu.
-  "canal?,debut,fin,note,velocite",
+  // La note canonique, et sa variante dont le canal est connu. La voix y est facultative comme le
+  // canal, et pour la même raison : elle n'a de sens qu'au bord, là où l'on grave des portées.
+  "canal?,debut,fin,note,velocite,voix?",
   "canal,debut,fin,note,velocite",
   // Sans nuance : une note de théorie, qui ne dit que sa place.
   "debut,fin,note",

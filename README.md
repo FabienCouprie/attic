@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 413 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 417 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,7 +13,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **413 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **417 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
@@ -134,7 +134,7 @@ SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and b
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (413 nodes)
+  plugins/       # Plugin node definitions (417 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
   workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
@@ -156,6 +156,7 @@ electron/
 - [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/` (regenerate with `npm run docs:lignes`; a test fails when it no longer matches the sources)
 - [`MODELES-BRUITAGE.md`](MODELES-BRUITAGE.md) — Working note on sound-effect generation: why the installed Stable Audio bundle drifts to music, what was measured, and the surveyed alternatives with their licences
 - [`COMPOSITION-ASSISTEE.md`](COMPOSITION-ASSISTEE.md) — Evaluation of hosting computer-assisted composition (OpenMusic): what already matches, the one representation that blocks the rest, and why porting is ruled out by licence
+- [`QUANTIFICATION-RYTHMIQUE.md`](QUANTIFICATION-RYTHMIQUE.md) — State of the art before writing a line of rhythm quantisation: what GTTM frames and does not solve, the Kant–RQ–qparse lineage that outputs a rhythm tree, why the recent neural work targets a different problem, and the licences
 - [`APP-BREAKDOWN.md`](APP-BREAKDOWN.md) — Historical record of the `App.tsx` → hooks extraction (a completed milestone; `App.tsx` has since grown again as features were added)
 - [`EXERCISE-WORKBOOK.md`](EXERCISE-WORKBOOK.md) — Guided exercises for learning the app
 - [`SECURITY.md`](SECURITY.md) — Vulnerability reporting policy

@@ -11,34 +11,32 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
+import {
+  MODELE_MONTAGE, disposerPistes, echelle, pasDeGraduation, valeurAuRepos, valeurDuGeste,
+  type Geste, type LigneMontage, type ModeleLigne, type PisteMontage, type Vue,
+} from "./ligne-temps-calcul";
 
-export interface PisteMontage { piste: number; duree: number }
+export type { PisteMontage } from "./ligne-temps-calcul";
+export { pasDeGraduation } from "./ligne-temps-calcul";
 
 const HAUTEUR_PISTE = 34, REGLE = 22, POIGNEE = 9;
-const DUREE_INCONNUE = 2;
 
-/** Un pas de graduation lisible pour une étendue donnée : 1, 2, 5, 10… secondes. */
-export function pasDeGraduation(etendueS: number, largeurPx: number): number {
-  const brut = etendueS / Math.max(1, largeurPx / 70);
-  const puissance = Math.pow(10, Math.floor(Math.log10(Math.max(brut, 1e-3))));
-  for (const m of [1, 2, 5, 10]) if (m * puissance >= brut) return m * puissance;
-  return 10 * puissance;
-}
-
-type Prise = {
-  piste: number; quoi: "corps" | "entree" | "sortie"; x0: number; valeur0: number;
+type Prise = Geste & {
+  x0: number;
   /** L'échelle figée pendant le geste : déplacer la dernière piste change l'étendue affichée, et une
    *  échelle recalculée à chaque mouvement ferait glisser la barre sous le pointeur. */
-  vue: { debutMin: number; etendue: number };
+  vue: Vue;
 };
 
-export function LigneDeTemps({ pistes, branchees, params, onChanger }: {
+export function LigneDeTemps({ pistes, branchees, params, onChanger, modele = MODELE_MONTAGE }: {
   /** Les durées de la dernière exécution. */
   pistes: PisteMontage[];
   /** Les rangs des pistes branchées maintenant. */
   branchees: number[];
   params: Record<string, unknown>;
   onChanger: (nom: string, valeur: number) => void;
+  /** Ce qu'une barre veut dire ici. Par défaut celle du Montage, qui est la première à s'en servir. */
+  modele?: ModeleLigne;
 }) {
   const { t, lang } = useI18n();
   const boite = useRef<HTMLDivElement>(null);
@@ -53,28 +51,13 @@ export function LigneDeTemps({ pistes, branchees, params, onChanger }: {
     return () => obs.disconnect();
   }, []);
 
-  const num = (nom: string, defaut: number) => { const v = Number(params[nom]); return Number.isFinite(v) ? v : defaut; };
-  const lignes = [...branchees].sort((a, b) => a - b).map((k) => {
-    const connue = pistes.find((p) => p.piste === k);
-    return {
-      k, connue: !!connue,
-      duree: connue?.duree ?? DUREE_INCONNUE,
-      debut: num(`Début ${k + 1}`, k * 2),
-      gain: num(`Gain ${k + 1}`, 0),
-      entree: num(`Fondu entrée ${k + 1}`, 10) / 1000,
-      sortie: num(`Fondu sortie ${k + 1}`, 10) / 1000,
-    };
-  });
+  const lignes = disposerPistes(branchees, pistes, params, modele);
 
   if (!lignes.length) {
-    return <div className="ligne-temps ligne-temps-vide">{t("montage.aucunePiste")}</div>;
+    return <div className="ligne-temps ligne-temps-vide">{t(modele.cleVide)}</div>;
   }
 
-  const calculee = {
-    debutMin: Math.min(0, ...lignes.map((l) => l.debut)),
-    etendue: Math.max(4, (Math.max(...lignes.map((l) => l.debut + l.duree)) - Math.min(0, ...lignes.map((l) => l.debut))) * 1.08),
-  };
-  const { debutMin, etendue } = prise?.vue ?? calculee;
+  const { debutMin, etendue } = prise?.vue ?? echelle(lignes);
   const zoneG = 44;
   const utile = Math.max(100, largeur - zoneG - 8);
   const px = utile / etendue;
@@ -84,27 +67,26 @@ export function LigneDeTemps({ pistes, branchees, params, onChanger }: {
   for (let s = Math.ceil(debutMin / pas) * pas; s <= debutMin + etendue; s += pas) graduations.push(+s.toFixed(6));
   const hauteur = REGLE + lignes.length * HAUTEUR_PISTE + 6;
   const virgule = (v: number, d: number) => (lang === "en" ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
+  /** Le second nombre écrit dans la barre. Il n'y paraît que s'il dit quelque chose. */
+  const legende = (l: LigneMontage) => {
+    if (modele.legende === "gain" && l.gain !== 0) return ` · ${l.gain > 0 ? "+" : ""}${virgule(l.gain, 1)} dB`;
+    if (modele.legende === "transposition" && l.transposition !== 0) {
+      return ` · ${l.transposition > 0 ? "+" : ""}${virgule(l.transposition, 1)}`;
+    }
+    return "";
+  };
 
-  const saisir = (e: React.PointerEvent, l: typeof lignes[number], quoi: Prise["quoi"]) => {
+  const saisir = (e: React.PointerEvent, l: LigneMontage, quoi: Prise["quoi"]) => {
     e.preventDefault(); e.stopPropagation();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    const valeur0 = quoi === "corps" ? l.debut : quoi === "entree" ? l.entree : l.sortie;
-    setPrise({ piste: l.k, quoi, x0: e.clientX, valeur0, vue: { debutMin, etendue } });
+    setPrise({ piste: l.k, quoi, x0: e.clientX, valeur0: valeurAuRepos(quoi, l), vue: { debutMin, etendue } });
   };
   const bouger = (e: React.PointerEvent) => {
     if (!prise) return;
-    const ds = (e.clientX - prise.x0) / px;
     const l = lignes.find((x) => x.k === prise.piste);
     if (!l) return;
-    // Au centième de seconde : assez fin pour placer, assez rond pour se relire.
-    if (prise.quoi === "corps") {
-      onChanger(`Début ${l.k + 1}`, Math.round((prise.valeur0 + ds) * 100) / 100);
-    } else {
-      // Tirer le coin gauche vers la droite allonge le fondu d'entrée ; le coin droit vers la gauche, celui de sortie.
-      const v = prise.quoi === "entree" ? prise.valeur0 + ds : prise.valeur0 - ds;
-      const borne = Math.max(0, Math.min(l.duree, v));
-      onChanger(prise.quoi === "entree" ? `Fondu entrée ${l.k + 1}` : `Fondu sortie ${l.k + 1}`, Math.round(borne * 1000));
-    }
+    const { nom, valeur } = valeurDuGeste(prise, (e.clientX - prise.x0) / px, l);
+    onChanger(nom, valeur);
   };
   const lacher = (e: React.PointerEvent) => {
     if (!prise) return;
@@ -114,7 +96,7 @@ export function LigneDeTemps({ pistes, branchees, params, onChanger }: {
 
   return (
     <div className="ligne-temps" ref={boite}>
-      <svg width={largeur} height={hauteur} role="img" aria-label={t("montage.ligneTemps")}
+      <svg width={largeur} height={hauteur} role="img" aria-label={t(modele.cleTitre)}
         onPointerMove={bouger} onPointerUp={lacher} onPointerCancel={lacher}>
         {graduations.map((s) => (
           <g key={s}>
@@ -133,19 +115,33 @@ export function LigneDeTemps({ pistes, branchees, params, onChanger }: {
               <rect x={x0} y={y} width={w} height={h} rx={3} className="ligne-temps-barre"
                 style={{ cursor: "grab" }} onPointerDown={(e) => saisir(e, l, "corps")} />
               {/* Les fondus : deux triangles qui mangent les coins, comme sur un banc de montage. */}
-              {we > 0 && <path d={`M${x0},${y + h} L${x0},${y} L${x0 + we},${y} Z`} className="ligne-temps-fondu" pointerEvents="none" />}
-              {ws > 0 && <path d={`M${x0 + w},${y + h} L${x0 + w},${y} L${x0 + w - ws},${y} Z`} className="ligne-temps-fondu" pointerEvents="none" />}
-              <rect x={x0 + we - POIGNEE / 2} y={y - 2} width={POIGNEE} height={POIGNEE} rx={2} className="ligne-temps-poignee"
-                style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "entree")}>
-                <title>{t("montage.fonduEntree")}</title>
-              </rect>
-              <rect x={x0 + w - ws - POIGNEE / 2} y={y - 2} width={POIGNEE} height={POIGNEE} rx={2} className="ligne-temps-poignee"
-                style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "sortie")}>
-                <title>{t("montage.fonduSortie")}</title>
-              </rect>
+              {modele.poignees.includes("entree") && we > 0
+                && <path d={`M${x0},${y + h} L${x0},${y} L${x0 + we},${y} Z`} className="ligne-temps-fondu" pointerEvents="none" />}
+              {modele.poignees.includes("sortie") && ws > 0
+                && <path d={`M${x0 + w},${y + h} L${x0 + w},${y} L${x0 + w - ws},${y} Z`} className="ligne-temps-fondu" pointerEvents="none" />}
+              {modele.poignees.includes("entree") && (
+                <rect x={x0 + we - POIGNEE / 2} y={y - 2} width={POIGNEE} height={POIGNEE} rx={2} className="ligne-temps-poignee"
+                  style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "entree")}>
+                  <title>{t("montage.fonduEntree")}</title>
+                </rect>
+              )}
+              {modele.poignees.includes("sortie") && (
+                <rect x={x0 + w - ws - POIGNEE / 2} y={y - 2} width={POIGNEE} height={POIGNEE} rx={2} className="ligne-temps-poignee"
+                  style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "sortie")}>
+                  <title>{t("montage.fonduSortie")}</title>
+                </rect>
+              )}
+              {/* LA DURÉE SE TIRE PAR LE BORD DROIT, sur toute la hauteur de la barre : ce n'est pas
+                  un coin qu'on entame, c'est la barre entière qu'on allonge. */}
+              {modele.poignees.includes("duree") && (
+                <rect x={x0 + w - POIGNEE / 2} y={y} width={POIGNEE} height={h} rx={2} className="ligne-temps-poignee"
+                  style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "duree")}>
+                  <title>{t("maquette.dureeBoite")}</title>
+                </rect>
+              )}
               {w > 70 && (
                 <text x={x0 + Math.max(we, 6)} y={y + h - 7} className="ligne-temps-texte ligne-temps-legende" pointerEvents="none">
-                  {`${virgule(l.debut, 2)} s${l.gain !== 0 ? ` · ${l.gain > 0 ? "+" : ""}${virgule(l.gain, 1)} dB` : ""}`}
+                  {`${virgule(l.debut, 2)} s${legende(l)}`}
                 </text>
               )}
             </g>

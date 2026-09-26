@@ -9,6 +9,7 @@ import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } 
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
 import { notesVersMusicXML } from "../audio/musicxml";
 import { estSequence } from "../audio/sequence";
+import { arbreDe, voixDe } from "../audio/voix";
 
 function noeudMeyda(
   id: string,
@@ -97,10 +98,44 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const fichier = ctx.entree(0);
       const recue = ctx.entree(1);
-      const arbreTexte = ctx.entree(2);
-      // L'ARBRE PASSE AVANT TOUT LE RESTE, quand il est branché : lui seul sait qu'un tiers de
-      // temps est un triolet, et c'est la seule information que ni un fichier MIDI ni une suite de
-      // durées ne peuvent rendre.
+      // L'ARBRE PORTÉ PAR LA SÉQUENCE SERT QUAND LE PORT N'EST PAS BRANCHÉ. Un arbre tiré sur son
+      // propre câble reste prioritaire, puisqu'on l'a branché exprès ; mais une séquence qui porte
+      // déjà son écriture n'a plus besoin d'un second câble, et les deux ne peuvent plus se
+      // désaccorder en chemin. Celui qui vient de la séquence n'est retenu que s'il décrit encore
+      // ses notes, ce dont `arbreDe` répond.
+      const porte = estSequence(recue) ? arbreDe(recue) : null;
+      const arbreEntree = ctx.entree(2);
+
+      // PLUSIEURS VOIX FONT PLUSIEURS PORTÉES, et il y faut l'écriture de chacune. Une voix sans
+      // arbre n'a pas de mesures à graver ; le chemin polyphonique demande donc que toutes soient
+      // écrites, et à défaut la gravure reprend le chemin ordinaire, ce que le message dit.
+      const lesVoix = estSequence(recue) ? voixDe(recue) : [];
+      if (typeof arbreEntree !== "string" && lesVoix.length > 1 && lesVoix.every((v) => v.arbre)) {
+        const { lireArbre } = await import("../audio/arbre-rythmique");
+        const { voixVersMusicXML } = await import("../audio/musicxml-arbre");
+        const parties = lesVoix.map((v, i) => ({
+          mesures: lireArbre(v.arbre as string),
+          hauteurs: v.notes.map((n) => n.note),
+          nom: v.nom ?? `${langueCourante() === "en" ? "Voice" : "Voix"} ${i + 1}`,
+        }));
+        const xmlVoix = voixVersMusicXML(parties, {
+          titre: ctx.paramTexte("Titre", "Attic"),
+          tempo: recue.tempo ?? ctx.paramNombre("Tempo", 120),
+        });
+        const nomV = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
+        return {
+          valeurs: [xmlVoix, new File([xmlVoix], nomV, { type: "application/vnd.recordare.musicxml+xml" })],
+          message: `${lesVoix.length} ${langueCourante() === "en" ? "staves" : "portées"} · `
+            + `${[...xmlVoix.matchAll(/<note>/g)].length} notes · `
+            + `${[...xmlVoix.matchAll(/<tuplet type="start"/g)].length} n-olets`,
+        };
+      }
+
+      const arbreTexte = typeof arbreEntree === "string" && arbreEntree.trim().length > 0
+        ? arbreEntree
+        : porte?.arbre;
+      // L'ARBRE PASSE AVANT TOUT LE RESTE : lui seul sait qu'un tiers de temps est un triolet, et
+      // c'est la seule information que ni un fichier MIDI ni une suite de durées ne peuvent rendre.
       if (typeof arbreTexte === "string" && arbreTexte.trim().length > 0) {
         const { lireArbre } = await import("../audio/arbre-rythmique");
         const { arbreVersMusicXML } = await import("../audio/musicxml-arbre");
@@ -118,9 +153,13 @@ export const fiches: FicheAudio[] = ([
         });
         const nomA = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
         const nolets = [...xmlArbre.matchAll(/<tuplet type="start"/g)].length;
+        const en = langueCourante() === "en";
+        const dOu = arbreTexte === porte?.arbre
+          ? (en ? "tree carried by the sequence" : "arbre porté par la séquence")
+          : (en ? "tree input" : "entrée Arbre");
         return {
           valeurs: [xmlArbre, new File([xmlArbre], nomA, { type: "application/vnd.recordare.musicxml+xml" })],
-          message: `${mesures.length} mesures · ${[...xmlArbre.matchAll(/<note>/g)].length} notes · ${nolets} n-olets`,
+          message: `${mesures.length} mesures · ${[...xmlArbre.matchAll(/<note>/g)].length} notes · ${nolets} n-olets · ${dOu}`,
         };
       }
       // LA SÉQUENCE PASSE D'ABORD, quand elle est branchée : elle porte les cents que l'autre

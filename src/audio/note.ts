@@ -51,6 +51,20 @@ export interface Note {
    * là pour les fonctions qui ne sauraient pas quoi faire d'une note sans canal.
    */
   canal?: number;
+  /**
+   * La voix à laquelle la note appartient, zéro pour la première.
+   *
+   * CE N'EST PAS LE CANAL, ET LES CONFONDRE ÉCRIRAIT MAL. Le canal désigne un instrument ; les deux
+   * mains d'un piano en partagent un et n'en forment pas moins deux portées, et deux voix d'un
+   * choeur peuvent tenir sur la même. La voix désigne la ligne, c'est-à-dire ce qui se grave sur
+   * une portée et se lit d'un seul tenant.
+   *
+   * LE CHAMP EST SUR LA NOTE, ET NON SUR LA SÉQUENCE. Un découpage gardé à côté des notes,
+   * par listes d'indices ou par copies, se désaccorde à la première transformation qui trie ou
+   * recopie ; porté par la note, il suit partout où elle va sans que rien n'ait à le savoir.
+   * Absent, la séquence est d'une seule voix, ce qu'elle était jusqu'ici.
+   */
+  voix?: number;
 }
 
 /** Une note dont le canal est connu : ce qui part vers un fichier MIDI ou un instrument. */

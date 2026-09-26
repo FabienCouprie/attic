@@ -22,6 +22,7 @@ import { derouler, dureeArbre, ecrireArbre, lireArbre } from "../audio/arbre-ryt
 import { catalogueArbres, engendrerArbre, engendrerHauteurs } from "../audio/arbres-catalogue";
 import { GAMMES_CORRECTION, degresDe } from "../audio/correction-hauteur";
 import { estSequence, type Sequence } from "../audio/sequence";
+import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
 
 const en = () => langueCourante() === "en";
@@ -287,7 +288,16 @@ export const fiches: FicheAudio[] = ([
       // LA DURÉE EST DITE, ET NON DÉDUITE DE LA DERNIÈRE NOTE. Un arbre qui se termine par un
       // silence dure plus longtemps que sa dernière note ; sans ce champ, le rendu s'arrêtait à
       // celle-ci et le silence final disparaissait du son.
-      const sequence: Sequence = { notes, tempo, duree: duree * repetitions, titre: texte };
+      // LA SÉQUENCE PART AVEC SON ÉCRITURE, et non plus seulement avec ses secondes. Elle n'est
+      // posée que si elle décrit encore les notes rendues : une répétition en concatène plusieurs,
+      // et l'arbre d'une seule ne décrirait alors que le premier tour.
+      //
+      // ET LE TEXTE DE L'ARBRE QUITTE LE TITRE, où il logeait faute d'un meilleur endroit. Un titre
+      // sert à nommer, et celui-ci devenait le nom de la portée une fois la voix gravée.
+      const sequence: Sequence = poserArbre(
+        { notes, tempo, duree: duree * repetitions },
+        repetitions === 1 ? ecrireArbre(mesures) : undefined,
+      );
       const entete = `${mesures.length} ${en() ? "measures" : "mesures"} · ${(duree * repetitions).toFixed(2)} s · ${tempo} BPM · ${provenance}`;
       return {
         valeurs: [sequence, [entete, "", ...lignes].join("\n")],
