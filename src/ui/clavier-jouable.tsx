@@ -13,10 +13,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReactFlow, useStore } from "@xyflow/react";
 import { clavierDoitJouer } from "./clavier-physique";
-import { NOTE_MAX, NOTE_MIN, disposition, nomNote, noteALaPosition } from "./clavier-disposition";
+import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote, noteALaPosition } from "./clavier-disposition";
 
 import type { Note } from "../audio/note";
-export const LARGEUR_BLANCHE = 24;
 export const PROPORTION_NOIRE = 0.62;
 
 export type NoteEnregistree = Note;
@@ -32,18 +31,29 @@ export type Presseur = (note: number, velocite: number) => VoixVivante;
 export function useClavierJouable(id: string, presseur: Presseur) {
   const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
   const [hauteurTouches, setHauteurTouches] = useState(90);
+  // LA LARGEUR EST MESUREE AU MEME TITRE QUE LA HAUTEUR, et c'est elle qui decide de la taille des
+  // touches : les quatre-vingt-huit tiennent alors dans le noeud, quelle que soit sa taille, et se
+  // voient d'un coup. A vingt-quatre pixels fixes, le clavier en faisait 1248 dans un noeud de 500.
+  const [largeurDispo, setLargeurDispo] = useState(0);
   useEffect(() => {
     const el = touchesRef.current; if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setHauteurTouches(entry.contentRect.height));
+    const ro = new ResizeObserver(([entry]) => {
+      setHauteurTouches(entry.contentRect.height);
+      setLargeurDispo(entry.contentRect.width);
+    });
     ro.observe(el); return () => ro.disconnect();
   }, []);
-  const dispo = useMemo(() => disposition(NOTE_MIN, NOTE_MAX, LARGEUR_BLANCHE), []);
-  // Les 88 touches debordent toujours du noeud : on arrive centre sur le do3, la ou se
-  // joue une melodie, plutot que sur le la0 tout en bas du piano.
+  const dispo = useMemo(
+    () => disposition(NOTE_MIN, NOTE_MAX, largeurBlanchePour(largeurDispo)),
+    [largeurDispo],
+  );
+  // IL NE RESTE A DEFILER QUE SI LE NOEUD EST TROP ETROIT pour la largeur minimale. On arrive alors
+  // centre sur le do3, la ou se joue une melodie, plutot que sur le la0 tout en bas du piano.
   useEffect(() => {
     const el = touchesRef.current; if (!el) return;
+    if (dispo.largeurTotale <= el.clientWidth) { el.scrollLeft = 0; return; }
     const do3 = dispo.blanches.find((k) => k.note === 48);
-    if (do3) el.scrollLeft = Math.max(0, do3.x - LARGEUR_BLANCHE);
+    if (do3) el.scrollLeft = Math.max(0, do3.x - dispo.largeurBlanche);
   }, [dispo]);
 
   const activesRef = useRef<Map<number, VoixVivante>>(new Map());

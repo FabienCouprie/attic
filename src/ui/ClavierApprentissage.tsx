@@ -18,10 +18,10 @@ import { NodeResizer } from "@xyflow/react";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio";
 import { assignerMains, type Main, type NoteJouee } from "../audio/conformite-clavier";
-import { NOTE_MAX, NOTE_MIN, disposition, nomNote } from "./clavier-disposition";
+import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote } from "./clavier-disposition";
 import { useI18n } from "../i18n";
 
-const LARGEUR_BLANCHE = 24, PROPORTION_NOIRE = 0.62;
+const PROPORTION_NOIRE = 0.62;
 
 interface Props {
   midi?: File;
@@ -67,7 +67,11 @@ export function ClavierApprentissage({ midi, audioUrl, anticipation = 3 }: Props
   const [enfoncees, setEnfoncees] = useState<Map<number, Main>>(new Map());
   const [position, setPosition] = useState(0);
 
-  const dispo = useMemo(() => disposition(NOTE_MIN, NOTE_MAX, LARGEUR_BLANCHE), []);
+  // LES QUATRE-VINGT-HUIT TOUCHES TIENNENT DANS LE NŒUD, quelle que soit sa taille : la largeur
+  // d'une blanche se déduit de la place, au lieu des vingt-quatre pixels fixes qui en faisaient
+  // 1248 et obligeaient à chercher une note en faisant défiler. Comme pour le clavier jouable.
+  const [largeurDispo, setLargeurDispo] = useState(0);
+  const dispo = useMemo(() => disposition(NOTE_MIN, NOTE_MAX, largeurBlanchePour(largeurDispo)), [largeurDispo]);
 
   // La hauteur disponible se partage entre la pluie et les touches. Un clavier réduit à un
   // trait ne servirait à rien : il garde un minimum, et la pluie prend ce qui reste.
@@ -79,6 +83,7 @@ export function ClavierApprentissage({ midi, audioUrl, anticipation = 3 }: Props
       const touches = Math.max(HAUTEUR_TOUCHES_MIN, Math.round(totale * (1 - PART_PLUIE)));
       setHauteurTouches(touches);
       setHauteurPluie(Math.max(0, Math.round(totale - touches)));
+      setLargeurDispo(entry.contentRect.width);
     });
     ro.observe(el); return () => ro.disconnect();
   }, []);
