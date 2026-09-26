@@ -20,12 +20,14 @@ export function estNoire(note: number): boolean {
   return NOIRES.has(((note % 12) + 12) % 12);
 }
 
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-/** Nom d'usage d'une note MIDI : 60 → « C4 ». */
-export function nomNote(note: number): string {
-  return NOMS[((note % 12) + 12) % 12] + (Math.floor(note / 12) - 1);
-}
+/**
+ * Le nom d'usage d'une note MIDI — 60 → « C4 » —, et son écart au tempérament s'il y en a un.
+ *
+ * Le calcul vit dans `audio/nom-note.ts`, où il est écrit une seule fois : il était recopié ici, et
+ * dans deux modules audio qui n'ont rien à voir avec un clavier. Réexporté pour que les appels
+ * d'ici gardent leur adresse.
+ */
+export { nomNote } from "../audio/nom-note";
 
 export interface Touche {
   note: number;

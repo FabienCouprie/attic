@@ -26,6 +26,22 @@ export function frequenceDeNoteMidi(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
+/**
+ * L'inverse : la hauteur en demi-tons d'une fréquence, fraction comprise.
+ *
+ * ELLE NE S'ARRONDIT PAS, et c'est ce qui la rend utile. Un partiel d'un spectre, une fréquence
+ * relevée par un suiveur de hauteur, un degré d'intonation juste : aucun ne tombe sur un demi-ton,
+ * et c'est l'écart qui porte l'information. Le calcul est continu dans les deux sens, donc
+ * `noteMidiDeFrequence(frequenceDeNoteMidi(x))` rend `x`, virgule comprise.
+ *
+ * Une fréquence nulle ou négative n'a pas de hauteur : le logarithme rendrait `-Infinity` ou
+ * `NaN`, et l'appelant hériterait d'une note impossible sans rien voir venir.
+ */
+export function noteMidiDeFrequence(frequence: number): number {
+  if (!Number.isFinite(frequence) || frequence <= 0) return Number.NaN;
+  return 69 + 12 * Math.log2(frequence / 440);
+}
+
 
 export interface PositionZone {
   debut: number;

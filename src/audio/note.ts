@@ -25,9 +25,12 @@
  * Les temps sont en secondes depuis le début, et non en tics : une note ne sait rien du tempo qui
  * l'a produite. La nuance va de zéro à cent vingt-sept, comme en MIDI.
  *
- * LA HAUTEUR EST UN DEMI-TON ENTIER, et c'est une limite connue : le quart de ton ne s'écrit pas
- * ici. Voir `COMPOSITION-ASSISTEE.md` pour ce que coûterait le passage aux midicents, et pourquoi
- * il se fera dans un type de flux séparé plutôt qu'en changeant celui-ci.
+ * LA HAUTEUR EST UN DEMI-TON ENTIER PAR CONVENTION, ET RIEN NE L'IMPOSE. Le champ est un nombre :
+ * une fraction y entre sans obstacle, et la conversion en fréquence comme la lecture d'un
+ * échantillon la portent jusqu'au son. `audio/microtons.test.ts` sonde ce que chaque chemin en
+ * fait, et tient les endroits qui arrondissent. Voir `COMPOSITION-ASSISTEE.md` pour ce que
+ * coûterait le passage aux midicents, et pourquoi il se fera dans un type de flux séparé plutôt
+ * qu'en changeant celui-ci.
  */
 export interface Note {
   /** Le numéro de note MIDI, do central à 60. */

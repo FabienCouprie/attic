@@ -280,8 +280,14 @@ export function notesVersFichierMidi(
     const tickDebut = secEnTicks(n.debut);
     const tickFin = secEnTicks(n.fin);
     if (tickDebut < 0) continue;
-    lignes.push({ tick: tickDebut, type: "noteOn", channel: canal, noteNumber: n.note, velocity: Math.max(1, n.velocite) });
-    lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: n.note, velocity: 0 });
+    // LE NUMÉRO DE NOTE EST UN OCTET, ET IL S'ARRONDIT ICI. Une hauteur peut ne pas tomber sur un
+    // demi-ton, la conversion en fréquence étant continue ; le format MIDI, lui, ne sait pas porter
+    // de cents. L'écriture tronquait : 69,5 partait en 69, soit jusqu'à quatre-vingt-dix-neuf cents
+    // trop bas au lieu de cinquante au pire. Arrondir ne rend pas le microton, cela cesse
+    // seulement de le fausser dans un seul sens.
+    const numero = Math.round(n.note);
+    lignes.push({ tick: tickDebut, type: "noteOn", channel: canal, noteNumber: numero, velocity: Math.max(1, n.velocite) });
+    lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: canal, noteNumber: numero, velocity: 0 });
   }
 
   lignes.sort(comparerEvenementsMidi);

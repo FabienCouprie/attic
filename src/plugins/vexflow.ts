@@ -134,9 +134,19 @@ function dureeStandardVex(quarts: number): string {
   return meilleur.v;
 }
 
+/**
+ * Le nom VexFlow d'une hauteur, arrondie au demi-ton.
+ *
+ * LA HAUTEUR EST ARRONDIE, ET IL FAUT QU'ELLE LE SOIT. Une hauteur peut ne pas tomber sur un
+ * demi-ton, la conversion en fréquence étant continue. `NOMS_NOTES[note % 12]` cherchait alors une
+ * case qui n'existe pas et rendait `undefined` : le jeton devenait « undefined4/q », que le dessin
+ * refuse, et la partition disparaissait sans un mot. La notation employée ici n'a pas de signe pour
+ * le quart de ton ; l'arrondi est donc sa limite, et non un oubli.
+ */
 function noteMidiEnNom(note: number): string {
-  const nom = NOMS_NOTES[note % 12];
-  const octave = Math.floor(note / 12) - 1;
+  const proche = Math.round(note);
+  const nom = NOMS_NOTES[((proche % 12) + 12) % 12];
+  const octave = Math.floor(proche / 12) - 1;
   return `${nom}${octave}`;
 }
 
