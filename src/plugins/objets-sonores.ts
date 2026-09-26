@@ -149,7 +149,9 @@ export const fiches: FicheAudio[] = ([
         pistes.push({ piste: k, duree: son.duration });
       }
       // La ligne de temps de l'inspecteur a besoin des durées réelles, que seule l'exécution connaît.
-      (ctx.noeud.data as any)._pistesMontage = pistes;
+      // LE CHAMP EST PARTAGÉ AVEC LA MAQUETTE, qui s'en sert pour la même raison : son nom ne dit
+      // donc plus « montage », qui aurait égaré celui qui l'aurait lu depuis l'autre composant.
+      (ctx.noeud.data as any)._dureesMesurees = pistes;
       if (!plans.length) return { valeurs: [null], message: en() ? "No track connected." : "Aucune piste branchée." };
       const y = await monter(plans);
       return { valeurs: [y], message: `${plans.length} ${en() ? "tracks" : "pistes"} · ${y.duration.toFixed(2)} s` };

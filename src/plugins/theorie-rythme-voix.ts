@@ -13,6 +13,7 @@ import {
 } from "../audio/rythme-analyse";
 import { motifEuclidien } from "../audio/euclidien";
 import { analyserConduite } from "../audio/conduite-voix";
+import { estSequence } from "../audio/sequence";
 
 interface NoteSimple { note: number; debut: number; fin: number }
 
@@ -130,22 +131,35 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Théorie",
     resume: "Mesure en demi-tons ce que coûte chaque enchaînement d'accords, et dit lequel coule et lequel se tend.",
     resumeEn: "Measures in semitones what each chord change costs, and says which one flows and which one strains.",
-    notice: "Mesure la distance de conduite des voix entre deux accords, en demi-tons. D'après Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 2006, et « A Geometry of Music » (2011).\n\nCette distance est la somme des déplacements de chaque voix, pour l'appariement qui la minimise. Elle rend un nombre, ce qui permet de comparer deux harmonisations et de repérer l'endroit d'une pièce où le mouvement se tend.\n\nLe théorème qui rend le calcul court. On croit devoir essayer toutes les façons d'apparier les voix, six notes en font sept cent vingt. Tymoczko démontre qu'il n'en est rien : la conduite minimale entre deux accords de même taille est toujours réalisable sans croisement de voix. Il suffit donc de trier les deux accords et d'essayer les rotations de l'un contre l'autre, et le résultat est le minimum exact et non une approximation.\n\nCe que les chiffres disent. Les transformations néo-riemanniennes P, L et R coûtent un, un et deux demi-tons ; ce sont les enchaînements les plus lisses qui existent entre accords parfaits. Six demi-tons est le maximum entre deux accords parfaits, atteint par deux accords diamétralement opposés comme do et fa dièse. Entre les deux, on lit la tension d'une progression.",
-    noticeEn: "Measures the voice-leading distance between two chords, in semitones. After Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 2006, and « A Geometry of Music » (2011).\n\nThat distance is the sum of each voice's displacement, for the pairing that minimises it. It returns a number, which allows two harmonisations to be compared and the place in a piece where the movement strains to be found.\n\nThe theorem that makes the computation short. One believes one must try every way of pairing the voices, six notes make seven hundred and twenty. Tymoczko proves otherwise: the minimal voice leading between two chords of the same size is always achievable without voice crossings. It therefore suffices to sort both chords and try the rotations of one against the other, and the result is the exact minimum, not an approximation.\n\nWhat the numbers say. The neo-Riemannian transformations P, L and R cost one, one and two semitones, the smoothest chord changes that exist between triads. Six semitones is the maximum between two triads, reached by diametrically opposed chords such as C and F sharp. Between the two, one reads a progression's tension.",
-    entrees: [{ nom: "MIDI", type: "midi", requis: false }],
+    notice: "Mesure la distance de conduite des voix entre deux accords, en demi-tons. D'après Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 2006, et « A Geometry of Music » (2011).\n\nCette distance est la somme des déplacements de chaque voix, pour l'appariement qui la minimise. Elle rend un nombre, ce qui permet de comparer deux harmonisations et de repérer l'endroit d'une pièce où le mouvement se tend.\n\nLe théorème qui rend le calcul court. On croit devoir essayer toutes les façons d'apparier les voix, six notes en font sept cent vingt. Tymoczko démontre qu'il n'en est rien : la conduite minimale entre deux accords de même taille est toujours réalisable sans croisement de voix. Il suffit donc de trier les deux accords et d'essayer les rotations de l'un contre l'autre, et le résultat est le minimum exact et non une approximation.\n\nCe que les chiffres disent. Les transformations néo-riemanniennes P, L et R coûtent un, un et deux demi-tons ; ce sont les enchaînements les plus lisses qui existent entre accords parfaits. Six demi-tons est le maximum entre deux accords parfaits, atteint par deux accords diamétralement opposés comme do et fa dièse. Entre les deux, on lit la tension d'une progression.\n\nLes accords viennent de l'entrée « Séquence » quand elle est branchée, sinon de l'entrée « MIDI », sinon du réglage « Accords ». Le message dit lesquels ont servi. La distance se calcule sur des nombres à virgule : une progression dont les hauteurs ne tombent pas sur le demi-ton se mesure telle quelle.",
+    noticeEn: "Measures the voice-leading distance between two chords, in semitones. After Dmitri Tymoczko, « The Geometry of Musical Chords », Science 313(5783), 2006, and « A Geometry of Music » (2011).\n\nThat distance is the sum of each voice's displacement, for the pairing that minimises it. It returns a number, which allows two harmonisations to be compared and the place in a piece where the movement strains to be found.\n\nThe theorem that makes the computation short. One believes one must try every way of pairing the voices, six notes make seven hundred and twenty. Tymoczko proves otherwise: the minimal voice leading between two chords of the same size is always achievable without voice crossings. It therefore suffices to sort both chords and try the rotations of one against the other, and the result is the exact minimum, not an approximation.\n\nWhat the numbers say. The neo-Riemannian transformations P, L and R cost one, one and two semitones, the smoothest chord changes that exist between triads. Six semitones is the maximum between two triads, reached by diametrically opposed chords such as C and F sharp. Between the two, one reads a progression's tension.\n\nThe chords come from the « Sequence » input when it is connected, otherwise from the « MIDI » input, otherwise from the « Chords » setting. The message states which ones served. The distance is computed on decimal numbers: a progression whose pitches do not fall on the semitone is measured as it stands.",
+    entrees: [
+      { nom: "MIDI", type: "midi", requis: false },
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence", requis: false },
+    ],
     sorties: [{ nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7",
         defautEn: "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7",
-        doc: "Les accords, séparés par des barres verticales, chacun en classes de hauteurs de 0 à 11. Le défaut est la progression do, la mineur, fa, sol, do. Un MIDI branché en entrée l'emporte.",
-        docEn: "The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A MIDI file on the input wins." },
+        doc: "Les accords, séparés par des barres verticales, chacun en classes de hauteurs de 0 à 11. Le défaut est la progression do, la mineur, fa, sol, do. Une séquence branchée en entrée l'emporte, puis un MIDI.",
+        docEn: "The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file." },
       { nom: "Tolérance", nomEn: "Tolerance", type: "curseur", plage: [0.01, 0.5], pas: 0.01, defaut: 0.05, unite: "s",
-        doc: "Écart en deçà duquel deux notes d'un MIDI sont tenues pour simultanées, donc membres du même accord. Sans MIDI branché, ce réglage ne sert pas.",
-        docEn: "Gap below which two notes of a MIDI file are taken as simultaneous, hence members of the same chord. With no MIDI connected, this setting does nothing." },
+        doc: "Écart en deçà duquel deux notes reçues sont tenues pour simultanées, donc membres du même accord. Sans entrée branchée, ce réglage ne sert pas.",
+        docEn: "Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing." },
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
-      const notes = await notesDuMidi(ctx.entree(0));
+      // LA SÉQUENCE PASSE DEVANT LE MIDI, qui passe devant le réglage. L'écart circulaire se
+      // calcule sur des nombres à virgule, donc une progression microtonale se mesure telle
+      // quelle ; par un port MIDI elle serait d'abord arrondie au demi-ton.
+      const sequence = ctx.entree(1);
+      const notes = estSequence(sequence) && sequence.notes.length > 0
+        ? sequence.notes.map((n: { note: number; debut: number; fin: number }) =>
+          ({ note: n.note, debut: n.debut, fin: n.fin }))
+        : await notesDuMidi(ctx.entree(0));
+      const provenance = estSequence(sequence) && sequence.notes.length > 0
+        ? (en ? "sequence input" : "entrée Séquence")
+        : notes && notes.length > 0 ? (en ? "MIDI input" : "entrée MIDI") : (en ? "setting" : "réglage");
       const accords = notes && notes.length > 0
         ? accordsSuccessifs(notes, ctx.paramNombre("Tolérance", 0.05))
         : lireAccords(ctx.paramTexte("Accords", "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7"));
@@ -174,7 +188,7 @@ export const fiches: FicheAudio[] = ([
       ].filter((l) => l !== "");
       return {
         valeurs: [[...lignes, ...resume].join("\n")],
-        message: traduire("msg.conduiteVoix.resume", String(a.total), a.moyenne.toFixed(2)),
+        message: `${traduire("msg.conduiteVoix.resume", String(a.total), a.moyenne.toFixed(2))} · ${provenance}`,
       };
     },
   },

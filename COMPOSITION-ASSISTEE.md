@@ -121,7 +121,7 @@ les deux catalogues sont arrivés aux mêmes objets par le même chemin, celui d
 
 | ce qui manque | ce qui l'empêche |
 | --- | --- |
-| les objets de partition : `chord-seq`, `voice`, `poly`, `multi-seq` | la représentation |
+| ~~les objets de partition : `chord-seq`, `voice`, `poly`, `multi-seq`~~ | **faits** : les opérations d'accord atteignent le flux, les accords étant groupés par leur attaque ; la séquence porte son arbre rythmique, qui n'est cru que s'il décrit encore ses notes ; et la note porte sa voix, ce qui donne une portée par voix à la gravure |
 | ~~les arbres rythmiques~~, et Rewrite qui les réécrit | **structure faite** ; leur réécriture reste à venir |
 | la quantification, la bibliothèque RQ | la représentation |
 | ~~Esquisse, OMTristan : l'harmonie spectrale **symbolique**~~ | **fait** : nœud « Harmonie spectrale », série, distorsion, anneau, modulation de fréquence |
@@ -155,10 +155,12 @@ nombres publiés, 3856 séries et la distance de trois entre « kitten » et « 
 
 ### Ce qui resterait difficile
 
-La **quantification** d'une suite de durées en rythme noté, qui est la fonction la plus demandée
-d'OpenMusic et la plus délicate à écrire. Un **solveur de contraintes** musical, qui est un sujet en
-soi. La **maquette**, dont la sémantique, une boîte qui calcule sa valeur dans un contexte temporel,
-n'a pas d'équivalent dans un graphe acyclique.
+~~La **quantification** d'une suite de durées en rythme noté~~ **faite**, et c'était bien la plus
+délicate : elle a demandé un état de l'art avant la première ligne, et quatre défauts trouvés en
+calibrant tenaient tous à ce que le calcul ne pesait que les attaques. Un **solveur de contraintes**
+musical, qui est un sujet en soi, reste à écrire. La **maquette** est à moitié faite : ses boîtes se
+posent et s'adaptent, mais sa sémantique propre, une boîte qui CALCULE sa valeur dans un contexte
+temporel, n'a toujours pas d'équivalent dans un graphe acyclique.
 
 ## 6. Le chemin, par incréments
 
@@ -183,10 +185,44 @@ promettrait une notation là où ne circule qu'un convoi d'événements.
    graveur ayant appris `time-modification` et le crochet de n-olet. L'unité de la partition se
    déduit du plus petit commun multiple des dénominateurs, de sorte qu'un tiers de noire s'écrive
    en durée entière ; un triolet s'entend juste ET se grave en croches sous un crochet 3:2.
-3. **La quantification** : une liste de durées vers un rythme noté. C'est la fonction la plus
-   demandée d'OpenMusic, et la plus difficile à écrire soi-même.
-4. **Les objets composés**, `chord-seq` puis `voice`, une fois que 1 et 2 tiennent.
-5. **La maquette**, si l'envie persiste.
+3. ~~**La quantification** : une liste de durées vers un rythme noté~~ **fait** : c'est la fonction la
+   plus demandée d'OpenMusic, et la plus difficile à écrire soi-même. **L'état de l'art a été relevé
+   avant d'écrire quoi que ce soit**, à la demande de Fabien : voir
+   [`QUANTIFICATION-RYTHMIQUE.md`](QUANTIFICATION-RYTHMIQUE.md). En bref, la lignée Kant, RQ, qparse
+   rend précisément un arbre rythmique, sa méthode est publiée, et aucune de ses implémentations
+   n'est réutilisable, toutes étant en copyleft ; elle est donc réimplémentée d'après les
+   publications. Le nœud « Quantifier » reçoit une séquence et rend l'arbre, la séquence réécrite
+   sur ce rythme, et les écritures examinées avec leur écart et leur complexité. Les nombres du
+   compromis sont exposés, GTTM disant ce qu'il faut peser et jamais combien.
+   **Ce que cette étape ne règle pas** : la profondeur permise borne la grille atteignable, et deux
+   attaques plus rapprochées qu'elle se fondent en une, ce que le message chiffre au lieu de le
+   taire. L'aller-retour, seul contrôle à notre portée faute d'un corpus d'exécutions alignées, part
+   de durées exactes : il ne dit pas qu'une exécution humaine serait bien transcrite.
+4. ~~**Les objets composés**, `chord-seq` puis `voice`~~ **faits**. Le relevé
+   a montré que ce qui manquait n'était pas la théorie : le groupement des notes simultanées en
+   accords, la forme première, le vecteur d'intervalles et le théorème de Tymoczko étaient écrits et
+   éprouvés, tous derrière un port MIDI qui arrondit. Les trois nœuds qui les portent reçoivent
+   maintenant une séquence, et le quart de ton traverse les renversements. **L'accord reste déduit
+   de l'attaque et non stocké** : deux notes écartées de plus que la tolérance forment deux accords,
+   là où une partition les tiendrait pour un accord arpégé.
+   `voice` suit : la séquence porte son arbre rythmique, donc le régime pulsé voyage avec le
+   linéaire et la gravure n'a plus besoin d'un second câble. Une écriture n'est crue que si elle
+   décrit encore les notes, ce que `audio/voix.ts` vérifie en déroulant l'arbre au tempo de la
+   séquence ; une transformation qui déplace une attaque la rend caduque, et elle est alors écartée
+   plutôt que gravée.
+   `poly` obéit à la même règle : la voix est portée par la note, et non par un découpage gardé à
+   côté d'elle, qui se désaccorderait au premier tri. Deux nœuds font le va-et-vient, « Réunir des
+   voix » et « Extraire une voix », et la gravure rend une portée par voix. **Ce que cela ne fait
+   pas** : séparer les voix d'un flux qui les mêle, qui est le problème de Streamsep et reste
+   ouvert ; et graver une polyphonie dont toutes les voix ne sont pas écrites, une voix sans arbre
+   n'ayant pas de mesures à mettre sur sa portée.
+5. **La maquette**, **à moitié faite**. Le nœud « Maquette » pose des séquences sur une ligne de
+   temps, chacune avec son début, sa durée et sa transposition, et chaque boîte peut devenir une
+   voix. Une boîte s'ADAPTE à sa place, son contenu étant étiré dans le rapport de sa durée, les
+   rapports du rythme étant gardés. **Ce qui manque est la seconde moitié, et c'est bien la plus
+   dure** : une boîte qui CALCULE sa valeur en connaissant sa place, ce qu'un graphe acyclique ne
+   sait pas faire, une valeur y remontant d'amont en aval sans jamais consulter l'aval. Il manque
+   aussi la ligne de temps visuelle, celle du montage audio codant en dur les réglages de fondus.
 
 **Un pont de données est disponible aujourd'hui, et ne coûte rien** : OpenMusic exporte MusicXML et
 MIDI, Attic lit les deux. Qui veut faire tourner une passe dans OpenMusic peut déjà le faire et

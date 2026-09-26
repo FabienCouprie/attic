@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**413 composants**, dont **88** avec une vue propre et **4** sans lecteur générique.
+**417 composants**, dont **88** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -169,7 +169,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Chopper | `chopper` | 240 × 140 |
 | Chopper logistique | `chopper-logistique` | 240 × 118 |
 | Chorus | `chorus` | 240 × 140 |
-| Classes de hauteurs | `classes-hauteurs` | 240 × 118 |
+| Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
 | Color Looper | `color-looper` | 240 × 140 |
@@ -206,7 +206,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Déréverbération | `dereverberation` | 240 × 118 |
 | Dessin sonore | `dessin-sonore` | 240 × 140 |
 | Détecteur de tempo | `detecteur-tempo` | 240 × 162 |
-| Distance de conduite de voix | `distance-conduite-voix` | 240 × 118 |
+| Distance de conduite de voix | `distance-conduite-voix` | 240 × 140 |
 | Distorsion | `distorsion` | 240 × 118 |
 | Documentation du graphe | `documentation-graphe` | 240 × 140 |
 | Doppler | `doppler` | 240 × 118 |
@@ -233,6 +233,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Extraction centre/côté | `extraction-centre-cote` | 240 × 118 |
 | Extraction PDF | `extraction-pdf` | 240 × 118 |
 | Extraire durée | `extraire-duree` | 240 × 140 |
+| Extraire une voix | `extraire-voix` | 240 × 140 |
 | Extraire une zone | `extraire-zone` | 240 × 140 |
 | Extraire zones (sélecteur) | `extraire-zones-selecteur` | 240 × 140 |
 | Fiche technique | `fiche-technique` | 240 × 140 |
@@ -284,6 +285,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Magenta Interpoler MIDI | `magenta-interpoler-midi` | 240 × 140 |
 | Magnétophone | `magnetophone` | 240 × 118 |
 | Mappeur Mandelbrot | `mappeur-mandelbrot` | 240 × 140 |
+| Maquette | `maquette` | 240 × 272 |
 | Chaîne de Markov | `markov-midi` | 240 × 162 |
 | Masquage | `masquage` | 240 × 140 |
 | Masque de zones | `masque-zones` | 240 × 140 |
@@ -344,6 +346,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
 | Quadrafuzz | `quadrafuzz` | 240 × 140 |
+| Quantifier | `quantifier-rythme` | 240 × 162 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
 | Réduction de bruit | `reduction-bruit` | 240 × 140 |
@@ -361,6 +364,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 140 |
 | Retard spectral | `retard-spectral` | 240 × 140 |
+| Réunir des voix | `reunir-voix` | 240 × 140 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
 | Réverbération hachée | `reverbe-hachee` | 240 × 118 |
@@ -438,7 +442,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Vitesse variable | `vitesse-variable` | 240 × 140 |
 | Vocoder | `vocoder` | 240 × 140 |
 | Voice Changer | `voice-changer` | 240 × 118 |
-| Renversements et voicings | `voicings-accords` | 240 × 140 |
+| Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |
 | Wah-wah | `wahwah` | 240 × 162 |
 | Wavesets (Wishart) | `wavesets-wishart` | 240 × 118 |

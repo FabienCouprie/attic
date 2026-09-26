@@ -173,11 +173,25 @@ const echapper = (s: string) =>
 export function arbreVersMusicXML(
   mesures: readonly Mesure[], hauteurs: readonly number[], o: OptionsArbreXML = {},
 ): string {
-  const tempo = Math.round(o.tempo ?? 120);
-  const parMesure = mesures.map(feuillesDeMesure);
-  const toutes = parMesure.flat();
-  const divisions = toutes.reduce((L, f) => ppcm(L, f.duree.d), 1);
+  return voixVersMusicXML([{ mesures, hauteurs, nom: o.instrument }], o);
+}
 
+/**
+ * Écrit une partition à plusieurs portées, une par voix.
+ *
+ * LE MÊME CODE ÉCRIT UNE PORTÉE ET PLUSIEURS, et c'est ce qui les garde semblables. Deux graveurs
+ * séparés finiraient par ne plus produire la même chose pour une voix unique, et la différence ne
+ * se verrait qu'à l'ouverture d'un fichier.
+ *
+ * L'UNITÉ SE CALCULE PAR PORTÉE. MusicXML déclare ses divisions à l'intérieur de chaque partie :
+ * une portée en triolets et une autre en croches n'ont donc pas à partager un dénominateur commun,
+ * et aucune n'est contrainte par les subdivisions de l'autre.
+ */
+export function voixVersMusicXML(
+  voix: readonly { mesures: readonly Mesure[]; hauteurs: readonly number[]; nom?: string }[],
+  o: OptionsArbreXML = {},
+): string {
+  const tempo = Math.round(o.tempo ?? 120);
   const lignes: string[] = [];
   lignes.push('<?xml version="1.0" encoding="UTF-8"?>');
   lignes.push('<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">');
@@ -185,10 +199,31 @@ export function arbreVersMusicXML(
   lignes.push(`  <work><work-title>${echapper(o.titre ?? "Attic")}</work-title></work>`);
   lignes.push('  <identification><encoding><software>Attic</software></encoding></identification>');
   lignes.push('  <part-list>');
-  lignes.push(`    <score-part id="P1"><part-name>${echapper(o.instrument ?? "Music")}</part-name></score-part>`);
+  voix.forEach((v, i) => {
+    const nom = v.nom ?? (voix.length === 1 ? (o.instrument ?? "Music") : `Voix ${i + 1}`);
+    lignes.push(`    <score-part id="P${i + 1}"><part-name>${echapper(nom)}</part-name></score-part>`);
+  });
   lignes.push('  </part-list>');
-  lignes.push('  <part id="P1">');
+  // LE TEMPO N'EST ÉCRIT QUE SUR LA PREMIÈRE PORTÉE : répété sur chacune, il paraîtrait autant de
+  // fois au-dessus du système, ce qu'aucune partition ne fait.
+  voix.forEach((v, i) => {
+    lignes.push(`  <part id="P${i + 1}">`);
+    lignes.push(...unePartie(v.mesures, v.hauteurs, tempo, i === 0));
+    lignes.push('  </part>');
+  });
+  lignes.push('</score-partwise>');
+  return lignes.join("\n");
+}
 
+/** Le corps d'une portée : ses mesures, ses notes, ses n-olets. */
+function unePartie(
+  mesures: readonly Mesure[], hauteurs: readonly number[], tempo: number, avecTempo: boolean,
+): string[] {
+  const parMesure = mesures.map(feuillesDeMesure);
+  const toutes = parMesure.flat();
+  const divisions = toutes.reduce((L, f) => ppcm(L, f.duree.d), 1);
+
+  const lignes: string[] = [];
   let rang = 0;
   mesures.forEach((m, iMesure) => {
     const feuilles = parMesure[iMesure];
@@ -200,7 +235,9 @@ export function arbreVersMusicXML(
       lignes.push(`        <time><beats>${m.metrique[0]}</beats><beat-type>${m.metrique[1]}</beat-type></time>`);
       lignes.push('        <clef><sign>G</sign><line>2</line></clef>');
       lignes.push('      </attributes>');
-      lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${tempo}</per-minute></metronome></direction-type><sound tempo="${tempo}"/></direction>`);
+      if (avecTempo) {
+        lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${tempo}</per-minute></metronome></direction-type><sound tempo="${tempo}"/></direction>`);
+      }
     } else if (m.metrique[0] !== mesures[iMesure - 1].metrique[0]
       || m.metrique[1] !== mesures[iMesure - 1].metrique[1]) {
       lignes.push(`      <attributes><time><beats>${m.metrique[0]}</beats><beat-type>${m.metrique[1]}</beat-type></time></attributes>`);
@@ -254,7 +291,5 @@ export function arbreVersMusicXML(
     lignes.push('    </measure>');
   });
 
-  lignes.push('  </part>');
-  lignes.push('</score-partwise>');
-  return lignes.join("\n");
+  return lignes;
 }

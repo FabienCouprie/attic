@@ -1,6 +1,7 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
 import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
+import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
@@ -211,9 +212,10 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>
       </div>
 
-      {def.id === "montage" && (
-        <LigneDeTemps pistes={((noeud.data as any)._pistesMontage ?? []) as PisteMontage[]}
-          branchees={portsBranches ?? []} params={params} onChanger={onChangerParametre} />
+      {(def.id === "montage" || def.id === "maquette") && (
+        <LigneDeTemps pistes={((noeud.data as any)._dureesMesurees ?? []) as PisteMontage[]}
+          branchees={portsBranches ?? []} params={params} onChanger={onChangerParametre}
+          modele={def.id === "maquette" ? MODELE_MAQUETTE : MODELE_MONTAGE} />
       )}
 
       {def.parametres.map((p) => {
