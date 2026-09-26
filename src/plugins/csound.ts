@@ -52,7 +52,7 @@ async function notesDuMidi(fichier: unknown): Promise<NoteCsound[] | null> {
   if (!(fichier instanceof File)) return null;
   const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
   return notes.map((n) => ({
-    note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin,
+    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
   }));
 }
 

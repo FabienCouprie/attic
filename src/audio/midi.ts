@@ -8,9 +8,10 @@ import { chercherZonesInstrument } from "./soundfont";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
 
+import type { Note } from "./note";
 export interface NoteMidi {
   note: number;
-  velociete: number;
+  velocite: number;
   debut: number;
   fin: number;
   canal: number;
@@ -85,7 +86,7 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
 
   for (const piste of midi.tracks) {
     let tick = 0;
-    const actifs = new Map<string, { note: number; debut: number; velociete: number; canal: number }>();
+    const actifs = new Map<string, { note: number; debut: number; velocite: number; canal: number }>();
 
     for (const evt of piste) {
       tick += evt.deltaTime;
@@ -97,7 +98,7 @@ export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
           notes.push({ ...existant, fin: t });
           if (t > dureeMax) dureeMax = t;
         }
-        actifs.set(cle, { note: evt.noteNumber, debut: t, velociete: evt.velocity, canal: evt.channel });
+        actifs.set(cle, { note: evt.noteNumber, debut: t, velocite: evt.velocity, canal: evt.channel });
       }
       if (evt.type === "noteOff" || (evt.type === "noteOn" && evt.velocity === 0)) {
         const t = tickEnSecondes(tick);
@@ -584,7 +585,7 @@ export async function rendreMidiDepuisBytes(
         const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
         const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
         console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
-        const an = nc.map((n) => ({ note: n.note, velocite: n.velociete, debut: n.debut, fin: n.fin }));
+        const an = nc.map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
         const layer = rendreAvecSF2(sf2Global, an, volume, prog, bq);
         // Canaux sortis de la boucle : appeler `getChannelData` par échantillon
         // coûtait 40× le temps du même calcul, pour un résultat identique.
@@ -608,7 +609,7 @@ export async function rendreMidiDepuisBytes(
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
     const freq = 440 * 2 ** ((n.note - 69) / 12);
-    const gain = (n.velociete / 127) * vol * 0.4;
+    const gain = (n.velocite / 127) * vol * 0.4;
     const ratio = 2;
     const idxMod = 3;
     const debutEch = Math.floor(n.debut * sr);
@@ -637,12 +638,7 @@ export async function rendreMidiDepuisBytes(
 }
 
 
-export interface NoteEvenement {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteEvenement = Note;
 
 
 /**
@@ -859,10 +855,10 @@ export async function arpegerMidi(
     const dernier = accords[accords.length - 1];
     if (dernier && Math.abs(n.debut - dernier.temps) < tol) {
       dernier.notes.push(n.note);
-      dernier.velocite = Math.max(dernier.velocite, n.velociete);
+      dernier.velocite = Math.max(dernier.velocite, n.velocite);
       dernier.duree = Math.max(dernier.duree, n.fin - n.debut);
     } else {
-      accords.push({ temps: n.debut, notes: [n.note], velocite: n.velociete, duree: n.fin - n.debut });
+      accords.push({ temps: n.debut, notes: [n.note], velocite: n.velocite, duree: n.fin - n.debut });
     }
   }
 

@@ -198,14 +198,14 @@ function simple(slug: string, nom: string, nomEn: string, resume: string, resume
  * Lit un MIDI d'entrée en notes de motif.
  *
  * Les quatre nœuds de motifs partagent cette lecture, donc la même tolérance et le même
- * message quand il n'y a rien à lire. Le champ de vélocité s'appelle `velociete` dans le
+ * message quand il n'y a rien à lire. Le champ de vélocité s'appelle `velocite` dans le
  * domaine — une coquille ancienne, gardée pour ne pas casser les graphes enregistrés.
  */
 async function notesDuMidi(fichier: unknown): Promise<NoteMotif[] | null> {
   if (!(fichier instanceof File)) return null;
   const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
   return notes.map((n) => ({
-    note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
+    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
   }));
 }
 
@@ -1096,7 +1096,7 @@ export const fiches: FicheAudio[] = ([
       if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
       const ordre = ctx.paramNombre("Ordre", 2);
       const table = apprendre(
-        notes.map((n: any) => ({ note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin })),
+        notes.map((n: any) => ({ note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin })),
         ordre,
       );
       if (table.size === 0) return { valeurs: [null, null, null], message: traduire("msg.markov.tropCourt") };
@@ -1160,7 +1160,7 @@ export const fiches: FicheAudio[] = ([
       // lecture d'échantillon.
       const temperees = notes.map((n: any) => ({
         note: noteTemperee(n.note, tonique, temp),
-        velocite: n.velociete ?? 90,
+        velocite: n.velocite ?? 90,
         debut: n.debut,
         fin: n.fin,
       }));

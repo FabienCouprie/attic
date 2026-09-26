@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/harmonie-negative.ts — Réflexion des hauteurs autour de l'axe tonique-dominante.
 //
 // L'idée vient de la théorie de l'harmonie duale d'Hugo Riemann, reprise par Ernst Levy
@@ -78,13 +79,7 @@ export function axeAbsolu(notes: number[], tonique: number): number {
 
 export type ModeReflet = "miroir" | "registre";
 
-export interface NoteReflet {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-  canal?: number;
-}
+export type NoteReflet = Note;
 
 /** Ramène une note dans le clavier par octaves entières, sans changer sa classe. */
 function dansLeClavier(note: number): number {

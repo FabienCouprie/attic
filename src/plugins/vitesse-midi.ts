@@ -86,7 +86,7 @@ export const fiches: FicheAudio[] = ([
 
       const dureeMin = Math.max(0, ctx.paramNombre("Durée minimale", DUREE_MIN_DEFAUT * 1000) / 1000);
       const evenements: NoteEvenement[] = notes.map((n) => ({
-        note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin,
+        note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
       }));
       const { notes: etirees, ecourtees } = etirerNotes(evenements, facteur, { dureeMin });
 

@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/motifs-midi.ts — Quatre transformations de motifs, prises au live-coding.
 //
 // Attic traite le MIDI par jointure, boucle, arpège et transposition ; il lui manquait
@@ -9,13 +10,7 @@
 // Toutes sont DÉTERMINISTES, y compris l'éclaircissement, qui tire au sort à partir d'une
 // graine : un motif retrouvé plaisant doit pouvoir se rejouer à l'identique.
 
-export interface NoteMotif {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-  canal?: number;
-}
+export type NoteMotif = Note;
 
 const trier = (notes: NoteMotif[]): NoteMotif[] =>
   [...notes].sort((a, b) => a.debut - b.debut || a.note - b.note);

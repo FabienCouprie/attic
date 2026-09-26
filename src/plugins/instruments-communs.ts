@@ -8,16 +8,17 @@ import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio";
 import { valeurA } from "../audio/courbe";
 
+import type { Note } from "../audio/note";
 export const FREQUENCE_ECH = 44100;
 
-export interface NoteJouee { note: number; velocite: number; debut: number; fin: number }
+export type NoteJouee = Note;
 
 /** Lit un MIDI d'entrée, ou rend null si rien n'est branché. */
 export async function notesDuMidi(fichier: unknown): Promise<NoteJouee[] | null> {
   if (!(fichier instanceof File)) return null;
   const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
   return notes.map((n) => ({
-    note: n.note, velocite: n.velociete ?? 90, debut: n.debut, fin: n.fin,
+    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
   }));
 }
 

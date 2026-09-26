@@ -15,15 +15,11 @@ import { useReactFlow, useStore } from "@xyflow/react";
 import { clavierDoitJouer } from "./clavier-physique";
 import { NOTE_MAX, NOTE_MIN, disposition, nomNote, noteALaPosition } from "./clavier-disposition";
 
+import type { Note } from "../audio/note";
 export const LARGEUR_BLANCHE = 24;
 export const PROPORTION_NOIRE = 0.62;
 
-export interface NoteEnregistree {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteEnregistree = Note;
 
 /** Une note en train de sonner : on ne garde que de quoi l'arrêter. */
 export interface VoixVivante {

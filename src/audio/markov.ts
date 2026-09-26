@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/markov.ts — Chaîne de Markov apprise sur un MIDI.
 //
 // Attic sait déjà continuer une mélodie par réseau de neurones (Magenta). Il lui manquait
@@ -13,12 +14,7 @@
 // n'ait plus le choix et recopie la source. C'est le compromis à régler, et le nœud le
 // montre en affichant combien de contextes n'ont qu'une seule suite possible.
 
-export interface NoteMarkov {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteMarkov = Note;
 
 /** Une table : pour chaque contexte, les suites observées et leur nombre d'occurrences. */
 export type TableMarkov = Map<string, Map<number, number>>;

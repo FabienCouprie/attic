@@ -31,6 +31,7 @@
 // troncature et fondu — et non par rééchantillonnage, qui changerait la hauteur.
 import { changerTonalite } from "./effets-spectral";
 
+import type { Note } from "./note";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
 /** Do8, dernière touche. */
@@ -256,12 +257,7 @@ export const ecartDeZone = (banque: Banque, note: number): number => {
   return z ? note - z.racine : 0;
 };
 
-export interface NoteJouee {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteJouee = Note;
 
 /**
  * Ce que la vélocité fait au NIVEAU, une fois la couche choisie.

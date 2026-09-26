@@ -90,7 +90,7 @@ export const fiches: FicheAudio[] = ([
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
       const [num, den] = ctx.paramTexte("Métrique", "4/4").split("/").map((v: string) => parseInt(v, 10));
       const xml = notesVersMusicXML(
-        notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velociete })),
+        notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velocite })),
         {
           titre: ctx.paramTexte("Titre", "Attic"),
           tempo: ctx.paramNombre("Tempo", 120),

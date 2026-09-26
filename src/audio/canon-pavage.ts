@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/canon-pavage.ts — Canons rythmiques par pavage.
 //
 // Un canon ordinaire superpose une mélodie à elle-même, décalée. Un canon par PAVAGE ajoute
@@ -146,7 +147,7 @@ export function canonEnTexte(canon: Canon): string {
   }).join("\n");
 }
 
-export interface NoteCanon { note: number; velocite: number; debut: number; fin: number }
+export type NoteCanon = Note;
 
 /**
  * Écrit le canon en notes : une voix par entrée, chacune sur sa propre hauteur.

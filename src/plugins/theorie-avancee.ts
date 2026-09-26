@@ -23,6 +23,7 @@ import { SAUT_TRAME_CHROMAGRAMME, chromagrammeParTrame } from "../audio/analyse"
 import { notesDuMidi } from "./instruments-communs";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 
+import type { Note } from "../audio/note";
 const NOMS = ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"];
 const NOMS_EN = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
 const IDS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
@@ -34,7 +35,7 @@ const GAMMES: Record<string, number[]> = {
   chromatique: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 };
 
-interface NoteSimple { note: number; velocite: number; debut: number; fin: number }
+type NoteSimple = Note;
 
 /** Rend l'audio et le MIDI d'une suite de notes, avec les réglages de synthèse du nœud. */
 async function rendre(ctx: any, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {

@@ -92,7 +92,7 @@ export function ClavierApprentissage({ midi, audioUrl, anticipation = 3 }: Props
         const { notes: lues } = analyserMidi(parseMidi(new Uint8Array(await midi.arrayBuffer())));
         if (annule) return;
         const jouees: NoteJouee[] = lues
-          .map((n) => ({ note: n.note, debut: n.debut, fin: n.fin, canal: n.canal, velociete: n.velociete }))
+          .map((n) => ({ note: n.note, debut: n.debut, fin: n.fin, canal: n.canal, velocite: n.velocite }))
           .sort((a, b) => a.debut - b.debut || a.note - b.note);
         setNotes(jouees);
         setMains(assignerMains(jouees));

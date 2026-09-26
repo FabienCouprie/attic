@@ -1,3 +1,4 @@
+import type { Note } from "./note";
 // audio/lsysteme.ts — L-systèmes : une grammaire qui se réécrit, et qu'on écoute.
 //
 // Aristid Lindenmayer, biologiste, a proposé en 1968 un système pour décrire la
@@ -58,12 +59,7 @@ export function reecrire(axiome: string, regles: RegleL[], iterations: number): 
   return mot;
 }
 
-export interface NoteL {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-}
+export type NoteL = Note;
 
 export interface ConfigInterpretation {
   /** Degrés de la gamme, en demi-tons depuis la tonique. */

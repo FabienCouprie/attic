@@ -6,6 +6,7 @@
 import { writeMidi } from "midi-file";
 import { comparerEvenementsMidi } from "./midi";
 import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
+import type { NoteMidi } from "./note";
 import {
   PROGRESSIONS_GENRE,
   degresGammeAccords,
@@ -41,13 +42,7 @@ export interface ConfigGrooveBox {
   graine: number;
 }
 
-export interface NoteGroove {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-  canal: number;
-}
+export type NoteGroove = NoteMidi;
 
 export interface ResultatGrooveBox {
   midiBytes: Uint8Array;

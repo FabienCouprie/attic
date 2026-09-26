@@ -1,3 +1,4 @@
+import type { NoteMidi } from "./note";
 // audio/euclidien.ts — Rythmes euclidiens (algorithme de Bjorklund).
 //
 // Répartir N frappes le plus régulièrement possible sur M pas : le problème que Bjorklund
@@ -82,13 +83,7 @@ export function nomTraditionnel(pas: number, frappes: number): string | undefine
   return NOMS[`${frappes},${pas}`];
 }
 
-export interface NoteEuclidienne {
-  note: number;
-  velocite: number;
-  debut: number;
-  fin: number;
-  canal: number;
-}
+export type NoteEuclidienne = NoteMidi;
 
 export interface ConfigEuclidien {
   pas: number;
