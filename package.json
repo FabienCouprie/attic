@@ -60,7 +60,8 @@
     "modeles:publier": "node scripts/modeles.cjs --publier",
     "build:electron:light": "node scripts/build-electron.cjs --light",
     "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts",
-    "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts"
+    "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts",
+    "docs:lignes": "cross-env ECRIRE_LIGNES=1 vitest run src/docs/generer-compte-lignes.test.ts"
   },
   "build": {
     "appId": "com.attic.audio",
