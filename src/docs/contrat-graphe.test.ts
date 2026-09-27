@@ -28,7 +28,18 @@ import { toutesLesFiches } from "../plugins/index";
 import "../audio/adaptateur";
 
 /** Les dossiers où l'on range des graphes, les mêmes que le script surveille. */
-const DOSSIERS = ["", "presets", "tests-e2e"];
+const DOSSIERS = ["", "presets", "exemples", "tests-e2e"];
+
+/**
+ * `exemples/` est tout entier sous contrat, et son nom suffit à le dire.
+ *
+ * Les deux dossiers n'ont pas le même rôle. `presets/` n'est pas versionné : c'est là qu'on
+ * travaille, et un graphe en cours de câblage y est momentanément incomplet par nature.
+ * `exemples/` est versionné et livré : ce qui s'y trouve est montré à quelqu'un d'autre, et n'a
+ * donc pas le droit d'être à moitié fait.
+ */
+const estExemple = (dossier: string, nom: string) =>
+  dossier === "exemples" ? /\.json$/i.test(nom) : /-exemple\.json$/i.test(nom);
 
 /** Les nœuds sans ports : une note et un cadre sont des annotations posées sur le canevas. */
 const SANS_PORTS = new Set(["comment", "frame"]);
@@ -42,12 +53,25 @@ interface GrapheEnregistre { nodes: NoeudEnregistre[]; edges: AreteEnregistree[]
 /** Tous les graphes trouvés, avec leur chemin pour que le message dise lequel. */
 function graphes(): { chemin: string; graphe: GrapheEnregistre }[] {
   const sortie: { chemin: string; graphe: GrapheEnregistre }[] = [];
-  for (const d of DOSSIERS) {
-    const dossier = join(process.cwd(), d);
-    if (!existsSync(dossier)) continue;
-    for (const nom of readdirSync(dossier)) {
-      if (!/-exemple\.json$/i.test(nom)) continue;
-      const chemin = join(dossier, nom);
+  // ON DESCEND DANS `exemples/`, et il le faut : ils se rangent par sous-dossiers depuis que le
+  // bouton de la barre ouvre le classeur. Sans cette descente, un exemple rangé dans un thème
+  // échapperait au contrôle, ce qui est le trou même que ce contrat existe pour boucher.
+  const fichiers: { d: string; nom: string; chemin: string }[] = [];
+  const parcourir = (d: string, dossier: string, prefixe: string) => {
+    if (!existsSync(dossier)) return;
+    for (const nom of readdirSync(dossier, { withFileTypes: true })) {
+      const complet = join(dossier, nom.name);
+      if (nom.isDirectory()) {
+        if (d === "exemples") parcourir(d, complet, join(prefixe, nom.name));
+        continue;
+      }
+      if (estExemple(d, nom.name)) fichiers.push({ d, nom: join(prefixe, nom.name), chemin: complet });
+    }
+  };
+  for (const d of DOSSIERS) parcourir(d, join(process.cwd(), d), d);
+
+  {
+    for (const { nom, chemin } of fichiers) {
       let brut: string;
       try {
         brut = readFileSync(chemin, "utf8");
@@ -58,7 +82,7 @@ function graphes(): { chemin: string; graphe: GrapheEnregistre }[] {
       try {
         const json = JSON.parse(brut);
         if (Array.isArray(json?.nodes) && Array.isArray(json?.edges)) {
-          sortie.push({ chemin: join(d, nom), graphe: json as GrapheEnregistre });
+          sortie.push({ chemin: nom, graphe: json as GrapheEnregistre });
         }
       } catch { /* ce n'est pas un graphe */ }
     }
@@ -71,6 +95,20 @@ const rang = (poignee: string | null | undefined): number =>
   Number.parseInt(String(poignee ?? "").split(":")[1] ?? "", 10);
 
 const parId = new Map(toutesLesFiches.map((f) => [f.id, f]));
+
+/**
+ * Ce nœud a-t-il un câble à attendre ?
+ *
+ * L'EXEMPTION SE LIT DANS LA FICHE, et non dans une liste. Une note et un cadre n'ont pas de fiche
+ * et restent nommés ; mais sept composants du catalogue n'ont NI ENTRÉE NI SORTIE, dont « Carte
+ * sonore » et « Film du cercle », qui se suffisent à eux-mêmes et ne servent qu'à l'export. Exiger
+ * un câble d'eux n'aurait aucun sens, et tenir leur liste à la main vieillirait au premier ajouté.
+ */
+const sansPorts = (ficheId: string): boolean => {
+  if (SANS_PORTS.has(ficheId)) return true;
+  const f = parId.get(ficheId);
+  return !!f && f.entrees.length === 0 && f.sorties.length === 0;
+};
 const tous = graphes();
 
 describe("le contrat de graphe, sur les graphes enregistrés", () => {
@@ -87,7 +125,7 @@ describe("le contrat de graphe, sur les graphes enregistrés", () => {
         const relies = new Set<string>();
         for (const e of graphe.edges) { relies.add(e.source); relies.add(e.target); }
         const orphelins = graphe.nodes
-          .filter((n) => !SANS_PORTS.has(n.data?.ficheId ?? "") && !relies.has(n.id))
+          .filter((n) => !sansPorts(n.data?.ficheId ?? "") && !relies.has(n.id))
           .map((n) => `${n.id} (${n.data?.ficheId})`);
         expect(orphelins).toEqual([]);
       });

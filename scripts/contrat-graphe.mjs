@@ -27,7 +27,19 @@ import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "n
 import { dirname, join, relative } from "node:path";
 
 /** Où l'on range des graphes. Un graphe écrit ailleurs échappe à ce contrôle, et le test le rattrape. */
-const DOSSIERS = ["", "presets", "tests-e2e"];
+const DOSSIERS = ["", "presets", "exemples", "tests-e2e"];
+
+/**
+ * Le dossier `exemples/` est tout entier sous contrat, et son nom suffit à le dire.
+ *
+ * LES DEUX DOSSIERS N'ONT PAS LE MÊME RÔLE, et c'est ce qui permet la différence. `presets/` n'est
+ * pas versionné : c'est là qu'on travaille, et un graphe qu'on est en train de câbler y est
+ * momentanément incomplet par nature. `exemples/` est versionné et livré : ce qui s'y trouve est
+ * montré à quelqu'un d'autre, et n'a donc pas le droit d'être à moitié fait. Un travail en cours se
+ * range dans `presets/`.
+ */
+const estExemple = (dossier, nom) =>
+  dossier === "exemples" ? /\.json$/i.test(nom) : EXEMPLE.test(nom);
 
 /**
  * Seuls les graphes D'EXEMPLE sont tenus, et leur nom le dit.
@@ -53,28 +65,41 @@ const SANS_PORTS = new Set(["comment", "frame"]);
 
 const racine = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-/** Les fichiers JSON des dossiers surveillés, sans descendre plus bas. */
+/**
+ * Les fichiers JSON des dossiers surveillés.
+ *
+ * ON NE DESCEND QUE DANS `exemples/`, et il le faut : les exemples se rangent par sous-dossiers
+ * depuis que le bouton de la barre ouvre le classeur plutôt qu'une liste. Sans cette descente, un
+ * exemple rangé dans un thème échapperait au contrôle, ce qui est exactement le trou que ce contrat
+ * existe pour boucher. Ailleurs on reste à plat : `presets/` est un dossier de travail, et la
+ * racine du dépôt contient trop de choses pour qu'on la parcoure en entier.
+ */
 function fichiersCandidats() {
   const sortie = [];
-  for (const d of DOSSIERS) {
-    const chemin = join(racine, d);
+  const parcourir = (d, chemin) => {
     let entrees;
     try {
       entrees = readdirSync(chemin);
     } catch {
-      continue;
+      return;
     }
     for (const nom of entrees) {
-      if (!EXEMPLE.test(nom)) continue;
       const complet = join(chemin, nom);
+      let stat;
       try {
-        if (!statSync(complet).isFile()) continue;
+        stat = statSync(complet);
       } catch {
         continue;
       }
+      if (stat.isDirectory()) {
+        if (d === "exemples") parcourir(d, complet);
+        continue;
+      }
+      if (!stat.isFile() || !estExemple(d, nom)) continue;
       sortie.push(complet);
     }
-  }
+  };
+  for (const d of DOSSIERS) parcourir(d, join(racine, d));
   return sortie;
 }
 

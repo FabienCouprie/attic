@@ -26,7 +26,8 @@
 /** Une manière d'écrire un champ. */
 export type Champ =
   | { forme: "liste"; valeurs: number[] }
-  | { forme: "rampe"; de: number; a: number };
+  | { forme: "rampe"; de: number; a: number }
+  | { forme: "hasard"; de: number; a: number };
 
 /**
  * Étend une liste au nombre voulu, en répétant sa dernière valeur.
@@ -58,14 +59,34 @@ export function lireChamp(texte: string): Champ | null {
     if (Number.isFinite(de) && Number.isFinite(a)) return { forme: "rampe", de, a };
     return null;
   }
+  // LE HASARD BORNÉ, ÉCRIT « de~à ». Une rampe traverse un intervalle dans l'ordre ; un nuage le
+  // remplit sans ordre. Les deux se distinguent à la lecture, et il en faut deux : une partition de
+  // mille fragments où tout serait rangé ne serait pas une partition stochastique.
+  const tirage = /^(-?[\d.]+)\s*~\s*(-?[\d.]+)$/.exec(t);
+  if (tirage) {
+    const de = Number(tirage[1]), a = Number(tirage[2]);
+    if (Number.isFinite(de) && Number.isFinite(a)) return { forme: "hasard", de, a };
+    return null;
+  }
   const valeurs = t.split(/[\s,;]+/).map(Number).filter((n) => Number.isFinite(n));
   return valeurs.length > 0 ? { forme: "liste", valeurs } : null;
 }
 
-/** Les valeurs d'un champ, pour un nombre d'événements donné. */
-export function deployer(champ: Champ, combien: number): number[] {
+/**
+ * Les valeurs d'un champ, pour un nombre d'événements donné.
+ *
+ * LE GÉNÉRATEUR EST FACULTATIF, ET SON ABSENCE NE TIRE RIEN. Un champ de hasard sans générateur rend
+ * le milieu de son intervalle : un appelant écrit avant cette forme ne peut donc pas se mettre à
+ * rendre du hasard sans l'avoir demandé, ce qui serait le plus mauvais des changements silencieux.
+ */
+export function deployer(champ: Champ, combien: number, hasard?: () => number): number[] {
   if (combien <= 0) return [];
   if (champ.forme === "liste") return etendre(champ.valeurs, combien);
+  if (champ.forme === "hasard") {
+    const milieu = (champ.de + champ.a) / 2;
+    return Array.from({ length: combien },
+      () => (hasard ? champ.de + (champ.a - champ.de) * hasard() : milieu));
+  }
   // LA RAMPE COMPTE SES BORNES : à un seul événement elle vaut son départ, et à deux elle donne le
   // départ puis l'arrivée, sans quoi l'arrivée écrite ne serait jamais atteinte.
   if (combien === 1) return [champ.de];

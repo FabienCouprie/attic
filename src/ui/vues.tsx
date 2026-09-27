@@ -226,6 +226,38 @@ function VueExtraitVideo({ id, data }: VueProps) {
   );
 }
 
+// ── Le film du cercle : le regarder, puis l'enregistrer ──
+//
+// CE NŒUD N'A AUCUN PORT, ni d'entrée ni de sortie : il est purement illustratif et ne sert qu'à
+// l'export. Son film n'existe donc qu'ici, dans ses données, et cette vue est le seul endroit où on
+// le voit et d'où on l'écrit. Tant qu'il n'est pas enregistré, le fichier n'existe qu'en mémoire.
+function VueFilmCercle({ data }: VueProps) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  const n = data as unknown as { _filmUrl?: string; _filmNom?: string; _filmOctets?: number };
+  if (!n._filmUrl) return null;
+  const nom = n._filmNom ?? "cercle.mp4";
+  return (
+    <div className="attic-vue-film-cercle" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <video src={n._filmUrl} controls loop className="attic-vue-film-cercle-lecteur" />
+      <div className="attic-vue-film-resultat">
+        {api?.sauvegarderBinaire ? (
+          <button className="attic-node-fichier-btn" onClick={async () => {
+            const buffer = await (await fetch(n._filmUrl!)).arrayBuffer();
+            await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
+          }}>💾 {t("film.enregistrer")}</button>
+        ) : (
+          <a className="attic-node-fichier-btn" href={n._filmUrl} download={nom}>
+            💾 {t("film.enregistrer")}
+          </a>
+        )}
+        <span>{nom}</span>
+        <span>{((n._filmOctets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Séparer image et son : récupérer la vidéo muette ──
 //
 // SANS CE BOUTON, LA MOITIÉ IMAGE SERAIT PERDUE. Le son rendu par ce nœud reçoit le lecteur commun
@@ -2390,6 +2422,8 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("visualiseur-courbe"), vue: VueTraceCourbe, position: "avant" },
   { correspond: parId("attracteur-ifs"), vue: VueAttracteurIFS, position: "avant" },
   { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant", porteLecteur: true },
+  // Le film n'a aucun port : cette vue est le seul endroit où on le voit et d'où on l'écrit.
+  { correspond: parId("cercle-film"), vue: VueFilmCercle, position: "avant" },
   { correspond: (f) => f === "gout-du-son" || f === "parfum-motif" || f === "accord-mets-musique", vue: VueGout, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },

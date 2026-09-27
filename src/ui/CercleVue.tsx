@@ -17,7 +17,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 
 import { nomNote } from "../audio/nom-note";
-import { POSITIONS_MAX, hauteursDuCercle, type Repartition } from "../audio/cercle";
+import {
+  POSITIONS_MAX, RYTHME_LIBRE, hauteursDuCercle, motifDuRythme, type Repartition,
+} from "../audio/cercle";
 import { useI18n } from "../i18n";
 
 import {
@@ -44,7 +46,12 @@ export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?
   const [survol, setSurvol] = useState<number | null>(null);
 
   const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
-  const motif = nettoyerMotif(String(parametres["Motif"] ?? "1000100010001000"));
+  // UN RYTHME CHOISI DANS LA LISTE GOUVERNE LE MOTIF SAISI, et le dessin suit la même règle que le
+  // composant : ce qu'on voit est donc toujours ce qui sortira. Voir `motifDuRythme`.
+  const motif = nettoyerMotif(motifDuRythme(
+    String(parametres["Rythme"] ?? RYTHME_LIBRE),
+    String(parametres["Motif"] ?? "1000100010001000"),
+  ));
   const positions = Math.max(1, motif.length);
   // LE MÊME CALCUL QUE LE COMPOSANT, ET NON UNE COPIE. Les hauteurs se déduisent de la fondamentale
   // et de la place : ce que le dessin nomme est donc, par construction, ce que la sortie portera.
@@ -52,12 +59,24 @@ export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?
   const repartition = String(parametres["Répartition"] ?? "octave") as Repartition;
 
   const ecrire = useCallback((valeur: string) => {
-    (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
-      .onChangerParametre?.(id, "Motif", valeur);
+    const changer = (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
+      .onChangerParametre;
+    changer?.(id, "Motif", valeur);
+    // LE CLIC REND LA MAIN AU MOTIF, en remettant le choix sur « Libre ». Sans cela, un rythme
+    // choisi continuerait à gouverner et le dessin reviendrait à lui dès le rendu suivant : on
+    // cliquerait une place, elle s'allumerait, puis s'éteindrait toute seule. Le rythme choisi
+    // reste le point de départ, puisque c'est lui qu'on vient d'écrire dans le motif.
+    changer?.(id, "Rythme", RYTHME_LIBRE);
     // Sans le rappel de l'application — vue isolée —, on écrit dans le nœud directement, sans quoi
     // le dessin reviendrait à son état d'avant le clic.
     setNodes((nds) => nds.map((n) => n.id === id
-      ? { ...n, data: { ...n.data, parametres: { ...(n.data.parametres as object), Motif: valeur } } }
+      ? {
+        ...n,
+        data: {
+          ...n.data,
+          parametres: { ...(n.data.parametres as object), Motif: valeur, Rythme: RYTHME_LIBRE },
+        },
+      }
       : n));
   }, [data, id, setNodes]);
 

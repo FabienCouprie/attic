@@ -324,6 +324,22 @@ ipcMain.handle("fichier:ouvrir-binaire", async (_event, options) => {
 });
 
 // --- IPC : ouvrir un fichier (dialogue + lecture) ---
+/**
+ * Le dossier des graphes d'exemple, livré avec l'application.
+ *
+ * DEMANDÉ PAR FABIEN : le bouton de la barre ouvrait une liste déroulante, qui devient illisible dès
+ * que les exemples se multiplient. Il ouvre désormais le classeur à ce dossier, ce qui permet de
+ * ranger les exemples dans des sous-dossiers et de les parcourir comme des fichiers.
+ *
+ * Empaqueté, le dossier est une ressource posée à côté de l'exécutable, comme les SF2 et les
+ * modèles ; en développement, c'est celui du dépôt. Même disposition des deux côtés.
+ */
+const dossierExemples = () => (app.isPackaged
+  ? path.join(process.resourcesPath || "", "exemples")
+  : path.join(path.resolve(__dirname, ".."), "exemples"));
+
+ipcMain.handle("exemples:dossier", () => (fs.existsSync(dossierExemples()) ? dossierExemples() : null));
+
 ipcMain.handle("fichier:ouvrir", async (_event, options) => {
   const { defaultPath, filters } = options;
   const resultat = await dialog.showOpenDialog(fenetre, {

@@ -18,6 +18,10 @@ const CHAMPS_CONSERVES = new Set([
   // qui ne survivait ni à l'export ni au rechargement — une mélodie enregistrée disparaissait à la
   // réouverture du graphe, et rien ne le disait.
   "sequenceNotes",
+  // Le texte d'une note ou d'un cadre, et sa version anglaise. Tous deux sont recopiés par la
+  // sauvegarde ; les taire ici les faisait signaler comme purgés à chaque export, ce qu'ils ne sont
+  // pas. Le défaut existait déjà pour le premier, et le second l'aurait redoublé.
+  "nom", "nomEn",
 ]);
 
 // Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine

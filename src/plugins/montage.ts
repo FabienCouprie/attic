@@ -9,6 +9,7 @@ import {
 } from "../audio";
 import { avecDoc } from "./notices";
 import { valeursParametre } from "../audio/courbe";
+import { enveloppeDeZones } from "../audio/dosage";
 import { creerAleatoire } from "../core";
 
 function zonesValides(z: any) {
@@ -220,8 +221,12 @@ export const fiches: FicheAudio[] = ([
         options: ["Supprimer les zones", "Conserver les zones"], optionsEn: ["Mute zones", "Keep zones"], optionIds: ["mute", "keep"], defaut: "Supprimer les zones",
         doc: "« Supprimer » coupe le son dans les zones et garde le reste ; « Conserver » ne garde que les zones et coupe le reste. Les deux sont complémentaires.",
         docEn: "« Mute » silences the zones and keeps the rest; « Keep » keeps only the zones and silences the rest. The two are complementary.", defautEn: "Mute zones" },
-      { nom: "Fondu", nomEn: "Fade", plage: [0, 100], defaut: 10, unite: "ms",
-        doc: "Fondu appliqué aux bords des zones pour éviter les clics.", docEn: "Fade applied at zone edges to avoid clicks." },
+      { nom: "Fondu d'entrée", nomEn: "Fade in", type: "curseur", plage: [0, 2000], pas: 5, defaut: 10, unite: "ms",
+        doc: "Durée de la rampe qui précède chaque zone. Elle se tient à l'extérieur, de sorte qu'une zone soit conservée ou supprimée en entier quelle que soit sa longueur.",
+        docEn: "Length of the ramp before each zone. It sits outside, so that a zone is kept or muted whole whatever its length." },
+      { nom: "Fondu de sortie", nomEn: "Fade out", type: "curseur", plage: [0, 2000], pas: 5, defaut: 10, unite: "ms",
+        doc: "Durée de la rampe qui suit chaque zone, à l'extérieur d'elle également. Deux zones dont les rampes se rencontrent prennent la plus haute des deux valeurs.",
+        docEn: "Length of the ramp after each zone, outside it as well. Two zones whose ramps meet take the higher of the two values." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -232,44 +237,20 @@ export const fiches: FicheAudio[] = ([
       const garder = action === "keep";
       const sr = a.sampleRate, len = a.length;
 
-      // Masque binaire : dans une zone sélectionnée ?
-      const dansZone = new Uint8Array(len);
-      for (const zn of zones) {
-        const d = Math.max(0, Math.floor(zn.debut * sr));
-        const f = Math.min(len, Math.floor((zn.debut + zn.duree) * sr));
-        for (let i = d; i < f; i++) dansZone[i] = 1;
-      }
-      // On garde le sample si : (Conserver ⇒ dans une zone) / (Supprimer ⇒ hors zone)
-      const k = new Float32Array(len);
-      for (let i = 0; i < len; i++) k[i] = (garder ? dansZone[i] === 1 : dansZone[i] === 0) ? 1 : 0;
-
-      // Fondus linéaires sur les bords extérieurs de chaque zone (anti-clic).
-      // Le fondu ne s'étend pas à l'intérieur de la zone, pour que la suppression
-      // ou la conservation reste totale même sur des zones très courtes.
-      const nf = Math.max(0, Math.floor((ctx.paramNombre("Fondu", 10) / 1000) * sr));
-      const g = k.slice();
-      if (nf > 0) {
-        const half = Math.max(1, nf >> 1);
-        const inside = garder ? 1 : 0;
-        const outside = garder ? 0 : 1;
-        for (let i = 1; i < len; i++) {
-          if (k[i] !== k[i - 1]) {
-            if (k[i] === inside) {
-              // Entrée dans une zone : fondu de l'extérieur vers l'intérieur
-              for (let j = Math.max(0, i - half); j < i; j++) {
-                const t = (j - (i - half)) / half;
-                g[j] = outside + (inside - outside) * t;
-              }
-            } else {
-              // Sortie d'une zone : fondu de l'intérieur vers l'extérieur
-              for (let j = i; j < Math.min(len, i + half); j++) {
-                const t = (j - i) / half;
-                g[j] = inside + (outside - inside) * t;
-              }
-            }
-          }
-        }
-      }
+      // L'ENVELOPPE EST CELLE DU DOSAGE, et c'est ce qui garantit que les deux nœuds marquent les
+      // mêmes frontières. Lus sur les mêmes zones, un masque et un dosage doivent monter et
+      // descendre aux mêmes échantillons, sans quoi les combiner laisserait un bord découvert.
+      //
+      // LES DEUX FONDUS HÉRITENT DE L'ANCIEN RÉGLAGE UNIQUE, ET DE SA MOITIÉ. « Fondu » posait une
+      // rampe de la moitié de sa valeur de chaque côté ; un projet enregistré avec 20 ms garde donc
+      // ses rampes de 10 ms, et les nouveaux réglages disent, eux, exactement la durée de la rampe.
+      const heritage = ctx.paramNombre("Fondu", 20) / 2;
+      const g = enveloppeDeZones({
+        longueur: len, sampleRate: sr, zones,
+        fonduEntreeSec: Math.max(0, ctx.paramNombre("Fondu d'entrée", heritage)) / 1000,
+        fonduSortieSec: Math.max(0, ctx.paramNombre("Fondu de sortie", heritage)) / 1000,
+        horsZones: !garder,
+      });
 
       const out = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: len, sampleRate: sr });
       for (let c = 0; c < a.numberOfChannels; c++) {

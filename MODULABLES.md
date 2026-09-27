@@ -11,7 +11,7 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 46
+- **acceptent déjà une courbe** : 48
 - **restent à faire** : 14 composants, 30 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **écartés** : 47, dont 1 famille de la palette écartée en bloc
@@ -134,6 +134,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
 - `delay-stereo` : Mix
+- `doser-effet` : Dose
 - `echo` : Temps
 - `echo-ping-pong` : Temps
 - `etirement-spectre` : Étirement
@@ -144,6 +145,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `glissando-interieur` : Mix
 - `largeur-stereo` : Largeur
 - `matrice-parametres` : (non déclarée)
+- `micromontage` : Transposition
 - `morphing-spectral` : Mélange
 - `mosaiquage` : Volume
 - `objet-sonore` : Azimut

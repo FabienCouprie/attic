@@ -377,6 +377,49 @@ export function melanger(cercles: readonly Cercle[], plafond = POSITIONS_MAX): C
 /** Le plus grand commun diviseur, pour la grille que deux cercles partagent. */
 const pgcd = (a: number, b: number): number => (b === 0 ? a : pgcd(b, a % b));
 
+// ── Les rythmes que l'on choisit dans une liste ─────────────────────────────────────────────────
+//
+// D'OÙ ILS VIENNENT. Ce sont les motifs que le cercle rythmique en ligne embarque, relus dans son
+// code et recoupés avec « The Geometry of Musical Rhythm » de Godfried Toussaint, qui les emploie
+// comme exemples tout au long du livre. Les six de seize places à cinq attaques sont ses claves :
+// elles ont toutes la même somme d'arcs, et ce sont les cordes qui les séparent.
+//
+// QUATRE D'ENTRE EUX SONT DES OPTIMA. Lascabettes et Bloch, « What Are "Good" Rhythms? », MCM 2024,
+// donnent le son pour cinq attaques sur seize, le tresillo pour trois sur huit, le fume-fume pour
+// cinq sur douze et la samba pour sept sur seize.
+
+/** Un rythme nommé, tel que la liste le propose. */
+export interface RythmeNomme { id: string; nom: string; nomEn: string; motif: string }
+
+/** L'identifiant du motif saisi à la main, celui que le dessin écrit. */
+export const RYTHME_LIBRE = "libre";
+
+export const RYTHMES_CANONIQUES: readonly RythmeNomme[] = [
+  { id: "tresillo", nom: "Tresillo", nomEn: "Tresillo", motif: "10010010" },
+  { id: "son", nom: "Son", nomEn: "Son", motif: "1001001000101000" },
+  { id: "shiko", nom: "Shiko", nomEn: "Shiko", motif: "1000101000101000" },
+  { id: "soukous", nom: "Soukous", nomEn: "Soukous", motif: "1001001000110000" },
+  { id: "rumba", nom: "Rumba", nomEn: "Rumba", motif: "1001000100101000" },
+  { id: "bossa", nom: "Bossa-nova", nomEn: "Bossa nova", motif: "1001001000100100" },
+  { id: "gahu", nom: "Gahu", nomEn: "Gahu", motif: "1001001000100010" },
+  { id: "samba", nom: "Samba", nomEn: "Samba", motif: "1001010100101010" },
+  { id: "fume-fume", nom: "Fume-fume", nomEn: "Fume-fume", motif: "101010010100" },
+  { id: "bembe", nom: "Bembé", nomEn: "Bembé", motif: "101011010101" },
+  { id: "reich", nom: "Steve Reich", nomEn: "Steve Reich", motif: "111011010110" },
+];
+
+/**
+ * Le motif effectif : celui du rythme choisi, ou celui qu'on a saisi.
+ *
+ * UN SEUL DES DEUX GOUVERNE À LA FOIS, et c'est ce qui empêche le dessin de mentir. Tant qu'un
+ * rythme est choisi, c'est le sien ; dès qu'on clique une place, l'éditeur écrit le motif et remet
+ * le choix sur « Libre », de sorte que ce qu'on voit est toujours ce qui sortira.
+ */
+export function motifDuRythme(rythme: string, motifLibre: string): string {
+  const trouve = RYTHMES_CANONIQUES.find((r) => r.id === rythme);
+  return trouve ? trouve.motif : motifLibre;
+}
+
 // ── Les hauteurs qu'un cercle mélodique porte ───────────────────────────────────────────────────
 //
 // ELLES SE DÉDUISENT DE LA FONDAMENTALE ET DE LA PLACE, et ne se saisissent plus une à une. Un

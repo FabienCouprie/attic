@@ -160,6 +160,47 @@ export function creerMeta(
   return { meta, noeudMeta, nouveauxNoeuds, nouvellesAretes };
 }
 
+/**
+ * Les méta-composants dont un graphe a besoin, emboîtements compris.
+ *
+ * POURQUOI CETTE FONCTION EXISTE, relevé par Fabien. L'enregistrement d'un projet y recopiait
+ * TOUTE la bibliothèque de métas de la session, et non ceux que le graphe emploie. Tant que les
+ * projets restaient sur la machine, cela ne se voyait pas ; le jour où un graphe est livré, il
+ * emporte les composants personnels de qui l'a enregistré, et les pose dans la palette de qui
+ * l'ouvre. Deux graphes d'exemple portaient ainsi deux métas qu'aucun de leurs nœuds n'employait.
+ *
+ * LA CLÔTURE EST TRANSITIVE, parce qu'un méta peut en contenir un autre. Ne garder que ceux que le
+ * graphe nomme directement laisserait un méta imbriqué sans définition, et le projet rouvert aurait
+ * un composant creux là où il y avait un sous-graphe.
+ *
+ * ELLE SUPPORTE LES CYCLES, un méta pouvant se contenir lui-même : `aplatirGraphe` le tolère par sa
+ * garde de boucle, et cette fonction par l'ensemble de ce qu'elle a déjà vu.
+ *
+ * L'ORDRE DE LA BIBLIOTHÈQUE EST CONSERVÉ : deux enregistrements du même graphe doivent donner le
+ * même fichier, sans quoi chaque sauvegarde ferait une différence dans le dépôt.
+ */
+export function metasEmployes(
+  noeuds: readonly { data: { ficheId: string } }[],
+  metas: readonly MetaComposant[],
+): MetaComposant[] {
+  const parId = new Map(metas.map((m) => [m.id, m]));
+  const retenus = new Set<string>();
+  const aVoir: string[] = [];
+
+  const ajouter = (ficheId: string) => {
+    if (!parId.has(ficheId) || retenus.has(ficheId)) return;
+    retenus.add(ficheId);
+    aVoir.push(ficheId);
+  };
+
+  for (const n of noeuds) ajouter(n.data?.ficheId);
+  while (aVoir.length > 0) {
+    const meta = parId.get(aVoir.pop()!)!;
+    for (const sous of meta.sousNoeuds ?? []) ajouter(sous.data?.ficheId);
+  }
+  return metas.filter((m) => retenus.has(m.id));
+}
+
 // Aplatit un graphe : remplace chaque méta-nœud par ses nœuds/arêtes intérieurs
 // (id préfixés par l'id du méta-nœud), et recâble les arêtes externes vers les
 // ports intérieurs correspondants. Récursif : gère les méta-composants imbriqués.

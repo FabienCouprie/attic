@@ -1,8 +1,10 @@
-// champs-copie.test.ts — Verrouille la séparation entre les deux rôles des
-// listes de champs : protection contre la réinitialisation d'un côté, allowlist
-// du copier-coller de l'autre.
+// champs-copie.test.ts — Verrouille la séparation entre les trois rôles des
+// listes de champs : ce qu'une exécution dépose et qu'un reset retire, ce qui
+// est à l'utilisateur et survit à tout, ce qu'un copier-coller emporte.
 import { describe, it, expect } from "vitest";
-import { CHAMPS_UTILISATEUR, CHAMPS_MEDIA_LOCAL, CHAMPS_COPIABLES } from "./useExecutionGraphe";
+import {
+  CHAMPS_UTILISATEUR, CHAMPS_MEDIA_LOCAL, CHAMPS_COPIABLES, CHAMPS_RESULTAT,
+} from "./useExecutionGraphe";
 
 describe("champs copiables", () => {
   // Le piège principal : un champ mal orthographié dans CHAMPS_MEDIA_LOCAL
@@ -39,5 +41,37 @@ describe("champs copiables", () => {
   it("copiables = utilisateur moins média, sans rien inventer", () => {
     expect(CHAMPS_COPIABLES.size).toBe(CHAMPS_UTILISATEUR.size - CHAMPS_MEDIA_LOCAL.size);
     for (const champ of CHAMPS_COPIABLES) expect(CHAMPS_UTILISATEUR.has(champ)).toBe(true);
+  });
+});
+
+// CE QUI A FAIT ÉCRIRE CETTE PARTIE, relevé par Fabien : le dessin du générateur de courbe restait
+// affiché après un reset. Le nœud revenait à « en attente », son message disparaissait, et la
+// courbe restait. Trois champs que l'exécution dépose manquaient à la liste de ce qu'un reset
+// efface, parce que cette liste était écrite à la main loin de l'endroit qui écrit.
+//
+// CE QUE CE TEST PEUT VOIR, ET CE QU'IL NE PEUT PAS. Il tient les ensembles disjoints et nomme les
+// champs affichés qui doivent partir : un champ retiré de la liste rallume le défaut. Il ne peut
+// pas deviner un champ que l'exécution se mettrait à écrire demain sans le déclarer ici ; c'est
+// l'unicité de la liste, et non ce test, qui rend cet oubli difficile.
+describe("champs de résultat", () => {
+  it("UN RÉSULTAT N'EST PAS UNE SAISIE : les deux ensembles ne se touchent pas", () => {
+    const communs = [...CHAMPS_RESULTAT].filter((c) => CHAMPS_UTILISATEUR.has(c));
+    expect(communs).toEqual([]);
+  });
+
+  it("LES TROIS CHAMPS QUI SURVIVAIENT À UN RESET en font partie", () => {
+    // Le dessin de la courbe, le fichier MIDI à télécharger, la pastille en décibels : trois
+    // affichages qui restaient sur un nœud redevenu « en attente ».
+    for (const champ of ["apercuCourbe", "midiFichierSortie", "ecartNiveau"]) {
+      expect(CHAMPS_RESULTAT.has(champ), `${champ} doit être effacé par un reset`).toBe(true);
+    }
+  });
+
+  it("et tout ce qu'un reset effaçait déjà y reste", () => {
+    for (const champ of ["audioResultatUrl", "audioResultatNom", "audioResultatBuffer",
+                         "audioResultatMessage", "scriptGenere", "mp3Url", "imageResultatUrl",
+                         "imageResultatFile", "visualisationUrl", "tempsExecution"]) {
+      expect(CHAMPS_RESULTAT.has(champ), `${champ} doit être effacé par un reset`).toBe(true);
+    }
   });
 });

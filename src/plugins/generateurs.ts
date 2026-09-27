@@ -78,12 +78,19 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
+      // LES LIBELLÉS VIENNENT DE LA TABLE, comme les identifiants. Ils étaient écrits à la main et
+      // en comptaient neuf quand la table en portait onze : le blues et la chromatique existaient
+      // dans le moteur et ne se choisissaient nulle part. Relevé par le contrat de réglages.
+      // LES LIBELLÉS ANGLAIS RESTENT CEUX D'ORIGINE, et ne viennent pas de la table : un projet
+      // enregistré avant garde le libellé dans son fichier, et `valeurCanoniqueChoix` le retrouve
+      // par comparaison exacte. Remplacer « minor » par le « Natural minor » de la table rendait
+      // illisible tout projet qui avait choisi cette gamme. Un test de rétrocompatibilité le tient.
       { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur","mineur","dorien","phrygien","lydien","mixolydien","locrien","pentatonique majeure","pentatonique mineure"],
-        optionsEn: ["Major","minor","Dorian","Phrygian","Lydian","Mixolydian","Locrian","Major pentatonic","Minor pentatonic"],
-        optionIds: GAMMES_ACCORDS_IDS, defaut: "majeur", defautEn: "Major",
-        doc: "Gamme utilisée pour construire les accords (7 modes + 2 gammes pentatoniques).",
-        docEn: "Scale used to build the chords (7 modes + 2 pentatonic scales)." },
+        options: GAMMES_ACCORDS.map((g) => g.fr),
+        optionsEn: ["Major","minor","Dorian","Phrygian","Lydian","Mixolydian","Locrian","Major pentatonic","Minor pentatonic","Blues","Chromatic"],
+        optionIds: GAMMES_ACCORDS_IDS, defaut: "Majeur", defautEn: "Major",
+        doc: "Gamme utilisée pour construire les accords : sept modes, deux pentatoniques, le blues et la chromatique.",
+        docEn: "Scale used to build the chords: seven modes, two pentatonics, blues and chromatic." },
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], optionIds: GENRES_ACCORDS_IDS, defaut: "pop",
         doc: "Style déterminant la progression d'accords. « Personnalisé » ouvre la saisie d'une progression ci-dessous.",
         docEn: "Style determines the chord progression. Settings: « Custom » to enter your own progression below.", defautEn: "pop" },
@@ -1283,13 +1290,16 @@ export const fiches: FicheAudio[] = ([
         nom: "Gamme",
         nomEn: "Scale",
         type: "choix",
-        options: ["majeur","mineur","dorien","phrygien","lydien","mixolydien","locrien","pentatonique majeure","pentatonique mineure"],
-        optionsEn: ["major","minor","dorian","phrygian","lydian","mixolydian","locrian","major pentatonic","minor pentatonic"],
+        // Les libellés viennent de la table, comme les identifiants : voir le générateur d'accords,
+        // où les deux listes s'étaient désaccordées et cachaient deux gammes.
+        options: GAMMES_ACCORDS.map((g) => g.fr),
+        // Les libellés anglais d'origine, pour la même raison que le générateur d'accords.
+        optionsEn: ["major","minor","dorian","phrygian","lydian","mixolydian","locrian","major pentatonic","minor pentatonic","blues","chromatic"],
         optionIds: GAMMES_ACCORDS_IDS,
-        defaut: "majeur",
+        defaut: "Majeur",
         defautEn: "major",
-        doc: "Gamme utilisée pour construire les accords (7 modes + 2 gammes pentatoniques).",
-        docEn: "Scale used to build chords (7 modes + 2 pentatonic scales).",
+        doc: "Gamme utilisée pour construire les accords : sept modes, deux pentatoniques, le blues et la chromatique.",
+        docEn: "Scale used to build chords: seven modes, two pentatonics, blues and chromatic.",
       },
       {
         nom: "Genre",

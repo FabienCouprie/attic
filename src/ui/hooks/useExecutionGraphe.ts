@@ -16,7 +16,7 @@ import {
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
-import { respirer } from "../../core/respirer";
+import { Respiration, respirer } from "../../core/respirer";
 import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { deplierBoucles } from "../../core/boucle-graphe";
@@ -24,7 +24,7 @@ import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { ecartNiveau } from "../../audio/ecart-niveau";
 import { publierGrapheCourant, publierExecutionCourante } from "../../plugins/grapheGlobal";
-import { bufferVersWavBlob, picAbsolu } from "../../audio";
+import { bufferVersWavBlob, bufferVersWavBlobRespirant, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
 import { heriterDisposition } from "../../audio/multicanal";
 import { tamponPourApercu } from "../../audio/multicanal-ecoute";
@@ -64,6 +64,8 @@ const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_node
 export const CHAMPS_UTILISATEUR = new Set([
   "ficheId",
   "nom",
+  // Le second texte d'une note ou d'un cadre : une saisie, au même titre que le premier.
+  "nomEn",
   "parametres",
   "zonesSelectionnees",
   "audioFichier",
@@ -114,6 +116,41 @@ export const CHAMPS_MEDIA_LOCAL = new Set([
 export const CHAMPS_COPIABLES = new Set(
   [...CHAMPS_UTILISATEUR].filter((c) => !CHAMPS_MEDIA_LOCAL.has(c)),
 );
+
+/**
+ * Ce qu'une exécution DÉPOSE sur un nœud, et que la réinitialisation doit donc retirer.
+ *
+ * POURQUOI CETTE LISTE EXISTE, relevé par Fabien : le dessin du générateur de courbe restait à
+ * l'écran après un reset. Le nœud repassait bien « en attente », son message et son bouton de copie
+ * disparaissaient, et la courbe continuait de s'afficher comme si elle venait d'être calculée. La
+ * cause n'est pas dans le composant : la remise à zéro énumérait à la main les champs à effacer, et
+ * trois de ceux que l'exécution écrit n'y figuraient pas. `apercuCourbe` dessine la courbe,
+ * `midiFichierSortie` offre le fichier à télécharger, `ecartNiveau` affiche la pastille en
+ * décibels : les trois survivaient à la remise à zéro du nœud qui les avait produits.
+ *
+ * LA LISTE EST DONC UNIQUE, et c'est la seule protection qui tienne. Une énumération écrite là où
+ * l'on efface ne peut pas savoir ce qu'on a ajouté là où l'on écrit ; deux listes divergent, et
+ * celle du réalisateur de démonstration avait déjà divergé de celle-ci, dans l'autre sens. Un champ
+ * ajouté ici disparaît partout.
+ *
+ * AUCUN DE CES CHAMPS N'APPARTIENT À L'UTILISATEUR. Un recouvrement avec `CHAMPS_UTILISATEUR`
+ * serait un fichier chargé qui s'évapore au premier lancement ; un test tient les deux disjoints.
+ */
+export const CHAMPS_RESULTAT = new Set([
+  "audioResultatUrl",
+  "audioResultatNom",
+  "audioResultatBuffer",
+  "audioResultatMessage",
+  "mp3Url",
+  "scriptGenere",
+  "apercuCourbe",
+  "midiFichierSortie",
+  "imageResultatUrl",
+  "imageResultatFile",
+  "visualisationUrl",
+  "tempsExecution",
+  "ecartNiveau",
+]);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -220,19 +257,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     reinitialiserStatuts(ids);
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
-      const nouvelleData: any = {
-        ...n.data,
-        audioResultatUrl: undefined,
-        audioResultatNom: undefined,
-        audioResultatBuffer: undefined,
-        audioResultatMessage: undefined,
-        scriptGenere: undefined,
-        mp3Url: undefined,
-        imageResultatUrl: undefined,
-        imageResultatFile: undefined,
-        visualisationUrl: undefined,
-        tempsExecution: undefined,
-      };
+      const nouvelleData: any = { ...n.data };
+      for (const champ of CHAMPS_RESULTAT) nouvelleData[champ] = undefined;
       // Garde-fou : on ne doit jamais effacer un champ utilisateur.
       for (const champ of CHAMPS_UTILISATEUR) {
         if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
@@ -747,10 +773,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!garde) cacheExec.current.delete(n.id);
     }
 
+    // LA PHASE DES APERÇUS RESPIRE ELLE AUSSI, relevé par Fabien sur une pièce de cinquante
+    // secondes. La boucle des nœuds rend la main entre deux nœuds depuis longtemps ; celle-ci, non,
+    // et c'est pourtant elle qui encode un WAV par nœud audio pour son petit lecteur. Sur une pièce
+    // longue, sept encodages s'enchaînaient sans une image : **un gel de 7,7 secondes d'un seul
+    // tenant**, alors que le même graphe lancé nœud par nœud ne gelait pas, le navigateur peignant
+    // entre deux clics. C'est cet indice-là qui a désigné la cause.
+    const souffle = new Respiration();
     const correctifs = new Map<string, Record<string, unknown>>();
     for (const n of noeudsRef.current) {
-      const patch = calculerCorrectifResultat(n);
+      const patch = await calculerCorrectifResultat(n);
       if (patch) correctifs.set(n.id, patch);
+      await souffle.tour();
     }
     // Un CORRECTIF de champs, appliqué sur les données VIVANTES du nœud — et non
     // un remplacement de `data` construit depuis `noeudsRef.current`. Ce ref est en
@@ -766,7 +800,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     );
 
     /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
-    function calculerCorrectifResultat(n: any): Record<string, unknown> | null {
+    async function calculerCorrectifResultat(n: any): Promise<Record<string, unknown> | null> {
       {
         const meta = trouverMeta(n.data.ficheId as string);
         // Méta hors du périmètre du run (branche non exécutée) : ne pas y toucher —
@@ -873,7 +907,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
             const ixml = NOEUDS_EXPORT.includes(ficheId)
               ? decrire(ecrit, { noeud: trouverDef(ficheId)?.nom ?? ficheId }, bits).ixml
               : undefined;
-            url = URL.createObjectURL(bufferVersWavBlob(ecrit, grapheExport, securiser, { bits, ixml }));
+            url = URL.createObjectURL(await bufferVersWavBlobRespirant(
+              ecrit, grapheExport, securiser, { bits, ixml }, souffle));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);

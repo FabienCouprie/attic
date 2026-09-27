@@ -254,7 +254,8 @@ export function suivre(
  * l'étiquette affichée est corrigée, et elle dit désormais « Chaos logistique ».
  */
 export type FormeCourbe =
-  "sinus" | "triangle" | "carre" | "rampe" | "sigmoide" | "logistique" | "aleatoire";
+  "sinus" | "triangle" | "carre" | "rampe" | "sigmoide" | "logistique" | "aleatoire"
+  | "gaussienne" | "poisson" | "gamma" | "khi2" | "weibull" | "ln" | "log10";
 
 export interface OptionsGenerateur {
   dureeSec: number;
@@ -263,12 +264,198 @@ export interface OptionsGenerateur {
   frequence?: number;
   /** Paramètre r de la suite logistique. Le chaos commence vers 3,57. */
   r?: number;
-  /** Où la sigmoïde passe par un demi, en part de la durée, de 0 à 1. */
+  /** Où la sigmoïde passe par un demi, en part de la durée, de 0 à 1. Sommet de la gaussienne. */
   centre?: number;
   /** Raideur de la sigmoïde. Basse, elle monte doucement ; haute, elle approche une marche. */
   pente?: number;
+  /** Écart type de la gaussienne, en part de la durée. */
+  largeur?: number;
+  /** Le λ de la loi de Poisson : son espérance, et l'endroit de son sommet. */
+  moyenne?: number;
+  /** L'ordre k de la loi gamma. */
+  ordre?: number;
+  /** Les degrés de liberté de la loi du khi-deux. */
+  degres?: number;
+  /** L'exposant k de la loi de Weibull. */
+  exposant?: number;
   graine?: number;
   cadence?: number;
+}
+
+// ── Les lois de probabilité, tracées comme des courbes ──────────────────────────
+//
+// POURQUOI UNE LOI FAIT UNE BONNE COURBE DE MODULATION. Les formes d'un oscillateur disent toutes
+// la même chose : un aller-retour régulier, symétrique, sans mémoire. Une densité de probabilité
+// dit autre chose, et c'est ce qui manquait à la liste : une montée brusque suivie d'une retombée
+// lente, ou l'inverse, avec un seul réglage pour passer continûment de l'une à l'autre. La loi
+// gamma d'ordre un est la décroissance exponentielle, celle d'ordre vingt une cloche presque
+// symétrique, et tous les intermédiaires existent.
+//
+// DEUX ENTRÉES DE LA LISTE SE REJOIGNENT, et il vaut mieux l'écrire que de le laisser découvrir :
+// la loi du khi-deux à d degrés EST la loi gamma d'ordre d/2. Les deux sont là parce qu'on ne les
+// cherche pas sous le même nom.
+//
+// LE LOGARITHME, LUI, POSAIT UN PIÈGE. Changer la base d'un logarithme le multiplie par une
+// constante, et une courbe ramenée entre zéro et un ne montre pas les constantes : `ln` et `log10`
+// tracés sur le même intervalle seraient donc le MÊME dessin, à la valeur près. Chacun parcourt
+// donc l'intervalle de sa propre base, de 1 à e pour l'un et de 1 à 10 pour l'autre ; ce sont deux
+// dessins distincts, et l'écart vient des bornes, non de la base.
+
+/**
+ * Coefficients de Lanczos pour g = 7, la variante à neuf termes.
+ *
+ * D'après Cornelius Lanczos, « A Precision Approximation of the Gamma Function », Journal of the
+ * SIAM: Series B, Numerical Analysis 1, 1964.
+ */
+const LANCZOS = [
+  0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+  771.32342877765313, -176.61502916214059, 12.507343278686905,
+  -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+];
+
+/**
+ * Le logarithme de la fonction gamma.
+ *
+ * POURQUOI LE LOGARITHME, ET NON Γ LUI-MÊME. Γ croît plus vite que tout : 170! est le dernier
+ * factoriel représentable en double précision. Une densité qui s'écrit x^(k−1)·e^(−x)/Γ(k) se
+ * calcule donc en additionnant des logarithmes, ce qui la garde juste quelles que soient les bornes
+ * des réglages, et évite de diviser un nombre immense par un autre.
+ *
+ * La formule de réflexion Γ(x)·Γ(1−x) = π/sin(πx) prolonge la série en dessous d'un demi, où elle
+ * ne converge pas.
+ */
+export function logGamma(x: number): number {
+  if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+  const z = x - 1;
+  let somme = LANCZOS[0];
+  for (let i = 1; i < LANCZOS.length; i++) somme += LANCZOS[i] / (z + i);
+  // 7,5 est g + 1/2 : la série n'approche Γ que pour ce décalage.
+  const t = z + 7.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(somme);
+}
+
+/** La cloche, sommet à un en `centre`, d'écart type `largeur`. Les deux sont en part de la durée. */
+export function densiteGaussienne(u: number, centre: number, largeur: number): number {
+  const z = (u - centre) / Math.max(1e-6, largeur);
+  return Math.exp(-0.5 * z * z);
+}
+
+/** La masse de la loi de Poisson en `k`, pour une espérance `moyenne`. */
+export function masseDePoisson(k: number, moyenne: number): number {
+  if (k < 0) return 0;
+  const l = Math.max(1e-9, moyenne);
+  return Math.exp(k * Math.log(l) - l - logGamma(k + 1));
+}
+
+/**
+ * La densité de la loi gamma d'ordre `ordre`, d'échelle un.
+ *
+ * L'ÉCHELLE N'EST PAS UN RÉGLAGE, parce qu'elle ne se verrait pas : elle étire l'axe des x, et le
+ * tracé couvre justement l'étendue utile de la loi quelle qu'elle soit. Seul l'ordre change la
+ * forme. L'ordre est tenu au-dessus de un : en dessous, la densité part à l'infini en zéro, et le
+ * tracé serait une pointe suivie d'une ligne plate.
+ */
+export function densiteGamma(x: number, ordre: number): number {
+  const k = Math.max(1, ordre);
+  if (x <= 0) return k === 1 ? 1 : 0;
+  return Math.exp((k - 1) * Math.log(x) - x - logGamma(k));
+}
+
+/** La densité de la loi du khi-deux à `degres` degrés de liberté, tenus au-dessus de deux. */
+export function densiteKhi2(x: number, degres: number): number {
+  const d = Math.max(2, Math.round(degres));
+  if (x <= 0) return d === 2 ? 0.5 : 0;
+  return Math.exp((d / 2 - 1) * Math.log(x) - x / 2 - (d / 2) * Math.LN2 - logGamma(d / 2));
+}
+
+/** La densité de la loi de Weibull d'exposant `exposant`, d'échelle un. */
+export function densiteWeibull(x: number, exposant: number): number {
+  const k = Math.max(1, exposant);
+  if (x <= 0) return k === 1 ? 1 : 0;
+  return Math.exp(Math.log(k) + (k - 1) * Math.log(x) - x ** k);
+}
+
+/** Une loi prête à tracer : sa densité, et jusqu'où la variable va. */
+interface Loi {
+  /** La densité au point demandé, ou la masse s'il s'agit d'une loi discrète. */
+  densite: (x: number) => number;
+  /** Jusqu'où va la variable, pour une loi continue. */
+  etendue?: number;
+  /** Combien de valeurs entières se succèdent, pour une loi discrète. */
+  paliers?: number;
+}
+
+/**
+ * L'étendue à tracer : l'espérance, plus quatre écarts types.
+ *
+ * QUATRE, PARCE QUE LA QUEUE DOIT ÊTRE RETOMBÉE AVANT LA FIN DU TRACÉ. Une courbe qui se coupe en
+ * pleine descente rendrait une modulation qui saute à sa valeur de départ en fin de course.
+ */
+const etendueUtile = (esperance: number, ecartType: number) => esperance + 4 * ecartType;
+
+/** La loi que la forme demande, ou `null` si la forme n'en est pas une. */
+function loiDe(o: OptionsGenerateur): Loi | null {
+  switch (o.forme) {
+    case "gaussienne": {
+      const centre = Math.min(1, Math.max(0, o.centre ?? 0.5));
+      const largeur = Math.max(0.005, o.largeur ?? 0.15);
+      return { etendue: 1, densite: (u) => densiteGaussienne(u, centre, largeur) };
+    }
+    case "poisson": {
+      const moyenne = Math.max(0.1, o.moyenne ?? 4);
+      // Un palier par valeur entière, plus deux : sans eux, une espérance d'un demi ne laisserait
+      // que deux paliers, et la forme de la loi ne se lirait pas.
+      const paliers = Math.ceil(etendueUtile(moyenne, Math.sqrt(moyenne))) + 3;
+      return { paliers, densite: (k) => masseDePoisson(k, moyenne) };
+    }
+    case "gamma": {
+      const ordre = Math.max(1, o.ordre ?? 2);
+      return {
+        etendue: etendueUtile(ordre, Math.sqrt(ordre)),
+        densite: (x) => densiteGamma(x, ordre),
+      };
+    }
+    case "khi2": {
+      const degres = Math.max(2, Math.round(o.degres ?? 3));
+      return {
+        etendue: etendueUtile(degres, Math.sqrt(2 * degres)),
+        densite: (x) => densiteKhi2(x, degres),
+      };
+    }
+    case "weibull": {
+      const k = Math.max(1, o.exposant ?? 1.5);
+      const esperance = Math.exp(logGamma(1 + 1 / k));
+      const carre = Math.exp(logGamma(1 + 2 / k));
+      return {
+        etendue: etendueUtile(esperance, Math.sqrt(Math.max(0, carre - esperance * esperance))),
+        densite: (x) => densiteWeibull(x, k),
+      };
+    }
+    default: return null;
+  }
+}
+
+/**
+ * Une loi tracée sur `n` valeurs, son sommet ramené à un.
+ *
+ * LE SOMMET EST RAMENÉ À UN, LE PIED RESTE OÙ IL EST. Une densité n'a pas de maximum naturel :
+ * celle de la loi gamma d'ordre deux culmine à 0,368, et sans division la modulation ne couvrirait
+ * que le tiers bas de la plage. Ramener aussi le pied à zéro, en revanche, changerait la forme,
+ * puisque le rapport entre le sommet et les épaules en dépend.
+ */
+function tracerLoi(n: number, loi: Loi): Float32Array {
+  const v = new Float32Array(n);
+  let sommet = 0;
+  for (let i = 0; i < n; i++) {
+    const x = loi.paliers
+      ? Math.min(loi.paliers - 1, Math.floor((i / n) * loi.paliers))
+      : (n > 1 ? i / (n - 1) : 0) * (loi.etendue ?? 1);
+    const d = loi.densite(x);
+    v[i] = Number.isFinite(d) && d > 0 ? d : 0;
+    if (v[i] > sommet) sommet = v[i];
+  }
+  if (sommet > 0) for (let i = 0; i < n; i++) v[i] /= sommet;
+  return v;
 }
 
 /**
@@ -281,6 +468,10 @@ export interface OptionsGenerateur {
 export function engendrer(o: OptionsGenerateur): Courbe {
   const cadence = o.cadence ?? CADENCE;
   const n = Math.max(1, Math.round(o.dureeSec * cadence));
+  // Une loi se trace d'un bloc, et non valeur par valeur : son sommet n'est connu qu'une fois
+  // toutes ses valeurs calculées.
+  const loi = loiDe(o);
+  if (loi) return { valeurs: tracerLoi(n, loi), cadence };
   const v = new Float32Array(n);
   const f = o.frequence ?? 0.5;
   let g = ((o.graine ?? 1) | 0) || 1;
@@ -303,6 +494,10 @@ export function engendrer(o: OptionsGenerateur): Courbe {
       case "triangle": v[i] = phase < 0.5 ? 2 * phase : 2 - 2 * phase; break;
       case "carre": v[i] = phase < 0.5 ? 0 : 1; break;
       case "rampe": v[i] = n > 1 ? i / (n - 1) : 0; break;
+      // Les deux logarithmes montent de zéro à un sur toute la durée, chacun sur l'intervalle de sa
+      // base : de 1 à e, et de 1 à 10. Comme la rampe, ils n'ont qu'un seul passage.
+      case "ln": v[i] = Math.log(1 + (Math.E - 1) * (n > 1 ? i / (n - 1) : 0)); break;
+      case "log10": v[i] = Math.log10(1 + 9 * (n > 1 ? i / (n - 1) : 0)); break;
       case "sigmoide": {
         // La FONCTION logistique, 1/(1+e^(−k(u−u₀))), parcourue une fois sur toute la durée. Elle
         // ne consomme pas la fréquence : comme la rampe, elle n'a qu'un seul passage.

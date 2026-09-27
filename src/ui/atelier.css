@@ -268,6 +268,13 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   color: var(--text-primary); text-decoration: none; border-radius: 4px;
 }
 .attic-favs-drop a:hover { background: var(--bg-hover); }
+/* La liste des exemples emprunte le même tiroir : ce sont des boutons et non des liens, puisqu'ils
+   n'ouvrent rien au dehors. Même gabarit, pour que les deux tiroirs se ressemblent. */
+.attic-favs-drop button {
+  display: block; width: 100%; text-align: left; padding: 6px 12px; font-size: 12.5px;
+  color: var(--text-primary); background: none; border: none; border-radius: 4px; cursor: pointer;
+}
+.attic-favs-drop button:hover { background: var(--bg-hover); }
 .attic-btn-lancer {
   display: inline-flex; align-items: center; gap: 7px;
   margin-left: 8px; background: var(--lancer, var(--success)); color: var(--lancer-texte, var(--text-inverse));
@@ -1645,3 +1652,10 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-gout-barre { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-hover, #22262e); overflow: hidden; }
 .attic-gout-barre > span { display: block; height: 100%; border-radius: 4px; }
 .attic-gout-part { width: 34px; text-align: right; color: var(--text-muted, #6b7079); font-variant-numeric: tabular-nums; flex: none; }
+
+/* Le film du cercle : un lecteur, et la ligne d'enregistrement en dessous. Le nœud n'a aucun port,
+   c'est donc le seul endroit où le film se voit et d'où il s'écrit. */
+.attic-vue-film-cercle { display: flex; flex-direction: column; gap: 6px; padding: 6px; }
+.attic-vue-film-cercle-lecteur {
+  width: 100%; border-radius: 6px; background: #08080e; display: block;
+}
