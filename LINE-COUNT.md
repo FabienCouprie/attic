@@ -3,8 +3,8 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**966 files, 175470 lines.** The table lists the 271 files of 200 lines or more;
-the remaining 695 account for 75612 lines.
+**967 files, 175621 lines.** The table lists the 271 files of 200 lines or more;
+the remaining 696 account for 75702 lines.
 
 | File | Lines |
 |---|---:|
@@ -41,6 +41,7 @@ the remaining 695 account for 75612 lines.
 | src/plugins/pochette-svg.ts | 508 |
 | src/audio/automate-cellulaire.ts | 507 |
 | src/audio/attracteurs.ts | 494 |
+| src/audio/tone-synths.ts | 494 |
 | src/audio/multicanal.ts | 490 |
 | src/ui/FormeOnde.tsx | 484 |
 | src/audio/continuation-spectrale.ts | 482 |
@@ -50,7 +51,6 @@ the remaining 695 account for 75612 lines.
 | src/plugins/magenta.ts | 456 |
 | src/audio/clavier-banque.test.ts | 451 |
 | src/plugins/generateurs.test.ts | 449 |
-| src/audio/tone-synths.ts | 443 |
 | src/audio/effets-spectral.test.ts | 440 |
 | src/audio/soundfont.ts | 440 |
 | src/plugins/analyse.ts | 436 |
@@ -224,6 +224,7 @@ the remaining 695 account for 75612 lines.
 | src/core/types.ts | 225 |
 | src/audio/batterie-midi.test.ts | 224 |
 | src/audio/declipper.test.ts | 224 |
+| src/audio/percussions-placement.ts | 224 |
 | src/audio/assaisonnement.ts | 223 |
 | src/audio/fdn.test.ts | 223 |
 | src/ui/hooks/useMetaComposants.ts | 223 |
@@ -241,7 +242,6 @@ the remaining 695 account for 75612 lines.
 | src/core/boucle-graphe.ts | 215 |
 | src/plugins/spectral-wishart.ts | 215 |
 | src/audio/abc-contraintes.ts | 214 |
-| src/audio/percussions-placement.ts | 214 |
 | src/audio/separation-voix.test.ts | 214 |
 | src/audio/velours.ts | 214 |
 | src/plugins/finitions.ts | 213 |
