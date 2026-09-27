@@ -44,6 +44,7 @@ import { useBulles } from "./hooks/useBulles";
 import { useRepliBulles } from "./hooks/useRepliBulles";
 import { signatureBulles, synchroniserFichesBulles } from "./fichesBulles";
 import { Inspector } from "./Inspector";
+import { EXEMPLES, fichierDExemple } from "./exemples";
 import { nodeTypes as nodeTypesImport, edgeTypes as edgeTypesImport } from "./reactflowTypes";
 import "./atelier.css";
 import "./clavier.css";
@@ -429,6 +430,7 @@ function Atelier() {
               sequenceNotes: n.data.sequenceNotes,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
+              nomEn: n.data.nomEn,
               couleur: n.data.couleur,
               // Les deux champs d'une bulle. Sans eux, une session reprise rendrait un nœud de bulle
               // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
@@ -714,11 +716,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         ficheId: "comment",
         parametres: {},
         statut: "attente",
-        nom: t("btn.commentaire"),
+        // AUCUN TEXTE POSÉ DANS LA DONNÉE : « Ajouter une note » y était écrit à la création, donc
+        // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
         ...(callbacksNoeudRef.current?.()),
       },
     }]);
-  }, [setNodes, t]);
+  }, [setNodes]);
 
   const creerCadre = useCallback((position: { x: number; y: number }) => {
     setNodes((nds) => {
@@ -732,7 +735,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           ficheId: "frame",
           parametres: {},
           statut: "attente",
-          nom: t("btn.cadre"),
+          // AUCUN NOM POSÉ DANS LA DONNÉE : « Ajouter un cadre » y était écrit à la création, donc
+          // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
           couleur: "rgba(120,120,120,0.12)",
           ...(callbacksNoeudRef.current?.()),
         },
@@ -1121,6 +1125,27 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     currentFilePath, setCurrentFilePath,
   });
 
+  /**
+   * Ouvre un exemple livré avec l'application.
+   *
+   * IL N'A PAS DE FICHIER, ET C'EST CE QUI LE REND NON MODIFIABLE. Le graphe vient du paquet ;
+   * l'import reçoit donc un fichier qui n'est sur aucun disque, et le chemin courant est remis à
+   * rien. La sauvegarde automatique s'abstient alors faute de fichier, et l'enregistrement manuel
+   * passe par le dialogue, qui propose le dossier de travail. Recopier pour modifier n'est pas une
+   * règle à faire respecter, c'est la seule chose qui puisse arriver.
+   *
+   * LA REMISE À RIEN EST ÉCRITE ICI, EXPRÈS, plutôt que déduite de ce que l'import fait d'un
+   * fichier sans chemin : ouvrir un exemple alors qu'un projet est ouvert ne doit en aucun cas
+   * laisser l'ancien chemin en place, sans quoi le premier Ctrl+S écraserait ce projet par
+   * l'exemple.
+   */
+  const ouvrirExemple = useCallback(async (id: string) => {
+    const ex = EXEMPLES.find((e) => e.id === id);
+    if (!ex) return;
+    await importer(fichierDExemple(ex));
+    setCurrentFilePath(null);
+  }, [importer, setCurrentFilePath]);
+
   // ── Sauvegarde automatique ──
   //
   // Toutes les 30 secondes, en silence, tant qu'un fichier de projet est ouvert — et
@@ -1311,6 +1336,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           profondeurExport={profondeurExport}
           onChangerProfondeurExport={changerProfondeurExport}
           onImporter={importer}
+          onOuvrirExemple={ouvrirExemple}
         />
         <div className="attic-onglets">
           <span className="attic-onglet actif">

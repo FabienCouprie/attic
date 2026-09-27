@@ -64,6 +64,8 @@ const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_node
 export const CHAMPS_UTILISATEUR = new Set([
   "ficheId",
   "nom",
+  // Le second texte d'une note ou d'un cadre : une saisie, au même titre que le premier.
+  "nomEn",
   "parametres",
   "zonesSelectionnees",
   "audioFichier",
@@ -114,6 +116,41 @@ export const CHAMPS_MEDIA_LOCAL = new Set([
 export const CHAMPS_COPIABLES = new Set(
   [...CHAMPS_UTILISATEUR].filter((c) => !CHAMPS_MEDIA_LOCAL.has(c)),
 );
+
+/**
+ * Ce qu'une exécution DÉPOSE sur un nœud, et que la réinitialisation doit donc retirer.
+ *
+ * POURQUOI CETTE LISTE EXISTE, relevé par Fabien : le dessin du générateur de courbe restait à
+ * l'écran après un reset. Le nœud repassait bien « en attente », son message et son bouton de copie
+ * disparaissaient, et la courbe continuait de s'afficher comme si elle venait d'être calculée. La
+ * cause n'est pas dans le composant : la remise à zéro énumérait à la main les champs à effacer, et
+ * trois de ceux que l'exécution écrit n'y figuraient pas. `apercuCourbe` dessine la courbe,
+ * `midiFichierSortie` offre le fichier à télécharger, `ecartNiveau` affiche la pastille en
+ * décibels : les trois survivaient à la remise à zéro du nœud qui les avait produits.
+ *
+ * LA LISTE EST DONC UNIQUE, et c'est la seule protection qui tienne. Une énumération écrite là où
+ * l'on efface ne peut pas savoir ce qu'on a ajouté là où l'on écrit ; deux listes divergent, et
+ * celle du réalisateur de démonstration avait déjà divergé de celle-ci, dans l'autre sens. Un champ
+ * ajouté ici disparaît partout.
+ *
+ * AUCUN DE CES CHAMPS N'APPARTIENT À L'UTILISATEUR. Un recouvrement avec `CHAMPS_UTILISATEUR`
+ * serait un fichier chargé qui s'évapore au premier lancement ; un test tient les deux disjoints.
+ */
+export const CHAMPS_RESULTAT = new Set([
+  "audioResultatUrl",
+  "audioResultatNom",
+  "audioResultatBuffer",
+  "audioResultatMessage",
+  "mp3Url",
+  "scriptGenere",
+  "apercuCourbe",
+  "midiFichierSortie",
+  "imageResultatUrl",
+  "imageResultatFile",
+  "visualisationUrl",
+  "tempsExecution",
+  "ecartNiveau",
+]);
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -220,19 +257,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     reinitialiserStatuts(ids);
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
-      const nouvelleData: any = {
-        ...n.data,
-        audioResultatUrl: undefined,
-        audioResultatNom: undefined,
-        audioResultatBuffer: undefined,
-        audioResultatMessage: undefined,
-        scriptGenere: undefined,
-        mp3Url: undefined,
-        imageResultatUrl: undefined,
-        imageResultatFile: undefined,
-        visualisationUrl: undefined,
-        tempsExecution: undefined,
-      };
+      const nouvelleData: any = { ...n.data };
+      for (const champ of CHAMPS_RESULTAT) nouvelleData[champ] = undefined;
       // Garde-fou : on ne doit jamais effacer un champ utilisateur.
       for (const champ of CHAMPS_UTILISATEUR) {
         if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {

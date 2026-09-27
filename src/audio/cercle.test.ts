@@ -13,9 +13,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  FONDAMENTALES, POSITIONS_MAX, QUINTE_JUSTE_CENTS, cercleAleatoire, chaineDeHauteurs, complementaire,
-  estCercle, hauteursDuCercle, inverserIntervalles, inverserOrdre, joindre, normaliser,
-  permuterEtiquettes, placesLibres, reflechir, tourner, type Cercle,
+  FONDAMENTALES, POSITIONS_MAX, QUINTE_JUSTE_CENTS, RYTHMES_CANONIQUES, RYTHME_LIBRE,
+  cercleAleatoire, chaineDeHauteurs, complementaire, estCercle, hauteursDuCercle,
+  inverserIntervalles, inverserOrdre, joindre, motifDuRythme, normaliser, permuterEtiquettes,
+  placesLibres, reflechir, tourner, type Cercle,
 } from "./cercle";
 import { mesurer } from "./cercle-mesures";
 
@@ -329,6 +330,85 @@ describe("les hauteurs déduites de la fondamentale", () => {
     for (const r of ["octave", "demi-tons", "quintes"] as const) {
       expect(hauteursDuCercle(12, [], 60, r), r).toEqual([]);
     }
+  });
+});
+
+describe("les rythmes de la liste", () => {
+  // CE QUI SE VÉRIFIE ICI, ET QU'UN ŒIL NE VERRAIT PAS. Un motif se recopie d'une source à l'autre
+  // sous deux formes, la chaîne de zéros et de uns et la liste des attaques ; un chiffre de travers
+  // dans l'une des deux passerait inaperçu, et l'on jouerait un rythme qui n'est pas celui qu'on a
+  // nommé. Les attaques sont donc écrites ici, relevées dans la littérature, et confrontées.
+  const ATTENDUS: Record<string, { places: number[]; positions: number }> = {
+    tresillo: { positions: 8, places: [0, 3, 6] },
+    son: { positions: 16, places: [0, 3, 6, 10, 12] },
+    shiko: { positions: 16, places: [0, 4, 6, 10, 12] },
+    soukous: { positions: 16, places: [0, 3, 6, 10, 11] },
+    rumba: { positions: 16, places: [0, 3, 7, 10, 12] },
+    bossa: { positions: 16, places: [0, 3, 6, 10, 13] },
+    gahu: { positions: 16, places: [0, 3, 6, 10, 14] },
+    samba: { positions: 16, places: [0, 3, 5, 7, 10, 12, 14] },
+    "fume-fume": { positions: 12, places: [0, 2, 4, 7, 9] },
+    bembe: { positions: 12, places: [0, 2, 4, 5, 7, 9, 11] },
+    reich: { positions: 12, places: [0, 1, 2, 4, 5, 7, 9, 10] },
+  };
+
+  it("CHAQUE MOTIF PORTE LES ATTAQUES QU'IL ANNONCE, et le compte des places avec", () => {
+    for (const r of RYTHMES_CANONIQUES) {
+      const attendu = ATTENDUS[r.id];
+      expect(attendu, `${r.id} n'est pas dans la table de contrôle`).toBeDefined();
+      expect(r.motif.length, r.id).toBe(attendu.positions);
+      const places = [...r.motif].flatMap((c, i) => (c === "1" ? [i] : []));
+      expect(places, r.id).toEqual(attendu.places);
+    }
+    expect(RYTHMES_CANONIQUES).toHaveLength(Object.keys(ATTENDUS).length);
+  });
+
+  it("LES SIX CLAVES DE SEIZE PLACES ONT TOUTES CINQ ATTAQUES, ce qui est leur définition", () => {
+    for (const id of ["son", "shiko", "soukous", "rumba", "bossa", "gahu"]) {
+      const r = RYTHMES_CANONIQUES.find((x) => x.id === id)!;
+      expect(r.motif.length, id).toBe(16);
+      expect([...r.motif].filter((c) => c === "1"), id).toHaveLength(5);
+    }
+  });
+
+  it("aucun motif ne porte autre chose que des zéros et des uns, ni ne commence par un silence", () => {
+    for (const r of RYTHMES_CANONIQUES) {
+      expect(/^[01]+$/.test(r.motif), r.id).toBe(true);
+      // Un rythme nommé se cite à partir de sa première attaque : commencer par un silence serait
+      // une rotation du collier, donc un autre écrit du même rythme, et le nom ne le dirait pas.
+      expect(r.motif[0], r.id).toBe("1");
+    }
+  });
+
+  it("les identifiants et les noms sont uniques, et « libre » n'en est pas un", () => {
+    expect(new Set(RYTHMES_CANONIQUES.map((r) => r.id)).size).toBe(RYTHMES_CANONIQUES.length);
+    expect(new Set(RYTHMES_CANONIQUES.map((r) => r.nom)).size).toBe(RYTHMES_CANONIQUES.length);
+    expect(RYTHMES_CANONIQUES.some((r) => r.id === RYTHME_LIBRE)).toBe(false);
+  });
+
+  it("LE CHOIX GOUVERNE LE MOTIF SAISI, et « libre » le lui rend", () => {
+    expect(motifDuRythme("son", "1111")).toBe("1001001000101000");
+    expect(motifDuRythme(RYTHME_LIBRE, "1111")).toBe("1111");
+    // Un identifiant inconnu, venu d'un projet plus ancien, rend la main plutôt que de vider le
+    // cercle : le motif saisi est toujours là, et c'est lui qui sert.
+    expect(motifDuRythme("ce-rythme-n-existe-pas", "1111")).toBe("1111");
+  });
+
+  it("CE QUE LES MESURES EN DISENT : le son n'a pas la même régularité que la rumba", () => {
+    // Les six claves partagent la somme des arcs ; c'est sur les cordes qu'elles se séparent, et
+    // c'est la raison pour laquelle la régularité se calcule ainsi. Le contrôle est ici parce que
+    // ces onze motifs sont désormais offerts au choix : un chiffre de travers se verrait.
+    const cercleDe = (id: string): Cercle => {
+      const r = RYTHMES_CANONIQUES.find((x) => x.id === id)!;
+      return {
+        positions: r.motif.length, sorte: "percussion",
+        sommets: [...r.motif].flatMap((c, i) => (c === "1" ? [{ position: i, valeur: 36 }] : [])),
+      };
+    };
+    const son = mesurer(cercleDe("son")).regularite;
+    const rumba = mesurer(cercleDe("rumba")).regularite;
+    expect(son).not.toBeCloseTo(rumba, 6);
+    expect(son).toBeGreaterThan(rumba);
   });
 });
 

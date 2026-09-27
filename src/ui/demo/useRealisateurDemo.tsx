@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject, type R
 import { registre } from "../../audio/adaptateur";
 import { langueCourante, traduire } from "../../i18n";
 import { scenarioDemo, type ActionDemo } from "./scenario";
+import { CHAMPS_RESULTAT } from "../hooks/useExecutionGraphe";
 
 export const EVENEMENT_FILMER = "attic:filmer-demo";
 
@@ -33,9 +34,6 @@ interface Params {
 }
 
 interface Curseur { x: number; y: number; ms: number; visible: boolean; appui: boolean }
-
-/** Les champs d'affichage d'un résultat : effacés pendant la construction, pour un graphe vierge. */
-const CHAMPS_RESULTAT = ["audioResultatUrl", "audioResultatBuffer", "audioResultatMessage", "imageResultatUrl", "imageResultatFile", "apercuCourbe", "scriptGenere", "midiFichierSortie"];
 
 function attendre(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((ok, echec) => {

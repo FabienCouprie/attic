@@ -4,7 +4,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
-import { estSubstitution, tousLesMetas, enregistrerMeta, type AreteG, type MetaComposant } from "../../core";
+import {
+  estSubstitution, metasEmployes, tousLesMetas, enregistrerMeta,
+  type AreteG, type MetaComposant, type NoeudG,
+} from "../../core";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
@@ -88,6 +91,9 @@ export function usePersistance(o: OptionsPersistance) {
         sequenceNotes: data.sequenceNotes,
         nomFichier: data.nomFichier,
         nom: data.nom,
+        // Le second texte d'une note ou d'un cadre, qui suit la langue de l'interface. Absent de
+        // cette liste, il serait perdu au premier enregistrement, en silence.
+        nomEn: data.nomEn,
         couleur: data.couleur,
         // LES DEUX SEULS CHAMPS D'UNE BULLE : à quelle bulle ce nœud appartient, et si elle est
         // repliée. Le reste — ce qui est caché, les arêtes de substitution, la fiche et ses ports —
@@ -103,14 +109,18 @@ export function usePersistance(o: OptionsPersistance) {
       .map(({ id, source, target, sourceHandle, targetHandle, type, style }: any) => ({
         id, source, target, sourceHandle, targetHandle, type, style,
       }));
-    const metas = tousLesMetas().map(serialiserMeta);
+    // UN PROJET N'EMPORTE QUE LES MÉTAS QU'IL EMPLOIE, relevé par Fabien. Il recopiait ici toute la
+    // bibliothèque de la session : un graphe livré posait les composants personnels de qui l'avait
+    // enregistré dans la palette de qui l'ouvrait. La bibliothèque, elle, reste entière dans
+    // `attic-metas` ; c'est le fichier de projet, et lui seul, qui se restreint.
+    const metas = metasEmployes(racine.nodes as unknown as NoeudG[], tousLesMetas()).map(serialiserMeta);
     const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
 
     const encours = {
       // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
       // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
       // arêtes de substitution.
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

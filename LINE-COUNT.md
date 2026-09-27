@@ -3,19 +3,19 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**989 files, 180080 lines.** The table lists the 279 files of 200 lines or more;
-the remaining 710 account for 77775 lines.
+**1003 files, 182906 lines.** The table lists the 283 files of 200 lines or more;
+the remaining 720 account for 79063 lines.
 
 | File | Lines |
 |---|---:|
 | src/ui/vues.tsx | 2460 |
 | src/plugins/effets.ts | 2107 |
 | src/plugins/carte-sonore.ts | 1863 |
-| src/plugins/generateurs.ts | 1700 |
-| src/ui/atelier.css | 1648 |
-| src/ui/App.tsx | 1436 |
-| src/i18n.tsx | 1392 |
-| src/ui/hooks/useExecutionGraphe.ts | 1228 |
+| src/plugins/generateurs.ts | 1710 |
+| src/ui/atelier.css | 1655 |
+| src/ui/App.tsx | 1462 |
+| src/i18n.tsx | 1396 |
+| src/ui/hooks/useExecutionGraphe.ts | 1254 |
 | src/audio/analyse.ts | 1210 |
 | src/audio/effets-spectral.ts | 1165 |
 | src/audio/generation.ts | 1130 |
@@ -26,16 +26,17 @@ the remaining 710 account for 77775 lines.
 | src/audio/abc.ts | 764 |
 | src/ui/Inspector.tsx | 738 |
 | src/docs/documentation-graphe.ts | 728 |
-| src/ui/AtelierNode.tsx | 707 |
+| src/ui/AtelierNode.tsx | 713 |
 | src/parcours/exercices.ts | 705 |
 | src/audio/algebre.ts | 691 |
 | src/quiz/notions.ts | 645 |
 | src/audio/sfz.test.ts | 619 |
+| src/audio/courbe.ts | 611 |
 | src/audio/csound.ts | 577 |
 | src/audio/clavier-banque.ts | 574 |
 | src/plugins/vexflow.ts | 558 |
-| src/plugins/montage.ts | 549 |
 | src/ui/SelecteurMultiZones.tsx | 539 |
+| src/plugins/montage.ts | 530 |
 | src/plugins/csound.ts | 523 |
 | src/plugins/textgen.ts | 523 |
 | src/plugins/pochette-svg.ts | 508 |
@@ -44,6 +45,7 @@ the remaining 710 account for 77775 lines.
 | src/audio/tone-synths.ts | 494 |
 | src/audio/multicanal.ts | 490 |
 | src/ui/FormeOnde.tsx | 484 |
+| src/audio/cercle.ts | 482 |
 | src/audio/continuation-spectrale.ts | 482 |
 | src/audio/sfz.ts | 467 |
 | src/ia.ts | 466 |
@@ -53,19 +55,19 @@ the remaining 710 account for 77775 lines.
 | src/plugins/generateurs.test.ts | 449 |
 | src/audio/effets-spectral.test.ts | 440 |
 | src/audio/soundfont.ts | 440 |
-| src/audio/cercle.ts | 439 |
 | src/plugins/analyse.ts | 436 |
+| src/ui/BarreOutils.tsx | 436 |
 | src/audio/conformite-clavier.ts | 435 |
+| src/audio/cercle.test.ts | 432 |
 | src/plugins/theorie-avancee.ts | 429 |
 | src/ui/EditeurCode.tsx | 426 |
 | src/audio/modulation-effets.test.ts | 425 |
+| src/plugins/index.ts | 425 |
+| src/audio/courbe.test.ts | 422 |
 | src/audio/algebre.test.ts | 419 |
-| src/plugins/index.ts | 419 |
 | src/plugins/optionIds-retrocompat.test.ts | 419 |
 | src/plugins/prompt-graphe.ts | 418 |
-| src/audio/courbe.ts | 416 |
 | src/audio/particules.test.ts | 416 |
-| src/ui/BarreOutils.tsx | 415 |
 | src/audio/effets-montage.ts | 414 |
 | src/audio/quantification.ts | 413 |
 | src/audio/particules.ts | 412 |
@@ -86,12 +88,11 @@ the remaining 710 account for 77775 lines.
 | src/audio/reservoir.ts | 375 |
 | src/audio/ecosysteme.ts | 373 |
 | src/audio/effets-verification.test.ts | 370 |
-| src/ui/demo/useRealisateurDemo.tsx | 369 |
 | src/audio/io-profondeur.test.ts | 368 |
+| src/ui/demo/useRealisateurDemo.tsx | 367 |
 | src/audio/commun.ts | 364 |
 | src/audio/couleurs.ts | 357 |
 | src/audio/csound-orchestre.ts | 355 |
-| src/audio/cercle.test.ts | 352 |
 | src/audio/sms.ts | 352 |
 | src/docs/documentation-graphe.test.ts | 352 |
 | src/plugins/boucleSequencesGlobal.ts | 349 |
@@ -102,6 +103,7 @@ the remaining 710 account for 77775 lines.
 | src/plugins/python-processor.ts | 344 |
 | src/audio/motifs-midi.test.ts | 339 |
 | src/audio/objets-sonores.ts | 339 |
+| src/core/meta.ts | 336 |
 | src/audio/csound-formules.ts | 333 |
 | src/audio/multicanal.test.ts | 333 |
 | src/audio/groove-box.test.ts | 330 |
@@ -120,22 +122,20 @@ the remaining 710 account for 77775 lines.
 | src/plugins/arbre-rythmique.ts | 310 |
 | src/plugins/magenta-helpers.ts | 310 |
 | src/quiz/formules.ts | 310 |
+| src/ui/hooks/usePersistance.ts | 310 |
 | src/audio/cercle-pulsant.ts | 308 |
 | src/core/graphe.test.ts | 308 |
 | src/parcours/mesures.ts | 307 |
 | src/audio/abc.test.ts | 306 |
 | src/audio/synthese-features.ts | 305 |
-| src/ui/hooks/usePersistance.ts | 300 |
 | src/audio/risset.test.ts | 298 |
 | src/audio/spectral-wishart.ts | 297 |
 | src/audio/ssp.ts | 297 |
 | src/audio/video-sortie.ts | 297 |
 | src/audio/separation-voix.ts | 296 |
 | src/audio/motif-crossmodal.ts | 295 |
-| src/core/meta.ts | 295 |
 | src/plugins/tonal.ts | 294 |
 | src/audio/cercle-mesures.ts | 290 |
-| src/audio/courbe.test.ts | 290 |
 | src/audio/spectral-cdp.ts | 289 |
 | src/plugins/multicanal.ts | 288 |
 | src/audio/inpainting.ts | 285 |
@@ -150,6 +150,7 @@ the remaining 710 account for 77775 lines.
 | src/audio/ssp.test.ts | 273 |
 | src/audio/synthese-features.test.ts | 272 |
 | src/audio/gout.ts | 267 |
+| src/audio/micromontage.test.ts | 266 |
 | src/audio/reverbes-etendues.ts | 265 |
 | src/audio/fdn.ts | 264 |
 | src/plugins/rythme-vers-midi.test.ts | 264 |
@@ -185,6 +186,7 @@ the remaining 710 account for 77775 lines.
 | src/plugins/galerie-exposition.ts | 247 |
 | src/workers/kokoro-local.test.ts | 247 |
 | src/audio/atomes.ts | 246 |
+| src/audio/micromontage.ts | 246 |
 | src/ui/Spectre.tsx | 246 |
 | src/audio/ecrans.ts | 245 |
 | src/plugins/soundfontGlobal.ts | 245 |
@@ -235,9 +237,11 @@ the remaining 710 account for 77775 lines.
 | src/ui/hooks/useMetaComposants.ts | 223 |
 | src/audio/spectral-cdp.test.ts | 222 |
 | src/docs/anglais-registre.test.ts | 222 |
+| src/plugins/micromontage.ts | 222 |
 | src/audio/hpss.ts | 221 |
 | src/plugins/boucle-voix.test.ts | 221 |
 | src/docs/catalogue-markdown.ts | 220 |
+| src/plugins/cercle.ts | 220 |
 | src/ui/generation-code.ts | 219 |
 | src/ui/hooks/useBulles.ts | 219 |
 | src/audio/arbre-disposition.ts | 216 |
@@ -261,11 +265,11 @@ the remaining 710 account for 77775 lines.
 | src/audio/phisem.ts | 208 |
 | src/audio/pure-data.ts | 208 |
 | src/audio/rythme-analyse.ts | 208 |
-| src/plugins/cercle.ts | 208 |
 | src/ui/ColorSynth.tsx | 208 |
 | src/audio/concatenatif.ts | 207 |
 | src/ui/Parcours.tsx | 207 |
 | src/audio/motif-crossmodal.test.ts | 206 |
+| src/core/meta.test.ts | 206 |
 | src/plugins/instrument-graphe.ts | 206 |
 | src/audio/inpainting.test.ts | 205 |
 | src/audio/phisem.test.ts | 205 |

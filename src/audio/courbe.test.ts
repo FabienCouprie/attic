@@ -6,8 +6,8 @@
 // chose que ce qu'elle devait.
 import { describe, expect, it } from "vitest";
 import {
-  CADENCE, appliquerGain, constante, engendrer, estCourbe, lisser, mettreEnForme, normaliser,
-  reechantillonner, suivre, valeursParametre,
+  CADENCE, appliquerGain, constante, engendrer, estCourbe, lisser, logGamma, mettreEnForme,
+  normaliser, reechantillonner, suivre, valeursParametre,
 } from "./courbe";
 
 const SR = 44100;
@@ -63,7 +63,10 @@ describe("la convention", () => {
   });
 
   it("une source quelconque reste entre zéro et un", () => {
-    for (const forme of ["sinus", "triangle", "carre", "rampe", "logistique", "aleatoire"] as const) {
+    for (const forme of [
+      "sinus", "triangle", "carre", "rampe", "sigmoide", "logistique", "aleatoire",
+      "gaussienne", "poisson", "gamma", "khi2", "weibull", "ln", "log10",
+    ] as const) {
       const c = engendrer({ dureeSec: 2, forme, frequence: 3, graine: 5 });
       expect([...c.valeurs].every((v) => v >= 0 && v <= 1), forme).toBe(true);
     }
@@ -284,6 +287,135 @@ describe("les sources fabriquées", () => {
       const s = S();
       const suite = engendrer({ dureeSec: 4, forme: "logistique", frequence: 2, r: 3.9, graine: 1 }).valeurs;
       expect([...s]).not.toEqual([...suite]);
+    });
+  });
+
+  describe("les lois de probabilité", () => {
+    const LOIS = ["gaussienne", "poisson", "gamma", "khi2", "weibull"] as const;
+    const tracer = (o: Partial<Parameters<typeof engendrer>[0]>) =>
+      engendrer({ dureeSec: 4, ...o } as Parameters<typeof engendrer>[0]).valeurs;
+
+    it("le logarithme de Γ tombe sur les factoriels connus", () => {
+      expect(logGamma(1)).toBeCloseTo(0, 9);
+      expect(logGamma(2)).toBeCloseTo(0, 9);
+      expect(logGamma(3)).toBeCloseTo(Math.LN2, 9);
+      expect(logGamma(6)).toBeCloseTo(Math.log(120), 9);
+      expect(logGamma(21)).toBeCloseTo(Math.log(2.43290200817664e18), 9);
+      // Γ(1/2) = √π : la formule de réflexion, sous laquelle la série ne converge pas.
+      expect(logGamma(0.5)).toBeCloseTo(Math.log(Math.sqrt(Math.PI)), 9);
+    });
+
+    it("CHAQUE LOI A SON SOMMET À UN, sans quoi la modulation ne couvrirait pas la plage", () => {
+      for (const forme of LOIS) {
+        const v = tracer({ forme });
+        expect(Math.max(...v), forme).toBe(1);
+        expect(Math.min(...v), forme).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it("LA QUEUE EST RETOMBÉE AVANT LA FIN, sans quoi la modulation sauterait en fin de course", () => {
+      for (const forme of LOIS) {
+        const v = tracer({ forme });
+        expect(v[v.length - 1], forme).toBeLessThan(0.02);
+      }
+    });
+
+    it("la fréquence ne les atteint pas : un seul passage, comme la rampe", () => {
+      for (const forme of LOIS) {
+        expect([...tracer({ forme, frequence: 0.5 })], forme)
+          .toEqual([...tracer({ forme, frequence: 20 })]);
+      }
+    });
+
+    it("la cloche a son sommet au centre demandé et s'élargit à la demande", () => {
+      for (const centre of [0.25, 0.5, 0.75]) {
+        const v = tracer({ forme: "gaussienne", centre });
+        const sommet = [...v].indexOf(1) / (v.length - 1);
+        expect(sommet, `centre ${centre}`).toBeCloseTo(centre, 2);
+      }
+      // Une cloche étroite retombe à presque rien aux extrémités ; une cloche large y reste haute.
+      expect(tracer({ forme: "gaussienne", largeur: 0.15 })[0]).toBeCloseTo(0.0039, 4);
+      expect(tracer({ forme: "gaussienne", largeur: 0.5 })[0]).toBeCloseTo(0.6065, 4);
+    });
+
+    it("LA LOI DE POISSON SE TIENT EN PALIERS, un par valeur entière", () => {
+      const v = tracer({ forme: "poisson", moyenne: 4.5 });
+      let ruptures = 1;
+      for (let i = 1; i < v.length; i++) if (v[i] !== v[i - 1]) ruptures++;
+      // 4,5 plus quatre écarts types fait 13 valeurs entières, et trois de plus laissent voir la
+      // queue : seize paliers.
+      expect(ruptures).toBe(16);
+      // Le sommet est celui de la partie entière de l'espérance, le cinquième palier sur seize.
+      const sommet = [...v].indexOf(1) / v.length;
+      expect(sommet).toBeGreaterThanOrEqual(4 / 16);
+      expect(sommet).toBeLessThan(5 / 16);
+    });
+
+    it("LE KHI-DEUX À d DEGRÉS EST LA LOI GAMMA D'ORDRE d/2, et les deux tracés se superposent", () => {
+      for (const ordre of [1, 2, 3, 5]) {
+        const g = tracer({ forme: "gamma", ordre });
+        const k = tracer({ forme: "khi2", degres: 2 * ordre });
+        expect(g.length).toBe(k.length);
+        for (let i = 0; i < g.length; i += 37) {
+          expect(k[i], `ordre ${ordre}, indice ${i}`).toBeCloseTo(g[i], 5);
+        }
+      }
+    });
+
+    it("À LEUR RÉGLAGE LE PLUS BAS, les trois lois continues sont la décroissance exponentielle", () => {
+      const g = tracer({ forme: "gamma", ordre: 1 });
+      const w = tracer({ forme: "weibull", exposant: 1 });
+      expect(g[0]).toBe(1);
+      expect(w[0]).toBe(1);
+      for (let i = 1; i < g.length; i++) expect(g[i], `indice ${i}`).toBeLessThan(g[i - 1]);
+      for (let i = 0; i < g.length; i += 37) expect(w[i], `indice ${i}`).toBeCloseTo(g[i], 5);
+      // e^(−x) sur cinq unités : la valeur à mi-course est e^(−2,5).
+      expect(g[Math.floor(g.length / 2)]).toBeCloseTo(Math.exp(-2.5), 2);
+    });
+
+    it("l'ordre de la loi gamma déplace son sommet, et la rend plus symétrique", () => {
+      // Le sommet de la densité est en k−1, sur une étendue de k + 4√k.
+      for (const ordre of [2, 5, 20]) {
+        const v = tracer({ forme: "gamma", ordre });
+        const attendu = (ordre - 1) / (ordre + 4 * Math.sqrt(ordre));
+        expect([...v].indexOf(1) / (v.length - 1), `ordre ${ordre}`).toBeCloseTo(attendu, 2);
+      }
+    });
+
+    it("l'exposant de Weibull redresse la cloche", () => {
+      // À 1 la courbe part de son sommet ; au-delà, le sommet entre dans le tracé.
+      expect([...tracer({ forme: "weibull", exposant: 1 })].indexOf(1)).toBe(0);
+      expect([...tracer({ forme: "weibull", exposant: 4 })].indexOf(1)).toBeGreaterThan(100);
+    });
+  });
+
+  describe("les deux logarithmes", () => {
+    const tracer = (forme: "ln" | "log10") => engendrer({ dureeSec: 4, forme }).valeurs;
+
+    it("ILS MONTENT DE ZÉRO À UN, chacun sur l'intervalle de sa base", () => {
+      for (const forme of ["ln", "log10"] as const) {
+        const v = tracer(forme);
+        expect(v[0], forme).toBeCloseTo(0, 6);
+        expect(v[v.length - 1], forme).toBeCloseTo(1, 6);
+        for (let i = 1; i < v.length; i++) expect(v[i], `${forme} ${i}`).toBeGreaterThan(v[i - 1]);
+      }
+    });
+
+    it("ILS NE SE CONFONDENT PAS, parce que leurs bornes diffèrent et non leur base", () => {
+      const ln = tracer("ln");
+      const log10 = tracer("log10");
+      const milieu = Math.floor(ln.length / 2);
+      // À mi-course, à un échantillon près : ln(1 + (e−1)/2) vaut 0,620 et log10(5,5) vaut 0,740.
+      // Le décimal est le plus courbé des deux, puisque ses bornes sont les plus écartées.
+      expect(ln[milieu]).toBeCloseTo(0.620, 2);
+      expect(log10[milieu]).toBeCloseTo(0.740, 2);
+      expect(log10[milieu] - ln[milieu]).toBeGreaterThan(0.11);
+    });
+
+    it("la fréquence ne les atteint pas", () => {
+      const a = engendrer({ dureeSec: 4, forme: "ln", frequence: 0.5 }).valeurs;
+      const b = engendrer({ dureeSec: 4, forme: "ln", frequence: 20 }).valeurs;
+      expect([...a]).toEqual([...b]);
     });
   });
 });

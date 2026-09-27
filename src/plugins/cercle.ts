@@ -11,7 +11,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
 import {
-  FONDAMENTALES, POSITIONS_MAX, enSuite, hauteursDuCercle, type Cercle, type Repartition,
+  FONDAMENTALES, POSITIONS_MAX, RYTHMES_CANONIQUES, RYTHME_LIBRE, enSuite, hauteursDuCercle,
+  motifDuRythme, type Cercle, type Repartition,
 } from "../audio/cercle";
 import { rendreCercles, type BaseDeTemps } from "../audio/cercle-rendu";
 import { lireMotif, nettoyerMotif } from "../ui/cercle-disposition";
@@ -76,14 +77,21 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Circle",
     resume: "Pose un rythme sur un cercle de places égales, et en trace le polygone inscrit.",
     resumeEn: "Places a rhythm on a circle of equal positions, and draws its inscribed polygon.",
-    notice: `Pose les attaques d'un rythme sur un cercle dont les places sont également réparties, et relie celles qui sonnent par un polygone inscrit. La place zéro est en haut, et le tour se fait dans le sens des aiguilles.\n\nLe polygone n'est pas un ornement : son aire est maximale quand les attaques se répartissent également, et c'est sur ses cordes que la régularité du rythme se calcule.\n\nUn clic sur une place l'allume ou l'éteint. Les boutons « plus » et « moins » changent le nombre de places, jusqu'à ${POSITIONS_MAX} ; le motif déjà posé est gardé, complété de silences ou coupé à la fin.\n\n« Motif » porte le rythme sous la forme d'une suite de zéros et de uns, un par place, et le nombre de places est sa longueur. Il se recopie d'un composant à l'autre, et se colle tel quel depuis l'adresse d'un cercle rythmique en ligne.\n\n« Percussion » choisit le son, le même pour toutes les attaques du cercle.\n\nLa sortie « Cercle » porte les places et leur son, sans aucune durée : le temps est fourni par le composant qui le rend.\n\n${CITATION}`,
-    noticeEn: `Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise.\n\nThe polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed.\n\nA click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to ${POSITIONS_MAX}; the pattern already laid is kept, padded with rests or cut at the end.\n\n« Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes as it stands from the address of an online rhythm circle.\n\n« Drum » selects the sound, the same for every onset of the circle.\n\nThe « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it.\n\n${CITATION_EN}`,
+    notice: `Pose les attaques d'un rythme sur un cercle dont les places sont également réparties, et relie celles qui sonnent par un polygone inscrit. La place zéro est en haut, et le tour se fait dans le sens des aiguilles.\n\nLe polygone n'est pas un ornement : son aire est maximale quand les attaques se répartissent également, et c'est sur ses cordes que la régularité du rythme se calcule.\n\nUn clic sur une place l'allume ou l'éteint. Les boutons « plus » et « moins » changent le nombre de places, jusqu'à ${POSITIONS_MAX} ; le motif déjà posé est gardé, complété de silences ou coupé à la fin.\n\n« Rythme » pose d'un coup l'un des onze rythmes traditionnels de la liste, le tresillo, le son, le shiko, le soukous, la rumba, la bossa-nova, le gahu, la samba, le fume-fume, le bembé et celui de Steve Reich. Ils viennent de « The Geometry of Musical Rhythm » de Godfried Toussaint, qui les emploie comme exemples : les six de seize places à cinq attaques y sont ses claves, et elles ont toutes la même somme d'arcs, ce sont les cordes qui les séparent. Quatre d'entre eux obtiennent le meilleur score de leur taille chez Paul Lascabettes et Isabelle Bloch, « What Are "Good" Rhythms? », MCM 2024 : le son à cinq attaques sur seize, le tresillo à trois sur huit, le fume-fume à cinq sur douze, la samba à sept sur seize. Sur « Libre », c'est « Motif » qui gouverne.\n\n« Motif » porte le rythme sous la forme d'une suite de zéros et de uns, un par place, et le nombre de places est sa longueur. Il se recopie d'un composant à l'autre, et se colle tel quel depuis l'adresse d'un cercle rythmique en ligne. Cliquer une place écrit ce motif et remet « Rythme » sur « Libre », ce qui garde le rythme choisi comme point de départ.\n\n« Percussion » choisit le son, le même pour toutes les attaques du cercle.\n\nLa sortie « Cercle » porte les places et leur son, sans aucune durée : le temps est fourni par le composant qui le rend.\n\n${CITATION}`,
+    noticeEn: `Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise.\n\nThe polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed.\n\nA click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to ${POSITIONS_MAX}; the pattern already laid is kept, padded with rests or cut at the end.\n\n« Rhythm » lays in one go one of the eleven traditional rhythms of the list: tresillo, son, shiko, soukous, rumba, bossa nova, gahu, samba, fume-fume, bembé and the one by Steve Reich. They come from Godfried Toussaint's « The Geometry of Musical Rhythm », which uses them as examples: the six with sixteen positions and five onsets are his claves, and they all have the same sum of arcs, it is the chords that tell them apart. Four of them obtain the best score for their size in Paul Lascabettes and Isabelle Bloch, « What Are "Good" Rhythms? », MCM 2024: the son at five onsets on sixteen, the tresillo at three on eight, the fume-fume at five on twelve, the samba at seven on sixteen. On « Free », it is « Pattern » that governs.\n\n« Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes as it stands from the address of an online rhythm circle. Clicking a position writes that pattern and sets « Rhythm » back to « Free », which keeps the chosen rhythm as a starting point.\n\n« Drum » selects the sound, the same for every onset of the circle.\n\nThe « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it.\n\n${CITATION_EN}`,
     entrees: [],
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [
+      { nom: "Rythme", nomEn: "Rhythm", type: "choix",
+        options: ["Libre", ...RYTHMES_CANONIQUES.map((r) => r.nom)],
+        optionsEn: ["Free", ...RYTHMES_CANONIQUES.map((r) => r.nomEn)],
+        optionIds: [RYTHME_LIBRE, ...RYTHMES_CANONIQUES.map((r) => r.id)],
+        defaut: "Libre", defautEn: "Free",
+        doc: "Un rythme traditionnel à poser d'un coup, ou « Libre » pour celui qu'on écrit soi-même. Cliquer une place remet ce réglage sur « Libre » et garde ce qui était posé.",
+        docEn: "A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid." },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_DEFAUT, defautEn: MOTIF_DEFAUT,
-        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Le dessin l'écrit à chaque clic, et il se saisit aussi à la main.",
-        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed." },
+        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Le dessin l'écrit à chaque clic, et il se saisit aussi à la main. Il ne sert que lorsque « Rythme » est sur « Libre ».",
+        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free »." },
       { nom: "Percussion", nomEn: "Drum", type: "choix",
         options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
         optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
@@ -92,12 +100,16 @@ export const fiches: FicheAudio[] = ([
         docEn: "The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles." },
     ],
     async executer(ctx: any) {
-      const motif = nettoyerMotif(ctx.paramTexte("Motif", MOTIF_DEFAUT)) || MOTIF_DEFAUT;
+      const choisi = ctx.paramTexte("Rythme", RYTHME_LIBRE);
+      const brut = motifDuRythme(choisi, ctx.paramTexte("Motif", MOTIF_DEFAUT));
+      const motif = nettoyerMotif(brut) || MOTIF_DEFAUT;
       const son = parseInt(ctx.paramTexte("Percussion", "36"), 10) || 36;
       const cercle = cercleRythmique(motif, son);
+      const nomme = RYTHMES_CANONIQUES.find((r) => r.id === choisi);
       return {
         valeurs: [cercle],
-        message: `${cercle.sommets.length} ${en() ? "onsets" : "attaques"} · ${cercle.positions} ${en() ? "positions" : "places"}`,
+        message: `${cercle.sommets.length} ${en() ? "onsets" : "attaques"} · ${cercle.positions} `
+          + `${en() ? "positions" : "places"}${nomme ? ` · ${en() ? nomme.nomEn : nomme.nom}` : ""}`,
       };
     },
   },

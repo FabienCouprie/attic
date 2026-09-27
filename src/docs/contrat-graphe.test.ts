@@ -28,7 +28,18 @@ import { toutesLesFiches } from "../plugins/index";
 import "../audio/adaptateur";
 
 /** Les dossiers où l'on range des graphes, les mêmes que le script surveille. */
-const DOSSIERS = ["", "presets", "tests-e2e"];
+const DOSSIERS = ["", "presets", "exemples", "tests-e2e"];
+
+/**
+ * `exemples/` est tout entier sous contrat, et son nom suffit à le dire.
+ *
+ * Les deux dossiers n'ont pas le même rôle. `presets/` n'est pas versionné : c'est là qu'on
+ * travaille, et un graphe en cours de câblage y est momentanément incomplet par nature.
+ * `exemples/` est versionné et livré : ce qui s'y trouve est montré à quelqu'un d'autre, et n'a
+ * donc pas le droit d'être à moitié fait.
+ */
+const estExemple = (dossier: string, nom: string) =>
+  dossier === "exemples" ? /\.json$/i.test(nom) : /-exemple\.json$/i.test(nom);
 
 /** Les nœuds sans ports : une note et un cadre sont des annotations posées sur le canevas. */
 const SANS_PORTS = new Set(["comment", "frame"]);
@@ -46,7 +57,7 @@ function graphes(): { chemin: string; graphe: GrapheEnregistre }[] {
     const dossier = join(process.cwd(), d);
     if (!existsSync(dossier)) continue;
     for (const nom of readdirSync(dossier)) {
-      if (!/-exemple\.json$/i.test(nom)) continue;
+      if (!estExemple(d, nom)) continue;
       const chemin = join(dossier, nom);
       let brut: string;
       try {

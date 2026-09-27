@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**443 composants**, dont **91** avec une vue propre et **4** sans lecteur générique.
+**446 composants**, dont **91** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -164,6 +164,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |
 | Brassage | `brassage` | 240 × 118 |
 | Bruitage IA | `bruitage-ia` | 240 × 118 |
+| Caler les coupes | `caler-coupes` | 240 × 140 |
 | Canon de tempo (Nancarrow) | `canon-nancarrow` | 240 × 118 |
 | Canon par pavage | `canon-pavage` | 240 × 162 |
 | Capture MIDI | `capture-midi` | 240 × 140 |
@@ -227,6 +228,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Distorsion | `distorsion` | 240 × 118 |
 | Documentation du graphe | `documentation-graphe` | 240 × 140 |
 | Doppler | `doppler` | 240 × 118 |
+| Doser un effet | `doser-effet` | 240 × 184 |
 | Batterie synthétique | `drum-synth` | 240 × 140 |
 | Ducking | `ducking` | 240 × 140 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
@@ -316,6 +318,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Membrane Synth | `membrane-synth` | 240 × 118 |
 | Metal Synth | `metal-synth` | 240 × 118 |
 | Métronome | `metronome` | 240 × 118 |
+| Micromontage | `micromontage` | 240 × 206 |
 | MIDI → ABC | `midi-vers-abc` | 240 × 140 |
 | MIDI → séquence | `midi-vers-sequence` | 240 × 162 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |

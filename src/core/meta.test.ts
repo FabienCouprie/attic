@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { creerMeta, aplatirGraphe, frontieresPourEdition, redériverMeta,
-  ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE, type NoeudG, type AreteG, type DefPorts } from "./meta";
+import { creerMeta, aplatirGraphe, frontieresPourEdition, metasEmployes, redériverMeta,
+  ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
+  type NoeudG, type AreteG, type DefPorts, type MetaComposant } from "./meta";
 
 const DEFS: Record<string, DefPorts> = {
   "entree-audio": { entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
@@ -149,5 +150,56 @@ describe("méta-composants", () => {
     const g = { noeuds: [{ id: "N", position: { x: 0, y: 0 }, data: { ficheId: "mx" } }], aretes: [] as AreteG[] };
     const flat = aplatirGraphe(g.noeuds, g.aretes, getMetaFrom(metaFictif));
     expect(flat.noeuds.find((n) => n.id === "N::E")?.data.parametres).toEqual({ Facteur: 2 });
+  });
+});
+
+// CE QUI A FAIT ÉCRIRE CETTE PARTIE, relevé par Fabien. L'enregistrement d'un projet y recopiait
+// TOUTE la bibliothèque de métas de la session. Deux graphes d'exemple portaient ainsi deux métas
+// qu'aucun de leurs nœuds n'employait, et un graphe livré aurait posé les composants personnels de
+// qui l'avait enregistré dans la palette de qui l'ouvre.
+describe("les métas qu'un graphe emploie", () => {
+  const meta = (id: string, sous: string[] = []): MetaComposant => ({
+    id, nom: id, entrees: [], sorties: [], mapEntrees: [], mapSorties: [],
+    sousNoeuds: sous.map((f, i) => ({ id: `${id}-s${i}`, data: { ficheId: f } })),
+    sousAretes: [],
+  });
+  const noeud = (ficheId: string) => ({ id: `n-${ficheId}`, data: { ficheId } });
+
+  it("UN GRAPHE SANS MÉTA N'EN EMPORTE AUCUN, si garnie que soit la bibliothèque", () => {
+    const bib = [meta("meta-a"), meta("meta-b")];
+    expect(metasEmployes([noeud("oscillateur"), noeud("melangeur")], bib)).toEqual([]);
+  });
+
+  it("IL N'EMPORTE QUE CEUX QU'IL NOMME, et non ceux d'à côté", () => {
+    const bib = [meta("meta-a"), meta("meta-b"), meta("meta-c")];
+    const pris = metasEmployes([noeud("oscillateur"), noeud("meta-b")], bib);
+    expect(pris.map((m) => m.id)).toEqual(["meta-b"]);
+  });
+
+  it("LA CLÔTURE EST TRANSITIVE : un méta imbriqué suit celui qui le contient", () => {
+    // Sans cela, le projet rouvert aurait un composant creux là où il y avait un sous-graphe.
+    const bib = [meta("meta-a", ["meta-b"]), meta("meta-b", ["meta-c"]), meta("meta-c"), meta("meta-seul")];
+    const pris = metasEmployes([noeud("meta-a")], bib);
+    expect(pris.map((m) => m.id)).toEqual(["meta-a", "meta-b", "meta-c"]);
+  });
+
+  it("UN MÉTA QUI SE CONTIENT LUI-MÊME NE BOUCLE PAS", () => {
+    const bib = [meta("meta-cycle", ["meta-cycle"])];
+    expect(metasEmployes([noeud("meta-cycle")], bib).map((m) => m.id)).toEqual(["meta-cycle"]);
+  });
+
+  it("deux métas qui se contiennent l'un l'autre ne bouclent pas non plus", () => {
+    const bib = [meta("meta-a", ["meta-b"]), meta("meta-b", ["meta-a"])];
+    expect(metasEmployes([noeud("meta-a")], bib).map((m) => m.id)).toEqual(["meta-a", "meta-b"]);
+  });
+
+  it("L'ORDRE DE LA BIBLIOTHÈQUE EST CONSERVÉ, sans quoi chaque sauvegarde ferait une différence", () => {
+    const bib = [meta("meta-a"), meta("meta-b"), meta("meta-c")];
+    const pris = metasEmployes([noeud("meta-c"), noeud("meta-a")], bib);
+    expect(pris.map((m) => m.id)).toEqual(["meta-a", "meta-c"]);
+  });
+
+  it("un nœud qui nomme un méta inconnu est ignoré plutôt que de faire échouer l'enregistrement", () => {
+    expect(metasEmployes([noeud("meta-disparu")], [meta("meta-a")])).toEqual([]);
   });
 });

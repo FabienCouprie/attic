@@ -1,0 +1,95 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "width": 520,
+      "height": 170,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE RÉVERBÉRATION DONT LA QUEUE DÉBORDE\n\nIci le fenêtrage est posé AVANT l'effet : « Masque de zones » ne laisse passer que le passage, la réverbération n'entend que lui, et sa queue sonne après. « Doser un effet » est donc en mode Départ, sans zone : le sec reste entier et la réverbération s'y ajoute.\n\nFenêtrer en sortie du doseur aurait coupé la queue avec la zone.\n\nZone : de 0,8 à 1,2 seconde. Le son sec s'arrête à 2,5 s et la sortie dure 5,5 s : les trois dernières secondes ne portent que la queue. Le message du doseur donne les deux durées.",
+        "nomEn": "A REVERBERATION WHOSE TAIL SPILLS OVER\n\nHere the windowing is laid BEFORE the effect: « Zone Mask » lets only the passage through, the reverberation hears only it, and its tail sounds after. « Effect Blend » is therefore in Send mode, with no zone: the dry stays whole and the reverberation adds to it.\n\nWindowing at the blend's output would have cut the tail with the zone.\n\nZone: from 0.8 to 1.2 second. The dry sound stops at 2.5 s and the output lasts 5.5 s: the last three seconds carry the tail alone. The blend's message gives both durations."
+      }
+    },
+    {
+      "id": "source",
+      "type": "atelier",
+      "position": { "x": 40, "y": 260 },
+      "width": 306,
+      "height": 385,
+      "data": {
+        "ficheId": "oscillateur",
+        "parametres": { "Forme": "Dent de scie", "Fréquence": 220, "Durée": 2.5, "Volume": 80 }
+      }
+    },
+    {
+      "id": "zones",
+      "type": "atelier",
+      "position": { "x": 40, "y": 700 },
+      "data": {
+        "ficheId": "selecteur-multi-zones",
+        "parametres": {},
+        "zonesSelectionnees": [{ "debut": 0.8, "duree": 0.4 }]
+      }
+    },
+    {
+      "id": "masque",
+      "type": "atelier",
+      "position": { "x": 460, "y": 300 },
+      "width": 255,
+      "height": 233,
+      "data": {
+        "ficheId": "masque-zones",
+        "parametres": { "Action": "Conserver les zones", "Fondu d'entrée": 10, "Fondu de sortie": 10 }
+      }
+    },
+    {
+      "id": "reverbe",
+      "type": "atelier",
+      "position": { "x": 800, "y": 300 },
+      "width": 325,
+      "height": 242,
+      "data": {
+        "ficheId": "reverbe-reseau",
+        "parametres": { "RT60 grave": 3, "RT60 aigu": 1.5 }
+      }
+    },
+    {
+      "id": "dosage",
+      "type": "atelier",
+      "position": { "x": 1200, "y": 260 },
+      "width": 236,
+      "height": 299,
+      "data": {
+        "ficheId": "doser-effet",
+        "parametres": {
+          "Dose": 100,
+          "Mode": "Départ",
+          "Application": "Dans les zones",
+          "Fondu d'entrée": 10,
+          "Fondu de sortie": 10,
+          "Loi du fondu": "Linéaire"
+        }
+      }
+    },
+    {
+      "id": "vue",
+      "type": "atelier",
+      "position": { "x": 1560, "y": 260 },
+      "data": { "ficheId": "visualiseur-forme-onde", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-source-zones", "source": "source", "target": "zones", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } },
+    { "id": "e-source-masque", "source": "source", "target": "masque", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } },
+    { "id": "e-zones-masque", "source": "zones", "target": "masque", "sourceHandle": "out:1", "targetHandle": "in:1", "type": "arete-personnalisee", "style": { "stroke": "#e8590c", "strokeWidth": 2.5 } },
+    { "id": "e-masque-reverbe", "source": "masque", "target": "reverbe", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } },
+    { "id": "e-source-sec", "source": "source", "target": "dosage", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } },
+    { "id": "e-reverbe-traite", "source": "reverbe", "target": "dosage", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } },
+    { "id": "e-dosage-vue", "source": "dosage", "target": "vue", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee", "style": { "stroke": "#2a9d8f", "strokeWidth": 2.5 } }
+  ],
+  "metas": [],
+  "viewport": { "x": 20, "y": 20, "zoom": 0.55 }
+}

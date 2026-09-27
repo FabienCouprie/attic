@@ -172,6 +172,9 @@ import { fiches as f_cercle_transformations } from "./cercle-transformations";
 import { fiches as f_cercle_boucle } from "./cercle-boucle";
 import { fiches as f_cercle_assemblage } from "./cercle-assemblage";
 import { fiches as f_sequence_assemblage } from "./sequence-assemblage";
+import { fiches as f_micromontage } from "./micromontage";
+import { fiches as f_passage_zero } from "./passage-zero";
+import { fiches as f_dosage } from "./dosage";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -284,6 +287,9 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_cercle_boucle,
   ...f_cercle_assemblage,
   ...f_sequence_assemblage,
+  ...f_micromontage,
+  ...f_passage_zero,
+  ...f_dosage,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,

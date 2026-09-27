@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 66 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 141 · transposable tel quel
+- **pur** : 144 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -86,6 +86,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | dirac.ts | recipient | AudioBuffer |
 | dissonance.ts | pur | — |
 | dither.ts | pur | — |
+| dosage.ts | pur | — |
 | ducking.ts | pur | — |
 | ecart-niveau.ts | recipient | AudioBuffer |
 | ecosysteme.ts | pur | — |
@@ -140,6 +141,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | matrice-parametres.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | metadonnees.ts | pur | — |
+| micromontage.ts | pur | — |
 | midi-ordre.ts | pur | — |
 | midi-vers-abc.ts | pur | — |
 | midi.ts | rendu | OfflineAudioContext |
@@ -168,6 +170,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | palette-harmonique.ts | recipient | AudioBuffer |
 | parfum.ts | pur | — |
 | particules.ts | pur | — |
+| passage-zero.ts | pur | — |
 | pca-neuronale.ts | recipient | AudioBuffer |
 | peigne.ts | recipient | AudioBuffer |
 | percussions-placement.ts | pur | — |

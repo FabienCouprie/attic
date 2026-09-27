@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **443 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **446 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 79 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (20) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 215 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (30) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 218 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 41 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 11 | [Export](#export) (4) · [Monitoring](#monitoring) (7) |
 | [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
@@ -194,13 +194,13 @@ Captures system audio (what comes out of the speakers). On start, Windows opens 
 
 | Component | Summary |
 |---|---|
-| [Curve](#curve) | Builds a modulation curve: oscillator, ramp, logistic sequence or random walk. |
+| [Curve](#curve) | Builds a modulation curve: oscillator, ramp, S curve, probability law, logarithm, logistic sequence or random walk. |
 
 #### Curve
 
 `generateur-courbe` · Inputs → Control
 
-*Builds a modulation curve: oscillator, ramp, logistic sequence or random walk.*
+*Builds a modulation curve: oscillator, ramp, S curve, probability law, logarithm, logistic sequence or random walk.*
 
 Builds a modulation curve to plug into an effect's Modulation input. A curve carries values between zero and one; the effect decides what zero and one mean at its end. The logistic sequence deserves an explanation, because it is this node's reason for being as much as the other shapes: seven nodes each reimplemented it on their own, logistic echo, logistic tremolo, logistic vibrato, logistic auto-pan, logistic chopper, logistic Paulstretch, logistic mixer. Seven implementations of the same sequence, and for seven effects only. A single source plugged into any effect does the same work, and for every effect that accepts a modulation. The sequence itself is x next = r x (1 - x): below 3 it settles on one value, around 3.45 it alternates between two then four, and beyond 3.57 it turns chaotic and never repeats; that is where the Chaos setting gets interesting. The periodic shapes give the ordinary tremolo, vibrato and sweep; the ramp gives the « progressive » effects; the random walk gives a gentle drift that never comes back to the same place.
 
@@ -210,13 +210,18 @@ Builds a modulation curve to plug into an effect's Modulation input. A curve car
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Shape | choice | Sine | Sine / Triangle / Square / Ramp / Logistic / Logistic chaos / Random | The shape of the modulation. Two entries carry the name logistic and do not denote the same thing. « Logistic » is the function 1/(1+e^(−k(t−t₀))), an S curve rising from zero to one once over the duration; « Centre » and « Steepness » set it, and « Frequency » does not reach it. « Logistic chaos » is the sequence x → r·x·(1−x), a succession of plateaus set by « Chaos » and whose frequency gives the number of steps per second. |
+| Shape | choice | Sine | Sine / Triangle / Square / Ramp / Logistic / Logistic chaos / Random / Gaussian / Poisson / Gamma / Chi-squared / Weibull / Logarithm (ln) / Logarithm (log10) | The shape of the modulation. Two entries carry the name logistic and do not denote the same thing. « Logistic » is the function 1/(1+e^(−k(t−t₀))), an S curve rising from zero to one once over the duration; « Centre » and « Steepness » set it, and « Frequency » does not reach it. « Logistic chaos » is the sequence x → r·x·(1−x), a succession of plateaus set by « Chaos » and whose frequency gives the number of steps per second. Five probability laws and two logarithms follow in the list, and all are traversed once over the duration without consuming the frequency. The laws are drawn from their density, peak brought to one and tail fallen before the end: the Gaussian is set by « Centre » and « Width », the Poisson law by « Mean », the gamma law by « Order », the chi-squared one by « Degrees of freedom », the Weibull one by « Exponent ». The chi-squared law with d degrees is the gamma law of order d over two, so the two plots superpose when the settings match, and the three continuous laws meet on the exponential decay at their lowest setting. The two logarithms rise from zero to one, « ln » over the interval from 1 to e and « log10 » over the one from 1 to 10; it is the gap between those bounds that tells the two plots apart, a change of base being no more than a constant factor, invisible on a curve brought between zero and one. |
 | Duration | slider | 10 s | 0.5 – 120 s, step 0.5 | Length of the curve. It need not match the sound's: the effect stretches it to cover it, so a ramp stays a ramp whatever the sound's length. |
 | Frequency | slider | 0.5 Hz | 0.01 – 20 Hz, step 0.01 | Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. Changing shape sets the rate that suits the new one: half a cycle per second for the periodic shapes, two steps per second for the logistic and random ones. A value set by hand is kept when the shape changes. Beyond four steps per second the plateaus become too narrow to tell apart in the trace. |
-| Centre | slider | 50 % | 0 – 100 %, step 1 | Where the S curve passes through half, as a share of the duration. At 50 % the transition sits in the middle. This setting acts on the Logistic shape only. |
+| Centre | slider | 50 % | 0 – 100 %, step 1 | Where the S curve passes through half, and where the Gaussian bell has its peak, as a share of the duration. At 50 % the transition or the peak sits in the middle. This setting acts on the Logistic and Gaussian shapes only. |
+| Width | slider | 15 % | 1 – 50 %, step 1 | Standard deviation of the Gaussian bell, as a share of the duration. At 15 % the bell takes a little under a third of the duration between its two inflexion points, and falls to four thousandths of its peak at the ends; at 50 % it stays at six tenths there. It never touches zero, a Gaussian having no end. This setting acts on the Gaussian shape only. |
 | Steepness | slider | 10 | 1 – 40, step 0.5 | Steepness of the S curve. At 1 it rises almost in a straight line; at 40 it approaches a step. The ends are brought back to zero and one whatever the value, so the travel always covers the whole range. This setting acts on the Logistic shape only. |
 | Chaos | slider | 3.9 | 2.5 – 4, step 0.01 | The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats. |
 | Seed | number | 1 | 1 – 999999, step 1 | Seed of the random walk. |
+| Mean | slider | 4 | 0.5 – 40, step 0.5 | Expectation of the Poisson law, which is also where its peak sits. The curve holds in plateaus, one per whole value, and the highest plateau is the one of the expectation's integer part: at 4.5 the curve counts sixteen plateaus of which the fifth is the highest. This setting acts on the Poisson shape only. |
+| Order | slider | 2 | 1 – 20, step 0.1 | Order k of the gamma law, of density x^(k−1)·e^(−x)/Γ(k). At 1 the curve is the exponential decay; beyond, it rises to a peak at k−1 then falls back, and the plot grows the more symmetrical as the order grows. The law's scale has no setting: it stretches the axis without changing the shape, and the plot always covers the law's useful extent. This setting acts on the Gamma shape only. |
+| Degrees of freedom | slider | 3 | 2 – 30, step 1 | Degrees of freedom of the chi-squared law, of density x^(d/2−1)·e^(−x/2)/(2^(d/2)·Γ(d/2)). At 2 the curve is the exponential decay; beyond, its peak sits at d−2 and moves away from the origin as the degrees grow. The travel starts at two because the density goes to infinity at zero for a single degree. This setting acts on the Chi-squared shape only. |
+| Exponent | slider | 1.5 | 1 – 8, step 0.1 | Exponent k of the Weibull law, of density k·x^(k−1)·e^(−x^k). At 1 the curve is the exponential decay; between 1 and 3, a bell whose tail trails to the right; around 3.6 it is nearly symmetrical; beyond, it tightens and leans to the left. This setting acts on the Weibull shape only. |
 
 ### Fractals
 
@@ -553,7 +558,7 @@ Generates a chord progression from the key, scale and genre. Each chord is arpeg
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic | Scale used to build the chords (7 modes + 2 pentatonic scales). |
+| Scale | choice | Major | Major / minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic | Scale used to build the chords: seven modes, two pentatonics, blues and chromatic. |
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style determines the chord progression. Settings: « Custom » to enter your own progression below. |
 | Progression | text | `I-IV-V-I` |  | Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV. Used only when Genre = Custom. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -1130,7 +1135,7 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the harmonic grid. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic | Scale used to build chords (7 modes + 2 pentatonic scales). |
+| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatic | Scale used to build chords: seven modes, two pentatonics, blues and chromatic. |
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style that determines the chord progression. Settings: « Custom » to enter the progression. |
 | Progression | text | `I-V-vi-IV` |  | Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V-I). Used only when Genre = Custom. |
 | Tempo | number | 110 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
@@ -3223,6 +3228,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 |---|---|
 | [Add Silence](#add-silence) | Adds silence at the beginning and/or end of the track. |
 | [Audio Join](#audio-join) | Places two tracks one after the other with a crossfade. |
+| [Effect Blend](#effect-blend) | Blends a sound and its treated version in a proportion that varies over time, to apply an effect over one portion only. |
 | [Extract duration](#extract-duration) | Measures track duration and passes it along. |
 | [Extract Zone](#extract-zone) | Extracts a portion with fade and returns the Zone object. |
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
@@ -3234,6 +3240,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Loop End C](#loop-end-c) | Closes a graph loop and stacks the passes on top of one another, like the mixer. |
 | [Loop Start](#loop-start) | Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result. |
 | [Maquette](#maquette) | Lays sequences on a timeline, each at its own instant, length and pitch. |
+| [Micromontage](#micromontage) | Assembles a sound from thousands of fragments, each cut and laid at its own place. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts, one per instrument, to play them with four different banks. |
@@ -3247,6 +3254,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Sequence Mixer](#sequence-mixer) | Superimposes several sequences into one, each becoming a voice. |
 | [Slot Loop End](#slot-loop-end) | Closes a slot loop: each pass is folded to its slot, then all are reunited. |
 | [Slot Loop Start](#slot-loop-start) | Opens a loop: what follows is computed once per slot, and knows the place it will occupy. |
+| [Snap Cuts](#snap-cuts) | Moves zone boundaries to the nearest zero crossing, so that cuts do not click. |
 | [Sound Object Segmentation](#sound-object-segmentation) | Finds the sound objects of a recording (by attacks, silences or changes of timbre) and describes them. |
 | [Track Aligner](#track-aligner) | Aligns a track to a reference length (silence or fade). |
 | [Trim Silence](#trim-silence) | Removes silence at the start and end of a take, and in the middle if asked. |
@@ -3287,6 +3295,33 @@ Puts two tracks end to end. The first fades out while the second fades in over a
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Overlap | number | 2 s | 0 – 30 s, step 0.1 | Crossfade duration between the end of track 1 and the start of track 2. |
+
+#### Effect Blend
+
+`doser-effet` · Processing → Editing
+
+*Blends a sound and its treated version in a proportion that varies over time, to apply an effect over one portion only.*
+
+Blends a sound and its treated version, in a proportion that varies over time. The « Dry » input receives the original sound, the « Treated » input the effect's output. The blend is the treated share of the mix: at zero, the output is the dry alone. An effect does not switch on or off. Cutting its input or connecting its output all at once produces a discontinuity, which contains every frequency and is heard as a click. The treated share rises and falls along a ramp, and the output stays continuous. « Zones » receives the portions of time to treat. With no zone, the blend covers the whole duration. « Amount » is the treated share. « Curve » drives it over time: the curve then travels the interval from « Amount min » to « Amount max », and the zones window it. The zones say where, the curve says how much inside. « Mode » gives the way of applying. In « Insert », the treated replaces the dry, which fades out as it comes: that is what a filter, a distortion, a transposition call for. In « Send », the dry stays whole and the treated adds to it: that is what a reverberation or a delay call for. « Fade in » and « Fade out » give the length of the ramps. They sit outside the zone, so that a zone is treated whole whatever its length. Two zones whose ramps meet take the higher of the two values, and the envelope does not dip between them. « Fade law » gives the shape of the ramps. « Linear » suits a treated signal that resembles the dry and adds in phase with it, as a filter's does. « Constant power » suits two signals with no phase relation left, a reverberation or a transposition: the shares are taken as square roots, and the level does not dip by three decibels mid-ramp. « Applied to » treats the zones, or everything that is not them. The two inputs share one time base: the blend is made instant by instant, and so assumes that instant t names the same place in the sound on both sides. An effect that adds a tail to the sound respects that, the tail coming after. An effect that stretches the sound, reverses it or displaces it does not: the treated no longer answers the dry at the same instant, and the zone falls elsewhere than where it was drawn. A treatment that changes the sound's duration is laid down by montage, the passage being extracted, treated, then put back in place. The message gives both durations as soon as they differ. An effect's tail is cut with the zone, since it is the effect's output that is windowed here. For a reverberation to sound after the passage that triggers it, it is the effect's input that must be windowed, upstream of it, the blend then having only to add. The output takes the longer of the two inputs, the dry padded with silence: an effect that lengthens the sound keeps what it added. A monophonic treated signal fed against a stereophonic dry one is doubled, and the blend keeps its two channels. The « Audio » output carries the blend. The message gives the number of zones, the share of the duration touched and the mean blend.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Dry | audio |  |
+| input | Treated | audio |  |
+| input | Zones | control |  |
+| input | Curve | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Amount | slider | 100 % | 0 – 100 %, step 1 | The treated share in the blend, when no curve drives it. At zero the output is the dry alone, whatever the zones. |
+| Amount min | slider | 0 % | 0 – 100 %, step 1 | The treated share when the curve is at its lowest. |
+| Amount max | slider | 100 % | 0 – 100 %, step 1 | The treated share when the curve is at its highest. |
+| Mode | choice | Insert | Insert / Send | In insert, the treated replaces the dry, which fades out as it comes: that is what a filter, a distortion, a transposition call for. In send, the dry stays whole and the treated adds to it: that is what a reverberation or a delay call for. |
+| Applied to | choice | Inside the zones | Inside the zones / Outside the zones | Treat the zones received, or everything that is not them. The ramps invert with the rest, and the output stays continuous. |
+| Fade in | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp before each zone. It sits outside, so that the zone is treated whole. Below five milliseconds the ramp becomes audible again as a click on low sounds: a fade covers at least one period of the lowest frequency present. |
+| Fade out | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp after each zone, outside it as well. |
+| Fade law | choice | Linear | Linear / Constant power | Two signals in phase add in amplitude, and their sum keeps its level when the two shares make one: that is linear, and that is the case of a sound and its filtered version. Two signals with no phase relation add in power, and their sum keeps its level when the squares of the two shares make one: that is constant power, and that is the case of a sound and its reverberation. Choosing wrong digs three decibels mid-ramp. This setting acts in insert only, a send adding instead of crossing. |
 
 #### Extract duration
 
@@ -3521,6 +3556,54 @@ Lays the received sequences on a timeline and returns them as one. Each box has 
 | Length 8 | number | 0 s | 0 – 600 s, step 0.01 | Length imposed on box 8, its content being stretched in the same ratio. At zero, the box keeps its own length. |
 | Transposition 8 | number | 0 | -24 – 24, step 0.5 | Shift of box 8's pitches, in semitones. |
 | One voice per box | choice | Yes | Yes / No | Gives each box its own voice number, which engraves as many staves as there are boxes. |
+
+#### Micromontage
+
+`micromontage` · Processing → Editing
+
+*Assembles a sound from thousands of fragments, each cut and laid at its own place.*
+
+Assembles a sound from short fragments cut out of the received sources, each with its own instant of cutting, instant of laying, length, level, place in the image and pitch offset. The instant of cutting and the instant of laying are independent of one another: that is what separates montage from playback. After Curtis Roads, « Microsound », MIT Press, 2001, chapter 6, and the practice of Horacio Vaggione. Each quantity is set by three controls: its value, its second bound, and its law. « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. « Fragments » gives their number, up to 4000. « Source » states which one each is cut from, counting from one. A number with no connected input falls back to the first. « Cut » is the place of the cut inside the source, from zero at the start to one at the end. « Lay » is the instant at which the fragment falls in the result, in seconds. It is this quantity that makes the form: a ramp spreads the cloud, a draw scatters it. « Length » is that of the laid fragment, in seconds. Below fifty milliseconds the pitch of the fragment stops being heard and it is the grain that speaks. « Level » is its level. « Pan » its place, from minus one at the left to one at the right, at constant power. « Transposition » its pitch offset in semitones: it reads more or less source without changing the laid length. Transposition can be driven by a curve. Each fragment reads there the value matching its instant of laying: the cloud falls then rises, and a gesture is heard where a draw gives only a texture. The two modulation bounds state what the curve's zero and one mean; with no curve connected they do nothing. « Window » decides the shape of each fragment. The Gaussian is the reference of the book; the trapezoid keeps a plateau, hence body; the expodec decays after a brief attack, the rexpodec rises then cuts. The last two give a direction to time inside the fragment. « Seed » governs the draws. At equal seed, the same score. « Level out » sets the output; density does not affect it, the sum being brought back to the square root of the mean overlap. The « Audio » output carries the montage, always in two channels since each fragment carries its place. The « Analysis » output gives the number of fragments laid, those that fell outside their source, the length, the density in fragments per second and the greatest number sounding together.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Source 1 | audio | required |
+| input | Source 2 | audio |  |
+| input | Source 3 | audio |  |
+| input | Source 4 | audio |  |
+| input | Transposition modulation | curve |  |
+| output | Audio | audio (stereo) |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fragments | slider | 400 | 1 – 4000, step 1 | How many fragments the score carries. |
+| Source | slider | 1 | 1 – 4, step 1 | Which source the fragment is cut from, counting from one. |
+| Source, end | slider | 4 | 1 – 4, step 1 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Source, law | choice | Fixed | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Cut | slider | 0 | 0 – 1, step 0.001 | The place of the cut inside the source, from zero at the start to one at the end. |
+| Cut, end | slider | 1 | 0 – 1, step 0.001 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Cut, law | choice | Draw | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Lay | slider | 0 s | 0 – 120 s, step 0.01 | The instant at which the fragment falls in the result. |
+| Lay, end | slider | 8 s | 0 – 120 s, step 0.01 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Lay, law | choice | Ramp | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Length | slider | 0.04 s | 0.002 – 2 s, step 0.001 | The length of the laid fragment. |
+| Length, end | slider | 0.12 s | 0.002 – 2 s, step 0.001 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Length, law | choice | Draw | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Level | slider | 0.3 | 0 – 1, step 0.01 | The level of the fragment. |
+| Level, end | slider | 1 | 0 – 1, step 0.01 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Level, law | choice | Draw | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Pan | slider | -1 | -1 – 1, step 0.01 | The place of the fragment, from minus one at the left to one at the right. |
+| Pan, end | slider | 1 | -1 – 1, step 0.01 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Pan, law | choice | Draw | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Transposition | slider | 0 | -24 – 24, step 0.1 | The pitch offset of the fragment, in semitones. A connected curve drives it instead. |
+| Transposition, end | slider | 0 | -24 – 24, step 0.1 | The second bound, for a ramp or a draw. No effect on « Fixed ». |
+| Transposition, law | choice | Fixed | Fixed / Ramp / Draw | « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. |
+| Transposition min | slider | -12 | -24 – 24, step 0.1 | The offset that a connected curve's zero means. With no curve, this setting does nothing. |
+| Transposition max | slider | 12 | -24 – 24, step 0.1 | The offset that the curve's one means. |
+| Window | choice | Gaussian | Gaussian / Trapezoid / Expodec / Rexpodec | The shape of each fragment. The two exponentials give a direction to time inside the fragment. |
+| Seed | slider | 1 | 1 – 9999, step 1 | The number of the draw. At equal seed, the same score. |
+| Level out | slider | 80 % | 0 – 100 %, step 1 | The level of the montage. Density does not affect it: the sum is already brought back to the square root of the mean overlap. |
 
 #### MIDI Join
 
@@ -3849,6 +3932,26 @@ Opens a loop over slots: what is laid between this node and « Slot Loop End » 
 | Lengths | text | `2` |  | The lengths of the slots, written the same way. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The tempo carried by the returned sequence. |
 
+#### Snap Cuts
+
+`caler-coupes` · Processing → Editing
+
+*Moves zone boundaries to the nearest zero crossing, so that cuts do not click.*
+
+Moves each boundary of the received zones to the nearest zero crossing of the waveform, and returns the zones thus snapped. Cutting a waveform anywhere but at zero leaves a step: the sample is at seven tenths and then, all at once, nothing. A step contains every frequency, and that is what is heard as a click. Moving the cut by a few samples is enough to remove it. The direction of the slope matters as much as the zero. Laying both ends of a splice on a zero removes the step but not the corner: a waveform that was rising and starts falling makes an angle, and an angle is heard. When every boundary is snapped to a rising zero, any end joins any other without having to choose which ones go together. « Search » is the greatest distance a boundary may move, in milliseconds. A boundary with no crossing within that radius stays where it is, and the report counts it. « Slope » chooses the direction of the crossing. « Rising » is the setting that makes every splice compatible with every other; « Either » takes the nearest zero whatever its direction, which moves less but leaves angles possible. The search is made on the sum of the channels. Two uncorrelated channels do not cross zero at the same instant, and no instant then suits both perfectly: the report gives what remains on the worst one, before and after, so that the limit is visible. A zone that snapping would turn inside out, its start passing after its end, is dropped rather than returned reversed. The « Zones » output carries the snapped zones, in the form the montage nodes expect. The « Analysis » output gives the number of boundaries, how many were snapped, how many found no crossing, the mean and greatest displacement, and the step remaining before and after.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Zones | control |  |
+| output | Zones | control |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Search | slider | 5 ms | 0.1 – 50 ms, step 0.1 | The greatest distance a boundary may move. Beyond it, the boundary stays where it is. |
+| Slope | choice | Rising | Rising / Falling / Either | The direction of the crossing. One single direction for every boundary makes any splice compatible with any other. |
+
 #### Sound Object Segmentation
 
 `decoupage-objets` · Processing → Editing
@@ -3927,7 +4030,8 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Action | choice | Mute zones | Mute zones / Keep zones | « Mute » silences the zones and keeps the rest; « Keep » keeps only the zones and silences the rest. The two are complementary. |
-| Fade | number | 10 ms | 0 – 100 ms | Fade applied at zone edges to avoid clicks. |
+| Fade in | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp before each zone. It sits outside, so that a zone is kept or muted whole whatever its length. |
+| Fade out | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp after each zone, outside it as well. Two zones whose ramps meet take the higher of the two values. |
 
 ### Envelope control
 
@@ -8652,7 +8756,7 @@ Shuffles the notes of the received circle between its positions and returns the 
 
 *Places a rhythm on a circle of equal positions, and draws its inscribed polygon.*
 
-Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise. The polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed. A click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to 48; the pattern already laid is kept, padded with rests or cut at the end. « Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes as it stands from the address of an online rhythm circle. « Drum » selects the sound, the same for every onset of the circle. The « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it. After: Paul Lascabettes, Corentin Guichaoua & Moreno Andreatta (2025). The Rhythm Circle: An Interactive Open-Source Web Environment Based on the Circular Representation, International Computer Music Conference, Boston (MA), United States.
+Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise. The polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed. A click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to 48; the pattern already laid is kept, padded with rests or cut at the end. « Rhythm » lays in one go one of the eleven traditional rhythms of the list: tresillo, son, shiko, soukous, rumba, bossa nova, gahu, samba, fume-fume, bembé and the one by Steve Reich. They come from Godfried Toussaint's « The Geometry of Musical Rhythm », which uses them as examples: the six with sixteen positions and five onsets are his claves, and they all have the same sum of arcs, it is the chords that tell them apart. Four of them obtain the best score for their size in Paul Lascabettes and Isabelle Bloch, « What Are "Good" Rhythms? », MCM 2024: the son at five onsets on sixteen, the tresillo at three on eight, the fume-fume at five on twelve, the samba at seven on sixteen. On « Free », it is « Pattern » that governs. « Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes as it stands from the address of an online rhythm circle. Clicking a position writes that pattern and sets « Rhythm » back to « Free », which keeps the chosen rhythm as a starting point. « Drum » selects the sound, the same for every onset of the circle. The « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it. After: Paul Lascabettes, Corentin Guichaoua & Moreno Andreatta (2025). The Rhythm Circle: An Interactive Open-Source Web Environment Based on the Circular Representation, International Computer Music Conference, Boston (MA), United States.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8660,7 +8764,8 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. |
+| Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
+| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
 | Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
 import { BoutonModeles } from "./BoutonModeles";
+import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
 import { PROFONDEURS } from "./profondeur-export";
 import type { ProfondeurExport } from "../audio/io";
@@ -19,6 +20,8 @@ interface Props {
   onResumeAudio: () => Promise<void>;
   onExporter: () => void;
   onImporter: (f?: File) => void;
+  /** Ouvre un graphe livré avec l'application. Il arrive sans fichier courant, donc non modifiable. */
+  onOuvrirExemple: (id: string) => void;
   onDetacher: () => void;
   onSauvegarder: () => void;
   onDetacherFichier: () => void;
@@ -61,11 +64,12 @@ const FAVORIS = [
 ];
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
+  const [exemplesOuverts, setExemplesOuverts] = useState(false);
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
   const [verifEnCours, setVerifEnCours] = useState(false);
   const [etatAudio, setEtatAudio] = useState<string>("");
@@ -160,6 +164,23 @@ export function BarreOutils(props: Props) {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 14V5m-4 4 4-4 4 4M3 2h10"/></svg>
         </button>
         <input ref={refImport} type="file" accept=".json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onImporter(f); e.target.value = ""; }} />
+        {/* Les exemples, à côté des deux flèches : une page cornée, qui n'est ni un envoi ni une
+            réception. Ils viennent du paquet et non du disque, et s'ouvrent donc sans fichier
+            courant : l'enregistrement en fera une copie dans le dossier de travail. */}
+        <div className="attic-favs" onMouseEnter={() => setExemplesOuverts(true)} onMouseLeave={() => setExemplesOuverts(false)}>
+          <button className="attic-btn-icon" title={`${eti("exemples")} — ${t("barre.exemples.copie")}`} aria-label={eti("exemples")}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 1.5H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V5.5L9 1.5zM9 1.5V5h4"/></svg>
+          </button>
+          {exemplesOuverts && EXEMPLES.length > 0 && (
+            <div className="attic-favs-drop">
+              {/* L'ordre alphabétique est celui de la langue affichée : rangée sur les titres
+                  français, la liste paraissait en désordre une fois passée en anglais. */}
+              {[...EXEMPLES].sort((a, b) => nomDeLExemple(a, lang).localeCompare(nomDeLExemple(b, lang), lang)).map((ex) => (
+                <button key={ex.id} type="button" onClick={() => { setExemplesOuverts(false); onOuvrirExemple(ex.id); }}>{nomDeLExemple(ex, lang)}</button>
+              ))}
+            </div>
+          )}
+        </div>
         {/* Un sablier — la sauvegarde automatique est affaire d'intervalle —, barré quand
             elle est coupée. Ni disque ni flèche circulaire : la barre en compte déjà, et
             c'est précisément ce qu'on ne veut plus confondre. */}

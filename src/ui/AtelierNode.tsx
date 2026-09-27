@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 const trouverDef = (id: string) => registre.trouverDef(id);
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { useI18n } from "../i18n";
+import { champTexte, texteBilingue } from "./texte-bilingue";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./vues";
 import { useStatut } from "./statuts";
 import { etatPorts } from "./ports-extensibles";
@@ -86,6 +87,9 @@ export type DonneesNoeud = {
   zonesSelectionnees?: { debut: number; duree: number }[];
   onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;
   onChargerIR?: (id: string, fichier: File) => void;
+  /** Le texte d'une note ou d'un cadre, et sa version anglaise quand il en a une. */
+  nom?: string;
+  nomEn?: string;
   [key: string]: unknown;
 };
 
@@ -469,7 +473,8 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const RING_CIRCUMFERENCE = 2 * Math.PI * 10;
 
   if (nodeEstCommentaire) {
-    const texte = typeof data.nom === "string" ? data.nom : "";
+    const champ = champTexte(data, lang);
+    const texte = texteBilingue(data, lang);
     return (
       <div className={`attic-node comment ${selected ? "selected" : ""}`} ref={nodeRef}>
         <NodeResizer minWidth={140} minHeight={80} maxWidth={800} maxHeight={600} lineClassName="attic-node-comment-resize-line" handleClassName="attic-node-comment-resize-handle" />
@@ -480,8 +485,8 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
         <textarea
           className="attic-node-comment-texte nodrag"
           value={texte}
-          onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, nom: e.target.value } } : n))}
-          placeholder="Ajouter une note..."
+          onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champ]: e.target.value } } : n))}
+          placeholder={t("note.ajouter")}
           onPointerDown={(e) => e.stopPropagation()}
           spellCheck={false}
         />
@@ -490,7 +495,8 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   }
 
   if (estCadre) {
-    const titre = typeof data.nom === "string" ? data.nom : "";
+    const champCadre = champTexte(data, lang);
+    const titre = texteBilingue(data, lang);
     const couleur = typeof data.couleur === "string" ? data.couleur : "rgba(120,120,120,0.12)";
     const COULEURS_CADRE = [
       "rgba(120,120,120,0.12)",
@@ -507,8 +513,8 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           <input
             className="attic-node-frame-titre nodrag"
             value={titre}
-            onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, nom: e.target.value } } : n))}
-            placeholder="Cadre"
+            onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champCadre]: e.target.value } } : n))}
+            placeholder={t("cadre.titre")}
             onPointerDown={(e) => e.stopPropagation()}
           />
           <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>

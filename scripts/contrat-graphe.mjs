@@ -27,7 +27,19 @@ import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "n
 import { dirname, join, relative } from "node:path";
 
 /** Où l'on range des graphes. Un graphe écrit ailleurs échappe à ce contrôle, et le test le rattrape. */
-const DOSSIERS = ["", "presets", "tests-e2e"];
+const DOSSIERS = ["", "presets", "exemples", "tests-e2e"];
+
+/**
+ * Le dossier `exemples/` est tout entier sous contrat, et son nom suffit à le dire.
+ *
+ * LES DEUX DOSSIERS N'ONT PAS LE MÊME RÔLE, et c'est ce qui permet la différence. `presets/` n'est
+ * pas versionné : c'est là qu'on travaille, et un graphe qu'on est en train de câbler y est
+ * momentanément incomplet par nature. `exemples/` est versionné et livré : ce qui s'y trouve est
+ * montré à quelqu'un d'autre, et n'a donc pas le droit d'être à moitié fait. Un travail en cours se
+ * range dans `presets/`.
+ */
+const estExemple = (dossier, nom) =>
+  dossier === "exemples" ? /\.json$/i.test(nom) : EXEMPLE.test(nom);
 
 /**
  * Seuls les graphes D'EXEMPLE sont tenus, et leur nom le dit.
@@ -65,7 +77,7 @@ function fichiersCandidats() {
       continue;
     }
     for (const nom of entrees) {
-      if (!EXEMPLE.test(nom)) continue;
+      if (!estExemple(d, nom)) continue;
       const complet = join(chemin, nom);
       try {
         if (!statSync(complet).isFile()) continue;

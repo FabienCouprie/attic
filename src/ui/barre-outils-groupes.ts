@@ -43,6 +43,9 @@ export const OUTILS: OutilBarre[] = [
   { id: "sauvegarder", famille: "fichier", cle: "barre.sauvegarder", raccourci: "Ctrl+S" },
   { id: "exporter", famille: "fichier", cle: "barre.exporter", raccourci: "Ctrl+Shift+S" },
   { id: "importer", famille: "fichier", cle: "barre.importer", raccourci: "Ctrl+O" },
+  // À côté des deux flèches, demandé par Fabien : un exemple s'ouvre comme un projet, mais il vient
+  // du paquet et non du disque, et c'est ce qui le rend non modifiable.
+  { id: "exemples", famille: "fichier", cle: "barre.exemples" },
   // Deux entrées pour un seul bouton, comme lancer/arrêter : l'étiquette dit ce que le
   // clic va faire, et non l'état dans lequel on se trouve.
   { id: "sauvegardeAutoActiver", famille: "fichier", cle: "barre.sauvegardeAutoActiver" },
