@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 65 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 130 · transposable tel quel
+- **pur** : 138 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -57,6 +57,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | conduite-voix.ts | pur | — |
 | conformite-clavier.ts | pur | — |
 | continuation-spectrale.ts | recipient | AudioBuffer |
+| contraintes-ecrites.ts | pur | — |
+| contraintes.ts | pur | — |
+| contrepoint-solveur.ts | pur | — |
 | contrepoint.ts | pur | — |
 | convolution.ts | rendu | OfflineAudioContext |
 | correction-hauteur.ts | pur | — |
@@ -93,11 +96,13 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | enveloppe.ts | recipient | AudioBuffer |
 | esthetique.ts | pur | — |
 | euclidien.ts | pur | — |
+| evolution.ts | pur | — |
 | fdn.ts | pur | — |
 | features-piste.ts | recipient | AudioBuffer |
 | fft.ts | pur | — |
 | fof.ts | pur | — |
 | formants.ts | recipient | AudioBuffer |
+| formule-sequence.ts | pur | — |
 | frequence-source.ts | rendu | OfflineAudioContext |
 | gammes-monde.ts | pur | — |
 | gendyn.ts | recipient | AudioBuffer |
@@ -129,6 +134,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | markov.ts | pur | — |
 | masquage.ts | pur | — |
 | math-formules.ts | recipient | AudioBuffer |
+| matrice-parametres.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | metadonnees.ts | pur | — |
 | midi-ordre.ts | pur | — |
@@ -174,6 +180,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | quantification.ts | pur | — |
 | random-slice.ts | recipient | AudioBuffer |
 | recaler-niveau.ts | recipient | AudioBuffer |
+| reecriture-arbre.ts | pur | — |
 | reetirage-dtw.ts | recipient | AudioBuffer |
 | reich.ts | recipient | AudioBuffer |
 | repartition-midi.ts | pur | — |
@@ -185,6 +192,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | rythme-analyse.ts | pur | — |
 | scanning.ts | pur | — |
 | schillinger.ts | pur | — |
+| separation-voix.ts | pur | — |
 | sequence-formes.ts | pur | — |
 | sequence.ts | pur | — |
 | series-intervalles.ts | pur | — |

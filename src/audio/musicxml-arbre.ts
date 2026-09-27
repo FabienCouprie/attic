@@ -215,6 +215,24 @@ export function voixVersMusicXML(
   return lignes.join("\n");
 }
 
+/**
+ * La clé d'une portée, choisie sur les hauteurs qu'elle porte.
+ *
+ * UNE SEULE CLÉ POUR TOUT NE TIENT PLUS DÈS QU'IL Y A DEUX PORTÉES. Une voix de basse gravée en clé
+ * de sol se lit sur quatre lignes supplémentaires sous la portée, ce qu'aucune partition n'écrit.
+ * La médiane décide, et non la note la plus grave : une seule note basse dans une ligne aiguë ne
+ * doit pas faire changer de clé toute la portée.
+ */
+function cleDe(hauteurs: readonly number[]): string {
+  if (hauteurs.length === 0) return "<sign>G</sign><line>2</line>";
+  const triees = [...hauteurs].sort((a, b) => a - b);
+  const mediane = triees[Math.floor(triees.length / 2)];
+  // Le do central vaut 60 ; en dessous, la clé de fa épargne les lignes supplémentaires.
+  return mediane < 60
+    ? "<sign>F</sign><line>4</line>"
+    : "<sign>G</sign><line>2</line>";
+}
+
 /** Le corps d'une portée : ses mesures, ses notes, ses n-olets. */
 function unePartie(
   mesures: readonly Mesure[], hauteurs: readonly number[], tempo: number, avecTempo: boolean,
@@ -233,7 +251,7 @@ function unePartie(
       lignes.push(`        <divisions>${divisions}</divisions>`);
       lignes.push('        <key><fifths>0</fifths></key>');
       lignes.push(`        <time><beats>${m.metrique[0]}</beats><beat-type>${m.metrique[1]}</beat-type></time>`);
-      lignes.push('        <clef><sign>G</sign><line>2</line></clef>');
+      lignes.push(`        <clef>${cleDe(hauteurs)}</clef>`);
       lignes.push('      </attributes>');
       if (avecTempo) {
         lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${tempo}</per-minute></metronome></direction-type><sound tempo="${tempo}"/></direction>`);

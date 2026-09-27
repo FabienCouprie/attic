@@ -360,6 +360,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "rouleau-sequence",
+    "vue": "RouleauSequence",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "sampler-personnalise",
     "vue": "VueUploadAudio",
     "entreeAudio": false,

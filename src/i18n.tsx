@@ -152,6 +152,14 @@ const DICO: Record<string, Record<Langue, string>> = {
   "arbre.liee.division": { fr: "Liée à la précédente ; la division sera défaite", en: "Tied to the previous one; the division will be undone" },
   "arbre.ajouter": { fr: "Ajouter une branche après", en: "Add a branch after" },
   "arbre.retirer": { fr: "Retirer cette branche", en: "Remove this branch" },
+  "rouleau.titre": { fr: "Rouleau", en: "Roll" },
+  "rouleau.vide": { fr: "Aucune séquence reçue.", en: "No sequence received." },
+  "rouleau.notes": { fr: "notes", en: "notes" },
+  "rouleau.tempo": { fr: "à la noire", en: "bpm" },
+  "rouleau.voix": { fr: "Voix", en: "Voice" },
+  "rouleau.microtons": { fr: "microtons", en: "microtones" },
+  "rouleau.laissees": { fr: "notes non dessinées", en: "notes not drawn" },
+  "rouleau.silence": { fr: "silence final", en: "trailing silence" },
   "clavier.enreg": { fr: "Enregistrer", en: "Record" },
   "clavier.arreter": { fr: "Arrêter", en: "Stop" },
   "clavier.rejouer": { fr: "Rejouer", en: "Replay" },
@@ -203,6 +211,10 @@ const DICO: Record<string, Record<Langue, string>> = {
   "meta.degrouperSelection": { fr: "Sélectionnez un méta-composant à dégrouper.", en: "Select a meta-component to ungroup." },
   "meta.renommerSelection": { fr: "Sélectionnez un méta-composant à renommer.", en: "Select a meta-component to rename." },
   "meta.nouveauNom": { fr: "Nouveau nom", en: "New name" },
+  "meta.description.invite": {
+    fr: "Écrire ici ce que fait ce méta-composant",
+    en: "Write here what this meta-component does",
+  },
   // Le {nom} est substitué par `String.replace`, pas par le mécanisme __VAR_n__.
   "meta.confirmSupprimerCatalogue": { fr: "Supprimer « {nom} » du catalogue ?", en: "Remove “{nom}” from the catalog?" },
   "msg.aucunFichierAudio": { fr: "Aucun fichier audio", en: "No audio file" },
@@ -469,6 +481,12 @@ const DICO: Record<string, Record<Langue, string>> = {
 };
 
 const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
+  // Ce que lit quelqu'un dont le graphe porte un cycle. Il dit la cause ET le remède : un nœud
+  // qu'on voit à l'écran mais qui ne s'exécute jamais n'a aucune raison apparente de se taire.
+  "erreur.cycle": {
+    fr: "Ce nœud est pris dans une boucle de câblage : une chaîne revient sur elle-même, et rien ne peut s'y exécuter. Défaire l'arête qui remonte vers l'amont.",
+    en: "This node is caught in a wiring loop: a chain comes back on itself, and nothing in it can run. Remove the edge that goes back upstream.",
+  },
   "msg.aucune_entr_e_audio": { fr: "Aucune entrée audio.", en: "No audio input." },
   "msg.aucune_entr_e": { fr: "Aucune entrée.", en: "No input." },
   "msg.branchez_la_sortie_analyse": { fr: "Branchez la sortie Analyse.", en: "Connect the Analysis output." },

@@ -10,6 +10,7 @@ import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modifie";
 import { estUniteMultiplicative } from "../audio/courbe";
+import { decrireMeta, estMeta, trouverMeta } from "../core";
 
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
@@ -177,6 +178,36 @@ function PlageModulation(
   );
 }
 
+/**
+ * Ce que l'auteur d'un méta-composant dit du sien, et qu'il peut écrire ici.
+ *
+ * POURQUOI UN ÉTAT LOCAL PLUTÔT QU'UNE ÉCRITURE À CHAQUE TOUCHE. Écrire dans le méta réenregistre
+ * sa fiche et rafraîchit le catalogue entier : le faire à chaque caractère ferait ce travail vingt
+ * fois par mot. Le texte est donc retenu ici pendant la frappe et posé quand on quitte le champ.
+ *
+ * LE TEXTE SUIT LE MÉTA QUAND ON CHANGE DE NŒUD. Sans cela, le champ garderait la description du
+ * méta précédent : `metaId` sert de clé au rechargement, et non le simple montage du composant.
+ */
+function DescriptionDeMeta({ metaId, repli }: { metaId: string; repli: string }) {
+  const { t } = useI18n();
+  const [texte, setTexte] = useState(() => trouverMeta(metaId)?.description ?? "");
+  useEffect(() => { setTexte(trouverMeta(metaId)?.description ?? ""); }, [metaId]);
+  return (
+    <textarea
+      className="inspecteur-resume inspecteur-description-meta"
+      value={texte}
+      rows={3}
+      placeholder={`${repli}\n${t("meta.description.invite")}`}
+      aria-label={t("meta.description.invite")}
+      onChange={(e) => setTexte(e.target.value)}
+      onBlur={() => decrireMeta(metaId, texte)}
+      // LA TOUCHE NE DOIT PAS ATTEINDRE LE CANEVAS. Sans cela, une espace lance l'exécution et
+      // « Suppr » efface le nœud qu'on est en train de décrire.
+      onKeyDown={(e) => e.stopPropagation()}
+    />
+  );
+}
+
 export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, onSupprimer, onReinitialiser, onEnregistrer, onEnregistrerMidi, parametresModules, portsBranches }: Props) {
   const { t, lang } = useI18n();
   const [docsOuverts, setDocsOuverts] = useState<Set<string>>(new Set());
@@ -209,7 +240,12 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
     <div className="inspecteur">
       <div className="inspecteur-entete">
         <h2>{nomFiche(def, lang)}</h2>
-        <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>
+        {/* UN MÉTA-COMPOSANT EST LE SEUL À VOIR SON RÉSUMÉ ÉDITABLE, et c'est la différence de
+            nature qui le justifie : celui d'un composant du catalogue est rédigé dans sa fiche et
+            tenu par le contrat de notice, tandis qu'un méta n'a que ce qu'on calcule sur lui. */}
+        {estMeta(def.id)
+          ? <DescriptionDeMeta metaId={def.id} repli={resumeFiche(def, lang)} />
+          : <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>}
       </div>
 
       {(def.id === "montage" || def.id === "maquette") && (

@@ -9,11 +9,38 @@
 // l'une des deux change, le test tombe.
 import { describe, expect, it } from "vitest";
 import {
-  CANAL_PERCUSSION, DUREE_NOTE_MAX, NOTES_PERCUSSION_GM, NUANCE_MAX, dureeDuPas,
+  CANAL_PERCUSSION, DUREE_NOTE_MAX, NOTES_PERCUSSION_GM, NUANCE_MAX, PERCUSSIONS_CHOIX, dureeDuPas,
   frappesDeGrilleVelocite, frappesDePistesBooleennes, instantDuPas, notesDepuisFrappes,
   velociteMidiDepuisNuance,
 } from "./batterie-midi";
 import { VOIX_KIT } from "./kit-batterie";
+import { declenchementsPour } from "./percussions-placement";
+
+describe("les percussions offertes au choix", () => {
+  // CE QUE CE CONTRÔLE ARRÊTE. Le placement renvoie la grosse caisse pour tout numéro qu'il ne
+  // connaît pas. Une percussion offerte dans un menu mais absente de sa table se jouerait donc en
+  // grosse caisse, sans erreur ni message : on choisit « Clave », on entend un kick, et rien ne dit
+  // pourquoi. Relevé sur une liste écrite à la main ailleurs dans le dépôt, où trois entrées sur
+  // huit étaient dans ce cas.
+  it("CHACUNE A SA PROPRE VOIX, et aucune ne retombe sur la grosse caisse par défaut", () => {
+    const voixDe = (note: number) => declenchementsPour(note).map((d) => d.voix).join("+");
+    const voixDuKick = voixDe(36);
+    for (const p of PERCUSSIONS_CHOIX) {
+      if (p.note === 36) continue;
+      expect(voixDe(p.note), `${p.fr} (${p.note})`).not.toBe(voixDuKick);
+    }
+  });
+
+  it("ce sont les mêmes huit notes que celles des pistes, et dans le même ordre", () => {
+    // Deux listes des mêmes percussions dériveraient : celle-ci ne fait qu'ajouter des noms.
+    expect(PERCUSSIONS_CHOIX.map((p) => p.note)).toEqual([...NOTES_PERCUSSION_GM]);
+  });
+
+  it("aucune n'est nommée deux fois, dans aucune des deux langues", () => {
+    expect(new Set(PERCUSSIONS_CHOIX.map((p) => p.fr)).size).toBe(PERCUSSIONS_CHOIX.length);
+    expect(new Set(PERCUSSIONS_CHOIX.map((p) => p.en)).size).toBe(PERCUSSIONS_CHOIX.length);
+  });
+});
 
 /** Une grille de vélocité : huit pistes, `pas` colonnes, remplie de zéros. */
 const grilleVide = (pas: number) => Array.from({ length: 8 }, () => new Array(pas).fill(0));

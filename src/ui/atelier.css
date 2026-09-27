@@ -438,6 +438,95 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .arbre-menu button:disabled { opacity: 0.35; cursor: default; }
 .arbre-menu button:disabled:hover { background: transparent; color: var(--text-primary); }
 
+/* ── Le rouleau d'une séquence ────────────────────────────────────────────────────────────────── */
+/* SIX TEINTES POUR LES VOIX, ET ELLES SONT QUALITATIVES : elles se distinguent, elles ne se classent
+   pas, la voix 2 n'étant ni plus forte ni plus haute que la voix 1. Elles sont prises dans les
+   teintes que ce fichier emploie déjà pour les familles de nœuds, de sorte qu'aucun goût nouveau
+   n'entre ici ; elles ne suivent pas `--accent`, parce que trois thèmes le redéfinissent et qu'une
+   série de six couleurs dérivées d'un seul accent finirait par confondre deux voix. */
+:root {
+  --rouleau-voix-0: #4c6ef5;
+  --rouleau-voix-1: #40c057;
+  --rouleau-voix-2: #f59e0b;
+  --rouleau-voix-3: #e64980;
+  --rouleau-voix-4: #14b8a6;
+  --rouleau-voix-5: #a855f7;
+}
+.rouleau { display: flex; flex-direction: column; gap: 2px; padding: 4px 2px; min-width: 0; }
+.rouleau-entete, .rouleau-pied {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 2px;
+  font-size: 10px; font-variant-numeric: tabular-nums;
+}
+.rouleau-titre { color: var(--text-title); font-size: 11px; }
+.rouleau-chiffre { color: var(--text-secondary); }
+/* Le compte des microtons porte l'accent : c'est ce que cette vue existe pour montrer. */
+.rouleau-microtons { color: var(--accent); }
+.rouleau-avertissement { color: var(--cat-analyse); }
+.rouleau-vide { color: var(--text-tertiary); font-size: 10px; padding: 6px 4px; text-align: center; }
+
+.rouleau-corps { display: flex; align-items: stretch; min-width: 0; }
+/* La règle des hauteurs : une bande étroite où chaque nom est posé au centre de sa rangée. */
+.rouleau-regle-hauteurs {
+  position: relative; flex: 0 0 26px; width: 26px;
+  border-right: 1px solid var(--border);
+}
+.rouleau-nom-hauteur {
+  position: absolute; right: 3px; transform: translateY(-50%);
+  color: var(--text-tertiary); font-size: 9px; font-variant-numeric: tabular-nums;
+  line-height: 1; white-space: nowrap; pointer-events: none;
+}
+/* LA HAUTEUR EST FIXÉE EN PIXELS, et la largeur suit le nœud : le dessin s'étire donc sur un seul
+   axe. C'est voulu, et c'est pourquoi il ne contient aucun texte — voir `RouleauSequence.tsx`. */
+.rouleau-dessin { position: relative; flex: 1 1 auto; min-width: 0; height: 190px; }
+.rouleau-svg { display: block; width: 100%; height: 100%; }
+.rouleau-fond { fill: var(--bg-input); }
+/* Le damier : à peine là, comme tout quadrillage, mais assez pour compter les rangées. */
+.rouleau-rangee-noire { fill: var(--text-primary); opacity: 0.07; }
+.rouleau-octave { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.rouleau-graduation {
+  stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.6;
+}
+.rouleau-hachure { stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.rouleau-queue { opacity: 0.5; pointer-events: none; }
+
+/* Une note est un aplat, et non un contour : sur une rangée de trois pixels, un contour ne laisserait
+   rien à voir. Les quatre bandes de nuance se lisent sur l'opacité, la plus forte étant pleine. */
+.rouleau-note { stroke: none; }
+.rouleau-note.nuance-0 { opacity: 0.35; }
+.rouleau-note.nuance-1 { opacity: 0.55; }
+.rouleau-note.nuance-2 { opacity: 0.78; }
+.rouleau-note.nuance-3 { opacity: 1; }
+.rouleau-note:hover { stroke: var(--text-primary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+/* UN MICROTON SE SIGNALE EN PLUS DE SA PLACE. Le chevauchement de deux rangées le montre déjà, mais
+   sur un axe de six octaves les rangées sont minces : un liseré le rend visible de loin aussi. */
+.rouleau-note.est-microton { stroke: var(--accent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.rouleau-note.voix-0 { fill: var(--rouleau-voix-0); }
+.rouleau-note.voix-1 { fill: var(--rouleau-voix-1); }
+.rouleau-note.voix-2 { fill: var(--rouleau-voix-2); }
+.rouleau-note.voix-3 { fill: var(--rouleau-voix-3); }
+.rouleau-note.voix-4 { fill: var(--rouleau-voix-4); }
+.rouleau-note.voix-5 { fill: var(--rouleau-voix-5); }
+
+/* La règle du temps, alignée sur le dessin : la bande des noms de hauteurs la décale d'autant. */
+.rouleau-regle-temps {
+  position: relative; height: 12px; margin-left: 26px;
+  border-top: 1px solid var(--border);
+}
+.rouleau-nom-temps {
+  position: absolute; top: 1px; color: var(--text-tertiary);
+  font-size: 9px; font-variant-numeric: tabular-nums; line-height: 1;
+  white-space: nowrap; pointer-events: none;
+}
+.rouleau-voix { display: inline-flex; align-items: center; gap: 3px; color: var(--text-secondary); }
+.rouleau-voix b { color: var(--text-tertiary); font-weight: normal; }
+.rouleau-pastille { width: 7px; height: 7px; border-radius: 1px; display: inline-block; }
+.rouleau-voix.voix-0 .rouleau-pastille { background: var(--rouleau-voix-0); }
+.rouleau-voix.voix-1 .rouleau-pastille { background: var(--rouleau-voix-1); }
+.rouleau-voix.voix-2 .rouleau-pastille { background: var(--rouleau-voix-2); }
+.rouleau-voix.voix-3 .rouleau-pastille { background: var(--rouleau-voix-3); }
+.rouleau-voix.voix-4 .rouleau-pastille { background: var(--rouleau-voix-4); }
+.rouleau-voix.voix-5 .rouleau-pastille { background: var(--rouleau-voix-5); }
+
 /* Un paramètre piloté par une courbe : ses deux bornes, à sa place et dans son unité. La lecture
    passe avant les curseurs — c'est elle qu'on vient chercher, les curseurs ne servent qu'à la régler. */
 .inspecteur-plage { display: flex; flex-direction: column; gap: 3px; }
@@ -1109,6 +1198,20 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .inspecteur-vide { color: var(--text-tertiary); text-align: center; padding: 20px; }
 .inspecteur-entete h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
 .inspecteur-resume { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+/* Le résumé d'un méta-composant s'écrit. Il garde l'aspect d'un résumé tant qu'on n'y touche pas,
+   et ne prend le cadre d'un champ qu'au survol et à la saisie : un cadre permanent dans l'en-tête
+   ferait croire à un réglage de plus, alors que c'est la même ligne qu'ailleurs, en modifiable. */
+.inspecteur-description-meta {
+  display: block; width: 100%; box-sizing: border-box; resize: vertical;
+  font-family: inherit; line-height: 1.35; padding: 4px 6px;
+  background: transparent; border: 1px solid transparent; border-radius: 4px;
+}
+.inspecteur-description-meta::placeholder { color: var(--text-tertiary); }
+.inspecteur-description-meta:hover { border-color: var(--border); }
+.inspecteur-description-meta:focus {
+  outline: none; border-color: var(--accent);
+  background: var(--bg-input); color: var(--text-primary);
+}
 /* Bloc « en savoir plus » — notice pédagogique repliable, bilingue */
 .inspecteur-notice-bloc { margin-bottom: 12px; }
 .inspecteur-notice-toggle {
@@ -1314,9 +1417,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 /* ── Quiz : une question, quatre boutons, et pourquoi ──
    Tout est pris aux variables du thème : le quiz n'invente aucune couleur, sauf les deux
    teintes du juste et du faux, qui doivent se lire d'un coup d'œil sans avoir à relire le texte. */
+/* LA VUE PREND CE QU'IL LUI FAUT, ET AU PLUS LE NŒUD. Elle demandait `height: 100%`, c'est-à-dire
+   toute la hauteur de la carte : la carte étant en disposition de bloc et non en flux flexible,
+   l'en-tête, la rangée de ports et le statut se retrouvaient poussés SOUS le cadre du nœud, de 121
+   pixels. Agrandir le nœud ne faisait qu'agrandir le débordement. Avec un maximum au lieu d'une
+   hauteur, la vue s'arrête à ce que son contenu demande, et le reste du nœud tient dedans. */
 .attic-quiz {
   display: flex; flex-direction: column; gap: 6px;
-  padding: 8px 10px; width: 100%; height: 100%;
+  padding: 8px 10px; width: 100%; max-height: 100%;
   font-size: 11px; color: var(--text-primary); overflow: hidden;
 }
 .attic-quiz-tete { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -1345,7 +1453,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-quiz-prop.juste { border-color: #3fb27f; background: rgba(63,178,127,0.14); }
 .attic-quiz-prop.faux { border-color: var(--arret); background: rgba(224,87,111,0.14); }
 .attic-quiz-prop.pale { opacity: 0.45; }
-.attic-quiz-lettre { color: var(--text-muted); font-family: monospace; flex-shrink: 0; }
+/* LES LETTRES A B C D SONT CE QU'ON VISE, et elles étaient au ton le plus effacé de la palette,
+   `--text-muted` : #5a4d6b, #3f5f92 ou #444 selon le thème, sur un fond de bouton à peine plus
+   sombre. Elles passent à l'ambre, qui est déjà la teinte des analyses dans ce fichier : aucune
+   couleur nouvelle n'entre, et les trois thèmes étant sombres, elle s'y détache également. */
+.attic-quiz-lettre { color: #f59e0b; font-family: monospace; font-weight: 600; flex-shrink: 0; }
 .attic-quiz-retour, .attic-quiz-bilan { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
 .attic-quiz-juste { color: #3fb27f; font-weight: 600; }
 .attic-quiz-rate { color: var(--arret); font-weight: 600; }
@@ -1369,9 +1481,10 @@ body { font-family: system-ui, -apple-system, sans-serif; }
    Mêmes variables que le quiz, et les deux mêmes teintes : le vert du point tenu et l'accent du
    bouton qui devient cliquable. Un point NON tenu n'est PAS rouge — il n'est pas encore fait, ce
    qui n'est pas une faute ; le rouge ne servirait qu'à décourager quelqu'un qui commence. */
+/* Même correction que pour le quiz, et pour la même raison : voir la règle de `.attic-quiz`. */
 .attic-parcours {
   display: flex; flex-direction: column; gap: 6px;
-  padding: 8px 10px; width: 100%; height: 100%;
+  padding: 8px 10px; width: 100%; max-height: 100%;
   font-size: 11px; color: var(--text-primary); overflow: hidden;
 }
 .attic-parcours-tete { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }

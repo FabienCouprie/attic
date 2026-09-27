@@ -18,6 +18,11 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
 
 // Types de flux du domaine audio (dans le registre, pas dans un global)
   registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
+  // GRIS NEUTRE, PARCE QU'UN NŒUD-FRONTIÈRE N'A PAS DE TYPE À LUI. Il marque, à l'intérieur d'un
+  // méta-composant, l'endroit où un port sera exposé ; ce port prend le type du port interne auquel
+  // la frontière se relie. Ses deux blocs étaient déclarés « audio », si bien qu'ils s'affichaient
+  // en vert quoi qu'on y branche : on croyait y lire un type, et c'était toujours le même.
+  registre.enregistrerTypeFlux({ id: "frontiere", couleur: "#8a8f98", libelle: "Port exposé" });
   registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
   registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
   registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });

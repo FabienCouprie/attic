@@ -12,7 +12,7 @@ import {
   sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
-  resoudreEntree, valeursEntrantes, validerGraphe,
+  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
@@ -31,7 +31,12 @@ import { tamponPourApercu } from "../../audio/multicanal-ecoute";
 import { decrire } from "../../audio/metadonnees";
 import { lireProfondeurExport } from "../profondeur-export";
 import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
-import { useI18n, valeurCanoniqueChoix } from "../../i18n";
+// LES BORNES SONT DÉCLARÉES AVEC LE COMPTEUR, ET NON ICI. Recopiées des deux côtés, elles auraient
+// dérivé à la première qu'on aurait changée, et le test ne garderait plus que la copie du module.
+import { avancerBoucles, planifierBoucles, publierBoucles, PASSES_MAX_TOTAL } from "../../plugins/boucleSequencesGlobal";
+import type { Sequence } from "../../audio/sequence";
+
+import { traduire, useI18n, valeurCanoniqueChoix } from "../../i18n";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
 const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
@@ -395,6 +400,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (ancPriorite && !ancPriorite.has(nodeId)) continue;
       noeudsEnErreur.add(nodeId);
       definirStatut(nodeId, "erreur", msgs[0]);
+    }
+    // UN CYCLE NE DOIT PAS ÊTRE UNE PANNE MUETTE. Kahn n'émet jamais un nœud pris dans un cycle :
+    // ce qui manque à l'ordre EST le cycle, et ces nœuds ne sont donc pas exécutés. Jusqu'ici ils
+    // l'étaient en silence — ni statut, ni message —, et une branche entière restait sans résultat
+    // sans que rien ne dise pourquoi. La pose d'une arête refuse désormais de refermer un cycle,
+    // mais un projet enregistré avant ce contrôle peut en porter un, et l'aplatissement d'un méta
+    // ou d'un instrument pourrait en fabriquer un : le relevé se fait donc ici aussi, sur le graphe
+    // RÉELLEMENT exécuté, avec les mêmes entrées que le tri lui-même.
+    for (const id of noeudsEnCycle(nds.map((n: any) => n.id), aretesG)) {
+      if (ancPriorite && !ancPriorite.has(id)) continue;
+      if (noeudsEnErreur.has(id)) continue;
+      noeudsEnErreur.add(id);
+      definirStatut(id, "erreur", traduire("erreur.cycle"));
     }
     // Un méta est « dans le périmètre » du run ssi au moins un de ses nœuds internes
     // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
@@ -1063,6 +1081,74 @@ export function useExecutionGraphe(o: OptionsExecution) {
   }, [prioritaire, repertoire, t]);
 
   /**
+   * La boucle sur une VALEUR : le graphe entier, rejoué une fois par morceau de ce qui circule.
+   *
+   * CE QU'ELLE AJOUTE AUX TROIS AUTRES RÉPÉTITIONS, ET LE POINT DUR. Les trois connaissent leur
+   * compte AVANT d'exécuter quoi que ce soit : un paramètre pour la boucle de graphe et
+   * l'instrument, un dossier lu pour le lot. Une liste qui arrive par un câble, elle, ne se connaît
+   * qu'une fois l'amont exécuté. D'où la PREMIÈRE PASSE DE DÉCOUVERTE : on lance une passe sans
+   * savoir combien il en faudra, le nœud de début publie ce qu'il a trouvé, et l'on poursuit. Elle
+   * ne coûte rien, étant la première passe utile et non une passe de plus.
+   *
+   * ELLE NE TOUCHE PAS AU MOTEUR, et c'est la condition de sa sûreté. Comme le lot, elle rejoue
+   * `lancerUnePasse`, qui reste une exécution entière avec ses statuts, son cache, son annulation
+   * et son `AbortController`. L'acyclicité du graphe n'est pas entamée : ce que `boucle-graphe.ts`
+   * désigne comme ce qu'il ne fallait pas casser reste intact.
+   *
+   * SANS NŒUD DE BOUCLE, RIEN NE CHANGE : une seule passe, comme avant, et pas un appel de plus.
+   */
+  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string) => {
+    const aretesG = () => aretesRef.current as unknown as AreteG[];
+    const plan = planifierBoucles(
+      noeudsRef.current,
+      (id) => [...descendants(id, aretesG())],
+      (id) => [...ancetres(id, aretesG())],
+    );
+    if (!plan) { publierBoucles([]); return lancerUnePasse(noeudPrioritaireId); }
+    if (plan.independantes) {
+      console.warn("[attic] Deux boucles qui ne s'emboîtent pas : elles seront menées l'une dans l'autre.");
+    }
+
+    const etats = plan.boucles.map((b) => ({
+      debutId: b.debutId, finsIds: b.finsIds, index: 0,
+      morceaux: [] as Sequence[], recoltes: [] as Sequence[],
+    }));
+
+    /** Ce qui doit rejouer : le corps de ces boucles, désigné par ses deux bouts. */
+    const oublierLeCorps = (depuis: number) => {
+      const aRejouer = new Set<string>();
+      for (let k = depuis; k < etats.length; k++) {
+        aRejouer.add(etats[k].debutId);
+        for (const id of descendants(etats[k].debutId, aretesG())) aRejouer.add(id);
+        for (const finId of etats[k].finsIds) {
+          aRejouer.add(finId);
+          for (const id of ancetres(finId, aretesG())) aRejouer.add(id);
+        }
+      }
+      for (const id of aRejouer) cacheExec.current.delete(id);
+    };
+
+    try {
+      publierBoucles(etats);
+      // La passe de découverte : chaque début y remplit ses morceaux.
+      await lancerUnePasse(noeudPrioritaireId);
+
+      // LE COMPTEUR EST DANS `boucleSequencesGlobal.ts`, AVEC SES BORNES ET SES TESTS. Une mécanique
+      // dont toute la valeur est de s'arrêter ne peut pas vivre dans un composant, où aucun test de
+      // ce dépôt ne l'atteint.
+      let faites = 1;
+      while (avancerBoucles(etats)) {
+        if (arretLotRef.current || faites >= PASSES_MAX_TOTAL) break;
+        oublierLeCorps(0);
+        await lancerUnePasse(noeudPrioritaireId);
+        faites++;
+      }
+    } finally {
+      publierBoucles([]);
+    }
+  }, [lancerUnePasse]);
+
+  /**
    * Le traitement par lot : le graphe entier, rejoué une fois par fichier.
    *
    * POURQUOI DES PASSES ET NON UN DÉPLIAGE. Les deux autres répétitions du projet — la boucle de
@@ -1094,7 +1180,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const plan = planifierLot(noeudsRef.current, (d) => dossiers.get(d) ?? []);
 
     // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
-    if (!plan) { publierLot(null); return lancerUnePasse(noeudPrioritaireId); }
+    if (!plan) {
+      publierLot(null);
+      return lancerBoucleValeur(noeudPrioritaireId);
+    }
     if (plan.plusieursDebuts) {
       console.warn("[attic] Deux débuts de boucle collection : chacun voudrait commander le nombre de passes.");
     }

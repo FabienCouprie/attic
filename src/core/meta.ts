@@ -30,6 +30,20 @@ export interface MetaComposant {
   id: string;
   nom: string;
   nomEn?: string;
+  /**
+   * Ce que son auteur dit de ce méta-composant, quand il l'a écrit.
+   *
+   * SEUL UN MÉTA-COMPOSANT EN PORTE UNE. Les composants du catalogue ont un résumé et une notice
+   * rédigés dans leur fiche, éprouvés par le contrat de notice ; un méta n'a que ce qu'on calcule
+   * sur lui, « sous-graphe de cinq nœuds, deux entrées, une sortie », qui dit sa forme et jamais ce
+   * qu'il fait. Celui qui le fabrique est le seul à le savoir, et c'est pourquoi il peut l'écrire.
+   *
+   * ELLE N'EST PAS TRADUITE, et ce n'est pas un oubli. C'est le texte de son auteur, pas une chaîne
+   * de l'application : le rendre bilingue demanderait de le lui faire écrire deux fois, et une
+   * traduction automatique mettrait dans sa bouche ce qu'il n'a pas dit. Le même texte paraît donc
+   * dans les deux langues.
+   */
+  description?: string;
   entrees: PortDef[];
   sorties: PortDef[];
   mapEntrees: PortInterne[]; // parallèle à entrees

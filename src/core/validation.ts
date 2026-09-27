@@ -14,7 +14,7 @@
 import type { PluginDef } from "./types";
 import type { TypeFlux } from "./typesFlux";
 import { empreinteParametres } from "./graphe";
-import { indexPort, type NoeudG, type AreteG } from "./meta";
+import { estFrontiere, indexPort, type NoeudG, type AreteG } from "./meta";
 
 interface DepsTypesFlux {
   typeFlux: (id: string) => TypeFlux | undefined;
@@ -87,6 +87,16 @@ export function validerGraphe(
     const ficheSource = ficheDe(ar.source);
     const ficheCible = ficheDe(ar.target);
     if (!ficheSource || !ficheCible) continue;
+    // UN NŒUD-FRONTIÈRE N'A PAS DE TYPE, IL EN PREND UN. À l'intérieur d'un méta-composant, il
+    // marque l'endroit où un port sera exposé ; le type de ce port est celui du port interne
+    // auquel il se relie, et `redériverMeta` le lit là. Sa propre déclaration ne dit donc rien,
+    // et la comparer à quoi que ce soit n'a pas de sens.
+    //
+    // CE CONTRÔLE REFUSAIT TOUT CE QUI N'ÉTAIT PAS DE L'AUDIO, et c'est ce qui bornait un méta à
+    // n'exposer que du son. La pose de l'arête, elle, exempte les frontières depuis toujours : on
+    // pouvait donc tirer le câble, et l'exécution le déclarait ensuite « connexion illégale :
+    // texte → audio » en passant le nœud en erreur. Les deux contrôles disent enfin la même chose.
+    if (estFrontiere(ficheSource) || estFrontiere(ficheCible)) continue;
 
     const defSource = getDef(ficheSource);
     const defCible = getDef(ficheCible);

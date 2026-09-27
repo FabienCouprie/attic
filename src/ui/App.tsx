@@ -10,7 +10,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
-  estFrontiere, estBulle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
+  estFrontiere, estBulle, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
   surChangementMetas, supprimerMeta, traduireConnexion, type AreteG, type NoeudG } from "../core";
 import { registre } from "../audio/adaptateur";
 import "../audio/adaptateur";
@@ -522,18 +522,29 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         // embarqué) — React signalait des clés dupliquées. Même convention
         // que onConnect ci-dessous (`e-${source}-${target}-${Date.now()}`).
         const horodatage = Date.now();
-        const nouveauxEdges = spec.edges.map((e, i) => {
+        // UN GRAPHE ÉCRIT PAR UN MODÈLE DE LANGUE PEUT BOUCLER, et rien dans la demande ne l'en
+        // empêche. Les arêtes sont donc posées UNE À UNE, chacune éprouvée contre celles déjà
+        // acceptées : celle qui refermerait un cycle est écartée et dite, le reste du graphe
+        // engendré restant utilisable. Poser le lot d'un coup aurait rendu muettes toutes les
+        // branches prises dans la boucle.
+        const nouveauxEdges: Edge[] = [];
+        for (const [i, e] of spec.edges.entries()) {
           const srcId = idsNouveaux[e.source];
-          return {
+          const cibleId = idsNouveaux[e.target];
+          if (fermeraitUnCycle(srcId, cibleId, nouveauxEdges as unknown as AreteG[])) {
+            console.warn(`[attic] Prompt → graphe : arête ${e.source} → ${e.target} écartée, elle refermerait un cycle.`);
+            continue;
+          }
+          nouveauxEdges.push({
             id: `e-prompt-${nodeId}-${horodatage}-${i}`,
             source: srcId,
-            target: idsNouveaux[e.target],
+            target: cibleId,
             sourceHandle: "out:0",
             targetHandle: "in:0",
             type: "arete-personnalisee" as const,
             style: { stroke: couleurArete(nouveauxNodes, srcId, "out:0"), strokeWidth: 2.5 },
-          };
-        });
+          });
+        }
         setEdges((eds) => [...eds, ...nouveauxEdges]);
         return [...nds, ...nouveauxNodes];
       });
@@ -1043,6 +1054,17 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       conn as any, trouverDef,
     );
     if (!traduite) return false;
+    // AUCUNE ARÊTE NE SE POSE SANS QUE LE CYCLE SOIT CHERCHÉ. Le moteur n'exécute qu'un graphe
+    // acyclique : un cycle n'a pas d'ordre topologique, et les nœuds qu'il contient ne seraient
+    // jamais lancés — sans erreur, sans message, une branche entière qui ne calcule rien. Le refus
+    // se fait ici, où il ne coûte rien à personne : la connexion ne se dépose simplement pas.
+    //
+    // SUR LES ARÊTES RÉELLES, ET NON SUR LES SUBSTITUTIONS. Une bulle repliée porte des arêtes de
+    // remplacement qui ramènent à elle celles de ses membres : deux membres sans rapport y
+    // paraissent reliés par elle, et une arête licite se ferait refuser. Les vraies arêtes sont
+    // gardées sous ces substituts, seulement cachées, et ce sont elles qui disent la topologie.
+    const reelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
+    if (fermeraitUnCycle(traduite.source, traduite.target, reelles)) return false;
     const source = noeudsRef.current.find((n) => n.id === traduite.source);
     const target = noeudsRef.current.find((n) => n.id === traduite.target);
     return validerArete(source, target, { ...conn, ...traduite });
@@ -1068,6 +1090,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     const ficheSource = noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId;
     const ficheTarget = noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId;
     if (ficheSource === "comment" || ficheTarget === "comment") return;
+    // LE MÊME REFUS QU'AU SURVOL, ET CE N'EST PAS UN DOUBLON. `isValidConnection` garde le geste à
+    // la souris ; celui-ci garde la pose elle-même, quel que soit le chemin qui y mène. Une seule
+    // arête qui referme un cycle suffit à rendre muette une branche entière.
+    if (fermeraitUnCycle(conn.source, conn.target,
+      (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a)))) {
+      console.warn(`[attic] Arête refusée : ${conn.source} → ${conn.target} refermerait un cycle.`);
+      return;
+    }
     pushHistorique();
     const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
     const ti = parseInt(conn.targetHandle.split(":")[1]);

@@ -31,41 +31,139 @@ function makeRequestId(): string {
 }
 
 // ─── Réservoir textuel ───
-// Un réseau de neurones aléatoires génère du texte par émergence :
-// les activations sont mappées vers des lettres/mots. Aucun entraînement.
+//
+// Un réseau de neurones à poids aléatoires, jamais entraîné, dont on lit l'activation pour écrire
+// des lettres. C'est le calcul par réservoir (Jaeger, « The echo state approach to analysing and
+// training recurrent neural networks », rapport 148 du Centre national allemand de recherche en
+// informatique, 2001).
+//
+// CE QUI A ÉTÉ REFAIT, ET POURQUOI. Quatre choses empêchaient ce composant de rendre ce que son
+// intitulé annonce, et chacune a été relevée par la mesure avant d'être touchée.
+//
+//  1. LA MATRICE ÉTAIT NORMALISÉE EN NORME DE FROBENIUS, à 0,9. Ce n'est pas la grandeur qui règle
+//     un réservoir : c'est le RAYON SPECTRAL, la plus grande valeur propre en module, qui décide
+//     qu'un état s'éteint ou se prolonge. Normaliser la somme des carrés fait rétrécir chaque poids
+//     quand le nombre de neurones grandit — mesuré, de 0,353 à cinq neurones à 0,016 à cinquante —,
+//     si bien que le réseau devenait plus FAIBLE à mesure qu'on l'agrandissait, et que le réglage
+//     « Neurones » agissait à l'envers de ce que sa documentation promettait.
+//
+//  2. TOUS LES NEURONES RECEVAIENT LA MÊME ENTRÉE, au même poids. Ils se ressemblaient donc, et le
+//     réservoir se comportait comme une seule unité. Chacun a maintenant son poids d'entrée tiré au
+//     sort, ce qui est la forme ordinaire d'un réseau à écho d'état.
+//
+//  3. LA LECTURE NE COUVRAIT PAS SON INTERVALLE. Elle prenait la moyenne des activations en valeur
+//     absolue, qui se concentre par la loi des grands nombres : relevée sur quatre réglages, elle
+//     ne dépassait jamais 0,494 sur 1. L'espace étant la dernière lettre du tableau, il aurait fallu
+//     0,963 pour le tirer : AUCUNE COUPURE DE MOT NE VENAIT DONC DU RÉSERVOIR, et tous les mots
+//     sortaient à la longueur de coupure, douze lettres, sans une exception. La moitié de l'alphabet
+//     était hors d'atteinte par la même cause. La lecture est maintenant une combinaison tirée au
+//     sort, ramenée sur l'étendue qu'elle occupe vraiment, relevée pendant une chauffe.
+//
+//  4. L'IMPULSION ÉTAIT UN SINUS, de période soixante-trois pas. Il dominait la dynamique, et le
+//     texte répétait ses mots : 23 % de mots distincts sur deux cents. Avec une impulsion tirée au
+//     sort, 66 %, mesuré à mémoire égale.
+//
+// ET LA LETTRE NE SE CHOISIT PLUS SUR L'ALPHABET ENTIER. Deux lettres voisines dans l'alphabet
+// n'ont aucun rapport phonétique : une lecture continue, qui se déplace lentement, y donnait des
+// glissades du genre « bcccbbaaaaaa bdfhjlnpsvyz », et jamais des mots. Consonnes et voyelles
+// alternent désormais, et un mot se ferme sur une voyelle. Les mots obtenus se prononcent :
+// « ledegosy », « mijago », « qojopu », « lebenu ».
+
+const VOYELLES = "aeiouyàâäéèêëîïôöûùüœ";
 
 interface ReservoirTextuel {
   n: number;
-  poidsRes: Float32Array;
-  etats: Float32Array;
+  poidsRes: Float64Array;
+  /** Le poids d'entrée de chaque neurone : c'est lui qui les rend différents les uns des autres. */
+  poidsEntree: Float64Array;
+  /** La combinaison lue à chaque pas, tirée au sort une fois pour toutes. */
+  poidsLecture: Float64Array;
+  etats: Float64Array;
   leaking: number;
 }
 
+/** Le rayon spectral voulu. Sous un, l'état s'éteint ; au-dessus, il s'emballe. */
+const RAYON_SPECTRAL = 0.95;
+
+/** L'amplitude du signal d'entrée, assez forte pour que les états occupent leur intervalle. */
+const ECHELLE_ENTREE = 1.5;
+
+/** Combien de pas sont joués et jetés avant d'écrire, pour relever l'étendue de la lecture. */
+const PAS_DE_CHAUFFE = 300;
+
+/**
+ * La plus grande valeur propre en module, estimée par itération de la puissance.
+ *
+ * Soixante itérations suffisent largement ici : la matrice fait au plus cinquante sur cinquante, et
+ * l'on ne cherche pas une valeur propre mais un facteur d'échelle.
+ */
+function rayonSpectral(poids: Float64Array, n: number, rng: () => number): number {
+  let v = new Float64Array(n);
+  for (let i = 0; i < n; i++) v[i] = rng() - 0.5;
+  let rayon = 0;
+  for (let k = 0; k < 60; k++) {
+    const suivant = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      for (let j = 0; j < n; j++) s += poids[i * n + j] * v[j];
+      suivant[i] = s;
+    }
+    let norme = 0;
+    for (let i = 0; i < n; i++) norme += suivant[i] * suivant[i];
+    norme = Math.sqrt(norme);
+    // Une matrice vide ou nilpotente : il n'y a pas de rayon à rendre, et l'appelant ne divise pas.
+    if (norme < 1e-12) return 0;
+    for (let i = 0; i < n; i++) suivant[i] /= norme;
+    v = suivant;
+    rayon = norme;
+  }
+  return rayon;
+}
+
 function creerReservoirTexte(n: number, connectivite: number, leaking: number, rng: () => number): ReservoirTextuel {
-  const poidsRes = new Float32Array(n * n);
+  const poidsRes = new Float64Array(n * n);
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       if (i !== j && rng() < connectivite) poidsRes[i * n + j] = rng() * 2 - 1;
     }
   }
-  // Normaliser
-  let norm = 0;
-  for (let i = 0; i < n * n; i++) norm += poidsRes[i] * poidsRes[i];
-  norm = Math.sqrt(norm);
-  if (norm > 0) for (let i = 0; i < n * n; i++) poidsRes[i] *= 0.9 / norm;
-  return { n, poidsRes, etats: new Float32Array(n), leaking };
+  const rayon = rayonSpectral(poidsRes, n, rng);
+  if (rayon > 1e-9) for (let i = 0; i < n * n; i++) poidsRes[i] *= RAYON_SPECTRAL / rayon;
+
+  const poidsEntree = new Float64Array(n);
+  const poidsLecture = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    poidsEntree[i] = (rng() * 2 - 1) * ECHELLE_ENTREE;
+    // Divisé par la racine du nombre de neurones : sans quoi la lecture saturerait la tangente
+    // hyperbolique dès que le réservoir grandit, et ne rendrait plus que zéro ou un.
+    poidsLecture[i] = (rng() * 2 - 1) / Math.sqrt(n);
+  }
+  return { n, poidsRes, poidsEntree, poidsLecture, etats: new Float64Array(n), leaking };
 }
 
 function stepReservoirTexte(res: ReservoirTextuel, entree: number): void {
   const n = res.n;
-  const nouveaux = new Float32Array(n);
+  const nouveaux = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     let somme = 0;
     for (let j = 0; j < n; j++) somme += res.poidsRes[i * n + j] * res.etats[j];
-    nouveaux[i] = (1 - res.leaking) * res.etats[i] + res.leaking * Math.tanh(somme + entree);
+    nouveaux[i] = (1 - res.leaking) * res.etats[i] + res.leaking * Math.tanh(somme + res.poidsEntree[i] * entree);
   }
   res.etats = nouveaux;
 }
+
+/** La combinaison lue à ce pas, avant normalisation. */
+function lireReservoir(res: ReservoirTextuel): number {
+  let s = 0;
+  for (let i = 0; i < res.n; i++) s += res.poidsLecture[i] * res.etats[i];
+  return s;
+}
+
+/** La longueur à laquelle un mot est coupé, faute d'avoir trouvé sa fin. */
+const LONGUEUR_MOT_MAX = 12;
+
+/** Au-dessus de cette lecture, un mot se ferme, à condition de finir sur une voyelle. */
+const SEUIL_FIN_DE_MOT = 0.6;
 
 function genererTexteReservoir(
   graine: number,
@@ -77,53 +175,73 @@ function genererTexteReservoir(
   seedWord: string,
 ): string {
   const rng = mulberry32(graine > 0 ? graine : Math.floor(Math.random() * 99999) + 1);
-  const res = creerReservoirTexte(neurones, connectivite, memoire / 100, rng);
+  // « MÉMOIRE » DISAIT L'INVERSE DE CE QU'ELLE FAISAIT, et à zéro elle tuait le réservoir. Le
+  // nombre passé ici est le taux de FUITE : à un, l'état est entièrement renouvelé à chaque pas,
+  // donc sans mémoire ; à zéro, il ne bouge plus jamais, et comme il part de zéro il y reste.
+  // Mesuré à l'ancienne convention, « Mémoire » à zéro rendait deux cent mots de douze lettres
+  // tirés de deux lettres en tout. La fuite est donc l'opposé du réglage, et elle garde un
+  // plancher : une mémoire longue ralentit le réservoir, elle ne l'arrête pas.
+  const fuite = Math.min(1, Math.max(0.05, 1 - memoire / 100));
+  const res = creerReservoirTexte(neurones, connectivite, fuite, rng);
+
+  const voyelles = [...alphabet].filter((c) => VOYELLES.includes(c));
+  const consonnes = [...alphabet].filter((c) => !VOYELLES.includes(c));
+  // Un alphabet privé de l'une des deux classes ne peut pas alterner : on rend l'amorce seule
+  // plutôt qu'une suite d'une seule lettre, et le message dira le compte.
+  if (voyelles.length === 0 || consonnes.length === 0) return seedWord.trim();
+
+  /** L'impulsion tirée au sort. Un sinus, qui était employé ici, imposait sa période au texte. */
+  const impulsion = () => (rng() * 2 - 1) * ECHELLE_ENTREE;
+
+  // LA CHAUFFE SERT À MESURER, non à écrire. La lecture n'occupe pas d'avance un intervalle connu :
+  // son étendue dépend du nombre de neurones, de la connectivité et de la mémoire. On la relève sur
+  // quelques centaines de pas, puis on s'y ramène, de sorte que toutes les lettres soient à portée
+  // quel que soit le réglage. Les centiles extrêmes sont écartés pour qu'une pointe isolée
+  // n'écrase pas l'échelle.
+  const echantillons: number[] = [];
+  for (let k = 0; k < PAS_DE_CHAUFFE; k++) {
+    stepReservoirTexte(res, impulsion());
+    echantillons.push(lireReservoir(res));
+  }
+  echantillons.sort((a, b) => a - b);
+  const bas = echantillons[Math.floor(echantillons.length * 0.02)];
+  const haut = echantillons[Math.floor(echantillons.length * 0.98)];
+  const etendue = Math.max(1e-9, haut - bas);
 
   let texte = seedWord ? seedWord + " " : "";
   let motCourant = "";
-  let pasTotal = 0;
+  let motsEcrits = 0;
   let iterations = 0;
-  const maxPas = nbMots * 8;
-  const maxIterations = maxPas * 20; // sécurité anti-boucle-infinie
+  // LE COMPTEUR EST CELUI DES MOTS, ET LA BORNE L'ÉTAIT HUIT FOIS TROP HAUT. Il s'appelait
+  // `maxPas` et valait `nbMots * 8`, mais il n'est incrémenté qu'à l'écriture d'un mot : demander
+  // vingt mots en rendait cent soixante, cinquante en rendaient quatre cents. Mesuré sur quatre
+  // valeurs, le facteur était exactement huit à chaque fois.
+  const maxMots = Math.max(1, Math.round(nbMots));
+  const maxIterations = maxMots * 160; // sécurité anti-boucle-infinie
 
-  // Lettres disponibles + espace
-  const lettres = (alphabet + " ").split("");
-
-  while (pasTotal < maxPas && iterations < maxIterations) {
+  let attendVoyelle = false;
+  while (motsEcrits < maxMots && iterations < maxIterations) {
     iterations++;
-    // Impulsion variable
-    const impulsion = Math.sin(pasTotal * 0.1) * 0.5 + (rng() - 0.5) * 0.3;
-    stepReservoirTexte(res, impulsion);
+    stepReservoirTexte(res, impulsion());
+    const u = Math.min(0.999999, Math.max(0, (lireReservoir(res) - bas) / etendue));
 
-    // Mapper les états vers une lettre
-    let somme = 0;
-    for (let i = 0; i < res.n; i++) somme += Math.abs(res.etats[i]);
-    const moyenne = somme / res.n; // 0-1
-    const idx = Math.floor(Math.abs(moyenne) * lettres.length) % lettres.length;
-    const lettre = lettres[idx];
+    const classe = attendVoyelle ? voyelles : consonnes;
+    motCourant += classe[Math.min(classe.length - 1, Math.floor(u * classe.length))];
+    attendVoyelle = !attendVoyelle;
 
-    if (lettre === " ") {
-      if (motCourant.length > 0) {
-        texte += motCourant + " ";
-        motCourant = "";
-        pasTotal++;
-      }
-    } else {
-      // Limiter la longueur des mots
-      if (motCourant.length < 12) motCourant += lettre;
-    }
-
-    // Forcer un espace tous les 15 caractères si le mot est trop long
-    if (motCourant.length >= 12) {
+    // UN MOT SE FERME SUR UNE VOYELLE, ce qui est la condition pour qu'il se prononce. La lecture
+    // décide quand, au-dessus du seuil ; la longueur maximale tranche quand elle ne décide pas.
+    const finissableIci = !attendVoyelle && motCourant.length >= 2 && u >= SEUIL_FIN_DE_MOT;
+    if (finissableIci || motCourant.length >= LONGUEUR_MOT_MAX) {
       texte += motCourant + " ";
       motCourant = "";
-      pasTotal++;
+      motsEcrits++;
+      attendVoyelle = false;
     }
   }
 
-  // Si on a un mot en cours, l'ajouter
-  if (motCourant.length > 0) texte += motCourant;
-
+  // LE RESTE N'EST AJOUTÉ QU'UNE FOIS. Il l'était deux fois, la même ligne étant écrite deux fois
+  // de suite sans que rien ne remette `motCourant` à vide entre les deux.
   if (motCourant.length > 0) texte += motCourant;
 
   return texte.trim();
@@ -182,8 +300,8 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reservoir-textuel", nom: "Réservoir textuel", nomEn: "Text Reservoir",
     univers: "Autres", famille: "Texte",
-    resume: "Génère du texte par réseau de neurones aléatoires (émergence, aucun entraînement).",
-    resumeEn: "Generates text via random neural networks (emergence, no training).",
+    resume: "Écrit des mots prononçables qui n'existent pas, par un réseau de neurones jamais entraîné.",
+    resumeEn: "Writes pronounceable words that do not exist, from a neural network that is never trained.",
     entrees: [],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
@@ -194,15 +312,27 @@ export const fiches: FicheAudio[] = ([
         doc: "Probabilité de connexion entre neurones. Faible = mots simples ; élevée = mots denses.",
         docEn: "Probability of connection between neurons. Low = simple words; high = dense words." },
       { nom: "Mémoire", nomEn: "Memory", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
-        doc: "Taux de fuite (leaking). Élevé = mémoire longue, mots qui évoluent lentement ; faible = réactions brèves.",
-        docEn: "Leaking rate. High = long memory, slowly evolving words; low = brief reactions." },
+        doc: "Part de son état que le réseau garde d'un pas au suivant. Haute, il change lentement et les mots voisins se ressemblent ; basse, chaque pas repart de l'entrée et les mots se suivent sans parenté.",
+        docEn: "How much of its state the network keeps from one step to the next. High, it changes slowly and neighbouring words resemble each other; low, each step starts again from the input and successive words are unrelated." },
       { nom: "Mots", nomEn: "Words", plage: [5, 100], pas: 1, defaut: 20,
         doc: "Nombre de mots à générer.", docEn: "Number of words to generate." },
+      // LE MENU FRANÇAIS MONTRAIT LES CHAÎNES BRUTES. L'anglais avait ses trois libellés, le
+      // français affichait « abcdefghijklmnopqrstuvwxyz » dans une liste déroulante : les
+      // identifiants, qui sont bien ces chaînes, tenaient lieu de noms. Les deux langues ont
+      // maintenant les leurs, et les identifiants ne bougent pas, de sorte qu'un projet enregistré
+      // garde son choix.
+      // TROIS CHOIX N'EN FAISAIENT QUE DEUX. « Voyelles en tête » portait les mêmes vingt-six
+      // lettres que l'alphabet latin, dans un autre ordre ; les voyelles et les consonnes étant
+      // désormais séparées avant le tirage, le filtrage préserve l'ordre et les deux listes
+      // ressortent identiques, lettre pour lettre. Un choix qui ne change rien vaut moins qu'un
+      // choix absent : il reste deux alphabets, qui diffèrent vraiment.
       { nom: "Alphabet", nomEn: "Alphabet", type: "choix",
-        options: ["abcdefghijklmnopqrstuvwxyz", "aeioubcdfghjklmnpqrstvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"], optionIds: ["abcdefghijklmnopqrstuvwxyz","aeioubcdfghjklmnpqrstvwxyz","abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
-        optionsEn: ["Full (a-z)", "Vowels-first", "French (a-z + accents)"],
-        defaut: "abcdefghijklmnopqrstuvwxyz",
-        doc: "Alphabet utilisé pour la génération.", docEn: "Alphabet used for generation.", defautEn: "Full (a-z)" },
+        options: ["Latin (a-z)", "Français (a-z et accents)"],
+        optionsEn: ["Latin (a-z)", "French (a-z and accents)"],
+        optionIds: ["abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyzéèêëàâïîôûùç"],
+        defaut: "Latin (a-z)", defautEn: "Latin (a-z)",
+        doc: "Les lettres dans lesquelles le texte est écrit. Elles sont réparties en voyelles et en consonnes, qui alternent dans chaque mot.",
+        docEn: "The letters the text is written in. They are split into vowels and consonants, which alternate within each word." },
       { nom: "Mot amorce", nomEn: "Seed word", type: "texte", defaut: "",
         doc: "Mot de départ (optionnel).", docEn: "Starting word (optional).", defautEn: "" },
       { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,

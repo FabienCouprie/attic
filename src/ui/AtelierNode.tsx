@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
-import { estMeta, estFrontiere, estBulle } from "../core";
+import { estMeta, estFrontiere, estBulle, surChangementMetas } from "../core";
 import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
 
@@ -95,6 +95,16 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 // La couleur d'un port vient désormais du registre de types de flux du domaine
 // (core/typesFlux) : type inconnu ⇒ gris neutre. Voir couleurFlux().
 
+/**
+ * Les fiches déjà lues, pour ne pas interroger le registre à chaque rendu de chaque nœud.
+ *
+ * IL FAUT L'OUBLIER QUAND UNE FICHE CHANGE, et rien ne le faisait. Une fiche de composant ne bouge
+ * jamais : elle est écrite dans le code. Celle d'un méta-composant, si — elle est refaite à chaque
+ * fois qu'on sort de sa vue interne, puisque ses ports se déduisent de son contenu. Le nœud gardait
+ * donc la fiche d'avant : on ajoutait une sortie exposée à l'intérieur, on ressortait, et le méta
+ * n'avait pas de nouveau port. Relevé par Fabien. Le registre, lui, était juste depuis le début, et
+ * c'est pourquoi relancer l'application faisait apparaître le port : le cache repartait vide.
+ */
 const DEFS_CACHE = new Map<string, FicheAudio>();
 function getDef(ficheId: string): FicheAudio | undefined {
   if (DEFS_CACHE.has(ficheId)) return DEFS_CACHE.get(ficheId);
@@ -102,6 +112,11 @@ function getDef(ficheId: string): FicheAudio | undefined {
   if (def) DEFS_CACHE.set(ficheId, def);
   return def;
 }
+// ON N'OUBLIE QUE LES MÉTAS, et non tout le cache : les quatre cent trente fiches du catalogue sont
+// immuables, et les relire à chaque retour d'une vue interne ne servirait personne.
+surChangementMetas(() => {
+  for (const id of [...DEFS_CACHE.keys()]) if (estMeta(id)) DEFS_CACHE.delete(id);
+});
 
 export const COULEURS_CATEGORIE: Record<string, string> = {
   entree: "#4c6ef5",
@@ -260,6 +275,13 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   // de hauteur ET déplace celles du dessous : sans cette remesure, les câbles resteraient accrochés
   // là où les ports étaient. Même raison que la remesure posée après une exécution.
   useEffect(() => { updateNodeInternals(id); }, [ports.visibles, id, updateNodeInternals]);
+
+  // MÊME REMESURE QUAND C'EST LA FICHE QUI CHANGE DE PORTS, et non le nœud. Un méta-composant que
+  // l'on vient d'éditer revient avec une entrée ou une sortie de plus : le nœud se redessine avec
+  // la bonne rangée, mais ReactFlow garde les coordonnées de poignées d'avant, et un câble tiré
+  // ensuite se collerait au milieu du bord. Le compte de ports suffit à déclencher la relecture.
+  const compteDePorts = `${def?.entrees.length ?? 0}/${def?.sorties.length ?? 0}`;
+  useEffect(() => { updateNodeInternals(id); }, [compteDePorts, id, updateNodeInternals]);
 
   const reglerPortsVisibles = useCallback((n: number) => {
     setNodes((nds) => nds.map((x) => (x.id === id ? { ...x, data: { ...x.data, portsVisibles: n } } : x)));
@@ -656,7 +678,13 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
       {/* Statut */}
       <div className="attic-node-statut">
         <span className={`attic-node-statut-puce ${statutClasse}`} />
-        <span className="attic-node-statut-label">{statutLabel}</span>
+        {/* LA CAUSE D'UNE ERREUR EST AU SURVOL, et elle n'était nulle part. Le moteur pose un message
+            avec le statut — connexion illégale, entrée obligatoire absente, boucle de câblage —, et
+            l'affichage ne gardait que le mot « Erreur » : on voyait le nœud rouge sans jamais savoir
+            pourquoi. Le message va dans l'infobulle plutôt que dans le libellé, qui doit rester
+            court : une phrase entière dans un nœud de deux cent soixante pixels le déformerait. */}
+        <span className="attic-node-statut-label"
+          title={etatExec.statut === "erreur" ? etatExec.progression : undefined}>{statutLabel}</span>
         {typeof data.tempsExecution === "number" && (
           <span className="attic-node-temps" title={t("execution.temps")}>
             {data.tempsExecution < 1000 ? `${Math.round(data.tempsExecution)} ms` : `${(data.tempsExecution / 1000).toFixed(2)} s`}

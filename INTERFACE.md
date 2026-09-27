@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**417 composants**, dont **88** avec une vue propre et **4** sans lecteur générique.
+**429 composants**, dont **89** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -75,15 +75,16 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Noms d'instruments | `noms-instruments` | VueNomsInstruments | — | 300 × 320 | non | oui | non |
 | Orchestre Csound | `orchestre-csound` | — | VueOrchestreCsound | 340 × 420 | non | oui | non |
 | Oscillateur | `oscillateur` | VueOscillo | — | 420 × 340 | non | oui | non |
-| Parcours | `parcours` | Parcours | — | 240 × 140 | non | oui | non |
+| Parcours | `parcours` | Parcours | — | 400 × 430 | non | oui | non |
 | Parfum → motif | `parfum-motif` | VueGout | — | 240 × 162 | non | oui | non |
 | Partition gravée | `partition-verovio` | VueGravure | — | 420 × 320 | non | oui | non |
 | Pure Data | `pure-data` | VueUploadPd | — | 240 × 118 | non | oui | non |
 | Python Processor | `python-processor` | VuePythonProcessor | — | 380 × 300 | non | oui | non |
-| Quiz | `quiz` | Quiz | — | 240 × 140 | non | oui | non |
+| Quiz | `quiz` | Quiz | — | 400 × 500 | non | oui | non |
 | Rendu image | `rendu-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Filtre + réponse | `reponse-filtre` | VueReponseFiltre | — | 420 × 300 | non | oui | non |
 | Réverbération à convolution (IR) | `reverbe-convolution` | — | VueUploadIR | 240 × 118 | non | oui | non |
+| Rouleau de séquence | `rouleau-sequence` | RouleauSequence | — | 520 × 340 | non | oui | non |
 | Sampler personnalisé | `sampler-personnalise` | VueUploadAudio | — | 240 × 118 | non | non | non |
 | Score esthétique | `score-esthetique` | VueEsthetique | — | 420 × 380 | non | oui | non |
 | Sélecteur multi-zones | `selecteur-multi-zones` | VueSelecteurMultiZones | — | 460 × 340 | non | oui | non |
@@ -149,11 +150,15 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Boîte à rythmes | `boite-rythmes` | 240 × 140 |
 | Début de boucle collection | `boucle-collection-debut` | 240 × 118 |
 | Fin de boucle collection | `boucle-collection-fin` | 240 × 118 |
+| Début de boucle par créneau | `boucle-creneau-debut` | 240 × 118 |
+| Fin de boucle par créneau | `boucle-creneau-fin` | 240 × 118 |
 | Début de boucle | `boucle-graphe-debut` | 240 × 118 |
 | Fin de boucle A | `boucle-graphe-fin` | 240 × 118 |
 | Fin de boucle B | `boucle-graphe-fin-b` | 240 × 118 |
 | Fin de boucle C | `boucle-graphe-fin-c` | 240 × 118 |
 | Boucle MIDI | `boucle-midi` | 240 × 118 |
+| Début de boucle par voix | `boucle-voix-debut` | 240 × 118 |
+| Fin de boucle par voix | `boucle-voix-fin` | 240 × 118 |
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |
 | Brassage | `brassage` | 240 × 118 |
 | Bruitage IA | `bruitage-ia` | 240 × 118 |
@@ -181,6 +186,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Continuum hauteur ↔ rythme | `continuum-stockhausen` | 240 × 118 |
 | Contraintes ABC | `contraintes-abc` | 240 × 140 |
 | Contrepoint d'espèces | `contrepoint-especes` | 240 × 118 |
+| Écrire un contrepoint | `contrepoint-solveur` | 240 × 140 |
 | Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
@@ -226,6 +232,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étirement temporel (DTW) | `etirement-dtw` | 240 × 140 |
 | Étirement glissant | `etirement-glissant` | 240 × 118 |
 | Étirement du spectre | `etirement-spectre` | 240 × 140 |
+| Faire évoluer une mélodie | `evolution-melodie` | 240 × 140 |
 | Exciter / Aural enhancer | `exciter` | 240 × 140 |
 | Export image | `export-image` | 240 × 118 |
 | Export SFZ | `export-sfz` | 240 × 118 |
@@ -243,6 +250,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
 | Fondu | `fondu` | 240 × 118 |
+| Formule sur séquence | `formule-sequence` | 240 × 140 |
 | Formules Csound | `formules-csound` | 240 × 140 |
 | Note d'instrument | `frontiere-note` | 240 × 162 |
 | Fusionner en stéréo | `fusion-stereo` | 240 × 140 |
@@ -289,6 +297,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Chaîne de Markov | `markov-midi` | 240 × 162 |
 | Masquage | `masquage` | 240 × 140 |
 | Masque de zones | `masque-zones` | 240 × 140 |
+| Matrice de paramètres | `matrice-parametres` | 240 × 140 |
 | Mélange des fenêtres | `melange-fenetres` | 240 × 118 |
 | Mélangeur | `melangeur` | 240 × 118 |
 | Mélangeur logistique | `melangeur-logistique` | 240 × 140 |
@@ -350,10 +359,11 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
 | Réduction de bruit | `reduction-bruit` | 240 × 140 |
+| Simplifier un arbre | `reecrire-arbre` | 240 × 140 |
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
-| Rendu de séquence | `rendu-sequence` | 240 × 140 |
+| Point d'écoute séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
 | Répartiteur MIDI | `repartiteur-midi` | 240 × 206 |
 | Reprise ABC | `reprise-abc` | 240 × 184 |
@@ -362,7 +372,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Resonance Audio | `resonance-audio` | 240 × 118 |
 | Résonateurs | `resonateurs` | 240 × 140 |
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
-| Résultante (Schillinger) | `resultante-schillinger` | 240 × 140 |
+| Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
 | Retard spectral | `retard-spectral` | 240 × 140 |
 | Réunir des voix | `reunir-voix` | 240 × 140 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
@@ -385,6 +395,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Secoueurs | `secoueurs` | 240 × 118 |
 | Séparateur canaux | `separateur-canaux` | 240 × 140 |
 | Séparation harmonique / percussive | `separation-harmonique-percussive` | 240 × 140 |
+| Séparer les voix | `separer-voix` | 240 × 140 |
 | Opérations sérielles | `serie-dodecaphonique` | 240 × 162 |
 | Série de l'infini (Nørgård) | `serie-infinie` | 240 × 162 |
 | Série à tous les intervalles | `serie-tous-intervalles` | 240 × 140 |
@@ -393,6 +404,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Shimmer | `shimmer` | 240 × 118 |
 | Boucle | `simple-boucle` | 240 × 118 |
 | Sinusoïdes + bruit (SMS) | `sms-sinusoides-bruit` | 240 × 162 |
+| Chercher sous contraintes | `solveur-contraintes` | 240 × 140 |
 | SoundTouch Vitesse | `soundtouch-rate` | 240 × 118 |
 | SoundTouch Tempo | `soundtouch-tempo` | 240 × 118 |
 | SoundTouch Tonalité | `soundtouch-tonalite` | 240 × 118 |
