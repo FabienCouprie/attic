@@ -14,7 +14,9 @@
 // LE NOM VIENT DU FICHIER, et rien n'est à tenir à jour à côté : déposer un graphe dans `exemples/`
 // suffit à le faire paraître dans la liste, sous un nom lisible.
 
-const FICHIERS = import.meta.glob("/exemples/*.json", { eager: true, import: "default" }) as Record<string, unknown>;
+// LES SOUS-DOSSIERS COMPTENT, demandé par Fabien : les exemples se rangeront par thème, et le
+// classeur d'Electron les parcourt naturellement. Ce repli, lui, doit les voir aussi.
+const FICHIERS = import.meta.glob("/exemples/**/*.json", { eager: true, import: "default" }) as Record<string, unknown>;
 
 export interface Exemple {
   /** Le nom du fichier, sans dossier ni extension. Sert de clé, et de nom au fichier recopié. */
@@ -30,9 +32,14 @@ export interface Exemple {
 export const nomDeLExemple = (ex: Exemple, lang: string): string =>
   (lang === "en" && ex.nomEn) || ex.nom;
 
-/** « /exemples/un-effet-sur-un-passage.json » donne « un-effet-sur-un-passage ». */
+/**
+ * « /exemples/rythme/un-effet.json » donne « rythme/un-effet ».
+ *
+ * LE CHEMIN RELATIF, ET NON LE SEUL NOM DE FICHIER : deux sous-dossiers peuvent porter un exemple
+ * du même nom, et l'identifiant sert de clé.
+ */
 export function identifiantDepuisChemin(chemin: string): string {
-  return chemin.replace(/\\/g, "/").split("/").pop()!.replace(/\.json$/i, "");
+  return chemin.replace(/\\/g, "/").replace(/^.*?\/exemples\//, "").replace(/^exemples\//, "").replace(/\.json$/i, "");
 }
 
 /**
@@ -43,7 +50,7 @@ export function identifiantDepuisChemin(chemin: string): string {
  * exemple ajouté.
  */
 export function nomDepuisIdentifiant(id: string): string {
-  const phrase = id.replace(/-+/g, " ").trim();
+  const phrase = (id.split("/").pop() ?? id).replace(/-+/g, " ").trim();
   return phrase.charAt(0).toUpperCase() + phrase.slice(1);
 }
 

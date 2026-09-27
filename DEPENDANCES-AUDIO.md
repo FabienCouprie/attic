@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 20 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 66 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 144 · transposable tel quel
+- **récipient** : 67 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 147 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -45,6 +45,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | camelot.ts | recipient | AudioBuffer |
 | canon-pavage.ts | pur | — |
 | cantor.ts | pur | — |
+| cercle-film.ts | pur | — |
 | cercle-mesures.ts | pur | — |
 | cercle-pulsant.ts | pur | — |
 | cercle-rendu.ts | pur | — |
@@ -219,6 +220,8 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | stft.ts | pur | — |
 | stn.ts | pur | — |
 | stockhausen.ts | recipient | AudioBuffer |
+| styles-film.ts | pur | — |
+| superforme.ts | pur | — |
 | synthese-features.ts | pur | — |
 | temperaments.ts | pur | — |
 | tempo-octave.ts | pur | — |
@@ -236,6 +239,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | verovio.ts | pur | — |
 | video-extrait.ts | pur | — |
 | video-montage.ts | recipient | AudioBuffer |
+| video-rendu.ts | recipient | AudioBuffer |
 | video-sortie.ts | recipient | AudioBuffer |
 | vitesse-midi.ts | pur | — |
 | voice-changer.ts | recipient | AudioBuffer |

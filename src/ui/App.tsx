@@ -1139,7 +1139,27 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
    * laisser l'ancien chemin en place, sans quoi le premier Ctrl+S écraserait ce projet par
    * l'exemple.
    */
-  const ouvrirExemple = useCallback(async (id: string) => {
+  const ouvrirExemple = useCallback(async (id?: string) => {
+    const api = (window as any).api;
+    // LE CLASSEUR PLUTÔT QU'UNE LISTE, demandé par Fabien : une liste déroulante devient illisible
+    // dès que les exemples se multiplient, et un dossier se range en sous-dossiers. Le dialogue
+    // s'ouvre sur le dossier livré ; hors d'Electron, il n'y a pas de dialogue et la liste compilée
+    // sert de repli.
+    if (!id && api?.dossierExemples && api?.ouvrirFichier) {
+      const dossier: string | null = await api.dossierExemples();
+      const choisi = await api.ouvrirFichier({
+        defaultPath: dossier || undefined,
+        filters: [{ name: "Workflow Attic", extensions: ["json"] }],
+      });
+      if (!choisi) return;
+      await importer(new File([choisi.contenu], choisi.nom, { type: "application/json" }));
+      // CE N'EST UN EXEMPLE QUE SI C'EN EST UN. Le dialogue s'ouvre sur le dossier des exemples,
+      // mais rien n'empêche d'en sortir et de prendre son propre projet : celui-là garde son
+      // fichier courant, et le Ctrl+S suivant doit l'écrire là où il est.
+      const normaliser = (c: string) => c.replace(/\\/g, "/").toLowerCase();
+      if (dossier && normaliser(choisi.chemin).startsWith(normaliser(dossier) + "/")) setCurrentFilePath(null);
+      return;
+    }
     const ex = EXEMPLES.find((e) => e.id === id);
     if (!ex) return;
     await importer(fichierDExemple(ex));

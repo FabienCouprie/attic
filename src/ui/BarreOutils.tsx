@@ -21,7 +21,7 @@ interface Props {
   onExporter: () => void;
   onImporter: (f?: File) => void;
   /** Ouvre un graphe livré avec l'application. Il arrive sans fichier courant, donc non modifiable. */
-  onOuvrirExemple: (id: string) => void;
+  onOuvrirExemple: (id?: string) => void;
   onDetacher: () => void;
   onSauvegarder: () => void;
   onDetacherFichier: () => void;
@@ -167,6 +167,15 @@ export function BarreOutils(props: Props) {
         {/* Les exemples, à côté des deux flèches : une page cornée, qui n'est ni un envoi ni une
             réception. Ils viennent du paquet et non du disque, et s'ouvrent donc sans fichier
             courant : l'enregistrement en fera une copie dans le dossier de travail. */}
+        {(window as any).api?.dossierExemples ? (
+          // LE CLASSEUR, ET NON UNE LISTE : une liste déroulante devient illisible dès que les
+          // exemples se multiplient, et un dossier se range en sous-dossiers. Un classeur, donc,
+          // et non plus une page cornée.
+          <button className="attic-btn-icon" title={`${eti("exemples")} — ${t("barre.exemples.copie")}`}
+            aria-label={eti("exemples")} onClick={() => onOuvrirExemple()}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1.5 4.5V13a1 1 0 001 1h11a1 1 0 001-1V6H8L6.5 4.5h-5zM1.5 4.5V3a1 1 0 011-1h3L7 3.5h3a1 1 0 011 1V6"/></svg>
+          </button>
+        ) : (
         <div className="attic-favs" onMouseEnter={() => setExemplesOuverts(true)} onMouseLeave={() => setExemplesOuverts(false)}>
           <button className="attic-btn-icon" title={`${eti("exemples")} — ${t("barre.exemples.copie")}`} aria-label={eti("exemples")}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 1.5H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V5.5L9 1.5zM9 1.5V5h4"/></svg>
@@ -181,6 +190,7 @@ export function BarreOutils(props: Props) {
             </div>
           )}
         </div>
+        )}
         {/* Un sablier — la sauvegarde automatique est affaire d'intervalle —, barré quand
             elle est coupée. Ni disque ni flèche circulaire : la barre en compte déjà, et
             c'est précisément ce qu'on ne veut plus confondre. */}

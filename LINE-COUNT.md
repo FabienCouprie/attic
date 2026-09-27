@@ -3,19 +3,19 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**1003 files, 182906 lines.** The table lists the 283 files of 200 lines or more;
-the remaining 720 account for 79063 lines.
+**1013 files, 184476 lines.** The table lists the 286 files of 200 lines or more;
+the remaining 727 account for 79795 lines.
 
 | File | Lines |
 |---|---:|
-| src/ui/vues.tsx | 2460 |
+| src/ui/vues.tsx | 2494 |
 | src/plugins/effets.ts | 2107 |
 | src/plugins/carte-sonore.ts | 1863 |
 | src/plugins/generateurs.ts | 1710 |
-| src/ui/atelier.css | 1655 |
-| src/ui/App.tsx | 1462 |
-| src/i18n.tsx | 1396 |
-| src/ui/hooks/useExecutionGraphe.ts | 1254 |
+| src/ui/atelier.css | 1662 |
+| src/ui/App.tsx | 1482 |
+| src/i18n.tsx | 1397 |
+| src/ui/hooks/useExecutionGraphe.ts | 1263 |
 | src/audio/analyse.ts | 1210 |
 | src/audio/effets-spectral.ts | 1165 |
 | src/audio/generation.ts | 1130 |
@@ -53,16 +53,16 @@ the remaining 720 account for 79063 lines.
 | src/plugins/magenta.ts | 456 |
 | src/audio/clavier-banque.test.ts | 451 |
 | src/plugins/generateurs.test.ts | 449 |
+| src/ui/BarreOutils.tsx | 446 |
 | src/audio/effets-spectral.test.ts | 440 |
 | src/audio/soundfont.ts | 440 |
 | src/plugins/analyse.ts | 436 |
-| src/ui/BarreOutils.tsx | 436 |
 | src/audio/conformite-clavier.ts | 435 |
 | src/audio/cercle.test.ts | 432 |
+| src/plugins/index.ts | 429 |
 | src/plugins/theorie-avancee.ts | 429 |
 | src/ui/EditeurCode.tsx | 426 |
 | src/audio/modulation-effets.test.ts | 425 |
-| src/plugins/index.ts | 425 |
 | src/audio/courbe.test.ts | 422 |
 | src/audio/algebre.test.ts | 419 |
 | src/plugins/optionIds-retrocompat.test.ts | 419 |
@@ -83,6 +83,7 @@ the remaining 720 account for 79063 lines.
 | src/core/domaine-nombre.test.ts | 389 |
 | src/plugins/syntheses-exotiques.ts | 388 |
 | src/plugins/theorie-composition.ts | 388 |
+| src/audio/io.ts | 380 |
 | src/audio/groove-box.ts | 378 |
 | src/audio/pghi.ts | 377 |
 | src/audio/reservoir.ts | 375 |
@@ -113,7 +114,6 @@ the remaining 720 account for 79063 lines.
 | src/audio/risset.ts | 325 |
 | src/docs/coeurs-par-trames.ts | 325 |
 | src/audio/ondelettes.ts | 321 |
-| src/audio/io.ts | 320 |
 | src/core/bulles.test.ts | 320 |
 | src/core/instrument-graphe.test.ts | 315 |
 | src/audio/musicxml-arbre.ts | 314 |
@@ -172,6 +172,7 @@ the remaining 720 account for 79063 lines.
 | src/ui/PistesMultiples.tsx | 254 |
 | src/audio/grains.test.ts | 253 |
 | src/audio/guides-onde.ts | 253 |
+| src/audio/cercle-film.ts | 252 |
 | src/plugins/boucle-creneau.test.ts | 252 |
 | src/plugins/masquage-schillinger-gammes.ts | 252 |
 | src/audio/microtons.test.ts | 251 |
@@ -206,6 +207,7 @@ the remaining 720 account for 79063 lines.
 | src/ui/rouleau-calcul.ts | 240 |
 | src/audio/csound-aleatoire.test.ts | 239 |
 | src/audio/midi-vers-abc.test.ts | 239 |
+| src/audio/styles-film.ts | 239 |
 | src/docs/modulables.ts | 237 |
 | src/audio/abc-edition-llm.ts | 236 |
 | src/audio/camelot.ts | 236 |
@@ -286,6 +288,7 @@ the remaining 720 account for 79063 lines.
 | src/audio/tone-synths.test.ts | 202 |
 | src/audio/tonnetz.test.ts | 202 |
 | src/plugins/cercle-assemblage.test.ts | 202 |
+| src/plugins/cercle-film.ts | 202 |
 | src/audio/classification-pistes.test.ts | 201 |
 | src/plugins/sampler-multizones.test.ts | 201 |
 | src/audio/classes-hauteurs.ts | 200 |

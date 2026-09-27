@@ -65,28 +65,41 @@ const SANS_PORTS = new Set(["comment", "frame"]);
 
 const racine = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-/** Les fichiers JSON des dossiers surveillés, sans descendre plus bas. */
+/**
+ * Les fichiers JSON des dossiers surveillés.
+ *
+ * ON NE DESCEND QUE DANS `exemples/`, et il le faut : les exemples se rangent par sous-dossiers
+ * depuis que le bouton de la barre ouvre le classeur plutôt qu'une liste. Sans cette descente, un
+ * exemple rangé dans un thème échapperait au contrôle, ce qui est exactement le trou que ce contrat
+ * existe pour boucher. Ailleurs on reste à plat : `presets/` est un dossier de travail, et la
+ * racine du dépôt contient trop de choses pour qu'on la parcoure en entier.
+ */
 function fichiersCandidats() {
   const sortie = [];
-  for (const d of DOSSIERS) {
-    const chemin = join(racine, d);
+  const parcourir = (d, chemin) => {
     let entrees;
     try {
       entrees = readdirSync(chemin);
     } catch {
-      continue;
+      return;
     }
     for (const nom of entrees) {
-      if (!estExemple(d, nom)) continue;
       const complet = join(chemin, nom);
+      let stat;
       try {
-        if (!statSync(complet).isFile()) continue;
+        stat = statSync(complet);
       } catch {
         continue;
       }
+      if (stat.isDirectory()) {
+        if (d === "exemples") parcourir(d, complet);
+        continue;
+      }
+      if (!stat.isFile() || !estExemple(d, nom)) continue;
       sortie.push(complet);
     }
-  }
+  };
+  for (const d of DOSSIERS) parcourir(d, join(racine, d));
   return sortie;
 }
 

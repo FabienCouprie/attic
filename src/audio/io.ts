@@ -79,9 +79,60 @@ export interface OptionsWav {
   ixml?: string;
 }
 
+/**
+ * L'encodage préparé, découpable en tranches.
+ *
+ * POURQUOI CETTE FORME, relevé par Fabien : l'encodage d'un aperçu bloque le fil de l'interface.
+ * Mesuré sur 54 secondes de stéréo, cinq millions d'échantillons, **295 à 390 ms par nœud**, et
+ * l'application en encode un par nœud audio. En une passe, cela faisait un gel de plusieurs
+ * secondes ; nœud par nœud, le navigateur peignait entre deux clics et personne ne voyait rien.
+ *
+ * L'EN-TÊTE ET LA QUEUE SE FONT D'UN COUP, les échantillons par tranches. `ecrire` reprend
+ * exactement là où on l'arrête : l'offset et l'état du dither sont retenus, si bien que le fichier
+ * obtenu en dix tranches est **le même octet pour octet** que celui obtenu d'un seul tenant. Un test
+ * le tient, sans quoi la promesse « même graine, mêmes octets » ne vaudrait plus rien.
+ */
+interface EncodageWav {
+  /** Écrit les trames de `de` inclus à `a` exclu. */
+  ecrire: (de: number, a: number) => void;
+  /** Le bourrage, les métadonnées, et le blob. */
+  finir: () => Blob;
+  /** Le nombre de trames à écrire. */
+  trames: number;
+}
+
+/**
+ * Le même encodage que `bufferVersWavBlob`, mais rendu par tranches pour ne pas figer l'interface.
+ *
+ * `souffle` est appelé après chaque tranche ; il ne rend la main que s'il le faut, selon son propre
+ * délai. Sans lui, cette fonction ferait le même travail que la version directe, en plus lent.
+ */
+export async function bufferVersWavBlobRespirant(
+  buffer: AudioBuffer, grapheJson: string | undefined, securise: boolean, options: OptionsWav,
+  souffle: { tour: () => Promise<boolean> },
+): Promise<Blob> {
+  const e = preparerWav(buffer, grapheJson, securise, options);
+  // Environ une seconde et demie d'audio par tranche à quarante-huit kilohertz : assez pour que le
+  // coût de la découpe reste négligeable, assez peu pour qu'une tranche tienne dans une image.
+  const PAS = 1 << 16;
+  for (let i = 0; i < e.trames; i += PAS) {
+    e.ecrire(i, Math.min(e.trames, i + PAS));
+    await souffle.tour();
+  }
+  return e.finir();
+}
+
 export function bufferVersWavBlob(
   buffer: AudioBuffer, grapheJson?: string, securise: boolean = false, options: OptionsWav = {},
 ): Blob {
+  const e = preparerWav(buffer, grapheJson, securise, options);
+  e.ecrire(0, e.trames);
+  return e.finir();
+}
+
+function preparerWav(
+  buffer: AudioBuffer, grapheJson?: string, securise: boolean = false, options: OptionsWav = {},
+): EncodageWav {
   const nbCanaux = buffer.numberOfChannels;
   const frequence = buffer.sampleRate;
   const nbEchantillons = buffer.length;
@@ -194,7 +245,11 @@ export function bufferVersWavBlob(
   // chercher. Le plafond d'aperçu, lui, reste : il protège les oreilles, ce qui prime.
   const borne = securise ? SEUIL_PREVIEW : flottant ? Infinity : 1.0;
   let offset = tete;
-  for (let i = 0; i < nbEchantillons; i++) {
+  // L'OFFSET ET LE DITHER SONT RETENUS PAR LA FERMETURE, et c'est ce qui rend la découpe sûre :
+  // une tranche reprend là où la précédente s'est arrêtée, dans le même ordre, donc le
+  // quantificateur voit la même suite de valeurs qu'en un seul passage.
+  const ecrire = (de: number, a: number) => {
+  for (let i = de; i < a; i++) {
     for (let c = 0; c < nbCanaux; c++) {
       const brut = canaux[c][i];
       const echantillon = Math.max(-borne, Math.min(borne, Number.isFinite(brut) ? brut : 0));
@@ -215,18 +270,23 @@ export function bufferVersWavBlob(
     }
   }
 
-  offset += bourrage;
-  // Les métadonnées implicites, puis le graphe embarqué.
-  if (ixml.length > 0) {
-    new Uint8Array(arrayBuffer).set(ixml, offset);
-    offset += ixml.length;
-  }
-  if (grapheChunk.byteLength > 0) {
-    const src = new Uint8Array(grapheChunk);
-    for (let i = 0; i < src.length; i++) vue.setUint8(offset + i, src[i]);
-  }
+  };
 
-  return new Blob([arrayBuffer], { type: "audio/wav" });
+  const finir = (): Blob => {
+    offset += bourrage;
+    // Les métadonnées implicites, puis le graphe embarqué.
+    if (ixml.length > 0) {
+      new Uint8Array(arrayBuffer).set(ixml, offset);
+      offset += ixml.length;
+    }
+    if (grapheChunk.byteLength > 0) {
+      const src = new Uint8Array(grapheChunk);
+      for (let i = 0; i < src.length; i++) vue.setUint8(offset + i, src[i]);
+    }
+    return new Blob([arrayBuffer], { type: "audio/wav" });
+  };
+
+  return { ecrire, finir, trames: nbEchantillons };
 }
 
 // Extraire le graphe JSON embarqué dans un WAV (chunk LIST/INFO IGRF).

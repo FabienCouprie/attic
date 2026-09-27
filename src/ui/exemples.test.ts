@@ -34,9 +34,16 @@ describe("le catalogue des exemples", () => {
     expect(noms).toEqual([...noms].sort((a, b) => a.localeCompare(b, "fr")));
   });
 
-  it("l'identifiant est le nom du fichier, sans dossier ni extension", () => {
+  it("l'identifiant est le chemin sous « exemples », sans extension", () => {
     expect(identifiantDepuisChemin("/exemples/un-effet-sur-un-passage.json")).toBe("un-effet-sur-un-passage");
     expect(identifiantDepuisChemin("exemples\\deux-effets.json")).toBe("deux-effets");
+  });
+
+  it("UN SOUS-DOSSIER FAIT PARTIE DE L'IDENTIFIANT, sans quoi deux exemples homonymes se confondraient", () => {
+    expect(identifiantDepuisChemin("/exemples/rythme/canon.json")).toBe("rythme/canon");
+    expect(identifiantDepuisChemin("/exemples/spectre/canon.json")).toBe("spectre/canon");
+    // Le nom affiché, lui, ne garde que le dernier segment : le dossier se lit dans le classeur.
+    expect(nomDepuisIdentifiant("rythme/canon-de-proportions")).toBe("Canon de proportions");
   });
 
   it("LE NOM AFFICHÉ SE DÉDUIT DU NOM DE FICHIER, et rien n'est à tenir à jour à côté", () => {

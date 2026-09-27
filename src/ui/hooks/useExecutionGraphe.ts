@@ -16,7 +16,7 @@ import {
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
 import { estResultatEnErreur } from "../../core/execution";
-import { respirer } from "../../core/respirer";
+import { Respiration, respirer } from "../../core/respirer";
 import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { deplierBoucles } from "../../core/boucle-graphe";
@@ -24,7 +24,7 @@ import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { ecartNiveau } from "../../audio/ecart-niveau";
 import { publierGrapheCourant, publierExecutionCourante } from "../../plugins/grapheGlobal";
-import { bufferVersWavBlob, picAbsolu } from "../../audio";
+import { bufferVersWavBlob, bufferVersWavBlobRespirant, picAbsolu } from "../../audio";
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
 import { heriterDisposition } from "../../audio/multicanal";
 import { tamponPourApercu } from "../../audio/multicanal-ecoute";
@@ -773,10 +773,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!garde) cacheExec.current.delete(n.id);
     }
 
+    // LA PHASE DES APERÇUS RESPIRE ELLE AUSSI, relevé par Fabien sur une pièce de cinquante
+    // secondes. La boucle des nœuds rend la main entre deux nœuds depuis longtemps ; celle-ci, non,
+    // et c'est pourtant elle qui encode un WAV par nœud audio pour son petit lecteur. Sur une pièce
+    // longue, sept encodages s'enchaînaient sans une image : **un gel de 7,7 secondes d'un seul
+    // tenant**, alors que le même graphe lancé nœud par nœud ne gelait pas, le navigateur peignant
+    // entre deux clics. C'est cet indice-là qui a désigné la cause.
+    const souffle = new Respiration();
     const correctifs = new Map<string, Record<string, unknown>>();
     for (const n of noeudsRef.current) {
-      const patch = calculerCorrectifResultat(n);
+      const patch = await calculerCorrectifResultat(n);
       if (patch) correctifs.set(n.id, patch);
+      await souffle.tour();
     }
     // Un CORRECTIF de champs, appliqué sur les données VIVANTES du nœud — et non
     // un remplacement de `data` construit depuis `noeudsRef.current`. Ce ref est en
@@ -792,7 +800,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     );
 
     /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
-    function calculerCorrectifResultat(n: any): Record<string, unknown> | null {
+    async function calculerCorrectifResultat(n: any): Promise<Record<string, unknown> | null> {
       {
         const meta = trouverMeta(n.data.ficheId as string);
         // Méta hors du périmètre du run (branche non exécutée) : ne pas y toucher —
@@ -899,7 +907,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
             const ixml = NOEUDS_EXPORT.includes(ficheId)
               ? decrire(ecrit, { noeud: trouverDef(ficheId)?.nom ?? ficheId }, bits).ixml
               : undefined;
-            url = URL.createObjectURL(bufferVersWavBlob(ecrit, grapheExport, securiser, { bits, ixml }));
+            url = URL.createObjectURL(await bufferVersWavBlobRespirant(
+              ecrit, grapheExport, securiser, { bits, ixml }, souffle));
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);

@@ -175,6 +175,8 @@ import { fiches as f_sequence_assemblage } from "./sequence-assemblage";
 import { fiches as f_micromontage } from "./micromontage";
 import { fiches as f_passage_zero } from "./passage-zero";
 import { fiches as f_dosage } from "./dosage";
+import { fiches as f_cercle_film } from "./cercle-film";
+import { fiches as f_video_export } from "./video-export";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -290,6 +292,8 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_micromontage,
   ...f_passage_zero,
   ...f_dosage,
+  ...f_cercle_film,
+  ...f_video_export,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,

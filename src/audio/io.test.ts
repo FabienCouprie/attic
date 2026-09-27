@@ -1,6 +1,6 @@
 // audio/io.test.ts — Sécurité de l'encodage WAV.
 import { describe, it, expect, beforeAll } from "vitest";
-import { bufferVersWavBlob } from "./io";
+import { bufferVersWavBlob, bufferVersWavBlobRespirant } from "./io";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -91,5 +91,66 @@ describe("bufferVersWavBlob", () => {
     expect(samples[1][3]).toBeCloseTo(0.5, 3);
     expect(samples[0][4]).toBeCloseTo(0.3, 3);
     expect(samples[1][4]).toBeCloseTo(-0.3, 3);
+  });
+});
+
+// L'ENCODAGE PAR TRANCHES, relevé par Fabien : encoder un aperçu figeait l'interface, et le même
+// graphe lancé nœud par nœud ne figeait pas. La découpe rend la main entre deux tranches ; elle ne
+// vaut que si le fichier obtenu est LE MÊME, ce que ces tests tiennent. Le dither en dépend : il
+// avance avec les échantillons, donc une tranche doit reprendre exactement où l'autre s'arrête.
+describe("l'encodage par tranches", () => {
+  const sansSouffle = { tour: async () => false };
+  const souffleur = () => {
+    let n = 0;
+    return { tour: async () => { n++; return true; }, compte: () => n };
+  };
+
+  function tampon(canaux: number, n: number, graine = 1) {
+    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: 48000 });
+    let g = graine;
+    for (let c = 0; c < canaux; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < n; i++) { g = (g * 1103515245 + 12345) & 0x7fffffff; d[i] = (g / 0x7fffffff) * 1.6 - 0.8; }
+    }
+    return b;
+  }
+
+  const octets = async (b: Blob) => new Uint8Array(await b.arrayBuffer());
+
+  it("IL REND LE MÊME FICHIER, OCTET POUR OCTET, sur chaque profondeur", async () => {
+    for (const bits of [16, 24, 32] as const) {
+      const b = tampon(2, 200_000);
+      const direct = await octets(bufferVersWavBlob(b, undefined, false, { bits, graine: 7 }));
+      const tranches = await octets(
+        await bufferVersWavBlobRespirant(b, undefined, false, { bits, graine: 7 }, sansSouffle));
+      expect(tranches.length, `${bits} bits`).toBe(direct.length);
+      let differents = 0;
+      for (let i = 0; i < direct.length; i++) if (direct[i] !== tranches[i]) differents++;
+      expect(differents, `${bits} bits`).toBe(0);
+    }
+  });
+
+  it("y compris en monophonie, avec le plafond d'aperçu, un graphe embarqué et un iXML", async () => {
+    const b = tampon(1, 130_001, 9);
+    const o = { bits: 16 as const, graine: 3, ixml: "<BWFXML><PROJECT>essai</PROJECT></BWFXML>" };
+    const direct = await octets(bufferVersWavBlob(b, "{\"nodes\":[]}", true, o));
+    const tranches = await octets(await bufferVersWavBlobRespirant(b, "{\"nodes\":[]}", true, o, sansSouffle));
+    expect([...tranches]).toEqual([...direct]);
+  });
+
+  it("IL RESPIRE une fois par tranche, et le compte suit la longueur", async () => {
+    const s = souffleur();
+    await bufferVersWavBlobRespirant(tampon(2, 300_000), undefined, false, { bits: 16 }, s);
+    // 300 000 trames par tranches de 65 536 : cinq tranches, donc cinq respirations.
+    expect(s.compte()).toBe(5);
+  });
+
+  it("un tampon vide ne demande aucune tranche et rend quand même un fichier lisible", async () => {
+    const s = souffleur();
+    const blob = await bufferVersWavBlobRespirant(tampon(2, 0), undefined, false, { bits: 16 }, s);
+    expect(s.compte()).toBe(0);
+    expect(blob.size).toBeGreaterThan(40);
+    const direct = bufferVersWavBlob(tampon(2, 0), undefined, false, { bits: 16 });
+    expect([...await octets(blob)]).toEqual([...await octets(direct)]);
   });
 });

@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **446 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **448 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -12,8 +12,8 @@ Attic ships **446 components** in **7 categories** and **62 families**. Every na
 | [Inputs](#inputs) | 79 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (20) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 218 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 41 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
-| [Outputs](#outputs) | 11 | [Export](#export) (4) · [Monitoring](#monitoring) (7) |
-| [Collections](#collections) | 12 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (4) · [Playback](#playback) (1) |
+| [Outputs](#outputs) | 12 | [Export](#export) (5) · [Monitoring](#monitoring) (7) |
+| [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Other & lab](#other--lab) | 83 | [Circle](#circle) (12) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
 
@@ -3317,7 +3317,7 @@ Blends a sound and its treated version, in a proportion that varies over time. T
 | Amount | slider | 100 % | 0 – 100 %, step 1 | The treated share in the blend, when no curve drives it. At zero the output is the dry alone, whatever the zones. |
 | Amount min | slider | 0 % | 0 – 100 %, step 1 | The treated share when the curve is at its lowest. |
 | Amount max | slider | 100 % | 0 – 100 %, step 1 | The treated share when the curve is at its highest. |
-| Mode | choice | Insert | Insert / Send | In insert, the treated replaces the dry, which fades out as it comes: that is what a filter, a distortion, a transposition call for. In send, the dry stays whole and the treated adds to it: that is what a reverberation or a delay call for. |
+| Mode | choice | Insert | Insert / Send | In insert, the treated replaces the dry, which fades out as it comes: that is what a filter, a distortion, a transposition call for. In send, the dry stays whole and the treated adds to it: that is what a reverberation or a delay call for. A send assumes an effect set fully wet: an effect that already mixes in some dry adds the direct sound a second time, and its treated share is reduced by as much. |
 | Applied to | choice | Inside the zones | Inside the zones / Outside the zones | Treat the zones received, or everything that is not them. The ramps invert with the rest, and the output stays continuous. |
 | Fade in | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp before each zone. It sits outside, so that the zone is treated whole. Below five milliseconds the ramp becomes audible again as a click on low sounds: a fade covers at least one period of the lowest frequency present. |
 | Fade out | slider | 10 ms | 0 – 2000 ms, step 5 | Length of the ramp after each zone, outside it as well. |
@@ -8025,6 +8025,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 | [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [SFZ Export](#sfz-export) | Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler. |
 | [SVG Export](#svg-export) | Saves an SVG file to disk and returns its path. |
+| [Video Export](#video-export) | Writes a film to disk, in the working directory, and returns its path. |
 
 #### Image Export
 
@@ -8099,6 +8100,23 @@ Saves an SVG file to disk and returns its path. Connect an 'Image' output produc
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Name | text | `export.svg` |  | Output SVG filename (in the working directory). The extension is forced to .svg. |
+
+#### Video Export
+
+`export-video` · Outputs → Export
+
+*Writes a film to disk, in the working directory, and returns its path.*
+
+Writes the film received on its input to disk, in the working directory, and returns the written path on its output. « Name » gives the file name. An extension naming a known container is respected; failing that, it is deduced from the film's actual type, so that a player is not mistaken about what it opens. The containers recognised are MP4, WebM, MOV and MKV. The film is written as it arrives, without being re-encoded: its definition, its frame rate and its quality are those it carried. The « Path » output gives the path of the written file, which the rest of the chain can take up. The message gives the name and the weight. Writing to disk requires the desktop application; in a browser, the node says so rather than failing.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Video | video |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Name | text | `film.mp4` |  | Name of the file written, in the working directory. A known extension is respected; failing that it is deduced from the film's actual type. |
 
 ### Monitoring
 
@@ -8397,6 +8415,7 @@ Batch-processes a folder: converts all audio files (WAV, OGG…) to MP3 in the o
 | [Cover Art Generator](#cover-art-generator) | Generates a procedural album cover (SVG) from a prompt + title. |
 | [Exhibition Gallery](#exhibition-gallery) | Generates a visual HTML gallery with procedural cover art from a directory of MP3 files, hung in folder order or in the order of received coordinates. |
 | [Sound Map](#sound-map) | Loads an audio folder and generates an interactive HTML map of a fictional city or a concentric map with several aesthetics, openable in a browser. |
+| [Video Generator](#video-generator) | Draws an animated figure frame by frame, with trails, particles and glow, and returns a silent MP4 film. |
 
 #### Coordinates on Map
 
@@ -8484,6 +8503,42 @@ Loads a folder of audio files and generates a fictional city map on each run. Co
 | Style | choice | Grid city | Grid city / Concentric circles / Organic / Voronoi | Map style. |
 | Aesthetic | choice | Classic | Classic / Baroque / Art Nouveau / Art Deco / Exotic | Visual mood of the map. |
 | Seed | slider | 0 | 0 – 9999, step 1 | Map seed (0 = new map each run). |
+
+#### Video Generator
+
+`cercle-film` · Collections → Export
+
+*Draws an animated figure frame by frame, with trails, particles and glow, and returns a silent MP4 film.*
+
+Builds a film: a series of pulses gives rise to both a music and a moving image, and the node returns the two in a single MP4 file. The drawing is made frame by frame on a canvas, which gives effects a declarative animation does not. Trailing covers the previous frame with a translucent background instead of erasing it, and the shapes leave a trail. The figures compose in additive mode: two shapes that cross brighten instead of masking each other, which makes a cluster of particles glow. Four figures overlay. The core beats at the centre, brief attack and exponential fall. A ring is born at each strike, opens and dies out. Particles leave each strike along rays, and fade. A polygon turns around the core, and its number of vertices follows the colour's Camelot slot: the figure changes shape when the music changes key. « Duration », « Initial rate », « Final rate », « Hue », « Hue journey », « Saturation », « Lightness », « Breathing », « Silence threshold » and « Seed » set the series of pulses, hence the music and the image together. « Definition » and « Frame rate » set the number of frames to compute, which is what the film costs: the duration times the frame rate. « Bitrate » sets the file's weight, in megabits per second. « Trailing » sets how long the trails last: high, the image clears fast; low, everything trails. « Particles » gives their number per strike, and zero removes them. « Ring life » gives the time a ring takes to open and vanish. The node has neither input nor output. The film is watched inside the node and saved by its button; until it is saved, the file exists only in memory. The message gives the number of frames, the weight and the computing time.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Video | video |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Duration | slider | 20 s | 2 – 120 s, step 1 | Length of the film, and of the music it carries. It multiplies the frame rate to give the number of frames to compute, which is what the render costs. |
+| Initial rate | slider | 1.6 /s | 0.2 – 12 /s, step 0.1 | Strikes per second at the start. |
+| Final rate | slider | 3.2 /s | 0.2 – 12 /s, step 0.1 | Strikes per second at the end. Different from the initial one, the rhythm speeds up or slows down throughout. |
+| Hue | slider | 210 ° | 0 – 359 °, step 1 | Starting colour. It also gives the key, through the Camelot slot of the sector it falls in. |
+| Hue journey | slider | 150 ° | -720 – 720 °, step 15 | How far the colour turns over the whole duration. The music modulates with it, and the polygon changes its number of vertices at each slot crossed. |
+| Saturation | slider | 70 % | 0 – 100 %, step 1 | Colour saturation. Above half, the Camelot slots are major; below, minor. |
+| Lightness | slider | 55 % | 0 – 100 %, step 1 | Colour lightness. |
+| Breathing | slider | 80 % | 0 – 100 %, step 1 | How much the radius varies from one strike to the next. |
+| Silence threshold | slider | 45 % | 0 – 90 %, step 1 | Radius below which the strike makes no sound. The silence keeps its image: the ring opens without a note. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed of the draw. Same seed, same film. |
+| Definition | choice | 1280 × 720 | 960 × 540 / 1280 × 720 / 1920 × 1080 | Picture size. It weighs on the encoding time, which is the main part of the computation. |
+| Frame rate | slider | 30 /s | 12 – 60 /s, step 1 | Frames per second. The number of frames to compute is the duration times this rate, and that is what sets the render time. |
+| Bitrate | slider | 6 Mb/s | 1 – 20 Mb/s, step 1 | Picture bitrate. It sets the file's weight: the duration times the bitrate. |
+| Trailing | slider | 24 % | 2 – 100 %, step 1 | Share of background laid down at each frame. High, the previous frame clears fast; low, everything leaves a trail. |
+| Particles | slider | 14 | 0 – 40, step 1 | Number of particles thrown by each strike. At zero there are none. |
+| Ring life | slider | 1.6 s | 0.2 – 6 s, step 0.1 | Time a ring takes to open and vanish. Long, the rings overlap. |
+| Shape | choice | Circle | Circle / Oval / Diamond / Square / Triangle / Pentagon / Hexagon / Star / Six-pointed star / Flower / Rosette / Astroid / Drop / Cross / Lens | The starting shape. All are settings of one same equation, the Gielis superformula, which allows passing from one to another without a break. |
+| Target shape | choice | Star | Circle / Oval / Diamond / Square / Triangle / Pentagon / Hexagon / Star / Six-pointed star / Flower / Rosette / Astroid / Drop / Cross / Lens | The shape the film deforms towards over the duration. |
+| Style | choice | Style 5 | Style 1 / Style 2 / Style 3 / Style 4 / Style 5 / Style 6 / Style 7 / Style 8 / Style 9 / Style 10 / Style 11 / Style 12 | The hand that draws. The shape does not change, the way it is laid down does. 1: a thin stroke, alone. 2: the outline and the chords joining its opposite points. 3: the radius rippled by a sine, fourteen waves around the turn. 4: dots sown along the outline, spaced at random. 5: five nested outlines, from full to a third. 6: the outline filled flat, plus a half disc. 7: the outline as a stencil, filled with stripes. 8: the outline broken into tesserae parted by gaps. 9: a cross at each vertex. 10: a stroke three times thicker, doubled by an offset shadow. 11: three copies offset in cyan, magenta and white. 12: three wide translucent strokes laid over each other. |
+| Prompt | text | — |  | A few words from which the palette is deduced: fire, ocean, forest, night, neon, pastel, synthwave, sepia and a dozen other worlds. Left empty, the colour follows the pulses' hue. |
+| Morphing | slider | 100 % | 0 – 100 %, step 1 | How much of the journey towards the target shape is travelled over the duration. At zero the starting shape holds the whole film; at a hundred it ends exactly on the target shape. |
 
 ### Playback
 

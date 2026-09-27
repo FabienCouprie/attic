@@ -78,6 +78,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "barre.importer": { fr: "Importer un projet", en: "Import a project" },
   "barre.exemples": { fr: "Ouvrir un exemple", en: "Open an example" },
   "note.ajouter": { fr: "Ajouter une note...", en: "Add a note..." },
+  "film.enregistrer": { fr: "Enregistrer le film", en: "Save the film" },
   "cadre.titre": { fr: "Cadre", en: "Frame" },
   "barre.exemples.copie": { fr: "Un exemple s'ouvre sans fichier : l'enregistrer en fait une copie dans le dossier de travail.", en: "An example opens with no file: saving it makes a copy in the working folder." },
   "barre.sauvegardeAutoActiver": { fr: "Activer la sauvegarde automatique", en: "Turn on automatic saving" },

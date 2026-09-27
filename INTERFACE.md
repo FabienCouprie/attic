@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**446 composants**, dont **91** avec une vue propre et **4** sans lecteur générique.
+**448 composants**, dont **92** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -31,6 +31,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Banque SFZ | `banque-sfz` | — | VueBanqueSfz | 240 × 140 | non | oui | non |
 | Roue de Camelot | `camelot` | VueRenduImage | — | 240 × 162 | oui | oui | non |
 | Carte sonore | `carte-sonore` | VueCarteSonore | — | 240 × 118 | non | oui | non |
+| Générateur vidéo | `cercle-film` | VueFilmCercle | — | 240 × 118 | non | oui | non |
 | Cercle mélodique | `cercle-melodique` | CercleMelodiqueVue | — | 320 × 400 | non | oui | non |
 | Cercle pulsant | `cercle-pulsant` | VueAnimationSvg | — | 300 × 500 | non | non | non |
 | Cercle rythmique | `cercle-rythmique` | CercleRythmiqueVue | — | 320 × 400 | non | oui | non |
@@ -250,6 +251,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Export image | `export-image` | 240 × 118 |
 | Export SFZ | `export-sfz` | 240 × 118 |
 | Export SVG | `export-svg` | 240 × 118 |
+| Export vidéo | `export-video` | 240 × 118 |
 | Extraction centre/côté | `extraction-centre-cote` | 240 × 118 |
 | Extraction PDF | `extraction-pdf` | 240 × 118 |
 | Extraire durée | `extraire-duree` | 240 × 140 |

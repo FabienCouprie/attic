@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("api", {
   sauvegarderFichier: (options) => ipcRenderer.invoke("fichier:sauvegarder", options),
 
   ouvrirFichier: (options) => ipcRenderer.invoke("fichier:ouvrir", options),
+  // Le dossier des graphes d'exemple, pour y ouvrir le classeur. `null` s'il n'est pas livré.
+  dossierExemples: () => ipcRenderer.invoke("exemples:dossier"),
 
   sauvegarderBinaire: (options) => ipcRenderer.invoke("fichier:sauvegarder-binaire", options),
 

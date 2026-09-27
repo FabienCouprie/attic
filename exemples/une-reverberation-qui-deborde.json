@@ -53,7 +53,7 @@
       "height": 242,
       "data": {
         "ficheId": "reverbe-reseau",
-        "parametres": { "RT60 grave": 3, "RT60 aigu": 1.5 }
+        "parametres": { "RT60 grave": 3, "RT60 aigu": 1.5, "Mix": 100 }
       }
     },
     {
