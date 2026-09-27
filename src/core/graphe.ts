@@ -31,6 +31,62 @@ export function ordreTopologique(ids: string[], aretes: AreteG[]): string[] {
   return ordonnees;
 }
 
+/**
+ * Les nœuds qu'un tri topologique ne parvient pas à classer : la preuve qu'un cycle existe.
+ *
+ * C'EST LA PREUVE, ET NON UN INDICE. Kahn n'émet un nœud que lorsque son degré entrant tombe à
+ * zéro ; un nœud pris dans un cycle attend une arête qui ne sera jamais consommée, et n'est donc
+ * jamais émis. Ce qui manque à l'ordre est EXACTEMENT l'ensemble des nœuds dont un cycle est
+ * atteignable en remontant. Le résultat vide veut dire acyclique, sans réserve.
+ *
+ * POURQUOI CE N'EST PAS `ordreTopologique` QUI LE DIT. Sa signature est figée par ses tests et par
+ * le moteur, qui attend une liste d'ids : lui faire rendre un couple aurait touché tous ses
+ * appelants pour un besoin qui n'est pas le leur. Le coût est un second passage, négligeable devant
+ * une exécution de graphe, et le calcul reste écrit une seule fois.
+ *
+ * L'ORDRE RENDU EST CELUI DE `ids`, pour qu'un message qui les nomme soit stable d'une fois sur
+ * l'autre : un ensemble rendu dans l'ordre de parcours changerait de forme sans que rien ne bouge.
+ */
+export function noeudsEnCycle(ids: string[], aretes: AreteG[]): string[] {
+  const classes = new Set(ordreTopologique(ids, aretes));
+  return ids.filter((id) => !classes.has(id));
+}
+
+/**
+ * Cette arête refermerait-elle un cycle ?
+ *
+ * À EXÉCUTER AVANT CHAQUE POSE. Le moteur exécute un graphe acyclique, et rien d'autre : un cycle
+ * n'a pas d'ordre topologique, si bien que les nœuds qu'il contient ne sont jamais exécutés. Refuser
+ * l'arête au moment où on la tire est le seul endroit où le refus ne coûte rien à personne.
+ *
+ * LA QUESTION EST UNE ATTEIGNABILITÉ, ET ELLE S'ARRÊTE TÔT. Poser `source → cible` referme un cycle
+ * si et seulement si `source` est DÉJÀ atteignable depuis `cible`. On descend donc de `cible` en
+ * cherchant `source`, et l'on rend la main dès qu'on la trouve — inutile de classer le graphe entier
+ * pour répondre à une question sur deux nœuds. Un graphe déjà cyclique ne fait pas boucler la
+ * recherche : l'ensemble des nœuds vus l'en empêche, comme dans `descendants`.
+ *
+ * UNE BOUCLE D'ATTIC N'EN EST PAS UNE AU SENS DU GRAPHE, et ce contrôle ne la gêne pas. « Début de
+ * boucle » et « Fin de boucle » sont deux nœuds distincts reliés vers l'aval : la répétition se fait
+ * par dépliage avant l'exécution, ou par passes successives, jamais par une arête qui remonte.
+ */
+export function fermeraitUnCycle(source: string, cible: string, aretes: AreteG[]): boolean {
+  // Une arête d'un nœud vers lui-même est le plus court des cycles, et aucune descente ne la verrait.
+  if (source === cible) return true;
+  const vus = new Set<string>([cible]);
+  const pile = [cible];
+  while (pile.length > 0) {
+    const id = pile.pop()!;
+    for (const a of aretes) {
+      if (a.source !== id) continue;
+      if (a.target === source) return true;
+      if (vus.has(a.target)) continue;
+      vus.add(a.target);
+      pile.push(a.target);
+    }
+  }
+  return false;
+}
+
 // Repousse en fin d'ordre les nœuds qui doivent passer APRÈS tous les autres — un nœud qui montre
 // le travail du graphe entier sans en recevoir aucune valeur par ses entrées. Sans entrée, le tri
 // topologique peut le placer n'importe où, y compris en tête ; il n'y a pas d'arête pour le dire.

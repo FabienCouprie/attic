@@ -9,6 +9,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { NB_BANDES, bandesCritiques, bark, masquageParBande, proportionMasquee } from "../audio/masquage";
 import { analyserResultante } from "../audio/schillinger";
+import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
 import { GAMMES, degresInjouables, ecartAuTempere, frequences, gammeParId, intervalles } from "../audio/gammes-monde";
 import { analyser, modules, TAILLE_TRAME } from "../audio/spectral-wishart";
 
@@ -115,12 +116,17 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Le rythme qui naît de la superposition de deux pulsations régulières.",
     resumeEn: "The rhythm that arises from superposing two regular pulses.",
-    notice: "Engendre un motif rythmique par superposition de deux pulsations. D'après Joseph Schillinger, « The Schillinger System of Musical Composition », Carl Fischer, 1946, livre I : « Theory of Rhythm ».\n\nDeux périodes battent côte à côte sur un même cycle. La résultante est la suite des intervalles entre les instants où l'une ou l'autre marque : le motif tombe où il tombe, et c'est de ce hasard réglé que sortent les figures que Schillinger poursuivait.\n\nDeux pulsations de 3 et 2 donnent 2-1-1-2, la figure la plus reconnaissable du système. Elle est palindromique, et ce n'est pas un hasard : la résultante de deux nombres premiers entre eux l'est toujours, par symétrie du cycle autour de son milieu.\n\nLe cycle dure le produit des deux périodes, mais si celles-ci partagent un facteur, elles retombent ensemble avant la fin et le motif se répète à l'intérieur de lui-même : la résultante de 4 et 2 n'est pas plus riche que celle de 2 et 1, c'est la même, jouée deux fois plus lentement. Le composant le dit plutôt que de laisser croire à un réglage sans effet.\n\nCe que ce composant ne fait pas : le fractionnement, par lequel Schillinger enrichit ses résultantes et obtient des structures auto-similaires. Les sources consultées nomment la technique sans en donner la règle.",
-    noticeEn: "Generates a rhythmic pattern by superposing two pulses. After Joseph Schillinger, « The Schillinger System of Musical Composition », Carl Fischer, 1946, book I: « Theory of Rhythm ».\n\nTwo periods beat side by side over one cycle. The resultant is the sequence of intervals between the instants where one or the other marks: the pattern falls where it falls, and from that governed chance come the figures Schillinger pursued.\n\nTwo pulses of 3 and 2 give 2-1-1-2, the system's most recognisable figure. It is palindromic, and that is no accident: the resultant of two coprime numbers always is, by symmetry of the cycle about its midpoint.\n\nThe cycle lasts the product of the two periods, but if they share a factor they fall together before the end and the pattern repeats inside itself: the resultant of 4 and 2 is no richer than that of 2 and 1, it is the same, played twice as slowly. The node says so rather than letting one believe in a setting with no effect.\n\nWhat this node does not do: fractioning, by which Schillinger enriches his resultants and obtains self-similar structures. The sources consulted name the technique without giving its rule.",
+    notice: "Engendre un motif rythmique par superposition de deux pulsations régulières, et le rend en son et en MIDI. D'après Joseph Schillinger, « The Schillinger System of Musical Composition », Carl Fischer, 1946, livre I : « Theory of Rhythm ».\n\nDeux périodes battent côte à côte sur un même cycle. La résultante est la suite des intervalles entre les instants où l'une ou l'autre marque.\n\nDeux pulsations de 3 et 2 donnent 2-1-1-2, la figure la plus reconnaissable du système. Elle est palindromique : la résultante de deux nombres premiers entre eux l'est toujours, par symétrie du cycle autour de son milieu.\n\n« Pulsation A » et « Pulsation B » sont les deux périodes, en battements. Le cycle dure leur produit ; si elles partagent un facteur, elles retombent ensemble avant la fin et le motif se répète à l'intérieur de lui-même. La résultante de 4 et 2 n'est alors pas plus riche que celle de 2 et 1, c'est la même, jouée deux fois plus lentement, et le message le signale.\n\n« Tempo » donne la vitesse du battement.\n\n« Percussion » choisit la sonorité qui marque chaque frappe, parmi huit. Elle est écrite sur le canal de batterie du General MIDI, dans le son rendu comme dans le fichier.\n\n« Volume » règle le niveau du son rendu, sans toucher au MIDI.\n\nLa sortie « Analyse » donne les deux périodes, la longueur du cycle, les instants des frappes, les écarts, et si la figure est palindromique. La sortie « MIDI » porte le motif en fichier. La sortie « Audio » le porte en son.\n\nCe composant ne fait pas le fractionnement, par lequel Schillinger enrichit ses résultantes et obtient des structures auto-similaires. Les sources consultées nomment la technique sans en donner la règle.",
+    noticeEn: "Generates a rhythmic pattern by superposing two regular pulses, and returns it as sound and as MIDI. After Joseph Schillinger, « The Schillinger System of Musical Composition », Carl Fischer, 1946, book I: « Theory of Rhythm ».\n\nTwo periods beat side by side over one cycle. The resultant is the sequence of intervals between the instants where one or the other marks.\n\nTwo pulses of 3 and 2 give 2-1-1-2, the system's most recognisable figure. It is palindromic: the resultant of two coprime numbers always is, by symmetry of the cycle about its midpoint.\n\n« Pulse A » and « Pulse B » are the two periods, in beats. The cycle lasts their product; if they share a factor they fall together before the end and the pattern repeats inside itself. The resultant of 4 and 2 is then no richer than that of 2 and 1, it is the same, played twice as slowly, and the message says so.\n\n« Tempo » gives the beat speed.\n\n« Drum » selects the sound that marks each onset, among eight. It is written on the General MIDI drum channel, in the rendered sound as in the file.\n\n« Volume » sets the level of the rendered sound, without touching the MIDI.\n\nThe « Analysis » output gives the two periods, the cycle length, the onset instants, the gaps, and whether the figure is palindromic. The « MIDI » output carries the pattern as a file. The « Audio » output carries it as sound.\n\nThis node does not do fractioning, by which Schillinger enriches his resultants and obtains self-similar structures. The sources consulted name the technique without giving its rule.",
     entrees: [],
+    // L'AUDIO EST AJOUTÉ À LA FIN, ET NON À SA PLACE « LOGIQUE ». Les prises sont désignées par leur
+    // rang, et les graphes enregistrés pointent sur eux : glisser l'audio en tête aurait rebranché
+    // l'analyse sur une entrée MIDI dans tout projet déjà écrit. Même raison, et même choix, que sur
+    // la boîte à rythmes et le rythme de Cantor quand ils ont reçu leur sortie MIDI.
     sorties: [
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
       { nom: "MIDI", nomEn: "MIDI", type: "midi" },
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
     ],
     parametres: [
       { nom: "Pulsation A", nomEn: "Pulse A", type: "curseur", plage: [1, 16], pas: 1, defaut: 3,
@@ -131,20 +137,36 @@ export const fiches: FicheAudio[] = ([
         docEn: "Period of the second. Take it coprime with the first: otherwise the pattern repeats inside the cycle, and the node will say so." },
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [30, 300], pas: 1, defaut: 120, unite: "bpm",
         doc: "Vitesse du battement, pour le MIDI rendu.", docEn: "Beat speed, for the rendered MIDI." },
-      { nom: "Note", nomEn: "Note", type: "curseur", plage: [21, 108], pas: 1, defaut: 38,
-        doc: "Note MIDI des frappes. 38 est la caisse claire du General MIDI.",
-        docEn: "MIDI note of the onsets. 38 is the General MIDI snare." },
+      // LE NUMÉRO DE NOTE EST DEVENU UN NOM DE PERCUSSION — relevé par Fabien. Un curseur de 21 à
+      // 108 demandait de savoir par cœur que 38 est la caisse claire, c'est-à-dire de connaître une
+      // table du General MIDI que rien à l'écran ne donnait ; et il laissait choisir des numéros que
+      // le synthétiseur ne sait pas rendre, qui se jouaient alors en grosse caisse sans le dire. Les
+      // huit percussions offertes sont celles qui ont chacune leur voix, ce qu'un test tient.
+      { nom: "Percussion", nomEn: "Drum", type: "choix",
+        options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
+        optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
+        defaut: "Caisse claire", defautEn: "Snare",
+        doc: "La percussion qui marque chaque frappe, sur le canal de batterie du General MIDI. Les huit choix ont chacun leur propre sonorité au rendu.",
+        docEn: "The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered." },
+      { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Niveau du son rendu. Sans effet sur le MIDI, dont la nuance est écrite dans les notes.",
+        docEn: "Level of the rendered sound. No effect on the MIDI, whose dynamics are written into the notes." },
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
       const a = analyserResultante(ctx.paramNombre("Pulsation A", 3), ctx.paramNombre("Pulsation B", 2));
       const tempo = ctx.paramNombre("Tempo", 120);
-      const note = Math.round(ctx.paramNombre("Note", 38));
+      const note = parseInt(ctx.paramTexte("Percussion", "38"), 10) || 38;
       const parBattement = 60 / tempo;
       const { notesVersFichierMidi } = await import("../audio");
       const notes = a.instants.map((t) => ({
-        note, velocite: 100, debut: t * parBattement, fin: (t + 0.9) * parBattement, canal: 9,
+        note, velocite: 100, debut: t * parBattement, fin: (t + 0.9) * parBattement,
+        canal: CANAL_PERCUSSION,
       }));
+      // LE SON EST RENDU PAR LE MÊME SYNTHÉTISEUR QUE LES AUTRES RYTHMES, et non par un moteur écrit
+      // ici : c'est ce qui fait qu'une caisse claire y sonne comme une caisse claire ailleurs.
+      const { rendreBatterieMidi } = await import("../audio/tone-synths");
+      const audio = await rendreBatterieMidi({ notes, volume: ctx.paramNombre("Volume", 80) });
       const lignes = [
         `${a.a} ${en ? "against" : "contre"} ${a.b}   ${en ? "cycle" : "cycle"} ${a.cycle}`,
         `${en ? "Attacks" : "Frappes"} : ${a.instants.join(", ")}`,
@@ -159,7 +181,11 @@ export const fiches: FicheAudio[] = ([
             : `Les deux pulsations partagent un facteur ${a.repetitions} : le motif se répète ${a.repetitions} fois dans le cycle, et n'est pas plus riche que la résultante de ${a.a / a.repetitions} contre ${a.b / a.repetitions}.`),
       ].filter((l) => l !== "");
       return {
-        valeurs: [lignes.join("\n"), notesVersFichierMidi(notes, tempo, 0)],
+        // LE CANAL DE BATTERIE EST ÉCRIT DANS LE FICHIER, et il ne l'était pas. Le zéro passé ici
+        // rangeait la piste sur le canal 1 : relu par un séquenceur, le motif sortait sur un piano
+        // au lieu du kit, et la caisse claire devenait un ré. Les notes portent déjà leur canal, ce
+        // troisième argument est celui du fichier.
+        valeurs: [lignes.join("\n"), notesVersFichierMidi(notes, tempo, CANAL_PERCUSSION), audio],
         message: traduire("msg.resultante.resume", a.ecarts.join("-"), String(a.cycle)),
       };
     },

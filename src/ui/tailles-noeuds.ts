@@ -46,6 +46,10 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   // hauteur déclarée, le nœud naissait à la hauteur de son seul contenu et l'image recevait 8 px.
   if (def.id === "cercle-pulsant") return { width: 300, height: 500 };
   if (def.id === "partition-verovio") return { width: 420, height: 320 };
+  // Le rouleau : le dessin fait 190 px a lui seul, et il lui faut encore ses deux regles, son
+  // en-tete et la legende des voix. En largeur, c'est le temps qui commande — a 260 px, deux notes
+  // voisines se touchent et l'on ne voit plus laquelle attaque la premiere.
+  if (def.id === "rouleau-sequence") return { width: 520, height: 340 };
   if (def.id === "rendu-image") return { width: 320, height: 320 };
   if (def.id === "entree-image") return { width: 320, height: 320 };
   if (def.id === "lecteur-svg") return { width: 320, height: 320 };
@@ -54,6 +58,16 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
     const hauteur = Number(def.parametres.find((p) => p.nom === "Hauteur" || p.nomEn === "Height")?.defaut ?? 160);
     return { width: largeur, height: hauteur };
   }
+  // LE QUIZ ET LE PARCOURS NAISSENT ASSEZ GRANDS POUR QU'ON LISE SANS DÉFILER — demandé par Fabien.
+  // Ils prenaient la taille ordinaire, 240 sur 140, où la question tient et où les propositions
+  // tombent sous le bord : il fallait agrandir le nœud avant de pouvoir répondre.
+  //
+  // LES DEUX HAUTEURS SONT MESURÉES, non estimées. À 400 px de large, le contenu du quiz demande de
+  // 215 à 231 px tant qu'on n'a pas répondu, et de 299 à 361 une fois l'explication ouverte, relevé
+  // sur douze questions tirées. Le parcours demande de 147 à 254 px selon l'exercice, et 184 avec
+  // l'indice déplié. L'habillage du nœud (en-tête, rangée de ports, statut) en ajoute 140.
+  if (def.id === "quiz") return { width: 400, height: 500 };
+  if (def.id === "parcours") return { width: 400, height: 430 };
   if (def.id === "galerie-exposition") return { width: 280, height: 280 };
   if (def.id === "gestion-nodes") return { width: 280, height: 220 };
   if (def.id === "couleur-suno-ia") return { width: 300, height: 260 };

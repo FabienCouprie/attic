@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest";
 
 import { lireArbre } from "./arbre-rythmique";
-import { arbreVersMusicXML, feuillesDeMesure, valeurEcrite } from "./musicxml-arbre";
+import { arbreVersMusicXML, feuillesDeMesure, valeurEcrite, voixVersMusicXML } from "./musicxml-arbre";
 
 const graver = (texte: string, hauteurs: number[] = [60, 62, 64, 65, 67, 69, 71]) =>
   arbreVersMusicXML(lireArbre(texte), hauteurs);
@@ -73,6 +73,36 @@ describe("la valeur imprimée", () => {
 
   it("prend la plus proche faute d'exacte, au lieu de refuser d'écrire", () => {
     expect(valeurEcrite({ n: 5, d: 7 }).nom).toBeTruthy();
+  });
+});
+
+describe("la clé de chaque portée", () => {
+  // RELEVÉ SUR LA GRAVURE ELLE-MÊME. Une clé de sol écrite pour toutes les portées mettait une voix
+  // de basse sur quatre lignes supplémentaires : le compte de balises « part » ne le disait pas,
+  // seul le SVG rendu par le graveur l'a montré.
+  const mesure = lireArbre("(4/4 (1 1 1 1))");
+
+  it("UNE VOIX AIGUË PREND LA CLÉ DE SOL", () => {
+    const xml = arbreVersMusicXML(mesure, [72, 74, 76, 77]);
+    expect(xml).toContain("<sign>G</sign><line>2</line>");
+    expect(xml).not.toContain("<sign>F</sign>");
+  });
+
+  it("UNE VOIX GRAVE PREND LA CLÉ DE FA", () => {
+    expect(arbreVersMusicXML(mesure, [48, 50, 52, 53])).toContain("<sign>F</sign><line>4</line>");
+  });
+
+  it("LA MÉDIANE DÉCIDE, non la note la plus grave : une seule note basse ne change pas la clé", () => {
+    expect(arbreVersMusicXML(mesure, [40, 72, 74, 76])).toContain("<sign>G</sign><line>2</line>");
+  });
+
+  it("CHAQUE PORTÉE A LA SIENNE, dans une partition à plusieurs voix", () => {
+    const xml = voixVersMusicXML([
+      { mesures: mesure, hauteurs: [72, 74, 76, 77], nom: "Dessus" },
+      { mesures: mesure, hauteurs: [48, 50, 52, 53], nom: "Basse" },
+    ]);
+    expect([...xml.matchAll(/<sign>G<\/sign>/g)]).toHaveLength(1);
+    expect([...xml.matchAll(/<sign>F<\/sign>/g)]).toHaveLength(1);
   });
 });
 

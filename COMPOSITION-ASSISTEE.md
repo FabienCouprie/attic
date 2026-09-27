@@ -122,20 +122,20 @@ les deux catalogues sont arrivés aux mêmes objets par le même chemin, celui d
 | ce qui manque | ce qui l'empêche |
 | --- | --- |
 | ~~les objets de partition : `chord-seq`, `voice`, `poly`, `multi-seq`~~ | **faits** : les opérations d'accord atteignent le flux, les accords étant groupés par leur attaque ; la séquence porte son arbre rythmique, qui n'est cru que s'il décrit encore ses notes ; et la note porte sa voix, ce qui donne une portée par voix à la gravure |
-| ~~les arbres rythmiques~~, et Rewrite qui les réécrit | **structure faite** ; leur réécriture reste à venir |
-| la quantification, la bibliothèque RQ | la représentation |
+| ~~les arbres rythmiques, et Rewrite qui les réécrit~~ | **faits** : structure, et nœud « Simplifier un arbre », quatre règles qui réduisent sans déplacer une note. L'aplatissement d'une division dans une autre n'est pas fait, étant faux dès qu'un compte n'est pas une puissance de deux |
+| ~~la quantification, la bibliothèque RQ~~ | **faite** : nœud « Quantifier », subdivision récursive et compromis entre l'écart et la complexité, réimplémenté d'après les publications de la lignée Kant, RQ, qparse |
 | ~~Esquisse, OMTristan : l'harmonie spectrale **symbolique**~~ | **fait** : nœud « Harmonie spectrale », série, distorsion, anneau, modulation de fréquence |
 | ~~OM-JI : l'intonation juste~~ | **faite**, et elle existait à moitié : le nœud « Tempérament » la calculait déjà, mais rendait du son. Il rend maintenant aussi une séquence, donc elle s'enchaîne et se grave |
 | ~~Profile : le contrôle des profils mélodiques~~ | **fait** : nœud « Profil mélodique », piloté par le flux `courbe` qui existait déjà |
-| Streamsep : la séparation de voix **symbolique** | la représentation |
-| la maquette, et la Sheet | un conteneur temporel, à écrire |
-| Situation, OMCS, OMRC, Cluster Engine, OMGecode : les solveurs de contraintes | un solveur, à écrire. Attic ne sait que **vérifier**, avec `contrepoint-especes` et « Contraintes ABC » |
+| ~~Streamsep : la séparation de voix **symbolique**~~ | **faite**, l'obstacle ayant disparu avec la représentation : nœud « Séparer les voix », d'après le principe des contigs de Chew et Wu. Ce qu'elle ne peut pas rendre est un croisement, dont l'information n'est pas dans les hauteurs |
+| ~~la maquette~~, et la Sheet | **faite** : « Maquette » pose des boîtes déjà calculées, et « Début » et « Fin de boucle par créneau » calculent le contenu une fois par boîte, en lui donnant sa place. Une valeur ne consulte toujours pas l'aval : elle reçoit sa place en amont, ce qui est la même chose vue du bon côté. La Sheet reste à écrire |
+| ~~Situation, OMCS, OMRC, Cluster Engine, OMGecode : les solveurs de contraintes~~ | **un solveur est écrit** : retour sur trace avec élagage sur les préfixes, budget borné, et la distinction entre l'absence de solution et l'abandon. Il ne cherche que sur des SUITES, et les règles s'écrivent en TypeScript, non dans l'interface |
 | ~~Morphologie : l'analyse contrastive de suites~~ | **faite** : nœud « Morphologie », profil primaire et distance d'édition |
-| OM-Darwin, GA : les algorithmes génétiques | un algorithme, à écrire |
-| class-array : la matrice de paramètres d'OMChroma | une structure, à écrire |
+| ~~OM-Darwin, GA : les algorithmes génétiques~~ | **faits** : nœud « Faire évoluer une mélodie », et un pont qui reprend les règles du solveur comme coût, de sorte qu'un problème déclaré sans solution rende la ligne la moins mauvaise au lieu de rien |
+| ~~class-array : la matrice de paramètres d'OMChroma~~ | **faite** : nœud « Matrice de paramètres », une ligne par p-field pour des centaines d'événements, rendue en partition Csound |
 | Orchidee : l'orchestration assistée | un serveur et une base de timbres, hors de portée |
 | SDIF : le format d'échange d'analyses de l'IRCAM | un format, à écrire, d'intérêt limité hors de l'IRCAM |
-| les fonctions d'ordre supérieur | le moteur, qui ne fait pas circuler de fonction |
+| ~~les fonctions d'ordre supérieur~~ | **faites, par les deux bouts**. La fonction ÉCRITE : « Formule sur séquence », une règle appliquée à chaque note et une condition qui en écarte. La fonction CÂBLÉE : « Début » et « Fin de boucle par voix », une chaîne quelconque appliquée à chaque voix, dont le compte vient d'une valeur qui circule et non d'un paramètre. Le mur était le moment du dépliage, non la forme de la boucle : le pilote lance une première passe de découverte, le nœud de début publie ce qu'il a trouvé, et les passes suivantes répètent. L'acyclicité du moteur n'est pas entamée |
 
 **Sur une soixantaine de bibliothèques, ce qui manque ne fait pas soixante chantiers.** Il fait une
 représentation, huit familles d'algorithmes, et un conteneur temporel. Le reste est déjà là, ou ne
@@ -157,10 +157,24 @@ nombres publiés, 3856 séries et la distance de trois entre « kitten » et « 
 
 ~~La **quantification** d'une suite de durées en rythme noté~~ **faite**, et c'était bien la plus
 délicate : elle a demandé un état de l'art avant la première ligne, et quatre défauts trouvés en
-calibrant tenaient tous à ce que le calcul ne pesait que les attaques. Un **solveur de contraintes**
-musical, qui est un sujet en soi, reste à écrire. La **maquette** est à moitié faite : ses boîtes se
-posent et s'adaptent, mais sa sémantique propre, une boîte qui CALCULE sa valeur dans un contexte
-temporel, n'a toujours pas d'équivalent dans un graphe acyclique.
+calibrant tenaient tous à ce que le calcul ne pesait que les attaques. Le **solveur de contraintes**
+est écrit, et il cherche avec le vérificateur de contrepoint déjà éprouvé plutôt qu'avec une seconde
+copie des règles, de sorte que le générateur ne peut pas produire ce que le correcteur refuserait.
+Ses règles s'écrivent désormais dans l'interface, en expressions que le nœud « Chercher sous
+contraintes » compile ; ce qui reste est qu'il ne porte que sur des SUITES. La **maquette** est
+faite, et sa sémantique propre avec elle : une boîte
+calcule bien sa valeur dans un contexte temporel, non parce que le graphe est devenu cyclique mais
+parce que le pilote rejoue la chaîne une fois par créneau en lui donnant sa place en AMONT. Ce qui
+ressemblait à consulter l'aval était la même chose vue du mauvais côté.
+
+**Ce qui reste vraiment.** La **Sheet**, c'est-à-dire l'ÉDITION d'une partition. Son affichage,
+lui, est là : la chaîne va de l'arbre rythmique à la page gravée, deux portées et leurs n-olets
+compris, et c'est Verovio qui en juge. Les **solveurs** ne
+portent que sur des suites. La **séparation de voix** ne
+retrouve pas un croisement, l'information n'étant pas dans les hauteurs. Une boîte de maquette peut désormais en contenir une
+autre, les boucles s'emboîtant ; ce qui reste est que deux boucles INDÉPENDANTES, dont aucune ne
+contient l'autre, sont menées l'une dans l'autre faute de mieux, le graphe s'exécutant d'un bloc.
+Le pilote le signale plutôt que de rendre un résultat qu'on croirait juste.
 
 ## 6. Le chemin, par incréments
 
@@ -223,6 +237,17 @@ promettrait une notation là où ne circule qu'un convoi d'événements.
    dure** : une boîte qui CALCULE sa valeur en connaissant sa place, ce qu'un graphe acyclique ne
    sait pas faire, une valeur y remontant d'amont en aval sans jamais consulter l'aval. Il manque
    aussi la ligne de temps visuelle, celle du montage audio codant en dur les réglages de fondus.
+6. ~~**Voir une séquence**~~ **fait**, et ce point ne figurait pas au plan : il s'est imposé une fois
+   les précédents clos. Vingt-cinq nœuds produisent des séquences, et le seul moyen de regarder ce
+   qu'ils rendent était de les graver — un détour qui demande un arbre rythmique, passe par un
+   graveur, et ne montre les hauteurs qu'à la note écrite près. Le nœud « Rouleau de séquence »
+   dessine les notes sur un axe de hauteurs **continu**, où une hauteur qui ne tombe pas sur un
+   demi-ton se pose entre deux rangées au lieu de recevoir une altération. Il montre en outre trois
+   choses que la notation tait : le recouvrement des voix dans le temps, la nuance de chaque note,
+   et le silence final. **Ce que cela ne fait pas** : rien ne s'y retouche, c'est un affichage ; et
+   ce n'est pas la ligne de temps de la maquette, qui demande de placer et de déplacer des boîtes.
+   La géométrie vit hors du dessin, dans `ui/rouleau-calcul.ts`, de sorte qu'une telle ligne de
+   temps puisse s'appuyer dessus le jour venu.
 
 **Un pont de données est disponible aujourd'hui, et ne coûte rien** : OpenMusic exporte MusicXML et
 MIDI, Attic lit les deux. Qui veut faire tourner une passe dans OpenMusic peut déjà le faire et

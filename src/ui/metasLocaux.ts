@@ -11,7 +11,9 @@ const CLE = "attic-metas";
 // l'export de workflow ; source unique de vérité de la sérialisation d'un méta).
 export function serialiserMeta(m: MetaComposant) {
   return {
-    id: m.id, nom: m.nom, entrees: m.entrees, sorties: m.sorties,
+    // LA DESCRIPTION SUIT LE MÉTA, sans quoi le texte de son auteur serait perdu au premier
+    // redémarrage et le catalogue reviendrait au compte des nœuds.
+    id: m.id, nom: m.nom, description: m.description, entrees: m.entrees, sorties: m.sorties,
     mapEntrees: m.mapEntrees, mapSorties: m.mapSorties,
     sousNoeuds: m.sousNoeuds.map((n) => ({
       id: n.id, position: n.position, width: n.width, height: n.height,

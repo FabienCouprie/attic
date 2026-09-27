@@ -33,6 +33,33 @@ import type { NoteEvenement } from "./midi";
  */
 export const NOTES_PERCUSSION_GM = [36, 38, 42, 46, 39, 49, 45, 50] as const;
 
+/**
+ * Les mêmes huit percussions, avec leurs noms, pour un réglage à choix.
+ *
+ * POURQUOI UN CHOIX ET NON UN NUMÉRO. Un curseur de 21 à 108 demande de savoir par cœur que 38 est
+ * la caisse claire : c'est une table du General MIDI, pas une intuition, et rien à l'écran ne la
+ * donne. Les huit noms disent ce qu'on va entendre.
+ *
+ * CE SONT LES HUIT QUE LE SYNTHÉTISEUR SAIT RENDRE, et c'est la raison d'être de cette liste plutôt
+ * qu'un florilège plus fourni. `audio/percussions-placement.ts` associe un numéro à une voix et
+ * renvoie la grosse caisse pour tout ce qu'il ne connaît pas : une percussion offerte au choix mais
+ * absente de cette table se jouerait en grosse caisse sans que rien ne le dise. Les huit ci-dessous
+ * ont chacune la leur, vérifié.
+ *
+ * L'IDENTIFIANT EST LE NUMÉRO ÉCRIT EN TOUTES LETTRES, comme partout où un réglage à choix porte une
+ * valeur numérique : c'est lui qui est enregistré dans un projet, et il ne dépend d'aucune langue.
+ */
+export const PERCUSSIONS_CHOIX: readonly { note: number; fr: string; en: string }[] = [
+  { note: 36, fr: "Grosse caisse", en: "Kick" },
+  { note: 38, fr: "Caisse claire", en: "Snare" },
+  { note: 42, fr: "Charley fermé", en: "Closed hi-hat" },
+  { note: 46, fr: "Charley ouvert", en: "Open hi-hat" },
+  { note: 39, fr: "Clap", en: "Clap" },
+  { note: 49, fr: "Cymbale crash", en: "Crash cymbal" },
+  { note: 45, fr: "Tom grave", en: "Low tom" },
+  { note: 50, fr: "Tom aigu", en: "High tom" },
+];
+
 /** Le canal de percussion du General MIDI, tel qu'il est écrit dans les octets (10 pour qui le lit). */
 export const CANAL_PERCUSSION = 9;
 

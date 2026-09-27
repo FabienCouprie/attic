@@ -152,7 +152,19 @@ export function useMetaComposants(o: OptionsMeta) {
     const nouvellePile = o.pileRef.current.slice(0, niveauCible + 1);
     if (nouvellePile.length === 0) {
       const g = o.grapheRacineRef.current;
-      if (g) { o.setNodes(g.nodes as unknown as any[]); o.setEdges(g.edges as unknown as Edge[]); o.cacheExec.current.clear(); o.setSel(null); }
+      if (g) {
+        // LES PORTS D'UN MÉTA ONT PU CHANGER PENDANT QU'ON ÉTAIT DEDANS, et le graphe restauré est
+        // l'INSTANTANÉ pris avant d'y entrer : ses objets sont les mêmes, donc rien ne dit au nœud
+        // de se redessiner, et il garde les ports d'avant. Relevé par Fabien : une sortie ajoutée à
+        // l'intérieur n'apparaissait pas sur le méta, et il fallait relancer l'application pour la
+        // voir. La fiche, elle, était juste depuis le début. Les nœuds de méta repartent donc avec
+        // une donnée neuve, ce qui suffit à les faire relire leur fiche.
+        o.setNodes(g.nodes.map((n: any) =>
+          trouverMeta(n.data?.ficheId) ? { ...n, data: { ...n.data } } : n) as unknown as any[]);
+        o.setEdges(g.edges as unknown as Edge[]);
+        o.cacheExec.current.clear();
+        o.setSel(null);
+      }
     } else {
       chargerContexteMeta(nouvellePile[nouvellePile.length - 1].metaId);
     }

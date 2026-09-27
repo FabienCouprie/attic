@@ -69,11 +69,21 @@ export function declenchementsPour(note: number): Declenchement[] {
     case 42:
     case 44: return [{ voix: "hihat", hauteur: "C5", duree: "32n" }];
     case 46: return [{ voix: "hihatOpen", hauteur: "C5", duree: "16n" }];
+    // 41 EST UN TOM, ET IL SORTAIT EN GROSSE CAISSE. Le tom basse du General MIDI n'était pas dans
+    // cette table, si bien qu'il tombait sur le repli : « Rythme euclidien » l'offre au choix, et
+    // l'on entendait un kick. La voix existait pourtant déjà, c'est la même que 45 et 47, un cran
+    // plus bas. Relevé par Fabien.
+    case 41: return [{ voix: "lowTom", hauteur: "G1", duree: "8n" }];
     case 45: return [{ voix: "lowTom", hauteur: "A1", duree: "8n" }];
     case 47: return [{ voix: "lowTom", hauteur: "C2", duree: "8n" }];
     case 48: return [{ voix: "highTom", hauteur: "E2", duree: "8n" }];
     case 50: return [{ voix: "highTom", hauteur: "F2", duree: "8n" }];
     case 49: return [{ voix: "crash", hauteur: "C5", duree: "4n" }];
+    // LA CLOCHE ET LES CLAVES SORTAIENT EN GROSSE CAISSE ELLES AUSSI, et il leur fallait une voix
+    // qu'aucune autre percussion ne donnait : un métal court et accordé pour l'une, un choc de bois
+    // bref et aigu pour l'autre. Les deux sont offertes au choix dans « Rythme euclidien ».
+    case 56: return [{ voix: "cowbell", hauteur: "A4", duree: "16n" }];
+    case 75: return [{ voix: "claves", hauteur: "C6", duree: "32n" }];
     default: return [{ voix: "kick", hauteur: "C2", duree: "8n" }];
   }
 }

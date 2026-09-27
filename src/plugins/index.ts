@@ -157,6 +157,16 @@ import { fiches as f_arbre_rythmique } from "./arbre-rythmique";
 import { fiches as f_quantification } from "./quantification";
 import { fiches as f_voix } from "./voix";
 import { fiches as f_maquette } from "./maquette";
+import { fiches as f_separation_voix } from "./separation-voix";
+import { fiches as f_contrepoint_solveur } from "./contrepoint-solveur";
+import { fiches as f_evolution } from "./evolution";
+import { fiches as f_reecriture_arbre } from "./reecriture-arbre";
+import { fiches as f_matrice_parametres } from "./matrice-parametres";
+import { fiches as f_formule_sequence } from "./formule-sequence";
+import { fiches as f_boucle_voix } from "./boucle-voix";
+import { fiches as f_boucle_creneau } from "./boucle-creneau";
+import { fiches as f_solveur_contraintes } from "./solveur-contraintes";
+import { fiches as f_rouleau_sequence } from "./rouleau-sequence";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -253,6 +263,16 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_quantification,
   ...f_voix,
   ...f_maquette,
+  ...f_separation_voix,
+  ...f_contrepoint_solveur,
+  ...f_evolution,
+  ...f_reecriture_arbre,
+  ...f_matrice_parametres,
+  ...f_formule_sequence,
+  ...f_boucle_voix,
+  ...f_boucle_creneau,
+  ...f_solveur_contraintes,
+  ...f_rouleau_sequence,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,

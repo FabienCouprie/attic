@@ -11,8 +11,8 @@ export {
 } from "./bulles";
 export type { PortsBulle } from "./bulles";
 export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";
-export { trouverMeta, tousLesMetas, estMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
-export { ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteValeur, empreinteValeursEntrantes, resoudreEntree, valeursEntrantes } from "./graphe";
+export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
+export { ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
 export { valider, validerGraphe } from "./validation";

@@ -123,6 +123,12 @@ const FORMES_ADMISES = new Set([
   "debut,duree,note,silence,velocite",
   // Une voix de kit de batterie : un fichier, pas une note jouée.
   "duree,fichier,nom,nomEn,note,piste",
+  // La barre d'un rouleau : une note DESSINÉE, et c'est une autre chose. Elle garde la hauteur, le
+  // début et la fin pour l'étiquette du survol, mais ce qui la définit est ailleurs — une abscisse,
+  // une ordonnée, une largeur, une bande de nuance, une couleur de voix. Employer `Note` ici
+  // obligerait à porter une vélocité dont le dessin n'a que faire, et ne dirait rien de la
+  // géométrie ; la vue n'aurait plus qu'à la recalculer, ce que ce dépôt sort exprès des composants.
+  "debut,fin,largeur,microton,nom,note,nuance,voix,x,y",
   // Les réglages des quatre synthétiseurs de Tone : une hauteur à jouer, pas une note en place.
   "decay?,duree,note,octaves?,pitchDecay?,release?,sampleRate?,volume",
   "attack?,decay?,duree,harmonicity?,modulationIndex?,note,octaves?,release?,resonance?,sampleRate?,volume",
