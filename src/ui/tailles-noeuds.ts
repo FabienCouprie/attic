@@ -50,6 +50,10 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   // en-tete et la legende des voix. En largeur, c'est le temps qui commande — a 260 px, deux notes
   // voisines se touchent et l'on ne voit plus laquelle attaque la premiere.
   if (def.id === "rouleau-sequence") return { width: 520, height: 340 };
+  // Les cercles : le dessin est carre, et c'est la plus petite pastille qui commande. A 300 px de
+  // large, une place sur quarante-huit fait 5 px de rayon, ce qui se vise encore ; en dessous, non.
+  // La hauteur ajoute la barre du compte au-dessus du dessin.
+  if (def.id === "cercle-rythmique" || def.id === "cercle-melodique") return { width: 320, height: 400 };
   if (def.id === "rendu-image") return { width: 320, height: 320 };
   if (def.id === "entree-image") return { width: 320, height: 320 };
   if (def.id === "lecteur-svg") return { width: 320, height: 320 };

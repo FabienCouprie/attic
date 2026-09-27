@@ -42,8 +42,20 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "cercle-melodique",
+    "vue": "CercleMelodiqueVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "cercle-pulsant",
     "vue": "VueAnimationSvg",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "cercle-rythmique",
+    "vue": "CercleRythmiqueVue",
     "entreeAudio": false,
     "entreeRequiseAutre": false
   },

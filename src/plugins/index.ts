@@ -167,6 +167,11 @@ import { fiches as f_boucle_voix } from "./boucle-voix";
 import { fiches as f_boucle_creneau } from "./boucle-creneau";
 import { fiches as f_solveur_contraintes } from "./solveur-contraintes";
 import { fiches as f_rouleau_sequence } from "./rouleau-sequence";
+import { fiches as f_cercle } from "./cercle";
+import { fiches as f_cercle_transformations } from "./cercle-transformations";
+import { fiches as f_cercle_boucle } from "./cercle-boucle";
+import { fiches as f_cercle_assemblage } from "./cercle-assemblage";
+import { fiches as f_sequence_assemblage } from "./sequence-assemblage";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_quiz } from "./quiz";
@@ -202,6 +207,7 @@ import { fiches as f_csound_orchestre } from "./csound-orchestre";
 import { fiches as f_csound_aleatoire } from "./csound-aleatoire";
 import { fiches as f_csound_formules } from "./csound-formules";
 import { rangerParStyle } from "./familles-palette";
+import { avecSortieAudio } from "./sortie-audio";
 
 export const toutesLesFiches: FicheAudio[] = ([
   ...f_entrees,
@@ -273,6 +279,11 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_boucle_creneau,
   ...f_solveur_contraintes,
   ...f_rouleau_sequence,
+  ...f_cercle,
+  ...f_cercle_transformations,
+  ...f_cercle_boucle,
+  ...f_cercle_assemblage,
+  ...f_sequence_assemblage,
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_quiz,
@@ -402,4 +413,6 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_syntheses_exotiques,
   ...f_theorie_avancee,
   ...f_csound,
-] as FicheAudio[]).map(rangerParStyle);
+// TOUT COMPOSANT QUI REND UNE SÉQUENCE REÇOIT UNE SORTIE AUDIO, posée ici plutôt que dans
+// vingt-cinq fiches. Voir `sortie-audio.ts` pour ce que cela suppose et ce que cela coûte.
+] as FicheAudio[]).map(rangerParStyle).map(avecSortieAudio);

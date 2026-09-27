@@ -151,6 +151,24 @@ export function empreinteEntrees(nodeId: string, aretes: AreteG[]): string {
   return aretes.filter((a) => a.target === nodeId).map((a) => a.source).sort().join(",");
 }
 
+/**
+ * Empreinte des SORTIES branchées d'un nœud (clé de cache « sorties »).
+ *
+ * POURQUOI LE CÂBLAGE AVAL ENTRE DANS LA CLÉ. Depuis qu'un nœud peut savoir si une de ses sorties
+ * est branchée, ce qu'il rend en dépend : une sortie chère n'est calculée que lorsqu'elle sert.
+ * Sans cette empreinte, brancher un câble sur une sortie restée vide ne relançait rien, le cache
+ * tenant les paramètres et les entrées pour inchangés ; on branchait l'audio, on lançait, et le
+ * nœud d'aval annonçait « aucune entrée ». Relevé à l'écran.
+ *
+ * SEUL LE RANG DE LA POIGNÉE COMPTE, non le nœud d'arrivée : deux câbles partis de la même sortie
+ * ne changent rien à ce qui est calculé, et rebrancher ailleurs non plus.
+ */
+export function empreinteSorties(nodeId: string, aretes: AreteG[]): string {
+  const rangs = new Set<string>();
+  for (const a of aretes) if (a.source === nodeId && a.sourceHandle) rangs.add(a.sourceHandle);
+  return [...rangs].sort().join(",");
+}
+
 // Empreinte des paramètres d'un nœud (clé de cache « paramètres »).
 // NB : inclut quelques champs de données audio (sequenceNotes, nom de fichier) —
 // c'est la clé actuelle ; à rendre injectable lors de la généralisation (§1 roadmap).
