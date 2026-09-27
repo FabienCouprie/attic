@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**429 composants**, dont **89** avec une vue propre et **4** sans lecteur générique.
+**443 composants**, dont **91** avec une vue propre et **4** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -31,7 +31,9 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Banque SFZ | `banque-sfz` | — | VueBanqueSfz | 240 × 140 | non | oui | non |
 | Roue de Camelot | `camelot` | VueRenduImage | — | 240 × 162 | oui | oui | non |
 | Carte sonore | `carte-sonore` | VueCarteSonore | — | 240 × 118 | non | oui | non |
+| Cercle mélodique | `cercle-melodique` | CercleMelodiqueVue | — | 320 × 400 | non | oui | non |
 | Cercle pulsant | `cercle-pulsant` | VueAnimationSvg | — | 300 × 500 | non | non | non |
+| Cercle rythmique | `cercle-rythmique` | CercleRythmiqueVue | — | 320 × 400 | non | oui | non |
 | Classificateur de genre | `classificateur-genre` | VueUploadOnnx | — | 380 × 300 | non | oui | non |
 | Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 660 × 380 | non | oui | non |
 | Clavier mélodie | `clavier-melodie` | — | ClavierMelodie | 660 × 260 | non | oui | non |
@@ -151,14 +153,14 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Début de boucle collection | `boucle-collection-debut` | 240 × 118 |
 | Fin de boucle collection | `boucle-collection-fin` | 240 × 118 |
 | Début de boucle par créneau | `boucle-creneau-debut` | 240 × 118 |
-| Fin de boucle par créneau | `boucle-creneau-fin` | 240 × 118 |
+| Fin de boucle par créneau | `boucle-creneau-fin` | 240 × 140 |
 | Début de boucle | `boucle-graphe-debut` | 240 × 118 |
 | Fin de boucle A | `boucle-graphe-fin` | 240 × 118 |
 | Fin de boucle B | `boucle-graphe-fin-b` | 240 × 118 |
 | Fin de boucle C | `boucle-graphe-fin-c` | 240 × 118 |
 | Boucle MIDI | `boucle-midi` | 240 × 118 |
-| Début de boucle par voix | `boucle-voix-debut` | 240 × 118 |
-| Fin de boucle par voix | `boucle-voix-fin` | 240 × 118 |
+| Début de boucle par voix | `boucle-voix-debut` | 240 × 140 |
+| Fin de boucle par voix | `boucle-voix-fin` | 240 × 140 |
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |
 | Brassage | `brassage` | 240 × 118 |
 | Bruitage IA | `bruitage-ia` | 240 × 118 |
@@ -169,6 +171,15 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Caractéristiques de piste | `caracteristiques-piste` | 240 × 140 |
 | Ceinture de Dirac | `ceinture-dirac` | 240 × 118 |
 | Centroïde spectral (Meyda) | `centroide-spectral` | 240 × 140 |
+| Début de boucle par cercle | `cercle-boucle-debut` | 240 × 118 |
+| Fin de boucle par cercle | `cercle-boucle-fin` | 240 × 118 |
+| Complémentaire d'un cercle | `cercle-complementaire` | 240 × 118 |
+| Inverser une mélodie | `cercle-inverser` | 240 × 118 |
+| Jointure de cercles | `cercle-jointure` | 240 × 272 |
+| Mélangeur de cercles | `cercle-melangeur` | 240 × 118 |
+| Miroir d'un cercle | `cercle-miroir` | 240 × 118 |
+| Permuter les notes | `cercle-permuter` | 240 × 118 |
+| Tourner un cercle | `cercle-tourner` | 240 × 118 |
 | Changement de tempo | `changement-tempo` | 240 × 118 |
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
 | Chopper | `chopper` | 240 × 140 |
@@ -186,7 +197,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Continuum hauteur ↔ rythme | `continuum-stockhausen` | 240 × 118 |
 | Contraintes ABC | `contraintes-abc` | 240 × 140 |
 | Contrepoint d'espèces | `contrepoint-especes` | 240 × 118 |
-| Écrire un contrepoint | `contrepoint-solveur` | 240 × 140 |
+| Écrire un contrepoint | `contrepoint-solveur` | 240 × 162 |
 | Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
@@ -232,7 +243,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étirement temporel (DTW) | `etirement-dtw` | 240 × 140 |
 | Étirement glissant | `etirement-glissant` | 240 × 118 |
 | Étirement du spectre | `etirement-spectre` | 240 × 140 |
-| Faire évoluer une mélodie | `evolution-melodie` | 240 × 140 |
+| Faire évoluer une mélodie | `evolution-melodie` | 240 × 162 |
 | Exciter / Aural enhancer | `exciter` | 240 × 140 |
 | Export image | `export-image` | 240 × 118 |
 | Export SFZ | `export-sfz` | 240 × 118 |
@@ -240,17 +251,17 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Extraction centre/côté | `extraction-centre-cote` | 240 × 118 |
 | Extraction PDF | `extraction-pdf` | 240 × 118 |
 | Extraire durée | `extraire-duree` | 240 × 140 |
-| Extraire une voix | `extraire-voix` | 240 × 140 |
+| Extraire une voix | `extraire-voix` | 240 × 162 |
 | Extraire une zone | `extraire-zone` | 240 × 140 |
 | Extraire zones (sélecteur) | `extraire-zones-selecteur` | 240 × 140 |
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
-| Filtre de séquence | `filtre-sequence` | 240 × 140 |
+| Filtre de séquence | `filtre-sequence` | 240 × 162 |
 | Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
 | Fondu | `fondu` | 240 × 118 |
-| Formule sur séquence | `formule-sequence` | 240 × 140 |
+| Formule sur séquence | `formule-sequence` | 240 × 162 |
 | Formules Csound | `formules-csound` | 240 × 140 |
 | Note d'instrument | `frontiere-note` | 240 × 162 |
 | Fusionner en stéréo | `fusion-stereo` | 240 × 140 |
@@ -272,7 +283,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
-| Harmonie spectrale | `harmonie-spectrale` | 240 × 140 |
+| Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
 | Lecture inversée | `inverseur-audio` | 240 × 118 |
@@ -306,7 +317,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Metal Synth | `metal-synth` | 240 × 118 |
 | Métronome | `metronome` | 240 × 118 |
 | MIDI → ABC | `midi-vers-abc` | 240 × 140 |
-| MIDI → séquence | `midi-vers-sequence` | 240 × 140 |
+| MIDI → séquence | `midi-vers-sequence` | 240 × 162 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |
 | Grave en mono | `mono-grave` | 240 × 118 |
 | Montage | `montage` | 240 × 448 |
@@ -351,17 +362,18 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Poly Synth | `poly-synth` | 240 × 118 |
 | Poussière de Cantor | `poussiere-cantor` | 240 × 118 |
 | Profil de bruit | `profil-bruit` | 240 × 118 |
-| Profil mélodique | `profil-melodique` | 240 × 140 |
+| Profil mélodique | `profil-melodique` | 240 × 162 |
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
 | Quadrafuzz | `quadrafuzz` | 240 × 140 |
-| Quantifier | `quantifier-rythme` | 240 × 162 |
+| Quantifier | `quantifier-rythme` | 240 × 184 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
 | Réduction de bruit | `reduction-bruit` | 240 × 140 |
 | Simplifier un arbre | `reecrire-arbre` | 240 × 140 |
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
+| Rendu de cercles | `rendu-cercles` | 240 × 272 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
 | Point d'écoute séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
@@ -374,7 +386,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
 | Retard spectral | `retard-spectral` | 240 × 140 |
-| Réunir des voix | `reunir-voix` | 240 × 140 |
+| Réunir des voix | `reunir-voix` | 240 × 162 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
 | Réverbération hachée | `reverbe-hachee` | 240 × 118 |
@@ -395,16 +407,18 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Secoueurs | `secoueurs` | 240 × 118 |
 | Séparateur canaux | `separateur-canaux` | 240 × 140 |
 | Séparation harmonique / percussive | `separation-harmonique-percussive` | 240 × 140 |
-| Séparer les voix | `separer-voix` | 240 × 140 |
+| Séparer les voix | `separer-voix` | 240 × 162 |
+| Jointure de séquences | `sequence-jointure` | 240 × 272 |
+| Mélangeur de séquences | `sequence-melangeur` | 240 × 140 |
 | Opérations sérielles | `serie-dodecaphonique` | 240 × 162 |
 | Série de l'infini (Nørgård) | `serie-infinie` | 240 × 162 |
-| Série à tous les intervalles | `serie-tous-intervalles` | 240 × 140 |
+| Série à tous les intervalles | `serie-tous-intervalles` | 240 × 162 |
 | Sherpa ASR | `sherpa-asr` | 240 × 118 |
 | Shift formants | `shift-formants` | 240 × 118 |
 | Shimmer | `shimmer` | 240 × 118 |
 | Boucle | `simple-boucle` | 240 × 118 |
 | Sinusoïdes + bruit (SMS) | `sms-sinusoides-bruit` | 240 × 162 |
-| Chercher sous contraintes | `solveur-contraintes` | 240 × 140 |
+| Chercher sous contraintes | `solveur-contraintes` | 240 × 162 |
 | SoundTouch Vitesse | `soundtouch-rate` | 240 × 118 |
 | SoundTouch Tempo | `soundtouch-tempo` | 240 × 118 |
 | SoundTouch Tonalité | `soundtouch-tonalite` | 240 × 118 |

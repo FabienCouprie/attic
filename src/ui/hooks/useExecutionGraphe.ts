@@ -11,7 +11,7 @@ import {
   ancetresBulle, aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
   sortieDeBulle,
   trouverMeta,
-  ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteValeursEntrantes,
+  ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
   noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
@@ -532,6 +532,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const sourceReprocessee = aretes.some((a) => a.target === nodeId && traitesCeRun.has(a.source));
       const hashParams = empreinteParametres(node.data);
       const monHashEntree = empreinteEntrees(nodeId, aretesG);
+      // LE CÂBLAGE AVAL ENTRE DANS LA CLÉ depuis qu'un nœud peut savoir si une de ses sorties est
+      // branchée : ce qu'il rend en dépend. Voir `empreinteSorties`.
+      const hashSorties = empreinteSorties(nodeId, aretesG);
       const hashValeursEntree = empreinteValeursEntrantes(nodeId, aretesG, resultats);
       const entreeCache = cacheExec.current.get(nodeId);
 
@@ -545,6 +548,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         entreeCache &&
         entreeCache.hashParams === hashParams &&
         entreeCache.hashEntree === monHashEntree &&
+        entreeCache.hashSorties === hashSorties &&
         entreeCache.hashValeursEntree === hashValeursEntree;
 
       console.log(`[cache] ${nodeId}(${node.data.ficheId}) sourceReprocessee=${sourceReprocessee} jamaisCache=${jamaisCache} hit=${cacheIdentique} hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree} cached=${entreeCache ? { hp: entreeCache.hashParams, he: entreeCache.hashEntree, hv: entreeCache.hashValeursEntree } : null}`);
@@ -600,6 +604,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
           repertoireTravail: repertoire,
           entree: (idx: number) => resoudreEntree<TypeValeur>(nodeId, idx, aretesG, resultats) as TypeValeur,
           entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
+          // Les arêtes sont ici, et elles disent si un câble part de cette sortie. Un nœud peut
+          // alors ne calculer une sortie chère que lorsqu'elle sert.
+          sortieBranchee: (idx: number) =>
+            aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`),
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
             if (typeof p === "number") return p;
@@ -682,7 +690,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, hashParams, hashEntree: monHashEntree, hashValeursEntree, tempsExecution: elapsed });
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
@@ -1130,6 +1138,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
     try {
       publierBoucles(etats);
+      // LE CORPS EST OUBLIÉ AVANT LA DÉCOUVERTE, ET NON SEULEMENT ENTRE LES PASSES. Sans cela, un
+      // second lancement du même graphe ne bouclait plus : le nœud de début, dont les réglages et
+      // les entrées n'avaient pas changé, était servi par le cache, `decouvrirPour` n'était jamais
+      // appelé, la boucle restait à zéro morceau, et la fin annonçait « toutes les passes sont
+      // revenues vides ». Le premier lancement marchait, les suivants non, ce qui est le pire des
+      // défauts à trouver. Relevé sur une boucle par créneau relancée deux fois de suite.
+      oublierLeCorps(0);
       // La passe de découverte : chaque début y remplit ses morceaux.
       await lancerUnePasse(noeudPrioritaireId);
 

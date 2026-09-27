@@ -134,8 +134,10 @@ export const fiches: FicheAudio[] = ([
       const plier = ctx.paramTexte("Plier", "oui") !== "non";
       const enVoix = ctx.paramTexte("Une voix par créneau", "non") === "oui";
       const blocs: Bloc[] = [];
-      b.morceaux.forEach((creneau, i) => {
-        const produite = b.recoltes[i];
+      // Les morceaux et les récoltes d'une boucle sont de type ouvert, le pilote n'en lisant que la
+      // longueur ; c'est ici, dans la boucle qui les a posés, qu'ils retrouvent le leur.
+      (b.morceaux as Sequence[]).forEach((creneau, i) => {
+        const produite = b.recoltes[i] as Sequence | undefined;
         if (!produite || produite.notes.length === 0) return;
         const note = creneau.notes[0];
         blocs.push({

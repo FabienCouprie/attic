@@ -66,6 +66,7 @@ import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { FicheAudio } from "../audio/types-domaine";
 import { ArbreRythmiqueVue } from "./ArbreRythmiqueVue";
 import { RouleauSequence } from "./RouleauSequence";
+import { CercleMelodiqueVue, CercleRythmiqueVue } from "./CercleVue";
 import type { DonneesNoeud } from "./AtelierNode";
 
 export interface VueProps {
@@ -2353,6 +2354,9 @@ const REGISTRE: EntreeRegistre[] = [
   // Aucun lecteur à déclarer : ce nœud ne rend pas de son, et n'en propose donc pas l'écoute.
   { correspond: parId("visualiseur-multipiste"), vue: VuePistesMultiples, position: "avant" },
   { correspond: parId("rouleau-sequence"), vue: RouleauSequence, position: "avant" },
+  // Les cercles se cliquent : la vue est l'editeur, et le motif qu'elle ecrit vit dans un reglage.
+  { correspond: parId("cercle-rythmique"), vue: CercleRythmiqueVue, position: "avant" },
+  { correspond: parId("cercle-melodique"), vue: CercleMelodiqueVue, position: "avant" },
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },

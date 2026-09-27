@@ -60,6 +60,23 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   // deux couleurs se seraient côtoyés dans la palette. Le mot promettait en outre une notation,
   // quand ce flux n'est qu'un convoi d'événements.
   registre.enregistrerTypeFlux({ id: "sequence", couleur: "#8b5a2b", libelle: "Séquence" });
+  // BLANC, DEMANDÉ PAR FABIEN, et il a raison : le bleu électrique qu'il remplaçait était à 93,5 ΔE
+  // du fond du canevas sur le papier, mais un câble d'un pixel et demi de large ne montre pas sa
+  // couleur comme un aplat, et du bleu sur du bleu nuit ne ressortait pas à l'œil.
+  //
+  // MESURÉ COMME LES QUATRE PRÉCÉDENTES. Sa distance en Lab à la plus proche des douze, le gris du
+  // fichier, est de **36,8 ΔE**, et **41,1** de celui du port exposé ; le dépôt a déjà accepté
+  // 22,3 pour la banque, et sa paire la plus serrée est justement ces deux gris à **6,7**. Du fond
+  // du canevas il est à **93,9 ΔE**, la plus grande distance de toute la palette.
+  //
+  // C'EST LA SEULE COULEUR NON SATURÉE HORS DES DEUX GRIS, et c'est ce qui la rend lisible : un
+  // câble blanc se voit sur un fond sombre là où une teinte, même vive, se fond dans les autres.
+  //
+  // UN PORT QUI PORTE UN CERCLE, ET NON DES NOTES DATÉES. Une séquence a ses temps en secondes ;
+  // un cercle n'a que des places et un nombre de places. C'est ce qui permet de le tourner, de le
+  // réfléchir et d'en prendre le complémentaire, toutes opérations qui perdent leur sens dès
+  // qu'une attaque est datée. Voir `audio/cercle.ts`.
+  registre.enregistrerTypeFlux({ id: "cercle", couleur: "#ffffff", libelle: "Cercle" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

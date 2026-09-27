@@ -438,6 +438,51 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .arbre-menu button:disabled { opacity: 0.35; cursor: default; }
 .arbre-menu button:disabled:hover { background: transparent; color: var(--text-primary); }
 
+/* ── Le cercle d'un rythme, et son polygone inscrit ───────────────────────────────────────────── */
+/* AU TRAIT, DANS LE TON DU PLAN TECHNIQUE, comme l'arbre rythmique : un dessin industriel se lit à
+   ses filets d'épaisseur constante, et le polygone inscrit est une figure de géométrie avant d'être
+   une illustration. Aucune couleur n'est écrite dans le composant : elles sont ici, et suivent le
+   thème. La teinte du cercle est celle de son type de flux, choisie par mesure en Lab. */
+.cercle-vue { display: flex; flex-direction: column; gap: 4px; padding: 4px 2px; min-width: 0; }
+.cercle-barre {
+  display: flex; align-items: center; gap: 6px; padding: 0 4px;
+  font-size: 10px; font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+.cercle-barre button {
+  min-width: 20px; padding: 1px 5px; font-size: 12px; line-height: 1.1;
+  border: 1px solid var(--text-tertiary); border-radius: 3px;
+  background: var(--bg-btn); color: var(--text-primary); cursor: pointer;
+}
+.cercle-barre button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.cercle-barre button:disabled { opacity: 0.35; cursor: default; }
+.cercle-compte { color: var(--text-title); min-width: 18px; text-align: center; }
+.cercle-attaques { margin-left: auto; color: var(--text-tertiary); }
+
+.cercle-svg { display: block; width: 100%; height: auto; cursor: pointer; }
+/* La piste sur laquelle les pastilles se posent : à peine là, comme tout quadrillage. */
+.cercle-piste { fill: var(--bg-input); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+/* LE POLYGONE EST UNE QUANTITÉ, d'où l'aire teintée : c'est elle qu'on vient lire. Le filet la
+   cerne, l'aplat reste faible pour que les pastilles restent lisibles par-dessus. */
+/* LE BLANC EST CELUI DU PORT, et il ne suit pas le thème : un type de flux porte une couleur, la
+   même dans les trois thèmes, et le dessin d'un cercle doit être de la couleur de sa sortie. */
+.cercle-polygone {
+  fill: #ffffff; fill-opacity: 0.12;
+  stroke: #ffffff; stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.cercle-pastille {
+  fill: var(--bg-btn); stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke;
+}
+.cercle-pastille.sonne { fill: #ffffff; stroke: #ffffff; }
+.cercle-pastille.survolee { stroke: var(--accent); stroke-width: 2; }
+/* La taille du texte n'est pas ici : c'est elle qui décide si le nom tient dans sa pastille, et
+   elle vit donc avec cette règle, dans `cercle-disposition.ts`. Voir `TAILLE_NOM`.
+   LA COULEUR NE SUIT PAS LE THÈME NON PLUS, puisque la pastille qui la porte est blanche dans les
+   trois : `--text-inverse` y vaut du blanc sur le thème sombre, et le nom aurait disparu. */
+.cercle-nom { fill: #0a1a40; font-variant-numeric: tabular-nums; }
+/* Le repère de la place zéro, en haut : sans lui, un motif tourné serait illisible. */
+.cercle-repere { stroke: var(--text-secondary); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+
 /* ── Le rouleau d'une séquence ────────────────────────────────────────────────────────────────── */
 /* SIX TEINTES POUR LES VOIX, ET ELLES SONT QUALITATIVES : elles se distinguent, elles ne se classent
    pas, la voix 2 n'étant ni plus forte ni plus haute que la voix 1. Elles sont prises dans les

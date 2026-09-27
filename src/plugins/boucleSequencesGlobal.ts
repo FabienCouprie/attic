@@ -28,6 +28,8 @@ export const FICHE_BOUCLE_DEBUT = "boucle-voix-debut";
 export const FICHE_BOUCLE_FIN = "boucle-voix-fin";
 export const FICHE_CRENEAU_DEBUT = "boucle-creneau-debut";
 export const FICHE_CRENEAU_FIN = "boucle-creneau-fin";
+export const FICHE_CERCLE_DEBUT = "cercle-boucle-debut";
+export const FICHE_CERCLE_FIN = "cercle-boucle-fin";
 
 /**
  * Les nœuds qui ouvrent une boucle sur une valeur.
@@ -37,7 +39,8 @@ export const FICHE_CRENEAU_FIN = "boucle-creneau-fin";
  * pilote lance une passe et regarde. Un début de boucle qui découperait par mesure ou par accord
  * s'ajoute ici, et rien d'autre ne bouge.
  */
-export const FICHES_BOUCLE_DEBUT: readonly string[] = [FICHE_BOUCLE_DEBUT, FICHE_CRENEAU_DEBUT];
+export const FICHES_BOUCLE_DEBUT: readonly string[] =
+  [FICHE_BOUCLE_DEBUT, FICHE_CRENEAU_DEBUT, FICHE_CERCLE_DEBUT];
 
 export interface BoucleCourante {
   /** Le nœud de début qui commande cette boucle, pour invalider son cache à chaque passe. */
@@ -50,10 +53,15 @@ export interface BoucleCourante {
    * Les morceaux à parcourir, publiés par le nœud de début à sa première passe.
    *
    * Vides tant que la découverte n'a pas eu lieu : le pilote lance alors une passe et regarde.
+   *
+   * LE TYPE EST OUVERT PARCE QUE LE PILOTE N'EN LIT QUE LA LONGUEUR. Ce sur quoi une boucle itère
+   * ne le regarde pas : des voix et des créneaux sont des séquences, une boucle de transformation
+   * parcourt des cercles. Chaque sorte de boucle relit ses morceaux avec son propre accesseur, et
+   * c'est là que le type revient.
    */
-  morceaux: Sequence[];
+  morceaux: unknown[];
   /** Ce que la fin de boucle a recueilli, une entrée par passe. */
-  recoltes: Sequence[];
+  recoltes: unknown[];
 }
 
 /**
@@ -109,7 +117,7 @@ export function boucleDeLaFin(finId: string): BoucleCourante | null {
  * les voix qu'il porte changent aussi, et la boucle intérieure doit redécouvrir. Le pilote efface
  * donc les morceaux des boucles intérieures quand il fait avancer une boucle extérieure.
  */
-export function decouvrirPour(debutId: string, morceaux: readonly Sequence[]): void {
+export function decouvrirPour(debutId: string, morceaux: readonly unknown[]): void {
   const b = boucleDuDebut(debutId);
   if (b && b.morceaux.length === 0) b.morceaux = [...morceaux];
 }
@@ -120,28 +128,46 @@ export function decouvrir(morceaux: readonly Sequence[]): void {
   if (b && b.morceaux.length === 0) b.morceaux = [...morceaux];
 }
 
-/** Le morceau de la passe en cours, pour ce début. */
+/** Le morceau de la passe en cours, pour ce début. Les boucles sur séquence relisent ainsi. */
 export function morceauPour(debutId: string): Sequence | null {
   const b = boucleDuDebut(debutId);
-  return b ? (b.morceaux[b.index] ?? null) : null;
+  return b ? ((b.morceaux[b.index] as Sequence | undefined) ?? null) : null;
 }
 
 /** Compatible avec l'ancien appel : la boucle la plus intérieure. */
 export function morceauCourant(): Sequence | null {
   const b = boucleCourante();
-  return b ? (b.morceaux[b.index] ?? null) : null;
+  return b ? ((b.morceaux[b.index] as Sequence | undefined) ?? null) : null;
 }
 
 /** La fin de boucle dépose ce que la passe a produit, dans SA boucle. */
-export function recolterPour(finId: string, sequence: Sequence): void {
+export function recolterPour(finId: string, valeur: unknown): void {
   const b = boucleDeLaFin(finId);
-  if (b) b.recoltes[b.index] = sequence;
+  if (b) b.recoltes[b.index] = valeur;
 }
 
 /** Compatible avec l'ancien appel : la boucle la plus intérieure. */
 export function recolter(sequence: Sequence): void {
   const courante = boucleCourante();
   if (courante) courante.recoltes[courante.index] = sequence;
+}
+
+/**
+ * Ce que la fin a recueilli à la passe PRÉCÉDENTE, pour ce début.
+ *
+ * C'EST LA RÉTROACTION, ET ELLE NE PASSE PAS PAR UNE ARÊTE. Une boucle qui transforme veut donner à
+ * la passe k ce que la passe k−1 a produit : trois rotations d'une place sont une rotation de trois,
+ * mais trois permutations tirées sont autre chose que la troisième. Relier la fin au début fermerait
+ * un cycle, et le graphe l'interdit à juste titre. Le début s'exécutant avant la fin dans une passe,
+ * il lit ici ce que la fin a déposé au tour d'avant : le graphe reste acyclique, et la valeur
+ * chemine par le même module ambiant que le reste de la boucle.
+ *
+ * RIEN À LA PREMIÈRE PASSE, et l'appelant y met sa source : c'est ce qui amorce la chaîne.
+ */
+export function recoltePrecedentePour(debutId: string): unknown {
+  const b = boucleDuDebut(debutId);
+  if (!b || b.index <= 0) return null;
+  return b.recoltes[b.index - 1] ?? null;
 }
 
 /** Ce qu'une planification rend au pilote. */
@@ -162,12 +188,14 @@ export interface PlanBoucle {
   plusieursDebuts: boolean;
 }
 
-export const FICHES_BOUCLE_FIN: readonly string[] = [FICHE_BOUCLE_FIN, FICHE_CRENEAU_FIN];
+export const FICHES_BOUCLE_FIN: readonly string[] =
+  [FICHE_BOUCLE_FIN, FICHE_CRENEAU_FIN, FICHE_CERCLE_FIN];
 
 /** Quelle fin referme quel début. Une boucle par créneau ne se referme pas par une fin de voix. */
 const FIN_DE_DEBUT: Record<string, string> = {
   [FICHE_BOUCLE_DEBUT]: FICHE_BOUCLE_FIN,
   [FICHE_CRENEAU_DEBUT]: FICHE_CRENEAU_FIN,
+  [FICHE_CERCLE_DEBUT]: FICHE_CERCLE_FIN,
 };
 
 /**

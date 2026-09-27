@@ -36,6 +36,17 @@ export interface ContexteExecution<TValeur, TRuntime> {
   // les entrées non connectées/non calculées. Le filtrage par type (ex. n'en
   // garder que les AudioBuffer) relève du domaine, pas du cœur.
   entrees: () => (TValeur | null)[];
+  // Une SORTIE de ce nœud est-elle branchée ? Le cœur connaît les arêtes ; sans cela un plugin ne
+  // peut pas savoir si ce qu'il s'apprête à calculer sera lu, et doit le calculer à tout hasard.
+  //
+  // POURQUOI C'EST DANS LE CONTRAT ET NON DANS UN DOMAINE. Le fait « un câble part-il d'ici » est
+  // de la topologie, comme les entrées, et rien de ce qui le décide n'appartient à l'audio ou à
+  // aucun autre domaine. C'est ce qui permet à une sortie chère d'être rendue seulement quand elle
+  // sert : une sortie audio calculée sur chaque nœud à séquence coûtait 8,6 ms par seconde de son,
+  // soit une seconde et demie par nœud sur une pièce de trois minutes, écoutée ou non.
+  //
+  // FACULTATIF : un appelant qui ne le fournit pas laisse le plugin faire comme avant.
+  sortieBranchee?: (index: number) => boolean;
   paramNombre: (nom: string, defaut: number) => number;
   paramTexte: (nom: string, defaut: string) => string;
   onProgress: (msg: string) => void;

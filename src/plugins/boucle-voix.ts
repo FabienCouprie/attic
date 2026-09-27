@@ -108,7 +108,9 @@ export const fiches: FicheAudio[] = ([
         };
       }
 
-      const recueillies = b.recoltes.filter((s): s is Sequence => !!s && s.notes.length > 0);
+      // Le type ouvert des récoltes retrouve le sien ici, dans la boucle qui les a déposées.
+      const recueillies = b.recoltes.filter(
+        (s): s is Sequence => !!s && Array.isArray((s as Sequence).notes) && (s as Sequence).notes.length > 0);
       if (recueillies.length === 0) {
         return {
           valeurs: [null], erreur: true,

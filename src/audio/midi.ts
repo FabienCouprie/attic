@@ -9,6 +9,9 @@ import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
 
 import type { Note } from "./note";
+import {
+  melangerTampons, RESERVE_BATTERIE, separerPercussions, tamponSilencieux,
+} from "./sequence-percussion";
 export interface NoteMidi {
   note: number;
   velocite: number;
@@ -682,6 +685,18 @@ function allongerA(buffer: AudioBuffer, duree: number): AudioBuffer {
   return sortie;
 }
 
+/**
+ * Une séquence rendue en son : les hauteurs par la synthèse choisie, la batterie par la sienne.
+ *
+ * LE CANAL DE BATTERIE EST HONORÉ, et il ne l'était pas. Toute note partait en hauteur, canal
+ * compris : une grosse caisse écrite en 36 sur le canal dix s'entendait en sinusoïde de trente-trois
+ * hertz, alors que le fichier MIDI rendu à côté sonnait juste dans un séquenceur. Les frappes vont
+ * désormais au synthétiseur de percussions que partagent les autres rythmes du dépôt, ce qui fait
+ * qu'une caisse claire y sonne comme une caisse claire ailleurs.
+ *
+ * UNE SÉQUENCE SANS CANAL NE CHANGE PAS D'UN ÉCHANTILLON : le canal absent vaut zéro, le partage
+ * rend alors toutes les notes du côté des hauteurs, et le chemin est celui d'avant, mot pour mot.
+ */
 export async function rendreSequence(
   notes: NoteEvenement[],
   mode: "FM/Oscillateurs" | "SoundFont",
@@ -699,7 +714,35 @@ export async function rendreSequence(
   // UNE PIÈCE NE FINIT PAS FORCÉMENT SUR UNE NOTE. La longueur se prenait sur la dernière ; un
   // rythme qui se termine par un silence perdait donc ce silence, mesuré à 1,5 seconde rendue pour
   // une mesure de 2. L'appelant qui connaît la durée voulue la dit, et elle l'emporte.
+  // ELLE SE PREND SUR TOUTES LES NOTES, batterie comprise, avant tout partage : les deux moitiés
+  // doivent tomber dans le même tampon, et une séquence n'a qu'une durée.
   const duree = Math.max(notes.reduce((m, n) => Math.max(m, n.fin), 0), dureeMin ?? 0, 0.5);
+
+  const { frappes, hauteurs } = separerPercussions(notes);
+  if (frappes.length > 0) {
+    const { rendreBatterieMidi } = await import("./tone-synths");
+    // LA MÊME RÉSERVE QUE LA SYNTHÈSE DES HAUTEURS, et le niveau est un gain : multiplier le volume
+    // revient exactement à multiplier le rendu. Voir `RESERVE_BATTERIE` pour la mesure qui l'exige.
+    const batterie = await rendreBatterieMidi({ notes: frappes, volume: volume * RESERVE_BATTERIE });
+    const melodie = hauteurs.length > 0
+      ? await rendreHauteurs(hauteurs, mode, volume, instrument, banque, caractere, duree)
+      : tamponSilencieux(duree, batterie.sampleRate);
+    return melangerTampons(melodie, batterie, duree);
+  }
+
+  return rendreHauteurs(notes, mode, volume, instrument, banque, caractere, duree);
+}
+
+/** La synthèse des hauteurs seules, telle qu'elle a toujours été, la durée étant déjà décidée. */
+async function rendreHauteurs(
+  notes: NoteEvenement[],
+  mode: "FM/Oscillateurs" | "SoundFont",
+  volume: number,
+  instrument: number | undefined,
+  banque: number | undefined,
+  caractere: CaractereTimbreId | "pur" | undefined,
+  duree: number,
+): Promise<AudioBuffer> {
   const vol = Math.max(0, Math.min(1, volume / 100));
 
   if (mode === "SoundFont") {
