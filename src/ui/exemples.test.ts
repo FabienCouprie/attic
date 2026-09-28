@@ -1,18 +1,42 @@
 // ui/exemples.test.ts — Le catalogue des graphes livrés.
 //
-// CE QU'IL TIENT. Que le catalogue ne soit pas vide, d'abord : compilé par un glob, il se viderait
+// CE QU'IL TIENT. Que le catalogue suive le dossier, d'abord : compilé par un glob, il se viderait
 // en silence si le dossier changeait de nom, et le bouton de la barre ouvrirait une liste vide sans
 // qu'une seule erreur paraisse. Et que le nom affiché se déduise bien du nom de fichier, puisque
 // c'est ce qui permet de déposer un graphe dans le dossier sans rien tenir à jour à côté.
+//
+// AUCUN CAS NE NOMME UN EXEMPLE, ET AUCUN N'EN EXIGE UN. Le dossier n'est plus versionné : on y
+// ajoute et on y retire constamment, et un test qui désignait un fichier par son nom faisait échouer
+// la suite au premier qu'on en retirait. Les propriétés du nommage se tiennent donc sur des graphes
+// écrits ici, qui ne dépendent de rien ; celles du catalogue se tiennent sur ce qui est là, quoi que
+// ce soit, y compris rien du tout sur un dépôt fraîchement cloné.
 import { describe, expect, it } from "vitest";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   EXEMPLES, fichierDExemple, identifiantDepuisChemin, nomDeLExemple, nomDepuisIdentifiant, titreDepuisNote,
 } from "./exemples";
 
+/** Les graphes réellement posés dans `exemples/`, sous-dossiers compris. */
+function jsonSurLeDisque(dossier = "exemples"): number {
+  if (!existsSync(dossier)) return 0;
+  let n = 0;
+  for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+    if (entree.name.startsWith(".")) continue;
+    const complet = join(dossier, entree.name);
+    if (entree.isDirectory()) n += jsonSurLeDisque(complet);
+    else if (/\.json$/i.test(entree.name)) n++;
+  }
+  return n;
+}
+
 describe("le catalogue des exemples", () => {
-  it("IL N'EST PAS VIDE, sans quoi le bouton ouvrirait une liste vide en silence", () => {
-    expect(EXEMPLES.length).toBeGreaterThan(0);
+  it("IL SUIT LE DOSSIER : autant d'exemples compilés que de graphes posés", () => {
+    // LE GARDE-FOU EST LÀ, et il ne tient plus à un nombre écrit d'avance : un dossier renommé, un
+    // glob qui cesse de mordre, et le compte ne correspondrait plus. Un dossier vide donne zéro des
+    // deux côtés, ce qui est l'état normal d'un dépôt cloné sans ses exemples.
+    expect(EXEMPLES.length).toBe(jsonSurLeDisque());
   });
 
   it("chaque exemple porte un graphe, avec ses nœuds et ses arêtes", () => {
@@ -71,12 +95,12 @@ describe("le catalogue des exemples", () => {
   });
 
   it("et le titre vient de la note, non du nom de fichier qui ne dit pas la meme chose", () => {
-    // Le sujet portait auparavant des accents qu'un nom de fichier ne peut pas porter. Les exemples
-    // qui les avaient ont été retirés ; la propriété se tient sur les mots, qui suffisent : le nom
-    // de fichier perd « sur », et c'est bien la note qui le rend.
-    const ex = EXEMPLES.find((e) => e.id === "deux-effets-deux-passages")!;
-    expect(ex.nom.toLowerCase()).toContain("sur");
-    expect(nomDepuisIdentifiant(ex.id).toLowerCase()).not.toContain("sur");
+    // La propriété se tient sur les mots, et sur un graphe écrit ici plutôt que sur un fichier du
+    // dossier : le nom de fichier perd « sur », et c'est bien la note qui le rend.
+    const id = "deux-effets-deux-passages";
+    const g = { nodes: [{ data: { ficheId: "comment", nom: "Deux effets sur deux passages" } }] };
+    expect(titreDepuisNote(g, nomDepuisIdentifiant(id)).toLowerCase()).toContain("sur");
+    expect(nomDepuisIdentifiant(id).toLowerCase()).not.toContain("sur");
   });
 
   it("LA LISTE SUIT LA LANGUE : chacun porte un titre anglais, et il n'est pas le français", () => {
@@ -91,8 +115,9 @@ describe("le catalogue des exemples", () => {
   });
 
   it("UN EXEMPLE DEVIENT UN FICHIER QUI N'EST SUR AUCUN DISQUE, ce qui le rend non modifiable", () => {
-    const f = fichierDExemple(EXEMPLES[0]);
-    expect(f.name).toBe(`${EXEMPLES[0].id}.json`);
+    const ex = { id: "rythme/canon", nom: "Canon", nomEn: "Canon", graphe: { nodes: [], edges: [] } };
+    const f = fichierDExemple(ex);
+    expect(f.name).toBe("rythme/canon.json");
     expect(f.type).toBe("application/json");
     expect(f.size).toBeGreaterThan(0);
   });

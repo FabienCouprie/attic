@@ -3,8 +3,8 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**1103 files, 188386 lines.** The table lists the 318 files of 200 lines or more;
-the remaining 785 account for 87419 lines.
+**1103 files, 188417 lines.** The table lists the 318 files of 200 lines or more;
+the remaining 785 account for 87450 lines.
 
 | File | Lines |
 |---|---:|

@@ -28,6 +28,13 @@ public/sf2/
 
 # Songsee binary (built locally, too large for git)
 bin/songsee/songsee.exe
+
+# Les graphes d'exemple. Demandé par Fabien : c'est un dossier d'exemples, on y ajoute et on y retire
+# constamment, et chaque essai laissait une trace dans le dépôt. Ils partent toujours dans
+# l'installeur, `package.json` les copiant en ressource et le glob de `src/ui/exemples.ts` les
+# compilant depuis le disque : c'est le suivi de version qui les lâche, non la livraison. Un dépôt
+# cloné sans eux donne donc une liste vide, ce que les tests admettent.
+exemples/
 bin/songsee/songsee
 
 # User work files

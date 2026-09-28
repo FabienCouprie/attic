@@ -17,8 +17,10 @@
 // enregistre le travail en cours dans le même dossier : le contrôler reviendrait à reprocher de ne
 // pas avoir fini. La convention de nommage est à la charge de qui livre l'exemple.
 //
-// ET `presets/` N'EST PAS VERSIONNÉ. Sur un dépôt fraîchement cloné il ne trouvera rien et passera :
-// c'est voulu, il garde ce qu'il y a là où l'on travaille.
+// NI `presets/` NI `exemples/` NE SONT VERSIONNÉS. Sur un dépôt fraîchement cloné ce test ne
+// trouvera rien et passera : c'est voulu, il garde ce qu'il y a là où l'on travaille. Les deux
+// dossiers gardent pourtant des rôles distincts, et le contrôle reste entier sur `exemples/` : ce
+// qui s'y trouve part dans l'installeur, donc est montré à quelqu'un d'autre.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -33,10 +35,10 @@ const DOSSIERS = ["", "presets", "exemples", "tests-e2e"];
 /**
  * `exemples/` est tout entier sous contrat, et son nom suffit à le dire.
  *
- * Les deux dossiers n'ont pas le même rôle. `presets/` n'est pas versionné : c'est là qu'on
- * travaille, et un graphe en cours de câblage y est momentanément incomplet par nature.
- * `exemples/` est versionné et livré : ce qui s'y trouve est montré à quelqu'un d'autre, et n'a
- * donc pas le droit d'être à moitié fait.
+ * Les deux dossiers n'ont pas le même rôle, et ce n'est pas le suivi de version qui le dit.
+ * `presets/` est là où l'on travaille, et un graphe en cours de câblage y est momentanément
+ * incomplet par nature. `exemples/` est livré : ce qui s'y trouve part dans l'installeur, donc est
+ * montré à quelqu'un d'autre, et n'a pas le droit d'être à moitié fait.
  */
 const estExemple = (dossier: string, nom: string) =>
   dossier === "exemples" ? /\.json$/i.test(nom) : /-exemple\.json$/i.test(nom);
