@@ -1,6 +1,8 @@
 // audio/algebre.test.ts
 import { describe, it, expect } from "vitest";
-import { calculerPCA, standardiser, kmeans, indiceCalinskiHarabasz, kmeansAuto, gmm, calculerDTW } from "./algebre";
+import { calculerPCA, standardiser, kmeans, indiceCalinskiHarabasz, kmeansAuto } from "./algebre";
+import { calculerDTW } from "./algebre-alignement";
+import { gmm } from "./algebre-melanges";
 
 function dot(a: number[], b: number[]): number {
   return a.reduce((s, x, i) => s + x * b[i], 0);

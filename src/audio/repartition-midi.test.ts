@@ -10,7 +10,7 @@ import {
   CANAL_BATTERIE, analyserListeCanaux, compterNotes, filtrerPistesMidi, inventaireMidi,
   listeCanauxHumaine, repartirCanaux,
 } from "./repartition-midi";
-import { filtrerCanauxMidi } from "./midi";
+import { filtrerCanauxMidi } from "./midi-montage";
 
 const TPM = 480;
 

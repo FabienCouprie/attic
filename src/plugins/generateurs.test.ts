@@ -4,7 +4,8 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
-import { analyserMidi, joindreMidi } from "../audio/midi";
+import { analyserMidi } from "../audio/midi";
+import { joindreMidi } from "../audio/midi-montage";
 import { parseMidi } from "midi-file";
 
 function ctx(sequenceNotes: any[]) {

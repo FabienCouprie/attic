@@ -1,6 +1,9 @@
 // plugins/carte-sonore.test.ts
 import { describe, it, expect, vi } from "vitest";
-import { genererCarteVille, genererCarteConcentrique, genererCarteVoronoi, genererCarteOrganique, genererHtmlCarte, fiches } from "./carte-sonore";
+import { fiches } from "./carte-sonore";
+import { genererCarteVille } from "./carte-sonore-plan-ville";
+import { genererCarteConcentrique, genererCarteVoronoi, genererCarteOrganique } from "./carte-sonore-plan-cellulaire";
+import { genererHtmlCarte } from "./carte-sonore-page";
 
 describe("carte-sonore", () => {
   const points = Array.from({ length: 8 }, (_, i) => ({ nom: `son${i}.mp3`, chemin: `/tmp/son${i}.mp3` }));

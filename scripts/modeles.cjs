@@ -59,30 +59,32 @@ const CONNUS = {
   },
   "htdemucs_6s.onnx": {
     id: "htdemucs-6s", nom: "Séparation 6 pistes", nomEn: "6-stem separation",
-    noeuds: ["separation-demucs"],
+    noeuds: ["separateur-ia"],
     licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs) ; citer Rouard, Massa, Défossez, ICASSP 2023, et MUSDB18-HQ", rediffusable: false,
       raison: "Le code de Demucs est sous licence MIT, PAS ses poids : « The model weights are not covered by the MIT license, and are provided only for scientific purposes » (adefossez, auteur de Demucs, facebookresearch/demucs#327) — la restriction vient de MUSDB18-HQ, jeu de données à usage éducatif. Attic, libre et non commercial, les EMPLOIE ; les héberger sur notre propre release serait une publication de plus, et cette décision-là n'est pas prise." },
   },
   "htdemucs_fp16weights.onnx": {
     id: "htdemucs-fp16", nom: "Séparation (poids fp16)", nomEn: "Separation (fp16 weights)",
-    noeuds: ["separation-demucs"],
+    noeuds: ["separateur-ia"],
     licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs), poids fp16", rediffusable: false,
       raison: "Mêmes poids que htdemucs-6s, même réserve : usage scientifique et non commercial, hébergement par nous non décidé." },
   },
   "model_genre.onnx": {
     id: "genre", nom: "Classement par genre", nomEn: "Genre classifier",
-    noeuds: ["genre-musical"],
+    noeuds: ["classificateur-genre"],
     licence: { nom: "inconnue", credit: "réglage fin de HuBERT (facebook/hubert-base-ls960, Apache-2.0) sur GTZAN", rediffusable: false,
       raison: "Aucune licence n'a jamais été déclarée pour ce réglage fin, et son dépôt d'origine a disparu (401 depuis le 2026-09-22). La chaîne de droits ne se documente pas : on ne le rediffuse pas." },
   },
   "modele-separation.onnx": {
     id: "separation-mdx", nom: "Séparation voix/instrumental", nomEn: "Vocal/instrumental separation",
-    noeuds: ["separation-voix"],
+    noeuds: ["separateur-ia"],
     licence: { nom: "MIT", credit: "Ultimate Vocal Remover — MDX-Net (Kuielab, Woosung Choi)", rediffusable: true },
   },
   "stable-audio-3-small-music": {
     id: "stable-audio-3", nom: "Stable Audio 3 (musique)", nomEn: "Stable Audio 3 (music)",
-    noeuds: ["stable-audio-3"], archive: true,
+    // Deux nœuds partagent ce paquet : la génération et la continuation, qui résout le même
+    // `stable-audio-3-small-music`. La continuation y manquait.
+    noeuds: ["stable-audio-3", "continuation-stable-audio-3"], archive: true,
     licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
       note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
   },

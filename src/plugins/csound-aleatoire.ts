@@ -12,7 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
-import { GAMMES_MELODIE_EN, GAMMES_MELODIE_FR, GAMMES_MELODIE_IDS, degresGammeMelodie } from "../audio/generation";
+import { GAMMES_MELODIE_EN, GAMMES_MELODIE_FR, GAMMES_MELODIE_IDS, degresGammeMelodie } from "../audio/generation-melodie";
 import { estCourbe, type Courbe } from "../audio/courbe";
 import { construirePartition, type ChampP, type Convention } from "../audio/csound-partition";
 import { composerAleatoire, statsLisibles, type Loi, type Repartition } from "../audio/csound-aleatoire";

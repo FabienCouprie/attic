@@ -7,17 +7,19 @@ import { describe, it, expect } from "vitest";
 import {
   calculerHistogramme,
   calculerBoundingBox,
-  canvasDisponible,
   collecterPoints,
   creerRng,
-  interpolerCouleur,
   normaliserTypeAttracteur,
-  PALETTES,
   rendreAttracteurImage,
   rendreAttracteurImageEtAudio,
-  sonifierPoints,
   type TypeAttracteur,
 } from "./attracteurs";
+import {
+  canvasDisponible,
+  interpolerCouleur,
+  PALETTES,
+  sonifierPoints,
+} from "./attracteurs-image-et-son";
 
 const TYPES: TypeAttracteur[] = ["lorenz", "rossler", "henon", "ikeda", "barnsley", "sierpinski"];
 

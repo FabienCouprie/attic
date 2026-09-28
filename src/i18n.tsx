@@ -360,6 +360,10 @@ const DICO: Record<string, Record<Langue, string>> = {
   "montage.aucunePiste": { fr: "Branchez un son sur une piste pour le voir sur la ligne de temps.", en: "Connect a sound to a track to see it on the timeline." },
   "montage.dureesInconnues": { fr: "Pointillé : durée inconnue tant que le graphe n'a pas été exécuté.", en: "Dotted: length unknown until the graph has been run." },
   "montage.fonduEntree": { fr: "Tirer pour régler le fondu d'entrée", en: "Drag to set the fade in" },
+  "montage.lire": { fr: "Écouter le montage", en: "Play the montage" },
+  "montage.pause": { fr: "Suspendre", en: "Pause" },
+  "montage.zoom": { fr: "Zoom de la ligne de temps. La molette zoome aussi, sur l'instant visé.", en: "Timeline zoom. The wheel zooms too, on the instant under the pointer." },
+  "montage.finesse": { fr: "Maj : dix fois plus fin. Alt : cent fois plus fin.", en: "Shift: ten times finer. Alt: a hundred times finer." },
   "montage.fonduSortie": { fr: "Tirer pour régler le fondu de sortie", en: "Drag to set the fade out" },
   "maquette.dureeBoite": { fr: "Tirer pour régler la durée de la boîte", en: "Drag to set the box length" },
   "maquette.aucuneBoite": { fr: "Branchez une séquence sur une boîte pour la voir sur la ligne de temps.", en: "Connect a sequence to a box to see it on the timeline." },
@@ -1165,6 +1169,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.analyse_lpc": { fr: "Analyse LPC…", en: "LPC analysis..." },
   "progress.g_n_ration_du_script": { fr: "Génération du script…", en: "Generating the script..." },
   "progress.rendu_soundfont": { fr: "Rendu SoundFont…", en: "Made SoundFont..." },
+  // La note sur le modèle, la même pour les onze nœuds qui en tirent un de la release des assets.
+  // Elle ne paraît que si le paquet manque vraiment, et elle en donne la taille : de 33 Mo à 1,8 Go.
+  "progress.modele.premiere_fois": { fr: "Le modèle ({__VAR_0__}) est récupéré d'abord : la première fois seulement, et cela peut prendre plusieurs minutes.", en: "The model ({__VAR_0__}) is fetched first: on the first run only, and this can take several minutes." },
+  "progress.bruitage.generation": { fr: "Génération du son…", en: "Generating the sound..." },
   "progress.debruitage.chargement_modele": { fr: "Chargement du modèle GTCRN…", en: "Loading the GTCRN model..." },
   "progress.debruitage.reechantillonnage": { fr: "Rééchantillonnage à 16 kHz…", en: "Resampling to 16 kHz..." },
   "progress.debruitage.var_0": { fr: "Débruitage {__VAR_0__} %", en: "Denoising {__VAR_0__}%" },

@@ -8,7 +8,7 @@ import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { frequenceDeNoteMidi, noteMidiDeFrequence } from "./commun";
-import { rendreSequence } from "./midi";
+import { rendreSequence } from "./midi-sequence";
 import {
   besselJ, decrirePartiels, ecartAuTempere, fondamentaleVirtuelle, modulationEnAnneau,
   partielsVersNotes, serieHarmonique, spectreDistordu, spectreFM,

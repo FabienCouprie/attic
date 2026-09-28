@@ -2,8 +2,8 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { analyserEmotion } from "./emotion";
-import { genererAccords } from "./generation";
-import { rendreMidiDepuisBytes } from "./midi";
+import { genererAccords } from "./generation-accords";
+import { rendreMidiDepuisBytes } from "./midi-montage";
 
 function ajouterSinus(buf: AudioBuffer, freq: number, amp: number): void {
   const d = buf.getChannelData(0);

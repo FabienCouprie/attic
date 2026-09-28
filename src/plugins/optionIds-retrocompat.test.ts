@@ -9,11 +9,11 @@ import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { valeurCanoniqueChoix } from "../i18n";
 import { normaliserModeSynthèse } from "./soundfontGlobal";
-import { normaliserTimbre } from "../audio/automate-cellulaire";
+import { normaliserTimbre } from "../audio/automate-cellulaire-reglages";
 import { formeOndeDepuisTimbre, caractereTimbre } from "../audio/timbres";
 import { cleCouleur } from "../audio/couleurs";
 import { DEMI_TONS_CLE } from "../audio/commun";
-import { normaliserCle } from "../audio/automate-cellulaire";
+import { normaliserCle } from "../audio/automate-cellulaire-reglages";
 import type { ParametreDef } from "../core/types";
 
 function paramDe(nodeId: string, nomParam: string): ParametreDef {

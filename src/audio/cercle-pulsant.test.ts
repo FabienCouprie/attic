@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 import {
   accordsDepuisPulsations, couleurCss, couleurVersCamelot, estMineur, notesDepuisPulsations,
-  pulsations, svgAnime, toniqueDeCamelot, type OptionsCercle,
+  pulsations, svgAnime, toniqueDeCamelot, type OptionsCercle, type OptionsPulsations,
 } from "./cercle-pulsant";
 import { parseCamelot } from "./camelot";
 
@@ -343,5 +343,35 @@ describe("les accords de la roue", () => {
         expect(n.note).toBeLessThanOrEqual(108);
       }
     }
+  });
+});
+
+// Ce qui justifie que `OptionsPulsations` soit un type à part, et ce qui le tiendra tel.
+//
+// LE GÉNÉRATEUR VIDÉO PORTAIT UN CURSEUR « Seuil de silence » QUI NE POUVAIT RIEN CHANGER : il est
+// lu par les notes, par les accords et par l'animation SVG, jamais par `pulsations`, et ce
+// composant est muet. Le réglage était visible et documenté, avec une plage et un défaut, et le
+// déplacer n'avait aucun effet. Le type interdit désormais de le fournir sans son.
+describe("les champs de OptionsPulsations agissent tous, et eux seuls", () => {
+  const empreinte = (o: OptionsPulsations) =>
+    pulsations(o).map((p) => `${p.temps.toFixed(6)}/${p.rayon.toFixed(6)}/${p.teinte.toFixed(4)}`
+      + `/${p.saturation.toFixed(4)}/${p.clarte.toFixed(4)}`).join("|");
+
+  const AUTRE: { [K in keyof OptionsPulsations]: number } = {
+    dureeSec: 8, pulsationDebut: 5, pulsationFin: 0.5, teinteDebut: 137,
+    teinteParcours: 240, saturation: 0.25, clarte: 0.9, respiration: 1, graine: 99,
+  };
+
+  // Chaque champ du type, sans en nommer un seul à la main : un champ ajouté sans effet échoue ici.
+  for (const champ of Object.keys(AUTRE) as (keyof OptionsPulsations)[]) {
+    it(`« ${champ} » change la suite de pulsations`, () => {
+      const base: OptionsPulsations = { ...BASE };
+      expect(empreinte({ ...base, [champ]: AUTRE[champ] })).not.toBe(empreinte(base));
+    });
+  }
+
+  it("« seuilSilence » n'y change rien, puisqu'il ne decide que de ce qui sonne", () => {
+    const sans: OptionsPulsations = { ...BASE };
+    expect(empreinte({ ...sans, seuilSilence: 0.9 } as OptionsPulsations)).toBe(empreinte(sans));
   });
 });

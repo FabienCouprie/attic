@@ -2,6 +2,7 @@
 // (anglais) via Kokoro-82M ONNX + Transformers.js, exécuté dans un Web Worker.
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 
@@ -114,6 +115,9 @@ export const fiches: FicheAudio[] = ([
         synthesize: traduire("progress.kokoro.synthesize"),
         chunk: traduire("progress.kokoro.chunk"),
       };
+      // Le worker rapporte un POURCENTAGE pendant la prise du paquet, ce qui ne prévient de rien
+      // avant qu'elle commence : la note dit la taille d'abord, et seulement si elle manque.
+      await annoncerModele(ctx, "tts-kokoro", "");
       return new Promise((resolve, reject) => {
         const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {

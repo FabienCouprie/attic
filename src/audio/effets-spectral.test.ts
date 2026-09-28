@@ -2,7 +2,11 @@
 import "node-web-audio-api/polyfill.js";
 import { AudioBuffer as AudioBufferNWA } from "node-web-audio-api";
 import { describe, it, expect, beforeAll } from "vitest";
-import { changerTonalite, glissandoTonalite, equaliser, panLogistique, vibratoLogistique, tremoloLogistique, echoLogistique, chopperLogistique, spatialiserStereo, trajectoirePanoramique } from "./effets-spectral";
+import { changerTonalite, glissandoTonalite } from "./effets-spectral";
+import { chopperLogistique } from "./effets-decoupe";
+import { panLogistique, spatialiserStereo, trajectoirePanoramique } from "./effets-espace";
+import { equaliser } from "./effets-filtres";
+import { vibratoLogistique, tremoloLogistique, echoLogistique } from "./effets-modulation";
 import { engendrer } from "./courbe";
 
 class AudioBufferPolyfill {

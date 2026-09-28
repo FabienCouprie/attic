@@ -70,13 +70,16 @@ describe("le catalogue des exemples", () => {
     expect(titreDepuisNote(null, "repli")).toBe("repli");
   });
 
-  it("et l'exemple dont le titre en demande les porte bien, là où son nom de fichier ne le pouvait pas", () => {
-    const rev = EXEMPLES.find((e) => e.id === "une-reverberation-qui-deborde")!;
-    expect(rev.nom).toContain("réverbération");
-    expect(nomDepuisIdentifiant(rev.id)).not.toContain("réverbération");
+  it("et le titre vient de la note, non du nom de fichier qui ne dit pas la meme chose", () => {
+    // Le sujet portait auparavant des accents qu'un nom de fichier ne peut pas porter. Les exemples
+    // qui les avaient ont été retirés ; la propriété se tient sur les mots, qui suffisent : le nom
+    // de fichier perd « sur », et c'est bien la note qui le rend.
+    const ex = EXEMPLES.find((e) => e.id === "deux-effets-deux-passages")!;
+    expect(ex.nom.toLowerCase()).toContain("sur");
+    expect(nomDepuisIdentifiant(ex.id).toLowerCase()).not.toContain("sur");
   });
 
-  it("LA LISTE SUIT LA LANGUE : les cinq portent un titre anglais, et il n'est pas le français", () => {
+  it("LA LISTE SUIT LA LANGUE : chacun porte un titre anglais, et il n'est pas le français", () => {
     for (const ex of EXEMPLES) {
       expect(nomDeLExemple(ex, "fr"), ex.id).toBe(ex.nom);
       expect(nomDeLExemple(ex, "en"), ex.id).not.toBe(ex.nom);

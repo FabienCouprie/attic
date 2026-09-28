@@ -6,7 +6,7 @@
 // rien d'inventé, et rien qui retombe en silence sur un patron de secours.
 import { describe, expect, it } from "vitest";
 import { PATRONS, optionsPatrons } from "./patrons-rythme";
-import { PATRONS_RYTHME } from "../audio/generation";
+import { PATRONS_RYTHME } from "../audio/generation-patrons";
 import { registre } from "../audio/adaptateur";
 
 describe("liste des patrons", () => {

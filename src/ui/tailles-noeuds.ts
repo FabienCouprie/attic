@@ -95,6 +95,13 @@ export function tailleDefaut(def: FicheAudio): { width: number; height: number }
   if (def.id === "multi-reservoirs") return { width: 280, height: 540 };
   // Le film en haut, six bandes dessous : un nœud étroit ne montrerait ni l'un ni les autres. Il se
   // redimensionne ensuite, la vue suivant sa boîte.
+  // LA LIGNE DE TEMPS A BESOIN DE LARGEUR, et c'est toute la raison de son déménagement. Elle vivait
+  // dans un volet de 280 pixels, dont 182 utiles après les étiquettes de piste : l'échelle y faisait
+  // tenir le montage entier, donc un pixel valait 0,32 seconde sur une pièce de cinquante secondes.
+  // À 560, le même pixel vaut 0,1 seconde, et le zoom fait le reste. La hauteur tient les quatre
+  // pistes par défaut, sa règle et son transport ; elle se règle ensuite, la vue suivant sa boîte.
+  if (def.id === "montage") return { width: 560, height: 420 };
+  if (def.id === "maquette") return { width: 560, height: 380 };
   if (def.id === "montage-video") return { width: 520, height: 560 };
   // Une seule bande sous l'image, donc moins haut que le montage.
   if (def.id === "extrait-video") return { width: 480, height: 420 };

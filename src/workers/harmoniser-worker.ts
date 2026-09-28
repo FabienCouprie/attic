@@ -3,7 +3,7 @@
 // Le dialogue est dans `servir-par-canal`, le calcul dans `audio/effets-spectral.ts`. Il n'a pu venir
 // ici qu'après avoir donné un cœur pur à la transposition : ce composant dépend d'elle, et c'était
 // `AudioBuffer`, simple récipient, qui le retenait dans le fil.
-import { harmoniserVoie, type OptionsHarmoniser } from "../audio/effets-spectral";
+import { harmoniserVoie, type OptionsHarmoniser } from "../audio/effets-voix";
 import { servirParCanal } from "./servir-par-canal";
 
 servirParCanal<Record<string, number>, Float32Array>(

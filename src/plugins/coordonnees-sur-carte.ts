@@ -9,10 +9,12 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import {
-  genererCarteVille, genererCarteConcentrique, genererCarteVoronoi, genererCarteOrganique, genererHtmlCarte,
-  type StyleCarte, type Esthetique, type PointSonore,
-} from "./carte-sonore";
+// La carte sonore est découpée en six modules, selon ses dépendances : les types et la géométrie, le
+// décor, les deux familles de plans, le rendu, puis le nœud.
+import { genererCarteVille } from "./carte-sonore-plan-ville";
+import { genererCarteConcentrique, genererCarteVoronoi, genererCarteOrganique } from "./carte-sonore-plan-cellulaire";
+import { genererHtmlCarte } from "./carte-sonore-page";
+import type { StyleCarte, Esthetique, PointSonore } from "./carte-sonore-formes";
 
 const MAX_POINTS = 400;
 

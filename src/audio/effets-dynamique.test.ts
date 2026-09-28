@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { calculerProfilBruit, reduireBruit, reduireBruitNotches } from "./effets-dynamique";
+import { calculerProfilBruit, reduireBruit, reduireBruitNotches } from "./effets-bruit";
 
 function mulberry32(seed: number): () => number {
   let a = seed | 0;

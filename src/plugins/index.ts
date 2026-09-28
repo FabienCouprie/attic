@@ -4,7 +4,16 @@
 import type { FicheAudio } from "../audio/types-domaine";
 
 import { fiches as f_entrees } from "./entrees";
+import { fiches as f_generateurs_fractals } from "./generateurs-fractals";
+import { fiches as f_generateurs_rythme } from "./generateurs-rythme";
+import { fiches as f_generateurs_sources } from "./generateurs-sources";
+import { fiches as f_generateurs_reservoirs } from "./generateurs-reservoirs";
+import { fiches as f_generateurs_echantillons } from "./generateurs-echantillons";
 import { fiches as f_effets } from "./effets";
+import { fiches as f_effets_spectral } from "./effets-spectral";
+import { fiches as f_effets_midi } from "./effets-midi";
+import { fiches as f_effets_modulation } from "./effets-modulation";
+import { fiches as f_effets_temporel } from "./effets-temporel";
 import { fiches as f_analyse } from "./analyse";
 import { fiches as f_sorties } from "./sorties";
 import { fiches as f_sortie_texte } from "./sortie-texte";
@@ -63,6 +72,7 @@ import { fiches as f_dirac } from "./dirac";
 import { fiches as f_miroir } from "./miroir";
 import { fiches as f_cantor } from "./cantor";
 import { fiches as f_tone_synths } from "./tone-synths";
+import { fiches as f_tone_synths_fm } from "./tone-synths-fm";
 import { fiches as f_phase_vocoder } from "./phase-vocoder";
 import { fiches as f_resonance } from "./resonance";
 import { fiches as f_ddsp } from "./ddsp";
@@ -216,7 +226,13 @@ import { avecSortieAudio } from "./sortie-audio";
 
 export const toutesLesFiches: FicheAudio[] = ([
   ...f_entrees,
+  // L'ORDRE COMPTE : c'est celui du catalogue engendré. Les cinq fichiers d'effets se suivent dans
+  // l'ordre où leurs fiches se suivaient quand ils n'en faisaient qu'un.
   ...f_effets,
+  ...f_effets_spectral,
+  ...f_effets_midi,
+  ...f_effets_modulation,
+  ...f_effets_temporel,
   ...f_analyse,
   ...f_sorties,
   ...f_sortie_texte,
@@ -224,7 +240,14 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_debruitage_ia,
   ...f_esthetique,
   ...f_entrees_extra,
+  // Les six fichiers de générateurs se suivent dans l'ordre où leurs fiches se suivaient quand ils
+  // n'en faisaient qu'un : c'est cet ordre que le catalogue engendré reflète.
   ...f_generateurs,
+  ...f_generateurs_fractals,
+  ...f_generateurs_rythme,
+  ...f_generateurs_sources,
+  ...f_generateurs_reservoirs,
+  ...f_generateurs_echantillons,
   ...f_montage,
   ...f_melangeur_logistique,
   ...f_sortie_conversion,
@@ -373,6 +396,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_miroir,
   ...f_cantor,
   ...f_tone_synths,
+  ...f_tone_synths_fm,
   ...f_phase_vocoder,
   ...f_resonance,
   ...f_ddsp,

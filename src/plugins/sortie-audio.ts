@@ -77,7 +77,7 @@ async function rendreSiBranche(ctx: any, rang: number, valeur: unknown): Promise
   if (typeof ctx?.sortieBranchee !== "function" || !ctx.sortieBranchee(rang)) return null;
   const { estSequence, dureeSequence } = await import("../audio/sequence");
   if (!estSequence(valeur) || valeur.notes.length === 0) return null;
-  const { rendreSequence } = await import("../audio/midi");
+  const { rendreSequence } = await import("../audio/midi-sequence");
   // LE RENDU NE FAIT PAS ÉCHOUER LE NŒUD. Une sortie d'appoint qui casserait le calcul dont elle
   // vient serait pire que son absence : ce qui la précède a réussi, et doit sortir.
   try {

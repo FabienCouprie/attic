@@ -4,7 +4,8 @@
 // les transitions harmoniques compatibles (+1, -1, même numéro, +7).
 
 import { Chord, Note } from "tonal";
-import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
+import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 
 // ─── Cartographie Camelot → symboles d'accords Tonal ───
 

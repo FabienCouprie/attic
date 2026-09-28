@@ -12,7 +12,8 @@
 // épuisement mémoire sur une collection de 240 pistes.
 
 import type { VecteurFeaturesPiste } from "./features-piste";
-import { calculerPCA, standardiser, kmeans, kmeansAuto, gmm, distanceCarree, type ResultatKMeans } from "./algebre";
+import { calculerPCA, standardiser, kmeans, kmeansAuto, distanceCarree, type ResultatKMeans } from "./algebre";
+import { gmm } from "./algebre-melanges";
 
 export interface PisteVectorisee {
   nom: string;

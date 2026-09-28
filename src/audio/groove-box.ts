@@ -13,9 +13,8 @@ import {
   degreAccordProche,
   degreSeptiemeProche,
   traduireCle,
-  PATRONS_RYTHME,
-  type Patron,
 } from "./generation";
+import { PATRONS_RYTHME, type Patron } from "./generation-patrons";
 
 export interface ConfigGrooveBox {
   cle: string;

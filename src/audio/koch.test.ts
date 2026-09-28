@@ -6,7 +6,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { PROFONDEUR_MAX, genererNotesKoch, subdiviserKoch, snapperNote, type OptionsArpegeKoch } from "./koch";
-import { rendreSequence } from "./midi";
+import { rendreSequence } from "./midi-sequence";
 
 const BASE: OptionsArpegeKoch = {
   cle: "C", gamme: "chromatique", octave: 4, accord: "Majeur", profondeur: 3, direction: "alternée",

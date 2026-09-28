@@ -14,9 +14,10 @@
 // le Générateur d'accords.
 import { describe, expect, it } from "vitest";
 import { parseMidi } from "midi-file";
-import { analyserMidi, notesVersFichierMidi } from "./midi";
+import { analyserMidi } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
 import { genererGrooveBox, type ConfigGrooveBox } from "./groove-box";
-import { genererAccords } from "./generation";
+import { genererAccords } from "./generation-accords";
 
 /** Les notes relues, telles que le rendu les recevra. */
 const relire = (bytes: Uint8Array) => analyserMidi(parseMidi(bytes)).notes;

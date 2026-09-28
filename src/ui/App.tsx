@@ -17,6 +17,10 @@ import "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const trouverDef = (id: string) => registre.trouverDef(id);
+/** Le temps qu'on laisse passer après le dernier réglage avant de relancer un nœud qui le demande.
+ *  Assez long pour qu'une valeur tapée chiffre par chiffre ne lance qu'une fois, assez court pour
+ *  qu'on entende le résultat du geste qu'on vient de faire. */
+const DELAI_RELANCE_MS = 350;
 const tousLesPlugins = () => registre.tousLesPlugins();
 const couleurFlux = (id: string) => registre.couleurFlux(id);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
@@ -40,6 +44,8 @@ import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
 import { MenuContextuel, type EntreeMenu, type EtatMenu } from "./MenuContextuel";
+import { useSauvegardeAutomatique } from "./hooks/useSauvegardeAutomatique";
+import { useFiletGlissement } from "./hooks/useFiletGlissement";
 import { useBulles } from "./hooks/useBulles";
 import { useRepliBulles } from "./hooks/useRepliBulles";
 import { signatureBulles, synchroniserFichesBulles } from "./fichesBulles";
@@ -556,6 +562,37 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     },
   });
   lancerRef.current = lancer;
+
+  // ── Relance après un réglage, pour les nœuds qui la demandent ──
+  //
+  // UN RÉGLAGE PÉRIME LE RÉSULTAT, et le moteur l'efface : on relance quand on veut. C'est ce qu'il
+  // faut pour un calcul qui coûte des secondes. Mais un nœud dont le calcul propre est négligeable et
+  // dont l'amont est en cache se relance pour presque rien, tandis que son résultat effacé coûte très
+  // cher : la ligne de temps du Montage se règle EN ÉCOUTANT, et déplacer une piste faisait
+  // disparaître le son qu'on écoutait. La fiche le déclare par `relanceAutomatique`.
+  //
+  // LA TEMPORISATION N'EST PAS UN CONFORT. Le champ numérique de l'inspecteur écrit à CHAQUE FRAPPE :
+  // taper « 12,5 » appellerait trois fois, et un curseur qu'on traîne, cent fois. Le minuteur ne garde
+  // que la dernière valeur d'une rafale.
+  const minuteursRelance = useRef(new Map<string, number>());
+  const relancerApresReglage = useCallback((nid: string) => {
+    const fiche = trouverDef(String(noeudsRef.current.find((n) => n.id === nid)?.data.ficheId ?? ""));
+    if (!(fiche as { relanceAutomatique?: boolean } | undefined)?.relanceAutomatique) return;
+    const enCours = minuteursRelance.current.get(nid);
+    if (enCours !== undefined) window.clearTimeout(enCours);
+    minuteursRelance.current.set(nid, window.setTimeout(() => {
+      minuteursRelance.current.delete(nid);
+      lancerRef.current?.(nid);
+    }, DELAI_RELANCE_MS));
+  }, [noeudsRef, lancerRef]);
+
+  // Les minuteurs en vol meurent avec la fenêtre : sans cela, une relance pourrait partir après le
+  // démontage, sur un graphe qui n'existe plus.
+  useEffect(() => () => {
+    for (const id of minuteursRelance.current.values()) window.clearTimeout(id);
+    minuteursRelance.current.clear();
+  }, []);
+
   // La démonstration filmée : le scénario joué dans la vraie interface (cf. ui/demo/).
   const { calque: calqueDemo } = useRealisateurDemo({
     noeudsRef, aretesRef, setNodes, setEdges, rfInstanceRef, setSel, lancerRef, audioCtxRef, resumeAudio,
@@ -653,6 +690,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             String(n.data.ficheId), n.data.parametres, nom, val) } }
         : n));
       reinitialiserNoeud(nid);
+      relancerApresReglage(nid);
     },
     // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
     // résultat : sa sortie audio est l'entrée transmise telle quelle, que les
@@ -1166,113 +1204,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     setCurrentFilePath(null);
   }, [importer, setCurrentFilePath]);
 
-  // ── Sauvegarde automatique ──
+  // ── Sauvegarde automatique, et filet anti-curseur collé ──
   //
-  // Toutes les 30 secondes, en silence, tant qu'un fichier de projet est ouvert — et
-  // seulement si le graphe a changé depuis la dernière écriture.
-  //
-  // Le minuteur est monté UNE FOIS par fichier. Il dépendait auparavant de `sauvegarder`,
-  // dont l'identité change à chaque rendu : chaque modification du graphe démontait
-  // l'effet et relançait le compte à zéro, si bien que la sauvegarde n'avait lieu qu'au
-  // repos. Mesuré dans l'application avant correction : dix changements de paramètre
-  // espacés de dix secondes, cent une secondes de travail, aucune écriture. Elle
-  // sauvegardait quand on ne faisait rien, et pas quand on travaillait.
-  //
-  // La fonction appelée est lue dans une ref, pour que le minuteur garde le graphe à
-  // jour sans avoir à se remonter.
-  //
-  // La bascule est lue dans une ref elle aussi : le minuteur n'a pas à se remonter quand
-  // on la change, et `sauvegarderAuto` s'abstient d'écrire si elle est coupée.
-  const sauvegardeAutoActiveRef = useRef(sauvegardeAutoActive);
-  sauvegardeAutoActiveRef.current = sauvegardeAutoActive;
-  const sauvegarderAutoRef = useRef(sauvegarderAuto);
-  sauvegarderAutoRef.current = () => sauvegarderAuto(sauvegardeAutoActiveRef.current);
-  useEffect(() => {
-    if (!currentFilePath) return;
-    const id = setInterval(() => {
-      sauvegarderAutoRef.current().catch((err) => console.error("[attic] Sauvegarde automatique échouée", err));
-    }, PERIODE_SAUVEGARDE_MS);
-    return () => clearInterval(id);
-  }, [currentFilePath]);
+  // Les deux sujets vivent dans leurs crochets : le minuteur qui écrit le projet et l'écriture
+  // de dernière minute à la fermeture d'un côté, le décrochage d'un nœud resté collé au curseur
+  // de l'autre. Aucun ne dépend de l'atelier au-delà de ce qui leur est passé ici.
+  useSauvegardeAutomatique({ currentFilePath, sauvegardeAutoActive, sauvegarderAuto });
+  useFiletGlissement({ pointerDownRef, rfRef });
 
-  // Et une dernière fois à la fermeture : entre deux battements, jusqu'à trente secondes
-  // de travail ne tiennent qu'en mémoire. Le processus principal interrompt la fermeture,
-  // envoie cette demande et attend la réponse — puis ferme, quoi qu'il arrive : une
-  // fenêtre qui refuserait de se fermer serait pire que la perte qu'on évite. La réponse
-  // part donc dans tous les cas, y compris si la sauvegarde échoue ou n'a pas lieu d'être.
-  useEffect(() => {
-    const api = (window as any).api;
-    if (!api?.fermetureDemandeSauvegarde) return;
-    api.fermetureDemandeSauvegarde(async () => {
-      try {
-        await sauvegarderAutoRef.current();
-      } catch (err) {
-        console.error("[attic] Sauvegarde à la fermeture échouée", err);
-      } finally {
-        api.fermeturePrete?.();
-      }
-    });
-  }, []);
-
-  // ── Filet de sécurité anti-curseur collé ──
-  //
-  // Si le bouton souris est relâché sans que la fenêtre le voie — second écran, Alt-Tab, menu
-  // système, fenêtre qui perd le focus pendant le geste —, le nœud reste accroché au curseur : rien
-  // ne vient clore le glissement. Le défaut est rare parce qu'il demande ce concours de
-  // circonstances, mais il est bien réel.
-  //
-  // CE FILET A ÉTÉ REFAIT, l'ancien ne pouvant pas fonctionner, pour deux raisons vérifiées dans la
-  // source de `d3-drag` — la bibliothèque par laquelle React Flow glisse :
-  //
-  //  1. il envoyait `pointerup` et `pointercancel`. Or d3-drag ne termine un geste que sur
-  //     **mouseup** : `select(event.view).on("mouseup.drag", mouseupped, …)`. On envoyait donc un
-  //     événement que personne n'écoutait. Voir `liberer-glissement.ts`, qui envoie le bon, avec le
-  //     `view` dont d3 a besoin pour se désabonner.
-  //  2. il s'armait sur un `pointerdown` écouté en phase de BULLE. Une quinzaine de vues d'Attic
-  //     arrêtent la propagation de cet événement pour ne pas déclencher le glissement du nœud ; le
-  //     filet restait donc DÉSARMÉ précisément sur les nœuds à forme d'onde, à séquenceur ou à
-  //     lecteur audio — ceux sur lesquels on clique le plus. D'où l'écoute en CAPTURE ci-dessous.
-  //
-  // Deux déclencheurs valent mieux qu'un : le mouvement sans bouton, qui attrape le retour du
-  // curseur dans la fenêtre, et la perte de focus, qui libère sans attendre ce retour.
-  useEffect(() => {
-    const capture = { capture: true } as const;
-    const derniere = { clientX: 0, clientY: 0, pointerId: 1, pointerType: "mouse" };
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (!e.isPrimary) return;
-      pointerDownRef.current = true;
-      derniere.clientX = e.clientX; derniere.clientY = e.clientY;
-      derniere.pointerId = e.pointerId; derniere.pointerType = e.pointerType;
-    };
-    const onPointerUp = (e: PointerEvent) => {
-      if (e.isPrimary) pointerDownRef.current = false;
-    };
-    const liberer = () => {
-      if (!pointerDownRef.current) return;
-      pointerDownRef.current = false;
-      libererGlissement(rfRef.current ?? window, derniere);
-    };
-    const onPointerMove = (e: PointerEvent) => {
-      if (e.isPrimary === false) return;
-      derniere.clientX = e.clientX; derniere.clientY = e.clientY;
-      derniere.pointerId = e.pointerId; derniere.pointerType = e.pointerType;
-      if (relachementManque(pointerDownRef.current, e.buttons)) liberer();
-    };
-
-    window.addEventListener("pointerdown", onPointerDown, capture);
-    window.addEventListener("pointerup", onPointerUp, capture);
-    window.addEventListener("pointercancel", onPointerUp, capture);
-    window.addEventListener("pointermove", onPointerMove, capture);
-    window.addEventListener("blur", liberer);
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown, capture);
-      window.removeEventListener("pointerup", onPointerUp, capture);
-      window.removeEventListener("pointercancel", onPointerUp, capture);
-      window.removeEventListener("pointermove", onPointerMove, capture);
-      window.removeEventListener("blur", liberer);
-    };
-  }, []);
 
   return (
     <div className="attic-app" style={{ gridTemplateColumns: paletteOuverte ? "260px 1fr 280px" : "40px 1fr 280px" }}>

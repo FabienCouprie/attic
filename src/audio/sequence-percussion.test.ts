@@ -8,7 +8,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { CANAL_PERCUSSION } from "./batterie-midi";
-import { rendreSequence } from "./midi";
+import { rendreSequence } from "./midi-sequence";
 import type { Note } from "./note";
 import {
   estFrappe, melangerTampons, RESERVE_BATTERIE, separerPercussions, tamponSilencieux,

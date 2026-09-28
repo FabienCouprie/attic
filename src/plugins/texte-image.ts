@@ -7,6 +7,7 @@
 // « Chemin modèle ».
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 
 function fileDepuisRgba(rgba: ArrayLike<number>, width: number, height: number, nom: string): Promise<File> {
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
       if (seed < 0) seed = Math.floor(Math.random() * 1_000_000);
       const modelPath = ctx.paramTexte("Chemin modèle", "");
 
-      ctx.onProgress(traduire("progress.g_n_ration_image_en_cours"));
+      await annoncerModele(ctx, "texte-image", traduire("progress.g_n_ration_image_en_cours"));
 
       try {
         const rep = await api.genererImageSdxs({ prompt, seed, modelPath });

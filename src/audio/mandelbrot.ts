@@ -3,9 +3,10 @@
 // d'itérations avant divergence (ou le temps de séjour) détermine la hauteur,
 // la vélocité et/ou l'octave.
 
-import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
+import { notesVersFichierMidi, appliquerInstrumentMidi } from "./midi-ecriture";
+import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
-import { degresGammeMelodie } from "./generation";
+import { degresGammeMelodie } from "./generation-melodie";
 import { caractereTimbre } from "./timbres";
 
 export type ModeMandelbrot = "escape" | "dwell" | "octave";

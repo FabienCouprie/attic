@@ -5,14 +5,16 @@ import {
   hauteurCellule2D,
   genererNotesAutomateCellulaire,
   genererAutomateCellulaire,
+} from "./automate-cellulaire";
+import {
   normaliserGamme,
   normaliserCle,
   normaliserMode,
   normaliserTopologie,
   normaliserModeVoix,
   normaliserMapping,
-} from "./automate-cellulaire";
-import { degresGammeMelodie } from "./generation";
+} from "./automate-cellulaire-reglages";
+import { degresGammeMelodie } from "./generation-melodie";
 
 const defaults = {
   regle: 90,

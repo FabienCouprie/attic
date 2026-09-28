@@ -1,9 +1,10 @@
 // audio/koch.ts — Arpégiateur flocon de Koch : chaque côté du triangle est une voix,
 // chaque subdivision récursive génère un motif mélodique polyrythmique.
 
-import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi } from "./midi";
+import { notesVersFichierMidi, appliquerInstrumentMidi } from "./midi-ecriture";
+import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
-import { degresGammeMelodie } from "./generation";
+import { degresGammeMelodie } from "./generation-melodie";
 import { caractereTimbre } from "./timbres";
 
 export type AccordKoch = "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";

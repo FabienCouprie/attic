@@ -22,7 +22,7 @@
 //     LONGUE ferait s'empiler dix charleys d'une croche à l'autre, dix voix au lieu d'une. Durer
 //     jusqu'à la frappe suivante donne les deux comportements justes — le charley se coupe, ce qui
 //     est ce qu'on veut d'un charley fermé, et la cymbale isolée sonne entièrement.
-import type { NoteEvenement } from "./midi";
+import type { NoteEvenement } from "./midi-sequence";
 
 /**
  * Les notes de percussion du General MIDI, dans l'ordre des pistes du séquenceur avancé.

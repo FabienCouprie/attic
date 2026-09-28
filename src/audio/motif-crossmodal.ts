@@ -25,7 +25,7 @@
 //                atteinte, et les nœuds le disent en donnant le point visé à côté du point mesuré.
 
 import { writeMidi } from "midi-file";
-import type { NoteEvenement } from "./midi";
+import type { NoteEvenement } from "./midi-sequence";
 import { mesurer, type DimensionsGout } from "./gout";
 
 const borner = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x));

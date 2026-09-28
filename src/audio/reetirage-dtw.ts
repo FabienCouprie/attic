@@ -9,7 +9,7 @@
 // préserverait la hauteur demanderait un vocodeur de phase à taux variable
 // dans le temps, un morceau à part entière (voir la doc du nœud).
 
-import type { PointAlignement } from "./algebre";
+import type { PointAlignement } from "./algebre-alignement";
 
 /**
  * Pour chaque trame j de la piste étalon (0..nbFramesB-1), la position

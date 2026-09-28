@@ -150,6 +150,13 @@ export const CHAMPS_RESULTAT = new Set([
   "visualisationUrl",
   "tempsExecution",
   "ecartNiveau",
+  // Ce que le Montage et la Maquette déposent pour leur ligne de temps : les durées réelles des
+  // pistes, les tampons de leurs sons, les notes de leurs boîtes. Relevé par Fabien, et c'est le
+  // MÊME défaut que celui du dessin de courbe ci-dessus : la barre d'une piste, son onde et ses notes
+  // restaient à l'écran après une remise à zéro, décrivant une exécution qui n'avait plus lieu.
+  "_dureesMesurees",
+  "_montageSons",
+  "_maquetteNotes",
 ]);
 
 export interface OptionsExecution {

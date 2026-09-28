@@ -1,19 +1,18 @@
 // plugins/automate-cellulaire.ts — Nœud de génération musicale par automate cellulaire.
 import type { FicheAudio } from "../audio/types-domaine";
+import { genererAutomateCellulaire, REGLES_1D } from "../audio/automate-cellulaire";
 import {
-  genererAutomateCellulaire,
   normaliserCle,
   normaliserGamme,
   normaliserTimbre,
   normaliserTopologie,
   normaliserModeVoix,
   normaliserMapping,
-  REGLES_1D,
-} from "../audio/automate-cellulaire";
+} from "../audio/automate-cellulaire-reglages";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE_SANS_AUTO } from "./soundfontGlobal";
-import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation";
+import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation-melodie";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];

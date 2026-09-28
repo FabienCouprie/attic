@@ -66,8 +66,17 @@ export function courbeDeGain(
   points = 128,
 ): Float32Array {
   const gain = gainLineaire(p.gainDb);
-  const fe = Math.max(0, p.fonduEntreeMs / 1000);
-  const fs = Math.max(0, p.fonduSortieMs / 1000);
+  let fe = Math.max(0, p.fonduEntreeMs / 1000);
+  let fs = Math.max(0, p.fonduSortieMs / 1000);
+  // DEUX FONDUS PLUS LONGS QUE LE SON SONT RÉDUITS DANS LA MÊME PROPORTION, comme au rendu (`monter`,
+  // dans `objets-sonores.ts`). Sans cela ils se chevauchaient et se multipliaient : l'aperçu d'un son
+  // court à longs fondus s'entendait creusé en son milieu, là où le fichier produit ne l'est pas. La
+  // réduction se mesure sur le son entier et non sur la portion jouée, sinon reprendre la lecture en
+  // cours de route changerait la forme des fondus.
+  if (fe + fs > dureeSonSec && fe + fs > 0) {
+    const k = dureeSonSec / (fe + fs);
+    fe *= k; fs *= k;
+  }
   const dureeJouee = Math.max(1e-6, dureeSonSec - Math.max(0, decalageSec));
   const courbe = new Float32Array(Math.max(2, points));
   for (let i = 0; i < courbe.length; i++) {

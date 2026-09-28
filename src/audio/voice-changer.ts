@@ -1,9 +1,9 @@
 // audio/voice-changer.ts — Effets de transformation vocale prédéfinis.
 // Combine pitch-shift, décalage formantique, filtrage et modulations simples.
 import { shiftFormants } from "./formants";
-import { ringModulator } from "./effets-temporel";
-import { appliquerFiltre } from "./effets-spectral";
-import { bitcrusher } from "./effets-dynamique";
+import { ringModulator } from "./effets-etirement";
+import { appliquerFiltre } from "./effets-filtres";
+import { bitcrusher } from "./effets-sibilance";
 
 export type EffetVoiceChanger =
   | "Chipmunk"

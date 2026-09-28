@@ -16,7 +16,7 @@ import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { filtrerCanauxMidi } from "../audio/midi";
+import { filtrerCanauxMidi } from "../audio/midi-montage";
 import {
   CANAL_BATTERIE_HUMAIN, analyserListeCanaux, compterNotes, filtrerPistesMidi, inventaireMidi,
   listeCanauxHumaine, repartirCanaux,

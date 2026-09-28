@@ -29,8 +29,9 @@
 // cette famille concerne ses modèles de parole, pas celui-ci.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { annoncerModele } from "./message-modele";
 
 const en = () => langueCourante() === "en";
 
@@ -140,12 +141,12 @@ export const fiches: FicheAudio[] = ([
       let seed = ctx.paramNombre("Graine", -1);
       if (seed < 0) seed = Math.floor(Math.random() * 1_000_000);
 
-      // LA PREMIÈRE UTILISATION PEUT COMMENCER PAR UN TÉLÉCHARGEMENT de plus d'un gigaoctet, et le
-      // message doit le dire : sans cela, une attente de plusieurs minutes passerait pour un gel.
-      // L'avancement lui-même paraît sur le bouton des modèles, qui écoute déjà ce canal.
-      ctx.onProgress(en()
-        ? "Generating the sound… (the first run fetches the package, over a gigabyte)"
-        : "Génération du son… (la première fois, le paquet est récupéré, plus d'un gigaoctet)");
+      // LA PREMIÈRE UTILISATION PEUT COMMENCER PAR UN TÉLÉCHARGEMENT, et le message doit le dire :
+      // sans cela, une attente de plusieurs minutes passerait pour un gel. L'avancement lui-même
+      // paraît sur le bouton des modèles, qui écoute déjà ce canal. La note vient de
+      // `message-modele.ts`, la même pour les onze nœuds concernés, et elle ne paraît que si le
+      // paquet manque vraiment — elle s'affichait ici à chaque exécution, modèle présent ou non.
+      await annoncerModele(ctx, "bruitage-ia", traduire("progress.bruitage.generation"));
       try {
         // LE PAQUET DE BRUITAGE, NOMMÉ ET NON DEVINÉ. Le moteur sert aussi le nœud musical, qui
         // emploie l'autre variante ; c'est ce nom qui les sépare.
