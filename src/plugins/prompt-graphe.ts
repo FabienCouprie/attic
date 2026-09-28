@@ -405,13 +405,17 @@ export const fiches: FicheAudio[] = ([
       }
       const { nodes, edges } = resultat ?? await parserPrompt(prompt);
 
+      // LE GRAPHE PART PAR LE CANAL DU MOTEUR, qui seul sait poser des nœuds sur le canevas.
       const spec = { nodes, edges, prompt };
-      (ctx.noeud.data as any)._grapheGenere = spec;
 
       const labels = nodes.map((n) => n.label);
       const chainDesc = labels.join(" → ");
       const prefixe = methode === "ollama" && !viaOllama ? `${traduire("msg.ollamaGraphRepli")} ` : "";
-      return { valeurs: [chainDesc], message: prefixe + traduire("msg.var_0_nodes_var_1_connexions_var_2", nodes.length, edges.length, chainDesc) };
+      return {
+        valeurs: [chainDesc],
+        moteur: { grapheACreer: { nodes: spec.nodes, edges: spec.edges } },
+        message: prefixe + traduire("msg.var_0_nodes_var_1_connexions_var_2", nodes.length, edges.length, chainDesc),
+      };
    },
  },
 ] as FicheAudio[]).map(avecDoc);

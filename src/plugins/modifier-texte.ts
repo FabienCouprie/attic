@@ -34,18 +34,19 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
-      const data = ctx.noeud.data as Record<string, unknown>;
       // La vue montre ce qui arrive avant toute correction : sans cela, la zone resterait vide et
-      // l'on corrigerait un texte qu'on ne voit pas.
-      if (typeof entree === "string") data._texteRecu = entree;
+      // l'on corrigerait un texte qu'on ne voit pas. C'est une désignation de l'ENTRÉE, donc écrire
+      // dans la zone ne la périme pas : le texte reçu reste sous les yeux pendant qu'on le corrige.
+      const designe = typeof entree === "string" ? { texteRecu: entree } : undefined;
 
       const ecrit = ctx.paramTexte("Texte", "");
       const sortie = ecrit !== "" ? ecrit : (typeof entree === "string" ? entree : null);
-      if (sortie === null) return { valeurs: [null], message: traduire("msg.aucun_texte_en_entr_e") };
+      if (sortie === null) return { valeurs: [null], designe, message: traduire("msg.aucun_texte_en_entr_e") };
 
       const etat = ecrit !== "" ? traduire("modifierTexte.corrige") : traduire("modifierTexte.inchange");
       return {
         valeurs: [sortie],
+        designe,
         message: `${traduire("msg.var_0_caract_res", sortie.length)} · ${etat}`,
       };
     },

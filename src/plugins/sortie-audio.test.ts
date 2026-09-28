@@ -71,13 +71,33 @@ describe("ce que l'enveloppe ne doit pas casser", () => {
     expect(avec.length).toBeGreaterThan(20);
   });
 
+  /**
+   * Ceux qui portent DEUX sorties audio par construction, nommés avec leur raison.
+   *
+   * L'ENVELOPPE NE LEUR FAIT RIEN, et c'est ce qui les rend sûrs : elle n'ajoute un port qu'à qui
+   * n'en a aucun. Les nommer ici garde la règle stricte pour tous les autres.
+   */
+  const DEUX_AUDIOS: Record<string, string> = {
+    "decomposition-atomique":
+      "l'esquisse et le résidu sont les deux moitiés du son décomposé, et les séparer est l'objet même du composant",
+  };
+
   it("LE PORT EST TOUJOURS LE DERNIER : un graphe enregistré pointe sur des rangs", () => {
     for (const f of avant) {
+      if (f.id in DEUX_AUDIOS) continue;
       const rangs = f.sorties.map((s) => s.type);
       const audios = rangs.filter((t) => t === "audio").length;
       // Un seul audio, et s'il vient de l'enveloppe il est en queue. Les composants qui en avaient
       // un avant l'enveloppe le gardent où il était, et n'en reçoivent pas d'autre.
       expect(audios, f.id).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("et chaque composant nommé en porte bien deux, sans quoi l'exception masquerait un défaut", () => {
+    for (const [id, raison] of Object.entries(DEUX_AUDIOS)) {
+      const f = avant.find((x) => x.id === id);
+      expect(f, `${id} ne rend plus de séquence : retirer l'exception`).toBeDefined();
+      expect(f!.sorties.filter((s) => s.type === "audio").length, `${id} — ${raison}`).toBe(2);
     }
   });
 

@@ -61,19 +61,21 @@ export const fiches: FicheAudio[] = ([
       ctx.onProgress?.(en() ? "decoding the sound" : "décodage du son");
       const son = await sonDuFilm(video, respirer);
 
-      const data = ctx.noeud.data as Record<string, unknown>;
-      if (typeof data._videoMuetteUrl === "string") URL.revokeObjectURL(data._videoMuetteUrl);
-      data._videoMuetteUrl = URL.createObjectURL(blob);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal déclaré,
+      // là où le run précédent l'a laissé.
+      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
+      if (typeof avant === "string") URL.revokeObjectURL(avant);
       const nomSource = (entree as File).name ?? "";
-      data._videoMuetteNom = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-muet.mp4`;
-      data._videoMuetteOctets = blob.size;
+      const nomMuet = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-muet.mp4`;
+      const affichage = { url: URL.createObjectURL(blob), nom: nomMuet, octets: blob.size };
 
-      const fichier = new File([blob], String(data._videoMuetteNom), { type: "video/mp4" });
+      const fichier = new File([blob], nomMuet, { type: "video/mp4" });
       const sonDit = son
         ? `${son.sampleRate} Hz · ${son.numberOfChannels} ${en() ? "ch" : "canaux"}`
         : (en() ? "silent film" : "film muet");
       return {
         valeurs: [fichier, son],
+        affichage,
         message: `${video.dureeSec.toFixed(1)} s · ${video.largeur}x${video.hauteur} · `
           + `${(blob.size / MEGA).toFixed(1)} Mo · ${sonDit}`,
       };

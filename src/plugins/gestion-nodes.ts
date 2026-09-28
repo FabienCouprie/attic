@@ -174,10 +174,8 @@ export const fiches: FicheAudio[] = ([
           noticeTextEn: res.notice?.en,
         });
 
-        // Signaler à l'UI de rafraîchir la palette
-        (ctx.noeud.data as any)._nodeInstalle = true;
-
-        return { valeurs: [], message: traduire("msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_", res.manifest.id, res.manifest.nom, res.manifest.univers, res.manifest.famille, res.dependencies?.length || 0, (res.dependencies || []).join(", ") || "aucune") };
+        // LA PALETTE SE RELIT PAR LE CANAL DU MOTEUR, et rien ne reste sur le nœud.
+        return { valeurs: [], moteur: { paletteARelire: true }, message: traduire("msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_", res.manifest.id, res.manifest.nom, res.manifest.univers, res.manifest.famille, res.dependencies?.length || 0, (res.dependencies || []).join(", ") || "aucune") };
       }
     },
   },

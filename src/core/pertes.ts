@@ -6,29 +6,20 @@
 // présents dans `data` avec la liste blanche d'export et renvoie explicitement
 // les champs purgés avec leur type, pour affichage à l'utilisateur.
 
+import { CHAMPS_ENREGISTRES, CHAMPS_RECHARGEABLES } from "./saisies";
+
 // Types de champs qui ne survivent pas à JSON.stringify / re-parse.
 const TYPES_NON_SERIALIZABLE = ["File", "Blob", "AudioBuffer", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
 
 // Liste blanche : champs conservés par usePersistance.exporter.
-const CHAMPS_CONSERVES = new Set([
-  "ficheId", "parametres", "audioNom", "midiNom", "imageNom", "svgNom", "zonesSelectionnees", "nomFichier",
-  // Le .sfz d'un « Clavier SFZ » : un chemin de disque, donc sérialisable et rechargeable tel quel.
-  "sfzChemin", "sfzNom",
-  // Ce qui a été joué au clavier d'un nœud : un tableau de notes, sérialisable depuis toujours, mais
-  // qui ne survivait ni à l'export ni au rechargement — une mélodie enregistrée disparaissait à la
-  // réouverture du graphe, et rien ne le disait.
-  "sequenceNotes",
-  // Le texte d'une note ou d'un cadre, et sa version anglaise. Tous deux sont recopiés par la
-  // sauvegarde ; les taire ici les faisait signaler comme purgés à chaque export, ce qu'ils ne sont
-  // pas. Le défaut existait déjà pour le premier, et le second l'aurait redoublé.
-  "nom", "nomEn",
-]);
+// Liste blanche : ce qu'un projet enregistre. DERIVEE de la table des genres de saisie, dans
+// core/saisies.ts, et non plus enumeree : le meme savoir etait ecrit ici et a sept autres endroits,
+// chacun avec un sous-ensemble different.
+const CHAMPS_CONSERVES = CHAMPS_ENREGISTRES;
 
 // Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine
 // de les signaler comme des pertes à l'export.
-const CHAMPS_FICHIER_RECHARGEABLES = new Set([
-  "audioFichier", "midiFichier", "imageFichier", "svgFichier", "enregistrementBlob", "irFichier", "pureDataFichier",
-]);
+const CHAMPS_FICHIER_RECHARGEABLES = CHAMPS_RECHARGEABLES;
 
 function typeChamp(v: unknown): string {
   if (v === null) return "null";

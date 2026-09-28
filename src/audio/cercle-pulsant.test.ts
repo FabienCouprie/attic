@@ -9,10 +9,13 @@
 //      instants, parce que c'est la même liste.
 import { describe, expect, it } from "vitest";
 import {
-  accordsDepuisPulsations, couleurCss, couleurVersCamelot, estMineur, notesDepuisPulsations,
-  pulsations, svgAnime, toniqueDeCamelot, type OptionsCercle, type OptionsPulsations,
+  accordsDepuisPulsations, couleurCss, couleurVersCamelot, estMineur, frappesDuCercle,
+  notesDepuisPulsations, pulsations, pulsationsDepuisNotes, svgAnime, toniqueDeCamelot,
+  type OptionsCercle, type OptionsPulsations,
 } from "./cercle-pulsant";
 import { parseCamelot } from "./camelot";
+import { intervallesDaccord } from "./qualites-accords";
+import { degresDeGamme } from "./gammes";
 
 const BASE: OptionsCercle = {
   dureeSec: 12, pulsationDebut: 2, pulsationFin: 2,
@@ -373,5 +376,149 @@ describe("les champs de OptionsPulsations agissent tous, et eux seuls", () => {
   it("« seuilSilence » n'y change rien, puisqu'il ne decide que de ce qui sonne", () => {
     const sans: OptionsPulsations = { ...BASE };
     expect(empreinte({ ...sans, seuilSilence: 0.9 } as OptionsPulsations)).toBe(empreinte(sans));
+  });
+});
+
+// ── Les nomenclatures communes, et la boucle qui se referme ──
+//
+// CE QUI EST TENU ICI, et pourquoi ces cas existent. Les intervalles des accords étaient CALCULÉS
+// dans ce fichier, `[0, tierce, 7]` avec une tierce qui valait 3 ou 4 : pire qu'une table cachée,
+// puisqu'un garde qui cherche la FORME d'un accord ne peut pas voir une triade qu'aucune liste ne
+// porte. Les degrés des gammes venaient déjà de la table commune. Les deux en viennent désormais,
+// et ces cas tiennent que le branchement est réel : une qualité nommée change ce qui sort.
+describe("les accords et les gammes viennent des tables communes", () => {
+  const p = pulsations(BASE);
+  const notes = (o: Partial<OptionsCercle>) => accordsDepuisPulsations(p, { ...BASE, ...o }, "tenus", 0.55);
+
+  it("sans qualite imposee, la roue donne la triade de son anneau, comme avant", () => {
+    const sortant = notes({}).slice(0, 3).map((n) => n.note);
+    const racine = sortant[0];
+    expect(sortant.map((n) => n - racine)).toEqual(intervallesDaccord("maj"));
+  });
+
+  it("UNE QUALITÉ NOMMÉE OUVRE LES TRENTE-TROIS : cinq sons pour une neuvieme majeure", () => {
+    const sortant = notes({ qualite: "maj9" }).slice(0, 5).map((n) => n.note);
+    const racine = sortant[0];
+    expect(sortant.map((n) => n - racine)).toEqual(intervallesDaccord("maj9"));
+    expect(sortant.length).toBe(5);
+  });
+
+  it("et une septieme mineure donne bien ses quatre sons", () => {
+    const sortant = notes({ qualite: "m7" }).slice(0, 4).map((n) => n.note);
+    expect(sortant.map((n) => n - sortant[0])).toEqual(intervallesDaccord("m7"));
+  });
+
+  it("la fondamentale reste celle de la case : seule la qualite change", () => {
+    expect(notes({ qualite: "m7" })[0].note).toBe(notes({})[0].note);
+  });
+
+  it("UNE GAMME NOMMÉE CHANGE LES DEGRÉS, et le lydien se reconnait a sa quarte", () => {
+    // Respiration pleine : le rayon balaie toute l'étendue, donc tous les degrés. Sans cela les
+    // deux gammes rendraient les mêmes hauteurs, leur seule différence étant au quatrième degré.
+    const o: OptionsCercle = { ...BASE, respiration: 1, seuilSilence: 0, dureeSec: 30 };
+    const q = pulsations(o);
+    const hauteurs = (gamme?: string) =>
+      [...new Set(notesDepuisPulsations(q, { ...o, gamme }).notes.map((n) => n.note))].sort((a, b) => a - b);
+    const majeur = hauteurs();
+    const lydien = hauteurs("lydien");
+    expect(lydien).not.toEqual(majeur);
+    // La quarte monte d'un demi-ton, et rien d'autre ne bouge.
+    expect(majeur.filter((n) => !lydien.includes(n))).toEqual([majeur[3]]);
+    expect(lydien.filter((n) => !majeur.includes(n))).toEqual([majeur[3] + 1]);
+  });
+
+  it("une gamme plus courte rend moins de hauteurs, une plus longue davantage", () => {
+    const o: OptionsCercle = { ...BASE, respiration: 1, seuilSilence: 0, dureeSec: 30 };
+    const q = pulsations(o);
+    const combien = (gamme?: string) =>
+      new Set(notesDepuisPulsations(q, { ...o, gamme }).notes.map((n) => n.note)).size;
+    expect(combien("pentatonique-majeure")).toBe(degresDeGamme("pentatonique-majeure").length);
+    expect(combien("chromatique")).toBe(degresDeGamme("chromatique").length);
+    expect(combien()).toBe(7);
+  });
+});
+
+// ── La boucle : ce qu'on voit battre est ce qu'on a entendu battre ──
+describe("les frappes du cercle, et la pulsation recue", () => {
+  const p = pulsations(BASE);
+
+  it("une frappe par pulsation audible, et le seuil decide comme partout ailleurs", () => {
+    const audibles = p.filter((x) => x.rayon >= BASE.seuilSilence).length;
+    expect(frappesDuCercle(p, BASE).length).toBe(audibles);
+    expect(frappesDuCercle(p, { ...BASE, seuilSilence: 1.1 })).toEqual([]);
+  });
+
+  it("les frappes tombent sur les pulsations, exactement", () => {
+    const f = frappesDuCercle(p, BASE);
+    const audibles = p.filter((x) => x.rayon >= BASE.seuilSilence);
+    expect(f.map((x) => x.instant)).toEqual(audibles.map((x) => x.temps));
+  });
+
+  it("une grande pulsation est une frappe forte, la meme echelle que la melodie", () => {
+    const f = frappesDuCercle(p, BASE);
+    const melodie = notesDepuisPulsations(p, BASE).notes;
+    expect(f.map((x) => x.force)).toEqual(melodie.map((n) => n.velocite));
+    expect(Math.max(...f.map((x) => x.force))).toBeGreaterThan(Math.min(...f.map((x) => x.force)));
+  });
+
+  it("LA BOUCLE SE FERME EXACTEMENT : les frappes reposees a l'entree redonnent les memes instants", () => {
+    const f = frappesDuCercle(p, BASE);
+    const recue = f.map((x, i) => ({
+      note: 34, velocite: x.force, debut: x.instant,
+      fin: i + 1 < f.length ? f[i + 1].instant : x.instant + 0.12,
+    }));
+    const retour = pulsationsDepuisNotes(recue, BASE);
+    expect(retour.length).toBe(f.length);
+    for (let i = 0; i < retour.length; i++) expect(retour[i].temps).toBeCloseTo(f[i].instant, 9);
+    // Et un second tour ne bouge pas davantage : c'est ce qui permet de rebrancher sans fin.
+    const f2 = frappesDuCercle(retour, BASE);
+    expect(f2.map((x) => x.instant)).toEqual(f.map((x) => x.instant));
+  });
+
+  it("LA NUANCE CONVERGE AU LIEU DE DÉRIVER, et le point fixe s'atteint en quatre tours", () => {
+    // Le rayon donne la force, la force redonne le rayon, et les deux formules ne sont pas
+    // inverses l'une de l'autre : la nuance se resserre à chaque tour. Ce cas tient que le
+    // resserrement est une CONTRACTION et non une dérive. Sans cela, rebrancher le cercle sur
+    // lui-même ferait fuir la nuance vers une borne, ou osciller sans jamais se poser.
+    const tours: number[][] = [];
+    let courant = p;
+    for (let k = 0; k < 6; k++) {
+      const f = frappesDuCercle(courant, BASE);
+      tours.push(f.map((x) => x.force));
+      courant = pulsationsDepuisNotes(
+        f.map((x) => ({ note: 34, velocite: x.force, debut: x.instant, fin: x.instant + 0.1 })), BASE);
+    }
+    const ecart = (a: number[], b: number[]) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
+    expect(ecart(tours[1], tours[0])).toBeGreaterThan(0);
+    expect(ecart(tours[2], tours[1])).toBeLessThan(ecart(tours[1], tours[0]));
+    expect(tours[5]).toEqual(tours[4]);
+  });
+
+  it("la velocite recue donne le rayon, et une suite plate rend un cercle de taille constante", () => {
+    const plate = [0, 0.5, 1, 1.5].map((t) => ({ note: 60, velocite: 100, debut: t, fin: t + 0.2 }));
+    const q = pulsationsDepuisNotes(plate, BASE);
+    expect(q.map((x) => x.temps)).toEqual([0, 0.5, 1, 1.5]);
+    expect(new Set(q.map((x) => x.rayon)).size).toBe(1);
+    const fort = pulsationsDepuisNotes(plate.map((n) => ({ ...n, velocite: 127 })), BASE);
+    expect(fort[0].rayon).toBeGreaterThan(q[0].rayon);
+  });
+
+  it("deux notes au meme instant ne font qu'une pulsation : un accord bat une fois", () => {
+    const accord = [60, 64, 67].map((note) => ({ note, velocite: 90, debut: 1, fin: 1.5 }));
+    expect(pulsationsDepuisNotes(accord, BASE).length).toBe(1);
+  });
+
+  it("une suite vide ne rend rien, et n'echoue pas", () => {
+    expect(pulsationsDepuisNotes([], BASE)).toEqual([]);
+  });
+
+  it("la couleur reste un reglage : elle tourne sur la duree recue, non sur celle du reglage", () => {
+    // Prendre aussi la hauteur des notes reçues ferait un second mappage, concurrent de la roue.
+    const o: OptionsCercle = { ...BASE, teinteDebut: 0, teinteParcours: 360, dureeSec: 0 };
+    const q = pulsationsDepuisNotes(
+      [0, 5, 10].map((t) => ({ note: 60, velocite: 100, debut: t, fin: t + 0.1 })), o);
+    expect(q[0].teinte).toBeCloseTo(0, 6);
+    expect(q[1].teinte).toBeCloseTo(180, 6);
+    expect(q[2].teinte).toBeCloseTo(360, 6);
   });
 });

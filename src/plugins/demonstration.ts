@@ -40,6 +40,7 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "This node makes a video of the graph it sits in. It connects to nothing: it runs after every other node, takes their results and gives each one a segment of the same length.\n\nNodes are shown following the chains of the graph: a node comes right after the one that feeds it, before moving on to another branch. No node is shown before what it receives.\n\nEach segment shows the node's name, its summary, its settings, and its result. A sound is played while its waveform scrolls under a playhead; a curve is drawn and traversed; an image is shown; a text is shown, and scrolls if it overflows the frame. A node that returns several things is shown by its sound first, then its image, its curve, its text. A node that returns nothing showable gets no segment. At the bottom of the picture, the chain of steps places the current node: a line joins two steps when the first feeds the second, a dot separates them otherwise.\n\nA node's sound starts 0.4 s after the start of its segment and stops 0.3 s before the end; a longer sound is cut with a fade, and the caption gives the excerpt played. Sounds are laid in as they are, without normalisation: one hears the levels the graph produces.\n\nThe video is rendered offline, frame by frame, and encoded as WebM (VP9 video, Opus sound at 48 kHz): two renders of the same graph give the same video. Running this node alone runs the whole graph. The copies of a node inside a loop get a single segment, showing the result of the last pass.",
     entrees: [],
     sorties: [{ nom: "Vidéo", nomEn: "Video", type: "fichier" }],
+    // Son résultat dépend de tout le graphe, que les empreintes du cache ne regardent pas.
     jamaisCache: true,
     executerEnDernier: true,
     parametres: [
@@ -100,13 +101,14 @@ export const fiches: FicheAudio[] = ([
         onProgress: (f) => ctx.onProgress?.(`${Math.round(f * 100)} %`),
       });
       const fichier = new File([video], "demonstration.webm", { type: "video/webm" });
-      const data = ctx.noeud.data as Record<string, unknown>;
-      if (typeof data._demoVideoUrl === "string") URL.revokeObjectURL(data._demoVideoUrl);
-      data._demoVideoUrl = URL.createObjectURL(video);
-      data._demoVideoTaille = video.size;
+      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, sans quoi un blob reste en mémoire à
+      // chaque exécution. Il se relit dans le canal déclaré, là où le run précédent l'a laissé.
+      const avant = (ctx.noeud.data as { _affichage?: { videoUrl?: string } })._affichage?.videoUrl;
+      if (typeof avant === "string") URL.revokeObjectURL(avant);
       const duree = (Math.round(plan.duree * 10) / 10).toLocaleString(anglais ? "en-US" : "fr-FR");
       return {
         valeurs: [fichier],
+        affichage: { videoUrl: URL.createObjectURL(video), taille: video.size },
         message: `${etapes.length} ${anglais ? "steps" : "étapes"} · ${duree} s · ${largeur} × ${hauteur}`,
       };
     },

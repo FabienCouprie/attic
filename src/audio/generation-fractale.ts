@@ -8,12 +8,16 @@ import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 import { caractereTimbre, type CaractereTimbreId } from "./timbres";
 import { degresGammeMelodie } from "./generation-melodie";
 import { GAMMES_ACCORDS, degresGammeAccords } from "./generation";
+import { CANTUS_FIRMUS, intervallesDaccord } from "./qualites-accords";
 
+// LES MOTIFS VIENNENT DES TABLES COMMUNES, `qualites-accords.ts` pour les trois accords et
+// `gammes.ts` pour le cantus firmus, qui est la gamme majeure et non un accord. Les clés restent
+// les libellés que le réglage offre, et la table des accords les connaît en alias.
 const MOTIFS_PREDEFINIS: Record<string, number[]> = {
-  "Triade M": [0, 4, 7],
-  "Triade m": [0, 3, 7],
-  "Arpège 7": [0, 4, 7, 10],
-  "Cantus firmus": [0, 2, 4, 5, 7, 9, 11],
+  "Triade M": intervallesDaccord("Triade M"),
+  "Triade m": intervallesDaccord("Triade m"),
+  "Arpège 7": intervallesDaccord("Arpège 7"),
+  "Cantus firmus": CANTUS_FIRMUS(),
 };
 
 
@@ -51,7 +55,7 @@ export async function genererMusiqueFractale(
   const pMax = Math.min(profondeur, 6);
   const motif = typeMotif === "Personnalisé"
     ? intervallesPerso.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
-    : (MOTIFS_PREDEFINIS[typeMotif] ?? [0, 4, 7]);
+    : (MOTIFS_PREDEFINIS[typeMotif] ?? intervallesDaccord("maj"));
   if (motif.length === 0) motif.push(0);
 
   const degres = degresGammeMelodie(gamme);

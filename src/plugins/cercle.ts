@@ -12,7 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
 import {
   FONDAMENTALES, POSITIONS_MAX, RYTHMES_CANONIQUES, RYTHME_LIBRE, enSuite, hauteursDuCercle,
-  motifDuRythme, type Cercle, type Repartition,
+  motifDuRythme, motifNomme, type Cercle, type Repartition,
 } from "../audio/cercle";
 import { rendreCercles, type BaseDeTemps } from "../audio/cercle-rendu";
 import { lireMotif, nettoyerMotif } from "../ui/cercle-disposition";
@@ -34,7 +34,11 @@ const CITATION = `D'après : ${REFERENCE}`;
 /** La même, dans la forme qu'ont les autres notices anglaises du dépôt : « After ». */
 const CITATION_EN = `After: ${REFERENCE}`;
 
-const MOTIF_DEFAUT = "1001001000101000";
+// LES MOTIFS VIENNENT DU CATALOGUE, `audio/cercle.ts`, plutôt que d'être recopiés. Celui-ci est le
+// son cubain, celui du cercle mélodique le fume-fume : écrits en clair, ils ne sauraient jamais que
+// le catalogue a changé.
+const MOTIF_DEFAUT = motifNomme("son");
+const MOTIF_MELODIQUE = motifNomme("fume-fume");
 
 /**
  * Combien de cercles le rendu peut faire tourner ensemble.
@@ -44,8 +48,13 @@ const MOTIF_DEFAUT = "1001001000101000";
  */
 const ANNEAUX = 8;
 
-/** Les fondamentales telles qu'un réglage à choix les offre : « C4 · 261,63 Hz ». */
-const libelleFondamentale = (f: typeof FONDAMENTALES[number], virgule: boolean) =>
+/**
+ * Les fondamentales telles qu'un réglage à choix les offre : « C4 · 261,63 Hz ».
+ *
+ * EXPORTÉE POUR N'EXISTER QU'UNE FOIS. Tout composant qui offre le même choix de fondamentale
+ * l'écrit de la même façon, et la virgule décimale du français y est décidée au même endroit.
+ */
+export const libelleFondamentale = (f: typeof FONDAMENTALES[number], virgule: boolean) =>
   `${f.nom} · ${f.hertz.toFixed(2).replace(".", virgule ? "," : ".")} Hz`;
 
 /** Le cercle de percussion que décrivent les réglages d'un nœud : un seul son pour tous ses sommets. */
@@ -124,7 +133,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [
-      { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: "101010010100", defautEn: "101010010100",
+      { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELODIQUE, defautEn: MOTIF_MELODIQUE,
         doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places.",
         docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions." },
       { nom: "Fondamentale", nomEn: "Fundamental", type: "choix",
@@ -144,7 +153,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets." },
     ],
     async executer(ctx: any) {
-      const motif = nettoyerMotif(ctx.paramTexte("Motif", "101010010100")) || "101010010100";
+      const motif = nettoyerMotif(ctx.paramTexte("Motif", MOTIF_MELODIQUE)) || MOTIF_MELODIQUE;
       const fondamentale = parseInt(ctx.paramTexte("Fondamentale", "60"), 10) || 60;
       const repartition = ctx.paramTexte("Répartition", "octave") as Repartition;
       const cercle = cercleMelodique(motif, fondamentale, repartition);

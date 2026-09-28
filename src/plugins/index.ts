@@ -22,6 +22,13 @@ import { fiches as f_debruitage_ia } from "./debruitage-ia";
 import { fiches as f_esthetique } from "./esthetique";
 import { fiches as f_entrees_extra } from "./entrees-extra";
 import { fiches as f_generateurs } from "./generateurs";
+import { fiches as f_gamme_jouee } from "./gamme-jouee";
+import { fiches as f_accords_joues } from "./accords-joues";
+import { fiches as f_glissando_harmonique } from "./glissando-harmonique";
+import { fiches as f_glissando_de_gamme } from "./glissando-de-gamme";
+import { fiches as f_pulsation } from "./pulsation";
+import { fiches as f_cercle_gamme } from "./cercle-gamme";
+import { fiches as f_cercle_retouche } from "./cercle-retouche";
 import { fiches as f_montage } from "./montage";
 import { fiches as f_melangeur_logistique } from "./melangeur-logistique";
 import { fiches as f_sortie_conversion } from "./sortie-conversion";
@@ -243,6 +250,13 @@ export const toutesLesFiches: FicheAudio[] = ([
   // Les six fichiers de générateurs se suivent dans l'ordre où leurs fiches se suivaient quand ils
   // n'en faisaient qu'un : c'est cet ordre que le catalogue engendré reflète.
   ...f_generateurs,
+  ...f_gamme_jouee,
+  ...f_accords_joues,
+  ...f_glissando_harmonique,
+  ...f_glissando_de_gamme,
+  ...f_pulsation,
+  ...f_cercle_gamme,
+  ...f_cercle_retouche,
   ...f_generateurs_fractals,
   ...f_generateurs_rythme,
   ...f_generateurs_sources,

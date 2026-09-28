@@ -23,15 +23,21 @@ export function VueMontage({ id, data }: VueProps) {
       .filter(Number.isFinite),
   )].sort((a, b) => a - b);
 
+  // CE QUE LA VUE MONTRE VIENT DU CANAL DÉCLARÉ, `_designe`, et non plus de champs posés un à un
+  // dans le sac de l'interface. L'exécuteur dit ce qu'il désigne de ses entrées ; le moteur le pose
+  // sous cette clé ; une remise à zéro l'efface et un réglage le garde, par construction.
   const d = data as unknown as {
     ficheId?: string;
     parametres?: Record<string, unknown>;
     audioResultatUrl?: string;
-    _dureesMesurees?: PisteMontage[];
-    /** Les tampons des pistes, désignés par la dernière exécution : l'onde s'y lit. */
-    _montageSons?: Record<number, AudioBuffer>;
-    /** Les notes des boîtes de la Maquette, en fractions de leur durée propre. */
-    _maquetteNotes?: Record<number, { debut: number; duree: number; note: number }[]>;
+    _designe?: {
+      /** Les durées réelles des pistes ou des boîtes, que seule l'exécution connaît. */
+      durees?: PisteMontage[];
+      /** Les tampons des pistes du Montage : l'onde s'y lit, et l'écoute vivante y joue. */
+      sons?: Record<number, AudioBuffer>;
+      /** Les notes des boîtes de la Maquette, en fractions de leur durée propre. */
+      notes?: Record<number, { debut: number; duree: number; note: number }[]>;
+    };
     onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   };
 
@@ -42,14 +48,14 @@ export function VueMontage({ id, data }: VueProps) {
           étiquettes de piste et le transport lisibles. */}
       <NodeResizer minWidth={360} minHeight={200} />
       <LigneDeTemps
-        pistes={d._dureesMesurees ?? []}
+        pistes={d._designe?.durees ?? []}
         branchees={branchees}
         params={d.parametres ?? {}}
         onChanger={(nom, valeur) => d.onChangerParametre?.(id, nom, valeur)}
         modele={d.ficheId === "maquette" ? MODELE_MAQUETTE : MODELE_MONTAGE}
         audioUrl={d.audioResultatUrl}
-        sons={d._montageSons}
-        notes={d._maquetteNotes}
+        sons={d._designe?.sons}
+        notes={d._designe?.notes}
       />
     </div>
   );

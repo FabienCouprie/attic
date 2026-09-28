@@ -13,6 +13,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE_SANS_AUTO } from "./soundfontGlobal";
 import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation-melodie";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];
@@ -133,13 +134,7 @@ const FICHES: FicheAudio[] = [
         docEn: "0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed.",
       },
       {
-        nom: "Clé",
-        nomEn: "Key",
-        type: "choix",
-        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"],
-        defaut: "Do",
-        optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
-        defautEn: "C",
+        ...PARAMETRE_CLE,
         doc: "Clé de la gamme utilisée pour mapper les cellules en notes.",
         docEn: "Key of the scale used to map cells to notes.",
       },

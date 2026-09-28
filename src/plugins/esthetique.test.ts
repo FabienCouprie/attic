@@ -64,7 +64,7 @@ describe("nœud Score esthétique", () => {
     expect(api.appels).toEqual([
       { longueur: 160000, utiles: 160000 }, { longueur: 160000, utiles: 160000 }, { longueur: 160000, utiles: 80000 },
     ]);
-    const analyse = c.noeud.data._esthetique;
+    const analyse = (r as any).affichage.analyse;
     // CE = 5 + p par tranche, poids 1, 1, 0,5 : (6 + 6 + 0,5 · 5,5) / 2,5 = 5,9 ; PC = 3p : (3 + 3 + 0,5 · 1,5) / 2,5 = 2,7.
     expect(analyse.global.CE).toBeCloseTo(5.9, 10);
     expect(analyse.tranches.map((t: any) => t.finSec)).toEqual([10, 20, 25]);
@@ -109,7 +109,7 @@ describe("nœud Comparaison esthétique", () => {
     expect(r.erreur, r.message).toBeFalsy();
     // A : une tranche pleine (CE 6, PC 3) ; B : une demi-tranche (CE 5,5, PC 1,5).
     expect(r.message).toMatch(/CE −0\.50 · CU \+0\.00 · PC −1\.50 · PQ \+0\.00/);
-    expect(c.noeud.data._comparaisonEsthetique.b.dureeSec).toBe(5);
+    expect((r as any).affichage.b.dureeSec).toBe(5);
     expect(c.progres[0]).toMatch(/^A · /);
     expect(c.progres[1]).toMatch(/^B · /);
   });

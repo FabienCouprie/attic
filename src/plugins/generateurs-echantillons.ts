@@ -20,6 +20,8 @@ import { avecDoc } from "./notices";
  * Retourne null si la note est invalide.
  */
 import { GENRES_ACCORDS_IDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
+import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -68,13 +70,7 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       {
-        nom: "Clé",
-        nomEn: "Key",
-        type: "choix",
-        options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
-        optionsEn: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
-        defaut: "C",
-        defautEn: "C",
+        ...PARAMETRE_CLE,
         doc: "Note fondamentale (tonique) de la grille harmonique.",
         docEn: "Root note (tonic) of the harmonic grid.",
       },
@@ -85,13 +81,18 @@ export const fiches: FicheAudio[] = ([
         // Les libellés viennent de la table, comme les identifiants : voir le générateur d'accords,
         // où les deux listes s'étaient désaccordées et cachaient deux gammes.
         options: GAMMES_ACCORDS.map((g) => g.fr),
-        // Les libellés anglais d'origine, pour la même raison que le générateur d'accords.
-        optionsEn: ["major","minor","dorian","phrygian","lydian","mixolydian","locrian","major pentatonic","minor pentatonic","blues","chromatic"],
+        // LES LIBELLÉS ANGLAIS VIENNENT DE LA TABLE EUX AUSSI. Ils étaient écrits en clair, et onze
+        // libellés pour une liste qui en compte davantage auraient caché les gammes ajoutées : c'est
+        // exactement le désaccord que le commentaire ci-dessus relevait déjà, par l'autre bout.
+        optionsEn: GAMMES_ACCORDS.map((g) => g.en),
         optionIds: GAMMES_ACCORDS_IDS,
+        // Les libellés que ce choix a portés autrefois, pour qu'un projet enregistré retrouve sa
+        // gamme : ils n'étaient pas les mêmes que ceux des composants de mélodie.
+        optionsHeritees: LIBELLES_HERITES_GAMMES,
         defaut: "Majeur",
-        defautEn: "major",
-        doc: "Gamme utilisée pour construire les accords : sept modes, deux pentatoniques, le blues et la chromatique.",
-        docEn: "Scale used to build chords: seven modes, two pentatonics, blues and chromatic.",
+        defautEn: "Major",
+        doc: "Gamme employée pour construire les accords. Les sept modes, les trois mineures, les deux pentatoniques, le vocabulaire du jazz avec le blues, l'altérée, les deux dominantes et la bebop, les symétriques avec la gamme par tons, les deux diminuées et l'augmentée, les gammes à seconde augmentée et les deux pentatoniques japonaises, et la chromatique.",
+        docEn: "Scale used to build chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic.",
       },
       {
         nom: "Genre",

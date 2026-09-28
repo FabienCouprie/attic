@@ -134,7 +134,9 @@ export function tableEnTexte(table: TableMarkov, maxLignes = 20): string {
         .sort((a, b) => b[1] - a[1])
         .map(([note, n]) => `${nomNote(note)} ${Math.round((100 * n) / total)}%`)
         .join(", ");
-      return { total, texte: `${c.split(",").map(Number).map(nomNote).join(" → ")} ⇒ ${suites}` };
+      // Le nom se demande note par note : passer `nomNote` à `map` lui donnerait l'index de la
+      // note pour altération, ce que son second paramètre a rendu possible.
+      return { total, texte: `${c.split(",").map(Number).map((n) => nomNote(n)).join(" → ")} ⇒ ${suites}` };
     })
     .sort((a, b) => b.total - a.total)
     .slice(0, maxLignes)

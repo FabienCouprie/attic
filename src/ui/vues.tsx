@@ -12,6 +12,7 @@ import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
 import { ArbreRythmiqueVue } from "./ArbreRythmiqueVue";
 import { RouleauSequence } from "./RouleauSequence";
+import { CercleRetoucheVue } from "./CercleRetoucheVue";
 import { CercleMelodiqueVue, CercleRythmiqueVue } from "./CercleVue";
 import type { DonneesNoeud } from "./AtelierNode";
 import { VueExtraitVideo, VueFilmCercle, VueMontageVideo, VuePistesMultiples, VueVideoMuette } from "./vues-video";
@@ -84,6 +85,10 @@ const REGISTRE: EntreeRegistre[] = [
   // Les cercles se cliquent : la vue est l'editeur, et le motif qu'elle ecrit vit dans un reglage.
   { correspond: parId("cercle-rythmique"), vue: CercleRythmiqueVue, position: "avant" },
   { correspond: parId("cercle-melodique"), vue: CercleMelodiqueVue, position: "avant" },
+  // Celui-ci montre le cercle qu'il a RECU, et non un cercle deduit de ses reglages : il le tient
+  // du canal `designe`, dont un changement de reglage ne perime pas le contenu. Sans cela, le clic
+  // qui allume une place effacerait le dessin qu'on est en train de cliquer.
+  { correspond: parId("cercle-retouche"), vue: CercleRetoucheVue, position: "avant" },
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },

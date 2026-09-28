@@ -1376,7 +1376,7 @@ export function uniteParametre(p: Pick<ParametreDef, "unite" | "uniteEn">, lang:
  * Accepte indifféremment l'id canonique, la valeur française ou la valeur anglaise,
  * ce qui garantit la compatibilité avec les anciens projets.
  */
-export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsEn" | "optionIds">, valeur: string | number): string | number {
+export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsEn" | "optionIds" | "optionsHeritees">, valeur: string | number): string | number {
   const ids = p.optionIds;
   if (!ids || ids.length === 0) return valeur;
   const v = String(valeur);
@@ -1385,6 +1385,23 @@ export function valeurCanoniqueChoix(p: Pick<ParametreDef, "options" | "optionsE
   if (idx >= 0 && ids[idx] !== undefined) return ids[idx];
   const idxEn = p.optionsEn?.indexOf(v) ?? -1;
   if (idxEn >= 0 && ids[idxEn] !== undefined) return ids[idxEn];
+  // LES LIBELLÉS D'AUTREFOIS, que le paramètre nomme lui-même : voir `optionsHeritees`. Ils passent
+  // avant la tolérance de casse, parce qu'ils sont une déclaration et non une ressemblance.
+  const herite = p.optionsHeritees?.[v];
+  if (herite !== undefined && ids.includes(herite)) return herite;
+  // LA CASSE NE DOIT PAS PERDRE UNE ANCIENNE VALEUR. Les libellés d'un choix se réécrivent au fil du
+  // temps, et une majuscule suffisait à rendre injoignable une option enregistrée : « major » ne
+  // retrouvait plus « Major », et le projet retombait en silence sur le défaut. On ne l'accepte que
+  // si la correspondance est UNIQUE, faute de quoi deux options ne différant que par la casse se
+  // confondraient, ce qui serait pire que de ne rien résoudre.
+  const bas = v.toLocaleLowerCase();
+  for (const libelles of [p.options, p.optionsEn]) {
+    if (!libelles) continue;
+    const rangs = libelles.map((x, i) => [String(x).toLocaleLowerCase(), i] as const)
+      .filter(([x]) => x === bas)
+      .map(([, i]) => i);
+    if (rangs.length === 1 && ids[rangs[0]] !== undefined) return ids[rangs[0]];
+  }
   return v;
 }
 

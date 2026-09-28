@@ -9,12 +9,13 @@ import { useNodeConnections } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { PistesMultiples, type PisteVue } from "./PistesMultiples";
 import { MontageVideo, type InfosFilm } from "./MontageVideo";
+import type { ColonneVue } from "./montage-video-geometrie";
 import { ExtraitVideo } from "./ExtraitVideo";
 import { urlMedia } from "./url-media";
 import type { VueProps } from "./vues";
 
 export function VuePistesMultiples({ data }: VueProps) {
-  const pistes = ((data as unknown as { _pistesVisu?: PisteVue[] })._pistesVisu ?? []);
+  const pistes = ((data as unknown as { _designe?: { pistes?: PisteVue[] } })._designe?.pistes ?? []);
   return <PistesMultiples pistes={pistes} />;
 }
 
@@ -29,14 +30,18 @@ export function VueMontageVideo({ id, data }: VueProps) {
   const connexions = useNodeConnections({ handleType: "target", id });
   const api = (window as { api?: any }).api;
 
-  const dejaConnu = (data as unknown as { _videoMontageInfos?: InfosFilm })._videoMontageInfos ?? null;
-  const [infos, setInfos] = useState<InfosFilm | null>(dejaConnu);
-  const mesure = useRef<string | null>(null);
-  useEffect(() => { setInfos(dejaConnu); }, [dejaConnu]);
+  // LA VUE NE POSE PLUS RIEN SUR LE NŒUD. Elle mesurait le film elle-même quand le composant
+  // n'avait pas encore tourné, et écrivait le relevé dans le champ que l'exécuteur écrit aussi :
+  // deux auteurs pour un même champ, dont l'un n'a aucun droit sur ce qu'un run produit. Sa mesure
+  // vit désormais dans son propre état, et ce que le run a reçu se lit dans le canal déclaré.
+  const dejaConnu = (data as unknown as { _designe?: { infos?: InfosFilm } })._designe?.infos ?? null;
+  const [mesure, setMesure] = useState<InfosFilm | null>(null);
+  const filmMesure = useRef<string | null>(null);
+  const infos = dejaConnu ?? mesure;
 
   const onMesurer = useCallback(() => {
-    if (!chemin || !api?.tailleFichier || !api?.lirePlage || mesure.current === chemin) return;
-    mesure.current = chemin;
+    if (!chemin || !api?.tailleFichier || !api?.lirePlage || filmMesure.current === chemin) return;
+    filmMesure.current = chemin;
     (async () => {
       try {
         const { ouvrirFilmParPlages } = await import("../audio/video-sortie");
@@ -44,8 +49,7 @@ export function VueMontageVideo({ id, data }: VueProps) {
         const releve: InfosFilm = {
           dureeSec: v.dureeSec, cadence: v.cadence, largeur: v.largeur, hauteur: v.hauteur,
         };
-        (data as unknown as { _videoMontageInfos?: InfosFilm })._videoMontageInfos = releve;
-        setInfos(releve);
+        setMesure(releve);
       } catch {
         // Un film illisible le dira à l'exécution, avec sa cause ; la vue n'a pas à doubler ce message.
       }
@@ -59,31 +63,34 @@ export function VueMontageVideo({ id, data }: VueProps) {
     [connexions],
   );
 
-  // DÉBRANCHER UNE ENTRÉE DOIT RENDRE SA MÉMOIRE. La vue ne dessine déjà plus une piste débranchée ;
-  // sans ce ménage, son enveloppe et surtout son tampon resteraient accrochés au nœud jusqu'à la
-  // prochaine exécution, c'est-à-dire peut-être jamais.
-  const cleBranchees = branchees.join(",");
-  useEffect(() => {
-    const n = data as unknown as {
-      _videoMontagePistes?: { piste: number }[];
-      _videoMontageSons?: Record<string, AudioBuffer>;
+  // UNE PISTE DÉBRANCHÉE SE FILTRE AU RENDU, ELLE NE S'EFFACE PLUS DU NŒUD. La vue retirait la piste
+  // et son tampon du nœud lui-même, ce qui revenait à corriger le résultat d'un run depuis
+  // l'affichage. Le filtrage dit la même chose sans rien écrire, et il ne coûte pas la mémoire que
+  // l'effacement prétendait rendre : ces tampons sont DÉSIGNÉS, c'est-à-dire ceux des composants
+  // d'amont, déjà tenus par le cache d'exécution, et les enveloppes pèsent seize kilo-octets.
+  const dsg = (data as unknown as {
+    _designe?: {
+      pistes?: { piste: number; dureeSec: number; crete: number; colonnes: ColonneVue[] }[];
+      sons?: Record<string, AudioBuffer>;
     };
-    const vivantes = new Set(branchees);
-    if (Array.isArray(n._videoMontagePistes)) {
-      const reste = n._videoMontagePistes.filter((x) => vivantes.has(x.piste));
-      if (reste.length !== n._videoMontagePistes.length) n._videoMontagePistes = reste;
-    }
-    if (n._videoMontageSons) {
-      for (const k of Object.keys(n._videoMontageSons)) {
-        if (!vivantes.has(Number(k))) delete n._videoMontageSons[k];
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleBranchees]);
+  })._designe;
+  const vivantes = useMemo(() => new Set(branchees), [branchees]);
+  const enveloppes = useMemo(
+    () => (dsg?.pistes ?? []).filter((p) => vivantes.has(p.piste)),
+    [dsg, vivantes],
+  );
+  const sons = useMemo(
+    () => Object.fromEntries(
+      Object.entries(dsg?.sons ?? {}).filter(([k]) => vivantes.has(Number(k))),
+    ) as Record<number, AudioBuffer>,
+    [dsg, vivantes],
+  );
 
-  const d = data as unknown as { _videoMontageUrl?: string; _videoMontageNom?: string; _videoMontageOctets?: number };
-  const resultat = d._videoMontageUrl
-    ? { url: d._videoMontageUrl, nom: d._videoMontageNom ?? "montage.mp4", octets: d._videoMontageOctets ?? 0 }
+  const aff = (data as unknown as {
+    _affichage?: { url?: string; nom?: string; octets?: number };
+  })._affichage;
+  const resultat = aff?.url
+    ? { url: aff.url, nom: aff.nom ?? "montage.mp4", octets: aff.octets ?? 0 }
     : null;
 
   return (
@@ -97,8 +104,8 @@ export function VueMontageVideo({ id, data }: VueProps) {
       urlFilm={chemin && api ? urlMedia(chemin) : null}
       resultat={resultat}
       infos={infos}
-      enveloppes={(data as unknown as { _videoMontagePistes?: any[] })._videoMontagePistes ?? []}
-      sons={(data as unknown as { _videoMontageSons?: Record<number, AudioBuffer> })._videoMontageSons ?? {}}
+      enveloppes={enveloppes}
+      sons={sons}
       branchees={branchees}
       imageDePiste={(piste) => Number(params[`Image ${piste + 1}`] ?? 0)}
       gainFilmDb={Number(params["Gain du film"] ?? 0)}
@@ -119,29 +126,28 @@ export function VueExtraitVideo({ id, data }: VueProps) {
   const chemin = String(params.Chemin ?? "").trim();
   const api = (window as { api?: any }).api;
 
+  // MÊME RÈGLE QUE LE MONTAGE VIDÉO : la vue ne pose plus rien sur le nœud. Sa mesure vit dans son
+  // état, ce que le run a reçu se lit dans le canal déclaré, et le film produit dans `affichage`.
   const n = data as unknown as {
-    _extraitVideoInfos?: InfosFilm; _extraitVideoUrl?: string;
-    _extraitVideoNom?: string; _extraitVideoOctets?: number;
+    _designe?: { infos?: InfosFilm };
+    _affichage?: { url?: string; nom?: string; octets?: number };
   };
-  const [infos, setInfos] = useState<InfosFilm | null>(n._extraitVideoInfos ?? null);
-  const mesure = useRef<string | null>(null);
-  useEffect(() => { if (n._extraitVideoInfos) setInfos(n._extraitVideoInfos); }, [n._extraitVideoInfos]);
+  const dejaConnu = n._designe?.infos ?? null;
+  const [mesure, setMesure] = useState<InfosFilm | null>(null);
+  const filmMesure = useRef<string | null>(null);
+  const infos = dejaConnu ?? mesure;
 
   const onMesurer = useCallback(() => {
-    if (!chemin || !api?.tailleFichier || !api?.lirePlage || mesure.current === chemin) return;
-    mesure.current = chemin;
+    if (!chemin || !api?.tailleFichier || !api?.lirePlage || filmMesure.current === chemin) return;
+    filmMesure.current = chemin;
     (async () => {
       try {
         const { ouvrirFilmParPlages } = await import("../audio/video-sortie");
         const v = await ouvrirFilmParPlages(chemin, api);
-        const releve: InfosFilm = {
-          dureeSec: v.dureeSec, cadence: v.cadence, largeur: v.largeur, hauteur: v.hauteur,
-        };
-        n._extraitVideoInfos = releve;
-        setInfos(releve);
+        setMesure({ dureeSec: v.dureeSec, cadence: v.cadence, largeur: v.largeur, hauteur: v.hauteur });
       } catch { /* l'exécution dira la cause, la vue n'a pas à doubler ce message */ }
     })();
-  }, [chemin, api, n]);
+  }, [chemin, api]);
 
   return (
     <ExtraitVideo
@@ -153,8 +159,8 @@ export function VueExtraitVideo({ id, data }: VueProps) {
       onBorner={(borne, image) => data.onChangerParametre?.(
         id, borne === "debut" ? "Image de début" : "Image de fin", image,
       )}
-      resultat={n._extraitVideoUrl
-        ? { url: n._extraitVideoUrl, nom: n._extraitVideoNom ?? "extrait.mp4", octets: n._extraitVideoOctets ?? 0 }
+      resultat={n._affichage?.url
+        ? { url: n._affichage.url, nom: n._affichage.nom ?? "extrait.mp4", octets: n._affichage.octets ?? 0 }
         : null}
       onMesurer={onMesurer}
     />
@@ -201,23 +207,23 @@ export function VueFilmCercle({ data }: VueProps) {
 export function VueVideoMuette({ data }: VueProps) {
   const { t } = useI18n();
   const api = (window as { api?: any }).api;
-  const n = data as unknown as { _videoMuetteUrl?: string; _videoMuetteNom?: string; _videoMuetteOctets?: number };
-  if (!n._videoMuetteUrl) return null;
-  const nom = n._videoMuetteNom ?? "muet.mp4";
+  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  if (!n.url) return null;
+  const nom = n.nom ?? "muet.mp4";
   return (
     <div className="attic-vue-film-resultat" onClick={(e) => e.stopPropagation()}>
       {api?.sauvegarderBinaire ? (
         <button className="attic-node-fichier-btn" onClick={async () => {
-          const buffer = await (await fetch(n._videoMuetteUrl!)).arrayBuffer();
+          const buffer = await (await fetch(n.url!)).arrayBuffer();
           await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
         }}>💾 {t("separerImageSon.enregistrer")}</button>
       ) : (
-        <a className="attic-node-fichier-btn" href={n._videoMuetteUrl} download={nom}>
+        <a className="attic-node-fichier-btn" href={n.url} download={nom}>
           💾 {t("separerImageSon.enregistrer")}
         </a>
       )}
       <span>{nom}</span>
-      <span>{((n._videoMuetteOctets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+      <span>{((n.octets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
     </div>
   );
 }

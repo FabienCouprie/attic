@@ -5,6 +5,7 @@
 
 import { parseMidi, writeMidi } from "midi-file";
 import { comparerEvenementsMidi } from "./midi-ordre";
+import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
 import type { NoteEvenement } from "./midi-sequence";
 
 export function notesVersFichierMidi(
@@ -31,7 +32,11 @@ export function notesVersFichierMidi(
     lignes.push({ tick: 0, type: "programChange", channel: canal, programNumber: programme });
   }
 
-  for (const n of notes) {
+  // DEUX NOTES DE MÊME HAUTEUR QUI SE RECOUVRENT SONT AMBIGUËS, et le fichier ne doit pas l'être :
+  // un canal n'a qu'une voix par hauteur, donc un lecteur conforme relance la note au second
+  // `noteOn` et le premier `noteOff` éteint tout. Le rendu résout la même chose, de la même façon,
+  // pour que le fichier sonne comme ce qu'on entend. Voir `recouvrement-hauteur.ts`.
+  for (const n of sansRecouvrementDeHauteur(notes)) {
     const tickDebut = secEnTicks(n.debut);
     const tickFin = secEnTicks(n.fin);
     if (tickDebut < 0) continue;

@@ -60,6 +60,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "cercle-retouche",
+    "vue": "CercleRetoucheVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "cercle-rythmique",
     "vue": "CercleRythmiqueVue",
     "entreeAudio": false,

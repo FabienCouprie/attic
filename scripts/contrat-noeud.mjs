@@ -32,19 +32,25 @@ const CONTRAT = `CONTRAT DE COMPOSANT. Un composant vient d'être créé ou modi
 
 DEUX RÈGLES, À VÉRIFIER SUR CE COMPOSANT AVANT DE PASSER À AUTRE CHOSE.
 
-1. TOUT CE QUE L'EXÉCUTEUR POSE SUR LE NŒUD A UNE CLASSE. Un champ écrit sur \`ctx.noeud.data\`
-   appartient à l'une de ces trois-là, et à une seule :
+1. UN EXÉCUTEUR N'ÉCRIT RIEN SUR LE NŒUD. Il REND ce qu'il a à dire, par trois canaux déclarés
+   dans le retour de \`executer\` (voir \`core/types.ts\`) :
 
-     CHAMPS_RESULTAT      produit par le run et ne décrivant que lui ; la remise à zéro l'efface.
-                          Le critère : si le nœud n'a pas tourné, le champ ne veut rien dire.
-     CHAMPS_UTILISATEUR   vient de la personne : un fichier chargé, un choix. Rien ne l'efface,
-                          le copier-coller le recopie, le projet l'écrit.
-     CHAMPS_SIGNAL_UNIQUE un déclencheur ponctuel. SEULE EXCEPTION LÉGITIME, et sa propriété se
-                          vérifie : \`lancer()\` le remet à \`undefined\` lui-même, donc il ne
-                          survit pas au run qui l'a posé.
+     affichage   ce que le run a PRODUIT et que la vue montre. Une remise à zéro l'efface, et un
+                 changement de réglage aussi, puisqu'il vient de le rendre faux.
+     designe     ce que le run a DÉSIGNÉ DE SES ENTRÉES et que la vue montre. La remise à zéro
+                 l'efface, un réglage le GARDE : régler ce composant ne touche pas à ce qu'il a
+                 reçu. C'est ce qui permet d'entendre un montage pendant qu'on le règle.
+     moteur      ce que le composant demande au MOTEUR, et non à une vue : un graphe à poser sur
+                 le canevas, un graphe à embarquer dans le fichier écrit, une palette à relire.
+                 Rien ne se pose sur le nœud, donc rien n'est à effacer ensuite.
 
-   Il n'y a pas de quatrième cas. Un champ hors des trois reste à l'écran sur un nœud redevenu
-   « en attente », et décrit une exécution qui n'a plus lieu.
+   ÉCRIRE SUR \`ctx.noeud.data\` EST LA FAUTE QUE CE CONTRAT EXISTE POUR EMPÊCHER. Un champ posé là
+   n'a pas de classe, donc rien ne l'efface : il reste à l'écran sur un nœud redevenu « en
+   attente », et décrit une exécution qui n'a plus lieu. Vingt-neuf champs y étaient, sur douze
+   composants ; il n'en reste aucun.
+
+   ET UNE VUE N'ÉCRIT PAS DAVANTAGE dans ces canaux : ils disent ce qu'un run a fait. Une vue qui
+   a besoin de garder une mesure la garde dans son propre état.
 
 2. TOUS LES PARAMÈTRES DÉCLARÉS SONT PRIS EN COMPTE AU RUN. Chaque paramètre est lu par
    l'exécuteur ET agit sur le résultat. Un paramètre lu puis versé dans un champ que personne ne

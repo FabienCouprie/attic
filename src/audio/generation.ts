@@ -5,6 +5,7 @@
 
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
+import { completer, degresDeGamme } from "./gammes";
 
 export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   rock: [[0, 4, 5], [0, 4, 0, 5], [0, 5, 3, 4]],
@@ -29,9 +30,11 @@ const INSTRUMENTS_GM: Record<string, number> = {
 };
 
 
-const DEGRES_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, sous un
+// nom que le garde des gammes ne cherchait pas.
+const DEGRES_MAJEUR = degresDeGamme("majeur");
 
-const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
+const DEGRES_MINEUR = degresDeGamme("mineur");
 
 // Gammes disponibles pour les nœuds qui construisent des accords ou
 // mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,
@@ -41,22 +44,21 @@ const DEGRES_MINEUR = [0, 2, 3, 5, 7, 8, 10];
 // majeure + 2 gammes pentatoniques) sont communes à tous ces nœuds ; blues
 // et chromatique ne sont proposées que par les nœuds de sonification
 // d'image, qui les avaient déjà.
-export const GAMMES_ACCORDS: { id: string; fr: string; en: string; degres: number[] }[] = [
-  { id: "majeur", fr: "Majeur", en: "Major", degres: DEGRES_MAJEUR },
-  { id: "mineur", fr: "Mineur naturel", en: "Natural minor", degres: DEGRES_MINEUR },
-  { id: "dorien", fr: "Dorien", en: "Dorian", degres: [0, 2, 3, 5, 7, 9, 10] },
-  { id: "phrygien", fr: "Phrygien", en: "Phrygian", degres: [0, 1, 3, 5, 7, 8, 10] },
-  { id: "lydien", fr: "Lydien", en: "Lydian", degres: [0, 2, 4, 6, 7, 9, 11] },
-  { id: "mixolydien", fr: "Mixolydien", en: "Mixolydian", degres: [0, 2, 4, 5, 7, 9, 10] },
-  { id: "locrien", fr: "Locrien", en: "Locrian", degres: [0, 1, 3, 5, 6, 8, 10] },
-  { id: "pentatonique-majeure", fr: "Pentatonique majeure", en: "Major pentatonic", degres: [0, 2, 4, 7, 9] },
-  { id: "pentatonique-mineure", fr: "Pentatonique mineure", en: "Minor pentatonic", degres: [0, 3, 5, 7, 10] },
-  { id: "blues", fr: "Blues", en: "Blues", degres: [0, 3, 5, 6, 7, 10] },
-  { id: "chromatique", fr: "Chromatique", en: "Chromatic", degres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
-];
+/**
+ * Les gammes qu'un composant d'accords propose.
+ *
+ * ELLE DÉRIVE DE LA TABLE, et c'est ce qui la garde d'accord avec les autres : les degrés viennent
+ * d'un seul endroit, `audio/gammes.ts`. Elle offre désormais tout ce que la table porte, la demande
+ * étant d'homogénéiser au maximum : le vocabulaire diminué, l'altérée et les gammes à seconde
+ * augmentée y entrent par là.
+ */
+export const GAMMES_ACCORDS: { id: string; fr: string; en: string; degres: number[] }[] = completer([
+  "majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien",
+  "pentatonique-majeure", "pentatonique-mineure", "blues", "chromatique",
+]);
 
 export function degresGammeAccords(id: string): number[] {
-  return GAMMES_ACCORDS.find((g) => g.id === id)?.degres ?? DEGRES_MAJEUR;
+  return degresDeGamme(id, "majeur");
 }
 
 /**

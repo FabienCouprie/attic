@@ -26,6 +26,7 @@
 
 import { fft } from "./fft";
 import { fenetreHann } from "./stft";
+import type { Note } from "./note";
 
 /** Un atome retenu : une sinusoïde sous une fenêtre, à une place et une durée données. */
 export interface Atome {
@@ -242,4 +243,54 @@ export function repartition(atomes: readonly Atome[]): Map<number, number> {
   const out = new Map<number, number>();
   for (const a of atomes) out.set(a.echelle, (out.get(a.echelle) ?? 0) + 1);
   return out;
+}
+
+/**
+ * Les atomes rendus comme des notes datées.
+ *
+ * POURQUOI CETTE CONVERSION EXISTE. Relevé en cherchant ce qui va d'un son vers une séquence :
+ * AUCUN COMPOSANT DU CATALOGUE NE LE FAISAIT. Or un atome porte déjà tout ce qu'une note demande,
+ * un instant, une durée, une hauteur et une amplitude ; la décomposition les calculait, s'en
+ * servait pour compter, puis les jetait. Ce seul passage relie l'analyse d'un son à tout ce qui
+ * lit une séquence, et notamment au quantifieur, donc à l'arbre rythmique.
+ *
+ * UN ATOME N'EST PAS UNE NOTE, ET IL FAUT LE DIRE. Une seule note en produit plusieurs : ses
+ * partiels en portent chacun un, et une même attaque en reçoit un par échelle. La suite rendue est
+ * donc DENSE et ne se lit pas comme une transcription. C'est une description du signal, et c'est
+ * à qui la reçoit de la trier.
+ *
+ * LA HAUTEUR RESTE À VIRGULE. Un atome est placé en hertz par la transformée, et rien ne l'oblige
+ * à tomber sur un demi-ton ; une séquence sait porter cet écart, et l'arrondir ici perdrait ce que
+ * la méthode a de plus fin.
+ *
+ * LA VÉLOCITÉ EST RELATIVE AU PLUS FORT ATOME. Le coefficient de projection n'a pas d'échelle
+ * absolue : il dépend de l'amplitude du signal, et deux sons de même contenu enregistrés à dix
+ * décibels d'écart donneraient des nombres différents pour la même musique. Rapportée au plus fort,
+ * elle dit ce qu'elle doit dire, le rang de chaque atome dans l'esquisse.
+ *
+ * CE QUI SORT DES CENT VINGT-HUIT DEMI-TONS EST ÉCARTÉ. La poursuite adaptative place des atomes
+ * partout où il reste de l'énergie, y compris sous vingt hertz et près de la moitié de la fréquence
+ * d'échantillonnage. Les replier inventerait des hauteurs que le calcul n'a pas produites.
+ */
+export function atomesEnNotes(
+  atomes: readonly Atome[],
+  frequence: number,
+): { notes: Note[]; ecartees: number } {
+  const sr = Math.max(1, frequence);
+  const plusFort = atomes.reduce((m, a) => Math.max(m, Math.abs(a.poids)), 0);
+  const notes: Note[] = [];
+  let ecartees = 0;
+  for (const a of atomes) {
+    const hauteur = 69 + 12 * Math.log2(Math.max(1e-6, a.frequenceHz) / 440);
+    if (!(hauteur >= 0 && hauteur <= 127)) { ecartees++; continue; }
+    const debut = a.debut / sr;
+    notes.push({
+      note: hauteur,
+      velocite: Math.max(1, Math.min(127, Math.round((Math.abs(a.poids) / (plusFort || 1)) * 126) + 1)),
+      debut,
+      fin: debut + a.echelle / sr,
+    });
+  }
+  notes.sort((x, y) => x.debut - y.debut || x.note - y.note);
+  return { notes, ecartees };
 }

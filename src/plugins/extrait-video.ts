@@ -99,18 +99,22 @@ export const fiches: FicheAudio[] = ([
         dureeReelle = relu.dureeSec;
       } catch { /* la durée réelle reste inconnue, le reste du message vaut toujours */ }
 
-      const data = ctx.noeud.data as Record<string, unknown>;
-      if (typeof data._extraitVideoUrl === "string") URL.revokeObjectURL(data._extraitVideoUrl);
-      data._extraitVideoUrl = URL.createObjectURL(blob);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal déclaré.
+      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
+      if (typeof avant === "string") URL.revokeObjectURL(avant);
       const nomSource = chemin.replace(/^.*[\\/]/, "");
-      data._extraitVideoNom = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-extrait.mp4`;
-      data._extraitVideoOctets = blob.size;
-      data._extraitVideoInfos = {
-        dureeSec: video.dureeSec, cadence: video.cadence,
-        largeur: video.largeur, hauteur: video.hauteur,
+      const nomExtrait = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-extrait.mp4`;
+      // LA CADENCE ET LA DURÉE SONT CELLES DU FILM REÇU, donc `designe` : un réglage de bornes ne
+      // les périme pas, et la vue garde son axe pendant qu'on déplace une borne.
+      const designe = {
+        infos: {
+          dureeSec: video.dureeSec, cadence: video.cadence,
+          largeur: video.largeur, hauteur: video.hauteur,
+        },
       };
+      const affichage = { url: URL.createObjectURL(blob), nom: nomExtrait, octets: blob.size };
 
-      const fichier = new File([blob], String(data._extraitVideoNom), { type: "video/mp4" });
+      const fichier = new File([blob], nomExtrait, { type: "video/mp4" });
       const demandee = plage.finSec - plage.debutSec;
       const produite = dureeReelle > 0 ? formatDuree(dureeReelle) : "?";
       // LE SORT DU SON EST DIT, et non deviné : gardé, absent du film, ou écarté avec sa raison.
@@ -121,6 +125,8 @@ export const fiches: FicheAudio[] = ([
           : (en() ? "silent film" : "film muet");
       return {
         valeurs: [fichier],
+        affichage,
+        designe,
         message: `${plage.images} ${en() ? "frames" : "images"} · ${en() ? "asked" : "demandé"} ${formatDuree(demandee)} · `
           + `${en() ? "produced" : "produit"} ${produite} · ${video.cadence.toFixed(2)} ${en() ? "fps" : "im/s"} · `
           + `${son} · ${(blob.size / MEGA).toFixed(1)} Mo`,

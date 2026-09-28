@@ -5,6 +5,7 @@
 
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { intervallesDaccord } from "./qualites-accords";
 
 const NOMS_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -16,18 +17,15 @@ const PROFIL_MINEUR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.6
 // Templates d'accords : vecteurs binaires de 12 éléments (classes de hauteur).
 // Index 0 = fondamentale. Chaque template indique quelles notes appartiennent à
 // l'accord (1 = présente, 0 = absente).
-const TEMPLATES: { nom: string; nomEn: string; intervalles: number[] }[] = [
-  { nom: "maj", nomEn: "maj", intervalles: [0, 4, 7] },
-  { nom: "min", nomEn: "min", intervalles: [0, 3, 7] },
-  { nom: "7", nomEn: "7", intervalles: [0, 4, 7, 10] },
-  { nom: "min7", nomEn: "min7", intervalles: [0, 3, 7, 10] },
-  { nom: "maj7", nomEn: "maj7", intervalles: [0, 4, 7, 11] },
-  { nom: "dim", nomEn: "dim", intervalles: [0, 3, 6] },
-  { nom: "aug", nomEn: "aug", intervalles: [0, 4, 8] },
-  { nom: "sus2", nomEn: "sus2", intervalles: [0, 2, 7] },
-  { nom: "sus4", nomEn: "sus4", intervalles: [0, 5, 7] },
-  { nom: "min7b5", nomEn: "min7b5", intervalles: [0, 3, 6, 10] },
-];
+// LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. LES NOMS RESTENT CEUX-CI :
+// ils s'écrivent dans le rapport de détection, et les changer changerait ce que l'utilisateur lit.
+// La table les connaît en alias, de sorte que « min » et « min7b5 » désignent toujours le même
+// accord qu'avant. L'ORDRE NE SE RÉARRANGE PAS non plus : le rang d'un type sert d'index dans la
+// matrice des soixante-douze accords construite plus bas.
+const NOMS_DETECTES = ["maj", "min", "7", "min7", "maj7", "dim", "aug", "sus2", "sus4", "min7b5"] as const;
+
+const TEMPLATES: { nom: string; nomEn: string; intervalles: number[] }[] =
+  NOMS_DETECTES.map((nom) => ({ nom, nomEn: nom, intervalles: intervallesDaccord(nom) }));
 
 // Construit la matrice des templates (72 accords = 12 fondamentales × 10 types).
 const TOUS_TEMPLATES: { fondamentale: number; typeIdx: number; vecteur: Float64Array }[] = [];

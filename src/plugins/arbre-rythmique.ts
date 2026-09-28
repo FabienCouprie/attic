@@ -24,11 +24,11 @@ import { GAMMES_CORRECTION, degresDe } from "../audio/correction-hauteur";
 import { estSequence, type Sequence } from "../audio/sequence";
 import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
+import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 
 const en = () => langueCourante() === "en";
 
 const ARBRE_DEFAUT = "(4/4 (1 (1 (1 1 1)) 1 1))";
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 const METRIQUES = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "12/8"];
 const SOURCES = [
@@ -105,8 +105,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Majeure", defautEn: "Major",
         doc: "Les degrés auxquels les hauteurs sont restreintes.",
         docEn: "The degrees the pitches are restricted to." },
-      { nom: "Tonique", nomEn: "Tonic", type: "choix",
-        options: NOMS, optionsEn: NOMS, optionIds: NOMS, defaut: "C", defautEn: "C",
+      { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Tonic",
         doc: "La tonique de la gamme.", docEn: "The tonic of the scale." },
       { nom: "Grave", nomEn: "Low", plage: [0, 127], pas: 1, defaut: 55,
         doc: "La hauteur la plus basse permise.", docEn: "The lowest pitch allowed." },
@@ -166,7 +165,9 @@ export const fiches: FicheAudio[] = ([
         combien: notes,
         basse: ctx.paramNombre("Grave", 55),
         haute: ctx.paramNombre("Aigu", 79),
-        degres: degresDe(ctx.paramTexte("Gamme", "majeure"), NOMS.indexOf(ctx.paramTexte("Tonique", "C"))),
+        // `demiTonDeCle` ACCEPTE TOUTE ORTHOGRAPHE, là où `NOMS.indexOf` résolvait par position et
+        // ne connaissait qu'une liste : un projet enregistré sous « Mi♭ » y rendait moins un.
+        degres: degresDe(ctx.paramTexte("Gamme", "majeure"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
         ecartMax: ctx.paramNombre("Écart maximal", 7),
       }, hasard);
 

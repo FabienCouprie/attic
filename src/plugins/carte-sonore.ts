@@ -106,11 +106,8 @@ export const fiches: FicheAudio[] = ([
       // disque) — un téléchargement isolé du blob romprait ces liens. Seul
       // « Ouvrir dans le navigateur » (le vrai fichier sur disque, aux côtés
       // de son dossier audio/) donne un résultat qui fonctionne.
-      (ctx.noeud.data as any)._carteHtmlPath = htmlPath;
-      (ctx.noeud.data as any)._carteSonore = carte;
-      (ctx.noeud.data as any)._carteSonoreGraine = graine;
-
-      return { valeurs: [], message: traduire("msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi", htmlPath, carte.points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
+      // LA GRAINE N'EST PLUS POSÉE : elle l'était sans que rien ne la lise, ni vue ni test.
+      return { valeurs: [], affichage: { htmlPath, carte }, message: traduire("msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi", htmlPath, carte.points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

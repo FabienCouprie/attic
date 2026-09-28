@@ -7,6 +7,7 @@
 // écrite : chacun prend un son tel qu'il est et le transforme en un autre son.
 
 import { estCourbe, valeurA, valeursParametre } from "./courbe";
+import { intervallesDaccord } from "./qualites-accords";
 
 // ── Vitesse variable ─────────────────────────────────────────────────────────────────────────
 
@@ -194,7 +195,12 @@ export type StructureResonateurs = "harmonique" | "impaire" | "barre" | "accord"
  * 1 ; 2,756 ; 5,404 ; 8,933… — les mêmes que la « Barre modale » du catalogue. L'accord répète les
  * intervalles donnés d'octave en octave jusqu'au nombre voulu.
  */
-export function rapportsResonateurs(structure: StructureResonateurs, nombre: number, intervalles: number[] = [0, 4, 7]): number[] {
+export function rapportsResonateurs(
+  structure: StructureResonateurs,
+  nombre: number,
+  // La triade majeure par défaut, prise à la table commune plutôt que réécrite ici.
+  intervalles: number[] = intervallesDaccord("maj"),
+): number[] {
   const n = Math.max(1, Math.min(64, Math.round(nombre)));
   if (structure === "impaire") return Array.from({ length: n }, (_, k) => 2 * k + 1);
   if (structure === "barre") {

@@ -13,6 +13,7 @@ import { parseMidi } from "midi-file";
 import { appliquerInstrumentMidi, joindreMidi, bouclerMidi, analyserMidi, rendreSequence } from "../audio";
 import { eclaircir, echoNotes, evenements, imposerRythme, palindrome, repeterEtTourner, type SensMotif } from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
+import { PARAMETRE_TONIQUE } from "../audio/cles";
 import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
@@ -275,11 +276,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "Intonation juste", defautEn: "Just intonation",
         doc: "L'accord employé. « Égal » est celui de tous les autres composants ; les autres donnent à chaque tonalité une couleur propre.",
         docEn: "The tuning used. « Equal » is the one every other node uses; the others give each key its own colour." },
-      { nom: "Tonique", nomEn: "Tonic", type: "choix",
-        options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"],
-        optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
-        optionIds: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
-        defaut: "Do", defautEn: "C",
+      { ...PARAMETRE_TONIQUE,
         doc: "La note sur laquelle le tempérament est accordé. C'est elle qui sonne pure ; les tonalités éloignées s'écartent d'autant plus.",
         docEn: "The note the temperament is tuned on. It is the one that sounds pure; distant keys drift the further away." },
       { ...PARAMETRE_SYNTHESE, doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.", docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },

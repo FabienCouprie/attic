@@ -129,7 +129,7 @@ export const fiches: FicheAudio[] = ([
           : (en() ? "no solution, everything was explored" : "aucune solution, tout a été exploré");
         return {
           valeurs: [null, [
-            `${en() ? "cantus" : "cantus"}  ${cantus.map(nomNote).join(" ")}`,
+            `${en() ? "cantus" : "cantus"}  ${cantus.map((n) => nomNote(n)).join(" ")}`,
             "",
             `${cause} · ${res.noeuds} ${en() ? "attempts" : "essais"}`,
             `${en() ? "most often turned back by" : "le plus souvent bloqué par"} : ${res.regleBloquante}`,
@@ -161,8 +161,8 @@ export const fiches: FicheAudio[] = ([
       const analyse = [
         `${cantus.length} notes · ${provenance} · ${res.noeuds} ${en() ? "attempts" : "essais"}`,
         "",
-        `${en() ? "cantus     " : "cantus     "}${cantus.map(nomNote).join(" ")}`,
-        `${en() ? "counterpoint " : "contrepoint "}${ligne.map(nomNote).join(" ")}`,
+        `${en() ? "cantus     " : "cantus     "}${cantus.map((n) => nomNote(n)).join(" ")}`,
+        `${en() ? "counterpoint " : "contrepoint "}${ligne.map((n) => nomNote(n)).join(" ")}`,
         "",
         res.avis.length > 0
           ? `${en() ? "advisories" : "avis"} :\n${res.avis.map((a) => `  ${a.position}. ${en() ? a.en : a.fr}`).join("\n")}`

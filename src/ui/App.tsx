@@ -474,7 +474,7 @@ function Atelier() {
   })();
 }, [pluginsVersion]); // après chargement des plugins
 
-  // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
+  // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
@@ -588,6 +588,32 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
 
   // Les minuteurs en vol meurent avec la fenêtre : sans cela, une relance pourrait partir après le
   // démontage, sur un graphe qui n'existe plus.
+  /**
+   * CHANGER UN RÉGLAGE, ET IL N'Y A QU'UNE FAÇON DE LE FAIRE.
+   *
+   * POURQUOI CETTE FONCTION EXISTE, relevé par Fabien : « toucher le gain du montage pendant la
+   * lecture oblige DE NOUVEAU à redémarrer le nœud ». Le même geste avait DEUX points d'appel, l'un
+   * sur le nœud et l'autre dans l'inspecteur, et ils avaient divergé : le premier gardait ce que le
+   * nœud avait désigné de ses entrées et relançait, le second faisait une remise à zéro complète et
+   * ne relançait pas. Régler depuis le nœud marchait donc, et régler depuis l'inspecteur arrêtait
+   * l'écoute. Un commentaire disait déjà « il y en a deux dans ce fichier » : le dire ne suffit pas,
+   * deux copies d'une règle finissent toujours par se séparer.
+   *
+   * Rend les réglages obtenus, dont l'inspecteur a besoin pour se mettre à jour lui-même.
+   */
+  const changerReglage = useCallback((nid: string, nom: string, val: number | string) => {
+    const noeud = noeudsRef.current.find((n) => n.id === nid);
+    if (!noeud) return null;
+    cacheExec.current.delete(nid);
+    const suite = reglagesApresChangement(String(noeud.data.ficheId), noeud.data.parametres, nom, val);
+    setNodes((nds) => nds.map((n) => (n.id === nid ? { ...n, data: { ...n.data, parametres: suite } } : n)));
+    // UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES : sans quoi le graphe vivant
+    // du Montage n'a plus rien à jouer et s'arrête. L'aval, lui, est effacé entièrement.
+    reinitialiserPourReglage(nid);
+    relancerApresReglage(nid);
+    return suite;
+  }, [noeudsRef, cacheExec, setNodes, reinitialiserPourReglage, relancerApresReglage]);
+
   useEffect(() => () => {
     for (const id of minuteursRelance.current.values()) window.clearTimeout(id);
     minuteursRelance.current.clear();
@@ -687,19 +713,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     },
     onChangerEnregistrement: (nid: string, blob: Blob) => { cacheExec.current.delete(nid); const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); reinitialiserNoeud(nid); },
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
-      cacheExec.current.delete(nid);
-      // Les liaisons entre réglages passent par `reglagesApresChangement`, et non par ce point
-      // d'appel : il y en a deux dans ce fichier, et une règle écrite ici ne servirait qu'à l'un.
-      setNodes((nds2) => nds2.map((n) => n.id === nid
-        ? { ...n, data: { ...n.data, parametres: reglagesApresChangement(
-            String(n.data.ficheId), n.data.parametres, nom, val) } }
-        : n));
-      // UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES, relevé par Fabien :
-      // « l'écoute vivante fonctionnait hier et ne fonctionne plus ». Une remise à zéro complète
-      // emportait les tampons du Montage, donc le graphe vivant n'avait plus rien à jouer et
-      // s'arrêtait au premier gain bougé. L'aval, lui, est effacé entièrement.
-      reinitialiserPourReglage(nid);
-      relancerApresReglage(nid);
+      changerReglage(nid, nom, val);
     },
     // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
     // résultat : sa sortie audio est l'entrée transmise telle quelle, que les
@@ -919,7 +933,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
-  // Hook extrait — voir DECOUPAGE-APP.md. La logique pure vit dans core/meta.ts.
+  // Dans hooks/useMetaComposants.ts ; la logique pure vit dans core/meta.ts.
   const { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA } = useMetaComposants({
     noeudsRef, aretesRef, pileRef, grapheRacineRef, cacheExec,
     setNodes, setEdges, setPile, setSel, callbacksNoeud,
@@ -1163,7 +1177,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     });
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
-  // Export / import du workflow (hook extrait — voir DECOUPAGE-APP.md).
+  // Export / import du workflow, dans hooks/usePersistance.ts.
   const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile,
@@ -1384,16 +1398,10 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           .map((a) => parseInt(String(a.targetHandle ?? "in:0").split(":")[1], 10)).filter(Number.isFinite) : []}
         onChangerParametre={(nom, val) => {
           if (!sel) return;
-          cacheExec.current.delete(sel.id);
-          // Même règle que l'autre point d'appel, et la même fonction : l'inspecteur doit voir
-          // exactement ce que le nœud reçoit, sans quoi un réglage ajusté n'apparaîtrait pas.
-          const suite = reglagesApresChangement(String(sel.data.ficheId), sel.data.parametres, nom, val);
-          setNodes((nds) => nds.map((n) => {
-            if (n.id !== sel.id) return n;
-            return { ...n, data: { ...n.data, parametres: suite } };
-          }));
-          setSel((prev) => prev ? { ...prev, data: { ...prev.data, parametres: suite } } : null);
-          reinitialiserNoeud(sel.id);
+          // LE MÊME CHEMIN QUE DEPUIS LE NŒUD, et c'est tout ce qui reste ici : l'inspecteur n'a
+          // plus à refaire la règle, seulement à se remettre à jour sur ce qu'elle a produit.
+          const suite = changerReglage(sel.id, nom, val);
+          if (suite) setSel((prev) => (prev ? { ...prev, data: { ...prev.data, parametres: suite } } : null));
         }}
         onChargerFichier={(key, fichier) => {
           if (!sel) return;

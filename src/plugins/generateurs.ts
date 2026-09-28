@@ -18,6 +18,8 @@ import { hasardDuNoeud } from "../core";
  * Retourne null si la note est invalide.
  */
 import { GENRES_ACCORDS_IDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
+import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -27,7 +29,7 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "Produces a sequence of chords based on the key, scale and genre. Each chord is voiced across 3 octaves with arpeggiation.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
+      { ...PARAMETRE_CLE },
       // LES LIBELLÉS VIENNENT DE LA TABLE, comme les identifiants. Ils étaient écrits à la main et
       // en comptaient neuf quand la table en portait onze : le blues et la chromatique existaient
       // dans le moteur et ne se choisissaient nulle part. Relevé par le contrat de réglages.
@@ -36,11 +38,14 @@ export const fiches: FicheAudio[] = ([
       // par comparaison exacte. Remplacer « minor » par le « Natural minor » de la table rendait
       // illisible tout projet qui avait choisi cette gamme. Un test de rétrocompatibilité le tient.
       { nom: "Gamme", nomEn: "Scale", type: "choix",
+        // LES LIBELLÉS ANGLAIS VIENNENT DE LA TABLE EUX AUSSI : onze étaient écrits en clair face à
+        // une liste française qui en dérivait, et les gammes ajoutées y seraient restées invisibles.
         options: GAMMES_ACCORDS.map((g) => g.fr),
-        optionsEn: ["Major","minor","Dorian","Phrygian","Lydian","Mixolydian","Locrian","Major pentatonic","Minor pentatonic","Blues","Chromatic"],
+        optionsEn: GAMMES_ACCORDS.map((g) => g.en),
         optionIds: GAMMES_ACCORDS_IDS, defaut: "Majeur", defautEn: "Major",
-        doc: "Gamme utilisée pour construire les accords : sept modes, deux pentatoniques, le blues et la chromatique.",
-        docEn: "Scale used to build the chords: seven modes, two pentatonics, blues and chromatic." },
+        optionsHeritees: LIBELLES_HERITES_GAMMES,
+        doc: "Gamme employée pour construire les accords. Les sept modes, les trois mineures, les deux pentatoniques, le vocabulaire du jazz avec le blues, l'altérée, les deux dominantes et la bebop, les symétriques avec la gamme par tons, les deux diminuées et l'augmentée, les gammes à seconde augmentée et les deux pentatoniques japonaises, et la chromatique.",
+        docEn: "Scale used to build the chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic." },
       { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], optionIds: GENRES_ACCORDS_IDS, defaut: "pop",
         doc: "Style déterminant la progression d'accords. « Personnalisé » ouvre la saisie d'une progression ci-dessous.",
         docEn: "Style determines the chord progression. Settings: « Custom » to enter your own progression below.", defautEn: "pop" },
@@ -94,7 +99,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Generates a random melody.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["4/4","3/4","6/8"], defautEn: "4/4" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },

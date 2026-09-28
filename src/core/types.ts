@@ -70,11 +70,88 @@ export interface ContexteExecution<TValeur, TRuntime> {
 export type FonctionPlugin<TValeur, TRuntime> = (ctx: ContexteExecution<TValeur, TRuntime>) => Promise<{
   valeurs: TValeur[];
   message?: string;
-  mp3Url?: string;
   // Échec déclaré. Ne pas compter sur le filet « tout-null » : lui seul ne
   // fournit aucun message, et un nœud sans port de sortie n'est pas couvert.
   erreur?: boolean;
+
+  // ── Ce que le composant MONTRE, et c'est un canal déclaré ──
+  //
+  // POURQUOI CES DEUX CHAMPS EXISTENT. Un exécuteur ne pouvait rendre que des valeurs et un
+  // message : tout ce qu'une vue de nœud doit afficher passait donc par un contournement,
+  // `(ctx.noeud.data as any)._quelqueChose = …`, dans le sac non typé que l'interface partage
+  // entre le moteur, les vues, la persistance, le copier-coller et la remise à zéro. Vingt-neuf
+  // champs y étaient écrits par douze composants, et comme ce sac n'a ni type ni propriétaire, le
+  // sens de chacun devait être redit ailleurs, dans sept ensembles globaux et une douzaine de
+  // fichiers réénumérant les mêmes clés. Un contrat global est un contrat que le composant ne peut
+  // ni déclarer ni vérifier : c'est ainsi qu'un champ nouveau survivait à une remise à zéro, et
+  // qu'une liste modifiée pour un composant changeait le comportement des quatre cent quarante-huit.
+  //
+  // LES DEUX SE DISTINGUENT PAR CE QU'UN RÉGLAGE PÉRIME, et cela suffit à les classer sans liste.
+
+  /**
+   * Ce que ce run a PRODUIT, et que la vue montre.
+   *
+   * Une remise à zéro l'efface, et un changement de réglage aussi : le réglage vient de rendre
+   * faux ce que le run avait calculé.
+   */
+  affichage?: Record<string, unknown>;
+
+  /**
+   * Ce que ce run a DÉSIGNÉ DE SES ENTRÉES, et que la vue montre.
+   *
+   * Une remise à zéro l'efface, un changement de réglage le garde : régler ce composant ne touche
+   * pas à ce qu'il a reçu. C'est ce qui permet d'entendre un montage pendant qu'on le règle.
+   *
+   * On y DÉSIGNE, on n'y recopie pas : les tampons nommés là vivent déjà dans le cache
+   * d'exécution des composants d'amont, et les nommer ne coûte rien de plus.
+   */
+  designe?: Record<string, unknown>;
+
+  /**
+   * Ce que le composant demande AU MOTEUR, et non à une vue.
+   *
+   * POURQUOI CE TROISIÈME CANAL EXISTE. Quatre composants parlaient déjà au moteur, et aucun n'avait
+   * d'endroit pour le faire : ils écrivaient un champ convenu sur le nœud, que le moteur relisait
+   * puis remettait à `undefined`. Cela portait un nom, `CHAMPS_SIGNAL_UNIQUE`, et c'était une
+   * quatrième liste de noms de champs tenue à la main — la chose même que les deux autres canaux
+   * ont supprimée. Un cinquième composant, l'export, écrivait le sien sans figurer dans cette liste.
+   *
+   * RIEN DE CECI NE SE POSE SUR LE NŒUD. Le moteur le lit dans le retour du run, agit, et n'en
+   * garde rien : il n'y a donc ni classe à décider, ni remise à zéro à prévoir, ni champ à oublier.
+   * C'est ce qui ramène les classes de trois à deux, la troisième n'ayant jamais décrit que des
+   * champs qui n'avaient pas à être là.
+   */
+  moteur?: DemandeAuMoteur;
 }>;
+
+/** Ce qu'un composant peut demander au moteur. Voir `moteur` dans le retour d'un exécuteur. */
+export interface DemandeAuMoteur {
+  /**
+   * Le graphe à embarquer dans le fichier que ce run écrit.
+   *
+   * Sérialisé, tel qu'il ira dans le WAV : un projet se retrouve ainsi dans le son qu'il a produit.
+   */
+  grapheAEmbarquer?: string;
+  /**
+   * Des nœuds et des arêtes à poser sur le canevas, décrits par leur fiche.
+   *
+   * Une arête désigne ses deux bouts par leur RANG dans `nodes`, et non par un identifiant : le
+   * composant qui décrit un graphe ne connaît pas les identifiants que le canevas donnera.
+   */
+  grapheACreer?: {
+    nodes: { ficheId: string; label: string }[];
+    edges: { source: number; target: number }[];
+  };
+  /**
+   * Un graphe TROUVÉ dans un fichier importé, à poser sur le canevas.
+   *
+   * Distinct du précédent parce qu'il arrive sous la forme d'un graphe enregistré, avec des
+   * identifiants de nœuds, là où l'autre décrit des fiches et des rangs.
+   */
+  grapheTrouve?: { nodes: { id: string; ficheId: string }[]; edges: { source: string; target: string }[] };
+  /** Un composant vient d'être installé : la palette doit se relire. */
+  paletteARelire?: boolean;
+}
 
 export interface PortDef {
   // `type` = id d'un type de flux enregistré dans le domaine (voir
@@ -111,6 +188,17 @@ export interface ParametreDef {
   options?: string[];
   optionsEn?: string[];
   optionIds?: string[];
+  /**
+   * Les libellés que ce choix a portés autrefois, et l'identifiant que chacun désignait.
+   *
+   * POURQUOI CE CHAMP EXISTE. Un projet enregistré garde la valeur d'un choix, et cette valeur se
+   * résout par le RANG du libellé dans `options` ou `optionsEn`. Renommer un libellé, ou en insérer
+   * un, rend donc injoignable une valeur ancienne : le projet rouvert retombe en silence sur le
+   * défaut, ce qui change la musique sans rien dire. Ce champ nomme les anciens libellés, et rien
+   * d'autre ne peut le faire à sa place : deux composants ont pu porter des libellés différents
+   * pour la même option.
+   */
+  optionsHeritees?: Record<string, string>;
   plage?: [number, number];
   pas?: number;
   defaut: string | number;

@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **448 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **455 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 79 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (20) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 83 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (24) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 218 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (10) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 41 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (2) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 42 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 12 | [Export](#export) (5) · [Monitoring](#monitoring) (7) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 83 | [Circle](#circle) (12) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
+| [Other & lab](#other--lab) | 85 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
 
 ## How to read this catalog
 
@@ -286,8 +286,8 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursion levels (higher = denser structure). |
 | Duration | number | 8 s | 2 – 60 s | Generated duration, in seconds. |
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to pick notes (major, minor, pentatonic…). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
 | Timbre | choice | Soft | Soft / Bright / Percussive | Tone color of the synthesis (soft, bright, percussive). |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
@@ -360,7 +360,7 @@ Three voices play three levels of the same Koch snowflake. Each starts from one 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Reference note (tonic) of the base chord. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to quantize the arpeggio notes. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to quantize the arpeggio notes. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the chord. |
 | Chord | choice | Major | Major / Minor / Augmented / Diminished / Sus4 | Triad type forming the base triangle of the snowflake. |
 | Depth | number | 3 | 1 – 5, step 1 | Number of subdivisions of the fastest voice; the other two have one and two fewer. Each level multiplies the cycle length by four: 4 sixteenths at 1, 64 at 3, 1024 at 5. |
@@ -395,8 +395,8 @@ Generates a melody from a self-rewriting grammar. Aristid Lindenmayer, a biologi
 | Axiom | text | `A` |  | The starting word, rewritten on every pass. |
 | Rules | text | `A=AB, B=A` |  | The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and &lt; lengthen and shorten the step, a dot is a rest. |
 | Iterations | number | 5 | 0 – 12, step 1 | Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Tonic of the scale. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | The degrees that + and − walk through: the word never leaves the scale. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Tonic of the scale. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees that + and − walk through: the word never leaves the scale. |
 | Octave | number | 4 | 1 – 7, step 1 | Octave of the starting note. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Speed: one step is an eighth note. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
@@ -427,7 +427,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Length of each note, as a fraction of a beat (1 = a quarter note, 0.5 = an eighth). In Dwell mode it is the average length: from half for points that diverge at once to twice for those of the edge. |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Tempo of the melody in beats per minute. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Reference note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to quantize note pitches. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to quantize note pitches. |
 | Octave | number | 4 | 1 – 6, step 1 | Octave of the lowest note of the range. 4: C4, MIDI note 60. |
 | Sensitivity | number | 1 | 0.1 – 5, step 0.1 | Width of the pitch range. At 1, two octaves of the scale; at 0.5, one; at 2, four. The iteration count is spread over it on a logarithmic scale, so that no note gets stuck at the top of the keyboard. |
 | Inside | choice | Silence | Silence / Low tonic | What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range. |
@@ -445,10 +445,12 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
+| [Chord Run](#chord-run) | Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Evolve a Melody](#evolve-a-melody) | Evolves a population of melodies toward a received sequence's gesture and the wanted span. |
 | [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
 | [Frequency Generator](#frequency-generator) | Generates a pure tone at a given frequency (Hz) or note. |
+| [Harmonic Glissando](#harmonic-glissando) | Slides a whole chord into another, each voice joining its own without ever settling. |
 | [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
 | [Noise Generator](#noise-generator) | Generates white, pink or brownian noise. |
@@ -456,6 +458,8 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Rhythm Tree](#rhythm-tree) | Picks or draws a rhythm written by divisions, and the pitches that go with it. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
+| [Scale Glissando](#scale-glissando) | Slides every degree of a scale onto another's, each onto the one of the same rank. |
+| [Scale Run](#scale-run) | Plays the degrees of a scale one by one, in a key and over as many octaves as wanted. |
 | [Search under Constraints](#search-under-constraints) | Searches for a pitch series satisfying written rules, and says when none exists. |
 | [Spectral Harmony](#spectral-harmony) | Computes a spectrum and returns it as pitches, keeping the deviations from equal temperament. |
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
@@ -533,7 +537,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step. |
 | Seed | number | 0 | 0 – 9999, step 1 | 0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Key of the scale used to map cells to notes. |
-| Scale | choice | Major pentatonic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to convert cell positions into note pitches. |
+| Scale | choice | Major pentatonic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to convert cell positions into note pitches. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the generated MIDI notes. |
 | Note duration | number | 0.2 s | 0.05 – 2 s, step 0.05 | Base duration of each step in seconds. |
 | Velocity | number | 100 | 1 – 127, step 1 | Base MIDI velocity of the generated notes (1-127). |
@@ -557,8 +561,8 @@ Generates a chord progression from the key, scale and genre. Each chord is arpeg
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic | Scale used to build the chords: seven modes, two pentatonics, blues and chromatic. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to build the chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic. |
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style determines the chord progression. Settings: « Custom » to enter your own progression below. |
 | Progression | text | `I-IV-V-I` |  | Custom progression in Roman numerals. I=tonic, IV=subdominant, V=dominant. Ex: I-IV-V-I, ii-V-I, I-V-vi-IV. Used only when Genre = Custom. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -566,6 +570,38 @@ Generates a chord progression from the key, scale and genre. Each chord is arpeg
 | Chord count | number | 8 | 2 – 32, step 1 | Total number of chords. |
 | Extension | choice | None | None / 7th / 6th | Adds a diatonic 7th or 6th (per the chosen scale) to each chord. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Chord Run
+
+`accords-joues` · Inputs → Generation
+
+*Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion.*
+
+Returns the notes of a chord as dated notes, from the chosen root. The MIDI output plugs into anything that reads MIDI, a keyboard included. « Chord » gives the intervals. The 33 qualities on offer come from the common table: the triads, the sevenths and sixths, the ninth, eleventh and thirteenth extensions, the altered chords and the suspended ones. One quality holds for the twelve roots, which makes 396 chords. The declared intervals are the ones that get played, not the theoretical stack: the eleventh chord is played without its third, which would clash a semitone against it, and the dominant thirteenth without its eleventh, for the same reason. The minor eleventh keeps both, the minor third not clashing against the eleventh. « Root » is the bottom note of the un-inverted chord. It moves the whole chord and changes nothing about the gaps between its notes. « Octave » is the root's. Four places middle C. « Range » is the number of octaves covered. Each one replays the same notes, twelve semitones higher. « Inversion » moves the bottom notes up an octave, one per requested degree. That is what changes the bass without changing the chord: the same notes are there, laid out differently. An inversion larger than the chord's number of notes is brought back to the last possible one. « Manner » decides what one hears, and the three do not make the same music. • « Struck » starts every note together and stops them together. That is the chord in a single gesture. • « Arpeggiated » starts them one after another, each released when the next starts. The chord never sounds whole: it is heard note by note. • « Rolled » starts them one after another and holds them all to the end. The chord therefore sounds whole from the last onset, and that is the spread form the harp and the piano play. « Direction » decides the order of the notes, and does nothing on a struck chord, whose notes start together. The round trip goes up then back down without replaying its summit, which is reached once. « Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a struck chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note. « Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a struck chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait. « Tempo » and « Duration » give the chord's length, the duration being counted in beats. « Dynamics » is the velocity of every note, the same throughout. A note that would fall outside MIDI's hundred and twenty-eight is dropped and not folded: bringing it back into range would make it land in the middle of the chord, where it would change the inversion without being asked. The message states how many notes were dropped. « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity. The « Notation » output writes the chord as text, one onset per line and simultaneous notes joined by a plus, in the form a text-to-MIDI converter reads back. That format is sequential and cannot say that a note holds through the next one: a rolled chord reads there as the series of its onsets, and it is the MIDI output that keeps its sustain.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Notation | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Chord | choice | Major | Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality to play. Its intervals come from the common chord table. |
+| Root | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The bottom note of the un-inverted chord. It moves the whole chord and changes nothing about the gaps between its notes. |
+| Octave | slider | 4 | 0 – 8, step 1 | The root's octave. Four places middle C. |
+| Range | slider | 1  octave(s) | 1 – 4  octave(s), step 1 | The number of octaves covered. Each one replays the same notes twelve semitones higher. |
+| Inversion | slider | 0 | 0 – 6, step 1 | Moves the bottom notes up an octave, one per degree. Changes the bass without changing the chord. |
+| Manner | choice | Struck | Struck / Arpeggiated / Rolled | What one hears. The roll starts the notes one after another and holds them all: the chord sounds whole from the last onset. |
+| Direction | choice | Ascending | Ascending / Descending / Round trip | The order of the notes. Has no effect on a struck chord, whose notes start together. |
+| Closing root | choice | No | No / Yes | Adds the root one octave above. It closes an arpeggio, and doubles a struck chord's bass. |
+| Spread | slider | 100 % | 0 – 100 %, step 1 | The share of the duration over which the onsets are laid out. Has no effect on a struck chord, whose notes start at the same instant. |
+| Tempo | slider | 90 BPM | 20 – 300 BPM, step 1 | The speed. With the duration, it gives the chord's length. |
+| Duration | slider | 2  beats | 0.25 – 8  beats, step 0.25 | The chord's length, in beats. |
+| Dynamics | slider | 90 | 1 – 127, step 1 | The velocity of every note, the same throughout. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Volume of the rendered audio. |
 
 #### Custom Sampler
 
@@ -581,8 +617,8 @@ Uses an audio sample as a melodic instrument: the sample is pitched to play a me
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to pick notes (major, minor, pentatonic…). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Duration | number | 4 s | 1 – 60 s | Generated duration, in seconds. |
 | Reference note | number | 60 | 21 – 108 | MIDI note for the original pitch of the sample. |
@@ -612,7 +648,7 @@ Evolves a population of melodies toward what is asked of them, and returns the b
 | Span | number | 0 | 0 – 12, step 0.5 | The mean leap aimed at. At zero, the received sequence's is taken up; without it, the objective does not weigh. |
 | Span weight | number | 1 | 0 – 20, step 0.5 | What the aimed span weighs. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | Population | number | 100 | 10 – 500, step 10 | How many melodies live at each generation. |
@@ -663,6 +699,35 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 | Waveform | choice | Sine | Sine / Square / Saw / Triangle | Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Harmonic Glissando
+
+`glissando-harmonique` · Inputs → Generation
+
+*Slides a whole chord into another, each voice joining its own without ever settling.*
+
+Sounds a chord, slides it into a second one, and holds that one. No note is ever settled during the journey: each voice passes through every intermediate pitch, including those no keyboard carries. This is the motion strings can make and a keyboard instrument cannot. The harmony moves whole, and what is heard midway is neither of the two chords. « Start chord », « Start root », « Start octave » and « Start inversion » describe the first aggregate; the four arrival settings describe the second, in the same way. The inversion decides the voice leading. Voices correspond rank by rank, from lowest to highest: inverting either chord therefore changes which voice joins which, and how wide each glide is. It is the only setting that acts on the shape of the motion rather than on its endpoints. Surplus voices hold in place, and enter or leave. Two chords of different sizes have no obvious correspondence: the number of voices is that of the fuller one, and a voice with no counterpart keeps its pitch rather than being given a destination nobody wrote. Holding a pitch is not sounding. A voice belonging only to the arrival chord enters during the glide, and one belonging only to the starting chord leaves: each held chord is therefore exactly itself, whatever the other one is. The level follows the same rule, spread over what sounds at each instant rather than over the total number of voices. The journey says what enters and what leaves, voice by voice. « Opening hold » and « Closing hold » are the times each chord is held. Without them one would hear only the motion and not what is moving. « Glide » is the journey's length. At zero, the chord switches at once. The glide is even in semitones, not in hertz. An octave covered in hertz spends its first quarter of the time within its first semitone, which is heard as a dragging start followed by a rush; in semitones every instant is worth the same interval, and midway through an octave the voice is at the tritone. « Richness » is the number of harmonic partials per voice. One gives a sine, and the aggregate is then heard exactly as written. Beyond that, the partials glide with their fundamental and thicken the sound without adding anything it did not already have. « Volume » sets the peak level. It accounts for the number of voices and partials, so a full aggregate does not clip. The « Audio » output carries the sound. There is no MIDI output: a MIDI file cannot carry a glide, its note number being a byte and its pitch wheel having one value per channel, hence a single curve for every voice. The « Journey » output gives, voice by voice, the starting note, the arrival note and the gap in semitones, held voices being named as such.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Start chord | choice | Major | Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the start chord. Its intervals come from the common chord table. |
+| Start root | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The root of the start chord. |
+| Start octave | slider | 3 | 0 – 8, step 1 | That root's octave. Four places middle C. |
+| Start inversion | slider | 0 | 0 – 6, step 1 | Moves this chord's bottom notes up an octave. It decides which voice goes to which, hence how wide the glides are. |
+| Arrival chord | choice | Major | Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the arrival chord. Its intervals come from the common chord table. |
+| Arrival root | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The root of the arrival chord. |
+| Arrival octave | slider | 4 | 0 – 8, step 1 | That root's octave. Four places middle C. |
+| Arrival inversion | slider | 0 | 0 – 6, step 1 | Moves this chord's bottom notes up an octave. It decides which voice goes to which, hence how wide the glides are. |
+| Opening hold | slider | 1 s | 0 – 10 s, step 0.1 | The time the starting chord is held before gliding. |
+| Glide | slider | 4 s | 0 – 60 s, step 0.1 | The journey's length. At zero, the chord switches at once. |
+| Closing hold | slider | 1 s | 0 – 10 s, step 0.1 | The time the arrival chord is held after the journey. |
+| Richness | slider | 4  partials | 1 – 12  partials, step 1 | The number of harmonic partials per voice. One gives a sine. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The peak level. It accounts for the number of voices and partials. |
 
 #### Logarithmic Spiral
 
@@ -793,7 +858,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 | Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. |
 | Seed | number | 1 | 0 – 9999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | Maximum leap | number | 7 | 0 – 24, step 1 | The maximum interval between two consecutive notes. At zero, no restraint. |
@@ -817,6 +882,61 @@ The timbre from Jean-Claude Risset's "Introductory Catalogue of Computer Synthes
 | Partials | number | 11 | 1 – 11, step 1 | Number of partials kept, from lowest to highest. Reducing thins the timbre: useful to hear what each one contributes. |
 | Inharmonicity | slider | 100 % | 0 – 100 %, step 1 | 100% = Risset's inharmonic ratios. 0% = each partial snapped onto the nearest integer harmonic: the bell vanishes, leaving an organ-like tone. The most direct demonstration of what makes a bell. |
 | Beating | slider | 100 % | 0 – 400 %, step 5 | Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness. |
+
+#### Scale Glissando
+
+`glissando-de-gamme` · Inputs → Generation
+
+*Slides every degree of a scale onto another's, each onto the one of the same rank.*
+
+Sounds every degree of a scale together, slides them onto a second scale's, and holds that one. Each degree joins the one of the same rank, passing through every intermediate pitch. This is where a continuous glide is worth the most. A major scale becoming maqam Rast sends its third through every intermediate quarter tone, and none of those pitches falls on a key: the journey is unplayable on a keyboard and easy here. « Start scale », « Start tonic » and « Start octave » describe the first one; the three arrival settings describe the second, in the same way. The list carries two sets. The first scales are counted in semitones and therefore fall on a keyboard's keys. The rest are counted in cents: maqamat, ragas and gamelan scales. The two mix freely, a tempered starting scale being able to reach an arrival scale measured in cents. The closing octave is dropped on both sides. Scales measured in cents carry their octave as a degree, tempered ones do not: keeping them would match one scale's first degree to the other's second, and the journey would mean nothing. Each scale is therefore reduced to its degrees below the octave. Surplus degrees hold in place, and enter or leave. A five-degree pentatonic towards a twelve-degree chromatic leaves seven voices with no origin: they keep their pitch rather than being given a start nobody wrote. Holding a pitch is not sounding. A voice belonging only to the arrival scale enters during the glide, and one belonging only to the starting scale leaves: each held scale is therefore exactly itself, whatever the other one is. The level follows the same rule, spread over what sounds at each instant rather than over the total number of voices. The journey says what enters and what leaves, voice by voice. « Opening hold » and « Closing hold » are the times each scale is held. Without them one would hear only the motion and not what is moving. « Glide » is the journey's length. At zero, the scale switches at once. The glide is even in semitones, not in hertz: every instant is worth the same interval, and the motion is heard as even throughout. « Richness » is the number of harmonic partials per voice. One gives a sine, and the aggregate is then heard exactly as written. « Volume » sets the peak level. It accounts for the number of voices and partials, so a twelve-degree scale does not clip. The « Audio » output carries the sound. There is no MIDI output: a MIDI file cannot carry a glide, and could carry a quarter tone no better. The « Journey » output gives, degree by degree, the starting note, the arrival note and the gap in semitones. A note that does not fall on a key carries its offset in cents.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Journey | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Start scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic / Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The start scale. The first in the list are counted in semitones, the rest in cents. |
+| Start tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | That scale's tonic. It moves every degree without changing the gaps between them. |
+| Start octave | slider | 3 | 0 – 8, step 1 | That tonic's octave. Four places middle C. |
+| Arrival scale | choice | Maqam Rast | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic / Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The arrival scale. The first in the list are counted in semitones, the rest in cents. |
+| Arrival tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | That scale's tonic. It moves every degree without changing the gaps between them. |
+| Arrival octave | slider | 3 | 0 – 8, step 1 | That tonic's octave. Four places middle C. |
+| Opening hold | slider | 1.5 s | 0 – 10 s, step 0.1 | The time the starting scale is held before gliding. |
+| Glide | slider | 6 s | 0 – 60 s, step 0.1 | The journey's length. At zero, the scale switches at once. |
+| Closing hold | slider | 1.5 s | 0 – 10 s, step 0.1 | The time the arrival scale is held after the journey. |
+| Richness | slider | 3  partials | 1 – 12  partials, step 1 | The number of harmonic partials per voice. One gives a sine. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The peak level. It accounts for the number of voices and partials. |
+
+#### Scale Run
+
+`gamme-jouee` · Inputs → Generation
+
+*Plays the degrees of a scale one by one, in a key and over as many octaves as wanted.*
+
+Returns the degrees of a scale as dated notes, one by one, from the tonic of the chosen key. The MIDI output plugs into anything that reads MIDI, a keyboard included. « Scale » gives the degrees. The 25 scales on offer are those of the common table: the seven modes, the three minors, the pentatonics, the jazz vocabulary, the symmetrical scales and the scales with an augmented second. « Key » is the tonic, and it moves the whole run without changing anything else: the gaps between degrees are those of the scale, whatever the key. « Octave » is that of the starting tonic. Four places middle C. « Range » is the number of octaves covered. Each one replays the same degrees, twelve semitones higher. « Direction » decides the path. Ascending starts from the tonic; descending makes the same path in reverse; the round trip goes up then back down without replaying its summit, which is reached once. « Closing tonic » ends the run on the tonic's octave. Without it, a scale stops on its last degree, which is heard as an interrupted phrase. Dropping it is what one wants in order to chain two runs, where it would make a doubled note at the joint. « Tempo » is the speed, and one note lasts one beat. « Dynamics » is the velocity of every note, the same throughout. A note that would fall outside MIDI's hundred and twenty-eight is dropped and not folded: bringing it back into range would make it land in the middle of the run, where it would be heard as a mistake. The message states how many notes were dropped. « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity. The « Notation » output writes the run as text, one note per line with its octave and its duration, in the form a text-to-MIDI converter reads back.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Notation | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | The degrees to run through. They come from the common scale table. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic. It moves the whole run and changes nothing about the gaps between degrees. |
+| Octave | slider | 4 | 0 – 8, step 1 | The octave of the starting tonic. Four places middle C. |
+| Range | slider | 1  octave(s) | 1 – 6  octave(s), step 1 | The number of octaves covered. Each one replays the same degrees twelve semitones higher. |
+| Direction | choice | Ascending | Ascending / Descending / Round trip | The path. The round trip goes up then back down without replaying its summit. |
+| Closing tonic | choice | Yes | Yes / No | End the run on the tonic's octave. Drop it to chain two runs, where it would make a doubled note. |
+| Tempo | slider | 90 BPM | 20 – 300 BPM, step 1 | The speed of the run. One note lasts one beat. |
+| Dynamics | slider | 90 | 1 – 127, step 1 | The velocity of every note, the same throughout. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Volume of the rendered audio. |
 
 #### Search under Constraints
 
@@ -842,7 +962,7 @@ Searches for a series of pitches satisfying the written rules, and returns the f
 | Rule 5 | text | — |  | A fifth rule. |
 | Rule 6 | text | — |  | A sixth rule. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | When nothing fits | choice | Approach | Nothing / Approach | « Approach » evolves a population with the same rules taken as cost, and returns the series that breaks the fewest. |
@@ -1134,8 +1254,8 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the harmonic grid. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatic | Scale used to build chords: seven modes, two pentatonics, blues and chromatic. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the harmonic grid. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to build chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic. |
 | Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient / Custom | Style that determines the chord progression. Settings: « Custom » to enter the progression. |
 | Progression | text | `I-V-vi-IV` |  | Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V-I). Used only when Genre = Custom. |
 | Tempo | number | 110 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
@@ -1178,7 +1298,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used to map activations to notes. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
@@ -1222,8 +1342,8 @@ Script: genre=pop, tempo=120, cle=C, gamme=majeur, duree=30
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Genre | choice | pop | pop / rock / jazz / blues / classic / electro / hip hop / reggae / ambient | Musical style, which guides the harmonic and rhythmic choices. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Minor | Scale used to pick notes (major, minor, pentatonic…). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale the piece is built on. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Duration | number | 30 s | 4 – 120 s | Generated duration, in seconds. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -1250,7 +1370,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Connectivity | number | 30 % | 0 – 100 %, step 1 | Probability of connection between neurons. Low = simple patterns; high = dense patterns. |
 | Memory | number | 30 % | 0 – 100 %, step 1 | Leaking rate. High = long memory, slowly evolving patterns; low = brief reactions. |
 | Spectral radius | number | 90 % | 50 – 150 %, step 1 | Network spectral radius. &lt;100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues / chromatic | Scale used to map network activations to notes. |
 | Octave | number | 4 | 2 – 6, step 1 | Starting octave (notes can span 2 octaves above). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
@@ -1280,8 +1400,8 @@ Composes a random melody in the chosen key and scale, over the given number of b
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | Scale used to pick notes (major, minor, pentatonic…). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
+| Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
 | Time signature | choice | 4/4 | 4/4 / 3/4 / 6/8 | Time signature (4/4, 3/4, 6/8…). |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Bars | number | 4 | 1 – 32, step 1 | Number of bars to generate. |
@@ -1476,7 +1596,7 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | [Color Looper](#color-looper) | Step sequencer where each step is a color. |
 | [Food-Music Pairing](#food-music-pairing) | From a tasting profile (sweet, sour, bitter, salty) to an accompanying music, and the written plan of what it does. |
 | [Odour → Motif](#odour--motif) | Builds a motif from an odour, register, consonance and timbre taken from the published odour-sound correspondences. |
-| [Pulsing Circle](#pulsing-circle) | An animation, a melody and its chords drawn from the same series of pulses: colour gives the key, pulsation the rhythm. |
+| [Pulsing Circle](#pulsing-circle) | An animation and a sound drawn from the same series of pulses: a dull beat, a struck rhythm or a melody and its chords, colour giving the key. |
 | [RGB Color](#rgb-color) | Synthesizes an RGB color into three oscillators (R, G, B). |
 | [Visible Spectrum](#visible-spectrum) | Transposes the frequency of a visible color (wavelength) into the audible range. |
 
@@ -1524,8 +1644,8 @@ Step sequencer where each step is a color. Enter a list of colors (hex or rgb), 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Colors | colour list | #e63946,#2a9d8f,#e9c46a,#8e6fce |  | Color palette. Each color = one step of the sequencer. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the scale. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatonic | Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used. |
 | Mode | choice | Melody | Melody / Harmony / Arpeggios | Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave. |
 | Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
@@ -1592,12 +1712,13 @@ This node takes an odour from a list and returns a motif of several voices, as a
 
 `cercle-pulsant` · Inputs → Sensory resonance
 
-*An animation, a melody and its chords drawn from the same series of pulses: colour gives the key, pulsation the rhythm.*
+*An animation and a sound drawn from the same series of pulses: a dull beat, a struck rhythm or a melody and its chords, colour giving the key.*
 
-Produces an animation (a circle that pulses, changing size and colour) and the corresponding piece of music, from a single series of pulses. Each pulse is defined by three values: an instant, a radius and a colour. The animation and the music are both derived from this series, so that the notes fall exactly on the instants drawn. Colour determines the key through the Camelot wheel: • hue selects the position, one per thirty-degree slice • saturation selects the ring: below 50 %, ring A (minor); above, ring B (major) • lightness selects the register, from one octave below to one octave above The Camelot wheel arranges the twelve keys in a circle following the mixing rule used by disc jockeys: adjacent position, same number in the other ring, or seven positions away. Hue being circular as well, two neighbouring hues correspond to two compatible keys, and the « Hue journey » setting produces a coherent sequence of modulations. A direct mapping from hue to semitones would instead assign two unrelated keys to two neighbouring colours. The radius determines the note: • the radius at the moment of the pulse sets the degree in the scale of the position; a large radius gives a low note • the same radius sets the velocity; a large radius gives a loud note • « Breathing » sets the amplitude of the radius variation, hence the range of the scale covered • below « Silence threshold », the pulse is drawn but no note is emitted The chords use the tonic triad of the position, transposed one octave below the melody: • « Held »: one chord per key, sustained until the next modulation • « Struck »: the same chord repeated at each audible pulse • a position whose pulses are all below the threshold receives no chord • « Chord dynamic » sets their velocity; that of the melody ranges from 50 to 120 Outputs: • « Melody » and « Chords »: two separate MIDI files, instrumentable independently • « Audio »: both together, rendered with the selected engine and instrument • « Journey »: the list of keys travelled and the start instant of each The animation is displayed in the node and is not available on an output port. It is produced as SVG animated by SMIL, that is described by time tags rather than a sequence of images; image processing does not apply to it.
+Produces an animation (a circle that pulses, changing size and colour) and the corresponding sound, from a single series of pulses. Each pulse is defined by three values: an instant, a radius and a colour. The animation and the sound are both derived from this series, so that the strikes fall exactly on the instants drawn. « Mode » chooses what is rendered. The picture is the same in all three cases: • « Pulse »: a low sine that dies away fast, one per audible pulse; « Beat frequency » gives its pitch and « Beat length » its decay time • « Rhythm »: the drum voice chosen under « Percussion », struck at each audible pulse • « Melody and chords »: the degrees of the scale and the chord of each position travelled The « Pulse » input takes a series of notes whose onsets replace the generated instants. The received length then applies, and « Duration », « Initial rate » and « Final rate » have no effect. The velocity of the received notes gives the radius, within the amplitude set by « Breathing ». The colour stays set here, and still gives the key and the register. Colour determines the key through the Camelot wheel: • hue selects the position, one per thirty-degree slice • saturation selects the ring: below 50 %, ring A (minor); above, ring B (major) • lightness selects the register, from one octave below to one octave above The Camelot wheel arranges the twelve keys in a circle following the mixing rule used by disc jockeys: adjacent position, same number in the other ring, or seven positions away. Hue being circular as well, two neighbouring hues correspond to two compatible keys, and the « Hue journey » setting produces a coherent sequence of modulations. A direct mapping from hue to semitones would instead assign two unrelated keys to two neighbouring colours. The radius determines the strike: • the radius at the moment of the pulse sets the degree in the scale of the position; a large radius gives a low note • the same radius sets the velocity; a large radius gives a loud strike • « Breathing » sets the amplitude of the radius variation, hence the range of the scale covered • below « Silence threshold », the pulse is drawn but nothing is emitted In « Melody and chords » mode, two settings open the full tables: • « Scale »: on « From the wheel », the ring gives major or minor. One of the 25 named scales applies to every position, which then gives only the tonic • « Chord quality »: on « From the wheel », the ring gives the major or minor triad. One of the 33 named qualities applies to every position, which then gives only the root The chords are transposed one octave below the melody: • « Held »: one chord per key, sustained until the next modulation • « Struck »: the same chord repeated at each audible pulse • a position whose pulses are all below the threshold receives no chord • « Chord dynamic » sets their velocity; that of the melody ranges from 50 to 120 Outputs: • « Melody »: in « Pulse » mode, the beats, all at the same pitch, so they can be written as a measured rhythm; in « Rhythm » mode, the strikes on the drum channel; in « Melody and chords » mode, the melody • « Chords »: the harmony as a separate MIDI file, instrumentable independently. Empty outside « Melody and chords » mode • « Audio »: what the chosen mode sounds, rendered with the selected engine and instrument • « Journey »: the mode used, the list of keys travelled and the start instant of each The animation is displayed in the node and is not available on an output port. It is produced as SVG animated by SMIL, that is described by time tags rather than a sequence of images; image processing does not apply to it.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | Pulse | sequence |  |
 | output | Melody | MIDI |  |
 | output | Audio | audio |  |
 | output | Journey | text |  |
@@ -1605,7 +1726,8 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Duration | slider | 20 s | 2 – 120 s, step 1 | Length of the animation, and of the piece: the two are equal. |
+| Mode | choice | Pulse | Pulse / Rhythm / Melody and chords | What the circle sounds. Pulse: a single dull tone per strike, a low sine that dies away fast. Rhythm: the chosen percussion in place of that tone. Melody and chords: the degrees of the scale and the chord of the position travelled. |
+| Duration | slider | 20 s | 2 – 120 s, step 1 | Length of the animation, and of the piece: the two are equal. Without effect when a pulse is received at the input, which brings its own. |
 | Initial rate | slider | 1.6 /s | 0.2 – 12 /s, step 0.1 | Beats per second at the start. Below one per second one hears isolated events; beyond five, a texture. |
 | Final rate | slider | 3.2 /s | 0.2 – 12 /s, step 0.1 | Beats per second at the end. Different from the initial one, the rate slides continuously from one to the other: not a tempo change but an acceleration, cut into no steps. |
 | Hue | slider | 210 ° | 0 – 359 °, step 1 | Starting colour. Zero is red, 120 green, 240 blue. Every thirty degrees moves one position on the Camelot wheel, hence one key. |
@@ -1614,6 +1736,11 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Lightness | slider | 55 % | 0 – 100 %, step 1 | Lightness of the colour, and register of the melody: a dark colour drops an octave, a light one rises an octave. |
 | Breathing | slider | 80 % | 0 – 100 %, step 1 | Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key still changes. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale. |
 | Silence threshold | slider | 45 % | 0 – 90 %, step 1 | Size below which the pulse does not sound: it is then drawn and silent. The radius never falls below one hundred minus the breathing, so a threshold lower than that cuts nothing. At 65 % breathing, a threshold under 35 % has no effect. |
+| Beat frequency | slider | 60 Hz | 30 – 400 Hz, step 1 | The pitch of the dull tone that marks each strike. Acts in Pulse mode only. |
+| Beat length | slider | 120 ms | 10 – 600 ms, step 5 | The time a beat takes to die away. Acts in Pulse mode only. |
+| Percussion | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
+| Scale | choice | From the wheel | From the wheel / Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | The scale the melody takes its degrees from. From the wheel: saturation picks major or minor. A named scale applies throughout, the position then giving only the tonic. Acts in Melody and chords mode only. |
+| Chord quality | choice | From the wheel | From the wheel / Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the chords laid on each position. From the wheel: the major or minor triad of the ring. A named quality applies throughout, the position then giving only the root. Acts in Melody and chords mode only. |
 | Chords | choice | Held | Held / Struck / None | The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound. |
 | Chord dynamic | slider | 55 % | 0 – 100 %, step 1 | Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it. |
 | Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke, over the length of the note. |
@@ -1698,8 +1825,8 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Swing | number | 0 % | 0 – 60 % | Slightly delays off-beats for a shuffle groove. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 85 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic | Diatonic scale used to build chords on the 7 degrees. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Diatonic scale used to build chords on the 7 degrees. |
 | Octave | number | 3 | 2 – 6, step 1 | Octave of the chord roots. |
 | Mode | choice | Harmony | Harmony / Arpeggio | Harmony = chord played as a block ; Arpeggio = notes quickly staggered. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
@@ -1726,7 +1853,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Swing | number | 0 % | 0 – 60 % | Slightly delays off-beats for a shuffle groove. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 85 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note (tonic) of the scale. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used for the available notes in the grid. |
 | Octave | number | 3 | 2 – 6, step 1 | Starting octave (rows span about 2 octaves above). |
 | Timbre | choice | Triangle | Triangle / Square / Saw / Sine | Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure. |
@@ -4464,7 +4591,7 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
 | Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
@@ -5658,7 +5785,7 @@ Corrects the tuning of a sound by bringing each note onto the nearest degree of 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Root | choice | C | C / C# / D / E♭ / E / F / F# / G / G# / A / B♭ / B | The scale's root. Without effect in chromatic, which contains every note. |
+| Root | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The scale's root. Without effect in chromatic, which contains every note. |
 | Scale | choice | Chromatic | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The allowed degrees. The more a scale has, the less the correction moves the notes: chromatic restores tuning, pentatonic imposes a colour and is heard as an effect. |
 | Strength | slider | 100 % | 0 – 100 %, step 1 | Share of the deviation corrected. At 100 % the note lands exactly on the degree; at 50 % half the vibrato and the attacks survive, which is almost always what one wants. |
 | Transition | slider | 0 ms | 0 – 200 ms, step 1 | How long the correction takes to settle. At zero the pitch jumps from one degree to the next: that is the 1998 effect, and it is one. Around fifty milliseconds, nothing is heard but tuning restored. |
@@ -6033,7 +6160,7 @@ Splits a track into stems. Demucs (HT) = 4 stems (drums, bass, vocals, other). D
 
 *Describes a sound by the N Gabor grains that best explain it, and returns the resulting sketch and what it left behind, separately.*
 
-After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequency dictionaries », IEEE Transactions on Signal Processing 41(12), 1993, applied to sound by Bob L. Sturm and described by Curtis Roads as microsound's atomic decomposition. What the method does, and what exists nowhere else in the catalog. A Fourier transform cuts the sound into a fixed number of cells, all of the same duration: one single scale for a finger snap as for a held note. Here the sound is described by a sum of Gabor grains, sines under a window, chosen one at a time, each where it explains the most of the remaining signal, and taken from several durations at once. An attack takes a short atom, a held note a long one. And you stop when you like: it is a sketch of the sound, whose number of strokes you set. At ten atoms you hear what is nearly enough to recognise a sound without quite recognising it; at a few hundred, it comes back. The question the node asks is that one: how many strokes does a sound need to stay itself? The method's guarantee is that the residual's energy decreases with every atom, since each time the orthogonal projection of what remains is removed. It is also the trap of its implementation: selecting the best candidate goes through a transform, but its coefficient is approximate, windows overlap and atoms are not orthogonal to one another. The projection is therefore computed exactly in the time domain. Taking the transform's coefficient as is would make the residual rise again. Scales are compared at equal window. A window twice as long gathers twice as many samples and would always win without that scaling: the multi-scale dictionary would then be pointless, every attack being described by long atoms that smear it. The second output returns the residual. The sketch alone does not say what its likeness is made of; the residual says exactly what the atoms failed to explain. Wire both into a comparator, or measure them with the spec sheet. The cost is bounded by the number of atoms, not by the sound's duration: each atom means finding the best candidate at each scale, then recomputing only the frames the removed atom just changed. The rest of the sound is not touched.
+After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequency dictionaries », IEEE Transactions on Signal Processing 41(12), 1993, applied to sound by Bob L. Sturm and described by Curtis Roads as microsound's atomic decomposition. What the method does, and what exists nowhere else in the catalog. A Fourier transform cuts the sound into a fixed number of cells, all of the same duration: one single scale for a finger snap as for a held note. Here the sound is described by a sum of Gabor grains, sines under a window, chosen one at a time, each where it explains the most of the remaining signal, and taken from several durations at once. An attack takes a short atom, a held note a long one. And you stop when you like: it is a sketch of the sound, whose number of strokes you set. At ten atoms you hear what is nearly enough to recognise a sound without quite recognising it; at a few hundred, it comes back. The question the node asks is that one: how many strokes does a sound need to stay itself? The method's guarantee is that the residual's energy decreases with every atom, since each time the orthogonal projection of what remains is removed. It is also the trap of its implementation: selecting the best candidate goes through a transform, but its coefficient is approximate, windows overlap and atoms are not orthogonal to one another. The projection is therefore computed exactly in the time domain. Taking the transform's coefficient as is would make the residual rise again. Scales are compared at equal window. A window twice as long gathers twice as many samples and would always win without that scaling: the multi-scale dictionary would then be pointless, every attack being described by long atoms that smear it. The second output returns the residual. The sketch alone does not say what its likeness is made of; the residual says exactly what the atoms failed to explain. Wire both into a comparator, or measure them with the spec sheet. The cost is bounded by the number of atoms, not by the sound's duration: each atom means finding the best candidate at each scale, then recomputing only the frames the removed atom just changed. The rest of the sound is not touched. The « Atoms » output returns the atoms themselves, as dated notes: the instant is the grain's, the duration is its window, the pitch is its frequency and the dynamic its weight relative to the strongest. They are the first channel's. An atom is not a note. A single note produces several, its partials each carrying one and a single attack receiving one per scale: the series is dense, and does not read as a transcription. It is a description of the signal, which the next node is left to sort. The pitch keeps its decimal part, an atom being placed in hertz and not on a semitone. A pitch falling outside the hundred and twenty-eight semitones is dropped rather than folded, which would invent a degree the computation did not produce; the message says how many.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -6041,6 +6168,7 @@ After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequenc
 | output | Sketch | audio |  |
 | output | Residual | audio |  |
 | output | Report | text |  |
+| output | Atoms | sequence |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -7658,6 +7786,7 @@ This node measures five features of a sound (its register, articulation, speed, 
 | Component | Summary |
 |---|---|
 | [Chord Detector](#chord-detector) | Detects the chord progression in the audio signal. |
+| [Pulse](#pulse) | Keeps the short, strong, low atoms of a decomposed sound, and sounds them as a single beating tone. |
 | [Tempo Detector](#tempo-detector) | Estimates an audio track's tempo and outputs it as a reusable value. |
 
 #### Chord Detector
@@ -7676,6 +7805,31 @@ Analyzes the audio signal and detects the chord progression over time. For each 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Analysis window | number | 0.5 s | 0.1 – 5 s, step 0.1 | Duration of each analysis window. Shorter = more time-precise but less stable; longer = more stable but less detailed. |
+
+#### Pulse
+
+`pulsation` · Visualization → Detectors
+
+*Keeps the short, strong, low atoms of a decomposed sound, and sounds them as a single beating tone.*
+
+Draws the strikes from a series of atoms and returns them as a single dull beating tone. A strike is described by a short atom, the decomposition choosing the briefest scale where the signal is most transient; it is strong, an attack carrying most of the energy of its instant; and it is low, that energy concentrating in the bottom of the spectrum. All three read directly off a note: its duration is the atom's scale, its velocity its weight, its pitch its frequency. « Longest atom » drops sustained tones. Beyond this threshold, the atom describes a note that lasts and not the moment it starts. « Highest frequency » drops the treble. The threshold is set in hertz, which is the unit a low register is heard in. « Lowest strength » drops the remainder, as a share of the strongest atom in the received sound. An atom's weight having no absolute scale, an absolute threshold would mean nothing from one sound to another. « Grouping » decides what makes a single strike. One attack receives several atoms, one per partial and one per scale: without grouping, the pulse would be several times too dense. The instant kept is that of the group's earliest atom, an attack starting where it starts. « Beat frequency » and « Beat length » describe the dull tone. Each strike's strength sets its amplitude. « Volume » sets the peak level. Two overlapping strikes add up, and the whole is brought back under this level rather than each strike being clipped, which would distort those that do not overlap. The « Audio » output carries the beating sound. The « Pulse » output carries the strikes as notes, all at the same pitch, so they can be written as a measured rhythm or laid on a timeline. The « Report » output gives the count, the average rate and the irregularity. The irregularity is zero on a perfect grid and one when the intervals' standard deviation equals their mean. This node returns attacks and not a regular grid: finding the isochronous pulse among the attacks is another problem, and the irregularity says how close these come to it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| output | Pulse | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Longest atom | slider | 60 ms | 2 – 400 ms, step 1 | Beyond this, the atom describes a sustained tone and not a strike. |
+| Highest frequency | slider | 250 Hz | 40 – 4000 Hz, step 10 | Above this, it is no longer the low register. A strike's energy concentrates in the bottom of the spectrum. |
+| Lowest strength | slider | 25 % | 0 – 100 %, step 1 | As a share of the strongest atom in the received sound. An absolute threshold would mean nothing from one sound to another. |
+| Grouping | slider | 60 ms | 1 – 500 ms, step 1 | Two atoms closer than this are the same strike. One attack receives one per partial and one per scale. |
+| Beat frequency | slider | 60 Hz | 30 – 400 Hz, step 1 | The pitch of the dull tone that marks each strike. |
+| Beat length | slider | 120 ms | 10 – 600 ms, step 5 | The time a beat takes to die away. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The peak level of the rendered sound. |
 
 #### Tempo Detector
 
@@ -8606,6 +8760,7 @@ Inside a meta-component, connect an inner node's output to this block: it create
 | Component | Summary |
 |---|---|
 | [Circle Complement](#circle-complement) | Returns the circle of the positions the pattern leaves free, and what they play. |
+| [Circle Editor](#circle-editor) | Shows the circle it receives, lets its positions be turned on or off, and returns the edited circle. |
 | [Circle Join](#circle-join) | Puts circles end to end, as a series of turns or as a single longer cycle. |
 | [Circle Loop End](#circle-loop-end) | Closes a variation loop and returns the series of circles produced, one per turn. |
 | [Circle Loop Start](#circle-loop-start) | Opens a variation loop: each pass receives the circle the previous one produced. |
@@ -8617,6 +8772,7 @@ Inside a meta-component, connect an inner node's output to this block: it create
 | [Permute Notes](#permute-notes) | Shuffles the notes between the positions of the circle, the rhythm staying put. |
 | [Rhythm Circle](#rhythm-circle) | Places a rhythm on a circle of equal positions, and draws its inscribed polygon. |
 | [Rotate Circle](#rotate-circle) | Shifts every onset by the same number of positions, the sound following its point. |
+| [Scale Circle](#scale-circle) | Places the degrees of a named scale on a circle, maqamat and gamelan included. |
 
 #### Circle Complement
 
@@ -8634,6 +8790,23 @@ Returns the circle of the positions the received pattern leaves free. The comple
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Drum | choice | Snare | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental. |
+
+#### Circle Editor
+
+`cercle-retouche` · Other & lab → Circle
+
+*Shows the circle it receives, lets its positions be turned on or off, and returns the edited circle.*
+
+Shows on the node the circle arriving at its input, and returns it at its output. A click on a position turns it on or off. The drawing carries the circle as it arrived, and not a circle derived from settings: placed after a transformation, it therefore shows what that transformation did. « Edit » carries the mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is, and that is the state of a node nobody has clicked. The mask can also be typed by hand, and it copies from one node to another. The mask does not freeze the input. It decides what sounds, and nothing else: the number of positions, the kind and the pitches come from the circle received on each pass. Turning the circle upstream therefore changes the pitches under a mask that itself does not move. A circle that changes size upstream neither loses nor invents positions: the mask is truncated if it becomes too long, and completed by what the circle already carries if it becomes too short. A position the input did not light can be lit. It then takes the pitch of the onset preceding it on the turn, the turn closing back on itself: a position before the first onset takes the last of the circle. On a rhythm circle, a single sound standing for the whole turn, any position can be lit without changing anything else. A series of circles received on the input is edited circle by circle, and the drawing shows the first. The message states how many positions were turned off and how many turned on.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Circle | cercle |  |
+| output | Circle | cercle |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. |
 
 #### Circle Join
 
@@ -8838,6 +9011,25 @@ Turns the received circle by a number of positions, and returns the turned circl
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Step | text | `1` |  | The number of positions the circle turns by. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. |
+
+#### Scale Circle
+
+`cercle-gamme` · Other & lab → Circle
+
+*Places the degrees of a named scale on a circle, maqamat and gamelan included.*
+
+Places the degrees of a scale on a circle, one vertex per sounding degree. The scale is chosen by name, rather than by drawing its positions one by one. « Scale » offers two sets in succession. The first are counted in semitones and therefore fall on a keyboard's keys: the modes, the minors, the pentatonics, the jazz vocabulary, the symmetrical scales and the scales with an augmented second. The rest are counted in cents: maqamat, ragas and gamelan scales. A vertex's value having a decimal part, the latter arrive whole on the circle, with their quarter tones and their pure thirds. « Fundamental » is the note of position zero, given with its frequency. It moves the whole circle and changes nothing about the gaps between degrees. « Positions » decides what a turn is worth. • « One position per degree » gives each degree a position: the turn takes as many steps as the scale has degrees, each lasting the same, and it is the only way that suits a scale measured in cents. • « Twelve semitones » lays out twelve positions and lights only the degrees: the angle is then the pitch, and the polygon draws the shape of the scale. A scale measured in cents does not fall on those twelve positions, and two of its neighbouring degrees would meet there: it therefore reverts to the first way, and the message says so. « Closing octave » keeps the degree that reaches the octave. A circle already comes back there on its own, so that degree is dropped by default. It is kept for scales whose octave is not just: slendro's is worth 1208 cents and pelog's 1206, and that is what these scales have that is most notable. No scale counted in semitones reaches the octave, so this setting does nothing to them. The message states the scale's name, the number of positions, and how many degrees fall between two keys. The « Circle » output carries the positions and their pitches, with no duration at all: time is supplied by the node that renders it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Circle | cercle |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic / Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The scale to lay out. The first are counted in semitones, the rest in cents. |
+| Fundamental | choice | C4 · 261.63 Hz | C1 · 32.70 Hz / C#1 · 34.65 Hz / D1 · 36.71 Hz / D#1 · 38.89 Hz / E1 · 41.20 Hz / F1 · 43.65 Hz / F#1 · 46.25 Hz / G1 · 49.00 Hz / G#1 · 51.91 Hz / A1 · 55.00 Hz / A#1 · 58.27 Hz / B1 · 61.74 Hz / C2 · 65.41 Hz / C#2 · 69.30 Hz / D2 · 73.42 Hz / D#2 · 77.78 Hz / E2 · 82.41 Hz / F2 · 87.31 Hz / F#2 · 92.50 Hz / G2 · 98.00 Hz / G#2 · 103.83 Hz / A2 · 110.00 Hz / A#2 · 116.54 Hz / B2 · 123.47 Hz / C3 · 130.81 Hz / C#3 · 138.59 Hz / D3 · 146.83 Hz / D#3 · 155.56 Hz / E3 · 164.81 Hz / F3 · 174.61 Hz / F#3 · 185.00 Hz / G3 · 196.00 Hz / G#3 · 207.65 Hz / A3 · 220.00 Hz / A#3 · 233.08 Hz / B3 · 246.94 Hz / C4 · 261.63 Hz / C#4 · 277.18 Hz / D4 · 293.66 Hz / D#4 · 311.13 Hz / E4 · 329.63 Hz / F4 · 349.23 Hz / F#4 · 369.99 Hz / G4 · 392.00 Hz / G#4 · 415.30 Hz / A4 · 440.00 Hz / A#4 · 466.16 Hz / B4 · 493.88 Hz / C5 · 523.25 Hz / C#5 · 554.37 Hz / D5 · 587.33 Hz / D#5 · 622.25 Hz / E5 · 659.26 Hz / F5 · 698.46 Hz / F#5 · 739.99 Hz / G5 · 783.99 Hz / G#5 · 830.61 Hz / A5 · 880.00 Hz / A#5 · 932.33 Hz / B5 · 987.77 Hz / C6 · 1046.50 Hz | The note of position zero, given with its frequency. Every degree follows from it. |
+| Positions | choice | One position per degree | One position per degree / Twelve semitones | What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones. |
+| Closing octave | choice | No | No / Yes | Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched. |
 
 ### Csound wrapper
 
@@ -9098,7 +9290,7 @@ Draws a Csound score at random. A MIDI file carries only pitch, velocity and dur
 | Instruments | number | 1 | 1 – 8, step 1 | How many instruments to spread the events over, `i1` to `iN`, drawn at random. To be matched with « Csound Orchestra », which numbers its own in the order of the ticked boxes. |
 | Lowest note | slider | 48 | 12 – 120, step 1 | Lowest note the draw can produce. 48 = C2. |
 | Highest note | slider | 84 | 12 – 120, step 1 | Highest note. 84 = C6. |
-| Scale | choice | Chromatic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic | The allowed notes. Each drawn pitch is moved to the nearest one belonging to the scale. An unconstrained draw does not make music: this is precisely what Xenakis constrained most, his distributions being held by chosen registers and densities. |
+| Scale | choice | Chromatic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The allowed notes. Each drawn pitch is moved to the nearest one belonging to the scale. An unconstrained draw does not make music: this is precisely what Xenakis constrained most, his distributions being held by chosen registers and densities. |
 | Pitch distribution | choice | Uniform | Uniform / Gaussian | Uniform: every note of the range is equally likely. Gaussian: notes cluster around the centre of the range, with a standard deviation of a quarter of it, two thirds fall in the central half, and the edges stay reachable. Out-of-range values are folded back rather than clipped, which would otherwise pile them onto the two extreme notes. |
 | Shortest | number | 0.2 s | 0.01 – 20 s, step 0.01 | Shortest duration an event can take. |
 | Longest | number | 1 s | 0.01 – 20 s, step 0.01 | Longest duration. Longer than the mean interval, events overlap, which is how a mass is obtained rather than a succession. |
@@ -9157,8 +9349,8 @@ Extracts the dominant colors of an image and turns them into a musical sequence.
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the scale used. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatonic | Scale used to map hues (7 modes + 2 pentatonic scales, in addition to blues and chromatic). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale used. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map hues. |
 | Mode | choice | Melody | Melody / Harmony / Arpeggio | Melody = one note per color; Harmony = triad chord per color; Arpeggio = triad chord played one note after another. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave of generated notes. |
 | Range | number | 2 | 1 – 3, step 1 | Number of octaves over which lightness can vary notes. |
@@ -9276,8 +9468,8 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the scale. |
-| Scale | choice | major | major / minor / dorian / phrygian / lydian / mixolydian / locrian / major pentatonic / minor pentatonic / blues / chromatonic | Scale used to map hues (7 modes + 2 pentatonic scales, in addition to blues and chromatic). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map hues. |
 | Mode | choice | Melody | Melody / Harmony / Arpeggio | Melody = one note per shape; Harmony = triad chord per shape; Arpeggio = triad chord played one note after another. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave. |
 | Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
@@ -10232,7 +10424,7 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
 | Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. |
 
@@ -10270,7 +10462,7 @@ Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tonic | choice | C | C / C# / D / D# / E / F / F# / G / G# / A / A# / B | Starting tonic. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Starting tonic. |
 | Type | choice | major | major / minor / dorian / mixolydian / lydian / phrygian / locrian | Scale type. |
 
 #### Species Counterpoint

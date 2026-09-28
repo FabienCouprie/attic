@@ -13,7 +13,9 @@
 // naturellement, une fenêtre longue accumulant plus d'échantillons —, la plus longue gagnerait
 // toujours et le dictionnaire multi-échelle ne servirait à rien.
 import { describe, expect, it } from "vitest";
-import { decomposer, echellesEnEchantillons, repartition, type Atome } from "./atomes";
+import {
+  atomesEnNotes, decomposer, echellesEnEchantillons, repartition, type Atome,
+} from "./atomes";
 
 const SR = 44100;
 const ECHELLES = [512, 2048, 8192];
@@ -137,5 +139,68 @@ describe("les échelles proposées", () => {
       { echelle: 8192, debut: 0, frequenceHz: 100, poids: 1, phase: 0 },
     ];
     expect([...repartition(atomes).entries()].sort()).toEqual([[512, 1], [8192, 2]]);
+  });
+});
+
+describe("les atomes rendus comme des notes", () => {
+  // CE PASSAGE EST LE SEUL DU DÉPÔT QUI AILLE D'UN SON VERS UNE SÉQUENCE. Ce qu'il porte doit donc
+  // être juste au sens musical, et non seulement bien typé : un instant en secondes, une durée qui
+  // est la fenêtre, une hauteur qui garde sa virgule, et une nuance qui veuille dire quelque chose.
+  const atome = (o: Partial<Atome>): Atome =>
+    ({ echelle: 2048, debut: 0, frequenceHz: 440, poids: 1, phase: 0, ...o });
+
+  it("L'INSTANT ET LA DURÉE VIENNENT DE LA FENÊTRE, en secondes", () => {
+    const { notes } = atomesEnNotes([atome({ debut: 44100, echelle: 4410 })], SR);
+    expect(notes[0].debut).toBeCloseTo(1, 10);
+    expect(notes[0].fin).toBeCloseTo(1.1, 10);
+  });
+
+  it("LA HAUTEUR GARDE SA VIRGULE, un atome étant placé en hertz", () => {
+    expect(atomesEnNotes([atome({ frequenceHz: 440 })], SR).notes[0].note).toBeCloseTo(69, 10);
+    // Un quart de ton au-dessus du la : 440 × 2^(1/24).
+    const quart = atomesEnNotes([atome({ frequenceHz: 440 * 2 ** (1 / 24) })], SR).notes[0].note;
+    expect(quart).toBeCloseTo(69.5, 6);
+    expect(Number.isInteger(quart)).toBe(false);
+  });
+
+  it("LA NUANCE EST RELATIVE AU PLUS FORT, le coefficient n'ayant pas d'échelle absolue", () => {
+    const { notes } = atomesEnNotes(
+      [atome({ poids: 1, debut: 0 }), atome({ poids: 0.5, debut: 100 }), atome({ poids: -1, debut: 200 })], SR,
+    );
+    expect(notes[0].velocite).toBe(127);
+    expect(notes[1].velocite).toBeGreaterThan(50);
+    expect(notes[1].velocite).toBeLessThan(90);
+    // LE SIGNE DU COEFFICIENT NE DIT RIEN DE LA FORCE : une projection négative est une phase, non
+    // une note plus faible.
+    expect(notes[2].velocite).toBe(127);
+  });
+
+  it("DEUX PRISES DU MÊME CONTENU À DIX DÉCIBELS D'ÉCART DONNENT LES MÊMES NUANCES", () => {
+    const suite = [atome({ poids: 1 }), atome({ poids: 0.4, debut: 100 })];
+    const forte = suite.map((a) => ({ ...a, poids: a.poids * 3.16 }));
+    expect(atomesEnNotes(forte, SR).notes.map((n) => n.velocite))
+      .toEqual(atomesEnNotes(suite, SR).notes.map((n) => n.velocite));
+  });
+
+  it("CE QUI SORT DES 128 DEMI-TONS EST ÉCARTÉ, et compté", () => {
+    // Sous vingt hertz et près de la moitié de la fréquence d'échantillonnage, la poursuite place
+    // des atomes qu'aucune hauteur MIDI ne nomme.
+    const { notes, ecartees } = atomesEnNotes(
+      [atome({ frequenceHz: 2 }), atome({ frequenceHz: 440 }), atome({ frequenceHz: 20000 })], SR,
+    );
+    expect(notes.length).toBe(1);
+    expect(ecartees).toBe(2);
+    expect(notes[0].note).toBeCloseTo(69, 10);
+  });
+
+  it("LES NOTES SONT RANGÉES DANS LE TEMPS, une séquence se lisant de gauche à droite", () => {
+    const { notes } = atomesEnNotes(
+      [atome({ debut: 3000 }), atome({ debut: 0 }), atome({ debut: 1500 })], SR,
+    );
+    expect(notes.map((n) => n.debut)).toEqual([0, 1500 / SR, 3000 / SR]);
+  });
+
+  it("aucun atome ne fait aucune note", () => {
+    expect(atomesEnNotes([], SR)).toEqual({ notes: [], ecartees: 0 });
   });
 });

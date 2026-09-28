@@ -94,7 +94,7 @@ export const fiches: FicheAudio[] = ([
 
       const mesure = mesurer(audio);
       const parts = profil(mesure.dimensions);
-      (ctx.noeud.data as Record<string, unknown>)._profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
+      const profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
 
       const midi = new File([octets as unknown as BlobPart], `${odeur.id}.mid`, { type: "audio/midi" });
       const v = (x: number, d = 2) => (anglais ? x.toFixed(d) : x.toFixed(d).replace(".", ","));
@@ -136,6 +136,7 @@ export const fiches: FicheAudio[] = ([
       const tete = parts.slice(0, 2).map((p) => `${noms[p.gout] ?? p.gout} ${Math.round(p.part * 100)} %`).join(" · ");
       return {
         valeurs: [audio, midi, rapport.join("\n")],
+        affichage: { profilGout },
         message: `${nomOdeur} · ${nomDeNote(motif.noteCentre)} · ${tete} · ${audio.duration.toFixed(1)} s`,
       };
     },

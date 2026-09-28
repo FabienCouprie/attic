@@ -36,9 +36,7 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  CHAMPS_GARDES_AU_REGLAGE, CHAMPS_RESULTAT, CHAMPS_SIGNAL_UNIQUE, CHAMPS_UTILISATEUR,
-} from "./useExecutionGraphe";
+import { CHAMPS_GARDES_AU_REGLAGE, CHAMPS_RESULTAT, CHAMPS_UTILISATEUR } from "./useExecutionGraphe";
 
 /**
  * Les champs qu'un exécuteur pose sans qu'on ait décidé de leur classe.
@@ -52,7 +50,13 @@ import {
 const A_CLASSER = new Set<string>([]);
 
 /** `data.X =`, `(ctx.noeud.data as any).X =`, `n.data.X =`. */
-const ECRITURE = /(?<![A-Za-z0-9_])data(?:\s+as\s+any)?\s*\)?\s*\.([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)/g;
+// L'AFFIRMATION DE TYPE EST QUELCONQUE, et c'est ce qui manquait. Le motif ne reconnaissait que
+// `data as any)`, si bien qu'une écriture sous `data as Record<string, unknown>)` passait. DEUX
+// champs y sont restés sur quatre écritures : `_animationSvg` du cercle pulsant, et `_profilGout`
+// de Goût, Parfum et Accord mets. Tous quatre écrits de la même main, et tous quatre invisibles au
+// relevé pendant que son premier cas affirmait « plus aucun composant ne pose de champ ». Un garde
+// qui cherche une ORTHOGRAPHE laisse entrer par l'autre porte ; celui-ci cherche la forme.
+const ECRITURE = /(?<![A-Za-z0-9_])data(?:\s+as\s+[^)]*)?\s*\)?\s*\.([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)/g;
 
 function sourcesPlugins(dossier = join("src", "plugins"), out: string[] = []): string[] {
   for (const e of readdirSync(dossier, { withFileTypes: true })) {
@@ -81,7 +85,6 @@ const classe = (champ: string): string =>
   [
     CHAMPS_UTILISATEUR.has(champ) && "utilisateur",
     CHAMPS_RESULTAT.has(champ) && "résultat",
-    CHAMPS_SIGNAL_UNIQUE.has(champ) && "signal unique",
   ].filter(Boolean).join(" + ") || "";
 
 describe("les champs qu'un exécuteur pose sur un nœud", () => {
@@ -90,10 +93,15 @@ describe("les champs qu'un exécuteur pose sur un nœud", () => {
   it("LE RELEVÉ VOIT CE QU'IL PRÉTEND VOIR : deux témoins dont la réponse est connue", () => {
     // Avant de croire un banc, lui faire mesurer un cas dont on connaît déjà la réponse. Sans ces
     // deux-là, un motif qui cesserait de mordre rendrait une liste vide, donc une suite au vert.
-    expect([...ecrits.keys()], "le relevé ne trouve plus les tampons du Montage").toContain("_montageSons");
-    expect([...ecrits.keys()], "le relevé ne trouve plus le graphe engendré").toContain("_grapheGenere");
-    expect(classe("_montageSons")).toBe("résultat");
-    expect(classe("_grapheGenere")).toBe("signal unique");
+    // LE TÉMOIN A DÛ ÊTRE REPRIS TROIS FOIS, et c'est la mesure de la migration : les tampons du
+    // Montage, puis le film du Montage vidéo, puis le graphe d'export, chacun ayant quitté le sac
+    // pour un canal déclaré. Le relevé a signalé sa disparition à chaque fois plutôt que de passer au
+    // vert sur une liste devenue vide, ce qui est exactement ce qu'on lui demande. Il n'y a plus AUCUN
+    // champ posé par un exécuteur : le témoin est donc l'absence elle-même, et le motif est éprouvé
+    // sur ce que le MOTEUR dépose, qui existe toujours.
+    expect([...ecrits.keys()], "plus aucun composant ne pose de champ sur un nœud").toEqual([]);
+    expect(classe("audioResultatUrl"), "le motif des classes doit encore répondre").toBe("résultat");
+    expect(classe("audioFichier"), "et distinguer une saisie d'un résultat").toBe("utilisateur");
   });
 
   it("CHACUN EST CLASSÉ, ou nommé dans la table de ce qui reste à faire", () => {
@@ -114,15 +122,43 @@ describe("les champs qu'un exécuteur pose sur un nœud", () => {
     expect(perimes, "à retirer de A_CLASSER : ces champs sont rangés ou n'existent plus").toEqual([]);
   });
 
-  it("UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES", () => {
-    // CE QUE CE CAS ATTRAPE, relevé par Fabien : « l'écoute vivante fonctionnait hier et ne
-    // fonctionne plus ». Les tampons du Montage sont entrés dans CHAMPS_RESULTAT pour que le dessin
-    // ne survive pas à l'exécution qui l'a produit, et un changement de réglage passe par la même
-    // remise à zéro : bouger un gain les effaçait, le graphe vivant n'avait plus rien à jouer et
-    // s'arrêtait. Régler en écoutant redevenait impossible, ce qui est le défaut même qu'il corrige.
-    for (const champ of ["_montageSons", "_dureesMesurees", "_maquetteNotes"]) {
-      expect(CHAMPS_GARDES_AU_REGLAGE.has(champ), `${champ} doit survivre à un changement de réglage`).toBe(true);
+  it("IL N'Y A PLUS QUE DEUX CLASSES, la troisième n'ayant décrit que des champs déplacés", () => {
+    // `CHAMPS_SIGNAL_UNIQUE` nommait trois champs qu'un composant posait sur un nœud pour parler au
+    // MOTEUR, et que le moteur relisait puis remettait à `undefined`. Ils passent par `moteur`, dans
+    // le retour de l'exécuteur : rien ne se pose, donc rien n'a de classe à recevoir.
+    const source = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8");
+    expect(source).not.toMatch(/export const CHAMPS_SIGNAL_UNIQUE/);
+    const contrat = readFileSync(join("src", "core", "types.ts"), "utf8");
+    expect(contrat, "le canal du moteur doit être déclaré").toMatch(/moteur\?:\s*DemandeAuMoteur/);
+  });
+
+  it("LE CANAL DÉCLARÉ PORTE LA CLASSE, et deux clés suffisent aux 448", () => {
+    // CE QUE CE CAS TIENT. `affichage` est ce qu'un run a produit : une remise à zéro l'efface, et
+    // un réglage aussi, puisqu'il vient de le rendre faux. `designe` est ce que le run a reçu de ses
+    // entrées : la remise à zéro l'efface, un réglage le garde. C'est cette seule distinction qui
+    // permet d'entendre un montage pendant qu'on le règle, et elle ne se déclare plus champ par
+    // champ — trois entrées y figuraient avant que le Montage et la Maquette passent au canal.
+    expect(CHAMPS_RESULTAT.has("_affichage"), "une remise à zéro doit effacer l'affichage").toBe(true);
+    expect(CHAMPS_RESULTAT.has("_designe"), "une remise à zéro doit effacer le désigné").toBe(true);
+    expect(CHAMPS_GARDES_AU_REGLAGE.has("_designe"), "un réglage doit garder le désigné").toBe(true);
+    expect(CHAMPS_GARDES_AU_REGLAGE.has("_affichage"), "un réglage doit périmer l'affichage").toBe(false);
+  });
+
+  it("ET LE CANAL DU MOTEUR NE POSE RIEN : il n'est dans aucune classe", () => {
+    // Une demande au moteur qui se retrouverait dans une classe serait une demande stockée, donc un
+    // champ de plus à effacer un jour. Elle ne doit être nulle part.
+    for (const c of ["moteur", "_moteur", "_grapheGenere", "_grapheEmbarque", "_nodeInstalle", "_grapheExport"]) {
+      expect(classe(c), `${c} ne doit plus avoir de classe`).toBe("");
     }
+  });
+
+  it("ET LE CANAL EST DÉCLARÉ DANS LE CONTRAT D'EXÉCUTEUR, non dans une convention de nommage", () => {
+    // Un champ préfixé d'un blanc souligné écrit dans le sac de l'interface n'engage personne : le
+    // composant ne peut ni le déclarer ni être confronté à lui. Ici le type le porte, donc le
+    // compilateur le tient.
+    const contrat = readFileSync(join("src", "core", "types.ts"), "utf8");
+    expect(contrat).toMatch(/affichage\?:\s*Record<string, unknown>/);
+    expect(contrat).toMatch(/designe\?:\s*Record<string, unknown>/);
   });
 
   it("ET CE QU'UN RÉGLAGE GARDE RESTE UN RÉSULTAT : le bouton de remise à zéro l'efface", () => {
@@ -132,8 +168,10 @@ describe("les champs qu'un exécuteur pose sur un nœud", () => {
     expect(hors, "un champ gardé au réglage doit rester dans CHAMPS_RESULTAT").toEqual([]);
   });
 
-  it("LES TROIS CLASSES NE SE TOUCHENT PAS : un champ n'en a qu'une", () => {
-    const doubles = [...ecrits.keys(), ...CHAMPS_RESULTAT, ...CHAMPS_SIGNAL_UNIQUE]
+  it("LES DEUX CLASSES NE SE TOUCHENT PAS : un champ n'en a qu'une", () => {
+    // Un champ à la fois saisie et résultat serait effacé par une remise à zéro alors qu'il
+    // appartient à la personne : c'est un fichier chargé qui s'évapore.
+    const doubles = [...ecrits.keys(), ...CHAMPS_RESULTAT, ...CHAMPS_UTILISATEUR]
       .filter((champ) => classe(champ).includes("+"));
     expect(doubles).toEqual([]);
   });

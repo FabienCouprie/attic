@@ -6,6 +6,7 @@ import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
 import { degresGammeMelodie } from "./generation-melodie";
 import { caractereTimbre } from "./timbres";
+import { intervallesDaccord } from "./qualites-accords";
 
 export type AccordKoch = "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";
 export type DirectionKoch = "alternée" | "extérieure" | "intérieure";
@@ -34,12 +35,15 @@ export interface OptionsArpegeKoch {
 /** Profondeur maximale : au-delà, le cycle de la voix la plus lente dépasserait la demi-heure. */
 export const PROFONDEUR_MAX = 5;
 
+// LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. Les clés restent les noms
+// français que le réglage du composant offre, et la table les connaît en alias : un projet
+// enregistré retrouve donc son accord.
 const INTERVALLES_ACCORD: Record<AccordKoch, number[]> = {
-  Majeur: [0, 4, 7],
-  Mineur: [0, 3, 7],
-  Augmenté: [0, 4, 8],
-  Diminué: [0, 3, 6],
-  Sus4: [0, 5, 7],
+  Majeur: intervallesDaccord("Majeur"),
+  Mineur: intervallesDaccord("Mineur"),
+  Augmenté: intervallesDaccord("Augmenté"),
+  Diminué: intervallesDaccord("Diminué"),
+  Sus4: intervallesDaccord("Sus4"),
 };
 
 export function snapperNote(midi: number, degresGamme: number[]): number {

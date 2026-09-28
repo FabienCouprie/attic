@@ -93,7 +93,7 @@ export const fiches: FicheAudio[] = ([
 
       const mesure = mesurer(audio);
       const parts = profil(mesure.dimensions);
-      (ctx.noeud.data as Record<string, unknown>)._profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
+      const profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
 
       const midi = new File([octets as unknown as BlobPart], `accord-${dominant.gout}.mid`, { type: "audio/midi" });
       const v = (x: number, d = 2) => (anglais ? x.toFixed(d) : x.toFixed(d).replace(".", ","));
@@ -141,6 +141,7 @@ export const fiches: FicheAudio[] = ([
       ];
       return {
         valeurs: [audio, midi, plan.join("\n")],
+        affichage: { profilGout },
         message: `${nomDominant} · ${anglais ? instrument.nomEn : instrument.nom} · ${nomDeNote(motif.noteCentre)} · ${audio.duration.toFixed(1)} s`,
       };
     },

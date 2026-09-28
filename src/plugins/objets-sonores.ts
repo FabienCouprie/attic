@@ -153,25 +153,21 @@ export const fiches: FicheAudio[] = ([
         });
         pistes.push({ piste: k, duree: son.duration });
       }
-      // La ligne de temps de l'inspecteur a besoin des durées réelles, que seule l'exécution connaît.
-      // LE CHAMP EST PARTAGÉ AVEC LA MAQUETTE, qui s'en sert pour la même raison : son nom ne dit
-      // donc plus « montage », qui aurait égaré celui qui l'aurait lu depuis l'autre composant.
-      (ctx.noeud.data as any)._dureesMesurees = pistes;
-      // LES TAMPONS DES PISTES, DÉSIGNÉS ET NON RECOPIÉS. La ligne de temps en a besoin pour dessiner
-      // la forme d'onde de chaque piste, et pour les faire entendre pendant qu'on règle. Ce sont les
-      // tampons des composants en amont, qui vivent déjà dans le cache d'exécution : les nommer ici ne
-      // coûte rien de plus, et le champ préfixé d'un blanc souligné n'est pas enregistré avec le
-      // projet. Le montage vidéo garde les siens de la même façon, pour la même raison.
-      (ctx.noeud.data as any)._montageSons = Object.fromEntries(
-        plans.map((p, i) => [pistes[i].piste, p.son]),
-      );
-      if (!plans.length) return { valeurs: [null], message: en() ? "No track connected." : "Aucune piste branchée." };
+      // CE QUE LA LIGNE DE TEMPS MONTRE PASSE PAR LE CANAL DÉCLARÉ, et non plus par le sac de
+      // l'interface. `designe` dit que tout cela vient des ENTRÉES : les durées sont celles des sons
+      // reçus, les tampons sont ceux des composants d'amont, désignés et non recopiés puisqu'ils
+      // vivent déjà dans le cache d'exécution. Régler une piste ne périme donc rien de tout cela, et
+      // c'est ce qui permet d'entendre le montage pendant qu'on le règle. Voir `FonctionPlugin`.
+      const designe = { durees: pistes, sons: Object.fromEntries(plans.map((p, i) => [pistes[i].piste, p.son])) };
+      if (!plans.length) {
+        return { valeurs: [null], designe, message: en() ? "No track connected." : "Aucune piste branchée." };
+      }
       const brut = await monter(plans);
       // LE MONTAGE REND SA SOMME, SANS RETOUCHE DE NIVEAU. Le niveau de chaque piste est déjà réglé
       // piste par piste, et c'est là qu'il se décide ; imposer une sonie au mélange reviendrait à
       // reprendre par-dessus ce qui vient d'être posé à la main.
       const pistesDites = `${plans.length} ${en() ? "tracks" : "pistes"}`;
-      return { valeurs: [brut], message: `${pistesDites} · ${brut.duration.toFixed(2)} s` };
+      return { valeurs: [brut], designe, message: `${pistesDites} · ${brut.duration.toFixed(2)} s` };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

@@ -84,25 +84,29 @@ export const fiches: FicheAudio[] = ([
 
       const enVoix = ctx.paramTexte("Une voix par boîte", "oui") !== "non";
       const { sequence, blocs: poses } = poserMaquette(blocs, { enVoix });
-      // LA LIGNE DE TEMPS DE L'INSPECTEUR A BESOIN DES DURÉES RÉELLES, que seule l'exécution
-      // connaît : une boîte dont la durée reste à zéro garde celle de son contenu, et sa barre doit
-      // la montrer plutôt qu'une largeur nominale.
-      (ctx.noeud.data as any)._dureesMesurees = poses.map((b, i) => ({ piste: ports[i], duree: b.duree }));
-      // LES NOTES DE CHAQUE BOÎTE, RAMENÉES À SA DURÉE PROPRE. La ligne de temps les dessine dans la
-      // barre de la boîte : sans elles, la barre dirait la place et la durée d'une boîte et rien de ce
-      // qu'elle contient, et l'on poserait une boîte sans voir ce qu'on pose. Des fractions suffisent,
-      // une durée imposée étirant le contenu dans un rapport unique et une transposition déplaçant
-      // toutes les hauteurs du même intervalle : ni l'une ni l'autre ne change le dessin relatif. Le
-      // champ préfixé d'un blanc souligné n'est pas enregistré avec le projet.
-      (ctx.noeud.data as any)._maquetteNotes = Object.fromEntries(blocs.map((b, i) => {
-        const propre = dureeSequence(b.sequence);
-        if (!(propre > 0)) return [ports[i], []];
-        return [ports[i], b.sequence.notes.map((nt) => ({
-          debut: nt.debut / propre,
-          duree: Math.max(0, nt.fin - nt.debut) / propre,
-          note: nt.note,
-        }))];
-      }));
+      // CE QUE LA LIGNE DE TEMPS MONTRE PASSE PAR LE CANAL DÉCLARÉ. `designe` dit que tout cela vient
+      // des ENTRÉES, donc qu'un réglage de ce composant ne le périme pas.
+      //
+      // LES DURÉES, que seule l'exécution connaît : une boîte dont la durée reste à zéro garde celle
+      // de son contenu, et sa barre doit la montrer plutôt qu'une largeur nominale.
+      //
+      // LES NOTES DE CHAQUE BOÎTE, RAMENÉES À SA DURÉE PROPRE : sans elles, la barre dirait la place
+      // et la durée d'une boîte et rien de ce qu'elle contient, et l'on poserait une boîte sans voir
+      // ce qu'on pose. Des fractions suffisent, une durée imposée étirant le contenu dans un rapport
+      // unique et une transposition déplaçant toutes les hauteurs du même intervalle : ni l'une ni
+      // l'autre ne change le dessin relatif.
+      const designe = {
+        durees: poses.map((b, i) => ({ piste: ports[i], duree: b.duree })),
+        notes: Object.fromEntries(blocs.map((b, i) => {
+          const propre = dureeSequence(b.sequence);
+          if (!(propre > 0)) return [ports[i], []];
+          return [ports[i], b.sequence.notes.map((nt) => ({
+            debut: nt.debut / propre,
+            duree: Math.max(0, nt.fin - nt.debut) / propre,
+            note: nt.note,
+          }))];
+        })),
+      };
       const lignes = poses.map((b, i) => {
         const etire = Math.abs(b.facteur - 1) > 1e-9
           ? `  ×${b.facteur.toFixed(3)}`
@@ -117,6 +121,7 @@ export const fiches: FicheAudio[] = ([
         + `${compterVoix(sequence)} ${en() ? "voices" : "voix"}`;
       return {
         valeurs: [sequence as Sequence, [entete, "", ...lignes].join("\n")],
+        designe,
         message: entete,
       };
     },

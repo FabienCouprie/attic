@@ -154,6 +154,8 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Simple player to preview a music folder (shuffle, loop, volume control).",
     entrees: [], sorties: [],
     affichageAutonome: true,
+    // Son résultat dépend du contenu d'un dossier du disque, que les empreintes du cache ne
+    // regardent pas : un fichier ajouté ou retiré ne changerait aucune d'elles.
     jamaisCache: true,
     parametres: [
       { nom: "Chemin", nomEn: "Path", type: "dossier", defaut: "music collection", defautEn: "music collection",

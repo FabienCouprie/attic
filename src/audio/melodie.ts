@@ -6,21 +6,18 @@
 
 import type { NoteEvenement } from "./midi-sequence";
 import { formeOndeDepuisTimbre } from "./timbres";
+import { degresDeGamme } from "./gammes";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
-const GAMMES: Record<string, number[]> = {
-  "majeur": [0, 2, 4, 5, 7, 9, 11],
-  "mineur": [0, 2, 3, 5, 7, 8, 10],
-  "pentatonique majeur": [0, 2, 4, 7, 9],
-  "pentatonique mineur": [0, 3, 5, 7, 10],
-  "blues": [0, 3, 5, 6, 7, 10],
-};
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `audio/gammes.ts`. Une table privée ici redisait
+// ce qu'elle dit, et sept copies du même savoir ne restent pas d'accord : les anciennes
+// orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 function intervallesGamme(nom: string): number[] {
-  return GAMMES[nom] ?? GAMMES["majeur"];
+  return degresDeGamme(nom, "majeur");
 }
 
 // Calcule le numéro de note MIDI pour la rangée r (0 = grave, NB_RANGEES-1 = aigu).

@@ -64,7 +64,7 @@ function VideoDeNoeud({ url, nom }: { url: string; nom: string }) {
 
 export function VueDemonstration({ data }: VueProps) {
   const { t } = useI18n();
-  const url = (data as { _demoVideoUrl?: string })._demoVideoUrl;
+  const url = (data as { _affichage?: { videoUrl?: string } })._affichage?.videoUrl;
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       {url ? <VideoDeNoeud url={url} nom="demonstration.webm" />
@@ -141,8 +141,13 @@ export function VueSortieTexte({ data }: VueProps) {
 // déposer ; la première frappe le recopie dans le réglage, et il devient le texte du nœud.
 export function VueModifierTexte({ id, data }: VueProps) {
   const { t } = useI18n();
-  const d = data as { _texteRecu?: string; onChangerParametre?: (id: string, nom: string, v: string | number) => void };
-  const recu = String(d._texteRecu ?? "");
+  // Le texte reçu vient du canal déclaré de l'exécuteur, sous `designe` : il décrit l'ENTRÉE, donc
+  // écrire dans la zone ne le périme pas et il reste sous les yeux pendant qu'on corrige.
+  const d = data as {
+    _designe?: { texteRecu?: string };
+    onChangerParametre?: (id: string, nom: string, v: string | number) => void;
+  };
+  const recu = String(d._designe?.texteRecu ?? "");
   const ecrit = String(data.parametres?.["Texte"] ?? "");
   const [valeur, setValeur] = useState(ecrit || recu);
 

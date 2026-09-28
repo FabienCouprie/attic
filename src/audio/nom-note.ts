@@ -15,18 +15,42 @@
 // AUCUN IMPORT ICI, comme dans `note.ts` : ce calcul est réclamé par l'interface comme par l'audio,
 // et il ne doit rien faire venir derrière lui.
 
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+/**
+ * L'altération dans laquelle une hauteur s'écrit.
+ *
+ * POURQUOI LE CHOIX EXISTE, relevé par Fabien : le trajet d'un glissando écrivait « D#4 F#4 A#4 »
+ * pour un accord de MI BÉMOL mineur septième, dont les notes s'écrivent mi♭ sol♭ si♭ ré♭. Les
+ * deux graphies désignent la même touche et ne se valent pas : une tonalité bémolisée ne s'écrit
+ * pas en dièses, et le lecteur qui cherche sa tierce ne la reconnaît plus.
+ *
+ * IL N'Y A PAS DE BONNE RÉPONSE SANS CONTEXTE, et c'est pourquoi ce module ne la devine pas. La
+ * graphie juste dépend de la tonalité, que seul l'appelant connaît ; à défaut, le dièse reste,
+ * comme avant.
+ */
+export type Alteration = "diese" | "bemol";
+
+const NOMS_DIESE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 /**
- * Le nom de la voisine la plus proche, sans rien dire de l'écart : « A#4 ».
+ * Les mêmes douze touches, bémolisées.
+ *
+ * LE BÉMOL S'ÉCRIT `b` ET NON `♭`, et il le faut : ces noms se relisent. L'éditeur ABC par modèle
+ * de langue et le convertisseur de texte en MIDI attendent tous deux une lettre, une altération et
+ * un chiffre, et n'acceptent que `#` ou `b`. Un signe typographique y serait rejeté.
+ */
+const NOMS_BEMOL = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+/**
+ * Le nom de la voisine la plus proche, sans rien dire de l'écart : « A#4 », ou « Bb4 » en bémols.
  *
  * C'est la forme qu'attend un format qui se relit — l'éditeur ABC par modèle de langue rend les
  * noms à un modèle, puis les relit avec une expression régulière qui n'accepte qu'une lettre, une
  * altération et un chiffre. Un écart y serait rejeté.
  */
-export function nomNoteRond(note: number): string {
+export function nomNoteRond(note: number, alteration: Alteration = "diese"): string {
   const proche = Math.round(note);
-  return NOMS[((proche % 12) + 12) % 12] + (Math.floor(proche / 12) - 1);
+  const noms = alteration === "bemol" ? NOMS_BEMOL : NOMS_DIESE;
+  return noms[((proche % 12) + 12) % 12] + (Math.floor(proche / 12) - 1);
 }
 
 /**
@@ -40,9 +64,9 @@ export function nomNoteRond(note: number): string {
  * UN QUART DE TON EXACT EST À ÉGALE DISTANCE DE SES DEUX VOISINES, et les deux noms le décrivent
  * aussi bien. L'arrondi va vers le haut : 69,5 se dit « A#4−50 » et non « A4+50 ».
  */
-export function nomNote(note: number): string {
+export function nomNote(note: number, alteration: Alteration = "diese"): string {
   const proche = Math.round(note);
   const ecart = Math.round((note - proche) * 100);
-  const nom = nomNoteRond(note);
+  const nom = nomNoteRond(note, alteration);
   return ecart === 0 ? nom : `${nom}${ecart > 0 ? "+" : "−"}${Math.abs(ecart)}`;
 }

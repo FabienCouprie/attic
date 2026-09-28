@@ -23,7 +23,10 @@
 // une note forte.
 
 import { camelotToAccord } from "./camelot";
+import { degresDeGamme } from "./gammes";
 import type { NoteEvenement } from "./midi-sequence";
+import type { Frappe } from "./pulsation";
+import { intervallesDaccord } from "./qualites-accords";
 
 /** Une pulsation : un instant, une taille, une couleur. Tout le reste en découle. */
 export interface Pulsation {
@@ -71,6 +74,86 @@ export interface OptionsPulsations {
 export interface OptionsCercle extends OptionsPulsations {
   /** Rayon en deçà duquel la pulsation ne sonne pas : le silence a une image. */
   seuilSilence: number;
+  /**
+   * La gamme où la mélodie prend ses degrés, par son identifiant dans la table commune.
+   *
+   * VIDE VEUT DIRE « SELON LA ROUE », et c'est le comportement d'origine : la saturation choisit
+   * l'anneau, donc majeur ou mineur. Un identifiant donné passe outre, et la roue ne décide plus
+   * que de la TONIQUE. Les deux se défendent — la roue tient sa cohérence de ce que ses cases
+   * voisines s'enchaînent, ce qu'une gamme imposée ne défait pas puisqu'elle ne touche pas au
+   * parcours des toniques.
+   */
+  gamme?: string;
+  /** La qualité des accords, par son identifiant. Vide veut dire « selon la roue » : majeur ou mineur. */
+  qualite?: string;
+}
+
+/**
+ * Ce que le cercle fait entendre.
+ *
+ * `pulsation` est le défaut, demandé par Fabien : un seul son sourd par frappe, celui-là même que
+ * rend le composant Pulsation, si bien que le son qui sort d'ici peut rentrer là-bas et
+ * réciproquement. `rythme` frappe une percussion à la place. `melodie` est le comportement des
+ * versions antérieures : la mélodie et ses accords.
+ */
+export type ModeDuCercle = "pulsation" | "rythme" | "melodie";
+
+/**
+ * Les pulsations audibles, vues comme des frappes.
+ *
+ * C'EST LE MÊME TYPE QUE CELUI DE `audio/pulsation.ts`, et ce n'est pas une coïncidence : ce que
+ * cette fonction rend, l'autre l'extrait d'un son. Les deux bouts se branchent donc l'un sur
+ * l'autre sans rien convertir, et c'est ce qui ferme la boucle.
+ *
+ * LE RAYON DONNE LA FORCE, comme il donne déjà la vélocité de la mélodie : une grande pulsation est
+ * une frappe forte. Une pulsation sous le seuil ne rend rien, la même décision que partout ici.
+ */
+export function frappesDuCercle(p: readonly Pulsation[], o: OptionsCercle): Frappe[] {
+  const out: Frappe[] = [];
+  for (const pulse of p) {
+    if (pulse.rayon < o.seuilSilence) continue;
+    out.push({ instant: pulse.temps, force: Math.round(50 + pulse.rayon * 70), atomes: 1 });
+  }
+  return out;
+}
+
+/**
+ * Les pulsations que dicte une suite de notes reçue.
+ *
+ * LA BOUCLE SE FERME ICI. Le composant Pulsation tire d'un son ses frappes ; posées à l'entrée de
+ * celui-ci, elles deviennent les instants du cercle, et l'on voit battre ce qu'on a entendu battre.
+ *
+ * CE QUI EST REÇU EST LE RYTHME, ET RIEN D'AUTRE. La couleur reste un réglage : elle continue de
+ * tourner sur la durée reçue, donc de donner la tonalité et le registre. Prendre aussi la hauteur
+ * des notes reçues ferait un second mappage, concurrent de la roue de Camelot, et le composant
+ * n'aurait plus une règle mais deux.
+ *
+ * LE RAYON VIENT DE LA VÉLOCITÉ, parce que c'est la même grandeur dans l'autre sens : la force
+ * d'une frappe y devenait un rayon, elle le redevient. Une suite sans vélocité utile — toutes les
+ * notes au même niveau — donne un cercle qui garde sa taille, ce qui est exact.
+ */
+export function pulsationsDepuisNotes(
+  notes: readonly { debut: number; velocite?: number }[], o: OptionsPulsations,
+): Pulsation[] {
+  const instants = [...new Set(notes.map((n) => Math.max(0, n.debut)))].sort((a, b) => a - b);
+  if (instants.length === 0) return [];
+  const forceA = new Map<number, number>();
+  for (const n of notes) {
+    const t = Math.max(0, n.debut);
+    forceA.set(t, Math.max(forceA.get(t) ?? 0, n.velocite ?? 100));
+  }
+  const fin = Math.max(o.dureeSec, instants[instants.length - 1]);
+  return instants.map((t) => {
+    const avancement = fin > 0 ? Math.min(1, t / fin) : 0;
+    const force = (forceA.get(t) ?? 100) / 127;
+    return {
+      temps: t,
+      rayon: Math.min(1, Math.max(0, (1 - o.respiration) + o.respiration * force)),
+      teinte: o.teinteDebut + o.teinteParcours * avancement,
+      saturation: Math.min(1, Math.max(0, o.saturation)),
+      clarte: Math.min(1, Math.max(0, o.clarte)),
+    };
+  });
 }
 
 function tirage(graine: number): () => number {
@@ -107,8 +190,20 @@ export function toniqueDeCamelot(code: string): number {
 /** Vrai si la case désigne un mode mineur — l'anneau A de la roue. */
 export const estMineur = (code: string) => code.toUpperCase().endsWith("A");
 
-const MAJEUR = [0, 2, 4, 5, 7, 9, 11];
-const MINEUR = [0, 2, 3, 5, 7, 8, 10];
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, et le
+// garde des gammes ne les voyait pas : il ne cherchait que des constantes nommées `GAMME*`, quand
+// celles-ci s'appelaient `MAJEUR` et `MINEUR`. C'est ce trou qui a fait refaire le garde sur la
+// FORME d'une gamme plutôt que sur le nom qu'on lui donne.
+const MAJEUR = degresDeGamme("majeur");
+const MINEUR = degresDeGamme("mineur");
+
+/** La gamme d'une case : celle qu'on impose, ou celle que l'anneau désigne. */
+const gammeDuCode = (code: string, impose?: string) =>
+  impose ? degresDeGamme(impose) : (estMineur(code) ? MINEUR : MAJEUR);
+
+/** L'accord d'une case : celui qu'on impose, ou la triade que l'anneau désigne. */
+const accordDuCode = (code: string, impose?: string) =>
+  intervallesDaccord(impose || (estMineur(code) ? "m" : "maj"));
 
 /**
  * La suite des pulsations.
@@ -161,7 +256,7 @@ export function notesDepuisPulsations(
     codes.push(code);
     if (pulse.rayon < o.seuilSilence) continue;
 
-    const gamme = estMineur(code) ? MINEUR : MAJEUR;
+    const gamme = gammeDuCode(code, o.gamme);
     // Le rayon choisit le degré : un grand cercle est une note GRAVE. C'est le sens que l'œil
     // donne spontanément à une forme large, et l'inverser ferait grimper la mélodie quand le
     // dessin s'alourdit.
@@ -216,7 +311,11 @@ export function accordsDepuisPulsations(
     const audibles: number[] = [];
     for (let k = i; k <= j; k++) if (p[k].rayon >= o.seuilSilence) audibles.push(k);
     if (audibles.length > 0) {
-      const tierce = estMineur(code) ? 3 : 4;
+      // LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. Ils étaient CALCULÉS
+      // ici — `[0, tierce, 7]` avec une tierce mineure ou majeure —, et c'est pire qu'une table
+      // cachée : un garde qui cherche la forme d'un accord ne peut pas voir une triade qu'aucune
+      // liste ne porte. Une qualité imposée ouvre du même coup les trente-trois autres.
+      const intervalles = accordDuCode(code, o.qualite);
       const octave = octaveBase + Math.round(p[i].clarte * 2) - 2;
       const racine = 12 * (octave + 1) + toniqueDeCamelot(code);
       const finSegment = Math.min(o.dureeSec, j + 1 < p.length ? p[j + 1].temps : p[j].temps + 0.4);
@@ -227,7 +326,7 @@ export function accordsDepuisPulsations(
           ? Math.min(finSegment, p[frappes[f + 1]].temps)
           : finSegment;
         if (fin <= debut) continue;
-        for (const demi of [0, tierce, 7]) {
+        for (const demi of intervalles) {
           notes.push({ note: Math.min(108, Math.max(21, racine + demi)), velocite, debut, fin });
         }
       }

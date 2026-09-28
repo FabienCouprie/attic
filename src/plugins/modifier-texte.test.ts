@@ -28,7 +28,7 @@ function ctx(entree: unknown, params: Record<string, string> = {}, data: Record<
 async function executer(entree: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {
   const f = registre.trouverDef("modifier-texte")!;
   const r = await f.executer(ctx(entree, params, data) as any);
-  return { texte: r.valeurs[0] as string | null, message: r.message ?? "", data };
+  return { texte: r.valeurs[0] as string | null, message: r.message ?? "", data, designe: (r as any).designe };
 }
 
 describe("nœud « Modifier le texte »", () => {
@@ -59,10 +59,11 @@ describe("nœud « Modifier le texte »", () => {
     expect(r.message).toMatch(/corrigé/);
   });
 
-  it("le texte reçu est déposé sur le nœud, pour que la zone le montre", async () => {
-    // Sans ce dépôt, la zone resterait vide et l'on corrigerait un texte qu'on ne voit pas.
+  it("le texte reçu est désigné par l'exécuteur, pour que la zone le montre", async () => {
+    // Sans cela, la zone resterait vide et l'on corrigerait un texte qu'on ne voit pas. Il passe par
+    // le canal déclaré, sous `designe` : il décrit l'ENTRÉE, donc écrire dans la zone ne le périme pas.
     const r = await executer("ce qui arrive");
-    expect(r.data._texteRecu).toBe("ce qui arrive");
+    expect(r.designe?.texteRecu).toBe("ce qui arrive");
   });
 
   it("la zone écrite sort même sans entrée branchée", async () => {

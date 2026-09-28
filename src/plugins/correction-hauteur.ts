@@ -9,9 +9,8 @@ import {
   type OptionsCorrection, type ResultatCorrection,
 } from "../audio/correction-hauteur";
 import { parCanal } from "./hors-fil";
+import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 
-const NOTES = ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"];
-const NOTES_EN = ["C", "C#", "D", "E♭", "E", "F", "F#", "G", "G#", "A", "B♭", "B"];
 
 export const fiches: FicheAudio[] = ([
   {
@@ -27,9 +26,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Correction", nomEn: "Correction", type: "courbe" },
     ],
     parametres: [
-      { nom: "Tonique", nomEn: "Root", type: "choix",
-        options: NOTES, optionsEn: NOTES_EN, optionIds: NOTES_EN.map((n) => n.toLowerCase()),
-        defaut: "Do", defautEn: "C",
+      { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Root",
         doc: "La tonique de la gamme. Sans effet en chromatique, qui contient toutes les notes.",
         docEn: "The scale's root. Without effect in chromatic, which contains every note." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
@@ -53,7 +50,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      const tonique = Math.max(0, NOTES_EN.findIndex((n) => n.toLowerCase() === ctx.paramTexte("Tonique", "c")));
+      // `demiTonDeCle` ACCEPTE TOUTE ORTHOGRAPHE, dont les identifiants en minuscules au bémol
+      // typographique que ce composant employait et que rien d'autre ne connaissait.
+      const tonique = demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0;
       const ecartMax = ctx.paramNombre("Écart max", 1);
       const o = {
         degres: degresDe(ctx.paramTexte("Gamme", "chromatique"), tonique),

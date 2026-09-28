@@ -192,8 +192,8 @@ describe("carte-sonore", () => {
         (({ Graine: 1 } as Record<string, number>)[nom] ?? defaut),
       onProgress: () => {},
     };
-    await fiche.executer(ctx as any);
-    const carte = (ctx.noeud.data as any)._carteSonore;
+    const res = await fiche.executer(ctx as any);
+    const carte = (res as any).affichage.carte;
     expect(carte.style).toBe("concentrique");
     expect(carte.esthetique).toBe("art-deco");
     expect(genererHtmlCarte(carte, "T", [{ nom: "a.wav", chemin: "/a.wav" }])).toContain("concentrique");

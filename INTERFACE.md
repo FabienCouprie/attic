@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**448 composants**, dont **94** avec une vue propre et **6** sans lecteur générique.
+**455 composants**, dont **95** avec une vue propre et **6** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -34,6 +34,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Générateur vidéo | `cercle-film` | VueFilmCercle | — | 240 × 118 | non | oui | non |
 | Cercle mélodique | `cercle-melodique` | CercleMelodiqueVue | — | 320 × 400 | non | oui | non |
 | Cercle pulsant | `cercle-pulsant` | VueAnimationSvg | — | 300 × 500 | non | non | non |
+| Cercle à retoucher | `cercle-retouche` | CercleRetoucheVue | — | 240 × 118 | non | oui | non |
 | Cercle rythmique | `cercle-rythmique` | CercleRythmiqueVue | — | 320 × 400 | non | oui | non |
 | Classificateur de genre | `classificateur-genre` | VueUploadOnnx | — | 380 × 300 | non | oui | non |
 | Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 660 × 380 | non | oui | non |
@@ -128,6 +129,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | ▸ Entrée exposée | `__entree-frontiere` | 240 × 118 |
 | Sortie exposée ◂ | `__sortie-frontiere` | 240 × 118 |
 | ABC → MIDI | `abc-vers-midi` | 240 × 162 |
+| Accords joués | `accords-joues` | 240 × 162 |
 | Accords → Notation MIDI | `accords-vers-notation` | 240 × 162 |
 | Ajouter silence | `ajouter-silence` | 240 × 118 |
 | Similarité audio | `alignement-dtw` | 240 × 140 |
@@ -178,6 +180,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Début de boucle par cercle | `cercle-boucle-debut` | 240 × 118 |
 | Fin de boucle par cercle | `cercle-boucle-fin` | 240 × 118 |
 | Complémentaire d'un cercle | `cercle-complementaire` | 240 × 118 |
+| Cercle de gamme | `cercle-gamme` | 240 × 118 |
 | Inverser une mélodie | `cercle-inverser` | 240 × 118 |
 | Jointure de cercles | `cercle-jointure` | 240 × 272 |
 | Mélangeur de cercles | `cercle-melangeur` | 240 × 118 |
@@ -219,7 +222,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
 | Déclarer la disposition | `declarer-disposition` | 240 × 118 |
 | Décodeur ambisonique | `decodeur-ambisonique` | 240 × 118 |
-| Décomposition atomique | `decomposition-atomique` | 240 × 162 |
+| Décomposition atomique | `decomposition-atomique` | 240 × 184 |
 | Découpage en objets | `decoupage-objets` | 240 × 162 |
 | Découpe aléatoire | `decoupe-aleatoire` | 240 × 118 |
 | Delay stéréo | `delay-stereo` | 240 × 140 |
@@ -271,6 +274,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Formules Csound | `formules-csound` | 240 × 140 |
 | Note d'instrument | `frontiere-note` | 240 × 162 |
 | Fusionner en stéréo | `fusion-stereo` | 240 × 140 |
+| Gamme jouée | `gamme-jouee` | 240 × 162 |
 | Gammes du monde | `gammes-monde` | 240 × 118 |
 | Gate/Expandeur | `gate-expandeur` | 240 × 118 |
 | Gel spectral | `gel-spectral` | 240 × 118 |
@@ -281,6 +285,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Générateur de fréquence | `generateur-frequence` | 240 × 118 |
 | Générateur musical | `generateur-musical` | 240 × 184 |
 | Générateur de paroles | `generateur-paroles` | 240 × 118 |
+| Glissando de gamme | `glissando-de-gamme` | 240 × 140 |
+| Glissando harmonique | `glissando-harmonique` | 240 × 140 |
 | Glissando intérieur | `glissando-interieur` | 240 × 140 |
 | Glissando de Risset | `glissando-risset` | 240 × 118 |
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
@@ -370,6 +376,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Profil mélodique | `profil-melodique` | 240 × 162 |
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
+| Pulsation | `pulsation` | 240 × 162 |
 | Quadrafuzz | `quadrafuzz` | 240 × 140 |
 | Quantifier | `quantifier-rythme` | 240 × 184 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
