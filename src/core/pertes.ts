@@ -11,7 +11,7 @@ const TYPES_NON_SERIALIZABLE = ["File", "Blob", "AudioBuffer", "ArrayBuffer", "F
 
 // Liste blanche : champs conservés par usePersistance.exporter.
 const CHAMPS_CONSERVES = new Set([
-  "ficheId", "parametres", "audioNom", "midiNom", "imageNom", "svgNom", "sf2InstrumentIdx", "zonesSelectionnees", "nomFichier",
+  "ficheId", "parametres", "audioNom", "midiNom", "imageNom", "svgNom", "zonesSelectionnees", "nomFichier",
   // Le .sfz d'un « Clavier SFZ » : un chemin de disque, donc sérialisable et rechargeable tel quel.
   "sfzChemin", "sfzNom",
   // Ce qui a été joué au clavier d'un nœud : un tableau de notes, sérialisable depuis toujours, mais
@@ -63,7 +63,7 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
     // Champs de statut runtime (recréés à l'exécution)
     if (["statut", "progression", "progressionDuNoeud", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
          "audioUrl", "enregistrementUrl", "mp3Url", "scriptGenere", "midiFichierSortie",
-         "sf2Data", "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "svgFichier",
+         "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "svgFichier",
          "svgNom", "enregistrementBlob",
          "irFichier", "pureDataFichier"].includes(cle)) {
       if (estNonSerializable(val) && !CHAMPS_FICHIER_RECHARGEABLES.has(cle)) {

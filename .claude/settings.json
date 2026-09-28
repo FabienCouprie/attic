@@ -25,6 +25,11 @@
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/contrat-graphe.mjs\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/contrat-noeud.mjs\"",
+            "timeout": 30
           }
         ]
       }

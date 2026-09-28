@@ -49,7 +49,11 @@ const NOEUDS_EXPORT = ["sortie-audio", "convertisseur-mp3-wav"];
 // autonomes. Exclus explicitement de cette fusion : ce sont des déclencheurs
 // ponctuels (import de graphe, installation de node), pas de l'état d'affichage
 // à faire persister sur le nœud.
-const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_nodeInstalle"]);
+// Exporté : c'est la TROISIÈME classe d'un champ posé sur un nœud, et la seule exception légitime à
+// la règle « un résultat s'efface à la remise à zéro ». Sa propriété se vérifie — le bloc dédié
+// ci-dessous le remet à `undefined` avant la fusion générique, donc il ne survit pas au run qui l'a
+// posé. `ui/hooks/champs-noeud.test.ts` tient que tout champ écrit par un exécuteur a une classe.
+export const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_nodeInstalle"]);
 
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
@@ -87,6 +91,11 @@ export const CHAMPS_UTILISATEUR = new Set([
   "irNom",
   "enregistrementBlob",
   "enregistrementUrl",
+  // LE MODÈLE ONNX CHARGÉ À LA MAIN, relevé par Fabien en cherchant le symétrique du défaut de la
+  // remise à zéro. C'est une saisie de plein droit — `analyse.ts` et `separation.ts` la lisent — et
+  // elle n'était dans aucune des listes : ni protégée d'une cascade de réinitialisation, ni traitée
+  // comme le fichier audio chargé qu'elle est. Elle rejoint donc les deux, comme lui.
+  "modeleFichier",
 ]);
 
 // Média chargé par l'utilisateur SUR CE NŒUD précis.
@@ -110,6 +119,9 @@ export const CHAMPS_MEDIA_LOCAL = new Set([
   "pdfFichier", "pdfNom",
   "irFichier", "irNom",
   "enregistrementBlob", "enregistrementUrl",
+  // Un modèle chargé à la main pèse souvent des dizaines de mégaoctets : un nœud collé doit arriver
+  // vierge, comme pour un fichier audio, et recevoir le sien.
+  "modeleFichier",
 ]);
 
 /** Champs retenus par un copier-coller (Ctrl+C) : saisie utilisateur, média exclu. */
@@ -157,6 +169,28 @@ export const CHAMPS_RESULTAT = new Set([
   "_dureesMesurees",
   "_montageSons",
   "_maquetteNotes",
+
+  // ── Ce qu'un composant à affichage autonome dépose pour sa propre vue ──
+  //
+  // VINGT-NEUF CHAMPS, DOUZE COMPOSANTS, LE MÊME DÉFAUT QUE LES TROIS CI-DESSUS. La fusion générique
+  // de `lancer()` recopie tout champ préfixé d'un blanc souligné dans l'état React ; aucun d'eux
+  // n'était ici, donc aucun ne s'effaçait. Un film produit, une carte, un rouleau de notes, un relevé
+  // d'esthétique restaient à l'écran sur un nœud redevenu « en attente ». Relevé par Fabien :
+  // « les paramètres n'ont pas à survivre au Reset ».
+  //
+  // TOUS SONT DES RÉSULTATS, et le critère le dit sans hésitation : si le nœud n'a pas tourné, aucun
+  // ne veut dire quoi que ce soit. La graine d'une carte est celle qui a été tirée, l'écho du texte
+  // reçu est ce qui est arrivé pendant le run, le graphe d'export est celui qu'on vient de préparer.
+  "_videoMontageUrl", "_videoMontageNom", "_videoMontageOctets", "_videoMontageInfos",
+  "_videoMontageSource", "_videoMontagePistes", "_videoMontageSons",
+  "_carteHtmlPath", "_carteSonore", "_carteSonoreGraine",
+  "_coordCarteHtmlPath", "_coordCarteSonore",
+  "_galerieHtmlPath", "_galeriePistes",
+  "_videoMuetteUrl", "_videoMuetteNom", "_videoMuetteOctets",
+  "_extraitVideoUrl", "_extraitVideoNom", "_extraitVideoOctets", "_extraitVideoInfos",
+  "_demoVideoUrl", "_demoVideoTaille",
+  "_esthetique", "_comparaisonEsthetique", "_rouleauSequence", "_pistesVisu",
+  "_grapheExport", "_texteRecu",
 ]);
 
 export interface OptionsExecution {
@@ -252,12 +286,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // être pur. Double-invoqué par StrictMode, il révoquait deux fois — sans
     // conséquence ici, la révocation étant idempotente — mais c'est le même motif
     // qui, à la création d'URL, laissait un blob orphelin par nœud et par run.
+    //
+    // ON RÉVOQUE CE QUI EST UNE URL D'OBJET, ET NON UNE LISTE DE NOMS. Quatre champs y étaient
+    // énumérés à la main, et c'était la même divergence que celle qui a fait survivre des résultats à
+    // la remise à zéro : les films du montage vidéo, de l'extrait, du muet et de la démonstration
+    // sont eux aussi des `createObjectURL`, et aucun n'y figurait — un blob par nœud et par run
+    // restait donc en mémoire. La seule liste qui décide est `CHAMPS_RESULTAT`, et la valeur dit
+    // d'elle-même si elle est à révoquer.
     for (const n of noeudsRef.current) {
       if (!ids.has(n.id)) continue;
-      if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
-      if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
-      if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
-      if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
+      for (const champ of CHAMPS_RESULTAT) {
+        const v = (n.data as any)[champ];
+        if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
+      }
     }
     // L'état d'exécution vit dans son magasin : le remettre en attente ne passe plus par le
     // tableau des nœuds (voir `ui/statuts.ts`).

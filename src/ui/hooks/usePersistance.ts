@@ -81,7 +81,6 @@ export function usePersistance(o: OptionsPersistance) {
         midiNom: data.midiNom,
         imageNom: data.imageNom,
         svgNom: data.svgNom,
-        sf2InstrumentIdx: data.sf2InstrumentIdx,
         zonesSelectionnees: data.zonesSelectionnees,
         // Le .sfz designe dans un « Clavier SFZ » : sans lui, un graphe reouvert avait un clavier
         // sans instrument, alors que le fichier n'avait pas bouge du disque.

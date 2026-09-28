@@ -3,15 +3,15 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**1103 files, 188417 lines.** The table lists the 318 files of 200 lines or more;
-the remaining 785 account for 87450 lines.
+**1104 files, 188570 lines.** The table lists the 318 files of 200 lines or more;
+the remaining 786 account for 87563 lines.
 
 | File | Lines |
 |---|---:|
 | src/ui/atelier.css | 1688 |
 | src/ui/App.tsx | 1421 |
 | src/i18n.tsx | 1405 |
-| src/ui/hooks/useExecutionGraphe.ts | 1270 |
+| src/ui/hooks/useExecutionGraphe.ts | 1311 |
 | src/audio/abc.ts | 764 |
 | src/ui/Inspector.tsx | 738 |
 | src/docs/documentation-graphe.ts | 728 |
@@ -129,7 +129,7 @@ the remaining 785 account for 87450 lines.
 | src/plugins/arbre-rythmique.ts | 310 |
 | src/plugins/magenta-helpers.ts | 310 |
 | src/quiz/formules.ts | 310 |
-| src/ui/hooks/usePersistance.ts | 310 |
+| src/ui/hooks/usePersistance.ts | 309 |
 | src/core/graphe.test.ts | 308 |
 | src/parcours/mesures.ts | 307 |
 | src/audio/abc.test.ts | 306 |

@@ -20,20 +20,14 @@ export function VueUploadMidi({ id, data }: VueProps) {
   );
 }
 
-// ── Sélecteur d'instrument SoundFont ──
-export function VueSoundFont({ data }: VueProps) {
-  if (!data.sf2Data) return null;
-  return (
-    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()}>
-      <select className="attic-node-select" value={data.sf2InstrumentIdx ?? 0}
-        onChange={(e) => { data.sf2InstrumentIdx = parseInt(e.target.value); }}>
-        {(data.sf2Data as { instruments?: { nom: string }[] }).instruments?.map((inst, i) => (
-          <option key={i} value={i}>{i} — {inst.nom}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
+// LE SÉLECTEUR D'INSTRUMENT SOUNDFONT A ÉTÉ RETIRÉ, relevé par Fabien en cherchant les réglages sans
+// effet. Il se gardait derrière `if (!data.sf2Data) return null;`, et RIEN N'ÉCRIVAIT JAMAIS
+// `sf2Data` : trois occurrences dans tout l'arbre de travail, une déclaration de type, une entrée de
+// liste de pertes, et ce garde. La vue rendait donc `null` en toutes circonstances, et le champ
+// `sf2InstrumentIdx` qu'elle seule écrivait n'était lu par personne, tout en voyageant dans le
+// fichier de projet et les méta-composants. Le choix d'instrument existe par ailleurs, et il marche :
+// c'est le paramètre « Instrument » du « Lecteur MIDI », que son exécuteur lit. Un second sélecteur
+// mutait de surcroît `data` sans passer par `setNodes`, donc React n'en aurait rien vu.
 
 // ── Téléchargement du MIDI transcrit ──
 export function VueTranscription({ data }: VueProps) {

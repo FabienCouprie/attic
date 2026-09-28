@@ -71,7 +71,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Goniomètre | `goniometre` | VueImageDepuisAudio | — | 330 × 470 | non | oui | non |
 | Le goût d'un son | `gout-du-son` | VueGout | — | 240 × 140 | non | oui | non |
 | Julia Processor | `julia-processor` | VueJuliaProcessor | — | 240 × 162 | non | oui | non |
-| Lecteur MIDI | `lecteur-midi` | VueUploadMidi + VueSoundFont | — | 240 × 140 | non | oui | non |
+| Lecteur MIDI | `lecteur-midi` | VueUploadMidi | — | 240 × 140 | non | oui | non |
 | Lecteur SVG | `lecteur-svg` | VueUploadSvg + VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Maquette | `maquette` | VueMontage | — | 560 × 380 | non | non | non |
 | Modifier le texte | `modifier-texte` | VueModifierTexte | — | 300 × 280 | non | oui | non |

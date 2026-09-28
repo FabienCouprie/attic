@@ -19,7 +19,7 @@ import { VueMontage } from "./vues-montage";
 import { VueFormeOnde, VueSelecteurMultiZones, VueUploadAudio, VueUploadImage, VueUploadPdf, VueUploadSvg } from "./vues-fichiers";
 import { VueExplorateur } from "./vues-explorateur";
 import { VueLecteurMusique } from "./vues-lecteur";
-import { VueSoundFont, VueTranscription, VueUploadIR, VueUploadMidi, VueUploadOnnx, VueUploadPd } from "./vues-midi";
+import { VueTranscription, VueUploadIR, VueUploadMidi, VueUploadOnnx, VueUploadPd } from "./vues-midi";
 import { VueCollections, VueExport } from "./vues-collections";
 import { ClavierMelodie, ClavierSfz, VueApprentissage, VueBanqueSfz, VueOrchestreCsound } from "./vues-claviers";
 import { VueADSR, VueComparateurAB, VueDetecteurAccords, VueEmotions, VueGenerateurScriptIA, VueNomsInstruments, VueOscillo, VueReponseFiltre, VueSequenceurAccords, VueSequenceurBatterieAvance, VueSequenceurMelodique, VueSpectre, VueSpectrogramme, VueStylesMusicaux, VueTessituresVoix } from "./vues-analyse";
@@ -147,7 +147,6 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("entree-pdf"), vue: VueUploadPdf, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant", porteLecteur: true },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
-  { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
   { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "apres" },

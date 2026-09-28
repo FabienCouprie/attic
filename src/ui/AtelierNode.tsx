@@ -63,7 +63,7 @@ export type DonneesNoeud = {
   audioFichier?: File; audioNom?: string; audioUrl?: string; audioChemin?: string;
   audioResultatBuffer?: AudioBuffer;
   midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
-  modeleFichier?: File; sf2Data?: unknown; sf2InstrumentIdx?: number;
+  modeleFichier?: File;
   enregistrementBlob?: Blob; enregistrementUrl?: string;
   imageFichier?: File; imageNom?: string;
   svgFichier?: File; svgNom?: string;
