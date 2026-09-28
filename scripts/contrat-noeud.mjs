@@ -54,6 +54,14 @@ DEUX RÈGLES, À VÉRIFIER SUR CE COMPOSANT AVANT DE PASSER À AUTRE CHOSE.
    le résultat. Un réglage légitimement inerte porte sa raison écrite à côté de lui, par exemple
    parce qu'il n'agit que dans un autre mode, ce que sa documentation doit dire.
 
+3. UN LECTEUR DE COMPOSANT NE S'OUVRE PAS À PLEINE PUISSANCE. Tout ce qui se fait entendre depuis
+   un nœud passe par \`NIVEAU_ECOUTE\` de \`ui/niveau-ecoute.ts\` : un élément audio par
+   \`onLoadedMetadata={ouvrirAuNiveauDEcoute}\`, une écoute montée en direct par un gain de sortie.
+
+   Seule exception : un lecteur dont le niveau est un RÉGLAGE DÉCLARÉ du composant, visible et
+   documenté. Le niveau du fichier produit, lui, ne change pas : c'est le confort d'écoute qui se
+   règle, pas le son.
+
 ET LA NOTICE SUIT. Un paramètre ajouté, retiré ou renommé s'écrit dans la notice, dans les deux
 langues ; un paramètre absent de la notice est un réglage que personne ne saura employer.`;
 

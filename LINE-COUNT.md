@@ -3,8 +3,8 @@
 Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**1104 files, 188648 lines.** The table lists the 318 files of 200 lines or more;
-the remaining 786 account for 87583 lines.
+**1106 files, 188795 lines.** The table lists the 317 files of 200 lines or more;
+the remaining 789 account for 87901 lines.
 
 | File | Lines |
 |---|---:|
@@ -13,14 +13,14 @@ the remaining 786 account for 87583 lines.
 | src/i18n.tsx | 1405 |
 | src/ui/hooks/useExecutionGraphe.ts | 1360 |
 | src/audio/abc.ts | 764 |
-| src/ui/Inspector.tsx | 738 |
+| src/ui/Inspector.tsx | 739 |
 | src/docs/documentation-graphe.ts | 728 |
-| src/ui/AtelierNode.tsx | 713 |
+| src/ui/AtelierNode.tsx | 714 |
 | src/audio/sfz.test.ts | 619 |
 | src/audio/courbe.ts | 611 |
 | src/audio/csound.ts | 577 |
 | src/audio/clavier-banque.ts | 574 |
-| src/ui/SelecteurMultiZones.tsx | 539 |
+| src/ui/SelecteurMultiZones.tsx | 543 |
 | src/plugins/montage.ts | 530 |
 | src/plugins/csound.ts | 523 |
 | src/plugins/textgen.ts | 523 |
@@ -115,11 +115,11 @@ the remaining 786 account for 87583 lines.
 | src/audio/multi-reservoir.ts | 325 |
 | src/docs/coeurs-par-trames.ts | 325 |
 | src/plugins/effets-modulation.ts | 324 |
+| src/ui/LigneDeTemps.tsx | 322 |
 | src/audio/analyse.ts | 321 |
 | src/audio/cercle-pulsant.ts | 321 |
 | src/audio/ondelettes.ts | 321 |
 | src/core/bulles.test.ts | 320 |
-| src/ui/LigneDeTemps.tsx | 320 |
 | src/parcours/exercices-composition.ts | 319 |
 | src/quiz/notions-suite.ts | 319 |
 | src/core/instrument-graphe.test.ts | 315 |
@@ -150,9 +150,9 @@ the remaining 786 account for 87583 lines.
 | src/plugins/midi-norme.test.ts | 285 |
 | src/audio/concret.ts | 284 |
 | src/audio/harmonie-spectrale.ts | 284 |
+| src/ui/vues-images.tsx | 284 |
 | src/ui/vues-lecteur.tsx | 284 |
 | src/ui/ArbreRythmiqueVue.tsx | 283 |
-| src/ui/vues-images.tsx | 283 |
 | src/plugins/julia-processor.ts | 280 |
 | src/quiz/sigles.ts | 278 |
 | src/audio/grains.ts | 274 |
@@ -160,6 +160,7 @@ the remaining 786 account for 87583 lines.
 | src/audio/ssp.test.ts | 273 |
 | src/plugins/generateurs-fractals.ts | 273 |
 | src/audio/synthese-features.test.ts | 272 |
+| src/ui/hooks/useLectureVive.ts | 272 |
 | src/ui/vues-analyse.tsx | 268 |
 | src/audio/effets-modulation.ts | 267 |
 | src/audio/gout.ts | 267 |
@@ -180,10 +181,10 @@ the remaining 786 account for 87583 lines.
 | src/audio/percussions-placement.test.ts | 258 |
 | src/plugins/cercle-transformations.test.ts | 257 |
 | src/plugins/clavier-banque.ts | 257 |
+| src/ui/ClavierApprentissage.tsx | 256 |
 | src/audio/csound-aleatoire.ts | 255 |
 | src/audio/vitesse-midi.test.ts | 255 |
 | src/plugins/generateurs-reservoirs.ts | 255 |
-| src/ui/ClavierApprentissage.tsx | 255 |
 | src/audio/generation.ts | 254 |
 | src/core/graphe.ts | 254 |
 | src/ui/PistesMultiples.tsx | 254 |
@@ -197,7 +198,6 @@ the remaining 786 account for 87583 lines.
 | src/audio/ampleur.test.ts | 250 |
 | src/audio/effets-mastering.ts | 250 |
 | src/core/instrument-graphe.ts | 250 |
-| src/ui/hooks/useLectureVive.ts | 250 |
 | src/audio/demonstration.ts | 249 |
 | src/plugins/effets.ts | 249 |
 | src/audio/conformite-clavier.test.ts | 248 |
@@ -311,7 +311,6 @@ the remaining 786 account for 87583 lines.
 | src/audio/scanning.test.ts | 204 |
 | src/plugins/lotGlobal.test.ts | 204 |
 | src/audio/terrain-onde.test.ts | 203 |
-| src/plugins/objets-sonores.ts | 203 |
 | src/plugins/visualisation.ts | 203 |
 | src/quiz/chiffres.ts | 203 |
 | src/audio/hauteur.test.ts | 202 |

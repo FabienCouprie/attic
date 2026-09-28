@@ -15,6 +15,7 @@ import { SongseeVue } from "./Songsee";
 import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "./vues";
 
+import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
 export function VueCouleurSunoIA({ data }: VueProps) {
   const { t, lang } = useI18n();
   const p = data.parametres ?? {};
@@ -237,7 +238,7 @@ export function VueAnimationSvg({ data }: VueProps) {
           controls
           src={data.audioResultatUrl}
           onPointerDown={(e) => e.stopPropagation()}
-          onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }}
+          onLoadedMetadata={ouvrirAuNiveauDEcoute}
         />
       )}
     </div>
