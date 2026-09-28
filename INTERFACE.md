@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**455 composants**, dont **95** avec une vue propre et **6** sans lecteur générique.
+**457 composants**, dont **96** avec une vue propre et **6** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -32,6 +32,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Roue de Camelot | `camelot` | VueRenduImage | — | 240 × 162 | oui | oui | non |
 | Carte sonore | `carte-sonore` | VueCarteSonore | — | 240 × 118 | non | oui | non |
 | Générateur vidéo | `cercle-film` | VueFilmCercle | — | 240 × 118 | non | oui | non |
+| Cercle de gamme | `cercle-gamme` | CercleGammeVue | — | 240 × 118 | non | oui | non |
 | Cercle mélodique | `cercle-melodique` | CercleMelodiqueVue | — | 320 × 400 | non | oui | non |
 | Cercle pulsant | `cercle-pulsant` | VueAnimationSvg | — | 300 × 500 | non | non | non |
 | Cercle à retoucher | `cercle-retouche` | CercleRetoucheVue | — | 240 × 118 | non | oui | non |
@@ -172,6 +173,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Caler les coupes | `caler-coupes` | 240 × 140 |
 | Canon de tempo (Nancarrow) | `canon-nancarrow` | 240 × 118 |
 | Canon par pavage | `canon-pavage` | 240 × 162 |
+| Déplacement de Cantor | `cantor-deplacement` | 240 × 162 |
 | Capture MIDI | `capture-midi` | 240 × 140 |
 | Capture système audio | `capture-systeme-audio` | 240 × 118 |
 | Caractéristiques de piste | `caracteristiques-piste` | 240 × 140 |
@@ -180,7 +182,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Début de boucle par cercle | `cercle-boucle-debut` | 240 × 118 |
 | Fin de boucle par cercle | `cercle-boucle-fin` | 240 × 118 |
 | Complémentaire d'un cercle | `cercle-complementaire` | 240 × 118 |
-| Cercle de gamme | `cercle-gamme` | 240 × 118 |
 | Inverser une mélodie | `cercle-inverser` | 240 × 118 |
 | Jointure de cercles | `cercle-jointure` | 240 × 272 |
 | Mélangeur de cercles | `cercle-melangeur` | 240 × 118 |
@@ -324,6 +325,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Mélangeur | `melangeur` | 240 × 118 |
 | Mélangeur logistique | `melangeur-logistique` | 240 × 140 |
 | Mélodie aléatoire | `melodie-aleatoire` | 240 × 140 |
+| Mélodie sur accords | `melodie-sur-accords` | 240 × 162 |
 | Membrane Synth | `membrane-synth` | 240 × 118 |
 | Metal Synth | `metal-synth` | 240 × 118 |
 | Métronome | `metronome` | 240 × 118 |

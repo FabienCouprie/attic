@@ -13,6 +13,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { ArbreRythmiqueVue } from "./ArbreRythmiqueVue";
 import { RouleauSequence } from "./RouleauSequence";
 import { CercleRetoucheVue } from "./CercleRetoucheVue";
+import { CercleGammeVue } from "./CercleGammeVue";
 import { CercleMelodiqueVue, CercleRythmiqueVue } from "./CercleVue";
 import type { DonneesNoeud } from "./AtelierNode";
 import { VueExtraitVideo, VueFilmCercle, VueMontageVideo, VuePistesMultiples, VueVideoMuette } from "./vues-video";
@@ -89,6 +90,9 @@ const REGISTRE: EntreeRegistre[] = [
   // du canal `designe`, dont un changement de reglage ne perime pas le contenu. Sans cela, le clic
   // qui allume une place effacerait le dessin qu'on est en train de cliquer.
   { correspond: parId("cercle-retouche"), vue: CercleRetoucheVue, position: "avant" },
+  // Et celui-ci montre le cercle qu'il a PRODUIT de ses réglages : il ne se clique donc pas, une
+  // retouche écrirait par-dessus ce que la gamme nommée dit.
+  { correspond: parId("cercle-gamme"), vue: CercleGammeVue, position: "avant" },
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },

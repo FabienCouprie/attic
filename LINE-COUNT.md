@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1142 files, 195710 lines, of which 136727 are code.**
-The table lists the 144 files of 200 code lines or more, heaviest first;
-the remaining 998 account for 136830 lines.
+**1154 files, 198210 lines, of which 138208 are code.**
+The table lists the 146 files of 200 code lines or more, heaviest first;
+the remaining 1008 account for 138452 lines.
 
 **13 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -22,12 +22,12 @@ the remaining 998 account for 136830 lines.
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 569 | 728 | ! |
 | src/ui/AtelierNode.tsx | 524 | 714 | ! |
+| src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
+| src/plugins/index.ts | 459 | 471 | ! |
 | src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
-| src/plugins/index.ts | 455 | 467 | ! |
 | src/ui/BarreOutils.tsx | 413 | 446 | ! |
 | src/ui/FormeOnde.tsx | 408 | 484 | ! |
-| src/audio/cercle-pulsant.test.ts | 401 | 525 | ! |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/plugins/montage.ts | 387 | 530 |  |
 | src/ia.ts | 382 | 466 |  |
@@ -105,6 +105,7 @@ the remaining 998 account for 136830 lines.
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
+| src/audio/cercle-pulsant.ts | 249 | 543 |  |
 | src/audio/multi-reservoir.ts | 248 | 325 |  |
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
@@ -128,7 +129,7 @@ the remaining 998 account for 136830 lines.
 | src/ui/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/ui/vues-analyse.tsx | 228 | 268 |  |
-| src/audio/cercle-pulsant.ts | 227 | 420 |  |
+| src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 226 | 280 |  |
 | src/ui/LigneDeTemps.tsx | 225 | 322 |  |
 | src/audio/commun.ts | 221 | 364 |  |
@@ -141,6 +142,7 @@ the remaining 998 account for 136830 lines.
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |
+| src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
 | src/ui/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |

@@ -106,6 +106,15 @@ const parId = new Map(toutesLesFiches.map((f) => [f.id, f]));
  * sonore » et « Film du cercle », qui se suffisent à eux-mêmes et ne servent qu'à l'export. Exiger
  * un câble d'eux n'aurait aucun sens, et tenir leur liste à la main vieillirait au premier ajouté.
  */
+/**
+ * Une bulle repliée, reconnue à sa fiche.
+ *
+ * ELLE N'A AUCUNE FICHE DANS LE REGISTRE : sa fiche est fabriquée pour elle seule, à partir des
+ * ports de ses membres, et son identifiant porte le préfixe. `sansPorts` ne peut donc rien en dire,
+ * et c'est pourquoi elle se reconnaît ici. Voir `core/bulles.ts`.
+ */
+const estBulle = (ficheId: string): boolean => ficheId.startsWith("bulle::");
+
 const sansPorts = (ficheId: string): boolean => {
   if (SANS_PORTS.has(ficheId)) return true;
   const f = parId.get(ficheId);
@@ -127,9 +136,23 @@ describe("le contrat de graphe, sur les graphes enregistrés", () => {
         const relies = new Set<string>();
         for (const e of graphe.edges) { relies.add(e.source); relies.add(e.target); }
         const orphelins = graphe.nodes
-          .filter((n) => !sansPorts(n.data?.ficheId ?? "") && !relies.has(n.id))
+          .filter((n) => !sansPorts(n.data?.ficheId ?? "") && !estBulle(n.data?.ficheId ?? "")
+            && !relies.has(n.id))
           .map((n) => `${n.id} (${n.data?.ficheId})`);
         expect(orphelins).toEqual([]);
+      });
+
+      it("ET UNE BULLE A DES MEMBRES, seule chose qu'on puisse lui demander", () => {
+        // UNE BULLE N'A JAMAIS D'ARÊTE À ELLE, et c'est sa nature : elle ne remplace pas ses
+        // composants, elle les cache, et les arêtes restent posées sur les membres. Ce que
+        // l'application dessine vers elle sont des arêtes de substitution, absentes du fichier.
+        // Ce qui reste vérifiable est qu'elle contienne quelque chose : une bulle vide ne montre
+        // rien et ne calcule rien.
+        const vides = graphe.nodes
+          .filter((n) => estBulle(n.data?.ficheId ?? ""))
+          .filter((b) => !graphe.nodes.some((m) => (m.data as { bulle?: string })?.bulle === b.id))
+          .map((b) => b.id);
+        expect(vides).toEqual([]);
       });
 
       it("toute arête part d'un nœud du graphe et arrive sur un nœud du graphe", () => {

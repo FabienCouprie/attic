@@ -29,6 +29,8 @@ import { fiches as f_glissando_de_gamme } from "./glissando-de-gamme";
 import { fiches as f_pulsation } from "./pulsation";
 import { fiches as f_cercle_gamme } from "./cercle-gamme";
 import { fiches as f_cercle_retouche } from "./cercle-retouche";
+import { fiches as f_cantor_deplacement } from "./cantor-deplacement";
+import { fiches as f_melodie_sur_accords } from "./melodie-sur-accords";
 import { fiches as f_montage } from "./montage";
 import { fiches as f_melangeur_logistique } from "./melangeur-logistique";
 import { fiches as f_sortie_conversion } from "./sortie-conversion";
@@ -257,6 +259,8 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_pulsation,
   ...f_cercle_gamme,
   ...f_cercle_retouche,
+  ...f_cantor_deplacement,
+  ...f_melodie_sur_accords,
   ...f_generateurs_fractals,
   ...f_generateurs_rythme,
   ...f_generateurs_sources,

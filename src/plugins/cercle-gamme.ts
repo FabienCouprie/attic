@@ -111,6 +111,9 @@ The « Circle » output carries the positions and their pitches, with no duratio
         : "";
       return {
         valeurs: [cercle],
+        // LE CERCLE SE VOIT SUR LE NŒUD, par le canal de ce qu'un run a PRODUIT : il est fabriqué
+        // des réglages, donc un réglage changé le périme, ce qu'`affichage` fait exactement.
+        affichage: { cercle },
         message: `${nom ? (en() ? nom.en : nom.fr) : id} · ${cercle.positions} `
           + `${en() ? "positions" : "places"} · ${cercle.sommets.length} ${en() ? "degrees" : "degrés"}${repli}${hors}`,
       };

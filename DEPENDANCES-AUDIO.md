@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 80 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 168 · transposable tel quel
+- **pur** : 172 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | abc-edition-llm.ts | pur | — |
 | abc-reprise.ts | pur | — |
 | abc.ts | pur | — |
+| accord-gamme.ts | pur | — |
 | accord-mets.ts | pur | — |
 | accords-sequencer.ts | recipient | AudioBuffer |
 | accords.ts | recipient | AudioBuffer |
@@ -52,6 +53,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | build-plugins.ts | pur | — |
 | camelot.ts | recipient | AudioBuffer |
 | canon-pavage.ts | pur | — |
+| cantor-deplacement.ts | pur | — |
 | cantor.ts | pur | — |
 | cercle-film.ts | pur | — |
 | cercle-gamme.ts | pur | — |
@@ -175,6 +177,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | masquage.ts | pur | — |
 | math-formules.ts | recipient | AudioBuffer |
 | matrice-parametres.ts | pur | — |
+| melodie-sur-accords.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | metadonnees.ts | pur | — |
 | micromontage.ts | pur | — |
@@ -230,6 +233,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | quantification.ts | pur | — |
 | random-slice.ts | recipient | AudioBuffer |
 | recaler-niveau.ts | recipient | AudioBuffer |
+| reconnaitre-accord.ts | pur | — |
 | recouvrement-hauteur.ts | pur | — |
 | reecriture-arbre.ts | pur | — |
 | reetirage-dtw.ts | recipient | AudioBuffer |

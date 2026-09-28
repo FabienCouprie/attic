@@ -51,7 +51,23 @@ const borner = (x: number, min: number, max: number) => Math.max(min, Math.min(m
  * point s'est bien déplacé dans la direction voulue.
  */
 export function doserAssaisonnement(actuel: DimensionsGout, gout: Gout, dose: number): Assaisonnement {
-  const cible = REGIONS[gout];
+  return doserVersPoint(actuel, REGIONS[gout], dose);
+}
+
+/**
+ * Le même dosage, vers un POINT quelconque de l'espace plutôt que vers une des quatre régions.
+ *
+ * POURQUOI CETTE FORME EST LA VRAIE, relevé par Fabien : « il faut adapter l'assaisonnement pour les
+ * combinaisons sucré, salé, amer, acide, comme dans l'accord mets-musique ». Une dégustation n'est
+ * presque jamais d'un seul goût ; `accord-mets.ts` savait déjà en faire un point, par barycentre des
+ * quatre régions pondéré par les intensités, et l'assaisonnement ne savait viser qu'un sommet. Rien
+ * dans le calcul ne l'exigeait : il ne lit de la région que ses cinq coordonnées.
+ *
+ * VISER ENTRE LES RÉGIONS N'EST PAS VISER MOINS FORT, et c'est la nuance qui compte. La dose règle
+ * la part du chemin ; le point, lui, dit OÙ l'on va. Un profil mêlant deux goûts tombe entre leurs
+ * deux régions, ce qui est une direction en soi, et non une demi-mesure vers l'un des deux.
+ */
+export function doserVersPoint(actuel: DimensionsGout, cible: DimensionsGout, dose: number): Assaisonnement {
   const d = borner(dose, 0, 1);
   // Cinq octaves d'étendue pour la dimension : un écart de 0,1 vaut une demi-octave.
   const demiTons = borner((cible.hauteur - actuel.hauteur) * 60 * d, -12, 12);
@@ -160,9 +176,26 @@ export interface ResultatAssaisonnement {
   reglages: Assaisonnement;
   avant: DimensionsGout;
   apres: DimensionsGout;
-  /** Part du goût visé, avant et après. */
+  /** Part du goût visé, avant et après. Vaut zéro quand la cible est un point et non une région. */
   partAvant: number;
   partApres: number;
+  /**
+   * La distance du son au point visé, avant et après.
+   *
+   * C'EST LA SEULE MESURE QUI VAILLE POUR UNE COMBINAISON. La part d'un goût ne dit rien d'un point
+   * situé ENTRE deux régions : viser le mélange d'un sucré et d'un salé peut faire baisser les deux
+   * parts, et pourtant s'approcher de la cible. La distance, elle, répond à la question posée.
+   */
+  distanceAvant: number;
+  distanceApres: number;
+}
+
+/** La distance dans l'espace à cinq dimensions, celle dont `gout.ts` se sert déjà pour ses parts. */
+export function distanceAuPoint(a: DimensionsGout, b: DimensionsGout): number {
+  return Math.sqrt(
+    (a.hauteur - b.hauteur) ** 2 + (a.articulation - b.articulation) ** 2
+    + (a.vitesse - b.vitesse) ** 2 + (a.consonance - b.consonance) ** 2
+    + (a.intensite - b.intensite) ** 2);
 }
 
 /**
@@ -175,6 +208,20 @@ export interface ResultatAssaisonnement {
 export async function assaisonner(
   b: AudioBuffer, gout: Gout, dose: number,
 ): Promise<ResultatAssaisonnement> {
+  const r = await assaisonnerVers(b, REGIONS[gout], dose);
+  const part = (d: DimensionsGout) => profil(d).find((p) => p.gout === gout)!.part;
+  return { ...r, partAvant: part(r.avant), partApres: part(r.apres) };
+}
+
+/**
+ * Le même geste, vers un POINT quelconque de l'espace.
+ *
+ * C'est la forme générale : viser une des quatre régions n'en est que le cas particulier, et
+ * `assaisonner` le lui délègue. Voir `doserVersPoint` pour la raison.
+ */
+export async function assaisonnerVers(
+  b: AudioBuffer, cible: DimensionsGout, dose: number,
+): Promise<ResultatAssaisonnement> {
   // UNE IMAGE ENTRE CHAQUE ÉTAPE. Ce composant figeait l'interface tout le temps de son calcul, et
   // son coût est RÉPARTI : mesuré sur trois secondes de stéréo, 312 ms pour chacune des deux mesures
   // et le reste distribué sur six traitements. Aucune étape ne domine, si bien que rendre la main
@@ -185,7 +232,7 @@ export async function assaisonner(
   // les attaques, qui ne se décomposent pas canal par canal.
   const mesureAvant = mesurer(b);
   await respirer();
-  const reglages = doserAssaisonnement(mesureAvant.dimensions, gout, dose);
+  const reglages = doserVersPoint(mesureAvant.dimensions, cible, dose);
   let son = b;
   if (reglages.porte > 0) { son = porter(son, reglages.porte); await respirer(); }
   if (reglages.queue > 0) { son = lier(son, reglages.queue); await respirer(); }
@@ -210,13 +257,16 @@ export async function assaisonner(
     await respirer();
   }
   const mesureApres = mesurer(son);
-  const part = (d: DimensionsGout) => profil(d).find((p) => p.gout === gout)!.part;
   return {
     son,
     reglages,
     avant: mesureAvant.dimensions,
     apres: mesureApres.dimensions,
-    partAvant: part(mesureAvant.dimensions),
-    partApres: part(mesureApres.dimensions),
+    // LA PART N'A DE SENS QUE POUR UNE RÉGION, et `assaisonner` la remplit lui-même. Ici la cible
+    // peut être n'importe quel point : il n'y a pas de goût dont donner la part.
+    partAvant: 0,
+    partApres: 0,
+    distanceAvant: distanceAuPoint(mesureAvant.dimensions, cible),
+    distanceApres: distanceAuPoint(mesureApres.dimensions, cible),
   };
 }

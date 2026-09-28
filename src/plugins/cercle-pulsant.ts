@@ -44,6 +44,7 @@ Chaque pulsation est définie par trois valeurs : un instant, un rayon et une co
 • « Pulsation » : une sinusoïde grave qui retombe vite, une par pulsation audible ; « Fréquence du battement » en donne la hauteur et « Longueur du battement » le temps d'extinction
 • « Rythme » : la voix de batterie choisie sous « Percussion », frappée à chaque pulsation audible
 • « Mélodie et accords » : les degrés de la gamme et l'accord de chaque case traversée
+• « Accords seuls » : l'harmonie sans la ligne qui la parcourt. Les accords montent alors d'une octave, le registre de la mélodie étant libre
 
 L'entrée « Pulsation » reçoit une suite de notes dont les débuts remplacent les instants engendrés. La durée reçue s'applique alors, et « Durée », « Pulsation initiale » et « Pulsation finale » restent sans effet. La vélocité des notes reçues donne le rayon, dans l'amplitude fixée par « Respiration ». La couleur reste réglée ici, et continue de donner la tonalité et le registre.
 
@@ -53,6 +54,12 @@ La couleur détermine la tonalité par la roue de Camelot :
 • la clarté sélectionne le registre, d'une octave en dessous à une octave au-dessus
 
 La roue de Camelot classe les douze tonalités en cercle suivant la règle d'enchaînement employée par les disc-jockeys : case voisine, même numéro dans l'autre anneau, ou sept cases plus loin. La teinte étant également circulaire, deux teintes voisines correspondent à deux tonalités compatibles, et le réglage « Parcours de teinte » produit une suite de modulations cohérentes. Une correspondance directe entre teinte et demi-tons associerait au contraire deux tonalités sans relation à deux couleurs voisines.
+
+« Graine » décide de tout ce qui est tiré au sort : la phase et la vitesse de la respiration, l'irrégularité des instants, la taille de chaque pulsation et l'errance de la tonalité. Deux graines donnent deux pièces dont les blocs de son et de silence tombent à des endroits différents.
+
+« Irrégularité » décide de combien chaque intervalle entre deux pulsations s'écarte de la cadence réglée, en part de cette cadence. À zéro, les pulsations tombent sur une grille exacte et seule la taille des cercles varie. L'écart étant relatif, une pièce qui accélère garde la même irrégularité perçue d'un bout à l'autre.
+
+« Errance » décide de la part des changements de case où la tonalité quitte le parcours réglé pour un autre mouvement de la roue, tiré au sort : la case voisine, le même numéro dans l'autre anneau, ou sept cases plus loin. Les trois sont des enchaînements que la roue autorise, la suite reste donc une suite de modulations qui tiennent, et deux graines donnent deux progressions différentes. L'écart pris est gardé, et le parcours continue de tourner par-dessus. Un changement d'anneau se voit sur la couleur, la saturation passant du vif au terne, puisque c'est la saturation qui désigne l'anneau. À zéro, la suite des tonalités ne dépend plus que de « Teinte » et « Parcours de teinte », et la graine ne touche plus que le rayon.
 
 Le rayon détermine la frappe :
 • le rayon au moment de la pulsation fixe le degré dans la gamme de la case ; un rayon élevé donne une note grave
@@ -71,8 +78,8 @@ Les accords sont transposés une octave sous la mélodie :
 • « Nuance des accords » règle leur vélocité ; celle de la mélodie varie de 50 à 120
 
 Sorties :
-• « Mélodie » : en mode « Pulsation », les battements, tous à la même hauteur, ce qui permet de les écrire en rythme mesuré ; en mode « Rythme », les frappes sur le canal de batterie ; en mode « Mélodie et accords », la mélodie
-• « Accords » : l'harmonie en fichier MIDI distinct, instrumentable séparément. Vide hors du mode « Mélodie et accords »
+• « Mélodie » : en mode « Pulsation », les battements, tous à la même hauteur, ce qui permet de les écrire en rythme mesuré ; en mode « Rythme », les frappes sur le canal de batterie ; en mode « Mélodie et accords », la mélodie ; en mode « Accords seuls », l'harmonie, portée là aussi pour qu'un composant branché derrière la trouve sans avoir à changer de port selon le mode
+• « Accords » : l'harmonie en fichier MIDI distinct, instrumentable séparément. Vide en modes « Pulsation » et « Rythme »
 • « Audio » : ce que le mode choisi fait entendre, rendu avec le moteur et l'instrument sélectionnés
 • « Parcours » : le mode employé, la liste des tonalités traversées et l'instant de début de chacune
 
@@ -85,6 +92,7 @@ Each pulse is defined by three values: an instant, a radius and a colour. The an
 • « Pulse »: a low sine that dies away fast, one per audible pulse; « Beat frequency » gives its pitch and « Beat length » its decay time
 • « Rhythm »: the drum voice chosen under « Percussion », struck at each audible pulse
 • « Melody and chords »: the degrees of the scale and the chord of each position travelled
+• « Chords only »: the harmony without the line that runs through it. The chords then rise an octave, the melody's register being free
 
 The « Pulse » input takes a series of notes whose onsets replace the generated instants. The received length then applies, and « Duration », « Initial rate » and « Final rate » have no effect. The velocity of the received notes gives the radius, within the amplitude set by « Breathing ». The colour stays set here, and still gives the key and the register.
 
@@ -94,6 +102,12 @@ Colour determines the key through the Camelot wheel:
 • lightness selects the register, from one octave below to one octave above
 
 The Camelot wheel arranges the twelve keys in a circle following the mixing rule used by disc jockeys: adjacent position, same number in the other ring, or seven positions away. Hue being circular as well, two neighbouring hues correspond to two compatible keys, and the « Hue journey » setting produces a coherent sequence of modulations. A direct mapping from hue to semitones would instead assign two unrelated keys to two neighbouring colours.
+
+« Seed » sets everything that is drawn: the phase and speed of the breathing, the irregularity of the instants, the size of each pulse and the wander of the key. Two seeds give two pieces whose blocks of sound and silence fall in different places.
+
+« Irregularity » sets how far each interval between two pulses departs from the set rate, as a share of that rate. At zero, the pulses fall on an exact grid and only the size of the circles varies. The departure being relative, a piece that accelerates keeps the same perceived irregularity throughout.
+
+« Wander » sets the share of position changes where the key leaves the set journey for another move of the wheel, drawn at random: the adjacent position, the same number in the other ring, or seven positions away. All three are progressions the wheel allows, so the sequence stays one of modulations that hold, and two seeds give two different progressions. The departure taken is kept, and the journey keeps turning on top of it. A ring change shows in the colour, saturation going from vivid to dull, since it is saturation that selects the ring. At zero, the sequence of keys depends only on « Hue » and « Hue journey », and the seed only affects the radius.
 
 The radius determines the strike:
 • the radius at the moment of the pulse sets the degree in the scale of the position; a large radius gives a low note
@@ -112,8 +126,8 @@ The chords are transposed one octave below the melody:
 • « Chord dynamic » sets their velocity; that of the melody ranges from 50 to 120
 
 Outputs:
-• « Melody »: in « Pulse » mode, the beats, all at the same pitch, so they can be written as a measured rhythm; in « Rhythm » mode, the strikes on the drum channel; in « Melody and chords » mode, the melody
-• « Chords »: the harmony as a separate MIDI file, instrumentable independently. Empty outside « Melody and chords » mode
+• « Melody »: in « Pulse » mode, the beats, all at the same pitch, so they can be written as a measured rhythm; in « Rhythm » mode, the strikes on the drum channel; in « Melody and chords » mode, the melody; in « Chords only » mode, the harmony, carried there as well so a node connected after it finds it without having to change port according to the mode
+• « Chords »: the harmony as a separate MIDI file, instrumentable independently. Empty in « Pulse » and « Rhythm » modes
 • « Audio »: what the chosen mode sounds, rendered with the selected engine and instrument
 • « Journey »: the mode used, the list of keys travelled and the start instant of each
 
@@ -127,11 +141,11 @@ The animation is displayed in the node and is not available on an output port. I
     ],
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix",
-        options: ["Pulsation", "Rythme", "Mélodie et accords"],
-        optionsEn: ["Pulse", "Rhythm", "Melody and chords"],
-        optionIds: ["pulsation", "rythme", "melodie"], defaut: "Pulsation", defautEn: "Pulse",
-        doc: "Ce que le cercle fait entendre. Pulsation : un seul son sourd par frappe, une sinusoïde grave qui retombe vite. Rythme : la percussion choisie à la place de ce son. Mélodie et accords : les degrés de la gamme et l'accord de la case traversée.",
-        docEn: "What the circle sounds. Pulse: a single dull tone per strike, a low sine that dies away fast. Rhythm: the chosen percussion in place of that tone. Melody and chords: the degrees of the scale and the chord of the position travelled." },
+        options: ["Pulsation", "Rythme", "Mélodie et accords", "Accords seuls"],
+        optionsEn: ["Pulse", "Rhythm", "Melody and chords", "Chords only"],
+        optionIds: ["pulsation", "rythme", "melodie", "accords"], defaut: "Pulsation", defautEn: "Pulse",
+        doc: "Ce que le cercle fait entendre. Pulsation : un seul son sourd par frappe, une sinusoïde grave qui retombe vite. Rythme : la percussion choisie à la place de ce son. Mélodie et accords : les degrés de la gamme et l'accord de la case traversée. Accords seuls : l'harmonie sans la ligne qui la parcourt, dans le registre de la mélodie.",
+        docEn: "What the circle sounds. Pulse: a single dull tone per strike, a low sine that dies away fast. Rhythm: the chosen percussion in place of that tone. Melody and chords: the degrees of the scale and the chord of the position travelled. Chords only: the harmony without the line that runs through it, in the register of the melody." },
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [2, 120], pas: 1, defaut: 20, unite: "s",
         doc: "Durée de l'animation, et de la pièce : les deux sont égales. Sans effet quand une pulsation est reçue à l'entrée, qui apporte la sienne.",
         docEn: "Length of the animation, and of the piece: the two are equal. Without effect when a pulse is received at the input, which brings its own." },
@@ -156,6 +170,12 @@ The animation is displayed in the node and is not available on an output port. I
       { nom: "Respiration", nomEn: "Breathing", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Amplitude des variations de taille. À zéro, le cercle garde son diamètre et la mélodie son degré : seule la tonalité change encore. Au maximum, le cercle passe du point au disque plein, et la mélodie parcourt toute la gamme.",
         docEn: "Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key still changes. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale." },
+      { nom: "Irrégularité", nomEn: "Irregularity", type: "curseur", plage: [0, 60], pas: 1, defaut: 0, unite: "%",
+        doc: "De combien chaque intervalle entre deux pulsations s'écarte de la cadence réglée, en part de cette cadence. À zéro, les pulsations tombent sur une grille exacte. L'écart étant relatif, une pièce qui accélère garde la même irrégularité perçue d'un bout à l'autre.",
+        docEn: "How far each interval between two pulses departs from the set rate, as a share of that rate. At zero, the pulses fall on an exact grid. The departure being relative, a piece that accelerates keeps the same perceived irregularity throughout." },
+      { nom: "Errance", nomEn: "Wander", type: "curseur", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
+        doc: "Part des changements de case où la tonalité quitte le parcours réglé pour un autre mouvement de la roue : la case voisine, le même numéro dans l'autre anneau, ou sept cases plus loin. Ce sont les trois enchaînements que la roue autorise, la suite reste donc une suite de modulations qui tiennent. À zéro, la suite des tonalités ne dépend plus que de « Teinte » et « Parcours de teinte », et la graine ne touche plus que le rayon. Sans parcours de teinte, aucune case n'est traversée et ce réglage n'a rien où s'appliquer.",
+        docEn: "Share of position changes where the key leaves the set journey for another move of the wheel: the adjacent position, the same number in the other ring, or seven positions away. These are the three progressions the wheel allows, so the sequence stays one of modulations that hold. At zero, the sequence of keys depends only on « Hue » and « Hue journey », and the seed only affects the radius. Without a hue journey, no position is travelled and this setting has nothing to apply to." },
       { nom: "Seuil de silence", nomEn: "Silence threshold", type: "curseur", plage: [0, 90], pas: 1, defaut: 45, unite: "%",
         doc: "Taille en deçà de laquelle la pulsation ne sonne pas : elle est alors dessinée et muette. Le rayon ne descend jamais sous cent moins la respiration, si bien qu'un seuil plus bas que cette valeur ne coupe rien. À respiration 65 %, un seuil sous 35 % est sans effet.",
         docEn: "Size below which the pulse does not sound: it is then drawn and silent. The radius never falls below one hundred minus the breathing, so a threshold lower than that cuts nothing. At 65 % breathing, a threshold under 35 % has no effect." },
@@ -220,6 +240,8 @@ The animation is displayed in the node and is not available on an output port. I
         saturation: ctx.paramNombre("Saturation", 70) / 100,
         clarte: ctx.paramNombre("Clarté", 55) / 100,
         respiration: ctx.paramNombre("Respiration", 80) / 100,
+        irregularite: ctx.paramNombre("Irrégularité", 0) / 100,
+        errance: ctx.paramNombre("Errance", 25) / 100,
         seuilSilence: ctx.paramNombre("Seuil de silence", 45) / 100,
         graine: Math.round(ctx.paramNombre("Graine", 7)),
         gamme: gammeChoisie === SELON_LA_ROUE ? undefined : gammeChoisie,
@@ -243,9 +265,13 @@ The animation is displayed in the node and is not available on an output port. I
       const { notes, codes } = notesDepuisPulsations(p, o);
       // La roue de Camelot code des TONALITÉS : la suite des cases traversées est une suite
       // d'accords, et la mélodie seule ne la faisait pas entendre. Voir `audio/cercle-pulsant.ts`.
-      const accords = modeDuCercle !== "melodie" ? [] : accordsDepuisPulsations(
+      // EN MODE « ACCORDS SEULS » ILS MONTENT D'UNE OCTAVE, et ce n'est pas un détail de goût : ils
+      // sont posés une octave SOUS la mélodie pour lui laisser l'avant-plan, or ici il n'y a pas de
+      // mélodie devant. Les laisser en bas les rendrait sourds sans raison.
+      const accords = modeDuCercle !== "melodie" && modeDuCercle !== "accords" ? [] : accordsDepuisPulsations(
         p, o, ctx.paramTexte("Accords", "tenus") as ModeAccords,
-        ctx.paramNombre("Nuance des accords", 55) / 100);
+        ctx.paramNombre("Nuance des accords", 55) / 100,
+        modeDuCercle === "accords" ? 5 : 4);
       const svg = svgAnime(p, o, {
         taille: Math.round(ctx.paramNombre("Taille", 600)),
         echos: ctx.paramTexte("Échos", "oui") !== "non",
@@ -305,6 +331,14 @@ The animation is displayed in the node and is not available on an output port. I
         midi = coups.length ? notesVersFichierMidi(coups, tempo, CANAL_PERCUSSION, banc, prog) : null;
         audio = await rendreSequence(coups, modeRendu, volume, prog, banc);
         sonnantes = coups.length;
+      } else if (modeDuCercle === "accords") {
+        // L'HARMONIE SEULE, et elle sort par les DEUX ports MIDI. « Accords » la porte à sa place,
+        // et « Mélodie » la porte aussi parce que c'est le port qu'un composant branché derrière
+        // lit en premier : la laisser vide obligerait à savoir lequel choisir selon le mode.
+        midiAccords = accords.length ? notesVersFichierMidi(accords, tempo, 0, banc, prog) : null;
+        midi = midiAccords;
+        audio = await rendreSequence(accords, modeRendu, volume, prog, banc);
+        sonnantes = accords.length;
       } else {
         // Le troisième argument est le CANAL, non le programme : instrument et banque sont les
         // quatrième et cinquième.
@@ -321,7 +355,8 @@ The animation is displayed in the node and is not available on an output port. I
         if (etapes.length === 0 || etapes[etapes.length - 1].code !== c) etapes.push({ code: c, depuis: p[i].temps });
       });
       const nomDuMode = { pulsation: en ? "Pulse" : "Pulsation", rythme: en ? "Rhythm" : "Rythme",
-        melodie: en ? "Melody and chords" : "Mélodie et accords" }[modeDuCercle];
+        melodie: en ? "Melody and chords" : "Mélodie et accords",
+        accords: en ? "Chords only" : "Accords seuls" }[modeDuCercle];
       const lignes = [
         `${en ? "Mode" : "Mode"} : ${nomDuMode}`,
         ...(dictee && dictee.length > 0

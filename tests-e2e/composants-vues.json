@@ -48,6 +48,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "cercle-gamme",
+    "vue": "CercleGammeVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "cercle-melodique",
     "vue": "CercleMelodiqueVue",
     "entreeAudio": false,
