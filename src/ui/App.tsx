@@ -31,7 +31,7 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES, CHAMPS_RESULTAT } from "./hooks/useExecutionGraphe";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { ecrireProfondeurExport, lireProfondeurExport } from "./profondeur-export";
@@ -477,7 +477,7 @@ function Atelier() {
   // ── Exécution du graphe (hook extrait — voir DECOUPAGE-APP.md) ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout } = useExecutionGraphe({
+  const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef,
     pileMetaRef: pileRef,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
@@ -607,11 +607,16 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     for (const id of idArr) {
       const n = noeudsRef.current.find((nn) => nn.id === id);
       if (!n) continue;
-      const d = n.data;
-      if (d.audioResultatUrl) URL.revokeObjectURL(d.audioResultatUrl);
-      if (d.imageResultatUrl) URL.revokeObjectURL(d.imageResultatUrl);
-      if (d.visualisationUrl) URL.revokeObjectURL(d.visualisationUrl);
-      if ((d as any).mp3Url) URL.revokeObjectURL((d as any).mp3Url);
+      // LA LISTE QUI DÉCIDE EST `CHAMPS_RESULTAT`, et la valeur dit d'elle-même si elle est à
+      // révoquer. Quatre noms étaient énumérés ici, la même divergence que celle relevée dans la
+      // remise à zéro : les films du montage vidéo, de l'extrait, du muet et de la démonstration
+      // sont eux aussi des `createObjectURL`, et supprimer un de ces nœuds laissait son film en
+      // mémoire. Les fichiers d'entrée, eux, ne sont pas des résultats et restent intacts, ce qui
+      // garde l'annulation utilisable.
+      for (const champ of CHAMPS_RESULTAT) {
+        const v = (n.data as any)[champ];
+        if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
+      }
     }
     // Réinitialiser les nœuds en aval et vider leurs entrées du cache d'exécution.
     for (const id of idArr) {
@@ -689,7 +694,11 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         ? { ...n, data: { ...n.data, parametres: reglagesApresChangement(
             String(n.data.ficheId), n.data.parametres, nom, val) } }
         : n));
-      reinitialiserNoeud(nid);
+      // UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES, relevé par Fabien :
+      // « l'écoute vivante fonctionnait hier et ne fonctionne plus ». Une remise à zéro complète
+      // emportait les tampons du Montage, donc le graphe vivant n'avait plus rien à jouer et
+      // s'arrêtait au premier gain bougé. L'aval, lui, est effacé entièrement.
+      reinitialiserPourReglage(nid);
       relancerApresReglage(nid);
     },
     // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son

@@ -36,7 +36,9 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { CHAMPS_RESULTAT, CHAMPS_SIGNAL_UNIQUE, CHAMPS_UTILISATEUR } from "./useExecutionGraphe";
+import {
+  CHAMPS_GARDES_AU_REGLAGE, CHAMPS_RESULTAT, CHAMPS_SIGNAL_UNIQUE, CHAMPS_UTILISATEUR,
+} from "./useExecutionGraphe";
 
 /**
  * Les champs qu'un exécuteur pose sans qu'on ait décidé de leur classe.
@@ -110,6 +112,24 @@ describe("les champs qu'un exécuteur pose sur un nœud", () => {
   it("AUCUNE ENTRÉE DE LA TABLE N'A VIEILLI : une ligne inutile masquerait le retour du défaut", () => {
     const perimes = [...A_CLASSER].filter((champ) => !ecrits.has(champ) || !!classe(champ));
     expect(perimes, "à retirer de A_CLASSER : ces champs sont rangés ou n'existent plus").toEqual([]);
+  });
+
+  it("UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES", () => {
+    // CE QUE CE CAS ATTRAPE, relevé par Fabien : « l'écoute vivante fonctionnait hier et ne
+    // fonctionne plus ». Les tampons du Montage sont entrés dans CHAMPS_RESULTAT pour que le dessin
+    // ne survive pas à l'exécution qui l'a produit, et un changement de réglage passe par la même
+    // remise à zéro : bouger un gain les effaçait, le graphe vivant n'avait plus rien à jouer et
+    // s'arrêtait. Régler en écoutant redevenait impossible, ce qui est le défaut même qu'il corrige.
+    for (const champ of ["_montageSons", "_dureesMesurees", "_maquetteNotes"]) {
+      expect(CHAMPS_GARDES_AU_REGLAGE.has(champ), `${champ} doit survivre à un changement de réglage`).toBe(true);
+    }
+  });
+
+  it("ET CE QU'UN RÉGLAGE GARDE RESTE UN RÉSULTAT : le bouton de remise à zéro l'efface", () => {
+    // La portée d'un geste, et non une quatrième classe. Un champ gardé au réglage qui ne serait pas
+    // un résultat ne s'effacerait plus jamais, et l'on retomberait sur le défaut d'origine.
+    const hors = [...CHAMPS_GARDES_AU_REGLAGE].filter((champ) => !CHAMPS_RESULTAT.has(champ));
+    expect(hors, "un champ gardé au réglage doit rester dans CHAMPS_RESULTAT").toEqual([]);
   });
 
   it("LES TROIS CLASSES NE SE TOUCHENT PAS : un champ n'en a qu'une", () => {

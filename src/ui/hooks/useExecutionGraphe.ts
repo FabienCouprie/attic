@@ -193,6 +193,36 @@ export const CHAMPS_RESULTAT = new Set([
   "_grapheExport", "_texteRecu",
 ]);
 
+/**
+ * Ce qu'un CHANGEMENT DE RÉGLAGE ne périme pas, bien que le run l'ait déposé.
+ *
+ * POURQUOI CE SECOND AXE EXISTE, relevé par Fabien : « l'écoute vivante fonctionnait hier et ne
+ * fonctionne plus ». C'est cette liste-ci qui manquait. Un réglage modifié passe par la même remise
+ * à zéro que le bouton, et depuis que les tampons du Montage s'effacent au reset — ce qu'il fallait
+ * pour que le dessin ne survive pas à l'exécution qui l'a produit — bouger un gain les effaçait
+ * aussi : le graphe vivant n'avait plus rien à jouer et s'arrêtait. Régler en écoutant redevenait
+ * impossible, ce qui est le défaut même qu'il corrigeait.
+ *
+ * LE CRITÈRE : un réglage périme ce que le nœud a CALCULÉ, jamais ce qu'il a DÉSIGNÉ DE SES ENTRÉES.
+ * Les tampons des pistes sont ceux des composants d'amont, les durées mesurées sont celles des sons
+ * reçus, les notes sont celles des boîtes branchées : changer un début ou un gain ne touche à aucun
+ * des trois. Le bouton de remise à zéro, lui, les efface comme le reste, le nœud repassant « en
+ * attente ». Ce n'est donc pas une quatrième classe, c'est la portée d'un geste.
+ *
+ * ET CELA NE VAUT QUE POUR LE NŒUD DONT LE RÉGLAGE A CHANGÉ. Un montage situé en aval, lui, voit ses
+ * entrées changer pour de bon : ses tampons sont périmés, et la cascade les efface.
+ *
+ * Le dépôt avait déjà rencontré ce conflit, sur les zones, et l'avait résolu par le choix entre
+ * `reinitialiserNoeud` et `reinitialiserAval` : « effacer le nœud ferait disparaître sa forme d'onde
+ * et son lecteur à chaque zone ajoutée ». Ici le résultat calculé EST périmé, donc il faut effacer le
+ * nœud ; seule la matière d'affichage venue des entrées doit rester.
+ */
+export const CHAMPS_GARDES_AU_REGLAGE = new Set([
+  "_montageSons",
+  "_dureesMesurees",
+  "_maquetteNotes",
+]);
+
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
@@ -276,7 +306,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
   };
 
   // ── Réinitialiser un ensemble de nœuds ──
-  const reinitialiserIds = useCallback((ids: Set<string>) => {
+  //
+  // `garder` nomme les champs de résultat à laisser en place, et n'est employé que par le changement
+  // de réglage : voir `CHAMPS_GARDES_AU_REGLAGE`. Le bouton de remise à zéro, lui, n'en passe pas.
+  const reinitialiserIds = useCallback((ids: Set<string>, garder?: ReadonlySet<string>) => {
     // Un reset pendant un run en cours signale l'annulation : sans ça, le nœud
     // en cours de calcul (ex. extraction de features piste par piste sur une
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
@@ -296,6 +329,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     for (const n of noeudsRef.current) {
       if (!ids.has(n.id)) continue;
       for (const champ of CHAMPS_RESULTAT) {
+        if (garder?.has(champ)) continue;
         const v = (n.data as any)[champ];
         if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
       }
@@ -306,7 +340,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
       const nouvelleData: any = { ...n.data };
-      for (const champ of CHAMPS_RESULTAT) nouvelleData[champ] = undefined;
+      for (const champ of CHAMPS_RESULTAT) {
+        if (!garder?.has(champ)) nouvelleData[champ] = undefined;
+      }
       // Garde-fou : on ne doit jamais effacer un champ utilisateur.
       for (const champ of CHAMPS_UTILISATEUR) {
         if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
@@ -337,6 +373,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
   // arêtes à jour plutôt qu'une closure périmée.
   const reinitialiserNoeud = useCallback((nodeId: string) => {
     reinitialiserIds(new Set([nodeId, ...descendants(nodeId, aretesRef.current)]));
+  }, [reinitialiserIds]);
+
+  /**
+   * La remise à zéro d'un changement de RÉGLAGE, et non du bouton.
+   *
+   * DEUX PORTÉES, ET C'EST TOUT L'OBJET. L'aval est effacé entièrement : ses entrées viennent de
+   * changer, donc tout ce qu'il en a tiré est faux, tampons compris. Le nœud réglé, lui, garde ce
+   * qu'il avait désigné de SES entrées — un réglage ne les touche pas — et c'est ce qui permet de
+   * continuer à entendre son montage pendant qu'on le règle.
+   */
+  const reinitialiserPourReglage = useCallback((nodeId: string) => {
+    reinitialiserIds(descendants(nodeId, aretesRef.current));
+    reinitialiserIds(new Set([nodeId]), CHAMPS_GARDES_AU_REGLAGE);
   }, [reinitialiserIds]);
 
   const reinitialiserAval = useCallback((nodeId: string) => {
@@ -1306,5 +1355,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [lancerUnePasse]);
 
-  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
+  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }
