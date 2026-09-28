@@ -8,6 +8,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core/hasard";
+import { normaliserSonie } from "../audio/normalisation-sonie";
 import {
   decouperEnObjets, decrireZones, monter, reordonnerObjets,
   type CritereDecoupage, type CritereTri, type ObjetSonore, type Plan,
@@ -115,10 +116,14 @@ export const fiches: FicheAudio[] = ([
   {
     id: "montage", nom: "Montage", nomEn: "Montage",
     univers: "Traitement", famille: "Montage",
+    // SA LIGNE DE TEMPS SE RÈGLE EN ÉCOUTANT, donc son résultat ne doit pas disparaître au premier
+    // geste : déplacer une piste relance le mélange, qui n'est qu'une addition, l'amont restant en
+    // cache. Mesuré avant : un changement de réglage effaçait le son rendu et il fallait relancer.
+    relanceAutomatique: true,
     resume: "Pose des sons sur une ligne de temps, chacun à son instant, à son niveau, avec ses fondus ; le composant s'allonge d'une piste à la demande.",
     resumeEn: "Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time.",
-    notice: "Ce composant pose des sons sur une ligne de temps et les additionne en un seul. Il montre quatre pistes au départ ; les boutons « + » et « − », sous ses entrées, l'allongent ou le raccourcissent, jusqu'à seize. Le « − » se refuse tant que la dernière piste est branchée : aucun câble ne disparaît sans qu'on l'ait débranché.\n\nChaque piste a quatre réglages : son instant de départ, son niveau, son fondu d'entrée et son fondu de sortie. Ils n'apparaissent que pour les pistes branchées. Au-dessus d'eux, la ligne de temps montre les pistes à leur place et à leur durée réelle après une exécution : on déplace une piste en la tirant, on règle ses fondus en tirant ses coins. Élargir l'inspecteur sur le canevas donne à la ligne de temps plus de place.\n\nLes fondus sont à puissance constante : deux sons qui se croisent sur la même durée, l'un sortant, l'autre entrant, gardent leur énergie au milieu du croisement, sans le creux qu'y ferait une rampe droite. Des fondus plus longs que le son sont réduits dans la même proportion.\n\nUn début négatif rogne le son d'autant : on entre dans un son déjà commencé, et le fondu d'entrée s'applique à ce qui reste. La sortie dure jusqu'à la fin du dernier son. Les pistes sont numérotées, et la piste 3 reste la piste 3 quel que soit l'ordre dans lequel on a tiré les câbles. Pour plus de seize sons, on monte des montages.",
-    noticeEn: "This node lays sounds out on a timeline and adds them into one. It shows four tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to sixteen. The « - » refuses while the last track is connected: no cable disappears without being unplugged first.\n\nEach track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. Above them, the timeline shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. Widening the inspector over the canvas gives the timeline more room.\n\nFades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion.\n\nA negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than sixteen sounds, one montage feeds another.",
+    notice: "Ce composant pose des sons sur une ligne de temps et les additionne en un seul. Il montre quatre pistes au départ ; les boutons « + » et « − », sous ses entrées, l'allongent ou le raccourcissent, jusqu'à seize. Le « − » se refuse tant que la dernière piste est branchée : aucun câble ne disparaît sans qu'on l'ait débranché.\n\nChaque piste a quatre réglages : son instant de départ, son niveau, son fondu d'entrée et son fondu de sortie. Ils n'apparaissent que pour les pistes branchées. La ligne de temps, sur le composant lui-même, montre les pistes à leur place et à leur durée réelle après une exécution : on déplace une piste en la tirant, on règle ses fondus en tirant ses coins. La touche Maj rend le geste dix fois plus fin, la touche Alt cent fois. La molette zoome sur l'instant visé, le curseur de zoom fait de même, et le composant s'élargit par ses bords pour donner plus de place à la ligne. Chaque piste montre sa forme d'onde dans sa barre, sur la part qui sonne.\n\nElle porte aussi l'écoute. Le bouton joue les pistes branchées, un clic sur la règle y porte la tête de lecture, et celle-ci suit la musique en ramenant la vue quand elle en sort. Un niveau changé pendant la lecture s'entend aussitôt, sans interruption du son ; un début, une durée ou un fondu changés ne reprennent que la piste concernée. Un glissement s'entend au relâchement du geste. L'écoute rend les pistes à leur propre niveau ; la sonie de l'ensemble se règle à l'exécution, par « Sonie cible » et « Plafond ».\n\n« Sonie cible » et « Plafond » décident du niveau du mélange. Additionner des pistes ajoute leurs amplitudes, et le nombre de pistes branchées n'est pas connu d'avance : une sonie visée, elle, n'en dépend pas. Le plafond est un vrai pic à ne pas franchir ; s'il empêche d'atteindre la sonie demandée, il gagne et le message le dit. À zéro, le mélange sort tel qu'il s'additionne, sans retouche de niveau. Le message donne la sonie obtenue, le vrai pic et le gain appliqué.\n\nLes fondus sont à puissance constante : deux sons qui se croisent sur la même durée, l'un sortant, l'autre entrant, gardent leur énergie au milieu du croisement, sans le creux qu'y ferait une rampe droite. Des fondus plus longs que le son sont réduits dans la même proportion.\n\nUn début négatif rogne le son d'autant : on entre dans un son déjà commencé, et le fondu d'entrée s'applique à ce qui reste. La sortie dure jusqu'à la fin du dernier son. Les pistes sont numérotées, et la piste 3 reste la piste 3 quel que soit l'ordre dans lequel on a tiré les câbles. Pour plus de seize sons, on monte des montages.",
+    noticeEn: "This node lays sounds out on a timeline and adds them into one. It shows four tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to sixteen. The « - » refuses while the last track is connected: no cable disappears without being unplugged first.\n\nEach track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. The timeline, on the node itself, shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. The Shift key makes the gesture ten times finer, the Alt key a hundred times. The wheel zooms on the instant under the pointer, the zoom slider does the same, and the node widens by its edges to give the timeline more room. It also carries listening: a button plays the mix, a click on the ruler takes the playhead there, and the playhead follows the music, bringing the view back when it leaves.\n\n« Target loudness » and « Ceiling » decide the level of the mix. Adding tracks adds their amplitudes, and the number of connected tracks is not known in advance: a target loudness does not depend on it. The ceiling is a true peak not to be crossed; if it prevents reaching the requested loudness, it wins and the message says so. At zero, the mix comes out as it adds up, with no level change. The message gives the loudness obtained, the true peak and the gain applied.\n\nFades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion.\n\nA negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than sixteen sounds, one montage feeds another.",
     entrees: Array.from({ length: PISTES }, (_, k) => ({ nom: `Piste ${k + 1}`, nomEn: `Track ${k + 1}`, type: "audio", requis: false })),
     // Seize pistes déclarées, quatre montrées : le nombre de pistes n'a pas à être décidé une fois
     // pour toutes par la fiche (cf. ui/ports-extensibles.ts).
@@ -135,7 +140,19 @@ export const fiches: FicheAudio[] = ([
         docEn: `Length of track ${k + 1}'s fade in. A few milliseconds avoid a click; several seconds make the sound emerge.` },
       { nom: `Fondu sortie ${k + 1}`, nomEn: `Fade out ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k,
         doc: `Durée du fondu de sortie de la piste ${k + 1}.`, docEn: `Length of track ${k + 1}'s fade out.` },
-    ]).flat(),
+    ]).flat().concat([
+      // ADDITIONNER N PISTES À GAIN UNITÉ DONNE N FOIS L'AMPLITUDE. Mesuré sur les quatre pistes du
+      // défaut, chacune à −6 dBFS : la sortie atteignait −2,29 LUFS, soit près de douze décibels
+      // au-dessus de la cible de diffusion, et la somme dépassait la pleine échelle là où les pistes
+      // se recouvraient. Le mélange ne peut pas deviner combien de pistes on branchera ; une sonie
+      // visée, elle, ne dépend pas de leur nombre.
+      { nom: "Sonie cible", nomEn: "Target loudness", type: "curseur", plage: [-36, 0], pas: 0.5, defaut: -14, unite: "LUFS",
+        doc: "Sonie du mélange. −14 est la cible des plateformes de diffusion, −23 celle de la norme EBU R 128 pour la télévision, −16 un usage courant en baladodiffusion. À zéro, le mélange sort tel qu'il s'additionne, sans retouche de niveau.",
+        docEn: "Loudness of the mix. -14 is the streaming platforms' target, -23 the EBU R 128 broadcast standard, -16 a common podcast value. At zero, the mix comes out as it adds up, with no level change." },
+      { nom: "Plafond", nomEn: "Ceiling", type: "curseur", plage: [-6, 0], pas: 0.1, defaut: -1, unite: "dBTP",
+        doc: "Vrai pic à ne pas dépasser. Si la sonie visée demandait de le franchir, le plafond gagne et le message le dit.",
+        docEn: "True peak not to be exceeded. If the target loudness required crossing it, the ceiling wins and the message says so." },
+    ] as never),
     async executer(ctx: any) {
       const plans: Plan[] = [];
       const pistes: { piste: number; duree: number }[] = [];
@@ -152,9 +169,34 @@ export const fiches: FicheAudio[] = ([
       // LE CHAMP EST PARTAGÉ AVEC LA MAQUETTE, qui s'en sert pour la même raison : son nom ne dit
       // donc plus « montage », qui aurait égaré celui qui l'aurait lu depuis l'autre composant.
       (ctx.noeud.data as any)._dureesMesurees = pistes;
+      // LES TAMPONS DES PISTES, DÉSIGNÉS ET NON RECOPIÉS. La ligne de temps en a besoin pour dessiner
+      // la forme d'onde de chaque piste, et pour les faire entendre pendant qu'on règle. Ce sont les
+      // tampons des composants en amont, qui vivent déjà dans le cache d'exécution : les nommer ici ne
+      // coûte rien de plus, et le champ préfixé d'un blanc souligné n'est pas enregistré avec le
+      // projet. Le montage vidéo garde les siens de la même façon, pour la même raison.
+      (ctx.noeud.data as any)._montageSons = Object.fromEntries(
+        plans.map((p, i) => [pistes[i].piste, p.son]),
+      );
       if (!plans.length) return { valeurs: [null], message: en() ? "No track connected." : "Aucune piste branchée." };
-      const y = await monter(plans);
-      return { valeurs: [y], message: `${plans.length} ${en() ? "tracks" : "pistes"} · ${y.duration.toFixed(2)} s` };
+      const brut = await monter(plans);
+      const pistesDites = `${plans.length} ${en() ? "tracks" : "pistes"}`;
+      // LE MÉLANGE NE PEUT PAS DEVINER COMBIEN DE PISTES ON BRANCHERA, donc son niveau ne peut pas
+      // être juste par construction : additionner N pistes à gain unité donne N fois l'amplitude. Une
+      // sonie visée, elle, ne dépend pas de leur nombre. À zéro, on garde la somme telle quelle.
+      const cible = ctx.paramNombre("Sonie cible", -14);
+      if (cible >= 0) {
+        return { valeurs: [brut], message: `${pistesDites} · ${brut.duration.toFixed(2)} s` };
+      }
+      const n = normaliserSonie(brut, cible, { plafondDb: ctx.paramNombre("Plafond", -1) });
+      const dit = [
+        pistesDites, `${brut.duration.toFixed(2)} s`,
+        `${n.lufsApres.toFixed(1)} LUFS`, `${n.vraiPicDb.toFixed(1)} dBTP`,
+        `${n.gainDb >= 0 ? "+" : ""}${n.gainDb.toFixed(1)} dB`,
+      ];
+      // Le plafond a gagné : le dire, sinon la cible demandée et la sonie rendue se contrediraient
+      // sans que rien ne l'explique.
+      if (n.plafonne) dit.push(en() ? "ceiling reached" : "plafond atteint");
+      return { valeurs: [n.audio], message: dit.join(" · ") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

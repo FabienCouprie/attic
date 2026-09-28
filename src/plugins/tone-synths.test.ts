@@ -1,8 +1,11 @@
 // plugins/tone-synths.test.ts
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
-import { fiches } from "./tone-synths";
-import { notesVersFichierMidi } from "../audio/midi";
+// LA FICHE SE CHERCHE DANS LE REGISTRE ENTIER, et non dans le fichier qui la portait : « drum-synth »
+// a changé de fichier au découpage, et ce test s'est cassé pour cette seule raison. Passer par la
+// liste complète le rend insensible à un regroupement futur.
+import { toutesLesFiches as fiches } from "./index";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 function trouver(id: string) { return fiches.find((f) => f.id === id); }
 

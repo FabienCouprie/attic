@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { validerGraphe } from "../core/validation";
 import { resoudreEntree } from "../core/graphe";
-import { calculerProfilBruit, reduireBruit } from "../audio/effets-dynamique";
+import { calculerProfilBruit, reduireBruit } from "../audio/effets-bruit";
 import type { AreteG } from "../core/meta";
 import type { FicheAudio } from "../audio/types-domaine";
 import { creerAleatoire } from "../core/hasard";

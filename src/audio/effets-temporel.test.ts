@@ -1,6 +1,7 @@
 // audio/effets-temporel.test.ts — Vérification de Paulstretch.
 import { describe, it, expect, beforeAll } from "vitest";
-import { appliquerPaulstretch, appliquerEchoInverse, paulstretchLogistique, beatRepeat } from "./effets-temporel";
+import { appliquerEchoInverse } from "./effets-echo";
+import { appliquerPaulstretch, paulstretchLogistique, beatRepeat } from "./effets-grains";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;

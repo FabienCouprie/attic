@@ -29,6 +29,8 @@
  *   tempo de la source est préservé, au prix des artefacts granulaires
  *   caractéristiques, d'autant plus audibles que la transposition est ample.
  */
+import { Respiration } from "../core/respirer";
+
 export type ModeRisset = "bande" | "hauteur";
 
 /**
@@ -163,9 +165,25 @@ function lire(canal: Float32Array, pos: number): number {
   return a * (1 - f) + b * f;
 }
 
-export function glissandoRisset(buffer: AudioBuffer, options: OptionsRisset): AudioBuffer {
-  if (options.mode === "hauteur") return rendreGranulaire(buffer, options, "hauteur");
+/**
+ * Tours de boucle entre deux points de respiration. Assez pour que le coût d'un `yield` reste
+ * négligeable, assez peu pour qu'une tranche ne tienne jamais le fil longtemps.
+ */
+const TRANCHE = 4096;
 
+/**
+ * POURQUOI DES GÉNÉRATEURS, ET NON DES FONCTIONS ASYNCHRONES. Ces rendus doivent exister sous deux
+ * formes : synchrone, pour les tests et pour qui n'a pas d'interface à ménager, et respirante, pour
+ * un nœud qui calcule dans le fil de la fenêtre. Écrire la boucle deux fois serait la corriger deux
+ * fois. Un générateur la laisse s'écrire une seule fois : chaque `yield` marque un endroit où l'on
+ * PEUT rendre la main, et ce sont les deux conducteurs qui décident si on le fait.
+ *
+ * Mesuré avant : le glissando tenait le fil 1 245 ms sur 1 245 ms de calcul, soit sans jamais le
+ * rendre. Un nœud dans cet état empêche toute image d'être rendue, donc aussi de l'arrêter.
+ */
+function* glissandoBandeParTranches(
+  buffer: AudioBuffer, options: OptionsRisset,
+): Generator<void, AudioBuffer, void> {
   const sr = buffer.sampleRate;
   const nCanaux = buffer.numberOfChannels;
   const nSorties = Math.max(1, Math.round(options.dureeSec * sr));
@@ -202,8 +220,43 @@ export function glissandoRisset(buffer: AudioBuffer, options: OptionsRisset): Au
       // en bas au bon endroit du son, pas figée là où elle s'est tue.
       positions[k] = (pos + vitesse) % src.length;
     }
+    if ((n & (TRANCHE - 1)) === TRANCHE - 1) yield;
   }
   return out;
+}
+
+/** Déroule un rendu par tranches sans rendre la main : pour les tests, et hors de la fenêtre. */
+function jusquAuBout(g: Generator<void, AudioBuffer, void>): AudioBuffer {
+  let etape = g.next();
+  while (!etape.done) etape = g.next();
+  return etape.value;
+}
+
+/** Le même, en rendant la main entre les tranches : pour un nœud qui tourne dans la fenêtre. */
+async function enRespirant(
+  g: Generator<void, AudioBuffer, void>, souffle: Respiration,
+): Promise<AudioBuffer> {
+  let etape = g.next();
+  while (!etape.done) {
+    await souffle.tour();
+    etape = g.next();
+  }
+  return etape.value;
+}
+
+export function glissandoRisset(buffer: AudioBuffer, options: OptionsRisset): AudioBuffer {
+  return jusquAuBout(options.mode === "hauteur"
+    ? granulaireParTranches(buffer, options, "hauteur")
+    : glissandoBandeParTranches(buffer, options));
+}
+
+/** Le glissando, en rendant la main à la fenêtre entre les tranches. */
+export function glissandoRissetRespirant(
+  buffer: AudioBuffer, options: OptionsRisset, souffle = new Respiration(),
+): Promise<AudioBuffer> {
+  return enRespirant(options.mode === "hauteur"
+    ? granulaireParTranches(buffer, options, "hauteur")
+    : glissandoBandeParTranches(buffer, options), souffle);
 }
 
 /**
@@ -229,7 +282,9 @@ export function glissandoRisset(buffer: AudioBuffer, options: OptionsRisset): Au
  * granulaires caractéristiques, d'autant plus audibles que la transposition est
  * ample — ce que le mode `bande`, qui ne fait que lire, ne produit jamais.
  */
-function rendreGranulaire(buffer: AudioBuffer, options: OptionsRisset, role: RoleGranulaire): AudioBuffer {
+function* granulaireParTranches(
+  buffer: AudioBuffer, options: OptionsRisset, role: RoleGranulaire,
+): Generator<void, AudioBuffer, void> {
   const sr = buffer.sampleRate;
   const nCanaux = buffer.numberOfChannels;
   const nSorties = Math.max(1, Math.round(options.dureeSec * sr));
@@ -299,6 +354,8 @@ function rendreGranulaire(buffer: AudioBuffer, options: OptionsRisset, role: Rol
         for (let c = 0; c < nCanaux; c++) sorties[c][debut + i] += w * lire(canaux[c], p);
       }
     }
+    // Le pas valant la moitié d'un grain, une tranche compte en grains et non en échantillons.
+    if (debut % (pas * 64) < pas) yield;
   }
   return out;
 }
@@ -320,5 +377,12 @@ function rendreGranulaire(buffer: AudioBuffer, options: OptionsRisset, role: Rol
  * grains accélère, la lecture à l'intérieur reste à vitesse normale.
  */
 export function rythmeRisset(buffer: AudioBuffer, options: OptionsRisset): AudioBuffer {
-  return rendreGranulaire(buffer, options, "rythme");
+  return jusquAuBout(granulaireParTranches(buffer, options, "rythme"));
+}
+
+/** Le rythme de Risset, en rendant la main à la fenêtre entre les tranches. */
+export function rythmeRissetRespirant(
+  buffer: AudioBuffer, options: OptionsRisset, souffle = new Respiration(),
+): Promise<AudioBuffer> {
+  return enRespirant(granulaireParTranches(buffer, options, "rythme"), souffle);
 }

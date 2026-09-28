@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { writeMidi, parseMidi } from "midi-file";
-import { joindreMidi, bouclerMidi, analyserMidi, appliquerInstrumentsParCanal } from "./midi";
+import { analyserMidi } from "./midi";
+import { appliquerInstrumentsParCanal } from "./midi-ecriture";
+import { joindreMidi, bouclerMidi } from "./midi-montage";
 
 function createMidiFile(
   notes: { note: number; velocity: number; start: number; end: number }[],

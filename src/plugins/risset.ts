@@ -50,13 +50,15 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const { glissandoRisset } = await import("../audio/risset");
+      // LA VARIANTE RESPIRANTE, parce que ce calcul a lieu dans le fil de la fenêtre : mesuré, le
+      // rendu tenait le fil 1 245 ms sur 1 245 ms, donc sans jamais rendre la main.
+      const { glissandoRissetRespirant } = await import("../audio/risset");
       const sens = ctx.paramTexte("Sens", "descendant");
       const dureeSec = ctx.paramNombre("Durée", 20);
       const cycleSec = ctx.paramNombre("Cycle", 8);
       const octaves = ctx.paramNombre("Octaves", 6);
       const mode = ctx.paramTexte("Mode", "bande") === "hauteur" ? "hauteur" : "bande";
-      const out = glissandoRisset(a, {
+      const out = await glissandoRissetRespirant(a, {
         dureeSec, cycleSec, octaves,
         montant: sens === "ascendant",
         mode,
@@ -107,11 +109,11 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const { rythmeRisset } = await import("../audio/risset");
+      const { rythmeRissetRespirant } = await import("../audio/risset");
       const sens = ctx.paramTexte("Sens", "accelerant");
       const cycleSec = ctx.paramNombre("Cycle", 10);
       const couches = ctx.paramNombre("Couches", 5);
-      const out = rythmeRisset(a, {
+      const out = await rythmeRissetRespirant(a, {
         dureeSec: ctx.paramNombre("Durée", 20),
         cycleSec,
         octaves: couches,

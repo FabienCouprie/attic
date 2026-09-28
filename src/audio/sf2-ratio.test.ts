@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { AudioBuffer, OfflineAudioContext } from "node-web-audio-api";
-import { rendreAvecSF2 } from "./midi";
+import { rendreAvecSF2 } from "./midi-soundfont";
 
 // Provide Web Audio globals for the renderer
 globalThis.AudioBuffer = AudioBuffer as any;

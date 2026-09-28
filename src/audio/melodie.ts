@@ -4,7 +4,7 @@
 // (oscillateur + enveloppe). Le motif est encodé comme celui du séquenceur de
 // batterie : lignes séparées par « | », chaque pas « 1 »/« 0 ».
 
-import type { NoteEvenement } from "./midi";
+import type { NoteEvenement } from "./midi-sequence";
 import { formeOndeDepuisTimbre } from "./timbres";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note

@@ -2,6 +2,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { lireModeleEmbarque } from "../modele-embarque";
 
@@ -28,6 +29,11 @@ export const fiches: FicheAudio[] = ([
       const modele = ctx.paramTexte("Modèle","Demucs (HT)");
       const api = (window as any).api;
       const nulls6 = [null,null,null,null,null,null];
+
+      // TROIS PAQUETS POUR CE SEUL NŒUD — les deux Demucs et le MDX — et le réglage « Modèle » dit
+      // lequel sert. L'annonce se fait ici, avant la branche : les trois manquent ou non ensemble
+      // du point de vue de l'inventaire, qui les rattache tous à cette fiche.
+      await annoncerModele(ctx, "separateur-ia", "");
 
       // ── Demucs 4-stem (natif) ──
       if (modele === "Demucs (HT)") {

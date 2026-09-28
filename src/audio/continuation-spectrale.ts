@@ -4,20 +4,14 @@
 // - LSTM (petit réseau récurrent) : un "LLM de taille réduite" entraîné à la
 //   volée sur les frames spectrales.
 // Chaque canal est traité indépendamment, puis les canaux sont re-assemblés.
-import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
-
-interface FrameSpectrale {
-  start: number;
-  mag: Float64Array; // magnitude linéaire originale
-  phase: Float64Array; // phase originale
-}
-
-interface Spectrogramme {
-  fftSize: number;
-  hop: number;
-  frames: FrameSpectrale[];
-}
+// L'analyse et la synthèse par trames vivent à côté : elles ne dépendent que de la transformée, et
+// ne savent rien du réseau qui décide de la suite.
+import {
+  analyserSpectrogramme, prochainePuissanceDeDeux, synthetiserSpectrogramme,
+  type FrameSpectrale, type Spectrogramme,
+} from "./spectrogramme-fenetre";
+import { Respiration } from "../core/respirer";
 
 export interface ContinuationSpectraleResultat {
   audio: AudioBuffer;
@@ -31,82 +25,6 @@ export interface ContinuationSpectraleResultat {
 }
 
 const EPS = 1e-10;
-
-function analyserSpectrogramme(
-  signal: Float32Array,
-  fftSize: number,
-  hop: number,
-  fenetre: Float64Array
-): Spectrogramme {
-  const nbBins = Math.floor(fftSize / 2) + 1;
-  const frames: FrameSpectrale[] = [];
-  for (let start = 0; start + fftSize <= signal.length; start += hop) {
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let i = 0; i < fftSize; i++) {
-      re[i] = signal[start + i] * fenetre[i];
-    }
-    fft(re, im, false);
-    const mag = new Float64Array(nbBins);
-    const phase = new Float64Array(nbBins);
-    for (let k = 0; k < nbBins; k++) {
-      mag[k] = Math.hypot(re[k], im[k]);
-      phase[k] = Math.atan2(im[k], re[k]);
-    }
-    frames.push({ start, mag, phase });
-  }
-  return { fftSize, hop, frames };
-}
-
-function synthetiserSpectrogramme(
-  frames: FrameSpectrale[],
-  fftSize: number,
-  hop: number,
-  fenetre: Float64Array,
-  length: number
-): Float64Array {
-  const out = new Float64Array(length);
-  const norm = new Float64Array(length);
-  const nbBins = Math.floor(fftSize / 2) + 1;
-  for (const frame of frames) {
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let k = 0; k < nbBins; k++) {
-      const mag = frame.mag[k];
-      const phase = frame.phase[k];
-      re[k] = mag * Math.cos(phase);
-      im[k] = mag * Math.sin(phase);
-      if (k > 0 && k < nbBins - 1) {
-        re[fftSize - k] = re[k];
-        im[fftSize - k] = -im[k];
-      }
-    }
-    if (fftSize % 2 === 0) {
-      im[nbBins - 1] = 0;
-    }
-    fft(re, im, true);
-    for (let i = 0; i < fftSize; i++) {
-      const idx = frame.start + i;
-      if (idx < length) {
-        out[idx] += re[i] * fenetre[i];
-        norm[idx] += fenetre[i] * fenetre[i];
-      }
-    }
-  }
-  // Avoid division by extremely small (or zero) window norms at frame boundaries, which
-  // otherwise amplify any tiny numerical noise into a huge spike.
-  const minNorm = 1e-6;
-  for (let i = 0; i < length; i++) {
-    if (norm[i] > minNorm) out[i] /= norm[i];
-    else out[i] = 0;
-  }
-  return out;
-}
-
-function prochainePuissanceDeDeux(n: number): number {
-  if (n <= 1) return 1;
-  return 1 << (32 - Math.clz32(n - 1));
-}
 
 function rngGraine(seed: number): () => number {
   let s = (seed >>> 0) || 1;
@@ -252,11 +170,21 @@ export async function appliquerContinuationSpectrale(
   const length = buffer.length;
   const nGenFrames = Math.max(1, Math.floor(dureeGenereS * sr / hop));
 
+  // CE CALCUL A LIEU DANS LE FIL DE LA FENÊTRE, et l'entraînement n'est pas ce qui le tient :
+  // `model.fit` sans `yieldEvery` prend le défaut « auto », qui cède au fil toutes les 125 ms
+  // environ. Ce qui le tient, c'est tout le reste — le spectrogramme, la normalisation, la mise en
+  // forme du jeu de données, la boucle de prédiction, la synthèse par recouvrement. Mesuré avant :
+  // un bloc de 6 475 ms sur 32 369 ms de calcul, pendant lequel aucune image n'est rendue et
+  // « Arrêter » ne s'atteint pas. Dans la boucle de prédiction, `await predTensor.data()` ne cède
+  // qu'une microtâche, laquelle ne laisse pas peindre : seule une tâche de macro-file le permet.
+  const souffle = new Respiration();
+
   onProgress?.(`Continuation spectrale · analyse · mode ${mode}`);
   const spectrograms: Spectrogramme[] = [];
   for (let c = 0; c < nCh; c++) {
     const ch = buffer.getChannelData(c);
     spectrograms.push(analyserSpectrogramme(ch, fftSize, hop, fenetre));
+    await souffle.tour();
   }
   const nFrames = spectrograms[0].frames.length;
   if (nFrames < history + 2) {
@@ -298,6 +226,7 @@ export async function appliquerContinuationSpectrale(
     matrices.push(m);
     moyennes.push(mean);
     ecarts.push(std);
+    await souffle.tour();
   }
 
   // Prédiction par canal
@@ -324,6 +253,9 @@ export async function appliquerContinuationSpectrale(
         const yOffset = t * nbBins;
         const srcOffset = (t + history) * nbBins;
         for (let b = 0; b < nbBins; b++) yData[yOffset + b] = m[srcOffset + b];
+        // `nSamples × history × nbBins` écritures ne se font pas d'un trait sans tenir le fil
+        // plusieurs secondes : une respiration tous les cent vingt-huit pas de temps.
+        if ((t & 127) === 127) await souffle.tour();
       }
       xTensor = tf.tensor2d(xData, [nSamples, history * nbBins]);
       yTensor = tf.tensor2d(yData, [nSamples, nbBins]);
@@ -340,6 +272,7 @@ export async function appliquerContinuationSpectrale(
         const yOffset = t * nbBins;
         const srcOffset = (t + history) * nbBins;
         for (let b = 0; b < nbBins; b++) yData[yOffset + b] = m[srcOffset + b];
+        if ((t & 127) === 127) await souffle.tour();
       }
       xTensor = tf.tensor3d(xData, [nSamples, history, nbBins]);
       yTensor = tf.tensor2d(yData, [nSamples, nbBins]);
@@ -444,6 +377,9 @@ export async function appliquerContinuationSpectrale(
       for (let b = 0; b < nbBins; b++) {
         historique[(history - 1) * nbBins + b] = pred[b];
       }
+      // L'`await` sur `predTensor.data()` plus haut ne cède qu'une microtâche, et une microtâche ne
+      // laisse pas peindre : sans cette respiration, la boucle entière tient le fil.
+      await souffle.tour();
     }
 
     model.dispose();

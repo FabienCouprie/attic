@@ -13,6 +13,10 @@
 //
 // LE NOM VIENT DU FICHIER, et rien n'est à tenir à jour à côté : déposer un graphe dans `exemples/`
 // suffit à le faire paraître dans la liste, sous un nom lisible.
+//
+// LE DOSSIER N'EST PAS VERSIONNÉ, demandé par Fabien : on y ajoute et on y retire constamment, et
+// chaque essai laissait une trace dans le dépôt. Rien ne change ici pour autant, le glob lisant le
+// disque : les exemples posés sont compilés, et un dépôt cloné sans eux donne une liste vide.
 
 // LES SOUS-DOSSIERS COMPTENT, demandé par Fabien : les exemples se rangeront par thème, et le
 // classeur d'Electron les parcourt naturellement. Ce repli, lui, doit les voir aussi.

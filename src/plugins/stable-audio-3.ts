@@ -4,6 +4,7 @@
 // du WASM et charger les fichiers depuis le disque.
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
@@ -60,7 +61,8 @@ export const fiches: FicheAudio[] = ([
       if (seed < 0) seed = Math.floor(Math.random() * 1_000_000);
       const modelPath = ctx.paramTexte("Chemin modèle", "");
 
-      ctx.onProgress(traduire("progress.g_n_ration_stable_audio_3_en_cours_cela_peut_prendre_plusieu"));
+      await annoncerModele(ctx, "stable-audio-3",
+        traduire("progress.g_n_ration_stable_audio_3_en_cours_cela_peut_prendre_plusieu"));
 
       try {
         const rep = await api.genererStableAudio3({ prompt, seconds, steps, seed, modelPath });

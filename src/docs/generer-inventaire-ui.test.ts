@@ -70,6 +70,11 @@ const SANS_LECTEUR_GENERIQUE_ET_SORTIE_AUDIO = [
   // Ces vues DECLARENT porter un moyen d'ecouter, par `porteLecteur` dans le registre des vues.
   // Verifie dans la source : chacune rend une balise `audio`.
   "cercle-pulsant", "entree-audio", "explorateur-musique", "sampler-personnalise",
+  // Le montage et la maquette depuis que leur ligne de temps a quitté l'inspecteur : elle porte son
+  // `<audio>` caché, ses boutons, et la tête de lecture qui suit la musique sur le dessin. Deux jeux
+  // de commandes pour un même son se contrediraient, et la tête ne saurait lequel suivre. Comme le
+  // lecteur générique, elle ne paraît qu'une fois le graphe exécuté, faute de son à écouter avant.
+  "maquette", "montage",
 ];
 
 it.skipIf(ecrire)("aucun composant ne perd son lecteur audio sans qu'on l'ait vu", () => {

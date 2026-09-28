@@ -6,7 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { MODES, MODES_EN, MODES_IDS } from "./magenta-helpers";
-import { appliquerInstrumentMidi } from "../audio/midi";
+import { appliquerInstrumentMidi } from "../audio/midi-ecriture";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { hasardDuNoeud } from "../core";
 import { installerGardeWorker } from "./garde-worker";

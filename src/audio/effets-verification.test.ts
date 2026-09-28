@@ -24,15 +24,30 @@ class AudioBufferPolyfill {
   copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
 }
 
+// UN ESPACE DE NOMS PAR MODULE, depuis que les trois grandes familles d'effets ont été découpées :
+// la dynamique en cinq, le temporel en cinq, le spectral en sept. Ce test appelle une vingtaine de
+// fonctions réparties entre elles, et chaque nom ci-dessous dit où la sienne vit.
 let dyn: typeof import("./effets-dynamique");
-let spec: typeof import("./effets-spectral");
+let sibilance: typeof import("./effets-sibilance");
+let restauration: typeof import("./effets-restauration");
+let mastering: typeof import("./effets-mastering");
+let voix: typeof import("./effets-voix");
+let balayage: typeof import("./effets-balayage");
+let decoupe: typeof import("./effets-decoupe");
 let temp: typeof import("./effets-temporel");
+let grains: typeof import("./effets-grains");
 
 beforeAll(async () => {
   (globalThis as any).AudioBuffer = AudioBufferPolyfill;
   dyn = await import("./effets-dynamique");
-  spec = await import("./effets-spectral");
+  sibilance = await import("./effets-sibilance");
+  restauration = await import("./effets-restauration");
+  mastering = await import("./effets-mastering");
+  voix = await import("./effets-voix");
+  balayage = await import("./effets-balayage");
+  decoupe = await import("./effets-decoupe");
   temp = await import("./effets-temporel");
+  grains = await import("./effets-grains");
 });
 
 const SR = 44100;
@@ -118,7 +133,7 @@ function maxApres(b: AudioBuffer, debut: number): number {
 describe("bitcrusher", () => {
   it("quantifie sur 2^bits niveaux (doc : Résolution en bits)", () => {
     const e = sinus(440, 0.2, 1);
-    const s = dyn.bitcrusher(e, 3, 44100, 100);
+    const s = sibilance.bitcrusher(e, 3, 44100, 100);
     const valeurs = new Set<number>();
     const d = s.getChannelData(0);
     for (let i = 0; i < d.length; i++) valeurs.add(Math.round(d[i] * 7)); // 2^3−1 = 7 niveaux
@@ -130,7 +145,7 @@ describe("bitcrusher", () => {
 describe("phaser", () => {
   it("modifie réellement le signal (pas un passe-plat)", () => {
     const e = sinus(1000, 0.5, 0.5);
-    const s = spec.phaser(e, 0.5, 80, 4, 50);
+    const s = balayage.phaser(e, 0.5, 80, 4, 50);
     // La différence échantillon à échantillon doit être significative.
     const de = e.getChannelData(0), ds = s.getChannelData(0);
     let diff = 0;
@@ -140,7 +155,7 @@ describe("phaser", () => {
   });
   it("crée des encoches mobiles : le gain à 1 kHz varie dans le temps", () => {
     const e = sinus(1000, 2, 0.5);
-    const s = spec.phaser(e, 1, 90, 4, 100);
+    const s = balayage.phaser(e, 1, 90, 4, 100);
     const fenetres: number[] = [];
     for (let deb = 0; deb + SR / 10 <= s.length; deb += SR / 10) {
       fenetres.push(rms(s, deb, deb + SR / 10));
@@ -153,21 +168,21 @@ describe("phaser", () => {
 describe("octaver", () => {
   it("« Octave sup » ajoute de l'énergie à 2f", () => {
     const e = sinus(440, 0.5, 0.6);
-    const s = spec.octaver(e, 100, 0, 50);
+    const s = decoupe.octaver(e, 100, 0, 50);
     const avant = energieA(e, 880, SR / 10);
     const apres = energieA(s, 880, SR / 10);
     expect(apres).toBeGreaterThan(avant * 5 + 1e-6);
   });
   it("« Octave inf » ajoute de l'énergie à f/2", () => {
     const e = sinus(440, 0.5, 0.6);
-    const s = spec.octaver(e, 0, 100, 50);
+    const s = decoupe.octaver(e, 0, 100, 50);
     const avant = energieA(e, 220, SR / 10);
     const apres = energieA(s, 220, SR / 10);
     expect(apres).toBeGreaterThan(avant * 5 + 1e-6);
   });
   it("à 0/0/0 le signal ressort intact", () => {
     const e = sinus(440, 0.2, 0.6);
-    const s = spec.octaver(e, 0, 0, 0);
+    const s = decoupe.octaver(e, 0, 0, 0);
     expect(rms(s)).toBeCloseTo(rms(e), 2);
   });
 });
@@ -175,17 +190,17 @@ describe("octaver", () => {
 describe("limiter", () => {
   it("réduit les pics au-dessus du seuil", () => {
     const e = sinus(440, 0.5, 1); // crête à 1.0 = 0 dB
-    const s = dyn.limiter(e, -6, 50, -6); // seuil = plafond = -6 dB
+    const s = mastering.limiter(e, -6, 50, -6); // seuil = plafond = -6 dB
     expect(pic(s)).toBeLessThanOrEqual(0.502);
   });
   it("laisse inchangé un signal sous le seuil", () => {
     const e = sinus(440, 0.5, 0.2); // crête à -14 dB, sous -6 dB
-    const s = dyn.limiter(e, -6, 50, -6);
+    const s = mastering.limiter(e, -6, 50, -6);
     expect(pic(s)).toBeCloseTo(0.2, 2);
   });
   it("applique le make-up jusqu'au plafond", () => {
     const e = sinus(440, 0.5, 1);
-    const s = dyn.limiter(e, -6, 50, -3); // makeup +3 dB
+    const s = mastering.limiter(e, -6, 50, -3); // makeup +3 dB
     expect(pic(s)).toBeCloseTo(0.501 * Math.pow(10, 3 / 20), 2);
   });
 });
@@ -205,21 +220,21 @@ describe("transientShaper", () => {
 
   it("augmente l'attaque quand Attack est positif", () => {
     const e = burstSustain();
-    const s = dyn.transientShaper(e, 6, 0, 1, 100);
+    const s = mastering.transientShaper(e, 6, 0, 1, 100);
     const burstAvant = rms(e, 0, Math.floor(0.05 * SR));
     const burstApres = rms(s, 0, Math.floor(0.05 * SR));
     expect(burstApres).toBeGreaterThan(burstAvant * 1.3);
   });
   it("diminue le sustain quand Sustain est négatif", () => {
     const e = burstSustain();
-    const s = dyn.transientShaper(e, 0, -6, 1, 100);
+    const s = mastering.transientShaper(e, 0, -6, 1, 100);
     const sustainAvant = rms(e, Math.floor(0.1 * SR), Math.floor(0.5 * SR));
     const sustainApres = rms(s, Math.floor(0.1 * SR), Math.floor(0.5 * SR));
     expect(sustainApres).toBeLessThan(sustainAvant * 0.9);
   });
   it("laisse le signal inchangé avec Attack=Sustain=0", () => {
     const e = burstSustain();
-    const s = dyn.transientShaper(e, 0, 0, 1, 100);
+    const s = mastering.transientShaper(e, 0, 0, 1, 100);
     expect(rms(s)).toBeCloseTo(rms(e), 2);
   });
 });
@@ -237,14 +252,14 @@ describe("largeurStereo", () => {
 
   it("conserve le signal stéréo à 100% de largeur et 100% Mid", () => {
     const e = stereoSinus();
-    const s = dyn.ajusterLargeurStereo(e, 100, 100);
+    const s = mastering.ajusterLargeurStereo(e, 100, 100);
     expect(rms(s, 0, s.length)).toBeCloseTo(rms(e, 0, e.length), 2);
     expect(pic(s)).toBeCloseTo(pic(e), 2);
   });
 
   it("passe en mono quand la largeur est 0%", () => {
     const e = stereoSinus();
-    const s = dyn.ajusterLargeurStereo(e, 0, 100);
+    const s = mastering.ajusterLargeurStereo(e, 0, 100);
     const l = s.getChannelData(0);
     const r = s.getChannelData(1);
     expect(Math.abs(l[Math.floor(SR / 10)])).toBeCloseTo(Math.abs(r[Math.floor(SR / 10)]), 5);
@@ -252,7 +267,7 @@ describe("largeurStereo", () => {
 
   it("élargit le stéréo quand la largeur est 200%", () => {
     const e = stereoSinus();
-    const s = dyn.ajusterLargeurStereo(e, 200, 100);
+    const s = mastering.ajusterLargeurStereo(e, 200, 100);
     const idx = Math.floor(SR / 10);
     const side = s.getChannelData(0)[idx] - s.getChannelData(1)[idx];
     const sideOrig = e.getChannelData(0)[idx] - e.getChannelData(1)[idx];
@@ -261,7 +276,7 @@ describe("largeurStereo", () => {
 
   it("élargit un signal mono en stéréo", () => {
     const e = sinus(440, 0.5, 1);
-    const s = dyn.ajusterLargeurStereo(e, 100, 100);
+    const s = mastering.ajusterLargeurStereo(e, 100, 100);
     expect(s.numberOfChannels).toBe(2);
     expect(rms(s)).toBeCloseTo(rms(e), 2);
     expect(s.getChannelData(0)[Math.floor(SR / 10)]).toBeCloseTo(s.getChannelData(1)[Math.floor(SR / 10)], 5);
@@ -270,7 +285,7 @@ describe("largeurStereo", () => {
   it("coupe le centre quand Mid est 0", () => {
     const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: 1000, sampleRate: SR });
     for (let i = 0; i < 1000; i++) { e.getChannelData(0)[i] = 0.5; e.getChannelData(1)[i] = 0.5; }
-    const s = dyn.ajusterLargeurStereo(e, 100, 0);
+    const s = mastering.ajusterLargeurStereo(e, 100, 0);
     expect(pic(s)).toBeCloseTo(0, 5);
   });
 });
@@ -286,7 +301,7 @@ describe("dererverberer", () => {
       const enveloppe = t < 0.1 ? 1 : Math.exp(-(t - 0.1) * 6); // RT60 ≈ 1.15 s
       d[i] = enveloppe * 0.7 * Math.sin(2 * Math.PI * 700 * t);
     }
-    const s = dyn.dererverberer(e, 80);
+    const s = restauration.dererverberer(e, 80);
     // Le gate s'enclenche quand la magnitude passe 6 dB sous la crête mémorisée
     // (décroissance 20 dB/s) : sur ce signal, à partir de ~0,6 s. On mesure donc
     // la FIN de traîne (0,65 → 0,95 s) — c'est là que vit le « wash » de réverb.
@@ -305,14 +320,14 @@ describe("dererverberer", () => {
 describe("harmoniser", () => {
   it("ajoute une voix à l'intervalle demandé", () => {
     const e = sinus(440, 0.5, 0.5);
-    const s = spec.harmoniser(e, 12, 50, 0, 0); // octave supérieure, 50%
+    const s = voix.harmoniser(e, 12, 50, 0, 0); // octave supérieure, 50%
     const avant = energieA(e, 880, 0, e.length);
     const apres = energieA(s, 880, 0, s.length);
     expect(apres).toBeGreaterThan(avant * 2 + 1e-6);
   });
   it("laisse le signal original quand les deux mix sont à 0", () => {
     const e = sinus(440, 0.2, 0.5);
-    const s = spec.harmoniser(e, 12, 0, 7, 0);
+    const s = voix.harmoniser(e, 12, 0, 7, 0);
     expect(rms(s)).toBeCloseTo(rms(e), 5);
   });
 });
@@ -323,7 +338,7 @@ describe("granularFreeze", () => {
     const d = e.getChannelData(0);
     // 1 s : burst au début, silence ensuite
     for (let i = 0; i < SR; i++) d[i] = i < SR / 10 ? 0.5 : 0;
-    const s = temp.granularFreeze(e, 50, 0, 0, 100); // grain 50 ms au début, 100% wet
+    const s = grains.granularFreeze(e, 50, 0, 0, 100); // grain 50 ms au début, 100% wet
     // La sortie doit rester active dans la seconde moitié grâce au loop
     const rmsAvant = rms(e, Math.floor(0.5 * SR), SR);
     const rmsApres = rms(s, Math.floor(0.5 * SR), SR);
@@ -332,7 +347,7 @@ describe("granularFreeze", () => {
   });
   it("transpose le grain quand pitch est non nul", () => {
     const e = sinus(440, 0.5, 0.5);
-    const s = temp.granularFreeze(e, 50, 12, 0, 100); // pitch +12
+    const s = grains.granularFreeze(e, 50, 12, 0, 100); // pitch +12
     const energieDouze = energieA(s, 880, 0, s.length);
     expect(energieDouze).toBeGreaterThan(0.001);
   });
@@ -340,11 +355,11 @@ describe("granularFreeze", () => {
 
 describe("exciter", () => {
   it("est exporté comme fonction async", async () => {
-    expect(typeof dyn.exciter).toBe("function");
+    expect(typeof mastering.exciter).toBe("function");
   });
   it.skipIf(!(globalThis as any).OfflineAudioContext)("ajoute de l'énergie dans les hautes fréquences", async () => {
     const e = sinus(440, 0.5, 0.5);
-    const s = await dyn.exciter(e, 80, 2000, 100);
+    const s = await mastering.exciter(e, 80, 2000, 100);
     const avant = energieA(e, 3520, 0, e.length);
     const apres = energieA(s, 3520, 0, s.length);
     expect(apres).toBeGreaterThan(avant * 2 + 1e-6);
@@ -353,7 +368,7 @@ describe("exciter", () => {
 
 describe("vocoder", () => {
   it("est exporté comme fonction async", async () => {
-    expect(typeof spec.vocoder).toBe("function");
+    expect(typeof voix.vocoder).toBe("function");
   });
   it.skipIf(!(globalThis as any).OfflineAudioContext)("produit une sortie modulée par l'enveloppe", async () => {
     const mod = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
@@ -361,7 +376,7 @@ describe("vocoder", () => {
     const d = mod.getChannelData(0);
     // modulateur = gate 100 Hz on/off toutes les 100 ms
     for (let i = 0; i < SR; i++) d[i] = (Math.floor(i / (SR / 10)) % 2 === 0) ? 0.5 : 0;
-    const s = await spec.vocoder(mod, car, 8, 500, 4000, 2, 100);
+    const s = await voix.vocoder(mod, car, 8, 500, 4000, 2, 100);
     expect(s.numberOfChannels).toBe(1);
     expect(s.length).toBe(SR);
     expect(rms(s)).toBeGreaterThan(0);

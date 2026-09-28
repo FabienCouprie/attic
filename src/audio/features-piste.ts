@@ -5,7 +5,8 @@
 // la standardisation inter-pistes (mise à l'échelle par feature) se fait en
 // amont de la PCA, à l'étape suivante, pas ici.
 
-import { analyserAudio, calculerCentroidSpectralMeyda, extraireMFCC, chromagramme } from "./analyse";
+import { analyserAudio, chromagramme } from "./analyse";
+import { calculerCentroidSpectralMeyda, extraireMFCC } from "./analyse-descripteurs";
 import { extraitCentre, mixdownMono } from "./commun";
 
 export interface VecteurFeaturesPiste {

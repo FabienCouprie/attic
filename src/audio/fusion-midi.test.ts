@@ -1,7 +1,7 @@
 // audio/fusion-midi.test.ts — Réunir les sorties MIDI d'un nœud en un seul fichier jouable.
 import { describe, expect, it } from "vitest";
 import { parseMidi } from "midi-file";
-import { fusionnerMidis, notesVersFichierMidi } from "./midi";
+import { fusionnerMidis, notesVersFichierMidi } from "./midi-ecriture";
 
 const octets = async (f: File) => new Uint8Array(await f.arrayBuffer());
 const partie = (note: number, canal: number, programme?: number) =>

@@ -12,7 +12,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 48
-- **restent à faire** : 14 composants, 30 couples composant / famille
+- **restent à faire** : 15 composants, 31 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **écartés** : 47, dont 1 famille de la palette écartée en bloc
 
@@ -38,10 +38,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération velours `reverberation-velours` : Chute
 
-### dynamique · 4
+### dynamique · 5
 
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
+- Montage `montage` : Plafond
 - Réverbération hachée `reverbe-hachee` : Seuil
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 

@@ -73,8 +73,11 @@ describe("les percussions que le placement ne connaissait pas", () => {
     // Le contrôle porte sur les listes réellement présentées : celle du rythme euclidien et celle
     // que partagent les autres composants. Une percussion offerte mais absente de la table se
     // jouerait en grosse caisse sans que rien ne le dise.
-    const { fiches } = await import("../plugins/generateurs");
-    const euclidien = fiches.find((f) => f.id === "rythme-euclidien")!;
+    // LA FICHE SE CHERCHE DANS LE REGISTRE ENTIER, et non dans le fichier qui la portait : elle a
+    // changé de fichier au découpage des générateurs, et ce test s'est cassé pour cette seule
+    // raison. Passer par la liste complète le rend insensible à un regroupement futur.
+    const { toutesLesFiches } = await import("../plugins");
+    const euclidien = toutesLesFiches.find((f) => f.id === "rythme-euclidien")!;
     const offertes = new Set<number>([
       ...PERCUSSIONS_CHOIX.map((p) => p.note),
       ...(euclidien.parametres.find((p) => p.nom === "Percussion")?.optionIds ?? []).map(Number),

@@ -10,7 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { calculerDTW } from "../audio/algebre";
+import { calculerDTW } from "../audio/algebre-alignement";
 import { chromagrammeParTrame } from "../audio/analyse";
 import { extraitCentre, decalageExtraitCentre, mixdownMono } from "../audio/commun";
 

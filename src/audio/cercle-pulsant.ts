@@ -23,7 +23,7 @@
 // une note forte.
 
 import { camelotToAccord } from "./camelot";
-import type { NoteEvenement } from "./midi";
+import type { NoteEvenement } from "./midi-sequence";
 
 /** Une pulsation : un instant, une taille, une couleur. Tout le reste en découle. */
 export interface Pulsation {
@@ -39,7 +39,16 @@ export interface Pulsation {
   clarte: number;
 }
 
-export interface OptionsCercle {
+/**
+ * Ce qu'il faut pour engendrer la suite de pulsations, et rien de plus.
+ *
+ * POURQUOI CE TYPE EXISTE À PART. `seuilSilence` ne décide que de ce qui SONNE : il est lu par les
+ * notes, par les accords et par l'animation SVG, jamais par `pulsations`. Un composant qui ne tire
+ * de cette suite qu'une image n'a donc rien à en dire, et le générateur vidéo le donnait pourtant,
+ * avec un curseur visible et documenté qui ne pouvait rien changer. Le séparer met cette erreur hors
+ * de portée : un appelant qui n'a pas de son à produire ne peut plus fournir ce champ par mégarde.
+ */
+export interface OptionsPulsations {
   dureeSec: number;
   /** Pulsations par seconde au début. */
   pulsationDebut: number;
@@ -55,9 +64,13 @@ export interface OptionsCercle {
   clarte: number;
   /** Amplitude de la respiration du rayon, 0 à 1. */
   respiration: number;
+  graine: number;
+}
+
+/** Les mêmes, plus ce qui ne concerne que le son. */
+export interface OptionsCercle extends OptionsPulsations {
   /** Rayon en deçà duquel la pulsation ne sonne pas : le silence a une image. */
   seuilSilence: number;
-  graine: number;
 }
 
 function tirage(graine: number): () => number {
@@ -104,7 +117,7 @@ const MINEUR = [0, 2, 3, 5, 7, 8, 10];
  * entre deux frappes change continûment. On avance donc instant par instant plutôt que de diviser
  * la durée — une grille imposerait un tempo là où l'on veut une respiration.
  */
-export function pulsations(o: OptionsCercle): Pulsation[] {
+export function pulsations(o: OptionsPulsations): Pulsation[] {
   const alea = tirage(o.graine);
   const out: Pulsation[] = [];
   let t = 0;

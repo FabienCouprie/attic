@@ -25,7 +25,9 @@ import { describe, expect, it } from "vitest";
 import { parseMidi } from "midi-file";
 
 import { frequenceDeNoteMidi } from "./commun";
-import { analyserMidi, notesVersFichierMidi, rendreSequence } from "./midi";
+import { analyserMidi } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
+import { rendreSequence } from "./midi-sequence";
 import { hauteurMediane, suivreHauteur } from "./hauteur";
 import { nomMusicXML } from "./musicxml";
 import { epeler } from "./midi-vers-abc";
@@ -36,7 +38,7 @@ import { apprendre, tableEnTexte } from "./markov";
 import { hauteurDepuisNom, nomNote as nomNoteLlm } from "./abc-edition-llm";
 import { parametresLecture, voixPourNote, type Banque, type Zone } from "./clavier-banque";
 import { transposerParReechantillonnage } from "./reverbes-etendues";
-import { midiVersNotationEasyScore } from "../plugins/vexflow";
+import { midiVersNotationEasyScore } from "../plugins/vexflow-notation";
 import { disposition, nomNote } from "../ui/clavier-disposition";
 
 /** L'écart en cents entre deux fréquences : la seule mesure qui dise si un microton a survécu. */

@@ -12,8 +12,11 @@
 // courbe constante doit tenir la valeur qu'elle désigne — ce qui se lit au spectre.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { autoPan, chopper, phaser, tremolo, vibrato, vibratoLogistique, wahwah } from "./effets-spectral";
-import { appliquerEchoPingPong } from "./effets-temporel";
+import { phaser, wahwah } from "./effets-balayage";
+import { chopper } from "./effets-decoupe";
+import { autoPan } from "./effets-espace";
+import { tremolo, vibrato, vibratoLogistique } from "./effets-modulation";
+import { appliquerEchoPingPong } from "./effets-echo";
 import { constante, engendrer, type Courbe } from "./courbe";
 
 /** La meme courbe a l envers. `engendrer` ne sait pas inverser, et le dire ici vaut mieux que

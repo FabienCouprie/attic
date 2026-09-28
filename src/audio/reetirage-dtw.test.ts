@@ -1,7 +1,7 @@
 // audio/reetirage-dtw.test.ts
 import { describe, it, expect, beforeAll } from "vitest";
 import { correspondanceIPourJ, reetirerParChemin } from "./reetirage-dtw";
-import type { PointAlignement } from "./algebre";
+import type { PointAlignement } from "./algebre-alignement";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;

@@ -16,7 +16,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { notesVersFichierMidi } from "../audio/midi";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { rendreNotes, type Banque, type NoteJouee } from "../audio/clavier-banque";
 import { chargerSfz, dossierDe } from "../audio/sfz";
 import { deposerBanque } from "../audio/banques-vives";

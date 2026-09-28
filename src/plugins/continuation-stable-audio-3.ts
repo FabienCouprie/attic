@@ -3,6 +3,7 @@
 // (onnxruntime-node) pour pouvoir charger les gros modèles ONNX depuis le disque.
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 
 const SAMPLE_RATE = 44100;
@@ -98,7 +99,8 @@ export const fiches: FicheAudio[] = ([
       if (seed < 0) seed = Math.floor(Math.random() * 1_000_000);
       const modelPath = ctx.paramTexte("Chemin modèle", "");
 
-      ctx.onProgress(traduire("progress.continuation_stable_audio_3_en_cours"));
+      await annoncerModele(ctx, "continuation-stable-audio-3",
+        traduire("progress.continuation_stable_audio_3_en_cours"));
 
       try {
         const audio441 = await resamplerVers(audioEntree, SAMPLE_RATE, 2);

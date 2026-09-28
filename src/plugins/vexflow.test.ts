@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
-import { fiches, midiVersNotationEasyScore } from "./vexflow";
-import { notesVersFichierMidi } from "../audio/midi";
+import { fiches } from "./vexflow";
+import { midiVersNotationEasyScore } from "./vexflow-notation";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);

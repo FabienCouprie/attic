@@ -294,10 +294,22 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "maquette",
+    "vue": "VueMontage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "modifier-texte",
     "vue": "VueModifierTexte",
     "entreeAudio": false,
     "entreeRequiseAutre": true
+  },
+  {
+    "id": "montage",
+    "vue": "VueMontage",
+    "entreeAudio": true,
+    "entreeRequiseAutre": false
   },
   {
     "id": "montage-video",

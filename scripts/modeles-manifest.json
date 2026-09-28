@@ -51,7 +51,7 @@
       "nom": "Séparation 6 pistes",
       "nomEn": "6-stem separation",
       "noeuds": [
-        "separation-demucs"
+        "separateur-ia"
       ],
       "octets": 258159781,
       "source": {
@@ -71,7 +71,7 @@
       "nom": "Séparation (poids fp16)",
       "nomEn": "Separation (fp16 weights)",
       "noeuds": [
-        "separation-demucs"
+        "separateur-ia"
       ],
       "octets": 165612636,
       "source": {
@@ -91,7 +91,7 @@
       "nom": "Classement par genre",
       "nomEn": "Genre classifier",
       "noeuds": [
-        "genre-musical"
+        "classificateur-genre"
       ],
       "octets": 94843658,
       "source": {
@@ -111,7 +111,7 @@
       "nom": "Séparation voix/instrumental",
       "nomEn": "Vocal/instrumental separation",
       "noeuds": [
-        "separation-voix"
+        "separateur-ia"
       ],
       "octets": 29704738,
       "source": {
@@ -133,7 +133,8 @@
       "nom": "Stable Audio 3 (musique)",
       "nomEn": "Stable Audio 3 (music)",
       "noeuds": [
-        "stable-audio-3"
+        "stable-audio-3",
+        "continuation-stable-audio-3"
       ],
       "octets": 719073823,
       "source": {

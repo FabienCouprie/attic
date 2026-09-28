@@ -153,7 +153,7 @@ describe("fréquence rendue", () => {
   }
 
   it("joue la tierce 14 centièmes plus bas en intonation juste — mesuré sur l'audio", async () => {
-    const { rendreSequence } = await import("./midi");
+    const { rendreSequence } = await import("./midi-sequence");
     const note = (n: number) => [{ note: n, velocite: 100, debut: 0, fin: 1.2 }];
     const egale = await rendreSequence(note(64), "FM/Oscillateurs", 90);
     const juste = await rendreSequence(note(noteTemperee(64, 60, temperament("juste"))), "FM/Oscillateurs", 90);
@@ -166,7 +166,7 @@ describe("fréquence rendue", () => {
   });
 
   it("ne change rien à la tonique : même fréquence dans les deux accords", async () => {
-    const { rendreSequence } = await import("./midi");
+    const { rendreSequence } = await import("./midi-sequence");
     const note = (n: number) => [{ note: n, velocite: 100, debut: 0, fin: 1.2 }];
     const a = await rendreSequence(note(60), "FM/Oscillateurs", 90);
     const b = await rendreSequence(note(noteTemperee(60, 60, temperament("juste"))), "FM/Oscillateurs", 90);

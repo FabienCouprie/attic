@@ -10,7 +10,7 @@ import { avecDoc } from "./notices";
 import { goutDominant, instrumentPublie, pointDepuisDegustation, type ProfilDegustation } from "../audio/accord-mets";
 import { dbDepuisIntensite, hertzDepuisHauteur, motifDepuisPoint, nomDeNote, octetsMidi, rendreAuRegistre, viserNiveau } from "../audio/motif-crossmodal";
 import { mesurer, profil } from "../audio/gout";
-import { rendreSequence } from "../audio/midi";
+import { rendreSequence } from "../audio/midi-sequence";
 import { creerAleatoire } from "../core/hasard";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI } from "./soundfontGlobal";
 

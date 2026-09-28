@@ -71,4 +71,17 @@ describe("courbe de gain", () => {
     // Le deuxième point tombe à une seconde, soit la moitié d'un fondu de deux secondes.
     expect(c[1]).toBeCloseTo(Math.SQRT1_2, 6);
   });
+
+  it("deux fondus plus longs que le son sont réduits dans la même proportion", () => {
+    // CE QUE CE CAS ATTRAPE. Deux fondus de trois secondes sur un son de deux : sans réduction ils se
+    // chevauchaient et se multipliaient, et le milieu du son s'entendait creusé — alors que le rendu
+    // (`monter`) les ramène à une seconde chacun et y passe à pleine échelle. L'aperçu sonnait donc
+    // plus faible que le fichier produit, exactement là où l'on règle un fondu.
+    const c = courbeDeGain({ gainDb: 0, fonduEntreeMs: 3000, fonduSortieMs: 3000 }, 2, 0, 5);
+    expect(Math.max(...c)).toBeCloseTo(1, 6);
+    // Réduits à une seconde chacun, ils se rejoignent au milieu du son : le point du milieu y est.
+    expect(c[2]).toBeCloseTo(1, 6);
+    expect(c[0]).toBeCloseTo(0, 6);
+    expect(c[c.length - 1]).toBeCloseTo(0, 6);
+  });
 });

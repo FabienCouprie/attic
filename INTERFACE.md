@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**448 composants**, dont **92** avec une vue propre et **4** sans lecteur générique.
+**448 composants**, dont **94** avec une vue propre et **6** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -73,7 +73,9 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Julia Processor | `julia-processor` | VueJuliaProcessor | — | 240 × 162 | non | oui | non |
 | Lecteur MIDI | `lecteur-midi` | VueUploadMidi + VueSoundFont | — | 240 × 140 | non | oui | non |
 | Lecteur SVG | `lecteur-svg` | VueUploadSvg + VueRenduImage | — | 320 × 320 | oui | oui | non |
+| Maquette | `maquette` | VueMontage | — | 560 × 380 | non | non | non |
 | Modifier le texte | `modifier-texte` | VueModifierTexte | — | 300 × 280 | non | oui | non |
+| Montage | `montage` | VueMontage | — | 560 × 420 | non | non | non |
 | Montage vidéo | `montage-video` | VueMontageVideo | — | 520 × 560 | non | oui | non |
 | Noms d'instruments | `noms-instruments` | VueNomsInstruments | — | 300 × 320 | non | oui | non |
 | Orchestre Csound | `orchestre-csound` | — | VueOrchestreCsound | 340 × 420 | non | oui | non |
@@ -308,7 +310,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Magenta Interpoler MIDI | `magenta-interpoler-midi` | 240 × 140 |
 | Magnétophone | `magnetophone` | 240 × 118 |
 | Mappeur Mandelbrot | `mappeur-mandelbrot` | 240 × 140 |
-| Maquette | `maquette` | 240 × 272 |
 | Chaîne de Markov | `markov-midi` | 240 × 162 |
 | Masquage | `masquage` | 240 × 140 |
 | Masque de zones | `masque-zones` | 240 × 140 |
@@ -325,7 +326,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | MIDI → séquence | `midi-vers-sequence` | 240 × 162 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |
 | Grave en mono | `mono-grave` | 240 × 118 |
-| Montage | `montage` | 240 × 448 |
 | Montage par grains | `montage-grains` | 240 × 140 |
 | Morphing spectral | `morphing-spectral` | 240 × 162 |
 | Morphologie | `morphologie` | 240 × 140 |

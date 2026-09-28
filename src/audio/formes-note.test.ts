@@ -129,6 +129,11 @@ const FORMES_ADMISES = new Set([
   // obligerait à porter une vélocité dont le dessin n'a que faire, et ne dirait rien de la
   // géométrie ; la vue n'aurait plus qu'à la recalculer, ce que ce dépôt sort exprès des composants.
   "debut,fin,largeur,microton,nom,note,nuance,voix,x,y",
+  // La note d'une boîte de maquette, ramenée à la durée propre de sa boîte pour être dessinée dans
+  // sa barre : `debut` et `duree` y sont des FRACTIONS de zéro à un, non des secondes. Employer
+  // `Note` ici mentirait sur l'unité du temps, et obligerait à porter une nuance et une fin dont le
+  // dessin n'a que faire ; les fractions, elles, sont ce qui rend le tracé insensible à l'étirement.
+  "debut,duree,note",
   // Les réglages des quatre synthétiseurs de Tone : une hauteur à jouer, pas une note en place.
   "decay?,duree,note,octaves?,pitchDecay?,release?,sampleRate?,volume",
   "attack?,decay?,duree,harmonicity?,modulationIndex?,note,octaves?,release?,resonance?,sampleRate?,volume",

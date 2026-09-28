@@ -13,6 +13,7 @@
 // L'analyse/synthèse et la boucle de trames vivent dans audio/gtcrn.ts, testées.
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import {
   debruiterParTrames, planchecherDeBruit, GTCRN_BINS, GTCRN_SAMPLE_RATE,
@@ -71,7 +72,7 @@ export const fiches: FicheAudio[] = ([
       const force = ctx.paramNombre("Force", 100) / 100;
       const rendreOrigine = ctx.paramTexte("Sortie", "origine") !== "modele";
 
-      ctx.onProgress(traduire("progress.debruitage.chargement_modele"));
+      await annoncerModele(ctx, "debruitage-ia", traduire("progress.debruitage.chargement_modele"));
       const { preparerSession } = await import("../ia");
       // Par le processus principal dans l'app, et non par `fetch` : une fois
       // installée, `fetch("oonx/…")` cherche dans `resources/app/dist/oonx/`, où le

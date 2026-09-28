@@ -67,6 +67,16 @@ describe("champs de résultat", () => {
     }
   });
 
+  it("ET CE QUE LA LIGNE DE TEMPS DESSINE AUSSI", () => {
+    // Le même défaut que le dessin de la courbe, relevé par Fabien sur le Montage : la barre de
+    // chaque piste, son onde et les notes des boîtes de la Maquette restaient à l'écran après une
+    // remise à zéro, décrivant une exécution qui n'avait plus lieu. Les tampons, en plus, tenaient
+    // en mémoire des sons dont plus rien n'avait besoin.
+    for (const champ of ["_dureesMesurees", "_montageSons", "_maquetteNotes"]) {
+      expect(CHAMPS_RESULTAT.has(champ), `${champ} doit être effacé par un reset`).toBe(true);
+    }
+  });
+
   it("et tout ce qu'un reset effaçait déjà y reste", () => {
     for (const champ of ["audioResultatUrl", "audioResultatNom", "audioResultatBuffer",
                          "audioResultatMessage", "scriptGenere", "mp3Url", "imageResultatUrl",

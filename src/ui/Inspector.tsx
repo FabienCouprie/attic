@@ -1,7 +1,5 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
-import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
-import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
 import type { FicheAudio } from "../audio/types-domaine";
 import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
@@ -248,11 +246,13 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           : <p className="inspecteur-resume">{resumeFiche(def, lang)}</p>}
       </div>
 
-      {(def.id === "montage" || def.id === "maquette") && (
-        <LigneDeTemps pistes={((noeud.data as any)._dureesMesurees ?? []) as PisteMontage[]}
-          branchees={portsBranches ?? []} params={params} onChanger={onChangerParametre}
-          modele={def.id === "maquette" ? MODELE_MAQUETTE : MODELE_MONTAGE} />
-      )}
+      {/* LA LIGNE DE TEMPS A QUITTÉ CE VOLET, et la raison est chiffrée. Il fait 280 pixels de large,
+          dont 182 utiles, et il ne s'élargit pas : comme l'échelle faisait tenir tout le montage dans
+          cette largeur, le plus petit déplacement possible au glissement valait 0,32 seconde sur une
+          pièce de cinquante secondes et 1,78 seconde sur cinq minutes, là où le réglage « Début »
+          accepte le centième. Le son, lui, se jouait sur le nœud : on ne pouvait pas suivre des yeux
+          où l'on en était en écoutant. Elle est désormais sur le nœud, avec son lecteur et sa tête de
+          lecture, et ce volet garde ce qu'il fait mieux qu'elle : la valeur exacte. */}
 
       {def.parametres.map((p) => {
         // Paramètres internes (ex: chemin persisté) — pas d'affichage

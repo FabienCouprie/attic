@@ -4,6 +4,7 @@
 // premier usage, puis mis en cache. Tourne dans un Web Worker.
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 
@@ -67,6 +68,8 @@ export const fiches: FicheAudio[] = ([
         synthesize: traduire("progress.kokoro.synthesize"),
         chunk: traduire("progress.kokoro.chunk"),
       };
+      // Même paquet que la voix anglaise, et même raison : le pourcentage arrive trop tard.
+      await annoncerModele(ctx, "tts-francais", "");
       return new Promise((resolve, reject) => {
         const requestId = makeRequestId();
         const onMessage = (e: MessageEvent) => {

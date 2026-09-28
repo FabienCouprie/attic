@@ -7,7 +7,8 @@ import type { PixelBuffer } from "./pixeltone";
 import { imageDataDepuisFichier } from "./pixeltone";
 import { extrairePalette, type CouleurExtraite } from "./palette-harmonique";
 import { rgbToHsl, distanceRgb2 } from "./couleurs";
-import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
+import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche } from "./generation";
 
 export interface FormeColoree {

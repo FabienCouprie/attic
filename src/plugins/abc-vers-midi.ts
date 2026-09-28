@@ -6,7 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { decouperMorceaux, lireMorceau, morceauVersMidi } from "../audio/abc";
-import { rendreMidiDepuisBytes } from "../audio/midi";
+import { rendreMidiDepuisBytes } from "../audio/midi-montage";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 const EXEMPLE = `X:1

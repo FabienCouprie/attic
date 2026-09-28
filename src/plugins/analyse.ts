@@ -3,7 +3,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
-import { langueCourante, traduire } from "../i18n";;
+import { langueCourante, traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
@@ -307,7 +308,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", plage: [5,120], defaut: 30, unite: "s", nomEn: "Duration" },
     ],
     async executer(ctx: any) {
-      ctx.onProgress(traduire("progress.extraction_des_caract_ristiques"));
+      await annoncerModele(ctx, "classificateur-genre", traduire("progress.extraction_des_caract_ristiques"));
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const duree = ctx.paramNombre("Durée", 30);

@@ -2,7 +2,8 @@
 // La couleur choisit la note (teinte → degré, luminosité → octave).
 
 import { rgbToHsl, hexToRgb } from "./couleurs";
-import { notesVersFichierMidi, rendreSequence, type NoteEvenement } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
+import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche } from "./generation";
 
 export interface OptionsColorLooper {

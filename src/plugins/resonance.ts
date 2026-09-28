@@ -2,7 +2,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { appliquerResonanceAudio } from "../audio/effets-spectral";
+import { appliquerResonanceAudio } from "../audio/effets-espace";
 
 const MATERIALS = [
   "transparent",

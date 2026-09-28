@@ -8,7 +8,7 @@
 
 import { genererReservoirMusical, mulberry32, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
-import { notesVersFichierMidi } from "./midi";
+import { notesVersFichierMidi } from "./midi-ecriture";
 import { formeOndeDepuisTimbre } from "./timbres";
 
 export interface ConfigMultiReservoir {

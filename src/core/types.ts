@@ -232,4 +232,19 @@ export interface PluginDef<TValeur, TRuntime> {
   // graphe entier. Pour un nœud qui rend compte du travail de tout le graphe (cf.
   // plugins/grapheGlobal.ts) sans en recevoir de valeur par une arête. Défaut : false.
   executerEnDernier?: boolean;
+
+  // CHANGER UN RÉGLAGE RELANCE LE NŒUD, au lieu d'effacer son résultat et d'attendre qu'on relance.
+  //
+  // POURQUOI CE N'EST PAS LE COMPORTEMENT DE TOUS. Un changement de réglage périme le résultat : le
+  // moteur l'efface, et l'on relance quand on veut. C'est ce qu'il faut pour un nœud dont le calcul
+  // coûte des secondes, sinon régler un curseur lancerait dix rendus.
+  //
+  // Mais un nœud dont le calcul PROPRE est négligeable, et dont l'amont est en cache, se relance pour
+  // presque rien — et son résultat effacé coûte, lui, très cher : le Montage porte une ligne de temps
+  // qu'on règle EN ÉCOUTANT, et déplacer une piste faisait disparaître le son qu'on écoutait. Un
+  // réglage qu'on ne peut pas juger à l'oreille ne se règle pas.
+  //
+  // La relance est temporisée par l'interface : le champ numérique de l'inspecteur écrit à chaque
+  // frappe, et « 12,5 » lancerait trois fois. Défaut : false.
+  relanceAutomatique?: boolean;
 }

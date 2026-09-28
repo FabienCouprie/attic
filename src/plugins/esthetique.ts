@@ -11,6 +11,7 @@
 // de démonstration, « Winter-Time » a un PQ global de 7,72 mais une tranche à 5,59.
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { canauxDe } from "../audio/geometrie-sonore";
 import {
@@ -106,6 +107,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true, message: traduire("msg.esthetique.aucune_entree") };
       }
       try {
+        await annoncerModele(ctx, "score-esthetique", "");
         const analyse = await analyserEsthetique(buffer, apiFenetre(), (t) => ctx.onProgress(t), ctx.signal);
         (ctx.noeud.data as any)._esthetique = analyse;
         return {
@@ -132,6 +134,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.esthetique.deux_entrees") };
       }
       try {
+        await annoncerModele(ctx, "comparaison-esthetique", "");
         const api = apiFenetre();
         const analyseA = await analyserEsthetique(a, api, (t) => ctx.onProgress(t), ctx.signal, "A · ");
         const analyseB = await analyserEsthetique(b, api, (t) => ctx.onProgress(t), ctx.signal, "B · ");

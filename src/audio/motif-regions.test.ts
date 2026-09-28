@@ -13,7 +13,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { dbDepuisIntensite, motifDepuisPoint, rendreAuRegistre, viserNiveau } from "./motif-crossmodal";
 import { mesurer, profil, REGIONS, type Gout } from "./gout";
-import { rendreSequence } from "./midi";
+import { rendreSequence } from "./midi-sequence";
 import { creerAleatoire } from "../core/hasard";
 
 /** Exactement la chaîne des deux nœuds : motif, rendu doux corrigé au registre, mise au niveau. */

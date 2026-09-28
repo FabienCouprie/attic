@@ -4,8 +4,9 @@
 // diatoniquement sur la gamme choisie. Les extensions sont donc des lignes à
 // part entière (ex. C, Cmaj7, C6) plutôt qu'un réglage global.
 
-import type { NoteEvenement } from "./midi";
-import { notesVersFichierMidi, rendreSequence } from "./midi";
+import type { NoteEvenement } from "./midi-sequence";
+import { notesVersFichierMidi } from "./midi-ecriture";
+import { rendreSequence } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
 
 export const NB_DEGRES_ACCORDS = 7;

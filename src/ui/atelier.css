@@ -33,6 +33,10 @@
   --lancer-texte: var(--text-inverse);
   --arret: #e0576f;
   --accent: #a855f7;
+  /* L'onde d'une piste, dans le ton complémentaire de la barre qui la porte : la barre dit la place
+     et la durée de la piste, l'onde dit sa matière, et deux choses différentes ne se lisent pas dans
+     la même couleur. Défini ici et non par thème, la barre étant seule à changer de ton. */
+  --onde: #ff9f43;
   --etiquette-bg: #2a1f3d;
   --cat-entree: #4c6ef5;
   --cat-generation: #40c057;
@@ -1228,6 +1232,28 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .ligne-temps-fondu { fill: var(--bg-surface); fill-opacity: 0.55; }
 .ligne-temps-poignee { fill: var(--bg-surface); stroke: var(--accent); stroke-width: 1.5; }
 .ligne-temps-legende { fill: var(--text-primary); }
+/* L'onde par-dessus la barre, dans un autre ton qu'elle : c'est la matière de la piste, pas sa boîte.
+   Transparente, pour que la barre reste lisible dessous et qu'on voie où la piste commence. */
+.ligne-temps-onde { fill: var(--onde); fill-opacity: 0.7; }
+/* Les notes d'une boîte, dans le ton de l'onde et pour la même raison : c'est la matière de la boîte.
+   Un peu plus opaques, un rectangle de deux pixels se voyant moins bien qu'une surface pleine. */
+.ligne-temps-note { fill: var(--onde); fill-opacity: 0.85; }
+/* La tête de lecture : un trait fin et vif, par-dessus tout le reste. C'est elle qu'on suit des yeux
+   pendant qu'on écoute, et rien ne doit la masquer. */
+.ligne-temps-tete { stroke: var(--accent-vif, #ff5d5d); stroke-width: 1.5; }
+/* `min-width: 0` ET `overflow: hidden` : sans eux, le contenu intrinsèque de cette rangée peut
+   élargir le conteneur, dont la largeur sert à dessiner la ligne de temps, laquelle relance
+   l'observateur de taille. C'est ainsi qu'une boucle de mesure gèle une fenêtre. */
+.ligne-temps-transport {
+  display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;
+  padding: 4px 8px 6px; border-top: 1px solid var(--border);
+}
+.ligne-temps-transport button {
+  min-width: 30px; padding: 2px 6px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg-surface); color: var(--text-primary); cursor: pointer;
+}
+.ligne-temps-transport input[type="range"] { flex: 1 1 0; min-width: 40px; }
 /* L'inspecteur qu'on tire sur le canevas : la colonne garde 280 px, le panneau s'étend par-dessus. */
 .inspecteur-emplacement { position: relative; min-width: 0; }
 .inspecteur-panneau {

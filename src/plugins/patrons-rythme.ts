@@ -9,7 +9,7 @@
 // quelques-uns (« Marche militaire », « Valse », « Pop ballade »). L'identifiant reste
 // le nom français : c'est la clé de PATRONS_RYTHME et celle qu'un projet enregistré
 // porte déjà.
-import { PATRONS_RYTHME } from "../audio/generation";
+import { PATRONS_RYTHME } from "../audio/generation-patrons";
 
 export interface PatronRythme { id: string; fr: string; en: string }
 

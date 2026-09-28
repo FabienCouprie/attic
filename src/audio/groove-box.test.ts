@@ -3,7 +3,8 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { genererGrooveBox, type ConfigGrooveBox } from "./groove-box";
 import { rendreBatterieMidi } from "./tone-synths";
-import { rendreSequence, analyserMidi } from "./midi";
+import { analyserMidi } from "./midi";
+import { rendreSequence } from "./midi-sequence";
 import { parseMidi } from "midi-file";
 
 describe("genererGrooveBox", () => {

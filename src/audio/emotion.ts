@@ -7,7 +7,8 @@
 // arousal (calme/énergique) — selon le modèle circomplex de Russell (1980),
 // puis reprojetés sur 8 émotions nommées réparties tous les 45° autour du
 // cercle, plus un état neutre au centre.
-import { analyserAudio, calculerRMS_Meyda, calculerCentroidSpectralMeyda } from "./analyse";
+import { analyserAudio } from "./analyse";
+import { calculerRMS_Meyda, calculerCentroidSpectralMeyda } from "./analyse-descripteurs";
 import { traduire } from "../i18n";
 
 export interface AnalyseEmotionnelle {

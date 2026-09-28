@@ -1,6 +1,7 @@
 // plugins/pochette-svg.test.ts
 import { describe, it, expect } from "vitest";
-import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG, mulberry32, paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-svg";
+import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG } from "./pochette-svg";
+import { mulberry32, paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-palettes";
 import { registre } from "../audio/adaptateur";
 
 function ctx(params: Record<string, string | number> = {}) {

@@ -1,6 +1,7 @@
 // audio/analyse.test.ts — Vérification des extracteurs Meyda.
 import { describe, it, expect, beforeAll } from "vitest";
-import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, transcrireMono, fusionnerNotesRepetees } from "./analyse";
+import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda } from "./analyse-descripteurs";
+import { transcrireMono, fusionnerNotesRepetees } from "./analyse-transcription";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
