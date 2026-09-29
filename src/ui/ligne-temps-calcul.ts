@@ -21,11 +21,28 @@ export interface PisteMontage {
 }
 
 /** Une piste prête à dessiner : sa place, sa durée, ses fondus, en secondes. */
+import { dureeSonnante, type Morceau } from "../audio/montage-morceaux";
+
 export interface LigneMontage {
   k: number;
+  /**
+   * L'identité du MORCEAU que cette barre dessine, quand la ligne de temps en porte.
+   *
+   * Absente pour une ligne de temps qui ne connaît que ses ports, où une barre EST une piste. Quand
+   * elle est là, plusieurs barres peuvent partager la même piste `k` : c'est ce qui distingue un
+   * morceau, qu'on coupe et qu'on déplace, d'un port, qui apporte le son.
+   */
+  id?: string;
   /** Faux tant que le graphe n'a pas tourné : la durée affichée est alors nominale. */
   connue: boolean;
   duree: number;
+  /**
+   * Où cette barre commence DANS son son, en secondes. Zéro pour une barre qui le prend au début.
+   *
+   * L'onde dessinée dans la barre s'en sert : un morceau coupé ne montre que sa part du son, faute
+   * de quoi deux morceaux issus d'une même coupe montreraient deux fois l'onde entière.
+   */
+  dans?: number;
   debut: number;
   gain: number;
   transposition: number;
@@ -87,6 +104,38 @@ const nombre = (params: Record<string, unknown>, nom: string, defaut: number): n
   const v = Number(params[nom]);
   return Number.isFinite(v) ? v : defaut;
 };
+
+/**
+ * Les barres que des morceaux dessinent : une par morceau, plusieurs pouvant partager une piste.
+ *
+ * LA DURÉE D'UNE BARRE EST CE QUE SON MORCEAU FAIT SONNER, et non la durée du son reçu : c'est
+ * précisément ce qui distingue un morceau d'un port. Tant que le graphe n'a pas tourné, la durée du
+ * son est inconnue, et une barre sans durée propre retombe alors sur la durée nominale, comme une
+ * piste le fait déjà.
+ *
+ * L'ORDRE EST CELUI DES MORCEAUX, qui est celui où ils ont été posés : un morceau collé se dessine
+ * donc par-dessus les précédents, ce qui est aussi l'ordre dans lequel on le désigne au clic.
+ */
+export function disposerMorceaux(
+  morceaux: readonly Morceau[], pistes: readonly PisteMontage[],
+): LigneMontage[] {
+  return morceaux.map((m) => {
+    const connue = pistes.find((p) => p.piste === m.piste);
+    const source = connue?.duree ?? DUREE_INCONNUE;
+    return {
+      k: m.piste,
+      id: m.id,
+      connue: !!connue,
+      duree: connue ? dureeSonnante(m, source) : (m.duree > 0 ? m.duree : DUREE_INCONNUE),
+      dans: m.dans,
+      debut: m.debut,
+      gain: m.gain,
+      transposition: 0,
+      entree: m.entree / 1000,
+      sortie: m.sortie / 1000,
+    };
+  });
+}
 
 /**
  * Les pistes branchées, dans l'ordre de leur numéro et non dans celui des câbles.

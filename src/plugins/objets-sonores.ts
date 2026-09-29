@@ -13,6 +13,7 @@ import {
   decouperEnObjets, decrireZones, monter, reordonnerObjets,
   type CritereDecoupage, type CritereTri, type ObjetSonore, type Plan,
 } from "../audio/objets-sonores";
+import { morceauxDepuisParametres, normaliserMorceau, type Morceau } from "../audio/montage-morceaux";
 
 const en = () => langueCourante() === "en";
 const PISTES = 16;
@@ -122,8 +123,8 @@ export const fiches: FicheAudio[] = ([
     relanceAutomatique: true,
     resume: "Pose des sons sur une ligne de temps, chacun à son instant, à son niveau, avec ses fondus ; le composant s'allonge d'une piste à la demande.",
     resumeEn: "Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time.",
-    notice: "Ce composant pose des sons sur une ligne de temps et les additionne en un seul. Il montre quatre pistes au départ ; les boutons « + » et « − », sous ses entrées, l'allongent ou le raccourcissent, jusqu'à seize. Le « − » se refuse tant que la dernière piste est branchée : aucun câble ne disparaît sans qu'on l'ait débranché.\n\nChaque piste a quatre réglages : son instant de départ, son niveau, son fondu d'entrée et son fondu de sortie. Ils n'apparaissent que pour les pistes branchées. La ligne de temps, sur le composant lui-même, montre les pistes à leur place et à leur durée réelle après une exécution : on déplace une piste en la tirant, on règle ses fondus en tirant ses coins. La touche Maj rend le geste dix fois plus fin, la touche Alt cent fois. La molette zoome sur l'instant visé ; le curseur de zoom garde le milieu de ce qu'on voit, et chaque cran y multiplie l'échelle par un même facteur. La barre posée sous la ligne la fait défiler, et la largeur de son curseur dit quelle part de la pièce est visible. Le composant s'élargit par ses bords pour donner plus de place à la ligne. Chaque piste montre sa forme d'onde dans sa barre, sur la part qui sonne.\n\nElle porte aussi l'écoute. Le bouton joue les pistes branchées, un clic sur la règle y porte la tête de lecture, et celle-ci suit la musique en ramenant la vue quand elle en sort. Un niveau changé pendant la lecture s'entend aussitôt, sans interruption du son ; un début, une durée ou un fondu changés ne reprennent que la piste concernée. Un glissement s'entend au relâchement du geste. L'écoute se fait au niveau d'écoute des composants, qui n'est pas la pleine puissance : elle sert à placer les sons, non à juger du niveau de sortie.\n\nLes fondus sont à puissance constante : deux sons qui se croisent sur la même durée, l'un sortant, l'autre entrant, gardent leur énergie au milieu du croisement, sans le creux qu'y ferait une rampe droite. Des fondus plus longs que le son sont réduits dans la même proportion.\n\nUn début négatif rogne le son d'autant : on entre dans un son déjà commencé, et le fondu d'entrée s'applique à ce qui reste. La sortie dure jusqu'à la fin du dernier son. Les pistes sont numérotées, et la piste 3 reste la piste 3 quel que soit l'ordre dans lequel on a tiré les câbles. Pour plus de seize sons, on monte des montages.",
-    noticeEn: "This node lays sounds out on a timeline and adds them into one. It shows four tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to sixteen. The « - » refuses while the last track is connected: no cable disappears without being unplugged first.\n\nEach track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. The timeline, on the node itself, shows the tracks in place and at their real length after a run: drag a track to move it, drag its corners to set its fades. The Shift key makes the gesture ten times finer, the Alt key a hundred times. The wheel zooms on the instant under the pointer; the zoom slider keeps the middle of what is shown, and each of its steps multiplies the scale by the same factor. The bar under the timeline scrolls it, and its thumb's width says how much of the piece is visible. The node widens by its edges to give the timeline more room. Each track shows its waveform inside its bar, over the part that sounds.\n\nIt also carries listening. The button plays the connected tracks, a click on the ruler takes the playhead there, and the playhead follows the music, bringing the view back when it leaves. A level changed while playing is heard at once, with no interruption of the sound; a start, a length or a fade changed take back only the track concerned. A drag is heard when the gesture is released. Listening happens at the components' listening level, which is not full power: it serves to place the sounds, not to judge the output level.\n\nThe output is the sum of the tracks, with no level change: the level is set track by track, and that is where it is decided. The message gives the number of tracks and the length.\n\nFades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion.\n\nA negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than sixteen sounds, one montage feeds another.",
+    notice: "Ce composant pose des sons sur une ligne de temps et les additionne en un seul. Il montre quatre pistes au départ ; les boutons « + » et « − », sous ses entrées, l'allongent ou le raccourcissent, jusqu'à seize. Le « − » se refuse tant que la dernière piste est branchée : aucun câble ne disparaît sans qu'on l'ait débranché.\n\nChaque piste a quatre réglages : son instant de départ, son niveau, son fondu d'entrée et son fondu de sortie. Ils n'apparaissent que pour les pistes branchées. La ligne de temps, sur le composant lui-même, montre les morceaux à leur place et à leur durée réelle après une exécution : on déplace un morceau en le tirant, on règle ses fondus en tirant ses coins.\n\nUne piste porte autant de morceaux qu'on veut, tous puisant le son de son câble. Un clic choisit un morceau, et son contour le marque. La touche S coupe en deux tout morceau que la tête de lecture traverse ; le second reprend le son là où le premier s'arrête, de sorte que la coupe ne s'entende pas. Ctrl+C copie le morceau choisi, Ctrl+X le coupe, Ctrl+V le colle à la tête de lecture, et la touche Suppr le retire. Le presse-papier passe d'un montage à l'autre. Un clic sur une place vide rend la sélection.\n\nLes quatre réglages de chaque piste donnent son premier morceau : ils décrivent l'état d'un montage qu'on n'a pas encore découpé, et cessent d'agir dès qu'on y touche. La touche Maj rend le geste dix fois plus fin, la touche Alt cent fois. La molette zoome sur l'instant visé ; le curseur de zoom garde le milieu de ce qu'on voit, et chaque cran y multiplie l'échelle par un même facteur. La barre posée sous la ligne la fait défiler, et la largeur de son curseur dit quelle part de la pièce est visible. Le composant s'élargit par ses bords pour donner plus de place à la ligne. Chaque piste montre sa forme d'onde dans sa barre, sur la part qui sonne.\n\nElle porte aussi l'écoute. Le bouton joue les pistes branchées, la tête de lecture se prend sur la règle ou sur elle-même et se porte où l'on veut sans lâcher le clic, et elle suit la musique en ramenant la vue quand elle en sort. Un niveau changé pendant la lecture s'entend aussitôt, sans interruption du son ; un début, une durée ou un fondu changés ne reprennent que la piste concernée. Un glissement s'entend au relâchement du geste. L'écoute se fait au niveau d'écoute des composants, qui n'est pas la pleine puissance : elle sert à placer les sons, non à juger du niveau de sortie.\n\nLes fondus sont à puissance constante : deux sons qui se croisent sur la même durée, l'un sortant, l'autre entrant, gardent leur énergie au milieu du croisement, sans le creux qu'y ferait une rampe droite. Des fondus plus longs que le son sont réduits dans la même proportion.\n\nUn début négatif rogne le son d'autant : on entre dans un son déjà commencé, et le fondu d'entrée s'applique à ce qui reste. La sortie dure jusqu'à la fin du dernier son. Les pistes sont numérotées, et la piste 3 reste la piste 3 quel que soit l'ordre dans lequel on a tiré les câbles. Pour plus de seize sons, on monte des montages.",
+    noticeEn: "This node lays sounds out on a timeline and adds them into one. It shows four tracks to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to sixteen. The « - » refuses while the last track is connected: no cable disappears without being unplugged first.\n\nEach track has four settings: its start instant, its level, its fade in and its fade out. They only appear for connected tracks. The timeline, on the node itself, shows the clips in place and at their real length after a run: drag a clip to move it, drag its corners to set its fades.\n\nA track carries as many clips as wanted, all drawing sound from its cable. A click chooses a clip, and its outline marks it. The S key cuts in two every clip the playhead crosses; the second one takes up the sound where the first one stops, so that the cut is not heard. Ctrl+C copies the chosen clip, Ctrl+X cuts it, Ctrl+V pastes it at the playhead, and the Delete key removes it. The clipboard carries from one montage to another. A click on an empty place gives the selection back.\n\nThe four settings of each track give its first clip: they describe the state of a montage that has not been cut yet, and stop acting as soon as one touches it. The Shift key makes the gesture ten times finer, the Alt key a hundred times. The wheel zooms on the instant under the pointer; the zoom slider keeps the middle of what is shown, and each of its steps multiplies the scale by the same factor. The bar under the timeline scrolls it, and its thumb's width says how much of the piece is visible. The node widens by its edges to give the timeline more room. Each track shows its waveform inside its bar, over the part that sounds.\n\nIt also carries listening. The button plays the connected tracks, the playhead is taken on the ruler or on itself and carried anywhere without releasing the click, and it follows the music, bringing the view back when it leaves. A level changed while playing is heard at once, with no interruption of the sound; a start, a length or a fade changed take back only the track concerned. A drag is heard when the gesture is released. Listening happens at the components' listening level, which is not full power: it serves to place the sounds, not to judge the output level.\n\nThe output is the sum of the tracks, with no level change: the level is set track by track, and that is where it is decided. The message gives the number of tracks and the length.\n\nFades are equal-power: two sounds crossing over the same length, one going out, the other coming in, keep their energy in the middle of the crossing, without the dip a straight ramp would make there. Fades longer than the sound are shortened in the same proportion.\n\nA negative start trims the sound by that much: one enters a sound already under way, and the fade in applies to what remains. The output lasts until the end of the last sound. Tracks are numbered, and track 3 stays track 3 whatever order the cables were drawn in. For more than sixteen sounds, one montage feeds another.",
     entrees: Array.from({ length: PISTES }, (_, k) => ({ nom: `Piste ${k + 1}`, nomEn: `Track ${k + 1}`, type: "audio", requis: false })),
     // Seize pistes déclarées, quatre montrées : le nombre de pistes n'a pas à être décidé une fois
     // pour toutes par la fiche (cf. ui/ports-extensibles.ts).
@@ -142,23 +143,42 @@ export const fiches: FicheAudio[] = ([
         doc: `Durée du fondu de sortie de la piste ${k + 1}.`, docEn: `Length of track ${k + 1}'s fade out.` },
     ]).flat(),
     async executer(ctx: any) {
-      const plans: Plan[] = [];
+      const sons: Record<number, AudioBuffer> = {};
       const pistes: { piste: number; duree: number }[] = [];
       for (let k = 0; k < PISTES; k++) {
         const son = ctx.entree(k);
         if (!(son instanceof AudioBuffer)) continue;
-        plans.push({
-          son, debut: ctx.paramNombre(`Début ${k + 1}`, k * 2), gainDb: ctx.paramNombre(`Gain ${k + 1}`, 0),
-          fonduEntreeMs: ctx.paramNombre(`Fondu entrée ${k + 1}`, 10), fonduSortieMs: ctx.paramNombre(`Fondu sortie ${k + 1}`, 10),
-        });
+        sons[k] = son;
         pistes.push({ piste: k, duree: son.duration });
       }
+      // LES MORCEAUX SONT LA VÉRITÉ, ET LES RÉGLAGES LEUR SERVENT DE PREMIÈRE FORME. Un graphe
+      // enregistré avant les morceaux n'en porte pas : ils se déduisent alors de ses réglages, un
+      // par piste branchée et le son entier, si bien qu'il sonne exactement comme avant. Rien n'est
+      // réécrit tant qu'on ne touche à rien. Voir `audio/montage-morceaux.ts`.
+      const poses = (ctx.noeud.data as { morceaux?: Morceau[] }).morceaux;
+      const morceaux = (Array.isArray(poses) && poses.length > 0
+        ? poses
+        : morceauxDepuisParametres(pistes.map((p) => p.piste), (ctx.noeud.data as any).parametres ?? {}))
+        // UN MORCEAU DONT LE PORT N'EST PLUS BRANCHÉ NE SONNE PAS, et ce n'est pas une faute : on
+        // débranche un câble pour écouter sans lui, et les morceaux doivent attendre son retour
+        // plutôt que de disparaître. Ils restent dans les données du nœud, seule leur exécution est
+        // sautée.
+        .filter((m) => sons[m.piste] instanceof AudioBuffer);
+      const plans: Plan[] = morceaux.map((m) => {
+        const son = sons[m.piste];
+        const n = normaliserMorceau(m, son.duration);
+        return {
+          son, debut: n.debut, gainDb: n.gain,
+          fonduEntreeMs: n.entree, fonduSortieMs: n.sortie,
+          dans: n.dans, duree: n.duree,
+        };
+      });
       // CE QUE LA LIGNE DE TEMPS MONTRE PASSE PAR LE CANAL DÉCLARÉ, et non plus par le sac de
       // l'interface. `designe` dit que tout cela vient des ENTRÉES : les durées sont celles des sons
       // reçus, les tampons sont ceux des composants d'amont, désignés et non recopiés puisqu'ils
       // vivent déjà dans le cache d'exécution. Régler une piste ne périme donc rien de tout cela, et
       // c'est ce qui permet d'entendre le montage pendant qu'on le règle. Voir `FonctionPlugin`.
-      const designe = { durees: pistes, sons: Object.fromEntries(plans.map((p, i) => [pistes[i].piste, p.son])) };
+      const designe = { durees: pistes, sons: Object.fromEntries(pistes.map((p) => [p.piste, sons[p.piste]])) };
       if (!plans.length) {
         return { valeurs: [null], designe, message: en() ? "No track connected." : "Aucune piste branchée." };
       }
@@ -166,8 +186,10 @@ export const fiches: FicheAudio[] = ([
       // LE MONTAGE REND SA SOMME, SANS RETOUCHE DE NIVEAU. Le niveau de chaque piste est déjà réglé
       // piste par piste, et c'est là qu'il se décide ; imposer une sonie au mélange reviendrait à
       // reprendre par-dessus ce qui vient d'être posé à la main.
-      const pistesDites = `${plans.length} ${en() ? "tracks" : "pistes"}`;
-      return { valeurs: [brut], designe, message: `${pistesDites} · ${brut.duration.toFixed(2)} s` };
+      const morceauxDits = en()
+        ? `${plans.length} clip${plans.length > 1 ? "s" : ""} · ${pistes.length} track${pistes.length > 1 ? "s" : ""}`
+        : `${plans.length} morceau${plans.length > 1 ? "x" : ""} · ${pistes.length} piste${pistes.length > 1 ? "s" : ""}`;
+      return { valeurs: [brut], designe, message: `${morceauxDits} · ${brut.duration.toFixed(2)} s` };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

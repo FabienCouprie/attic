@@ -280,6 +280,24 @@ export interface Plan {
   /** Fondu d'entrée et de sortie, en millisecondes, propres à ce son. */
   fonduEntreeMs: number;
   fonduSortieMs: number;
+  /**
+   * Où ce plan commence DANS le son, en secondes. Absent ou nul : à son début.
+   *
+   * C'est ce qui permet de ne poser qu'une PARTIE d'un son, donc de couper un morceau en deux sans
+   * que la coupe s'entende : le second reprend là où le premier s'arrête. Absent, le plan pose le
+   * son entier, et tout appelant écrit avant cette notion garde exactement son comportement.
+   */
+  dans?: number;
+  /** Ce qu'on en joue, en secondes. Absent ou nul : jusqu'à la fin du son. */
+  duree?: number;
+}
+
+/** La fenêtre qu'un plan prend dans son son : d'où elle part, combien d'échantillons elle porte. */
+function fenetreDuPlan(p: Plan, sr: number): { depart: number; n: number } {
+  const depart = Math.max(0, Math.min(p.son.length, Math.round((p.dans ?? 0) * sr)));
+  const reste = p.son.length - depart;
+  const n = p.duree && p.duree > 0 ? Math.min(Math.round(p.duree * sr), reste) : reste;
+  return { depart, n: Math.max(0, n) };
 }
 
 /**
@@ -310,11 +328,14 @@ export async function monter(plans: Plan[]): Promise<AudioBuffer> {
     const s = off.createBufferSource(); s.buffer = p.son; s.connect(off.destination); s.start(0);
     return { ...p, son: await off.startRendering() };
   }));
-  const longueur = Math.max(1, maxDe(prets.map((p) => Math.round(p.debut * sr) + p.son.length)));
+  const longueur = Math.max(1, maxDe(prets.map((p) => Math.round(p.debut * sr) + fenetreDuPlan(p, sr).n)));
   const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate: sr });
   for (const p of prets) {
-    const decalage = Math.round(p.debut * sr), gain = Math.pow(10, p.gainDb / 20), n = p.son.length;
-    // Ce qui sonne vraiment : un début négatif ôte le commencement du son.
+    const decalage = Math.round(p.debut * sr), gain = Math.pow(10, p.gainDb / 20);
+    // LA FENÊTRE DU PLAN, ET NON LE SON ENTIER : un plan peut n'en poser qu'une partie, ce qui est
+    // ce qui rend une coupe possible. Sans `dans` ni `duree`, elle couvre le son d'un bout à l'autre.
+    const { depart, n } = fenetreDuPlan(p, sr);
+    // Ce qui sonne vraiment : un début négatif ôte le commencement de la fenêtre.
     const premier = Math.max(0, -decalage), utile = n - premier;
     if (utile <= 0) continue;
     let fe = Math.max(0, Math.round((p.fonduEntreeMs / 1000) * sr));
@@ -330,7 +351,7 @@ export async function monter(plans: Plan[]): Promise<AudioBuffer> {
         let g = gain;
         if (j < fe) g *= gainDeFondu(j / fe);
         if (n - 1 - i < fs) g *= gainDeFondu((n - 1 - i) / fs);
-        y[decalage + i] += x[i] * g;
+        y[decalage + i] += x[depart + i] * g;
       }
     }
   }

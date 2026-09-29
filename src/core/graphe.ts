@@ -174,7 +174,13 @@ export function empreinteSorties(nodeId: string, aretes: AreteG[]): string {
 // c'est la clé actuelle ; à rendre injectable lors de la généralisation (§1 roadmap).
 export function empreinteParametres(data: Record<string, unknown>): string {
   const f = data.audioFichier as { name?: string } | undefined;
-  return JSON.stringify({ p: data.parametres ?? {}, s: data.sequenceNotes ?? null, f: f ? f.name : null });
+  // LES MORCEAUX DU MONTAGE ENTRENT DANS LA CLÉ, au même titre que les notes enregistrées d'un
+  // clavier : ils sont posés à la main et décident de ce que le composant rend. Sans eux, couper ou
+  // déplacer un morceau n'aurait relancé personne, et l'on aurait entendu le montage d'avant.
+  return JSON.stringify({
+    p: data.parametres ?? {}, s: data.sequenceNotes ?? null, m: data.morceaux ?? null,
+    f: f ? f.name : null,
+  });
 }
 
 // Empreinte stable d'une valeur individuelle (utilisée pour les entrées).

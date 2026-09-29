@@ -9,12 +9,14 @@
 //
 // `porteLecteur: true` DANS LE REGISTRE fait taire le lecteur générique du nœud : deux jeux de
 // commandes pour un même son se contrediraient, et la tête de lecture ne saurait plus lequel suivre.
-import { NodeResizer, useNodeConnections } from "@xyflow/react";
+import { NodeResizer, useNodeConnections, useReactFlow } from "@xyflow/react";
 import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
 import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
+import { morceauxDepuisParametres, type Morceau } from "../audio/montage-morceaux";
 import type { VueProps } from "./vues";
 
 export function VueMontage({ id, data }: VueProps) {
+  const { setNodes } = useReactFlow();
   // Les rangs branchés, lus comme le nœud les lit : c'est la poignée qui porte le numéro du port.
   const entrees = useNodeConnections({ handleType: "target", id });
   const branchees = [...new Set(
@@ -39,7 +41,28 @@ export function VueMontage({ id, data }: VueProps) {
       notes?: Record<number, { debut: number; duree: number; note: number }[]>;
     };
     onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
+    /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
+    morceaux?: Morceau[];
   };
+
+  // LA MAQUETTE GARDE SON MODÈLE : une boîte y EST un port, avec sa durée réglée, et rien n'a été
+  // demandé pour elle. Les morceaux ne concernent que le montage, où l'on coupe du son.
+  const estMaquette = d.ficheId === "maquette";
+
+  // LES MORCEAUX SE DÉDUISENT DES RÉGLAGES TANT QU'IL N'Y EN A PAS, et c'est toute la migration : un
+  // graphe enregistré avant eux s'ouvre avec un morceau par piste branchée, le son entier, donc
+  // exactement ce qu'il montrait. Rien n'est écrit sur le disque tant qu'on ne touche à rien.
+  const morceaux = estMaquette ? undefined
+    : (d.morceaux && d.morceaux.length > 0
+      ? d.morceaux
+      : morceauxDepuisParametres(branchees, d.parametres ?? {}));
+
+  // ON ÉCRIT DANS LES DONNÉES DU NŒUD, comme le clavier y écrit ce qu'on vient de jouer. Une vue a le
+  // droit de poser ce que L'UTILISATEUR a fait ; ce qu'elle n'a pas le droit de poser, ce sont les
+  // canaux d'un run. L'empreinte de cache les regarde, si bien qu'un morceau déplacé fait rejouer.
+  const ecrireMorceaux = (ms: Morceau[]) => setNodes((nds) => nds.map((n) => (
+    n.id === id ? { ...n, data: { ...n.data, morceaux: ms } } : n
+  )));
 
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()}>
@@ -52,10 +75,13 @@ export function VueMontage({ id, data }: VueProps) {
         branchees={branchees}
         params={d.parametres ?? {}}
         onChanger={(nom, valeur) => d.onChangerParametre?.(id, nom, valeur)}
-        modele={d.ficheId === "maquette" ? MODELE_MAQUETTE : MODELE_MONTAGE}
+        modele={estMaquette ? MODELE_MAQUETTE : MODELE_MONTAGE}
         audioUrl={d.audioResultatUrl}
         sons={d._designe?.sons}
         notes={d._designe?.notes}
+        noeudId={id}
+        morceaux={estMaquette ? undefined : morceaux}
+        onMorceaux={estMaquette ? undefined : ecrireMorceaux}
       />
     </div>
   );

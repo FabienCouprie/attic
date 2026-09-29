@@ -76,12 +76,21 @@ export function suiteAuChangement(avant: EtatPiste, apres: EtatPiste): Suite {
   return avant.gainDb !== apres.gainDb ? "niveau" : "rien";
 }
 
+/**
+ * Ce qui identifie une piste ou un morceau dans ces tables.
+ *
+ * ELLE NE SERT QU'À SE RETROUVER, JAMAIS À CALCULER : un rang de piste y allait seul tant qu'une
+ * barre était une piste ; depuis qu'un montage porte plusieurs morceaux par piste, l'identifiant du
+ * morceau y va aussi, et un texte s'y compare aussi bien qu'un nombre.
+ */
+export type CleVive = number | string;
+
 /** Ce qui a bougé entre deux états du montage, piste par piste. */
 export interface Differences {
-  aDemarrer: number[];
-  aArreter: number[];
-  aReprogrammer: number[];
-  aRegler: number[];
+  aDemarrer: CleVive[];
+  aArreter: CleVive[];
+  aReprogrammer: CleVive[];
+  aRegler: CleVive[];
 }
 
 /**
@@ -92,8 +101,8 @@ export interface Differences {
  * arrêt du montage entier, ce qui est exactement ce qu'on veut éviter.
  */
 export function differencePistes(
-  avant: ReadonlyMap<number, EtatPiste>,
-  apres: ReadonlyMap<number, EtatPiste>,
+  avant: ReadonlyMap<CleVive, EtatPiste>,
+  apres: ReadonlyMap<CleVive, EtatPiste>,
 ): Differences {
   const d: Differences = { aDemarrer: [], aArreter: [], aReprogrammer: [], aRegler: [] };
   for (const k of avant.keys()) if (!apres.has(k)) d.aArreter.push(k);
@@ -104,7 +113,11 @@ export function differencePistes(
     if (suite === "reprogrammer") d.aReprogrammer.push(k);
     else if (suite === "niveau") d.aRegler.push(k);
   }
-  const rang = (a: number, b: number) => a - b;
+  // L'ORDRE EST STABLE QUELLE QUE SOIT LA CLÉ : deux nombres se rangent par leur valeur, et deux
+  // identifiants de morceau par leur texte. Ce qui compte est que le même état rende toujours la
+  // même liste, sans quoi deux rendus successifs paraîtraient différer sans que rien n'ait bougé.
+  const rang = (a: CleVive, b: CleVive) =>
+    typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b));
   d.aArreter.sort(rang); d.aDemarrer.sort(rang); d.aReprogrammer.sort(rang); d.aRegler.sort(rang);
   return d;
 }

@@ -18,13 +18,28 @@ import { calerSource, courbeDeGain, gainLineaire } from "../../audio/apercu-vide
 import { NIVEAU_ECOUTE } from "../niveau-ecoute";
 import {
   departDeLecture, differencePistes, finDeMontage, positionVive, segmentSonnant,
-  type Depart, type EtatPiste, type ReglagesVifs,
+  type CleVive, type Depart, type EtatPiste, type ReglagesVifs,
 } from "../../audio/lecture-vive";
 
 /** Une piste à entendre : son rang, son tampon, ses réglages. */
 export interface PisteVive extends ReglagesVifs {
-  k: number;
+  /**
+   * Ce qui l'identifie d'un rendu à l'autre : un rang de piste, ou l'identifiant d'un MORCEAU.
+   *
+   * Le montage porte plusieurs morceaux par piste depuis qu'on peut les couper : le rang de piste ne
+   * les distingue donc plus, et deux morceaux d'une même piste s'écraseraient l'un l'autre dans les
+   * tables qui suivent ce qui sonne. La clé n'est employée que pour se retrouver, jamais pour
+   * calculer, si bien qu'un texte y va aussi bien qu'un nombre.
+   */
+  k: number | string;
   son: AudioBuffer;
+  /**
+   * Où ce morceau commence DANS son son, en secondes. Absent : à son début.
+   *
+   * Sans lui, une écoute en direct rejouerait le son entier là où le montage rendu n'en pose qu'une
+   * partie : on entendrait autre chose que ce que l'on fabrique, ce qui est le pire des écarts.
+   */
+  dansSec?: number;
 }
 
 export interface LectureVive {
@@ -84,9 +99,9 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
   const ctxRef = useRef<AudioContext | null>(null);
   /** Le gain d ecoute, unique et garde entre deux lectures. */
   const sortieRef = useRef<{ courant: GainNode | null }>({ courant: null });
-  const vivantes = useRef(new Map<number, Vivante>());
+  const vivantes = useRef(new Map<CleVive, Vivante>());
   /** Ce qui est programmé en ce moment : c'est à cet état qu'on compare pour ne reprendre que le nécessaire. */
-  const programme = useRef(new Map<number, EtatPiste>());
+  const programme = useRef(new Map<CleVive, EtatPiste>());
   const departRef = useRef<Depart>({ t0: 0, auCtx: 0 });
   /** La tête quand rien ne joue : une horloge arrêtée ne dit plus où l'on en est. */
   const arretRef = useRef(0);
@@ -104,7 +119,7 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
     return positionVive(departRef.current, ctxRef.current.currentTime, finDeMontage(pistesRef.current));
   }, []);
 
-  const arreterPiste = useCallback((k: number) => {
+  const arreterPiste = useCallback((k: CleVive) => {
     const v = vivantes.current.get(k);
     if (!v) return;
     try { v.source.stop(); } catch { /* déjà arrêtée */ }
@@ -133,8 +148,12 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
     arreterPiste(p.k);
     const seg = segmentSonnant(p);
     if (!seg) return;
+    // LE MORCEAU NE COMMENCE PAS FORCÉMENT AU DÉBUT DE SON SON. `dansSec` dit où il y entre, et ce
+    // qui reste à jouer se compte depuis là : sans quoi une écoute en direct dépasserait la fin du
+    // tampon sur un morceau coupé tard, et le fondu de sortie tomberait dans le vide.
+    const dans = Math.max(0, p.dansSec ?? 0);
     // La durée ne dépasse pas ce que le tampon contient : au-delà, le fondu de sortie tomberait dans le vide.
-    const utile = Math.min(seg.dureeSec, Math.max(0, p.son.duration - seg.rogneSec));
+    const utile = Math.min(seg.dureeSec, Math.max(0, p.son.duration - dans - seg.rogneSec));
     if (!(utile > 0)) return;
     const calage = calerSource(seg.debutSec, utile, tete);
     if (!calage) return;
@@ -153,7 +172,7 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
     fondu.gain.setValueCurveAtTime(courbe, quand, Math.max(0.001, calage.duree));
     niveau.gain.value = gainLineaire(p.gainDb);
     source.connect(fondu).connect(niveau).connect(gainDEcoute(ctx, sortieRef.current));
-    source.start(quand, seg.rogneSec + calage.decalage, calage.duree);
+    source.start(quand, dans + seg.rogneSec + calage.decalage, calage.duree);
     source.onended = () => { source.disconnect(); fondu.disconnect(); niveau.disconnect(); };
     vivantes.current.set(p.k, { source, fondu, niveau });
   }, [arreterPiste]);
@@ -216,8 +235,10 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
   // LA SIGNATURE DÉCIDE, ET NON LE RENDU. La tête de lecture provoque soixante rendus par seconde :
   // reprogrammer à chacun couperait le son en continu. Ce qui doit décider, c'est ce qu'on entendrait.
   const signature = pistes
+    // `dansSec` EN FAIT PARTIE : couper un morceau ne change ni son instant ni sa durée totale, mais
+    // change où chacun entre dans le son. Sans lui, la coupe ne se serait pas entendue.
     .map((p) => `${p.k}#${numeroDeSon(p.son)}:${p.debutSec}:${p.dureeSec}:${p.gainDb}:${
-      p.fonduEntreeSec}:${p.fonduSortieSec}`)
+      p.fonduEntreeSec}:${p.fonduSortieSec}:${p.dansSec ?? 0}`)
     .join("|");
   const nombreDeSons = pistes.length;
 

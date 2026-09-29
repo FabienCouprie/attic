@@ -2,38 +2,32 @@
 // Trace la magnitude (gain en dB) d'un filtre biquadratique (formules RBJ) en
 // fonction de la fréquence (axe log). Purement calculée depuis les paramètres :
 // s'affiche et se met à jour instantanément, sans exécuter le graphe.
+//
+// QUAND UN RÉGLAGE EST MODULÉ, LE FILTRE N'A PLUS UNE RÉPONSE MAIS UNE PAR INSTANT, et c'est une
+// ENVELOPPE que l'on trace : les deux bornes de ce qu'il traverse, et la bande entre elles. Relevé
+// par Fabien. Le calcul et son enveloppe vivent dans `reponse-filtre-calcul.ts`, où des tests les
+// atteignent ; il ne reste ici que le dessin.
 import { useRef, useEffect, useCallback } from "react";
+import { SR, enveloppeReponse, fmtHz, legendePlage, type Plage } from "./reponse-filtre-calcul";
 
 interface Props {
   type: string;      // Passe-bas | Passe-haut | Passe-bande | Coupe-bande
   cutoff: number;    // Hz
   q: number;         // résonance (facteur de qualité)
+  /** La plage que la coupure traverse quand une courbe la pilote. Absente : elle ne bouge pas. */
+  plageCoupure?: Plage;
+  /** De même pour la résonance. */
+  plageQ?: Plage;
 }
 
-const SR = 44100;
 const DB_HAUT = 18, DB_BAS = -48;
 
-// Gain (dB) d'un biquad RBJ à la fréquence f. a0 normalisé à 1.
-function reponseDb(type: string, f0: number, Q: number, f: number): number {
-  const w0 = (2 * Math.PI * f0) / SR, cw = Math.cos(w0), sw = Math.sin(w0), alpha = sw / (2 * Q);
-  let b0: number, b1: number, b2: number, a0: number, a1: number, a2: number;
-  if (type === "Passe-haut") { b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = (1 + cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
-  else if (type === "Passe-bande") { b0 = alpha; b1 = 0; b2 = -alpha; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
-  else if (type === "Coupe-bande") { b0 = 1; b1 = -2 * cw; b2 = 1; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
-  else { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = (1 - cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; } // Passe-bas
-  b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
-  const w = (2 * Math.PI * f) / SR, c1 = Math.cos(w), s1 = Math.sin(w), c2 = Math.cos(2 * w), s2 = Math.sin(2 * w);
-  const nRe = b0 + b1 * c1 + b2 * c2, nIm = -(b1 * s1 + b2 * s2);
-  const dRe = 1 + a1 * c1 + a2 * c2, dIm = -(a1 * s1 + a2 * s2);
-  return 20 * Math.log10(Math.hypot(nRe, nIm) / Math.hypot(dRe, dIm) + 1e-9);
-}
-
-function fmtHz(f: number): string {
-  return f >= 1000 ? `${(f / 1000).toFixed(f % 1000 === 0 ? 0 : 1)}k` : `${Math.round(f)}`;
-}
-
-export function ReponseFiltre({ type, cutoff, q }: Props) {
+export function ReponseFiltre({ type, cutoff, q, plageCoupure, plageQ }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Sans plage donnée, le réglage ne bouge pas : la plage se referme sur lui, et tout ce qui suit
+  // retombe exactement sur le tracé d'avant.
+  const coupure: Plage = plageCoupure ?? { min: cutoff, max: cutoff };
+  const resonance: Plage = plageQ ?? { min: q, max: q };
 
   const dessiner = useCallback(() => {
     const canvas = canvasRef.current;
@@ -70,41 +64,65 @@ export function ReponseFiltre({ type, cutoff, q }: Props) {
     }
     cx.textAlign = "left";
 
-    // Repère de la fréquence de coupure
-    const xc = freqToX(Math.max(fMin, Math.min(fMax, cutoff)));
+    // LES REPÈRES DE COUPURE : un seul si elle ne bouge pas, les deux bornes si une courbe la
+    // balaie. Ce sont eux qui disent d'un coup d'œil OÙ le filtre voyage.
+    const repere = (f: number) => {
+      const xc = freqToX(Math.max(fMin, Math.min(fMax, f)));
+      cx.beginPath(); cx.moveTo(xc, 0); cx.lineTo(xc, hauteur); cx.stroke();
+    };
     cx.strokeStyle = "rgba(233,161,59,0.6)";
     cx.setLineDash([4, 3]);
-    cx.beginPath(); cx.moveTo(xc, 0); cx.lineTo(xc, hauteur); cx.stroke();
+    if (coupure.min === coupure.max) repere(coupure.min);
+    else { repere(coupure.min); repere(coupure.max); }
     cx.setLineDash([]);
 
-    // Courbe de réponse
-    cx.beginPath();
+    /** L'enveloppe de la réponse à chaque abscisse : bornée au cadre, du bas vers le haut. */
+    const borne = (db: number) => dbToY(Math.max(DB_BAS, Math.min(DB_HAUT, db)));
+    const colonnes: { bas: number; haut: number }[] = [];
     for (let x = 0; x < largeur; x++) {
-      const f = xToFreq(x);
-      const db = Math.max(DB_BAS, Math.min(DB_HAUT, reponseDb(type, cutoff, q, f)));
-      const y = dbToY(db);
-      if (x === 0) cx.moveTo(x, y); else cx.lineTo(x, y);
+      const e = enveloppeReponse(type, coupure, resonance, xToFreq(x));
+      colonnes.push({ bas: borne(e.min), haut: borne(e.max) });
     }
+
+    // La surface sous la réponse : sous son BORD HAUT, ce qui garde exactement le remplissage
+    // d'un filtre non modulé, les deux bords s'y confondant.
+    cx.beginPath();
+    colonnes.forEach((c, x) => (x === 0 ? cx.moveTo(x, c.haut) : cx.lineTo(x, c.haut)));
     cx.lineTo(largeur, hauteur); cx.lineTo(0, hauteur); cx.closePath();
     cx.fillStyle = "rgba(42,157,143,0.15)"; cx.fill();
-    cx.beginPath();
-    for (let x = 0; x < largeur; x++) {
-      const f = xToFreq(x);
-      const db = Math.max(DB_BAS, Math.min(DB_HAUT, reponseDb(type, cutoff, q, f)));
-      const y = dbToY(db);
-      if (x === 0) cx.moveTo(x, y); else cx.lineTo(x, y);
+
+    // LA BANDE ENTRE LES DEUX BORDS, quand ils diffèrent : c'est l'étendue de ce que le filtre
+    // fait entendre au cours du balayage, et elle ne paraît que s'il y a un balayage.
+    const balaie = coupure.min !== coupure.max || resonance.min !== resonance.max;
+    if (balaie) {
+      cx.beginPath();
+      colonnes.forEach((c, x) => (x === 0 ? cx.moveTo(x, c.haut) : cx.lineTo(x, c.haut)));
+      for (let x = colonnes.length - 1; x >= 0; x--) cx.lineTo(x, colonnes[x].bas);
+      cx.closePath();
+      cx.fillStyle = "rgba(42,157,143,0.22)"; cx.fill();
     }
-    cx.strokeStyle = "#2a9d8f"; cx.lineWidth = 1.4; cx.stroke();
-  }, [type, cutoff, q]);
+
+    // Les bords : le haut toujours, le bas seulement s'il se distingue.
+    const tracer = (quel: "bas" | "haut", largeurTrait: number) => {
+      cx.beginPath();
+      colonnes.forEach((c, x) => (x === 0 ? cx.moveTo(x, c[quel]) : cx.lineTo(x, c[quel])));
+      cx.strokeStyle = "#2a9d8f"; cx.lineWidth = largeurTrait; cx.stroke();
+    };
+    if (balaie) tracer("bas", 1);
+    tracer("haut", 1.4);
+  }, [type, coupure.min, coupure.max, resonance.min, resonance.max]);
 
   useEffect(() => { dessiner(); }, [dessiner]);
 
   return (
     <div className="attic-node-onde nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <canvas ref={canvasRef} className="attic-node-onde-canvas" />
+      {/* LA LÉGENDE DIT CE QUE LE TRACÉ MONTRE : une valeur quand le réglage ne bouge pas, les deux
+          bornes quand une courbe le balaie. Elle affichait la coupure au repos même sous
+          modulation, et annonçait donc un filtre qui n'existait pas. */}
       <div className="attic-node-onde-infos">
         <span>{type}</span>
-        <span>{fmtHz(cutoff)}Hz · Q{q}</span>
+        <span>{legendePlage(coupure, fmtHz)}Hz · Q{legendePlage(resonance, (v) => String(v))}</span>
       </div>
     </div>
   );
