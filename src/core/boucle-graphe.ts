@@ -42,6 +42,22 @@ export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has
 const TOURS_MIN = 1;
 export const TOURS_MAX = 32;
 
+/**
+ * Le nombre total de copies qu'un dépliage a le droit de fabriquer.
+ *
+ * POURQUOI UN PLAFOND SUR LE TOTAL, ET PAS SEULEMENT PAR BOUCLE. Une boucle seule coûte au plus
+ * trente-deux fois son ventre, et le réglage le borne déjà. Des boucles IMBRIQUÉES multiplient : une
+ * chaîne de quatre nœuds sous deux boucles de trente-deux tours en fabriquerait plus de quatre
+ * mille, dont chacune tient un tampon audio le temps du run. Sans ce plafond, le dépliage
+ * réussirait et c'est l'exécution qui s'effondrerait, sans que rien n'ait prévenu.
+ *
+ * MILLE VINGT-QUATRE, ET NON UN NOMBRE ROND CHOISI AU HASARD : c'est ce qu'un ventre de quatre nœuds
+ * donne sous deux boucles de seize tours, ou huit nœuds sous seize et huit. Mesuré sur le banc de
+ * deux boucles en série, 256 copies d'une découpe aléatoire tiennent 1 260 Mo de tampons ; quatre
+ * fois plus en tiendrait cinq gigaoctets, ce qu'aucune machine ordinaire ne rend sans souffrir.
+ */
+export const COPIES_MAX = 1024;
+
 export type ProblemeBoucle =
   /** Une fin de boucle sans début en amont. */
   | "fin-sans-debut"
@@ -51,6 +67,8 @@ export type ProblemeBoucle =
   | "debuts-multiples"
   /** Une boucle dans une boucle : non pris en charge. */
   | "boucle-imbriquee"
+  /** Le dépliage fabriquerait plus de copies que `COPIES_MAX` : l'exécution s'effondrerait. */
+  | "trop-de-copies"
   /** Rien entre le début et la fin : il n'y a rien à répéter. */
   | "boucle-vide";
 
@@ -61,6 +79,16 @@ export interface ResultatDepliage {
   origines: Map<string, string>;
   /** Ce qui empêche une boucle de se déplier, à signaler sur le nœud concerné. */
   problemes: { noeudId: string; code: ProblemeBoucle }[];
+  /**
+   * Les boucles effectivement dépliées, et en combien de tours.
+   *
+   * POURQUOI LE DÉPLIAGE LE DIT PLUTÔT QUE QUELQU'UN NE LE DEVINE. Un début de boucle est RETIRÉ du
+   * graphe exécuté : il ne tourne jamais, ne rend rien, et restait donc « En attente » pour
+   * toujours, ce qui ne dit rien de ce qui s'est passé. Relevé par Fabien. Le nombre de tours se
+   * lirait bien dans les identifiants engendrés, mais le déduire d'une convention de nommage est
+   * précisément ce qu'on ne veut pas : le dépliage le SAIT, il le rend.
+   */
+  depliees: { debutId: string; tours: number }[];
 }
 
 const nombreDeTours = (n: NoeudG): number => {
@@ -79,38 +107,87 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
   const fins = noeuds.filter((n) => estFinDeBoucle(n.data.ficheId));
   const debuts = noeuds.filter((n) => n.data.ficheId === FICHE_DEBUT);
   if (fins.length === 0 && debuts.length === 0) {
-    return { noeuds, aretes, origines: new Map(), problemes: [] };
+    return { noeuds, aretes, origines: new Map(), problemes: [], depliees: [] };
   }
 
   let courantN = noeuds.map((n) => ({ ...n }));
   let courantE = aretes.map((a) => ({ ...a }));
   const origines = new Map<string, string>();
   const problemes: { noeudId: string; code: ProblemeBoucle }[] = [];
+  const depliees: { debutId: string; tours: number }[] = [];
   const debutsTraites = new Set<string>();
 
-  for (const fin of fins) {
+  const finsTraitees = new Set<string>();
+  let copiesProduites = 0;
+
+  // LES BOUCLES SE DÉPLIENT DE LA PLUS INTÉRIEURE VERS LA PLUS EXTÉRIEURE, et c'est tout ce qu'il
+  // aura fallu pour prendre l'imbrication en charge. Une fois l'intérieure dépliée, son début a
+  // disparu et sa chaîne est devenue des copies ordinaires : l'extérieure ne voit plus alors aucune
+  // boucle dans son ventre, et l'algorithme d'une boucle seule s'y applique sans rien changer. La
+  // fin intérieure, elle, reste — et se recopie à chaque tour de l'extérieure, ce qui est justement
+  // ce qu'on veut, chaque tour du dehors ayant besoin de son propre résultat du dedans.
+  //
+  // L'ORDRE SE LIT SUR LES ARÊTES : une fin est intérieure à une autre quand elle est son ancêtre.
+  // On compte donc, pour chaque fin, combien d'autres fins la précèdent, et l'on traite les plus
+  // petits comptes d'abord. Deux boucles côte à côte ont le même compte et gardent leur ordre.
+  const ancetresDe = new Map(fins.map((f) => [f.id, ancetres(f.id, aretes)]));
+  const profondeur = new Map(fins.map((f) => [
+    f.id, fins.filter((g) => g.id !== f.id && ancetresDe.get(f.id)!.has(g.id)).length,
+  ]));
+  const ordreDesFins = [...fins].sort((x, y) => profondeur.get(x.id)! - profondeur.get(y.id)!);
+
+  for (const fin of ordreDesFins) {
     const enAmont = ancetres(fin.id, courantE);
     const debutsAmont = [...enAmont].filter(
       (id) => courantN.find((n) => n.id === id)?.data.ficheId === FICHE_DEBUT && !debutsTraites.has(id),
     );
     if (debutsAmont.length === 0) { problemes.push({ noeudId: fin.id, code: "fin-sans-debut" }); continue; }
-    if (debutsAmont.length > 1) { problemes.push({ noeudId: fin.id, code: "debuts-multiples" }); continue; }
 
-    const debutId = debutsAmont[0];
+    // PLUSIEURS DÉBUTS EN AMONT NE VEULENT PAS DIRE UN GRAPHE FAUTIF : c'est même la forme normale
+    // d'une imbrication, la fin du dedans ayant les deux débuts derrière elle. Celui qui lui revient
+    // est LE PLUS INTÉRIEUR, c'est-à-dire celui qui descend de tous les autres. Quand aucun ne
+    // descend de tous — deux boucles parallèles qui aboutissent à la même fin —, il n'y a pas
+    // d'imbrication à lire, et le graphe est bien ambigu.
+    const debutId = debutsAmont.length === 1
+      ? debutsAmont[0]
+      : debutsAmont.find((c) => debutsAmont.every((o) => o === c || ancetres(c, courantE).has(o)));
+    if (debutId === undefined) { problemes.push({ noeudId: fin.id, code: "debuts-multiples" }); continue; }
+
     const debut = courantN.find((n) => n.id === debutId)!;
     const enAval = descendants(debutId, courantE);
     const interieur = [...enAval].filter((id) => id !== fin.id && enAmont.has(id));
 
-    if (interieur.some((id) => {
+    // CE QUI RESTE D'UNE BOUCLE NON DÉPLIÉE DANS LE VENTRE, et non plus toute trace de boucle. Une
+    // fin déjà traitée y est légitime : c'est l'intérieure, qu'on recopie à chaque tour. Ce qui ne
+    // l'est pas, c'est une boucle qu'on n'a pas su déplier, et dont les copies seraient fausses.
+    const restants = interieur.filter((id) => {
       const f = courantN.find((n) => n.id === id)?.data.ficheId;
-      return f === FICHE_DEBUT || estFinDeBoucle(f);
-    })) {
-      problemes.push({ noeudId: debutId, code: "boucle-imbriquee" });
-      continue;
-    }
+      if (f !== FICHE_DEBUT && !estFinDeBoucle(f)) return false;
+      // ON REMONTE À L'ORIGINE, et il le faut dès le troisième niveau : la fin d'une boucle déjà
+      // dépliée est elle-même recopiée par celle qui l'englobe, sous un identifiant neuf que rien
+      // ne reconnaîtrait. `origines` dit de quel nœud visible une copie descend, et c'est ce nœud
+      // qu'on a traité. Sans cela, trois boucles emboîtées refusaient la troisième.
+      const origine = origines.get(id) ?? id;
+      return !debutsTraites.has(origine) && !finsTraitees.has(origine);
+    });
+    if (restants.length > 0) { problemes.push({ noeudId: debutId, code: "boucle-imbriquee" }); continue; }
     if (interieur.length === 0) { problemes.push({ noeudId: debutId, code: "boucle-vide" }); continue; }
 
+    // ET UN PLAFOND SUR LE TOTAL, que l'imbrication rend nécessaire. Une boucle seule coûte au plus
+    // trente-deux fois son ventre ; deux imbriquées le multiplient, et trente-deux sur trente-deux
+    // fabriqueraient des milliers de copies dont chacune tient un tampon audio. Sans plafond, le
+    // dépliage réussirait et c'est l'exécution qui s'effondrerait, sans que rien n'ait prévenu.
+    const tours = nombreDeTours(debut);
+    const aProduire = interieur.length * tours;
+    if (copiesProduites + aProduire > COPIES_MAX) {
+      problemes.push({ noeudId: debutId, code: "trop-de-copies" });
+      continue;
+    }
+    copiesProduites += aProduire;
+
     debutsTraites.add(debutId);
+    finsTraitees.add(fin.id);
+    depliees.push({ debutId, tours });
     const { noeuds: nn, aretes: ne } = deplierUne(courantN, courantE, debut, fin, interieur, origines);
     courantN = nn;
     courantE = ne;
@@ -122,7 +199,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
     }
   }
 
-  return { noeuds: courantN, aretes: courantE, origines, problemes };
+  return { noeuds: courantN, aretes: courantE, origines, problemes, depliees };
 }
 
 function deplierUne(

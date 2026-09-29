@@ -125,10 +125,33 @@ export function apercuUtile(
  * L'ÉCHANGE SUIT LE RÉGLAGE QUI EXISTE DÉJÀ, l'économie de mémoire, plutôt que d'ajouter un
  * interrupteur : c'est le même arbitrage que pour les aperçus, et il se défait de la même façon.
  */
+/**
+ * ET LE CORPS D'UNE BOUCLE DÉPLIÉE NE SE GARDE PAS DAVANTAGE — demandé par Fabien.
+ *
+ * Une boucle de graphe ne boucle pas : elle se DÉPLIE, et les nœuds entre le début et la fin sont
+ * recopiés autant de fois qu'il y a de tours, chaque copie recevant le résultat de la précédente.
+ * Chacune est un nœud à part entière, avec sa propre entrée de cache — et ces copies ne figurent pas
+ * parmi les nœuds visibles, de sorte que le ménage de fin de run ne les voyait même pas : elles
+ * survivaient d'un run à l'autre, et pour toute la session.
+ *
+ * CE QUE CELA PÈSE, MESURÉ sur huit tours d'un écho à partir de cinq secondes de sinusoïde : vingt-
+ * quatre tampons, **208,6 Mo**, dont 134,6 pour le seul corps de la boucle. Et la croissance est
+ * quadratique quand la chaîne allonge son signal : le premier tour pèse 5,1 Mo, le huitième 28,6.
+ *
+ * CE QUE LA FIN DE BOUCLE REND, ELLE, RESTE EN CACHE : c'est un nœud visible, et c'est lui que
+ * l'aval consomme. Ce qu'on lâche est l'échafaudage, pas l'ouvrage.
+ *
+ * LE PRIX EST LE MÊME QUE POUR LES BULLES, ET IL FAUT LE DIRE : sans entrée de cache, chaque tour se
+ * refait à l'exécution suivante, et comme le moteur refuse de croire une source qui vient d'être
+ * recalculée, la fin de boucle et tout son aval se refont aussi. Une boucle inchangée ne se
+ * recalculait pas ; désormais elle se recalcule. On échange du temps contre de la place, et l'échange
+ * se défait par le même interrupteur que pour les bulles.
+ */
 export function resultatRetenu(
-  { cacheParBulle, economie = true }: { cacheParBulle: boolean; economie?: boolean },
+  { cacheParBulle, corpsDeBoucle = false, economie = true }:
+    { cacheParBulle: boolean; corpsDeBoucle?: boolean; economie?: boolean },
 ): boolean {
-  return !economie || !cacheParBulle;
+  return !economie || (!cacheParBulle && !corpsDeBoucle);
 }
 
 export function noeudRegarde(

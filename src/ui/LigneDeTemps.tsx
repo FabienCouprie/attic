@@ -73,13 +73,19 @@ type Prise = Geste & {
 };
 
 /**
- * Qui, de toutes les lignes de temps montées, tient la sélection.
+ * NOTE SUR LE GARDE DES RACCOURCIS, ET LA FAUTE QU'IL A VALUE.
  *
- * POURQUOI UN PORTEUR UNIQUE. Les raccourcis s'écoutent sur la fenêtre, faute de quoi il faudrait
- * qu'un dessin SVG prenne le focus. Deux montages posés sur le canevas les recevraient donc tous
- * deux, et couper l'un couperait aussi l'autre. Le porteur est pris au clic et rendu au clic à vide.
+ * Un porteur unique gardait ces raccourcis : une variable de module, prise au clic sur un morceau.
+ * Elle NE SE RENDAIT JAMAIS quand on retournait au canevas, si bien qu'après avoir seulement touché
+ * un morceau, le montage interceptait Ctrl+C, Ctrl+X, Ctrl+V et Suppr pour TOUTE l'application.
+ * Relevé par Fabien : « quand le composant montage est sur la palette, cela désactive le copier
+ * coller sur toute la palette pour les autres nœuds ». Copier un nœud ne faisait plus rien, et
+ * silencieusement, puisque l'événement était arrêté net avant d'atteindre le canevas.
+ *
+ * LE FOCUS CLAVIER EST LA BONNE RÈGLE, et c'est celle du navigateur depuis toujours : il n'est qu'à
+ * UN endroit à la fois, et il se rend de lui-même dès qu'on clique ailleurs. Aucune variable de
+ * module ne peut en dire autant, parce qu'aucune ne sait qu'on l'a quittée.
  */
-let porteurDeSelection: string | null = null;
 
 /**
  * Ce qui a été copié ou coupé, commun à toutes les lignes de temps.
@@ -243,7 +249,12 @@ export function LigneDeTemps({
     // revient.
     function surTouche(e: KeyboardEvent) {
       const { morceaux: ms, selection: sel, pos, dureeDe: duree, onMorceaux: ecrire } = pourRaccourcis.current;
-      if (!ms || !ecrire || porteurDeSelection !== noeudId) return;
+      if (!ms || !ecrire) return;
+      // CETTE LIGNE DE TEMPS A-T-ELLE LE FOCUS ? C'est la seule question qui vaille, et la seule qui
+      // se rende d'elle-même : cliquer un nœud du canevas le déplace ailleurs, et le montage cesse
+      // aussitôt d'intercepter. Voir la note en tête de fichier.
+      const el = boite.current;
+      if (!el || !el.contains(document.activeElement)) return;
       const cible = e.target as HTMLElement | null;
       if (cible && (cible.tagName === "INPUT" || cible.tagName === "TEXTAREA"
         || cible.tagName === "SELECT" || cible.isContentEditable)) return;
@@ -391,7 +402,10 @@ export function LigneDeTemps({
     // d'abord puis de tirer ensuite. Le porteur de la sélection change ici, de sorte qu'un second
     // montage posé sur le canevas ne réponde pas aux mêmes raccourcis.
     const m = morceaux?.find((x) => x.id === l.id);
-    if (m) { setSelection(m.id); porteurDeSelection = noeudId ?? null; }
+    // PRENDRE UN MORCEAU DONNE LE FOCUS À LA LIGNE DE TEMPS, ce qui arme ses raccourcis et, du même
+    // coup, les désarme partout ailleurs. `preventScroll` parce qu'un nœud vit dans un canevas qu'on
+    // fait glisser : le navigateur, sinon, le ramènerait de force dans la fenêtre.
+    if (m) { setSelection(m.id); boite.current?.focus({ preventScroll: true }); }
     setPrise({ piste: l.k, quoi, x0: e.clientX, valeur0: valeurAuRepos(quoi, l), vue: totale, morceau: m });
   };
   const bouger = (e: React.PointerEvent) => {
@@ -446,12 +460,14 @@ export function LigneDeTemps({
     // dessin ne soit appelé, et l'on zoomait le CANEVAS en croyant zoomer la ligne. Mesuré : une
     // molette sur le dessin faisait passer l'échelle du canevas de 0,624 à 0,737, et le facteur de la
     // ligne de temps ne bougeait pas d'un cran. La notice promettait pourtant ce zoom.
-    <div className="ligne-temps nowheel" ref={attacherLaBoite}>
+    // `tabIndex` À MOINS UN : la ligne de temps peut RECEVOIR le focus, au clic ou par programme,
+    // sans entrer dans l'ordre de tabulation. C'est ce focus qui arme ses raccourcis, et lui seul.
+    <div className="ligne-temps nowheel" ref={attacherLaBoite} tabIndex={-1}>
       <svg width={largeur} height={hauteur} role="img" aria-label={t(modele.cleTitre)}
         // CLIQUER À VIDE REND LA SÉLECTION. Les barres et la règle arrêtent l'événement, si bien
         // qu'il n'arrive ici que depuis une place où rien n'est posé. Sans cela on ne pourrait jamais
         // désélectionner, et les raccourcis resteraient armés sur un morceau qu'on ne regarde plus.
-        onPointerDown={() => { if (selection !== null) { setSelection(null); porteurDeSelection = null; } }}
+        onPointerDown={() => { if (selection !== null) setSelection(null); }}
         onPointerMove={bouger} onPointerUp={lacher} onPointerCancel={lacher}
         onWheel={(e) => { e.preventDefault(); axe.surMolette(e.deltaY, e.clientX - (boite.current?.getBoundingClientRect().left ?? 0) - ZONE_G); }}>
         {graduations.map((s) => (

@@ -20,7 +20,7 @@ import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
-import { deplierBoucles } from "../../core/boucle-graphe";
+import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { ecartNiveau } from "../../audio/ecart-niveau";
@@ -443,6 +443,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     for (const p of deplie.problemes) {
       console.warn(`[attic] Boucle de graphe : ${p.code} sur ${p.noeudId}`);
     }
+    // UN DÉBUT DE BOUCLE DIT CE QU'IL EST DEVENU. Il est RETIRÉ du graphe exécuté — c'est la chaîne
+    // recopiée qui tourne à sa place —, donc il ne rend rien et restait « En attente » pour
+    // toujours, ce qui ne dit rien de ce qui s'est passé. Relevé par Fabien. Le statut est posé ici
+    // plutôt qu'après l'exécution : ce n'est pas le compte rendu d'un calcul, c'est ce que le
+    // dépliage vient de décider, et cela vaut même si le run est interrompu ensuite.
+    for (const d of deplie.depliees) {
+      definirStatut(d.debutId, "attente", t("boucle.depliee").replace("{n}", String(d.tours)));
+    }
     const nds = deplie.noeuds as unknown as any[];
     const aretes = deplie.aretes as unknown as Edge[];
     const prioriteDemandee = noeudPrioritaireId ?? prioritaireRef.current;
@@ -481,8 +489,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // alors qu'il n'a ni lien ni exécution avec le nœud sur lequel on a cliqué
     // « lancer ». On restreint donc l'application des résultats de validation au
     // périmètre du run (`ancPriorite`), comme le fait déjà `ordreFiltre` plus bas.
+    // LA VALIDATION PORTE SUR LE GRAPHE RÉELLEMENT EXÉCUTÉ, nœuds ET arêtes venant du même état.
+    //
+    // Elle lisait les nœuds d'AVANT le dépliage et les arêtes d'APRÈS. Or déplier une boucle RETIRE
+    // son « Début de boucle » et recâble ses arêtes vers les copies : le validateur voyait donc ce
+    // nœud sans la moindre arête, lui reprochait son entrée requise non branchée, et le marquait en
+    // erreur. Relevé sur deux boucles de trente-deux tours qui avaient parfaitement abouti : les
+    // 256 copies exécutées, les deux fins de boucle terminées, et les deux débuts en rouge.
+    //
+    // Le tri topologique et le relevé des cycles travaillent déjà sur `nds`, et la raison est écrite
+    // plus bas dans les mêmes termes : « sur le graphe RÉELLEMENT exécuté, avec les mêmes entrées
+    // que le tri lui-même ». La validation manquait seulement à l'appel.
     const validation = validerGraphe(
-      plat.noeuds,
+      nds,
       aretes as unknown as AreteG[],
       (ficheId) => trouverDef(ficheId),
       registre.fluxCompatibles,
@@ -870,12 +889,39 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // À LA FIN PLUTÔT QU'AU DÉBUT : le run courant garde ses raccourcis de cache, et c'est le
     // suivant qui refera la bulle. On paie le recalcul une fois par exécution, pas deux.
     // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti.
+    const economie = economieMemoireRef?.current ?? true;
     for (const n of noeudsRef.current) {
       const garde = resultatRetenu({
         cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
-        economie: economieMemoireRef?.current ?? true,
+        economie,
       });
       if (!garde) cacheExec.current.delete(n.id);
+    }
+    // ET LE CORPS D'UNE BOUCLE DÉPLIÉE, QUE LA BOUCLE CI-DESSUS NE POUVAIT PAS VOIR. Les copies
+    // portent des identifiants engendrés — « deb#3::echo » — et ne figurent pas parmi les nœuds
+    // visibles : leurs tampons restaient donc accrochés au cache pour toute la session, et rien ne
+    // les examinait jamais. Mesuré sur huit tours d'un écho : 134,6 Mo pour le seul corps, le
+    // premier tour pesant 5,1 Mo et le huitième 28,6, la chaîne allongeant son signal à chaque
+    // passage. Ce que la FIN de boucle rend reste en cache, elle : c'est l'échafaudage qu'on lâche,
+    // pas l'ouvrage. Voir `resultatRetenu` pour le prix consenti.
+    for (const copie of deplie.origines.keys()) {
+      if (!resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true, economie })) {
+        cacheExec.current.delete(copie);
+      }
+    }
+
+    // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, et non dans la seule console.
+    //
+    // Un début de boucle non déplié s'exécute lui-même et rend « reliez ce composant à une fin de
+    // boucle » — vrai d'un seul des six cas, et trompeur pour les cinq autres : relevé par Fabien
+    // sur deux boucles emboîtées, où les deux débuts accusaient un câblage pourtant correct. Le
+    // moteur, lui, connaît la raison exacte. Il la pose ICI, avant que les correctifs ne soient
+    // calculés, faute de quoi le message de l'exécuteur resterait celui qu'on lit.
+    for (const p of deplie.problemes) {
+      const visible = plat.expansions.get(p.noeudId) ?? p.noeudId;
+      const dit = t(`boucle.probleme.${p.code}`).replace("{max}", String(COPIES_MAX));
+      messages.set(visible, dit);
+      definirStatut(visible, "erreur", dit);
     }
 
     // LA PHASE DES APERÇUS RESPIRE ELLE AUSSI, relevé par Fabien sur une pièce de cinquante
