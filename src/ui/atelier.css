@@ -1267,6 +1267,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--accent, #2a9d8f); opacity: 0.55; border-radius: 3px;
 }
 .ligne-temps-defilement:hover .ligne-temps-defilement-curseur { opacity: 0.8; }
+/* LE MORCEAU CHOISI, celui sur qui portent couper, copier et coller. Un contour plutôt qu'une autre
+   couleur de remplissage : l'onde se lit dans la barre, et la couvrir la rendrait illisible. */
+.ligne-temps-choisi .ligne-temps-barre {
+  stroke: var(--accent, #2a9d8f); stroke-width: 2px; filter: brightness(1.18);
+}
 /* L'inspecteur qu'on tire sur le canevas : la colonne garde 280 px, le panneau s'étend par-dessus. */
 .inspecteur-emplacement { position: relative; min-width: 0; }
 .inspecteur-panneau {

@@ -183,3 +183,79 @@ describe("monter", () => {
     expect(milieu).toBeGreaterThan(0.45);
   });
 });
+
+// ── Une partie d'un son, et la coupe qui ne s'entend pas ─────────────────────────────────────
+//
+// `dans` ET `duree` SONT CE QUI REND UNE COUPE POSSIBLE. Un montage sait maintenant porter plusieurs
+// morceaux par piste ; couper l'un d'eux en deux ne doit rien changer à ce qu'on entend, le second
+// reprenant dans le son exactement là où le premier s'arrête. C'est une égalité échantillon par
+// échantillon, et c'est la seule preuve qui vaille : une coupe fausse d'un seul échantillon fait un
+// clic, et un clic sur une pièce de cinquante secondes ne se distingue pas d'un défaut du son.
+describe("monter une partie d'un son", () => {
+  /** Un son dont chaque échantillon dit son propre rang : toute erreur de fenêtre se lit dessus. */
+  const rampe = (n: number) => tampon(n, (i) => i / n);
+
+  it("`dans` saute le commencement du son", async () => {
+    const son = rampe(1000);
+    const y = (await monter([{ son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, dans: 400 / SR }]))
+      .getChannelData(0);
+    expect(y.length).toBe(600);
+    expect(y[0]).toBeCloseTo(400 / 1000, 6);
+    expect(y[599]).toBeCloseTo(999 / 1000, 6);
+  });
+
+  it("`duree` arrête le son avant sa fin", async () => {
+    const son = rampe(1000);
+    const y = (await monter([{ son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, duree: 250 / SR }]))
+      .getChannelData(0);
+    expect(y.length).toBe(250);
+    expect(y[249]).toBeCloseTo(249 / 1000, 6);
+  });
+
+  it("une durée plus longue que ce qui reste ne lit pas au-delà du son", async () => {
+    const son = rampe(1000);
+    const y = (await monter([{ son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, dans: 900 / SR, duree: 10 }]))
+      .getChannelData(0);
+    expect(y.length).toBe(100);
+    expect(y.every(Number.isFinite)).toBe(true);
+  });
+
+  it("UNE COUPE NE S'ENTEND PAS : les deux moitiés rendent exactement le son entier", async () => {
+    const son = rampe(1000);
+    const t = 400 / SR;
+    const entier = (await monter([{ son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0 }])).getChannelData(0);
+    const coupe = (await monter([
+      { son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, duree: t },
+      { son, debut: t, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, dans: t, duree: (1000 - 400) / SR },
+    ])).getChannelData(0);
+    expect(coupe.length).toBe(entier.length);
+    let ecartMax = 0;
+    for (let i = 0; i < entier.length; i++) ecartMax = Math.max(ecartMax, Math.abs(coupe[i] - entier[i]));
+    expect(ecartMax).toBe(0);
+  });
+
+  it("ET CELA TIENT SUR TOUTE COUPE, pas seulement sur celle qu'on a choisie", async () => {
+    const son = rampe(1000);
+    const entier = (await monter([{ son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0 }])).getChannelData(0);
+    for (const ech of [1, 137, 500, 899, 999]) {
+      const t = ech / SR;
+      const coupe = (await monter([
+        { son, debut: 0, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, duree: t },
+        { son, debut: t, gainDb: 0, fonduEntreeMs: 0, fonduSortieMs: 0, dans: t, duree: (1000 - ech) / SR },
+      ])).getChannelData(0);
+      let ecartMax = 0;
+      for (let i = 0; i < entier.length; i++) ecartMax = Math.max(ecartMax, Math.abs(coupe[i] - entier[i]));
+      expect(ecartMax, `coupe a l'echantillon ${ech}`).toBe(0);
+    }
+  });
+
+  it("un plan sans `dans` ni `duree` pose le son entier, comme avant cette notion", async () => {
+    const son = rampe(500);
+    const avec = (await monter([{ son, debut: 0.25, gainDb: -3, fonduEntreeMs: 5, fonduSortieMs: 5 }])).getChannelData(0);
+    const memeAvecZeros = (await monter([
+      { son, debut: 0.25, gainDb: -3, fonduEntreeMs: 5, fonduSortieMs: 5, dans: 0, duree: 0 },
+    ])).getChannelData(0);
+    expect(avec.length).toBe(memeAvecZeros.length);
+    for (let i = 0; i < avec.length; i++) expect(memeAvecZeros[i]).toBe(avec[i]);
+  });
+});

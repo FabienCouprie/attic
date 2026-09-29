@@ -10,6 +10,8 @@ import { SpectreFFT } from "./Spectre";
 import { Spectrogramme } from "./Spectrogramme";
 import { OscilloVue } from "./OscilloVue";
 import { ReponseFiltre } from "./ReponseFiltre";
+import { plageDe } from "./reponse-filtre-calcul";
+import { useNodeConnections } from "@xyflow/react";
 import { SequenceurBatterieAvance } from "./SequenceurBatterieAvance";
 import { SequenceurMelodique } from "./SequenceurMelodique";
 import { SequenceurAccords } from "./SequenceurAccords";
@@ -51,13 +53,24 @@ export function VueOscillo({ data }: VueProps) {
 }
 
 // ── Réponse en fréquence d'un filtre (courbe théorique depuis les paramètres) ──
-export function VueReponseFiltre({ data }: VueProps) {
+export function VueReponseFiltre({ id, data }: VueProps) {
   const p = data.parametres ?? {};
+  // CE QUI EST BRANCHÉ DÉCIDE DE CE QU'ON MONTRE — relevé par Fabien : la vue lisait les réglages
+  // seuls, si bien qu'un filtre balayé par une courbe affichait sa coupure au repos. Les deux
+  // entrées de modulation se lisent ici : branchées, le réglage cesse d'agir et ce sont ses bornes
+  // que le filtre traverse. Les rangs sont ceux de la fiche, un port se désignant par son rang.
+  const entrees = useNodeConnections({ handleType: "target", id });
+  const branchee = (rang: number) => entrees.some((c) => String(c.targetHandle ?? "") === `in:${rang}`);
+  const nb = (nom: string, defaut: number) => Number(p[nom] ?? defaut) || defaut;
   return (
     <ReponseFiltre
       type={String(p["Type"] ?? "Passe-bas")}
-      cutoff={Number(p["Fréquence de coupure"] ?? 1000) || 1000}
-      q={Number(p["Résonance"] ?? 0.7) || 0.7}
+      cutoff={nb("Fréquence de coupure", 1000)}
+      q={nb("Résonance", 0.7)}
+      plageCoupure={plageDe(nb("Fréquence de coupure", 1000), branchee(1),
+        nb("Modulation min", 200), nb("Modulation max", 6000))}
+      plageQ={plageDe(nb("Résonance", 0.7), branchee(2),
+        nb("Résonance min", 0.7), nb("Résonance max", 8))}
     />
   );
 }
