@@ -46,7 +46,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Mélange que vaut le un de la courbe. Une rampe de zéro à cent pour cent ouvre la pièce d'un bout à l'autre du son ; un sinus la fait respirer.",
         docEn: "Mix that the curve's one means. A ramp from zero to a hundred per cent opens the room from one end of the sound to the other; a sine makes it breathe." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Graine des deux motifs de réflexions. Une même graine rejoue la même pièce. Changer de graine change la pièce sans changer ses dimensions.",
         docEn: "Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions." },
     ],

@@ -72,7 +72,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.5, 60], pas: 0.5, defaut: 8, unite: "s",
         doc: "La durée de la pièce. Elle se répartit entre les sections, qui sont donc d'autant plus brèves qu'on en demande.",
         docEn: "The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 9999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Deux graines donnent deux sons sans rapport tirés du même matériau. À graine égale, le composant rend deux fois exactement le même son, ce qui permet de retrouver un tirage qu'on avait aimé.",
         docEn: "Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked." },
     ],

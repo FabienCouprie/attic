@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Silence entre deux objets ; négatif, ils se chevauchent d'autant.", docEn: "Silence between two objects; negative, they overlap by that much." },
       { nom: "Fondu", nomEn: "Fade", type: "curseur", plage: [0, 500], pas: 1, defaut: 10, unite: "ms",
         doc: "Fondu d'entrée et de sortie de chaque objet.", docEn: "Fade in and out of each object." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Pour l'ordre au hasard : à graine égale, le même ordre.", docEn: "For random order: same seed, same order." },
     ],
     async executer(ctx: any) {

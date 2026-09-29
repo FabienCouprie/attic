@@ -124,10 +124,10 @@ const FICHES: FicheAudio[] = [
         docEn: "Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step.",
       },
       {
-        nom: "Graine",
+        nom: "Graine", graine: true,
         nomEn: "Seed",
         type: "nombre",
-        plage: [0, 9999],
+        plage: [0, 999999],
         pas: 1,
         defaut: 0,
         doc: "0 : une configuration fixe au centre, une cellule en 1D ; en 2D, un motif qui vit longtemps (le R-pentomino en Conway, le réplicateur en Highlife). Sinon, une grille tirée au hasard à partir de cette graine.",

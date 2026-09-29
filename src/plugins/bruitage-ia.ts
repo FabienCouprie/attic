@@ -108,7 +108,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Étapes", nomEn: "Steps", type: "curseur", plage: [1, 20], pas: 1, defaut: 8,
         doc: "Nombre d'étapes du débruitage. Peu d'étapes donnent un son plus rugueux, et plus vite.",
         docEn: "Number of denoising steps. Few steps give a rougher sound, and give it faster." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
         doc: "Tirage aléatoire. À moins un, une graine est tirée à chaque exécution.",
         docEn: "Random draw. At minus one, a seed is drawn at each run." },
       { nom: "Sortie", nomEn: "Output", type: "choix",

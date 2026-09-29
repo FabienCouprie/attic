@@ -110,7 +110,7 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
       { nom: "Même sens au plus", nomEn: "Same direction at most", type: "curseur", plage: [0, 12], pas: 1, defaut: 4,
         doc: "Le nombre de pas consécutifs permis dans la même direction. À zéro, aucune borne.",
         docEn: "The number of consecutive steps allowed in the same direction. At zero, no bound." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Fixe l'ordre dans lequel les hauteurs sont essayées. Deux graines donnent deux lignes également valides.",
         docEn: "Fixes the order in which pitches are tried. Two seeds give two equally valid lines." },
       { nom: "Budget", nomEn: "Budget", type: "curseur", plage: [1000, 2000000], pas: 1000, defaut: 200000,

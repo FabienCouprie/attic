@@ -121,7 +121,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "Gaussienne", defautEn: "Gaussian",
         doc: "La forme de chaque fragment. Les deux exponentielles donnent un sens au temps à l'intérieur du fragment.",
         docEn: "The shape of each fragment. The two exponentials give a direction to time inside the fragment." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 9999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Le numéro du tirage. À graine égale, la même partition.",
         docEn: "The number of the draw. At equal seed, the same score." },
       { nom: "Niveau", nomEn: "Level out", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

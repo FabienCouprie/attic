@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Partiels", nomEn: "Partials", type: "curseur", plage: [4, 48], pas: 1, defaut: 24,
         doc: "Nombre de partiels par note. Peu, et le centroïde visé peut être hors de portée, une série courte ne monte pas assez haut. Beaucoup, et le son gagne en richesse sans que la mesure change beaucoup.",
         docEn: "Number of partials per note. Few, and the target centroid may be out of reach, a short series does not reach high enough. Many, and the sound gains richness without the measurement changing much." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 5,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 5,
         doc: "Graine de l'ordre des notes. Les proportions du chroma ne changent pas avec elle ; elles sont réparties exactement, seul l'ordre change. Une même graine rejoue le même son.",
         docEn: "Seed for the note order. The chroma proportions do not change with it, they are allocated exactly, only the order does. The same seed replays the same sound." },
       { nom: "Vérifier", nomEn: "Verify", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],

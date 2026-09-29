@@ -107,7 +107,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Début", nomEn: "Start", defaut: 0, doc: "Mix wet au début (0=sec seulement).", docEn: "Wet mix at start (0=dry only)." },
       { nom: "Fin", nomEn: "End", defaut: 50, doc: "Mix wet à la fin du fondu.", docEn: "Wet mix after fade completes." },
       { nom: "Fondu", nomEn: "Fade", plage: [0, 60], pas: 0.5, defaut: 8, unite: "s", doc: "Durée du passage du sec au mouillé. Plafonnée à la durée du rendu, le son plus la queue de réverbération : au-delà, le fondu n'arrive jamais à sa valeur de fin. 0 : sur toute la durée du son.", docEn: "Length of the move from dry to wet. Capped at the length of the render, that is the sound plus the reverb tail : beyond that, the fade never reaches its end value. 0: over the whole sound." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut fixe : une réverbération qui change de pièce à chaque exécution serait un défaut.",
         docEn: "Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect." },
     ],
@@ -311,6 +311,14 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
         doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
         docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
+      // CE RÉGLAGE N'EST PAS UNE GRAINE, et ne porte donc pas le rôle : c'est un CHOIX qui dit ce
+      // que les graines de la chaîne deviennent. Lui donner le rôle ferait résoudre son libellé
+      // comme un nombre.
+      { nom: "Graines", nomEn: "Seeds", type: "choix",
+        options: ["Identiques", "Une par tour"], optionsEn: ["Identical", "One per pass"],
+        optionIds: ["Identiques", "Une par tour"], defaut: "Identiques", defautEn: "Identical",
+        doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Identiques » donne à tous les tours la même graine, qu'elle soit posée ou tirée : chaque tour applique donc le même tirage. « Une par tour » la dérive du numéro du tour : les tours diffèrent, et la même graine avec le même nombre de tours rend toujours la même suite. Dans les deux cas, une graine tirée est rendue dans le message, et la reposer rejoue la boucle entière.",
+        docEn: "What becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message, and putting it back replays the whole loop." },
     ],
     async executer(ctx: any) {
       // Ce nœud n'est normalement JAMAIS exécuté : le moteur déplie la boucle avant

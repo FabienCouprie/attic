@@ -240,6 +240,27 @@ export interface ParametreDef {
    * un nœud à huit pistes porte trente-deux réglages, dont ceux des pistes vides ne servent à rien.
    */
   port?: number;
+  /**
+   * Ce réglage est une GRAINE d'aléa, et le moteur la résout avant que le composant ne la lise.
+   *
+   * POURQUOI LE DÉCLARER AU LIEU DE LE DEVINER — relevé par Fabien : « il y a un excès de
+   * décentralisation, il faut le corriger partout où c'est possible, le fonctionnement sur les
+   * graines doit être homogène ». Soixante-seize réglages de graine vivaient dans soixante-cinq
+   * fichiers, et la convention du projet — zéro ou moins veut dire « tire au sort », et la graine
+   * tirée se rend pour qu'un résultat réussi soit rejouable — n'était appliquée que par treize
+   * d'entre eux. Ailleurs, une graine à zéro était une graine FIXE valant zéro, qui rendait toujours
+   * la même chose, alors que la documentation de plusieurs annonçait le contraire.
+   *
+   * ET LE RÔLE SE DÉCLARE, IL NE SE CHERCHE PAS DANS LE NOM. Un garde qui reconnaîtrait une graine
+   * à son libellé serait le même garde que celui qui a laissé passer cinq tables de gammes : il
+   * marcherait jusqu'au premier composant qui l'appelle autrement. La déclaration est ici, et un cas
+   * permanent refuse qu'un réglage nommé comme une graine ne la porte pas.
+   *
+   * CE QUE LE MOTEUR EN FAIT : il résout la valeur une fois par nœud et par run, la mélange au
+   * numéro du tour quand une boucle le demande explicitement, et la rend telle quelle au composant.
+   * Aucun composant n'a à changer : `hasardDuNoeud` est idempotente sur une graine déjà résolue.
+   */
+  graine?: true;
 }
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et

@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Number of ping-pong sampler steps. 8 = quality/speed sweet spot.",
      },
       {
-        nom: "Graine", nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
+        nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
         doc: "Graine aléatoire. -1 = aléatoire.",
         docEn: "Random seed. -1 = random.",
      },

@@ -209,7 +209,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_AVANCE_DEFAUT,
         doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (silence) ou de 1 à 9 (vélocité).",
         docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1 to 9 (velocity)." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même motif doit rendre le même fichier à chaque exécution.",
         docEn: "Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
     ],

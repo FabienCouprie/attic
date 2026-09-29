@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "SVG", defautEn: "SVG",
         doc: "SVG : format natif, vectoriel, redimensionnable sans perte (à privilégier). PNG : image matricielle rendue à la taille Largeur × Hauteur, pour les usages qui ne lisent pas le vectoriel.",
         docEn: "SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle à chaque exécution). Même graine = même pochette.",
         docEn: "Random seed (0 = new each run). Same seed = same cover." },
     ],

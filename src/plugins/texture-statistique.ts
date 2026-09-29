@@ -39,7 +39,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Itérations", nomEn: "Iterations", type: "curseur", plage: [1, 20], pas: 1, defaut: 6,
         doc: "Tours de projections alternées entre distributions et corrélations : imposer les unes abîme les autres, et l'on alterne jusqu'à ce que les deux tiennent à peu près. Au-delà d'une dizaine, le gain devient imperceptible et le calcul double.",
         docEn: "Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine du bruit de départ. Deux graines donnent deux textures différentes aux mêmes statistiques ; c'est exactement ce que deux enregistrements de la même pluie sont l'un pour l'autre.",
         docEn: "Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other." },
     ],

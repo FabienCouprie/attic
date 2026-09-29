@@ -6,8 +6,8 @@
 // les n résultats DANS L'ORDRE — ainsi que les cas où l'utilisateur se trompe de câblage.
 import { describe, expect, it } from "vitest";
 import {
-  COPIES_MAX, FICHES_FIN, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C, TOURS_MAX,
-  deplierBoucles, estFinDeBoucle,
+  COPIES_MAX, FICHES_BOUCLE_PAR_PASSE, FICHES_FIN, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C,
+  GRAINES_PAR_TOUR, TOURS_MAX, deplierBoucles, estFinDeBoucle,
 } from "./boucle-graphe";
 import type { AreteG, NoeudG } from "./meta";
 
@@ -233,7 +233,7 @@ describe("les trois fins de boucle", () => {
     ];
     const r = deplierBoucles(noeuds, aretes);
     expect(r.problemes).toEqual([]);
-    expect(r.depliees).toEqual([{ debutId: "d2", tours: 3 }, { debutId: "d1", tours: 2 }]);
+    expect(r.depliees).toEqual([depliee("d2", 3), depliee("d1", 2)]);
     // Les deux fins restent, avec leur variante : c'est chacune qui dit ce qu'elle fait de ses tours.
     expect(r.noeuds.filter((x) => x.data.ficheId === FICHE_FIN_B).length).toBe(1);
     expect(r.noeuds.filter((x) => x.data.ficheId === FICHE_FIN_C).length).toBe(2);
@@ -251,6 +251,10 @@ describe("les trois fins de boucle", () => {
     expect(estFinDeBoucle(undefined)).toBe(false);
   });
 });
+
+/** Une boucle dépliée telle que le dépliage la rapporte, traversées comprises. */
+const depliee = (debutId: string, tours: number, entreesDuDehors = 0, sortiesVersDehors = 0) =>
+  ({ debutId, tours, entreesDuDehors, sortiesVersDehors });
 
 describe("boucles imbriquées", () => {
   // DEMANDÉ PAR FABIEN, après un banc d'épreuve où deux boucles emboîtées ne dépliaient rien : les
@@ -302,7 +306,7 @@ describe("boucles imbriquées", () => {
   it("LES DEUX SONT NOMMÉES, LA PLUS INTÉRIEURE D'ABORD", () => {
     const g = imbriquees(2, 3);
     expect(deplierBoucles(g.noeuds, g.aretes).depliees)
-      .toEqual([{ debutId: "d2", tours: 3 }, { debutId: "d1", tours: 2 }]);
+      .toEqual([depliee("d2", 3), depliee("d1", 2)]);
   });
 
   it("ET LES TOURS DU DEHORS S'ENCHAÎNENT : chacun part du résultat du précédent", () => {
@@ -322,7 +326,7 @@ describe("boucles imbriquées", () => {
     const inverse = { ...g, noeuds: [...g.noeuds].reverse() };
     const r = deplierBoucles(inverse.noeuds, inverse.aretes);
     expect(r.problemes).toEqual([]);
-    expect(r.depliees).toEqual([{ debutId: "d2", tours: 3 }, { debutId: "d1", tours: 2 }]);
+    expect(r.depliees).toEqual([depliee("d2", 3), depliee("d1", 2)]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(6);
   });
 
@@ -360,7 +364,7 @@ describe("boucles imbriquées", () => {
     expect(r.problemes).toContainEqual({ noeudId: "d1", code: "trop-de-copies" });
     // L'INTÉRIEURE A TOUT DE MÊME ÉTÉ DÉPLIÉE : elle tient dans le plafond, et refuser tout le
     // graphe pour une extérieure trop large priverait de ce qui marche.
-    expect(r.depliees).toEqual([{ debutId: "d2", tours: 32 }]);
+    expect(r.depliees).toEqual([depliee("d2", 32)]);
   });
 
   it("et le plafond laisse passer ce qui tient : seize sur seize sur un ventre de quatre", () => {
@@ -386,7 +390,7 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
   // convention de nommage est ce qu'on ne veut pas : le dépliage le SAIT, il le rend.
   it("IL NOMME LA BOUCLE DÉPLIÉE ET SON NOMBRE DE TOURS", () => {
     const g = grapheSimple(7);
-    expect(deplierBoucles(g.noeuds, g.aretes).depliees).toEqual([{ debutId: "d", tours: 7 }]);
+    expect(deplierBoucles(g.noeuds, g.aretes).depliees).toEqual([depliee("d", 7)]);
   });
 
   it("ET IL REND LE NOMBRE VRAIMENT EMPLOYÉ, non celui qu'on a écrit", () => {
@@ -394,7 +398,7 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
     // ce nombre-là que le nœud doit annoncer, sans quoi il mentirait sur ce qui a tourné.
     const g = grapheSimple(999);
     const r = deplierBoucles(g.noeuds, g.aretes);
-    expect(r.depliees).toEqual([{ debutId: "d", tours: TOURS_MAX }]);
+    expect(r.depliees).toEqual([depliee("d", TOURS_MAX)]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(TOURS_MAX);
   });
 
@@ -409,7 +413,7 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
       a("a4", "f1", "d2"), a("a5", "d2", "t2"), a("a6", "t2", "f2"),
     ];
     const r = deplierBoucles(noeuds, aretes);
-    expect(r.depliees).toEqual([{ debutId: "d1", tours: 3 }, { debutId: "d2", tours: 5 }]);
+    expect(r.depliees).toEqual([depliee("d1", 3), depliee("d2", 5)]);
   });
 
   it("UNE BOUCLE QUI NE SE DÉPLIE PAS N'EST PAS NOMMÉE : elle a un problème, et c'est lui qu'on dit", () => {
@@ -420,5 +424,149 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
 
   it("et un graphe sans la moindre boucle n'en nomme aucune", () => {
     expect(deplierBoucles([n("a1", "x")], []).depliees).toEqual([]);
+  });
+
+  it("IL COMPTE CE QUI TRAVERSE LE VENTRE, dont le sens ne se devine pas", () => {
+    // Une entrée venue du dehors alimente CHAQUE tour à l'identique ; une sortie prise ailleurs que
+    // par la fin ne sort QU'UNE FOIS, au dernier tour. Un seul câble, et trente et une valeurs sur
+    // trente-deux qui ne sortent jamais : c'est cela que le début de boucle doit dire.
+    const noeuds = [
+      n("s", "gen"), n("reglage", "gen"), n("dehors", "x"),
+      n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "transposition"), n("f", FICHE_FIN),
+    ];
+    const aretes = [
+      a("e0", "s", "d"), a("e1", "d", "m"), a("e2", "m", "f"),
+      a("e3", "reglage", "m"),   // du dehors vers le ventre
+      a("e4", "m", "dehors"),    // du ventre vers le dehors, ailleurs que par la fin
+    ];
+    const r = deplierBoucles(noeuds, aretes);
+    expect(r.depliees).toEqual([depliee("d", 3, 1, 1)]);
+  });
+
+  it("et une boucle que rien ne traverse le dit par des zéros", () => {
+    const g = grapheSimple(4);
+    expect(deplierBoucles(g.noeuds, g.aretes).depliees).toEqual([depliee("d", 4, 0, 0)]);
+  });
+});
+
+describe("les graines qui varient d'un tour à l'autre", () => {
+  // DEMANDÉ PAR FABIEN, ET L'OPTION EST EXPLICITE : sans elle, une boucle recopie ses nœuds à
+  // l'identique, graine comprise, et rend la même chose à chaque tour. C'est ce que font tous les
+  // graphes enregistrés jusqu'ici, et cela ne doit pas changer sous les pieds de qui les a réglés.
+  const avecOption = (valeur?: string) => {
+    const params: Record<string, unknown> = { Tours: 3 };
+    if (valeur !== undefined) params.Graines = valeur;
+    return {
+      noeuds: [n("s", "gen"), n("d", FICHE_DEBUT, params), n("m", "transposition"), n("f", FICHE_FIN)],
+      aretes: [a("e0", "s", "d"), a("e1", "d", "m"), a("e2", "m", "f")],
+    };
+  };
+
+  it("SANS L'OPTION, AUCUN TOUR N'EST MARQUÉ : le comportement d'avant, à la lettre", () => {
+    expect(deplierBoucles(...Object.values(avecOption()) as [never, never]).toursDesCopies.size).toBe(0);
+    expect(deplierBoucles(...Object.values(avecOption("Identiques")) as [never, never]).toursDesCopies.size).toBe(0);
+  });
+
+  it("AVEC L'OPTION, CHAQUE COPIE PORTE SON TOUR", () => {
+    const g = avecOption(GRAINES_PAR_TOUR);
+    const r = deplierBoucles(g.noeuds, g.aretes);
+    expect([...r.toursDesCopies.entries()].sort())
+      .toEqual([["d#0::m", 0], ["d#1::m", 1], ["d#2::m", 2]]);
+  });
+
+  it("ET LES TOURS S'EMPILENT AVEC LES BOUCLES : chaque tour du dedans reste distinct dans chaque tour du dehors", () => {
+    const noeuds = [
+      n("s", "gen"),
+      n("d1", FICHE_DEBUT, { Tours: 2, Graines: GRAINES_PAR_TOUR }),
+      n("d2", FICHE_DEBUT, { Tours: 2, Graines: GRAINES_PAR_TOUR }),
+      n("m", "transposition"), n("f2", FICHE_FIN), n("f1", FICHE_FIN),
+    ];
+    const aretes = [
+      a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"),
+      a("e3", "m", "f2"), a("e4", "f2", "f1"),
+    ];
+    const r = deplierBoucles(noeuds, aretes);
+    const tours = [...r.toursDesCopies.entries()].filter(([id]) => id.endsWith("::m")).sort();
+    expect(tours.length).toBe(4);
+    // Quatre copies, quatre valeurs distinctes : aucune ne se confond avec une autre.
+    expect(new Set(tours.map(([, v]) => v)).size).toBe(4);
+  });
+
+  it("une boucle extérieure qui ne demande rien LAISSE À L'INTÉRIEURE ce qu'elle a décidé", () => {
+    const noeuds = [
+      n("s", "gen"),
+      n("d1", FICHE_DEBUT, { Tours: 2 }),
+      n("d2", FICHE_DEBUT, { Tours: 2, Graines: GRAINES_PAR_TOUR }),
+      n("m", "transposition"), n("f2", FICHE_FIN), n("f1", FICHE_FIN),
+    ];
+    const aretes = [
+      a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"),
+      a("e3", "m", "f2"), a("e4", "f2", "f1"),
+    ];
+    const r = deplierBoucles(noeuds, aretes);
+    const tours = [...r.toursDesCopies.entries()].filter(([id]) => id.endsWith("::m")).sort();
+    // Les deux tours du dedans restent distingués, et le tour du dehors ne les sépare pas davantage.
+    expect(tours.map(([, v]) => v)).toEqual([0, 1, 0, 1]);
+  });
+});
+
+describe("une boucle menée par PASSES dans le ventre", () => {
+  // CE QUE CE BLOC GARDE, ET COMMENT ON L'A TROUVÉ. Attic répète de deux façons. Celle-ci RECOPIE
+  // la chaîne sous des identifiants engendrés ; l'autre rejoue le graphe une fois par morceau et
+  // apparie un nœud à sa boucle PAR SON IDENTIFIANT. Mesuré dans l'application : seule, une boucle
+  // par voix annonce « voix 1/1 · 10 notes » ; la même, posée dans un ventre, n'annonce rien, le
+  // graphe aboutit, et aucun avertissement ne paraît. Un résultat faux et muet est le pire des deux.
+  const ventre = (fichePasse: string) => ({
+    noeuds: [
+      n("src", "generateur-frequence"), n("d", FICHE_DEBUT, { Tours: 3 }),
+      n("p", fichePasse), n("f", FICHE_FIN),
+    ],
+    aretes: [a("e1", "src", "d"), a("e2", "d", "p"), a("e3", "p", "f")],
+  });
+
+  it.each([...FICHES_BOUCLE_PAR_PASSE])("« %s » DANS LE VENTRE REFUSE LE DÉPLIAGE", (fiche) => {
+    const g = ventre(fiche);
+    const r = deplierBoucles(g.noeuds, g.aretes);
+    expect(r.problemes).toEqual([{ noeudId: "d", code: "boucle-par-passe-dedans" }]);
+    // ET RIEN N'EST DÉPLIÉ : c'est le refus qui rend l'autre boucle à elle-même. Ses nœuds gardent
+    // leur identifiant, donc son pilote les reconnaît et elle tourne.
+    expect(r.origines.size).toBe(0);
+    expect(r.depliees).toEqual([]);
+    expect(r.noeuds.map((x) => x.id).sort()).toEqual(["d", "f", "p", "src"]);
+  });
+
+  it("MAIS HORS DU VENTRE ELLE NE GÊNE RIEN, et la boucle de graphe se déplie", () => {
+    // Les deux mécaniques cohabitent dans un même graphe : c'est le cas courant, et il ne doit rien
+    // coûter. Vérifié aussi dans l'application, les deux rendant leur compte.
+    const noeuds = [
+      n("src", "generateur-frequence"), n("d", FICHE_DEBUT, { Tours: 3 }),
+      n("tr", "transposition"), n("f", FICHE_FIN),
+      n("p", "boucle-creneau-debut"), n("q", "boucle-creneau-fin"),
+    ];
+    const aretes = [
+      a("e1", "src", "d"), a("e2", "d", "tr"), a("e3", "tr", "f"), a("e4", "p", "q"),
+    ];
+    const r = deplierBoucles(noeuds, aretes);
+    expect(r.problemes).toEqual([]);
+    expect(r.depliees).toEqual([{ debutId: "d", tours: 3, entreesDuDehors: 0, sortiesVersDehors: 0 }]);
+  });
+
+  it("SOUS DEUX BOUCLES EMBOÎTÉES, C'EST LA PLUS INTÉRIEURE QUI LE DIT, et rien n'est déplié", () => {
+    // AUCUNE COPIE D'UN NŒUD PAR PASSES N'EST DONC POSSIBLE, et c'est ce qui rend le garde complet :
+    // la boucle la plus intérieure qui le contient refuse avant d'en produire une seule. Le refus se
+    // pose sur ELLE, la boucle du dehors n'étant pour rien dans le câblage fautif.
+    const noeuds = [
+      n("src", "generateur-frequence"),
+      n("d1", FICHE_DEBUT, { Tours: 2 }), n("d2", FICHE_DEBUT, { Tours: 2 }),
+      n("p", "cercle-boucle-debut"), n("f2", FICHE_FIN), n("f1", FICHE_FIN),
+    ];
+    const aretes = [
+      a("e0", "src", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "p"),
+      a("e3", "p", "f2"), a("e4", "f2", "f1"),
+    ];
+    const r = deplierBoucles(noeuds, aretes);
+    expect(r.problemes[0]).toEqual({ noeudId: "d2", code: "boucle-par-passe-dedans" });
+    expect(r.origines.size).toBe(0);
+    expect(r.depliees).toEqual([]);
   });
 });

@@ -21,6 +21,7 @@ import { Respiration, respirer } from "../../core/respirer";
 import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
+import { graineDuTour, resoudreGraine } from "../../core/hasard";
 import { deplierInstruments } from "../../core/instrument-graphe";
 import { registre } from "../../audio/adaptateur";
 import { ecartNiveau } from "../../audio/ecart-niveau";
@@ -449,7 +450,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // plutôt qu'après l'exécution : ce n'est pas le compte rendu d'un calcul, c'est ce que le
     // dépliage vient de décider, et cela vaut même si le run est interrompu ensuite.
     for (const d of deplie.depliees) {
-      definirStatut(d.debutId, "attente", t("boucle.depliee").replace("{n}", String(d.tours)));
+      // ET LES TRAVERSÉES AVEC, parce que leur sens ne se devine pas. Une entrée venue du dehors
+      // alimente CHAQUE tour à l'identique, une sortie prise ailleurs que par la fin ne sort QU'UNE
+      // FOIS, au dernier tour : un seul câble, et trente et une valeurs sur trente-deux qui ne
+      // sortent jamais. Elles ne se disent que lorsqu'il y en a, pour ne pas encombrer le cas simple.
+      const dits = [t("boucle.depliee").replace("{n}", String(d.tours))];
+      if (d.entreesDuDehors > 0) dits.push(t("boucle.entrees").replace("{n}", String(d.entreesDuDehors)));
+      if (d.sortiesVersDehors > 0) dits.push(t("boucle.sorties").replace("{n}", String(d.sortiesVersDehors)));
+      definirStatut(d.debutId, "attente", dits.join(" · "));
     }
     const nds = deplie.noeuds as unknown as any[];
     const aretes = deplie.aretes as unknown as Edge[];
@@ -565,6 +573,61 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const resultats = new Map<string, TypeValeur[]>();
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
+
+    // ── Les graines, résolues au CENTRE ──
+    //
+    // Relevé par Fabien : « il y a un excès de décentralisation, il faut le corriger partout où
+    // c'est possible, le fonctionnement sur les graines doit être homogène ». Soixante-seize
+    // réglages de graine vivaient dans soixante-cinq fichiers, et la convention du projet n'était
+    // appliquée que par treize d'entre eux ; ailleurs, une graine à zéro était une graine FIXE
+    // valant zéro, qui rendait toujours la même chose quand la documentation annonçait le contraire.
+    //
+    // DEUX TABLES, ET ELLES NE DISENT PAS LA MÊME CHOSE. `graines` retient ce qu'un nœud a obtenu,
+    // pour que deux lectures du même réglage rendent la même valeur. `basesDeGraine` retient ce que
+    // le nœud VISIBLE a tiré, et ne sert qu'aux boucles à graines variables : tous les tours
+    // partagent alors la même base, que leur numéro décale, de sorte que fixer cette base rejoue la
+    // boucle entière à l'identique. Sans cette option, chaque copie résout pour elle-même, ce qui
+    // est exactement ce que les graphes enregistrés font aujourd'hui.
+    const graines = new Map<string, number>();
+    const basesDeGraine = new Map<string, number>();
+    /** Ce qu'un nœud a TIRÉ, par réglage : rendu dans son message, sans quoi on ne pourrait le rejouer. */
+    const grainesTirees = new Map<string, { nom: string; valeur: number }[]>();
+
+    const graineDuNoeud = (nodeId: string, nom: string, brut: number): number => {
+      const cle = `${nodeId}|${nom}`;
+      const deja = graines.get(cle);
+      if (deja !== undefined) return deja;
+      const tour = deplie.toursDesCopies.get(nodeId);
+      const origine = deplie.origines.get(nodeId);
+      let valeur: number;
+      let base: number;
+      if (tour === undefined && origine === undefined) {
+        valeur = base = resoudreGraine(brut);
+      } else {
+        // LES COPIES D'UN MÊME NŒUD PARTAGENT UNE BASE, dans les deux réglages, et c'est ce qui rend
+        // la boucle rejouable : une seule graine à reposer, et les trente-deux tours reviennent.
+        // Sans ce partage, « Identiques » mentait dès que la graine était à zéro — chaque copie
+        // tirait la sienne, et les tours différaient sous une étiquette qui promet le contraire.
+        const cleBase = `${origine ?? nodeId}|${nom}`;
+        const deja = basesDeGraine.get(cleBase);
+        base = deja ?? resoudreGraine(brut);
+        if (deja === undefined) basesDeGraine.set(cleBase, base);
+        // Et c'est la CONVENTION DE GRAINE qui mêle le numéro du tour, jamais le moteur lui-même.
+        valeur = tour === undefined ? base : graineDuTour(base, tour);
+      }
+      graines.set(cle, valeur);
+      // TIRÉE veut dire que l'utilisateur n'en avait pas posé : c'est celle-là qu'il faut lui rendre,
+      // SUR LE NŒUD QU'IL VOIT. Dans une boucle, celui qui tire est une COPIE, dont l'identifiant
+      // n'existe pas à l'écran ; et ce qu'on lui rend est LA BASE, jamais la graine d'un tour :
+      // reposer une graine de tour ne rejouerait rien, quand la base rejoue les trente-deux.
+      if (!(brut > 0)) {
+        const visible = plat.expansions.get(nodeId) ?? nodeId;
+        const liste = grainesTirees.get(visible) ?? [];
+        if (!liste.some((g) => g.nom === nom)) liste.push({ nom, valeur: base });
+        grainesTirees.set(visible, liste);
+      }
+      return valeur;
+    };
     // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
     publierExecutionCourante({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
 
@@ -755,11 +818,17 @@ export function useExecutionGraphe(o: OptionsExecution) {
           },
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            if (typeof p === "number") return p;
             const def = trouverDef(node.data.ficheId as string);
             const pDef = def?.parametres.find((p) => p.nom === nom);
-            const defautEff = typeof pDef?.defautEn === "number" ? pDef.defautEn : defaut;
-            return defautEff;
+            const brut = typeof p === "number"
+              ? p
+              : (typeof pDef?.defautEn === "number" ? pDef.defautEn : defaut);
+            // UNE GRAINE EST RÉSOLUE ICI, ET NON DANS CHACUN DES SOIXANTE-CINQ COMPOSANTS QUI EN
+            // PORTENT UNE. C'est la correction de la décentralisation relevée par Fabien : la
+            // convention du projet — zéro ou moins veut dire « tire au sort » — n'était appliquée
+            // que par treize d'entre eux, et ailleurs une graine à zéro était une graine FIXE
+            // valant zéro. Le rôle est DÉCLARÉ sur le réglage, jamais cherché dans son libellé.
+            return pDef?.graine ? graineDuNoeud(nodeId, nom, brut) : brut;
           },
           paramTexte: (nom: string, defaut: string) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
@@ -922,6 +991,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const dit = t(`boucle.probleme.${p.code}`).replace("{max}", String(COPIES_MAX));
       messages.set(visible, dit);
       definirStatut(visible, "erreur", dit);
+    }
+
+    // LA GRAINE TIRÉE SE REND, faute de quoi un rendu qu'on voudrait garder resterait introuvable :
+    // le réglage à zéro ne dit pas ce qui a été joué. Treize composants le faisaient déjà eux-mêmes ;
+    // on ne le répète donc que si le NOMBRE n'est pas déjà là — le nombre, et non le mot, qui
+    // s'écrit de trop de façons pour qu'on le cherche.
+    //
+    // ET C'EST ICI, APRÈS TOUTE L'EXÉCUTION, plutôt que dans la boucle des nœuds : `grainesTirees`
+    // est rangée sous l'identifiant VISIBLE, quand la boucle, elle, tourne sur des copies. Ajouter
+    // le tirage au message d'une copie l'aurait perdu, la vue lisant `messages` sous l'identifiant
+    // qu'elle affiche.
+    for (const [visible, tirees] of grainesTirees) {
+      const dit = messages.get(visible) ?? "";
+      const aDire = tirees.filter((g) => !dit.includes(String(g.valeur)));
+      if (!aDire.length) continue;
+      const bout = aDire.map((g) => `${g.nom.toLowerCase()} ${g.valeur}`).join(" · ");
+      messages.set(visible, dit ? `${dit} · ${bout}` : bout);
     }
 
     // LA PHASE DES APERÇUS RESPIRE ELLE AUSSI, relevé par Fabien sur une pièce de cinquante
@@ -1291,12 +1377,35 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * et son `AbortController`. L'acyclicité du graphe n'est pas entamée : ce que `boucle-graphe.ts`
    * désigne comme ce qu'il ne fallait pas casser reste intact.
    *
-   * SANS NŒUD DE BOUCLE, RIEN NE CHANGE : une seule passe, comme avant, et pas un appel de plus.
+   * SANS NŒUD DE BOUCLE, RIEN NE CHANGE : une seule passe, comme avant. Le plan coûte désormais un
+   * aplatissement, c'est-à-dire un parcours du graphe qui n'exécute rien ; c'est le prix pour que le
+   * contenu d'un méta-composant soit vu, et il se paie une fois par exécution, non une fois par
+   * passe.
    */
   const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string) => {
-    const aretesG = () => aretesRef.current as unknown as AreteG[];
+    // LE PLAN SE FAIT SUR LE GRAPHE APLATI, ET NON SUR CELUI QU'ON VOIT — relevé par Fabien, qui
+    // demandait si les changements faits sur les boucles valaient aussi pour les autres.
+    //
+    // CE QUI CLOCHAIT. Un nœud de boucle par passes s'apparie à sa boucle PAR SON IDENTIFIANT, et
+    // c'est celui de son exécution qu'il donne (`ctx.noeud.id`). Dans un méta-composant, cet
+    // identifiant est PRÉFIXÉ par celui du méta — `outil1::cd` —, quand le plan, lui, était fait sur
+    // les nœuds visibles, où le méta n'est qu'UN nœud. La boucle n'était donc jamais planifiée : la
+    // découverte n'avait pas lieu, le graphe tournait une passe, et rien ne prévenait. MESURÉ sur
+    // une boucle à quatre créneaux suivie d'un rendu : quatre notes sur quatorze secondes posée sur
+    // le canevas, UNE note sur deux secondes une fois les deux mêmes nœuds groupés en outil.
+    //
+    // ET `oublierLeCorps` SUIT, faute de quoi la moitié du travail serait faite : il efface du cache
+    // ce qui doit rejouer, or le cache est rangé sous l'identifiant EXÉCUTÉ. Effacer `outil1` n'y
+    // touchait rien, et le début de boucle, servi par le cache, n'aurait pas redécouvert.
+    //
+    // SANS MÉTA, RIEN NE CHANGE : l'aplatissement rend alors les mêmes nœuds sous les mêmes
+    // identifiants. Les arêtes de substitution sont écartées comme le fait l'exécution, de sorte que
+    // le plan porte sur le graphe qui va tourner et non sur celui qu'une bulle repliée donne à voir.
+    const aretesReelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
+    const aplati = aplatirGraphe(noeudsRef.current as unknown as NoeudG[], aretesReelles, trouverMeta);
+    const aretesG = () => aplati.aretes;
     const plan = planifierBoucles(
-      noeudsRef.current,
+      aplati.noeuds,
       (id) => [...descendants(id, aretesG())],
       (id) => [...ancetres(id, aretesG())],
     );
@@ -1404,12 +1513,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
         for (const id of descendants(plan.debutId, aretesRef.current as unknown as AreteG[])) {
           cacheExec.current.delete(id);
         }
-        await lancerUnePasse(noeudPrioritaireId);
+        // CHAQUE FICHIER PASSE PAR LE PILOTE DES BOUCLES, ET NON PAR UNE PASSE NUE — relevé par
+        // Fabien. Cette ligne appelait `lancerUnePasse` directement, si bien qu'une boucle par voix,
+        // par créneau ou par cercle posée dans un graphe mené par lot n'était jamais PLANIFIÉE : le
+        // pilote qui la mène est celui-là même qu'on sautait. Chaque fichier menait donc une seule
+        // passe, la boucle ne bouclait pas, et rien ne le disait. Les trois répétitions s'emboîtent
+        // maintenant dans l'ordre où elles se lisent : le lot dehors, les boucles par passes dedans,
+        // et l'exécution du graphe au fond.
+        await lancerBoucleValeur(noeudPrioritaireId);
       }
     } finally {
       publierLot(null);
     }
-  }, [lancerUnePasse]);
+  }, [lancerBoucleValeur]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }

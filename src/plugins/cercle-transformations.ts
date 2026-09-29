@@ -185,6 +185,9 @@ export const fiches: FicheAudio[] = ([
     entrees: ENTREE_CERCLE,
     sorties: SORTIE_CERCLE,
     parametres: [
+      // CE RÉGLAGE NE PORTE PAS LE RÔLE DE GRAINE, et c'est délibéré : il n'en contient pas une mais
+      // une SUITE, un nombre par passe, ou une rampe étalée sur les passes. Le moteur résout une
+      // graine, pas une suite ; lui donner ce rôle remplacerait la suite par un nombre tiré au sort.
       { nom: "Graine", nomEn: "Seed", type: "texte", defaut: "1", defautEn: "1",
         doc: `Le numéro du tirage. La même graine rend la même permutation. ${CHAMP_FR}`,
         docEn: `The number of the draw. The same seed gives the same permutation. ${CHAMP_EN}` },

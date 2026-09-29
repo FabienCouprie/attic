@@ -63,7 +63,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Tendance à répéter la note précédente. Élevée = motifs accrocheurs ; faible = variation continue.", docEn: "Tendency to repeat the previous note. High = catchy patterns; low = continuous variation." },
       { nom: "Silence", nomEn: "Silence", plage: [0, 50], pas: 1, defaut: 10, unite: "%",
         doc: "Probabilité de silence à chaque pas. Crée des respirations dans la mélodie.", docEn: "Probability of silence at each step. Creates breathing room in the melody." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle réseau aléatoire à chaque exécution). Même graine = même réseau = même mélodie.", docEn: "Random seed (0 = new random network each run). Same seed = same network = same melody." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
       { ...PARAMETRE_SYNTHESE,
@@ -154,7 +154,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionIds: ["sine","square","sawtooth","triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
         doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution).", docEn: "Random seed (0 = new network each run)." },
       // Mélodie
       { nom: "Mél. neurones", nomEn: "Mel. neurons", plage: [5, 40], pas: 1, defaut: 15,

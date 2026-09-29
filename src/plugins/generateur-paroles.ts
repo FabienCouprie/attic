@@ -138,7 +138,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Lignes/section", nomEn: "Lines/section", plage: [2, 8], pas: 1, defaut: 4,
         doc: "Nombre de lignes par section (couplet, refrain).",
         docEn: "Number of lines per section (verse, chorus)." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau à chaque exécution). Même graine = mêmes paroles.",
         docEn: "Random seed (0 = new each run). Same seed = same lyrics." },
     ],

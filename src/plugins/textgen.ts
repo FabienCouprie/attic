@@ -335,7 +335,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The letters the text is written in. They are split into vowels and consonants, which alternate within each word." },
       { nom: "Mot amorce", nomEn: "Seed word", type: "texte", defaut: "",
         doc: "Mot de départ (optionnel).", docEn: "Starting word (optional).", defautEn: "" },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution).",
         docEn: "Random seed (0 = new network each run)." },
     ],

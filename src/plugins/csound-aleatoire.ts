@@ -85,7 +85,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Borne basse du champ libre.", docEn: "Lower bound of the free field." },
       { nom: "Libre max", nomEn: "Free max", type: "nombre", plage: [-10000, 10000], pas: 0.01, defaut: 1,
         doc: "Borne haute du champ libre.", docEn: "Upper bound of the free field." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine du tirage. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur redonne exactement la même partition, ce qui permet de garder un tirage qu'on aime.",
         docEn: "Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives exactly the same score again, which is how a draw you like is kept." },
     ],

@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Overrides the instrument's particle count. 0 = the instrument's own. This is the setting that turns a countable rattle into a continuous hiss." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.2, 30], pas: 0.1, defaut: 4, unite: "s",
         doc: "Durée produite, quand aucun MIDI n'est branché.", docEn: "Duration produced, when no MIDI is connected." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "0 = tirée au sort à chaque exécution, et affichée dans le message. Toute autre valeur rejoue exactement le même son, ce qu'aucun vrai tambourin ne fait, et dont on a besoin ici.",
         docEn: "0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound, which no real tambourine does, and which is needed here." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

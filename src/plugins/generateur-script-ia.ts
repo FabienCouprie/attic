@@ -108,7 +108,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de styles musicaux à piocher.", docEn: "Number of musical styles to pick." },
       { nom: "Émotions", nomEn: "Emotions", plage: [0, 5], pas: 1, defaut: 2, unite: "",
         doc: "Nombre d'émotions à piocher.", docEn: "Number of emotions to pick." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0, unite: "",
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0, unite: "",
         doc: "Graine aléatoire (0 = aléatoire à chaque exécution).", docEn: "Random seed (0 = random each run)." },
     ],
     async executer(ctx: any) {

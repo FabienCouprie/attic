@@ -54,7 +54,7 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine du parcours, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici ; toute autre valeur rejoue le même parcours.",
         docEn: "Seed for the journey; no effect outside the \"Random\" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey." },
     ],

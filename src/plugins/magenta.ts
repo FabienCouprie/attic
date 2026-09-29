@@ -214,7 +214,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns.", defautEn: "Random"
       },
       {
-        nom: "Graine", nomEn: "Seed", type: "curseur",
+        nom: "Graine", graine: true, nomEn: "Seed", type: "curseur",
         plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine de l'improvisation : elle pilote à la fois le modèle et le choix des boutons. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
         docEn: "Seed for the improvisation; it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here."

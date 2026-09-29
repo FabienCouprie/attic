@@ -80,7 +80,7 @@ Generates stereo music at 44.1 kHz from a text prompt using Stable Audio 3 small
 | Prompt | text | `A rhythmic electronic loop with deep bass and crisp drums` |  | Text description of the music to generate (English for best results). |
 | Duration | slider | 10 s | 3 – 30 s, step 1 | Duration of the generated audio (seconds). The model adds 6 s of internal headroom. |
 | Steps | slider | 8 | 1 – 20, step 1 | Number of ping-pong sampler steps. 8 = quality/speed sweet spot. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music). |
 
 ### Audio
@@ -217,7 +217,7 @@ Builds a modulation curve to plug into an effect's Modulation input. A curve car
 | Width | slider | 15 % | 1 – 50 %, step 1 | Standard deviation of the Gaussian bell, as a share of the duration. At 15 % the bell takes a little under a third of the duration between its two inflexion points, and falls to four thousandths of its peak at the ends; at 50 % it stays at six tenths there. It never touches zero, a Gaussian having no end. This setting acts on the Gaussian shape only. |
 | Steepness | slider | 10 | 1 – 40, step 0.5 | Steepness of the S curve. At 1 it rises almost in a straight line; at 40 it approaches a step. The ends are brought back to zero and one whatever the value, so the travel always covers the whole range. This setting acts on the Logistic shape only. |
 | Chaos | slider | 3.9 | 2.5 – 4, step 0.01 | The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats. |
-| Seed | number | 1 | 1 – 999999, step 1 | Seed of the random walk. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random walk. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Mean | slider | 4 | 0.5 – 40, step 0.5 | Expectation of the Poisson law, which is also where its peak sits. The curve holds in plateaus, one per whole value, and the highest plateau is the one of the expectation's integer part: at 4.5 the curve counts sixteen plateaus of which the fifth is the highest. This setting acts on the Poisson shape only. |
 | Order | slider | 2 | 1 – 20, step 0.1 | Order k of the gamma law, of density x^(k−1)·e^(−x)/Γ(k). At 1 the curve is the exponential decay; beyond, it rises to a peak at k−1 then falls back, and the plot grows the more symmetrical as the order grows. The law's scale has no setting: it stretches the axis without changing the shape, and the plot always covers the law's useful extent. This setting acts on the Gamma shape only. |
 | Degrees of freedom | slider | 3 | 2 – 30, step 1 | Degrees of freedom of the chi-squared law, of density x^(d/2−1)·e^(−x/2)/(2^(d/2)·Γ(d/2)). At 2 the curve is the exponential decay; beyond, its peak sits at d−2 and moves away from the origin as the degrees grow. The travel starts at two because the density goes to infinity at zero for a single degree. This setting acts on the Chi-squared shape only. |
@@ -258,7 +258,7 @@ Renders a chaotic attractor or iterated function system (IFS) as image and sound
 | Projection | choice | XY | XY / XZ / YZ / 3D shadow | Projection of the attractor's 3D axes onto the image. |
 | Exposure | number | 1.5 | 0.1 – 5, step 0.1 | Exposure factor to emphasize or attenuate point density. |
 | Gamma | number | 1 | 0.1 – 3, step 0.1 | Gamma correction of the image. |
-| Seed | number | 42 | 0 – 999999, step 1 | Seed for random initial conditions of the IFS. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for random initial conditions of the IFS. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Format | choice | PNG | PNG / JPEG | Output image file format. |
 | Audio duration | number | 4 s | 1 – 30 s, step 0.5 | Duration of the sound generated from the trajectory. |
 | Base frequency | number | 220 Hz | 20 – 2000 Hz, step 1 | Base frequency for sonifying the X/Y coordinates. |
@@ -313,7 +313,7 @@ Generates a spectrogram whose pattern is fractal noise (sum of octaves of pseudo
 | Octaves | number | 4 | 1 – 8, step 1 | Number of fractal noise octaves. |
 | Roughness | number | 0.5 | 0 – 1, step 0.05 | Influence of high-frequency noise (0 = smooth, 1 = rough). |
 | Scale | choice | Logarithmic | Logarithmic / Linear | Vertical distribution of frequencies in the image. |
-| Seed | number | 42 | 0 – 999999, step 1 | Seed to reproduce the same fractal texture. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed to reproduce the same fractal texture. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Format | choice | PNG | PNG / JPEG | Output image format. |
 
 #### Infinity Series (Nørgård)
@@ -433,7 +433,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | Inside | choice | Silence | Silence / Low tonic | What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range. |
 | Timbre | choice | Soft | Soft / Bright / Percussive | Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
-| Seed | number | 42 | 0 – 999999, step 1 | Seed for the pseudo-random distribution of sampling points. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the pseudo-random distribution of sampling points. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
@@ -485,7 +485,7 @@ Generates a sound from a description in words: an impact, a creak, an ambience, 
 | Prompt | text | `a heavy wooden door creaking open slowly, close mic, dry …` |  | Description of the sound to generate, in English. The recording describes itself as much as the sound does: « close mic », « dry room », « field recording » steer the result as much as the subject. |
 | Duration | slider | 6 s | 1 – 30 s, step 1 | Length of the generated sound. The model adds six seconds of internal headroom. |
 | Steps | slider | 8 | 1 – 20, step 1 | Number of denoising steps. Few steps give a rougher sound, and give it faster. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Output | choice | Normalised | Normalised / As is | « Normalised » brings the peak to the requested level. « As is » returns the model's sound untouched. |
 | Peak level | slider | -1 dBFS | -30 – 0 dBFS, step 0.5 | Peak aimed at for the normalised output, in decibels below full scale. |
 
@@ -535,7 +535,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Width | number | 16 cells | 4 – 64 cells, step 1 | Number of cells per row. |
 | Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D. |
 | Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step. |
-| Seed | number | 0 | 0 – 9999, step 1 | 0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed. |
+| Seed | number | 0 | 0 – 999999, step 1 | 0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Key of the scale used to map cells to notes. |
 | Scale | choice | Major pentatonic | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to convert cell positions into note pitches. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the generated MIDI notes. |
@@ -622,7 +622,7 @@ Uses an audio sample as a melodic instrument: the sample is pitched to play a me
 | Tempo | number | 100 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Duration | number | 4 s | 1 – 60 s | Generated duration, in seconds. |
 | Reference note | number | 60 | 21 – 108 | MIDI note for the original pitch of the sample. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Evolve a Melody
 
@@ -655,7 +655,7 @@ Evolves a population of melodies toward what is asked of them, and returns the b
 | Generations | number | 300 | 10 – 2000, step 10 | How many generations at most. |
 | Mutation | number | 12 % | 0 – 100 %, step 1 | The chance a note changes at each birth. Strong, the search explores and retains poorly. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a note, each being a quarter note. |
-| Seed | number | 1 | 1 – 9999, step 1 | Fixes the draw. The same seed gives the same melody. |
+| Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Feature Synthesis
 
@@ -676,7 +676,7 @@ Builds a sound from a feature vector: tempo, spectral centroid, chroma, cepstral
 | Duration | slider | 8 s | 1 – 60 s, step 1 | Length of the sound built. Longer, the chroma proportions come out better, enough notes are needed for a twelve-class allocation to show. |
 | Octave | slider | 4 | 1 – 7, step 1 | Octave of the fundamentals. The vector carries no absolute pitch: chroma says which classes, never in which register. The choice is yours, and it moves the centroid obtained. |
 | Partials | slider | 24 | 4 – 48, step 1 | Number of partials per note. Few, and the target centroid may be out of reach, a short series does not reach high enough. Many, and the sound gains richness without the measurement changing much. |
-| Seed | slider | 5 | 0 – 999999, step 1 | Seed for the note order. The chroma proportions do not change with it, they are allocated exactly, only the order does. The same seed replays the same sound. |
+| Seed | slider | 5 | 0 – 999999, step 1 | Seed for the note order. The chroma proportions do not change with it, they are allocated exactly, only the order does. The same seed replays the same sound. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Verify | choice | Yes | Yes / No | Re-measure the sound produced and show the deviation family by family. It is the only proof the node comes close to anything, and it doubles the computation time. « No » returns the sound only. |
 
 #### Frequency Generator
@@ -789,7 +789,7 @@ Generates noise: a random signal handy for testing filters and envelopes, or as 
 | Type | choice | White | White / Pink / Brownian | White = all frequencies at equal level (flat spectrum). Pink = −3 dB/octave (perceptually balanced). Brownian = −6 dB/octave (dark, muffled). Connect to the Spectrum Analyzer to see the difference. |
 | Duration | number | 2 s | 0.2 – 10 s, step 0.1 | Generated duration, in seconds. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the noise. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same noise, sample for sample. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the noise. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same noise, sample for sample. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Oscillator
 
@@ -856,7 +856,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 | Density | number | 35 % | 0 – 100 %, step 1 | The chance that a slot divides rather than staying a note. |
 | Rests | number | 15 % | 0 – 100 %, step 1 | The share of slots that become a rest. |
 | Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. |
-| Seed | number | 1 | 0 – 9999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. |
+| Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
@@ -967,7 +967,7 @@ Searches for a series of pitches satisfying the written rules, and returns the f
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | When nothing fits | choice | Approach | Nothing / Approach | « Approach » evolves a population with the same rules taken as cost, and returns the series that breaks the fewest. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a note, each being a quarter note. |
-| Seed | number | 1 | 1 – 9999, step 1 | Fixes the draw. The same seed gives the same series. |
+| Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same series. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 200000 | 1000 – 2000000, step 1000 | The number of attempts at most before giving up. |
 
 #### Spectral Harmony
@@ -1046,7 +1046,7 @@ Synthesises a sound point by point, with no waveform model: two lists of numbers
 | Sections | slider | 4 | 1 – 24, step 1 | How many distinct sections to compose before ordering them. At one, the piece is of a single piece and the form principle has nothing to act on. Beyond a dozen, each section becomes too brief to be identified, and the order stops being audible. |
 | Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
 | Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
-| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Write a Counterpoint
 
@@ -1072,7 +1072,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 | Maximum leap | number | 9 | 2 – 16, step 1 | The largest leap from one note to the next, in semitones. Too tight, the cadence can no longer be made. |
 | Range | number | 17 | 7 – 36, step 1 | The range of the searched voice, in semitones, from the edge of the cantus. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a note, each being a whole note. |
-| Seed | number | 1 | 1 – 9999, step 1 | Fixes the draw. The same seed gives the same counterpoint. |
+| Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same counterpoint. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 200000 | 1000 – 2000000, step 1000 | The number of attempts at most before giving up. The message says whether the search gave up or concluded. |
 
 ### Image
@@ -1130,7 +1130,7 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Prompt | text | `a red apple on a wooden table, photo` |  | Text description of the image to generate (English for best results). |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image). |
 
 ### Keyboards
@@ -1271,7 +1271,7 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a melodic note at each step. |
 | Repetition | number | 25 % | 0 – 100 %, step 1 | Tendency to repeat the previous melodic note. |
 | Silence | number | 10 % | 0 – 50 %, step 1 | Probability of melodic silence at each step. |
-| Seed | number | 0 | 0 – 99999, step 1 | Reservoir seed (0 = random each run). Same seed = same melody. |
+| Seed | number | 0 | 0 – 999999, step 1 | Reservoir seed (0 = random each run). Same seed = same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | General volume for melodic and harmonic parts. |
 | Drum volume | number | 100 % | 0 – 200 %, step 1 | Drum volume, relative to the melodic parts. The two buses are levelled separately before being summed: the melodic parts to a 0.80 peak, the drums to 0.50 at 100%. The melody's level therefore no longer depends on the drums, the whole mix used to be scaled down to the drum hits' peak, and the melodic parts came out 9 dB lower with drums at 100 than at 0. Above 100 the drums dominate; at 0 they are gone. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth. |
@@ -1305,7 +1305,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
 | Timbre | choice | Triangle | Sine / Square / Saw / Triangle | Synthesis waveform. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new network each run). |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new network each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Mel. neurons | number | 15 | 5 – 40, step 1 | Melody reservoir neurons. |
 | Mel. connectivity | number | 30 % | 0 – 100 %, step 1 | Melody reservoir connectivity. |
 | Mel. memory | number | 30 % | 0 – 100 %, step 1 | Melody reservoir memory. |
@@ -1380,7 +1380,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a note at each step. High = dense melody; low = sparse melody. |
 | Repetition | number | 25 % | 0 – 100 %, step 1 | Tendency to repeat the previous note. High = catchy patterns; low = continuous variation. |
 | Silence | number | 10 % | 0 – 50 %, step 1 | Probability of silence at each step. Creates breathing room in the melody. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new random network each run). Same seed = same network = same melody. |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new random network each run). Same seed = same network = same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 85 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -1406,7 +1406,7 @@ Composes a random melody in the chosen key and scale, over the given number of b
 | Tempo | number | 100 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Bars | number | 4 | 1 – 32, step 1 | Number of bars to generate. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
@@ -1443,7 +1443,7 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1 to 9 (velocity). |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cantor Rhythm
 
@@ -1468,7 +1468,7 @@ Generates a self-similar rhythmic groove by Cantor recursion on a 64-step grid p
 | Bars | number | 2 | 1 – 8, step 1 | Number of bars generated. |
 | Swing | number | 0 % | 0 – 100 % | Offset of odd beats for a swing/shuffle feel. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the groove. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the removed-part choice and the noise bursts. No effect on the grid outside the « Random » mode, but it always fixes the noise. 0 = drawn at random on every run, and shown in the message. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the removed-part choice and the noise bursts. No effect on the grid outside the « Random » mode, but it always fixes the noise. 0 = drawn at random on every run, and shown in the message. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Drum Machine
 
@@ -1491,7 +1491,7 @@ Generates a drum track from a pattern (Rock, Funk, House…), with per-drum volu
 | Kick | number | 80 % | 0 – 100 % | Kick drum volume, from 0 to 100%. |
 | Snare | number | 70 % | 0 – 100 % | Snare volume, from 0 to 100%. |
 | Hi-hat | number | 60 % | 0 – 100 % | Hi-hat volume, from 0 to 100%. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Euclidean Rhythm
 
@@ -1626,7 +1626,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect outside the "Random" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect outside the "Random" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Color Looper
 
@@ -1678,7 +1678,7 @@ This node takes the four intensities of a tasting and returns an accompanying mu
 | Salty | slider | 0 % | 0 – 100 %, step 1 | Saltiness. It is the only one of the four tastes for which the literature gives no instrument. |
 | Duration | number | 20 s | 2 – 120 s, step 1 | Music duration. |
 | Loudness | slider | 40 % | 0 – 100 %, step 1 | Target root-mean-square level, from -40 dB to 0 dB. |
-| Seed | number | 42 | 1 – 999999, step 1 | For the choice of degrees: same seed, same music. |
+| Seed | number | 42 | 0 – 999999, step 1 | For the choice of degrees: same seed, same music. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | follow MIDI |  | SoundFont preset, or Follow MIDI to keep the instrument that the dominant taste wrote into the file. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Synthesis volume, before the target level is applied. |
@@ -1703,7 +1703,7 @@ This node takes an odour from a list and returns a motif of several voices, as a
 | Duration | number | 12 s | 2 – 60 s, step 1 | Motif duration. |
 | Articulation | slider | 50 % | 0 – 100 %, step 1 | From staccato, with silences between the notes, to legato, where the sound never stops. The odour literature does not decide this axis: it stays in the middle by default. |
 | Loudness | slider | 50 % | 0 – 100 %, step 1 | Target root-mean-square level, from -40 dB to 0 dB. The study establishes that an odour's intensity does not drive its matching to a sound: this dimension is therefore left to be set. |
-| Seed | number | 42 | 1 – 999999, step 1 | For the choice of degrees: same seed, same motif. |
+| Seed | number | 42 | 0 – 999999, step 1 | For the choice of degrees: same seed, same motif. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | follow MIDI |  | SoundFont preset, or Follow MIDI to keep the instrument that the odour's timbre family wrote into the file. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Synthesis volume, before the target level is applied. |
@@ -1747,7 +1747,7 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Chord dynamic | slider | 55 % | 0 – 100 %, step 1 | Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it. |
 | Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke, over the length of the note. |
 | Size | slider | 600 px | 200 – 1200 px, step 20 | Side of the square image. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the irregularity of the sizes. The same seed replays the same piece, picture included. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the irregularity of the sizes. The same seed replays the same piece, picture included. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
@@ -2151,7 +2151,7 @@ After Iannis Xenakis's dynamic stochastic synthesis (Gendy3, 1991). Xenakis atta
 | Max segment | number | 4 ms | 0.1 – 50 ms, step 0.1 | Maximum segment duration: the low bound. The gap between the two bounds sets how far the pitch can wander. |
 | Time step | slider | 10 % | 0 – 100 %, step 1 | Liveliness of the walk on durations, hence on pitch. At 0% the pitch stops moving. |
 | Amplitude step | slider | 10 % | 0 – 100 %, step 1 | Liveliness of the walk on amplitudes, hence on timbre. Both steps at 0% freeze the waveform entirely. |
-| Seed | number | 1 | 1 – 9999, step 1 | Random seed. Same seed, same sound: essential to recover a result you liked. |
+| Seed | number | 1 | 0 – 999999, step 1 | Random seed. Same seed, same sound: essential to recover a result you liked. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Screens (Xenakis)
 
@@ -2180,7 +2180,7 @@ Builds a granular texture by describing a probability density rather than grains
 | Hold | slider | 85 % | 0 – 100 %, step 1 | The probability that a lit cell stays lit on the next screen. It is half of the Markov chain, and the setting that decides between the pad and the boiling. |
 | Appearance | slider | 10 % | 0 – 100 %, step 1 | The probability that an unlit cell lights up on the next screen. Together with hold, it sets the grid's equilibrium occupancy: appearance divided by the sum of appearance and extinction. |
 | Volume | slider | 70 % | 0 – 100 %, step 1 | The overall level. Grains add up: doubling the density or the number of lit cells moves that much closer to the ceiling. |
-| Seed | slider | 42 | 1 – 999999, step 1 | The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random, without it nothing you liked can be found again. |
+| Seed | slider | 42 | 0 – 999999, step 1 | The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random, without it nothing you liked can be found again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Sieve (Xenakis)
 
@@ -3064,7 +3064,7 @@ None of the four faults is decorative, and each has a distinct cause. Wow comes 
 | Saturation | slider | 2 | 0 – 12, step 0.5 | Drive of the tape saturation. At zero, none. The level does not change as it is raised, only the waveshape does, and the harmonics that come with it. |
 | Dropouts | slider | 0.5 /s | 0 – 20 /s, step 0.5 | Holes per second in the magnetic coating. Each lasts some twenty milliseconds and opens with a fade, without which one would hear a click rather than an absence. |
 | Hiss | slider | 0.5 % | 0 – 5 %, step 0.1 | Level of tape hiss. It is heard only in the silences, which is exactly its original failing. |
-| Seed | slider | 1 | 0 – 999999, step 1 | Seed for dropouts and hiss. The same seed replays the same tape. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed for dropouts and hiss. The same seed replays the same tape. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Tremolo
 
@@ -3550,7 +3550,7 @@ Cuts a sound into grains whose boundaries come from the sound itself, then reass
 | Threshold | slider | -45 dBFS | -80 – -20 dBFS, step 1 | Below this level, there is deemed to be no sound. It is the same threshold, on the same envelope, as the silence trimmer. Too high and only the loud hits are found; too low and hiss is taken for a grain. |
 | Sensitivity | slider | 6 dB | 0 – 24 dB, step 1 | By how much the envelope must rise, after a fall, for an attack to be seen. This is the setting that separates the hits of a roll, whose envelope never falls back to silence. At zero the rule is off and only silences separate grains, which gives one single grain on a sustained sound. |
 | Minimum gap | slider | 40 ms | 1 – 500 ms, step 1 | Two grains cannot start closer than this. An attack is not an instant but a rise of a few milliseconds where the envelope wavers: without this gap, a single hit gives three or four grains. |
-| Seed | slider | 42 | 1 – 999999, step 1 | The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again. |
+| Seed | slider | 42 | 0 – 999999, step 1 | The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Loop
 
@@ -3625,7 +3625,7 @@ Closes a graph loop opened by « Loop Start » and stacks the passes: they all s
 
 *Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.*
 
-Opens a graph loop. Everything wired between this node and a « Loop End » (A, B or C) is played « Passes » times, and each pass starts from the previous result: if the chain transposes by a semitone, the second pass transposes an already transposed signal, so by two semitones in total, the third by three, and so on. The loop end then decides what is kept of the N successive states: « Loop End A » puts them end to end, « B » keeps only the last one, « C » stacks them on top of one another like the mixer. The engine runs only acyclic graphs: the loop is therefore unrolled before execution, the inner chain copied as many times as there are passes, each copy wired to the previous one. It shows in the computation time, which is that of N passes, not one. Anything entering the loop from outside through another port (a setting, a second source) feeds every pass identically. Anything leaving it other than through « Loop End » leaves only once, on the last pass. Limits: a loop cannot contain another loop, and a loop end can only have one start upstream. In those cases nothing is unrolled and the node says so.
+Opens a graph loop. Everything wired between this node and a « Loop End » (A, B or C) is played « Passes » times, and each pass starts from the previous result: if the chain transposes by a semitone, the second pass transposes an already transposed signal, so by two semitones in total, the third by three, and so on. The loop end then decides what is kept of the N successive states: « Loop End A » puts them end to end, « B » keeps only the last one, « C » stacks them on top of one another like the mixer. The engine runs only acyclic graphs: the loop is therefore unrolled before execution, the inner chain copied as many times as there are passes, each copy wired to the previous one. It shows in the computation time, which is that of N passes, not one. Anything entering the loop from outside through another port (a setting, a second source) feeds every pass identically. Anything leaving it other than through « Loop End » leaves only once, on the last pass. « Seeds » decides what becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message of the node that drew it, and putting it back replays the whole loop. A loop can contain another one: the innermost is unrolled first, and the outermost then copies all of its content, passes included. The number of copies is then the product of the passes, and it is capped: beyond that nothing is unrolled and the node states how many would have been needed. A loop end can however close only one loop: two starts that do not nest and reach the same end are refused. A pass-driven loop, by voice, by slot or by circle, is not laid between this node and its end: it is matched by identifier, and unrolling would give it another one. That wiring is refused, and the node says why; the pass-driven loop then runs on its own. The reverse layout is allowed: a graph loop can be laid inside a pass-driven loop.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3635,6 +3635,7 @@ Opens a graph loop. Everything wired between this node and a « Loop End » (A, 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
+| Seeds | choice | Identical | Identical / One per pass | What becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message, and putting it back replays the whole loop. |
 
 #### Maquette
 
@@ -3731,7 +3732,7 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 | Transposition min | slider | -12 | -24 – 24, step 0.1 | The offset that a connected curve's zero means. With no curve, this setting does nothing. |
 | Transposition max | slider | 12 | -24 – 24, step 0.1 | The offset that the curve's one means. |
 | Window | choice | Gaussian | Gaussian / Trapezoid / Expodec / Rexpodec | The shape of each fragment. The two exponentials give a direction to time inside the fragment. |
-| Seed | slider | 1 | 1 – 9999, step 1 | The number of the draw. At equal seed, the same score. |
+| Seed | slider | 1 | 0 – 999999, step 1 | The number of the draw. At equal seed, the same score. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Level out | slider | 80 % | 0 – 100 %, step 1 | The level of the montage. Density does not affect it: the sum is already brought back to the square root of the mean overlap. |
 
 #### MIDI Join
@@ -3979,7 +3980,7 @@ This node chains a sound's objects in the order of a descriptor: loudness, brigh
 | Direction | choice | Ascending | Ascending / Descending | Ascending: from lowest to highest on the chosen descriptor. No effect at random. |
 | Spacing | slider | 0 ms | -2000 – 5000 ms, step 10 | Silence between two objects; negative, they overlap by that much. |
 | Fade | slider | 10 ms | 0 – 500 ms, step 1 | Fade in and out of each object. |
-| Seed | number | 42 | 1 – 999999, step 1 | For random order: same seed, same order. |
+| Seed | number | 42 | 0 – 999999, step 1 | For random order: same seed, same order. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Sequence Join
 
@@ -4809,7 +4810,7 @@ Shaken percussion from a stochastic particle model. Perry Cook posed the problem
 | Energy | number | 50 % | 0 – 100 %, step 1 | Strength of each shake. It does not only set the volume: the more energy, the likelier the collisions, hence the denser the grain. |
 | Particles | number | 0 | 0 – 512, step 1 | Overrides the instrument's particle count. 0 = the instrument's own. This is the setting that turns a countable rattle into a continuous hiss. |
 | Duration | number | 4 s | 0.2 – 30 s, step 0.1 | Duration produced, when no MIDI is connected. |
-| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound, which no real tambourine does, and which is needed here. |
+| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sound, which no real tambourine does, and which is needed here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Spread Across Keyboard
@@ -4862,7 +4863,7 @@ Sung vowel by formant synthesis. A vowel is not a waveform, it is a configuratio
 | Vibrato rate | number | 5.5 Hz | 1 – 12 Hz, step 0.1 | Vibrato speed. An operatic singer sits around 5 to 6 Hz. |
 | Jitter | number | 15 % | 0 – 100 %, step 1 | Random variation of the period from one period to the next. It is what stops the voice sounding like an organ: a real voice is never exactly periodic. |
 | Duration | number | 3 s | 0.2 – 20 s, step 0.1 | Duration produced, when no MIDI is connected. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed of the jitter. 0 = drawn at random on every run. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the jitter. 0 = drawn at random on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Wave Terrain
@@ -5034,7 +5035,7 @@ Logistic Paulstretch: extreme time-stretch grows in progressively following a lo
 | Center | number | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition. |
 | Steepness | number | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Logistic tremolo
 
@@ -5129,7 +5130,7 @@ Learns a MIDI file's note transitions, then generates new ones. The text output 
 | Order | number | 2 | 1 – 4, step 1 | How many notes are looked back on. At 1, the piece comes out in its key but without phrasing; at 2 or 3, its turns of phrase reappear; beyond that, the chain has no choice left and copies the source. The text output gives the share of contexts with no choice, which measures that overfitting. |
 | Notes | number | 64 | 4 – 2000, step 1 | Number of notes generated. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Speed of the produced MIDI. The source's durations are not learned: the node imitates pitches only, and plays them as eighth notes. |
-| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sequence. |
+| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same sequence. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
@@ -5153,7 +5154,7 @@ Turns chords from a MIDI file into arpeggios. Detects simultaneous notes (chords
 | Pattern | choice | Straight | Straight / 1232 / 12321 / 1321 / 1213 | Intra-chord repetition pattern (1=low note, 2=mid, 3=high). « Straight » = plays notes in the direction order. |
 | Speed | choice | 1/16 | 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | Arpeggio speed (time division). |
 | Octaves | number | 1 | 1 – 4, step 1 | Number of octaves the arpeggio spans (each octave adds +12 semitones). |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the note order; no effect outside the « Random » mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the note order; no effect outside the « Random » mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Note length | number | 50 % | 10 – 100 %, step 5 | Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
@@ -5176,7 +5177,7 @@ Removes a share of the notes at random, but reproducibly. This is live-coding's 
 | Amount | number | 30 % | 0 – 100 %, step 1 | Share of events removed. The draw is per event, not per note: a chord leaves whole or stays whole. |
 | Keep beats | choice | Yes | No / Yes | Spares the events that land on a beat. A texture thinned purely at random loses its pulse; one often wants to lighten it without dissolving it. |
 | Beat length | number | 0.5 s | 0.05 – 4 s, step 0.05 | What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s. |
-| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning. |
+| Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -5219,7 +5220,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | Pitch of the segments. It does not touch the read position: it changes the rate at which each segment is replayed. That is what makes it independent of speed, which a tape player cannot do. |
 | Scatter | slider | 0 s | 0 – 2 s, step 0.01 | Largest random offset on the read position. At zero the segments follow one another in order. High, they come from anywhere in the source, and the order of things is lost. For sound to travel from a distant place, the scatter must exceed the distance to cover. |
 | Pitch scatter | slider | 0 semitones | 0 – 24 semitones, step 0.5 | Largest random offset on each segment's transposition. A few semitones give a shimmer; an octave gives a cloud with no pitch. |
-| Seed | slider | 1 | 0 – 999999, step 1 | Seed of the draw. The same seed replays exactly the same brassage, useful to find again a result one liked. With no scatter it does nothing: nothing is drawn at random. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed of the draw. The same seed replays exactly the same brassage, useful to find again a result one liked. With no scatter it does nothing: nothing is drawn at random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Inversion Mirror
 
@@ -5348,7 +5349,7 @@ Slices an audio track into equal parts and rearranges the slices in a chosen ord
 | Parts | slider | 8 | 2 – 64, step 1 | Number of equal slices the track is cut into. |
 | Crossfade | slider | 5 ms | 0 – 100 ms, step 1 | Crossfade duration between slices to avoid clicks. |
 | Mode | choice | Random | Random / Original / Reverse | Rearrangement order: random, original or reversed. |
-| Seed | slider | 0 | 0 – 9999, step 1 | Random seed (0 = new order each run). Same seed = same slice order. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Random seed (0 = new order each run). Same seed = same slice order. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Retrograde and Palindrome
 
@@ -5434,7 +5435,7 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 |---|---|---|---|---|
 | Operation | choice | Repeat | Repeat / Omit / Reverse / Shuffle / Level | "Repeat" plays each segment several times: the pitch drops and the sound lengthens accordingly. "Omit" silences some without shortening the sound. "Reverse" plays each segment backwards: same duration and energy, altered timbre. "Shuffle" reorders segments in groups. "Level" brings every segment to the same level, flattening all dynamics. |
 | Factor | number | 2 | 1 – 16, step 1 | Number of repeats, omission step (1 segment kept out of N), or shuffled group size. No effect on Reverse and Level. |
-| Seed | number | 1 | 1 – 9999, step 1 | Shuffle seed: same seed, same result. No effect on the other operations. |
+| Seed | number | 1 | 0 – 999999, step 1 | Shuffle seed: same seed, same result. No effect on the other operations. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Other effects
 
@@ -5475,7 +5476,7 @@ Displaces the events of a sequence according to a Cantor dust, keeping their num
 | Depth | slider | 3 | 0 – 8, step 1 | The number of recursions. At zero, the whole duration is dust and nothing moves. |
 | Share displaced | slider | 100 % | 0 – 100 %, step 1 | The proportion of the events in the holes that move. At one hundred, none remains in a hole. |
 | Where to place | choice | Nearest | Nearest / At random | Nearest tightens the sequence without undoing it. At random remakes it entirely. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the draw. The same seed returns the same sequence. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the draw. The same seed returns the same sequence. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cantor Dust
 
@@ -5546,7 +5547,7 @@ Runs a sonic ecosystem: the node listens to itself, measures what it hears and d
 | Maximum density | slider | 120 /s | 5 – 400 /s, step 5 | The ceiling of grains per second, which the system reaches when it judges itself very agitated. It never stays there long: the density it actually uses is reported in the log, and it is that one which says what it made of the world it was given. |
 | Duration | slider | 15 s | 1 – 120 s, step 1 | The output duration, independent of the world's. This is where the node parts company with an effect: ask for thirty seconds on a one-second input, and listen to what the system becomes once the world has gone. |
 | Homeostat | choice | Connected | Connected / Disconnected | The node's control, and it is made to be disconnected. The same loop, the same grains, the same memory, without the regulation: the system then follows the world's volume instead of holding its own. Measured, three worlds thirty-four decibels apart give three outputs 1.13 dB apart with the homeostat, and 33.19 dB apart without it. |
-| Seed | slider | 7 | 1 – 9999, step 1 | Two seeds give two sounds that resemble each other in no sample and in every statistic, same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Two seeds give two sounds that resemble each other in no sample and in every statistic, same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Feature Follower
 
@@ -5609,7 +5610,7 @@ After Alvin Lucier's "I Am Sitting in a Room" (1969), whose principle is to reco
 | Decay | number | 3 s | 0.1 – 10 s, step 0.1 | Length of the reverb tail. |
 | Pre-delay | number | 10 ms | 0 – 200 ms, step 1 | Delay before the first reflections. It accumulates from pass to pass: a high value combined with many iterations pushes the sound later, possibly out of the frame. |
 | Damping | number | 30 % | 0 – 100 %, step 1 | Absorption of highs by air and materials. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Melody over Chords
 
@@ -5637,7 +5638,7 @@ Writes a melody over the received chords, searching for a line that satisfies th
 | Single peak | choice | Yes | Yes / No | Requires that the highest note appear only once. |
 | Leap answered | slider | 4 semitones | 0 – 12 semitones, step 1 | Beyond this interval, the next note must go the other way. At zero, nothing is required. |
 | Same direction at most | slider | 4 | 0 – 12, step 1 | The number of consecutive steps allowed in the same direction. At zero, no bound. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the order in which pitches are tried. Two seeds give two equally valid lines. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the order in which pitches are tried. Two seeds give two equally valid lines. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | slider | 200000 | 1000 – 2000000, step 1000 | The number of assignments tried at most before giving up. A problem with no solution would run forever. |
 
 #### Particles
@@ -5668,7 +5669,7 @@ Synthesises sound grains with a single generator, set in seven species selected 
 | Speed | slider | 1 | -2 – 2, step 0.05 | How fast the read head advances through the connected sound. One reads it at its original speed; a half stretches it twofold without transposing it; zero freezes it, which gives the granular freeze; a negative number reads it backwards. Only serves granulation. |
 | Duration | slider | 4 s | 0.5 – 60 s, step 0.5 | The duration of the sound produced. It does not depend on the connected sound's: granulating two seconds of material for a minute is an ordinary use of the process. |
 | Volume | slider | 60 % | 0 – 100 %, step 1 | Each grain's amplitude. Grains add up: doubling the density moves that much closer to the ceiling, which is why a high density calls for a lower volume. |
-| Seed | slider | 42 | 1 – 999999, step 1 | The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again. |
+| Seed | slider | 42 | 0 – 999999, step 1 | The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Sample Formula
 
@@ -5732,7 +5733,7 @@ Generates a new texture having the statistics of a given sound. After Josh H. Mc
 | Bands | choice | 20 | 16 / 20 / 28 | Number of cochlear bands, spaced as the ear hears them, narrow in the bass, wide in the treble. The more there are, the more closely the model's colour is followed, and the longer the computation: the cost of the correlations grows with their square. |
 | Correlations | choice | Yes | Yes / No | Also impose the correlations between bands, not merely each band's distribution. This is the paper's central result: bands taken in isolation do not make a recognisable texture. Measured here on a synthetic rain, the statistical distance to the model falls from 40 % to 31 % when they are imposed. Setting « No » mostly serves to hear the difference. |
 | Iterations | slider | 6 | 1 – 20, step 1 | Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles. |
-| Seed | number | 1 | 1 – 999999, step 1 | Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Pitch
 
@@ -6003,7 +6004,7 @@ Convolution reverb: generates a synthetic impulse response (IR) from your settin
 | Pre-delay | number | 20 ms | 0 – 200 ms, step 1 | Delay before the first reflection. Separates dry signal from reverb (sense of space). |
 | Damping | number | 30 % | 0 – 100 %, step 1 | High-frequency absorption. High = darker/muffled sound. Low = bright sound. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the diffuse tail. Unlike nodes where randomness is the point, the default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the diffuse tail. Unlike nodes where randomness is the point, the default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Feedback Delay Network Reverb
 
@@ -6074,7 +6075,7 @@ Reverberates a percussive sound and cuts its tail dead, driven by the dry sound.
 | Release | slider | 0.01 s | 0.002 – 0.3 s, step 0.002 | Closing time. Short, it is the cleaver; beyond a hundred milliseconds or so one hears a fade and the effect vanishes. |
 | Threshold | slider | -40 dB | -60 – -10 dB, step 1 | Dry level above which the gate opens. Too low and it stays open on hiss; too high and soft hits no longer trigger anything. |
 | Mix | slider | 60 % | 0 – 100 %, step 1 | Proportion of reverb added. At 0 %, the output is the input. |
-| Seed | slider | 1 | 1 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Progressive Reverb
 
@@ -6095,7 +6096,7 @@ Reverb whose mix gradually evolves from dry to wet over an adjustable fade durat
 | Start | number | 0 |  | Wet mix at start (0=dry only). |
 | End | number | 50 |  | Wet mix after fade completes. |
 | Fade | number | 8 s | 0 – 60 s, step 0.5 | Length of the move from dry to wet. Capped at the length of the render, that is the sound plus the reverb tail : beyond that, the fade never reaches its end value. 0: over the whole sound. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Reverb
 
@@ -6116,7 +6117,7 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Size | number | 50 % |  | Simulated room size. |
 | Decay | number | 2 s |  | Reverb decay time. |
 | Mix | number | 50 % |  | Dry/wet balance. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
@@ -6140,7 +6141,7 @@ A reverb whose tail rises an octave at each pass, receding as it climbs. The eff
 | Transposition | slider | 12 semitones | -12 – 24 semitones, step 1 | What the loop transposes at each pass. Twelve gives the classic shimmer octave; seven gives a fifth that stacks chords; negative values descend, which thickens instead of brightening. |
 | Generations | slider | 4 | 1 – 8, step 1 | Number of passes unrolled. Beyond four or five everything is below the hearing floor and the computation costs for nothing, the node shows each generation's level so it can be seen. |
 | Mix | slider | 50 % | 0 – 100 %, step 1 | Proportion added to the dry sound. At 0 %, the output is the input. |
-| Seed | slider | 1 | 1 – 999999, step 1 | Seed of the room's response. |
+| Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Velvet Reverb
 
@@ -6165,7 +6166,7 @@ Late reverberation whose tail takes whatever shape one wants. After Vesa Valimak
 | Darkening | slider | 25 % | 1 – 100 %, step 1 | How much the treble dies before the bass. A hundred leaves the tail bright, which sounds like a noise wash glued onto the sound; twenty-five gives an ordinary room. |
 | Knee | slider | 30 % | 5 – 95 %, step 5 | For coupled rooms only: at what point in the tail the second slope takes over. |
 | Mix | slider | 35 % | 0 – 100 %, step 1 | Share of reverberated sound in the output. |
-| Seed | number | 1 | 1 – 999999, step 1 | Seed of the positions and signs. Two seeds give two rooms of the same dimensions. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the positions and signs. Two seeds give two rooms of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Spectrum
 
@@ -6297,7 +6298,7 @@ Iterative audio signal reconstruction from its magnitude spectrogram using the G
 |---|---|---|---|---|
 | Iterations | number | 60 | 1 – 300, step 1 | Number of Griffin-Lim iterations. Higher values produce more coherent phase and cleaner output. |
 | Initial phase | choice | Random | Random / Zero / Original | Starting phase for reconstruction. Random = creative texture; Zero = initial pulse; Original = reconstruct the original signal. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the initial phases; no effect outside the « Random » mode. The default is fixed: a reconstruction that changes on every run would be a defect. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the initial phases; no effect outside the « Random » mode. The default is fixed: a reconstruction that changes on every run would be a defect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | FFT | number | 2048 samples | 64 – 8192 samples, step 64 | FFT size (rounded up to next power of 2). |
 | Overlap | choice | 75 % | 50 % / 75 % | Overlap between frames. 75% gives a smoother result. |
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
@@ -6604,7 +6605,7 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 |---|---|---|---|---|
 | Block length | slider | 50 ms | 12 – 2000 ms, step 1 | Length of a moved block. Short, a continuous matter; long, recognisable fragments. |
 | Range | slider | 1 s | 0 – 60 s, step 0.05 | How far a block can move from its place. 0: no movement. |
-| Seed | number | 42 | 1 – 999999, step 1 | Same seed, same shuffle. |
+| Seed | number | 42 | 0 – 999999, step 1 | Same seed, same shuffle. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Stereo
 
@@ -6819,7 +6820,7 @@ Widens a stereo image with decorrelated early reflections, including on a mono s
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reflections added. At 0 %, the output is the input, unchanged. Loudness does not change at any setting: only the width moves. A curve connected to the Modulation input takes this setting's place, which then serves no purpose. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Mix that a connected curve's zero means. At zero the room vanishes entirely when the curve falls; at twenty, some of it always remains. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A ramp from zero to a hundred per cent opens the room from one end of the sound to the other; a sine makes it breathe. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Stereo Spatialization
 
@@ -6904,7 +6905,7 @@ Paulstretch: extreme time-stretch by randomizing the phases of the STFT. The sig
 |---|---|---|---|---|
 | Stretch | number | 8 × | 1 – 100 ×, step 1 | Stretch factor. 1 = no effect, 8 = 8× longer. |
 | Window | number | 0.25 s | 0.01 – 1 s, step 0.01 | STFT window size in seconds. Large = smooth texture, small = more transients. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Pitch ↔ Rhythm Continuum
 
@@ -8523,7 +8524,7 @@ Loads a folder of audio tracks, reduces each to a 40-feature vector (tempo, spec
 | PCA axes | number | 5 | 2 – 20, step 1 | Number of PCA axes kept for clustering (always at least 2, for visualization). |
 | Number of groups | number | 0 | 0 – 20, step 1 | 0 = automatic search (Calinski-Harabasz index) up to the ceiling below. A positive value fixes the number of groups. |
 | Auto ceiling | number | 10 | 2 – 30, step 1 | Maximum number of groups tested in automatic search (ignored if Number of groups > 0). |
-| Seed | number | 1 | 1 – 9999, step 1 | Initialization seed (K-means++/GMM), same tracks and same seed ⇒ same result. |
+| Seed | number | 1 | 0 – 999999, step 1 | Initialization seed (K-means++/GMM), same tracks and same seed ⇒ same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Conversion
 
@@ -8650,7 +8651,7 @@ A Sound Map variant driven by data instead of a folder: connect a classification
 | Title | text | `Coordinates on Map` |  | Title of the HTML page. |
 | Style | choice | Grid city | Grid city / Concentric circles / Organic / Voronoi | Map style. |
 | Aesthetic | choice | Classic | Classic / Baroque / Art Nouveau / Art Deco / Exotic | Visual mood of the map (backdrop: roads, districts, buildings). |
-| Seed | slider | 0 | 0 – 9999, step 1 | Procedural backdrop seed (0 = different backdrop each run). Does not affect point position, which follows the received coordinates. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Procedural backdrop seed (0 = different backdrop each run). Does not affect point position, which follows the received coordinates. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cover Art Generator
 
@@ -8677,7 +8678,7 @@ Generates procedural album cover art in SVG, offline, instant, no GPU or downloa
 | Width | number | 512 | 128 – 2048, step 1 | SVG image width in pixels. |
 | Height | number | 512 | 128 – 2048, step 1 | SVG image height in pixels. |
 | Format | choice | SVG | SVG / PNG | SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new each run). Same seed = same cover. |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new each run). Same seed = same cover. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Exhibition Gallery
 
@@ -8697,7 +8698,7 @@ Generates an HTML gallery from a directory of MP3 files: an index.html at the ro
 | MP3 directory | folder | — |  | Path to the directory containing MP3 files (.mp3 only). |
 | Output directory | folder | — |  | Directory where to generate the gallery (index.html + copied MP3s). |
 | Order | choice | Coordinates: X then Y | Folder order / Coordinates: X then Y / Coordinates: Y then X | Order in which the tracks are hung. With no Coordinates input connected, folder order applies in every case. With it, the chosen axis leads and the other breaks ties. |
-| Visual seed | number | 0 | 0 – 99999, step 1 | Seed for procedural cover art (0 = random). Same seed = same covers. |
+| Visual seed | number | 0 | 0 – 999999, step 1 | Seed for procedural cover art (0 = random). Same seed = same covers. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Sound Map
 
@@ -8716,7 +8717,7 @@ Loads a folder of audio files and generates a fictional city map on each run. Co
 | Title | text | `Sound Map` |  | Title of the HTML page. |
 | Style | choice | Grid city | Grid city / Concentric circles / Organic / Voronoi | Map style. |
 | Aesthetic | choice | Classic | Classic / Baroque / Art Nouveau / Art Deco / Exotic | Visual mood of the map. |
-| Seed | slider | 0 | 0 – 9999, step 1 | Map seed (0 = new map each run). |
+| Seed | slider | 0 | 0 – 999999, step 1 | Map seed (0 = new map each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Video Generator
 
@@ -8740,7 +8741,7 @@ Builds a silent film: a series of pulses drives a moving image, rendered as MP4.
 | Saturation | slider | 70 % | 0 – 100 %, step 1 | Colour saturation. Above half, the Camelot slots are major; below, minor. |
 | Lightness | slider | 55 % | 0 – 100 %, step 1 | Colour lightness. |
 | Breathing | slider | 80 % | 0 – 100 %, step 1 | How much the radius varies from one strike to the next. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Seed of the draw. Same seed, same film. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Seed of the draw. Same seed, same film. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Definition | choice | 1280 × 720 | 960 × 540 / 1280 × 720 / 1920 × 1080 | Picture size. It weighs on the encoding time, which is the main part of the computation. |
 | Frame rate | slider | 30 /s | 12 – 60 /s, step 1 | Frames per second. The number of frames to compute is the duration times this rate, and that is what sets the render time. |
 | Bitrate | slider | 6 Mb/s | 1 – 20 Mb/s, step 1 | Picture bitrate. It sets the file's weight: the duration times the bitrate. |
@@ -9129,7 +9130,7 @@ Runs a Csound orchestra and score. Csound descends from music V, the line that i
 | Score | text | `i1 0.0 1.0 220 0.5 i1 1.0 1.0 277 0.5 i1 2.0 1.5 330 0.6 e` |  | When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field, and the node states in its message which one it took. The final « e » is added if missing. |
 | Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. In stereo, use outs instead of out. |
 | Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples computed per control cycle. Small means finer control signals and slower computation; 32 is the common choice. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. Csound is reproducible as soon as it is fixed: 0 lets Csound draw its own and the render changes on every run. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. Csound is reproducible as soon as it is fixed: 0 lets Csound draw its own and the render changes on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Input channels | choice | Mono | Mono / Stereo | Number of channels in the input files written for Csound. In mono, « a1 diskin2 "entree1.wav", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
 
@@ -9155,7 +9156,7 @@ Processes one or two sounds through a Csound orchestra. The inputs are written i
 | Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. |
 | Tail | number | 1 s | 0 – 20 s, step 0.1 | Time added after the input ends, to let a delay or reverb breathe. |
 | Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples per control cycle. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Input channels | choice | Mono | Mono / Stereo | Number of channels in the input files written for Csound. In mono, « a1 diskin2 "entree1.wav", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
 
@@ -9198,7 +9199,7 @@ Plays a MIDI file with a Csound orchestra. Each note becomes a score event, and 
 | Channels | choice | Mono | Mono / Stereo | Number of channels in the orchestra. |
 | Block size | number | 32 | 1 – 512, step 1 | ksmps, the number of samples per control cycle. |
 | Tail | number | 0.5 s | 0 – 10 s, step 0.1 | Time added after the last note, so resonances have room to die away. Without it, a reverb is cut off at the end of the score. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes, so the render is reproducible. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed of the random opcodes, so the render is reproducible. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
 
 #### Csound Instruments
@@ -9360,7 +9361,7 @@ Draws a Csound score at random. A MIDI file carries only pitch, velocity and dur
 | Free field | choice | None | None / Uniform / Gaussian | One more p-field, drawn at random for each event and written as p6. This is what a score has that MIDI does not: the orchestra can read whatever it likes there (a stereo position, a modulation index, a bandwidth) and each note gets its own value. No MIDI file can carry that. |
 | Free min | number | 0 | -10000 – 10000, step 0.01 | Lower bound of the free field. |
 | Free max | number | 1 | -10000 – 10000, step 0.01 | Upper bound of the free field. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives exactly the same score again, which is how a draw you like is kept. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives exactly the same score again, which is how a draw you like is kept. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Generation
 
@@ -9391,7 +9392,7 @@ Generates a Suno/Udio script via AI by combining color psychology and a LLM (Dis
 | Color 1 | choice | Blue | Red / Orange / Yellow / Green / Blue / Purple / Pink / Black / White / Brown / Grey | First color (psychological mapping → emotion, mode, tempo, instruments, styles). |
 | Color 2 | choice | (none) | (none) / Red / Orange / Yellow / Green / Blue / Purple / Pink / Black / White / Brown / Grey | Optional second color. If present, profiles are fused. |
 | Variability | number | 70 % | 0 – 100 %, step 1 | Controls variability of generated scripts. High = LLM is more creative; low = stays close to template. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new script each run). Same seed = same script. |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new script each run). Same seed = same script. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Harmonic Palette
 
@@ -9421,7 +9422,7 @@ Extracts the dominant colors of an image and turns them into a musical sequence.
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the MIDI file. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same image must yield the same colours on every run. Changing it may surface other dominant hues. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same image must yield the same colours on every run. Changing it may surface other dominant hues. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Julia Processor
 
@@ -9540,7 +9541,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the MIDI file. |
-| Seed | number | 42 | 1 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues. |
+| Seed | number | 42 | 0 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Installation
 
@@ -9607,7 +9608,7 @@ Six themes, and one of them is not written by hand. Acronyms, concepts, formulas
 | Theme | choice | All | All / Acronyms / Concepts / Formulas / Figures / Sources / Catalog | « All » alternates the six themes, which is the setting the draw was designed for. A single theme serves to revise one point: acronyms before an interview, formulas before writing a process. « Catalog » is the only computed theme; it quizzes on the installed nodes, and grows by itself with every node added. |
 | Level | choice | All | All / Beginner / Advanced | « Beginner » keeps what you meet on opening the software, « Advanced » what you have had to go and look for, the masking spreading function, a maqam's neutral third, Tymoczko's theorem. If a theme has nothing at the requested level, the whole bank is returned rather than an empty quiz. |
 | Questions | slider | 20 | 5 – 100, step 5 | The length of the series. Beyond the pool's size a second round starts in a different order, so a question only comes back after all the others have been seen. |
-| Seed | slider | 7 | 1 – 999999, step 1 | The seed is the questionnaire: the same one gives the same series back, options included. Change it for another draw, the view's « New round » button does it and clears the answers in the same gesture. |
+| Seed | slider | 7 | 0 – 999999, step 1 | The seed is the questionnaire: the same one gives the same series back, options included. Change it for another draw, the view's « New round » button does it and clears the answers in the same gesture. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Answers | text | — |  | One letter per question, in the order of the series; a dot for a skipped question. The view fills it on every click, and it is this field the answer key reads, so the two cannot contradict each other. Empty it to retake the same series from the start. |
 
 ### Magenta
@@ -9739,7 +9740,7 @@ Generates a piano improvisation with @magenta/music (Piano Genie). The model dow
 | Tempo | slider | 120 BPM | 60 – 200 BPM, step 1 | Tempo of the generated MIDI file. |
 | Temperature | slider | 1 | 0 – 1.5, step 0.05 | Sampling creativity (0 = argmax, 1 = standard, >1 = random). |
 | Mode | choice | Random | Random / Walk / Up / Down / Arpeggio | Piano Genie button sequence (0-7). Random = random buttons, Walk = drift, Up/Down/Arpeggio = patterns. |
-| Seed | slider | 0 | 0 – 999999, step 1 | Seed for the improvisation; it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Seed for the improvisation; it drives both the model and the button choice. 0 = drawn at random on every run, and shown in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Magenta Interpolate MIDI
@@ -9973,7 +9974,7 @@ Extends an audio track by predicting the continuation of its spectrogram. A line
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 1 – 99999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. |
 
 #### LSTM Continuation
@@ -9997,7 +9998,7 @@ Extends an audio track with a small recurrent network (LSTM) trained on the fly 
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 1 – 99999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. |
 | Hidden units | number | 128 | 16 – 512, step 16 | Number of hidden units in the LSTM layer. Larger = more context memory (but slower). |
 
@@ -10023,7 +10024,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | Activation | choice | ReLU | ReLU / Tanh | Hidden layer activation function. |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 1 – 99999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). |
 
 #### Stable Audio 3 Continuation
@@ -10044,7 +10045,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 |---|---|---|---|---|
 | Generated duration | slider | 5 s | 1 – 30 s, step 1 | Duration of the continuation to generate, in seconds. Total duration will be input + this value. |
 | Steps | slider | 8 | 1 – 20, step 1 | Number of ping-pong sampler steps. 8 = quality/speed sweet spot. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music). The audio encoder (encoder_q4.onnx) must also be present. |
 
 #### Time Stretch (DTW)
@@ -10130,7 +10131,7 @@ Generates a structured prompt for a music AI app (Suno, Udio…). Connect the te
 | Instruments | number | 3 | 0 – 10, step 1 | Number of instruments to randomly pick from the input. |
 | Styles | number | 2 | 0 – 5, step 1 | Number of musical styles to pick. |
 | Emotions | number | 2 | 0 – 5, step 1 | Number of emotions to pick. |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = random each run). |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = random each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### DistilGPT-2
 
@@ -10240,7 +10241,7 @@ Generates structured song lyrics (verse, chorus, bridge, outro) without an AI mo
 | Emotion | text | `hope` |  | Dominant emotion (e.g. hope, sadness, anger). |
 | Language | choice | French | French / English | Language of generated lyrics. |
 | Lines/section | number | 4 | 2 – 8, step 1 | Number of lines per section (verse, chorus). |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new each run). Same seed = same lyrics. |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new each run). Same seed = same lyrics. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Multilingual Lyrics (AI)
 
@@ -10377,7 +10378,7 @@ Writes words that do not exist, from a neural network with randomly drawn weight
 | Words | number | 20 | 5 – 100, step 1 | Number of words to generate. |
 | Alphabet | choice | Latin (a-z) | Latin (a-z) / French (a-z and accents) | The letters the text is written in. They are split into vowels and consonants, which alternate within each word. |
 | Seed word | text | — |  | Starting word (optional). |
-| Seed | number | 0 | 0 – 99999, step 1 | Random seed (0 = new network each run). |
+| Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new network each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Vocal Ranges
 

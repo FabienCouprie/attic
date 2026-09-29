@@ -36,6 +36,30 @@ export const FICHES_FIN: readonly string[] = [FICHE_FIN, FICHE_FIN_B, FICHE_FIN_
 
 const FINS = new Set(FICHES_FIN);
 
+/**
+ * Les fiches qui mènent une boucle PAR PASSES, et non par dépliage.
+ *
+ * POURQUOI LE DÉPLIAGE A BESOIN DE LES CONNAÎTRE. Attic répète de deux façons, et elles ne se
+ * mélangent pas. Celle-ci RECOPIE la chaîne avant l'exécution, sous des identifiants engendrés.
+ * L'autre rejoue le graphe entier une fois par morceau, et apparie un nœud à sa boucle PAR SON
+ * IDENTIFIANT. Une boucle par passes tombée dans le ventre d'une boucle de graphe est donc recopiée
+ * en nœuds que le pilote ne reconnaît plus : la découverte n'a jamais lieu, la boucle reste à zéro
+ * morceau, et le graphe aboutit sans avoir bouclé. MESURÉ : seule, une boucle par voix annonce
+ * « voix 1/1 · 10 notes » ; la même, posée dans un ventre, n'annonce rien et rien ne prévient.
+ *
+ * LE CŒUR NE LIT PAS LES FICHES, il nomme les identifiants — ce que ce module fait déjà pour ses
+ * propres bouts. Un cas permanent, du côté des fiches, tient cette liste égale à celle que
+ * `boucleSequencesGlobal.ts` déclare : une septième boucle par passes ajoutée demain fera échouer ce
+ * cas-là tant que ce garde-ci ne la connaît pas.
+ */
+export const FICHES_BOUCLE_PAR_PASSE: readonly string[] = [
+  "boucle-voix-debut", "boucle-voix-fin",
+  "boucle-creneau-debut", "boucle-creneau-fin",
+  "cercle-boucle-debut", "cercle-boucle-fin",
+];
+
+const PAR_PASSE = new Set(FICHES_BOUCLE_PAR_PASSE);
+
 /** Ce nœud referme-t-il une boucle, quelle que soit sa façon de rassembler les tours ? */
 export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has(ficheId ?? "");
 
@@ -69,6 +93,8 @@ export type ProblemeBoucle =
   | "boucle-imbriquee"
   /** Le dépliage fabriquerait plus de copies que `COPIES_MAX` : l'exécution s'effondrerait. */
   | "trop-de-copies"
+  /** Une boucle menée PAR PASSES est dans le ventre : ses copies ne boucleraient pas. */
+  | "boucle-par-passe-dedans"
   /** Rien entre le début et la fin : il n'y a rien à répéter. */
   | "boucle-vide";
 
@@ -88,8 +114,40 @@ export interface ResultatDepliage {
    * lirait bien dans les identifiants engendrés, mais le déduire d'une convention de nommage est
    * précisément ce qu'on ne veut pas : le dépliage le SAIT, il le rend.
    */
-  depliees: { debutId: string; tours: number }[];
+  /**
+   * Les boucles dépliées, avec ce qui les traverse.
+   *
+   * LES DEUX TRAVERSÉES SONT LICITES ET LEUR SENS NE SE DEVINE PAS — relevé par Fabien. Une entrée
+   * venue du dehors alimente CHAQUE tour à l'identique ; une sortie prise ailleurs que par la fin
+   * ne sort QU'UNE FOIS, au dernier tour. Un seul câble, et une valeur sur trente-deux qui
+   * s'échappe : rien à l'écran ne le disait, et c'est le début de boucle qui le dira.
+   */
+  depliees: {
+    debutId: string;
+    tours: number;
+    /** Combien d'arêtes entrent dans le ventre depuis le dehors, autrement que par le début. */
+    entreesDuDehors: number;
+    /** Combien en sortent vers le dehors, autrement que par la fin. */
+    sortiesVersDehors: number;
+  }[];
+  /**
+   * Le numéro de tour de chaque copie, quand sa boucle demande des graines qui varient.
+   *
+   * VIDE PAR DÉFAUT, ET C'EST VOULU : l'option est EXPLICITE, demandée par Fabien. Sans elle, une
+   * boucle recopie ses nœuds à l'identique, graine comprise, et rend donc la même chose à chaque
+   * tour — ce que fait tout graphe enregistré jusqu'ici, et qui ne doit pas changer sous les pieds
+   * de qui l'a réglé ainsi.
+   *
+   * LE TOUR NE SE POSE PAS DANS LES DONNÉES DU NŒUD, mais se rend à part. Un champ ajouté aux
+   * données d'une copie remonterait au nœud visible par le report des champs, et décrirait une
+   * exécution qui n'a plus lieu ; c'est la faute même que le contrat de composant existe pour
+   * empêcher. Le moteur lit cette table et mélange le tour à la graine.
+   */
+  toursDesCopies: Map<string, number>;
 }
+
+/** Ce que le réglage « Graines » d'un début de boucle peut valoir. */
+export const GRAINES_PAR_TOUR = "Une par tour";
 
 const nombreDeTours = (n: NoeudG): number => {
   const brut = Number((n.data.parametres as Record<string, unknown> | undefined)?.["Tours"] ?? 3);
@@ -107,14 +165,15 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
   const fins = noeuds.filter((n) => estFinDeBoucle(n.data.ficheId));
   const debuts = noeuds.filter((n) => n.data.ficheId === FICHE_DEBUT);
   if (fins.length === 0 && debuts.length === 0) {
-    return { noeuds, aretes, origines: new Map(), problemes: [], depliees: [] };
+    return { noeuds, aretes, origines: new Map(), problemes: [], depliees: [], toursDesCopies: new Map() };
   }
 
   let courantN = noeuds.map((n) => ({ ...n }));
   let courantE = aretes.map((a) => ({ ...a }));
   const origines = new Map<string, string>();
   const problemes: { noeudId: string; code: ProblemeBoucle }[] = [];
-  const depliees: { debutId: string; tours: number }[] = [];
+  const depliees: ResultatDepliage["depliees"] = [];
+  const toursDesCopies = new Map<string, number>();
   const debutsTraites = new Set<string>();
 
   const finsTraitees = new Set<string>();
@@ -171,6 +230,15 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
       return !debutsTraites.has(origine) && !finsTraitees.has(origine);
     });
     if (restants.length > 0) { problemes.push({ noeudId: debutId, code: "boucle-imbriquee" }); continue; }
+
+    // UNE BOUCLE PAR PASSES DANS LE VENTRE EST REFUSÉE, PLUTÔT QUE RECOPIÉE EN SILENCE. Elle
+    // s'apparie par identifiant, et le dépliage lui en donnerait un autre : les copies ne
+    // boucleraient pas, le graphe aboutirait tout de même, et l'on ne verrait rien. En refusant, la
+    // boucle par passes garde son identifiant et tourne normalement, et le début de boucle de graphe
+    // DIT pourquoi il ne s'est pas déplié. C'est la fiche qui porte ce rôle, jamais son nom.
+    const parPasse = interieur.filter((id) => PAR_PASSE.has(courantN.find((n) => n.id === id)?.data.ficheId ?? ""));
+    if (parPasse.length > 0) { problemes.push({ noeudId: debutId, code: "boucle-par-passe-dedans" }); continue; }
+
     if (interieur.length === 0) { problemes.push({ noeudId: debutId, code: "boucle-vide" }); continue; }
 
     // ET UN PLAFOND SUR LE TOTAL, que l'imbrication rend nécessaire. Une boucle seule coûte au plus
@@ -187,10 +255,45 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
 
     debutsTraites.add(debutId);
     finsTraitees.add(fin.id);
-    depliees.push({ debutId, tours });
+    // CE QUI TRAVERSE LE VENTRE SE COMPTE ICI, sur le graphe tel qu'il est avant d'être recopié :
+    // après, chaque traversée existe en autant d'exemplaires qu'il y a de tours, et le compte ne
+    // dirait plus rien de ce que l'on a câblé. Les deux catégories sont celles que `deplierUne`
+    // traite, et elles sont nommées de la même façon des deux côtés.
+    const dedans = new Set(interieur);
+    const entreesDuDehors = courantE.filter(
+      (a) => dedans.has(a.target) && !dedans.has(a.source) && a.source !== debutId).length;
+    const sortiesVersDehors = courantE.filter(
+      (a) => dedans.has(a.source) && !dedans.has(a.target) && a.target !== fin.id).length;
+    depliees.push({ debutId, tours, entreesDuDehors, sortiesVersDehors });
+    const avant = new Set(origines.keys());
     const { noeuds: nn, aretes: ne } = deplierUne(courantN, courantE, debut, fin, interieur, origines);
     courantN = nn;
     courantE = ne;
+
+    // LE NUMÉRO DU TOUR DE CHAQUE COPIE QUE CETTE BOUCLE VIENT DE FAIRE.
+    //
+    // Il se lit une seule fois ici, dans l'identifiant que `deplierUne` vient de former — « d1#3::x »
+    // —, et il est ensuite RENDU par une table : nulle part ailleurs personne n'a à déduire quoi que
+    // ce soit d'une convention de nommage.
+    //
+    // ET LES TOURS S'EMPILENT AVEC LES BOUCLES. Une copie portée par une boucle plus extérieure
+    // garde ce que l'intérieure a décidé : si l'intérieure fait varier ses graines, chacun de ses
+    // tours doit rester distinct DANS chaque tour du dehors. Les deux numéros se combinent donc en
+    // un seul, par un décalage de la taille d'un tour — au plus trente-deux, et le plafond des
+    // copies interdit d'empiler assez de niveaux pour que ce nombre déborde.
+    const demandeDesGraines = String(
+      (debut.data.parametres as Record<string, unknown> | undefined)?.["Graines"] ?? "",
+    ) === GRAINES_PAR_TOUR;
+    const marque = new RegExp(`^${debutId.replace(/[.*+?^${}()|[\]\\#]/g, "\\$&")}#(\\d+)::(.+)$`);
+    for (const id of origines.keys()) {
+      if (avant.has(id)) continue;
+      const m = marque.exec(id);
+      if (!m) continue;
+      const k = Number(m[1]);
+      const herite = toursDesCopies.get(m[2]);
+      if (demandeDesGraines) toursDesCopies.set(id, herite === undefined ? k : herite * TOURS_MAX + k);
+      else if (herite !== undefined) toursDesCopies.set(id, herite);
+    }
   }
 
   for (const d of debuts) {
@@ -199,7 +302,14 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
     }
   }
 
-  return { noeuds: courantN, aretes: courantE, origines, problemes, depliees };
+  // LA TABLE DES TOURS NE DÉCRIT QUE LE GRAPHE RENDU. Une boucle extérieure REMPLACE les copies de
+  // l'intérieure par les siennes : les premières n'existent plus, et leurs entrées ne désigneraient
+  // que des nœuds que personne n'exécutera. On les retire, faute de quoi la table dirait plus de
+  // choses que le graphe n'en contient.
+  const vivants = new Set(courantN.map((n) => n.id));
+  for (const id of [...toursDesCopies.keys()]) if (!vivants.has(id)) toursDesCopies.delete(id);
+
+  return { noeuds: courantN, aretes: courantE, origines, problemes, depliees, toursDesCopies };
 }
 
 function deplierUne(

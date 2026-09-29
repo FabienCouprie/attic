@@ -88,7 +88,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Écart minimal", nomEn: "Minimum gap", type: "curseur", plage: [1, 500], pas: 1, defaut: 40, unite: "ms",
         doc: "Deux grains ne peuvent pas commencer à moins de cet écart. Une attaque n'est pas un instant mais une montée de quelques millisecondes où l'enveloppe tremble : sans cet écart, une seule frappe donne trois ou quatre grains.",
         docEn: "Two grains cannot start closer than this. An attack is not an instant but a rise of a few milliseconds where the envelope wavers: without this gap, a single hit gives three or four grains." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Le tirage du mélange. La même graine rejoue exactement le même ordre, ce qui permet de retrouver un résultat qu'on avait aimé.",
         docEn: "The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again." },
     ],
