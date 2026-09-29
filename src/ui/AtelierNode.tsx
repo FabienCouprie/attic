@@ -239,7 +239,12 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   // 7 ms par nœud présent, à chaque fois. Ici, seul ce composant-ci est prévenu. Voir `statuts.ts`.
   const etatExec = useStatut(id);
   const statutClasse = etatExec.statut === "en_cours" ? "en-cours" : etatExec.statut === "termine" ? "termine" : etatExec.statut === "erreur" ? "erreur" : "attente";
-  const statutLabel = etatExec.statut === "termine" ? t("statut.termine") : etatExec.statut === "en_cours" ? (etatExec.progression ?? t("statut.en_cours")) : etatExec.statut === "erreur" ? t("statut.erreur") : t("statut.attente");
+  // UN NŒUD EN ATTENTE PEUT AVOIR QUELQUE CHOSE À DIRE, et il ne pouvait pas le dire. Un « Début de
+  // boucle » est retiré du graphe exécuté au profit des copies qui tournent à sa place : il n'est ni
+  // en cours, ni terminé, ni en erreur, et « En attente » ne racontait rien de ce qui lui est
+  // arrivé. Le moteur y pose désormais « Dépliée en 32 tours ». La règle vaut pour tous : quand une
+  // progression accompagne l'attente, c'est elle qu'on lit.
+  const statutLabel = etatExec.statut === "termine" ? t("statut.termine") : etatExec.statut === "en_cours" ? (etatExec.progression ?? t("statut.en_cours")) : etatExec.statut === "erreur" ? t("statut.erreur") : (etatExec.progression ?? t("statut.attente"));
   const nodeClassName = etatExec.statut === "en_cours" ? "running" : etatExec.statut === "termine" ? "termine" : etatExec.statut === "erreur" ? "erreur" : "attente";
   const descriptionTooltip = def ? resumeFiche(def, lang) : undefined;
 

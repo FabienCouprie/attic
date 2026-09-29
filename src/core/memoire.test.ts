@@ -140,6 +140,45 @@ describe("ce qu'une bulle repliée garde de son intérieur", () => {
   });
 });
 
+describe("ce qu'une boucle dépliée garde de ses tours", () => {
+  // RELEVÉ PAR FABIEN : « est-ce que la mémoire des caches intermédiaires est libérée à chaque
+  // passage en fin de boucle ? » Elle ne l'était pas, et pas même à la fin du run : les copies
+  // portent des identifiants engendrés et ne figurent pas parmi les nœuds visibles, de sorte que le
+  // ménage ne les examinait jamais. Mesuré sur huit tours d'un écho : 134,6 Mo pour le seul corps.
+  it("UN TOUR INTERMÉDIAIRE NE GARDE PAS SON RÉSULTAT", () => {
+    expect(resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true })).toBe(false);
+  });
+
+  it("ET CE QUE LA FIN DE BOUCLE REND RESTE, LUI : c'est l'échafaudage qu'on lâche, pas l'ouvrage", () => {
+    // La fin de boucle est un nœud visible, et rien ne la désigne comme corps de boucle.
+    expect(resultatRetenu({ cacheParBulle: false, corpsDeBoucle: false })).toBe(true);
+  });
+
+  it("l'économie de mémoire coupée, les tours sont gardés comme avant", () => {
+    expect(resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true, economie: false })).toBe(true);
+  });
+
+  it("un membre de bulle QUI EST AUSSI un tour de boucle ne se garde pas deux fois moins", () => {
+    // Les deux raisons se cumulent sans se contredire : une seule suffit à lâcher.
+    expect(resultatRetenu({ cacheParBulle: true, corpsDeBoucle: true })).toBe(false);
+  });
+
+  it("SANS RAISON DE LÂCHER, ON GARDE : le défaut ne change pour personne", () => {
+    // Clause décisive : tous les nœuds du catalogue passent par ici, et aucun ne devait changer de
+    // sort du seul fait qu'un argument s'ajoute.
+    expect(resultatRetenu({ cacheParBulle: false })).toBe(true);
+    expect(resultatRetenu({ cacheParBulle: false, economie: true })).toBe(true);
+  });
+
+  it("huit tours d'une chaîne qui allonge son signal, ce sont les 134,6 Mo mesurés", () => {
+    // Les durées relevées dans l'application, tour par tour : la queue de l'écho s'ajoute à chaque
+    // passage, si bien que le coût croît avec le carré du nombre de tours et non avec lui.
+    const tours = [5.1, 8.4, 11.7, 15.1, 18.5, 21.9, 25.3, 28.6];
+    expect(+tours.reduce((s, t) => s + t, 0).toFixed(1)).toBe(134.6);
+    expect(tours[7] / tours[0]).toBeGreaterThan(5);
+  });
+});
+
 describe("dans une bulle repliée, personne n'est regardé", () => {
   const chaine = [{ source: "a" }, { source: "b" }];
 

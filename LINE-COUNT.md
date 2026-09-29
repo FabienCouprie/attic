@@ -7,21 +7,21 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1160 files, 200154 lines, of which 139333 are code.**
-The table lists the 148 files of 200 code lines or more, heaviest first;
-the remaining 1012 account for 139464 lines.
+**1161 files, 200718 lines, of which 139657 are code.**
+The table lists the 149 files of 200 code lines or more, heaviest first;
+the remaining 1012 account for 139530 lines.
 
 **13 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1386 | 1706 | ! |
+| src/ui/atelier.css | 1390 | 1712 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 696 | 1370 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 711 | 1416 | ! |
 | src/ui/Inspector.tsx | 603 | 739 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 569 | 728 | ! |
-| src/ui/AtelierNode.tsx | 524 | 714 | ! |
+| src/ui/AtelierNode.tsx | 524 | 719 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
 | src/plugins/index.ts | 459 | 471 | ! |
@@ -34,8 +34,8 @@ the remaining 1012 account for 139464 lines.
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
 | src/audio/effets-spectral.test.ts | 372 | 444 |  |
+| src/ui/LigneDeTemps.tsx | 368 | 611 |  |
 | src/audio/clavier-banque.test.ts | 367 | 451 |  |
-| src/ui/LigneDeTemps.tsx | 367 | 595 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
 | src/audio/tone-synths.ts | 360 | 494 |  |
 | src/plugins/analyse.ts | 360 | 437 |  |
@@ -44,6 +44,7 @@ the remaining 1012 account for 139464 lines.
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
+| src/core/boucle-graphe.test.ts | 342 | 425 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |
