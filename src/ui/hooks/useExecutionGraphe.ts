@@ -708,6 +708,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
+      // CE NŒUD A-T-IL DEMANDÉ SI SES SORTIES ÉTAIENT BRANCHÉES ? La réponse se constate pendant son
+      // run, et décide si son câblage aval entre dans sa clé de cache. Déclaré par tour de boucle :
+      // c'est une propriété de CE nœud, et la porter au-delà les mélangerait.
+      let aConsulteSesSorties = false;
       const ajouterTemps = (ms: number) => {
         const visibleId = plat.expansions.get(nodeId) ?? nodeId;
         tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
@@ -721,8 +725,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
           entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
           // Les arêtes sont ici, et elles disent si un câble part de cette sortie. Un nœud peut
           // alors ne calculer une sortie chère que lorsqu'elle sert.
-          sortieBranchee: (idx: number) =>
-            aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`),
+          //
+          // ET POSER LA QUESTION EST RETENU. C'est ce fait — non une liste de composants — qui
+          // décide si le câblage aval entre dans la clé de cache de ce nœud. Voir
+          // `core/cache-execution.ts` : un nœud qui ne demande jamais si ses sorties sont branchées
+          // ne peut pas en dépendre, et un câble ajouté derrière lui ne doit pas le faire rejouer.
+          sortieBranchee: (idx: number) => {
+            aConsulteSesSorties = true;
+            return aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`);
+          },
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
             if (typeof p === "number") return p;
@@ -808,7 +819,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, tempsExecution: elapsed });
+          // `consulteSorties` est ce que le nœud vient de DEMANDER, et non ce qu'une fiche déclare :
+          // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);

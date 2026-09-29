@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1154 files, 198210 lines, of which 138208 are code.**
+**1155 files, 198540 lines, of which 138375 are code.**
 The table lists the 146 files of 200 code lines or more, heaviest first;
-the remaining 1008 account for 138452 lines.
+the remaining 1009 account for 138708 lines.
 
 **13 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -17,7 +17,7 @@ the remaining 1008 account for 138452 lines.
 |---|---:|---:|---|
 | src/ui/atelier.css | 1373 | 1688 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 693 | 1357 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 696 | 1370 | ! |
 | src/ui/Inspector.tsx | 603 | 739 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 569 | 728 | ! |
@@ -122,6 +122,7 @@ the remaining 1008 account for 138452 lines.
 | src/core/cache.test.ts | 240 | 310 |  |
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
+| src/core/cache-execution.test.ts | 238 | 350 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
@@ -160,4 +161,3 @@ the remaining 1008 account for 138452 lines.
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
 | src/audio/effets-modulation.ts | 202 | 267 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
-| src/core/cache-execution.test.ts | 200 | 289 |  |

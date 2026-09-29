@@ -79,6 +79,18 @@ export function useClavierJouable(id: string, presseur: Presseur) {
     if (o) { o.arreter(); activesRef.current.delete(note); }
   }, []);
   const presser = useCallback((note: number) => {
+    // UNE NOTE QUI SONNE DÉJÀ NE SE RELANCE PAS, et le garde est ICI plutôt que chez l'appelant.
+    //
+    // La table ne tient qu'UNE voix par note : y en poser une seconde écrase la première, et plus
+    // personne au monde ne détient alors son `arreter`. La voix abandonnée sonne jusqu'à la
+    // fermeture de l'application — et si la banque boucle, elle sonne pour toujours. Relevé par
+    // Fabien : « un son reste même après les touches relâchées et ne s'éteint jamais ».
+    //
+    // LES CHEMINS QUI PRESSENT SONT PLUSIEURS — le pointeur, le glissando, le clavier de
+    // l'ordinateur — et recopier le garde dans chacun d'eux le perdrait au premier ajouté. Il tient
+    // au seul endroit qui lance une voix, ce qui en fait un invariant plutôt qu'une précaution.
+    // Sortir avant `calculerVelocite` est voulu : cette fonction date la frappe.
+    if (activesRef.current.has(note)) return;
     const velocite = calculerVelocite();
     setTouches((p) => new Set(p).add(note));
     activesRef.current.set(note, presseurRef.current(note, velocite));
@@ -97,6 +109,19 @@ export function useClavierJouable(id: string, presseur: Presseur) {
       setVersion((v) => v + 1);
     }
   }, [arreter]);
+
+  // UNE VUE QUI S'EN VA EMPORTE SES VOIX.
+  //
+  // La table des voix vit dans la vue : le nœud supprimé, le graphe rechargé, la bulle repliée, elle
+  // disparaît avec elle — et personne ne détient plus les `arreter` qu'elle contenait. C'est l'autre
+  // façon d'obtenir un son qui ne s'éteint jamais, et celle-là ne demande même pas qu'on presse deux
+  // fois. On appelle les voix directement et non `relacher`, qui poserait un état sur une vue morte.
+  useEffect(() => () => {
+    for (const voix of activesRef.current.values()) {
+      try { voix.arreter(); } catch { /* une voix déjà morte ne doit pas empêcher les suivantes */ }
+    }
+    activesRef.current.clear();
+  }, []);
 
   function trouverNoteDepuisPointer(e: React.PointerEvent): number | null {
     const el = touchesRef.current; if (!el) return null;
@@ -125,8 +150,13 @@ export function useClavierJouable(id: string, presseur: Presseur) {
   function onPointerMove(e: React.PointerEvent) {
     if (!pointerEnfonce.current) return;
     if (e.buttons === 0) { onPointerUp(); return; }
+    // ON NE SE GARDE PLUS SUR `touches`, QUI EST EN RETARD D'UN RENDU. Un `pointermove` est un
+    // événement continu, que React ne vide pas sur-le-champ : deux d'entre eux dans la même image
+    // lisent le même `touches`, celui d'avant la presse, et la note repartait donc une seconde
+    // fois. Mesuré : deux voix pour une seule touche, dont une abandonnée. C'est `presser` qui
+    // décide maintenant, sur la table des voix — une référence, à jour à l'instant même.
     const note = trouverNoteDepuisPointer(e);
-    if (note !== null && !touches.has(note)) presser(note);
+    if (note !== null) presser(note);
   }
   function onPointerUp() {
     pointerEnfonce.current = false;
@@ -176,8 +206,9 @@ export function useClavierJouable(id: string, presseur: Presseur) {
       if (e.repeat || !clavierDoitJouer({ selectionne: true, cible: e.target })) return;
       if (e.key === "ArrowUp" || e.key === "=") { setOctaveClavier((o) => Math.min(o + 1, 7)); return; }
       if (e.key === "ArrowDown" || e.key === "-") { setOctaveClavier((o) => Math.max(o - 1, 2)); return; }
+      // Le garde contre la relance a déménagé dans `presser`, qui le tient pour tous les chemins.
       const note = keyMap.get(e.key.toUpperCase());
-      if (note !== undefined && !activesRef.current.has(note)) presser(note);
+      if (note !== undefined) presser(note);
     }
     function onKU(e: KeyboardEvent) {
       // Le relâchement n'est PAS conditionné à la cible : une touche enfoncée sur le clavier puis

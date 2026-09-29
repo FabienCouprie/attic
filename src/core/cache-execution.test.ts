@@ -15,6 +15,8 @@
 // propagation en comparant les sorties.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   peutReutiliserLeCache, sourceRetraitee, type EmpreintesDuRun, type LienDeGraphe,
 } from "./cache-execution";
@@ -66,11 +68,70 @@ describe("un composant peut rejouer son résultat", () => {
     expect(peutReutiliserLeCache(false, false, undefined, EMPREINTES)).toBe(false);
   });
 
-  it("CHACUNE DES QUATRE EMPREINTES SUFFIT À LE FAIRE REJOUER", () => {
-    for (const cle of ["hashParams", "hashEntree", "hashSorties", "hashValeursEntree"] as const) {
+  it("CHACUNE DES TROIS EMPREINTES QUI LE DÉCRIVENT SUFFIT À LE FAIRE REJOUER", () => {
+    for (const cle of ["hashParams", "hashEntree", "hashValeursEntree"] as const) {
       const change = { ...EMPREINTES, [cle]: "autre" };
       expect(peutReutiliserLeCache(false, false, EMPREINTES, change), cle).toBe(false);
     }
+  });
+});
+
+describe("le câblage aval ne compte que pour le composant qui le consulte", () => {
+  // RELEVÉ PAR FABIEN : « un nœud Ampleur posé après un débruitage IA déjà exécuté relance le
+  // débruitage ». Le câblage des sorties entrait dans la clé de TOUS pour la raison d'un seul.
+  const ailleurs = { ...EMPREINTES, hashSorties: "autre" };
+
+  it("UN CÂBLE AJOUTÉ DERRIÈRE UN COMPOSANT QUI NE DEMANDE RIEN NE LE FAIT PAS REJOUER", () => {
+    expect(peutReutiliserLeCache(false, false, EMPREINTES, ailleurs)).toBe(true);
+    expect(peutReutiliserLeCache(false, false, { ...EMPREINTES, consulteSorties: false }, ailleurs)).toBe(true);
+  });
+
+  it("MAIS IL FAIT REJOUER CELUI QUI A DEMANDÉ SI SES SORTIES ÉTAIENT BRANCHÉES", () => {
+    // C'est le cas pour lequel l'empreinte des sorties a été créée : brancher un câble sur une
+    // sortie restée vide ne relançait rien, et le composant d'aval annonçait « aucune entrée ».
+    expect(peutReutiliserLeCache(false, false, { ...EMPREINTES, consulteSorties: true }, ailleurs)).toBe(false);
+  });
+
+  it("ET CELUI QUI A DEMANDÉ REJOUE SON CACHE TANT QUE SON CÂBLAGE AVAL NE BOUGE PAS", () => {
+    // Le garde ne doit pas devenir « ce composant ne cache plus rien » : consulter ses sorties
+    // n'est pas `jamaisCache`, c'est une empreinte de plus à comparer.
+    expect(peutReutiliserLeCache(false, false, { ...EMPREINTES, consulteSorties: true }, EMPREINTES)).toBe(true);
+  });
+
+  it("UNE ENTRÉE DE CACHE ÉCRITE AVANT LA QUESTION VAUT « N'A PAS DEMANDÉ »", () => {
+    // Le champ est absent des entrées d'avant, et le premier run qui suit le renseignera. Le seul
+    // risque serait de servir un résultat périmé à un composant qui consulte ses sorties ; or
+    // celui-là écrit le champ dès son premier run, et un premier run ne rejoue jamais rien.
+    const sansLeChamp: EmpreintesDuRun = { ...EMPREINTES };
+    expect(peutReutiliserLeCache(false, false, sansLeChamp, ailleurs)).toBe(true);
+  });
+
+  it("ET LES AUTRES RAISONS DE REJOUER RESTENT ENTIÈRES POUR LUI", () => {
+    const consulte = { ...EMPREINTES, consulteSorties: true };
+    expect(peutReutiliserLeCache(true, false, consulte, EMPREINTES)).toBe(false);
+    expect(peutReutiliserLeCache(false, true, consulte, EMPREINTES)).toBe(false);
+    for (const cle of ["hashParams", "hashEntree", "hashValeursEntree"] as const) {
+      expect(peutReutiliserLeCache(false, false, consulte, { ...EMPREINTES, [cle]: "autre" }), cle).toBe(false);
+    }
+  });
+
+  it("LE MOTEUR RETIENT LA QUESTION, ET LA PORTE JUSQU'À L'ENTRÉE DE CACHE", () => {
+    // POURQUOI CE CAS LIT UNE SOURCE. La règle ci-dessus est juste et ne prouve rien toute seule :
+    // elle ne vaut que si le moteur RENSEIGNE `consulteSorties`. Ce joint-là ne se voit sur aucune
+    // fonction pure, et le laisser sans garde, c'est laisser la règle se vider sans que rien ne
+    // tombe — le résultat étant alors un rejeu inutile, qui ne se remarque qu'à l'oreille et à la
+    // montre. Les deux bouts sont attachés PAR LE NOM DE LA VARIABLE : renommer la déplace des deux
+    // côtés et le cas tient, en retirer un seul et il tombe.
+    const source = readFileSync(
+      fileURLToPath(new URL("../ui/hooks/useExecutionGraphe.ts", import.meta.url)), "utf8");
+    const debut = source.indexOf("sortieBranchee:");
+    expect(debut, "le moteur doit fournir `sortieBranchee` au composant").toBeGreaterThan(0);
+
+    const corps = source.slice(debut, debut + 600);
+    const drapeau = corps.match(/([A-Za-z_][A-Za-z0-9_]*) = true/)?.[1];
+    expect(drapeau, "`sortieBranchee` doit retenir qu'on lui a posé la question").toBeTruthy();
+    expect(source.includes(`consulteSorties: ${drapeau}`),
+      "ce que `sortieBranchee` a retenu doit partir dans l'entrée de cache").toBe(true);
   });
 });
 

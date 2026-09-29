@@ -35,6 +35,20 @@
 // UNE BRANCHE SŒUR N'EST PAS ENTRAÎNÉE. La propagation suit les arêtes, et non l'ordre linéaire du
 // run : deux branches parallèles dont l'une rejoue laissent l'autre tranquille. Cela a été une
 // faute, et c'est pour cela que la règle se lit sur les arêtes.
+//
+// ET LE CÂBLAGE AVAL NE COMPTE QUE POUR QUI LE CONSULTE — relevé par Fabien : « un nœud Ampleur
+// posé après un débruitage IA déjà exécuté relance le débruitage ». Le câblage des sorties était
+// entré dans la clé de TOUS les composants pour la raison d'un seul : depuis qu'un composant peut
+// demander si une de ses sorties est branchée, ce qu'il rend en dépend. Mais brancher un câble sur
+// la sortie d'un composant qui ne pose JAMAIS cette question ne change rien à ce qu'il rend — et
+// cela relançait pourtant un modèle appris. Mesuré dans l'application : réglages, câblage amont et
+// valeurs d'entrée tous identiques au cache, et pourtant rejeu.
+//
+// LA QUESTION SE LIT SUR UNE FORME, ET JAMAIS SUR UNE LISTE DE NOMS. On n'inscrit nulle part quels
+// composants dépendent de leur aval : le moteur REGARDE si le composant a appelé `sortieBranchee`
+// pendant son run, et ne retient le câblage aval dans sa clé que pour celui-là. Une liste déclarée
+// se serait oubliée au premier composant ajouté, et l'oubli aurait servi un résultat périmé en
+// silence — la faute exactement inverse, et la plus grave des deux.
 
 /** Les quatre empreintes d'un composant pour un run. */
 export interface EmpreintesDuRun {
@@ -42,10 +56,27 @@ export interface EmpreintesDuRun {
   hashParams: string;
   /** Le câblage de ses entrées : quels ports, depuis quels composants. */
   hashEntree: string;
-  /** Le câblage de ses sorties. Ce qu'un composant rend peut dépendre de ce qui est branché. */
+  /** Le câblage de ses sorties. Ne compte que pour un composant qui le consulte, cf. `CachePrecedent`. */
   hashSorties: string;
   /** Les valeurs qui arrivent réellement sur ses entrées. */
   hashValeursEntree: string;
+}
+
+/** Ce que le run précédent a retenu d'un composant : ses empreintes, et ce qu'il a demandé. */
+export interface CachePrecedent extends EmpreintesDuRun {
+  /**
+   * Ce composant a-t-il DEMANDÉ si ses sorties étaient branchées, pendant son dernier run ?
+   *
+   * C'est un FAIT OBSERVÉ et non une déclaration : le moteur compte les appels à `sortieBranchee`.
+   * Un composant qui n'a pas posé la question ne peut pas avoir tenu compte de la réponse, donc son
+   * résultat ne dépend pas de son câblage aval, donc un câble ajouté derrière lui ne le périme pas.
+   *
+   * ABSENT VAUT « N'A PAS DEMANDÉ », et c'est le bon défaut dans les deux sens. Une entrée de cache
+   * écrite avant que cette question n'existe n'a pas le champ : elle décrit un composant dont on ne
+   * sait rien, et le premier run qui suit le renseignera. Un composant qui, lui, consulte ses
+   * sorties porte le champ dès son premier run, celui où il n'y a de toute façon rien à rejouer.
+   */
+  consulteSorties?: boolean;
 }
 
 /** Ce qu'il faut savoir d'une arête pour décider : d'où elle part, où elle va. */
@@ -77,12 +108,14 @@ export function sourceRetraitee(
 export function peutReutiliserLeCache(
   jamaisCache: boolean,
   entreeRetraitee: boolean,
-  precedentes: EmpreintesDuRun | undefined,
+  precedentes: CachePrecedent | undefined,
   courantes: EmpreintesDuRun,
 ): boolean {
   if (jamaisCache || entreeRetraitee || !precedentes) return false;
+  // LE CÂBLAGE AVAL N'EST COMPARÉ QUE POUR QUI L'A CONSULTÉ. Voir l'en-tête : la réponse est un
+  // fait observé au run précédent, non une déclaration qu'on aurait pu oublier de poser.
+  if (precedentes.consulteSorties && precedentes.hashSorties !== courantes.hashSorties) return false;
   return precedentes.hashParams === courantes.hashParams
     && precedentes.hashEntree === courantes.hashEntree
-    && precedentes.hashSorties === courantes.hashSorties
     && precedentes.hashValeursEntree === courantes.hashValeursEntree;
 }
