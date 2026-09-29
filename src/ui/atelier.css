@@ -1254,6 +1254,19 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-surface); color: var(--text-primary); cursor: pointer;
 }
 .ligne-temps-transport input[type="range"] { flex: 1 1 0; min-width: 40px; }
+/* LA BARRE DE DÉFILEMENT DE LA LIGNE DE TEMPS, au-dessus du lecteur. Elle reste posée même quand il
+   n'y a rien à faire défiler — son curseur couvre alors toute la piste, ce qui le dit — plutôt que de
+   paraître et disparaître au gré du zoom en déplaçant le lecteur de quelques pixels sous la main. */
+.ligne-temps-defilement {
+  position: relative; height: 7px; margin: 0 8px 4px 0;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; touch-action: none;
+}
+.ligne-temps-defilement-curseur {
+  position: absolute; top: 0; bottom: 0; min-width: 8px;
+  background: var(--accent, #2a9d8f); opacity: 0.55; border-radius: 3px;
+}
+.ligne-temps-defilement:hover .ligne-temps-defilement-curseur { opacity: 0.8; }
 /* L'inspecteur qu'on tire sur le canevas : la colonne garde 280 px, le panneau s'étend par-dessus. */
 .inspecteur-emplacement { position: relative; min-width: 0; }
 .inspecteur-panneau {

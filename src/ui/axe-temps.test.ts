@@ -5,8 +5,9 @@
 // revient, pas qu'elle revient juste. Ces règles sont donc éprouvées ici, et le dessin ailleurs.
 import { describe, expect, it } from "vitest";
 import {
-  ZOOM_MAX, ZOOM_MIN, defilementAncre, defilementPourSuivre, fenetre, tempsDepuisX,
-  xDepuisTemps, zoomAjuste, zoomBorne, zoomMolette,
+  ZOOM_MAX, ZOOM_MIN, curseurDefilement, defilementAncre, defilementPourCentrer,
+  defilementPourSuivre, fenetre, fractionDepuisZoom, tempsDepuisX,
+  xDepuisTemps, zoomAjuste, zoomBorne, zoomDepuisFraction, zoomMolette,
 } from "./axe-temps";
 
 describe("le zoom", () => {
@@ -34,6 +35,86 @@ describe("le zoom", () => {
   it("ne rend pas un zoom absurde sur une duree ou une largeur nulle", () => {
     expect(zoomAjuste(0, 60, 100)).toBe(1);
     expect(zoomAjuste(600, 0, 100)).toBe(1);
+  });
+});
+
+describe("le curseur de zoom est geometrique", () => {
+  // RELEVE PAR FABIEN : « on peut zoomer mais ce n'est pas pratique, une fois le zoom fait on ne
+  // peut plus dezoomer ». Un curseur lineaire sur cinq cents fois donne 102 unites par pixel sur la
+  // largeur d'un noeud : toute la plage utile tenait dans neuf pixels sur 489.
+  it("va d'un bout a l'autre des bornes", () => {
+    expect(zoomDepuisFraction(0)).toBe(ZOOM_MIN);
+    expect(zoomDepuisFraction(1)).toBe(ZOOM_MAX);
+    expect(zoomDepuisFraction(-5)).toBe(ZOOM_MIN);
+    expect(zoomDepuisFraction(9)).toBe(ZOOM_MAX);
+  });
+
+  it("UN MEME DEPLACEMENT MULTIPLIE TOUJOURS PAR LE MEME FACTEUR, ce qui est tout l'objet", () => {
+    const pas = 0.1;
+    const rapports: number[] = [];
+    for (let f = 0; f + pas <= 1.0000001; f += pas) {
+      rapports.push(zoomDepuisFraction(f + pas) / zoomDepuisFraction(f));
+    }
+    // Dix rapports, tous egaux a la racine dixieme de cinq cents.
+    expect(rapports.length).toBe(10);
+    for (const r of rapports) expect(r).toBeCloseTo((ZOOM_MAX / ZOOM_MIN) ** pas, 2);
+  });
+
+  it("ET LA PLAGE UTILE CESSE DE TENIR DANS QUELQUES PIXELS", () => {
+    // Sur une piste de 489 pixels, comme celle mesuree dans l'application.
+    const px = (pct: number) => Math.round(fractionDepuisZoom(pct) * 489);
+    expect(px(ZOOM_MIN)).toBe(0);
+    // De une a dix fois : plus de cent pixels, contre neuf en lineaire.
+    expect(px(1000)).toBeGreaterThan(100);
+    // Et de une a deux fois, un geste qu'on peut faire a la main.
+    expect(px(200)).toBeGreaterThan(20);
+  });
+
+  it("le curseur et le zoom se repondent, aller et retour", () => {
+    for (const pct of [ZOOM_MIN, 137, 500, 2500, 20000, ZOOM_MAX]) {
+      expect(zoomDepuisFraction(fractionDepuisZoom(pct))).toBe(zoomBorne(pct));
+    }
+    expect(fractionDepuisZoom(ZOOM_MIN)).toBe(0);
+    expect(fractionDepuisZoom(ZOOM_MAX)).toBeCloseTo(1, 9);
+  });
+});
+
+describe("la barre de defilement", () => {
+  const large = (zoomPct: number) => fenetre(600, zoomAjuste(600, 60, zoomPct), 60, 0);
+
+  it("son curseur couvre TOUTE la piste quand il n'y a rien a faire defiler", () => {
+    const c = curseurDefilement(large(100), 60);
+    expect(c.debut).toBe(0);
+    expect(c.largeur).toBe(1);
+  });
+
+  it("et sa largeur dit quelle part on voit", () => {
+    // A mille pour cent on voit le dixieme : le curseur couvre le dixieme.
+    expect(curseurDefilement(large(1000), 60).largeur).toBeCloseTo(0.1, 6);
+  });
+
+  it("IL NE DEPASSE JAMAIS LE BOUT DE LA PISTE, et le touche exactement a fond", () => {
+    const f = fenetre(600, zoomAjuste(600, 60, 1000), 60, 1e9);  // defilement demande au-dela du max
+    const c = curseurDefilement(f, 60);
+    expect(c.debut + c.largeur).toBeCloseTo(1, 6);
+  });
+
+  it("centrer sur un instant met cet instant au milieu de la vue", () => {
+    const f = large(1000);                       // six secondes visibles sur soixante
+    expect(defilementPourCentrer(30, f)).toBeCloseTo(27, 6);
+    const apres = fenetre(600, zoomAjuste(600, 60, 1000), 60, defilementPourCentrer(30, f));
+    expect((apres.debutVisible + apres.finVisible) / 2).toBeCloseTo(30, 6);
+  });
+
+  it("ET IL RESTE DANS LES BORNES AUX DEUX EXTREMITES, sans montrer de vide", () => {
+    const f = large(1000);
+    expect(defilementPourCentrer(0, f)).toBe(0);            // avant le debut
+    expect(defilementPourCentrer(1000, f)).toBe(f.maxDefilement);  // apres la fin
+  });
+
+  it("une duree nulle ne fait pas un curseur absurde", () => {
+    const c = curseurDefilement(fenetre(600, 1, 0, 0), 0);
+    expect(c).toEqual({ debut: 0, largeur: 1 });
   });
 });
 

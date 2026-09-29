@@ -98,7 +98,11 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },
   // Après le lecteur : le son rendu garde le lecteur commun, la vidéo muette s'enregistre en dessous.
   { correspond: parId("separer-image-son"), vue: VueVideoMuette, position: "apres" },
-  { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant" },
+  // L'ONDE PORTE LE LECTEUR, donc le nœud n'en pose pas un second — relevé par Fabien : « le
+  // sélecteur multizone a un deuxième lecteur, le sien, et un lecteur classique supplémentaire ».
+  // Le sien est le bon : son bouton, son compteur et sa tête de lecture vivent sur l'onde, où se
+  // tracent les zones, et l'on y cherche un instant en cliquant le dessin plutôt qu'une réglette.
+  { correspond: parId("selecteur-multi-zones"), vue: VueSelecteurMultiZones, position: "avant", porteLecteur: true },
   // LA LIGNE DE TEMPS PORTE LE LECTEUR, donc le nœud n'en pose pas un second : la tête de lecture ne
   // saurait pas lequel suivre, et deux jeux de commandes pour un même son se contrediraient.
   { correspond: parId("montage", "maquette"), vue: VueMontage, position: "avant", porteLecteur: true },

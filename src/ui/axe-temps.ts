@@ -91,6 +91,53 @@ export function zoomBorne(pourcent: number): number {
   return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(pourcent)));
 }
 
+/**
+ * Le zoom qu'une position de curseur désigne, et réciproquement.
+ *
+ * LE CURSEUR EST GÉOMÉTRIQUE, ET C'EST TOUTE LA QUESTION — relevé par Fabien : « on peut zoomer mais
+ * ce n'est pas pratique, une fois le zoom fait on ne peut plus dézoomer ». Un curseur LINÉAIRE sur
+ * une plage de cinq cents fois donne 102 unités par pixel sur la largeur d'un nœud : mesuré, toute
+ * la plage utile, de une à dix fois, tenait dans les NEUF PREMIERS PIXELS d'une piste de 489. On ne
+ * pouvait donc que sauter d'un extrême à l'autre, et revenir demandait de viser le pixel de gauche.
+ *
+ * Un zoom est une échelle, pas une quantité : ce qui compte est le RAPPORT entre deux niveaux, non
+ * leur différence. Un même déplacement multiplie donc toujours par le même facteur, comme le fait
+ * déjà la molette avec son facteur constant. La fraction va de zéro à un.
+ */
+export function zoomDepuisFraction(fraction: number): number {
+  const f = Math.max(0, Math.min(1, fraction));
+  return zoomBorne(ZOOM_MIN * (ZOOM_MAX / ZOOM_MIN) ** f);
+}
+
+export function fractionDepuisZoom(pourcent: number): number {
+  const p = zoomBorne(pourcent);
+  return Math.log(p / ZOOM_MIN) / Math.log(ZOOM_MAX / ZOOM_MIN);
+}
+
+/**
+ * Le défilement qui centre la vue sur un instant, compté depuis l'origine de l'étendue.
+ *
+ * C'EST CE QUE FAIT LA BARRE DE DÉFILEMENT, au clic comme au glissement : l'instant désigné vient
+ * au milieu de la vue. Centrer plutôt que poser le bord gauche rend le clic et le glissement
+ * identiques — le curseur suit le pointeur sans sauter au premier contact.
+ */
+export function defilementPourCentrer(instant: number, f: Fenetre): number {
+  return Math.max(0, Math.min(f.maxDefilement, instant - f.largeurVisible / 2));
+}
+
+/**
+ * Où poser le curseur de la barre de défilement, et quelle part de la piste il couvre.
+ *
+ * SA LARGEUR DIT COMBIEN L'ON VOIT, ce qui est la moitié de ce qu'une barre de défilement apprend :
+ * un curseur qui couvre tout dit qu'il n'y a rien à faire défiler, et un curseur mince dit de
+ * combien la pièce dépasse. Les deux nombres sont des fractions de la piste, de zéro à un.
+ */
+export function curseurDefilement(f: Fenetre, duree: number): { debut: number; largeur: number } {
+  if (duree <= 0) return { debut: 0, largeur: 1 };
+  const largeur = Math.min(1, f.largeurVisible / duree);
+  return { debut: Math.max(0, Math.min(1 - largeur, f.debutVisible / duree)), largeur };
+}
+
 /** Ce que devient le zoom à un cran de molette. Vers le bas éloigne, vers le haut rapproche. */
 export function zoomMolette(pourcent: number, deltaY: number): number {
   return zoomBorne(pourcent * (deltaY > 0 ? 1 / FACTEUR_MOLETTE : FACTEUR_MOLETTE));

@@ -363,6 +363,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "montage.lire": { fr: "Écouter le montage", en: "Play the montage" },
   "montage.pause": { fr: "Suspendre", en: "Pause" },
   "montage.zoom": { fr: "Zoom de la ligne de temps. La molette zoome aussi, sur l'instant visé.", en: "Timeline zoom. The wheel zooms too, on the instant under the pointer." },
+  "montage.defilement": { fr: "Défilement de la ligne de temps. La largeur du curseur dit quelle part de la pièce est visible.", en: "Timeline scrolling. The thumb's width says how much of the piece is visible." },
   "montage.finesse": { fr: "Maj : dix fois plus fin. Alt : cent fois plus fin.", en: "Shift: ten times finer. Alt: a hundred times finer." },
   "montage.fonduSortie": { fr: "Tirer pour régler le fondu de sortie", en: "Drag to set the fade out" },
   "maquette.dureeBoite": { fr: "Tirer pour régler la durée de la boîte", en: "Drag to set the box length" },
