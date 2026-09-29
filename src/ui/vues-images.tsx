@@ -4,7 +4,7 @@
 // identifiant de fiche vit dans `vues.tsx`, avec le type `VueProps` que toutes recoivent.
 // Aucune ligne n'a ete retouchee au passage.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { copierTexte } from "./copier";
 import { VuMetre } from "./VuMetre";
@@ -15,6 +15,7 @@ import { SongseeVue } from "./Songsee";
 import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "./vues";
 
+import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
 export function VueCouleurSunoIA({ data }: VueProps) {
   const { t, lang } = useI18n();
   const p = data.parametres ?? {};
@@ -67,8 +68,9 @@ export function VueCouleurSunoIA({ data }: VueProps) {
 export function VueGalerieExposition({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const htmlPath = (data as any)._galerieHtmlPath as string | undefined;
-  const pistes = (data as any)._galeriePistes as { nom: string; url: string }[] | undefined;
+  const a = (data as any)._affichage as { htmlPath?: string; pistes?: { nom: string; url: string }[] } | undefined;
+  const htmlPath = a?.htmlPath;
+  const pistes = a?.pistes;
 
   async function ouvrirDansNavigateur() {
     if (!htmlPath) return;
@@ -191,7 +193,8 @@ const COULEURS_GOUT: Record<string, string> = {
 
 export function VueGout({ data }: VueProps) {
   const { t } = useI18n();
-  const parts = Array.isArray(data._profilGout) ? (data._profilGout as { gout: string; part: number }[]) : [];
+  const brut = (data as { _affichage?: { profilGout?: unknown } })._affichage?.profilGout;
+  const parts = Array.isArray(brut) ? (brut as { gout: string; part: number }[]) : [];
   if (!parts.length) {
     return <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("export.avantLancer")}</div>;
   }
@@ -210,9 +213,78 @@ export function VueGout({ data }: VueProps) {
   );
 }
 
+/**
+ * L'écart au-delà duquel on recale l'image sur le son, en secondes.
+ *
+ * DEUX HORLOGES, ET ELLES DÉRIVENT. Le temps de SMIL et celui du lecteur audio avancent
+ * séparément ; sur une pièce longue, quelques dizaines de millisecondes finissent par se voir. Un
+ * recalage à CHAQUE battement de `timeupdate` se verrait davantage : une image qui saute en
+ * arrière de trois millisecondes est un à-coup. On ne recale donc que ce qui se remarque, et le
+ * seuil est sous la durée d'une image à soixante par seconde multipliée par cinq.
+ */
+const DERIVE_TOLEREE = 0.08;
+
+/**
+ * L'animation cale son temps sur celui du lecteur.
+ *
+ * LE DÉFAUT QUE CECI CORRIGE, relevé par Fabien : « décalage du son et du visuel ». Une animation
+ * SMIL part dès qu'elle est posée dans la page et tourne en boucle, sans aucun rapport avec
+ * l'instant où l'on appuie sur lecture : quand le son commence, l'image en est où elle en est. Les
+ * deux décrivent pourtant la même suite de pulsations, et c'est tout l'objet du composant qu'elles
+ * tombent ensemble.
+ *
+ * L'IMAGE N'EST JAMAIS ARRÊTÉE AVANT LA PREMIÈRE LECTURE, et c'est délibéré. On ne touche à son
+ * horloge qu'à partir du moment où quelqu'un appuie sur lecture : tant que personne ne l'a fait,
+ * elle tourne exactement comme avant. Le pire cas de ce code est donc le comportement d'origine,
+ * et non une image figée. L'arrêter d'emblée aurait été plus simple à écrire et bien plus risqué :
+ * il aurait suffi qu'un lecteur n'émette pas son événement pour que le dessin ne reparte jamais.
+ */
+function useImageCaleeSurLeSon(svg: string) {
+  const boite = useRef<HTMLDivElement | null>(null);
+  const lecteur = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const dessin = boite.current?.querySelector("svg") as SVGSVGElement | null;
+    const son = lecteur.current;
+    // `pauseAnimations` n'existe que sur un SVG vivant : un environnement sans SMIL laisse
+    // l'animation tourner comme avant plutôt que d'échouer.
+    if (!dessin || !son || typeof dessin.pauseAnimations !== "function") return;
+
+    const caler = () => { try { dessin.setCurrentTime(son.currentTime); } catch { /* horloge absente */ } };
+    const jouer = () => { caler(); dessin.unpauseAnimations(); };
+    const arreter = () => { dessin.pauseAnimations(); caler(); };
+    const finir = () => { try { dessin.setCurrentTime(0); } catch { /* idem */ } dessin.unpauseAnimations(); };
+    const suivre = () => {
+      if (son.paused) return;
+      try {
+        if (Math.abs(dessin.getCurrentTime() - son.currentTime) > DERIVE_TOLEREE) caler();
+      } catch { /* horloge absente */ }
+    };
+
+    son.addEventListener("play", jouer);
+    son.addEventListener("playing", jouer);
+    son.addEventListener("pause", arreter);
+    son.addEventListener("seeked", caler);
+    son.addEventListener("ended", finir);
+    son.addEventListener("timeupdate", suivre);
+    return () => {
+      son.removeEventListener("play", jouer);
+      son.removeEventListener("playing", jouer);
+      son.removeEventListener("pause", arreter);
+      son.removeEventListener("seeked", caler);
+      son.removeEventListener("ended", finir);
+      son.removeEventListener("timeupdate", suivre);
+    };
+  }, [svg]);
+
+  return { boite, lecteur };
+}
+
 export function VueAnimationSvg({ data }: VueProps) {
   const { t } = useI18n();
-  const svg = typeof data._animationSvg === "string" ? data._animationSvg : "";
+  const dessine = (data as { _affichage?: { animationSvg?: unknown } })._affichage?.animationSvg;
+  const svg = typeof dessine === "string" ? dessine : "";
+  const { boite, lecteur } = useImageCaleeSurLeSon(svg);
   if (!svg.includes("<svg")) {
     return <div className="attic-node-vue-animation" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
   }
@@ -228,16 +300,17 @@ export function VueAnimationSvg({ data }: VueProps) {
   // suite de pulsations, elles s'écoutent au même endroit.
   return (
     <div className="attic-node-vue-animation">
-      <div className="attic-node-vue-animation-inner" dangerouslySetInnerHTML={{ __html: svg }} />
+      <div ref={boite} className="attic-node-vue-animation-inner" dangerouslySetInnerHTML={{ __html: svg }} />
       {typeof data.audioResultatUrl === "string" && (
         <audio
           key={data.audioResultatUrl}
+          ref={lecteur}
           className="attic-node-audio nodrag"
           style={{ flex: "0 0 auto", marginTop: 4 }}
           controls
           src={data.audioResultatUrl}
           onPointerDown={(e) => e.stopPropagation()}
-          onLoadedMetadata={(e) => { (e.currentTarget as HTMLAudioElement).volume = 0.3; }}
+          onLoadedMetadata={ouvrirAuNiveauDEcoute}
         />
       )}
     </div>
@@ -263,16 +336,18 @@ export function VueColorSynth({ data }: VueProps) {
 
 // ── VU-mètre / LUFS (bargraphes de niveau) ──
 // ── Score et comparaison esthétiques ──
-// Affichés seulement une fois le nœud terminé : `_esthetique` survit à une
-// réinitialisation (les champs `_` ne sont pas effacés), et une courbe périmée
-// affichée à côté d'un nœud « en attente » se lirait comme le résultat courant.
+// LE GARDE SUR LE STATUT A ÉTÉ RETIRÉ, et il rendait ces deux vues muettes. Il existait parce que
+// le champ survivait à une remise à zéro, « une courbe périmée affichée à côté d'un nœud en attente
+// se lirait comme le résultat courant » ; mais `data.statut` n'est jamais passé à « termine » depuis
+// que les statuts vivent dans leur magasin, et la condition était donc toujours fausse. Le canal
+// déclaré efface vraiment ce qu'un run a produit : il n'y a plus rien à contourner.
 export function VueEsthetique({ data }: VueProps) {
-  const d = data as { statut?: string; _esthetique?: any };
-  return d.statut === "termine" ? <VueScoreEsthetique analyse={d._esthetique} /> : null;
+  const d = data as { _affichage?: { analyse?: any } };
+  return d._affichage?.analyse ? <VueScoreEsthetique analyse={d._affichage.analyse} /> : null;
 }
 export function VueComparaisonEsth({ data }: VueProps) {
-  const d = data as { statut?: string; _comparaisonEsthetique?: { a: any; b: any } };
-  return d.statut === "termine" ? <VueComparaisonEsthetique a={d._comparaisonEsthetique?.a} b={d._comparaisonEsthetique?.b} /> : null;
+  const d = data as { _affichage?: { a?: any; b?: any } };
+  return d._affichage?.a ? <VueComparaisonEsthetique a={d._affichage.a} b={d._affichage.b} /> : null;
 }
 
 export function VueVuMetre({ data }: VueProps) {

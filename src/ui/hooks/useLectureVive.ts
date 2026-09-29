@@ -15,6 +15,7 @@
 // rendu, et l'horloge du son n'attend pas les rendus.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { calerSource, courbeDeGain, gainLineaire } from "../../audio/apercu-video";
+import { NIVEAU_ECOUTE } from "../niveau-ecoute";
 import {
   departDeLecture, differencePistes, finDeMontage, positionVive, segmentSonnant,
   type Depart, type EtatPiste, type ReglagesVifs,
@@ -47,6 +48,25 @@ interface Vivante {
   niveau: GainNode;
 }
 
+/**
+ * Le gain d'écoute du composant, entre les pistes et la sortie.
+ *
+ * UN LECTEUR DE COMPOSANT NE S'OUVRE PAS À PLEINE PUISSANCE, et cette écoute-ci est un lecteur de
+ * composant comme les autres : elle passe donc par `NIVEAU_ECOUTE`, le même que celui des éléments
+ * audio posés sur les nœuds. Sans lui, la ligne de temps aurait apporté sa propre écoute en
+ * échappant à la règle, ce qui est précisément ce qui s'est produit. Il ne touche pas au fichier
+ * produit, qui sort au niveau où les pistes ont été réglées.
+ */
+function gainDEcoute(ctx: AudioContext, cache: { courant: GainNode | null }): GainNode {
+  if (!cache.courant) {
+    const g = ctx.createGain();
+    g.gain.value = NIVEAU_ECOUTE;
+    g.connect(ctx.destination);
+    cache.courant = g;
+  }
+  return cache.courant;
+}
+
 // UN NUMÉRO PAR TAMPON, et la signature voit alors un son remplacé par un autre. Sans lui, une piste
 // rebranchée sur un autre générateur aux mêmes réglages gardait l'ancien son à l'oreille : la
 // comparaison des états l'aurait vu, mais l'effet ne se serait pas réveillé pour la faire. La table est
@@ -62,6 +82,8 @@ function numeroDeSon(son: AudioBuffer): number {
 export function useLectureVive(pistes: PisteVive[]): LectureVive {
   const [enLecture, setEnLecture] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
+  /** Le gain d ecoute, unique et garde entre deux lectures. */
+  const sortieRef = useRef<{ courant: GainNode | null }>({ courant: null });
   const vivantes = useRef(new Map<number, Vivante>());
   /** Ce qui est programmé en ce moment : c'est à cet état qu'on compare pour ne reprendre que le nécessaire. */
   const programme = useRef(new Map<number, EtatPiste>());
@@ -130,7 +152,7 @@ export function useLectureVive(pistes: PisteVive[]): LectureVive {
     const quand = ctx.currentTime + MARGE_PROG + calage.quand;
     fondu.gain.setValueCurveAtTime(courbe, quand, Math.max(0.001, calage.duree));
     niveau.gain.value = gainLineaire(p.gainDb);
-    source.connect(fondu).connect(niveau).connect(ctx.destination);
+    source.connect(fondu).connect(niveau).connect(gainDEcoute(ctx, sortieRef.current));
     source.start(quand, seg.rogneSec + calage.decalage, calage.duree);
     source.onended = () => { source.disconnect(); fondu.disconnect(); niveau.disconnect(); };
     vivantes.current.set(p.k, { source, fondu, niveau });

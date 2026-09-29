@@ -6,6 +6,7 @@ import { NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { actionBoutonLecture } from "./lecteur-onde";
 
+import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
 export type Zone = { debut: number; duree: number };
 
 // ── Couleurs de la forme d'onde ──
@@ -57,7 +58,7 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
     // une sélection héritée d'un fichier plus long tomberait hors du nouveau, et
     // « Ajouter » la mémoriserait telle quelle.
     //
-    // L'élément <audio> est réutilisé d'une source à l'autre (il n'a pas de
+    // L'élément <audio onLoadedMetadata={ouvrirAuNiveauDEcoute}> est réutilisé d'une source à l'autre (il n'a pas de
     // `key`) : remplacer son `src` l'arrête SANS émettre `pause`, donc sans que
     // `isPlaying` se corrige tout seul. Le remettre à zéro ici est ce qui garde
     // l'icône honnête ; que le bouton reste utilisable même en cas d'écart ne
@@ -475,7 +476,10 @@ export function SelecteurMultiZones({ audioUrl, zones, onZonesChange }: Props) {
             onPlay={() => { setIsPlaying(true); }}
             onPause={() => { setIsPlaying(false); dessiner(); }}
             onEnded={() => { setIsPlaying(false); setPlayPos(0); dessiner(); }}
-            onLoadedMetadata={() => { if (audioElRef.current) audioElRef.current.currentTime = playPos; }}
+            onLoadedMetadata={(e) => {
+              ouvrirAuNiveauDEcoute(e);
+              if (audioElRef.current) audioElRef.current.currentTime = playPos;
+            }}
             style={{ display: "none" }}
           />
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>

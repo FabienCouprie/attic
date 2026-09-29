@@ -15,6 +15,7 @@ import {
   noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG, type TypeValeur,
 } from "../../core";
+import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-execution";
 import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
@@ -28,6 +29,9 @@ import { bufferVersWavBlob, bufferVersWavBlobRespirant, picAbsolu } from "../../
 import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
 import { heriterDisposition } from "../../audio/multicanal";
 import { tamponPourApercu } from "../../audio/multicanal-ecoute";
+import { apresEffacement, champsAReporter, urlsARevoquer, type ClassesDeChamps } from "../../core/cycle-de-vie";
+import type { DemandeAuMoteur } from "../../core/types";
+import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
 import { decrire } from "../../audio/metadonnees";
 import { lireProfondeurExport } from "../profondeur-export";
 import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
@@ -44,12 +48,16 @@ const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "py
 /** Les nœuds dont l'aperçu est aussi le fichier enregistré, et qui portent donc un bloc iXML. */
 const NOEUDS_EXPORT = ["sortie-audio", "convertisseur-mp3-wav"];
 
-// Champs "signal unique" déjà consommés et effacés (mis à `undefined`) par leurs
-// blocs dédiés plus bas dans `lancer()`, avant la fusion générique des champs
-// autonomes. Exclus explicitement de cette fusion : ce sont des déclencheurs
-// ponctuels (import de graphe, installation de node), pas de l'état d'affichage
-// à faire persister sur le nœud.
-const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_nodeInstalle"]);
+// LA TROISIÈME CLASSE A DISPARU, ET C'EST UN RÉSULTAT. `CHAMPS_SIGNAL_UNIQUE` nommait ici trois
+// champs qu'un composant posait sur un nœud pour parler au MOTEUR : un graphe à créer, un graphe
+// trouvé dans un fichier, une palette à relire. Le moteur les relisait puis les remettait à
+// `undefined`. C'était une quatrième liste de noms tenue à la main, et un cinquième champ, celui de
+// l'export, écrivait la même chose sans y figurer.
+//
+// Ces demandes passent désormais par `moteur`, dans le retour de l'exécuteur : rien ne se pose sur
+// le nœud, donc il n'y a ni classe à décider, ni remise à zéro à prévoir, ni champ à oublier. Il ne
+// reste que deux classes, la troisième n'ayant jamais décrit que des champs qui n'avaient pas à être
+// là. Voir `DemandeAuMoteur` dans `core/types.ts`.
 
 // Champs saisis par l'utilisateur : ils ne doivent JAMAIS être réinitialisés par
 // une cascade de reset. Seuls les résultats de calcul (URLs blob, buffers,
@@ -61,33 +69,15 @@ const CHAMPS_SIGNAL_UNIQUE = new Set(["_grapheGenere", "_grapheEmbarque", "_node
 // du bug : un nœud collé affichait/jouait le résultat de l'original avant même
 // sa première exécution, car `audioResultatBuffer`/`audioResultatUrl` etc.
 // étaient copiés par erreur avec le reste de `data`.
-export const CHAMPS_UTILISATEUR = new Set([
-  "ficheId",
-  "nom",
-  // Le second texte d'une note ou d'un cadre : une saisie, au même titre que le premier.
-  "nomEn",
-  "parametres",
-  "zonesSelectionnees",
-  "audioFichier",
-  "audioNom",
-  "audioUrl",
-  "audioChemin",
-  "midiFichier",
-  "midiNom",
-  "midiUrl",
-  "imageFichier",
-  "imageNom",
-  "imageUrl",
-  "svgFichier",
-  "svgNom",
-  "svgUrl",
-  "pdfFichier",
-  "pdfNom",
-  "irFichier",
-  "irNom",
-  "enregistrementBlob",
-  "enregistrementUrl",
-]);
+/**
+ * Ce que la personne a posé sur un nœud, et que rien n'efface jamais.
+ *
+ * DÉRIVÉ, ET NON PLUS ÉNUMÉRÉ. Vingt-cinq noms étaient écrits ici à la main, et les sept autres
+ * endroits qui décrivaient le même savoir en avaient chacun un sous-ensemble différent. La table des
+ * genres de saisie, dans `core/saisies.ts`, les déclare une fois ; ceci n'est plus qu'un nom pour
+ * elle. Sert aussi d'allowlist au copier-coller, privée des médias locaux.
+ */
+export const CHAMPS_UTILISATEUR: ReadonlySet<string> = CHAMPS_DE_SAISIE;
 
 // Média chargé par l'utilisateur SUR CE NŒUD précis.
 //
@@ -102,15 +92,8 @@ export const CHAMPS_UTILISATEUR = new Set([
 // La distinction ne vaut que pour la COPIE (Ctrl+C). Un couper-coller (Ctrl+X)
 // est un déplacement, pas une duplication : l'original disparaît, donc le média
 // doit suivre — l'oublier là reviendrait à le détruire.
-export const CHAMPS_MEDIA_LOCAL = new Set([
-  "audioFichier", "audioNom", "audioUrl", "audioChemin",
-  "midiFichier", "midiNom", "midiUrl",
-  "imageFichier", "imageNom", "imageUrl",
-  "svgFichier", "svgNom", "svgUrl",
-  "pdfFichier", "pdfNom",
-  "irFichier", "irNom",
-  "enregistrementBlob", "enregistrementUrl",
-]);
+/** Les médias chargés sur CE nœud, dérivés de la même table : voir `core/saisies.ts`. */
+export const CHAMPS_MEDIA_LOCAL: ReadonlySet<string> = CHAMPS_MEDIA;
 
 /** Champs retenus par un copier-coller (Ctrl+C) : saisie utilisateur, média exclu. */
 export const CHAMPS_COPIABLES = new Set(
@@ -150,14 +133,73 @@ export const CHAMPS_RESULTAT = new Set([
   "visualisationUrl",
   "tempsExecution",
   "ecartNiveau",
-  // Ce que le Montage et la Maquette déposent pour leur ligne de temps : les durées réelles des
-  // pistes, les tampons de leurs sons, les notes de leurs boîtes. Relevé par Fabien, et c'est le
-  // MÊME défaut que celui du dessin de courbe ci-dessus : la barre d'une piste, son onde et ses notes
-  // restaient à l'écran après une remise à zéro, décrivant une exécution qui n'avait plus lieu.
-  "_dureesMesurees",
-  "_montageSons",
-  "_maquetteNotes",
+  // ── L'ANCIEN RÉGIME EST VIDE ──
+  //
+  // VINGT-NEUF CHAMPS Y FIGURAIENT, sur douze composants. Vingt-six sont passés au canal
+  // d'affichage, deux ont été retirés parce que rien ne les lisait, et le dernier, `_grapheExport`,
+  // est parti par le canal du moteur : il ne décrivait pas ce qu'on voit, il disait au moteur quoi
+  // embarquer dans le fichier écrit.
+  //
+  // Ce qui précède est ce que le MOTEUR lui-même dépose sur un nœud : l'URL du son rendu, son
+  // message, le temps d'exécution. Un composant, lui, n'écrit plus rien.
+
+  // ── LE CANAL DÉCLARÉ, et ce qu'il remplace ──
+  //
+  // Ces deux clés seules valent pour tout composant qui rend `affichage` ou `designe` : la classe
+  // ne se déclare plus champ par champ dans cette liste, elle est portée par le canal. Un composant
+  // migré n'ajoute donc plus rien ici, et n'a plus rien à y oublier. Les vingt-neuf entrées
+  // ci-dessus sont ce qui reste de l'ancien régime, et elles s'en iront composant par composant.
+  "_affichage",
+  "_designe",
 ]);
+
+/**
+ * Ce qu'un CHANGEMENT DE RÉGLAGE ne périme pas, bien que le run l'ait déposé.
+ *
+ * POURQUOI CE SECOND AXE EXISTE, relevé par Fabien : « l'écoute vivante fonctionnait hier et ne
+ * fonctionne plus ». C'est cette liste-ci qui manquait. Un réglage modifié passe par la même remise
+ * à zéro que le bouton, et depuis que les tampons du Montage s'effacent au reset — ce qu'il fallait
+ * pour que le dessin ne survive pas à l'exécution qui l'a produit — bouger un gain les effaçait
+ * aussi : le graphe vivant n'avait plus rien à jouer et s'arrêtait. Régler en écoutant redevenait
+ * impossible, ce qui est le défaut même qu'il corrigeait.
+ *
+ * LE CRITÈRE : un réglage périme ce que le nœud a CALCULÉ, jamais ce qu'il a DÉSIGNÉ DE SES ENTRÉES.
+ * Les tampons des pistes sont ceux des composants d'amont, les durées mesurées sont celles des sons
+ * reçus, les notes sont celles des boîtes branchées : changer un début ou un gain ne touche à aucun
+ * des trois. Le bouton de remise à zéro, lui, les efface comme le reste, le nœud repassant « en
+ * attente ». Ce n'est donc pas une quatrième classe, c'est la portée d'un geste.
+ *
+ * ET CELA NE VAUT QUE POUR LE NŒUD DONT LE RÉGLAGE A CHANGÉ. Un montage situé en aval, lui, voit ses
+ * entrées changer pour de bon : ses tampons sont périmés, et la cascade les efface.
+ *
+ * Le dépôt avait déjà rencontré ce conflit, sur les zones, et l'avait résolu par le choix entre
+ * `reinitialiserNoeud` et `reinitialiserAval` : « effacer le nœud ferait disparaître sa forme d'onde
+ * et son lecteur à chaque zone ajoutée ». Ici le résultat calculé EST périmé, donc il faut effacer le
+ * nœud ; seule la matière d'affichage venue des entrées doit rester.
+ */
+export const CHAMPS_GARDES_AU_REGLAGE = new Set([
+  // LE CANAL DÉCLARÉ : `designe` dit ce que le run a reçu, qu'un réglage ne périme pas. Un
+  // composant migré est couvert par cette seule entrée, quel que soit ce qu'il désigne.
+  //
+  // ELLE EST SEULE, ET C'EST LA MESURE DE CE QUE LE CANAL CHANGE. Trois champs y figuraient, un par
+  // besoin d'un composant ; le Montage et la Maquette passés au canal, il n'en reste aucun, et le
+  // prochain composant qui désignera quelque chose de ses entrées n'aura rien à ajouter ici.
+  "_designe",
+]);
+
+/**
+ * Les quatre classes réunies, telles que `core/cycle-de-vie.ts` les attend.
+ *
+ * ELLES RESTENT DÉCLARÉES ICI, avec le moteur qui les applique ; ce qu'on en FAIT est parti dans le
+ * cœur, où cela se démontre. Un banc peut donc prendre cet objet tel quel et éprouver les
+ * transitions sur les quatre cent quarante-huit fiches, sans monter React.
+ */
+export const CLASSES: ClassesDeChamps = {
+  utilisateur: CHAMPS_UTILISATEUR,
+  resultat: CHAMPS_RESULTAT,
+  gardesAuReglage: CHAMPS_GARDES_AU_REGLAGE,
+  mediaLocal: CHAMPS_MEDIA_LOCAL,
+};
 
 export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
@@ -242,7 +284,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
   };
 
   // ── Réinitialiser un ensemble de nœuds ──
-  const reinitialiserIds = useCallback((ids: Set<string>) => {
+  //
+  // `garder` nomme les champs de résultat à laisser en place, et n'est employé que par le changement
+  // de réglage : voir `CHAMPS_GARDES_AU_REGLAGE`. Le bouton de remise à zéro, lui, n'en passe pas.
+  const reinitialiserIds = useCallback((ids: Set<string>, garder?: ReadonlySet<string>) => {
     // Un reset pendant un run en cours signale l'annulation : sans ça, le nœud
     // en cours de calcul (ex. extraction de features piste par piste sur une
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
@@ -252,28 +297,29 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // être pur. Double-invoqué par StrictMode, il révoquait deux fois — sans
     // conséquence ici, la révocation étant idempotente — mais c'est le même motif
     // qui, à la création d'URL, laissait un blob orphelin par nœud et par run.
+    //
+    // ON RÉVOQUE CE QUI EST UNE URL D'OBJET, ET NON UNE LISTE DE NOMS. Quatre champs y étaient
+    // énumérés à la main, et c'était la même divergence que celle qui a fait survivre des résultats à
+    // la remise à zéro : les films du montage vidéo, de l'extrait, du muet et de la démonstration
+    // sont eux aussi des `createObjectURL`, et aucun n'y figurait — un blob par nœud et par run
+    // restait donc en mémoire. La seule liste qui décide est `CHAMPS_RESULTAT`, et la valeur dit
+    // d'elle-même si elle est à révoquer.
     for (const n of noeudsRef.current) {
       if (!ids.has(n.id)) continue;
-      if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
-      if ((n.data as any).mp3Url) URL.revokeObjectURL((n.data as any).mp3Url);
-      if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
-      if (n.data.visualisationUrl) URL.revokeObjectURL(n.data.visualisationUrl);
+      for (const url of urlsARevoquer(n.data as any, CLASSES, garder)) URL.revokeObjectURL(url);
     }
     // L'état d'exécution vit dans son magasin : le remettre en attente ne passe plus par le
     // tableau des nœuds (voir `ui/statuts.ts`).
     reinitialiserStatuts(ids);
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
-      const nouvelleData: any = { ...n.data };
-      for (const champ of CHAMPS_RESULTAT) nouvelleData[champ] = undefined;
-      // Garde-fou : on ne doit jamais effacer un champ utilisateur.
-      for (const champ of CHAMPS_UTILISATEUR) {
-        if (champ in nouvelleData && nouvelleData[champ] === undefined && (n.data as any)[champ] !== undefined) {
-          console.warn(`[reinitialiserIds] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
-          nouvelleData[champ] = (n.data as any)[champ];
-        }
+      // LA RÈGLE EST DANS `core/cycle-de-vie.ts`, ce crochet ne fait que l'appliquer : c'est ce qui
+      // permet à un banc d'éprouver la transition sur les 448 fiches sans monter React.
+      const { etat, saisiesSauvees } = apresEffacement(n.data as any, CLASSES, garder);
+      for (const champ of saisiesSauvees) {
+        console.warn(`[reinitialiserIds] Tentative de réinitialisation du champ utilisateur "${champ}" — opération annulée.`);
       }
-      return { ...n, data: nouvelleData };
+      return { ...n, data: etat as typeof n.data };
     }));
     for (const id of ids) cacheExec.current.delete(id);
   }, [setNodes]);
@@ -296,6 +342,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
   // arêtes à jour plutôt qu'une closure périmée.
   const reinitialiserNoeud = useCallback((nodeId: string) => {
     reinitialiserIds(new Set([nodeId, ...descendants(nodeId, aretesRef.current)]));
+  }, [reinitialiserIds]);
+
+  /**
+   * La remise à zéro d'un changement de RÉGLAGE, et non du bouton.
+   *
+   * DEUX PORTÉES, ET C'EST TOUT L'OBJET. L'aval est effacé entièrement : ses entrées viennent de
+   * changer, donc tout ce qu'il en a tiré est faux, tampons compris. Le nœud réglé, lui, garde ce
+   * qu'il avait désigné de SES entrées — un réglage ne les touche pas — et c'est ce qui permet de
+   * continuer à entendre son montage pendant qu'on le règle.
+   */
+  const reinitialiserPourReglage = useCallback((nodeId: string) => {
+    reinitialiserIds(descendants(nodeId, aretesRef.current));
+    reinitialiserIds(new Set([nodeId]), CHAMPS_GARDES_AU_REGLAGE);
   }, [reinitialiserIds]);
 
   const reinitialiserAval = useCallback((nodeId: string) => {
@@ -527,6 +586,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // L'ecart de niveau mesure sur chaque noeud, en decibels. Voir le commentaire pose la
     // ou il est calcule.
     const ecartsParNoeud = new Map<string, number>();
+    // CE QUE CHAQUE COMPOSANT MONTRE, par le canal déclaré de son exécuteur. Voir `FonctionPlugin`
+    // dans `core/types.ts` : `affichage` est ce que le run a produit, `designe` ce qu'il a désigné
+    // de ses entrées, et cette distinction seule décide de ce qu'un réglage périme.
+    const affichageParNoeud = new Map<string, Record<string, unknown>>();
+    const designeParNoeud = new Map<string, Record<string, unknown>>();
+    // CE QUE LES COMPOSANTS DEMANDENT AU MOTEUR, et qui ne se pose jamais sur un nœud : embarquer un
+    // graphe dans le fichier écrit, en poser un sur le canevas, relire la palette. Voir `moteur`
+    // dans `core/types.ts`.
+    const demandesParNoeud = new Map<string, DemandeAuMoteur>();
 
     // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
     // boucles et les instruments, le publier, calculer l'ordre topologique : tout cela est
@@ -562,7 +630,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!node) {
  continue; }
 
-      const sourceReprocessee = aretes.some((a) => a.target === nodeId && traitesCeRun.has(a.source));
+      const sourceReprocessee = sourceRetraitee(nodeId, aretes, traitesCeRun);
       const hashParams = empreinteParametres(node.data);
       const monHashEntree = empreinteEntrees(nodeId, aretesG);
       // LE CÂBLAGE AVAL ENTRE DANS LA CLÉ depuis qu'un nœud peut savoir si une de ses sorties est
@@ -575,20 +643,27 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // cachés — la fiche le déclare, le moteur ne connaît aucun id en dur.
       const jamaisCache = trouverDef(node.data.ficheId as string)?.jamaisCache === true;
 
-      const cacheIdentique =
-        !jamaisCache &&
-        !sourceReprocessee &&
-        entreeCache &&
-        entreeCache.hashParams === hashParams &&
-        entreeCache.hashEntree === monHashEntree &&
-        entreeCache.hashSorties === hashSorties &&
-        entreeCache.hashValeursEntree === hashValeursEntree;
+      // LA DÉCISION EST DANS `core/cache-execution.ts`, AVEC SES CAS ET SON PRIX. Elle y tient en
+      // deux fonctions pures, et l'en-tête de ce module-là dit pourquoi un composant rejoué
+      // entraîne toute sa descendance même quand il rend deux fois la même chose.
+      const cacheIdentique = entreeCache && peutReutiliserLeCache(
+        jamaisCache, sourceReprocessee, entreeCache,
+        { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree },
+      );
 
       console.log(`[cache] ${nodeId}(${node.data.ficheId}) sourceReprocessee=${sourceReprocessee} jamaisCache=${jamaisCache} hit=${cacheIdentique} hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree} cached=${entreeCache ? { hp: entreeCache.hashParams, he: entreeCache.hashEntree, hv: entreeCache.hashValeursEntree } : null}`);
 
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         if (entreeCache.message) messages.set(nodeId, entreeCache.message);
+        // LE CACHE PORTE AUSSI CE QUE LE NŒUD MONTRAIT, et il ne le portait pas. Un raccourci de
+        // cache ne repassait donc rien dans les deux canaux déclarés, et le moteur posait
+        // `undefined` : l'écran d'un nœud sauté se vidait. Cela ne se voyait pas, parce que le
+        // report des champs autonomes remettait par-dessus la valeur de l'INSTANTANÉ, c'est-à-dire
+        // celle d'un run antérieur. Deux fautes qui se masquaient l'une l'autre ; corriger l'une
+        // sans l'autre aurait vidé l'écran à chaque cache.
+        if (entreeCache.affichage) affichageParNoeud.set(nodeId, entreeCache.affichage);
+        if (entreeCache.designe) designeParNoeud.set(nodeId, entreeCache.designe);
         poserStatut(nodeId, "termine");
         if (typeof entreeCache.tempsExecution === "number") {
           const visibleId = plat.expansions.get(nodeId) ?? nodeId;
@@ -620,12 +695,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // réexécution des vrais descendants est déjà assurée par `sourceReprocessee`
       // (propagation transitive via `traitesCeRun`), qui ne touche QUE les
       // nœuds dont une entrée réelle a été recalculée ce run.
+      //
+      // ET C'EST ICI, AVANT L'EXÉCUTION, QUE LE NŒUD EST DÉCLARÉ RETRAITÉ : dès qu'il a TOURNÉ, et
+      // non dès que sa sortie a CHANGÉ. Un composant `jamaisCache` qui rend deux fois la même chose
+      // entraîne donc toute sa descendance. Comparer les sorties pour arrêter la propagation serait
+      // faux : les empreintes décrivent une forme et non un contenu, et deux sons différents de
+      // même durée en portent une seule. Voir `core/cache-execution.ts`, qui tient la décision et
+      // ses cas.
       traitesCeRun.add(nodeId);
 
       const fn = registre.trouverPlugin(node.data.ficheId as string);
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
+      // CE NŒUD A-T-IL DEMANDÉ SI SES SORTIES ÉTAIENT BRANCHÉES ? La réponse se constate pendant son
+      // run, et décide si son câblage aval entre dans sa clé de cache. Déclaré par tour de boucle :
+      // c'est une propriété de CE nœud, et la porter au-delà les mélangerait.
+      let aConsulteSesSorties = false;
       const ajouterTemps = (ms: number) => {
         const visibleId = plat.expansions.get(nodeId) ?? nodeId;
         tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
@@ -639,8 +725,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
           entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
           // Les arêtes sont ici, et elles disent si un câble part de cette sortie. Un nœud peut
           // alors ne calculer une sortie chère que lorsqu'elle sert.
-          sortieBranchee: (idx: number) =>
-            aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`),
+          //
+          // ET POSER LA QUESTION EST RETENU. C'est ce fait — non une liste de composants — qui
+          // décide si le câblage aval entre dans la clé de cache de ce nœud. Voir
+          // `core/cache-execution.ts` : un nœud qui ne demande jamais si ses sorties sont branchées
+          // ne peut pas en dépendre, et un câble ajouté derrière lui ne doit pas le faire rejouer.
+          sortieBranchee: (idx: number) => {
+            aConsulteSesSorties = true;
+            return aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`);
+          },
           paramNombre: (nom: string, defaut: number) => {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
             if (typeof p === "number") return p;
@@ -707,6 +800,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
           if (ec) ecartsParNoeud.set(nodeId, ec.ecart);
         } catch { /* une mesure ratée ne fait pas échouer une exécution */ }
         if (res.message) messages.set(nodeId, res.message);
+        if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
+        if (res.designe) designeParNoeud.set(nodeId, res.designe);
+        if (res.moteur) demandesParNoeud.set(nodeId, res.moteur);
         // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
         // (entrée manquante, pas assez d'entrées, fichier absent…) : le marquer
         // « erreur » (et donc le propager) au lieu de « terminé ». Sinon un
@@ -723,7 +819,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, tempsExecution: elapsed });
+          // `consulteSorties` est ce que le nœud vient de DEMANDER, et non ce qu'une fiche déclare :
+          // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
+          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
@@ -834,7 +932,21 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const defNode = trouverDef(n.data.ficheId as string);
         if ((!vals || vals.length === 0) && !messages.has(n.id)) return null;
         // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
-        if (defNode?.affichageAutonome) return null;
+        //
+        // SAUF LES DEUX CANAUX DÉCLARÉS ET SON MESSAGE. « Autonome » veut dire que le moteur ne lui
+        // fabrique ni lecteur audio, ni aperçu, ni URL d'image : il montre ce qu'il a lui-même
+        // désigné. Cela ne veut pas dire qu'il n'a rien à recevoir. Deux composants sont dans ce cas,
+        // « Carte sonore » et « Coordonnées sur carte » : tous deux rendent `affichage` et leur vue
+        // lit `_affichage.htmlPath`, or ce retour anticipé le jetait, si bien que la carte ne
+        // pouvait pas s'afficher. Les canaux passent donc, et rien d'autre.
+        if (defNode?.affichageAutonome) {
+          const canaux = {
+            audioResultatMessage: messages.get(n.id) ?? undefined,
+            _affichage: affichageParNoeud.get(n.id) ?? undefined,
+            _designe: designeParNoeud.get(n.id) ?? undefined,
+          };
+          return canaux._affichage || canaux._designe || canaux.audioResultatMessage ? canaux : null;
+        }
         const valsSafe = vals ?? [];
         // L'aperçu joue la PREMIÈRE sortie audio. Les nœuds dont les sorties audio sont des pairs —
         // les six pistes d'un séparateur — le disent par `sansApercuAudio` et n'en ont aucun.
@@ -867,7 +979,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         const courbeProduite = (valsSafe as unknown[]).find(estCourbe);
         const apercuCourbe = courbeProduite ? echantillonnerPourApercu(courbeProduite.valeurs, 256) : undefined;
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
-        const grapheExport = (n.data as any)?._grapheExport as string | undefined;
+        const grapheExport = demandesParNoeud.get(n.id)?.grapheAEmbarquer;
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
         // démonter/remonter le lecteur à chaque run (cache) et empêche le
         // rechargement gris/0:00 sur les nœuds déjà terminés.
@@ -973,6 +1085,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
           midiFichierSortie: midiFile ?? undefined,
           imageResultatUrl: imageUrl ?? undefined,
           imageResultatFile: imageFile ?? undefined,
+          // LE CANAL DÉCLARÉ, posé sous deux clés réservées. Le `?? undefined` compte : un composant
+          // qui ne rend plus rien à montrer doit effacer ce qu'il montrait au run précédent, sinon
+          // l'écran décrirait une exécution qui n'a plus lieu.
+          _affichage: affichageParNoeud.get(n.id) ?? undefined,
+          _designe: designeParNoeud.get(n.id) ?? undefined,
         };
       }
     }
@@ -1011,68 +1128,51 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // — donc dès ce premier appel, `noeudsRef.current` ne contient déjà plus
     // le MÊME objet `data` que celui que le plugin mute ensuite (`ctx.noeud.data`
     // reste l'ancien objet, maintenant orphelin de l'état React). Toute
-    // mutation que le plugin fait sur `ctx.noeud.data` (ex. `_grapheGenere`,
-    // `_grapheEmbarque`, `_nodeInstalle` ci-dessous) était donc invisible ici
+    // mutation que le plugin faisait sur `ctx.noeud.data` était donc invisible ici
     // — bug préexistant, vérifié sur le code d'origine (avant l'ajout du mode
     // Ollama), qui rendait la génération de graphe totalement silencieuse :
     // le nœud passait bien à « Terminé » mais rien n'apparaissait sur le
     // canevas. `nds`, lui, référence directement les objets mutés par les
     // plugins — aucune de ces trois fonctionnalités ne peut avoir fonctionné
     // depuis l'introduction de cette optimisation de `definirStatut`.
-    if (onGrapheGenere) {
-      for (const n of nds) {
-        const spec = (n.data as any)?._grapheGenere;
-        if (spec && spec.nodes && spec.edges) {
-          onGrapheGenere(n.id, { nodes: spec.nodes, edges: spec.edges });
-          (n.data as any)._grapheGenere = undefined;
-        }
-        // Graphe embarqué dans un fichier audio importé
-        const embarque = (n.data as any)?._grapheEmbarque;
-        if (embarque && embarque.nodes && embarque.edges) {
-          onGrapheGenere(n.id, {
-            nodes: embarque.nodes.map((nn: any) => ({ ficheId: nn.ficheId, label: nn.ficheId })),
-            edges: embarque.edges.map((ee: any) => ({
-              source: embarque.nodes.findIndex((nn: any) => nn.id === ee.source),
-              target: embarque.nodes.findIndex((nn: any) => nn.id === ee.target),
-            })).filter((e: any) => e.source >= 0 && e.target >= 0),
-          });
-          (n.data as any)._grapheEmbarque = undefined;
-        }
+    // LES DEMANDES SE LISENT DANS LE RETOUR DU RUN, et rien n'est à effacer ensuite : elles ne se
+    // sont jamais posées sur un nœud. Le long commentaire qui précédait disait qu'un champ muté par
+    // un plugin restait invisible tant qu'on lisait l'état React au lieu de l'instantané du run ;
+    // la question ne se pose plus, puisque le composant rend sa demande au lieu de l'écrire.
+    for (const [nodeId, demande] of demandesParNoeud) {
+      if (onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
+        onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
+      }
+      // UN GRAPHE TROUVÉ DANS UN FICHIER arrive avec des identifiants de nœuds : il se convertit en
+      // fiches et en rangs, qui est ce que le canevas sait poser.
+      const trouve = demande.grapheTrouve;
+      if (onGrapheGenere && trouve?.nodes && trouve?.edges) {
+        onGrapheGenere(nodeId, {
+          nodes: trouve.nodes.map((nn) => ({ ficheId: nn.ficheId, label: nn.ficheId })),
+          edges: trouve.edges.map((ee) => ({
+            source: trouve.nodes.findIndex((nn) => nn.id === ee.source),
+            target: trouve.nodes.findIndex((nn) => nn.id === ee.target),
+          })).filter((e) => e.source >= 0 && e.target >= 0),
+        });
       }
     }
-
-    // Vérifier si un node a été installé dynamiquement (import de .zip)
-    // Même raison qu'au-dessus : lire `nds`, pas `noeudsRef.current`.
-    if (onNodeInstalle) {
-      for (const n of nds) {
-        const data = n.data as any;
-        if (data?._nodeInstalle) {
-          onNodeInstalle();
-          data._nodeInstalle = undefined;
-          break;
-        }
-      }
-    }
+    if (onNodeInstalle && [...demandesParNoeud.values()].some((d) => d.paletteARelire)) onNodeInstalle();
 
     // Fusion générique des champs "autonomes" (préfixés `_`, ex. `_carteHtmlUrl`,
     // `_carteSonore`) qu'un plugin à `affichageAutonome: true` écrit sur
     // `ctx.noeud.data` pendant son exécution. `ctx.noeud` pointe vers l'entrée
     // de `nds` (l'instantané local aplati de ce run), pas vers l'état React réel
     // — une mutation faite là ne serait donc jamais vue par personne sans cette
-    // passe (même cause que `_grapheGenere`/`_grapheEmbarque`/`_nodeInstalle`
-    // ci-dessus, qui ont chacun leur propre correctif ciblé). Volontairement
-    // placée en dernier : les trois blocs précédents effacent leurs champs une
-    // fois consommés, donc cette passe les recopie à `undefined` (no-op) plutôt
-    // que de risquer de les redéclencher.
+    // passe. Les demandes au moteur, elles, ne passent plus par là du tout : elles
+    // arrivent dans le retour de l'exécuteur et ne touchent jamais un nœud.
+    //
+    // LES DEUX CANAUX DÉCLARÉS NE PASSENT PAS PAR ICI, et c'est `core/cycle-de-vie.ts` qui le
+    // tient : ils viennent du retour de l'exécuteur, ou du cache, jamais de l'instantané.
     const champsAutonomesParNoeud = new Map<string, Record<string, unknown>>();
     for (const n of nds) {
       const d = n.data as any;
       if (!d) continue;
-      let champs: Record<string, unknown> | null = null;
-      for (const cle of Object.keys(d)) {
-        if (!cle.startsWith("_") || CHAMPS_SIGNAL_UNIQUE.has(cle)) continue;
-        (champs ??= {})[cle] = d[cle];
-      }
+      const champs = champsAReporter(d as Record<string, unknown>);
       if (champs) champsAutonomesParNoeud.set(n.id, champs);
     }
     if (champsAutonomesParNoeud.size > 0) {
@@ -1265,5 +1365,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
   }, [lancerUnePasse]);
 
-  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserTout };
+  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }

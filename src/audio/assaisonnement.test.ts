@@ -5,7 +5,11 @@
 // rapprocher le son de la région sucrée serait une décoration ; le test refuse cela.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { assaisonner, doserAssaisonnement, porter, lier, desaccorder, adoucir } from "./assaisonnement";
+import {
+  assaisonner, assaisonnerVers, distanceAuPoint, doserAssaisonnement, doserVersPoint,
+  porter, lier, desaccorder, adoucir,
+} from "./assaisonnement";
+import { pointDepuisDegustation, type ProfilDegustation } from "./accord-mets";
 import { mesurer, REGIONS, type DimensionsGout, type Gout } from "./gout";
 
 const SR = 44100;
@@ -157,5 +161,121 @@ describe("assaisonner", () => {
       for (const v of r.son.getChannelData(0)) crete = Math.max(crete, Math.abs(v));
       expect(crete, gout).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+// ── VISER UNE COMBINAISON, ET NON UN SEUL GOÛT ──
+//
+// DEMANDÉ PAR FABIEN : « il faut adapter l'assaisonnement pour les combinaisons sucré, salé, amer,
+// acide, comme dans l'accord mets-musique ». Une dégustation n'est presque jamais d'un seul goût.
+// Le barycentre des quatre régions existait déjà dans `accord-mets.ts` ; l'assaisonnement, lui, ne
+// savait viser qu'un sommet, alors que son calcul ne lit de la région que ses cinq coordonnées.
+//
+// CE QUE CES CAS TIENNENT, ET DANS QUEL ORDRE. D'abord que la généralisation NE CHANGE RIEN au cas
+// d'un goût pur, ce qui est la seule façon de savoir qu'on n'a rien cassé en élargissant. Ensuite
+// que viser entre deux régions vise bien entre elles. Enfin ce que le dosage fait de cet écart.
+describe("viser un point plutôt qu'une région", () => {
+  const profilPur = (g: Gout): ProfilDegustation =>
+    ({ "sucré": 0, "acide": 0, "amer": 0, "salé": 0, [g]: 100 }) as ProfilDegustation;
+
+  it("UN PROFIL D'UN SEUL GOÛT TOMBE EXACTEMENT SUR SA RÉGION", () => {
+    for (const g of GOUTS) expect(pointDepuisDegustation(profilPur(g)), g).toEqual(REGIONS[g]);
+  });
+
+  it("ET LE DOSAGE Y EST LE MÊME QUE PAR L'ANCIEN CHEMIN : la généralisation ne change rien", () => {
+    // LE CAS QUI COMPTE LE PLUS. Élargir une fonction sans changer ce qu'elle faisait se vérifie,
+    // il ne se suppose pas : les deux voies doivent rendre des réglages identiques au bit près.
+    const actuel = mesurer(neutre()).dimensions;
+    for (const g of GOUTS) {
+      for (const dose of [0, 0.3, 0.7, 1]) {
+        expect(doserVersPoint(actuel, REGIONS[g], dose), `${g} à ${dose}`)
+          .toEqual(doserAssaisonnement(actuel, g, dose));
+      }
+    }
+  });
+
+  it("et le son rendu l'est aussi, réglages compris", async () => {
+    const b = neutre();
+    const ancien = await assaisonner(b, "salé", 0.6);
+    const nouveau = await assaisonnerVers(b, pointDepuisDegustation(profilPur("salé"))!, 0.6);
+    expect(nouveau.reglages).toEqual(ancien.reglages);
+    expect(nouveau.apres).toEqual(ancien.apres);
+  });
+
+  it("SEULE LA PROPORTION COMPTE, non la somme des quatre parts", () => {
+    const a = pointDepuisDegustation({ "sucré": 50, "acide": 0, "amer": 0, "salé": 50 });
+    const b = pointDepuisDegustation({ "sucré": 30, "acide": 0, "amer": 0, "salé": 30 });
+    const c = pointDepuisDegustation({ "sucré": 100, "acide": 0, "amer": 0, "salé": 100 });
+    expect(b).toEqual(a);
+    expect(c).toEqual(a);
+  });
+
+  it("UN MÉLANGE TOMBE ENTRE LES DEUX RÉGIONS, et à égale distance quand les parts le sont", () => {
+    const mix = pointDepuisDegustation({ "sucré": 50, "acide": 0, "amer": 0, "salé": 50 })!;
+    const dSucre = distanceAuPoint(mix, REGIONS["sucré"]);
+    const dSale = distanceAuPoint(mix, REGIONS["salé"]);
+    expect(dSucre).toBeCloseTo(dSale, 9);
+    // Et il est bien ENTRE : plus près de chacune que les deux ne le sont l'une de l'autre.
+    const entreElles = distanceAuPoint(REGIONS["sucré"], REGIONS["salé"]);
+    expect(dSucre).toBeLessThan(entreElles);
+    expect(dSucre).toBeCloseTo(entreElles / 2, 9);
+  });
+
+  it("une part qui l'emporte rapproche le point de sa région", () => {
+    const vers = (partSucre: number) => distanceAuPoint(
+      pointDepuisDegustation({ "sucré": partSucre, "acide": 0, "amer": 0, "salé": 100 - partSucre })!,
+      REGIONS["sucré"]);
+    expect(vers(90)).toBeLessThan(vers(50));
+    expect(vers(50)).toBeLessThan(vers(10));
+  });
+
+  it("LES QUATRE PARTS À ZÉRO NE DÉSIGNENT AUCUNE CIBLE, et viser le centre le cacherait", () => {
+    expect(pointDepuisDegustation({ "sucré": 0, "acide": 0, "amer": 0, "salé": 0 })).toBeNull();
+  });
+
+  it("À DOSE NULLE, RIEN N'EST DEMANDÉ AU SON, quelle que soit la cible", () => {
+    const actuel = mesurer(neutre()).dimensions;
+    const mix = pointDepuisDegustation({ "sucré": 40, "acide": 30, "amer": 20, "salé": 10 })!;
+    // `toBeCloseTo` plutôt que `toBe` : un écart négatif multiplié par une dose nulle rend `-0`,
+    // que `Object.is` distingue de `+0`. C'est le zéro signé de la norme, non un reste de calcul.
+    const r = doserVersPoint(actuel, mix, 0);
+    expect(r.demiTons).toBeCloseTo(0, 10);
+    expect(r.vitesse).toBeCloseTo(1, 10);
+    expect(r.porte).toBeCloseTo(0, 10);
+    expect(r.queue).toBeCloseTo(0, 10);
+    expect(r.desaccord).toBeCloseTo(0, 10);
+    expect(r.gainDb).toBeCloseTo(0, 10);
+  });
+
+  it("ET LE DOSAGE VISE LA CIBLE, non une autre : chaque geste va dans le bon sens", () => {
+    // CE QUE CE CAS TIENT, ET CE QU'IL NE TIENT PAS. Il vérifie la DIRECTION du geste, non que le
+    // son l'atteigne : ce qu'un traitement peut faire est borné, la notice le dit, et la consonance
+    // d'un enregistrement ne se récrit pas. La direction, elle, doit être juste dans tous les cas.
+    const actuel = mesurer(neutre()).dimensions;
+    for (const p of [
+      { "sucré": 100, "acide": 0, "amer": 0, "salé": 0 },
+      { "sucré": 0, "acide": 0, "amer": 0, "salé": 100 },
+      { "sucré": 50, "acide": 0, "amer": 0, "salé": 50 },
+      { "sucré": 0, "acide": 60, "amer": 40, "salé": 0 },
+      { "sucré": 25, "acide": 25, "amer": 25, "salé": 25 },
+    ] as ProfilDegustation[]) {
+      const cible = pointDepuisDegustation(p)!;
+      const r = doserVersPoint(actuel, cible, 1);
+      expect(Math.sign(r.demiTons), `hauteur vers ${JSON.stringify(p)}`)
+        .toBe(Math.sign(Math.round((cible.hauteur - actuel.hauteur) * 1000)));
+      expect(Math.sign(r.gainDb), `intensité vers ${JSON.stringify(p)}`)
+        .toBe(Math.sign(Math.round((cible.intensite - actuel.intensite) * 1000)));
+      // Une vitesse visée plus haute donne un facteur supérieur à un, et l'inverse.
+      if (Math.abs(cible.vitesse - actuel.vitesse) > 0.01) {
+        expect(r.vitesse > 1, `vitesse vers ${JSON.stringify(p)}`).toBe(cible.vitesse > actuel.vitesse);
+      }
+      // L'articulation ouvre la porte OU la queue, jamais les deux.
+      expect(r.porte > 0 && r.queue > 0).toBe(false);
+    }
+  });
+
+  it("la distance se mesure dans les cinq dimensions, et vaut zéro sur soi-même", () => {
+    expect(distanceAuPoint(REGIONS["amer"], REGIONS["amer"])).toBe(0);
+    expect(distanceAuPoint(REGIONS["sucré"], REGIONS["acide"])).toBeGreaterThan(0);
   });
 });

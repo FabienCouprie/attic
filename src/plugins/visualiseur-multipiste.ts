@@ -55,14 +55,16 @@ export const fiches: FicheAudio[] = ([
         const fine = enveloppeFine(son);
         pistes.push({ piste: k, dureeSec: son.duration, crete: creteDenveloppe(fine), fine });
       }
-      // La vue lit ce champ : seule l'exécution connaît les sons branchés et leur durée.
-      (ctx.noeud.data as any)._pistesVisu = pistes;
+      // La vue les lit par le canal déclaré : seule l'exécution connaît les sons branchés et leur
+      // durée, et c'est une désignation des ENTRÉES, qu'un réglage ne périme pas.
+      const designe = { pistes };
       if (pistes.length === 0) {
         return { valeurs: [], message: en() ? "No track connected." : "Aucune piste branchée." };
       }
       const duree = Math.max(...pistes.map((p) => p.dureeSec));
       return {
         valeurs: [],
+        designe,
         message: `${pistes.length} ${en() ? "tracks" : "pistes"} · ${duree.toFixed(2)} s`,
       };
     },

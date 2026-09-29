@@ -232,15 +232,14 @@ export const fiches: FicheAudio[] = ([
       // Pas de blob téléchargeable séparément : le HTML référence ses MP3 en
       // chemins relatifs (`mp3/xxx.mp3`, copiés à côté d'index.html sur
       // disque) — un téléchargement isolé du blob romprait ces liens.
-      (ctx.noeud.data as any)._galerieHtmlPath = `${dossierSortie}/index.html`;
-      (ctx.noeud.data as any)._galeriePistes = pistes;
+      const affichage = { htmlPath: `${dossierSortie}/index.html`, pistes };
 
       // L'ordre d'accrochage se dit : une galerie rangée par coordonnées et une galerie rangée par
       // le dossier se ressemblent à l'œil, et rien d'autre ne distinguerait les deux.
       const ordre = range.placees > 0
         ? ` · ordre ${sens === "yx" ? "Y→X" : "X→Y"} : ${range.placees} placée(s)${range.restantes > 0 ? `, ${range.restantes} sans coordonnées à la suite` : ""}`
         : "";
-      return { valeurs: [], message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") + ordre };
+      return { valeurs: [], affichage, message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") + ordre };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

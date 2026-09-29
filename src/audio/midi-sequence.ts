@@ -9,6 +9,7 @@ import { traduire } from "../i18n";
 import type { Note } from "./note";
 import { melangerTampons, RESERVE_BATTERIE, separerPercussions, tamponSilencieux } from "./sequence-percussion";
 import { rendreAvecSF2 } from "./midi-soundfont";
+import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
 
 export type NoteEvenement = Note;
 
@@ -73,6 +74,12 @@ export async function rendreSequence(
     const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
     return ctx.startRendering();
   }
+  // LE RENDU JOUE CE QUE LE FICHIER DIRA, et c'est la seule façon de supprimer l'écart relevé par le
+  // banc de conformité. Sept composants empilaient deux notes de même hauteur sur un même canal :
+  // l'application les tenait toutes, un lecteur conforme relançait la note et le premier note-off
+  // éteignait tout. Résoudre ici ET à l'écriture fait que les deux racontent la même chose ; le
+  // résoudre d'un seul côté n'aurait fait que déplacer l'écart. Voir `recouvrement-hauteur.ts`.
+  notes = sansRecouvrementDeHauteur(notes);
 
   // UNE PIÈCE NE FINIT PAS FORCÉMENT SUR UNE NOTE. La longueur se prenait sur la dernière ; un
   // rythme qui se termine par un silence perdait donc ce silence, mesuré à 1,5 seconde rendue pour

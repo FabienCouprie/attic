@@ -63,6 +63,19 @@ const EXEMPLE = /-exemple\.json$/i;
  */
 const SANS_PORTS = new Set(["comment", "frame"]);
 
+/**
+ * Une bulle repliée n'a JAMAIS d'arête à elle, et ce n'est pas un oubli de câblage.
+ *
+ * Une bulle ne remplace pas ses composants : elle les CACHE et se dessine devant eux. Les arêtes
+ * restent posées sur les membres, avec leurs identifiants d'origine, et l'application dessine vers
+ * la bulle des arêtes de SUBSTITUTION qui n'existent pas dans le fichier. Exiger une arête sur la
+ * bulle elle-même reviendrait donc à exiger ce qu'aucun repli ne produit. Voir `core/bulles.ts`.
+ *
+ * CE QUI RESTE EXIGÉ, ET C'EST LE VRAI CONTRÔLE : que la bulle ait des membres. Une bulle vide est
+ * un nœud qui ne montre rien et ne calcule rien, et celle-là est bien une faute.
+ */
+const estBulle = (fiche) => typeof fiche === "string" && fiche.startsWith("bulle::");
+
 const racine = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
 /**
@@ -145,6 +158,11 @@ function fautes(graphe) {
     for (const n of graphe.nodes) {
       const fiche = n?.data?.ficheId ?? "?";
       if (SANS_PORTS.has(fiche)) continue;
+      if (estBulle(fiche)) {
+        const membres = graphe.nodes.filter((m) => m?.data?.bulle === n.id);
+        if (membres.length === 0) trouvees.push(`bulle sans membre : « ${n.id} »`);
+        continue;
+      }
       if (!relies.has(n.id)) trouvees.push(`nœud relié à rien : « ${n.id} » (${fiche})`);
     }
   }

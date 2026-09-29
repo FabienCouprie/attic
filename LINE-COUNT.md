@@ -1,328 +1,163 @@
 # File Line Count
 
-Generated from `src/` — all `.ts`, `.tsx` and `.css` files, blank lines and comments included.
+Generated from `src/` — every `.ts`, `.tsx` and `.css` file.
 Regenerate with `npm run docs:lignes`; a test fails when this file no longer matches the sources.
 
-**1103 files, 188417 lines.** The table lists the 318 files of 200 lines or more;
-the remaining 785 account for 87450 lines.
+**Weight** counts every line. **Code** counts what the repository's size norm measures:
+neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
+translations (any field whose name ends in `En`, and translation-table entries).
 
-| File | Lines |
-|---|---:|
-| src/ui/atelier.css | 1688 |
-| src/ui/App.tsx | 1421 |
-| src/i18n.tsx | 1405 |
-| src/ui/hooks/useExecutionGraphe.ts | 1270 |
-| src/audio/abc.ts | 764 |
-| src/ui/Inspector.tsx | 738 |
-| src/docs/documentation-graphe.ts | 728 |
-| src/ui/AtelierNode.tsx | 713 |
-| src/audio/sfz.test.ts | 619 |
-| src/audio/courbe.ts | 611 |
-| src/audio/csound.ts | 577 |
-| src/audio/clavier-banque.ts | 574 |
-| src/ui/SelecteurMultiZones.tsx | 539 |
-| src/plugins/montage.ts | 530 |
-| src/plugins/csound.ts | 523 |
-| src/plugins/textgen.ts | 523 |
-| src/plugins/effets-midi.ts | 505 |
-| src/plugins/generateurs-echantillons.ts | 502 |
-| src/audio/tone-synths.ts | 494 |
-| src/audio/multicanal.ts | 490 |
-| src/ui/FormeOnde.tsx | 484 |
-| src/audio/cercle.ts | 482 |
-| src/audio/sfz.ts | 467 |
-| src/ia.ts | 466 |
-| src/audio/midi-vers-abc.ts | 461 |
-| src/plugins/magenta.ts | 456 |
-| src/plugins/index.ts | 453 |
-| src/audio/clavier-banque.test.ts | 451 |
-| src/plugins/generateurs.test.ts | 450 |
-| src/plugins/effets-temporel.ts | 446 |
-| src/ui/BarreOutils.tsx | 446 |
-| src/audio/effets-spectral.test.ts | 444 |
-| src/audio/soundfont.ts | 440 |
-| src/plugins/analyse.ts | 437 |
-| src/audio/conformite-clavier.ts | 435 |
-| src/plugins/carte-sonore-plan-cellulaire.ts | 435 |
-| src/audio/cercle.test.ts | 432 |
-| src/audio/automate-cellulaire.ts | 430 |
-| src/plugins/theorie-avancee.ts | 429 |
-| src/audio/modulation-effets.test.ts | 428 |
-| src/ui/EditeurCode.tsx | 426 |
-| src/audio/courbe.test.ts | 422 |
-| src/audio/algebre.test.ts | 421 |
-| src/plugins/tone-synths.ts | 420 |
-| src/plugins/optionIds-retrocompat.test.ts | 419 |
-| src/audio/continuation-spectrale.ts | 418 |
-| src/plugins/prompt-graphe.ts | 418 |
-| src/audio/particules.test.ts | 416 |
-| src/audio/effets-montage.ts | 414 |
-| src/audio/quantification.ts | 413 |
-| src/audio/particules.ts | 412 |
-| src/audio/texture-statistique.ts | 412 |
-| src/plugins/sherpa-asr.ts | 411 |
-| src/audio/csound.test.ts | 410 |
-| src/plugins/effets-spectral.ts | 410 |
-| src/ui/MontageVideo.tsx | 407 |
-| src/parcours/exercices.ts | 401 |
-| src/plugins/pochette-svg.ts | 401 |
-| src/audio/pca-neuronale.ts | 397 |
-| src/core/bulles.ts | 397 |
-| src/plugins/notices.ts | 394 |
-| src/audio/hauteur.ts | 393 |
-| src/audio/batterie.ts | 390 |
-| src/audio/risset.ts | 389 |
-| src/core/domaine-nombre.test.ts | 389 |
-| src/plugins/syntheses-exotiques.ts | 388 |
-| src/plugins/theorie-composition.ts | 388 |
-| src/plugins/carte-sonore-formes.ts | 386 |
-| src/audio/effets-verification.test.ts | 385 |
-| src/audio/io.ts | 380 |
-| src/ui/vues-claviers.tsx | 379 |
-| src/audio/cercle-pulsant.test.ts | 378 |
-| src/audio/groove-box.ts | 377 |
-| src/audio/pghi.ts | 377 |
-| src/audio/reservoir.ts | 375 |
-| src/audio/ecosysteme.ts | 373 |
-| src/audio/analyse-genre.ts | 369 |
-| src/audio/io-profondeur.test.ts | 368 |
-| src/ui/demo/useRealisateurDemo.tsx | 367 |
-| src/audio/commun.ts | 364 |
-| src/plugins/tone-synths-fm.ts | 358 |
-| src/audio/couleurs.ts | 357 |
-| src/audio/csound-orchestre.ts | 355 |
-| src/audio/sms.ts | 352 |
-| src/docs/documentation-graphe.test.ts | 352 |
-| src/plugins/boucleSequencesGlobal.ts | 349 |
-| src/plugins/algebre-musicale.ts | 346 |
-| src/audio/accords.ts | 345 |
-| src/audio/generation-patrons.ts | 344 |
-| src/audio/harmonie-spectrale.test.ts | 344 |
-| src/plugins/python-processor.ts | 344 |
-| src/plugins/carte-sonore-decor.ts | 341 |
-| src/plugins/generateurs-sources.ts | 340 |
-| src/audio/motifs-midi.test.ts | 339 |
-| src/audio/objets-sonores.ts | 339 |
-| src/quiz/notions.ts | 337 |
-| src/core/meta.ts | 336 |
-| src/audio/csound-formules.ts | 333 |
-| src/audio/multicanal.test.ts | 333 |
-| src/plugins/vexflow-notation.ts | 333 |
-| src/audio/algebre.ts | 332 |
-| src/audio/groove-box.test.ts | 331 |
-| src/audio/ondelettes.test.ts | 330 |
-| src/audio/declipper.ts | 328 |
-| src/audio/multi-reservoir.ts | 325 |
-| src/docs/coeurs-par-trames.ts | 325 |
-| src/plugins/effets-modulation.ts | 324 |
-| src/audio/analyse.ts | 321 |
-| src/audio/cercle-pulsant.ts | 321 |
-| src/audio/ondelettes.ts | 321 |
-| src/core/bulles.test.ts | 320 |
-| src/ui/LigneDeTemps.tsx | 320 |
-| src/parcours/exercices-composition.ts | 319 |
-| src/quiz/notions-suite.ts | 319 |
-| src/core/instrument-graphe.test.ts | 315 |
-| src/audio/musicxml-arbre.ts | 314 |
-| src/audio/demonstration-video.ts | 313 |
-| src/core/cache.test.ts | 310 |
-| src/plugins/arbre-rythmique.ts | 310 |
-| src/plugins/magenta-helpers.ts | 310 |
-| src/quiz/formules.ts | 310 |
-| src/ui/hooks/usePersistance.ts | 310 |
-| src/core/graphe.test.ts | 308 |
-| src/parcours/mesures.ts | 307 |
-| src/audio/abc.test.ts | 306 |
-| src/audio/synthese-features.ts | 305 |
-| src/audio/risset.test.ts | 298 |
-| src/audio/spectral-wishart.ts | 297 |
-| src/audio/ssp.ts | 297 |
-| src/audio/video-sortie.ts | 297 |
-| src/audio/separation-voix.ts | 296 |
-| src/audio/motif-crossmodal.ts | 295 |
-| src/plugins/tonal.ts | 294 |
-| src/audio/cercle-mesures.ts | 290 |
-| src/audio/attracteurs.ts | 289 |
-| src/audio/spectral-cdp.ts | 289 |
-| src/plugins/multicanal.ts | 288 |
-| src/audio/inpainting.ts | 285 |
-| src/audio/spectral-wishart.test.ts | 285 |
-| src/plugins/midi-norme.test.ts | 285 |
-| src/audio/concret.ts | 284 |
-| src/audio/harmonie-spectrale.ts | 284 |
-| src/ui/vues-lecteur.tsx | 284 |
-| src/ui/ArbreRythmiqueVue.tsx | 283 |
-| src/ui/vues-images.tsx | 283 |
-| src/plugins/julia-processor.ts | 280 |
-| src/quiz/sigles.ts | 278 |
-| src/audio/grains.ts | 274 |
-| src/plugins/integration.test.ts | 274 |
-| src/audio/ssp.test.ts | 273 |
-| src/plugins/generateurs-fractals.ts | 273 |
-| src/audio/synthese-features.test.ts | 272 |
-| src/ui/vues-analyse.tsx | 268 |
-| src/audio/effets-modulation.ts | 267 |
-| src/audio/gout.ts | 267 |
-| src/plugins/generateurs-rythme.ts | 267 |
-| src/audio/micromontage.test.ts | 266 |
-| src/plugins/effet-parametres-midi.test.ts | 266 |
-| src/audio/reverbes-etendues.ts | 265 |
-| src/audio/fdn.ts | 264 |
-| src/plugins/rythme-vers-midi.test.ts | 264 |
-| src/audio/evolution.ts | 263 |
-| src/plugins/spectral-cdp.ts | 263 |
-| src/audio/correction-hauteur.ts | 261 |
-| src/ui/ExtraitVideo.tsx | 261 |
-| src/plugins/automate-cellulaire.ts | 260 |
-| src/audio/deplacement.test.ts | 259 |
-| src/audio/ecosysteme.test.ts | 258 |
-| src/audio/palette-harmonique.ts | 258 |
-| src/audio/percussions-placement.test.ts | 258 |
-| src/plugins/cercle-transformations.test.ts | 257 |
-| src/plugins/clavier-banque.ts | 257 |
-| src/audio/csound-aleatoire.ts | 255 |
-| src/audio/vitesse-midi.test.ts | 255 |
-| src/plugins/generateurs-reservoirs.ts | 255 |
-| src/ui/ClavierApprentissage.tsx | 255 |
-| src/audio/generation.ts | 254 |
-| src/core/graphe.ts | 254 |
-| src/ui/PistesMultiples.tsx | 254 |
-| src/audio/grains.test.ts | 253 |
-| src/audio/guides-onde.ts | 253 |
-| src/audio/microtons.test.ts | 253 |
-| src/audio/cercle-film.ts | 252 |
-| src/plugins/boucle-creneau.test.ts | 252 |
-| src/plugins/masquage-schillinger-gammes.ts | 252 |
-| src/core/types.ts | 251 |
-| src/audio/ampleur.test.ts | 250 |
-| src/audio/effets-mastering.ts | 250 |
-| src/core/instrument-graphe.ts | 250 |
-| src/ui/hooks/useLectureVive.ts | 250 |
-| src/audio/demonstration.ts | 249 |
-| src/plugins/effets.ts | 249 |
-| src/audio/conformite-clavier.test.ts | 248 |
-| src/audio/dissonance.test.ts | 248 |
-| src/plugins/deplacement.ts | 248 |
-| src/ui/clavier-jouable.tsx | 248 |
-| src/audio/csound-orchestre.test.ts | 247 |
-| src/plugins/galerie-exposition.ts | 247 |
-| src/workers/kokoro-local.test.ts | 247 |
-| src/audio/atomes.ts | 246 |
-| src/audio/micromontage.ts | 246 |
-| src/ui/Spectre.tsx | 246 |
-| src/audio/ecrans.ts | 245 |
-| src/plugins/soundfontGlobal.ts | 245 |
-| src/ui/rouleau-calcul.test.ts | 245 |
-| src/quiz/tour.test.ts | 243 |
-| src/audio/abc-reprise.ts | 242 |
-| src/plugins/cercle-transformations.ts | 242 |
-| src/ui/ligne-temps-calcul.test.ts | 242 |
-| src/audio/arbre-rythmique.ts | 241 |
-| src/audio/metadonnees.test.ts | 241 |
-| src/core/boucle-graphe.test.ts | 241 |
-| src/plugins/modeles-physiques.ts | 241 |
-| src/plugins/sequenceurs.ts | 241 |
-| src/audio/ampleur.ts | 240 |
-| src/audio/deplacement.ts | 240 |
-| src/audio/griffin-lim.ts | 240 |
-| src/ui/rouleau-calcul.ts | 240 |
-| src/audio/csound-aleatoire.test.ts | 239 |
-| src/audio/midi-vers-abc.test.ts | 239 |
-| src/audio/styles-film.ts | 239 |
-| src/audio/camelot.ts | 237 |
-| src/docs/modulables.ts | 237 |
-| src/audio/abc-edition-llm.ts | 236 |
-| src/audio/concatenatif.test.ts | 236 |
-| src/audio/vumetre.ts | 236 |
-| src/audio/effets-grains.ts | 235 |
-| src/audio/formants.ts | 235 |
-| src/audio/metadonnees.ts | 234 |
-| src/audio/motifs-midi.ts | 234 |
-| src/audio/accords-sequencer.test.ts | 233 |
-| src/audio/automate-cellulaire.test.ts | 233 |
-| src/audio/midi.test.ts | 233 |
-| src/plugins/effets-aides.ts | 231 |
-| src/audio/accords-sequencer.ts | 230 |
-| src/plugins/montage.test.ts | 230 |
-| src/plugins/vexflow.ts | 230 |
-| src/audio/dissonance.ts | 229 |
-| src/plugins/carte-sonore-plan-ville.ts | 229 |
-| src/quiz/tour.ts | 229 |
-| src/audio/arbre-rythmique.test.ts | 227 |
-| src/audio/moebius.test.ts | 227 |
-| src/audio/sms.test.ts | 227 |
-| src/audio/ambisonique.test.ts | 226 |
-| src/audio/csound-partition.ts | 226 |
-| src/audio/gtcrn.test.ts | 226 |
-| src/ui/vues-video.tsx | 226 |
-| src/audio/csound-opcodes.ts | 225 |
-| src/audio/batterie-midi.test.ts | 224 |
-| src/audio/declipper.test.ts | 224 |
-| src/audio/percussions-placement.ts | 224 |
-| src/audio/assaisonnement.ts | 223 |
-| src/audio/attracteurs-image-et-son.ts | 223 |
-| src/audio/fdn.test.ts | 223 |
-| src/ui/hooks/useMetaComposants.ts | 223 |
-| src/audio/spectral-cdp.test.ts | 222 |
-| src/docs/anglais-registre.test.ts | 222 |
-| src/plugins/micromontage.ts | 222 |
-| src/audio/hpss.ts | 221 |
-| src/plugins/boucle-voix.test.ts | 221 |
-| src/docs/catalogue-markdown.ts | 220 |
-| src/plugins/cercle.ts | 220 |
-| src/audio/analyse-transcription.ts | 219 |
-| src/ui/generation-code.ts | 219 |
-| src/ui/hooks/useBulles.ts | 219 |
-| src/audio/midi-ecriture.ts | 218 |
-| src/audio/arbre-disposition.ts | 216 |
-| src/audio/dessin-sonore.ts | 216 |
-| src/audio/effets-espace.ts | 216 |
-| src/audio/repartition-midi.test.ts | 216 |
-| src/audio/cercle-mesures.test.ts | 215 |
-| src/audio/fof.test.ts | 215 |
-| src/core/boucle-graphe.ts | 215 |
-| src/plugins/spectral-wishart.ts | 215 |
-| src/audio/abc-contraintes.ts | 214 |
-| src/audio/separation-voix.test.ts | 214 |
-| src/audio/velours.ts | 214 |
-| src/plugins/carte-sonore-svg.ts | 214 |
-| src/audio/classification-pistes.ts | 213 |
-| src/plugins/finitions.ts | 213 |
-| src/audio/reverbes-etendues.test.ts | 212 |
-| src/parcours/exercices.test.ts | 212 |
-| src/audio/musicxml.ts | 211 |
-| src/audio/quantification.test.ts | 210 |
-| src/audio/rythme-analyse.test.ts | 210 |
-| src/audio/voix.ts | 210 |
-| src/audio/phisem.ts | 208 |
-| src/audio/pure-data.ts | 208 |
-| src/audio/rythme-analyse.ts | 208 |
-| src/ui/ColorSynth.tsx | 208 |
-| src/audio/concatenatif.ts | 207 |
-| src/ui/Parcours.tsx | 207 |
-| src/audio/motif-crossmodal.test.ts | 206 |
-| src/core/meta.test.ts | 206 |
-| src/plugins/instrument-graphe.ts | 206 |
-| src/audio/inpainting.test.ts | 205 |
-| src/audio/phisem.test.ts | 205 |
-| src/audio/spectrogramme-fractal.ts | 205 |
-| src/audio/demonstration.test.ts | 204 |
-| src/audio/guides-onde.test.ts | 204 |
-| src/audio/scanning.test.ts | 204 |
-| src/plugins/lotGlobal.test.ts | 204 |
-| src/audio/terrain-onde.test.ts | 203 |
-| src/plugins/objets-sonores.ts | 203 |
-| src/plugins/visualisation.ts | 203 |
-| src/quiz/chiffres.ts | 203 |
-| src/audio/hauteur.test.ts | 202 |
-| src/audio/retard-spectral.test.ts | 202 |
-| src/audio/tone-synths.test.ts | 202 |
-| src/audio/tonnetz.test.ts | 202 |
-| src/plugins/carte-sonore.test.ts | 202 |
-| src/plugins/cercle-assemblage.test.ts | 202 |
-| src/audio/classification-pistes.test.ts | 201 |
-| src/plugins/cercle-film.ts | 201 |
-| src/plugins/sampler-multizones.test.ts | 201 |
-| src/audio/classes-hauteurs.ts | 200 |
-| src/plugins/banque-sfz.test.ts | 200 |
-| src/plugins/familles-palette.ts | 200 |
+**1155 files, 198540 lines, of which 138375 are code.**
+The table lists the 146 files of 200 code lines or more, heaviest first;
+the remaining 1009 account for 138708 lines.
+
+**13 files exceed the 400-code-line norm** and are marked « ! ».
+
+| File | Code | Weight | |
+|---|---:|---:|---|
+| src/ui/atelier.css | 1373 | 1688 | ! |
+| src/ui/App.tsx | 1078 | 1438 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 696 | 1370 | ! |
+| src/ui/Inspector.tsx | 603 | 739 | ! |
+| src/audio/abc.ts | 589 | 764 | ! |
+| src/docs/documentation-graphe.ts | 569 | 728 | ! |
+| src/ui/AtelierNode.tsx | 524 | 714 | ! |
+| src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
+| src/audio/sfz.test.ts | 497 | 619 | ! |
+| src/plugins/index.ts | 459 | 471 | ! |
+| src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
+| src/ui/BarreOutils.tsx | 413 | 446 | ! |
+| src/ui/FormeOnde.tsx | 408 | 484 | ! |
+| src/plugins/csound.ts | 387 | 523 |  |
+| src/plugins/montage.ts | 387 | 530 |  |
+| src/ia.ts | 382 | 466 |  |
+| src/plugins/effets-midi.ts | 382 | 502 |  |
+| src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
+| src/audio/effets-spectral.test.ts | 372 | 444 |  |
+| src/audio/clavier-banque.test.ts | 367 | 451 |  |
+| src/audio/soundfont.ts | 360 | 440 |  |
+| src/audio/tone-synths.ts | 360 | 494 |  |
+| src/plugins/analyse.ts | 360 | 437 |  |
+| src/plugins/magenta.ts | 359 | 456 |  |
+| src/plugins/pochette-svg.ts | 358 | 401 |  |
+| src/audio/automate-cellulaire.ts | 355 | 430 |  |
+| src/audio/algebre.test.ts | 347 | 421 |  |
+| src/plugins/textgen.ts | 343 | 523 |  |
+| src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/audio/continuation-spectrale.ts | 335 | 418 |  |
+| src/audio/courbe.test.ts | 335 | 422 |  |
+| src/audio/effets-verification.test.ts | 334 | 385 |  |
+| src/audio/modulation-effets.test.ts | 334 | 428 |  |
+| src/plugins/theorie-avancee.ts | 334 | 424 |  |
+| src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/audio/pca-neuronale.ts | 330 | 397 |  |
+| src/audio/cercle.test.ts | 328 | 432 |  |
+| src/plugins/effets-temporel.ts | 327 | 446 |  |
+| src/audio/couleurs.ts | 326 | 357 |  |
+| src/plugins/tone-synths.ts | 325 | 420 |  |
+| src/plugins/generateurs.test.ts | 323 | 450 |  |
+| src/plugins/effets-spectral.ts | 321 | 410 |  |
+| src/ui/EditeurCode.tsx | 320 | 426 |  |
+| src/audio/midi-vers-abc.ts | 319 | 461 |  |
+| src/audio/batterie.ts | 318 | 390 |  |
+| src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
+| src/audio/csound.test.ts | 317 | 410 |  |
+| src/audio/particules.test.ts | 316 | 416 |  |
+| src/ui/MontageVideo.tsx | 314 | 407 |  |
+| src/audio/effets-montage.ts | 313 | 414 |  |
+| src/quiz/notions.ts | 312 | 337 |  |
+| src/audio/conformite-clavier.ts | 311 | 435 |  |
+| src/quiz/notions-suite.ts | 310 | 319 |  |
+| src/ui/demo/useRealisateurDemo.tsx | 310 | 367 |  |
+| src/audio/courbe.ts | 308 | 611 |  |
+| src/audio/clavier-banque.ts | 307 | 574 |  |
+| src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
+| src/plugins/prompt-graphe.ts | 306 | 422 |  |
+| src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
+| src/audio/io-profondeur.test.ts | 299 | 368 |  |
+| src/audio/analyse-genre.ts | 297 | 369 |  |
+| src/ui/vues-claviers.tsx | 297 | 379 |  |
+| src/plugins/sherpa-asr.ts | 296 | 411 |  |
+| src/plugins/theorie-composition.ts | 296 | 392 |  |
+| src/plugins/syntheses-exotiques.ts | 293 | 388 |  |
+| src/core/domaine-nombre.test.ts | 291 | 389 |  |
+| src/audio/groove-box.ts | 289 | 377 |  |
+| src/audio/multicanal.ts | 289 | 490 |  |
+| src/quiz/formules.ts | 288 | 310 |  |
+| src/audio/sfz.ts | 287 | 467 |  |
+| src/audio/csound.ts | 286 | 577 |  |
+| src/audio/groove-box.test.ts | 281 | 331 |  |
+| src/parcours/exercices.ts | 279 | 401 |  |
+| src/plugins/tone-synths-fm.ts | 279 | 358 |  |
+| src/plugins/generateurs-sources.ts | 277 | 341 |  |
+| src/audio/csound-formules.ts | 273 | 333 |  |
+| src/audio/multicanal.test.ts | 273 | 333 |  |
+| src/audio/motifs-midi.test.ts | 270 | 339 |  |
+| src/docs/documentation-graphe.test.ts | 270 | 352 |  |
+| src/audio/demonstration-video.ts | 266 | 313 |  |
+| src/plugins/python-processor.ts | 265 | 344 |  |
+| src/plugins/magenta-helpers.ts | 264 | 310 |  |
+| src/plugins/vexflow-notation.ts | 264 | 333 |  |
+| src/ui/vues-images.tsx | 261 | 358 |  |
+| src/audio/io.ts | 257 | 380 |  |
+| src/core/bulles.test.ts | 257 | 320 |  |
+| src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
+| src/core/instrument-graphe.test.ts | 255 | 315 |  |
+| src/quiz/sigles.ts | 253 | 278 |  |
+| src/audio/hauteur.ts | 250 | 393 |  |
+| src/audio/cercle-pulsant.ts | 249 | 543 |  |
+| src/audio/multi-reservoir.ts | 248 | 325 |  |
+| src/audio/abc.test.ts | 247 | 306 |  |
+| src/audio/attracteurs.ts | 247 | 289 |  |
+| src/core/meta.ts | 246 | 336 |  |
+| src/audio/analyse.ts | 244 | 321 |  |
+| src/plugins/effets-modulation.ts | 244 | 324 |  |
+| src/audio/objets-sonores.ts | 243 | 339 |  |
+| src/audio/qualites-accords.test.ts | 243 | 326 |  |
+| src/ui/vues-lecteur.tsx | 243 | 284 |  |
+| src/audio/pghi.ts | 242 | 377 |  |
+| src/audio/reservoir.ts | 242 | 371 |  |
+| src/audio/texture-statistique.ts | 241 | 412 |  |
+| src/plugins/generateurs-fractals.ts | 241 | 274 |  |
+| src/core/cache.test.ts | 240 | 310 |  |
+| src/audio/ondelettes.test.ts | 239 | 330 |  |
+| src/plugins/algebre-musicale.ts | 239 | 346 |  |
+| src/core/cache-execution.test.ts | 238 | 350 |  |
+| src/plugins/integration.test.ts | 236 | 274 |  |
+| src/audio/algebre.ts | 235 | 332 |  |
+| src/parcours/exercices-composition.ts | 233 | 319 |  |
+| src/audio/risset.test.ts | 232 | 298 |  |
+| src/ui/ArbreRythmiqueVue.tsx | 232 | 283 |  |
+| src/audio/spectral-wishart.test.ts | 228 | 285 |  |
+| src/ui/vues-analyse.tsx | 228 | 268 |  |
+| src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
+| src/plugins/julia-processor.ts | 226 | 280 |  |
+| src/ui/LigneDeTemps.tsx | 225 | 322 |  |
+| src/audio/commun.ts | 221 | 364 |  |
+| src/core/graphe.test.ts | 221 | 308 |  |
+| src/audio/palette-harmonique.ts | 220 | 258 |  |
+| src/ui/ExtraitVideo.tsx | 220 | 261 |  |
+| src/audio/cercle.ts | 219 | 496 |  |
+| src/core/bulles.ts | 219 | 397 |  |
+| src/ui/hooks/usePersistance.ts | 219 | 309 |  |
+| src/plugins/arbre-rythmique.ts | 218 | 311 |  |
+| src/audio/particules.ts | 216 | 412 |  |
+| src/audio/quantification.ts | 216 | 413 |  |
+| src/audio/assaisonnement.test.ts | 215 | 282 |  |
+| src/audio/synthese-features.test.ts | 213 | 272 |  |
+| src/ui/Spectre.tsx | 213 | 246 |  |
+| src/audio/csound-orchestre.ts | 212 | 355 |  |
+| src/plugins/effets.ts | 211 | 249 |  |
+| src/audio/accords.ts | 210 | 343 |  |
+| src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
+| src/audio/ssp.test.ts | 209 | 273 |  |
+| src/plugins/multicanal.ts | 209 | 288 |  |
+| src/plugins/boucle-creneau.test.ts | 207 | 252 |  |
+| src/plugins/cercle-transformations.test.ts | 206 | 257 |  |
+| src/audio/ecosysteme.ts | 205 | 373 |  |
+| src/plugins/effet-parametres-midi.test.ts | 205 | 322 |  |
+| src/plugins/tonal.ts | 205 | 283 |  |
+| src/audio/musicxml-arbre.ts | 203 | 314 |  |
+| src/plugins/midi-norme.test.ts | 203 | 289 |  |
+| src/audio/effets-modulation.ts | 202 | 267 |  |
+| src/audio/micromontage.test.ts | 202 | 266 |  |

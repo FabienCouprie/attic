@@ -129,6 +129,11 @@ const FORMES_ADMISES = new Set([
   // obligerait à porter une vélocité dont le dessin n'a que faire, et ne dirait rien de la
   // géométrie ; la vue n'aurait plus qu'à la recalculer, ce que ce dépôt sort exprès des composants.
   "debut,fin,largeur,microton,nom,note,nuance,voix,x,y",
+  // CE QU'IL FAUT D'UNE NOTE POUR DÉCIDER D'UN RECOUVREMENT, et rien de plus : sa hauteur, son
+  // canal, son début, sa fin. Ni nuance ni voix, parce que l'ambiguïté MIDI ne les regarde pas. Ce
+  // n'est pas la note canonique mais une VUE sur elle : la fonction est générique, elle rend les
+  // notes qu'on lui donne avec tous leurs champs, et n'exige que ces quatre-là.
+  "canal?,debut,fin,note",
   // La note d'une boîte de maquette, ramenée à la durée propre de sa boîte pour être dessinée dans
   // sa barre : `debut` et `duree` y sont des FRACTIONS de zéro à un, non des secondes. Employer
   // `Note` ici mentirait sur l'unité du temps, et obligerait à porter une nuance et une fin dont le

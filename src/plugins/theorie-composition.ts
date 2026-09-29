@@ -10,6 +10,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { parseMidi } from "midi-file";
+import { PARAMETRE_TONIQUE } from "../audio/cles";
 import {
   PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2,
   normaliserModeSynthèse, sf2Chargee,
@@ -104,10 +105,13 @@ const PARAMETRES_RENDU = [
     doc: "Volume du rendu audio.", docEn: "Output volume." },
 ];
 
+// LES DOUZE CLÉS VIENNENT DE LA TABLE COMMUNE, `audio/cles.ts`. Elles étaient recopiées ici, et
+// trente-deux réglages du dépôt les recopiaient de même, sous quatre orthographes.
 const TONIQUES = {
-  options: ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"],
-  optionsEn: ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"],
-  optionIds: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+  options: PARAMETRE_TONIQUE.options,
+  optionsEn: PARAMETRE_TONIQUE.optionsEn,
+  optionIds: PARAMETRE_TONIQUE.optionIds,
+  optionsHeritees: PARAMETRE_TONIQUE.optionsHeritees,
 };
 
 /** Le rapport d'analyse d'un ensemble, dans la langue courante. */

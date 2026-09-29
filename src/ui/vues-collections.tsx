@@ -75,7 +75,7 @@ export function VueExport({ data }: VueProps) {
   const { t } = useI18n();
   const [nomFichierLocal, setNomFichierLocal] = useState(String(data.nomFichier ?? ""));
   const api = (window as { api?: any }).api;
-  const mp3Url = (data as { mp3Url?: string }).mp3Url;
+  const mp3Url = (data as { _affichage?: { mp3Url?: string } })._affichage?.mp3Url;
   const nomOu = (defaut: string) => (data.nomFichier as string)?.toString().trim() || defaut;
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>

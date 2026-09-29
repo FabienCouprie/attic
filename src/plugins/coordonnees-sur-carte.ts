@@ -151,14 +151,9 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
-      // Même limite du canal `ctx.noeud.data` que Carte sonore, même
-      // solution : ces champs `_xxx` sont reportés dans l'état réel par la
-      // fusion générique de useExecutionGraphe.ts, pas par ce plugin.
-      (ctx.noeud.data as any)._coordCarteHtmlPath = htmlPath;
-      (ctx.noeud.data as any)._coordCarteSonore = carteRepositionnee;
-
       return {
         valeurs: [],
+        affichage: { htmlPath, carte: carteRepositionnee },
         message: traduire("msg.coord_carte_g_n_r_e_var_0_var_1_points_var_2_audio_copi", htmlPath, points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗"),
       };
     },

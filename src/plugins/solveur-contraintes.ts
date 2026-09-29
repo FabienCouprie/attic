@@ -15,6 +15,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 import type { Sequence } from "../audio/sequence";
 import { domaineHauteurs, resoudre } from "../audio/contraintes";
 import { compilerRegles, type RegleEcrite } from "../audio/contraintes-ecrites";
@@ -23,7 +24,6 @@ import { GAMMES_CORRECTION, degresDe } from "../audio/correction-hauteur";
 import { nomNote } from "../audio/nom-note";
 
 const en = () => langueCourante() === "en";
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const REGLES = ["Règle 1", "Règle 2", "Règle 3", "Règle 4", "Règle 5", "Règle 6"];
 
 export const fiches: FicheAudio[] = ([
@@ -67,8 +67,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Majeure", defautEn: "Major",
         doc: "Les degrés auxquels les hauteurs sont restreintes.",
         docEn: "The degrees the pitches are restricted to." },
-      { nom: "Tonique", nomEn: "Tonic", type: "choix",
-        options: NOMS, optionsEn: NOMS, optionIds: NOMS, defaut: "C", defautEn: "C",
+      { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Tonic",
         doc: "La tonique de la gamme.", docEn: "The tonic of the scale." },
       { nom: "Grave", nomEn: "Low", plage: [0, 127], pas: 1, defaut: 55,
         doc: "La hauteur la plus basse permise.", docEn: "The lowest pitch allowed." },
@@ -93,7 +92,7 @@ export const fiches: FicheAudio[] = ([
       const combien = Math.round(ctx.paramNombre("Longueur", 12));
       const domaine = domaineHauteurs(
         ctx.paramNombre("Grave", 55), ctx.paramNombre("Aigu", 79),
-        degresDe(ctx.paramTexte("Gamme", "majeure"), NOMS.indexOf(ctx.paramTexte("Tonique", "C"))),
+        degresDe(ctx.paramTexte("Gamme", "majeure"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
       );
       if (domaine.length === 0) {
         return {
@@ -138,7 +137,7 @@ export const fiches: FicheAudio[] = ([
           valeurs: [enSequence(suite), [
             ...entete, "",
             `${en() ? "found in" : "trouvée en"} ${exact.noeuds} ${en() ? "attempts" : "essais"}`,
-            `  ${suite.map(nomNote).join(" ")}`,
+            `  ${suite.map((n) => nomNote(n)).join(" ")}`,
           ].join("\n")],
           message: `${en() ? "found" : "trouvée"} · ${exact.noeuds} ${en() ? "attempts" : "essais"} · `
             + `${contraintes.length} ${en() ? "rules" : "règles"}`
@@ -176,7 +175,7 @@ export const fiches: FicheAudio[] = ([
           `${en() ? "approached by evolution" : "approchée par évolution"} · `
             + `${ev.generations} ${en() ? "generations" : "générations"} · `
             + `${en() ? "cost" : "coût"} ${ev.cout}`,
-          `  ${ev.meilleur.map(nomNote).join(" ")}`,
+          `  ${ev.meilleur.map((n) => nomNote(n)).join(" ")}`,
         ].join("\n")],
         message: `${en() ? "approached" : "approchée"} · ${en() ? "cost" : "coût"} ${ev.cout} · ${cause}`,
       };

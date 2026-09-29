@@ -182,9 +182,13 @@ export function motifDepuisPoint(cible: DimensionsGout, o: OptionsMotif): Motif 
 export function octetsMidi(notes: NoteEvenement[], tempo: number, programme: number, canal = 0): Uint8Array {
   const tpm = 480;
   const secEnTicks = (s: number) => Math.max(0, Math.round((s / 60) * tempo * tpm));
+  // CHAQUE PISTE SE TERMINE, celle de tempo comme celle des notes. Relevé par le banc de conformité :
+  // ce fichier bâtit deux pistes et n'en terminait qu'une. La norme MIDI veut un `endOfTrack` par
+  // piste, et un lecteur qui l'exige refuse le fichier entier plutôt que la piste fautive.
   const pisteTempo = [
     { deltaTime: 0, type: "setTempo", microsecondsPerBeat: Math.round((60 / tempo) * 1_000_000) },
     { deltaTime: 0, type: "timeSignature", numerator: 4, denominator: 4, channel: 0 },
+    { deltaTime: 0, type: "endOfTrack" },
   ];
   const absolus: { tick: number; ev: Record<string, unknown> }[] = [
     { tick: 0, ev: { type: "programChange", channel: canal, programNumber: Math.max(0, Math.min(127, Math.round(programme))) } },

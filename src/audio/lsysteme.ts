@@ -1,4 +1,5 @@
 import type { Note } from "./note";
+import { degresDeGamme } from "./gammes";
 // audio/lsysteme.ts — L-systèmes : une grammaire qui se réécrit, et qu'on écoute.
 //
 // Aristid Lindenmayer, biologiste, a proposé en 1968 un système pour décrire la
@@ -101,7 +102,8 @@ export interface ConfigInterpretation {
  */
 export function interpreter(mot: string, config: ConfigInterpretation): NoteL[] {
   const notes: NoteL[] = [];
-  const degres = config.degres.length > 0 ? config.degres : [0, 2, 4, 5, 7, 9, 11];
+  // Le repli vient de la table commune, `gammes.ts`, plutôt que d'être écrit ici.
+  const degres = config.degres.length > 0 ? config.degres : degresDeGamme("majeur");
   let t = 0;
   let degre = 0;
   let duree = config.dureePas;

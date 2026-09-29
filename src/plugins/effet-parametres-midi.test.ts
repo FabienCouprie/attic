@@ -72,6 +72,18 @@ function entreeRiche(): Uint8Array<ArrayBuffer> {
   // Des durées longues et inégales, pour les quantiseurs de fins et les éclaircisseurs.
   poser([77], 1680, 700, 0, 120);
   poser([74], 1700, 180, 0, 40);
+  // DES NOTES HORS DES 88 TOUCHES, pour ce qui replie dans l'ambitus d'un clavier : 21 et 108 en
+  // sont les bornes, donc 12 et 117 tombent dehors. Sans elles, un repliement n'a rien à replier et
+  // paraît inerte alors qu'il agit.
+  poser([12], 1920, 200, 0, 84);
+  poser([117], 1920, 200, 0, 84);
+  // UN CANAL DE PERCUSSION, le dixième au sens MIDI, pour ce qui l'écarte ou le traite à part. Sans
+  // lui, « écarter la percussion » ne peut rien écarter.
+  poser([36, 42], 1920, 240, 9, 100);
+  // UN TROISIÈME ACCORD, PLUS HAUT, pour ce qui conduit les voix : le premier accord fixe le
+  // registre et ne bouge pas, si bien qu'une entrée à un seul accord ne peut pas éprouver les
+  // bornes d'aigu ou de grave.
+  poser([72, 76, 79], 2160, 460, 0, 88);
 
   evenements.sort((a, b) => a.tick - b.tick || (a.ev.type === "noteOff" ? 0 : 1) - (b.ev.type === "noteOff" ? 0 : 1));
   for (const { tick: t, ev } of evenements) {
@@ -86,8 +98,43 @@ function entreeRiche(): Uint8Array<ArrayBuffer> {
 
 const OCTETS = entreeRiche();
 
+/**
+ * La même matière que l'entrée MIDI, mais en séquence.
+ *
+ * SANS ELLE, UN NŒUD À ENTRÉE « SÉQUENCE » RECEVAIT `null` et sortait à sa première ligne : tous ses
+ * réglages paraissaient morts, et c'est ce qui a fait porter « Aigu maximum » des accords au relevé
+ * des candidats non attribués. Un banc qui nourrit mal ne mesure pas l'inertie d'un réglage, il
+ * mesure la sienne.
+ */
+const SEQUENCE_RICHE = {
+  tempo: 120,
+  notes: [
+    // Trois accords, dont un haut placé : le premier fixe le registre, les suivants s'y conduisent.
+    ...[60, 64, 67].map((n) => ({ note: n, velocite: 96, debut: 0, fin: 0.48, canal: 0 })),
+    ...[59, 62, 67].map((n) => ({ note: n, velocite: 80, debut: 0.5, fin: 0.98, canal: 0 })),
+    ...[72, 76, 79].map((n) => ({ note: n, velocite: 88, debut: 2.25, fin: 2.73, canal: 0 })),
+    // Hors grille, pour les quantiseurs.
+    { note: 72, velocite: 112, debut: 1.01, fin: 1.12, canal: 0 },
+    { note: 71, velocite: 64, debut: 1.09, fin: 1.19, canal: 0 },
+    // La même hauteur rejouée, bout à bout.
+    { note: 65, velocite: 90, debut: 1.25, fin: 1.5, canal: 0 },
+    { note: 65, velocite: 90, debut: 1.5, fin: 1.75, canal: 0 },
+    // Un second canal, et des durées inégales.
+    { note: 48, velocite: 70, debut: 0, fin: 0.98, canal: 1 },
+    { note: 43, velocite: 58, debut: 1, fin: 1.48, canal: 1 },
+    { note: 77, velocite: 120, debut: 1.75, fin: 2.48, canal: 0 },
+    { note: 74, velocite: 40, debut: 1.77, fin: 1.96, canal: 0 },
+    // Hors des 88 touches, et une percussion : pour ce qui replie ou écarte.
+    { note: 12, velocite: 84, debut: 2, fin: 2.2, canal: 0 },
+    { note: 117, velocite: 84, debut: 2, fin: 2.2, canal: 0 },
+    { note: 36, velocite: 100, debut: 2, fin: 2.25, canal: 9 },
+    { note: 42, velocite: 100, debut: 2, fin: 2.25, canal: 9 },
+  ],
+};
+
 function entreeSynthetique(p: Port): unknown {
   if (p.type === "midi") return new File([OCTETS], "riche.mid", { type: "audio/midi" });
+  if (p.type === "sequence") return { ...SEQUENCE_RICHE, notes: SEQUENCE_RICHE.notes.map((n) => ({ ...n })) };
   if (p.type === "texte") return "CDEF GABc";
   if (p.type === "nombre") return 60;
   return null;
@@ -199,10 +246,19 @@ const INERTIE_NORMALE: Record<string, Record<string, string>> = {
  * avec sa raison.
  */
 const A_ATTRIBUER: Record<string, Record<string, string>> = {
-  "clavier-apprentissage": { "Adapter": "ni « replier » ni « replier-sans-percussion » ne bougent la sortie" },
-  // Piste : `conduireVoix` pousse le PREMIER accord tel quel, sans consulter les bornes de registre.
-  // Mesuré sur la fonction : a plafond 60, les accords 2 a 4 descendent, le premier reste a 60/64/67.
-  "voicings-accords": { "Aigu maximum": "le premier accord echappe aux bornes ; reste a attribuer cote nœud" },
+  // ELLE EST VIDE, ET LES DEUX LIGNES QUI L'OCCUPAIENT N'ÉTAIENT PAS DES DÉFAUTS DE COMPOSANT.
+  //
+  // « Adapter » du clavier d'apprentissage : l'entrée du banc ne portait aucune note hors des 88
+  // touches ni aucune percussion, donc un repliement n'avait rien à replier et un écartement rien à
+  // écarter. Elle les porte maintenant.
+  //
+  // « Aigu maximum » des accords : son nœud prend une SÉQUENCE, et le banc donnait `null` à toute
+  // entrée de ce type. Le nœud sortait à sa première ligne, si bien que TOUS ses réglages
+  // paraissaient morts. Il reçoit désormais la même matière en séquence.
+  //
+  // Dans les deux cas le banc a lui-même réclamé le retrait de la ligne, en disant que le réglage
+  // agit désormais. Un banc qui nourrit mal ne mesure pas l'inertie d'un réglage, il mesure la
+  // sienne : c'est la même faute que celle des quatre aveuglements de l'instrument, un an plus tôt.
 };
 
 /** Les réglages de texte, qu'aucune valeur générique ne peut éprouver : on les compte, sans plus. */

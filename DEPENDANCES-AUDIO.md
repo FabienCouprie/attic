@@ -7,9 +7,9 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 30 · ne peut pas aller dans un worker, mais ne fige pas
+- **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 80 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 160 · transposable tel quel
+- **pur** : 172 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | abc-edition-llm.ts | pur | — |
 | abc-reprise.ts | pur | — |
 | abc.ts | pur | — |
+| accord-gamme.ts | pur | — |
 | accord-mets.ts | pur | — |
 | accords-sequencer.ts | recipient | AudioBuffer |
 | accords.ts | recipient | AudioBuffer |
@@ -52,15 +53,19 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | build-plugins.ts | pur | — |
 | camelot.ts | recipient | AudioBuffer |
 | canon-pavage.ts | pur | — |
+| cantor-deplacement.ts | pur | — |
 | cantor.ts | pur | — |
 | cercle-film.ts | pur | — |
+| cercle-gamme.ts | pur | — |
 | cercle-mesures.ts | pur | — |
 | cercle-pulsant.ts | pur | — |
 | cercle-rendu.ts | pur | — |
+| cercle-retouche.ts | pur | — |
 | cercle.ts | pur | — |
 | classes-hauteurs.ts | pur | — |
 | classification-pistes.ts | pur | — |
 | clavier-banque.ts | recipient | AudioBuffer |
+| cles.ts | pur | — |
 | cloche-risset.ts | recipient | AudioBuffer |
 | color-looper.ts | recipient | AudioBuffer |
 | commun.ts | rendu | OfflineAudioContext |
@@ -132,6 +137,8 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | formule-sequence.ts | pur | — |
 | frequence-source.ts | rendu | OfflineAudioContext |
 | gammes-monde.ts | pur | — |
+| gammes-reunies.ts | pur | — |
+| gammes.ts | pur | — |
 | gendyn.ts | recipient | AudioBuffer |
 | generation-accords.ts | pur | — |
 | generation-echantillon.ts | rendu | OfflineAudioContext |
@@ -141,6 +148,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | generation-rythme.ts | rendu | OfflineAudioContext |
 | generation.ts | pur | — |
 | geometrie-sonore.ts | recipient | AudioBuffer |
+| glissando.ts | rendu | OfflineAudioContext |
 | gout.ts | recipient | AudioBuffer |
 | grains.ts | pur | — |
 | graphe-embarque.ts | pur | — |
@@ -169,6 +177,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | masquage.ts | pur | — |
 | math-formules.ts | recipient | AudioBuffer |
 | matrice-parametres.ts | pur | — |
+| melodie-sur-accords.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | metadonnees.ts | pur | — |
 | micromontage.ts | pur | — |
@@ -217,11 +226,15 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | pixeltone.ts | recipient | AudioBuffer |
 | polyfill-audiobuffer.ts | recipient | AudioBuffer |
 | pulsars.ts | recipient | AudioBuffer |
+| pulsation.ts | pur | — |
 | pure-data.ts | rendu | OfflineAudioContext |
 | quadrafuzz.ts | rendu | OfflineAudioContext |
+| qualites-accords.ts | pur | — |
 | quantification.ts | pur | — |
 | random-slice.ts | recipient | AudioBuffer |
 | recaler-niveau.ts | recipient | AudioBuffer |
+| reconnaitre-accord.ts | pur | — |
+| recouvrement-hauteur.ts | pur | — |
 | reecriture-arbre.ts | pur | — |
 | reetirage-dtw.ts | recipient | AudioBuffer |
 | reich.ts | recipient | AudioBuffer |

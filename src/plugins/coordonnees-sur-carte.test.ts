@@ -35,8 +35,8 @@ describe("coordonnees-sur-carte", () => {
       { "Dossier sortie": "out", Style: "ville", Esthétique: "classique" },
       { Graine: 1 },
     );
-    await fiche.executer(ctx as any);
-    const carte = (ctx.noeud.data as any)._coordCarteSonore;
+    const res = await fiche.executer(ctx as any);
+    const carte = (res as any).affichage.carte;
     expect(carte.points.length).toBe(3);
     // Les points gardent leur ordre relatif en x (a < b < c dans les coordonnées reçues).
     const [pa, pb, pc] = carte.points;
@@ -55,8 +55,8 @@ describe("coordonnees-sur-carte", () => {
       { "Dossier sortie": "out" },
       { Graine: 1 },
     );
-    await fiche.executer(ctx as any);
-    const carte = (ctx.noeud.data as any)._coordCarteSonore;
+    const res = await fiche.executer(ctx as any);
+    const carte = (res as any).affichage.carte;
     const xs = carte.points.map((p: { x: number }) => p.x);
     const ys = carte.points.map((p: { y: number }) => p.y);
     const etendueXRendue = Math.max(...xs) - Math.min(...xs);
@@ -79,8 +79,8 @@ describe("coordonnees-sur-carte", () => {
       { "Dossier sortie": "out" },
       { Graine: 1 },
     );
-    await fiche.executer(ctx as any);
-    const carte = (ctx.noeud.data as any)._coordCarteSonore;
+    const res = await fiche.executer(ctx as any);
+    const carte = (res as any).affichage.carte;
     const [pa, pb, pc] = carte.points;
     expect(pa.couleur).toBe(pc.couleur); // même groupe (0)
     expect(pa.couleur).not.toBe(pb.couleur); // groupe différent (1)
@@ -91,8 +91,8 @@ describe("coordonnees-sur-carte", () => {
     (globalThis as any).window = { api };
     const fiche = fiches.find((f) => f.id === "coordonnees-sur-carte")!;
     const ctx = ctxDe([null, JSON.stringify(coordonnees)], { "Dossier sortie": "out" }, { Graine: 1 });
-    await fiche.executer(ctx as any);
-    const carte = (ctx.noeud.data as any)._coordCarteSonore;
+    const res = await fiche.executer(ctx as any);
+    const carte = (res as any).affichage.carte;
     for (const p of carte.points) expect(typeof p.couleur).toBe("string");
   });
 

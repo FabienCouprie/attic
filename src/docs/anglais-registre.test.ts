@@ -37,9 +37,17 @@ import "../audio/adaptateur";
  * auteur de YIN, relève du même cas : c'est ainsi qu'il signe ses articles en anglais.
  */
 // La limite finale est une négation et non un `\b` : en JavaScript, « é » n'est pas un
-// caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, » — le tréma de
-// Möbius, lui, est au milieu et ne posait pas ce problème.
-const TOLERES = /\b(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle)(?![a-zà-ÿ])/gi;
+// caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, ».
+//
+// ET LA LIMITE INITIALE A DÛ LE DEVENIR AUSSI, pour la même raison prise par l'autre bout : le
+// tréma de Möbius est au milieu, mais celui d'« Über » ouvre le mot. Entre une espace et un « Ü »,
+// il n'y a AUCUNE frontière de mot, les deux n'étant pas des caractères de mot : `\büber` ne
+// reconnaissait donc rien, et le titre de Cantor était relevé comme du français.
+// ET LE TITRE D'UN ARTICLE CITÉ RELÈVE DU MÊME CAS. « Über unendliche, lineare
+// Punktmannigfaltigkeiten » est le titre sous lequel l'article de Cantor de 1883 se cite dans
+// toutes les langues : le traduire dans une notice anglaise le rendrait introuvable, ce qui est
+// l'inverse de ce qu'une référence sert à faire.
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

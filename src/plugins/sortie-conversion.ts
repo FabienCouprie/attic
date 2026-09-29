@@ -29,19 +29,25 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+      let mp3Url: string | undefined;
       try {
         const qualite = ctx.paramNombre("Qualité", 192);
         const { serialiserGraphe } = await import("../audio/graphe-embarque");
         const graphe = serialiserGraphe() ?? undefined;
         const blob = await bufferVersMp3Blob(a, qualite, graphe, decrire(a, { noeud: "WAV → MP3" }));
-        if ((ctx.noeud.data as any).mp3Url) URL.revokeObjectURL((ctx.noeud.data as any).mp3Url);
-        (ctx.noeud.data as any).mp3Url = URL.createObjectURL(blob);
+        // LE MP3 PRÉCÉDENT SE RÉVOQUE, et il se relit dans le canal déclaré où le run d'avant l'a
+        // laissé. Ce fichier était le dernier champ d'affichage d'un composant à passer par un nom
+        // convenu : il figurait même dans la signature universelle des exécuteurs, faute d'endroit
+        // où le mettre. C'est la cicatrice que le canal efface.
+        const avant = (ctx.noeud.data as { _affichage?: { mp3Url?: string } })._affichage?.mp3Url;
+        if (typeof avant === "string") URL.revokeObjectURL(avant);
+        mp3Url = URL.createObjectURL(blob);
       } catch (e: any) {
         // L'audio passe quand même : la suite du graphe n'a pas à tomber avec l'encodeur. Mais l'échec
         // se dit — c'est son silence qui avait caché des MP3 qui n'en étaient pas.
         return { valeurs: [a, { debut: 0, duree: a.duration }], message: `MP3 : ${e?.message ?? String(e)}` };
       }
-      return { valeurs: [a, { debut: 0, duree: a.duration }] };
+      return { valeurs: [a, { debut: 0, duree: a.duration }], affichage: { mp3Url } };
    },
  },
   {
@@ -56,9 +62,9 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const { serialiserGraphe } = await import("../audio/graphe-embarque");
       const graphe = serialiserGraphe() ?? undefined;
-      // Le graphe est embarqué dans le WAV téléchargé via la vue d'export
-      (ctx.noeud.data as any)._grapheExport = graphe;
-      return { valeurs: [a, { debut: 0, duree: a.duration }] };
+      // LE GRAPHE PART PAR LE CANAL DU MOTEUR : c'est lui qui écrit le WAV, donc lui qui doit
+      // savoir quoi y embarquer. Rien ne se pose sur le nœud.
+      return { valeurs: [a, { debut: 0, duree: a.duration }], moteur: { grapheAEmbarquer: graphe } };
    },
  },
   {

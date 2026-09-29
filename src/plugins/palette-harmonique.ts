@@ -5,10 +5,12 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererPaletteHarmonique, GAMMES_ACCORDS, type CouleurExtraite } from "../audio";
+import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 const formatCouleur = (c: CouleurExtraite) => `rgb(${c.r},${c.g},${c.b})`;
 
@@ -27,15 +29,17 @@ export const fiches: FicheAudio[] = ([
       { nom: "MIDI", nomEn: "MIDI", type: "midi" },
     ],
     parametres: [
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defaut: "C",
-        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C",
+      { ...PARAMETRE_CLE,
         doc: "Fondamentale de la gamme utilisée.", docEn: "Root note of the scale used." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
-        optionsEn: ["major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
+        // LES LIBELLÉS VIENNENT DE LA TABLE, comme les identifiants : ils étaient écrits en clair
+        // ici, onze pour une liste qui en compte davantage, ce qui aurait caché les gammes ajoutées.
+        options: GAMMES_ACCORDS.map((g) => g.fr), defaut: "Majeur",
+        optionsEn: GAMMES_ACCORDS.map((g) => g.en), defautEn: "Major",
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
-        doc: "Gamme sur laquelle mapper les teintes (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
-        docEn: "Scale used to map hues (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
+        optionsHeritees: LIBELLES_HERITES_GAMMES,
+        doc: "Gamme sur laquelle mapper les teintes.",
+        docEn: "Scale used to map hues." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpège"], optionIds: ["melodie","harmonie","arpege"], optionsEn: ["Melody", "Harmony", "Arpeggio"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par couleur ; Harmonie = accord triadique par couleur ; Arpège = accord triadique joué note après note.", docEn: "Melody = one note per color; Harmony = triad chord per color; Arpeggio = triad chord played one note after another." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,

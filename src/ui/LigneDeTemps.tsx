@@ -36,6 +36,7 @@ import { useLectureVive } from "./hooks/useLectureVive";
 import { ZOOM_MAX, ZOOM_MIN } from "./axe-temps";
 import { cheminOnde, enveloppe } from "./onde-piste";
 import { rectsNotes, type NoteBoite } from "./notes-boite";
+import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
 import {
   MODELE_MONTAGE, disposerPistes, echelle, pasDeGraduation, valeurAuRepos, valeurDuGeste,
   type Geste, type LigneMontage, type ModeleLigne, type PisteMontage, type Vue,
@@ -298,7 +299,8 @@ export function LigneDeTemps({
               ligne de temps dont le nœud n'en désigne pas. Caché, parce que ses commandes sont celles de
               la ligne de temps : deux jeux de boutons pour un même son se contrediraient. */}
           {!vive.prete && audioUrl && (
-            <audio ref={axe.audioRef} src={audioUrl} style={{ display: "none" }} />
+            <audio ref={axe.audioRef} src={audioUrl} style={{ display: "none" }}
+              onLoadedMetadata={ouvrirAuNiveauDEcoute} />
           )}
           <button type="button" className="nodrag" onPointerDown={(e) => e.stopPropagation()}
             onClick={axe.basculerLecture}

@@ -88,6 +88,17 @@ const CONNUS = {
     licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
       note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
   },
+  // LE PAQUET DE BRUITAGE MANQUAIT ICI, relevé par Fabien. Il était au manifeste, publié, avec son
+  // empreinte et son adresse — 1,49 Go, sept fichiers, attribué à « bruitage-ia » — mais absent de
+  // cette table. Or `engendrer()` ne parcourt QUE cette table : une régénération du manifeste
+  // l'aurait effacé, avec son empreinte et son adresse de publication, sans rien dire. C'est le plus
+  // silencieux des défauts relevés, puisqu'il ne se serait vu qu'au téléchargement suivant.
+  "stable-audio-3-small-sfx": {
+    id: "stable-audio-3-sfx", nom: "Stable Audio 3 (bruitage)", nomEn: "Stable Audio 3 (sound effects)",
+    noeuds: ["bruitage-ia"], archive: true,
+    licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-sfx ; export ONNX par lsb et bgkb", rediffusable: true,
+      note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
+  },
   "kokoro-82m": {
     id: "kokoro-82m", nom: "Synthèse vocale Kokoro", nomEn: "Kokoro speech synthesis",
     noeuds: ["tts-kokoro", "tts-francais"], archive: true,
@@ -126,12 +137,25 @@ const mo = (octets) => (octets / 1048576).toFixed(1);
 function engendrer() {
   const ancien = fs.existsSync(MANIFESTE) ? JSON.parse(fs.readFileSync(MANIFESTE, "utf8")) : { modeles: [] };
   const adressesConnues = new Map(ancien.modeles.map((m) => [m.id, m.source]));
+  const entreesConnues = new Map(ancien.modeles.map((m) => [m.id, m]));
 
   const modeles = [];
   for (const [entree, meta] of Object.entries(CONNUS)) {
     const complet = path.join(SOURCE, entree);
     if (!fs.existsSync(complet)) {
-      console.log(`  ${entree} : absent de public/oonx/, ignoré`);
+      // UN PAQUET ABSENT DU DISQUE EST REPORTÉ, ET NON JETÉ. Relevé par Fabien sur le paquet de
+      // bruitage, qui manquait à `CONNUS` ; mais le défaut est plus large que ce paquet-là. Cette
+      // table décrit ce qui EXISTE, et `public/oonx/` ne contient que ce que CETTE machine a
+      // téléchargé : régénérer depuis un poste qui n'a pas tout aurait effacé du manifeste les
+      // empreintes et les adresses de publication des paquets manquants, sans rien dire. Un
+      // manifeste est un registre de ce qui est publié, pas un inventaire du disque local.
+      const reporte = entreesConnues.get(meta.id);
+      if (reporte) {
+        modeles.push(reporte);
+        console.log(`  ${meta.id.padEnd(22)} absent du disque · REPORTÉ du manifeste (${mo(reporte.octets)} Mo)`);
+      } else {
+        console.log(`  ${entree} : absent de public/oonx/ et du manifeste, ignoré`);
+      }
       continue;
     }
     const estDossier = fs.statSync(complet).isDirectory();

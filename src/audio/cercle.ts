@@ -420,6 +420,20 @@ export function motifDuRythme(rythme: string, motifLibre: string): string {
   return trouve ? trouve.motif : motifLibre;
 }
 
+/**
+ * Le motif d'un rythme nommé, pour qui a besoin d'en poser un en valeur par défaut.
+ *
+ * SANS ELLE, UN MOTIF SE RECOPIE. Trois réglages portaient « 1001001000101000 » et
+ * « 101010010100 » écrits en clair, qui sont le son cubain et le fume-fume : la même chaîne à deux
+ * endroits, dont l'un ne saurait jamais que l'autre a changé. Un identifiant inconnu jette, plutôt
+ * que de rendre en silence un motif que personne n'a écrit.
+ */
+export function motifNomme(id: string): string {
+  const trouve = RYTHMES_CANONIQUES.find((r) => r.id === id);
+  if (!trouve) throw new Error(`rythme inconnu : ${id}`);
+  return trouve.motif;
+}
+
 // ── Les hauteurs qu'un cercle mélodique porte ───────────────────────────────────────────────────
 //
 // ELLES SE DÉDUISENT DE LA FONDAMENTALE ET DE LA PLACE, et ne se saisissent plus une à une. Un

@@ -4,8 +4,10 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
+import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -27,15 +29,17 @@ export const fiches: FicheAudio[] = ([
       { nom: "Couleurs", nomEn: "Colors", type: "couleurs", defaut: "#e63946,#2a9d8f,#e9c46a,#8e6fce",
         doc: "Palette de couleurs. Chaque couleur = un pas du séquenceur.",
         docEn: "Color palette. Each color = one step of the sequencer." },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defaut: "C",
-        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C",
+      { ...PARAMETRE_CLE,
         doc: "Fondamentale de la gamme.", docEn: "Root note of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique majeur", "pentatonique mineur", "blues", "chromatique"], defaut: "majeur",
-        optionsEn: ["major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian", "major pentatonic", "minor pentatonic", "blues", "chromatonic"], defautEn: "major",
+        // LES LIBELLÉS VIENNENT DE LA TABLE, comme les identifiants : ils étaient écrits en clair
+        // ici, onze pour une liste qui en compte davantage, ce qui aurait caché les gammes ajoutées.
+        options: GAMMES_ACCORDS.map((g) => g.fr), defaut: "Majeur",
+        optionsEn: GAMMES_ACCORDS.map((g) => g.en), defautEn: "Major",
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
-        doc: "Gamme utilisée (7 modes + 2 gammes pentatoniques, en plus de blues et chromatique).",
-        docEn: "Scale used (7 modes + 2 pentatonic scales, in addition to blues and chromatic)." },
+        optionsHeritees: LIBELLES_HERITES_GAMMES,
+        doc: "Gamme utilisée.",
+        docEn: "Scale used." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionIds: ["melodie","harmonie","arpeges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
         doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,

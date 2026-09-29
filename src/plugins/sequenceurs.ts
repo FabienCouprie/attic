@@ -14,6 +14,7 @@ import {
   GAMMES_ACCORDS,
 } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 // Motif par défaut du séquenceur avancé (16 pas, 8 pistes) : kick temps, snare 2/4,
 // charley fermé en croches, le reste muet.
@@ -76,8 +77,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
+      { ...PARAMETRE_CLE,
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"], defaut: "majeur",
         optionIds: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"],
         doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
@@ -139,8 +140,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mesures", nomEn: "Bars", plage: [1, 8], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
-      { nom: "Clé", nomEn: "Key", type: "choix", options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], defaut: "C",
-        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale.", optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], defautEn: "C" },
+      { ...PARAMETRE_CLE,
+        doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_ACCORDS.map((g) => g.fr), defaut: "majeur",
         optionIds: GAMMES_ACCORDS.map((g) => g.id),

@@ -6,11 +6,13 @@
 import { type NoteEvenement } from "./midi-sequence";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 import { degresGammeAccords } from "./generation";
-
-const DEGRES_MINEUR_HARMONIQUE = [0, 2, 3, 5, 7, 8, 11];
+import { completer, degresDeGamme } from "./gammes";
 
 export function degresGammeMelodie(id: string): number[] {
-  if (id === "mineur-harmonique") return DEGRES_MINEUR_HARMONIQUE;
+  // LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, sous un
+  // nom que le garde des gammes ne cherchait pas : il ne regardait que les constantes nommées
+  // `GAMME*`, et cette table-ci s'appelait `DEGRES_MINEUR_HARMONIQUE`.
+  if (id === "mineur-harmonique") return degresDeGamme("mineur-harmonique");
   return degresGammeAccords(id);
 }
 
@@ -20,9 +22,17 @@ export function degresGammeMelodie(id: string): number[] {
 // il le fait déjà pour tout le reste, sans dépendance croisée entre
 // fichiers de plugins (qui casserait le graphe de modules circulaire
 // plugins/index.ts ↔ audio/adaptateur.ts).
-export const GAMMES_MELODIE_FR = ["Majeur", "Mineur naturel", "Mineur harmonique", "Dorien", "Phrygien", "Lydien", "Mixolydien", "Locrien", "Pentatonique majeure", "Pentatonique mineure", "Chromatique"];
-export const GAMMES_MELODIE_EN = ["Major", "Natural minor", "Harmonic minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Major pentatonic", "Minor pentatonic", "Chromatic"];
-export const GAMMES_MELODIE_IDS = ["majeur", "mineur", "mineur-harmonique", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "pentatonique-majeure", "pentatonique-mineure", "chromatique"];
+// TROIS LISTES PARALLÈLES SE DÉSACCORDENT, et celles-ci l'étaient déjà : elles portaient la mineure
+// harmonique que la liste des accords n'avait pas, et pas le blues qu'elle avait. Elles dérivent
+// maintenant de la table, dans le même ordre, donc elles ne peuvent plus glisser l'une par rapport
+// à l'autre ni par rapport aux autres composants.
+const GAMMES_MELODIE = completer([
+  "majeur", "mineur", "mineur-harmonique", "dorien", "phrygien", "lydien", "mixolydien", "locrien",
+  "pentatonique-majeure", "pentatonique-mineure", "chromatique",
+]);
+export const GAMMES_MELODIE_FR = GAMMES_MELODIE.map((g) => g.fr);
+export const GAMMES_MELODIE_EN = GAMMES_MELODIE.map((g) => g.en);
+export const GAMMES_MELODIE_IDS = GAMMES_MELODIE.map((g) => g.id);
 
 
 export async function genererMelodieAleatoire(

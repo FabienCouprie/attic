@@ -102,6 +102,31 @@ const FAUTES = [
       + " le shell ne doit pas être sur le chemin d'un source.",
   },
   {
+    // DU CODE PASSÉ EN ARGUMENT, ET NON PAR UN HEREDOC. C'est la même faute par une autre porte, et
+    // elle a coûté deux fois dans la même session : `python -c "…"` et `node -e "…"` traversent le
+    // shell comme n'importe quelle chaîne entre guillemets. Un accent grave y devient une
+    // substitution de commande — un chemin cité dans un commentaire a disparu, remplacé par la sortie
+    // d'une commande qui n'existait pas — et des guillemets imbriqués doivent être échappés à la main,
+    // ce qui a effacé les guillemets d'une liste de champs et cassé le fichier.
+    //
+    // LA RÈGLE NE REFUSE PAS TOUT `-c`, parce qu'un `node -e "console.log(x)"` est utile et sans
+    // danger. Elle refuse les trois choses que le shell PREND : un accent grave, qui est une
+    // substitution de commande ; un guillemet échappé, qu'il faut compter à la main ; un dollar, qui
+    // est une variable — et `${…}` d'un gabarit en est un.
+    //
+    // LA LONGUEUR N'EST PAS UN CRITÈRE, essayée puis retirée le jour même : elle a refusé une simple
+    // lecture de manifeste, qui ne contenait aucun de ces trois caractères et ne risquait donc rien.
+    // Un long code sans caractère interpolé traverse le shell intact ; c'est la mécanique qui décide,
+    // pas la taille.
+    voir: (cmd) => {
+      if (!/(^|[\s;|&])(python3?|py|node)\b[^\n]*\s(-c|-e|--eval)\s/.test(cmd)) return false;
+      return cmd.includes("`") || cmd.includes('\\"') || cmd.includes("$");
+    },
+    dire: "Ce code est passé au shell en argument de -c ou -e. Un accent grave y est une substitution"
+      + " de commande, et des guillemets imbriqués s'échappent à la main. L'écrire avec Write dans un"
+      + " fichier du répertoire de travail temporaire, puis le lancer.",
+  },
+  {
     // Une fin de ligne dans un motif, tant que l'arbre est mixte.
     // `\\n` est un antislash suivi d'un n, c'est-à-dire la fin de ligne telle qu'un script l'écrit.
     // Le cas `\r\n` la contient, donc le chercher séparément serait redondant. Une première version

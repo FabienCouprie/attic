@@ -22,8 +22,12 @@
 // la frappe donne le degré dans la gamme, et son amplitude la nuance : une grande pulsation est
 // une note forte.
 
+import { creerAleatoire } from "../core";
 import { camelotToAccord } from "./camelot";
+import { degresDeGamme } from "./gammes";
 import type { NoteEvenement } from "./midi-sequence";
+import type { Frappe } from "./pulsation";
+import { intervallesDaccord } from "./qualites-accords";
 
 /** Une pulsation : un instant, une taille, une couleur. Tout le reste en découle. */
 export interface Pulsation {
@@ -64,6 +68,46 @@ export interface OptionsPulsations {
   clarte: number;
   /** Amplitude de la respiration du rayon, 0 à 1. */
   respiration: number;
+  /**
+   * De combien la suite des tonalités s'écarte du parcours réglé, de zéro à un.
+   *
+   * POURQUOI CE RÉGLAGE EXISTE, relevé par Fabien : « les accords sont peu variables en fonction de
+   * la graine, on entend à peu près la même progression à chaque fois ». Mesuré sur huit graines :
+   * la progression était **identique aux huit**, `8B 9B 10B 11B 12B` à chaque fois. La cause est
+   * structurelle et non un réglage mal choisi : la teinte se calcule de `teinteDebut` et de
+   * `teinteParcours`, sans un seul tirage, et l'harmonie vient entièrement de la teinte. La graine ne
+   * touchait que le rayon, donc la nuance, le degré de la mélodie et le silence.
+   *
+   * CE QU'ELLE TIRE AU SORT N'EST PAS UNE TONALITÉ QUELCONQUE, et c'est ce qui distingue ce réglage
+   * d'un bruit ajouté. À chaque changement de case, elle choisit entre suivre le parcours et prendre
+   * l'un des trois mouvements que la roue de Camelot autorise : la case voisine, le même numéro dans
+   * l'autre anneau, ou sept cases plus loin. Ce sont les enchaînements que les disc-jockeys emploient
+   * précisément parce qu'ils tiennent ; la suite reste donc une suite de modulations qui fonctionnent,
+   * et ce n'est plus la même à chaque graine.
+   *
+   * À ZÉRO, PAS UN SEUL TIRAGE N'EST CONSOMMÉ, et la pièce est exactement celle d'avant ce réglage,
+   * rayon compris : le `&&` court-circuite avant d'appeler le tirage. C'est ce qui permet de retrouver
+   * le comportement d'origine sans rien d'autre à régler.
+   */
+  errance?: number;
+  /**
+   * De combien chaque intervalle entre deux pulsations s'écarte de la cadence réglée, de zéro à un.
+   *
+   * POURQUOI CE RÉGLAGE EXISTE, relevé par Fabien après une première correction qui ne portait que
+   * sur l'harmonie : « ça sonne pareil quelle que soit la graine ». Les instants venaient du seul
+   * glissement de cadence, sans un tirage : mesuré sur huit graines, **une seule suite d'instants
+   * pour les huit**. Or le rythme est ce qu'on entend en premier d'une pulsation, et le mode par
+   * défaut ne fait sonner ni accords ni mélodie : aucune correction de l'harmonie ne pouvait donc
+   * s'y entendre.
+   *
+   * L'ÉCART EST RELATIF À LA PÉRIODE COURANTE. Une pièce qui accélère garde ainsi la même
+   * irrégularité perçue d'un bout à l'autre ; comptée en secondes, elle paraîtrait s'assagir à
+   * mesure que la cadence monte.
+   *
+   * À ZÉRO, AUCUN TIRAGE N'EST CONSOMMÉ et les instants sont ceux d'une grille exacte, ce qui est le
+   * comportement d'avant ce réglage.
+   */
+  irregularite?: number;
   graine: number;
 }
 
@@ -71,12 +115,108 @@ export interface OptionsPulsations {
 export interface OptionsCercle extends OptionsPulsations {
   /** Rayon en deçà duquel la pulsation ne sonne pas : le silence a une image. */
   seuilSilence: number;
+  /**
+   * La gamme où la mélodie prend ses degrés, par son identifiant dans la table commune.
+   *
+   * VIDE VEUT DIRE « SELON LA ROUE », et c'est le comportement d'origine : la saturation choisit
+   * l'anneau, donc majeur ou mineur. Un identifiant donné passe outre, et la roue ne décide plus
+   * que de la TONIQUE. Les deux se défendent — la roue tient sa cohérence de ce que ses cases
+   * voisines s'enchaînent, ce qu'une gamme imposée ne défait pas puisqu'elle ne touche pas au
+   * parcours des toniques.
+   */
+  gamme?: string;
+  /** La qualité des accords, par son identifiant. Vide veut dire « selon la roue » : majeur ou mineur. */
+  qualite?: string;
 }
 
-function tirage(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+/**
+ * Ce que le cercle fait entendre.
+ *
+ * `pulsation` est le défaut, demandé par Fabien : un seul son sourd par frappe, celui-là même que
+ * rend le composant Pulsation, si bien que le son qui sort d'ici peut rentrer là-bas et
+ * réciproquement. `rythme` frappe une percussion à la place. `melodie` est le comportement des
+ * versions antérieures : la mélodie et ses accords.
+ *
+ * `accords` NE REND QUE L'HARMONIE, demandé par Fabien. Ce n'est pas la mélodie coupée : c'est la
+ * suite des tonalités traversées, rendue seule, donc ce que la roue prescrit sans la ligne qui la
+ * parcourt. Elle sert de matière à qui veut écrire sa mélodie ailleurs, et c'est aussi ce qu'un
+ * composant qui pose une mélodie sur des accords attend en entrée.
+ */
+export type ModeDuCercle = "pulsation" | "rythme" | "melodie" | "accords";
+
+/**
+ * Les pulsations audibles, vues comme des frappes.
+ *
+ * C'EST LE MÊME TYPE QUE CELUI DE `audio/pulsation.ts`, et ce n'est pas une coïncidence : ce que
+ * cette fonction rend, l'autre l'extrait d'un son. Les deux bouts se branchent donc l'un sur
+ * l'autre sans rien convertir, et c'est ce qui ferme la boucle.
+ *
+ * LE RAYON DONNE LA FORCE, comme il donne déjà la vélocité de la mélodie : une grande pulsation est
+ * une frappe forte. Une pulsation sous le seuil ne rend rien, la même décision que partout ici.
+ */
+export function frappesDuCercle(p: readonly Pulsation[], o: OptionsCercle): Frappe[] {
+  const out: Frappe[] = [];
+  for (const pulse of p) {
+    if (pulse.rayon < o.seuilSilence) continue;
+    out.push({ instant: pulse.temps, force: Math.round(50 + pulse.rayon * 70), atomes: 1 });
+  }
+  return out;
 }
+
+/**
+ * Les pulsations que dicte une suite de notes reçue.
+ *
+ * LA BOUCLE SE FERME ICI. Le composant Pulsation tire d'un son ses frappes ; posées à l'entrée de
+ * celui-ci, elles deviennent les instants du cercle, et l'on voit battre ce qu'on a entendu battre.
+ *
+ * CE QUI EST REÇU EST LE RYTHME, ET RIEN D'AUTRE. La couleur reste un réglage : elle continue de
+ * tourner sur la durée reçue, donc de donner la tonalité et le registre. Prendre aussi la hauteur
+ * des notes reçues ferait un second mappage, concurrent de la roue de Camelot, et le composant
+ * n'aurait plus une règle mais deux.
+ *
+ * LE RAYON VIENT DE LA VÉLOCITÉ, parce que c'est la même grandeur dans l'autre sens : la force
+ * d'une frappe y devenait un rayon, elle le redevient. Une suite sans vélocité utile — toutes les
+ * notes au même niveau — donne un cercle qui garde sa taille, ce qui est exact.
+ */
+export function pulsationsDepuisNotes(
+  notes: readonly { debut: number; velocite?: number }[], o: OptionsPulsations,
+): Pulsation[] {
+  const instants = [...new Set(notes.map((n) => Math.max(0, n.debut)))].sort((a, b) => a - b);
+  if (instants.length === 0) return [];
+  const forceA = new Map<number, number>();
+  for (const n of notes) {
+    const t = Math.max(0, n.debut);
+    forceA.set(t, Math.max(forceA.get(t) ?? 0, n.velocite ?? 100));
+  }
+  const fin = Math.max(o.dureeSec, instants[instants.length - 1]);
+  return instants.map((t) => {
+    const avancement = fin > 0 ? Math.min(1, t / fin) : 0;
+    const force = (forceA.get(t) ?? 100) / 127;
+    return {
+      temps: t,
+      rayon: Math.min(1, Math.max(0, (1 - o.respiration) + o.respiration * force)),
+      teinte: o.teinteDebut + o.teinteParcours * avancement,
+      saturation: Math.min(1, Math.max(0, o.saturation)),
+      clarte: Math.min(1, Math.max(0, o.clarte)),
+    };
+  });
+}
+
+/**
+ * Le tirage vient du générateur commun, et il en venait pas.
+ *
+ * CE QUI ÉTAIT ÉCRIT ICI, et pourquoi c'était faux. Un générateur congruentiel recopié à la main,
+ * avec le multiplicateur de la bibliothèque C. En JavaScript ce produit DÉPASSE 2^53 dès le second
+ * tirage, d'un facteur qui monte à 131 : les bits de poids faible sont perdus, et ce sont exactement
+ * ceux qui portent l'aléa d'un tel générateur. Relevé par Fabien à l'oreille, puis mesuré : période de
+ * 10 466, et 14 469 valeurs distinctes sur 20 000 tirages, soit 28 % de doublons. Le générateur de
+ * `core/hasard.ts` emploie `Math.imul`, qui est la seule façon correcte de multiplier sur 32 bits
+ * en JavaScript, et rend 20 000 valeurs distinctes sur 20 000.
+ *
+ * LA PIÈCE CHANGE, ET IL FAUT LE DIRE : à graine égale, les rayons ne sont plus les mêmes qu'avant
+ * cette correction. C'est le prix d'un aléa qui en est un.
+ */
+const tirage = creerAleatoire;
 
 /**
  * La case de la roue de Camelot qu'une couleur désigne.
@@ -107,8 +247,20 @@ export function toniqueDeCamelot(code: string): number {
 /** Vrai si la case désigne un mode mineur — l'anneau A de la roue. */
 export const estMineur = (code: string) => code.toUpperCase().endsWith("A");
 
-const MAJEUR = [0, 2, 4, 5, 7, 9, 11];
-const MINEUR = [0, 2, 3, 5, 7, 8, 10];
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, et le
+// garde des gammes ne les voyait pas : il ne cherchait que des constantes nommées `GAMME*`, quand
+// celles-ci s'appelaient `MAJEUR` et `MINEUR`. C'est ce trou qui a fait refaire le garde sur la
+// FORME d'une gamme plutôt que sur le nom qu'on lui donne.
+const MAJEUR = degresDeGamme("majeur");
+const MINEUR = degresDeGamme("mineur");
+
+/** La gamme d'une case : celle qu'on impose, ou celle que l'anneau désigne. */
+const gammeDuCode = (code: string, impose?: string) =>
+  impose ? degresDeGamme(impose) : (estMineur(code) ? MINEUR : MAJEUR);
+
+/** L'accord d'une case : celui qu'on impose, ou la triade que l'anneau désigne. */
+const accordDuCode = (code: string, impose?: string) =>
+  intervallesDaccord(impose || (estMineur(code) ? "m" : "maj"));
 
 /**
  * La suite des pulsations.
@@ -120,21 +272,87 @@ const MINEUR = [0, 2, 3, 5, 7, 8, 10];
 export function pulsations(o: OptionsPulsations): Pulsation[] {
   const alea = tirage(o.graine);
   const out: Pulsation[] = [];
+  const errance = Math.min(1, Math.max(0, o.errance ?? 0));
+  const saturationReglee = Math.min(1, Math.max(0, o.saturation));
+  const irregularite = Math.min(1, Math.max(0, o.irregularite ?? 0));
+
+  // LA RESPIRATION PART D'UNE PHASE ET D'UNE VITESSE TIRÉES, et c'est ce qui manquait le plus.
+  //
+  // CE QUI ÉTAIT FAUX, relevé par Fabien : « ça sonne pareil quelle que soit la graine ». Le souffle
+  // était `sin(2π · 0,11 · t)`, le MÊME sinus pour toute graine, parti de la même phase. Or c'est lui
+  // qui décide quelles pulsations passent sous le seuil de silence : l'architecture de son et de
+  // silence, qui est ce qu'on entend en premier, était donc identique d'une graine à l'autre.
+  // Mesuré sur huit graines : les motifs de silence se superposaient à une ou deux places près, et
+  // les INSTANTS, eux, étaient rigoureusement identiques — une seule suite pour les huit.
+  const phase = alea() * 2 * Math.PI;
+  // La vitesse varie d'un tiers autour de sa valeur d'origine : assez pour que les blocs tombent
+  // ailleurs, pas assez pour que le cercle cesse de respirer lentement sous la cadence.
+  const vitesseSouffle = 0.11 * (0.75 + 0.5 * alea());
+  // L'ERRANCE REMPLACE LE PAS DU PARCOURS, elle ne s'y ajoute pas, et c'est ce qui la garde dans la
+  // roue. Ajoutée, un écart d'une case sur un pas nominal d'une case donnait un saut de DEUX cases,
+  // que la roue de Camelot n'autorise pas : la suite aurait cessé d'être une suite de modulations
+  // qui tiennent, ce qui est tout l'intérêt de passer par elle. Le décalage est donc calculé pour
+  // que la case ENTENDUE tombe sur la cible, quel que soit le pas que le parcours venait de faire.
+  //
+  // ET IL S'ACCUMULE : un écart pris reste pris, et le parcours continue de tourner par-dessus. Le
+  // retirer ferait revenir la pièce à son chemin réglé, donc effacerait la modulation entendue.
+  //
+  // LA CASE SE COMPTE SANS LA RAMENER DANS LE TOUR. Une case entendue vaut toujours la nominale plus
+  // le décalage en cases, le décalage étant un multiple de trente degrés ; c'est le code de Camelot
+  // qui ramène dans les douze, à la lecture. Compter modulo douze ici obligerait à des soustractions
+  // circulaires pour rien.
+  const caseDe = (degres: number) => Math.floor(degres / 30);
+  let decalage = 0;
+  let anneauChange = false;
+  // La première case ne se tire pas : la pièce commence dans la tonalité que les réglages disent.
+  let caseNominale = caseDe(o.teinteDebut);
   let t = 0;
   let garde = 0;
   while (t < o.dureeSec && garde++ < 100000) {
     const avancement = o.dureeSec > 0 ? t / o.dureeSec : 0;
     const cadence = o.pulsationDebut + (o.pulsationFin - o.pulsationDebut) * avancement;
-    const periode = 1 / Math.max(0.05, cadence);
+    // L'INSTANT SUIVANT SE TIRE, ET IL NE SE TIRAIT PAS. Les instants venaient du seul glissement de
+    // cadence : ils étaient donc rigoureusement les mêmes pour toute graine, et le rythme est ce
+    // qu'on entend en premier d'une pulsation. L'écart se compte en part de la période courante, de
+    // sorte qu'une pièce qui accélère garde la même irrégularité RELATIVE d'un bout à l'autre ; en
+    // valeur absolue, elle paraîtrait s'assagir à mesure que la cadence monte.
+    const periode = (1 / Math.max(0.05, cadence))
+      * (irregularite > 0 ? 1 + irregularite * (alea() * 2 - 1) : 1);
+    const teinteNominale = o.teinteDebut + o.teinteParcours * avancement;
+    const caseCourante = caseDe(teinteNominale);
+    if (caseCourante !== caseNominale) {
+      const pas = caseCourante - caseNominale;
+      caseNominale = caseCourante;
+      // LE `&&` COURT-CIRCUITE À ERRANCE NULLE : aucun tirage n'est consommé, et la suite des
+      // rayons reste celle d'avant ce réglage, à l'échantillon près.
+      if (errance > 0 && alea() < errance) {
+        // Les trois mouvements de la roue, comptés depuis la case qu'on vient d'entendre.
+        const mouvement = Math.floor(alea() * 3);
+        const vise = mouvement === 0 ? -1 : mouvement === 1 ? 0 : 7;
+        if (mouvement === 1) anneauChange = !anneauChange;
+        decalage += (vise - pas) * 30;
+      }
+    }
     // Le rayon respire : une oscillation lente sous la cadence, plus un grain d'irrégularité.
-    const souffle = 0.5 + 0.5 * Math.sin(2 * Math.PI * 0.11 * t);
+    //
+    // LE GRAIN VA DE 0,6 À 1 ET NON DE 0,75 À 1,25, et ce n'est pas un réglage de goût. Avec l'ancien
+    // intervalle, la formule pouvait rendre jusqu'à 1,25 et se faisait raboter par le plafond :
+    // mesuré sur une pièce de deux minutes, **31 pulsations sur 288 collées exactement à 1**, soit
+    // onze pour cent de la pièce au rayon maximal, et ce à TOUTE respiration puisque le dépassement
+    // est proportionnel. Or le rayon donne la nuance et le degré : onze pour cent des notes sortaient
+    // à la même force et au même degré. Les trente doublons de rayon relevés venaient tous de là.
+    // Ramené sous un, le plancher ne bouge pas — il vaut toujours cent moins la respiration — et le
+    // plafond n'est plus atteint que par la limite.
+    const souffle = 0.5 + 0.5 * Math.sin(phase + 2 * Math.PI * vitesseSouffle * t);
     const rayon = Math.min(1, Math.max(0,
-      (1 - o.respiration) + o.respiration * souffle * (0.75 + 0.5 * alea())));
+      (1 - o.respiration) + o.respiration * souffle * (0.6 + 0.4 * alea())));
     out.push({
       temps: t,
       rayon,
-      teinte: o.teinteDebut + o.teinteParcours * avancement,
-      saturation: Math.min(1, Math.max(0, o.saturation)),
+      teinte: teinteNominale + decalage,
+      // L'ANNEAU EST LA SATURATION, le composant le tient depuis l'origine : changer d'anneau, c'est
+      // donc passer du vif au terne. La couleur suit la tonalité parce qu'elle EST la tonalité.
+      saturation: anneauChange ? 1 - saturationReglee : saturationReglee,
       clarte: Math.min(1, Math.max(0, o.clarte)),
     });
     t += periode;
@@ -161,7 +379,7 @@ export function notesDepuisPulsations(
     codes.push(code);
     if (pulse.rayon < o.seuilSilence) continue;
 
-    const gamme = estMineur(code) ? MINEUR : MAJEUR;
+    const gamme = gammeDuCode(code, o.gamme);
     // Le rayon choisit le degré : un grand cercle est une note GRAVE. C'est le sens que l'œil
     // donne spontanément à une forme large, et l'inverser ferait grimper la mélodie quand le
     // dessin s'alourdit.
@@ -216,7 +434,11 @@ export function accordsDepuisPulsations(
     const audibles: number[] = [];
     for (let k = i; k <= j; k++) if (p[k].rayon >= o.seuilSilence) audibles.push(k);
     if (audibles.length > 0) {
-      const tierce = estMineur(code) ? 3 : 4;
+      // LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. Ils étaient CALCULÉS
+      // ici — `[0, tierce, 7]` avec une tierce mineure ou majeure —, et c'est pire qu'une table
+      // cachée : un garde qui cherche la forme d'un accord ne peut pas voir une triade qu'aucune
+      // liste ne porte. Une qualité imposée ouvre du même coup les trente-trois autres.
+      const intervalles = accordDuCode(code, o.qualite);
       const octave = octaveBase + Math.round(p[i].clarte * 2) - 2;
       const racine = 12 * (octave + 1) + toniqueDeCamelot(code);
       const finSegment = Math.min(o.dureeSec, j + 1 < p.length ? p[j + 1].temps : p[j].temps + 0.4);
@@ -227,7 +449,7 @@ export function accordsDepuisPulsations(
           ? Math.min(finSegment, p[frappes[f + 1]].temps)
           : finSegment;
         if (fin <= debut) continue;
-        for (const demi of [0, tierce, 7]) {
+        for (const demi of intervalles) {
           notes.push({ note: Math.min(108, Math.max(21, racine + demi)), velocite, debut, fin });
         }
       }

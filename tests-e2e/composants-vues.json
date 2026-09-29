@@ -48,6 +48,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "cercle-gamme",
+    "vue": "CercleGammeVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "cercle-melodique",
     "vue": "CercleMelodiqueVue",
     "entreeAudio": false,
@@ -58,6 +64,12 @@
     "vue": "VueAnimationSvg",
     "entreeAudio": false,
     "entreeRequiseAutre": false
+  },
+  {
+    "id": "cercle-retouche",
+    "vue": "CercleRetoucheVue",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
   },
   {
     "id": "cercle-rythmique",
@@ -283,7 +295,7 @@
   },
   {
     "id": "lecteur-midi",
-    "vue": "VueUploadMidi + VueSoundFont",
+    "vue": "VueUploadMidi",
     "entreeAudio": false,
     "entreeRequiseAutre": false
   },

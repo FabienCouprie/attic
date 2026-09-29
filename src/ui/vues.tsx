@@ -12,6 +12,8 @@ import { registre } from "../audio/adaptateur";
 import type { FicheAudio } from "../audio/types-domaine";
 import { ArbreRythmiqueVue } from "./ArbreRythmiqueVue";
 import { RouleauSequence } from "./RouleauSequence";
+import { CercleRetoucheVue } from "./CercleRetoucheVue";
+import { CercleGammeVue } from "./CercleGammeVue";
 import { CercleMelodiqueVue, CercleRythmiqueVue } from "./CercleVue";
 import type { DonneesNoeud } from "./AtelierNode";
 import { VueExtraitVideo, VueFilmCercle, VueMontageVideo, VuePistesMultiples, VueVideoMuette } from "./vues-video";
@@ -19,7 +21,7 @@ import { VueMontage } from "./vues-montage";
 import { VueFormeOnde, VueSelecteurMultiZones, VueUploadAudio, VueUploadImage, VueUploadPdf, VueUploadSvg } from "./vues-fichiers";
 import { VueExplorateur } from "./vues-explorateur";
 import { VueLecteurMusique } from "./vues-lecteur";
-import { VueSoundFont, VueTranscription, VueUploadIR, VueUploadMidi, VueUploadOnnx, VueUploadPd } from "./vues-midi";
+import { VueTranscription, VueUploadIR, VueUploadMidi, VueUploadOnnx, VueUploadPd } from "./vues-midi";
 import { VueCollections, VueExport } from "./vues-collections";
 import { ClavierMelodie, ClavierSfz, VueApprentissage, VueBanqueSfz, VueOrchestreCsound } from "./vues-claviers";
 import { VueADSR, VueComparateurAB, VueDetecteurAccords, VueEmotions, VueGenerateurScriptIA, VueNomsInstruments, VueOscillo, VueReponseFiltre, VueSequenceurAccords, VueSequenceurBatterieAvance, VueSequenceurMelodique, VueSpectre, VueSpectrogramme, VueStylesMusicaux, VueTessituresVoix } from "./vues-analyse";
@@ -84,6 +86,13 @@ const REGISTRE: EntreeRegistre[] = [
   // Les cercles se cliquent : la vue est l'editeur, et le motif qu'elle ecrit vit dans un reglage.
   { correspond: parId("cercle-rythmique"), vue: CercleRythmiqueVue, position: "avant" },
   { correspond: parId("cercle-melodique"), vue: CercleMelodiqueVue, position: "avant" },
+  // Celui-ci montre le cercle qu'il a RECU, et non un cercle deduit de ses reglages : il le tient
+  // du canal `designe`, dont un changement de reglage ne perime pas le contenu. Sans cela, le clic
+  // qui allume une place effacerait le dessin qu'on est en train de cliquer.
+  { correspond: parId("cercle-retouche"), vue: CercleRetoucheVue, position: "avant" },
+  // Et celui-ci montre le cercle qu'il a PRODUIT de ses réglages : il ne se clique donc pas, une
+  // retouche écrirait par-dessus ce que la gamme nommée dit.
+  { correspond: parId("cercle-gamme"), vue: CercleGammeVue, position: "avant" },
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },
@@ -147,7 +156,6 @@ const REGISTRE: EntreeRegistre[] = [
   { correspond: parId("entree-pdf"), vue: VueUploadPdf, position: "avant" },
   { correspond: parId("explorateur-musique"), vue: VueExplorateur, position: "avant", porteLecteur: true },
   { correspond: parId("lecteur-midi"), vue: VueUploadMidi, position: "avant" },
-  { correspond: parId("lecteur-midi"), vue: VueSoundFont, position: "avant" },
   { correspond: parId("transcripteur-midi"), vue: VueTranscription, position: "avant" },
   { correspond: parId("classificateur-genre", "separateur-ia"), vue: VueUploadOnnx, position: "avant" },
   { correspond: parId("reverbe-convolution"), vue: VueUploadIR, position: "apres" },

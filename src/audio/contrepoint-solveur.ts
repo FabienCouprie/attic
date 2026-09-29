@@ -18,6 +18,7 @@
 
 import { creerAleatoire } from "../core";
 import { verifier, type Infraction } from "./contrepoint";
+import { degresDeGamme } from "./gammes";
 import {
   domaineHauteurs, ecartMaximal, repetitionMaximale, resoudre,
   type Contrainte, type Resolution,
@@ -117,7 +118,8 @@ export function chercherContrepoint(
  */
 export function cantusFirmus(tonique = 60, combien = 8, graine = 1): number[] {
   const hasard = creerAleatoire(graine);
-  const gamme = [0, 2, 4, 5, 7, 9, 11];
+  // Les degrés viennent de la table commune, `gammes.ts`, plutôt que d'être écrits ici.
+  const gamme = degresDeGamme("majeur");
   const degre = (d: number) => tonique + 12 * Math.floor(d / 7) + gamme[((d % 7) + 7) % 7];
   const n = Math.max(4, Math.min(16, Math.round(combien)));
 

@@ -109,9 +109,9 @@ export const fiches: FicheAudio[] = ([
       try {
         await annoncerModele(ctx, "score-esthetique", "");
         const analyse = await analyserEsthetique(buffer, apiFenetre(), (t) => ctx.onProgress(t), ctx.signal);
-        (ctx.noeud.data as any)._esthetique = analyse;
         return {
           valeurs: [buffer, rapportEsthetique(analyse)],
+          affichage: { analyse },
           message: traduire("msg.esthetique.resultat_var_0_var_1", ligneScores(analyse.global), analyse.tranches.length),
         };
       } catch (e) {
@@ -138,9 +138,9 @@ export const fiches: FicheAudio[] = ([
         const api = apiFenetre();
         const analyseA = await analyserEsthetique(a, api, (t) => ctx.onProgress(t), ctx.signal, "A · ");
         const analyseB = await analyserEsthetique(b, api, (t) => ctx.onProgress(t), ctx.signal, "B · ");
-        (ctx.noeud.data as any)._comparaisonEsthetique = { a: analyseA, b: analyseB };
         return {
           valeurs: [rapportComparaison(analyseA, analyseB)],
+          affichage: { a: analyseA, b: analyseB },
           message: traduire("msg.esthetique.ecarts_var_0", ligneScores(ecartsEsthetiques(analyseA, analyseB), signe)),
         };
       } catch (e) {

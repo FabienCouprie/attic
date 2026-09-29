@@ -11,7 +11,7 @@ import type { VueProps } from "./vues";
 export function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const htmlPath = (data as any)._carteHtmlPath as string | undefined;
+  const htmlPath = (data as any)._affichage?.htmlPath as string | undefined;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {
@@ -52,7 +52,7 @@ export function VueCarteSonore({ data }: VueProps) {
 export function VueCoordonneesSurCarte({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const htmlPath = (data as any)._coordCarteHtmlPath as string | undefined;
+  const htmlPath = (data as any)._affichage?.htmlPath as string | undefined;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {

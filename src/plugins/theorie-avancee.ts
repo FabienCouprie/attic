@@ -24,16 +24,12 @@ import { notesDuMidi } from "./instruments-communs";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 
 import type { Note } from "../audio/note";
-const NOMS = ["Do", "Do#", "Ré", "Mi♭", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Si♭", "Si"];
-const NOMS_EN = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
-const IDS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
+import { degresDeGamme } from "../audio/gammes";
+import { PARAMETRE_TONIQUE } from "../audio/cles";
 
-const GAMMES: Record<string, number[]> = {
-  majeure: [0, 2, 4, 5, 7, 9, 11],
-  mineure: [0, 2, 3, 5, 7, 8, 10],
-  pentatonique: [0, 2, 4, 7, 9],
-  chromatique: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `audio/gammes.ts`. Une table privée ici redisait
+// ce qu'elle dit, et sept copies du même savoir ne restent pas d'accord : les anciennes
+// orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
 
 type NoteSimple = Note;
 
@@ -302,8 +298,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Voix", nomEn: "Voices", type: "nombre", plage: [1, 3], pas: 1, defaut: 1,
         doc: "Superpose la suite prise un terme sur un, sur deux et sur quatre. Ce n'est pas un effet : au pas 4, la suite se retrouve identique à elle-même, si bien que la voix lente est la même mélodie et que le contrepoint se tient tout seul. C'est le procédé de la Deuxième Symphonie.",
         docEn: "Superimposes the sequence taken every term, every two and every four. This is not an effect: at stride 4 the sequence comes back identical to itself, so the slow voice is the same melody and the counterpoint holds by itself. It is the procedure of the Second Symphony." },
-      { nom: "Tonique", nomEn: "Tonic", type: "choix", options: NOMS, optionsEn: NOMS_EN, optionIds: IDS,
-        defaut: "Do", defautEn: "C",
+      { ...PARAMETRE_TONIQUE,
         doc: "La note d'où part la suite, dont le premier terme vaut toujours zéro.",
         docEn: "The note the sequence starts from, its first term always being zero." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
@@ -329,7 +324,7 @@ export const fiches: FicheAudio[] = ([
       const tonique = (parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0)
         + (Math.round(ctx.paramNombre("Octave", 4)) + 1) * 12;
       const mode = ctx.paramTexte("Lecture", "demi-tons") as ModeHauteur;
-      const gamme = GAMMES[ctx.paramTexte("Gamme", "majeure")] ?? GAMMES.majeure;
+      const gamme = degresDeGamme(ctx.paramTexte("Gamme", "majeure"), "majeur");
       const duree = ctx.paramNombre("Durée d'une note", 0.25);
 
       const notes: NoteSimple[] = [];

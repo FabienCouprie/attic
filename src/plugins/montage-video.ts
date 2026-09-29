@@ -133,46 +133,44 @@ export const fiches: FicheAudio[] = ([
         onProgress: (f) => ctx.onProgress?.(`${Math.round(f * 100)} %`),
       });
 
-      const data = ctx.noeud.data as Record<string, unknown>;
-      if (typeof data._videoMontageUrl === "string") URL.revokeObjectURL(data._videoMontageUrl);
-      data._videoMontageUrl = URL.createObjectURL(blob);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal
+      // déclaré, là où le run précédent l'a laissé.
+      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
+      if (typeof avant === "string") URL.revokeObjectURL(avant);
       const nomSource = chemin.replace(/^.*[\\/]/, "");
-      data._videoMontageSource = nomSource;
-      // La vue lit ceci : seule l'exécution connaît la cadence et la durée du film.
-      data._videoMontageInfos = {
-        dureeSec: video.dureeSec, cadence: video.cadence,
-        largeur: video.largeur, hauteur: video.hauteur,
-      };
-      // LES ENVELOPPES, ET NON LES SONS. La vue dessine les bandes avec ; six tampons retenus pour
-      // l'affichage pèseraient des dizaines de mégaoctets, ces colonnes pèsent seize kilo-octets.
-      data._videoMontagePistes = pistes
-        .filter((p) => p.piste >= 0)
-        .map((p) => {
-          const colonnes = enveloppeDeTampon(p.son);
-          return {
-            piste: p.piste, dureeSec: p.son.duration,
-            crete: creteDeColonnes(colonnes), colonnes,
-          };
-        });
-      // LES SONS EUX-MÊMES, pour les entendre sur le film. Ce sont les tampons des composants en
-      // amont, désignés et non recopiés : ils vivent déjà dans le cache d'exécution, et ce sont les
-      // sons posés, courts par nature, jamais le film. Le son du film, lui, est rendu par l'élément
-      // vidéo et n'a donc pas à être gardé.
-      data._videoMontageSons = Object.fromEntries(
-        pistes.filter((p) => p.piste >= 0).map((p) => [p.piste, p.son]),
-      );
-
       const nom = (nomSource || "montage").replace(/\.[^.]+$/, "");
       const fichier = new File([blob], `${nom}-sonorise.mp4`, { type: "video/mp4" });
-      // La vue propose de l'enregistrer : un fichier produit qui ne se récupère nulle part n'est pas
-      // produit. Le nom et la taille viennent d'ici, personne d'autre ne les connaît.
-      data._videoMontageNom = fichier.name;
-      data._videoMontageOctets = blob.size;
+
+      // CE QUI VIENT DES ENTRÉES VA DANS `designe`, et un réglage ne le périme donc pas : la cadence
+      // et la durée sont celles du film reçu, les enveloppes sont un dessin des sons reçus, et les
+      // tampons sont ceux des composants d'amont, désignés et non recopiés.
+      //
+      // LES ENVELOPPES, ET NON LES SONS, POUR DESSINER. Six tampons retenus pour l'affichage
+      // pèseraient des dizaines de mégaoctets ; ces colonnes pèsent seize kilo-octets. Les sons,
+      // eux, sont là pour s'entendre sur le film, et ce sont les sons posés, courts par nature,
+      // jamais le film : celui-ci est rendu par l'élément vidéo.
+      const posees = pistes.filter((p) => p.piste >= 0);
+      const designe = {
+        infos: {
+          dureeSec: video.dureeSec, cadence: video.cadence,
+          largeur: video.largeur, hauteur: video.hauteur,
+        },
+        pistes: posees.map((p) => {
+          const colonnes = enveloppeDeTampon(p.son);
+          return { piste: p.piste, dureeSec: p.son.duration, crete: creteDeColonnes(colonnes), colonnes };
+        }),
+        sons: Object.fromEntries(posees.map((p) => [p.piste, p.son])),
+      };
+      // ET CE QUE LE RUN A PRODUIT VA DANS `affichage` : la vue propose de l'enregistrer, et un
+      // fichier produit qui ne se récupère nulle part n'est pas produit.
+      const affichage = { url: URL.createObjectURL(blob), nom: fichier.name, octets: blob.size };
       // Les octets du film n'entrent pas dans ce compte : ils n'ont jamais été tenus. Restent le
       // mélange et le fichier produit.
       const retenu = (melange.length * melange.numberOfChannels * 4 + blob.size) / MEGA;
       return {
         valeurs: [fichier],
+        affichage,
+        designe,
         message: `${pistes.length} ${en() ? "tracks" : "pistes"} · ${video.dureeSec.toFixed(1)} s · `
           + `${video.cadence.toFixed(2)} ${en() ? "fps" : "im/s"} · ${(blob.size / MEGA).toFixed(0)} Mo · `
           + `${en() ? "held" : "retenu"} ${retenu.toFixed(0)} Mo`,

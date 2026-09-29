@@ -185,20 +185,24 @@ function manquements(octets: Uint8Array): string[] {
  * sonne donc pas comme l'application.
  */
 const RECOUVREMENT = ["hauteur deja ouverte", "note-off orphelin"];
+
+/**
+ * Ce qui reste, et pourquoi ces deux-là seulement.
+ *
+ * SEPT COMPOSANTS EMPILAIENT DEUX NOTES DE MÊME HAUTEUR sur un même canal, ce qui est ambigu : un
+ * lecteur conforme relance la note et le premier note-off éteint tout, quand le lecteur du logiciel
+ * les tient toutes. Cinq sont corrigés : ils bâtissent une liste de notes, et
+ * `audio/recouvrement-hauteur.ts` la résout AVANT le fichier ET AVANT le rendu, ce qui supprime
+ * l'écart au lieu de le déplacer.
+ *
+ * LES DEUX AUTRES N'ONT PAS DE LISTE DE NOTES à ce moment-là : ils travaillent sur des OCTETS MIDI
+ * déjà écrits, l'arpégiateur en transformant ceux qu'il reçoit, la boîte à groove en assemblant
+ * trois flux par canal. Les résoudre demande de relire, résoudre et réécrire un flux, ce qui est un
+ * autre travail que celui-ci.
+ */
 const TOLERES: Record<string, string[]> = {
-  // Écart de durée sonnante mesuré entre les deux lectures : l'export ne sonne pas comme l'application.
-  "arpege-koch": RECOUVREMENT,           // 24,683 s contre 20,569 s
-  "automate-cellulaire": RECOUVREMENT,   // 4,200 s contre 10,500 s, et 2 notes a duree nulle
-  "boite-groove": RECOUVREMENT,          // 2,473 s contre 2,267 s
-  "motif-echo-notes": RECOUVREMENT,      // 9 des 36 notes a duree nulle chez un lecteur conforme
-  // Même classe, mais aucun écart de durée sonnante mesuré : le flux reste ambigu, sans conséquence
-  // relevée à ce jour. Moins pressés que les quatre précédents, à corriger tout de même.
   "arpegiateur-midi": RECOUVREMENT,
-  "multi-reservoirs": RECOUVREMENT,
-  "reservoir-musical": RECOUVREMENT,
-  // `motif-crossmodal.ts` bâtit deux pistes et ne termine que la seconde.
-  "parfum-motif": ["endOfTrack absent"],
-  "accord-mets-musique": ["endOfTrack absent"],
+  "boite-groove": RECOUVREMENT,
 };
 
 /** Le plancher d'émetteurs réellement éprouvés. Voir l'en-tête : un test qui n'exerce plus rien

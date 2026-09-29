@@ -6,6 +6,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Scale, Note, Progression } from "tonal";
 import { estimerTonalite, detecterAccords } from "../audio/accords";
+import { PARAMETRE_CLE } from "../audio/cles";
 import {
   accordsDepuisRomains, modeDepuisTonalite, normaliserRomains, type ModeProgression,
 } from "../audio/theorie-romains";
@@ -94,13 +95,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Notes", nomEn: "Notes", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Tonic", type: "choix",
-        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        defaut: "C",
+      { ...PARAMETRE_CLE, nom: "Tonalité",
         doc: "Tonalité de départ.",
-        docEn: "Starting tonic.", defautEn: "C" },
+        docEn: "Starting tonic." },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
         doc: "Type de gamme.",
         docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
@@ -149,11 +146,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Tonalité", nomEn: "Tonic", type: "texte", requis: false }],
     sorties: [{ nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "choix",
-        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        defaut: "C",
+      { ...PARAMETRE_CLE, nom: "Tonalité",
         doc: "Tonique de la progression. Le mode se choisit dans « Gamme » ; l'entrée Tonalité, si elle en nomme un (« A minor »), l'emporte sur le réglage.",
         docEn: "Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »).", defautEn: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
@@ -187,11 +180,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
     sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
-      { nom: "Tonalité", nomEn: "Key", type: "choix",
-        options: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionsEn: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        optionIds: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-        defaut: "C",
+      { ...PARAMETRE_CLE, nom: "Tonalité",
         doc: "Tonique de la grille. Le mode se choisit dans « Gamme » ; l'entrée Progression, si elle nomme une tonalité, l'emporte sur le réglage.",
         docEn: "Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key.", defautEn: "C" },
       { nom: "Gamme", nomEn: "Scale", type: "choix",

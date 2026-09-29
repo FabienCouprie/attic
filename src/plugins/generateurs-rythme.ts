@@ -15,6 +15,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { optionsPatrons } from "./patrons-rythme";
 import { avecDoc } from "./notices";
 import { creerAleatoire, hasardDuNoeud } from "../core";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -89,10 +90,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [0, 12], pas: 1, defaut: 5,
         doc: "Nombre de réécritures. Le mot grandit vite : une règle qui double sa longueur atteint le millier en dix tours.",
         docEn: "Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes." },
-      { nom: "Clé", nomEn: "Key", type: "choix",
-        options: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
-        optionsEn: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
-        defaut: "C", defautEn: "C", doc: "Tonique de la gamme.", docEn: "Tonic of the scale." },
+      { ...PARAMETRE_CLE, doc: "Tonique de la gamme.", docEn: "Tonic of the scale." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS,
         defaut: "Majeur", defautEn: "Major",

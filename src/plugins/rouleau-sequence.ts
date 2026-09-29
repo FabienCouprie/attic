@@ -38,13 +38,13 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const recue = ctx.entree(0);
       if (!estSequence(recue)) {
-        // LE CHAMP EST EFFACÉ, ET NON LAISSÉ TEL QUEL : sans cela, débrancher une entrée laisserait
-        // le dessin de la séquence précédente affiché comme s'il décrivait encore quelque chose.
-        (ctx.noeud.data as any)._rouleauSequence = undefined;
+        // RIEN N'EST DÉSIGNÉ, ET NON LE DESSIN PRÉCÉDENT LAISSÉ TEL QUEL : sans cela, débrancher une
+        // entrée laisserait la séquence d'avant affichée comme si elle décrivait encore quelque chose.
         return { valeurs: [], message: en() ? "No sequence at the input." : "Aucune séquence à l'entrée." };
       }
-      // La vue lit ce champ : seule l'exécution connaît la séquence branchée.
-      (ctx.noeud.data as any)._rouleauSequence = recue;
+      // La vue le lit par le canal déclaré : seule l'exécution connaît la séquence branchée, et
+      // c'est une désignation de l'ENTRÉE, qu'un réglage ne périme pas.
+      const designe = { sequence: recue };
 
       const voix = new Set(recue.notes.map((n: any) => Math.max(0, Math.floor(n.voix ?? 0)))).size;
       const microtons = compterMicrotons(recue);
@@ -55,7 +55,7 @@ export const fiches: FicheAudio[] = ([
         `${voix} ${en() ? (voix > 1 ? "voices" : "voice") : "voix"}`,
       ];
       if (microtons > 0) bouts.push(`${microtons} ${en() ? "microtones" : "microtons"}`);
-      return { valeurs: [], message: bouts.join(" · ") };
+      return { valeurs: [], designe, message: bouts.join(" · ") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

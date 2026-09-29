@@ -11,6 +11,7 @@
 // de la structure aléatoire du réseau, comme un kaléidoscope.
 
 import { formeOndeDepuisTimbre } from "./timbres";
+import { degresDeGamme } from "./gammes";
 
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
@@ -32,14 +33,9 @@ export interface ConfigReservoir {
   silence: number;         // probabilité de silence (0-1)
 }
 
-const GAMMES: Record<string, number[]> = {
-  "majeur": [0, 2, 4, 5, 7, 9, 11],
-  "mineur": [0, 2, 3, 5, 7, 8, 10],
-  "pentatonique majeur": [0, 2, 4, 7, 9],
-  "pentatonique mineur": [0, 3, 5, 7, 10],
-  "blues": [0, 3, 5, 6, 7, 10],
-  "chromatique": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-};
+// LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `audio/gammes.ts`. Une table privée ici redisait
+// ce qu'elle dit, et sept copies du même savoir ne restent pas d'accord : les anciennes
+// orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -188,7 +184,7 @@ function lectureReservoir(res: Reservoir): number {
  */
 function noteDepuisLecture(lecture: number, moyenne: number, ecartType: number,
                            cle: string, gamme: string, octave: number): number {
-  const intervalles = GAMMES[gamme] ?? GAMMES["majeur"];
+  const intervalles = degresDeGamme(gamme, "majeur");
   const cleIdx = NOTES.indexOf(cle);
   const baseMidi = (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0);
 

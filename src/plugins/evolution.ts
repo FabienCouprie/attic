@@ -10,6 +10,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
+import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 import { avecDoc } from "./notices";
 import { estSequence, type Sequence } from "../audio/sequence";
 import { domaineHauteurs } from "../audio/contraintes";
@@ -23,7 +24,6 @@ import { estCourbe, reechantillonner } from "../audio/courbe";
 import { nomNote } from "../audio/nom-note";
 
 const en = () => langueCourante() === "en";
-const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 export const fiches: FicheAudio[] = ([
   {
@@ -63,8 +63,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Majeure", defautEn: "Major",
         doc: "Les degrés auxquels les hauteurs sont restreintes.",
         docEn: "The degrees the pitches are restricted to." },
-      { nom: "Tonique", nomEn: "Tonic", type: "choix",
-        options: NOMS, optionsEn: NOMS, optionIds: NOMS, defaut: "C", defautEn: "C",
+      { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Tonic",
         doc: "La tonique de la gamme.", docEn: "The tonic of the scale." },
       { nom: "Grave", nomEn: "Low", plage: [0, 127], pas: 1, defaut: 55,
         doc: "La hauteur la plus basse permise.", docEn: "The lowest pitch allowed." },
@@ -94,7 +93,7 @@ export const fiches: FicheAudio[] = ([
 
       const domaine = domaineHauteurs(
         ctx.paramNombre("Grave", 55), ctx.paramNombre("Aigu", 79),
-        degresDe(ctx.paramTexte("Gamme", "majeure"), NOMS.indexOf(ctx.paramTexte("Tonique", "C"))),
+        degresDe(ctx.paramTexte("Gamme", "majeure"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
       );
       if (domaine.length === 0 || combien < 2) {
         return {
@@ -159,7 +158,7 @@ export const fiches: FicheAudio[] = ([
         "",
         ...ev.parObjectif.map((ob) => `  ${ob.nom} ${ob.cout.toFixed(4)}`),
         "",
-        `${en() ? "melody" : "mélodie"}  ${ev.meilleur.map(nomNote).join(" ")}`,
+        `${en() ? "melody" : "mélodie"}  ${ev.meilleur.map((n) => nomNote(n)).join(" ")}`,
         `${en() ? "mean leap" : "saut moyen"}  ${sautMoyen(ev.meilleur).toFixed(2)}`
           + (ampleur > 0 ? ` (${en() ? "aimed" : "visé"} ${ampleur.toFixed(2)})` : ""),
         "",

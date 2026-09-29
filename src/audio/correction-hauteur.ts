@@ -29,6 +29,7 @@
 
 import { suivreHauteur } from "./hauteur";
 import type { Courbe } from "./courbe";
+import { degresDeGamme } from "./gammes";
 
 export interface OptionsCorrection {
   /** Les classes de hauteur permises, de 0 (do) à 11. */
@@ -66,15 +67,24 @@ const MIDI = (hz: number) => 69 + 12 * Math.log2(Math.max(1e-6, hz) / 440);
  * plus une gamme a de degrés, moins la correction fait de travail. La chromatique ne fait que
  * rendre juste ; la pentatonique impose une couleur, et s'entend comme un effet.
  */
-export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: number[] }[] = [
-  { id: "chromatique", fr: "Chromatique", en: "Chromatic", degres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
-  { id: "majeure", fr: "Majeure", en: "Major", degres: [0, 2, 4, 5, 7, 9, 11] },
-  { id: "mineure", fr: "Mineure naturelle", en: "Natural minor", degres: [0, 2, 3, 5, 7, 8, 10] },
-  { id: "mineure-harmonique", fr: "Mineure harmonique", en: "Harmonic minor", degres: [0, 2, 3, 5, 7, 8, 11] },
-  { id: "penta-majeure", fr: "Pentatonique majeure", en: "Major pentatonic", degres: [0, 2, 4, 7, 9] },
-  { id: "penta-mineure", fr: "Pentatonique mineure", en: "Minor pentatonic", degres: [0, 3, 5, 7, 10] },
-  { id: "blues", fr: "Blues", en: "Blues", degres: [0, 3, 5, 6, 7, 10] },
-];
+/**
+ * Les gammes sur lesquelles une hauteur se recale.
+ *
+ * SES IDENTIFIANTS SONT LES SIENS, ET ILS RESTENT. Ce composant écrit `majeure` là où le reste du
+ * dépôt écrit `majeur`, et `penta-majeure` là où les autres écrivent `pentatonique-majeure` : ces
+ * orthographes sont enregistrées dans les projets, et les changer ferait qu'un graphe rouvert
+ * retomberait sur la gamme par défaut. Ce sont des alias dans `audio/gammes.ts`, donc les DEGRÉS
+ * viennent de la table commune sans que rien ne bouge ici.
+ */
+export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: number[] }[] = ([
+  ["chromatique", "Chromatique", "Chromatic"],
+  ["majeure", "Majeure", "Major"],
+  ["mineure", "Mineure naturelle", "Natural minor"],
+  ["mineure-harmonique", "Mineure harmonique", "Harmonic minor"],
+  ["penta-majeure", "Pentatonique majeure", "Major pentatonic"],
+  ["penta-mineure", "Pentatonique mineure", "Minor pentatonic"],
+  ["blues", "Blues", "Blues"],
+] as const).map(([id, fr, en]) => ({ id, fr, en, degres: degresDeGamme(id) }));
 
 /** Les degrés d'une gamme transposés sur une tonique, en classes de hauteur. */
 export function degresDe(idGamme: string, tonique: number): number[] {

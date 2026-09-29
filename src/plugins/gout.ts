@@ -34,14 +34,15 @@ export const fiches: FicheAudio[] = ([
       const m = mesurer(a);
       const parts = profil(m.dimensions);
       // La vue lit le profil ici : quatre barres valent mieux qu'un tableau de chiffres pour voir
-      // d'un coup où penche un son.
-      (ctx.noeud.data as Record<string, unknown>)._profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
+      // d'un coup où penche un son. IL PASSE PAR `affichage` : il ne décrit que ce run, donc une
+      // remise à zéro et un changement de réglage doivent l'effacer tous les deux.
+      const profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
       const noms: Record<string, string> = anglais
         ? { "sucré": "sweet", "acide": "sour", "amer": "bitter", "salé": "salty" } : {};
       const tete = parts.slice(0, 2)
         .map((p) => `${noms[p.gout] ?? p.gout} ${Math.round(p.part * 100)} %`)
         .join(" · ");
-      return { valeurs: [a, rapport(m, parts, anglais)], message: tete };
+      return { valeurs: [a, rapport(m, parts, anglais)], affichage: { profilGout }, message: tete };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

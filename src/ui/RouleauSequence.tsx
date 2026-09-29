@@ -39,7 +39,7 @@ const COULEURS_VOIX = 6;
 
 export function RouleauSequence({ id, data }: VueProps) {
   const { t } = useI18n();
-  const recue = (data as unknown as { _rouleauSequence?: Sequence })._rouleauSequence;
+  const recue = (data as unknown as { _designe?: { sequence?: Sequence } })._designe?.sequence;
   // LE CHAMP EST TRAVERSÉ SANS TYPE, et la vue existe avant toute exécution : `estSequence` répond
   // d'un seul coup aux deux cas, l'absence et la forme. Un nœud qu'on vient de poser n'a rien reçu,
   // et dessiner une géométrie calculée sur `undefined` viderait le nœud sans rien expliquer.

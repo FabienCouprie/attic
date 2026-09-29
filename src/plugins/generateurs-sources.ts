@@ -17,6 +17,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Retourne null si la note est invalide.
  */
 import { noteVersFrequence, FORMES_FREQ } from "./generateurs-aides";
+import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -58,7 +59,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom:"Clé", nomEn:"Key", type:"choix", options:["Do","Do#","Ré","Mi♭","Mi","Fa","Fa#","Sol","Sol#","La","Si♭","Si"], optionIds: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defaut:"Do", optionsEn: ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"], defautEn: "C" },
+      { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Durée", nomEn:"Duration", plage:[1,60], defaut:4, unite:"s" },

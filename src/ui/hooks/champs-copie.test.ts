@@ -67,12 +67,12 @@ describe("champs de résultat", () => {
     }
   });
 
-  it("ET CE QUE LA LIGNE DE TEMPS DESSINE AUSSI", () => {
+  it("ET CE QU'UN COMPOSANT MONTRE AUSSI, par son canal déclaré", () => {
     // Le même défaut que le dessin de la courbe, relevé par Fabien sur le Montage : la barre de
-    // chaque piste, son onde et les notes des boîtes de la Maquette restaient à l'écran après une
-    // remise à zéro, décrivant une exécution qui n'avait plus lieu. Les tampons, en plus, tenaient
-    // en mémoire des sons dont plus rien n'avait besoin.
-    for (const champ of ["_dureesMesurees", "_montageSons", "_maquetteNotes"]) {
+    // chaque piste, son onde et les notes des boîtes restaient à l'écran après une remise à zéro,
+    // décrivant une exécution qui n'avait plus lieu. Trois champs y répondaient, un par besoin ; le
+    // canal les remplace par deux clés qui valent pour tout composant.
+    for (const champ of ["_affichage", "_designe"]) {
       expect(CHAMPS_RESULTAT.has(champ), `${champ} doit être effacé par un reset`).toBe(true);
     }
   });
