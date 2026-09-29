@@ -10,7 +10,7 @@
 // composant touché.
 import "node-web-audio-api/polyfill.js";
 import { it, expect } from "vitest";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { toutesLesFiches } from "../plugins/index";
 import "../audio/adaptateur";
@@ -75,7 +75,85 @@ const SANS_LECTEUR_GENERIQUE_ET_SORTIE_AUDIO = [
   // de commandes pour un même son se contrediraient, et la tête ne saurait lequel suivre. Comme le
   // lecteur générique, elle ne paraît qu'une fois le graphe exécuté, faute de son à écouter avant.
   "maquette", "montage",
+  // Le sélecteur multi-zones, dont l'onde porte son `<audio>` caché, son bouton, son compteur et sa
+  // tête de lecture. On y cherche un instant en cliquant le dessin, là où se tracent les zones.
+  "selecteur-multi-zones",
 ];
+
+// ET L'AUTRE SENS : UNE VUE QUI PORTE DÉJÀ UN LECTEUR DOIT LE DÉCLARER — relevé par Fabien : « le
+// sélecteur multizone a un deuxième lecteur, le sien, et un lecteur classique supplémentaire ». Le
+// cas ci-dessus garde le sens dangereux, un son devenu inaudible ; celui-ci garde le sens visible,
+// deux jeux de commandes pour un même son. Les deux sont la même règle, lue dans ses deux sens, et
+// rien ne tenait le second : `porteLecteur` était une déclaration que personne ne confrontait au
+// rendu.
+//
+// LE FAIT SE CHERCHE DANS LA SOURCE, ET C'EST UNE FORME : la vue rend-elle une balise `audio`,
+// directement ou par un composant qu'elle rend ? Une liste de noms se serait oubliée au premier
+// ajouté — c'est exactement ce qui vient d'arriver.
+//
+// LE FILTRE EST CELUI DU CAS VOISIN, la sortie audio du composant, et il n'est pas décoratif : le
+// « Lecteur musique » rend un `<audio>` sans avoir ni entrée ni sortie. Le sien joue un dossier du
+// disque, jamais un résultat, donc aucun lecteur générique ne vient s'y ajouter.
+const UI = join(process.cwd(), "src", "ui");
+
+/** Le corps d'une fonction exportée, jusqu'au prochain export. */
+function corpsDe(nom: string, sources: Map<string, string>): string | null {
+  for (const src of sources.values()) {
+    const i = src.indexOf(`export function ${nom}(`);
+    if (i < 0) continue;
+    const suite = src.slice(i + 1);
+    const j = suite.indexOf("\nexport ");
+    return j < 0 ? suite : suite.slice(0, j);
+  }
+  return null;
+}
+
+/** Cette vue rend-elle une balise `audio`, directement ou par un composant qu'elle rend ? */
+function rendUnAudio(nom: string, sources: Map<string, string>, vus = new Set<string>()): boolean {
+  if (vus.has(nom)) return false;
+  vus.add(nom);
+  const corps = corpsDe(nom, sources);
+  if (corps === null) return false;
+  if (/<audio\b/.test(corps)) return true;
+  for (const m of corps.matchAll(/<([A-Z][A-Za-z0-9_]*)\b/g)) {
+    if (rendUnAudio(m[1], sources, vus)) return true;
+  }
+  return false;
+}
+
+it.skipIf(ecrire)("UNE VUE QUI REND SON PROPRE LECTEUR LE DÉCLARE, sinon le nœud en montre deux", () => {
+  const sources = new Map<string, string>();
+  const parcourir = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) parcourir(p);
+      else if (/\.tsx?$/.test(e.name)) sources.set(p, readFileSync(p, "utf8"));
+    }
+  };
+  parcourir(UI);
+
+  // Le registre se relit dans sa source : son type ne sort pas du module, et c'est la LIGNE qui
+  // porte à la fois la vue et la déclaration.
+  const registre = readFileSync(join(UI, "vues.tsx"), "utf8");
+  const aSortieAudio = (id: string) =>
+    ((toutesLesFiches as any[]).find((f) => f.id === id)?.sorties ?? [])
+      .some((s: any) => s.type === "audio");
+
+  const muets: string[] = [];
+  for (const ligne of registre.split("\n")) {
+    const m = ligne.match(/correspond:\s*parId\(([^)]*)\).*?vue:\s*([A-Za-z0-9_]+)/);
+    if (!m || /porteLecteur:\s*true/.test(ligne)) continue;
+    if (!rendUnAudio(m[2], sources)) continue;
+    for (const id of m[1].split(",").map((s) => s.trim().replace(/"/g, ""))) {
+      if (aSortieAudio(id)) muets.push(`${id} (${m[2]})`);
+    }
+  }
+  expect(muets.sort(), [
+    "Ces vues rendent leur propre lecteur sans le déclarer : le nœud en montrera DEUX.",
+    "Posez « porteLecteur: true » sur leur entrée du registre, dans src/ui/vues.tsx.",
+    "Si les deux lecteurs sont voulus — deux sons différents à comparer —, dites-le en commentaire ici.",
+  ].join("\n")).toEqual([]);
+});
 
 it.skipIf(ecrire)("aucun composant ne perd son lecteur audio sans qu'on l'ait vu", () => {
   const releve = inventorier(toutesLesFiches as any)

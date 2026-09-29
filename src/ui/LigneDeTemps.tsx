@@ -33,7 +33,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { useAxeTemps } from "./hooks/useAxeTemps";
 import { useLectureVive } from "./hooks/useLectureVive";
-import { ZOOM_MAX, ZOOM_MIN } from "./axe-temps";
+import { curseurDefilement, fractionDepuisZoom, zoomDepuisFraction } from "./axe-temps";
 import { cheminOnde, enveloppe } from "./onde-piste";
 import { rectsNotes, type NoteBoite } from "./notes-boite";
 import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
@@ -46,6 +46,14 @@ export type { PisteMontage } from "./ligne-temps-calcul";
 export { pasDeGraduation } from "./ligne-temps-calcul";
 
 const HAUTEUR_PISTE = 34, REGLE = 22, POIGNEE = 9;
+/**
+ * Les crans du curseur de zoom, sur sa fraction.
+ *
+ * Mille pour cinq cents fois : chaque cran multiplie par 1,0062, donc environ un pour cent par cran,
+ * et un pixel de la piste en vaut deux. C'est plus fin que l'œil ne distingue sur le dessin, et c'est
+ * ce qu'il faut pour que le geste soit continu plutôt que par sauts.
+ */
+const CRANS_ZOOM = 1000;
 /** La largeur réservée aux étiquettes de piste, à gauche de la règle. */
 const ZONE_G = 44;
 
@@ -212,8 +220,23 @@ export function LigneDeTemps({
     setPrise(null);
   };
 
+  /** L'instant que désigne une abscisse sur une piste horizontale, par sa FRACTION de largeur. */
+  const instantSurLaPiste = (e: React.PointerEvent): number => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (r.width <= 0) return 0;
+    // UNE FRACTION, ET NON DES PIXELS : React Flow met le nœud à l'échelle, et le rectangle comme le
+    // pointeur sont mesurés dans la même échelle. Leur rapport n'en dépend donc pas.
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * totale.etendue;
+  };
+  const curseur = curseurDefilement(axe.fen, totale.etendue);
+
   return (
-    <div className="ligne-temps" ref={boite}>
+    // `nowheel` REND LA MOLETTE À LA LIGNE DE TEMPS — relevé par Fabien : « on peut zoomer mais ce
+    // n'est pas pratique ». Sans cette classe, React Flow saisit la molette avant que le `onWheel` du
+    // dessin ne soit appelé, et l'on zoomait le CANEVAS en croyant zoomer la ligne. Mesuré : une
+    // molette sur le dessin faisait passer l'échelle du canevas de 0,624 à 0,737, et le facteur de la
+    // ligne de temps ne bougeait pas d'un cran. La notice promettait pourtant ce zoom.
+    <div className="ligne-temps nowheel" ref={boite}>
       <svg width={largeur} height={hauteur} role="img" aria-label={t(modele.cleTitre)}
         onPointerMove={bouger} onPointerUp={lacher} onPointerCancel={lacher}
         onWheel={(e) => { e.preventDefault(); axe.surMolette(e.deltaY, e.clientX - (boite.current?.getBoundingClientRect().left ?? 0) - ZONE_G); }}>
@@ -293,6 +316,25 @@ export function LigneDeTemps({
         )}
       </svg>
 
+      {/* LA BARRE DE DÉFILEMENT, AU-DESSUS DU LECTEUR — demandée par Fabien. Zoomé, on ne pouvait se
+          déplacer qu'à la molette, qui ne répondait pas, ou en attendant que la tête de lecture
+          ramène la vue. Son curseur porte deux nouvelles à la fois : OÙ l'on est, par sa position, et
+          COMBIEN l'on voit, par sa largeur — couvrant toute la piste, il dit qu'il n'y a rien à faire
+          défiler. Elle est alignée sur le dessin et non sur le nœud : la colonne de gauche porte les
+          étiquettes de piste, et le curseur ne correspondrait plus à la règle. */}
+      <div className="ligne-temps-defilement" style={{ marginLeft: ZONE_G }}
+        title={t("montage.defilement")}
+        onPointerDown={(e) => {
+          e.preventDefault(); e.stopPropagation();
+          (e.currentTarget as Element).setPointerCapture(e.pointerId);
+          axe.centrerSur(instantSurLaPiste(e));
+        }}
+        onPointerMove={(e) => { if (e.buttons !== 0) axe.centrerSur(instantSurLaPiste(e)); }}
+        onPointerUp={(e) => { (e.currentTarget as Element).releasePointerCapture?.(e.pointerId); }}>
+        <div className="ligne-temps-defilement-curseur"
+          style={{ left: `${curseur.debut * 100}%`, width: `${curseur.largeur * 100}%` }} />
+      </div>
+
       {ecoutable && (
         <div className="ligne-temps-transport">
           {/* L'ÉLÉMENT AUDIO NE SERT QU'À DÉFAUT DE TAMPONS : avant la première exécution, ou pour une
@@ -308,9 +350,15 @@ export function LigneDeTemps({
             {axe.enLecture ? "❚❚" : "▶"}
           </button>
           <span className="ligne-temps-texte">{virgule(axe.pos, 2)} s</span>
-          <input type="range" className="nodrag" min={ZOOM_MIN} max={ZOOM_MAX} step={10}
-            value={axe.zoomPct} onPointerDown={(e) => e.stopPropagation()}
-            onChange={(e) => axe.changerZoom(Number(e.target.value))}
+          {/* LE CURSEUR PORTE UNE FRACTION, ET LE ZOOM S'EN DÉDUIT GÉOMÉTRIQUEMENT. Réglé sur le
+              pourcentage lui-même, il valait 102 unités par pixel : toute la plage utile, de une à
+              dix fois, tenait dans les NEUF PREMIERS PIXELS d'une piste de 489, et l'on ne pouvait
+              que sauter d'un extrême à l'autre. Mille crans sur la fraction donnent un rapport
+              constant par cran, comme la molette. Voir `axe-temps.ts`. */}
+          <input type="range" className="nodrag" min={0} max={CRANS_ZOOM} step={1}
+            value={Math.round(fractionDepuisZoom(axe.zoomPct) * CRANS_ZOOM)}
+            onPointerDown={(e) => e.stopPropagation()}
+            onChange={(e) => axe.changerZoom(zoomDepuisFraction(Number(e.target.value) / CRANS_ZOOM))}
             title={t("montage.zoom")} />
           <span className="ligne-temps-texte">{`×${(axe.zoomPct / 100).toFixed(1)}`}</span>
         </div>

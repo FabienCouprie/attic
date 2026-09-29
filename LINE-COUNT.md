@@ -7,15 +7,15 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1155 files, 198540 lines, of which 138375 are code.**
+**1155 files, 198829 lines, of which 138556 are code.**
 The table lists the 146 files of 200 code lines or more, heaviest first;
-the remaining 1009 account for 138708 lines.
+the remaining 1009 account for 138936 lines.
 
 **13 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1373 | 1688 | ! |
+| src/ui/atelier.css | 1383 | 1701 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 696 | 1370 | ! |
 | src/ui/Inspector.tsx | 603 | 739 | ! |
@@ -101,6 +101,7 @@ the remaining 1009 account for 138708 lines.
 | src/ui/vues-images.tsx | 261 | 358 |  |
 | src/audio/io.ts | 257 | 380 |  |
 | src/core/bulles.test.ts | 257 | 320 |  |
+| src/ui/LigneDeTemps.tsx | 256 | 370 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
@@ -132,7 +133,6 @@ the remaining 1009 account for 138708 lines.
 | src/ui/vues-analyse.tsx | 228 | 268 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 226 | 280 |  |
-| src/ui/LigneDeTemps.tsx | 225 | 322 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |

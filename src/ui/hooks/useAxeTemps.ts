@@ -12,8 +12,8 @@
 // quand le système le décide.
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  defilementAncre, defilementPourSuivre, fenetre, tempsDepuisX, xDepuisTemps, zoomAjuste, zoomBorne,
-  zoomMolette, type Fenetre,
+  defilementAncre, defilementPourCentrer, defilementPourSuivre, fenetre, tempsDepuisX, xDepuisTemps,
+  zoomAjuste, zoomBorne, zoomMolette, type Fenetre,
 } from "../axe-temps";
 
 export interface OptionsAxeTemps {
@@ -65,6 +65,8 @@ export interface AxeTemps {
   /** Porter la lecture à un instant absolu. */
   allerA: (instantAbsolu: number) => void;
   basculerLecture: () => void;
+  /** Centrer la vue sur un instant compté depuis l'origine : ce que fait la barre de défilement. */
+  centrerSur: (instantDepuisOrigine: number) => void;
 }
 
 export function useAxeTemps({ etendue, origine = 0, largeurPx, url, horloge }: OptionsAxeTemps): AxeTemps {
@@ -146,7 +148,22 @@ export function useAxeTemps({ etendue, origine = 0, largeurPx, url, horloge }: O
     [origine, fen.debutVisible, zoom],
   );
 
-  const changerZoom = useCallback((pourcent: number) => setZoomPct(zoomBorne(pourcent)), []);
+  // LE CURSEUR DE ZOOM GARDE LE MILIEU DE LA VUE, comme la molette garde l'instant sous le pointeur.
+  // Sans ancre, grossir laissait la vue posée sur son bord gauche : ce qu'on regardait s'échappait
+  // vers la droite, et il fallait le rattraper au défilement après chaque cran. Un curseur n'a pas de
+  // pointeur sur la ligne de temps, donc son ancre est le milieu de ce qu'il montre.
+  const changerZoom = useCallback((pourcent: number) => {
+    const pct = zoomBorne(pourcent);
+    const milieu = fen.debutVisible + fen.largeurVisible / 2;
+    setZoomPct(pct);
+    setDefilement(defilementPourCentrer(
+      milieu, fenetre(largeurPx, zoomAjuste(largeurPx, etendue, pct), etendue, defilement)));
+  }, [fen.debutVisible, fen.largeurVisible, largeurPx, etendue, defilement]);
+
+  /** Centrer la vue sur un instant compté depuis l'origine : ce que fait la barre de défilement. */
+  const centrerSur = useCallback((instantDepuisOrigine: number) => {
+    setDefilement(defilementPourCentrer(instantDepuisOrigine, fenRef.current));
+  }, []);
 
   const surMolette = useCallback((deltaY: number, xPointeur: number) => {
     const vise = tempsDepuisX(xPointeur, fen.debutVisible, zoom);
@@ -193,6 +210,6 @@ export function useAxeTemps({ etendue, origine = 0, largeurPx, url, horloge }: O
   return {
     zoomPct, changerZoom, zoom, fen,
     pos: posAbsolue,
-    enLecture, audioRef, X, tempsDe, surMolette, allerA, basculerLecture,
+    enLecture, audioRef, X, tempsDe, surMolette, allerA, basculerLecture, centrerSur,
   };
 }
