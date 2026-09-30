@@ -63,17 +63,32 @@ const PAR_PASSE = new Set(FICHES_BOUCLE_PAR_PASSE);
 /** Ce nœud referme-t-il une boucle, quelle que soit sa façon de rassembler les tours ? */
 export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has(ficheId ?? "");
 
+/**
+ * Un tour au moins, et AUCUN PLAFOND — décidé par Fabien : « je n'aime pas l'idée des boucles
+ * plafonnées à 32, nous allons déroger à une règle et laisser le champ ouvert pour l'utilisateur ».
+ *
+ * CE QUI EST PERDU, ET CE QUI NE L'EST PAS. Le réglage était borné à trente-deux, et l'on tenait
+ * donc le coût par une valeur qu'aucune main ne pouvait dépasser. Ce qui coûte n'est pourtant pas le
+ * nombre de tours : c'est le nombre de COPIES, et `COPIES_MAX` le borne déjà, pour toutes les
+ * boucles à la fois, imbrications comprises. Un ventre d'un seul nœud supporte donc mille tours,
+ * quand un ventre de trente-deux n'en supporte que trente-deux : c'est la même limite, mais posée là
+ * où la mémoire se dépense.
+ *
+ * ET LE REFUS SE VOIT, là où un bornage silencieux mentait. Un réglage clos à trente-deux ramenait
+ * « 999 » à trente-deux sans rien dire ; le plafond des copies, lui, refuse en NOMMANT ce qu'il
+ * aurait fallu. Un utilisateur qui demande trop l'apprend, au lieu d'obtenir autre chose que ce
+ * qu'il a écrit.
+ */
 const TOURS_MIN = 1;
-export const TOURS_MAX = 32;
 
 /**
  * Le nombre total de copies qu'un dépliage a le droit de fabriquer.
  *
- * POURQUOI UN PLAFOND SUR LE TOTAL, ET PAS SEULEMENT PAR BOUCLE. Une boucle seule coûte au plus
- * trente-deux fois son ventre, et le réglage le borne déjà. Des boucles IMBRIQUÉES multiplient : une
- * chaîne de quatre nœuds sous deux boucles de trente-deux tours en fabriquerait plus de quatre
- * mille, dont chacune tient un tampon audio le temps du run. Sans ce plafond, le dépliage
- * réussirait et c'est l'exécution qui s'effondrerait, sans que rien n'ait prévenu.
+ * POURQUOI UN PLAFOND SUR LE TOTAL, ET PAS SEULEMENT PAR BOUCLE. Le réglage d'une boucle est
+ * OUVERT ; c'est ici que le coût se tient, et nulle part ailleurs. Des boucles IMBRIQUÉES
+ * multiplient : une chaîne de quatre nœuds sous deux boucles de trente-deux tours en fabriquerait
+ * plus de quatre mille, dont chacune tient un tampon audio le temps du run. Sans ce plafond, le
+ * dépliage réussirait et c'est l'exécution qui s'effondrerait, sans que rien n'ait prévenu.
  *
  * MILLE VINGT-QUATRE, ET NON UN NOMBRE ROND CHOISI AU HASARD : c'est ce qu'un ventre de quatre nœuds
  * donne sous deux boucles de seize tours, ou huit nœuds sous seize et huit. Mesuré sur le banc de
@@ -152,7 +167,7 @@ export const GRAINES_PAR_TOUR = "Une par tour";
 const nombreDeTours = (n: NoeudG): number => {
   const brut = Number((n.data.parametres as Record<string, unknown> | undefined)?.["Tours"] ?? 3);
   if (!Number.isFinite(brut)) return 3;
-  return Math.max(TOURS_MIN, Math.min(TOURS_MAX, Math.round(brut)));
+  return Math.max(TOURS_MIN, Math.round(brut));
 };
 
 /**
@@ -279,8 +294,13 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
     // ET LES TOURS S'EMPILENT AVEC LES BOUCLES. Une copie portée par une boucle plus extérieure
     // garde ce que l'intérieure a décidé : si l'intérieure fait varier ses graines, chacun de ses
     // tours doit rester distinct DANS chaque tour du dehors. Les deux numéros se combinent donc en
-    // un seul, par un décalage de la taille d'un tour — au plus trente-deux, et le plafond des
-    // copies interdit d'empiler assez de niveaux pour que ce nombre déborde.
+    // un seul.
+    //
+    // LE MULTIPLICATEUR EST LE NOMBRE DE TOURS DE CETTE BOUCLE-CI, et non un plafond. C'était
+    // `TOURS_MAX`, ce qui tenait tant qu'un réglage ne pouvait pas le dépasser ; le réglage est
+    // maintenant ouvert, et un décalage plus petit que le nombre de tours ferait se confondre deux
+    // copies. Multiplier par `tours` est la numération à bases mêlées : elle est injective par
+    // construction, et le nombre obtenu reste inférieur au PRODUIT des tours, donc à `COPIES_MAX`.
     const demandeDesGraines = String(
       (debut.data.parametres as Record<string, unknown> | undefined)?.["Graines"] ?? "",
     ) === GRAINES_PAR_TOUR;
@@ -291,7 +311,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
       if (!m) continue;
       const k = Number(m[1]);
       const herite = toursDesCopies.get(m[2]);
-      if (demandeDesGraines) toursDesCopies.set(id, herite === undefined ? k : herite * TOURS_MAX + k);
+      if (demandeDesGraines) toursDesCopies.set(id, herite === undefined ? k : herite * tours + k);
       else if (herite !== undefined) toursDesCopies.set(id, herite);
     }
   }

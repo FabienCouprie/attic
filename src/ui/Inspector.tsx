@@ -43,8 +43,25 @@ interface Props {
 function calerParametre(p: { plage?: [number, number]; pas?: number }, v: number): number {
   const [mn, mx] = p.plage ?? [0, 100];
   const pas = p.pas ?? 1;
+  // `Math.min` AVEC L'INFINI REND CE QU'ON LUI DONNE, donc un réglage sans plafond n'a rien de
+  // particulier à faire ici : c'est la borne qui est ouverte, pas le calage.
   return Math.min(mx, Math.max(mn, Math.round((v - mn) / pas) * pas + mn));
 }
+
+/**
+ * Ce réglage a-t-il un plafond ?
+ *
+ * DÉCIDÉ PAR FABIEN sur les boucles : « je n'aime pas l'idée des boucles plafonnées à 32, nous
+ * allons déroger à une règle et laisser le champ ouvert pour l'utilisateur, sans slider ». La
+ * dérogation est à la règle des réglages : dès qu'une grandeur est bornée, elle se donne une
+ * glissière. Une grandeur SANS borne haute ne le peut pas — une glissière est faite de deux bouts —,
+ * et le champ de saisie reste seul.
+ *
+ * LA FORME TRANCHE, ET NON UN NOM : une plage dont le haut n'est pas un nombre fini dit qu'il n'y a
+ * pas de plafond. Rien à déclarer en plus, rien à deviner.
+ */
+const sansPlafond = (p: { plage?: [number, number] }): boolean =>
+  p.plage !== undefined && !Number.isFinite(p.plage[1]);
 
 // Champ de saisie numérique directe. La frappe vit dans un état LOCAL : un
 // clamp « live » sur un champ contrôlé rendait impossible la saisie chiffre à
@@ -61,8 +78,11 @@ function ChampNombre({ p, valeur, onChanger }: {
   const [mn, mx] = p.plage ?? [0, 100];
   const ref = useRef<HTMLInputElement>(null);
   return (
-    <input ref={ref} type="number" className="inspecteur-num" style={{ width: 62 }}
-      min={mn} max={mx} step={p.pas ?? 1}
+    <input ref={ref} type="number" className="inspecteur-num"
+      // SANS PLAFOND, LE CHAMP RESPIRE : c'est lui seul qui règle la valeur, la glissière ayant
+      // disparu, et soixante-deux pixels ne montrent pas « 1024 ».
+      style={{ width: sansPlafond(p) ? 92 : 62 }}
+      min={mn} max={Number.isFinite(mx) ? mx : undefined} step={p.pas ?? 1}
       value={saisie ?? String(valeur)}
       onChange={(e) => {
         setSaisie(e.target.value);
@@ -341,7 +361,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               onChanger={onChangerParametre} />
           ) : (
             <div className="inspecteur-range">
-              {estUniteMultiplicative(p.unite) ? (
+              {sansPlafond(p) ? null : estUniteMultiplicative(p.unite) ? (
                 <input type="range"
                   min={Math.log10(Math.max(1, (p.plage ?? [0,100])[0]))}
                   max={Math.log10((p.plage ?? [0,100])[1])}

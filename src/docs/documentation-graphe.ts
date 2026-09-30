@@ -209,7 +209,11 @@ function plageLisible(p: Param, langue: Langue): string | undefined {
   if (type === "choix") return ((langue === "en" ? p.optionsEn ?? p.options : p.options) ?? []).join(" / ");
   if (p.plage) {
     const unite = langue === "en" ? p.uniteEn ?? p.unite : p.unite;
-    return `${p.plage[0]} – ${p.plage[1]}${unite ? ` ${unite}` : ""}${p.pas !== undefined ? `, pas ${p.pas}` : ""}`;
+    // Une borne haute qui n'est pas finie se dit en toutes lettres : le réglage n'a pas de plafond.
+    const haut = Number.isFinite(p.plage[1])
+      ? String(p.plage[1])
+      : (langue === "en" ? "no ceiling" : "sans plafond");
+    return `${p.plage[0]} – ${haut}${unite ? ` ${unite}` : ""}${p.pas !== undefined ? `, pas ${p.pas}` : ""}`;
   }
   return undefined;
 }

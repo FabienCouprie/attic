@@ -47,9 +47,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [],
     sorties: [{ nom: "Créneau", nomEn: "Slot", type: "sequence" }],
     parametres: [
-      { nom: "Créneaux", nomEn: "Slots", plage: [1, 32], pas: 1, defaut: 4,
-        doc: "Combien de créneaux, donc combien de fois la chaîne est calculée.",
-        docEn: "How many slots, hence how many times the chain is computed." },
+      // LE CHAMP EST OUVERT, comme sur les autres débuts de boucle : une grandeur sans borne haute
+      // ne porte pas de glissière. Ce qui l'arrête est le nombre total de passes, que le pilote
+      // borne pour toutes les boucles à la fois, et le message dit alors le rang atteint sur le
+      // nombre demandé.
+      { nom: "Créneaux", nomEn: "Slots", plage: [1, Infinity], pas: 1, defaut: 4,
+        doc: "Combien de créneaux, donc combien de fois la chaîne est calculée. Le nombre est libre ; le message donne le rang du créneau sur le nombre demandé, de sorte qu'une valeur que le nombre total de passes ne laisse pas atteindre se voit.",
+        docEn: "How many slots, hence how many times the chain is computed. The number is free; the message gives the rank of the slot out of the number asked for, so that a value the total pass count does not allow shows up." },
       { nom: "Départs", nomEn: "Onsets", type: "texte", defaut: "0:6", defautEn: "0:6",
         doc: "Les instants des créneaux. Un nombre, une suite, ou une rampe écrite « de:à ».",
         docEn: "The instants of the slots. A number, a series, or a ramp written « from:to »." },

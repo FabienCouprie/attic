@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COPIES_MAX, FICHES_BOUCLE_PAR_PASSE, FICHES_FIN, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C,
-  GRAINES_PAR_TOUR, TOURS_MAX, deplierBoucles, estFinDeBoucle,
+  GRAINES_PAR_TOUR, deplierBoucles, estFinDeBoucle,
 } from "./boucle-graphe";
 import type { AreteG, NoeudG } from "./meta";
 
@@ -74,9 +74,24 @@ describe("dépliage", () => {
     expect(r.aretes.filter((x) => x.target === "f").length).toBe(1);
   });
 
-  it("borne le nombre de tours, plutôt que de déplier un graphe démesuré", () => {
+  it("REFUSE un graphe démesuré au lieu de le borner en silence", () => {
+    // LE RÉGLAGE N'A PLUS DE PLAFOND, décidé par Fabien. Il était clos à trente-deux, si bien que
+    // « 9999 » devenait trente-deux sans un mot : l'utilisateur obtenait autre chose que ce qu'il
+    // avait écrit. C'est le plafond des COPIES qui tient le coût désormais, et lui REFUSE en le
+    // disant, ce qui est la seule façon honnête de ne pas faire ce qu'on demande.
     const r = deplierBoucles(...Object.values(grapheSimple(9999)) as [NoeudG[], AreteG[]]);
-    expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(TOURS_MAX);
+    expect(r.problemes).toEqual([{ noeudId: "d", code: "trop-de-copies" }]);
+    expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(1);
+  });
+
+  it("MAIS UN GRAND NOMBRE QUI TIENT DANS LE PLAFOND EST DÉPLIÉ, tel qu'il est écrit", () => {
+    // Trois cents tours d'un ventre d'un seul nœud : trois cents copies, sous les mille vingt-quatre.
+    const r = deplierBoucles(...Object.values(grapheSimple(300)) as [NoeudG[], AreteG[]]);
+    expect(r.problemes).toEqual([]);
+    expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(300);
+  });
+
+  it("et un tour au moins, un réglage à zéro n'ayant pas de sens", () => {
     const r0 = deplierBoucles(...Object.values(grapheSimple(0)) as [NoeudG[], AreteG[]]);
     expect(r0.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(1);
   });
@@ -394,12 +409,12 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
   });
 
   it("ET IL REND LE NOMBRE VRAIMENT EMPLOYÉ, non celui qu'on a écrit", () => {
-    // Le réglage est borné : au-delà de trente-deux, la boucle n'en fait que trente-deux, et c'est
-    // ce nombre-là que le nœud doit annoncer, sans quoi il mentirait sur ce qui a tourné.
-    const g = grapheSimple(999);
+    // Un réglage à virgule ou en dessous d'un tour est ramené à ce qui tourne vraiment, et c'est ce
+    // nombre-là que le nœud annonce, sans quoi il mentirait sur ce qui s'est passé.
+    const g = grapheSimple(4.6);
     const r = deplierBoucles(g.noeuds, g.aretes);
-    expect(r.depliees).toEqual([depliee("d", TOURS_MAX)]);
-    expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(TOURS_MAX);
+    expect(r.depliees).toEqual([depliee("d", 5)]);
+    expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(5);
   });
 
   it("deux boucles en série sont nommées toutes les deux, chacune avec son compte", () => {

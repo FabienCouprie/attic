@@ -29,8 +29,16 @@ import {
 
 const en = () => langueCourante() === "en";
 
-/** Le plus de variations qu'une boucle parcourt, la borne du dépliage de boucle du dépôt. */
-const VARIATIONS_MAX = 32;
+/**
+ * Le nombre de variations est LIBRE, comme sur les autres débuts de boucle.
+ *
+ * Il était clos à trente-deux, et le réglage portait donc une glissière. Une grandeur sans borne
+ * haute n'en porte pas : c'est la dérogation décidée pour toutes les boucles. Ce qui l'arrête est le
+ * nombre total de passes que le pilote accepte, `PASSES_MAX_TOTAL`, qui vaut pour les boucles
+ * emboîtées ensemble et non pour celle-ci seule ; le message donne le rang atteint sur le nombre
+ * demandé, de sorte qu'une valeur hors d'atteinte se voit.
+ */
+const VARIATIONS_MIN = 1;
 
 export const fiches: FicheAudio[] = ([
   {
@@ -39,14 +47,14 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Circle",
     resume: "Ouvre une boucle de variation : chaque passe reçoit le cercle que la précédente a produit.",
     resumeEn: "Opens a variation loop: each pass receives the circle the previous one produced.",
-    notice: `Ouvre une boucle de variation sur le cercle reçu : ce qui est posé entre ce composant et « Fin de boucle par cercle » est calculé une fois par variation, et chaque passe reçoit le cercle que la passe précédente a produit.\n\nLa première passe rend le cercle d'entrée tel quel, les suivantes rendent le résultat de la passe d'avant. Une rotation d'une place posée dans la boucle donne donc le cercle, puis le cercle tourné d'une place, puis de deux, et ainsi de suite. Une permutation tirée donne la permutation de la permutation, qui n'est pas la permutation d'une autre graine.\n\n« Variations » fixe le nombre de passes, donc le nombre de cercles que la fin recueillera, jusqu'à ${VARIATIONS_MAX}.\n\nLa réinjection ne passe pas par un câble : relier la fin au début fermerait un cycle, et un graphe n'en accepte pas. Le début s'exécute avant la fin dans une passe, et lit ce qu'elle a déposé au tour d'avant.\n\nLa sortie « Cercle » rend le cercle de la passe en cours. Le message donne le rang de la passe et le nombre de variations.`,
-    noticeEn: `Opens a variation loop on the received circle: what is laid between this node and « Circle Loop End » is computed once per variation, and each pass receives the circle the previous pass produced.\n\nThe first pass returns the input circle as it stands, the following ones return the result of the pass before. A rotation by one position laid inside the loop therefore gives the circle, then the circle turned by one position, then by two, and so on. A drawn permutation gives the permutation of the permutation, which is not the permutation of another seed.\n\n« Variations » sets the number of passes, hence the number of circles the end will collect, up to ${VARIATIONS_MAX}.\n\nThe feedback does not go through a cable: connecting the end to the start would close a cycle, and a graph does not accept one. The start runs before the end within a pass, and reads what the end laid down on the turn before.\n\nThe « Circle » output returns the circle of the current pass. The message gives the rank of the pass and the number of variations.`,
+    notice: `Ouvre une boucle de variation sur le cercle reçu : ce qui est posé entre ce composant et « Fin de boucle par cercle » est calculé une fois par variation, et chaque passe reçoit le cercle que la passe précédente a produit.\n\nLa première passe rend le cercle d'entrée tel quel, les suivantes rendent le résultat de la passe d'avant. Une rotation d'une place posée dans la boucle donne donc le cercle, puis le cercle tourné d'une place, puis de deux, et ainsi de suite. Une permutation tirée donne la permutation de la permutation, qui n'est pas la permutation d'une autre graine.\n\n« Variations » fixe le nombre de passes, donc le nombre de cercles que la fin recueillera. Le nombre est libre ; ce qui l'arrête est le nombre total de passes que l'exécution accepte, boucles emboîtées ensemble, et le message donne alors le rang atteint sur le nombre demandé.\n\nLa réinjection ne passe pas par un câble : relier la fin au début fermerait un cycle, et un graphe n'en accepte pas. Le début s'exécute avant la fin dans une passe, et lit ce qu'elle a déposé au tour d'avant.\n\nLa sortie « Cercle » rend le cercle de la passe en cours. Le message donne le rang de la passe et le nombre de variations.`,
+    noticeEn: `Opens a variation loop on the received circle: what is laid between this node and « Circle Loop End » is computed once per variation, and each pass receives the circle the previous pass produced.\n\nThe first pass returns the input circle as it stands, the following ones return the result of the pass before. A rotation by one position laid inside the loop therefore gives the circle, then the circle turned by one position, then by two, and so on. A drawn permutation gives the permutation of the permutation, which is not the permutation of another seed.\n\n« Variations » sets the number of passes, hence the number of circles the end will collect. The number is free; what stops it is the total number of passes the run accepts, nested loops taken together, and the message then gives the rank reached out of the number asked for.\n\nThe feedback does not go through a cable: connecting the end to the start would close a cycle, and a graph does not accept one. The start runs before the end within a pass, and reads what the end laid down on the turn before.\n\nThe « Circle » output returns the circle of the current pass. The message gives the rank of the pass and the number of variations.`,
     entrees: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [
-      { nom: "Variations", nomEn: "Variations", plage: [1, VARIATIONS_MAX], pas: 1, defaut: 4,
-        doc: "Combien de fois la chaîne est calculée, donc combien de cercles la fin recueille.",
-        docEn: "How many times the chain is computed, hence how many circles the end collects." },
+      { nom: "Variations", nomEn: "Variations", plage: [VARIATIONS_MIN, Infinity], pas: 1, defaut: 4,
+        doc: "Combien de fois la chaîne est calculée, donc combien de cercles la fin recueille. Le nombre est libre ; le message donne le rang de la passe sur le nombre demandé, de sorte qu'une valeur que le nombre total de passes ne laisse pas atteindre se voit.",
+        docEn: "How many times the chain is computed, hence how many circles the end collects. The number is free; the message gives the rank of the pass out of the number asked for, so that a value the total pass count does not allow shows up." },
     ],
     async executer(ctx: any) {
       // LA SOURCE PEUT DÉJÀ ÊTRE UNE SUITE, et elle ne se réduit pas à son premier cercle : une
@@ -59,7 +67,7 @@ export const fiches: FicheAudio[] = ([
           message: en() ? "No circle at the input." : "Aucun cercle à l'entrée.",
         };
       }
-      const combien = Math.max(1, Math.min(VARIATIONS_MAX, Math.round(ctx.paramNombre("Variations", 4))));
+      const combien = Math.max(VARIATIONS_MIN, Math.round(ctx.paramNombre("Variations", 4)));
       // LA DÉCOUVERTE DIT SEULEMENT LE COMPTE. Les deux autres boucles y publient les morceaux à
       // parcourir, qui existent d'avance ; ici les cercles des passes suivantes n'existent pas
       // encore, puisqu'ils sont ce que la chaîne produira. Le pilote n'en lit que la longueur.

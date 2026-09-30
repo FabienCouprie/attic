@@ -21,7 +21,7 @@ import {
   peutReutiliserLeCache, sourceRetraitee, type EmpreintesDuRun, type LienDeGraphe,
 } from "./cache-execution";
 import { empreinteValeur, ordreTopologique } from "./graphe";
-import { deplierBoucles, FICHE_DEBUT, FICHE_FIN, TOURS_MAX } from "./boucle-graphe";
+import { deplierBoucles, FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
 import type { AreteG, NoeudG } from "./meta";
 
 const EMPREINTES: EmpreintesDuRun = {
@@ -287,13 +287,16 @@ describe("le cache d'une boucle dépliée", () => {
     expect(tournent, "et la source, elle, n'a aucune raison de rejouer").not.toContain("src");
   });
 
-  it("ET CELA TIENT SUR TRENTE-DEUX TOURS, le maximum que le dépliage accepte", () => {
-    const { ordre, liens, ids } = deplie(TOURS_MAX);
+  it("ET CELA TIENT SUR TROIS CENTS TOURS, le réglage n'ayant plus de plafond", () => {
+    // Le nombre de tours était clos à trente-deux ; il est ouvert, et seul le nombre total de
+    // COPIES est borné. Trois cents tours d'un ventre d'un nœud restent sous ce plafond-là.
+    const TOURS = 300;
+    const { ordre, liens, ids } = deplie(TOURS);
     const cache = new Map(ids.map((id) => [id, EMPREINTES]));
     cache.delete("avant");
     const tournent = quiTourne(ordre, liens, new Set(), cache);
     const copies = ids.filter((id) => id.includes("::dans"));
-    expect(copies.length).toBe(TOURS_MAX);
+    expect(copies.length).toBe(TOURS);
     for (const c of copies) expect(tournent, `le tour ${c} doit rejouer`).toContain(c);
     expect(tournent).toContain("apres");
   });

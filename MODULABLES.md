@@ -12,14 +12,15 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 48
-- **restent à faire** : 14 composants, 30 couples composant / famille
+- **restent à faire** : 15 composants, 32 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **écartés** : 47, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### melange · 7
+### melange · 8
 
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Mix
 - Beat Repeat / Stutter `beat-repeat` : Mix
 - Granular freeze `granular-freeze` : Mix
 - Réverbération hachée `reverbe-hachee` : Mix
@@ -45,8 +46,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération hachée `reverbe-hachee` : Seuil
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
-### espace · 3
+### espace · 4
 
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
 - Brassage `brassage` : Dispersion
 - Granular freeze `granular-freeze` : Position
 - Réverbération à réseau (FDN) `reverbe-reseau` : Largeur

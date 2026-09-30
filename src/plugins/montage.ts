@@ -308,9 +308,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, 32], pas: 1, defaut: 3,
-        doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons.",
-        docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones." },
+      // LE CHAMP EST OUVERT, ET C'EST UNE DÉROGATION ASSUMÉE. La règle des réglages veut qu'une
+      // grandeur bornée porte une glissière ; celle-ci n'a pas de borne haute, donc pas de
+      // glissière. Ce qui coûte n'est pas le nombre de tours mais le nombre de copies, et le moteur
+      // le borne pour toutes les boucles à la fois, en REFUSANT et en le disant.
+      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
+        doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons. Le nombre est libre ; ce qui l'arrête est le nombre total de copies que le dépliage fabrique, boucles emboîtées comprises, et le composant dit alors ce qui aurait été nécessaire.",
+        docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. The number is free; what stops it is the total number of copies the unrolling builds, nested loops included, and the node then states what would have been needed." },
       // CE RÉGLAGE N'EST PAS UNE GRAINE, et ne porte donc pas le rôle : c'est un CHOIX qui dit ce
       // que les graines de la chaîne deviennent. Lui donner le rôle ferait résoudre son libellé
       // comme un nombre.

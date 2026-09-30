@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **457 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **458 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 83 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (24) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 220 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (12) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (13) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 221 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (12) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 12 | [Export](#export) (5) · [Monitoring](#monitoring) (7) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -3634,7 +3634,7 @@ Opens a graph loop. Everything wired between this node and a « Loop End » (A, 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Passes | number | 3 | 1 – 32, step 1 | How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. |
+| Passes | number | 3 | 1 – no ceiling, step 1 | How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. The number is free; what stops it is the total number of copies the unrolling builds, nested loops included, and the node then states what would have been needed. |
 | Seeds | choice | Identical | Identical / One per pass | What becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message, and putting it back replays the whole loop. |
 
 #### Maquette
@@ -4057,7 +4057,7 @@ Opens a loop over slots: what is laid between this node and « Slot Loop End » 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Slots | number | 4 | 1 – 32, step 1 | How many slots, hence how many times the chain is computed. |
+| Slots | number | 4 | 1 – no ceiling, step 1 | How many slots, hence how many times the chain is computed. The number is free; the message gives the rank of the slot out of the number asked for, so that a value the total pass count does not allow shows up. |
 | Onsets | text | `0:6` |  | The instants of the slots. A number, a series, or a ramp written « from:to ». |
 | Lengths | text | `2` |  | The lengths of the slots, written the same way. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The tempo carried by the returned sequence. |
@@ -6611,6 +6611,7 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 
 | Component | Summary |
 |---|---|
+| [Acoustic Rainbow](#acoustic-rainbow) | Sorts sound across space by frequency: each band comes from its own direction, arrives at its own time, and dwells where it stops. |
 | [Ambisonic Rotation](#ambisonic-rotation) | Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo. |
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Bass Mono](#bass-mono) | Collapses the bass of both channels below a crossover, and leaves the treble untouched. |
@@ -6624,6 +6625,31 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 | [Stereo Spatialization](#stereo-spatialization) | Positions the sound in stereo space (left/right). |
 | [Stereo Width / MS](#stereo-width--ms) | Adjusts stereo width and Mid level. |
 | [Swap Channels](#swap-channels) | Swaps left/right channels. |
+
+#### Acoustic Rainbow
+
+`arc-en-ciel-acoustique` · Processing → Stereo
+
+*Sorts sound across space by frequency: each band comes from its own direction, arrives at its own time, and dwells where it stops.*
+
+This node lays the frequencies of a sound across stereo space: each band comes out of its own direction, arrives at its own moment, and goes on ringing where it stopped. After rainbow trapping, proposed in optics by Kosmas L. Tsakmakidis, Allan D. Boardman and Ortwin Hess, « 'Trapped rainbow' storage of light in metamaterials », Nature 450, 2007, pp. 397-401, and shown in acoustics by Jie Zhu, Yong Chen, Xuefeng Zhu et al., « Acoustic rainbow trapping », Scientific Reports 3, 2013, 1728. In a graded array of resonators a broadband wave slows down and each band halts where the local resonance catches it: the highs early, the lows far. Noé Jiménez, Vicent Romero-García, Vincent Pagneux and Jean-Philippe Groby, « Rainbow-trapping absorbers », Scientific Reports 7, 2017, 13595, draw a broadband absorber from it. « Bands » is the number of resonators in the array, spread in frequency by equal octaves between « Low » and « High ». Frequencies beyond half the sample rate are dropped. « Direction » says which side the low end comes out of. « Spread » is the share of the stereo field used: at zero, every band comes from the centre and the sorting is heard in time alone. « Curve » gathers the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side and the highs spread out; below, the other way round. « Dispersion » is the travel of the lowest band, the one that goes furthest. Higher bands arrive earlier, in the order of the gradient. At zero they all arrive together and only the sorting in space remains. « Trapping » is the time the lowest band takes to lose 60 dB. The array is constant-Q: the ring time follows the inverse of the frequency, so the band that travels furthest is also the one that dwells longest. This setting commands the sharpness of the sorting in the same gesture, a two-pole resonator having a single command for its width and its length: short, the sound keeps its grain; long, it turns into held bands. « Mix » is the share of the sorted sound. The input is summed to one channel before sorting: this node rebuilds the stereo image from frequency, and keeping the one it receives would hold two images at once on the same output. The output is longer than the input: the longest travel and the longest resonance come after the end of the sound. The level of the sorted sound is brought back to that of the input. The message gives the number of bands kept, the travel difference between the two edges and the ring time of the low end.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Bands | slider | 32 | 4 – 128, step 1 | Number of resonators in the array, spread by equal octaves between « Low » and « High ». Few bands give a coarse sorting, heard as such; many give a continuous gradient. |
+| Low | slider | 60 Hz | 20 – 2000 Hz, step 1 | Low edge of the array. Nothing below it is sorted. |
+| High | slider | 12000 Hz | 1000 – 20000 Hz, step 100 | High edge of the array. A band beyond half the sample rate is dropped. |
+| Direction | choice | Low on the left | Low on the left / Low on the right | Which side the lowest band comes out of; the high end comes out of the other. |
+| Spread | slider | 100 % | 0 – 100 %, step 1 | Share of the stereo field used. At zero, every band comes from the centre and the sorting is heard in time alone. |
+| Curve | slider | 0 | -100 – 100, step 1 | Gathering of the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side; below, the highs do. |
+| Dispersion | slider | 0.25 s | 0 – 2 s, step 0.01 | Travel of the lowest band, the one that goes furthest. Higher bands arrive earlier. At zero they all arrive together. |
+| Trapping | slider | 0.3 s | 0.01 – 5 s, step 0.01 | Time the lowest band takes to lose 60 dB. The array being constant-Q, high bands ring proportionally less. This setting commands the sharpness of the sorting in the same gesture: short, the sound keeps its grain; long, it turns into held bands. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the sorted sound. At 0%, the input alone. |
 
 #### Ambisonic Rotation
 
@@ -8914,7 +8940,7 @@ Closes a variation loop and returns the series of circles the passes produced. T
 
 *Opens a variation loop: each pass receives the circle the previous one produced.*
 
-Opens a variation loop on the received circle: what is laid between this node and « Circle Loop End » is computed once per variation, and each pass receives the circle the previous pass produced. The first pass returns the input circle as it stands, the following ones return the result of the pass before. A rotation by one position laid inside the loop therefore gives the circle, then the circle turned by one position, then by two, and so on. A drawn permutation gives the permutation of the permutation, which is not the permutation of another seed. « Variations » sets the number of passes, hence the number of circles the end will collect, up to 32. The feedback does not go through a cable: connecting the end to the start would close a cycle, and a graph does not accept one. The start runs before the end within a pass, and reads what the end laid down on the turn before. The « Circle » output returns the circle of the current pass. The message gives the rank of the pass and the number of variations.
+Opens a variation loop on the received circle: what is laid between this node and « Circle Loop End » is computed once per variation, and each pass receives the circle the previous pass produced. The first pass returns the input circle as it stands, the following ones return the result of the pass before. A rotation by one position laid inside the loop therefore gives the circle, then the circle turned by one position, then by two, and so on. A drawn permutation gives the permutation of the permutation, which is not the permutation of another seed. « Variations » sets the number of passes, hence the number of circles the end will collect. The number is free; what stops it is the total number of passes the run accepts, nested loops taken together, and the message then gives the rank reached out of the number asked for. The feedback does not go through a cable: connecting the end to the start would close a cycle, and a graph does not accept one. The start runs before the end within a pass, and reads what the end laid down on the turn before. The « Circle » output returns the circle of the current pass. The message gives the rank of the pass and the number of variations.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8923,7 +8949,7 @@ Opens a variation loop on the received circle: what is laid between this node an
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Variations | number | 4 | 1 – 32, step 1 | How many times the chain is computed, hence how many circles the end collects. |
+| Variations | number | 4 | 1 – no ceiling, step 1 | How many times the chain is computed, hence how many circles the end collects. The number is free; the message gives the rank of the pass out of the number asked for, so that a value the total pass count does not allow shows up. |
 
 #### Circle Mixer
 

@@ -47,7 +47,10 @@ import "../audio/adaptateur";
 // Punktmannigfaltigkeiten » est le titre sous lequel l'article de Cantor de 1883 se cite dans
 // toutes les langues : le traduire dans une notice anglaise le rendrait introuvable, ce qui est
 // l'inverse de ce qu'une référence sert à faire.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über)(?![a-zà-ÿ])/gi;
+// ET LES AUTEURS DE L'ABSORBEUR EN ARC-EN-CIEL RELÈVENT DU MÊME CAS QUE « de Cheveigné » : Noé
+// Jiménez et Vicent Romero-García signent ainsi leurs articles en anglais, et retirer leurs accents
+// ne serait pas une traduction mais une faute sur un nom.
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

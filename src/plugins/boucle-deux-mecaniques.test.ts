@@ -19,7 +19,10 @@
 // que le garde ne la connaîtra pas.
 import { describe, expect, it } from "vitest";
 
-import { FICHES_BOUCLE_PAR_PASSE } from "../core/boucle-graphe";
+import "node-web-audio-api/polyfill.js";
+import { COPIES_MAX, FICHES_BOUCLE_PAR_PASSE } from "../core/boucle-graphe";
+import { toutesLesFiches } from "./index";
+import "../audio/adaptateur";
 import { aplatirGraphe } from "../core/meta";
 import type { AreteG, MetaComposant, NoeudG } from "../core/meta";
 import { ancetres, descendants } from "../core/graphe";
@@ -37,6 +40,37 @@ describe("le garde du dépliage connaît toutes les boucles par passes", () => {
     // Un cas qui ne trouve rien passe, et l'on croirait qu'il garde quelque chose.
     expect(FICHES_BOUCLE_DEBUT.length).toBe(3);
     expect(FICHES_BOUCLE_FIN.length).toBe(3);
+  });
+});
+
+describe("le nombre de tours d'une boucle est un champ ouvert", () => {
+  // DÉCIDÉ PAR FABIEN : « je n'aime pas l'idée des boucles plafonnees a 32, nous allons déroger à
+  // une règle et laisser le champ ouvert pour l'utilisateur, sans slider sur toutes les boucles
+  // start ». La dérogation est à la règle des réglages, qui veut qu'une grandeur bornée porte une
+  // glissière ; une grandeur sans borne haute ne le peut pas, et l'inspecteur n'en dessine donc
+  // aucune. CE CAS EXISTE POUR QUE LE PLAFOND NE REVIENNE PAS SANS QU'ON LE VEUILLE : reposer un
+  // nombre fini sur l'un de ces réglages le fera échouer.
+  const COMPTES: [string, string][] = [
+    ["boucle-graphe-debut", "Tours"],
+    ["boucle-creneau-debut", "Créneaux"],
+    ["cercle-boucle-debut", "Variations"],
+  ];
+
+  it.each(COMPTES)("« %s » : le réglage « %s » n'a pas de borne haute", (ficheId, nom) => {
+    const fiches = toutesLesFiches as unknown as { id: string; parametres?: { nom: string; plage?: [number, number] }[] }[];
+    const f = fiches.find((x) => x.id === ficheId);
+    expect(f, `« ${ficheId} » introuvable`).toBeTruthy();
+    const p = (f!.parametres ?? []).find((x) => x.nom === nom);
+    expect(p, `« ${ficheId} » ne déclare pas « ${nom} »`).toBeTruthy();
+    expect(p!.plage, `« ${nom} » doit garder une borne basse`).toBeTruthy();
+    expect(p!.plage![0], "un tour au moins").toBeGreaterThanOrEqual(1);
+    expect(Number.isFinite(p!.plage![1]), `« ${nom} » ne doit pas avoir de plafond`).toBe(false);
+  });
+
+  it("ET CE QUI TIENT LE COÛT EST AILLEURS, sur ce qui se paie vraiment", () => {
+    // Le nombre de tours ne coûte rien par lui-même : ce sont les COPIES qui tiennent un tampon
+    // audio, et leur plafond vaut pour toutes les boucles à la fois, imbrications comprises.
+    expect(COPIES_MAX).toBeGreaterThan(0);
   });
 });
 
