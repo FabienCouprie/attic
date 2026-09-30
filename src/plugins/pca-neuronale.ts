@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Adam optimizer learning rate.",
       },
       {
-        nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 99999], pas: 1, defaut: 1, unite: "",
+        nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1, unite: "",
         doc: "Graine pour l'initialisation des poids. Même piste + mêmes réglages + même graine = même résultat.",
         docEn: "Seed for weight initialization. Same track + same settings + same seed = same result.",
       },

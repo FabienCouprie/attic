@@ -76,7 +76,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Respiration", nomEn: "Breathing", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Amplitude de la variation du rayon d'une frappe à l'autre.",
         docEn: "How much the radius varies from one strike to the next." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Graine du tirage. Même graine, même film.", docEn: "Seed of the draw. Same seed, same film." },
       { nom: "Définition", nomEn: "Definition", type: "choix",
         options: Object.keys(DEFINITIONS), optionsEn: Object.keys(DEFINITIONS),

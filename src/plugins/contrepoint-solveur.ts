@@ -79,7 +79,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [20, 300], pas: 1, defaut: 120, unite: "BPM",
         doc: "La durée d'une note, chacune valant une ronde.",
         docEn: "The length of a note, each being a whole note." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 9999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Fixe le tirage. La même graine rend le même contrepoint.",
         docEn: "Fixes the draw. The same seed gives the same counterpoint." },
       { nom: "Budget", nomEn: "Budget", plage: [1000, 2000000], pas: 1000, defaut: 200000,

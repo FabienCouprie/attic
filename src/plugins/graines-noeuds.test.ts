@@ -14,6 +14,13 @@
 //   - défaut 0  → tiré au sort à chaque exécution, ET la graine retenue doit
 //                 apparaître dans le message, sinon le rendu est irretrouvable ;
 //   - défaut fixe → deux exécutions sans rien régler donnent le même résultat.
+//
+// LE RÉGIME EST DANS LE DÉFAUT, ET PLUS DANS LA PLAGE. Ce fichier exigeait d'une
+// graine fixe que sa plage COMMENCE À 1, c'est-à-dire que le tirage y soit
+// interdit : c'était une seconde convention par-dessus la première, et c'est
+// l'« excès de décentralisation » que Fabien a demandé de supprimer. Toute
+// graine déclarée laisse maintenant atteindre le tirage ; ce que le nœud fait
+// quand on ne lui demande rien reste dit par son DÉFAUT, et par lui seul.
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
@@ -147,14 +154,12 @@ describe("déclaration du paramètre", () => {
       if (!def) continue;   // nœud absent de ce build : rien à vérifier
       const p = def.parametres.find((x) => x.nom === "Graine");
       expect(p, `« ${id} » ne déclare aucun paramètre Graine`).toBeTruthy();
+      expect(p!.graine, `« ${id} » ne déclare pas le rôle de graine`).toBe(true);
       const minimum = p!.plage?.[0];
-      if (TIRE_AU_SORT.includes(id)) {
-        expect(p!.defaut, `« ${id} » devrait tirer au sort par défaut`).toBe(0);
-        expect(minimum, `« ${id} » doit accepter 0`).toBe(0);
-      } else {
-        expect(p!.defaut, `« ${id} » devrait avoir une graine fixe`).not.toBe(0);
-        expect(minimum, `« ${id} » n'a pas de régime « tiré au sort », sa plage doit démarrer à 1`).toBe(1);
-      }
+      if (TIRE_AU_SORT.includes(id)) expect(p!.defaut, `« ${id} » devrait tirer au sort par défaut`).toBe(0);
+      else expect(p!.defaut, `« ${id} » devrait avoir une graine fixe`).not.toBe(0);
+      // ET LA PLAGE DIT LA MÊME CHOSE POUR TOUS : le tirage est atteignable, quel que soit le régime.
+      expect(minimum, `« ${id} » doit laisser atteindre le tirage`).toBeLessThanOrEqual(0);
     }
   });
 });

@@ -49,7 +49,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mélange", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 35, unite: "%",
         doc: "Part de son réverbéré dans la sortie.",
         docEn: "Share of reverberated sound in the output." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine des positions et des signes. Deux graines donnent deux salles de mêmes dimensions.",
         docEn: "Seed of the positions and signs. Two seeds give two rooms of the same dimensions." },
     ],

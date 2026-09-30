@@ -89,24 +89,29 @@ describe("le compteur de passes s'arrête", () => {
 describe("les bornes, et ce qu'elles arrêtent", () => {
   it("UN NOMBRE DE MORCEAUX ABSURDE EST BORNÉ, et ne vient pas d'un réglage qu'on surveille", () => {
     // Le compte vient des données : un fichier qui déclarerait dix mille voix ferait dix mille
-    // exécutions du graphe entier. La borne est la même que celle du dépliage de boucle.
+    // exécutions du graphe entier. La borne par boucle vaut le budget entier depuis que le nombre
+    // de tours est un champ ouvert, et c'est elle qui arrête le compteur.
     expect(toursJusquAuBout([etat("a", 10_000)])).toBe(PASSES_MAX_BOUCLE);
   });
 
   it("LA BORNE PAR BOUCLE NE SUFFIT PAS QUAND ELLES S'EMBOÎTENT, et c'est pourquoi l'autre existe", () => {
-    // Deux boucles au maximum feraient 32 × 32 = 1024 exécutions du graphe. Le compteur les produit
-    // bel et bien : c'est le pilote qui s'arrête à `PASSES_MAX_TOTAL`, et ce test dit pourquoi cette
-    // seconde borne n'est pas une précaution redondante.
-    const etats = [etat("a", PASSES_MAX_BOUCLE), etat("b", PASSES_MAX_BOUCLE)];
+    // Deux boucles de trente-deux feraient 32 × 32 = 1024 exécutions du graphe entier, soit quatre
+    // fois le total permis. Le compteur les produit bel et bien : c'est le pilote qui s'arrête à
+    // `PASSES_MAX_TOTAL`, et ce cas dit pourquoi cette seconde borne n'est pas redondante. Les
+    // comptes sont écrits ici plutôt que pris de la borne par boucle : celle-ci vaut le budget
+    // entier depuis que le nombre de tours est un champ ouvert, et deux fois le budget ferait
+    // soixante-cinq mille tours de compteur pour la même démonstration.
+    const CHACUNE = 32;
+    const etats = [etat("a", CHACUNE), etat("b", CHACUNE)];
     let tours = 1;
     while (avancerBoucles(etats)) {
       if (etats[1].morceaux.length === 0) {
-        etats[1].morceaux = Array.from({ length: PASSES_MAX_BOUCLE }, (_, i) => seq(i));
+        etats[1].morceaux = Array.from({ length: CHACUNE }, (_, i) => seq(i));
       }
       tours++;
       if (tours > 5000) throw new Error("le compteur ne s'est pas arrêté");
     }
-    expect(tours).toBe(PASSES_MAX_BOUCLE * PASSES_MAX_BOUCLE);
+    expect(tours).toBe(CHACUNE * CHACUNE);
     expect(tours).toBeGreaterThan(PASSES_MAX_TOTAL);
   });
 

@@ -55,7 +55,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Variabilité", nomEn: "Variability", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Contrôle la variabilité des scripts générés. Élevée = le LLM est plus créatif ; basse = reste proche du template.",
         docEn: "Controls variability of generated scripts. High = LLM is more creative; low = stays close to template." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouveau script à chaque exécution). Même graine = même script.",
         docEn: "Random seed (0 = new script each run). Same seed = same script." },
     ],

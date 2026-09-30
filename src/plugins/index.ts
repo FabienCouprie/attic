@@ -198,6 +198,7 @@ import { fiches as f_cercle_film } from "./cercle-film";
 import { fiches as f_video_export } from "./video-export";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
+import { fiches as f_arc_en_ciel } from "./arc-en-ciel";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_parcours } from "./parcours";
 import { fiches as f_ficheTechnique } from "./fiche-technique";
@@ -337,6 +338,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_video_export,
   ...f_spirale_spatiale,
   ...f_ampleur,
+  ...f_arc_en_ciel,
   ...f_quiz,
   ...f_parcours,
   ...f_ficheTechnique,

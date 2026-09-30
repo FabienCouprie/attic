@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Le niveau d'ensemble. Les grains s'additionnent : doubler la densité ou le nombre de cases allumées approche d'autant du plafond.",
         docEn: "The overall level. Grains add up: doubling the density or the number of lit cells moves that much closer to the ceiling." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Le tirage, de bout en bout : le livre d'écrans comme la place de chaque grain dans sa case. La même graine rejoue exactement la même pièce, ce qui est indispensable à une musique tirée au sort, sans quoi rien de ce qu'on aime ne se retrouve.",
         docEn: "The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random, without it nothing you liked can be found again." },
     ],

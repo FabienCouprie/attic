@@ -103,7 +103,12 @@ export function defautParam(p: Param): string {
 export function valeursParam(p: Param): string {
   const type = p.type ?? "nombre";
   if (type === "choix") return (p.optionsEn ?? p.options ?? []).join(" / ");
-  if (p.plage) return `${p.plage[0]} – ${p.plage[1]}${p.unite ? ` ${uniteEn(p)}` : ""}${p.pas !== undefined ? `, step ${p.pas}` : ""}`;
+  // UNE BORNE HAUTE QUI N'EST PAS FINIE SE DIT EN TOUTES LETTRES : le réglage n'a pas de plafond,
+  // et « Infinity » dans un tableau se lirait comme une coquille.
+  if (p.plage) {
+    const haut = Number.isFinite(p.plage[1]) ? String(p.plage[1]) : "no ceiling";
+    return `${p.plage[0]} – ${haut}${p.unite ? ` ${uniteEn(p)}` : ""}${p.pas !== undefined ? `, step ${p.pas}` : ""}`;
+  }
   return "";
 }
 

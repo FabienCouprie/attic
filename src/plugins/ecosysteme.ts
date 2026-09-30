@@ -53,7 +53,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["branche", "debranche"], defaut: "Branché", defautEn: "Connected",
         doc: "Le témoin du composant, et il est fait pour être débranché. La même boucle, les mêmes grains, la même mémoire, sans la régulation : le système suit alors le volume du monde au lieu de tenir le sien. Mesuré, trois mondes distants de trente-quatre décibels rendent trois sorties distantes de 1,13 dB avec l'homéostat, et de 33,19 dB sans lui.",
         docEn: "The node's control, and it is made to be disconnected. The same loop, the same grains, the same memory, without the regulation: the system then follows the world's volume instead of holding its own. Measured, three worlds thirty-four decibels apart give three outputs 1.13 dB apart with the homeostat, and 33.19 dB apart without it." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 9999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Deux graines donnent deux sons qui ne se ressemblent en rien échantillon par échantillon, et se ressemblent en tout statistiquement, mêmes niveaux, mêmes densités. Ce que le composant rend n'est pas un objet mais une instance, et la graine sert à retrouver exactement celle qu'on avait aimée.",
         docEn: "Two seeds give two sounds that resemble each other in no sample and in every statistic, same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked." },
     ],

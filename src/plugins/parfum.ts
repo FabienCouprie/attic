@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Intensité", nomEn: "Loudness", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Niveau efficace visé, de −40 dB à 0 dB. L'étude établit que l'intensité d'une odeur ne décide pas de son appariement à un son : cette dimension est donc laissée au réglage.",
         docEn: "Target root-mean-square level, from -40 dB to 0 dB. The study establishes that an odour's intensity does not drive its matching to a sound: this dimension is therefore left to be set." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Pour le choix des degrés : à graine égale, le même motif.", docEn: "For the choice of degrees: same seed, same motif." },
       PARAMETRE_SYNTHESE,
       { ...PARAMETRE_INSTRUMENT_SF2_SUIVI,

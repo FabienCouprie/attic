@@ -117,7 +117,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Portée", nomEn: "Range", type: "curseur", plage: [0, 60], pas: 0.05, defaut: 1, unite: "s",
         doc: "De combien un bloc peut s'éloigner de sa place. 0 : aucun déplacement.",
         docEn: "How far a block can move from its place. 0: no movement." },
-      { nom: "Graine", nomEn: "Seed", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "À graine égale, le même mélange.", docEn: "Same seed, same shuffle." },
     ],
     async executer(ctx: any) {

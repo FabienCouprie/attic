@@ -157,7 +157,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["dossier", "xy", "yx"], defaut: "Coordonnées : X puis Y", defautEn: "Coordinates: X then Y",
         doc: "Ordre d'accrochage des pistes. Sans entrée Coordonnées branchée, l'ordre du dossier s'applique dans tous les cas. Avec elle, l'axe choisi mène et l'autre départage les ex æquo.",
         docEn: "Order in which the tracks are hung. With no Coordinates input connected, folder order applies in every case. With it, the chosen axis leads and the other breaks ties." },
-      { nom: "Graine visuelle", nomEn: "Visual seed", plage: [0, 99999], pas: 1, defaut: 0,
+      { nom: "Graine visuelle", graine: true, nomEn: "Visual seed", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine pour les pochettes procédurales (0 = aléatoire). Même graine = mêmes pochettes.",
         docEn: "Seed for procedural cover art (0 = random). Same seed = same covers." },
     ],

@@ -78,7 +78,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Style de la carte.", docEn: "Map style." },
       { nom: "Esthétique", nomEn: "Aesthetic", type: "choix", options: ["Classique", "Baroque", "Art nouveau", "Art déco", "Exotique"], optionsEn: ["Classic", "Baroque", "Art Nouveau", "Art Deco", "Exotic"], optionIds: ["classique", "baroque", "art-nouveau", "art-deco", "exotique"], defaut: "Classique", defautEn: "Classic",
         doc: "Ambiance visuelle de la carte (décor : routes, quartiers, bâtiments).", docEn: "Visual mood of the map (backdrop: roads, districts, buildings)." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 9999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine du décor procédural (0 = décor différent à chaque exécution). Ne change pas la position des points, calquée sur les coordonnées reçues.", docEn: "Procedural backdrop seed (0 = different backdrop each run). Does not affect point position, which follows the received coordinates." },
     ],
     async executer(ctx: any) {

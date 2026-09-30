@@ -219,7 +219,7 @@ The animation is displayed in the node and is not available on an output port. I
         docEn: "Let a ring open and fade at each audible stroke, over the length of the note." },
       { nom: "Taille", nomEn: "Size", type: "curseur", plage: [200, 1200], pas: 20, defaut: 600, unite: "px",
         doc: "Côté de l'image carrée.", docEn: "Side of the square image." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
         doc: "Graine de l'irrégularité des tailles. Une même graine rejoue la même pièce, image comprise.",
         docEn: "Seed for the irregularity of the sizes. The same seed replays the same piece, picture included." },
       PARAMETRE_SYNTHESE,

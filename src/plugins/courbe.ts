@@ -109,7 +109,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Chaos", nomEn: "Chaos", type: "curseur", plage: [2.5, 4], pas: 0.01, defaut: 3.9,
         doc: "Le paramètre r de la suite logistique. En dessous de 3 elle se fixe ; vers 3,45 elle alterne entre deux valeurs, puis quatre ; au-delà de 3,57 elle devient chaotique et ne se répète jamais.",
         docEn: "The logistic sequence's r. Below 3 it settles; around 3.45 it alternates between two values, then four; beyond 3.57 it turns chaotic and never repeats." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine de la marche aléatoire.", docEn: "Seed of the random walk." },
       { nom: "Moyenne", nomEn: "Mean", type: "curseur", plage: [0.5, 40], pas: 0.5, defaut: 4,
         doc: "Espérance de la loi de Poisson, qui est aussi l'endroit de son sommet. La courbe se tient en paliers, un par valeur entière, et le palier le plus haut est celui de la partie entière de l'espérance : à 4,5, la courbe compte seize paliers dont le cinquième est le plus haut. Ce réglage n'agit que sur la forme Poisson.",

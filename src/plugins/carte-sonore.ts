@@ -41,7 +41,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Style de la carte.", docEn: "Map style." },
       { nom: "Esthétique", nomEn: "Aesthetic", type: "choix", options: ["Classique", "Baroque", "Art nouveau", "Art déco", "Exotique"], optionsEn: ["Classic", "Baroque", "Art Nouveau", "Art Deco", "Exotic"], optionIds: ["classique", "baroque", "art-nouveau", "art-deco", "exotique"], defaut: "Classique", defautEn: "Classic",
         doc: "Ambiance visuelle de la carte.", docEn: "Visual mood of the map." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 9999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine de la carte (0 = carte différente à chaque exécution).", docEn: "Map seed (0 = new map each run)." },
     ],
     async executer(ctx: any) {

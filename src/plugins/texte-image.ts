@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Text description of the image to generate (English for best results).", defautEn: "a red apple on a wooden table, photo",
       },
       {
-        nom: "Graine", nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
+        nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
         doc: "Graine aléatoire. -1 = aléatoire.",
         docEn: "Random seed. -1 = random.",
       },

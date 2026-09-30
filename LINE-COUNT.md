@@ -7,29 +7,30 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1161 files, 200718 lines, of which 139657 are code.**
-The table lists the 149 files of 200 code lines or more, heaviest first;
-the remaining 1012 account for 139530 lines.
+**1166 files, 202123 lines, of which 140382 are code.**
+The table lists the 150 files of 200 code lines or more, heaviest first;
+the remaining 1016 account for 140193 lines.
 
-**13 files exceed the 400-code-line norm** and are marked « ! ».
+**14 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1390 | 1712 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 711 | 1416 | ! |
-| src/ui/Inspector.tsx | 603 | 739 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 754 | 1532 | ! |
+| src/ui/Inspector.tsx | 606 | 759 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
-| src/docs/documentation-graphe.ts | 569 | 728 | ! |
+| src/docs/documentation-graphe.ts | 572 | 732 | ! |
 | src/ui/AtelierNode.tsx | 524 | 719 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 459 | 471 | ! |
+| src/core/boucle-graphe.test.ts | 465 | 588 | ! |
+| src/plugins/index.ts | 461 | 473 | ! |
 | src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/ui/BarreOutils.tsx | 413 | 446 | ! |
 | src/ui/FormeOnde.tsx | 408 | 484 | ! |
+| src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
-| src/plugins/montage.ts | 387 | 530 |  |
 | src/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
@@ -44,7 +45,6 @@ the remaining 1012 account for 139530 lines.
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
-| src/core/boucle-graphe.test.ts | 342 | 425 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |
@@ -123,8 +123,8 @@ the remaining 1012 account for 139530 lines.
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
+| src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
-| src/core/cache-execution.test.ts | 238 | 350 |  |
 | src/ui/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
@@ -164,3 +164,4 @@ the remaining 1012 account for 139530 lines.
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
 | src/audio/effets-modulation.ts | 202 | 267 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
+| src/core/boucle-graphe.ts | 201 | 422 |  |

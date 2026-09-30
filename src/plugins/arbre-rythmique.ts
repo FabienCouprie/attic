@@ -97,7 +97,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Liaisons", nomEn: "Ties", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
         doc: "La part des notes liées à celle qui précède.",
         docEn: "The share of notes tied to the one before." },
-      { nom: "Graine", nomEn: "Seed", plage: [0, 9999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Fixe le tirage. La même graine rend le même rythme et les mêmes hauteurs.",
         docEn: "Fixes the draw. The same seed gives the same rhythm and the same pitches." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",

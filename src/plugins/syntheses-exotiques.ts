@@ -249,7 +249,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Random variation of the period from one period to the next. It is what stops the voice sounding like an organ: a real voice is never exactly periodic." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.2, 20], pas: 0.1, defaut: 3, unite: "s",
         doc: "Durée produite, quand aucun MIDI n'est branché.", docEn: "Duration produced, when no MIDI is connected." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine de l'instabilité. 0 = tirée au sort à chaque exécution.",
         docEn: "Seed of the jitter. 0 = drawn at random on every run." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

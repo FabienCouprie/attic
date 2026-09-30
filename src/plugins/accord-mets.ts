@@ -46,7 +46,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Intensité", nomEn: "Loudness", type: "curseur", plage: [0, 100], pas: 1, defaut: 40, unite: "%",
         doc: "Niveau efficace visé, de −40 dB à 0 dB.",
         docEn: "Target root-mean-square level, from -40 dB to 0 dB." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Pour le choix des degrés : à graine égale, la même musique.", docEn: "For the choice of degrees: same seed, same music." },
       PARAMETRE_SYNTHESE,
       { ...PARAMETRE_INSTRUMENT_SF2_SUIVI,

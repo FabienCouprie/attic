@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 60, unite: "%",
         doc: "L'amplitude de chaque grain. Les grains s'additionnent : doubler la densité approche d'autant du plafond, et c'est pourquoi une densité forte demande un volume plus bas.",
         docEn: "Each grain's amplitude. Grains add up: doubling the density moves that much closer to the ceiling, which is why a high density calls for a lower volume." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "La graine du tirage qui disperse les instants. La même graine rejoue exactement le même désordre, ce qui permet de retrouver un rendu.",
         docEn: "The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again." },
     ],

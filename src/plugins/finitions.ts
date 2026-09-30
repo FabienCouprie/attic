@@ -43,7 +43,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 60, unite: "%",
         doc: "Proportion de réverbération ajoutée. À 0 %, la sortie est l'entrée.",
         docEn: "Proportion of reverb added. At 0 %, the output is the input." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine de la réponse de la salle. Une même graine rejoue la même pièce.",
         docEn: "Seed of the room's response. The same seed replays the same room." },
     ],
@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Proportion ajoutée au son sec. À 0 %, la sortie est l'entrée.",
         docEn: "Proportion added to the dry sound. At 0 %, the output is the input." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [1, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine de la réponse de la salle.", docEn: "Seed of the room's response." },
     ],
     async executer(ctx: any) {

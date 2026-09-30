@@ -99,7 +99,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Souffle", nomEn: "Hiss", type: "curseur", plage: [0, 5], pas: 0.1, defaut: 0.5, unite: "%",
         doc: "Niveau du souffle de bande. Il ne s'entend que dans les silences, ce qui est exactement son défaut d'origine.",
         docEn: "Level of tape hiss. It is heard only in the silences, which is exactly its original failing." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine des décrochages et du souffle. Une même graine rejoue la même bande.",
         docEn: "Seed for dropouts and hiss. The same seed replays the same tape." },
     ],

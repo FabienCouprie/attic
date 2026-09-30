@@ -34,7 +34,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Pas amplitude", nomEn: "Amplitude step", type: "curseur", plage: [0, 100], pas: 1, defaut: 10, unite: "%",
         doc: "Vivacité de la marche sur les ordonnées, donc sur le timbre. Les deux pas à 0 % figent complètement la forme d'onde.",
         docEn: "Liveliness of the walk on amplitudes, hence on timbre. Both steps at 0% freeze the waveform entirely." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 9999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine du tirage. Même graine, même son : indispensable pour retrouver un résultat qui vous a plu.",
         docEn: "Random seed. Same seed, same sound: essential to recover a result you liked." },
     ],

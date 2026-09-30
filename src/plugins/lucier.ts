@@ -37,7 +37,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Delay before the first reflections. It accumulates from pass to pass: a high value combined with many iterations pushes the sound later, possibly out of the frame." },
       { nom: "Damping", nomEn: "Damping", type: "nombre", plage: [0, 100], pas: 1, defaut: 30, unite: "%",
         doc: "Absorption des aigus par l'air et les matériaux.", docEn: "Absorption of highs by air and materials." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine de la pièce. Elle mérite d'être fixe ici plus qu'ailleurs : la pièce est le sujet de l'œuvre, et vingt itérations dans une pièce chaque fois différente ne donneraient pas deux fois le même résultat. La changer, c'est enregistrer dans une autre pièce.",
         docEn: "Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room." },
     ],

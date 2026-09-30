@@ -289,23 +289,32 @@ export const passesRestantes = (b: BoucleCourante | null): number =>
   Math.max(0, (b?.morceaux.length ?? 0) - 1);
 
 /**
- * Combien de tours au plus pour une boucle.
+ * Le nombre total de passes qu'une exécution accepte, quelle que soit la profondeur.
  *
- * LA BORNE EXISTE PARCE QUE LE COMPTE VIENT DES DONNÉES. Une boucle par voix fait un tour par voix,
- * une boucle par créneau un tour par créneau : ni l'un ni l'autre n'est écrit dans un réglage, et
- * un fichier mal formé pourrait en annoncer des milliers. Trente-deux est la borne que le dépliage
- * de boucle applique déjà à son propre compte de tours.
- */
-export const PASSES_MAX_BOUCLE = 32;
-
-/**
- * Et une borne sur le PRODUIT, qui n'est pas la même chose.
- *
- * Deux boucles de trente-deux emboîtées feraient mille vingt-quatre exécutions du graphe entier :
- * la borne par boucle ne suffit plus dès qu'elles s'emboîtent, et trois boucles la rendraient
- * dérisoire. Celle-ci porte sur le nombre total de passes, quelle que soit la profondeur.
+ * CHAQUE PASSE EST UNE EXÉCUTION DU GRAPHE ENTIER, et c'est ce qui fixe l'ordre de grandeur : deux
+ * cent cinquante-six passes sont déjà longues sur une pièce ordinaire. La borne n'est pas cachée :
+ * le composant de début donne le rang atteint SUR LE NOMBRE DEMANDÉ, « créneau 256/300 », de sorte
+ * qu'une valeur qu'elle ne laisse pas atteindre se voit.
  */
 export const PASSES_MAX_TOTAL = 256;
+
+/**
+ * Combien de tours au plus pour UNE boucle.
+ *
+ * ELLE VALAIT TRENTE-DEUX, ET C'EST FINI — décidé par Fabien : « je n'aime pas l'idée des boucles
+ * plafonnées à 32, nous allons déroger à une règle et laisser le champ ouvert pour l'utilisateur ».
+ * Sa raison d'être était que le compte vient des DONNÉES — une boucle par voix fait un tour par
+ * voix — et que trente-deux était la borne que le dépliage de boucle appliquait déjà à son propre
+ * compte de tours. Ce compte-là est ouvert maintenant, et la boucle par créneau comme la boucle par
+ * cercle tiennent le leur d'un RÉGLAGE que l'utilisateur écrit : une borne plus basse que le total
+ * rognerait ce qu'il a demandé sans autre raison qu'une habitude.
+ *
+ * ELLE NE DISPARAÎT PAS POUR AUTANT, et c'est ce qui fait tenir la preuve d'arrêt : le compteur de
+ * `avancerBoucles` a besoin qu'aucun rang ne puisse croître sans fin. Elle vaut donc le budget
+ * entier, ce qui la rend inoffensive sur une boucle seule et laisse le total faire son office dès
+ * qu'elles s'emboîtent.
+ */
+export const PASSES_MAX_BOUCLE = PASSES_MAX_TOTAL;
 
 /**
  * Fait avancer le compteur, la boucle la plus INTÉRIEURE d'abord, et dit s'il reste un tour.

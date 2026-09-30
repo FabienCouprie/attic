@@ -105,7 +105,7 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Graine", nomEn:"Seed", plage:[0,999999], pas:1, defaut:0,
+      { nom:"Graine", graine: true, nomEn:"Seed", plage:[0,999999], pas:1, defaut:0,
         doc:"Graine de la mélodie. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement la même mélodie.",
         docEn:"Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody." },
       { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",

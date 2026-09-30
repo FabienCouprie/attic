@@ -359,7 +359,7 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["Random", "Original", "Reverse"],
         defaut: "Random",
         doc: "Ordre de réarrangement : aléatoire, original ou inversé.", docEn: "Rearrangement order: random, original or reversed." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 9999], pas: 1, defaut: 0,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvel ordre à chaque exécution). Même graine = même découpe.", docEn: "Random seed (0 = new order each run). Same seed = same slice order." },
     ],
     async executer(ctx: any) {
@@ -390,7 +390,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["aleatoire", "nulle", "originale"],
         defaut: "Aléatoire",
         doc: "Phase de départ pour la reconstruction. Aléatoire = texture créative ; Nulle = impulsion initiale ; Originale = reconstruit le signal original.", docEn: "Starting phase for reconstruction. Random = creative texture; Zero = initial pulse; Original = reconstruct the original signal." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 999999], pas: 1, defaut: 42,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine des phases initiales, sans effet hors du mode « Aléatoire ». Valeur par défaut fixe : une reconstruction qui change à chaque exécution serait un défaut.",
         docEn: "Seed for the initial phases; no effect outside the « Random » mode. The default is fixed: a reconstruction that changes on every run would be a defect." },
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",

@@ -26,7 +26,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Facteur", nomEn: "Factor", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
         doc: "Nombre de répétitions, pas d'omission (1 segment gardé sur N), ou taille du groupe mélangé. Sans effet sur Inversion et Égalisation.",
         docEn: "Number of repeats, omission step (1 segment kept out of N), or shuffled group size. No effect on Reverse and Level." },
-      { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [1, 9999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine du mélange : même graine, même résultat. Sans effet sur les autres opérations.",
         docEn: "Shuffle seed: same seed, same result. No effect on the other operations." },
     ],

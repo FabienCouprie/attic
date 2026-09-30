@@ -17,7 +17,9 @@ import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, nor
 import { parCanal } from "./hors-fil";
 
 
-export type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number };
+// `graine` PORTE LE MÊME RÔLE QU'AILLEURS : ces réglages-ci se fabriquent par `param()`, et sans
+// ce champ ils n'auraient pas pu le déclarer. Voir `core/types.ts` pour ce que le moteur en fait.
+export type ParamEffet = { nom: string; nomEn?: string; defaut: number; unite?: string; doc?: string; docEn?: string; plage?: [number, number]; pas?: number; graine?: true };
 /**
  * Le calcul d'un effet, ses réglages passés dans l'ordre où la fiche les déclare.
  *
@@ -101,6 +103,10 @@ export function effet(
         unite: p.unite ?? (p.nom.includes("Mix") || p.nom === "Gain" || p.nom === "Réduction" ? "%" : undefined),
         ...(p.plage ? { plage: p.plage } : {}),
         ...(p.pas ? { pas: p.pas } : {}),
+        // CETTE LIGNE RECOPIE UN RÔLE, ET SON ABSENCE NE SE VOYAIT PAS : la fiche se reconstruit
+        // champ par champ, donc un champ oublié ici disparaît sans erreur. Le contrat des graines
+        // a rattrapé le cas ; tout champ ajouté à `ParamEffet` est à recopier ici.
+        ...(p.graine ? { graine: p.graine } : {}),
       })),
       ...(modulation ? bornesDe(modulation) : []),
     ],

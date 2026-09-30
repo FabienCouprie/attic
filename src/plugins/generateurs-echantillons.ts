@@ -261,10 +261,10 @@ export const fiches: FicheAudio[] = ([
         docEn: "Probability of melodic silence at each step.",
       },
       {
-        nom: "Graine",
+        nom: "Graine", graine: true,
         nomEn: "Seed",
         type: "nombre",
-        plage: [0, 99999],
+        plage: [0, 999999],
         pas: 1,
         defaut: 0,
         doc: "Graine du réservoir (0 = aléatoire à chaque exécution). Même graine = même mélodie.",

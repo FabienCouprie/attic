@@ -52,7 +52,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Dispersion hauteur", nomEn: "Pitch scatter", type: "curseur", plage: [0, 24], pas: 0.5, defaut: 0, unite: "demi-tons", uniteEn: "semitones",
         doc: "Écart maximal tiré au sort sur la transposition de chaque segment. Quelques demi-tons donnent un chatoiement ; une octave donne un nuage sans hauteur.",
         docEn: "Largest random offset on each segment's transposition. A few semitones give a shimmer; an octave gives a cloud with no pitch." },
-      { nom: "Graine", nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
+      { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine du tirage. Une même graine rejoue exactement le même brassage, utile pour retrouver un résultat qu'on a aimé. Sans dispersion, elle ne sert à rien : rien n'est tiré au sort.",
         docEn: "Seed of the draw. The same seed replays exactly the same brassage, useful to find again a result one liked. With no scatter it does nothing: nothing is drawn at random." },
     ],
