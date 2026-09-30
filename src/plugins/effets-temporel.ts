@@ -200,37 +200,6 @@ export const fiches: FicheAudio[] = ([
    },
   },
   {
-    id: "chopper-logistique", nom: "Chopper logistique", nomEn: "Logistic chopper", univers: "Traitement", famille: "Effets",
-    memoire: "flux", // gain fonction de i seul
-    resume: "Gate rythmique dont la profondeur croît selon une courbe logistique.",
-    resumeEn: "Rhythmic gate whose depth grows following a logistic curve.",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [
-      { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "Hz",
-        doc: "Vitesse de coupe (coups par seconde).", docEn: "Chop speed (cuts per second)." },
-      { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
-        doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
-      { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionIds: ["Dur","Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
-        doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
-      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Profondeur maximale du gate atteinte en fin de transition (0% = aucun effet, 100% = gate complet).", docEn: "Maximum gate depth reached at the end of the transition (0% = no effect, 100% = full gate)." },
-      { nom: "Centre", nomEn: "Center", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Point milieu de la transition logistique (0% = début, 100% = fin).", docEn: "Midpoint of the logistic transition (0% = start, 100% = end)." },
-      { nom: "Pente", nomEn: "Steepness", type: "curseur", plage: [0.1, 50], pas: 0.1, defaut: 10, unite: "",
-        doc: "Raideur de la courbe logistique (valeur élevée = transition très rapide).", docEn: "Steepness of the logistic curve (higher = very fast transition)." },
-      { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
-    ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const { chopperLogistique } = await import("../audio");
-      const typeStr = ctx.paramTexte("Type", "Dur");
-      return { valeurs: [chopperLogistique(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0, ctx.paramNombre("Profondeur", 50), ctx.paramNombre("Centre", 50), ctx.paramNombre("Pente", 10), ctx.paramNombre("Mix", 100))], message: traduire("msg.chopper_logistique", (a.duration ?? 0).toFixed(1)) };
-    },
-  },
-  {
     id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",

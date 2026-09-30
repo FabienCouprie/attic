@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**458 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**457 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -148,11 +148,11 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Arpégiateur MIDI | `arpegiateur-midi` | 240 × 118 |
 | Assaisonnement sonore | `assaisonnement-sonore` | 240 × 140 |
 | Auto-pan | `auto-pan` | 240 × 140 |
-| Auto-pan logistique | `auto-pan-logistique` | 240 × 118 |
 | Matrice d'auto-similarité | `auto-similarite` | 240 × 162 |
 | Automate cellulaire | `automate-cellulaire` | 240 × 140 |
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
 | Barre modale | `barre-modale` | 240 × 118 |
+| Battements binauraux | `battements-binauraux` | 240 × 140 |
 | Beat Repeat / Stutter | `beat-repeat` | 240 × 118 |
 | Bitcrusher | `bitcrusher` | 240 × 140 |
 | Groove Box | `boite-groove` | 240 × 206 |
@@ -192,7 +192,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Changement de tempo | `changement-tempo` | 240 × 118 |
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
 | Chopper | `chopper` | 240 × 140 |
-| Chopper logistique | `chopper-logistique` | 240 × 118 |
 | Chorus | `chorus` | 240 × 140 |
 | Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
@@ -242,7 +241,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
 | Echo inversé | `echo-inverse` | 240 × 118 |
-| Écho logistique | `echo-logistique` | 240 × 118 |
 | Echo Ping-Pong | `echo-ping-pong` | 240 × 162 |
 | Écosystème (Di Scipio) | `ecosysteme` | 240 × 140 |
 | Écoute binaurale | `ecoute-binaurale` | 240 × 118 |
@@ -271,6 +269,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
+| Fondamentale manquante | `fondamentale-manquante` | 240 × 140 |
 | Fondu | `fondu` | 240 × 118 |
 | Formule sur séquence | `formule-sequence` | 240 × 162 |
 | Formules Csound | `formules-csound` | 240 × 140 |
@@ -299,6 +298,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
+| Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
 | Lecture inversée | `inverseur-audio` | 240 × 118 |
 | Inversion de polarité | `inversion-polarite` | 240 × 118 |
@@ -355,11 +355,11 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
+| Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
 | Particules | `particules` | 240 × 140 |
 | Partition aléatoire Csound | `partition-aleatoire-csound` | 240 × 140 |
 | Partition Csound | `partition-csound` | 240 × 140 |
-| Paulstretch | `paulstretch` | 240 × 118 |
-| Paulstretch logistique | `paulstretch-logistique` | 240 × 118 |
+| Paulstretch | `paulstretch` | 240 × 140 |
 | PCA neuronale | `pca-neuronale` | 240 × 118 |
 | Peignes accordés | `peignes-accordes` | 240 × 140 |
 | Reconstruction de phase (PGHI) | `phase-pghi` | 240 × 118 |
@@ -425,6 +425,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Séparer les voix | `separer-voix` | 240 × 162 |
 | Jointure de séquences | `sequence-jointure` | 240 × 272 |
 | Mélangeur de séquences | `sequence-melangeur` | 240 × 140 |
+| Jouer une séquence sur une banque | `sequence-sur-banque` | 240 × 162 |
 | Opérations sérielles | `serie-dodecaphonique` | 240 × 162 |
 | Série de l'infini (Nørgård) | `serie-infinie` | 240 × 162 |
 | Série à tous les intervalles | `serie-tous-intervalles` | 240 × 162 |
@@ -469,7 +470,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Transient Shaper | `transient-shaper` | 240 × 140 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
-| Tremolo logistique | `tremolo-logistique` | 240 × 118 |
 | Tresse | `tresse` | 240 × 118 |
 | TTS Français | `tts-francais` | 240 × 118 |
 | Kokoro TTS | `tts-kokoro` | 240 × 118 |
@@ -478,7 +478,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | SpeechT5 TTS | `tts-speecht5` | 240 × 118 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
 | Vibrato | `vibrato` | 240 × 162 |
-| Vibrato logistique | `vibrato-logistique` | 240 × 118 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |
 | Vocoder | `vocoder` | 240 × 140 |

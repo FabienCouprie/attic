@@ -1090,6 +1090,12 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background-color: #f5f0e6;
 }
 .attic-node-player { padding: 4px 8px; overflow: hidden; }
+/* Le temps au centième, sous le transport, qui ne compte qu'en secondes entières. Le nom ne peut
+   pas être « attic-node-temps » : cette classe-là est le chronomètre d'exécution, plus bas. */
+.attic-node-duree {
+  font-size: 10px; font-family: monospace; color: var(--text-muted);
+  text-align: right; padding: 2px 2px 0;
+}
 .attic-node-vu { display: flex; align-items: center; gap: 6px; padding: 2px 0 4px; }
 .attic-node-vu-bar-bg { flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
 .attic-node-vu-bar { height: 100%; border-radius: 3px; transition: width 0.2s ease; }

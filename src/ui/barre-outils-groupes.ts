@@ -61,6 +61,7 @@ export const OUTILS: OutilBarre[] = [
   { id: "favoris", famille: "ressources", cle: "barre.favoris" },
 
   { id: "theme", famille: "affichage", cle: "barre.theme" },
+  { id: "friction", famille: "affichage", cle: "barre.friction" },
   { id: "langue", famille: "affichage", cle: "barre.langue" },
   { id: "fenetre", famille: "affichage", cle: "barre.fenetre" },
 

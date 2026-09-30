@@ -146,7 +146,7 @@ describe("déclaration du paramètre", () => {
     const TIRE_AU_SORT = ["generateur-bruit", "melodie-aleatoire", "rythme-cantor", "camelot", "arpege-midi",
       "magenta-improvisation", "partition-aleatoire-csound"];
     const FIXE = ["sequenceur-batterie-avance", "boite-rythmes", "reverberation",
-      "reverb-progressive", "paulstretch", "paulstretch-logistique", "griffin-lim", "piece-lucier",
+      "reverb-progressive", "paulstretch", "griffin-lim", "piece-lucier",
       "palette-harmonique", "dessin-sonore"];
 
     for (const id of [...TIRE_AU_SORT, ...FIXE]) {

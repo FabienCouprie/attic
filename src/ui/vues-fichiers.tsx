@@ -10,7 +10,7 @@ import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
 import type { VueProps } from "./vues";
 
-import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
+import { LecteurAudio } from "./lecteur-audio";
 export function VueFormeOnde({ data }: VueProps) {
   return (
     <FormeOnde
@@ -66,8 +66,7 @@ export function VueUploadAudio({ id, data }: VueProps) {
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
       {data.audioUrl && lecteurVisible && (
-        <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl}
-          onLoadedMetadata={ouvrirAuNiveauDEcoute} />
+        <LecteurAudio key={data.audioUrl} src={data.audioUrl} />
       )}
     </div>
   );

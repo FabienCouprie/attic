@@ -49,11 +49,6 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
     "pitch-progressif", "glissando-tonalite", "harmonizer", "octaver", "glissando-risset",
     "temperament", "transposeur-quantiseur-midi",
   ],
-  // Pilotés par la suite logistique : le même chaos règle la profondeur, la vitesse ou le fondu.
-  "Logistique": [
-    "auto-pan-logistique", "chopper-logistique", "tremolo-logistique", "vibrato-logistique",
-    "echo-logistique", "paulstretch-logistique", "melangeur-logistique",
-  ],
   // Décider de ce qui passe, et à quel niveau.
   "Égalisation et filtres": [
     "equaliseur", "reponse-filtre", "filtrage-spectre", "de-esser", "peignes-accordes", "resonateurs",
@@ -67,7 +62,10 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
     "voicings-accords", "wavesets-wishart",
   ],
   // Fondus et mélange : ce qu on fait en posant les sons les uns après les autres.
-  "Montage": ["fondu"],
+  // Le mélangeur logistique tenait une famille à lui seul, les six autres composants pilotés par la
+  // suite ayant été retirés au profit de l'entrée Modulation. Il rejoint la famille que sa fiche
+  // déclare depuis toujours.
+  "Montage": ["fondu", "melangeur-logistique"],
   // Dessiner le volume dans le temps, ou le prendre à un son pour le poser sur un autre.
   "Contrôle d enveloppe": ["enveloppe-adsr", "transfert-enveloppe"],
   // Ils reçoivent des notes et rendent un son : ce ne sont pas des effets, ce sont des instruments.

@@ -13,7 +13,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import type { Sequence } from "../audio/sequence";
+import { lireMidiEnSequence } from "../audio/midi-lecture-sequence";
 
 const en = () => langueCourante() === "en";
 
@@ -44,13 +44,12 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
-      const { analyserMidi } = await import("../audio");
-      const { parseMidi } = await import("midi-file");
-      const lu = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
-      const { notes } = analyserMidi(lu);
+      // LA LECTURE EST DANS `audio/midi-sequence.ts`, et elle y est SEULE : le composant qui joue
+      // sur une banque a lui aussi une entrée MIDI, et deux lectures du même format pourraient
+      // diverger.
       const canal = Math.round(ctx.paramNombre("Canal", -1));
-      const gardees = canal < 0 ? notes : notes.filter((n: any) => n.canal === canal);
-      if (gardees.length === 0) {
+      const lu = await lireMidiEnSequence(fichier, canal, ctx.paramNombre("Tempo", 120));
+      if (!lu.sequence) {
         return {
           valeurs: [null, fichier], erreur: true,
           message: canal < 0
@@ -58,24 +57,10 @@ export const fiches: FicheAudio[] = ([
             : (en() ? `No note on channel ${canal}.` : `Aucune note sur le canal ${canal}.`),
         };
       }
-      // LE TEMPO DU FICHIER L'EMPORTE SUR LE RÉGLAGE : il est écrit par celui qui a produit la
-      // pièce, alors que le réglage n'est qu'un défaut pour les fichiers qui n'en portent pas.
-      let tempo = ctx.paramNombre("Tempo", 120);
-      for (const piste of lu.tracks) {
-        for (const evt of piste) {
-          if ((evt as any).type === "setTempo" && (evt as any).microsecondsPerBeat) {
-            tempo = Math.round(60 / ((evt as any).microsecondsPerBeat / 1_000_000));
-            break;
-          }
-        }
-      }
-      const sequence: Sequence = { notes: gardees, tempo, titre: fichier.name };
-      const canaux = new Set(gardees.map((n: any) => n.canal ?? 0)).size;
-      const duree = gardees.reduce((m: number, n: any) => Math.max(m, n.fin), 0);
       return {
-        valeurs: [sequence, fichier],
-        message: `${gardees.length} notes · ${duree.toFixed(2)} s · `
-          + `${canaux} ${en() ? "channels" : "canaux"} · ${tempo} BPM`,
+        valeurs: [lu.sequence, fichier],
+        message: `${lu.sequence.notes.length} notes · ${lu.duree.toFixed(2)} s · `
+          + `${lu.canaux} ${en() ? "channels" : "canaux"} · ${lu.tempo} BPM`,
       };
     },
   },

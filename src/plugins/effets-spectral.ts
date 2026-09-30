@@ -10,7 +10,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
-import { appliquerFiltre, reduireBruit, reduireBruitNotches, calculerProfilBruit, equaliser, inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote, appliquerFondu, extraireZone, appliquerPaulstretch, paulstretchLogistique, appliquerFormuleEchantillons, appliquerFormuleSpectrale, ajusterLargeurStereo, granularFreeze } from "../audio";
+import { appliquerFiltre, reduireBruit, reduireBruitNotches, calculerProfilBruit, equaliser, inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote, appliquerFondu, extraireZone, appliquerPaulstretch, appliquerFormuleEchantillons, appliquerFormuleSpectrale, ajusterLargeurStereo, granularFreeze } from "../audio";
 
 import { effet, param, simple } from "./effets-aides";
 
@@ -19,10 +19,20 @@ export const fiches: FicheAudio[] = ([
     id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement extrême par randomisation des phases (stéréo).",
     resumeEn: "Extreme phase-randomization time-stretch (stereo).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Stretch" },
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Stretch", nomEn: "Stretch", defaut: 8, unite: "×", doc: "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long.", docEn: "Stretch factor. 1 = no effect, 8 = 8× longer.", plage: [1, 100], pas: 1 },
+      { nom: "Stretch", nomEn: "Stretch", defaut: 8, unite: "×", plage: [1, 100], pas: 1,
+        doc: "Facteur d'étirement. 1 = pas d'effet, 8 = 8 fois plus long. Une courbe branchée sur l'entrée Modulation prend la main, et l'étirement varie alors au fil du son.",
+        docEn: "Stretch factor. 1 = no effect, 8 = 8× longer. A curve connected to the Modulation input takes over, and the stretch then varies along the sound." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Stretch", defaut: 1, unite: "×", plage: [1, 100], pas: 1,
+        doc: "Facteur que vaut le zéro d'une courbe branchée. La course se parcourt en multipliant : de 1 à 64, le milieu de la courbe vaut 8, et chaque doublement dure autant. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Factor that a connected curve's zero means. The travel is multiplicative: from 1 to 64, the middle of the curve is 8, and every doubling lasts as long. With no curve, this setting does nothing." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Stretch", defaut: 20, unite: "×", plage: [1, 100], pas: 1,
+        doc: "Facteur que vaut le un de la courbe.", docEn: "Factor that the curve's one means." },
       { nom: "Fenêtre", nomEn: "Window", defaut: 0.25, unite: "s", doc: "Taille de la fenêtre STFT en secondes. Grande = texture lisse, petite = plus de transitoires.", docEn: "STFT window size in seconds. Large = smooth texture, small = more transients.", plage: [0.01, 1], pas: 0.01 },
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine de la randomisation des phases. Valeur par défaut fixe : un étirement qui change à chaque exécution serait un défaut. La changer donne une autre texture, de même caractère.",
@@ -31,40 +41,29 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      const stretch = ctx.paramNombre("Stretch", 8);
       const fenetre = ctx.paramNombre("Fenêtre", 0.25);
-      const out = await appliquerPaulstretch(audio, stretch, fenetre,
+      // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage. L'étirement se
+      // parcourt en MULTIPLIANT, parce qu'un facteur est un rapport : de 1 à 64, le milieu de la
+      // course vaut 8, et non 32 comme le donnerait une répartition linéaire.
+      const facteurs = valeursParametre(ctx.entree(1), audio.length, ctx.paramNombre("Stretch", 8), {
+        min: ctx.paramNombre("Modulation min", 1),
+        max: ctx.paramNombre("Modulation max", 20),
+        echelle: "logarithmique",
+      });
+      const out = await appliquerPaulstretch(audio, facteurs, fenetre,
         { onProgress: ctx.onProgress, signal: ctx.signal, hasard: creerAleatoire(ctx.paramNombre("Graine", 42)) });
-      return { valeurs: [out] };
-    },
-  },
-  {
-    id: "paulstretch-logistique", nom: "Paulstretch logistique", nomEn: "Logistic Paulstretch", univers: "Traitement", famille: "Effets",
-    resume: "Étirement extrême qui s'installe progressivement.",
-    resumeEn: "Extreme time-stretch that grows in progressively.",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [
-      { nom: "Stretch", nomEn: "Stretch", defaut: 8, unite: "×", doc: "Facteur d'étirement maximal atteint en fin de transition.", docEn: "Maximum stretch factor reached at the end of the transition.", plage: [1, 100], pas: 1 },
-      { nom: "Fenêtre", nomEn: "Window", defaut: 0.25, unite: "s", doc: "Taille de la fenêtre STFT en secondes.", docEn: "STFT window size in seconds.", plage: [0.01, 1], pas: 0.01 },
-      { nom: "Centre", nomEn: "Center", defaut: 50, unite: "%", doc: "Point milieu de la transition logistique.", docEn: "Midpoint of the logistic transition.", plage: [0, 100], pas: 1 },
-      { nom: "Pente", nomEn: "Steepness", defaut: 10, unite: "", doc: "Raideur de la courbe logistique.", docEn: "Steepness of the logistic curve.", plage: [0.1, 50], pas: 0.1 },
-      { nom: "Mix", nomEn: "Mix", defaut: 100, unite: "%", doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance.", plage: [0, 100], pas: 1 },
-      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
-        doc: "Graine de la randomisation des phases. Valeur par défaut fixe : un étirement qui change à chaque exécution serait un défaut. La changer donne une autre texture, de même caractère.",
-        docEn: "Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character." },
-    ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      const stretch = ctx.paramNombre("Stretch", 8);
-      const fenetre = ctx.paramNombre("Fenêtre", 0.25);
-      const centre = ctx.paramNombre("Centre", 50);
-      const pente = ctx.paramNombre("Pente", 10);
-      const mix = ctx.paramNombre("Mix", 100);
-      const out = await paulstretchLogistique(audio, stretch, fenetre, centre, pente, mix,
-        { onProgress: ctx.onProgress, signal: ctx.signal, hasard: creerAleatoire(ctx.paramNombre("Graine", 42)) });
-      return { valeurs: [out], message: traduire("msg.paulstretch_logistique", out.duration.toFixed(1)) };
+      // Le message dit ce qui a été parcouru : avec une courbe, le facteur n'est plus sur le
+      // réglage, et la durée seule ne dit pas entre quelles bornes l'étirement a voyagé.
+      let bas = Infinity;
+      let haut = 0;
+      for (const f of facteurs) { if (f < bas) bas = f; if (f > haut) haut = f; }
+      const nb = (v: number) => v.toFixed(1).replace(".", ",");
+      return {
+        valeurs: [out],
+        message: estCourbe(ctx.entree(1))
+          ? `${nb(out.duration)} s · ${nb(bas)} à ${nb(haut)} ×`
+          : `${nb(out.duration)} s · ${nb(haut)} ×`,
+      };
     },
   },
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",

@@ -9,6 +9,7 @@ import { NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { useStatut } from "./statuts";
 import { estActif } from "./vues-fichiers";
+import { tempsAuCentieme } from "./lecteur-audio";
 import type { VueProps } from "./vues";
 
 export function VueLecteurMusique({ id, data }: VueProps) {
@@ -35,12 +36,10 @@ export function VueLecteurMusique({ id, data }: VueProps) {
   const shuffle = estActif(data.parametres?.["Lecture aléatoire"]);
   const loop = estActif(data.parametres?.["Lecture en boucle"]);
 
-  const formatTime = (s: number) => {
-    if (!Number.isFinite(s) || s < 0) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
+  // LE CENTIÈME PLUTÔT QUE LA SECONDE : ce transport est à nous, et il tronquait comme celui du
+  // navigateur. Un fichier d'une demi-seconde s'y lisait « 0:00 / 0:00 », et beaucoup de ce que ce
+  // dépôt fabrique dure moins de deux secondes.
+  const formatTime = tempsAuCentieme;
 
   const rafraichir = useCallback(async () => {
     if (!api) return;
@@ -247,9 +246,9 @@ export function VueLecteurMusique({ id, data }: VueProps) {
             <button className="attic-node-fichier-btn" title={t("lecteur.suivant")} onClick={handleNext}>⏭</button>
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, padding: "2px 0" }}>
-            <span style={{ width: 32, textAlign: "right" }}>{formatTime(currentTime)}</span>
+            <span style={{ width: 48, textAlign: "right", fontFamily: "monospace" }}>{formatTime(currentTime)}</span>
             <input type="range" min={0} max={100} step={0.1} value={duration ? (currentTime / duration) * 100 : 0} onChange={(e) => handleSeek(parseFloat(e.target.value))} style={{ flex: 1 }} />
-            <span style={{ width: 32, textAlign: "left" }}>{formatTime(duration)}</span>
+            <span style={{ width: 48, textAlign: "left", fontFamily: "monospace" }}>{formatTime(duration)}</span>
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, padding: "2px 0" }}>
             <button className="attic-node-fichier-btn" style={{ opacity: shuffle ? 1 : 0.5 }} title={t("lecteur.shuffle")} onClick={toggleShuffle}>🔀</button>

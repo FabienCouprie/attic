@@ -3,13 +3,33 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { valeurA } from "./courbe";
 import { fft } from "./fft";
 import { normaliser } from "./effets-dynamique";
 import { tailleFenetreSuivante } from "./effets-temporel";
 
+/**
+ * Paulstretch, dont le facteur d'étirement peut varier au fil du son.
+ *
+ * L'ÉTIREMENT EST UN PAS DE LECTURE, et c'est ce qui rend sa modulation possible. La sortie avance
+ * d'une demi-fenêtre par trame, toujours ; ce qui change avec le facteur, c'est de combien la
+ * LECTURE avance dans la source pendant ce temps. Étirer huit fois, c'est n'avancer que d'un
+ * huitième de demi-fenêtre. Un facteur qui varie ne demande donc rien de plus qu'un pas recalculé à
+ * chaque trame.
+ *
+ * LA COURBE SE LIT SUR LA SOURCE ET NON SUR LA SORTIE, et c'est le seul sens qui se tienne. La
+ * longueur de sortie est la SOMME des pas, donc inconnue tant qu'on n'a pas parcouru la courbe :
+ * la lire sur la sortie demanderait de connaître d'avance ce qu'on cherche à calculer. Lue sur la
+ * source, elle dit « ce moment-ci du son est étiré tant », ce qui est aussi ce qu'on veut dire.
+ *
+ * ET LE NOMBRE DE TRAMES SE COMPTE D'ABORD, À VIDE. Le pas changeant à chaque trame, la longueur
+ * n'est plus une division mais une somme, et il faut l'avoir avant d'allouer la sortie. Le compte
+ * parcourt exactement la même récurrence que la boucle de calcul, sans quoi les deux divergeraient
+ * d'une trame sur un arrondi.
+ */
 export async function appliquerPaulstretch(
   buffer: AudioBuffer,
-  stretch: number,
+  stretch: number | Float32Array,
   windowSizeSeconds: number,
   options: { onProgress?: (msg: string) => void; signal?: AbortSignal; hasard?: () => number } = {}
 ): Promise<AudioBuffer> {
@@ -18,17 +38,21 @@ export async function appliquerPaulstretch(
   const sr = buffer.sampleRate;
   const nCh = buffer.numberOfChannels;
   const len = buffer.length;
-  const stretchFactor = Math.max(1, stretch);
   let windowSize = Math.max(16, Math.round(windowSizeSeconds * sr));
   windowSize = Math.floor(windowSize / 2) * 2;
   windowSize = tailleFenetreSuivante(windowSize);
   const half = windowSize / 2;
-  const displace = half / stretchFactor;
+  // Le pas de lecture à la position `p` de la source. Un facteur sous un n'existe pas : Paulstretch
+  // étire, il ne comprime pas, et le pas dépasserait la demi-fenêtre.
+  const pasEn = (p: number) =>
+    half / Math.max(1, valeurA(stretch, Math.min(len - 1, Math.max(0, Math.floor(p)))));
 
   // Fondu de sortie sur les 50 derniers ms pour éviter un coup de queue abrupt.
   const fadeEnd = Math.min(len, Math.max(16, Math.round(0.05 * sr)));
 
-  const outputFrames = Math.max(1, Math.ceil(len / displace));
+  let outputFrames = 0;
+  for (let p = 0; p < len; p += pasEn(p)) outputFrames++;
+  outputFrames = Math.max(1, outputFrames);
   const outputLength = outputFrames * half;
   const resultat = new AudioBuffer({ numberOfChannels: nCh, length: outputLength, sampleRate: sr });
 
@@ -97,7 +121,7 @@ export async function appliquerPaulstretch(
       }
       oldBuf.set(re);
 
-      startPos += displace;
+      startPos += pasEn(startPos);
       frame++;
       const frameIndex = c * outputFrames + frame;
       if (frameIndex % reportInterval === 0) {
@@ -111,45 +135,6 @@ export async function appliquerPaulstretch(
   onProgress?.("Paulstretch · 100%");
   // Normalisation douce pour éviter les dépassements sans monter artificiellement le bruit.
   return normaliser(resultat, -3);
-}
-
-// Paulstretch logistique : l'étirement extrême s'installe progressivement selon
-// une courbe logistique. En début de piste le signal est intact, en fin de piste
-// il atteint le facteur d'étirement maximal.
-export async function paulstretchLogistique(
-  buffer: AudioBuffer,
-  stretch: number,
-  windowSizeSeconds: number,
-  centre: number,
-  pente: number,
-  mix: number,
-  options: { onProgress?: (msg: string) => void; signal?: AbortSignal; hasard?: () => number } = {}
-): Promise<AudioBuffer> {
-  const { onProgress, signal } = options;
-  const sr = buffer.sampleRate;
-  const maxStretch = Math.max(1, stretch);
-  const mixWet = Math.max(0, Math.min(1, mix / 100));
-  if (mixWet <= 0 || maxStretch <= 1) return buffer;
-  const stretched = await appliquerPaulstretch(buffer, maxStretch, windowSizeSeconds, { onProgress, signal, hasard: options.hasard });
-  const n = stretched.length;
-  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
-  const centreRel = Math.max(0, Math.min(1, centre / 100));
-  const k = Math.max(0.1, pente);
-
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    if (signal?.aborted) throw new Error("aborted");
-    const src = buffer.getChannelData(c);
-    const wet = stretched.getChannelData(c);
-    const dst = resultat.getChannelData(c);
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1 || 1);
-      const p = 1 / (1 + Math.exp(-k * (t - centreRel)));
-      const dry = i < src.length ? src[i] : 0;
-      const wetScaled = dry * (1 - p) + wet[i] * p;
-      dst[i] = dry * (1 - mixWet) + wetScaled * mixWet;
-    }
-  }
-  return resultat;
 }
 
 // --- Granular freeze : boucle de grains avec contrôle de taille et hauteur ----

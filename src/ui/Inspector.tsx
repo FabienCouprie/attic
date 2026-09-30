@@ -10,7 +10,7 @@ import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modif
 import { estUniteMultiplicative } from "../audio/courbe";
 import { decrireMeta, estMeta, trouverMeta } from "../core";
 
-import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
+import { LecteurAudio } from "./lecteur-audio";
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
   def: FicheAudio | undefined;
@@ -497,7 +497,7 @@ function EnregistreurInspecteur({ noeud, onEnregistrer, onChangerParametre }: { 
       )}
       {enregistrementUrl && !enRegistrant && (
         <>
-          <audio onLoadedMetadata={ouvrirAuNiveauDEcoute} className="attic-node-audio" controls src={enregistrementUrl} style={{ marginTop: 8 }} />
+          <LecteurAudio src={enregistrementUrl} className="attic-node-audio" style={{ marginTop: 8 }} />
           <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
         </>
       )}
@@ -621,7 +621,7 @@ function CaptureSystemeInspecteur({ noeud, onEnregistrer }: { noeud: { id: strin
       )}
       {enregistrementUrl && !enRegistrant && (
         <>
-          <audio onLoadedMetadata={ouvrirAuNiveauDEcoute} className="attic-node-audio" controls src={enregistrementUrl} style={{ marginTop: 8 }} />
+          <LecteurAudio src={enregistrementUrl} className="attic-node-audio" style={{ marginTop: 8 }} />
           <button className="attic-node-btn-record" onClick={demarrer} style={{ marginTop: 4 }}>● {t("btn.rerecord")}</button>
         </>
       )}

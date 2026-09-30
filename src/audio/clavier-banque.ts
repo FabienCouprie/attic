@@ -45,11 +45,17 @@ export interface PlanZone {
   haute: number;
 }
 
+/** Les deux bornes d'une boucle de maintien, en échantillons de la zone. */
+export interface Boucle {
+  debut: number;
+  fin: number;
+}
+
 export interface Zone extends PlanZone {
   /** L'échantillon transposé pour cette racine. */
   audio: AudioBuffer;
   /** Boucle de maintien, en échantillons, quand la note doit pouvoir tenir. */
-  boucle?: { debut: number; fin: number };
+  boucle?: Boucle;
   /**
    * Désaccord de la zone, en cents. Les banques construites par Attic n'en ont pas — leurs zones
    * sont justes par construction —, mais un SFZ lu peut en déclarer un par région (`tune`).
@@ -156,6 +162,33 @@ export interface OptionsBanque {
   boucle?: boolean;
   /** Début de la boucle, en part de l'échantillon. */
   boucleDebut?: number;
+  /**
+   * Longueur de la boucle, en SECONDES, et non en part de l'échantillon.
+   *
+   * POURQUOI EN SECONDES. La boucle allait du début choisi jusqu'à 95 % de l'échantillon : sur un
+   * son d'une seconde cela fait un maintien, sur un son de trente secondes cela fait un cycle de
+   * treize secondes, et l'on entend le son RECOMMENCER au lieu de tenir. Relevé par Fabien sur une
+   * note tenue. Une boucle de maintien est courte par nature, et sa longueur ne dépend pas de celle
+   * du son : elle se donne donc dans l'unité où on l'entend.
+   *
+   * La fin reste bornée à 95 % de l'échantillon : au-delà, la boucle mordrait sur l'extinction.
+   */
+  boucleLongueur?: number;
+}
+
+/**
+ * Les bornes de la boucle de maintien d'une zone, ou rien si l'échantillon est trop court.
+ *
+ * UNE SEULE RÈGLE POUR LES DEUX FABRIQUES DE BANQUE, qui la recopiaient chacune de son côté.
+ */
+function bornesDeBoucle(
+  audio: AudioBuffer, o: { boucleDebut?: number; boucleLongueur?: number },
+): Boucle | undefined {
+  const debut = Math.round(audio.length * Math.min(0.9, Math.max(0.05, o.boucleDebut ?? 0.5)));
+  const bout = Math.round(audio.length * 0.95);
+  const longueur = Math.round(Math.max(0.05, o.boucleLongueur ?? 2) * audio.sampleRate);
+  const fin = Math.max(debut + 32, Math.min(bout, debut + longueur));
+  return fin < audio.length ? { debut, fin } : undefined;
 }
 
 /** Tronque un échantillon avec un fondu, sans toucher à la hauteur. */
@@ -197,9 +230,7 @@ export function construireBanque(source: AudioBuffer, o: OptionsBanque): Banque 
     }
     const zone: Zone = { ...p, audio };
     if (o.boucle) {
-      const debut = Math.round(audio.length * Math.min(0.9, Math.max(0.05, o.boucleDebut ?? 0.5)));
-      const fin = Math.max(debut + 32, Math.round(audio.length * 0.95));
-      if (fin < audio.length) zone.boucle = { debut, fin };
+      zone.boucle = bornesDeBoucle(audio, o);
     }
     return zone;
   });
@@ -331,21 +362,74 @@ export interface ParametresLecture {
 }
 
 /**
+ * L'échantillon dont le RACCORD DE BOUCLE est déjà fondu, prêt à être bouclé tel quel.
+ *
+ * POURQUOI LE FONDU EST CUIT DANS LE TAMPON. Web Audio boucle tout seul, et il saute de `loopEnd` à
+ * `loopStart` SANS RIEN FONDRE : l'onde ne revient pas à la même phase, et chaque tour laisse un
+ * clic. C'est ce que la notice du composant promettait pourtant d'éviter, « le raccord est fondu,
+ * faute de quoi chaque tour laisserait un clic ». Relevé par Fabien sur une note tenue : un
+ * cliquetis, une reprise du son, un cliquetis, une reprise.
+ *
+ * LE FONDU SE FAIT AVEC CE QUI PRÉCÈDE LE DÉBUT DE BOUCLE, et non avec ce qui le suit. C'est la
+ * seule façon qu'un saut de `fin` vers `debut` soit continu : la queue de la boucle est amenée à
+ * ressembler à ce qui précède `debut`, si bien que l'échantillon d'après le saut prolonge celui
+ * d'avant. Fondre vers ce qui SUIT `debut` rendrait la queue semblable à `debut + fondu`, et le saut
+ * répéterait alors la fenêtre du fondu : c'est ce que faisait le rendu hors ligne, et cela laissait
+ * un saut de 48 % de la crête mesuré sur une note tenue de six secondes.
+ *
+ * LE RÉSULTAT EST GARDÉ, parce qu'une banque a quatre-vingt-huit zones et qu'un son long en pèse
+ * autant : le recalculer à chaque touche appuyée coûterait une copie complète par note jouée.
+ */
+const fondusEnCache = new WeakMap<AudioBuffer, Map<number, AudioBuffer>>();
+
+export function audioBoucleFondue(audio: AudioBuffer, boucle: Boucle, fonduEch: number): AudioBuffer {
+  const f = Math.max(1, Math.min(
+    Math.round(fonduEch), boucle.debut, Math.floor((boucle.fin - boucle.debut) / 2),
+  ));
+  const parFondu = fondusEnCache.get(audio) ?? new Map<number, AudioBuffer>();
+  const deja = parFondu.get(f);
+  if (deja) return deja;
+
+  const out = new AudioBuffer({
+    numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate,
+  });
+  for (let c = 0; c < audio.numberOfChannels; c++) {
+    const x = audio.getChannelData(c);
+    const y = out.getChannelData(c);
+    y.set(x);
+    for (let k = 0; k < f; k++) {
+      // Le poids ne touche ni zéro ni un : aux deux bouts, la fenêtre doit rejoindre ses voisines
+      // sans marche.
+      const w = (k + 1) / (f + 1);
+      const i = boucle.fin - f + k;
+      y[i] = x[i] * (1 - w) + x[boucle.debut - f + k] * w;
+    }
+  }
+  parFondu.set(f, out);
+  fondusEnCache.set(audio, parFondu);
+  return out;
+}
+
+/**
  * Les réglages de lecture d'une note, prêts pour Web Audio.
  *
  * Le jeu en direct — clavier d'un nœud — ne passe pas par `rendreNotes` : il confie l'échantillon au
  * matériel, qui le relit et le boucle tout seul. Ce qu'il faut lui donner se calcule ici, depuis la
  * MÊME voix que le rendu hors ligne, pour que les deux ne puissent pas diverger.
+ *
+ * ET CE QU'IL LUI CONFIE EST L'ÉCHANTILLON AU RACCORD FONDU, faute de quoi la promesse ci-dessus
+ * était fausse sur le seul point qui s'entend.
  */
-export function parametresLecture(voix: Voix): ParametresLecture {
+export function parametresLecture(voix: Voix, fonduBoucle = 0.02): ParametresLecture {
   const sr = voix.zone.audio.sampleRate;
+  const b = voix.zone.boucle;
   return {
-    audio: voix.zone.audio,
+    audio: b ? audioBoucleFondue(voix.zone.audio, b, fonduBoucle * sr) : voix.zone.audio,
     vitesse: voix.ratio,
     gain: voix.gain,
-    boucle: !!voix.zone.boucle,
-    boucleDebut: voix.zone.boucle ? voix.zone.boucle.debut / sr : 0,
-    boucleFin: voix.zone.boucle ? voix.zone.boucle.fin / sr : 0,
+    boucle: !!b,
+    boucleDebut: b ? b.debut / sr : 0,
+    boucleFin: b ? b.fin / sr : 0,
   };
 }
 
@@ -386,13 +470,20 @@ export function rendreNotes(
     const voix = n.fin > n.debut ? voixPourNote(banque, n.note, n.velocite, volume, sr) : null;
     if (!voix) continue;
     const { zone, ratio, gain } = voix;
-    const srcG = zone.audio.getChannelData(0);
-    const srcD = zone.audio.numberOfChannels > 1 ? zone.audio.getChannelData(1) : srcG;
+    // LE MÊME ÉCHANTILLON QUE LE JEU EN DIRECT, raccord de boucle déjà fondu. Le rendu avait sa
+    // propre mécanique de fondu, qui mélangeait la queue de la boucle avec ce qui SUIT son début
+    // puis sautait à son début : la fenêtre du fondu se répétait, et il restait un saut de 48 % de
+    // la crête, mesuré sur une note tenue de six secondes. Une seule mise en œuvre, donc, et les
+    // deux chemins ne peuvent plus diverger.
+    const source = zone.boucle
+      ? audioBoucleFondue(zone.audio, zone.boucle, fonduBoucle * zone.audio.sampleRate)
+      : zone.audio;
+    const srcG = source.getChannelData(0);
+    const srcD = source.numberOfChannels > 1 ? source.getChannelData(1) : srcG;
     const debutEch = Math.max(0, Math.round(n.debut * sr));
     const finEch = Math.min(longueur, Math.round((n.fin + relachement) * sr));
     const finTenue = Math.min(longueur, Math.round(n.fin * sr));
     const fonduEch = Math.max(1, Math.round(relachement * sr));
-    const fonduB = Math.max(1, Math.round(fonduBoucle * sr * ratio));
 
     let pos = 0; // position de lecture dans l'échantillon, en échantillons source
     for (let i = debutEch; i < finEch; i++) {
@@ -405,19 +496,8 @@ export function rendreNotes(
 
       const k = Math.floor(pos);
       const f = pos - k;
-      let vg = srcG[k] * (1 - f) + (srcG[k + 1] ?? srcG[k]) * f;
-      let vd = srcD[k] * (1 - f) + (srcD[k + 1] ?? srcD[k]) * f;
-      // Fondu du raccord de boucle : on mélange la fin de la boucle avec son début.
-      if (zone.boucle && pos > zone.boucle.fin - fonduB) {
-        const part = (pos - (zone.boucle.fin - fonduB)) / fonduB;
-        const posMiroir = zone.boucle.debut + (pos - (zone.boucle.fin - fonduB));
-        const km = Math.floor(posMiroir);
-        if (km + 1 < zone.audio.length) {
-          const fm = posMiroir - km;
-          vg = vg * (1 - part) + (srcG[km] * (1 - fm) + srcG[km + 1] * fm) * part;
-          vd = vd * (1 - part) + (srcD[km] * (1 - fm) + srcD[km + 1] * fm) * part;
-        }
-      }
+      const vg = srcG[k] * (1 - f) + (srcG[k + 1] ?? srcG[k]) * f;
+      const vd = srcD[k] * (1 - f) + (srcD[k + 1] ?? srcD[k]) * f;
       // Relâchement : la note s'éteint après la fin de la touche.
       let env = 1;
       if (i >= finTenue) env = Math.max(0, 1 - (i - finTenue) / fonduEch);
@@ -559,9 +639,7 @@ export function banqueDepuisRendus(
     const haute = dernier ? o.noteHaute : Math.min(o.noteHaute, racine + largeur);
     const zone: Zone = { racine, basse, haute, audio };
     if (o.boucle) {
-      const debut = Math.round(audio.length * Math.min(0.9, Math.max(0.05, o.boucleDebut ?? 0.5)));
-      const fin = Math.max(debut + 32, Math.round(audio.length * 0.95));
-      if (fin < audio.length) zone.boucle = { debut, fin };
+      zone.boucle = bornesDeBoucle(audio, o);
     }
     zones.push(zone);
   });

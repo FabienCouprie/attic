@@ -203,7 +203,10 @@ export function ClavierSfz({ id, data }: VueProps) {
     if (!banque) return { arreter: () => {} };
     const voix = voixPourNote(banque, note, velocite, 1);
     if (!voix) return { arreter: () => {} };
-    const p = parametresLecture(voix);
+    // LE FONDU DU RACCORD EST CELUI DU NŒUD, comme au rendu : le jeu en direct posait la boucle
+    // telle quelle sur le materiel, qui saute de la fin au debut sans rien fondre, et chaque tour
+    // laissait un clic. Releve par Fabien sur une note tenue.
+    const p = parametresLecture(voix, Number((data.parametres as any)?.["Fondu de boucle"] ?? 20) / 1000);
     const ctx = getCtx();
     const source = ctx.createBufferSource();
     source.buffer = p.audio;

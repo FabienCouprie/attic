@@ -1,7 +1,7 @@
 // audio/effets-temporel.test.ts — Vérification de Paulstretch.
 import { describe, it, expect, beforeAll } from "vitest";
 import { appliquerEchoInverse } from "./effets-echo";
-import { appliquerPaulstretch, paulstretchLogistique, beatRepeat } from "./effets-grains";
+import { appliquerPaulstretch, beatRepeat } from "./effets-grains";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -101,39 +101,6 @@ function rmsTranche(buf: AudioBuffer, debut: number, fin: number): number {
   for (let i = debut; i < fin; i++) sum += data[i] * data[i];
   return Math.sqrt(sum / (fin - debut));
 }
-
-describe("paulstretchLogistique", () => {
-  it("produit une sortie plus longue que l'entrée et sans NaN/Inf", async () => {
-    const buffer = sinus(440, 0.5, 1);
-    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
-    expect(out.duration).toBeGreaterThan(buffer.duration * 0.9);
-    for (let c = 0; c < out.numberOfChannels; c++) {
-      const d = out.getChannelData(c);
-      for (let i = 0; i < d.length; i++) expect(Number.isFinite(d[i])).toBe(true);
-    }
-  });
-
-  it("avec un mix à 0, retourne le signal original (pas étiré)", async () => {
-    const buffer = sinus(440, 0.5, 1);
-    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 0);
-    const src = buffer.getChannelData(0);
-    const dst = out.getChannelData(0);
-    expect(dst.length).toBe(src.length);
-    for (let i = 0; i < src.length; i++) expect(dst[i]).toBeCloseTo(src[i], 6);
-  });
-
-  it("l'étirement s'installe progressivement : début proche du sec, fin étirée", async () => {
-    const buffer = sinus(440, 0.5, 1);
-    const out = await paulstretchLogistique(buffer, 4, 0.25, 50, 10, 100);
-    const quart = Math.floor(out.length / 4);
-    const rmsDebut = rmsTranche(out, 0, quart);
-    const rmsFin = rmsTranche(out, out.length - quart, out.length);
-    // Le début est principalement le signal original, la fin est plus étirée/texture.
-    // On vérifie juste que la fin n'est pas silencieuse et que le début est actif.
-    expect(rmsDebut).toBeGreaterThan(0.01);
-    expect(rmsFin).toBeGreaterThan(0.01);
-  });
-});
 
 describe("beatRepeat", () => {
   it("conserve la durée, le sample rate et le nombre de canaux", () => {

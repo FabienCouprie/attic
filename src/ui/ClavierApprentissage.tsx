@@ -21,7 +21,7 @@ import { assignerMains, type Main, type NoteJouee } from "../audio/conformite-cl
 import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote } from "./clavier-disposition";
 import { useI18n } from "../i18n";
 
-import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
+import { LecteurAudio } from "./lecteur-audio";
 const PROPORTION_NOIRE = 0.62;
 
 interface Props {
@@ -219,8 +219,8 @@ export function ClavierApprentissage({ midi, audioUrl, anticipation = 3 }: Props
       <NodeResizer minWidth={350} minHeight={240} />
       <div className="clavier-controles">
         {secours && (
-          <audio onLoadedMetadata={ouvrirAuNiveauDEcoute} ref={(el) => { if (el) audioRef.current = el; }} src={audioUrl}
-            controls className="clavier-lecteur nodrag" />
+          <LecteurAudio src={audioUrl} className="clavier-lecteur nodrag"
+            elementRef={(el) => { if (el) audioRef.current = el; }} />
         )}
         <span className="clavier-nb">{notes.length} {t("clavier.notes")}</span>
         <span className="clavier-position">{position.toFixed(1)} / {duree.toFixed(1)} s</span>
