@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1185 files, 204534 lines, of which 141742 are code.**
+**1186 files, 204740 lines, of which 141866 are code.**
 The table lists the 148 files of 200 code lines or more, heaviest first;
-the remaining 1037 account for 143134 lines.
+the remaining 1038 account for 143313 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -61,6 +61,7 @@ the remaining 1037 account for 143134 lines.
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
+| src/plugins/effets-temporel.ts | 318 | 442 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
 | src/plugins/effets-spectral.ts | 314 | 409 |  |
@@ -72,7 +73,6 @@ the remaining 1037 account for 143134 lines.
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 367 |  |
 | src/audio/courbe.ts | 308 | 611 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
-| src/plugins/effets-temporel.ts | 305 | 415 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/plugins/prompt-graphe.ts | 300 | 416 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |

@@ -2938,12 +2938,16 @@ Rhythmic gate that chops the sound periodically, stutter/DJ effect. Settings: �
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Rate modulation | curve |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rate | slider | 4 Hz | 0.5 – 20 Hz, step 0.5 | Chop speed (cuts per second). |
 | Length | slider | 50 % | 1 – 99 %, step 1 | ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous). |
+| Depth | slider | 100 % | 0 – 100 %, step 1 | Share of the signal the chop removes (0% = no effect, 100% = full silence between cuts). A curve connected to the Modulation input takes over: the chop that settles in as the piece goes on. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means on the Modulation input. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
 | Type | choice | Hard | Hard / Soft | Hard = abrupt cut, Soft = smooth transition. |
 | Rate min | slider | 1 Hz | 0.5 – 20 Hz, step 0.5 | Rate that a curve's zero means on the Rate modulation input: the chop that accelerates into a stutter. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 16 Hz | 0.5 – 20 Hz, step 0.5 | Rate that the curve's one means. |
@@ -3224,6 +3228,7 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
 | input | Rate modulation | curve |  |
+| input | Depth modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3231,7 +3236,9 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 | Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation speed (oscillations per second). A curve connected to the Rate modulation input takes over: the vibrato that speeds up, like a singer holding a note. If the Modulation input is connected too, it wins: it then draws the whole gesture, and there is no LFO left whose speed could be set. |
 | Rate min | slider | 1 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative, as for any frequency. |
 | Rate max | slider | 10 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it. |
+| Depth | slider | 50 % | 0 – 100 %, step 1 | Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it. A curve connected to the Depth modulation input takes over: the vibrato that opens up on a held note. The Modulation input replaces the oscillator instead, and leaves depth without purpose. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Deviation that a connected curve's zero means on the Depth modulation input. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Deviation that the curve's one means. |
 
 #### Vocoder
 
@@ -6647,12 +6654,15 @@ Automatic stereo sweep: the sound moves periodically between left and right. Set
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Rate modulation | curve |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rate | slider | 2 Hz | 0.1 – 20 Hz, step 0.1 | Sweep speed (round trips per second). |
-| Depth | slider | 80 % | 0 – 100 %, step 1 | Sweep depth (0% = static, 100% = extreme left to extreme right). |
+| Depth | slider | 80 % | 0 – 100 %, step 1 | Sweep depth (0% = static, 100% = extreme left to extreme right). A curve connected to the Modulation input takes over: the sway that opens up as the piece goes on. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means on the Modulation input. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
 | Rate min | slider | 0.5 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the sway that speeds up. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 8 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
 
