@@ -65,14 +65,21 @@ export const fiches: FicheAudio[] = ([
       { nom: "Suivi de touche", nomEn: "Key tracking", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "De combien la note raccourcit vers l'aigu. À 100 %, la durée est divisée par deux à chaque octave montée, ce qui est l'ordre de grandeur d'un piano, une corde grave tient vingt secondes, une aiguë moins d'une. À 0 %, toutes les touches durent autant, ce qui sonne comme un échantillonneur et non comme un instrument.",
         docEn: "By how much a note shortens toward the treble. At 100 %, duration halves with every octave up, which is a piano's order of magnitude, a bass string rings for twenty seconds, a treble one for less than one. At 0 %, every key lasts as long, which sounds like a sampler rather than an instrument." },
+      // LE DÉFAUT EST « NON », décidé par Fabien : « laisser le son se finir jusqu'au bout et ne pas
+      // redémarrer ». Un son étalé sur le clavier est un son ENTIER, avec son début, sa matière et
+      // sa fin ; le relire en boucle tant que la touche est tenue le fait recommencer, ce qui n'a
+      // de sens que pour une matière tenue. Le maintien reste à portée d'un clic pour qui le veut.
       { nom: "Boucle de maintien", nomEn: "Sustain loop", type: "choix",
         options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
-        defaut: "Oui", defautEn: "Yes",
-        doc: "Pose dans chaque zone une boucle relue tant que la touche est tenue : sans elle, une note tenue s'arrête à la fin de l'échantillon. Le raccord est fondu, faute de quoi chaque tour laisserait un clic, l'onde ne revenant pas à la même phase.",
-        docEn: "Places in each zone a loop replayed while the key is held: without it, a held note stops at the end of the sample. The join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase." },
+        defaut: "Non", defautEn: "No",
+        doc: "Pose dans chaque zone une boucle relue tant que la touche est tenue. À « Non », une touche tenue joue l'échantillon jusqu'à sa fin, puis se tait : le son garde son début, sa matière et sa fin. À « Oui », il se maintient tant que la touche est enfoncée ; le raccord est fondu, faute de quoi chaque tour laisserait un clic, l'onde ne revenant pas à la même phase.",
+        docEn: "Places in each zone a loop replayed while the key is held. At « No », a held key plays the sample through to its end, then falls silent: the sound keeps its beginning, its substance and its end. At « Yes », it holds as long as the key is down; the join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase." },
       { nom: "Début de boucle", nomEn: "Loop start", type: "curseur", plage: [5, 90], pas: 1, defaut: 50, unite: "%",
         doc: "Où la boucle commence dans l'échantillon. Après l'attaque, donc : une boucle qui l'engloberait la répéterait à chaque tour.",
         docEn: "Where the loop starts within the sample. After the attack, then: a loop enclosing it would repeat it on every turn." },
+      { nom: "Longueur de boucle", nomEn: "Loop length", type: "curseur", plage: [0.05, 30], pas: 0.05, defaut: 2, unite: "s",
+        doc: "Longueur de la boucle de maintien, comptée depuis son début. Elle se donne en secondes et non en part de l'échantillon : une boucle de maintien est courte par nature, et un son de trente secondes bouclé sur la moitié de sa durée s'entend recommencer au lieu de tenir. La fin reste bornée à quatre-vingt-quinze pour cent de l'échantillon, au-delà desquels la boucle mordrait sur l'extinction.",
+        docEn: "Length of the sustain loop, counted from its start. It is given in seconds rather than as a share of the sample: a sustain loop is short by nature, and a thirty second sound looped over half its length is heard starting again instead of holding. The end stays bounded to ninety-five percent of the sample, beyond which the loop would bite into the decay." },
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -135,6 +142,7 @@ export const fiches: FicheAudio[] = ([
         suiviTouche: ctx.paramNombre("Suivi de touche", 50) / 100,
         boucle: ctx.paramTexte("Boucle de maintien", "oui") !== "non",
         boucleDebut: ctx.paramNombre("Début de boucle", 50) / 100,
+        boucleLongueur: ctx.paramNombre("Longueur de boucle", 2),
       });
 
       // L'aperçu : la racine de chaque zone, l'une après l'autre. De quoi ENTENDRE la banque sans

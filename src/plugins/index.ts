@@ -199,6 +199,11 @@ import { fiches as f_video_export } from "./video-export";
 import { fiches as f_spirale_spatiale } from "./spirale-spatiale";
 import { fiches as f_ampleur } from "./ampleur";
 import { fiches as f_arc_en_ciel } from "./arc-en-ciel";
+import { fiches as f_sequence_sur_banque } from "./sequence-sur-banque";
+import { fiches as f_paradoxe_triton } from "./paradoxe-triton";
+import { fiches as f_fondamentale_manquante } from "./fondamentale-manquante";
+import { fiches as f_illusion_octave } from "./illusion-octave";
+import { fiches as f_battements_binauraux } from "./battements-binauraux";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_parcours } from "./parcours";
 import { fiches as f_ficheTechnique } from "./fiche-technique";
@@ -339,6 +344,11 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_spirale_spatiale,
   ...f_ampleur,
   ...f_arc_en_ciel,
+  ...f_sequence_sur_banque,
+  ...f_paradoxe_triton,
+  ...f_fondamentale_manquante,
+  ...f_illusion_octave,
+  ...f_battements_binauraux,
   ...f_quiz,
   ...f_parcours,
   ...f_ficheTechnique,

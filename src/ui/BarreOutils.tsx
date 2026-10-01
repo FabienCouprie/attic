@@ -4,6 +4,7 @@ import { useI18n } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
 import { BoutonModeles } from "./BoutonModeles";
 import { EXEMPLES, nomDeLExemple } from "./exemples";
+import { demarrerLaFriction } from "./friction-pointeur";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
 import { PROFONDEURS } from "./profondeur-export";
 import type { ProfondeurExport } from "../audio/io";
@@ -73,6 +74,20 @@ export function BarreOutils(props: Props) {
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
   const [verifEnCours, setVerifEnCours] = useState(false);
   const [etatAudio, setEtatAudio] = useState<string>("");
+
+  // LE POINTEUR QU'ON ENTEND FROTTER. Le réglage se retient d'une session à l'autre : quelqu'un qui
+  // l'éteint ne veut pas le retrouver allumé au lancement suivant. Le contexte audio, lui, naît et
+  // meurt avec le bouton, et le navigateur ne l'ouvrira qu'au premier mouvement, qui est le geste
+  // qui l'y autorise.
+  const [friction, setFriction] = useState(() => {
+    try { return localStorage.getItem("attic-friction") === "1"; } catch { return false; }
+  });
+  useEffect(() => (friction ? demarrerLaFriction() : undefined), [friction]);
+  const basculerFriction = () => {
+    const suivant = !friction;
+    setFriction(suivant);
+    try { localStorage.setItem("attic-friction", suivant ? "1" : "0"); } catch { /* stockage refusé */ }
+  };
 
   // Compteur de mémoire : seul le processus principal connaît le total de l'application, donc
   // rien ne s'affiche hors d'Electron. Un relevé toutes les deux secondes, arrêté avec le
@@ -291,6 +306,15 @@ export function BarreOutils(props: Props) {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <circle cx="8" cy="8" r="6" />
             <path d="M8 2a6 6 0 000 12z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+        {/* Un pointeur et deux arcs : ce qui se passe, c'est qu'il fait du bruit en glissant. */}
+        <button className={`attic-btn-icon${friction ? "" : " attic-btn-coupe"}`}
+          title={eti("friction", t(friction ? "barre.friction.marche" : "barre.friction.arret"))}
+          aria-label={eti("friction")} aria-pressed={friction} onClick={basculerFriction}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+            <path d="M3 2v9l2.3-2.2 1.5 3.4 1.6-.7-1.4-3.3 3.1-.2z" />
+            <path d="M11.6 3.2a3.4 3.4 0 011.8 2.1M13.4 1.4a5.4 5.4 0 011.3 2.9" strokeLinecap="round" />
           </svg>
         </button>
         <button className="attic-btn-lang" onClick={() => setLang(lang === "fr" ? "en" : "fr")}

@@ -53,7 +53,10 @@ describe("la déclaration mémoire des fiches", () => {
   const enFlux = fiches.filter((f) => (f as { memoire?: string }).memoire === "flux");
 
   it("quelques nœuds sont déclarés « flux », sinon ce test ne garde rien", () => {
-    expect(enFlux.length).toBeGreaterThanOrEqual(14);
+    // Le plancher est descendu de 14 à 13 : quatre des six composants logistiques retirés étaient
+    // déclarés « flux », et trois composants l'ont été depuis. Il garde son office, qui est
+    // d'empêcher que la déclaration disparaisse du dépôt sans que rien ne le dise.
+    expect(enFlux.length).toBeGreaterThanOrEqual(13);
   });
 
   it("aucune autre valeur que « totale » ou « flux » n'est déclarée", () => {

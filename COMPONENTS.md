@@ -3,16 +3,16 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **458 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **457 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 83 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (24) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 221 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (33) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Logistic](#logistic) (7) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (12) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Inputs](#inputs) | 87 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (28) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 215 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (34) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (12) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
-| [Outputs](#outputs) | 12 | [Export](#export) (5) · [Monitoring](#monitoring) (7) |
+| [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Other & lab](#other--lab) | 85 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
@@ -443,6 +443,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 |---|---|
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
+| [Binaural Beats](#binaural-beats) | Two close pure tones, one per ear, whose heard pulsation is in neither of them. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Chord Run](#chord-run) | Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion. |
@@ -453,7 +454,9 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Harmonic Glissando](#harmonic-glissando) | Slides a whole chord into another, each voice joining its own without ever settling. |
 | [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
+| [Missing Fundamental](#missing-fundamental) | A run of harmonics without its fundamental, which is nonetheless heard at the pitch of that absent fundamental. |
 | [Noise Generator](#noise-generator) | Generates white, pink or brownian noise. |
+| [Octave Illusion](#octave-illusion) | Two tones an octave apart alternate from one ear to the other, and one hears a single tone. |
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
 | [Rhythm Tree](#rhythm-tree) | Picks or draws a rhythm written by divisions, and the pitches that go with it. |
@@ -464,6 +467,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Spectral Harmony](#spectral-harmony) | Computes a spectrum and returns it as pitches, keeping the deviations from equal temperament. |
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
+| [Tritone Paradox](#tritone-paradox) | Two tones half an octave apart, whose direction of movement depends on who is listening. |
 | [Write a Counterpoint](#write-a-counterpoint) | Searches for a voice that makes a first-species counterpoint with the received cantus firmus. |
 
 #### AI Sound Effect
@@ -511,6 +515,29 @@ Generates a twelve-note series whose eleven successive intervals are all differe
 | Octave | number | 4 | 1 – 7, step 1 | The octave where the series is placed. |
 | Duration | number | 0.5 s | 0.05 – 4 s, step 0.05 | The length of each note. |
 | Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
+
+#### Binaural Beats
+
+`battements-binauraux` · Inputs → Generation
+
+*Two close pure tones, one per ear, whose heard pulsation is in neither of them.*
+
+This node returns two pure tones of close frequencies, one per ear. A slow pulsation is heard, at the speed of their difference, which neither of them carries. Heinrich Wilhelm Dove described it in 1839; Gerald Oster, « Auditory beats in the brain », Scientific American 229(4), 1973, pp. 94-102, gives the review that made the phenomenon known. Two beats carry the same name and are not the same thing. Two close tones mixed in the air give an acoustic beat: their sum is an amplitude modulation, written into the signal, which a microphone picks up and which a single loudspeaker suffices to make audible. Sent separately to each ear, the two tones mix nowhere before the ears: each channel is a pure tone of constant amplitude, neither of them beats, and the spectrum carries nothing at the speed heard. The « Presentation » setting gives one and the other, and the report measures both on the rendered sound. The sequence therefore calls for headphones, and nothing else will do. Over loudspeakers the two channels meet in the room, and only the acoustic beat remains. « Carrier » is the pitch heard and « Beat » the speed of the pulsation, which is the difference between the two tones. Each moves away by half that difference, so the pitch stays the one that was asked for. The carrier has a measured limit: after J. C. R. Licklider, J. C. Webster and J. M. Hedlun, « On the frequency limits of binaural beats », Journal of the Acoustical Society of America 22, 1950, pp. 468-473, the binaural beat is heard for low carriers and is lost beyond about a thousand hertz. The acoustic beat is heard at any pitch. « High tone on » says which ear receives the higher of the two frequencies. This setting acts only on the one-per-ear presentation, the two channels being identical in the other. « Length » is that of the sound and « Fade » its opening and closing. « Volume » is the output level. The « Audio » output returns the sound, in two channels. The « Report » output gives the two frequencies sent, the modulation depth measured on each channel and on their sum, and the carrier limit. The message gives the two frequencies and the speed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio (stereo) |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Carrier | slider | 220 Hz | 20 – 1500 Hz, step 1 | The pitch heard, midway between the two tones sent. The binaural beat is lost beyond about a thousand hertz, as measured by Licklider, Webster and Hedlun. |
+| Beat | slider | 6 Hz | 0.5 – 40 Hz, step 0.5 | The speed of the pulsation, which is the difference between the two tones. Beyond about thirty hertz the pulsation stops being heard as such and the two tones come apart. |
+| Presentation | choice | One per ear | One per ear / Both in both | Per ear, each channel is a pure tone and nothing beats in the signal: the pulsation arises from the listening. Both in both, the sum is made before the output and the pulsation is an amplitude modulation, present in the signal and audible on anything. |
+| High tone on | choice | Right | Right / Left | The ear receiving the higher of the two frequencies. This setting acts only on the per-ear presentation: in the other, the two channels are the same signal and there is nothing to swap. |
+| Length | slider | 30 s | 1 – 300 s, step 1 | The length of the sound. The pulsation takes a few seconds to settle. |
+| Fade | slider | 200 ms | 0 – 2000 ms, step 10 | The opening and closing of the sound. Without them, the first and last samples are clicks. |
+| Volume | slider | 60 % | 0 – 100 %, step 1 | Output level. |
 
 #### Cellular automaton
 
@@ -772,6 +799,31 @@ Generates an audio signal from scratch using a mathematical expression. Variable
 | Channels | choice | Stereo | Mono / Stereo | Number of output channels. |
 | Volume | number | 30 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
+#### Missing Fundamental
+
+`fondamentale-manquante` · Inputs → Generation
+
+*A run of harmonics without its fundamental, which is nonetheless heard at the pitch of that absent fundamental.*
+
+This node returns a sound made of consecutive harmonics whose fundamental is absent. The pitch heard is that of the fundamental, which is nowhere in the signal. After Jan Frederik Schouten, « The perception of subjective tones », Proceedings of the Koninklijke Nederlandse Akademie van Wetenschappen 41, 1938, pp. 1086-1093, who names the residue; August Seebeck had observed it as early as 1841. J. C. R. Licklider, « Periodicity pitch and place pitch », Journal of the Acoustical Society of America 26, 1954, p. 945, shows the pitch survives a noise masking the region of the fundamental. Ernst Terhardt, « Pitch, consonance, and harmony », same journal 55(5), 1974, pp. 1061-1069, draws virtual pitch from it. « Fundamental » is the pitch that will be heard. « First rank » is the first harmonic present: at one, the fundamental is played and there is no illusion left; at three, the sound starts at the triple and the pitch stays that of the simple. « Harmonics » is the number of consecutive ranks present. « Decay » is the slope of their amplitudes, from all equal to a decay in one over the rank. « Shift » adds the same number of hertz to every partial. The gaps between them do not change, and the perceived pitch moves all the same, by about the shift divided by the mean rank: that is the measurement of Schouten, Ritsma and Cardozo, « Pitch of the residue », Journal of the Acoustical Society of America 34(9), 1962, pp. 1418-1424. The report gives that first-order prediction. « Mask » adds a low noise covering the region of the absent fundamental. The pitch survives it, which rules out the explanation by a distortion product born in the ear or in the equipment. « Comparison » has the complex preceded by a sine wave at the fundamental: the two pitches are then heard one after the other, and the second is not in the signal. « Length » is that of each sound and « Volume » the output level. The « Audio » output returns the sound. The « Report » output gives the partials present, the absent fundamental and the pitch that the virtual fundamental computation attributes to the same aggregate. The message gives the number of partials and the expected pitch.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fundamental | slider | 220 Hz | 40 – 800 Hz, step 1 | The pitch that will be heard. It is played only if « First rank » is one. |
+| First rank | slider | 3 | 1 – 16, step 1 | The first harmonic present. At one, the fundamental is played and the illusion goes: that is the comparison. Beyond ten, the ranks grow too close for the ear to separate them, and the residue pitch weakens. |
+| Harmonics | slider | 6 | 1 – 16, step 1 | The number of consecutive ranks present. A single partial is only a sine wave, and is heard at its own pitch. |
+| Decay | slider | 50 % | 0 – 100 %, step 1 | The slope of the amplitudes: at zero all partials weigh the same, at one hundred rank k weighs one over k. |
+| Shift | slider | 0 Hz | -200 – 200 Hz, step 1 | The same number of hertz added to every partial. The gaps between them do not move, and the perceived pitch shifts all the same by about that shift divided by the mean rank. The sound is then no longer harmonic. |
+| Mask | slider | 0 % | 0 – 100 %, step 1 | A low noise covering the region of the absent fundamental. The pitch survives it, which rules out the explanation by a distortion product born at that frequency. |
+| Comparison | choice | Sine first | No / Sine first | Has the complex preceded by a sine wave at the fundamental, to hear the two pitches one after the other. |
+| Length | slider | 1.5 s | 0.2 – 5 s, step 0.1 | The length of each sound. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
+
 #### Noise Generator
 
 `generateur-bruit` · Inputs → Generation
@@ -790,6 +842,29 @@ Generates noise: a random signal handy for testing filters and envelopes, or as 
 | Duration | number | 2 s | 0.2 – 10 s, step 0.1 | Generated duration, in seconds. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Seed | number | 0 | 0 – 999999, step 1 | Seed for the noise. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same noise, sample for sample. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Octave Illusion
+
+`illusion-octave` · Inputs → Generation
+
+*Two tones an octave apart alternate from one ear to the other, and one hears a single tone.*
+
+This node returns a dichotic sequence: at each step one ear receives a low tone and the other the same tone an octave up, and the two ears swap roles at the next step. After Diana Deutsch, « An auditory illusion », Nature 251, 1974, pp. 307-309. Both ears therefore receive a tone at all times, and never the same one. Most listeners nonetheless hear a single tone, which jumps from one ear to the other while changing pitch. What is heard is not what is sent, and the « Report » output gives the one so it can be compared with the other. The sequence calls for headphones, and nothing else will do. Over loudspeakers the two channels mix in the room before reaching the ears: all that remains is a motionless octave chord, and there is nothing left to hear. Folding down to mono wipes out the whole stimulus. Two separate decisions account for the percept, after Diana Deutsch and Philip Roll, « Separate what and where decision mechanisms in processing a dichotic tonal sequence », Journal of Experimental Psychology: Human Perception and Performance 2(1), 1976, pp. 23-29: the pitch heard follows what the dominant ear receives, and the side it is heard on follows the ear receiving the higher tone. Those two ears are not the same at every step, and the pitch is then heard on the side that did not receive it. The answer depends on the listener. Diana Deutsch, « The octave illusion in relation to handedness and familial handedness background », Neuropsychologia 21(3), 1983, pp. 289-293, relates it to handedness and to that of the family: right dominance has the high tone heard on the right and the low tone on the left, left dominance gives the mirror image. « High tone first on » swaps the two channels, which amounts to turning the headphones round. This is the test that settles it: were the answer to depend on a tone's place in the sequence, it would reverse; if it depends on the ear, it does not move. « Frequency » is the low tone and « Interval » the distance to the second, in semitones. At twelve the two tones are an octave apart and merge into a single pitch: that is the condition of the illusion. At any other interval they stay two distinct tones and the alternation is heard for what it is. « Tone length » is the length of one step and « Alternations » their number. « Fade » softens both ends of each step: without it a change leaves a click, which carries every frequency and points the alternation out to the ear. « Volume » is the output level. The « Audio » output returns the sequence, in two channels. The « Report » output says what is sent to each ear, gives the model's prediction for either dominance, and recalls the procedure. The message gives the number of steps, the length and the interval.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio (stereo) |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Frequency | slider | 400 Hz | 100 – 1500 Hz, step 1 | The low tone. The second is higher by the chosen interval. Deutsch uses four hundred hertz. |
+| Interval | slider | 12 1/2 ton | 1 – 24 1/2 ton, step 1 | The distance between the two tones, in semitones. At twelve they are an octave apart and merge into a single pitch, which is the condition of the illusion; elsewhere they stay two distinct tones. |
+| Tone length | slider | 250 ms | 50 – 1000 ms, step 5 | The length of one step. Deutsch uses two hundred and fifty milliseconds. |
+| Alternations | slider | 20 | 2 – 200, step 1 | The number of steps in the sequence. The percept takes a few steps to settle. |
+| High tone first on | choice | Right | Right / Left | The ear receiving the high tone at the first step. Changing this setting swaps the two channels, which amounts to turning the headphones round: it is the test that says whether the answer depends on the ear or on the tone's place in the sequence. |
+| Fade | slider | 5 ms | 0 – 50 ms, step 0.5 | The fade at both ends of each step. Without it a change leaves a click, which carries every frequency and points the alternation out to the ear. Too long, it blunts the change. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
 
 #### Oscillator
 
@@ -1047,6 +1122,30 @@ Synthesises a sound point by point, with no waveform model: two lists of numbers
 | Joining | choice | Line | Line / Steps | What happens between two points, and it is the only timbre decision the method knows. The line joins them and the signal passes through every intermediate value. Steps hold each amplitude until the next point, so the signal only ever takes the values you wrote. Measured on identical points, the crest goes from 5.14 to 3.34 dB: a fuller sound, and a harder one. |
 | Duration | slider | 8 s | 0.5 – 60 s, step 0.5 | The duration of the piece. It is shared among the sections, which are therefore the briefer the more you ask for. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Tritone Paradox
+
+`paradoxe-triton` · Inputs → Generation
+
+*Two tones half an octave apart, whose direction of movement depends on who is listening.*
+
+This node returns pairs of tones a tritone apart, that is half an octave. After Diana Deutsch, « A musical paradox », Music Perception 3(3), 1986, pp. 275-280; the influence of language and region of origin on the answer is established in Diana Deutsch, « The tritone paradox: an influence of language on music perception », Music Perception 8(4), 1991, pp. 335-347. Some listeners hear the pair rise, others hear the same pair fall, and each stays consistent with themselves from one hearing to the next. The signal does not settle it: the answer comes from the listener. A tone is made of components spaced an octave apart, whose amplitudes follow an envelope fixed in frequency. The pitch class is therefore clear and the absolute height is not: the tone has no octave. The tritone being exactly half an octave, the second class lies six semitones away in either direction. « Starting class » gives the first of the two classes; the second follows from it. « All twelve » plays the twelve pairs in turn, one per starting class: this is the test that reveals a listener's own orientation, some classes being heard as high and their opposites as low. « Components » is the number of sine waves spaced an octave apart. « Centre » is the peak of the envelope, which does not move with the class; moving it allows one to check that the answer does not depend on it. « Width » is the spread of the envelope in octaves. « Length » is that of one tone, « Gap » the interval between the two tones of a pair, « Pause » the interval between two pairs. « Volume » is the output level. The « Audio » output returns the pairs. The « Report » output gives the order of the pairs played, to note one's answers and compare them afterwards. The message gives the number of pairs and the length.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Starting class | choice | All twelve | C / C♯ / D / D♯ / E / F / F♯ / G / G♯ / A / A♯ / B / All twelve | The first pitch class of the pair; the second is a tritone away. « All twelve » plays the twelve pairs in turn, which is the full test. |
+| Components | slider | 6 | 2 – 12, step 1 | The number of sine waves an octave apart making up a tone. Few components leave an audible octave, which dissolves the paradox. |
+| Centre | slider | 523 Hz | 100 – 2000 Hz, step 1 | The peak of the amplitude envelope. It does not move with the pitch class: that is what deprives the tone of an octave. Changing it allows one to check that the answer does not depend on it. |
+| Width | slider | 1 oct | 0.3 – 3 oct, step 0.1 | The spread of the envelope, in octaves. Narrow, the tone comes down to one or two components and regains an octave; wide, they all weigh almost the same. |
+| Length | slider | 0.5 s | 0.1 – 2 s, step 0.05 | The length of one tone. |
+| Gap | slider | 0 s | 0 – 1 s, step 0.05 | The silence between the two tones of a pair. |
+| Pause | slider | 1.5 s | 0 – 4 s, step 0.1 | The silence between two pairs, for « All twelve ». It leaves time to note one's answer. |
+| Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
 
 #### Write a Counterpoint
 
@@ -3363,6 +3462,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Extract Zones (Selector)](#extract-zones-selector) | Cuts and concatenates the zones chosen in the multi-zone selector. |
 | [Fade](#fade) | Fade in/out. |
 | [Grain Editing](#grain-editing) | Finds a sound's grains (each hit, each syllable) then drops some, repeats them, reverses their order or shuffles them, never cutting in the middle of a sound. |
+| [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
 | [Loop](#loop) | Repeats the whole signal a given number of times. |
 | [Loop End A](#loop-end-a) | Closes a graph loop and puts every pass's result end to end. |
 | [Loop End B](#loop-end-b) | Closes a graph loop and keeps only the last pass's result. |
@@ -3551,6 +3651,26 @@ Cuts a sound into grains whose boundaries come from the sound itself, then reass
 | Sensitivity | slider | 6 dB | 0 – 24 dB, step 1 | By how much the envelope must rise, after a fall, for an attack to be seen. This is the setting that separates the hits of a roll, whose envelope never falls back to silence. At zero the rule is off and only silences separate grains, which gives one single grain on a sustained sound. |
 | Minimum gap | slider | 40 ms | 1 – 500 ms, step 1 | Two grains cannot start closer than this. An attack is not an instant but a rise of a few milliseconds where the envelope wavers: without this gap, a single hit gives three or four grains. |
 | Seed | slider | 42 | 0 – 999999, step 1 | The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Logistic Mixer
+
+`melangeur-logistique` · Processing → Editing
+
+*Mixes two tracks with a logistic transition: the first fades out while the second fades in.*
+
+Connect two audio tracks. The first track's weight decreases along a logistic curve while the second's increases. Center sets the 50/50 mix point, Steepness controls the transition sharpness (low = very smooth fade, high = abrupt switch).
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio 1 | audio |  |
+| input | Audio 2 | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Center | number | 50 % | 0 – 100 %, step 1 | 50/50 mix position (0 = start, 100 = end). |
+| Steepness | number | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve. Higher value = faster transition. |
+| Volume | number | 100 % | 0 – 100 %, step 1 | Output volume. |
 
 #### Loop
 
@@ -4819,7 +4939,7 @@ Shaken percussion from a stochastic particle model. Perry Cook posed the problem
 
 *Turns one sound into a sample bank playable across the 88 keys, in zones.*
 
-Turns one sound into a sample bank playable across the 88 keys. The problem, in figures: an 88-key keyboard runs from A0 (27.5 Hz) to C8 (4186 Hz), a ratio of 152, seven octaves and a minor third. A sampler that resamples a single sound from a single reference note therefore reads between 0.105 and 16 times speed: a two-second sound lasts nineteen seconds at the bottom of the keyboard and a hundred and twenty-five milliseconds at the top, and a 5 ms attack becomes 48 ms of mush at the bottom and 0.3 ms of click at the top. That is the « chipmunk » effect, and no setting makes up for it. The solution separates two transpositions that are often confused. Building the bank: the sound is transposed to each root by a constant-duration method, since the intervals reach four octaves. Playing a note: the nearest zone is resampled by a few semitones only, which is exact in pitch by construction and changes duration by just 12 % at ±2. The zone rule comes from sample-library practice: do not resample by more than two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys. One zone is always the sound itself: the root grid is anchored on the source note, so at least one zone undergoes no transposition at all. The source note is measured rather than declared. Three transposition methods are offered, and they are not equals: constant duration (phase vocoder), tape (resampling, the chipmunk effect when it is wanted), and attack preserved: the sound is split into sines, transients and noise; only the first two are transposed, and the transients are put back untouched, so the attack neither smears nor turns into a click. Key tracking shortens notes toward the treble, as every instrument does: a bass piano string rings for twenty seconds, a treble one for less than one. The sustain loop lets a held key sound beyond the sample; its join is crossfaded, failing which each turn would leave a click. The preview output plays each zone's root one after the other. Over eight keys spread from A0 to A7, a note's duration varies by a factor below 2, where a single sample would spread it by 152, and the pitch lands within a third of a semitone of the requested note.
+Turns one sound into a sample bank playable across the 88 keys. The problem, in figures: an 88-key keyboard runs from A0 (27.5 Hz) to C8 (4186 Hz), a ratio of 152, seven octaves and a minor third. A sampler that resamples a single sound from a single reference note therefore reads between 0.105 and 16 times speed: a two-second sound lasts nineteen seconds at the bottom of the keyboard and a hundred and twenty-five milliseconds at the top, and a 5 ms attack becomes 48 ms of mush at the bottom and 0.3 ms of click at the top. That is the « chipmunk » effect, and no setting makes up for it. The solution separates two transpositions that are often confused. Building the bank: the sound is transposed to each root by a constant-duration method, since the intervals reach four octaves. Playing a note: the nearest zone is resampled by a few semitones only, which is exact in pitch by construction and changes duration by just 12 % at ±2. The zone rule comes from sample-library practice: do not resample by more than two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys. One zone is always the sound itself: the root grid is anchored on the source note, so at least one zone undergoes no transposition at all. The source note is measured rather than declared. Three transposition methods are offered, and they are not equals: constant duration (phase vocoder), tape (resampling, the chipmunk effect when it is wanted), and attack preserved: the sound is split into sines, transients and noise; only the first two are transposed, and the transients are put back untouched, so the attack neither smears nor turns into a click. Key tracking shortens notes toward the treble, as every instrument does: a bass piano string rings for twenty seconds, a treble one for less than one. The sustain loop lets a held key sound beyond the sample. It is at « No » by default: a held key then plays the sample through to its end and falls silent, and the sound keeps its beginning, its substance and its end. At « Yes », its join is crossfaded, failing which each turn would leave a click, and its length is given in seconds, « Loop length », rather than as a share of the sample: a sustain loop is short by nature, and a long sound looped over half its length is heard starting again instead of holding. The preview output plays each zone's root one after the other. Over eight keys spread from A0 to A7, a note's duration varies by a factor below 2, where a single sample would spread it by 152, and the pitch lands within a third of a semitone of the requested note.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4836,8 +4956,9 @@ Turns one sound into a sample bank playable across the 88 keys. The problem, in 
 | Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0, the lowest of an 88-key piano. |
 | Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8, the highest. |
 | Key tracking | slider | 50 % | 0 – 100 %, step 1 | By how much a note shortens toward the treble. At 100 %, duration halves with every octave up, which is a piano's order of magnitude, a bass string rings for twenty seconds, a treble one for less than one. At 0 %, every key lasts as long, which sounds like a sampler rather than an instrument. |
-| Sustain loop | choice | Yes | Yes / No | Places in each zone a loop replayed while the key is held: without it, a held note stops at the end of the sample. The join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase. |
+| Sustain loop | choice | No | Yes / No | Places in each zone a loop replayed while the key is held. At « No », a held key plays the sample through to its end, then falls silent: the sound keeps its beginning, its substance and its end. At « Yes », it holds as long as the key is down; the join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase. |
 | Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample. After the attack, then: a loop enclosing it would repeat it on every turn. |
+| Loop length | slider | 2 s | 0.05 – 30 s, step 0.05 | Length of the sustain loop, counted from its start. It is given in seconds rather than as a share of the sample: a sustain loop is short by nature, and a thirty second sound looped over half its length is heard starting again instead of holding. The end stays bounded to ninety-five percent of the sample, beyond which the loop would bite into the decay. |
 
 #### Sung Vowel (FOF)
 
@@ -4919,165 +5040,6 @@ Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscil
 | Attack | number | 0.05 s | 0.005 – 0.5 s, step 0.005 | Breath rise time. The model also takes its own time to settle: that is the loop filling up. |
 | Duration | number | 2 s | 0.1 – 10 s, step 0.1 | Note duration, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
-
-### Logistic
-
-| Component | Summary |
-|---|---|
-| [Logistic auto-pan](#logistic-auto-pan) | Left-to-right sweep following a logistic curve. |
-| [Logistic chopper](#logistic-chopper) | Rhythmic gate whose depth grows following a logistic curve. |
-| [Logistic echo](#logistic-echo) | Echo whose feedback grows following a logistic curve. |
-| [Logistic Mixer](#logistic-mixer) | Mixes two tracks with a logistic transition: the first fades out while the second fades in. |
-| [Logistic Paulstretch](#logistic-paulstretch) | Extreme time-stretch that grows in progressively. |
-| [Logistic tremolo](#logistic-tremolo) | Tremolo whose depth grows following a logistic curve. |
-| [Logistic vibrato](#logistic-vibrato) | Vibrato whose depth grows following a logistic curve. |
-
-#### Logistic auto-pan
-
-`auto-pan-logistique` · Processing → Logistic
-
-*Left-to-right sweep following a logistic curve.*
-
-Progressive automatic stereo sweep: the panning moves from left to right following a logistic curve. The Center (0-100%) sets the moment of the fastest transition, Steepness (0.1-50) controls the curve's sharpness (higher = more abrupt), and Mix sets the dry/wet balance. Useful for panning movements that appear slowly then accelerate, or vice versa.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
-| Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-
-#### Logistic chopper
-
-`chopper-logistique` · Processing → Logistic
-
-*Rhythmic gate whose depth grows following a logistic curve.*
-
-Rhythmic gate whose chopping depth rises along a logistic curve: the effect is inaudible at the start, then the gate becomes more and more pronounced up to its maximum depth. Settings: • the rate (cuts per second, 0.5 to 20 Hz) • ON segment length • type (Hard/Soft) • maximum depth (0 to 100%) • center (midpoint of the transition) • steepness • mix.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Rate | slider | 4 Hz | 0.5 – 20 Hz, step 0.5 | Chop speed (cuts per second). |
-| Length | slider | 50 % | 1 – 99 %, step 1 | ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous). |
-| Type | choice | Hard | Hard / Soft | Hard = abrupt cut, Soft = smooth transition. |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Maximum gate depth reached at the end of the transition (0% = no effect, 100% = full gate). |
-| Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
-| Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-
-#### Logistic echo
-
-`echo-logistique` · Processing → Logistic
-
-*Echo whose feedback grows following a logistic curve.*
-
-Echo whose feedback rises along a logistic curve: the effect is inaudible at the start, then repetitions become more and more present up to the maximum feedback. Settings: • the delay between repetitions (50 to 2000 ms) • the maximum feedback (0 to 95%) • the center (midpoint of the transition) • the steepness • the mix.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Time | slider | 350 ms | 50 – 2000 ms, step 10 | Delay time between repetitions. |
-| Feedback | slider | 40 % | 0 – 95 %, step 1 | Maximum feedback reached at the end of the transition (0% = single repeat, 95% = long tail). |
-| Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
-| Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
-| Mix | slider | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
-
-#### Logistic Mixer
-
-`melangeur-logistique` · Processing → Logistic
-
-*Mixes two tracks with a logistic transition: the first fades out while the second fades in.*
-
-Connect two audio tracks. The first track's weight decreases along a logistic curve while the second's increases. Center sets the 50/50 mix point, Steepness controls the transition sharpness (low = very smooth fade, high = abrupt switch).
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio 1 | audio |  |
-| input | Audio 2 | audio |  |
-| output | Audio | audio |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Center | number | 50 % | 0 – 100 %, step 1 | 50/50 mix position (0 = start, 100 = end). |
-| Steepness | number | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve. Higher value = faster transition. |
-| Volume | number | 100 % | 0 – 100 %, step 1 | Output volume. |
-
-#### Logistic Paulstretch
-
-`paulstretch-logistique` · Processing → Logistic
-
-*Extreme time-stretch that grows in progressively.*
-
-Logistic Paulstretch: extreme time-stretch grows in progressively following a logistic curve. At the start the signal is intact, then it gradually transforms into a stretched texture up to the maximum factor. Parameters: max Stretch, Window, Center, Steepness and Mix.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Stretch | number | 8 × | 1 – 100 ×, step 1 | Maximum stretch factor reached at the end of the transition. |
-| Window | number | 0.25 s | 0.01 – 1 s, step 0.01 | STFT window size in seconds. |
-| Center | number | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition. |
-| Steepness | number | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve. |
-| Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-| Seed | number | 42 | 0 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-
-#### Logistic tremolo
-
-`tremolo-logistique` · Processing → Logistic
-
-*Tremolo whose depth grows following a logistic curve.*
-
-Tremolo whose modulation depth rises along a logistic curve: the effect is inaudible at the start, then grows to its maximum depth. Settings: • the rate (speed, 0.1 to 20 Hz) • the maximum depth (0 to 100%) • the center (midpoint of the transition) • the steepness • the mix.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation rate (vibrations per second). |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Maximum modulation depth (0% = no effect, 100% = volume fully cut). |
-| Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
-| Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
-
-#### Logistic vibrato
-
-`vibrato-logistique` · Processing → Logistic
-
-*Vibrato whose depth grows following a logistic curve.*
-
-Vibrato whose modulation depth rises along a logistic curve: the vibrato is inaudible at the start, then grows to its maximum depth. Settings: • the rate (speed, 0.1 to 20 Hz) • the maximum depth (0 to ±2 semitones) • the center (midpoint of the transition) • the steepness • the mix.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation speed (oscillations per second). |
-| Depth | slider | 50 % | 0 – 100 %, step 1 | Maximum pitch modulation depth (0% = none, 100% = ±2 semitones). |
-| Center | slider | 50 % | 0 – 100 %, step 1 | Midpoint of the logistic transition (0% = start, 100% = end). |
-| Steepness | slider | 10 | 0.1 – 50, step 0.1 | Steepness of the logistic curve (higher = very fast transition). |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
 
 ### MIDI patterns
 
@@ -6925,11 +6887,14 @@ Paulstretch: extreme time-stretch by randomizing the phases of the STFT. The sig
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Stretch | number | 8 × | 1 – 100 ×, step 1 | Stretch factor. 1 = no effect, 8 = 8× longer. |
+| Stretch | number | 8 × | 1 – 100 ×, step 1 | Stretch factor. 1 = no effect, 8 = 8× longer. A curve connected to the Modulation input takes over, and the stretch then varies along the sound. |
+| Modulation min | number | 1 × | 1 – 100 ×, step 1 | Factor that a connected curve's zero means. The travel is multiplicative: from 1 to 64, the middle of the curve is 8, and every doubling lasts as long. With no curve, this setting does nothing. |
+| Modulation max | number | 20 × | 1 – 100 ×, step 1 | Factor that the curve's one means. |
 | Window | number | 0.25 s | 0.01 – 1 s, step 0.01 | STFT window size in seconds. Large = smooth texture, small = more transients. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
@@ -8368,6 +8333,7 @@ Writes the film received on its input to disk, in the working directory, and ret
 | [Listening Point](#listening-point) | Auditions the signal at a point in the chain without interrupting it. |
 | [MIDI Listening Point](#midi-listening-point) | Auditions the MIDI without interrupting the chain. |
 | [MIDI output](#midi-output) | Receives a MIDI file, synthesizes it to audio and passes it along. |
+| [Play Sequence on Bank](#play-sequence-on-bank) | Plays a written sequence on a sample bank: the line comes from the graph, the timbre from the sound spread across the keyboard. |
 | [Sequence Listening Point](#sequence-listening-point) | Plays a note sequence keeping its deviations from equal temperament, and also returns the MIDI. |
 | [Text Output](#text-output) | Displays received text and allows copying or downloading. |
 
@@ -8462,6 +8428,29 @@ Receives a MIDI file, synthesizes it to audio (FM or SoundFont) and passes along
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Play Sequence on Bank
+
+`sequence-sur-banque` · Outputs → Monitoring
+
+*Plays a written sequence on a sample bank: the line comes from the graph, the timbre from the sound spread across the keyboard.*
+
+This node plays a sequence on a sample bank and returns the audio. The sequence gives the pitches, the instants and the dynamics; the bank gives the timbre, each note being played by the zone covering its key. Two sounds spread across the keyboard and two of these nodes make two distinct instruments: a chord grid on one, a melodic line on the other, joined afterwards by the mixer. The « Sequence » input takes what the composition nodes return. The « Bank » input takes what « Spread Across Keyboard » returns, an SFZ file read back, or a keyboard's bank output. The « MIDI » input takes a MIDI file, wherever it comes from: a sequencer, a keyboard, a notation, a capture. It shortens the chain by one node on that route; the sequence wins when both are connected, and the message says where the notes come from. « Channel » appears only with the MIDI input, and says which channel of the file is played. A score in several voices writes one voice per channel: two copies of this node, set to two channels, give two instruments. « Volume » is the output level, scaled by each note's dynamic. « Release » is the fade-out time after each note ends. « Loop crossfade » is the length of the crossfade at the sustain loop's join, when the bank carries one. « Pitches » decides the fate of a pitch falling between two keys. A bank plays by resampling, so it is held to no grid: « As written » plays the exact pitch, « Snapped to semitones » rounds it to the nearest equal-tempered semitone, as a keyboard would. Spectral nodes produce such pitches, the harmonic series not falling on the tempered grid: its fifth is two hundredths of a semitone above the tempered fifth, its major third fourteen hundredths below the tempered third. A sequence whose pitches are all integers sounds the same either way. A note whose key falls outside the bank's zones is played by the nearest zone. A note whose end is not after its start is dropped, and the message says how many. The « Audio » output returns the played sequence. The message gives the number of notes played and the length.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence |  |
+| input | Bank | bank |  |
+| input | MIDI | MIDI |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Output level. Each note's dynamic scales it. |
+| Release | slider | 150 ms | 1 – 2000 ms, step 1 | Fade-out time after each note ends. The output therefore lasts a little longer than the sequence. |
+| Loop crossfade | slider | 20 ms | 1 – 200 ms, step 1 | Length of the crossfade at the sustain loop's join, when the bank carries one. With no loop, this setting does nothing. |
+| Pitches | choice | As written | As written / Snapped to semitones | What the node does with a pitch falling between two keys. « As written » plays it at its exact pitch: a bank plays by resampling, which imposes no grid. « Snapped to semitones » rounds it to the nearest equal-tempered semitone, as a keyboard would. A sequence whose pitches are all integers sounds the same either way. The message says how many notes were moved and by how much. |
+| Channel | number | -1 | -1 – 15, step 1 | The MIDI channel kept when a file arrives on the « MIDI » input. At minus one, all channels are taken together; from zero to fifteen, only that channel's notes are played. This is how a score in several voices is spread over several banks, each voice being written on its own channel. |
 
 #### Sequence Listening Point
 

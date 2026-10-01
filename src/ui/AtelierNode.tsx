@@ -17,7 +17,8 @@ import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 import { bufferVersWavBlob } from "../audio";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
-import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
+import { LecteurAudio } from "./lecteur-audio";
+
 /**
  * Le lecteur d'un intermédiaire sur une piste longue, construit au clic.
  *
@@ -49,8 +50,7 @@ function LecteurALaDemande({ buffer }: { buffer: AudioBuffer }) {
   return (
     <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
       <IndicateurNiveau buffer={buffer} />
-      <audio key={url} className="attic-node-audio nodrag" controls src={url}
-        onLoadedMetadata={ouvrirAuNiveauDEcoute} />
+      <LecteurAudio src={url} />
     </div>
   );
 }
@@ -605,7 +605,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {data.audioResultatUrl && !lecteurPorteParUneVue && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <IndicateurNiveau buffer={data.audioResultatBuffer} />
-              <audio key={data.audioResultatUrl} className="attic-node-audio nodrag" controls src={data.audioResultatUrl} onLoadedMetadata={(e) => { ouvrirAuNiveauDEcoute(e); console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
+              <LecteurAudio src={data.audioResultatUrl} trace />
             </div>
           )}
           {/* Un tampon sans aperçu : piste longue, nœud intermédiaire. Le lecteur se construit au clic. */}
@@ -614,7 +614,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           )}
           {!data.audioResultatUrl && !data.audioResultatBuffer && data.audioUrl && !lecteurPorteParUneVue && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
-              <audio key={data.audioUrl} className="attic-node-audio nodrag" controls src={data.audioUrl} onLoadedMetadata={(e) => { ouvrirAuNiveauDEcoute(e); console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src); }} onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)} onPlay={(e) => console.log("[audio player] play", e.currentTarget.src)} />
+              <LecteurAudio src={data.audioUrl} trace />
             </div>
           )}
           {data.audioResultatMessage && !vueAvantMasqueMessage(data.ficheId) && (

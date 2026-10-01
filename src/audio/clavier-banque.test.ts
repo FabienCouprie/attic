@@ -448,3 +448,109 @@ describe("le panoramique", () => {
     expect(crete(trop, 1)).toBeGreaterThan(0.7);
   });
 });
+
+describe("la boucle de maintien, sur une touche tenue", () => {
+  // RELEVÉ PAR FABIEN sur un son long étalé sur les 88 touches : « là où le son devrait finir par
+  // s'éteindre ou se prolonger indéfiniment, on entend un cliquetis puis une reprise du son puis un
+  // nouveau cliquetis ». Deux défauts distincts derrière une seule plainte, et ces cas les séparent.
+
+  /** Un son qui ÉVOLUE : deux partiels qui dérivent et du souffle. Le pire cas pour une boucle, et
+   *  le seul honnête : sur une sinusoïde pure, le raccord tombe près de la phase par chance. */
+  function sonQuiEvolue(dureeSec: number): AudioBuffer {
+    const n = Math.round(dureeSec * SR);
+    const audio = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const d = audio.getChannelData(0);
+    const f = hertz(RACINE);
+    let bruit = 0;
+    let graine = 12345;
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      graine = (graine * 1103515245 + 12345) & 0x7fffffff;
+      bruit = bruit * 0.9 + (graine / 0x7fffffff - 0.5) * 0.1;
+      d[i] = 0.6 * Math.min(1, t / 0.005) * Math.exp(-t * 0.3)
+        * (Math.sin(2 * Math.PI * f * t) + 0.5 * Math.sin(2 * Math.PI * f * 1.37 * t) + 2 * bruit);
+    }
+    return audio;
+  }
+
+  /** Le plus grand saut d'un échantillon au suivant, rapporté à la crête. */
+  function sautMax(x: ArrayLike<number>, depuis = 1, jusqua = -1): number {
+    let crete = 0;
+    for (let i = 0; i < x.length; i++) crete = Math.max(crete, Math.abs(x[i]));
+    const fin = jusqua < 0 ? x.length : jusqua;
+    let saut = 0;
+    for (let i = Math.max(1, depuis); i < fin; i++) saut = Math.max(saut, Math.abs(x[i] - x[i - 1]));
+    return crete > 0 ? saut / crete : 0;
+  }
+
+  const banqueLongue = (boucleLongueur: number, duree = 30) => construireBanque(sonQuiEvolue(duree), {
+    racineSource: RACINE, suiviTouche: 0, boucle: true, boucleDebut: 0.5, boucleLongueur,
+    noteBasse: RACINE, noteHaute: RACINE, transposer: (a) => a,
+  });
+
+  it("N'EST PAS POSÉE PAR DÉFAUT : une touche tenue joue le son jusqu'à sa fin, puis se tait", () => {
+    // DÉCIDÉ PAR FABIEN : « laisser le son se finir jusqu'au bout et ne pas redémarrer ». Un son
+    // étalé sur le clavier est un son ENTIER ; le relire tant que la touche est tenue le fait
+    // recommencer, ce qui n'a de sens que pour une matière tenue.
+    const sansRien = construireBanque(sonQuiEvolue(2), {
+      racineSource: RACINE, suiviTouche: 0, noteBasse: RACINE, noteHaute: RACINE, transposer: (a) => a,
+    });
+    expect(sansRien.zones[0].boucle).toBeUndefined();
+    expect(parametresLecture(voixPourNote(sansRien, RACINE, 100, 1)!).boucle).toBe(false);
+  });
+
+  it("EST COURTE QUAND ON LA DEMANDE, même sur un son long", () => {
+    // La boucle allait du début choisi jusqu'à 95 % de l'échantillon : sur trente secondes, cela
+    // faisait un cycle de treize secondes et demie, qu'on entend comme une reprise et non un
+    // maintien. Sa longueur se donne maintenant en secondes.
+    const longue = banqueLongue(1000).zones[0].boucle!;
+    expect((longue.fin - longue.debut) / SR).toBeCloseTo(13.5, 1);
+    const courte = banqueLongue(2).zones[0].boucle!;
+    expect((courte.fin - courte.debut) / SR).toBeCloseTo(2, 2);
+  });
+
+  it("ET UN SON COURT NE CHANGE PAS, la fin de l'échantillon arrivant la première", () => {
+    // La condition de sûreté : les banques déjà réglées sur des sons brefs sonnent comme avant.
+    const brefe = banqueLongue(2, 2).zones[0].boucle!;
+    expect(brefe.fin / SR).toBeCloseTo(0.95 * 2, 2);
+  });
+
+  it("SON RACCORD NE SAUTE PAS PLUS QUE LA MATIÈRE ELLE-MÊME", () => {
+    // LE DÉFAUT : le jeu en direct confie la boucle au matériel, qui saute de la fin au début SANS
+    // RIEN FONDRE. L'étalon est le saut naturel de l'onde d'un échantillon au suivant : un raccord
+    // propre ne saute pas davantage. Sans le fondu, il sautait de vingt-sept pour cent de la crête
+    // quand la matière n'en saute que trente : un clic à chaque tour.
+    const banque = banqueLongue(2, 2);
+    const voix = voixPourNote(banque, RACINE, 100, 1)!;
+    const b = voix.zone.boucle!;
+    const brut = voix.zone.audio.getChannelData(0);
+    const naturel = sautMax(brut);
+
+    const fondu = parametresLecture(voix, 0.02).audio.getChannelData(0);
+    const raccord = (x: ArrayLike<number>) => {
+      let crete = 0;
+      for (let i = 0; i < x.length; i++) crete = Math.max(crete, Math.abs(x[i]));
+      return Math.abs(x[b.debut] - x[b.fin - 1]) / crete;
+    };
+    expect(raccord(fondu), "le raccord fondu").toBeLessThan(naturel);
+    // Et il est bien PLUS PETIT, non pas à la limite : sans quoi le cas passerait sur un fondu qui
+    // ne ferait presque rien.
+    expect(raccord(fondu)).toBeLessThan(naturel / 3);
+    // La faute plantée : l'échantillon brut, celui qu'on confiait au matériel.
+    expect(raccord(brut), "le raccord sans fondu").toBeGreaterThan(naturel / 2);
+  });
+
+  it("ET LE RENDU HORS LIGNE NE SAUTE PAS DAVANTAGE, les deux chemins bouclant pareil", () => {
+    // Le rendu avait sa propre mécanique de fondu, qui répétait la fenêtre du raccord : il restait
+    // un saut de 48 % de la crête sur une note tenue. Les deux chemins partagent désormais le même
+    // échantillon au raccord fondu.
+    const banque = banqueLongue(2, 2);
+    const rendu = rendreNotes([{ note: RACINE, velocite: 100, debut: 0, fin: 6 }], banque, {
+      volume: 1, relachement: 0.15, fonduBoucle: 0.02,
+    });
+    const g = rendu.getChannelData(0);
+    const naturel = sautMax(banque.zones[0].audio.getChannelData(0));
+    // Passé l'attaque, et avant le relâchement : c'est la part que la boucle occupe.
+    expect(sautMax(g, Math.round(0.2 * SR), Math.round(5.5 * SR))).toBeLessThan(naturel);
+  });
+});

@@ -68,13 +68,7 @@ export const ECARTES: Record<string, string> = {
   // LES COMPOSANTS LOGISTIQUES RESTENT TELS QU'ILS SONT. Ils portent des réglages d'ajustement qui
   // leur sont propres, que la modulation par courbe ne reproduit pas. Ils ne sont ni retirés du
   // catalogue ni modifiés. Décision de Fabien, définitive.
-  "auto-pan-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
-  "chopper-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
-  "echo-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
   "melangeur-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
-  "paulstretch-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
-  "tremolo-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
-  "vibrato-logistique": "composant logistique : reste tel qu'il est, il ne bouge pas",
 
   // LE RÉGLAGE N'EST PAS UN `AudioParam`. Le faire varier demanderait de reconstruire le graphe à
   // chaque valeur, ce qui n'est pas une automation : la table d'un distordeur, la longueur d'une

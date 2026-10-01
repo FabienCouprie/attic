@@ -15,7 +15,7 @@ import { SongseeVue } from "./Songsee";
 import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "./vues";
 
-import { ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
+import { LecteurAudio } from "./lecteur-audio";
 export function VueCouleurSunoIA({ data }: VueProps) {
   const { t, lang } = useI18n();
   const p = data.parametres ?? {};
@@ -239,25 +239,51 @@ const DERIVE_TOLEREE = 0.08;
  * et non une image figée. L'arrêter d'emblée aurait été plus simple à écrire et bien plus risqué :
  * il aurait suffi qu'un lecteur n'émette pas son événement pour que le dessin ne reparte jamais.
  */
-function useImageCaleeSurLeSon(svg: string) {
+function useImageCaleeSurLeSon() {
   const boite = useRef<HTMLDivElement | null>(null);
-  const lecteur = useRef<HTMLAudioElement | null>(null);
+
+  // LE LECTEUR EST UN ÉTAT ET NON UNE RÉFÉRENCE, ET C'EST LA PREMIÈRE DES DEUX RAISONS QUI FAISAIENT
+  // MANQUER LE CALAGE. Une référence ne prévient personne quand elle change : l'effet ci-dessous
+  // attend le dessin ET le lecteur, et ne déclarait que le dessin. Le dessin arrivant le premier,
+  // l'effet se rejouait sur lui, ne trouvait pas encore de lecteur, renonçait — et ne se rejouait
+  // plus jamais, puisque le dessin ne changeait plus. RELEVÉ À LA TRACE : « dessin vrai, son faux »
+  // était la dernière exécution de l'effet. En état, l'arrivée du lecteur est un rendu de plus, et
+  // l'effet le voit.
+  const [son, setSon] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const dessin = boite.current?.querySelector("svg") as SVGSVGElement | null;
-    const son = lecteur.current;
+    if (!son) return;
+
+    // ET LE DESSIN EST CHERCHÉ À CHAQUE FOIS PLUTÔT QUE GARDÉ, ce qui est la seconde raison. React
+    // refait le contenu du cadre quand le nœud se redessine ; un élément gardé ici devient alors
+    // DÉTACHÉ, et l'on cale consciencieusement l'horloge d'un SVG qui n'est plus dans la page
+    // pendant que celui qu'on voit tourne librement. MESURÉ : l'élément capturé n'était plus dans
+    // le document, et l'image dérivait d'une seconde du son.
+    //
     // `pauseAnimations` n'existe que sur un SVG vivant : un environnement sans SMIL laisse
     // l'animation tourner comme avant plutôt que d'échouer.
-    if (!dessin || !son || typeof dessin.pauseAnimations !== "function") return;
+    const dessin = (): SVGSVGElement | null => {
+      const d = boite.current?.querySelector("svg") as SVGSVGElement | null;
+      return d && typeof d.pauseAnimations === "function" ? d : null;
+    };
 
-    const caler = () => { try { dessin.setCurrentTime(son.currentTime); } catch { /* horloge absente */ } };
-    const jouer = () => { caler(); dessin.unpauseAnimations(); };
-    const arreter = () => { dessin.pauseAnimations(); caler(); };
-    const finir = () => { try { dessin.setCurrentTime(0); } catch { /* idem */ } dessin.unpauseAnimations(); };
+    const caler = () => {
+      const d = dessin();
+      if (d) try { d.setCurrentTime(son.currentTime); } catch { /* horloge absente */ }
+    };
+    const jouer = () => { caler(); dessin()?.unpauseAnimations(); };
+    const arreter = () => { dessin()?.pauseAnimations(); caler(); };
+    const finir = () => {
+      const d = dessin();
+      if (!d) return;
+      try { d.setCurrentTime(0); } catch { /* idem */ }
+      d.unpauseAnimations();
+    };
     const suivre = () => {
-      if (son.paused) return;
+      const d = dessin();
+      if (!d || son.paused) return;
       try {
-        if (Math.abs(dessin.getCurrentTime() - son.currentTime) > DERIVE_TOLEREE) caler();
+        if (Math.abs(d.getCurrentTime() - son.currentTime) > DERIVE_TOLEREE) caler();
       } catch { /* horloge absente */ }
     };
 
@@ -275,16 +301,16 @@ function useImageCaleeSurLeSon(svg: string) {
       son.removeEventListener("ended", finir);
       son.removeEventListener("timeupdate", suivre);
     };
-  }, [svg]);
+  }, [son]);
 
-  return { boite, lecteur };
+  return { boite, poserLecteur: setSon };
 }
 
 export function VueAnimationSvg({ data }: VueProps) {
   const { t } = useI18n();
   const dessine = (data as { _affichage?: { animationSvg?: unknown } })._affichage?.animationSvg;
   const svg = typeof dessine === "string" ? dessine : "";
-  const { boite, lecteur } = useImageCaleeSurLeSon(svg);
+  const { boite, poserLecteur } = useImageCaleeSurLeSon();
   if (!svg.includes("<svg")) {
     return <div className="attic-node-vue-animation" style={{ padding: 4 }}><div style={{ fontSize: 11, opacity: 0.5 }}>{t("export.avantLancer")}</div></div>;
   }
@@ -302,15 +328,12 @@ export function VueAnimationSvg({ data }: VueProps) {
     <div className="attic-node-vue-animation">
       <div ref={boite} className="attic-node-vue-animation-inner" dangerouslySetInnerHTML={{ __html: svg }} />
       {typeof data.audioResultatUrl === "string" && (
-        <audio
+        <LecteurAudio
           key={data.audioResultatUrl}
-          ref={lecteur}
-          className="attic-node-audio nodrag"
-          style={{ flex: "0 0 auto", marginTop: 4 }}
-          controls
           src={data.audioResultatUrl}
+          style={{ flex: "0 0 auto", marginTop: 4 }}
+          elementRef={poserLecteur}
           onPointerDown={(e) => e.stopPropagation()}
-          onLoadedMetadata={ouvrirAuNiveauDEcoute}
         />
       )}
     </div>

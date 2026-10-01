@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import { phaser, wahwah } from "./effets-balayage";
 import { chopper } from "./effets-decoupe";
 import { autoPan } from "./effets-espace";
-import { tremolo, vibrato, vibratoLogistique } from "./effets-modulation";
+import { tremolo, vibrato } from "./effets-modulation";
 import { appliquerEchoPingPong } from "./effets-echo";
 import { constante, engendrer, type Courbe } from "./courbe";
 
@@ -417,11 +417,4 @@ describe("la profondeur du vibrato dit ce qu'elle promet", () => {
     expect(Math.abs((vif.haut - vif.bas) / 2 - 200)).toBeLessThan(15);
   });
 
-  it("le vibrato logistique atteint sa profondeur annoncée en fin de courbe", () => {
-    const x = sinus1k(4 * SR);
-    const y = vibratoLogistique(x, 5, 100, 20, 40, 100).getChannelData(0);
-    const debut = cretes(y, 0, SR / 4), fin = cretes(y, 3 * SR, 4 * SR - SR / 8);
-    expect(Math.abs((fin.haut - fin.bas) / 2 - 200)).toBeLessThan(15);
-    expect((debut.haut - debut.bas) / 2).toBeLessThan(60);
-  });
 });

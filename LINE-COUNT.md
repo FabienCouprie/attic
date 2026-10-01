@@ -7,36 +7,35 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1166 files, 202123 lines, of which 140382 are code.**
-The table lists the 150 files of 200 code lines or more, heaviest first;
-the remaining 1016 account for 140193 lines.
+**1185 files, 204534 lines, of which 141742 are code.**
+The table lists the 148 files of 200 code lines or more, heaviest first;
+the remaining 1037 account for 143134 lines.
 
-**14 files exceed the 400-code-line norm** and are marked « ! ».
+**15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1390 | 1712 | ! |
+| src/ui/atelier.css | 1394 | 1718 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 754 | 1532 | ! |
 | src/ui/Inspector.tsx | 606 | 759 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
-| src/ui/AtelierNode.tsx | 524 | 719 | ! |
+| src/ui/AtelierNode.tsx | 523 | 719 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
+| src/plugins/index.ts | 471 | 483 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
-| src/plugins/index.ts | 461 | 473 | ! |
 | src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
-| src/ui/BarreOutils.tsx | 413 | 446 | ! |
+| src/audio/clavier-banque.test.ts | 439 | 557 | ! |
+| src/ui/BarreOutils.tsx | 432 | 470 | ! |
 | src/ui/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
-| src/audio/effets-spectral.test.ts | 372 | 444 |  |
 | src/ui/LigneDeTemps.tsx | 368 | 611 |  |
-| src/audio/clavier-banque.test.ts | 367 | 451 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
 | src/audio/tone-synths.ts | 360 | 494 |  |
 | src/plugins/analyse.ts | 360 | 437 |  |
@@ -46,25 +45,25 @@ the remaining 1016 account for 140193 lines.
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |
 | src/audio/effets-verification.test.ts | 334 | 385 |  |
-| src/audio/modulation-effets.test.ts | 334 | 428 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
-| src/plugins/effets-temporel.ts | 327 | 446 |  |
+| src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/tone-synths.ts | 325 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
-| src/plugins/effets-spectral.ts | 321 | 410 |  |
 | src/ui/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
+| src/plugins/effets-spectral.ts | 314 | 409 |  |
 | src/ui/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
 | src/quiz/notions.ts | 312 | 337 |  |
@@ -72,13 +71,13 @@ the remaining 1016 account for 140193 lines.
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 367 |  |
 | src/audio/courbe.ts | 308 | 611 |  |
-| src/audio/clavier-banque.ts | 307 | 574 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
-| src/plugins/prompt-graphe.ts | 306 | 422 |  |
+| src/plugins/effets-temporel.ts | 305 | 415 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
+| src/plugins/prompt-graphe.ts | 300 | 416 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/audio/analyse-genre.ts | 297 | 369 |  |
-| src/ui/vues-claviers.tsx | 297 | 379 |  |
+| src/ui/vues-claviers.tsx | 297 | 382 |  |
 | src/plugins/sherpa-asr.ts | 296 | 411 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/syntheses-exotiques.ts | 293 | 388 |  |
@@ -96,11 +95,11 @@ the remaining 1016 account for 140193 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
+| src/ui/vues-images.tsx | 269 | 381 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 265 | 344 |  |
 | src/plugins/magenta-helpers.ts | 264 | 310 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
-| src/ui/vues-images.tsx | 261 | 358 |  |
 | src/audio/io.ts | 257 | 380 |  |
 | src/core/bulles.test.ts | 257 | 320 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
@@ -109,14 +108,13 @@ the remaining 1016 account for 140193 lines.
 | src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
 | src/audio/cercle-pulsant.ts | 249 | 543 |  |
+| src/audio/effets-spectral.test.ts | 248 | 301 |  |
 | src/audio/multi-reservoir.ts | 248 | 325 |  |
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
-| src/plugins/effets-modulation.ts | 244 | 324 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
-| src/ui/vues-lecteur.tsx | 243 | 284 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
@@ -125,6 +123,7 @@ the remaining 1016 account for 140193 lines.
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
 | src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
+| src/ui/vues-lecteur.tsx | 239 | 283 |  |
 | src/ui/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
@@ -162,6 +161,5 @@ the remaining 1016 account for 140193 lines.
 | src/plugins/tonal.ts | 205 | 283 |  |
 | src/audio/musicxml-arbre.ts | 203 | 314 |  |
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
-| src/audio/effets-modulation.ts | 202 | 267 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |

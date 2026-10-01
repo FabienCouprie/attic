@@ -11,10 +11,10 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 48
+- **acceptent déjà une courbe** : 49
 - **restent à faire** : 15 composants, 32 couples composant / famille
 - **dont le cœur travaille par trames** : 2
-- **écartés** : 47, dont 1 famille de la palette écartée en bloc
+- **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
@@ -103,13 +103,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `dereverberation` : traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon
 - `shift-formants` : traitement par trames : l'enveloppe est estimée par bloc, non par échantillon
 - `filtrage-spectre` : traitement par trames : la profondeur est appliquée par trame d'analyse, non par échantillon
-- `auto-pan-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
-- `chopper-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
-- `echo-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
 - `melangeur-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
-- `paulstretch-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
-- `tremolo-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
-- `vibrato-logistique` : composant logistique : reste tel qu'il est, il ne bouge pas
 - `distorsion` : le gain de saturation est la table d'un distordeur, non un réglage automatisable
 - `reverb-fractale` : le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur
 - `reverbe-convolution` : le decay décide de la longueur d'une réponse impulsionnelle, reconstruite à chaque valeur
@@ -154,6 +148,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `octaver` : Mix
 - `partition-aleatoire-csound` : (non déclarée)
 - `partition-csound` : (non déclarée)
+- `paulstretch` : Stretch
 - `peignes-accordes` : Fondamentale
 - `phaser` : Fréquence
 - `profil-melodique` : (non déclarée)

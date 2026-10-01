@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 81 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 173 · transposable tel quel
+- **pur** : 178 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -47,6 +47,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | automation.ts | pur | — |
 | banques-vives.ts | pur | — |
 | barre-modale.ts | pur | — |
+| battements-binauraux.ts | pur | — |
 | batterie-midi.ts | pur | — |
 | batterie.ts | rendu | OfflineAudioContext |
 | brassage.ts | pur | — |
@@ -134,6 +135,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | features-piste.ts | recipient | AudioBuffer |
 | fft.ts | pur | — |
 | fof.ts | pur | — |
+| fondamentale-manquante.ts | pur | — |
 | formants.ts | recipient | AudioBuffer |
 | formule-sequence.ts | pur | — |
 | frequence-source.ts | rendu | OfflineAudioContext |
@@ -161,6 +163,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | harmonie-spectrale.ts | pur | — |
 | hauteur.ts | pur | — |
 | hpss.ts | pur | — |
+| illusion-octave.ts | pur | — |
 | index.ts | pur | — |
 | inpainting.ts | pur | — |
 | io.ts | rendu | OfflineAudioContext |
@@ -184,6 +187,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | micromontage.ts | pur | — |
 | midi-arpege.ts | pur | — |
 | midi-ecriture.ts | pur | — |
+| midi-lecture-sequence.ts | pur | — |
 | midi-montage.ts | rendu | OfflineAudioContext |
 | midi-ordre.ts | pur | — |
 | midi-quantification.ts | pur | — |
@@ -215,6 +219,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | ordre-catalogue.ts | pur | — |
 | ordre-galerie.ts | pur | — |
 | palette-harmonique.ts | recipient | AudioBuffer |
+| paradoxe-triton.ts | pur | — |
 | parfum.ts | pur | — |
 | particules.ts | pur | — |
 | passage-zero.ts | pur | — |
