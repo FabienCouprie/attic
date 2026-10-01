@@ -181,13 +181,21 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+      // EN DERNIER RANG, ET NON À CÔTÉ DE SON RÉGLAGE : les entrées se branchent par leur numéro, et
+      // l'intercaler renverrait l'entrée fréquence d'un graphe enregistré vers la profondeur.
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Profondeur" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 2, unite: "Hz",
         doc: "Vitesse du balayage (allers-retours par seconde).", docEn: "Sweep speed (round trips per second)." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
-        doc: "Amplitude du balayage (0% = fixe, 100% = gauche extrême à droite extrême).", docEn: "Sweep depth (0% = static, 100% = extreme left to extreme right)." },
+        doc: "Amplitude du balayage (0% = fixe, 100% = gauche extrême à droite extrême). Une courbe branchée sur l'entrée Modulation prend la main : le balancement qui s'ouvre au fil du morceau.", docEn: "Sweep depth (0% = static, 100% = extreme left to extreme right). A curve connected to the Modulation input takes over: the sway that opens up as the piece goes on." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Amplitude que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Depth that a connected curve's zero means on the Modulation input. With no curve, this setting does nothing." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Amplitude que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
       { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 0.5, unite: "Hz",
         doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : le balancement qui s'accélère. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
         docEn: "Rate that a curve's zero means on the Rate modulation input: the sway that speeds up. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
@@ -199,7 +207,10 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { autoPan } = await import("../audio");
       const freq = ctx.paramNombre("Fréquence", 2);
-      const depth = ctx.paramNombre("Profondeur", 80);
+      // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.
+      const depth = valeursParametre(ctx.entree(2), a.length, ctx.paramNombre("Profondeur", 80), {
+        min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+      });
       return { valeurs: [await autoPan(a, freq, depth, ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) })] };
    },
   },

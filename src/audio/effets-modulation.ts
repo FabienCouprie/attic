@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { estCourbe, progressionPour, valeursParametre } from "./courbe";
+import { estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, formeLfo, frequencesModulees } from "./lfo";
 
 export function amplitudeVibrato(cents: number, frequence: number, sr: number): number {
@@ -31,14 +31,16 @@ function lireDecale(src: Float32Array, decalages: Float64Array, dst: Float32Arra
 export function vibrato(
   buffer: AudioBuffer,
   frequence: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   courbe?: unknown,
   courbeFrequence?: unknown,
   bornesFrequence: { min: number; max: number } = { min: 1, max: 10 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
-  const maxCents = profondeur * 2;
+  /** L'écart de hauteur à l'échantillon `i`, en cents. Constant sans courbe de profondeur. */
+  const cents = (i: number) => valeurA(profondeur, i) * 2;
+  const maxCents = cents(0);
 
   if (estCourbe(courbe)) {
     // LA COURBE DE POSITION DESSINE LE GESTE : elle remplace le LFO, et c'est sa pente qui fait la
@@ -73,12 +75,16 @@ export function vibrato(
   // garde alors la même largeur, ce qu'un chanteur fait naturellement.
   const decalages = new Float64Array(buffer.length);
   const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
+  // L'AMPLITUDE SE RECALCULE À CHAQUE ÉCHANTILLON, et cela ne coûte rien à qui n'a pas branché de
+  // courbe : `amplitudeVibrato` est une fonction de ses arguments seuls, donc une profondeur
+  // constante y rend le même chiffre, au bit près, que le calcul unique d'avant.
   if (f) {
     const u = cyclesAccumules(f, sr);
-    for (let i = 0; i < buffer.length; i++) decalages[i] = amplitudeVibrato(maxCents, f[i], sr) * Math.sin(2 * Math.PI * u[i]);
+    for (let i = 0; i < buffer.length; i++) decalages[i] = amplitudeVibrato(cents(i), f[i], sr) * Math.sin(2 * Math.PI * u[i]);
   } else {
-    const a = amplitudeVibrato(maxCents, frequence, sr);
-    for (let i = 0; i < buffer.length; i++) decalages[i] = a * Math.sin((2 * Math.PI * frequence * i) / sr);
+    for (let i = 0; i < buffer.length; i++) {
+      decalages[i] = amplitudeVibrato(cents(i), frequence, sr) * Math.sin((2 * Math.PI * frequence * i) / sr);
+    }
   }
   for (let c = 0; c < buffer.numberOfChannels; c++) lireDecale(buffer.getChannelData(c), decalages, resultat.getChannelData(c));
   return resultat;

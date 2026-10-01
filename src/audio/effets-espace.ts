@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { CADENCE, valeursParametre } from "./courbe";
+import { CADENCE, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, frequencesModulees, type BornesFrequence } from "./lfo";
 
 export function trajectoirePanoramique(
@@ -155,13 +155,12 @@ export async function appliquerResonanceAudio(
 export async function autoPan(
   buffer: AudioBuffer,
   frequence: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   courbeFrequence?: unknown,
   bornesFrequence: BornesFrequence = { min: 0.5, max: 8 },
 ): Promise<AudioBuffer> {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: 2, length: buffer.length, sampleRate: sr });
-  const depth = profondeur / 100;
   // Avec une courbe, la phase intégrée ; sans, le calcul direct d'origine, au bit près.
   const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
   const u = f ? cyclesAccumules(f, sr) : null;
@@ -172,6 +171,9 @@ export async function autoPan(
     for (let i = 0; i < buffer.length; i++) {
       const t = i / sr;
       const lfo = u ? Math.sin(2 * Math.PI * u[i]) : Math.sin(2 * Math.PI * frequence * t);
+      // La profondeur se lit à l'échantillon : constante sans courbe, elle rend le même chiffre
+      // qu'avant, l'expression n'ayant pas changé de forme.
+      const depth = valeurA(profondeur, i) / 100;
       const gain = c === 0
         ? 1 - depth * (lfo + 1) / 2
         : 1 - depth * (1 - lfo) / 2;

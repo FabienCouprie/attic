@@ -147,7 +147,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
 | Arpégiateur MIDI | `arpegiateur-midi` | 240 × 118 |
 | Assaisonnement sonore | `assaisonnement-sonore` | 240 × 140 |
-| Auto-pan | `auto-pan` | 240 × 140 |
+| Auto-pan | `auto-pan` | 240 × 162 |
 | Matrice d'auto-similarité | `auto-similarite` | 240 × 162 |
 | Automate cellulaire | `automate-cellulaire` | 240 × 140 |
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
@@ -191,7 +191,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Tourner un cercle | `cercle-tourner` | 240 × 118 |
 | Changement de tempo | `changement-tempo` | 240 × 118 |
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
-| Chopper | `chopper` | 240 × 140 |
+| Chopper | `chopper` | 240 × 162 |
 | Chorus | `chorus` | 240 × 140 |
 | Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
@@ -477,7 +477,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Piper TTS | `tts-piper` | 240 × 118 |
 | SpeechT5 TTS | `tts-speecht5` | 240 × 118 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
-| Vibrato | `vibrato` | 240 × 162 |
+| Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |
 | Vocoder | `vocoder` | 240 × 140 |

@@ -104,6 +104,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
       { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+      // EN DERNIER RANG : les entrées se branchent par leur numéro, et l'intercaler renverrait
+      // ailleurs les câbles des graphes enregistrés. Sous un nom à elle, aussi : l'entrée
+      // « Modulation » de ce composant remplace l'oscillateur au lieu d'en régler la profondeur.
+      { nom: "Modulation profondeur", nomEn: "Depth modulation", type: "courbe", requis: false, module: "Profondeur" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -115,13 +119,22 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 10, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Écart de hauteur au sommet de l'oscillation (0% = aucun, 100% = ±2 demi-tons), le même à toute vitesse : accélérer le vibrato ne l'élargit pas.", docEn: "Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it." },
+        doc: "Écart de hauteur au sommet de l'oscillation (0% = aucun, 100% = ±2 demi-tons), le même à toute vitesse : accélérer le vibrato ne l'élargit pas. Une courbe branchée sur l'entrée Modulation profondeur prend la main : le vibrato qui s'ouvre sur une note tenue. L'entrée Modulation, elle, remplace l'oscillateur et laisse alors la profondeur sans objet.", docEn: "Pitch deviation at the peak of the oscillation (0% = none, 100% = ±2 semitones), the same at any speed: speeding the vibrato up does not widen it. A curve connected to the Depth modulation input takes over: the vibrato that opens up on a held note. The Modulation input replaces the oscillator instead, and leaves depth without purpose." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Écart que vaut le zéro d'une courbe branchée sur l'entrée Modulation profondeur. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Deviation that a connected curve's zero means on the Depth modulation input. With no curve, this setting does nothing." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Écart que vaut le un de la courbe.", docEn: "Deviation that the curve's one means." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { vibrato } = await import("../audio");
-      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), ctx.paramNombre("Profondeur", 50), ctx.entree(1),
+      // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.
+      const profondeur = valeursParametre(ctx.entree(3), a.length, ctx.paramNombre("Profondeur", 50), {
+        min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+      });
+      return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), profondeur, ctx.entree(1),
         ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 10) })] };
    },
  },
@@ -175,6 +188,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+      // EN DERNIER RANG, ET NON À CÔTÉ DE SON RÉGLAGE : les entrées se branchent par leur numéro, et
+      // l'intercaler renverrait l'entrée fréquence d'un graphe enregistré vers la profondeur.
+      { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Profondeur" },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -182,6 +198,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Vitesse de coupe (coups par seconde).", docEn: "Chop speed (cuts per second)." },
       { nom: "Durée", nomEn: "Length", type: "curseur", plage: [1, 99], pas: 1, defaut: 50, unite: "%",
         doc: "Ratio ON dans le cycle (1% = staccissimo, 50% = carré, 99% = quasi continu).", docEn: "ON ratio in cycle (1% = very short, 50% = square, 99% = near continuous)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Part du signal que la coupe emporte (0% = aucun effet, 100% = silence complet entre les coups). Une courbe branchée sur l'entrée Modulation prend la main : la coupe qui s'installe au fil du morceau.", docEn: "Share of the signal the chop removes (0% = no effect, 100% = full silence between cuts). A curve connected to the Modulation input takes over: the chop that settles in as the piece goes on." },
+      { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
+        doc: "Profondeur que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Depth that a connected curve's zero means on the Modulation input. With no curve, this setting does nothing." },
+      { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
+        doc: "Profondeur que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionIds: ["Dur","Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
         doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
       { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 1, unite: "Hz",
@@ -195,8 +218,12 @@ export const fiches: FicheAudio[] = ([
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { chopper } = await import("../audio");
       const typeStr = ctx.paramTexte("Type", "Dur");
+      // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.
+      const profondeur = valeursParametre(ctx.entree(2), a.length, ctx.paramNombre("Profondeur", 100), {
+        min: ctx.paramNombre("Modulation min", 0), max: ctx.paramNombre("Modulation max", 100),
+      });
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0,
-        ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 16) })] };
+        ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 16) }, profondeur)] };
    },
   },
   {

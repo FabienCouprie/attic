@@ -54,6 +54,12 @@ export function chopper(
   type: number,
   courbeFrequence?: unknown,
   bornesFrequence: BornesFrequence = { min: 1, max: 16 },
+  /**
+   * La part du signal que la coupe emporte, de 0 à 100. Le défaut vaut cent, c'est-à-dire la coupe
+   * entière : c'est ce que le composant faisait avant que ce réglage existe, et tout graphe
+   * enregistré sans lui doit sonner comme avant.
+   */
+  profondeur: number | Float32Array = 100,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
@@ -86,7 +92,11 @@ export function chopper(
           if (offPos < fadeRatio) gain = 1 - offPos / fadeRatio;
         }
       }
-      dst[i] = src[i] * gain;
+      // LA FORME EST CHOISIE POUR RENDRE LE GAIN INTACT À PROFONDEUR PLEINE : à d valant un, elle
+      // se réduit au gain lui-même, au bit près, là où « 1 − d(1 − gain) » y ajouterait l'erreur
+      // de deux soustractions. À d nul elle vaut un, et le son passe sans être touché.
+      const d = valeurA(profondeur, i) / 100;
+      dst[i] = src[i] * (gain * d + (1 - d));
     }
   }
   return resultat;
