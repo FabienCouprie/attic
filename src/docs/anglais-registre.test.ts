@@ -50,7 +50,7 @@ import "../audio/adaptateur";
 // ET LES AUTEURS DE L'ABSORBEUR EN ARC-EN-CIEL RELÈVENT DU MÊME CAS QUE « de Cheveigné » : Noé
 // Jiménez et Vicent Romero-García signent ainsi leurs articles en anglais, et retirer leurs accents
 // ne serait pas une traduction mais une faute sur un nom.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía)(?![a-zà-ÿ])/gi;
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

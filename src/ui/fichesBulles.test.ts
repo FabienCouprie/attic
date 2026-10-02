@@ -47,8 +47,9 @@ describe("la synchronisation des fiches de bulle", () => {
     expect(inscrites).toEqual([ficheDeBulle("b1")]);
     expect(retirees).toEqual([]);
     const fiche = r.trouverDef(ficheDeBulle("b1"))!;
-    // Une entrée et une sortie : celles qui franchissent la frontière, sans nom.
-    expect(fiche.entrees.map((e) => e.nom)).toEqual([""]);
+    // Deux entrées : celle qui franchit la frontière, et la seconde entrée du mélangeur, que rien
+    // n'alimente et qui reste donc offerte. Une sortie : celle qui franchit. Aucune n'est nommée.
+    expect(fiche.entrees.map((e) => e.nom)).toEqual(["", ""]);
     expect(fiche.sorties.map((e) => e.nom)).toEqual([""]);
     expect(fiche.univers).toBe(UNIVERS_BULLES);
   });
@@ -73,13 +74,17 @@ describe("la synchronisation des fiches de bulle", () => {
     expect(r.trouverDef(ficheDeBulle("b1"))).toBeUndefined();
   });
 
-  it("UNE ARÊTE BRANCHÉE DONNE UN PORT, et la signature le dit", () => {
+  it("BRANCHER UNE ARÊTE NE DÉPLACE PAS LE PORT, et la signature se met pourtant à jour", () => {
+    // CE QUI EST GARDÉ ICI EST LA STABILITÉ DU RANG. La sortie du mélangeur est offerte avant d'être
+    // branchée, parce qu'elle est libre ; la brancher la fait passer de libre à traversante, et elle
+    // doit rester au même rang, sans quoi les arêtes déjà posées sur la bulle changeraient de
+    // destination. La signature, elle, change bien : la fiche se resynchronise.
     const r = registrePret();
     const avant = ARETES.filter((a) => a.id !== "e3");
     expect(signatureBulles(GRAPHE, avant)).not.toBe(signatureBulles(GRAPHE, ARETES));
 
     synchroniserFichesBulles(GRAPHE, avant, r);
-    expect(r.trouverDef(ficheDeBulle("b1"))!.sorties).toHaveLength(0);
+    expect(r.trouverDef(ficheDeBulle("b1"))!.sorties).toHaveLength(1);
     synchroniserFichesBulles(GRAPHE, ARETES, r);
     expect(r.trouverDef(ficheDeBulle("b1"))!.sorties).toHaveLength(1);
   });

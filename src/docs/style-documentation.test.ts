@@ -28,6 +28,8 @@ const SIGLES = new Set([
   "PM", "PWM", "CV", "BPM", "GM", "IR", "VST", "DAW", "OSC", "SMS", "MMS",
   // Programmes historiques : le « Sound Synthesis Program » de Koenig s'écrit ainsi.
   "SSP",
+  // Organismes de normalisation, dont les normes se citent par leur sigle.
+  "DIN",
   // Spatialisation : l'ordre des canaux ambisoniques, et l'Union internationale des télécommunications.
   "ACN", "UIT", "ITU",
   // Groupe de recherches musicales (Schaeffer, 1958), dont les GRM Tools.

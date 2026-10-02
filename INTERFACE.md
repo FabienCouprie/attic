@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**457 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**463 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -210,6 +210,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
 | Courbe de dissonance | `courbe-dissonance` | 240 × 140 |
+| Créneau | `creneau` | 240 × 140 |
 | Crible harmonique | `crible-harmonique` | 240 × 140 |
 | Crible (Xenakis) | `crible-xenakis` | 240 × 118 |
 | Csound | `csound` | 240 × 184 |
@@ -240,6 +241,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ducking | `ducking` | 240 × 140 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
+| Écho flottant | `echo-flottant` | 240 × 118 |
 | Echo inversé | `echo-inverse` | 240 × 118 |
 | Echo Ping-Pong | `echo-ping-pong` | 240 × 162 |
 | Écosystème (Di Scipio) | `ecosysteme` | 240 × 140 |
@@ -294,6 +296,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
 | Granular freeze | `granular-freeze` | 240 × 118 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
+| Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
@@ -370,6 +373,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Tonalité progressive | `pitch-progressif` | 240 × 118 |
 | Pixeltone | `pixeltone` | 240 × 118 |
 | Placer un son sur zones | `placer-sons-zones` | 240 × 184 |
+| Platine | `platine` | 240 × 118 |
 | Pluck Synth | `pluck-synth` | 240 × 118 |
 | Point d'écoute | `point-ecoute` | 240 × 118 |
 | Point d'écoute MIDI | `point-ecoute-midi` | 240 × 140 |
@@ -476,6 +480,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | MMS-TTS Multilingue | `tts-mms` | 240 × 118 |
 | Piper TTS | `tts-piper` | 240 × 118 |
 | SpeechT5 TTS | `tts-speecht5` | 240 × 118 |
+| Ubiquité | `ubiquite` | 240 × 118 |
+| Vague | `vague` | 240 × 118 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |

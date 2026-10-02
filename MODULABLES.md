@@ -12,16 +12,17 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 49
-- **restent à faire** : 15 composants, 32 couples composant / famille
+- **restent à faire** : 20 composants, 39 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### melange · 8
+### melange · 9
 
 - Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Mix
 - Beat Repeat / Stutter `beat-repeat` : Mix
+- Écho flottant `echo-flottant` : Mélange
 - Granular freeze `granular-freeze` : Mix
 - Réverbération hachée `reverbe-hachee` : Mix
 - Réverbération à réseau (FDN) `reverbe-reseau` : Mix
@@ -29,15 +30,27 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Ring modulator `ring-modulator` : Mix
 - Vocoder `vocoder` : Mix
 
-### temps · 7
+### temps · 9
 
+- Écho flottant `echo-flottant` : Décroissance
 - Echo inversé `echo-inverse` : Temps
 - Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
 - Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
+- Effet Haas `haas` : Retard
 - Limiteur `limiteur` : Relâchement
 - Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération velours `reverberation-velours` : Chute
+
+### espace · 7
+
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
+- Brassage `brassage` : Dispersion
+- Écho flottant `echo-flottant` : Distance
+- Granular freeze `granular-freeze` : Position
+- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
+- Ubiquité `ubiquite` : Dispersion
+- Vague `vague` : Profondeur, Ouverture
 
 ### dynamique · 4
 
@@ -45,13 +58,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Limiteur `limiteur` : Seuil, Plafond
 - Réverbération hachée `reverbe-hachee` : Seuil
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
-
-### espace · 4
-
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
-- Brassage `brassage` : Dispersion
-- Granular freeze `granular-freeze` : Position
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
 
 ### frequence · 3
 
@@ -65,14 +71,15 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Granular freeze `granular-freeze` : Pitch
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
+### niveau · 2
+
+- Créneau `creneau` : Niveau
+- Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
+
 ### retroaction · 2
 
 - Beat Repeat / Stutter `beat-repeat` : Feedback
 - Echo inversé `echo-inverse` : Feedback
-
-### niveau · 1
-
-- Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 
 ## Familles écartées en bloc
 

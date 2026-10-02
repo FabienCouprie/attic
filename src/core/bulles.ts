@@ -150,9 +150,22 @@ export function descendantsDeBulle(noeuds: readonly NoeudG[], bulleId: string): 
  * cas particulier pour une chaîne — un port d'un côté, un de l'autre — comme pour deux branches
  * parallèles, qui en montrent deux. Règle énoncée par Fabien.
  *
- * DEUX CONSÉQUENCES QU'IL FAUT CONNAÎTRE. Aucune arête traversante ne peut manquer de port, puisque
- * ce sont elles qui les créent : rien ne disparaît à l'affichage. Et une bulle qu'aucune arête ne
- * traverse n'a aucun port, ce qui est le cas d'un morceau de schéma replié à l'écart.
+ * ET LES PORTS LIBRES S'Y AJOUTENT, faute de quoi une bulle ne se branche à rien. La règle de la
+ * frontière, seule, enferme : les ports naissant des arêtes qui traversent, une bulle qu'aucune
+ * arête ne traverse n'en a aucun, donc rien à quoi tirer un câble, donc aucune arête ne la
+ * traversera jamais. Relevé par Fabien, et mesuré dans l'application : une bulle fraîchement repliée
+ * montrait zéro entrée et zéro sortie quand le composant d'à côté en montrait deux et une.
+ *
+ * EST LIBRE UN PORT QUE RIEN NE SATISFAIT AU-DEDANS : une sortie de membre qui n'alimente personne,
+ * une entrée de membre que personne n'alimente. Une sortie qui alimente un autre membre reste
+ * cachée, elle appartient au travail intérieur de la bulle.
+ *
+ * ILS VIENNENT APRÈS LES TRAVERSANTS, et ce n'est pas un détail d'esthétique : une arête enregistrée
+ * désigne un port de bulle par son RANG, et intercaler un port libre déplacerait les câbles des
+ * graphes déjà sauvegardés.
+ *
+ * UNE CONSÉQUENCE QU'IL FAUT CONNAÎTRE : aucune arête traversante ne peut manquer de port, puisque
+ * ce sont elles qui les créent en premier, et rien ne disparaît donc à l'affichage.
  *
  * LES PORTS NE SONT PAS NOMMÉS : leur couleur dit leur type, ce qui suffit là où il n'y en a qu'un ou
  * deux. Décision de Fabien.
@@ -181,10 +194,16 @@ export function portsDeBulle(
 
   const cleEntrees = new Set<string>();
   const cleSorties = new Set<string>();
+  // Ce qui est PRIS : un port qu'une arête touche, d'où qu'elle vienne. Il sert à distinguer le port
+  // libre du port occupé à l'intérieur, qui lui reste caché.
+  const prisEntrees = new Set<string>();
+  const prisSorties = new Set<string>();
   for (const a of aretes) {
     if (estSubstitution(a)) continue;
     const source = ids.has(a.source);
     const cible = ids.has(a.target);
+    if (cible) prisEntrees.add(`${a.target}#${indexPort(a.targetHandle, 0)}`);
+    if (source) prisSorties.add(`${a.source}#${indexPort(a.sourceHandle, 0)}`);
     if (!source && cible) cleEntrees.add(`${a.target}#${indexPort(a.targetHandle, 0)}`);
     if (source && !cible) cleSorties.add(`${a.source}#${indexPort(a.sourceHandle, 0)}`);
   }
@@ -194,19 +213,26 @@ export function portsDeBulle(
   const sorties: PortDef[] = [];
   const mapEntrees: PortInterne[] = [];
   const mapSorties: PortInterne[] = [];
-  for (const m of dedans) {
-    const def = getDef(m.data.ficheId);
-    if (!def) continue;
-    def.entrees.forEach((p: PortDef, i: number) => {
-      if (!cleEntrees.has(`${m.id}#${i}`)) return;
-      entrees.push({ ...anonyme(p), requis: false });
-      mapEntrees.push({ noeudInterne: m.id, portIndex: i });
-    });
-    def.sorties.forEach((p: PortDef, i: number) => {
-      if (!cleSorties.has(`${m.id}#${i}`)) return;
-      sorties.push(anonyme(p));
-      mapSorties.push({ noeudInterne: m.id, portIndex: i });
-    });
+  // Deux passes, et l'ordre compte : les traversants d'abord, pour que leur rang ne bouge pas.
+  for (const traversants of [true, false]) {
+    for (const m of dedans) {
+      const def = getDef(m.data.ficheId);
+      if (!def) continue;
+      def.entrees.forEach((p: PortDef, i: number) => {
+        const cle = `${m.id}#${i}`;
+        const garder = traversants ? cleEntrees.has(cle) : !prisEntrees.has(cle);
+        if (!garder) return;
+        entrees.push({ ...anonyme(p), requis: false });
+        mapEntrees.push({ noeudInterne: m.id, portIndex: i });
+      });
+      def.sorties.forEach((p: PortDef, i: number) => {
+        const cle = `${m.id}#${i}`;
+        const garder = traversants ? cleSorties.has(cle) : !prisSorties.has(cle);
+        if (!garder) return;
+        sorties.push(anonyme(p));
+        mapSorties.push({ noeudInterne: m.id, portIndex: i });
+      });
+    }
   }
   return { entrees, sorties, mapEntrees, mapSorties };
 }

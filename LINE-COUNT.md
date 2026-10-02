@@ -7,15 +7,15 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1186 files, 204740 lines, of which 141866 are code.**
-The table lists the 148 files of 200 code lines or more, heaviest first;
-the remaining 1038 account for 143313 lines.
+**1197 files, 206752 lines, of which 143164 are code.**
+The table lists the 149 files of 200 code lines or more, heaviest first;
+the remaining 1048 account for 144924 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1394 | 1718 | ! |
+| src/ui/atelier.css | 1397 | 1735 | ! |
 | src/ui/App.tsx | 1078 | 1438 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 754 | 1532 | ! |
 | src/ui/Inspector.tsx | 606 | 759 | ! |
@@ -24,11 +24,11 @@ the remaining 1038 account for 143313 lines.
 | src/ui/AtelierNode.tsx | 523 | 719 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 471 | 483 | ! |
+| src/plugins/index.ts | 473 | 485 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
-| src/ui/BarreOutils.tsx | 432 | 470 | ! |
+| src/ui/BarreOutils.tsx | 433 | 471 | ! |
 | src/ui/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
@@ -88,6 +88,7 @@ the remaining 1038 account for 143313 lines.
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
+| src/core/bulles.test.ts | 281 | 362 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
 | src/plugins/generateurs-sources.ts | 277 | 341 |  |
@@ -101,7 +102,6 @@ the remaining 1038 account for 143313 lines.
 | src/plugins/magenta-helpers.ts | 264 | 310 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
 | src/audio/io.ts | 257 | 380 |  |
-| src/core/bulles.test.ts | 257 | 320 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
@@ -130,6 +130,8 @@ the remaining 1038 account for 143313 lines.
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/ui/ArbreRythmiqueVue.tsx | 232 | 283 |  |
+| src/plugins/effets-cresson.ts | 230 | 313 |  |
+| src/core/bulles.ts | 229 | 423 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 226 | 280 |  |
@@ -138,7 +140,6 @@ the remaining 1038 account for 143313 lines.
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/ui/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
-| src/core/bulles.ts | 219 | 397 |  |
 | src/ui/hooks/usePersistance.ts | 219 | 309 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
 | src/audio/objets-sonores.test.ts | 217 | 262 |  |

@@ -51,6 +51,7 @@ const FAVORIS = [
   { cle: "sonniss", url: "https://gdc.sonniss.com/" },
   { cle: "freesound", url: "https://freesound.org/" },
   { cle: "openlofi", url: "https://github.com/btahir/open-lofi" },
+  { cle: "cresson", url: "https://aau.archi.fr/cresson/cressound-2025/la-boite-a-effets/" },
   { cle: "birdsounds", url: "https://www.bird-sounds.net/" },
   { cle: "cornell", url: "https://dl.allaboutbirds.org/backyardbirdsdownload-0" },
   { cle: "hawaii", url: "https://muted.io/birds-of-hawaii/" },

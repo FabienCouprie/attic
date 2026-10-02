@@ -8,7 +8,7 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 81 · fige, transposable après extraction d'un cœur par voie
+- **récipient** : 86 · fige, transposable après extraction d'un cœur par voie
 - **pur** : 178 · transposable tel quel
 
 | module | classe | marqueur |
@@ -86,6 +86,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | couleurs.ts | pur | — |
 | courbe-trace.ts | pur | — |
 | courbe.ts | pur | — |
+| creneau.ts | recipient | AudioBuffer |
 | cribles.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
 | csound-formules.ts | pur | — |
@@ -105,6 +106,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | dosage.ts | pur | — |
 | ducking.ts | pur | — |
 | ecart-niveau.ts | recipient | AudioBuffer |
+| echo-flottant.ts | recipient | AudioBuffer |
 | ecosysteme.ts | pur | — |
 | ecrans.ts | pur | — |
 | effets-balayage.ts | recipient | AudioBuffer |
@@ -231,6 +233,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | pistes-visu.ts | recipient | AudioBuffer |
 | pitch-progressif.ts | recipient | AudioBuffer |
 | pixeltone.ts | recipient | AudioBuffer |
+| platine.ts | recipient | AudioBuffer |
 | polyfill-audiobuffer.ts | recipient | AudioBuffer |
 | pulsars.ts | recipient | AudioBuffer |
 | pulsation.ts | pur | — |
@@ -291,6 +294,8 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | tore.ts | recipient | AudioBuffer |
 | tresse.ts | pur | — |
 | types-domaine.ts | pur | — |
+| ubiquite.ts | recipient | AudioBuffer |
+| vague.ts | recipient | AudioBuffer |
 | velours.ts | pur | — |
 | verovio.ts | pur | — |
 | video-extrait.ts | pur | — |

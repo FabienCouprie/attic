@@ -110,18 +110,31 @@ describe("les ports d'une bulle", () => {
 
   const avecDehors = [noeud("dehors", "source"), noeud("apres", "gain"), ...noeuds];
 
-  it("UN PORT EXISTE DÈS QU'UN MEMBRE EST RELIÉ AU DEHORS, et seulement alors", () => {
+  it("LES PORTS TRAVERSANTS VIENNENT LES PREMIERS, et les libres ensuite", () => {
+    // L'ORDRE EST CE QUI PROTÈGE LES GRAPHES ENREGISTRÉS : une arête désigne un port de bulle par son
+    // RANG, et intercaler un port libre déplacerait les câbles déjà posés.
     const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "m", "apres")];
     const p = portsDeBulle(avecDehors, aretes, "b", getDef);
-    expect(p.mapEntrees).toEqual([{ noeudInterne: "g", portIndex: 0 }]);
+    // L'entrée de `g` traverse ; la seconde entrée de `m`, que rien n'alimente, est libre.
+    expect(p.mapEntrees).toEqual([
+      { noeudInterne: "g", portIndex: 0 },
+      { noeudInterne: "m", portIndex: 1 },
+    ]);
+    // La sortie de `m` traverse ; celle de `g` alimente `m`, donc elle reste au-dedans.
     expect(p.mapSorties).toEqual([{ noeudInterne: "m", portIndex: 0 }]);
-    // L'arête interne g → m ne crée aucun port : elle ne traverse rien.
+  });
+
+  it("UNE SORTIE QUI ALIMENTE UN AUTRE MEMBRE RESTE CACHÉE, c'est le travail intérieur", () => {
+    // Sans cette règle, replier une chaîne ferait saillir chacun de ses maillons.
+    const aretes = [arete("e1", "dehors", "g"), arete("e2", "g", "m"), arete("e3", "m", "apres")];
+    const p = portsDeBulle(avecDehors, aretes, "b", getDef);
+    expect(p.mapSorties.some((s) => s.noeudInterne === "g")).toBe(false);
   });
 
   it("LES PORTS NE SONT PAS NOMMÉS : leur couleur dit leur type", () => {
     const p = portsDeBulle(avecDehors, [arete("e1", "dehors", "g")], "b", getDef);
-    expect(p.entrees.map((e) => e.nom)).toEqual([""]);
-    expect(p.entrees.map((e) => e.type)).toEqual(["audio"]);
+    expect(new Set(p.entrees.map((e) => e.nom))).toEqual(new Set([""]));
+    expect(new Set(p.entrees.map((e) => e.type))).toEqual(new Set(["audio"]));
   });
 
   it("DEUX BRANCHES PARALLÈLES MONTRENT DEUX PORTS", () => {
@@ -134,9 +147,19 @@ describe("les ports d'une bulle", () => {
     ]);
   });
 
-  it("une bulle qu'aucune arête ne traverse n'a aucun port", () => {
-    expect(portsDeBulle(avecDehors, [arete("e2", "g", "m")], "b", getDef))
-      .toEqual({ entrees: [], sorties: [], mapEntrees: [], mapSorties: [] });
+  it("UNE BULLE QU'AUCUNE ARÊTE NE TRAVERSE SE BRANCHE QUAND MÊME, et c'est le défaut réparé", () => {
+    // LE CAS QUI GARDE LA RÉPARATION. La règle de la frontière, seule, enfermait : les ports naissant
+    // des arêtes qui traversent, une bulle fraîchement repliée n'en avait aucun, donc rien à quoi
+    // tirer un câble, donc aucune arête ne la traverserait jamais. Relevé par Fabien, et mesuré dans
+    // l'application : zéro entrée et zéro sortie, quand le composant d'à côté en montrait deux et une.
+    const p = portsDeBulle(avecDehors, [arete("e2", "g", "m")], "b", getDef);
+    // L'entrée de `g` et la seconde de `m` sont libres ; la première de `m` est prise au-dedans.
+    expect(p.mapEntrees).toEqual([
+      { noeudInterne: "g", portIndex: 0 },
+      { noeudInterne: "m", portIndex: 1 },
+    ]);
+    // La sortie de `m` est libre ; celle de `g` alimente `m`.
+    expect(p.mapSorties).toEqual([{ noeudInterne: "m", portIndex: 0 }]);
   });
 
   it("AUCUNE ENTRÉE N'EST OBLIGATOIRE, sans quoi replier interdirait d'exécuter", () => {
@@ -260,7 +283,26 @@ describe("la traduction d'une connexion", () => {
     expect(c).toEqual({ source: "autre", target: "g", sourceHandle: "out:0", targetHandle: "in:0" });
   });
 
+  it("LA SORTIE D'UNE BULLE SE BRANCHE AILLEURS, sans qu'une arête la traverse d'abord", () => {
+    // LE CAS QUI GARDE LA RÉPARATION, du côté où le défaut se voyait. Une bulle fraîchement repliée
+    // n'a aucune arête qui la traverse : sa sortie est libre, et c'est par elle qu'on la relie au
+    // composant suivant. Sans les ports libres, la poignée n'existait pas et la connexion était
+    // refusée, ce qui enfermait la bulle pour de bon.
+    const seule = [noeud("apres", "gain"), noeud("b", BULLE), noeud("g", "gain", "b")];
+    const c = traduireConnexion(seule, [],
+      { source: "b", target: "apres", sourceHandle: "out:0", targetHandle: "in:0" }, getDef);
+    expect(c).toEqual({ source: "g", target: "apres", sourceHandle: "out:0", targetHandle: "in:0" });
+  });
+
+  it("ET SON ENTRÉE AUSSI, par le même chemin", () => {
+    const seule = [noeud("avant", "source"), noeud("b", BULLE), noeud("g", "gain", "b")];
+    const c = traduireConnexion(seule, [],
+      { source: "avant", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef);
+    expect(c).toEqual({ source: "avant", target: "g", sourceHandle: "out:0", targetHandle: "in:0" });
+  });
+
   it("une poignée qui ne désigne rien est REFUSÉE, non devinée", () => {
+    // Une bulle VIDE n'a toujours aucun port : elle n'a aucun membre dont exposer les ports libres.
     const vide = [noeud("dehors", "source"), noeud("b", BULLE)];
     expect(traduireConnexion(vide, [],
       { source: "dehors", target: "b", sourceHandle: "out:0", targetHandle: "in:0" }, getDef)).toBeNull();

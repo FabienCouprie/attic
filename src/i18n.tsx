@@ -452,6 +452,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "favs.sonniss": { fr: "Sonniss GDC (7.5 GB)", en: "Sonniss GDC (7.5 GB)" },
   "favs.freesound": { fr: "Freesound", en: "Freesound" },
   "favs.openlofi": { fr: "Open Lofi (CC0)", en: "Open Lofi (CC0)" },
+  "favs.cresson": { fr: "CRESSON (lexique des effets sonores)", en: "CRESSON (lexicon of sonic effects)" },
   "favs.birdsounds": { fr: "Bird Sounds (602 espèces)", en: "Bird Sounds (602 species)" },
   "favs.cornell": { fr: "Cornell Lab (oiseaux)", en: "Cornell Lab (birds)" },
   "favs.hawaii": { fr: "Oiseaux d'Hawaï (CC0)", en: "Birds of Hawaii (CC0)" },
