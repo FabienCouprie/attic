@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**463 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**469 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -221,6 +221,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
 | De-esser | `de-esser` | 240 × 140 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
+| Décalage des bandes | `decalage-bandes` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
 | Déclarer la disposition | `declarer-disposition` | 240 × 118 |
 | Décodeur ambisonique | `decodeur-ambisonique` | 240 × 118 |
@@ -270,6 +271,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Filtre de séquence | `filtre-sequence` | 240 × 162 |
 | Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
+| Flou du spectrogramme | `flou-spectrogramme` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
 | Fondamentale manquante | `fondamentale-manquante` | 240 × 140 |
 | Fondu | `fondu` | 240 × 118 |
@@ -302,6 +304,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
+| Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
 | Lecture inversée | `inverseur-audio` | 240 × 118 |
 | Inversion de polarité | `inversion-polarite` | 240 × 118 |
@@ -439,6 +442,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Boucle | `simple-boucle` | 240 × 118 |
 | Sinusoïdes + bruit (SMS) | `sms-sinusoides-bruit` | 240 × 162 |
 | Chercher sous contraintes | `solveur-contraintes` | 240 × 162 |
+| Son → spectrogramme | `son-spectrogramme` | 240 × 118 |
 | SoundTouch Vitesse | `soundtouch-rate` | 240 × 118 |
 | SoundTouch Tempo | `soundtouch-tempo` | 240 × 118 |
 | SoundTouch Tonalité | `soundtouch-tonalite` | 240 × 118 |
@@ -446,6 +450,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Spatialiseur | `spatialiseur` | 240 × 184 |
 | Spectre visible | `spectre-visible` | 240 × 140 |
 | Spectrogramme fractal | `spectrogramme-fractal` | 240 × 140 |
+| Spectrogramme → image | `spectrogramme-image` | 240 × 118 |
+| Spectrogramme → son | `spectrogramme-son` | 240 × 118 |
 | Spirale logarithmique | `spirale-logarithmique` | 240 × 140 |
 | Spirale des quintes | `spirale-quintes` | 240 × 140 |
 | Spirale spatiale | `spirale-spatiale` | 240 × 118 |

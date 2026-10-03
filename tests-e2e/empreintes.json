@@ -28,9 +28,10 @@
       "empreintes": [
         "0.268589638/0.526395142",
         "0.026862897/0.346627086",
+        null,
         null
       ],
-      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n« durée »"
+      "message": "200 atomes · 98.9 % expliqués · 19.6 dB\n200 notes · « durée »"
     },
     "texture-statistique": {
       "empreintes": [
@@ -59,6 +60,13 @@
       ],
       "message": "300 trames · 99 % voisé · médiane 220.0 Hz"
     },
+    "fiche-technique": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "3 s · stéréo · −9,18 LUFS · −5,53 dBTP · r 0,15 · 220,01 Hz (A3)"
+    },
     "harmonizer": {
       "empreintes": [
         "0.292976511/0.686969876"
@@ -71,6 +79,173 @@
       ],
       "message": "Voice Changer · Chipmunk"
     },
+    "glissando-tonalite": {
+      "empreintes": [
+        "0.228961724/0.667898357"
+      ],
+      "message": null
+    },
+    "changement-tonalite": {
+      "empreintes": [
+        "0.269161387/0.538834214"
+      ],
+      "message": null
+    },
+    "banque-clavier": {
+      "empreintes": [
+        null,
+        "0.164482802/0.334578305"
+      ],
+      "message": "18 zones · ±2 demi-tons · racine 57 (220.0 Hz)"
+    },
+    "separation-harmonique-percussive": {
+      "empreintes": [
+        "0.269156494/0.516615927",
+        "0.010472727/0.179493904"
+      ],
+      "message": "0 % percussif · 100 % harmonique"
+    },
+    "vitesse-variable": {
+      "empreintes": [
+        "0.269828269/0.540759683"
+      ],
+      "message": "3.00 s → 6.00 s"
+    },
+    "ondelettes": {
+      "empreintes": [
+        "0.265471180/0.505983710",
+        "0.020916331/0.062089860",
+        null
+      ],
+      "message": "94.9 % effacés · 6 étages\n« durée »"
+    },
+    "formule-spectrale": {
+      "empreintes": [
+        "0.124640601/0.150000006"
+      ],
+      "message": "Formule spectrale appliquée"
+    },
+    "peignes-accordes": {
+      "empreintes": [
+        "0.201172813/0.528780282"
+      ],
+      "message": "3 peignes"
+    },
+    "etirement-spectre": {
+      "empreintes": [
+        "0.271251312/0.528780282"
+      ],
+      "message": null
+    },
+    "arpege-spectral": {
+      "empreintes": [
+        "0.047622283/0.334945530"
+      ],
+      "message": null
+    },
+    "crible-harmonique": {
+      "empreintes": [
+        "0.267378407/0.528780282"
+      ],
+      "message": null
+    },
+    "melange-fenetres": {
+      "empreintes": [
+        "0.209869451/0.468717963"
+      ],
+      "message": null
+    },
+    "tracage-spectral": {
+      "empreintes": [
+        "0.269220562/0.505254507"
+      ],
+      "message": null
+    },
+    "flou-spectral": {
+      "empreintes": [
+        "0.268095264/0.533209562"
+      ],
+      "message": null
+    },
+    "gel-spectral": {
+      "empreintes": [
+        "0.246562380/0.695852816"
+      ],
+      "message": null
+    },
+    "glissando-interieur": {
+      "empreintes": [
+        "0.016100059/0.059272282"
+      ],
+      "message": null
+    },
+    "gout-du-son": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "sucré 61 % · amer 28 %"
+    },
+    "ecosysteme": {
+      "empreintes": [
+        "0.115402765/0.944496632",
+        null
+      ],
+      "message": "balancier · -19.5 dB · 78/s\n« durée »"
+    },
+    "reverberation-velours": {
+      "empreintes": [
+        "0.187605411/0.435002595",
+        "0.039676359/1.000000000"
+      ],
+      "message": "queue de 2.0 s · 1500 impulsions/s · 35 % mouillé"
+    },
+    "reverbe-hachee": {
+      "empreintes": [
+        "0.237460386/0.620308995"
+      ],
+      "message": "traînée 0.21 s → 0.21 s"
+    },
+    "glissando-de-gamme": {
+      "empreintes": [
+        "0.135766883/0.475199193",
+        null
+      ],
+      "message": "Do Majeur → Do Maqam Rast · 7 voix · 5 tenue(s) · 2 hors du clavier · 9.0 s"
+    },
+    "glissando-harmonique": {
+      "empreintes": [
+        "0.186411298/0.585626423",
+        null
+      ],
+      "message": "Do → Do · 3 voix · 6.0 s"
+    },
+    "battements-binauraux": {
+      "empreintes": [
+        "0.422492603/0.600000024",
+        null
+      ],
+      "message": "217,0 et 223,0 Hz · battement 6,0 Hz · 30,00 s"
+    },
+    "spirale-logarithmique": {
+      "empreintes": [
+        "0.306122350/0.665000021",
+        null
+      ],
+      "message": "rapport 1.618 · 9 partiels · auto-similarité 0.000 ‰"
+    },
+    "son-spectrogramme": {
+      "empreintes": [
+        "spectrogramme 46.927223887/696.818054199 · 1×301×512"
+      ],
+      "message": "301 × 512 · 3,00 s"
+    },
+    "spectrogramme-son": {
+      "empreintes": [
+        "0.387262391/0.949999988"
+      ],
+      "message": "3,00 s · 2 tours · graine 7"
+    },
     "griffin-lim": {
       "empreintes": [
         "0.210755351/0.528780282"
@@ -82,7 +257,7 @@
         "0.046797511/0.182511583",
         null
       ],
-      "message": "sucré 61 % → 90 %"
+      "message": "sucré 100 % · distance 0,48 → 0,20"
     },
     "octaver": {
       "empreintes": [
@@ -90,17 +265,11 @@
       ],
       "message": null
     },
-    "changement-tonalite": {
-      "empreintes": [
-        "0.269161387/0.538834214"
-      ],
-      "message": null
-    },
     "paulstretch": {
       "empreintes": [
         "0.203754738/0.707945764"
       ],
-      "message": null
+      "message": "24,1 s · 8,0 ×"
     },
     "de-esser": {
       "empreintes": [
@@ -204,12 +373,6 @@
         "0.269858425/0.574913681"
       ],
       "message": "+100 Hz · 100 % de décalé"
-    },
-    "glissando-interieur": {
-      "empreintes": [
-        "0.016100059/0.059272282"
-      ],
-      "message": null
     },
     "transfert-enveloppe": {
       "empreintes": [

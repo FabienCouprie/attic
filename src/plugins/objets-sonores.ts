@@ -13,7 +13,7 @@ import {
   decouperEnObjets, decrireZones, monter, reordonnerObjets,
   type CritereDecoupage, type CritereTri, type ObjetSonore, type Plan,
 } from "../audio/objets-sonores";
-import { morceauxDepuisParametres, normaliserMorceau, type Morceau } from "../audio/montage-morceaux";
+import { morceauxCompletes, normaliserMorceau, type Morceau } from "../audio/montage-morceaux";
 
 const en = () => langueCourante() === "en";
 const PISTES = 16;
@@ -155,10 +155,17 @@ export const fiches: FicheAudio[] = ([
       // enregistré avant les morceaux n'en porte pas : ils se déduisent alors de ses réglages, un
       // par piste branchée et le son entier, si bien qu'il sonne exactement comme avant. Rien n'est
       // réécrit tant qu'on ne touche à rien. Voir `audio/montage-morceaux.ts`.
-      const poses = (ctx.noeud.data as { morceaux?: Morceau[] }).morceaux;
-      const morceaux = (Array.isArray(poses) && poses.length > 0
-        ? poses
-        : morceauxDepuisParametres(pistes.map((p) => p.piste), (ctx.noeud.data as any).parametres ?? {}))
+      const donnees = ctx.noeud.data as { morceaux?: Morceau[]; pistesVidees?: number[] };
+      const poses = donnees.morceaux;
+      const videes = donnees.pistesVidees;
+      const morceaux = morceauxCompletes(
+        Array.isArray(poses) ? poses : [],
+        pistes.map((p) => p.piste),
+        (ctx.noeud.data as any).parametres ?? {},
+        // UNE PISTE VIDÉE RESTE VIDE : sans cette liste, le rendu lui redonnerait le morceau que la
+        // ligne de temps vient de lui retirer, et l'on entendrait ce qu'on ne voit plus.
+        Array.isArray(videes) ? videes : [],
+      )
         // UN MORCEAU DONT LE PORT N'EST PLUS BRANCHÉ NE SONNE PAS, et ce n'est pas une faute : on
         // débranche un câble pour écouter sans lui, et les morceaux doivent attendre son retour
         // plutôt que de disparaître. Ils restent dans les données du nœud, seule leur exécution est

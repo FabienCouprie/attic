@@ -7,13 +7,16 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi } from "../audio/midi";
-import { changerTonalite } from "../audio/effets-spectral";
-import { separerStn } from "../audio/stn";
 import { hauteurMediane, suivreHauteur } from "../audio/hauteur";
 import {
-  NOTE_DO8, NOTE_LA0, appliquerPanoramique, choisirZone, construireBanque, ecartDeZone, planZones,
+  NOTE_DO8, NOTE_LA0, appliquerPanoramique, choisirZone, ecartDeZone, planZones,
   rendreNotes, type Banque, type NoteJouee, type Zone,
 } from "../audio/clavier-banque";
+import {
+  preparerBanque, zoneDuLot,
+  type MethodeBanque, type OptionsLotBanque, type PrepareBanque, type ZoneBrute,
+} from "../audio/clavier-banque-lot";
+import { parLot } from "./hors-lot";
 
 /** La note MIDI la plus proche d'une fréquence. */
 const noteDepuisHertz = (hz: number): number =>
@@ -100,50 +103,39 @@ export const fiches: FicheAudio[] = ([
       const noteHaute = Math.max(noteBasse + 1, Math.round(ctx.paramNombre("Note haute", NOTE_DO8)));
       const methode = ctx.paramTexte("Transposition", "duree");
 
-      // Le transposeur, selon la méthode. « Attaque préservée » décompose UNE FOIS le son source et
-      // ne transpose ensuite que les sinus et le bruit : les transitoires sont remis tels quels.
-      let transposer: (a: AudioBuffer, d: number) => AudioBuffer;
-      if (methode === "bande") {
-        transposer = (a, d) => {
-          const ratio = Math.pow(2, d / 12);
-          const n = Math.max(1, Math.round(a.length / ratio));
-          const out = new AudioBuffer({ numberOfChannels: a.numberOfChannels, length: n, sampleRate: a.sampleRate });
-          for (let c = 0; c < a.numberOfChannels; c++) {
-            const src = a.getChannelData(c), dst = out.getChannelData(c);
-            for (let i = 0; i < n; i++) {
-              const p = i * ratio, k = Math.floor(p), f = p - k;
-              dst[i] = (src[k] ?? 0) * (1 - f) + (src[k + 1] ?? src[k] ?? 0) * f;
-            }
-          }
-          return out;
-        };
-      } else if (methode === "attaque") {
-        const parties = Array.from({ length: entree.numberOfChannels }, (_, c) =>
-          separerStn(entree.getChannelData(c)));
-        const tenu = depuisCanaux(parties.map((p) => Float32Array.from(p.sinus, (v, i) => v + p.bruit[i])), sr);
-        transposer = (_a, d) => {
-          if (d === 0) return entree;
-          const decale = changerTonalite(tenu, d);
-          const out = new AudioBuffer({ numberOfChannels: entree.numberOfChannels, length: entree.length, sampleRate: sr });
-          for (let c = 0; c < entree.numberOfChannels; c++) {
-            const dst = out.getChannelData(c);
-            const src = decale.getChannelData(Math.min(c, decale.numberOfChannels - 1));
-            const tr = parties[c].transitoires;
-            for (let i = 0; i < dst.length; i++) dst[i] = (src[i] ?? 0) + tr[i];
-          }
-          return out;
-        };
-      } else {
-        transposer = (a, d) => (d === 0 ? a : changerTonalite(a, d));
-      }
-
-      const banque: Banque = construireBanque(entree, {
-        racineSource: racine, noteBasse, noteHaute, largeur, transposer,
+      // LE CALCUL SORT DU FIL DE L'INTERFACE, ET IL SE RÉPARTIT. Mesuré avant : 14 390
+      // millisecondes sur trois secondes de son, sans qu'un seul message passe, le plus long gel de
+      // tout le catalogue. Ce composant ne découpe pas son travail par canal mais par RACINE, et le
+      // socle par canal n'y voyait donc qu'une tâche ; `parLot` en voit dix-neuf, indépendantes, et
+      // les fait tourner de front. La préparation — la décomposition que demande « attaque
+      // préservée » — a lieu une fois par ouvrier et non une fois par zone.
+      const reglages: OptionsLotBanque = {
+        voies: Array.from({ length: entree.numberOfChannels }, (_, c) => entree.getChannelData(c)),
+        frequence: sr,
+        methode: (methode === "bande" || methode === "attaque" ? methode : "duree") as MethodeBanque,
+        racineSource: racine, noteBasse, noteHaute, largeur,
         suiviTouche: ctx.paramNombre("Suivi de touche", 50) / 100,
         boucle: ctx.paramTexte("Boucle de maintien", "oui") !== "non",
         boucleDebut: ctx.paramNombre("Début de boucle", 50) / 100,
         boucleLongueur: ctx.paramNombre("Longueur de boucle", 2),
+      };
+      const plan = planZones(noteBasse, noteHaute, largeur, racine);
+      const brutes = await parLot<OptionsLotBanque, PrepareBanque, ZoneBrute>(plan.length, reglages, {
+        creerWorker: () => new Worker(new URL("../workers/banque-worker.ts", import.meta.url), { type: "module" }),
+        preparer: preparerBanque,
+        calcul: zoneDuLot,
+        surProgres: (faits, total) => ctx.onProgress?.(traduire("msg.banque.zone", String(faits), String(total))),
       });
+      const banque: Banque = {
+        zones: brutes.map((z) => {
+          const audio = new AudioBuffer({
+            numberOfChannels: z.voies.length, length: Math.max(1, z.voies[0].length), sampleRate: sr,
+          });
+          for (let c = 0; c < z.voies.length; c++) audio.copyToChannel(new Float32Array(z.voies[c]), c);
+          return { racine: z.racine, basse: z.basse, haute: z.haute, audio, ...(z.boucle ? { boucle: z.boucle } : {}) };
+        }),
+        racineSource: racine, largeur, noteBasse, noteHaute,
+      };
 
       // L'aperçu : la racine de chaque zone, l'une après l'autre. De quoi ENTENDRE la banque sans
       // brancher un clavier, et voir si une zone sonne autrement que ses voisines.

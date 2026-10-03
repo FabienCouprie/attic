@@ -191,6 +191,44 @@ export function convoluer(x: Float32Array, h: Float32Array): Float32Array {
   return Float32Array.from(xr.subarray(0, n));
 }
 
+/** Tout ce qu'une voie de réverbération demande, en un seul objet sérialisable. */
+export interface OptionsVoieVelours extends OptionsVelours {
+  /** Part de son réverbéré dans la sortie, entre 0 et 1. */
+  melange: number;
+}
+
+/** Ce qu'une voie rend : le son mélangé, et la réponse qui l'a produit. */
+export interface VoieVelours {
+  melangee: Float32Array;
+  reponse: Float32Array;
+}
+
+/**
+ * Une voie réverbérée, de sa réponse à son mélange.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. Relevé avant, sur trois
+ * secondes de son : 203 millisecondes, sans qu'un seul message passe. `AudioBuffer` n'y servait que
+ * de récipient — tout le calcul était déjà sur des tableaux.
+ *
+ * LA GRAINE SE DÉRIVE DU RANG DU CANAL, et c'est à cela que sert l'indice que le socle passe. Les
+ * deux côtés décrivent alors la même salle sans être la même queue, ce qui donne l'ampleur d'une
+ * réverbération stéréo sans aucun élargissement artificiel. Sans cet indice, les deux canaux
+ * auraient rendu exactement la même queue.
+ */
+export function velourVoie(sec: Float32Array, o: OptionsVoieVelours, canal: number): VoieVelours {
+  const reponse = reponseVelours({ ...o, graine: (o.graine ?? 1) + canal * 977 });
+  const mouille = convoluer(sec, reponse);
+  // Le niveau d'une convolution dépend de la longueur de la queue : on le recale sur le son
+  // d'entrée, faute de quoi allonger la réverbération monterait le volume.
+  let cs = 0, cm = 0;
+  for (let i = 0; i < sec.length; i++) cs = Math.max(cs, Math.abs(sec[i]));
+  for (let i = 0; i < mouille.length; i++) cm = Math.max(cm, Math.abs(mouille[i]));
+  const g = cm > 1e-9 ? cs / cm : 0;
+  const melangee = new Float32Array(sec.length);
+  for (let i = 0; i < sec.length; i++) melangee[i] = sec[i] * (1 - o.melange) + mouille[i] * g * o.melange;
+  return { melangee, reponse };
+}
+
 /**
  * La courbe de décroissance d'énergie, mesurée sur une réponse.
  *

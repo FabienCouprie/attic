@@ -128,6 +128,11 @@ export function effet(
       if (hors) {
         const reglages: Record<string, number> = {};
         hors.cles.forEach((cle, i) => { reglages[cle] = args[i]; });
+        // LA FRÉQUENCE D'ÉCHANTILLONNAGE VOYAGE TOUJOURS, sous `sr`. Un tableau de nombres ne la
+        // porte pas, et un calcul qui en a besoin — tout ce qui compte en secondes plutôt qu'en
+        // échantillons — ne pouvait donc pas employer ce socle du tout. Un calcul qui n'en a pas
+        // besoin reçoit une clé de plus et l'ignore.
+        reglages.sr = audio.sampleRate;
         const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
         const parVoie = await parCanal<Record<string, number>, Float32Array>(voies, reglages, {
           creerWorker: hors.creerWorker, calcul: hors.voix,
@@ -135,7 +140,11 @@ export function effet(
         const out = new AudioBuffer({
           numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate,
         });
-        for (let c = 0; c < audio.numberOfChannels; c++) out.getChannelData(c).set(parVoie[c]);
+        // LA VOIE RENDUE PEUT ÊTRE PLUS LONGUE QUE LE TAMPON : le glissando recolle ses segments et
+        // dépasse d'un reste de recouvrement, qu'il rogne. `set` refuserait tout net.
+        for (let c = 0; c < audio.numberOfChannels; c++) {
+          out.getChannelData(c).set(parVoie[c].subarray(0, audio.length));
+        }
         return { valeurs: [out] };
       }
       return { valeurs: [await fn(audio, ...args)] };

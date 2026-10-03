@@ -32,6 +32,9 @@ const SIGLES = new Set([
   "DIN",
   // Spatialisation : l'ordre des canaux ambisoniques, et l'Union internationale des télécommunications.
   "ACN", "UIT", "ITU",
+  // HTK : le « Hidden Markov Model Toolkit » de Cambridge, dont la formule de l'échelle des mels
+  // porte le nom. Une notice qui dit quelle échelle elle emploie doit pouvoir la nommer.
+  "HTK",
   // Groupe de recherches musicales (Schaeffer, 1958), dont les GRM Tools.
   "GRM",
   // Apprentissage automatique

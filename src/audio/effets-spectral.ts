@@ -46,74 +46,75 @@ export function changerTonalite(buffer: AudioBuffer, demiTons: number): AudioBuf
 // statique par segment (interpolation linéaire en demi-tons), puis recolle les
 // segments par overlap-add avec fenêtre de Hann et normalisation d'enveloppe.
 // Si les deux hauteurs sont identiques, on retombe sur un pitch-shift statique.
-export function glissandoTonalite(buffer: AudioBuffer, debutDemiTons: number, finDemiTons: number, segmentSec = 0.2): AudioBuffer {
-  if (Math.abs(finDemiTons - debutDemiTons) < 1e-6) {
-    return changerTonalite(buffer, debutDemiTons);
-  }
+/** Ce qu'un glissando demande, une fois sorti de l'`AudioBuffer` qui le portait. */
+export interface OptionsGlissando {
+  debut: number;
+  fin: number;
+  /** La fréquence d'échantillonnage : un tableau de nombres ne la porte pas. */
+  sr: number;
+  segmentSec?: number;
+}
 
-  const sr = buffer.sampleRate;
-  const len = buffer.length;
-  const segmentLen = Math.max(4096, Math.round(segmentSec * sr));
+/**
+ * Le glissando de tonalité d'UNE voie, sans `AudioBuffer`.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT PUISSE QUITTER LE FIL DE L'INTERFACE. `AudioBuffer` n'y
+ * servait que de récipient — des canaux, une longueur, une fréquence d'échantillonnage — et c'est
+ * lui seul qui retenait le calcul dans le fil. **Mesuré sur trois secondes de son : 615
+ * millisecondes, et pas un seul message pendant ce temps**, donc un gel total, le plus long de tous
+ * les effets relevés.
+ *
+ * LES OPÉRATIONS SONT CELLES D'AVANT, SANS CHANGEMENT : découpage en segments, transposition
+ * statique de chacun, recollement par fenêtre de Hann et division par l'enveloppe de recouvrement.
+ */
+export function glissandoTonaliteVoie(x: Float32Array, o: OptionsGlissando): Float32Array {
+  if (Math.abs(o.fin - o.debut) < 1e-6) return changerTonaliteVoie(x, o.debut);
 
-  // Pour les sons très courts, on utilise un glissando par lecture temporelle
-  // variable (normalisé sur la durée) : le pitch moyen reste proche de l'original.
-  if (len <= segmentLen) {
-    return glissandoTonaliteCourt(buffer, debutDemiTons, finDemiTons);
-  }
+  const len = x.length;
+  const segmentLen = Math.max(4096, Math.round((o.segmentSec ?? 0.2) * o.sr));
+  if (len <= segmentLen) return glissandoCourtVoie(x, o.debut, o.fin);
 
   const N = Math.max(2, Math.min(50, Math.round(len / (segmentLen / 2)) + 1));
   const overlap = Math.floor((len - segmentLen) / (N - 1));
   const outputLen = (N - 1) * overlap + segmentLen;
 
-  const out = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: outputLen, sampleRate: sr });
-  const enveloppe = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: outputLen, sampleRate: sr });
+  const out = new Float32Array(outputLen);
+  const enveloppe = new Float32Array(outputLen);
   const fenetre = creerFenetreHann(segmentLen);
+  const segment = new Float32Array(segmentLen);
 
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1);
-    const semi = debutDemiTons + (finDemiTons - debutDemiTons) * t;
+    const semi = o.debut + (o.fin - o.debut) * t;
     const startSrc = i * overlap;
-
-    const segment = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: segmentLen, sampleRate: sr });
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const src = buffer.getChannelData(c);
-      const dst = segment.getChannelData(c);
-      for (let j = 0; j < segmentLen; j++) {
-        const idx = startSrc + j;
-        dst[j] = idx >= 0 && idx < src.length ? src[idx] : 0;
-      }
+    for (let j = 0; j < segmentLen; j++) {
+      const idx = startSrc + j;
+      segment[j] = idx >= 0 && idx < len ? x[idx] : 0;
     }
-
-    const transposed = changerTonalite(segment, semi);
+    const transpose = changerTonaliteVoie(segment, semi);
     const startDst = i * overlap;
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      const srcT = transposed.getChannelData(c);
-      const dst = out.getChannelData(c);
-      const env = enveloppe.getChannelData(c);
-      for (let j = 0; j < segmentLen; j++) {
-        const pos = startDst + j;
-        if (pos >= outputLen) break;
-        const w = fenetre[j];
-        dst[pos] += srcT[j] * w;
-        env[pos] += w;
-      }
+    for (let j = 0; j < segmentLen; j++) {
+      const pos = startDst + j;
+      if (pos >= outputLen) break;
+      const w = fenetre[j];
+      out[pos] += transpose[j] * w;
+      enveloppe[pos] += w;
     }
   }
 
-  // Normalisation par l'enveloppe de recouvrement.
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const dst = out.getChannelData(c);
-    const env = enveloppe.getChannelData(c);
-    for (let i = 0; i < outputLen; i++) {
-      dst[i] = env[i] > 1e-6 ? dst[i] / env[i] : 0;
-    }
-  }
-
+  for (let i = 0; i < outputLen; i++) out[i] = enveloppe[i] > 1e-6 ? out[i] / enveloppe[i] : 0;
   // Rallonger à la durée originale si le recouvrement a raccourci légèrement.
-  if (outputLen === len) return out;
-  const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: len, sampleRate: sr });
+  return outputLen === len ? out : out.subarray(0, len);
+}
+
+export function glissandoTonalite(buffer: AudioBuffer, debutDemiTons: number, finDemiTons: number, segmentSec = 0.2): AudioBuffer {
+  const sr = buffer.sampleRate;
+  const resultat = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr,
+  });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    resultat.copyToChannel(out.getChannelData(c).subarray(0, len), c);
+    const voie = glissandoTonaliteVoie(buffer.getChannelData(c), { debut: debutDemiTons, fin: finDemiTons, sr, segmentSec });
+    resultat.getChannelData(c).set(voie.subarray(0, buffer.length));
   }
   return resultat;
 }
@@ -121,10 +122,9 @@ export function glissandoTonalite(buffer: AudioBuffer, debutDemiTons: number, fi
 // Fallback pour les sons plus courts qu'une fenêtre : lecture temporelle variable
 // normalisée sur la durée originale. La trajectoire de pitch est exacte en forme,
 // la hauteur moyenne est ramenée autour de l'original pour conserver la durée.
-function glissandoTonaliteCourt(buffer: AudioBuffer, debutDemiTons: number, finDemiTons: number): AudioBuffer {
-  const sr = buffer.sampleRate;
-  const len = buffer.length;
-  const out = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: len, sampleRate: sr });
+function glissandoCourtVoie(src: Float32Array, debutDemiTons: number, finDemiTons: number): Float32Array {
+  const len = src.length;
+  const dst = new Float32Array(len);
 
   const a = debutDemiTons;
   const b = finDemiTons - debutDemiTons;
@@ -133,30 +133,26 @@ function glissandoTonaliteCourt(buffer: AudioBuffer, debutDemiTons: number, finD
   const R1 = (A * (Math.exp(k) - 1)) / k;
   const invR1 = 1 / R1;
 
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c);
-    const dst = out.getChannelData(c);
-    for (let i = 0; i < len; i++) {
-      const t = i / len;
-      const R = (A * (Math.exp(k * t) - 1)) / k;
-      const pos = len * R * invR1;
-      const idx = Math.floor(pos);
-      const frac = pos - idx;
-      const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
-      const p1 = idx < src.length ? src[idx] : 0;
-      const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
-      const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
-      const t2 = frac * frac;
-      const t3 = t2 * frac;
-      dst[i] =
-        p1
-        + 0.5 * (p2 - p0) * frac
-        + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
-        + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
-    }
+  for (let i = 0; i < len; i++) {
+    const t = i / len;
+    const R = (A * (Math.exp(k * t) - 1)) / k;
+    const pos = len * R * invR1;
+    const idx = Math.floor(pos);
+    const frac = pos - idx;
+    const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
+    const p1 = idx < src.length ? src[idx] : 0;
+    const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
+    const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
+    const t2 = frac * frac;
+    const t3 = t2 * frac;
+    dst[i] =
+      p1
+      + 0.5 * (p2 - p0) * frac
+      + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
+      + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
   }
 
-  return out;
+  return dst;
 }
 
 

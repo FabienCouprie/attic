@@ -8,7 +8,8 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { ODEURS, TIMBRES, odeurParId, pointDepuisParfum } from "../audio/parfum";
 import { dbDepuisIntensite, hertzDepuisHauteur, motifDepuisPoint, nomDeNote, octetsMidi, rendreAuRegistre, viserNiveau } from "../audio/motif-crossmodal";
-import { mesurer, profil } from "../audio/gout";
+import { profil } from "../audio/gout";
+import { mesurerGoutHorsFil } from "./gout-hors-fil";
 import { rendreSequence } from "../audio/midi-sequence";
 import { creerAleatoire } from "../core/hasard";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI } from "./soundfontGlobal";
@@ -92,7 +93,7 @@ export const fiches: FicheAudio[] = ([
       const octets = octetsMidi(motif.notes, motif.tempo, motif.programme);
       const audio = viserNiveau(brut, dbDepuisIntensite(cible.intensite));
 
-      const mesure = mesurer(audio);
+      const mesure = await mesurerGoutHorsFil(audio);
       const parts = profil(mesure.dimensions);
       const profilGout = parts.map((p) => ({ gout: p.gout, part: p.part }));
 

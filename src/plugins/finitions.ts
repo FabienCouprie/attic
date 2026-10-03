@@ -9,7 +9,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   reverberationHachee, shimmerVoie,
-  type OptionsVoieShimmer, type ResultatShimmer,
+  type OptionsHachee, type OptionsVoieShimmer, type ResultatHachee, type ResultatShimmer,
 } from "../audio/reverbes-etendues";
 import { parCanal } from "./hors-fil";
 import { appliquerRognage, planRognage } from "../audio/silences";
@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const o = {
+      const o: OptionsHachee = {
         decroissanceSec: ctx.paramNombre("Décroissance", 1.5),
         maintienSec: ctx.paramNombre("Maintien", 0.2),
         chuteSec: ctx.paramNombre("Chute", 0.01),
@@ -59,10 +59,16 @@ export const fiches: FicheAudio[] = ([
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,
       };
+      const voies = Array.from({ length: e.numberOfChannels }, (_, c) => e.getChannelData(c));
+      const rendus = await parCanal<OptionsHachee, ResultatHachee>(voies, o, {
+        creerWorker: () => new Worker(new URL("../workers/hachee-worker.ts", import.meta.url), { type: "module" }),
+        calcul: reverberationHachee,
+      });
       // La sortie est plus longue que l'entrée : la porte se ferme après la dernière frappe.
-      const rendus = Array.from({ length: e.numberOfChannels }, (_, c) => reverberationHachee(e.getChannelData(c), o));
       const out = new AudioBuffer({ numberOfChannels: e.numberOfChannels, length: rendus[0].audio.length, sampleRate: e.sampleRate });
-      rendus.forEach((r, c) => out.getChannelData(c).set(r.audio));
+      // `copyToChannel` et non `getChannelData().set` : un `Float32Array` revenu d'un ouvrier n'est
+      // pas celui du tampon, et une plate-forme où `getChannelData` rend une copie perdrait l'écriture.
+      rendus.forEach((r, c) => out.copyToChannel(new Float32Array(r.audio), c));
       const premier = rendus[0];
       return {
         valeurs: [out],

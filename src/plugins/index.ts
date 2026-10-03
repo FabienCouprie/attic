@@ -110,6 +110,8 @@ import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
 import { fiches as f_texte_image } from "./texte-image";
+import { fiches as f_spectrogramme_image } from "./spectrogramme-image";
+import { fiches as f_spectrogramme_operations } from "./spectrogramme-operations";
 import { fiches as f_legende_image } from "./legende-image";
 import { fiches as f_algebre_musicale } from "./algebre-musicale";
 import { fiches as f_coordonnees_sur_carte } from "./coordonnees-sur-carte";
@@ -351,6 +353,8 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_illusion_octave,
   ...f_battements_binauraux,
   ...f_effets_cresson,
+  ...f_spectrogramme_image,
+  ...f_spectrogramme_operations,
   ...f_quiz,
   ...f_parcours,
   ...f_ficheTechnique,

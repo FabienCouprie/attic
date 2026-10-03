@@ -6,6 +6,10 @@
 // aussitôt ce que la régulation faisait — le système suit le volume du monde au lieu de tenir le
 // sien. Un nœud qui cacherait cette pièce demanderait qu'on le croie sur parole.
 //
+// **LA BOUCLE NE TOURNE PAS DANS LE FIL DE L'INTERFACE.** Relevé avant, sur trois secondes de monde
+// et quinze secondes de sortie : 228 millisecondes, et pas un seul message passé pendant ce temps.
+// Le coût ne vient pas de l'entrée mais de la DURÉE DEMANDÉE, réglable jusqu'à deux minutes.
+//
 // POURQUOI LE JOURNAL EST LA MOITIÉ DU NŒUD, comme le livre d'écrans de Xenakis. Ce que le système
 // fait ne s'entend pas toujours : un système qui se tient sans peine et un système à bout de
 // forces sonnent au même volume, puisque c'est précisément ce que l'homéostat leur impose. Ce qui
@@ -14,7 +18,10 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { nomRegime, tracer, vivre } from "../audio/ecosysteme";
+import {
+  nomRegime, tracer, vivreVoie, type OptionsEcosysteme, type Resultat,
+} from "../audio/ecosysteme";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -64,7 +71,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], message: en ? "No input." : "Aucune entrée." };
       }
       const frequence = audio.sampleRate;
-      const options = {
+      const options: OptionsEcosysteme = {
         frequence,
         duree: Math.max(0.1, ctx.paramNombre("Durée", 15)),
         couplage: Math.max(0, ctx.paramNombre("Couplage", 0.8)),
@@ -77,24 +84,22 @@ export const fiches: FicheAudio[] = ([
       };
 
       const debut = performance.now();
-      const sorties = [];
-      let premier: ReturnType<typeof vivre> | null = null;
-      for (let c = 0; c < audio.numberOfChannels; c++) {
-        // Chaque canal est un écosystème à part entière, et sa graine en est décalée : deux canaux
-        // qui partageraient la leur rendraient exactement le même son, donc une mono déguisée.
-        const r = vivre(audio.getChannelData(c), { ...options, graine: options.graine + c * 101 });
-        sorties.push(r.son);
-        if (c === 0) premier = r;
-      }
+      const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
+      const parVoie = await parCanal<OptionsEcosysteme, Resultat>(voies, options, {
+        creerWorker: () => new Worker(new URL("../workers/ecosysteme-worker.ts", import.meta.url), { type: "module" }),
+        calcul: vivreVoie,
+      });
+      // « Calculé en » compte désormais l'aller-retour vers l'ouvrier, et c'est ce qu'il faut : le
+      // journal dit ce que le composant a coûté, non ce que la boucle aurait coûté seule.
       const millisecondes = performance.now() - debut;
-      const r = premier!;
+      const r = parVoie[0];
 
       const buffer = new AudioBuffer({
-        numberOfChannels: sorties.length,
-        length: Math.max(1, sorties[0].length),
+        numberOfChannels: parVoie.length,
+        length: Math.max(1, parVoie[0].son.length),
         sampleRate: frequence,
       });
-      for (let c = 0; c < sorties.length; c++) buffer.copyToChannel(new Float32Array(sorties[c]), c);
+      for (let c = 0; c < parVoie.length; c++) buffer.copyToChannel(new Float32Array(parVoie[c].son), c);
 
       const lignes: string[] = [];
       const colonne = (fr: string, enn: string, valeur: string) =>

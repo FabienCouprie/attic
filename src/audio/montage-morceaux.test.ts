@@ -12,7 +12,8 @@
 import { describe, expect, it } from "vitest";
 import {
   appliquerGeste, collerMorceaux, couperA, couperMorceau, deplacerMorceau, dureeSonnante,
-  etendueDesMorceaux, morceauA, morceauxDepuisParametres, normaliserMorceau, nouvelId,
+  etendueDesMorceaux, morceauA, morceauxAEcrire, morceauxCompletes, morceauxDepuisParametres,
+  normaliserMorceau, nouvelId,
   remplacerMorceau, retirerMorceau, type Morceau,
 } from "./montage-morceaux";
 
@@ -266,5 +267,177 @@ describe("l'etendue et les bornes", () => {
 
   it("MAIS UN DEBUT NEGATIF RESTE PERMIS : le montage peut commencer avant zero", () => {
     expect(normaliserMorceau(M({ debut: -12 }), 8).debut).toBe(-12);
+  });
+});
+
+describe("les morceaux completes piste par piste", () => {
+  // CE QUE CES CAS GARDENT, ET POURQUOI ILS EXISTENT. Les morceaux poses REMPLACAIENT les reglages
+  // au lieu de les completer : un seul morceau quelque part rendait muets les reglages de TOUTES les
+  // pistes. Releve par Fabien, en quatre symptomes qui n'en faisaient qu'un : une piste branchee
+  // apres coup n'apparaissait pas, il semblait falloir reserver les pistes d'avance, les glissieres
+  // de gain paraissaient mortes, et les fondus obeissaient a deux systemes sans rapport.
+  const params = {
+    "Début 1": 0, "Gain 1": -6, "Fondu entrée 1": 50, "Fondu sortie 1": 60,
+    "Début 2": 4, "Gain 2": -12, "Fondu entrée 2": 70, "Fondu sortie 2": 80,
+    "Début 3": 9, "Gain 3": -18, "Fondu entrée 3": 90, "Fondu sortie 3": 100,
+  };
+
+  it("UNE PISTE BRANCHEE APRES COUP RECOIT SON MORCEAU, au lieu de rester invisible", () => {
+    const poses = [M({ id: "a", piste: 0, debut: 1 }), M({ id: "b", piste: 1, debut: 5 })];
+    const tous = morceauxCompletes(poses, [0, 1, 2], params);
+    expect(tous).toHaveLength(3);
+    const neuf = tous.find((m) => m.piste === 2)!;
+    expect(neuf.debut).toBe(9);
+  });
+
+  it("ET IL PREND SES QUATRE REGLAGES, non des valeurs par defaut", () => {
+    // Le symptome des glissieres mortes et celui des deux systemes de fondu tiennent a ce seul
+    // point : les reglages d'une piste sans morceau doivent la decrire entierement.
+    const neuf = morceauxCompletes([M({ piste: 0 })], [0, 2], params).find((m) => m.piste === 2)!;
+    expect(neuf.gain).toBe(-18);
+    expect(neuf.entree).toBe(90);
+    expect(neuf.sortie).toBe(100);
+  });
+
+  it("ET LES MORCEAUX POSES NE SONT PAS TOUCHES : ce qu'on a decoupe reste tel quel", () => {
+    const poses = [M({ id: "a", piste: 0, debut: 1, gain: -3, duree: 2, dans: 1 })];
+    const garde = morceauxCompletes(poses, [0, 1], params).find((m) => m.piste === 0)!;
+    expect(garde).toEqual(poses[0]);
+  });
+
+  it("ET UNE PISTE QUI PORTE DEJA UN MORCEAU N'EN RECOIT PAS UN SECOND", () => {
+    const poses = [M({ id: "a", piste: 0 }), M({ id: "b", piste: 0, debut: 10 })];
+    const tous = morceauxCompletes(poses, [0], params);
+    expect(tous).toHaveLength(2);
+  });
+
+  it("ET LES IDENTIFIANTS NE SE HEURTENT PAS, la selection s'y retrouvant par le nom", () => {
+    // Un morceau deduit prenait le nom « p<piste> », que des morceaux poses portent deja.
+    const poses = [M({ id: "p1", piste: 0 }), M({ id: "p2", piste: 0, debut: 3 })];
+    const tous = morceauxCompletes(poses, [0, 1], params);
+    expect(new Set(tous.map((m) => m.id)).size).toBe(tous.length);
+  });
+
+  it("ET SANS AUCUN MORCEAU POSE, LE RESULTAT EST CELUI DES REGLAGES SEULS", () => {
+    // La migration d'un graphe enregistre avant les morceaux : il doit sonner exactement comme avant.
+    const deduits = morceauxDepuisParametres([0, 1], params);
+    const completes = morceauxCompletes([], [0, 1], params);
+    expect(completes.map((m) => ({ ...m, id: "" }))).toEqual(deduits.map((m) => ({ ...m, id: "" })));
+  });
+
+  it("ET UNE PISTE DEBRANCHEE NE FAIT PAS NAITRE DE MORCEAU", () => {
+    expect(morceauxCompletes([], [1], params).map((m) => m.piste)).toEqual([1]);
+  });
+});
+
+describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
+  // CE QUE CES CAS GARDENT. Completer la liste a la LECTURE ne suffisait pas : la ligne de temps
+  // travaille sur la liste completee, donc elle la REND completee, et le premier geste sur une barre
+  // ecrivait un morceau pour CHAQUE piste branchee. Toutes devenaient des pistes decoupees d'un coup,
+  // et leurs quatre reglages cessaient d'agir. Releve par Fabien : « dans la table montage modifie,
+  // le gain a la lecture ne fonctionne pas ».
+  const params = {
+    "Début 1": 0, "Gain 1": -6, "Fondu entrée 1": 50, "Fondu sortie 1": 60,
+    "Début 2": 4, "Gain 2": -12, "Fondu entrée 2": 70, "Fondu sortie 2": 80,
+    "Début 3": 9, "Gain 3": -18, "Fondu entrée 3": 90, "Fondu sortie 3": 100,
+  };
+  const avecGain2 = (db: number) => ({ ...params, "Gain 2": db });
+  const branchees = [0, 1, 2];
+
+  /** Le geste de l'utilisateur, puis ce que le nœud garde : la vue n'en fait pas davantage. */
+  const apresGeste = (vus: Morceau[], modifie: Morceau, avant: number[] = []) =>
+    morceauxAEcrire(remplacerMorceau(vus, modifie), branchees, params, avant);
+
+  it("UNE PISTE JAMAIS TOUCHEE GARDE SES REGLAGES APRES UN GESTE SUR UNE AUTRE", () => {
+    // Le scenario exact : trois pistes, on deplace la premiere barre, puis on tire la glissiere de
+    // gain de la DEUXIEME piste. C'est elle qui ne repondait plus.
+    const vus = morceauxCompletes([], branchees, params);
+    const e = apresGeste(vus, { ...vus[0], debut: 5 });
+    const relu = morceauxCompletes(e.morceaux, branchees, avecGain2(-20), e.videes);
+    expect(relu.find((m) => m.piste === 1)!.gain).toBe(-20);
+    expect(relu.find((m) => m.piste === 2)!.gain).toBe(-18);
+  });
+
+  it("ET SEULE LA PISTE TOUCHEE EST ECRITE", () => {
+    const vus = morceauxCompletes([], branchees, params);
+    const e = apresGeste(vus, { ...vus[0], debut: 5 });
+    expect(e.morceaux.map((m) => m.piste)).toEqual([0]);
+    expect(e.morceaux[0].debut).toBe(5);
+    expect(e.videes).toEqual([]);
+  });
+
+  it("ET LA PISTE TOUCHEE, ELLE, NE SUIT PLUS SES REGLAGES : c'est la regle de la notice", () => {
+    const vus = morceauxCompletes([], branchees, params);
+    const e = apresGeste(vus, { ...vus[0], debut: 5 });
+    const relu = morceauxCompletes(e.morceaux, branchees, { ...params, "Début 1": 99 }, e.videes);
+    expect(relu.find((m) => m.piste === 0)!.debut).toBe(5);
+  });
+
+  it("ET UNE PISTE QUI PORTE DEUX MORCEAUX S'ECRIT ENTIERE", () => {
+    const coupes = [M({ id: "a", piste: 1, debut: 4, duree: 2 }), M({ id: "b", piste: 1, debut: 6 })];
+    const e = morceauxAEcrire([...coupes, ...morceauxDepuisParametres([0, 2], params)], branchees, params);
+    expect(e.morceaux.filter((m) => m.piste === 1)).toHaveLength(2);
+    expect(e.morceaux.map((m) => m.piste)).toEqual([1, 1]);
+  });
+
+  it("ET UNE PISTE DEBRANCHEE S'ECRIT TOUJOURS, un cable rebranche devant retrouver son decoupage", () => {
+    const e = morceauxAEcrire([M({ id: "a", piste: 7, debut: 3 }), ...morceauxDepuisParametres(branchees, params)], branchees, params);
+    expect(e.morceaux.map((m) => m.piste)).toEqual([7]);
+  });
+
+  it("ET UNE LISTE ENCORE ENTIEREMENT SOUS SES REGLAGES NE S'ECRIT PAS DU TOUT", () => {
+    // Un geste repris a son point de depart, ou une simple selection : rien n'a bouge, rien ne se fige.
+    const vus = morceauxCompletes([], branchees, params);
+    expect(morceauxAEcrire(vus, branchees, params)).toEqual({ morceaux: [], videes: [] });
+  });
+});
+
+describe("une piste videe reste vide", () => {
+  // CE QUE CES CAS GARDENT. Supprimer le dernier morceau d'une piste la laissait absente de ce qui
+  // s'ecrit, c'est-a-dire exactement dans l'etat d'une piste jamais touchee : elle se rededuisait de
+  // ses reglages au relevé suivant, et le morceau revenait. Releve par Fabien. Une piste sans morceau
+  // ne peut pas se dire par un morceau : il faut donc une liste a part.
+  const params = {
+    "Début 1": 0, "Gain 1": -6, "Fondu entrée 1": 50, "Fondu sortie 1": 60,
+    "Début 2": 4, "Gain 2": -12, "Fondu entrée 2": 70, "Fondu sortie 2": 80,
+    "Début 3": 9, "Gain 3": -18, "Fondu entrée 3": 90, "Fondu sortie 3": 100,
+  };
+  const branchees = [0, 1, 2];
+  /** La suppression du dernier morceau de la piste 2, telle que la ligne de temps la rend. */
+  const apresSuppression = (avant: number[] = []) => {
+    const vus = morceauxCompletes([], branchees, params, avant);
+    const reste = retirerMorceau(vus, vus.find((m) => m.piste === 2)!.id);
+    return morceauxAEcrire(reste, branchees, params, avant);
+  };
+
+  it("UN MORCEAU SUPPRIME NE REVIENT PAS", () => {
+    const e = apresSuppression();
+    expect(e.videes).toEqual([2]);
+    expect(morceauxCompletes(e.morceaux, branchees, params, e.videes).map((m) => m.piste)).toEqual([0, 1]);
+  });
+
+  it("ET LES AUTRES PISTES GARDENT LEURS REGLAGES : vider n'est pas toucher a tout", () => {
+    const e = apresSuppression();
+    const relu = morceauxCompletes(e.morceaux, branchees, { ...params, "Gain 2": -30 }, e.videes);
+    expect(relu.find((m) => m.piste === 1)!.gain).toBe(-30);
+  });
+
+  it("ET REPOSER UN MORCEAU SUR LA PISTE LA REND A SES REGLAGES", () => {
+    const e = apresSuppression();
+    const colle = [...morceauxCompletes(e.morceaux, branchees, params, e.videes), M({ id: "colle", piste: 2, debut: 1 })];
+    const e2 = morceauxAEcrire(colle, branchees, params, e.videes);
+    expect(e2.videes).toEqual([]);
+    expect(e2.morceaux.map((m) => m.piste)).toEqual([2]);
+  });
+
+  it("ET UNE PISTE VIDEE PUIS DEBRANCHEE GARDE SON ETAT", () => {
+    // Sans ce report, rebrancher le cable ferait revenir le morceau qu'on avait retire.
+    const e = apresSuppression();
+    const apresDebranchement = morceauxAEcrire(
+      morceauxCompletes(e.morceaux, [0, 1], params, e.videes), [0, 1], params, e.videes,
+    );
+    expect(apresDebranchement.videes).toEqual([2]);
+    expect(morceauxCompletes(apresDebranchement.morceaux, branchees, params, apresDebranchement.videes)
+      .map((m) => m.piste)).toEqual([0, 1]);
   });
 });

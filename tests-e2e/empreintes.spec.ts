@@ -57,15 +57,75 @@ const SURVEILLES: {
   { id: "correction-hauteur", worker: "correction-hauteur-worker.ts" },
   { id: "shimmer", worker: "shimmer-worker.ts" },
   { id: "suiveur-hauteur", worker: "hauteur-worker.ts" },
+  // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
+  // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
+  // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.
+  { id: "fiche-technique", worker: "hauteur-worker.ts" },
   { id: "harmonizer", worker: "harmoniser-worker.ts" },
   { id: "voice-changer", worker: "formants-worker.ts" },
+  // LA FAMILLE DES MELS. L'analyse et la synthèse sont sorties du fil le même jour : avant, huit
+  // tours de Griffin-Lim sur cinq secondes de son laissaient la sonde sans un battement pendant
+  // 14 049 millisecondes. « Spectrogramme → son » prend peu de tours ici pour que le banc tienne
+  // dans son temps ; c'est l'identité du son qui est surveillée, pas sa durée de calcul.
+  // LA PASSE SUR LES PLUS LENTS, premier lot. Le relevé des composants audio vers audio donne leur
+  // temps et leur gel sur trois secondes de son ; ces deux-là figeaient TOTALEMENT, 615 et 245
+  // millisecondes sans qu'un seul message passe.
+  { id: "glissando-tonalite", worker: "glissando-worker.ts" },
+  { id: "changement-tonalite", worker: "tonalite-worker.ts" },
+  // LES QUATRE MISES EN FORME DE WISHART PARTAGENT UN WORKER, le mode voyageant avec les réglages.
+  // Toutes les quatre figeaient totalement : 329, 260, 238 ms et le gel sans un seul message.
+  // `glissando-interieur` était déjà surveillé plus bas pour sa modulation ; il est monté ici le
+  // jour où il a reçu son worker, deux entrées pour un même composant s'écrasant dans la base.
+  // Deux calculs déjà purs et déjà par voie : il ne leur manquait qu'une signature à un seul objet
+  // de réglages, le dialogue des workers n'en passant pas cinq. 585 et 429 ms de gel total.
+  // LE PREMIER COMPOSANT RÉPARTI SUR PLUSIEURS OUVRIERS. Il ne découpe pas son travail par canal
+  // mais par racine : dix-neuf transpositions indépendantes, qui tournent de front. 14 390 ms de
+  // gel total avant, et c'était le plus long du catalogue. Sa première sortie est une banque, que
+  // le banc ne sait pas empreindre ; la seconde est l'aperçu audio, et c'est elle qui est surveillée.
+  { id: "banque-clavier", worker: "banque-worker.ts" },
+  { id: "separation-harmonique-percussive", worker: "hpss-worker.ts" },
+  // Sa sortie n'a pas la longueur de son entrée : le socle rend la voie telle quelle, et c'est le
+  // composant qui fabrique son tampon.
+  { id: "vitesse-variable", worker: "vitesse-worker.ts" },
+  { id: "ondelettes", worker: "ondelettes-worker.ts" },
+  // Quatre des cinq mises en forme du Composers' Desktop Project, qui partagent un worker comme
+  // celles de Wishart. « Peignes accordés » ne passe pas par ce passage-là.
+  { id: "formule-spectrale", worker: "formule-spectrale-worker.ts" },
+  { id: "peignes-accordes", worker: "peigne-worker.ts" },
+  { id: "etirement-spectre", worker: "cdp-worker.ts" },
+  { id: "arpege-spectral", worker: "cdp-worker.ts" },
+  { id: "crible-harmonique", worker: "cdp-worker.ts" },
+  { id: "melange-fenetres", worker: "cdp-worker.ts" },
+  { id: "tracage-spectral", worker: "wishart-worker.ts" },
+  { id: "flou-spectral", worker: "wishart-worker.ts" },
+  { id: "gel-spectral", worker: "wishart-worker.ts" },
+  { id: "glissando-interieur", worker: "wishart-worker.ts" },
+  // SECOND LOT DE LA PASSE SUR LES PLUS LENTS, trouvé en élargissant le relevé. Le premier ne
+  // portait que sur les composants audio VERS audio ; ces quatre-là rendent du texte, une courbe ou
+  // un journal en plus de leur son, et ils figeaient tout autant — 248, 228, 203 et 154
+  // millisecondes sans qu'un seul message passe.
+  { id: "gout-du-son", worker: "gout-worker.ts" },
+  { id: "ecosysteme", worker: "ecosysteme-worker.ts" },
+  { id: "reverberation-velours", worker: "velours-worker.ts" },
+  { id: "reverbe-hachee", worker: "hachee-worker.ts" },
+  // TROISIÈME LOT : LES GÉNÉRATEURS. Ceux-là n'ont aucune entrée audio, donc aucun canal à
+  // découper, et leur calcul ne se coupe pas en tâches indépendantes — une phase s'accumule d'un
+  // échantillon au suivant. Ils passent par `parUneFois`, qui est `parLot` avec un lot de un.
+  // Relevé avant, sans qu'un seul message passe : 492, 475, 342 et 176 millisecondes.
+  { id: "glissando-de-gamme", worker: "glissando-agregats-worker.ts" },
+  { id: "glissando-harmonique", worker: "glissando-agregats-worker.ts" },
+  { id: "battements-binauraux", worker: "binaural-worker.ts" },
+  { id: "spirale-logarithmique", worker: "spirale-worker.ts" },
+  { id: "son-spectrogramme", worker: "spectrogramme-analyse-worker.ts" },
+  { id: "spectrogramme-son", worker: "spectrogramme-synthese-worker.ts", parametres: { Tours: 2, Graine: 7 } },
   // Rendus vivants par la respiration.
   { id: "griffin-lim" },
   { id: "assaisonnement-sonore" },
   // Non déplacés, mais ils partagent les cœurs extraits de `commun.ts` : ce sont eux qui prouvent
   // qu'une extraction dans un fichier central n'a rien changé au son de ceux qui en dépendent.
+  // `changement-tonalite` était ici pour cette raison ; il est monté plus haut le jour où il a reçu
+  // son worker, et deux entrées pour un même composant se seraient écrasées dans la base.
   { id: "octaver" },
-  { id: "changement-tonalite" },
   { id: "paulstretch" },
   // LES QUATORZE EFFETS RENDUS PAR LE WEB AUDIO. Leur empreinte est enregistree AVANT qu'ils
   // recoivent une entree Modulation : sans branchement, elle ne doit pas bouger d'un chiffre.
@@ -95,7 +155,6 @@ const SURVEILLES: {
   // Il lui faut deux sons : sans le second il ne rend rien, et son empreinte serait vide.
   { id: "convolution-deux-sons", entreesAudio: [0, 1] },
   { id: "decaleur-frequence" },
-  { id: "glissando-interieur" },
   // Cible et modele : deux entrees, comme la convolution.
   { id: "transfert-enveloppe", entreesAudio: [0, 1] },
   { id: "transient-shaper" },

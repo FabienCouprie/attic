@@ -9,7 +9,8 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { QUALITES, notesDaccord } from "../audio/qualites-accords";
-import { tamponDuGlissando, trajetDesVoix, voixDuGlissando } from "../audio/glissando";
+import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
+import { glissandoHorsFil } from "./glissando-hors-fil";
 import { CLES, PARAMETRE_TONIQUE, alterationDe } from "../audio/cles";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -145,8 +146,8 @@ The « Journey » output gives, voice by voice, the starting note, the arrival n
       const tenueDepart = ctx.paramNombre("Tenue initiale", 1);
       const glissement = ctx.paramNombre("Glissement", 4);
       const tenueArrivee = ctx.paramNombre("Tenue finale", 1);
-      const audio = tamponDuGlissando(voix, {
-        tenueDepart, glissement, tenueArrivee,
+      const audio = await glissandoHorsFil({
+        voix, tenueDepart, glissement, tenueArrivee,
         richesse: Math.round(ctx.paramNombre("Richesse", 4)),
         niveau: ctx.paramNombre("Volume", 80) / 100,
       });

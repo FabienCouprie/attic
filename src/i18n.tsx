@@ -284,6 +284,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "typeFlux.texte": { fr: "Texte", en: "Text" },
   "typeFlux.fichier": { fr: "Fichier", en: "File" },
   "typeFlux.image": { fr: "Image", en: "Image" },
+  "typeFlux.spectrogramme": { fr: "Spectrogramme", en: "Spectrogram" },
   "univers.Entrées": { fr: "Entrées", en: "Inputs" },
   "univers.Traitement": { fr: "Traitement", en: "Processing" },
   "univers.Sorties": { fr: "Sorties", en: "Outputs" },
@@ -292,6 +293,9 @@ const DICO: Record<string, Record<Langue, string>> = {
   "univers.Nouvelles fonctionnalités": { fr: "Nouvelles fonctionnalités", en: "New features" },
   "univers.Méta-composants": { fr: "Méta-composants", en: "Meta-components" },
   "univers.Autres": { fr: "Autres et lab", en: "Other & lab" },
+  // « Mels » et non « Spectrogramme » : « Spectre » occupe déjà le même univers, et deux familles
+  // qui ne diffèrent que par leur terminaison ouvrent deux sous-menus voisins dans la palette.
+  "famille.Mels": { fr: "Mels", en: "Mels" },
   "famille.Sous-graphes": { fr: "Sous-graphes", en: "Sub-graphs" },
   "famille.Texte": { fr: "Texte", en: "Text" },
   "famille.Text to Speech": { fr: "Text to Speech", en: "Text to Speech" },
@@ -713,6 +717,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.sms.canal": { fr: "canal {__VAR_0__}/{__VAR_1__}", en: "channel {__VAR_0__}/{__VAR_1__}" },
   "msg.texture.resultat": { fr: "{__VAR_0__} s · {__VAR_1__} bandes · écart aux statistiques {__VAR_2__} %", en: "{__VAR_0__} s · {__VAR_1__} bands · statistical distance {__VAR_2__} %" },
   "msg.texture.canal": { fr: "canal {__VAR_0__}/{__VAR_1__}", en: "channel {__VAR_0__}/{__VAR_1__}" },
+  "msg.wishart.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
+  "msg.banque.zone": { fr: "Zone {__VAR_0__}/{__VAR_1__}…", en: "Zone {__VAR_0__}/{__VAR_1__}…" },
   "msg.decaleur.resultat": { fr: "{__VAR_0__} Hz · {__VAR_1__} % de décalé", en: "{__VAR_0__} Hz · {__VAR_1__} % shifted" },
   "msg.hpss.resultat": { fr: "{__VAR_0__} % percussif · {__VAR_1__} % harmonique", en: "{__VAR_0__} % percussive · {__VAR_1__} % harmonic" },
   "msg.hpss.canal": { fr: "canal {__VAR_0__}/{__VAR_1__}", en: "channel {__VAR_0__}/{__VAR_1__}" },

@@ -98,6 +98,81 @@ export function frequenceAuTemps(p: Partiel, o: OptionsSpirale, t: number): numb
  * calculé sur les partiels qui restent communs aux deux instants, le plus aigu sortant et un
  * nouveau entrant au grave.
  */
+/** Tout ce qu'un rendu demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
+export interface OptionsSonSpirale extends OptionsSpirale {
+  sampleRate: number;
+  /** Le niveau de crête visé, de zéro à un. */
+  volume: number;
+}
+
+/** Ce qu'un rendu de spirale porte : le son, et les partiels qu'il a pu garder. */
+export interface SonSpirale {
+  echantillons: Float32Array;
+  /** Les partiels retenus, dans l'ordre des rangs : ceux qui tiennent sous Nyquist d'un bout à l'autre. */
+  retenus: Partiel[];
+  /** Combien ont été écartés parce qu'ils le franchissaient. */
+  abandonnes: number;
+}
+
+/**
+ * La spirale rendue en son.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE, et il y était écrit en entier :
+ * la prise portait la synthèse. Relevé avant, sur les réglages par défaut et sans qu'un seul message
+ * passe : **342 millisecondes.** Le coût est un sinus par partiel et par échantillon — douze secondes
+ * à 44 100 hertz, neuf partiels, soit cinq millions de sinus.
+ *
+ * LES PARTIELS RETENUS REVIENNENT AVEC LE SON, et ce n'est pas un détail : la prise en fait son
+ * rapport, et les filtrer une seconde fois de son côté permettrait au tableau de contredire ce qui
+ * s'entend.
+ *
+ * LA PHASE EST INTÉGRÉE, ET NON RECALCULÉE À CHAQUE ÉCHANTILLON. Poser sin(2π·f(t)·t) pour une
+ * fréquence qui varie donne une hauteur fausse, la dérivée de f(t)·t n'étant pas f(t).
+ */
+export function sonDeSpirale(o: OptionsSonSpirale): SonSpirale {
+  const sr = Math.max(1, Math.round(o.sampleRate));
+  const n = Math.max(1, Math.round(o.dureeSec * sr));
+  const x = new Float32Array(n);
+  const rapport = rapportValide(o.rapport);
+  const nyquist = sr / 2;
+
+  const tous = partielsDeSpirale(o);
+  const tient = (p: Partiel) => p.frequenceDebut < nyquist && p.frequenceFin < nyquist;
+  const retenus = tous.filter(tient);
+  const abandonnes = tous.length - retenus.length;
+
+  let somme = 0;
+  for (const p of retenus) somme += p.amplitude;
+  const normalisation = somme > 0 ? 1 / somme : 1;
+
+  for (const p of retenus) {
+    const a = p.amplitude * normalisation;
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const part = n > 1 ? i / (n - 1) : 0;
+      const f = p.frequenceDebut * Math.pow(rapport, o.tours * part);
+      phase += (2 * Math.PI * f) / sr;
+      x[i] += a * Math.sin(phase);
+    }
+  }
+
+  // Un fondu de vingt millisecondes aux deux bouts : le spectre commence et finit en plein milieu
+  // de son parcours, et une coupure nette y ferait un clic.
+  const fondu = Math.min(Math.floor(0.02 * sr), Math.floor(n / 2));
+  for (let i = 0; i < fondu; i++) {
+    const g = i / fondu;
+    x[i] *= g;
+    x[n - 1 - i] *= g;
+  }
+
+  let pic = 0;
+  for (let i = 0; i < n; i++) pic = Math.max(pic, Math.abs(x[i]));
+  const gain = pic > 0 ? (o.volume * 0.95) / pic : 1;
+  for (let i = 0; i < n; i++) x[i] *= gain;
+
+  return { echantillons: x, retenus, abandonnes };
+}
+
 export function ecartAutoSimilarite(o: OptionsSpirale): number {
   if (o.tours === 0 || o.dureeSec <= 0) return 0;
   const rapport = rapportValide(o.rapport);

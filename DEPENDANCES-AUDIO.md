@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 86 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 178 · transposable tel quel
+- **pur** : 183 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -66,6 +66,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | cercle.ts | pur | — |
 | classes-hauteurs.ts | pur | — |
 | classification-pistes.ts | pur | — |
+| clavier-banque-lot.ts | pur | — |
 | clavier-banque.ts | recipient | AudioBuffer |
 | cles.ts | pur | — |
 | cloche-risset.ts | recipient | AudioBuffer |
@@ -183,6 +184,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | masquage.ts | pur | — |
 | math-formules.ts | recipient | AudioBuffer |
 | matrice-parametres.ts | pur | — |
+| mel.ts | pur | — |
 | melodie-sur-accords.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | metadonnees.ts | pur | — |
@@ -271,6 +273,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | spectre-visible.ts | recipient | AudioBuffer |
 | spectrogramme-fenetre.ts | pur | — |
 | spectrogramme-fractal.ts | recipient | AudioBuffer |
+| spectrogramme-mel.ts | pur | — |
+| spectrogramme-operations.ts | pur | — |
+| spectrogramme-pixels.ts | pur | — |
 | spirale-logarithmique.ts | pur | — |
 | spirale-quintes.ts | pur | — |
 | spirale-spatiale.ts | pur | — |

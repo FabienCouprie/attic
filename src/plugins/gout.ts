@@ -7,7 +7,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { mesurer, profil, rapport } from "../audio/gout";
+import { profil, rapport } from "../audio/gout";
+import { mesurerGoutHorsFil } from "./gout-hors-fil";
 
 const en = () => langueCourante() === "en";
 
@@ -31,7 +32,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], message: en() ? "No audio input." : "Aucune entrée audio." };
       }
       const anglais = en();
-      const m = mesurer(a);
+      const m = await mesurerGoutHorsFil(a);
       const parts = profil(m.dimensions);
       // La vue lit le profil ici : quatre barres valent mieux qu'un tableau de chiffres pour voir
       // d'un coup où penche un son. IL PASSE PAR `affichage` : il ne décrit que ce run, donc une

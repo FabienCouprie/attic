@@ -83,6 +83,111 @@ export function morceauxDepuisParametres(
   }));
 }
 
+/**
+ * Les morceaux posés, COMPLÉTÉS d'un morceau pour chaque piste branchée qui n'en a pas.
+ *
+ * CE QUI SE PASSAIT SANS CELA, ET LE DÉFAUT TIENT EN UN MOT : « OU ». Les morceaux posés
+ * remplaçaient les réglages au lieu de les compléter, de sorte qu'un seul morceau quelque part
+ * rendait muets les réglages de TOUTES les pistes. Relevé par Fabien, en quatre symptômes qui n'en
+ * faisaient qu'un :
+ *
+ *   — une piste branchée APRÈS un premier découpage n'apparaissait pas, n'ayant pas de morceau et
+ *     ne pouvant plus s'en déduire un ;
+ *   — d'où l'impression qu'il fallait réserver le bon nombre de pistes d'avance ;
+ *   — les glissières de gain paraissaient mortes, y compris sur les pistes auxquelles on n'avait
+ *     jamais touché ;
+ *   — et les fondus semblaient obéir à deux systèmes sans rapport, celui des réglages étant
+ *     simplement hors circuit.
+ *
+ * LA NOTICE DISAIT DÉJÀ LA BONNE RÈGLE : les quatre réglages d'une piste « décrivent l'état d'un
+ * montage qu'on n'a pas encore découpé, et cessent d'agir dès qu'on y touche ». Dès qu'on touche à
+ * CETTE piste-là, non dès qu'on touche à une quelconque. C'est cette règle que ce calcul applique.
+ *
+ * LES IDENTIFIANTS NE SE HEURTENT PAS : un morceau déduit prend un nom qu'aucun posé ne porte, la
+ * sélection et le presse-papier s'y retrouvant par le nom.
+ */
+export function morceauxCompletes(
+  poses: readonly Morceau[], branchees: readonly number[], params: ParametresMontage,
+  videes: readonly number[] = [],
+): Morceau[] {
+  const avec = new Set(poses.map((m) => m.piste));
+  const vide = new Set(videes);
+  const manquantes = [...branchees]
+    .filter((k) => !avec.has(k) && !vide.has(k))
+    .sort((a, b) => a - b);
+  if (manquantes.length === 0) return [...poses];
+  const out = [...poses];
+  for (const neuf of morceauxDepuisParametres(manquantes, params)) {
+    out.push({ ...neuf, id: nouvelId(out, "p") });
+  }
+  return out.sort((a, b) => a.piste - b.piste || a.debut - b.debut);
+}
+
+/** Ce qu'un geste sur la ligne de temps laisse au nœud : son découpage, et ses pistes vidées. */
+export interface EcritureMontage {
+  morceaux: Morceau[];
+  /** Les pistes que l'on a vidées de tous leurs morceaux, et qui ne doivent donc pas se redéduire. */
+  videes: number[];
+}
+
+/** Deux morceaux font-ils entendre la même chose ? Leur nom ne compte pas, il ne sert qu'à se retrouver. */
+function memeMorceau(a: Morceau, b: Morceau): boolean {
+  return a.piste === b.piste && a.debut === b.debut && a.dans === b.dans && a.duree === b.duree
+    && a.gain === b.gain && a.entree === b.entree && a.sortie === b.sortie;
+}
+
+/**
+ * Ce qu'il faut ÉCRIRE quand la ligne de temps rend sa liste : les pistes TOUCHÉES, et elles seules.
+ *
+ * LE DÉFAUT QUE CECI RÉPARE, ET QUE LA COMPLÉTION SEULE LAISSAIT ENTIER. La ligne de temps travaille
+ * sur la liste complétée, donc elle la REND complétée : le premier geste sur une barre, n'importe
+ * laquelle, écrivait un morceau pour CHAQUE piste branchée. Toutes les pistes devenaient alors des
+ * pistes découpées, et leurs quatre réglages cessaient d'agir d'un coup. **Mesuré : après un
+ * déplacement sur la piste 1, la glissière « Gain 2 » portée à moins vingt laissait la piste 2 à
+ * zéro, là où la même glissière donne bien moins vingt sans ce geste.**
+ *
+ * LA RÈGLE EST CELLE DE LA NOTICE, APPLIQUÉE À L'ÉCRITURE comme elle l'était déjà à la lecture : les
+ * quatre réglages d'une piste cessent d'agir dès qu'on touche à CETTE piste-là. Une piste dont les
+ * morceaux sont encore exactement ceux que ses réglages décrivent n'est donc pas écrite.
+ *
+ * UNE PISTE DÉBRANCHÉE S'ÉCRIT TOUJOURS : ses réglages ne la décrivent plus, puisqu'il n'y en a plus
+ * pour elle, et la perdre effacerait un découpage qu'un câble rebranché doit retrouver.
+ *
+ * ET LES PISTES VIDÉES SE DISENT À PART, parce qu'une piste sans morceau ne peut pas se dire par un
+ * morceau. Sans cette liste, supprimer le dernier morceau d'une piste la laissait absente de ce qui
+ * s'écrit, c'est-à-dire exactement dans l'état d'une piste jamais touchée : elle se redéduisait de
+ * ses réglages au relevé suivant, et le morceau revenait. **Mesuré : après suppression du morceau de
+ * la piste 3, la relecture rendait les pistes 0, 1 et 2.**
+ */
+export function morceauxAEcrire(
+  affiches: readonly Morceau[], branchees: readonly number[], params: ParametresMontage,
+  videesAvant: readonly number[] = [],
+): EcritureMontage {
+  const derives = new Map(morceauxDepuisParametres(branchees, params).map((m) => [m.piste, m]));
+  const parPiste = new Map<number, Morceau[]>();
+  for (const m of affiches) {
+    const liste = parPiste.get(m.piste);
+    if (liste) liste.push(m);
+    else parPiste.set(m.piste, [m]);
+  }
+  const out: Morceau[] = [];
+  for (const [piste, liste] of parPiste) {
+    const derive = derives.get(piste);
+    if (derive && liste.length === 1 && memeMorceau(liste[0], derive)) continue;
+    out.push(...liste);
+  }
+  // UNE PISTE BRANCHÉE ABSENTE DE CE QU'ON AFFICHE A ÉTÉ VIDÉE, et il n'y a pas d'autre cas : la
+  // lecture donne un morceau à toute piste branchée qui n'en a pas. Une piste vidée puis débranchée
+  // garde son état, sans quoi rebrancher le câble ferait revenir ce qu'on avait retiré.
+  const presentes = new Set(affiches.map((m) => m.piste));
+  const encore = new Set(branchees);
+  const videes = [
+    ...branchees.filter((k) => !presentes.has(k)),
+    ...videesAvant.filter((k) => !encore.has(k)),
+  ].sort((a, b) => a - b);
+  return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), videes };
+}
+
 /** Un identifiant qu'aucun morceau ne porte encore. */
 export function nouvelId(existants: readonly Morceau[], graine = "m"): string {
   const pris = new Set(existants.map((m) => m.id));

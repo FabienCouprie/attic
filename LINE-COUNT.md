@@ -7,24 +7,24 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1197 files, 206752 lines, of which 143164 are code.**
-The table lists the 149 files of 200 code lines or more, heaviest first;
-the remaining 1048 account for 144924 lines.
+**1232 files, 210269 lines, of which 145085 are code.**
+The table lists the 153 files of 200 code lines or more, heaviest first;
+the remaining 1079 account for 146839 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1397 | 1735 | ! |
-| src/ui/App.tsx | 1078 | 1438 | ! |
+| src/ui/App.tsx | 1080 | 1442 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 754 | 1532 | ! |
 | src/ui/Inspector.tsx | 606 | 759 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
-| src/ui/AtelierNode.tsx | 523 | 719 | ! |
+| src/ui/AtelierNode.tsx | 524 | 720 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 473 | 485 | ! |
+| src/plugins/index.ts | 477 | 489 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/ui/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
@@ -45,6 +45,7 @@ the remaining 1048 account for 144924 lines.
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |
@@ -55,6 +56,7 @@ the remaining 1048 account for 144924 lines.
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
+| src/plugins/effets-spectral.ts | 326 | 428 |  |
 | src/plugins/tone-synths.ts | 325 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/ui/EditeurCode.tsx | 320 | 426 |  |
@@ -64,7 +66,6 @@ the remaining 1048 account for 144924 lines.
 | src/plugins/effets-temporel.ts | 318 | 442 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
-| src/plugins/effets-spectral.ts | 314 | 409 |  |
 | src/ui/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
 | src/quiz/notions.ts | 312 | 337 |  |
@@ -131,36 +132,39 @@ the remaining 1048 account for 144924 lines.
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/ui/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/plugins/effets-cresson.ts | 230 | 313 |  |
+| src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 226 | 280 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
+| src/plugins/effets.ts | 221 | 259 |  |
+| src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/ui/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
-| src/ui/hooks/usePersistance.ts | 219 | 309 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
 | src/audio/objets-sonores.test.ts | 217 | 262 |  |
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |
+| src/plugins/spectral-cdp.ts | 216 | 318 |  |
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
 | src/ui/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
-| src/plugins/effets.ts | 211 | 249 |  |
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
-| src/audio/montage-morceaux.test.ts | 209 | 271 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |
 | src/plugins/multicanal.ts | 209 | 288 |  |
+| src/audio/ecosysteme.ts | 208 | 388 |  |
+| src/audio/spectrogramme-mel.ts | 208 | 333 |  |
 | src/plugins/boucle-creneau.test.ts | 207 | 252 |  |
 | src/plugins/cercle-transformations.test.ts | 206 | 257 |  |
-| src/audio/ecosysteme.ts | 205 | 373 |  |
 | src/plugins/effet-parametres-midi.test.ts | 205 | 322 |  |
 | src/plugins/tonal.ts | 205 | 283 |  |
 | src/audio/musicxml-arbre.ts | 203 | 314 |  |
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
+| src/audio/ondelettes.ts | 200 | 349 |  |

@@ -50,6 +50,7 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
       setSurvol({
         contenu: contenuInfobulle(def, lang, {
           couleurFlux: (type) => registre.couleurFlux(type),
+          formeFlux: (type) => registre.formeFlux(type),
           libelleType: (type) => {
             // Le libellé du registre est français ; le dictionnaire traduit ceux qu'il
             // connaît, et un type venu d'un plugin garde le sien plutôt que rien.

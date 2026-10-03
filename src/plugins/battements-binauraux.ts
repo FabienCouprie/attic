@@ -6,8 +6,9 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  echantillonsBinauraux, frequencesDuCouple, profondeurDeModulation,
+  frequencesDuCouple, rendreBinaural, type OptionsRendu, type RenduBinaural,
 } from "../audio/battements-binauraux";
+import { parUneFois } from "./hors-lot";
 
 const en = () => langueCourante() === "en";
 const SR = 44100;
@@ -61,21 +62,26 @@ export const fiches: FicheAudio[] = ([
       const battement = ctx.paramNombre("Battement", 6);
       const parOreille = String(ctx.paramTexte("Présentation", "par-oreille")) !== "les-deux";
       const aiguADroite = String(ctx.paramTexte("Aigu à", "droite")) !== "gauche";
-      const { gauche, droite } = echantillonsBinauraux({
+      const rendu = await parUneFois<OptionsRendu, RenduBinaural>({
         porteuse, battement, parOreille, aiguADroite,
         duree: ctx.paramNombre("Durée", 30),
         fondu: ctx.paramNombre("Fondu", 200) / 1000,
         niveau: Math.max(0, Math.min(1, ctx.paramNombre("Volume", 60) / 100)),
         sampleRate: SR,
+      }, {
+        creerWorker: () => new Worker(new URL("../workers/binaural-worker.ts", import.meta.url), { type: "module" }),
+        calcul: rendreBinaural,
       });
+      const { gauche, droite } = rendu;
 
       // DEUX CANAUX, ET C'EST LE STIMULUS ENTIER dans la présentation par oreille : ramené à un
       // seul, il ne resterait que le battement acoustique, qui est l'autre phénomène.
       const sortie = new AudioBuffer({
         numberOfChannels: 2, length: Math.max(1, gauche.length), sampleRate: SR,
       });
-      sortie.getChannelData(0).set(gauche);
-      sortie.getChannelData(1).set(droite);
+      // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
+      sortie.copyToChannel(new Float32Array(gauche), 0);
+      sortie.copyToChannel(new Float32Array(droite), 1);
 
       // LE RAPPORT MESURE CE QU'IL ANNONCE, sur le son qui vient d'être rendu : dire qu'un canal ne
       // bat pas sans le vérifier serait une affirmation, et c'est précisément le point qu'un
@@ -85,12 +91,12 @@ export const fiches: FicheAudio[] = ([
       // quand l'aigu y est envoyé donnerait à l'auditeur l'inverse de ce qu'il entend.
       const aGauche = aiguADroite ? basse : haute;
       const aDroite = aiguADroite ? haute : basse;
-      const melange = new Float32Array(gauche.length);
-      for (let i = 0; i < gauche.length; i++) melange[i] = gauche[i] + droite[i];
-      const pc = (x: Float32Array) => nb(profondeurDeModulation(x, porteuse, battement, SR) * 100, 2);
-      const aG = pc(gauche);
-      const aD = pc(droite);
-      const aM = pc(melange);
+      // Les trois profondeurs sont mesurées AVEC le rendu, dans l'ouvrier : c'est là qu'est tout le
+      // coût, et les renvoyer pour les relire ici l'aurait laissé dans le fil.
+      const pc = (x: number) => nb(x * 100, 2);
+      const aG = pc(rendu.profondeurGauche);
+      const aD = pc(rendu.profondeurDroite);
+      const aM = pc(rendu.profondeurSomme);
 
       const rapport = en() ? [
         "Binaural beats. On headphones, and on headphones only.",

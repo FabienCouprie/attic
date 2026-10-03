@@ -7,6 +7,15 @@ import { fft } from "./fft";
 import { TAILLE_FFT_BRUIT, SAUT_FFT_BRUIT, creerFenetreHann } from "./commun";
 import { amplifier } from "./effets-dynamique";
 
+/**
+ * Le profil spectral d'un bruit : par bin, la RACINE DE SA PUISSANCE MOYENNE.
+ *
+ * CE N'EST PAS LA MAGNITUDE MOYENNE, ET LA DIFFÉRENCE SE MESURE. `reduireBruit` élève ce profil au
+ * carré pour en faire une puissance : lui donner la moyenne des magnitudes, c'est lui donner le
+ * CARRÉ DE LA MOYENNE là où il faut la MOYENNE DES CARRÉS. Sur un bruit dont chaque bin suit une loi
+ * de Rayleigh, les deux diffèrent d'un facteur racine(4/π) = 1,1284 — relevé sur du bruit blanc :
+ * 1,1213. Le bruit était donc sous-estimé d'un quart de sa puissance, et il en restait d'autant.
+ */
 export function calculerProfilBruit(buffer: AudioBuffer): Float32Array {
   const fenetre = creerFenetreHann(TAILLE_FFT_BRUIT);
   const nbBins = TAILLE_FFT_BRUIT / 2 + 1;
@@ -29,13 +38,15 @@ export function calculerProfilBruit(buffer: AudioBuffer): Float32Array {
       const im = new Float64Array(TAILLE_FFT_BRUIT);
       for (let i = 0; i < TAILLE_FFT_BRUIT; i++) re[i] = donnees[debut + i] * fenetre[i];
       fft(re, im, false);
-      for (let b = 0; b < nbBins; b++) somme[b] += Math.hypot(re[b], im[b]);
+      for (let b = 0; b < nbBins; b++) somme[b] += re[b] * re[b] + im[b] * im[b];
       nbTrames++;
     }
   }
 
   const profil = new Float32Array(nbBins);
-  if (nbTrames > 0) for (let b = 0; b < nbBins; b++) profil[b] = somme[b] / nbTrames;
+  // La racine de la puissance moyenne : le profil garde ainsi l'unité d'une magnitude, ce dont
+  // `reduireBruitNotches` a besoin pour comparer des bins entre eux.
+  if (nbTrames > 0) for (let b = 0; b < nbBins; b++) profil[b] = Math.sqrt(somme[b] / nbTrames);
   return profil;
 }
 
@@ -56,18 +67,26 @@ export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: n
   // amplifier quand le profil surestime le bruit local.
   const plancher = Math.max(0, Math.min(1, plancherRelatif));
 
+  // LES DEUX BORDS SONT BOURRÉS DE ZÉROS, ET SANS CELA ILS ÉTAIENT PERDUS. La boucle n'avance que
+  // tant qu'une trame ENTIÈRE tient dans le signal : la queue qui ne remplissait pas une dernière
+  // trame n'était jamais analysée, et l'enveloppe de recollement y restait nulle. Relevé : **83
+  // échantillons effacés au début, et de 30 à 73 millisecondes de queue selon la longueur.**
+  //
+  // LA MARGE AVANT VAUT UN SAUT, de sorte que le tout premier échantillon soit couvert par une
+  // trame qui le prend au MILIEU de sa fenêtre, là où la Hann vaut un, et non par son bord où elle
+  // vaut zéro. La grille des trames intérieures ne bouge pas d'un échantillon : la trame ajoutée
+  // s'intercale AVANT celle qui commençait à zéro, et le son produit au milieu reste le même.
+  const marge = SAUT_FFT_BRUIT;
+
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const canal = buffer.getChannelData(c);
-    // Pour les extraits courts on centre le signal dans une trame FFT :
-    // évite l'amplification dangereuse aux bords de la fenêtre Hann
-    // (overlap-add) quand le signal ne couvre pas une trame complète.
-    const estCourt = canal.length < TAILLE_FFT_BRUIT;
-    const entree = estCourt ? new Float32Array(TAILLE_FFT_BRUIT) : canal;
-    const offsetCourt = estCourt ? Math.floor((TAILLE_FFT_BRUIT - canal.length) / 2) : 0;
-    if (estCourt) entree.set(canal, offsetCourt);
+    // L'entrée bourrée : une marge avant, et de quoi laisser la dernière trame se compléter après.
+    const total = marge + canal.length + TAILLE_FFT_BRUIT;
+    const entree = new Float32Array(total);
+    entree.set(canal, marge);
 
-    const sortie = new Float64Array(estCourt ? TAILLE_FFT_BRUIT : buffer.length);
-    const enveloppe = new Float64Array(estCourt ? TAILLE_FFT_BRUIT : buffer.length);
+    const sortie = new Float64Array(total);
+    const enveloppe = new Float64Array(total);
     for (let debut = 0; debut + TAILLE_FFT_BRUIT <= entree.length; debut += SAUT_FFT_BRUIT) {
       const re = new Float64Array(TAILLE_FFT_BRUIT);
       const im = new Float64Array(TAILLE_FFT_BRUIT);
@@ -103,15 +122,9 @@ export function reduireBruit(buffer: AudioBuffer, profil: Float32Array, force: n
     }
 
     const canalSortie = resultat.getChannelData(c);
-    if (estCourt) {
-      for (let i = 0; i < canal.length; i++) {
-        const j = offsetCourt + i;
-        canalSortie[i] = enveloppe[j] > 1e-6 ? sortie[j] / enveloppe[j] : 0;
-      }
-    } else {
-      for (let i = 0; i < sortie.length; i++) {
-        canalSortie[i] = enveloppe[i] > 1e-6 ? sortie[i] / enveloppe[i] : 0;
-      }
+    for (let i = 0; i < canal.length; i++) {
+      const j = marge + i;
+      canalSortie[i] = enveloppe[j] > 1e-6 ? sortie[j] / enveloppe[j] : 0;
     }
   }
 

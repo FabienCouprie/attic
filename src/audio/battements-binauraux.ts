@@ -155,6 +155,44 @@ export function enveloppeParDemodulation(
  * d'amplitude : les compter ferait passer un son parfaitement constant pour un son qui bat. Le
  * filtre a besoin du même écart pour s'établir.
  */
+/** Ce qu'un rendu de battements porte : les deux canaux, et les trois profondeurs mesurées. */
+export interface RenduBinaural {
+  gauche: Float32Array;
+  droite: Float32Array;
+  /** Profondeur de modulation du canal gauche, du droit, et de leur somme — de 0 à 1. */
+  profondeurGauche: number;
+  profondeurDroite: number;
+  profondeurSomme: number;
+}
+
+/**
+ * Le rendu entier : les deux canaux, et la mesure de ce que le rapport annonce.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. Relevé avant, sur les réglages
+ * par défaut et sans qu'un seul message passe : **475 millisecondes**. Et le coût n'est pas dans la
+ * synthèse mais dans la MESURE : trente secondes à 44 100 hertz font un million trois cent mille
+ * échantillons, et la démodulation en coûte un sinus, un cosinus, six produits et une racine, trois
+ * fois — une par canal, une pour leur somme.
+ *
+ * LES TROIS PROFONDEURS SONT MESURÉES ICI, avec le rendu, et non dans la prise. Le rapport affirme
+ * qu'aucun canal ne bat et que leur somme bat : c'est le point qu'un auditeur ne peut pas trancher à
+ * l'oreille, donc celui qui doit être mesuré sur le son réellement rendu. Les laisser dans la prise
+ * aurait renvoyé les deux canaux pour les relire aussitôt, et gardé dans le fil tout le coût.
+ */
+export function rendreBinaural(o: OptionsRendu): RenduBinaural {
+  const { gauche, droite } = echantillonsBinauraux(o);
+  const somme = new Float32Array(gauche.length);
+  for (let i = 0; i < gauche.length; i++) somme[i] = gauche[i] + droite[i];
+  const profondeur = (x: Float32Array) =>
+    profondeurDeModulation(x, o.porteuse, o.battement, o.sampleRate);
+  return {
+    gauche, droite,
+    profondeurGauche: profondeur(gauche),
+    profondeurDroite: profondeur(droite),
+    profondeurSomme: profondeur(somme),
+  };
+}
+
 export function profondeurDeModulation(
   x: Float32Array, porteuse: number, battement: number, sampleRate: number,
 ): number {

@@ -87,22 +87,47 @@ function lireSinc(src: Float32Array, pos: number, coupure: number): number {
 }
 
 /** La vitesse variable : la bande qu'on accélère ou qu'on freine, hauteur et durée liées. */
+/** Ce qu'une voie demande, en un seul objet sérialisable : c'est tout ce qu'un worker reçoit. */
+export interface OptionsVitesse {
+  /** Le rapport de vitesse à chaque échantillon de la SOURCE. */
+  rapports: Float32Array;
+  /** La fréquence d'échantillonnage : un tableau de nombres ne la porte pas, et la borne en dépend. */
+  frequence: number;
+}
+
+/**
+ * Une voie, lue à vitesse variable.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. `AudioBuffer` n'y servait que
+ * de récipient. **Mesuré avant, sur trois secondes de son : 516 millisecondes, et pas un seul
+ * message pendant ce temps.**
+ *
+ * LES POSITIONS SE RECALCULENT PAR VOIE, et c'est un surcoût assumé : elles ne dépendent que des
+ * rapports, donc les deux canaux en trouvent les mêmes. Les partager demanderait un dialogue à deux
+ * temps entre le composant et son worker, pour une passe qui ne coûte qu'une addition par
+ * échantillon là où la lecture en coûte trente-deux.
+ */
+export function vitesseVariableVoie(src: Float32Array, o: OptionsVitesse): Float32Array {
+  const positions = positionsDeLecture(o.rapports);
+  if (positions.length / o.frequence > DUREE_SORTIE_MAX_S) {
+    throw new Error(`la sortie durerait ${Math.round(positions.length / o.frequence / 60)} min, au-delà de ${DUREE_SORTIE_MAX_S / 60}`);
+  }
+  const dst = new Float32Array(Math.max(1, positions.length));
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i];
+    const r = o.rapports[Math.min(o.rapports.length - 1, Math.floor(p))];
+    dst[i] = lireSinc(src, p, Math.min(1, 1 / r));
+  }
+  return dst;
+}
+
 export function vitesseVariable(buffer: AudioBuffer, rapports: Float32Array): AudioBuffer {
-  const positions = positionsDeLecture(rapports);
-  if (positions.length / buffer.sampleRate > DUREE_SORTIE_MAX_S) {
-    throw new Error(`la sortie durerait ${Math.round(positions.length / buffer.sampleRate / 60)} min, au-delà de ${DUREE_SORTIE_MAX_S / 60}`);
-  }
+  const o = { rapports, frequence: buffer.sampleRate };
+  const voies = Array.from({ length: buffer.numberOfChannels }, (_, c) => vitesseVariableVoie(buffer.getChannelData(c), o));
   const sortie = new AudioBuffer({
-    numberOfChannels: buffer.numberOfChannels, length: Math.max(1, positions.length), sampleRate: buffer.sampleRate,
+    numberOfChannels: buffer.numberOfChannels, length: voies[0].length, sampleRate: buffer.sampleRate,
   });
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c), dst = sortie.getChannelData(c);
-    for (let i = 0; i < positions.length; i++) {
-      const p = positions[i];
-      const r = rapports[Math.min(rapports.length - 1, Math.floor(p))];
-      dst[i] = lireSinc(src, p, Math.min(1, 1 / r));
-    }
-  }
+  for (let c = 0; c < buffer.numberOfChannels; c++) sortie.getChannelData(c).set(voies[c]);
   return sortie;
 }
 

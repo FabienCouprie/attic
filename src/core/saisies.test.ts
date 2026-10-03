@@ -45,6 +45,8 @@ const RECUPERES = new Map([
   ["nomFichier", "le nom du fichier d'origine, que les métadonnées d'export réécrivent"],
   ["pureDataFichier", "le patch Pure Data chargé, que son composant lit à l'exécution"],
   ["couleur", "la couleur donnée au nœud, enregistrée et relue mais perdue à chaque copie"],
+  ["morceaux", "le découpage posé sur la ligne de temps d'un montage, qu'aucune sauvegarde ne gardait"],
+  ["pistesVidees", "les pistes d'un montage que l'on a vidées, qu'un morceau ne peut pas dire à leur place"],
 ]);
 
 const tri = (s: Iterable<string>) => [...s].sort();
@@ -55,7 +57,13 @@ describe("la table des genres de saisie", () => {
     expect(perdus, "un champ qui cesserait d'être enregistré disparaîtrait du projet").toEqual([]);
     // Ce qu'elle ajoute : la couleur, qui était déjà écrite par la persistance sans figurer dans la
     // liste blanche de l'export. Le reste des ajouts vaut pour les saisies, cas plus bas.
-    expect(tri([...CHAMPS_ENREGISTRES].filter((c) => !AVANT.conserves.includes(c)))).toEqual(["couleur"]);
+    //
+    // ET LE DÉCOUPAGE DU MONTAGE, qui n'était écrit NULLE PART : ni dans la table, ni dans la
+    // sauvegarde, ni dans la reprise de session. Un montage découpé revenait intact de son fichier,
+    // en silence. C'est exactement ce que le cas « aux deux bouts de la persistance » surveille, et
+    // il n'avait rien à surveiller tant que la table ignorait ces deux champs.
+    expect(tri([...CHAMPS_ENREGISTRES].filter((c) => !AVANT.conserves.includes(c))))
+      .toEqual(["couleur", "morceaux", "pistesVidees"]);
   });
 
   it("ET EXACTEMENT LES FICHIERS QUE L'OUVERTURE REFABRIQUE", () => {
