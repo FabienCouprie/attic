@@ -19,7 +19,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import "../audio/adaptateur";
 
 /**

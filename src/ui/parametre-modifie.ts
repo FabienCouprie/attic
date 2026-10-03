@@ -12,6 +12,7 @@
 //   — le défaut lui-même dépend de la langue (`defautEn`) pour les textes ;
 //   — un paramètre absent vaut son défaut, et n'est donc pas modifié.
 import { defautCanoniqueChoix, defautParametre, valeurCanoniqueChoix } from "../i18n";
+import { genresNumeriques } from "./widgets-parametre";
 
 type Parametre = {
   nom: string;
@@ -23,8 +24,16 @@ type Parametre = {
   optionIds?: string[];
 };
 
-/** Types dont la valeur se compare comme un nombre. */
-const NUMERIQUES = new Set([undefined, "nombre", "curseur", "sf2instrument"]);
+/**
+ * Genres dont la valeur se compare comme un nombre.
+ *
+ * `"sf2instrument"` Y FIGURAIT EN DUR, c'est-à-dire un genre du domaine audio dans le shell. Le fait
+ * « ma valeur est un nombre » appartient au genre : le domaine le déclare avec son composant de
+ * saisie, et `genresNumeriques()` les rend.
+ */
+const NUMERIQUES_DU_COEUR = [undefined, "nombre", "curseur"];
+const estNumerique = (type: string | undefined): boolean =>
+  NUMERIQUES_DU_COEUR.includes(type) || genresNumeriques().includes(type ?? "");
 
 /** La valeur de ce paramètre diffère-t-elle de son défaut ? */
 export function parametreModifie(
@@ -41,7 +50,7 @@ export function parametreModifie(
   }
 
   const defaut = defautParametre(p as any, lang as any);
-  if (NUMERIQUES.has(p.type)) {
+  if (estNumerique(p.type)) {
     const a = Number(brut);
     const b = Number(defaut);
     // Deux nombres : comparer comme tels, sinon « 110 » paraîtrait modifié face à 110.
@@ -62,7 +71,7 @@ export function parametreModifie(
 export function valeurDefaut(p: Parametre, lang = "fr"): number | string {
   if (p.type === "choix" && p.options) return defautCanoniqueChoix(p as any);
   const defaut = defautParametre(p as any, lang as any);
-  if (NUMERIQUES.has(p.type)) {
+  if (estNumerique(p.type)) {
     const n = Number(defaut);
     if (Number.isFinite(n)) return n;
   }

@@ -13,7 +13,7 @@
 // toute façon le programme 0, donc le piano : le suivi ne coûte rien au cas simple et rend le cas
 // orchestré.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from ".";
+import { toutesLesFiches } from "./index";
 
 /** Les nœuds qui reçoivent un fichier MIDI et le font sonner. */
 const LECTEURS_MIDI = ["sortie-midi", "lecteur-midi", "point-ecoute-midi", "capture-midi"];

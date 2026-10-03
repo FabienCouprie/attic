@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
+import { favoris } from "./favoris";
 import { BoutonModeles } from "./BoutonModeles";
 import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { demarrerLaFriction } from "./friction-pointeur";
@@ -43,34 +44,13 @@ interface Props {
   currentFilePath?: string | null;
 }
 
-const FAVORIS = [
-  { cle: "sonotheque", url: "https://lasonotheque.org" },
-  { cle: "pixabay", url: "https://pixabay.com/fr/sound-effects/" },
-  { cle: "signature", url: "https://signaturesounds.org/" },
-  { cle: "cc0sounds", url: "https://cc0-sounds.exi.software/" },
-  { cle: "sonniss", url: "https://gdc.sonniss.com/" },
-  { cle: "freesound", url: "https://freesound.org/" },
-  { cle: "openlofi", url: "https://github.com/btahir/open-lofi" },
-  { cle: "cresson", url: "https://aau.archi.fr/cresson/cressound-2025/la-boite-a-effets/" },
-  { cle: "birdsounds", url: "https://www.bird-sounds.net/" },
-  { cle: "cornell", url: "https://dl.allaboutbirds.org/backyardbirdsdownload-0" },
-  { cle: "hawaii", url: "https://muted.io/birds-of-hawaii/" },
-  { cle: "sounddino", url: "https://sounddino.com/en/effects/birdsong/" },
-  { cle: "vcsl", url: "https://versilian-studios.com/vcsl/" },
-  { cle: "philharmonia", url: "https://philharmonia.co.uk/resources/sound-samples/" },
-  { cle: "mutedio", url: "https://muted.io/" },
-  { cle: "chantcosmos", url: "https://lesia.obspm.fr/perso/philippe-zarka/Chants.html" },
-  { cle: "sounddinoSea", url: "https://sounddino.com/en/effects/fish/" },
-  { cle: "aquaplan", url: "https://aquaplan-project.eu/resources/outreach-activities/sound-recordings/" },
-  { cle: "marineMammals", url: "https://huggingface.co/datasets/ardavey/marine_ocean_mammal_sound" },
-];
-
 export function BarreOutils(props: Props) {
   const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
   const [favsOpen, setFavsOpen] = useState(false);
+  const liens = favoris();
   const [exemplesOuverts, setExemplesOuverts] = useState(false);
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
   const [verifEnCours, setVerifEnCours] = useState(false);
@@ -283,18 +263,23 @@ export function BarreOutils(props: Props) {
           <span className="attic-sf2-check">{sf2Nom ? "✓" : "?"}</span>
           <input type="file" accept=".sf2" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) onChargerSF2(f); e.target.value = ""; }} />
         </label>
-        <div className="attic-favs" onMouseEnter={() => setFavsOpen(true)} onMouseLeave={() => setFavsOpen(false)}>
-          <button className="attic-btn-icon" title={eti("favoris")} aria-label={eti("favoris")}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1l2.5 5 5.5.8-4 3.9.9 5.3L8 13.5 3.1 16l.9-5.3-4-3.9 5.5-.8L8 1z"/></svg>
-          </button>
-          {favsOpen && (
-            <div className="attic-favs-drop">
-              {FAVORIS.map((f) => (
-                <a key={f.cle} href={f.url} target="_blank" rel="noopener">{t(`favs.${f.cle}`)}</a>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* AUCUN BOUTON SI LE DOMAINE N'A DÉCLARÉ AUCUN LIEN : un menu qui s'ouvrirait sur rien ne
+            vaut pas mieux que pas de menu. La liste est déposée par la racine de composition, le
+            shell ne sait pas ce qu'on y cherche (cf. `ui/favoris.ts`). */}
+        {liens.length > 0 && (
+          <div className="attic-favs" onMouseEnter={() => setFavsOpen(true)} onMouseLeave={() => setFavsOpen(false)}>
+            <button className="attic-btn-icon" title={eti("favoris")} aria-label={eti("favoris")}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1l2.5 5 5.5.8-4 3.9.9 5.3L8 13.5 3.1 16l.9-5.3-4-3.9 5.5-.8L8 1z"/></svg>
+            </button>
+            {favsOpen && (
+              <div className="attic-favs-drop">
+                {liens.map((f) => (
+                  <a key={f.cle} href={f.url} target="_blank" rel="noopener">{t(`favs.${f.cle}`)}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Groupe>
       <span className="attic-sep" />
 

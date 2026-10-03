@@ -8,9 +8,10 @@
 // Le contenu et le placement vivent ici, hors du composant : la suite de tests ne couvre
 // pas les `.tsx`, et un panneau qui sort de l'écran ou qui montre un port en français en
 // anglais sont exactement les défauts qu'un test attrape.
-import type { FicheAudio } from "../audio/types-domaine";
+
 import type { FormePort } from "../core/typesFlux";
 import { nomFiche, resumeFiche } from "./libelles-fiche";
+import type { FicheUI } from "./registre-actif";
 
 export interface PortInfobulle {
   nom: string;
@@ -49,7 +50,7 @@ const port = (p: Port, lang: string, types: SourceTypes): PortInfobulle => {
 };
 
 /** Nom, résumé et ports d'une fiche, dans la langue affichée. */
-export function contenuInfobulle(def: FicheAudio, lang: string, types: SourceTypes): ContenuInfobulle {
+export function contenuInfobulle(def: FicheUI, lang: string, types: SourceTypes): ContenuInfobulle {
   return {
     nom: nomFiche(def, lang),
     resume: resumeFiche(def, lang),

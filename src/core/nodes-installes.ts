@@ -3,11 +3,12 @@
 // Au démarrage, recharge les nodes installés et les enregistre comme plugins.
 
 import type { Registre } from "./registre";
-import type { PluginDef, PortDef, ParametreDef, TypeValeur } from "./types";
+import { servicesDomaine } from "./services-domaine";
+import type { PluginDef, PortDef, ParametreDef } from "./types";
 
 // DI : l'adaptateur configure le registre au démarrage.
-let registre: Registre<TypeValeur, AudioContext> | null = null;
-export function configurerRegistreNodes(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
+let registre: Registre<unknown, unknown> | null = null;
+export function configurerRegistreNodes(r: Registre<unknown, unknown>): void { registre = r; }
 
 const CLE = "attic-nodes-installes";
 
@@ -69,7 +70,11 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
   try {
     const moduleObj = { exports: null as any };
     const atticCtx = {
-      AudioBuffer: (typeof AudioBuffer !== "undefined" ? AudioBuffer : undefined),
+      // CE QUE LE DOMAINE PRÊTE À UN NODE INSTALLÉ, et c'est à lui de le dire : `AudioBuffer`
+      // figurait ici en dur, c'est-à-dire le domaine audio nommé dans le cœur. Un node installé est
+      // du code du domaine ; ce qu'il lui faut sous la main l'est aussi.
+      ...servicesDomaine().globalesInstallees,
+      // Ce qui suit vient du langage et des API du navigateur, sans DOM ni stockage.
       Worker: (typeof Worker !== "undefined" ? Worker : undefined),
       fetch: (typeof fetch !== "undefined" ? fetch : undefined),
       URL: (typeof URL !== "undefined" ? URL : undefined),
@@ -98,7 +103,7 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     return;
   }
 
-  const def: PluginDef<TypeValeur, AudioContext> = {
+  const def: PluginDef<unknown, unknown> = {
     id: m.id,
     nom: m.nom,
     nomEn: m.nomEn,

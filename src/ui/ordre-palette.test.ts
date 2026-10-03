@@ -13,17 +13,17 @@ import { grouperFiches } from "./ordre-palette";
 import { filtrerFiches } from "./recherche-palette";
 import { toutesLesFiches } from "../plugins";
 import { ORDRE_UNIVERS } from "../audio/ordre-catalogue";
-import type { FicheAudio } from "../audio/types-domaine";
+import type { FicheUI } from "./registre-actif";
 
-const fiche = (id: string, univers: string, famille: string, nom = id, resume = ""): FicheAudio => ({
+const fiche = (id: string, univers: string, famille: string, nom = id, resume = ""): FicheUI => ({
   id, nom, univers, famille, resume,
   entrees: [], sorties: [], parametres: [],
   executer: async () => ({ valeurs: [] }),
-} as unknown as FicheAudio);
+} as unknown as FicheUI);
 
-const nomDe = (f: FicheAudio) => f.nom;
+const nomDe = (f: FicheUI) => f.nom;
 const familleDe = (f: string) => f;
-const universDe = (fiches: FicheAudio[]) => grouperFiches(fiches, nomDe, familleDe).map((g) => g.univers);
+const universDe = (fiches: FicheUI[]) => grouperFiches(fiches, nomDe, familleDe).map((g) => g.univers);
 
 describe("l'ordre des rubriques de la palette", () => {
   // Une liste où un nœud de Traitement se présente AVANT celui d'Entrées : c'est ce que produit
@@ -75,7 +75,7 @@ describe("l'ordre des rubriques de la palette", () => {
 });
 
 describe("sur le vrai catalogue", () => {
-  const sansRecherche = universDe(toutesLesFiches as FicheAudio[]);
+  const sansRecherche = universDe(toutesLesFiches as FicheUI[]);
 
   it("les univers sont ceux qu'on attend, dans l'ordre qu'on attend", () => {
     expect(sansRecherche[0]).toBe("Entrées");
@@ -86,7 +86,7 @@ describe("sur le vrai catalogue", () => {
   it("AUCUNE RECHERCHE NE CHANGE L'ORDRE DES RUBRIQUES", () => {
     // Des requêtes choisies pour que la première correspondance tombe dans des univers différents.
     for (const requete of ["reverb", "midi", "image", "collection", "spectral", "a", "son"]) {
-      const retenues = filtrerFiches(toutesLesFiches as FicheAudio[], requete, () => "");
+      const retenues = filtrerFiches(toutesLesFiches as FicheUI[], requete, () => "");
       const ordre = universDe(retenues);
       // L'ordre obtenu est celui du catalogue complet, privé des univers sans correspondance.
       expect(ordre, `recherche « ${requete} »`).toEqual(sansRecherche.filter((u) => ordre.includes(u)));

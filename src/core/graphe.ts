@@ -6,6 +6,7 @@
 // Domaine-neutre : ces fonctions ne connaissent ni l'audio ni React ; elles
 // opèrent sur des ids de nœuds, des arêtes et une table de résultats opaque.
 import type { AreteG } from "./meta";
+import { servicesDomaine } from "./services-domaine";
 
 // Tri topologique (algorithme de Kahn) d'un DAG. Renvoie les ids de nœuds dans
 // un ordre d'exécution valide (une source avant ses cibles). Réplique exacte de
@@ -185,16 +186,20 @@ export function empreinteParametres(data: Record<string, unknown>): string {
 
 // Empreinte stable d'une valeur individuelle (utilisée pour les entrées).
 // Permet au cache d'invalidation d'être basé sur les valeurs réelles reçues,
-// pas seulement sur les ids des nœuds amont. Traite les types courants du
-// moteur (primitifs, AudioBuffer, File/Blob, tableaux, objets simples).
+// pas seulement sur les ids des nœuds amont. Traite les types que le cœur
+// connaît du LANGAGE : primitifs, File/Blob, tableaux typés, tableaux, objets
+// simples. Les valeurs propres au domaine sont empreintes par le domaine.
+//
+// LE DOMAINE RÉPOND AVANT LES CAS GÉNÉRIQUES, et après les primitifs seulement : une valeur de
+// domaine n'est jamais une chaîne ni un nombre, et la placer là garde le comportement d'avant au
+// caractère près — c'est exactement la position qu'occupait le test `instanceof AudioBuffer`.
 export function empreinteValeur(valeur: unknown): string {
   if (valeur === null) return "null";
   if (valeur === undefined) return "undefined";
   const type = typeof valeur;
   if (type === "string" || type === "number" || type === "boolean") return String(valeur);
-  if (typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer) {
-    return `AudioBuffer(${valeur.length},${valeur.sampleRate},${valeur.numberOfChannels})`;
-  }
+  const duDomaine = servicesDomaine().empreinte(valeur);
+  if (duDomaine !== null) return duDomaine;
   if (valeur instanceof File) return `File(${valeur.name},${valeur.size},${valeur.type})`;
   if (valeur instanceof Blob) return `Blob(${valeur.size},${valeur.type})`;
   if (Array.isArray(valeur)) return `[${valeur.map(empreinteValeur).join(",")}]`;

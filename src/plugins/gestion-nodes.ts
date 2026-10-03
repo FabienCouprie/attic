@@ -2,7 +2,8 @@
 // exporte un node existant en .zip et importe un node depuis un .zip.
 // Permet de partager des nodes entre installations d'Attic.
 
-import type { Registre, TypeValeur } from "../core";
+import type { Registre } from "../core";
+import type { ValeurAudio, RuntimeAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
@@ -11,8 +12,8 @@ import { installerNode } from "../core";
 // Injection : l'adaptateur configure le registre au démarrage.
 // Ce plugin est un outil d'administration (export/import .zip) qui accède
 // au registre — ce n'est pas un plugin de traitement.
-let registre: Registre<TypeValeur, AudioContext> | null = null;
-export function configurerRegistreGestion(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
+let registre: Registre<ValeurAudio, RuntimeAudio> | null = null;
+export function configurerRegistreGestion(r: Registre<ValeurAudio, RuntimeAudio>): void { registre = r; }
 
 // Récupère les 5 derniers plugins au moment de l'appel (pas au chargement du module)
 function getPluginsRecents(): string[] {

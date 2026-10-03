@@ -54,6 +54,9 @@ export const fiches: FicheAudio[] = ([
     id: "convertisseur-mp3-wav", nom: "MP3 → WAV", nomEn: "MP3 → WAV", univers: "Traitement", famille: "Conversion",
     resume: "Convertit un flux audio en WAV téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable WAV.",
+    // Ce que ce nœud fait entendre est ce que son bouton enregistre : le fichier porte donc son
+    // bloc de métadonnées iXML.
+    apercuEstLeFichier: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [],

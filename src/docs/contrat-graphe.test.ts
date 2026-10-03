@@ -26,7 +26,7 @@ import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import "../audio/adaptateur";
 
 /** Les dossiers où l'on range des graphes, les mêmes que le script surveille. */

@@ -2,6 +2,13 @@
 
 import { describe, it, expect } from "vitest";
 import { filtrerAretesInvalides } from "./validerGraphe";
+// LE SHELL NE NOMME PLUS SON DOMAINE : il demande le registre actif, qu'une racine de composition
+// dépose. Un test qui exerce un module du shell doit donc en déposer un, et c'est un progrès : la
+// dépendance au domaine, qui était cachée dans un import, est maintenant écrite dans le test.
+import { registre } from "../audio/adaptateur";
+import { configurerRegistreUI, type RegistreUI } from "./registre-actif";
+
+configurerRegistreUI(registre as unknown as RegistreUI);
 
 function makeNode(id: string, ficheId: string) {
   return { id, type: "atelier", position: { x: 0, y: 0 }, data: { ficheId, parametres: {} } };

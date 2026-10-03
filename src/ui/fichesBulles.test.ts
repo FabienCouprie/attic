@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   creerRegistre, estBulle, ficheDeBulle,
-  type AreteG, type NoeudG, type PluginDef, type TypeValeur,
+  type AreteG, type NoeudG, type PluginDef,
 } from "../core";
 import { signatureBulles, synchroniserFichesBulles, UNIVERS_BULLES } from "./fichesBulles";
 
-const def = (id: string, entrees: number, sorties: number): PluginDef<TypeValeur, AudioContext> => ({
+const def = (id: string, entrees: number, sorties: number): PluginDef<unknown, unknown> => ({
   id, nom: id, univers: "Traitement", famille: "Effets", resume: `Le composant ${id}.`,
   entrees: Array.from({ length: entrees },
     (_, i) => ({ nom: `E${i}`, type: "audio" })),
@@ -21,7 +21,7 @@ const noeud = (id: string, ficheId: string, bulle?: string): NoeudG => ({
 });
 
 function registrePret() {
-  const r = creerRegistre<TypeValeur, AudioContext>();
+  const r = creerRegistre<unknown, unknown>();
   // Le registre refuse une fiche dont un port porte un type de flux inconnu de lui.
   r.enregistrerTypeFlux({ id: "audio", couleur: "#fff", libelle: "Audio" });
   r.enregistrer(def("gain", 1, 1));

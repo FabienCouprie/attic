@@ -35,7 +35,7 @@ import { QUALITES } from "./qualites-accords";
 import { RYTHMES_CANONIQUES } from "./cercle";
 
 /** Les sources où une table pourrait réapparaître, cas de test exclus. */
-function sources(dossiers = [join("src", "audio"), join("src", "plugins"), join("src", "ui")]): string[] {
+function sources(dossiers = [join("src", "audio"), join("src", "plugins"), join("src", "ui"), join("src", "vues-domaine")]): string[] {
   const out: string[] = [];
   for (const d of dossiers) {
     for (const e of readdirSync(d, { withFileTypes: true })) {

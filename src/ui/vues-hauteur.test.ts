@@ -25,7 +25,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const SOURCE = readFileSync(join(process.cwd(), "src/ui/vues.tsx"), "utf8");
+const SOURCE = readFileSync(join(process.cwd(), "src/vues-domaine/vues.tsx"), "utf8");
 
 /** Les composants de vue déclarés dans `vues.tsx`, chacun avec son corps. */
 function vuesDeclarees(): Map<string, string> {

@@ -12,17 +12,16 @@ import "@xyflow/react/dist/style.css";
 import { trouverMeta,
   estFrontiere, estBulle, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
   surChangementMetas, supprimerMeta, traduireConnexion, type AreteG, type NoeudG } from "../core";
-import { registre } from "../audio/adaptateur";
-import "../audio/adaptateur";
-import type { FicheAudio } from "../audio/types-domaine";
 
-const trouverDef = (id: string) => registre.trouverDef(id);
+import "../audio/adaptateur";
+
+const trouverDef = (id: string) => registreUI().trouverDef(id);
 /** Le temps qu'on laisse passer après le dernier réglage avant de relancer un nœud qui le demande.
  *  Assez long pour qu'une valeur tapée chiffre par chiffre ne lance qu'une fois, assez court pour
  *  qu'on entende le résultat du geste qu'on vient de faire. */
 const DELAI_RELANCE_MS = 350;
-const tousLesPlugins = () => registre.tousLesPlugins();
-const couleurFlux = (id: string) => registre.couleurFlux(id);
+const tousLesPlugins = () => registreUI().tousLesPlugins();
+const couleurFlux = (id: string) => registreUI().couleurFlux(id);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
@@ -63,6 +62,7 @@ import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { chargerNodesInstalles } from "../core";
 import { PanneauInspecteur } from "./PanneauInspecteur";
+import { registreUI } from "./registre-actif";
 // Restaure les données de backup si on vient d'une mise à jour (synchrone)
 const api0 = (window as any).api;
 if (api0?.majRestaurerBackupSync) {
@@ -134,7 +134,6 @@ function couleurArete(nodes: any[], source: string, sourceHandle: string): strin
   const type = def?.sorties[idx]?.type ?? "audio";
   return couleurFlux(type);
 }
-
 
 // ── Application ──
 
@@ -661,7 +660,6 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     setSel((prev) => prev && idArr.includes(prev.id) ? null : prev);
   }, [reinitialiserNoeud, setNodes, setEdges]);
 
-
   // Callbacks standard attachés à tout nœud (ajout, import, copier/coller).
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
@@ -986,7 +984,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   useEffect(() => {
     const { inscrites, retirees } = synchroniserFichesBulles(
       noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
-      registre,
+      registreUI(),
     );
     if (inscrites.length || retirees.length) setPluginsVersion((v) => v + 1);
   }, [signatureDesBulles, nomDeNoeud]);
@@ -1140,7 +1138,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   }, [nomDeNoeud]);
 
   const nodeColor = useCallback((node: any) => {
-    const cat = categorieNoeud(node.data?.ficheId, registre.trouverDef(node.data?.ficheId));
+    const cat = categorieNoeud(node.data?.ficheId, registreUI().trouverDef(node.data?.ficheId));
     return COULEURS_CATEGORIE[cat] ?? "var(--text-muted)";
   }, []);
 
@@ -1238,7 +1236,6 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   // de l'autre. Aucun ne dépend de l'atelier au-delà de ce qui leur est passé ici.
   useSauvegardeAutomatique({ currentFilePath, sauvegardeAutoActive, sauvegarderAuto });
   useFiletGlissement({ pointerDownRef, rfRef });
-
 
   return (
     <div className="attic-app" style={{ gridTemplateColumns: paletteOuverte ? "260px 1fr 280px" : "40px 1fr 280px" }}>

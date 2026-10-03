@@ -2,17 +2,19 @@
 
 import type { ModeMemoire } from "./memoire";
 
-// Valeur transportée sur les arêtes. Le cœur ne manipule les valeurs que de
-// façon opaque : un autre domaine fournit son propre type via le paramètre
-// `TValeur` des contrats génériques ci-dessous, sans toucher au cœur.
-// Union de valeurs du domaine AUDIO. Elle vit encore dans le cœur uniquement
-// parce que `core/metastore.ts` et `core/nodes-installes.ts` sont mono-domaine
-// (hypothèse assumée « un domaine par process » — cf. ARCHITECTURE.md §14).
-// Un NOUVEAU domaine ne doit PAS l'utiliser : il déclare sa propre union et la
-// passe en paramètre générique (les contrats ci-dessous n'ont plus de défaut,
-// donc le compilateur l'y oblige). Côté audio, utiliser `FicheAudio` /
-// `ValeurAudio` de `audio/types-domaine.ts` plutôt que ce type directement.
-export type TypeValeur = AudioBuffer | Float32Array | File | string | { debut: number; duree: number } | null;
+// LA VALEUR TRANSPORTÉE SUR LES ARÊTES N'EST PLUS NOMMÉE ICI, et c'est la dernière chose que le cœur
+// savait du domaine audio. Elle l'était sous le nom `TypeValeur`, une union de six types dont
+// `AudioBuffer` : le cœur ne manipule les valeurs que de façon opaque, mais il les énumérait.
+//
+// POURQUOI ELLE A PU PARTIR. Son propre commentaire disait la raison de sa présence : « elle vit
+// encore dans le cœur uniquement parce que `core/metastore.ts` et `core/nodes-installes.ts` sont
+// mono-domaine ». Ces deux modules fabriquent des fiches dérivées — un méta-composant, un node
+// installé à chaud — dont les valeurs ne font que passer ; ils déclarent désormais
+// `Registre<unknown, unknown>`, et la raison est tombée.
+//
+// Chaque domaine déclare donc son union et la passe en paramètre générique : `ValeurAudio` dans
+// `audio/types-domaine.ts`, `number | string` dans `core/domaine-nombre.test.ts`. Les contrats
+// ci-dessous n'ont aucun défaut, si bien que le compilateur l'exige.
 
 // Contexte d'exécution passé à chaque plugin. Générique sur :
 //  - `TValeur`  : le type des valeurs sur les arêtes, propre au domaine ;
@@ -181,10 +183,34 @@ export interface PortDef {
   module?: string;
 }
 
+/**
+ * Les genres de paramètre que le cœur connaît, parce que leur saisie ne suppose aucun domaine.
+ *
+ * `couleurs` EN FAIT PARTIE, ET CE N'EST PAS UNE EXCEPTION : une liste de couleurs se saisit par un
+ * composant qui n'importe que React. N'importe quel domaine peut en vouloir une, comme il peut
+ * vouloir un champ de texte ou un chemin de fichier.
+ */
+export type GenreParametreGenerique =
+  | "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "couleurs";
+
+/**
+ * Le genre d'un paramètre : l'un de ceux du cœur, ou un genre propre au domaine.
+ *
+ * POURQUOI L'UNION EST OUVERTE. Elle nommait `"sf2instrument"`, c'est-à-dire un préréglage de
+ * banque SoundFont : le cœur énumérait un genre de saisie que seul l'audio connaît, et l'inspecteur
+ * portait la branche qui le rend. Un domaine d'images aurait hérité d'un genre de paramètre parlant
+ * d'instruments. Le domaine déclare donc les siens, et les fait rendre par le registre de
+ * `ui/widgets-parametre.ts`.
+ *
+ * `string & {}` garde l'autocomplétion des genres du cœur tout en acceptant les autres : sans cette
+ * intersection, TypeScript réduirait l'union entière à `string` et plus rien ne serait suggéré.
+ */
+export type GenreParametre = GenreParametreGenerique | (string & {});
+
 export interface ParametreDef {
   nom: string;
   nomEn?: string;
-  type?: "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "sf2instrument" | "couleurs";
+  type?: GenreParametre;
   options?: string[];
   optionsEn?: string[];
   optionIds?: string[];
@@ -356,4 +382,32 @@ export interface PluginDef<TValeur, TRuntime> {
   // La relance est temporisée par l'interface : le champ numérique de l'inspecteur écrit à chaque
   // frappe, et « 12,5 » lancerait trois fois. Défaut : false.
   relanceAutomatique?: boolean;
+
+  // L'APERÇU DE CE NŒUD EST LE FICHIER QU'IL LIVRE, et non un résultat intermédiaire. L'interface
+  // peut donc y attacher ce qu'un fichier livré doit porter : dans le domaine audio, un bloc de
+  // métadonnées décrivant d'où vient le son.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON UNE LISTE D'IDENTIFIANTS. Le fait était écrit dans le shell, sous
+  // la forme d'un tableau d'identifiants de composants du domaine, sur le chemin d'exécution de tous
+  // les domaines. Deux défauts : ajouter un nœud d'export demandait de modifier un fichier d'UI, et
+  // un autre domaine héritait d'une liste qui ne parlait pas de lui. Le nœud déclare donc le fait,
+  // et le moteur le lui demande.
+  //
+  // CE N'EST PAS VRAI DE TOUS, et c'est pourquoi la propriété existe : calculer ces métadonnées
+  // parcourt le son entier, et un aperçu qui n'est jamais livré ne vaut pas ce parcours.
+  // Défaut : false.
+  apercuEstLeFichier?: boolean;
+
+  // LA SORTIE DE CE NŒUD PEUT TOMBER HORS DE LA PLAGE VALIDE DU DOMAINE, et doit donc passer par
+  // son recadrage avant d'être livrée. C'est le cas des nœuds qui calculent leurs valeurs à partir
+  // d'une expression ou d'un script fournis par l'utilisateur : rien ne les borne.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON UNE LISTE D'IDENTIFIANTS. Le fait était écrit dans le shell, sous
+  // la forme de cinq identifiants de composants du domaine, sur le chemin d'exécution de tous les
+  // domaines. Écrire un sixième nœud à formule demandait de modifier un fichier d'UI, et l'oubli ne
+  // se voyait pas : la sortie partait simplement sans recadrage.
+  //
+  // LE RECADRAGE LUI-MÊME APPARTIENT AU DOMAINE. Le cœur ne dit que le fait ; ce qu'est une plage
+  // valide et comment on y ramène une valeur, c'est au domaine de le savoir. Défaut : false.
+  sortieHorsPlagePossible?: boolean;
 }

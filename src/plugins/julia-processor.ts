@@ -148,6 +148,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Julia avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Julia code editor with syntax highlighting for audio processing.",
+    // Le script est écrit par l'utilisateur : rien ne borne ce qu'il rend.
+    sortieHorsPlagePossible: true,
     entrees: [
       { nom: "Audio", type: "audio", requis: false },
       { nom: "MIDI", type: "midi", requis: false },

@@ -15,13 +15,19 @@ export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, suppr
 export { ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
+// CE QUE LE CŒUR DEMANDE AU DOMAINE sur ses propres valeurs : empreinte, nom de type, types non
+// sérialisables, globales prêtées aux nodes installés. Neutre tant qu'aucun adaptateur n'a répondu.
+export { configurerServicesDomaine, oublierServicesDomaine, servicesDomaine } from "./services-domaine";
+export type { ServicesDomaine } from "./services-domaine";
 export { valider, validerGraphe } from "./validation";
 export type { ResultatValidationGraphe } from "./validation";
 export { creerAleatoire, hasardDuNoeud } from "./hasard";
 export { detecterPertes, formaterRapportPertes } from "./pertes";
 export type { ChampPurge } from "./pertes";
 export { estResultatEnErreur } from "./execution";
+// `TypeValeur` NE FIGURE PLUS ICI : l'union des valeurs d'un domaine est déclarée par ce domaine,
+// et passée en paramètre générique. Côté audio, c'est `ValeurAudio` de `audio/types-domaine.ts`.
 export type {
-  TypeValeur, ContexteExecution, FonctionPlugin,
+  ContexteExecution, FonctionPlugin,
   PortDef, ParametreDef, PluginDef,
 } from "./types";

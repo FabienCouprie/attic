@@ -188,7 +188,7 @@ describe("un graphe enregistre avant les morceaux", () => {
     // montre a l'ecran, et ici, qui les applique a un graphe ancien. Deux ecritures derivent, et la
     // derive serait silencieuse : un vieux projet rouvert sonnerait autrement sans que rien ne le
     // dise. Le cas va donc LIRE la fiche plutot que de recopier ses nombres.
-    const { toutesLesFiches } = await import("../plugins/index");
+    const { toutesLesFiches } = await import("../plugins");
     await import("./adaptateur");
     const fiche = (toutesLesFiches as { id: string; parametres?: { nom: string; defaut?: unknown }[] }[])
       .find((f) => f.id === "montage");

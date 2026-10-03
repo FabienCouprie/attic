@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere, estBulle, surChangementMetas } from "../core";
-import { registre } from "../audio/adaptateur";
-import type { FicheAudio } from "../audio/types-domaine";
 
-const trouverDef = (id: string) => registre.trouverDef(id);
-const couleurFlux = (id: string) => registre.couleurFlux(id);
+const trouverDef = (id: string) => registreUI().trouverDef(id);
+const couleurFlux = (id: string) => registreUI().couleurFlux(id);
 import { useI18n } from "../i18n";
 import { champTexte, texteBilingue } from "./texte-bilingue";
-import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./vues";
+import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
 import { useStatut } from "./statuts";
 import { etatPorts } from "./ports-extensibles";
 import { copierTexte } from "./copier";
@@ -19,6 +17,7 @@ import { bufferVersWavBlob } from "../audio";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
 import { LecteurAudio } from "./lecteur-audio";
+import { registreUI, type FicheUI } from "./registre-actif";
 
 /**
  * Le lecteur d'un intermédiaire sur une piste longue, construit au clic.
@@ -111,8 +110,8 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
  * n'avait pas de nouveau port. Relevé par Fabien. Le registre, lui, était juste depuis le début, et
  * c'est pourquoi relancer l'application faisait apparaître le port : le cache repartait vide.
  */
-const DEFS_CACHE = new Map<string, FicheAudio>();
-function getDef(ficheId: string): FicheAudio | undefined {
+const DEFS_CACHE = new Map<string, FicheUI>();
+function getDef(ficheId: string): FicheUI | undefined {
   if (DEFS_CACHE.has(ficheId)) return DEFS_CACHE.get(ficheId);
   const def = trouverDef(ficheId);
   if (def) DEFS_CACHE.set(ficheId, def);
@@ -138,7 +137,7 @@ export const COULEURS_CATEGORIE: Record<string, string> = {
 /** Les familles des « Entrées » qui prennent leur matière dehors, plutôt que de la fabriquer. */
 const SOURCES = new Set(["Audio", "Image", "Texte", "Text to Speech"]);
 
-export function categorieNoeud(ficheId: string, def?: FicheAudio): string {
+export function categorieNoeud(ficheId: string, def?: FicheUI): string {
   if (ficheId === "comment" || ficheId === "frame") return "autre";
   if (estFrontiere(ficheId)) return "autre";
   if (!def) return "autre";
@@ -456,7 +455,6 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
     return () => obs.disconnect();
   }, [id, updateNodeInternals, setNodes]);
 
-
   const nodeEstFrontiere = estFrontiere(data.ficheId as string);
   const vuesAvant = vuesPourNoeud(data.ficheId, "avant");
   const vuesApres = vuesPourNoeud(data.ficheId, "apres");
@@ -644,12 +642,12 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {def?.entrees.slice(0, ports.visibles).map((p, i) => {
             const hid = `in:${i}`;
             const c = couleurFlux(p.type);
-            const libelleType = registre.typeFlux(p.type)?.libelle ?? p.type;
+            const libelleType = registreUI().typeFlux(p.type)?.libelle ?? p.type;
             return (
               <div key={hid} className="attic-node-port" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
                 <Handle type="target" position={Position.Left} id={hid}
                   title={libelleType}
-                  style={stylePort(registre.formeFlux(p.type), c)} />
+                  style={stylePort(registreUI().formeFlux(p.type), c)} />
                 <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
                 {survolPort === hid && (
                   <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
@@ -672,7 +670,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
           {def?.sorties.map((p, i) => {
             const hid = `out:${i}`;
             const c = couleurFlux(p.type);
-            const libelleType = registre.typeFlux(p.type)?.libelle ?? p.type;
+            const libelleType = registreUI().typeFlux(p.type)?.libelle ?? p.type;
             return (
               <div key={hid} className="attic-node-port sortie" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
                 <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
@@ -681,7 +679,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
                 )}
                 <Handle type="source" position={Position.Right} id={hid}
                   title={libelleType}
-                  style={stylePort(registre.formeFlux(p.type), c)} />
+                  style={stylePort(registreUI().formeFlux(p.type), c)} />
               </div>
             );
           })}

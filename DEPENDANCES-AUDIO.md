@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 86 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 183 · transposable tel quel
+- **récipient** : 88 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 182 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | accord-mets.ts | pur | — |
 | accords-sequencer.ts | recipient | AudioBuffer |
 | accords.ts | recipient | AudioBuffer |
-| adaptateur.ts | pur | — |
+| adaptateur.ts | recipient | AudioBuffer |
 | algebre-alignement.ts | pur | — |
 | algebre-melanges.ts | pur | — |
 | algebre.ts | pur | — |
@@ -134,6 +134,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | esthetique.ts | pur | — |
 | euclidien.ts | pur | — |
 | evolution.ts | pur | — |
+| favoris.ts | pur | — |
 | fdn.ts | pur | — |
 | features-piste.ts | recipient | AudioBuffer |
 | fft.ts | pur | — |
@@ -298,7 +299,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | tonnetz.ts | pur | — |
 | tore.ts | recipient | AudioBuffer |
 | tresse.ts | pur | — |
-| types-domaine.ts | pur | — |
+| types-domaine.ts | recipient | AudioBuffer |
 | ubiquite.ts | recipient | AudioBuffer |
 | vague.ts | recipient | AudioBuffer |
 | velours.ts | pur | — |

@@ -10,7 +10,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modifie";
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const CURSEUR = { nom: "Tempo", type: "curseur", defaut: 110, plage: [40, 240] as [number, number] };

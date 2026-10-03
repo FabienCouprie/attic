@@ -3,12 +3,12 @@
 // catalogue et se rendre/relier comme n'importe quel nœud. À l'exécution, il est
 // aplati (cf. core/meta.ts), donc son `executer` n'est jamais réellement appelé.
 import type { MetaComposant } from "./meta";
-import type { PluginDef, TypeValeur } from "./types";
+import type { PluginDef } from "./types";
 import type { Registre } from "./registre";
 
 // DI : l'adaptateur de domaine configure le registre au démarrage.
-let registre: Registre<TypeValeur, AudioContext> | null = null;
-export function configurerRegistre(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
+let registre: Registre<unknown, unknown> | null = null;
+export function configurerRegistre(r: Registre<unknown, unknown>): void { registre = r; }
 
 const metas = new Map<string, MetaComposant>();
 
@@ -70,7 +70,7 @@ export function decrireMeta(id: string, description: string): void {
 
 export function enregistrerMeta(meta: MetaComposant): void {
   metas.set(meta.id, meta);
-  const def: PluginDef<TypeValeur, AudioContext> = {
+  const def: PluginDef<unknown, unknown> = {
     id: meta.id,
     nom: meta.nom,
     // La fiche n'avait aucun champ anglais : un méta-composant gardait son nom et son

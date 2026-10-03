@@ -13,8 +13,13 @@ import {
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
   noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
-  type NoeudG, type AreteG, type TypeValeur,
+  type NoeudG, type AreteG,
 } from "../../core";
+
+// CE QUE LE SHELL TRANSPORTE SANS LE REGARDER. Le moteur d exécution déclarait ses valeurs
+// `TypeValeur`, c est-à-dire l union du domaine audio : le chemin d exécution de TOUS les domaines
+// était typé contre un seul. Il n en lit aucune ; il les prend d un nœud et les donne au suivant.
+type ValeurTransportee = unknown;
 import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-execution";
 import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
@@ -23,31 +28,30 @@ import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as stat
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { graineDuTour, resoudreGraine } from "../../core/hasard";
 import { deplierInstruments } from "../../core/instrument-graphe";
-import { registre } from "../../audio/adaptateur";
-import { ecartNiveau } from "../../audio/ecart-niveau";
-import { publierGrapheCourant, publierExecutionCourante } from "../../plugins/grapheGlobal";
-import { bufferVersWavBlob, bufferVersWavBlobRespirant, picAbsolu } from "../../audio";
-import { echantillonnerPourApercu, estCourbe } from "../../audio/courbe";
-import { heriterDisposition } from "../../audio/multicanal";
-import { tamponPourApercu } from "../../audio/multicanal-ecoute";
+
+import { servicesOrchestration } from "../services-orchestration";
+// CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
+// importées ici, sur le chemin d'exécution de tous les domaines, et `AudioBuffer` nommé à trois
+// endroits. Les questions sont désormais posées, et le domaine y répond (cf. ui/services-apercu.ts).
+import { servicesApercu } from "../services-apercu";
 import { apresEffacement, champsAReporter, urlsARevoquer, type ClassesDeChamps } from "../../core/cycle-de-vie";
 import type { DemandeAuMoteur } from "../../core/types";
 import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
-import { decrire } from "../../audio/metadonnees";
 import { lireProfondeurExport } from "../profondeur-export";
-import { FICHE_LOT_DEBUT, fichiersAudio, planifierLot, publierLot } from "../../plugins/lotGlobal";
+// LES DEUX PILOTES DE PASSES RESTENT ICI, et c'est un choix écrit : les généraliser demande de
+// réécrire les deux boucles imbriquées, qui portent l'oubli de cache par passe et l'ordre
+// d'emboîtement du lot autour des boucles — deux corrections durement acquises, qu'aucun test
+// n'éprouve aujourd'hui ensemble. Voir `ui/services-orchestration.ts`.
+import { planifierLot, publierLot } from "../../plugins/lotGlobal";
 // LES BORNES SONT DÉCLARÉES AVEC LE COMPTEUR, ET NON ICI. Recopiées des deux côtés, elles auraient
 // dérivé à la première qu'on aurait changée, et le test ne garderait plus que la copie du module.
 import { avancerBoucles, planifierBoucles, publierBoucles, PASSES_MAX_TOTAL } from "../../plugins/boucleSequencesGlobal";
 import type { Sequence } from "../../audio/sequence";
 
 import { traduire, useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { registreUI } from "../registre-actif";
 
-const trouverDef = (id: string) => registre.trouverDef(id);
-const FORMULA_NODE_IDS = ["formule-echantillons", "formule-spectrale", "generateur-audio-mathematique"];
-const NOEUDS_AVEC_PLAFOND_PREVIEW = [...FORMULA_NODE_IDS, "julia-processor", "python-processor"];
-/** Les nœuds dont l'aperçu est aussi le fichier enregistré, et qui portent donc un bloc iXML. */
-const NOEUDS_EXPORT = ["sortie-audio", "convertisseur-mp3-wav"];
+const trouverDef = (id: string) => registreUI().trouverDef(id);
 
 // LA TROISIÈME CLASSE A DISPARU, ET C'EST UN RÉSULTAT. `CHAMPS_SIGNAL_UNIQUE` nommait ici trois
 // champs qu'un composant posait sur un nœud pour parler au MOTEUR : un graphe à créer, un graphe
@@ -411,7 +415,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       trouverMeta,
       estBulle,
     );
-    publierGrapheCourant(aDocumenter);
+    servicesOrchestration().publierGraphe(aDocumenter);
     for (const id of aDocumenter.conteneursRetires) {
       console.warn(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
     }
@@ -512,7 +516,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       nds,
       aretes as unknown as AreteG[],
       (ficheId) => trouverDef(ficheId),
-      registre.fluxCompatibles,
+      registreUI().fluxCompatibles,
     );
     const noeudsEnErreur = new Set<string>();
     for (const [nodeId, msgs] of validation.noeudsAffectes) {
@@ -570,7 +574,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
 
     const ctx = await obtenirAudio();
-    const resultats = new Map<string, TypeValeur[]>();
+    const resultats = new Map<string, ValeurTransportee[]>();
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
 
@@ -629,7 +633,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       return valeur;
     };
     // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
-    publierExecutionCourante({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
+    servicesOrchestration().publierExecution({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
 
     // Retour visuel IMMÉDIAT sur le méta propriétaire d'un nœud interne en échec.
     // Sans ça le méta garde son « en cours » (posé en amont) jusqu'à la passe
@@ -786,7 +790,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // ses cas.
       traitesCeRun.add(nodeId);
 
-      const fn = registre.trouverPlugin(node.data.ficheId as string);
+      const fn = registreUI().trouverPlugin(node.data.ficheId as string);
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
@@ -803,8 +807,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
           noeud: node,
           runtime: ctx,
           repertoireTravail: repertoire,
-          entree: (idx: number) => resoudreEntree<TypeValeur>(nodeId, idx, aretesG, resultats) as TypeValeur,
-          entrees: () => valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats),
+          entree: (idx: number) => resoudreEntree<ValeurTransportee>(nodeId, idx, aretesG, resultats) as ValeurTransportee,
+          entrees: () => valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats),
           // Les arêtes sont ici, et elles disent si un câble part de cette sortie. Un nœud peut
           // alors ne calculer une sortie chère que lorsqu'elle sert.
           //
@@ -863,30 +867,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // ne pas écraser l'état déjà remis à « attente » par le reset avec un
         // résultat/statut « terminé » ou « erreur » périmé.
         if (controller.signal.aborted) break;
-        resultats.set(nodeId, res.valeurs as TypeValeur[]);
-        // LA DISPOSITION VOYAGE AVEC LE SON. Un effet ordinaire fabrique un tampon neuf, et sans
-        // cette ligne il effacerait au passage l'étiquette « 7.1.4 » ou « ambisonie d'ordre 2 » que
-        // son entrée portait — l'export ne saurait plus quel canal est le centre. La règle ne devine
-        // jamais : seul un tampon de même nombre de canaux qu'une entrée étiquetée hérite.
-        heriterDisposition(res.valeurs as unknown[], valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats));
-        // DE COMBIEN CE COMPOSANT A CHANGÉ LE NIVEAU DE CE QU'IL A REÇU.
-        //
-        // Un composant peut rendre un son plus faible que son entrée sans que rien ne le dise : la
-        // chute se découvre à l'oreille, plusieurs composants plus loin, sans qu'on sache lequel en
-        // est la cause. L'écart est donc mesuré ici, où les entrées et les sorties sont toutes
-        // deux disponibles, et porté sur le nœud à côté du temps d'exécution.
-        //
-        // RIEN N'EST CORRIGÉ. Redresser automatiquement casserait les composants dont le niveau
-        // est l'objet, les garanties de reconstruction et l'associativité de la chaîne : voir
-        // l'en-tête d'`audio/ecart-niveau.ts`. Le composant « Recaler le niveau » fait ce travail
-        // là où on le demande.
-        try {
-          const ec = ecartNiveau(
-            res.valeurs as unknown[],
-            valeursEntrantes<TypeValeur>(nodeId, aretesG, resultats) as unknown[],
-            (v): v is AudioBuffer => v instanceof AudioBuffer);
-          if (ec) ecartsParNoeud.set(nodeId, ec.ecart);
-        } catch { /* une mesure ratée ne fait pas échouer une exécution */ }
+        resultats.set(nodeId, res.valeurs as ValeurTransportee[]);
+        // CE QUE LES SORTIES HÉRITENT DES ENTRÉES, et que le calcul ne reproduit pas : côté audio,
+        // la disposition des canaux. C'est ici, et seulement ici, que les entrées et les sorties
+        // sont toutes deux sous la main — d'où la question posée depuis ce point du moteur.
+        const entrantes = () =>
+          valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats) as unknown[];
+        servicesApercu().heriterDesEntrees(res.valeurs as unknown[], entrantes());
+        // DE COMBIEN CE NŒUD A CHANGÉ LE NIVEAU DE CE QU'IL A REÇU, porté sur le nœud à côté du
+        // temps d'exécution. Ce que « niveau » veut dire appartient au domaine, et c'est lui qui
+        // mesure ; le shell ne sait que l'endroit où la question se pose.
+        const ecart = servicesApercu().ecartNiveau(res.valeurs as unknown[], entrantes());
+        if (ecart !== undefined) ecartsParNoeud.set(nodeId, ecart);
         if (res.message) messages.set(nodeId, res.message);
         if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
         if (res.designe) designeParNoeud.set(nodeId, res.designe);
@@ -900,7 +892,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // (sortieNullePermise) : « aucune note détectée » d'un transcripteur ou
         // un nœud-frontière ne sont pas des échecs.
         const defRes = trouverDef(node.data.ficheId as string);
-        if (estResultatEnErreur(defRes, res as { valeurs: TypeValeur[]; erreur?: boolean })) {
+        if (estResultatEnErreur(defRes, res as { valeurs: ValeurTransportee[]; erreur?: boolean })) {
           noeudsEnErreur.add(nodeId);
           poserStatut(nodeId, "erreur", res.message);
           marquerMetaEnEchec(nodeId, node.data.ficheId as string);
@@ -1080,36 +1072,21 @@ export function useExecutionGraphe(o: OptionsExecution) {
           return canaux._affichage || canaux._designe || canaux.audioResultatMessage ? canaux : null;
         }
         const valsSafe = vals ?? [];
-        // L'aperçu joue la PREMIÈRE sortie audio. Les nœuds dont les sorties audio sont des pairs —
-        // les six pistes d'un séparateur — le disent par `sansApercuAudio` et n'en ont aucun.
-        const audio = defNode?.sansApercuAudio ? null : valsSafe.find((v): v is AudioBuffer => v instanceof AudioBuffer);
-        if ((n.data.ficheId as string) === "griffin-lim") {
-          const peak0 = audio ? picAbsolu(audio.getChannelData(0)) : 0;
-          const peak1 = audio && audio.numberOfChannels > 1 ? picAbsolu(audio.getChannelData(1)) : 0;
-          console.log("[audio url] griffin-lim", {
-            valsLength: valsSafe.length,
-            firstType: valsSafe[0] ? typeof valsSafe[0] : "undefined",
-            isAudioBuffer: valsSafe[0] instanceof AudioBuffer,
-            audioFound: !!audio,
-            audioCh: audio?.numberOfChannels,
-            audioLen: audio?.length,
-            audioSr: audio?.sampleRate,
-            peakCh0: peak0,
-            peakCh1: peak1,
-            existingUrl: n.data.audioResultatUrl ? "yes" : "no",
-            sameBuffer: audio === n.data.audioResultatBuffer,
-          });
-        }
+        // LA SORTIE QUI REPRÉSENTE CE QUE LE NŒUD A PRODUIT, et c'est le domaine qui la désigne.
+        // Les nœuds dont les sorties sont des pairs — les six pistes d'un séparateur — le disent par
+        // `sansApercuAudio`, et l'on ne demande alors rien.
+        //
+        // UN BLOC DE DIAGNOSTIC A DISPARU D'ICI, et il tenait de la fuite autant que de la trace :
+        // il testait `ficheId === "griffin-lim"`, c'est-à-dire un identifiant de composant du domaine
+        // écrit dans le shell, pour journaliser deux crêtes dans la console.
+        const audio = defNode?.sansApercuAudio ? null : servicesApercu().valeurRepresentative(valsSafe);
         const fichier = valsSafe.find((v): v is File => v instanceof File);
         const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
         const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
         const texte = valsSafe.find((v): v is string => typeof v === "string");
-        // UN APERÇU DE LA COURBE, ET NON LA COURBE. Une courbe de quatre minutes porte quarante-huit
-        // mille valeurs ; les retenir sur chaque nœud pour dessiner un trait de deux cents pixels
-        // serait payer cher un croquis. Deux cent cinquante-six points suffisent à la forme, et ce
-        // sont des nombres ordinaires, donc sérialisables avec le graphe.
-        const courbeProduite = (valsSafe as unknown[]).find(estCourbe);
-        const apercuCourbe = courbeProduite ? echantillonnerPourApercu(courbeProduite.valeurs, 256) : undefined;
+        // Ce qu'une courbe produite donne à dessiner. Combien de points y suffisent, et ce qu'est une
+        // courbe, relèvent du domaine : voir `plugins/apercu-domaine.ts`.
+        const apercuCourbe = servicesApercu().apercuCourbe(valsSafe as unknown[]);
         // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
         const grapheExport = demandesParNoeud.get(n.id)?.grapheAEmbarquer;
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
@@ -1126,7 +1103,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
           economie: economieMemoireRef?.current ?? true,
         });
         const garderApercu = !audio || (!membreReplie && apercuUtile({
-          dureeS: audio.duration,
+          // Combien de temps dure cette valeur : au domaine de le dire.
+          dureeS: servicesApercu().dureeSecondes(audio),
           regarde: noeudRegarde({
             id: n.id, selectionne: !!n.selected, aretes: aretesRef.current,
             dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
@@ -1141,25 +1119,28 @@ export function useExecutionGraphe(o: OptionsExecution) {
             url = n.data.audioResultatUrl;
           } else {
             if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
-            const securiser = NOEUDS_AVEC_PLAFOND_PREVIEW.includes(n.data.ficheId as string);
+            // LE NŒUD DÉCLARE QUE SA SORTIE PEUT SORTIR DE LA PLAGE, le shell ne tient plus la
+            // liste : elle y était écrite en cinq identifiants de composants du domaine.
+            const securiser = trouverDef(n.data.ficheId as string)?.sortieHorsPlagePossible === true;
             // Ce blob est à la fois l'aperçu écoutable et le fichier sauvegardé : la profondeur
             // choisie s'applique donc ici, et non au moment de la sauvegarde. Les séparer aurait
             // demandé de réencoder à l'enregistrement, donc de reconstruire le graphe embarqué,
-            // que seule cette boucle connaît.
-            // Un tampon multicanal étiqueté est replié en stéréo pour l'aperçu : à douze ou seize
-            // canaux, l'aperçu pesait six à huit fois une stéréo dans le processus principal, pour un
-            // lecteur incapable de le jouer juste. L'enregistrement, lui, repart du tampon complet.
-            // Les nœuds d'export disent en plus d'où vient leur fichier (bloc iXML) : c'est ce blob
-            // qu'enregistre leur bouton. Pas les autres — le calcul de l'identifiant parcourt le son,
-            // et un aperçu intermédiaire n'est jamais livré.
-            const ecrit = tamponPourApercu(audio);
-            const bits = lireProfondeurExport();
+            // que seule cette boucle connaît. Ce qu'écrire veut dire — repliement d'un multicanal,
+            // métadonnées, tranches qui rendent la main — appartient au domaine.
             const ficheId = n.data.ficheId as string;
-            const ixml = NOEUDS_EXPORT.includes(ficheId)
-              ? decrire(ecrit, { noeud: trouverDef(ficheId)?.nom ?? ficheId }, bits).ixml
-              : undefined;
-            url = URL.createObjectURL(await bufferVersWavBlobRespirant(
-              ecrit, grapheExport, securiser, { bits, ixml }, souffle));
+            // LE NŒUD DÉCLARE QUE SON APERÇU EST LE FICHIER, le shell ne tient plus la liste. Elle
+            // y était écrite en dur, sous la forme d'identifiants de composants du domaine, sur le
+            // chemin d'exécution de tous les domaines. Les autres n'ont pas de métadonnées : leur
+            // calcul parcourt la valeur entière, et un aperçu intermédiaire n'est jamais livré.
+            const def = trouverDef(ficheId);
+            const blob = await servicesApercu().blobApercu(audio, {
+              grapheAEmbarquer: grapheExport,
+              securiser,
+              bits: lireProfondeurExport(),
+              nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined,
+              souffle,
+            });
+            url = blob ? URL.createObjectURL(blob) : undefined;
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);
@@ -1482,14 +1463,16 @@ export function useExecutionGraphe(o: OptionsExecution) {
     arretLotRef.current = false;
     // La lecture du dossier est asynchrone, la planification ne l'est pas : on lit d'abord, puis
     // `planifierLot` — pure et testée — décide de tout le reste.
+    // QUELS DOSSIERS LIRE EST UNE QUESTION DE DOMAINE, et le moteur ne la tranche plus : il tenait
+    // ici l'identifiant du composant qui les porte et le nom de son paramètre.
     const api = (window as any).api;
-    const dossiers = new Map<string, ReturnType<typeof fichiersAudio>>();
-    for (const n of noeudsRef.current) {
-      if ((n.data as { ficheId?: string }).ficheId !== FICHE_LOT_DEBUT) continue;
-      const d = String((n.data as { parametres?: Record<string, unknown> }).parametres?.["Dossier"] ?? "").trim();
-      if (d && !dossiers.has(d)) dossiers.set(d, api?.lireDossier ? fichiersAudio(await api.lireDossier(d)) : []);
+    const orch = servicesOrchestration();
+    const dossiers = new Map<string, readonly unknown[]>();
+    for (const d of orch.dossiersALire(noeudsRef.current)) {
+      if (dossiers.has(d)) continue;
+      dossiers.set(d, api?.lireDossier ? orch.fichiersUtiles(await api.lireDossier(d)) : []);
     }
-    const plan = planifierLot(noeudsRef.current, (d) => dossiers.get(d) ?? []);
+    const plan = planifierLot(noeudsRef.current, (d) => (dossiers.get(d) ?? []) as never);
 
     // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
     if (!plan) {
