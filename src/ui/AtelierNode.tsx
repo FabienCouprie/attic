@@ -14,6 +14,7 @@ import { etatPorts } from "./ports-extensibles";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
+import { stylePort } from "./forme-port";
 import { bufferVersWavBlob } from "../audio";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
@@ -648,7 +649,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
               <div key={hid} className="attic-node-port" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
                 <Handle type="target" position={Position.Left} id={hid}
                   title={libelleType}
-                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-node)" }} />
+                  style={stylePort(registre.formeFlux(p.type), c)} />
                 <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
                 {survolPort === hid && (
                   <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
@@ -680,7 +681,7 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
                 )}
                 <Handle type="source" position={Position.Right} id={hid}
                   title={libelleType}
-                  style={{ background: c, width: 10, height: 10, border: "2px solid var(--bg-node)" }} />
+                  style={stylePort(registre.formeFlux(p.type), c)} />
               </div>
             );
           })}

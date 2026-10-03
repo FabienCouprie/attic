@@ -198,6 +198,23 @@ export function spectrogrammeModules(x: Float32Array, taille: number): Float32Ar
  * `analyseSynthese` exactement comme elle est prévue — plusieurs sorties d'un même signal, ce
  * que le nœud « Tresse » fait déjà avec ses brins.
  */
+/** Les réglages ET la taille, en un seul objet : c'est ce qu'un worker reçoit, et il n'en reçoit qu'un. */
+export interface OptionsHpss extends ReglagesHpss {
+  taille: number;
+}
+
+/**
+ * Une voie, de son signal à ses deux moitiés : tout ce qu'un canal demande, en un seul appel.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. Le calcul était déjà pur et
+ * déjà par voie ; il ne lui manquait qu'une signature à un seul objet de réglages, le dialogue des
+ * workers n'en passant pas deux. **Mesuré avant, sur trois secondes de son : 585 millisecondes, et
+ * pas un seul message pendant ce temps.**
+ */
+export function separerVoie(signal: Float32Array, o: OptionsHpss): ResultatHpss {
+  return separerHarmoniquePercussif(signal, o.taille, o);
+}
+
 export function separerHarmoniquePercussif(
   signal: Float32Array, taille = 2048, o: ReglagesHpss = {},
 ): ResultatHpss {

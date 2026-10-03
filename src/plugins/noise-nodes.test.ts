@@ -129,14 +129,29 @@ describe("profil-bruit + réduction-bruit en graphe", () => {
     expect(res.message).toContain("vide");
   });
 
-  it("les paramètres Réduction et Plancher ont une métadonnée complète", () => {
+  // LE PLAFOND DE « RÉDUCTION » DOIT RESTER AU-DESSUS DE CENT, ET C'EST LE DÉFAUT QUE CE TEST
+  // CONTRACTUALISE. Il valait exactement 100, et `calerParametre` de l'inspecteur borne la saisie à
+  // la plage : le réglage s'arrêtait donc à la valeur où la soustraction spectrale ne peut presque
+  // rien retirer. À 100 %, on retire la puissance MOYENNE du bruit et il en reste e⁻¹, soit 37 %,
+  // parce que la puissance de chaque trame fluctue autour de cette moyenne et que seule la part qui
+  // passerait sous zéro est rognée : quatre décibels, quoi qu'on règle par ailleurs. Fabien l'a
+  // signalé depuis l'application, « le bruit de fond que je cherchais à éliminer demeure ».
+  // La littérature fixe ce facteur entre trois et six : Berouti, Schwartz et Makhoul, « Enhancement
+  // of speech corrupted by acoustic noise », ICASSP 1979.
+  it("LE PLAFOND DE « RÉDUCTION » LAISSE SUR-SOUSTRAIRE, sans quoi le bruit ne part pas", () => {
     const def = registre.trouverDef("reduction-bruit") as FicheAudio | undefined;
     expect(def).toBeDefined();
     const reduction = def!.parametres.find((p) => p.nom === "Réduction");
     expect(reduction).toBeDefined();
     expect(reduction!.type).toBe("nombre");
-    expect(reduction!.plage).toEqual([0, 100]);
-    expect(reduction!.defaut).toBe(100);
+    const [bas, haut] = reduction!.plage as [number, number];
+    expect(bas).toBe(0);
+    expect(haut, "à 100 % la soustraction spectrale plafonne vers quatre décibels")
+      .toBeGreaterThanOrEqual(300);
+    expect(reduction!.defaut as number,
+      "le défaut doit sur-soustraire, faute de quoi le composant paraît inerte à la première écoute")
+      .toBeGreaterThanOrEqual(200);
+    expect(reduction!.defaut as number).toBeLessThanOrEqual(haut);
     const plancher = def!.parametres.find((p) => p.nom === "Plancher");
     expect(plancher).toBeDefined();
     expect(plancher!.type).toBe("nombre");

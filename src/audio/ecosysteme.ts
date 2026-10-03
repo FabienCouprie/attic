@@ -294,6 +294,21 @@ export function vivre(monde: Float32Array, o: OptionsEcosysteme): Resultat {
 }
 
 /**
+ * Un canal d'écosystème, dont la graine se dérive du rang du canal.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. Relevé avant, sur trois
+ * secondes de monde et quinze secondes de sortie : 228 millisecondes, sans qu'un seul message
+ * passe. `AudioBuffer` n'y servait que de récipient.
+ *
+ * CHAQUE CANAL EST UN ÉCOSYSTÈME À PART ENTIÈRE, et sa graine en est décalée : deux canaux qui
+ * partageraient la leur rendraient exactement le même son, donc une mono déguisée. C'est à cela
+ * que sert l'indice que le socle passe.
+ */
+export function vivreVoie(monde: Float32Array, o: OptionsEcosysteme, canal: number): Resultat {
+  return vivre(monde, { ...o, graine: o.graine + canal * 101 });
+}
+
+/**
  * Le régime que le système a trouvé.
  *
  * C'est la question que Di Scipio pose, et elle ne se lit pas sur les réglages : le même couplage

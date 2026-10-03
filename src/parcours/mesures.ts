@@ -30,7 +30,7 @@
 // qu'on le lui demande.
 
 import { mesurerNiveau } from "../audio/vumetre";
-import { hauteurMediane, partVoisee, suivreHauteur } from "../audio/hauteur";
+import { hauteurMediane, partVoisee, suivreHauteur, type SuiviHauteur } from "../audio/hauteur";
 import { fft } from "../audio/fft";
 import { fenetreHann } from "../audio/stft";
 import { chiffre } from "./conditions";
@@ -169,11 +169,29 @@ export interface MesureHauteur {
   noteProche: string;
 }
 
-export function mesurerHauteur(son: SonSoumis): MesureHauteur {
+/**
+ * La voie que le suivi de hauteur lira, ou rien quand le son est trop court pour en porter une.
+ *
+ * ELLE EST DÉTACHÉE DU SON, et non prise en vue. Une vue sur le canal d'un `AudioBuffer` traverse un
+ * worker en y emportant le tampon ENTIER : une pièce de trois minutes se recopierait pour huit
+ * secondes de lecture. La copie ne change pas un échantillon de ce qui est lu.
+ */
+export function voieAHauteur(son: SonSoumis): Float32Array | null {
   const n = Math.min(son.length, Math.round(SECONDES_HAUTEUR * son.sampleRate));
+  if (n < son.sampleRate * 0.05) return null;
+  return son.getChannelData(0).slice(0, n);
+}
+
+/**
+ * Ce qu'on conclut d'un suivi déjà fait : la médiane, la part voisée, et l'écart au demi-ton.
+ *
+ * CE CŒUR EST SÉPARÉ POUR QUE LE SUIVI PUISSE AVOIR LIEU AILLEURS. Mesuré sur trois secondes de son,
+ * le suivi pYIN coûte 330 millisecondes et le reste de la fiche onze : tout le gel est là, et il
+ * suffit de sortir ce seul calcul du fil. Ce qu'on en conclut tient en quelques divisions.
+ */
+export function conclureHauteur(suivi: SuiviHauteur | null): MesureHauteur {
   const rien = { hauteurHz: 0, justesseCents: Number.NaN, partVoiseePc: 0, ecartCents: Number.NaN, noteProche: "" };
-  if (n < son.sampleRate * 0.05) return rien;
-  const suivi = suivreHauteur(son.getChannelData(0).subarray(0, n), son.sampleRate);
+  if (!suivi) return rien;
   const f = hauteurMediane(suivi);
   const partVoiseePc = partVoisee(suivi) * 100;
   if (f <= 0) return { ...rien, partVoiseePc };
@@ -188,6 +206,12 @@ export function mesurerHauteur(son: SonSoumis): MesureHauteur {
     ecartCents,
     noteProche: nomDemiTon(69 + Math.round(demiTons)),
   };
+}
+
+/** Le suivi et sa conclusion, dans le fil : c'est ce que les épreuves du parcours emploient. */
+export function mesurerHauteur(son: SonSoumis): MesureHauteur {
+  const voie = voieAHauteur(son);
+  return conclureHauteur(voie ? suivreHauteur(voie, son.sampleRate) : null);
 }
 
 /** Ce qu'on peut ne pas demander : le suivi de hauteur, qui coûte une transformée par trame. */

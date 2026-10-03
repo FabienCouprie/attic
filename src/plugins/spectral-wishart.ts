@@ -11,9 +11,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
-import {
-  SAUT, TAILLE_TRAME, analyser, flouter, geler, glissandoInterieur, recoller, tracer,
-} from "../audio/spectral-wishart";
+import { TAILLE_TRAME, wishartVoie, type OptionsWishart } from "../audio/spectral-wishart";
+import { parCanal } from "./hors-fil";
 
 /** Le réglage commun aux quatre : ce que l'analyse voit du temps et de la fréquence. */
 const FINESSE = {
@@ -32,27 +31,30 @@ const tailleDe = (ctx: any): number => {
 };
 
 /**
- * Applique une transformation de trames à chaque canal, et rend un tampon de même forme.
+ * Applique une mise en forme à chaque canal, HORS DU FIL DE L'INTERFACE, et rend un tampon de même
+ * forme.
  *
- * LE SON EST PROLONGÉ D'UNE TRAME DE SILENCE DE CHAQUE CÔTÉ avant l'analyse, puis rogné. Sans cela,
- * les premiers et derniers échantillons ne sont couverts que par le bord d'une seule fenêtre, dont
- * le poids tend vers zéro ; le recollement divise par ce poids, ce qui est exact tant que la trame
- * n'est pas modifiée, et explose dès qu'elle l'est. Mesuré avant correction, aux bords seulement :
- * une crête de 21 au traçage, de 86 au flou, de 465 au gel — pour un son qui culmine à 0,5.
+ * CE PASSAGE CALCULAIT DANS LE FIL, et les quatre composants le figeaient TOTALEMENT : relevé sur
+ * trois secondes de son, 329 ms pour le traçage, 260 pour le flou, 238 pour le glissando intérieur,
+ * sans qu'un seul message passe. Le découpage en trames, la mise en forme et le recollement sont
+ * désormais dans `wishartVoie`, que le worker exécute et que le repli exécute aussi là où il n'y a
+ * pas de worker.
+ *
+ * LE MODE REMPLACE LA FONCTION. Un worker ne reçoit pas de fermeture : la transformation ne peut
+ * plus être passée en argument, elle se nomme. C'est le seul changement de forme ; le calcul, lui,
+ * est celui d'avant, bourrage des bords compris.
  */
-function parCanal(entree: AudioBuffer, taille: number, transformer: (t: ReturnType<typeof analyser>) => ReturnType<typeof analyser>): AudioBuffer {
-  const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
+async function parVoies(entree: AudioBuffer, o: OptionsWishart, ctx: any): Promise<AudioBuffer> {
+  const voies = Array.from({ length: entree.numberOfChannels }, (_, c) => entree.getChannelData(c));
+  const rendues = await parCanal<OptionsWishart, Float32Array>(voies, o, {
+    creerWorker: () => new Worker(new URL("../workers/wishart-worker.ts", import.meta.url), { type: "module" }),
+    calcul: wishartVoie,
+    surProgres: (c, n) => ctx.onProgress?.(traduire("msg.wishart.canal", String(c), String(n))),
+  });
   const sortie = new AudioBuffer({
     numberOfChannels: entree.numberOfChannels, length: entree.length, sampleRate: entree.sampleRate,
   });
-  const n = entree.length;
-  for (let c = 0; c < entree.numberOfChannels; c++) {
-    const prolonge = new Float32Array(n + 2 * taille);
-    prolonge.set(entree.getChannelData(c), taille);
-    const trames = analyser(prolonge, taille, saut);
-    const recolle = recoller(transformer(trames), prolonge.length, taille, saut);
-    sortie.getChannelData(c).set(recolle.subarray(taille, taille + n));
-  }
+  for (let c = 0; c < entree.numberOfChannels; c++) sortie.getChannelData(c).set(rendues[c]);
   return sortie;
 }
 
@@ -105,7 +107,7 @@ export const fiches: FicheAudio[] = ([
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return sansEntree();
       const n = Math.round(ctx.paramNombre("Composantes", 12));
-      const out = parCanal(e, tailleDe(ctx), (t) => tracer(t, n));
+      const out = await parVoies(e, { mode: "tracer", taille: tailleDe(ctx), composantes: n }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
   },
@@ -128,7 +130,7 @@ export const fiches: FicheAudio[] = ([
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return sansEntree();
       const w = Math.round(ctx.paramNombre("Largeur", 24));
-      const out = parCanal(e, tailleDe(ctx), (t) => flouter(t, w));
+      const out = await parVoies(e, { mode: "flouter", taille: tailleDe(ctx), largeur: w }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
   },
@@ -151,9 +153,7 @@ export const fiches: FicheAudio[] = ([
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return sansEntree();
       const part = Math.max(0, Math.min(1, ctx.paramNombre("Instant", 50) / 100));
-      const taille = tailleDe(ctx);
-      const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
-      const out = parCanal(e, taille, (t) => geler(t, Math.round(part * (t.length - 1)), taille, saut));
+      const out = await parVoies(e, { mode: "geler", taille: tailleDe(ctx), part }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
   },
@@ -190,15 +190,13 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return sansEntree();
-      const taille = tailleDe(ctx);
-      const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
-      const o = {
+      const out = await parVoies(e, {
+        mode: "glissando", taille: tailleDe(ctx),
         vitesse: ctx.paramNombre("Vitesse", 0.5),
         octaves: Math.round(ctx.paramNombre("Octaves", 6)),
         lissage: Math.round(ctx.paramNombre("Lissage", 20)),
-        taille, saut, frequence: e.sampleRate,
-      };
-      const out = parCanal(e, taille, (t) => glissandoInterieur(t, o));
+        frequence: e.sampleRate,
+      }, ctx);
       // Sans courbe branchée, on passe le NOMBRE : le raccourci de `melanger` à part pleine reste
       // emprunté, et la sortie est celle d'avant.
       const modulation = ctx.entree(1);

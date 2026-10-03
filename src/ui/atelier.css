@@ -1202,8 +1202,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-node-port-vide {
   font-size: 10px; color: var(--text-muted); padding: 2px 10px;
 }
+/* LA HAUTEUR MINIMALE EST CELLE D'UNE LIGNE NOMMÉE, et c'est ce qui donne de l'air aux ports d'une
+   bulle. Ceux-là n'ont pas de nom : leur ligne se réduisait à ses quatre pixels de marge, et deux
+   poignées voisines, larges de dix, se trouvaient espacées de huit. Elles se chevauchaient, et viser
+   la bonne tenait de l'adresse. MESURÉ : 4 pixels de ligne et 8 d'écart sur une bulle, contre 18 et
+   22 sur un composant à ports nommés. Le minimum porte les premières à la mesure des secondes, et
+   ne change rien aux secondes, qui l'atteignaient déjà. Relevé par Fabien. */
 .attic-node-port {
-  display: flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 5px; min-height: 18px;
   padding: 2px 10px; white-space: nowrap; position: relative;
 }
 .attic-node-port .react-flow__handle-left  { left: -10px; }
@@ -1212,12 +1218,23 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-node-port-label {
   font-size: 10px; color: var(--text-tertiary); user-select: none;
 }
+/* LE BOUTON DE SUPPRESSION EST HORS DU FLUX, et ce n'est pas un détail d'esthétique : posé dedans,
+   il AGRANDISSAIT la ligne au survol, et la poignée visée glissait de sous le curseur. Celui-ci
+   quittait alors la ligne, le bouton disparaissait, la poignée revenait, et le manège recommençait.
+   Le défaut se voyait surtout sur les bulles, dont les ports n'ont pas de nom : leurs lignes font
+   huit pixels, le bouton quatorze. MESURÉ : trois sorties espacées de 8 px passaient à 15 px au
+   survol, la seconde descendant de 306 à 313. Relevé par Fabien. */
 .attic-node-port-del {
+  position: absolute; top: 50%; transform: translateY(-50%);
   background: rgba(238,68,68,0.9); color: #fff;
   border: none; border-radius: 50%; width: 14px; height: 14px;
   font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+/* Du côté de la poignée, et dedans : aller de l'une à l'autre ne doit pas sortir de la ligne, sans
+   quoi le survol se perdrait avant qu'on ait atteint le bouton. */
+.attic-node-port .attic-node-port-del { left: 20px; }
+.attic-node-port.sortie .attic-node-port-del { left: auto; right: 20px; }
 
 /* ── Inspecteur ── */
 .inspecteur {

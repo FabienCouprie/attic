@@ -6,11 +6,18 @@
 // Velvet Noise », 2024.
 //
 // La logique est dans `audio/velours.ts`, testée ; ce fichier n'est que la prise.
+//
+// **LE CALCUL N'A PAS LIEU DANS LE FIL DE L'INTERFACE.** Relevé avant, sur trois secondes de son :
+// 203 millisecondes, et pas un seul message passé pendant ce temps. Les deux transformées de la
+// convolution portent sur la somme des longueurs du son et de la queue, et c'est tout le coût.
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { convoluer, reponseVelours, type ProfilDecroissance } from "../audio/velours";
+import {
+  velourVoie, type OptionsVoieVelours, type ProfilDecroissance, type VoieVelours,
+} from "../audio/velours";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -62,39 +69,33 @@ export const fiches: FicheAudio[] = ([
       const profil = ctx.paramTexte("Profil", "exponentielle") as ProfilDecroissance;
       const duree = ctx.paramNombre("Durée", 2);
       const melange = Math.max(0, Math.min(1, ctx.paramNombre("Mélange", 35) / 100));
-      const commun = {
-        duree, sampleRate, profil,
+      const densite = Math.round(ctx.paramNombre("Densité", 1500));
+      const o: OptionsVoieVelours = {
+        duree, sampleRate, profil, melange, densite,
         rt60: ctx.paramNombre("Chute", 1.5),
-        densite: Math.round(ctx.paramNombre("Densité", 1500)),
         assombrissement: ctx.paramNombre("Assombrissement", 25) / 100,
         coude: ctx.paramNombre("Coude", 30) / 100,
+        graine: Math.round(ctx.paramNombre("Graine", 1)),
       };
 
       const longueurReponse = Math.max(1, Math.round(duree * sampleRate));
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<OptionsVoieVelours, VoieVelours>(voies, o, {
+        creerWorker: () => new Worker(new URL("../workers/velours-worker.ts", import.meta.url), { type: "module" }),
+        calcul: velourVoie,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.velours.canal", String(c), String(n))),
+      });
+
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
       const reponses = new AudioBuffer({ numberOfChannels: canaux, length: longueurReponse, sampleRate });
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.velours.canal", String(c + 1), String(canaux)));
-        // Une graine par canal : les deux côtés décrivent la même salle sans être la même queue,
-        // ce qui donne l'ampleur d'une réverbération stéréo sans aucun élargissement artificiel.
-        const h = reponseVelours({ ...commun, graine: Math.round(ctx.paramNombre("Graine", 1)) + c * 977 });
-        const sec = entree.getChannelData(c);
-        const mouille = convoluer(sec, h);
-        // Le niveau d'une convolution dépend de la longueur de la queue : on le recale sur le son
-        // d'entrée, faute de quoi allonger la réverbération monterait le volume.
-        let cs = 0, cm = 0;
-        for (let i = 0; i < length; i++) cs = Math.max(cs, Math.abs(sec[i]));
-        for (let i = 0; i < mouille.length; i++) cm = Math.max(cm, Math.abs(mouille[i]));
-        const g = cm > 1e-9 ? cs / cm : 0;
-        const melangee = new Float32Array(length);
-        for (let i = 0; i < length; i++) melangee[i] = sec[i] * (1 - melange) + mouille[i] * g * melange;
-        sortie.copyToChannel(melangee, c);
-        reponses.copyToChannel(new Float32Array(h), c);
+        sortie.copyToChannel(new Float32Array(parVoie[c].melangee), c);
+        reponses.copyToChannel(new Float32Array(parVoie[c].reponse), c);
       }
       return {
         valeurs: [sortie, reponses],
         message: traduire("msg.velours.resultat", duree.toFixed(1),
-          String(Math.round(commun.densite)), String(Math.round(melange * 100))),
+          String(densite), String(Math.round(melange * 100))),
       };
     },
   },

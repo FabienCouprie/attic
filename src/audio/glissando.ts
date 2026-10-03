@@ -184,6 +184,31 @@ export function echantillonsDuGlissando(
 /** La fréquence d'échantillonnage du rendu. */
 export const SR_GLISSANDO = 44100;
 
+/** Tout ce qu'un glissement demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
+export interface OptionsSonGlissando extends Omit<OptionsGlissando, "sampleRate"> {
+  voix: readonly VoixDeGlissando[];
+}
+
+/**
+ * Le glissement rendu en échantillons, voix et réglages rassemblés.
+ *
+ * CE CŒUR EXISTE POUR QUE LES DEUX COMPOSANTS QUITTENT LE FIL DE L'INTERFACE. Relevé avant, sur les
+ * réglages par défaut et sans qu'un seul message passe : 492 millisecondes pour « Glissando de
+ * gamme », 176 pour « Glissando harmonique ». Le coût est une sinusoïde par voix et par partiel,
+ * échantillon par échantillon — neuf secondes de rendu à 44 100 hertz, sept voix, trois partiels,
+ * soit huit millions de sinus.
+ *
+ * LE CALCUL NE SE COUPE PAS EN TÂCHES INDÉPENDANTES, et c'est pourquoi il part en une fois : la
+ * phase s'accumule d'un échantillon au suivant, et deux moitiés calculées séparément se
+ * recolleraient sur un saut de phase, c'est-à-dire sur un clic.
+ *
+ * LE RÉSULTAT EST ENVELOPPÉ et non rendu nu, pour que le dialogue sache transférer son tampon au
+ * lieu de le recopier : il cherche les tableaux typés que porte un objet.
+ */
+export function sonDuGlissando(o: OptionsSonGlissando): { echantillons: Float32Array } {
+  return { echantillons: echantillonsDuGlissando(o.voix, { ...o, sampleRate: SR_GLISSANDO }) };
+}
+
 /** Le glissement rendu en son, monophonique. */
 export function tamponDuGlissando(
   voix: readonly VoixDeGlissando[],

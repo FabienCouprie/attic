@@ -10,7 +10,11 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
-import { appliquerFiltre, reduireBruit, reduireBruitNotches, calculerProfilBruit, equaliser, inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote, appliquerFondu, extraireZone, appliquerPaulstretch, appliquerFormuleEchantillons, appliquerFormuleSpectrale, ajusterLargeurStereo, granularFreeze } from "../audio";
+import { appliquerFiltre, reduireBruit, reduireBruitNotches, calculerProfilBruit, equaliser, inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote, appliquerFondu, extraireZone, appliquerPaulstretch, appliquerFormuleEchantillons, ajusterLargeurStereo, granularFreeze } from "../audio";
+import {
+  assemblerFormuleSpectrale, formuleSpectraleVoie, type OptionsFormuleSpectrale,
+} from "../audio/math-formules";
+import { parCanal } from "./hors-fil";
 
 import { effet, param, simple } from "./effets-aides";
 
@@ -152,7 +156,18 @@ export const fiches: FicheAudio[] = ([
       const fftSize = ctx.paramNombre("FFT", 2048);
       const volume = ctx.paramNombre("Volume", 30);
       try {
-        const out = appliquerFormuleSpectrale(audio, formuleMag, formulePhase, fftSize);
+        // LE CALCUL SORT DU FIL DE L'INTERFACE. Mesuré avant : 232 millisecondes sur trois
+        // secondes de son, sans qu'un seul message passe. La sécurisation d'amplitude reste ici :
+        // elle regarde la crête de la sortie entière, tous canaux confondus.
+        const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
+        const rendues = await parCanal<OptionsFormuleSpectrale, Float32Array>(
+          voies, { formuleMag, formulePhase, fftSize, frequence: audio.sampleRate },
+          {
+            creerWorker: () => new Worker(new URL("../workers/formule-spectrale-worker.ts", import.meta.url), { type: "module" }),
+            calcul: formuleSpectraleVoie,
+          },
+        );
+        const out = assemblerFormuleSpectrale(audio, rendues);
         const vol = Math.max(0, Math.min(1, volume / 100));
         if (vol !== 1) {
           for (let c = 0; c < out.numberOfChannels; c++) {
@@ -244,8 +259,12 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Spectral", "Notches"], optionsEn: ["Spectral", "Notches"], optionIds: ["spectral", "notches"], defaut: "Spectral",
         doc: "Spectral = soustraction de puissance standard. Notches = filtres coupe-bande dynamiques sur les fréquences les plus fortes du profil (utile pour un ronflement/hum).", docEn: "Spectral = standard power subtraction. Notches = dynamic notch filters on the strongest profile frequencies (useful for hum/buzz).", defautEn: "Spectral" },
-      { nom: "Réduction", nomEn: "Reduction", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%", doc: "(Mode Spectral) Pourcentage de la puissance du bruit soustrait au signal. 100% = soustraction complète, 0% = aucun effet.", docEn: "(Spectral mode) Percentage of the noise power subtracted from the signal. 100% = full subtraction, 0% = no effect." },
-      { nom: "Plancher", nomEn: "Floor", type: "nombre", plage: [0, 100], pas: 1, defaut: 1, unite: "%", doc: "(Mode Spectral) Niveau minimum de puissance conservé (pourcentage de la puissance du signal bruité). 0% = débruitage maximal, peut créer des artefacts musicaux.", docEn: "(Spectral mode) Minimum residual power level (percentage of the noisy signal power). 0% = maximum denoising, may create musical artifacts." },
+      { nom: "Réduction", nomEn: "Reduction", type: "nombre", plage: [0, 600], pas: 5, defaut: 300, unite: "%",
+        doc: "(Mode Spectral) Combien de fois la puissance du bruit décrite par l'entrée Profil est retirée du signal. À 100 %, cette puissance moyenne est retirée une seule fois, et il en reste 37 % : la puissance de chaque trame fluctue autour de sa moyenne, et seule la part qui passerait sous zéro est rognée. La réduction obtenue croît donc avec le réglage, d'environ 4 décibels à 100 % à une quinzaine à 600 %, pendant que le signal utile en perd un dixième. Au-delà du réglage où le fond cesse de s'entendre, ce qui reste du bruit scintille.",
+        docEn: "(Spectral mode) How many times the noise power described by the Profile input is removed from the signal. At 100 % that average power is removed once, and 37 % of it remains: each frame's power fluctuates around its average, and only the part that would go below zero is clipped. The reduction obtained therefore grows with the setting, from about 4 decibels at 100 % to some fifteen at 600 %, while the wanted signal loses a tenth of one. Beyond the setting where the floor stops being audible, what remains of the noise shimmers." },
+      { nom: "Plancher", nomEn: "Floor", type: "nombre", plage: [0, 100], pas: 1, defaut: 1, unite: "%",
+        doc: "(Mode Spectral) Puissance minimale conservée, en pourcentage de celle du signal bruité. Elle borne la réduction : à 1 %, la sortie ne descend pas plus de 20 décibels sous le signal bruité, ce qui empêche le bruit résiduel de scintiller. Ce réglage retient la réduction sans la commander ; c'est Réduction qui la fixe.",
+        docEn: "(Spectral mode) Minimum power kept, as a percentage of the noisy signal's. It bounds the reduction: at 1 %, the output goes no more than 20 decibels below the noisy signal, which keeps the residual noise from shimmering. This setting holds the reduction back without commanding it; Reduction sets it." },
       { nom: "Notches", nomEn: "Notches", type: "nombre", plage: [1, 100], pas: 1, defaut: 50, unite: "", doc: "(Mode Notches) Nombre maximum de filtres coupe-bande appliqués. Augmentez si le ronflement a beaucoup d'harmoniques.", docEn: "(Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics." },
       { nom: "Q", nomEn: "Q", type: "nombre", plage: [1, 50], pas: 1, defaut: 10, unite: "", doc: "(Mode Notches) Sélectivité des filtres coupe-bande. Plus Q est élevé, plus la bande supprimée est étroite. Pour des harmoniques proches, laissez Q = 10.", docEn: "(Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10." },
     ],
@@ -264,7 +283,7 @@ export const fiches: FicheAudio[] = ([
         const q = ctx.paramNombre("Q", 10);
         return { valeurs: [await reduireBruitNotches(audio, profil, 2, nb, q)] };
       }
-      const reduction = ctx.paramNombre("Réduction", 100) / 100;
+      const reduction = ctx.paramNombre("Réduction", 300) / 100;
       const plancher = ctx.paramNombre("Plancher", 1) / 100;
       return { valeurs: [await reduireBruit(audio, profil, reduction, plancher)] };
    },

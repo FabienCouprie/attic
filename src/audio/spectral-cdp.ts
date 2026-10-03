@@ -16,6 +16,7 @@
 
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { creerAleatoire } from "../core/hasard";
 
 export const TAILLE = 2048;
 export const SAUT = TAILLE / 4;
@@ -104,6 +105,87 @@ const crete = (b: AudioBuffer) => {
  * 0,141 mais double la crête, de 0,36 à 0,68 — un bruit qui culminait à 0,72 sortait écrêté. Si la
  * crête de sortie dépasse celle d'entrée, tout le son est abaissé d'autant ; sinon rien n'est touché.
  */
+/**
+ * Ce qu'une des mises en forme demande, tout entier sérialisable.
+ *
+ * LE MODE REMPLACE LA FONCTION, et les COURBES deviennent des tableaux. Un worker ne reçoit ni
+ * fermeture ni fonction : une valeur par trame, qui se lisait jusqu'ici par un appel, voyage donc
+ * en tableau, et le cœur l'y relit par son indice.
+ */
+export interface OptionsCdp {
+  mode: "etirer" | "arpeger" | "cribler" | "melanger";
+  /** La fréquence d'échantillonnage : un tableau de nombres ne la porte pas. */
+  frequence: number;
+  /** Étirement : le pivot, et un facteur par trame. */
+  pivot?: number;
+  facteurs?: Float32Array;
+  /** Arpège : ses propres réglages, déjà sérialisables. */
+  arpege?: OptionsArpege;
+  /** Crible : une fondamentale par trame, et le reste. */
+  fondamentales?: Float32Array;
+  rangs?: Rangs;
+  tolerance?: number;
+  inverse?: boolean;
+  /** Mélange des fenêtres : la taille des blocs, leur portée, et la graine du tirage. */
+  tramesParBloc?: number;
+  porteeBlocs?: number;
+  graine?: number;
+}
+
+/** Une valeur par trame, relue par son indice ; la dernière vaut pour tout ce qui dépasse. */
+const parIndice = (v: Float32Array | undefined, defaut: number) =>
+  (t: number) => (v && v.length ? v[Math.min(v.length - 1, t)] : defaut);
+
+/**
+ * Une voie, de son signal à son signal mis en forme.
+ *
+ * CE CŒUR EXISTE POUR QUE LES COMPOSANTS QUITTENT LE FIL DE L'INTERFACE. Ils figeaient tous
+ * TOTALEMENT : **relevé sur trois secondes de son, 277 ms pour l'arpège, 265 pour l'étirement et
+ * pour le crible, sans qu'un seul message passe.**
+ *
+ * LA NORMALISATION DE CRÊTE N'EST PAS ICI, et c'est voulu : elle compare la crête de l'ENTRÉE
+ * ENTIÈRE à celle de la SORTIE ENTIÈRE, donc tous canaux confondus. Une voie seule ne peut pas la
+ * faire sans se tromper ; c'est le composant qui l'applique une fois ses voies rassemblées.
+ */
+export function cdpVoie(x: Float32Array, o: OptionsCdp): Float32Array {
+  const a = analyserPV(x, o.frequence);
+  let trames: TramePV[];
+  if (o.mode === "etirer") trames = etirerSpectre(a, o.pivot ?? 200, parIndice(o.facteurs, 1.3));
+  else if (o.mode === "arpeger") {
+    trames = arpegerSpectre(a, o.arpege ?? { vitesse: 1, largeur: 0.5, bas: 100, haut: 5000, sens: "montant", remanence: 0 });
+  } else if (o.mode === "melanger") {
+    // LA GRAINE NE SE DÉCALE PAS DU NUMÉRO DE CANAL, contrairement à ce que fait la synthèse d'un
+    // spectrogramme, et c'est délibéré : « chaque canal reçoit le même mélange, sans quoi l'image
+    // stéréo se déchirerait ». Le générateur était déjà construit À L'INTÉRIEUR de la boucle des
+    // canaux, donc chaque canal repartait déjà de la même graine ; passer au calcul par voie ne
+    // change donc rien à ce qu'on entend.
+    trames = melangerFenetres(a, o.tramesParBloc ?? 1, o.porteeBlocs ?? 1, creerAleatoire(o.graine ?? 42));
+  } else {
+    trames = cribler(a, parIndice(o.fondamentales, 110), o.rangs ?? "tous", o.tolerance ?? 30, !!o.inverse);
+  }
+  return new Float32Array(synthetiserPV(a, trames, x.length));
+}
+
+/**
+ * La crête de sortie ramenée sous celle de l'entrée, tous canaux confondus.
+ *
+ * LA CRÊTE NE DÉPASSE JAMAIS CELLE DE L'ENTRÉE. Réordonner ou cribler un spectre change le facteur
+ * de crête : mesuré sur un bruit, le mélange des fenêtres abaisse le niveau efficace de 0,207 à
+ * 0,141 mais double la crête, de 0,36 à 0,68 ; un bruit qui culminait à 0,72 sortait écrêté. Si la
+ * crête de sortie dépasse celle d'entrée, tout le son est abaissé d'autant ; sinon rien n'est touché.
+ */
+export function ramenerSousLaCrete(entree: AudioBuffer, sortie: AudioBuffer): AudioBuffer {
+  const avant = crete(entree), apres = crete(sortie);
+  if (apres > avant && apres > 0) {
+    const k = avant / apres;
+    for (let c = 0; c < sortie.numberOfChannels; c++) {
+      const y = sortie.getChannelData(c);
+      for (let i = 0; i < y.length; i++) y[i] *= k;
+    }
+  }
+  return sortie;
+}
+
 export function parCanal(b: AudioBuffer, op: (a: AnalysePV, canal: number) => TramePV[], longueur = b.length): AudioBuffer {
   const sortie = new AudioBuffer({ numberOfChannels: b.numberOfChannels, length: longueur, sampleRate: b.sampleRate });
   for (let c = 0; c < b.numberOfChannels; c++) {

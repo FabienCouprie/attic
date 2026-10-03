@@ -7,7 +7,7 @@
 // Deux registres sont étanches : un type de flux "nombre" dans le domaine
 // nombre n'écrase pas un type "nombre" dans un autre domaine.
 import type { PluginDef, FonctionPlugin } from "./types";
-import type { TypeFlux } from "./typesFlux";
+import type { FormePort, TypeFlux } from "./typesFlux";
 import { valider } from "./validation";
 
 export interface Registre<TV, TR> {
@@ -29,6 +29,8 @@ export interface Registre<TV, TR> {
   typeFlux(id: string): TypeFlux | undefined;
   tousTypesFlux(): TypeFlux[];
   couleurFlux(id: string): string;
+  /** La forme du point d'un port, qui distingue deux types là où la couleur ne suffit plus. */
+  formeFlux(id: string): FormePort;
   fluxCompatibles(sourceId: string, cibleId: string): boolean;
 }
 
@@ -130,6 +132,11 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     return typesFlux.get(id)?.couleur ?? "#999";
   }
 
+  /** La forme du point d'un port. Ronde par défaut, comme tous les ports l'étaient. */
+  function formeFlux(id: string): FormePort {
+    return typesFlux.get(id)?.forme ?? "rond";
+  }
+
   function fluxCompatibles(sourceId: string, cibleId: string): boolean {
     const t = typesFlux.get(sourceId);
     if (t?.compatible) return t.compatible(cibleId);
@@ -137,5 +144,5 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
   }
 
   return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
-    enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, fluxCompatibles };
+    enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, formeFlux, fluxCompatibles };
 }

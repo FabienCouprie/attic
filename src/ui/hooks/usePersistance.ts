@@ -88,6 +88,11 @@ export function usePersistance(o: OptionsPersistance) {
         sfzNom: data.sfzNom,
         // Ce qui a ete joue au clavier d'un noeud : perdu jusqu'ici a chaque reouverture.
         sequenceNotes: data.sequenceNotes,
+        // CE QU'ON A DECOUPE SUR LA LIGNE DE TEMPS D'UN MONTAGE, et les pistes qu'on y a vidées.
+        // Absents de cette liste, un montage decoupe revenait intact de sa sauvegarde : les
+        // morceaux deplaces, coupes et regles etaient perdus en silence.
+        morceaux: data.morceaux,
+        pistesVidees: data.pistesVidees,
         nomFichier: data.nomFichier,
         nom: data.nom,
         // Le second texte d'une note ou d'un cadre, qui suit la langue de l'interface. Absent de
@@ -119,7 +124,7 @@ export function usePersistance(o: OptionsPersistance) {
       // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
       // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
       // arêtes de substitution.
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
+      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, morceaux: n.data.morceaux, pistesVidees: n.data.pistesVidees, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
       date: new Date().toISOString(),

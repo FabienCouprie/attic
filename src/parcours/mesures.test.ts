@@ -9,7 +9,11 @@
 // défaut que trois à gauche, et une épreuve qui n'aurait relevé que l'un des deux côtés aurait
 // laissé passer la moitié des mixages déséquilibrés — en donnant l'impression d'avoir vérifié.
 import { describe, expect, it } from "vitest";
-import { cibleTenue, jugerCibles, mesurerCopie, partsDeBande, valeurJugee, type SonSoumis } from "./mesures";
+import {
+  cibleTenue, conclureHauteur, jugerCibles, mesurerCopie, mesurerHauteur, partsDeBande,
+  valeurJugee, voieAHauteur, type SonSoumis,
+} from "./mesures";
+import { suivreHauteur } from "../audio/hauteur";
 import type { Cible } from "./types";
 
 const SR = 44100;
@@ -119,6 +123,20 @@ describe("la hauteur et la justesse", () => {
   it("un son trop court pour une période ne fait pas lever", () => {
     const m = mesurerCopie(son(0.01, sinus(440)));
     expect(m.hauteurHz).toBe(0);
+  });
+
+  // CE TEST TIENT LA PROMESSE DES DEUX NOTICES. Le suivi a été coupé en trois — la voie à lire, le
+  // suivi lui-même, ce qu'on en conclut — pour que le suivi puisse avoir lieu dans un ouvrier. La
+  // fiche technique et les épreuves du parcours recomposent les trois morceaux ; si la recomposition
+  // dérivait d'un seul cent, la fiche contredirait le verdict, et c'est précisément ce que les deux
+  // notices affirment impossible. Rien d'autre ne surveille cela : le composant « Parcours » ne rend
+  // que du texte, donc la base d'empreintes ne peut pas le tenir.
+  it("LES TROIS MORCEAUX RECOMPOSÉS DONNENT LA MESURE ENTIÈRE, champ par champ", () => {
+    for (const essai of [son(1, sinus(440)), son(1, sinus(453)), son(1, () => 0), son(0.01, sinus(440))]) {
+      const voie = voieAHauteur(essai);
+      const recompose = conclureHauteur(voie ? suivreHauteur(voie, essai.sampleRate) : null);
+      expect(recompose).toEqual(mesurerHauteur(essai));
+    }
   });
 });
 

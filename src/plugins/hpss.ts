@@ -8,7 +8,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { separerHarmoniquePercussif } from "../audio/hpss";
+import { separerVoie, type OptionsHpss, type ResultatHpss } from "../audio/hpss";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -58,18 +59,25 @@ export const fiches: FicheAudio[] = ([
       };
 
       const { numberOfChannels: canaux, length, sampleRate } = entree;
+      // LE CALCUL SORT DU FIL DE L'INTERFACE. Mesuré avant : 585 millisecondes sur trois secondes
+      // de son, sans qu'un seul message passe, donc un gel total. Le repli dans le fil reste pour
+      // les tests, où il n'y a pas de worker.
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const parVoie = await parCanal<OptionsHpss, ResultatHpss>(voies, { ...reglages, taille }, {
+        creerWorker: () => new Worker(new URL("../workers/hpss-worker.ts", import.meta.url), { type: "module" }),
+        calcul: separerVoie,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.hpss.canal", String(c), String(n))),
+      });
       const harmonique = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
       const percussif = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
       let partPercussive = 0;
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.hpss.canal", String(c + 1), String(canaux)));
-        const r = separerHarmoniquePercussif(entree.getChannelData(c), taille, reglages);
         // Recopie explicite, comme ailleurs dans Attic : `copyToChannel` veut un tableau adossé
         // à un ArrayBuffer simple, et c'est aussi ce qui garantit que le buffer ne partage rien
         // avec le calcul.
-        harmonique.copyToChannel(new Float32Array(r.harmonique), c);
-        percussif.copyToChannel(new Float32Array(r.percussif), c);
-        partPercussive += r.partPercussive / canaux;
+        harmonique.copyToChannel(new Float32Array(parVoie[c].harmonique), c);
+        percussif.copyToChannel(new Float32Array(parVoie[c].percussif), c);
+        partPercussive += parVoie[c].partPercussive / canaux;
       }
       return {
         valeurs: [harmonique, percussif],

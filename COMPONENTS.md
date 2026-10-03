@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **457 components** in **7 categories** and **61 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **469 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 87 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (28) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 215 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (34) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (12) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 227 | [Conversion](#conversion) (19) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (35) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (17) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2853,8 +2853,8 @@ Subtracts background noise from the signal using a noise profile captured on a s
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Mode | choice | Spectral | Spectral / Notches | Spectral = standard power subtraction. Notches = dynamic notch filters on the strongest profile frequencies (useful for hum/buzz). |
-| Reduction | number | 100 % | 0 – 100 %, step 1 | (Spectral mode) Percentage of the noise power subtracted from the signal. 100% = full subtraction, 0% = no effect. |
-| Floor | number | 1 % | 0 – 100 %, step 1 | (Spectral mode) Minimum residual power level (percentage of the noisy signal power). 0% = maximum denoising, may create musical artifacts. |
+| Reduction | number | 300 % | 0 – 600 %, step 5 | (Spectral mode) How many times the noise power described by the Profile input is removed from the signal. At 100 % that average power is removed once, and 37 % of it remains: each frame's power fluctuates around its average, and only the part that would go below zero is clipped. The reduction obtained therefore grows with the setting, from about 4 decibels at 100 % to some fifteen at 600 %, while the wanted signal loses a tenth of one. Beyond the setting where the floor stops being audible, what remains of the noise shimmers. |
+| Floor | number | 1 % | 0 – 100 %, step 1 | (Spectral mode) Minimum power kept, as a percentage of the noisy signal's. It bounds the reduction: at 1 %, the output goes no more than 20 decibels below the noisy signal, which keeps the residual noise from shimmering. This setting holds the reduction back without commanding it; Reduction sets it. |
 | Notches | number | 50 | 1 – 100, step 1 | (Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics. |
 | Q | number | 10 | 1 – 50, step 1 | (Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10. |
 
@@ -3483,6 +3483,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
 | [Montage](#montage) | Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time. |
 | [Multi-Zone Selector](#multi-zone-selector) | Selects multiple audio zones and passes them as a list. |
+| [Niche](#niche) | Places a sound at the moment the background leaves it room, in time and in frequency. |
 | [Place sound on zones](#place-sound-on-zones) | Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration. |
 | [Reinsert Zone](#reinsert-zone) | Reinserts a treated zone into the original track. |
 | [Reorder Objects](#reorder-objects) | Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest. |
@@ -4049,6 +4050,28 @@ Displays the waveform and lets you select several zones (drag then « Add »). T
 | output | Duration | control |  |
 
 *No parameters.*
+
+#### Niche
+
+`creneau` · Processing → Editing
+
+*Places a sound at the moment the background leaves it room, in time and in frequency.*
+
+This node looks through a background for the moment a sound finds its place, and puts it there. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodefine the niche as the occurrence of a sound emission at the moment the context is most favourable and leaves a place particularly suited to its expression, and make it one of the instruments of sonic action. Room is not merely a dip in level. A background loaded in the bass lets a treble sound through without ever weakening, and a background loaded in the treble lets a bass sound through at the same level. The search is therefore made in the plane of time and frequency, and the sound to be placed says itself where to look: its own band profile serves as the weighting. The background is split into twelve bands by a bank of band-pass filters, and the sound slides along the background to the point where what occupies it is weakest. The background is neither cut nor lowered: the effect describes a place the context leaves. The « Background » input takes the context. The « Sound » input takes what is to be placed in it. « Listening » chooses what the search looks at. « Timbre and level » weights each band by the sound's profile; « Level only » weights all bands equally. « Window » is the length of an analysis frame. « No earlier than » forbids searching before a given instant. « Level » sets the strength of the placed sound. The « Audio » output returns the background and the sound together. The « Report » output gives the instant found, what the background occupies there, and what it occupies on average and at worst. The message gives the instant and the ratio between the place found and the average.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Background | audio (stereo) |  |
+| input | Sound | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Listening | choice | Timbre and level | Timbre and level / Level only | What the search looks at. By timbre, each band is weighted by the sound's profile, and a background that does not occupy its band leaves it room. By level only, all bands weigh the same. |
+| Window | slider | 50 ms | 10 – 500 ms, step 5 | The length of an analysis frame. Short, the place is sought finely; long, the computation runs faster. |
+| No earlier than | slider | 0 s | 0 – 600 s, step 0.5 | The instant before which the search does not go. |
+| Level | slider | 100 % | 0 – 200 %, step 1 | The strength of the placed sound. |
 
 #### Place sound on zones
 
@@ -5048,6 +5071,134 @@ Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscil
 | Duration | number | 2 s | 0.1 – 10 s, step 0.1 | Note duration, when no MIDI is connected. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
 
+### Mels
+
+| Component | Summary |
+|---|---|
+| [Band Shift](#band-shift) | Moves a spectrogram up or down by a number of mel bands, which is not a transposition. |
+| [Image to spectrogram](#image-to-spectrogram) | Reads an image back as a mel spectrogram, with Riffusion's convention. |
+| [Sound to spectrogram](#sound-to-spectrogram) | Analyses a sound into a mel spectrogram, with Riffusion's parameters. |
+| [Spectrogram Blur](#spectrogram-blur) | Spreads a spectrogram in time and in frequency, by a Gaussian. |
+| [Spectrogram to image](#spectrogram-to-image) | Writes a mel spectrogram as an image, with Riffusion's convention. |
+| [Spectrogram to sound](#spectrogram-to-sound) | Returns the sound a mel spectrogram carries, with the phase estimated by Griffin-Lim. |
+
+#### Band Shift
+
+`decalage-bandes` · Processing → Mels
+
+*Moves a spectrogram up or down by a number of mel bands, which is not a transposition.*
+
+This node moves the whole content of a spectrogram by a whole number of mel bands, up or down. It is neither a transposition nor a frequency shift, and that is the whole point of it. A transposition multiplies every frequency by the same number; a frequency shift adds the same number of hertz to all of them. A shift of mel bands adds the same perceived height to all of them, which does neither. With the default settings, going up twelve bands takes a hundred hertz to 152.7, a factor of 1.527, and five thousand hertz to 5375, a factor of 1.075: in hertz the high end moves far more, in interval it is the low end. The ratios between partials are therefore not kept, and a harmonic sound comes out inharmonic, the more so the larger the shift. Silence comes in from the edge rather than the content wrapping round: a sound going up leaves its low end empty, and what leaves by the top is lost. « Bands » is the number of rows, positive towards the high end and negative towards the low end. The « Spectrogram » output carries the moved matrix and the same parameters. The message gives, for two reference frequencies, where they end up.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Spectrogram | spectrogramme |  |
+| output | Spectrogram | spectrogramme |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Bands | slider | 12 | -256 – 256, step 1 | The number of rows the whole content moves by, positive towards the high end. This is not a transposition: at the default, a hundred hertz go up by a factor of 1.527 and five thousand by 1.075. |
+
+#### Image to spectrogram
+
+`image-spectrogramme` · Processing → Mels
+
+*Reads an image back as a mel spectrogram, with Riffusion's convention.*
+
+This node reads an image back as a mel spectrogram. It expects the writing convention of the node that makes the outward trip: low frequencies at the bottom, loud in dark, and the magnitude raised to a power. An image does not carry its scale settings, which is why they are all here. They must hold what they held when the image was written; otherwise the rows end up at other pitches, which is heard at once. The height of the image gives the number of bands, which therefore needs no setting. The mel scale is the HTK one, 2595 times the base ten logarithm of one plus the frequency divided by seven hundred, and not the Slaney one, which is a straight line below a thousand hertz; the triangular filters are not normalised by their area. « Sample rate » is the rate of the sound the spectrogram will describe. An image does not carry it, and it decides what pitch each row ends up at. « Power » must hold what it held at writing time. « Channels » reads a grey, or the green and blue of a stereo image. It is a declared setting rather than a guess: an image whose red is zero would read as stereo, but an image painted by hand may be one without being one. « Step », « Window », « Padding », « Min frequency » and « Max frequency » describe the scale and the division of time. The « Spectrogram » output carries the matrix and those settings.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Image | image |  |
+| output | Spectrogram | spectrogramme |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Sample rate | choice | 44100 | 22050 / 32000 / 44100 / 48000 | The sample rate of the sound the spectrogram will describe. An image does not carry it, and it decides what pitch each row ends up at. |
+| Power | slider | 0.25 | 0.05 – 1, step 0.05 | The exponent applied to the magnitude before writing to 256 levels. A quarter follows the reference and makes the bottom of the dynamic range visible; one is linear writing, where the image is almost entirely white. |
+| Channels | choice | Mono | Mono / Stereo | Mono analyses a single channel. Stereo keeps two, which follow each other to the end of the chain. |
+| Step | slider | 10 ms | 1 – 50 ms, step 1 | The advance from one column to the next. Ten milliseconds give a hundred columns per second. |
+| Window | slider | 100 ms | 10 – 500 ms, step 1 | The duration analysed per column. Long, it separates neighbouring pitches and smears attacks; short, it does the opposite. |
+| Padding | slider | 400 ms | 20 – 1000 ms, step 10 | The frame duration once padded with zeros. It adds no resolution, it refines the grid the spectrum is read on, and it sets the cost of the computation. |
+| Min frequency | slider | 0 Hz | 0 – 2000 Hz, step 10 | The frequency of the bottom band. Zero follows the reference and devotes the bottom of the spectrogram to a few hertz. |
+| Max frequency | slider | 10000 Hz | 1000 – 22050 Hz, step 100 | The frequency of the top band. Anything above does not enter the spectrogram and does not come back on the return trip. |
+
+#### Sound to spectrogram
+
+`son-spectrogramme` · Processing → Mels
+
+*Analyses a sound into a mel spectrogram, with Riffusion's parameters.*
+
+This node analyses a sound and returns its mel spectrogram. Each column is a slice of time, each row a band of the mel scale, and the value is the magnitude of the spectrum. After the parameters of Riffusion, published by Seth Forsgren and Hayk Martiros in 2022 under the MIT licence. The mel scale packs the highs and stretches the lows, so that a spectrogram gives roughly as much room to the bottom octaves as to the top ones. The scale in use is the HTK one, 2595 times the base ten logarithm of one plus the frequency divided by seven hundred, and not the Slaney one, which is a straight line below a thousand hertz. The difference shows in the low end: two intervals of two hundred hertz taken below a thousand occupy heights in a ratio of 1.40 here, where the Slaney scale would give them the same. Slaney's name also stands for a normalisation of the filters by their area, which is not applied either: the peak of each triangle is one whatever its width. « Bands » is the number of rows of the spectrogram. « Step » is the advance from one column to the next, and so sets how many there are. « Window » is the duration analysed per column. Long, it separates neighbouring pitches and smears attacks. « Padding » is the frame duration once padded with zeros. It adds no resolution: it refines the grid the spectrum is read on, and it sets the cost of the computation. « Min frequency » and « Max frequency » bound the scale. Anything above does not enter. « Channels » analyses a single channel or two. The « Spectrogram » output carries the matrix and the parameters needed to read it back: the nodes that receive it therefore have no need to repeat those settings. The message gives the size of the spectrogram and the duration covered.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Spectrogram | spectrogramme |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Bands | slider | 512 | 64 – 1024, step 1 | The number of mel bands, and so the height of the spectrogram. Five hundred and twelve follows the reference. |
+| Step | slider | 10 ms | 1 – 50 ms, step 1 | The advance from one column to the next. Ten milliseconds give a hundred columns per second. |
+| Window | slider | 100 ms | 10 – 500 ms, step 1 | The duration analysed per column. Long, it separates neighbouring pitches and smears attacks; short, it does the opposite. |
+| Padding | slider | 400 ms | 20 – 1000 ms, step 10 | The frame duration once padded with zeros. It adds no resolution, it refines the grid the spectrum is read on, and it sets the cost of the computation. |
+| Min frequency | slider | 0 Hz | 0 – 2000 Hz, step 10 | The frequency of the bottom band. Zero follows the reference and devotes the bottom of the spectrogram to a few hertz. |
+| Max frequency | slider | 10000 Hz | 1000 – 22050 Hz, step 100 | The frequency of the top band. Anything above does not enter the spectrogram and does not come back on the return trip. |
+| Channels | choice | Mono | Mono / Stereo | Mono analyses a single channel. Stereo keeps two, which follow each other to the end of the chain. |
+
+#### Spectrogram Blur
+
+`flou-spectrogramme` · Processing → Mels
+
+*Spreads a spectrogram in time and in frequency, by a Gaussian.*
+
+This node spreads a mel spectrogram, in time and in frequency, by a bell-weighted average. The two directions are set separately and either may stay at zero. The frequency blur is the one the mel scale makes particular. A mel band covers the more hertz the higher it sits: averaging six neighbouring bands therefore averages a few hertz in the low end and hundreds in the high end. The spreading is the same for the ear from one end of the spectrum to the other, which a kernel of fixed width in hertz would not give. It dulls the partials, brings a sound closer to a narrow band noise, and on a voice it rubs out the fineness of the harmonics while leaving the shape of the timbre. The time blur spreads attacks without changing the duration. It is set in milliseconds because the parameters travel with the spectrogram: the node knows how many columns that makes. « Time » is the standard deviation of the bell in the time direction. The kernel reaches three standard deviations on each side. « Frequency » is its standard deviation in the band direction. The edges continue with their last value rather than falling to zero: padding with zeros would hollow out a fade at the start and end of the sound, and would erase the outermost bands. The « Spectrogram » output carries the spread matrix and the same parameters. The message gives the two widths retained, in milliseconds and in bands.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Spectrogram | spectrogramme |  |
+| output | Spectrogram | spectrogramme |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Time | slider | 0 ms | 0 – 1000 ms, step 5 | The spreading in the time direction, as a standard deviation. Zero leaves that direction alone. It dulls attacks without changing the duration. |
+| Frequency | slider | 6 bandes | 0 – 64 bandes, step 0.5 | The spreading in the band direction, as a standard deviation. It dulls the partials; on the mel scale it covers the same width for the ear from low to high. |
+
+#### Spectrogram to image
+
+`spectrogramme-image` · Processing → Mels
+
+*Writes a mel spectrogram as an image, with Riffusion's convention.*
+
+This node writes a mel spectrogram as an image. Low frequencies are at the bottom, loud is dark, and the grey level carries the magnitude. After the convention of Riffusion, published by Seth Forsgren and Hayk Martiros in 2022 under the MIT licence. The magnitude is not written as it stands but raised to a power, because a spectrogram has such a dynamic range that written linearly it would be white almost everywhere. A two-channel spectrogram writes the left one into green and the right one into blue, with red left at zero. « Power » is the exponent of the writing. A quarter follows the reference. The « Image » output returns a PNG. The absolute level is not recorded in it, nor the scale settings: an image read back therefore needs those settings given again. The message gives the size of the image.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Spectrogram | spectrogramme |  |
+| output | Image | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Power | slider | 0.25 | 0.05 – 1, step 0.05 | The exponent applied to the magnitude before writing to 256 levels. A quarter follows the reference and makes the bottom of the dynamic range visible; one is linear writing, where the image is almost entirely white. |
+
+#### Spectrogram to sound
+
+`spectrogramme-son` · Processing → Mels
+
+*Returns the sound a mel spectrogram carries, with the phase estimated by Griffin-Lim.*
+
+This node returns the sound a mel spectrogram carries. For the phase, after Daniel Griffin and Jae Lim, « Signal estimation from modified short-time Fourier transform », IEEE Transactions on Acoustics, Speech and Signal Processing 32(2), 1984. Two things are missing from a spectrogram and have to be found again. The mel bands first: each one gives its level back to the frequencies its triangle covered, which is an average and not the exact shape that was there. Then the phase, which is not written at all: the starting phase is drawn at random, the sound is synthesised, what came out is analysed again, the phase found is kept and the wanted levels are put back into it. Each round brings it closer. « Rounds » is the number of these trips. Zero returns the noise coloured by the spectrogram, and sounds like it. On five seconds of sound, measured with the default settings: four rounds bring the spectral error to eleven decibels below the signal in four seconds of computation, eight rounds to twelve decibels in seven seconds, thirty-two rounds, the number of the reference, to fifteen decibels in twenty-five seconds. « Seed » sets the draw of the starting phase. The same seed returns the same sound. The scale settings are not repeated here: they travel with the spectrogram, and that is what makes sure the pitches find their place again. The « Audio » output returns the sound, normalised, since the absolute level is not kept. The message gives the duration, the number of rounds and the seed retained.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Spectrogram | spectrogramme |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Rounds | slider | 8 | 0 – 64, step 1 | The number of Griffin-Lim trips. Zero returns the noise coloured by the spectrogram. On five seconds of sound, four rounds cost four seconds of computation and thirty-two cost twenty-five. |
+| Seed | slider | -1 | -1 – 999999, step 1 | The seed of the draw for the starting phase. The same seed returns the same sound. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
 ### MIDI patterns
 
 | Component | Summary |
@@ -5415,13 +5566,18 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | [Corpus Mosaicing](#corpus-mosaicing) | Rebuilds one sound from another's grains: the target's shape, the corpus's material. |
 | [Ecosystem (Di Scipio)](#ecosystem-di-scipio) | A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling. |
 | [Feature Follower](#feature-follower) | Extracts a feature from a sound (energy, brightness, flatness, flux) to drive an effect with it. |
+| [Flutter Echo](#flutter-echo) | The metallic flutter of a sound caught between two parallel walls. |
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
+| [Haas Effect](#haas-effect) | One channel delayed by a few milliseconds: the image moves to the side that arrives first. |
 | [Lucier Room](#lucier-room) | Feeds the sound back into the same room until only its resonances remain. |
 | [Melody over Chords](#melody-over-chords) | Searches for a melody over a received chord progression, under constraints set one at a time. |
 | [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound; on a grid, or locked to its period. |
 | [Sample Formula](#sample-formula) | Applies a mathematical expression to each sample of the signal. |
 | [Sonic Seasoning](#sonic-seasoning) | Moves a sound toward a taste profile, a share of sweet, sour, bitter and salty, and says how far it moved. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound (rain, fire, crowd) without copying a single sample of it. |
+| [Turntable](#turntable) | The faults of a record player: rumble, surface, clicks, and the off-centre hole. |
+| [Ubiquity](#ubiquity) | A source that can no longer be located, or located better than life. |
+| [Wave](#wave) | Cycles of crescendo, crest and undertow, several seconds apart. |
 
 #### Cantor Displacement
 
@@ -5538,6 +5694,26 @@ Extracts a feature from a sound to drive an effect with it. After Vincent Verfai
 | Inertia | slider | 70 % | 0 – 99 %, step 1 | Smoothing of the curve. Without it, an energy curve makes the parameter jump at every attack. The smoothing runs forwards then backwards so that it does not delay the curve: without that care, the filter would open after the note instead of with it. |
 | Rate | slider | 200 /s | 20 – 1000 /s, step 10 | Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates. |
 
+#### Flutter Echo
+
+`echo-flottant` · Processing → Other effects
+
+*The metallic flutter of a sound caught between two parallel walls.*
+
+This node returns the flutter of a sound caught between two parallel reflecting surfaces. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005. The sound travels back and forth between the two walls in twice the distance divided by the speed of sound, then starts again. Frequencies whose half wavelength divides the distance build up on every round trip, the others cancel: what remains is a comb whose teeth are spaced by the speed of sound over twice the distance. The reflections stay discrete and periodic, and it is their regularity that makes the timbre. « Distance » is the gap between the two walls. At three metres the round trip lasts seventeen and a half milliseconds and the comb sounds at fifty-seven hertz; moving the walls apart brings the flutter down. « Decay » is the time the flutter takes to lose sixty decibels. The gain of each round trip follows from it, so the length stays the one asked for whatever the distance. « Damping » is the share of highs the walls absorb at each reflection. The flutter then dulls as it dies away. « Mix » sets the share of the effect in the output. The « Audio » output returns the treated sound. The message gives the round-trip period and the comb frequency.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Distance | slider | 3 m | 0.5 – 20 m, step 0.1 | The gap between the two walls. It sets the pitch of the flutter: three metres give fifty-seven hertz, and moving them apart brings it down. |
+| Decay | slider | 1 s | 0.05 – 10 s, step 0.05 | The time the flutter takes to lose sixty decibels. |
+| Damping | slider | 20 % | 0 – 95 %, step 1 | The share of highs the walls absorb at each reflection. The flutter dulls as it dies away. |
+| Mix | slider | 70 % | 0 – 100 %, step 1 | The share of the effect in the output. |
+
 #### Granular Freeze
 
 `granular-freeze` · Processing → Other effects
@@ -5557,6 +5733,25 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Pitch | number | 0 st | -24 – 24 st, step 1 | Grain pitch shift in semitones. |
 | Position | number | 0 % | 0 – 100 %, step 1 | Position in the file where the grain is extracted. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
+
+#### Haas Effect
+
+`haas` · Processing → Other effects
+
+*One channel delayed by a few milliseconds: the image moves to the side that arrives first.*
+
+This node delays one of the two channels by a few milliseconds. After Helmut Haas, « Über den Einfluss eines Einfachechos auf die Hörsamkeit von Sprache », Acustica 1, 1951, pp. 49-58. Between one and thirty milliseconds the ear does not separate the direct wave from the reflected one: it fuses them into a single sound, placed on the side that arrives first, even when the delayed side is louder. Beyond about forty milliseconds the fusion breaks and two sounds are heard. The source is brought down to mono before the treatment: the effect rests on both ears receiving the same wave at two instants. « Delay » is the gap between the two channels. « Delayed side » says which of the two arrives second; the image moves to the other. « Delayed level » sets its strength. The « Audio » output returns two channels. The message gives the delay and says whether fusion still holds.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Delay | slider | 12 ms | 0 – 60 ms, step 0.5 | The gap between the two channels. Fusion holds up to about forty milliseconds; beyond that, two sounds are heard. |
+| Delayed side | choice | Right | Right / Left | The channel that arrives second. The image moves to the other. |
+| Delayed level | slider | 100 % | 0 – 100 %, step 1 | The strength of the delayed channel. The image stays on the side that arrives first even when this level exceeds it. |
 
 #### Lucier Room
 
@@ -5703,6 +5898,70 @@ Generates a new texture having the statistics of a given sound. After Josh H. Mc
 | Correlations | choice | Yes | Yes / No | Also impose the correlations between bands, not merely each band's distribution. This is the paper's central result: bands taken in isolation do not make a recognisable texture. Measured here on a synthetic rain, the statistical distance to the model falls from 40 % to 31 % when they are imposed. Setting « No » mostly serves to hear the difference. |
 | Iterations | slider | 6 | 1 – 20, step 1 | Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles. |
 | Seed | number | 1 | 0 – 999999, step 1 | Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Turntable
+
+`platine` · Processing → Other effects
+
+*The faults of a record player: rumble, surface, clicks, and the off-centre hole.*
+
+This node adds the faults of a record player to a sound. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whogive rumble as the whirring of the motor picked up by the cartridge and mixed into the signal. Everything here hangs on the rotation speed. A thirty-three record turns once in one point eight seconds: the hole never being exactly centred, the reading speed rises and falls once per turn, and the pitch of the sound with it. At forty-five the cycle lasts one point three seconds, at seventy-eight seven tenths. « Speed » chooses between the three record speeds. « Rumble » is the level of the motor and bearing growl, below full scale. The DIN 45 539 standard measures it this way: a good turntable holds seventy decibels below reference, a domestic one fifty-five. « Surface » is the level of the dust in the groove, a continuous bed with no bass. « Clicks » is the number of crackles per second, which are brief impulses rather than noise. « Eccentricity » is the off-centring of the hole, which makes the pitch waver once per turn. « Seed » fixes the draw of the noise and the clicks. The « Audio » output returns the treated sound. The message gives the speed and the length of one turn.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Speed | choice | 33 rpm | 33 rpm / 45 rpm / 78 rpm | The speed of the record. It sets the rate of the wavering and the breathing of the rumble. |
+| Rumble | slider | -58 dB | -90 – -20 dB, step 1 | The level of the motor growl, below full scale. A good turntable holds seventy decibels below reference. |
+| Surface | slider | -52 dB | -90 – -20 dB, step 1 | The level of the dust in the groove, a continuous bed with no bass. |
+| Clicks | slider | 2 /s | 0 – 20 /s, step 0.5 | The number of crackles per second. These are brief impulses, not noise. |
+| Eccentricity | slider | 25 % | 0 – 100 %, step 1 | The off-centring of the hole. It makes the pitch waver once per turn. |
+| Seed | slider | 4 | 0 – 999999, step 1 | The draw of the noise and the clicks. Changing it gives another record in the same condition. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Ubiquity
+
+`ubiquite` · Processing → Other effects
+
+*A source that can no longer be located, or located better than life.*
+
+This node disperses or tightens where a sound comes from. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whoname ubiquity the effect by which a source becomes impossible to locate, and hyperlocalization its opposite. The ear locates a sound by three cues: the time difference between the two ears, the level difference, and the coherence of the two signals. It is the third that this node moves. Two ears receiving the same wave conclude there is a source; two ears receiving unrelated waves conclude nothing, and the sound spreads out. Dispersion works on phase. Cascaded all-pass sections turn the phase of each channel without touching its spectrum, and the two sides receive opposite turns. The mono fold-down therefore keeps its shape: it loses the three decibels any decorrelation costs, and nothing more. « Dispersion » runs from hyperlocalization to ubiquity. Negative, the two channels slide towards what they have in common until only that is left. At zero the sound comes out as it went in. Positive, the phase scrambles. « Stages » is the number of cascaded all-pass sections. « Seed » fixes the draw of their coefficients. The « Audio » output returns two channels. The message gives the correlation of the two channels before and after.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Dispersion | slider | 80 % | -100 – 100 %, step 1 | From hyperlocalization when negative to ubiquity when positive. At zero the sound comes out as it went in. |
+| Stages | slider | 6 | 1 – 16, step 1 | The number of cascaded all-pass sections. The more there are, the more finely the phase scrambles. |
+| Seed | slider | 3 | 0 – 999999, step 1 | The draw of the coefficients. Changing it gives another dispersion of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Wave
+
+`vague` · Processing → Other effects
+
+*Cycles of crescendo, crest and undertow, several seconds apart.*
+
+This node carries a sound through cycles of intensity shaped like a wave. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodescribe it as a crescendo, a maximum point, a fast or gradual break, and a decrescendo, the cycles following one another several seconds apart, regularly or not. The cycle is asymmetric, and that is what makes it recognizable: the wave takes a long time to build and breaks quickly. The repertoire makes it a composite effect, of phase and filtering; the timbre therefore follows the intensity, and the sound brightens as it rises. « Period » is the length of one cycle. « Variation » makes the cycles uneven, from zero for a regular swell to a hundred for a disordered sea. « Rise » is the share of the cycle spent rising. Above one half, the wave breaks. « Break » chooses how it breaks. « Breaker » falls leaving a ridge at the crest; « Gradual » withdraws without one. « Depth » is the share of the level the trough takes away. « Opening » is the share of the timbre that follows the intensity. « Seed » fixes the draw of the variation. The « Audio » output returns the treated sound. The message gives the number of cycles and the mean length of one.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Period | slider | 7 s | 1 – 30 s, step 0.5 | The length of one cycle. |
+| Variation | slider | 20 % | 0 – 100 %, step 1 | The unevenness of the cycles. At zero the swell is regular. |
+| Rise | slider | 70 % | 10 – 90 %, step 1 | The share of the cycle spent rising. Above one half, the wave breaks. |
+| Break | choice | Breaker | Breaker / Gradual | How the wave breaks. Breaker leaves a ridge at the crest, gradual leaves none. |
+| Depth | slider | 90 % | 0 – 100 %, step 1 | The share of the level the trough takes away. |
+| Opening | slider | 60 % | 0 – 100 %, step 1 | The share of the timbre that follows the intensity. At zero, only the level moves. |
+| Seed | slider | 5 | 0 – 999999, step 1 | The draw of the variation. With no variation, this setting does nothing. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Pitch
 

@@ -9,9 +9,11 @@ import { describe, expect, it } from "vitest";
 import { contenuInfobulle, positionInfobulle } from "./infobulle-fiche";
 import { toutesLesFiches } from "../plugins/index";
 import type { FicheAudio } from "../audio/types-domaine";
+import type { FormePort } from "../core/typesFlux";
 
 const TYPES = {
   couleurFlux: (type: string) => ({ audio: "#2a9d8f", midi: "#e9a13b" }[type] ?? "#999"),
+  formeFlux: (type: string) => (type === "midi" ? "carre" : "rond") as FormePort,
   libelleType: (type: string) => ({ audio: "Audio", midi: "MIDI", controle: "Control" }[type] ?? type),
 };
 
@@ -40,6 +42,15 @@ describe("contenu de l'infobulle", () => {
     expect(c.resume).toBe("Generates a drum pattern.");
     expect(c.sorties.map((p) => p.nom)).toEqual(["Audio", "MIDI drums"]);
     expect(c.entrees[0].libelleType).toBe("Control");
+  });
+
+  it("habille chaque port de la FORME de son flux, et pas seulement de sa couleur", () => {
+    // Le point du port porte deux signes et non un seul : la couleur ne suffisait plus, treize
+    // teintes étant déjà prises et deux d'entre elles trop voisines pour un œil. Une infobulle qui
+    // ne montrerait que la couleur annoncerait au catalogue autre chose que ce que le nœud pose.
+    const c = contenuInfobulle(FICHE, "fr", TYPES);
+    expect(c.sorties.map((p) => p.forme)).toEqual(["rond", "carre"]);
+    expect(c.entrees[0].forme).toBe("rond");
   });
 
   it("habille chaque port de la couleur de son flux", () => {

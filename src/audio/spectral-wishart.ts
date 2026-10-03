@@ -30,6 +30,67 @@ export const TAILLE_TRAME = 2048;
 /** Saut par défaut : un quart de trame, le compromis habituel entre finesse et coût. */
 export const SAUT = TAILLE_TRAME / 4;
 
+/**
+ * Ce qu'une des quatre mises en forme demande, tout entier sérialisable.
+ *
+ * LE MODE VOYAGE AVEC LES RÉGLAGES, et c'est ce qui permet au calcul de sortir du fil : un worker
+ * ne reçoit pas de fonction, donc on ne peut pas lui passer la transformation elle-même. Il reçoit
+ * son NOM, et choisit. Les quatre composants partagent alors un seul worker au lieu de quatre.
+ */
+export interface OptionsWishart {
+  mode: "tracer" | "flouter" | "geler" | "glissando";
+  taille: number;
+  /** Traçage : le nombre de composantes gardées à chaque instant. */
+  composantes?: number;
+  /** Flou : le nombre d'instants moyennés. */
+  largeur?: number;
+  /** Gel : où il commence, en proportion de la durée. L'INDICE de trame s'en déduit ici, le nombre
+   *  de trames n'étant connu qu'après l'analyse. */
+  part?: number;
+  /** Glissando intérieur : ses propres réglages, à plat pour le voyage. */
+  vitesse?: number;
+  octaves?: number;
+  lissage?: number;
+  frequence?: number;
+}
+
+/**
+ * Une voie, de son signal à son signal : analyse, mise en forme, recollement.
+ *
+ * LE SON EST PROLONGÉ D'UNE TRAME DE SILENCE DE CHAQUE CÔTÉ avant l'analyse, puis rogné. Sans cela,
+ * les premiers et derniers échantillons ne sont couverts que par le bord d'une seule fenêtre, dont
+ * le poids tend vers zéro ; le recollement divise par ce poids, ce qui est exact tant que la trame
+ * n'est pas modifiée, et explose dès qu'elle l'est. Mesuré avant correction, aux bords seulement :
+ * une crête de 21 au traçage, de 86 au flou, de 465 au gel, pour un son qui culmine à 0,5.
+ *
+ * CE CŒUR EXISTE POUR QUE LES QUATRE COMPOSANTS QUITTENT LE FIL DE L'INTERFACE. Ils figeaient tous
+ * les quatre TOTALEMENT : **relevé sur trois secondes de son, 329 ms pour le traçage, 260 pour le
+ * flou, 238 pour le glissando intérieur, sans qu'un seul message passe.**
+ */
+export function wishartVoie(x: Float32Array, o: OptionsWishart): Float32Array {
+  const taille = o.taille;
+  const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
+  const prolonge = new Float32Array(x.length + 2 * taille);
+  prolonge.set(x, taille);
+  const trames = analyser(prolonge, taille, saut);
+
+  let misEnForme: TrameFFT[];
+  if (o.mode === "tracer") misEnForme = tracer(trames, o.composantes ?? 12);
+  else if (o.mode === "flouter") misEnForme = flouter(trames, o.largeur ?? 1);
+  else if (o.mode === "geler") {
+    misEnForme = geler(trames, Math.round((o.part ?? 0.5) * (trames.length - 1)), taille, saut);
+  } else {
+    misEnForme = glissandoInterieur(trames, {
+      vitesse: o.vitesse ?? 0.5, octaves: o.octaves ?? 6, lissage: o.lissage ?? 20,
+      taille, saut, frequence: o.frequence ?? 44100,
+    });
+  }
+
+  // `slice` et non `subarray` : une vue garde son tampon entier, que le passage par un worker
+  // recopierait en totalité, bourrage compris.
+  return recoller(misEnForme, prolonge.length, taille, saut).slice(taille, taille + x.length);
+}
+
 /** Analyse : le signal découpé en trames fenêtrées, chacune transformée. */
 export function analyser(donnees: Float32Array, taille = TAILLE_TRAME, saut = SAUT): TrameFFT[] {
   const fenetre = creerFenetreHann(taille);

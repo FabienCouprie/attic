@@ -10,7 +10,8 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { GAMMES_REUNIES, degresDUneOctave } from "../audio/gammes-reunies";
-import { tamponDuGlissando, trajetDesVoix, voixDuGlissando } from "../audio/glissando";
+import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
+import { glissandoHorsFil } from "./glissando-hors-fil";
 import { CLES, PARAMETRE_TONIQUE, alterationDe } from "../audio/cles";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -147,7 +148,8 @@ The « Journey » output gives, degree by degree, the starting note, the arrival
       }
 
       const voix = voixDuGlissando(depart.notes, arrivee.notes);
-      const audio = tamponDuGlissando(voix, {
+      const audio = await glissandoHorsFil({
+        voix,
         tenueDepart: ctx.paramNombre("Tenue initiale", 1.5),
         glissement: ctx.paramNombre("Glissement", 6),
         tenueArrivee: ctx.paramNombre("Tenue finale", 1.5),

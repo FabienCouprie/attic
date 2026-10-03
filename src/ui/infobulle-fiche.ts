@@ -9,6 +9,7 @@
 // pas les `.tsx`, et un panneau qui sort de l'écran ou qui montre un port en français en
 // anglais sont exactement les défauts qu'un test attrape.
 import type { FicheAudio } from "../audio/types-domaine";
+import type { FormePort } from "../core/typesFlux";
 import { nomFiche, resumeFiche } from "./libelles-fiche";
 
 export interface PortInfobulle {
@@ -16,6 +17,8 @@ export interface PortInfobulle {
   type: string;
   libelleType: string;
   couleur: string;
+  /** La forme du point, qui distingue deux types là où la couleur ne suffit plus. */
+  forme: FormePort;
 }
 
 export interface ContenuInfobulle {
@@ -25,9 +28,10 @@ export interface ContenuInfobulle {
   sorties: PortInfobulle[];
 }
 
-/** De quoi habiller un port : la couleur de son flux et le nom de son type. */
+/** De quoi habiller un port : la couleur et la forme de son flux, et le nom de son type. */
 export interface SourceTypes {
   couleurFlux: (type: string) => string;
+  formeFlux: (type: string) => FormePort;
   libelleType: (type: string) => string;
 }
 
@@ -40,6 +44,7 @@ const port = (p: Port, lang: string, types: SourceTypes): PortInfobulle => {
     type,
     libelleType: types.libelleType(type),
     couleur: types.couleurFlux(type),
+    forme: types.formeFlux(type),
   };
 };
 

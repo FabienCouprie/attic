@@ -6,8 +6,10 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  NOMBRE_OR, ecartAutoSimilarite, partielsDeSpirale, rapportValide, type OptionsSpirale,
+  NOMBRE_OR, ecartAutoSimilarite, rapportValide, sonDeSpirale,
+  type OptionsSonSpirale, type SonSpirale,
 } from "../audio/spirale-logarithmique";
+import { parUneFois } from "./hors-lot";
 
 /** Les rapports qui ont un nom. « Libre » laisse le curseur décider. */
 const RAPPORTS: Record<string, number | null> = {
@@ -63,60 +65,28 @@ export const fiches: FicheAudio[] = ([
       const en = langueCourante() === "en";
       const choix = ctx.paramTexte("Rapport par tour", "or");
       const rapport = rapportValide(RAPPORTS[choix] ?? ctx.paramNombre("Rapport libre", 1.62));
-      const o: OptionsSpirale = {
+      const sr = 44100;
+      const o: OptionsSonSpirale = {
         fondamentale: ctx.paramNombre("Fondamentale", 55),
         rapport,
         partiels: Math.round(ctx.paramNombre("Partiels", 9)),
         tours: ctx.paramNombre("Tours", 2),
         dureeSec: ctx.paramNombre("Durée", 12),
         decroissance: ctx.paramNombre("Décroissance", 1),
+        sampleRate: sr,
+        volume: ctx.paramNombre("Volume", 70) / 100,
       };
 
-      const sr = 44100;
-      const n = Math.max(1, Math.round(o.dureeSec * sr));
-      const buffer = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: sr });
-      const x = buffer.getChannelData(0);
-      const partiels = partielsDeSpirale(o);
+      const { echantillons, retenus, abandonnes } = await parUneFois<OptionsSonSpirale, SonSpirale>(o, {
+        creerWorker: () => new Worker(new URL("../workers/spirale-worker.ts", import.meta.url), { type: "module" }),
+        calcul: sonDeSpirale,
+      });
+      const buffer = new AudioBuffer({
+        numberOfChannels: 1, length: Math.max(1, echantillons.length), sampleRate: sr,
+      });
+      // `copyToChannel` et non `getChannelData().set` : le tableau revient d'un ouvrier.
+      buffer.copyToChannel(new Float32Array(echantillons), 0);
 
-      // LA PHASE EST INTÉGRÉE, ET NON RECALCULÉE À CHAQUE ÉCHANTILLON. Poser sin(2π·f(t)·t) pour
-      // une fréquence qui varie donne une hauteur fausse, la dérivée de f(t)·t n'étant pas f(t).
-      let abandonnes = 0;
-      const nyquist = sr / 2;
-      let somme = 0;
-      for (const p of partiels) {
-        if (p.frequenceDebut >= nyquist || p.frequenceFin >= nyquist) { abandonnes++; continue; }
-        somme += p.amplitude;
-      }
-      const normalisation = somme > 0 ? 1 / somme : 1;
-
-      for (const p of partiels) {
-        if (p.frequenceDebut >= nyquist || p.frequenceFin >= nyquist) continue;
-        const a = p.amplitude * normalisation;
-        let phase = 0;
-        for (let i = 0; i < n; i++) {
-          const part = n > 1 ? i / (n - 1) : 0;
-          const f = p.frequenceDebut * Math.pow(rapport, o.tours * part);
-          phase += (2 * Math.PI * f) / sr;
-          x[i] += a * Math.sin(phase);
-        }
-      }
-
-      // Un fondu de vingt millisecondes aux deux bouts : le spectre commence et finit en plein
-      // milieu de son parcours, et une coupure nette y ferait un clic.
-      const fondu = Math.min(Math.floor(0.02 * sr), Math.floor(n / 2));
-      for (let i = 0; i < fondu; i++) {
-        const g = i / fondu;
-        x[i] *= g;
-        x[n - 1 - i] *= g;
-      }
-
-      const volume = ctx.paramNombre("Volume", 70) / 100;
-      let pic = 0;
-      for (let i = 0; i < n; i++) pic = Math.max(pic, Math.abs(x[i]));
-      const gain = pic > 0 ? (volume * 0.95) / pic : 1;
-      for (let i = 0; i < n; i++) x[i] *= gain;
-
-      const retenus = partiels.filter((p) => p.frequenceDebut < nyquist && p.frequenceFin < nyquist);
       const lignes = [
         `${en ? "Ratio per turn" : "Rapport par tour"} : ${rapport.toFixed(4)}`,
         `${en ? "Turns" : "Tours"} : ${o.tours}   ${en ? "total factor" : "facteur total"} : ${Math.pow(rapport, o.tours).toFixed(4)}`,

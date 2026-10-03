@@ -7,6 +7,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { positionInfobulle, type ContenuInfobulle, type Rectangle } from "./infobulle-fiche";
+import { stylePort } from "./forme-port";
 
 export function InfobulleFiche({ contenu, cible }: { contenu: ContenuInfobulle; cible: Rectangle }) {
   const { t } = useI18n();
@@ -32,7 +33,10 @@ export function InfobulleFiche({ contenu, cible }: { contenu: ContenuInfobulle; 
       {ports.length === 0 && <div className="attic-infobulle-port-vide">—</div>}
       {ports.map((p, i) => (
         <div key={`${p.nom}-${i}`} className="attic-infobulle-port" title={p.libelleType}>
-          <span className="attic-infobulle-puce" style={{ background: p.couleur }} />
+          {/* LA PASTILLE PORTE LA MÊME FORME QUE LA POIGNÉE DU NŒUD, par le même calcul : une
+              infobulle qui annoncerait un rond là où le nœud pose un carré tromperait justement
+              la personne qui vient y chercher ce que le nœud prend et ce qu'il rend. */}
+          <span className="attic-infobulle-puce" style={stylePort(p.forme, p.couleur, 8)} />
           <span className="attic-infobulle-port-nom">{p.nom}</span>
           <span className="attic-infobulle-port-type">{p.libelleType}</span>
         </div>

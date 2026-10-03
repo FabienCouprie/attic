@@ -12,8 +12,10 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   EST_ONDELETTE, EST_OPERATION, ONDELETTES, OPERATIONS,
-  bandesDetages, etagesPossibles, filtreDe, traiterAvecDecalages,
+  bandesDetages, etagesPossibles, filtreDe, ondelettesVoie,
+  type OptionsVoieOndelettes, type ResultatVoieOndelettes,
 } from "../audio/ondelettes";
+import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -83,12 +85,23 @@ export const fiches: FicheAudio[] = ([
       const etages = Math.max(1, Math.min(voulus, etagesPossibles(audio.length, h.length)));
 
       const debut = performance.now();
+      // LE CALCUL SORT DU FIL DE L'INTERFACE. Mesuré avant : 429 millisecondes sur trois secondes
+      // de son, sans qu'un seul message passe, et « Décalages » multiplie ce temps par lui-même.
+      const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
+      const parVoie = await parCanal<OptionsVoieOndelettes, ResultatVoieOndelettes>(
+        voies, { ...options, ondelette: nomOndelette, etages, decalages },
+        {
+          creerWorker: () => new Worker(new URL("../workers/ondelettes-worker.ts", import.meta.url), { type: "module" }),
+          calcul: ondelettesVoie,
+          surProgres: (c, n) => ctx.onProgress?.(en ? `Channel ${c}/${n}` : `Canal ${c}/${n}`),
+        },
+      );
       const traites: Float32Array[] = [];
       const retires: Float32Array[] = [];
       let annules = 0, total = 0, seuil = 0, sigma = 0;
       for (let c = 0; c < audio.numberOfChannels; c++) {
         const source = audio.getChannelData(c);
-        const r = traiterAvecDecalages(source, h, etages, options, decalages);
+        const r = parVoie[c];
         traites.push(r.son);
         const retire = new Float32Array(source.length);
         for (let i = 0; i < source.length; i++) retire[i] = source[i] - r.son[i];

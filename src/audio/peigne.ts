@@ -39,21 +39,40 @@ const pic = (b: AudioBuffer) => {
  * (plafonnée à vingt) laisse les peignes s'éteindre ; le niveau de sortie est ramené à celui de
  * l'entrée.
  */
-export function peignes(b: AudioBuffer, o: OptionsPeigne): AudioBuffer {
-  const sr = b.sampleRate;
+/** Tout ce qu'une voie demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
+export interface OptionsPeigneVoie extends Omit<OptionsPeigne, "mix"> {
+  /** La fréquence d'échantillonnage : un tableau de nombres ne la porte pas. */
+  frequence: number;
+}
+
+/** La longueur que rend un peigne : le son, plus sa traîne. */
+export const longueurAvecTraine = (longueur: number, t60: number, frequence: number) =>
+  longueur + Math.round(Math.min(20, Math.max(0.01, t60)) * frequence);
+
+/**
+ * Une voie passée dans les peignes, et RIEN D'AUTRE : le son humide seul.
+ *
+ * CE CŒUR EXISTE POUR QUE LE COMPOSANT QUITTE LE FIL DE L'INTERFACE. **Mesuré avant, sur trois
+ * secondes de son : 248 millisecondes, et pas un seul message pendant ce temps.**
+ *
+ * LA NORMALISATION ET LE MÉLANGE NE SONT PAS ICI, et c'est voulu : le niveau humide se ramène à la
+ * crête de l'ENTRÉE ENTIÈRE, tous canaux confondus. Une voie seule ne peut pas la connaître ; c'est
+ * le composant qui l'applique une fois ses voies rassemblées.
+ */
+export function peignesVoie(x: Float32Array, o: OptionsPeigneVoie): Float32Array {
+  const sr = o.frequence;
   const t60 = Math.max(0.01, o.t60);
-  const n = b.length + Math.round(Math.min(20, t60) * sr);
+  const n = longueurAvecTraine(x.length, t60, sr);
   const freqs = o.frequences.filter((f) => f >= 20 && f < sr / 2);
   const amort = Math.max(0, Math.min(0.99, o.amortissement / 100));
-  const humide = new AudioBuffer({ numberOfChannels: b.numberOfChannels, length: n, sampleRate: sr });
+  const y = new Float32Array(n);
   // La ligne doit tenir le peigne le plus grave, transposé au plus bas.
   // Par une boucle : un tableau par échantillon déborderait la pile d'un `Math.min(...t)`.
   let minT = 1;
   if (o.transpositions) { minT = Infinity; for (const v of o.transpositions) if (v < minT) minT = v; }
   const taille = Math.ceil(sr / Math.max(1, Math.min(...freqs, sr) * Math.max(0.05, minT))) + 4;
 
-  for (let c = 0; c < b.numberOfChannels; c++) {
-    const x = b.getChannelData(c), y = humide.getChannelData(c);
+  {
     const lignes = freqs.map(() => new Float64Array(taille));
     const filtres = freqs.map(() => 0);
     const passeTout = freqs.map(() => 0);
@@ -86,12 +105,31 @@ export function peignes(b: AudioBuffer, o: OptionsPeigne): AudioBuffer {
       ecr = (ecr + 1) % taille;
     }
   }
-  const niveau = pic(humide) > 0 ? pic(b) / pic(humide) : 0;
-  const mix = Math.max(0, Math.min(1, o.mix / 100));
+  return y;
+}
+
+/**
+ * Le son humide ramené au niveau de l'entrée, puis mélangé au sec.
+ *
+ * LE NIVEAU SE RAMÈNE SUR LA CRÊTE DE L'ENTRÉE ENTIÈRE, tous canaux confondus : un peigne accordé
+ * accumule, et sans ce rattrapage la sortie passerait franchement au-dessus de ce qu'on lui a donné.
+ */
+export function melangerPeignes(b: AudioBuffer, humides: Float32Array[], mixPc: number): AudioBuffer {
+  const sr = b.sampleRate, n = humides[0]?.length ?? b.length;
   const sortie = new AudioBuffer({ numberOfChannels: b.numberOfChannels, length: n, sampleRate: sr });
+  let piqueHumide = 0;
+  for (const h of humides) for (let i = 0; i < h.length; i++) piqueHumide = Math.max(piqueHumide, Math.abs(h[i]));
+  const niveau = piqueHumide > 0 ? pic(b) / piqueHumide : 0;
+  const mix = Math.max(0, Math.min(1, mixPc / 100));
   for (let c = 0; c < b.numberOfChannels; c++) {
-    const h = humide.getChannelData(c), s = b.getChannelData(c), d = sortie.getChannelData(c);
+    const h = humides[c], s = b.getChannelData(c), d = sortie.getChannelData(c);
     for (let i = 0; i < n; i++) d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
   }
   return sortie;
+}
+
+export function peignes(b: AudioBuffer, o: OptionsPeigne): AudioBuffer {
+  const humides = Array.from({ length: b.numberOfChannels }, (_, c) =>
+    peignesVoie(b.getChannelData(c), { ...o, frequence: b.sampleRate }));
+  return melangerPeignes(b, humides, o.mix);
 }

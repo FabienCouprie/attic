@@ -107,11 +107,29 @@ export async function mesurerComposant(
 
     const reglages = parametres as Record<string, string | number>;
     const rangs = entreesAudio as number[];
+
+    // UN PORT « SPECTROGRAMME » NE REÇOIT PAS UN TAMPON AUDIO. Le composant le refuserait et le banc
+    // mesurerait un refus, c'est-à-dire rien. Le spectrogramme d'essai est l'analyse du MÊME son
+    // déterministe, au paramétrage de la référence : il reste donc reproductible d'une passe à
+    // l'autre, ce qui est la condition pour qu'une empreinte veuille dire quelque chose.
+    const veutSpectre = (fiche.entrees || []).some((p: any, i: number) => rangs.includes(i) && p?.type === "spectrogramme");
+    let spectre: any = null;
+    if (veutSpectre) {
+      const sm = await import("/src/audio/spectrogramme-mel.ts");
+      const mel = await import("/src/audio/mel.ts");
+      const p = { ...(mel as any).PARAMETRES_RIFFUSION, echantillonnage: frequence };
+      spectre = { canaux: [(sm as any).melDepuisSignal(buf.getChannelData(0), p)], parametres: p };
+    }
+    const pourRang = (i: number) => {
+      if (!rangs.includes(i)) return null;
+      return (fiche.entrees || [])[i]?.type === "spectrogramme" ? spectre : buf;
+    };
+
     const ctx = {
       noeud: { id: "banc", data: { ficheId: id, parametres: reglages } },
       runtime: null, repertoireTravail: null,
-      entree: (i: number) => (rangs.includes(i) ? buf : null),
-      entrees: () => rangs.map(() => buf),
+      entree: (i: number) => pourRang(i),
+      entrees: () => rangs.map((i) => pourRang(i)),
       paramNombre: (nom: string, def: number) => {
         if (typeof reglages[nom] === "number") return reglages[nom] as number;
         const p = (fiche.parametres || []).find((q: any) => q.nom === nom);
@@ -185,6 +203,22 @@ export async function mesurerComposant(
         }
         const rms = d.length ? Math.sqrt(somme / d.length) : 0;
         return `courbe ${rms.toFixed(9)}/${crete.toFixed(9)} · ${d.length} valeurs · ${paliers} paliers`;
+      }
+      // UN SPECTROGRAMME SE SURVEILLE AUSSI, et sans cela le composant qui l'ANALYSE échapperait à la
+      // base : sa sortie n'est pas de l'audio, donc son empreinte aurait été vide, et le garde de
+      // couverture l'aurait refusé à juste titre. Les trois dimensions sont relevées avec le niveau,
+      // pour la même raison que les paliers d'une courbe : un spectrogramme qui perdrait une trame ou
+      // une bande garderait à peu près la même valeur efficace.
+      if (v && Array.isArray(v.canaux) && v.parametres) {
+        let somme = 0, crete = 0, n = 0;
+        for (const trames of v.canaux) {
+          for (const t of trames as Float32Array[]) {
+            for (let i = 0; i < t.length; i++) { somme += t[i] * t[i]; crete = Math.max(crete, t[i]); n++; }
+          }
+        }
+        const rms = n ? Math.sqrt(somme / n) : 0;
+        const dim = `${v.canaux.length}×${v.canaux[0]?.length ?? 0}×${v.canaux[0]?.[0]?.length ?? 0}`;
+        return `spectrogramme ${rms.toFixed(9)}/${crete.toFixed(9)} · ${dim}`;
       }
       return null;
     });

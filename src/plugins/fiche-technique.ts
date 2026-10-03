@@ -15,12 +15,17 @@
 // demande une transformée par trame — quelques dizaines de millisecondes par seconde de son, bornées
 // aux huit premières secondes. C'est négligeable sur une prise, sensible sur une collection de deux
 // cents fichiers, et inutile sur de la percussion, qui n'a pas de hauteur à trouver.
+//
+// **CE COÛT NE FIGE PLUS LE FIL DE L'INTERFACE.** Relevé sur trois secondes de son : 354
+// millisecondes, et pas un seul message passé pendant ce temps. Le profil a tranché où intervenir —
+// le suivi pYIN prend 330 de ces millisecondes, les onze autres mesures en prennent onze — et c'est
+// donc le suivi SEUL qui part dans un ouvrier, celui du nœud « Suiveur de hauteur ».
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { mesurerCopie } from "../parcours/mesures";
 import { CIBLES_DIFFUSION, ficheSon, resumeSon } from "../parcours/fiche-son";
+import { mesurerCopieHorsFil } from "./mesure-hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -55,7 +60,7 @@ export const fiches: FicheAudio[] = ([
       }
       const diffusion = ctx.paramTexte("Cible de diffusion", "aucune");
       const avecHauteur = ctx.paramTexte("Analyse de hauteur", "oui") !== "non";
-      const mesure = mesurerCopie(audio, { hauteur: avecHauteur });
+      const mesure = await mesurerCopieHorsFil(audio, avecHauteur);
       return {
         valeurs: [audio, ficheSon(mesure, en, diffusion, avecHauteur)],
         message: resumeSon(mesure, en, diffusion),

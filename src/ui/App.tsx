@@ -434,6 +434,10 @@ function Atelier() {
               sfzChemin: n.data.sfzChemin,
               sfzNom: n.data.sfzNom,
               sequenceNotes: n.data.sequenceNotes,
+              // Le découpage d'un montage et les pistes qu'on y a vidées : une session reprise
+              // rendait sinon un montage que personne n'avait découpé.
+              morceaux: n.data.morceaux,
+              pistesVidees: n.data.pistesVidees,
               nomFichier: n.data.nomFichier,
               nom: n.data.nom,
               nomEn: n.data.nomEn,

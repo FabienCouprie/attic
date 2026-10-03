@@ -10,7 +10,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core";
-import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, glissandoTonalite, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, vocoder } from "../audio";
+import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
 
 import { effet, param } from "./effets-aides";
@@ -232,11 +232,21 @@ export const fiches: FicheAudio[] = ([
     (a,t,f) => changerTempo(a, t, f)),
   effet("changement-tonalite", "Changement de tonalité", "Pitch Shift", "Pitch-shift.", "Pitch shift.",
     [param("Demi-tons", 2, "Semitones", "", "Transposition en demi-tons.", "Transposition in semitones.", [-24, 24], 1)],
-    (a,d) => changerTonalite(a, d)),
+    (a,d) => changerTonalite(a, d),
+    {
+      creerWorker: () => new Worker(new URL("../workers/tonalite-worker.ts", import.meta.url), { type: "module" }),
+      voix: (x, o) => changerTonaliteVoie(x, o.demiTons),
+      cles: ["demiTons"],
+    }),
   effet("glissando-tonalite", "Glissando de tonalité", "Pitch Glissando", "Pitch-shift glissant d'une tonalité à une autre.", "Pitch glissando from one pitch to another.",
     [param("Début", 0, "Start", "st", "Hauteur de départ en demi-tons.", "Start pitch in semitones.", [-24, 24], 0.5),
      param("Fin", 12, "End", "st", "Hauteur d'arrivée en demi-tons.", "End pitch in semitones.", [-24, 24], 0.5)],
-    (a,debut,fin) => glissandoTonalite(a, debut, fin)),
+    (a,debut,fin) => glissandoTonalite(a, debut, fin),
+    {
+      creerWorker: () => new Worker(new URL("../workers/glissando-worker.ts", import.meta.url), { type: "module" }),
+      voix: (x, o) => glissandoTonaliteVoie(x, o as unknown as OptionsGlissando),
+      cles: ["debut", "fin"],
+    }),
   effet("harmonizer", "Harmonizer / Octaver", "Harmonizer / Octaver", "Ajoute des voix pitch-shiftées (octave, quinte…) sous l'original.", "Adds pitch-shifted voices (octave, fifth…) under the original.",
     [param("Voix 1", 12, "Voice 1", "st", "Intervalle de la première voix en demi-tons. 12 = octave supérieure, -12 = octave inférieure, 7 = quinte.", "Interval of first voice in semitones. 12 = octave up, -12 = octave down, 7 = fifth.", [-24, 24], 1), param("Mix 1", 30, "Mix 1", "%", "Niveau de la première voix.", "Level of first voice.", [0, 100], 1), param("Voix 2", -12, "Voice 2", "st", "Intervalle de la deuxième voix en demi-tons.", "Interval of second voice in semitones.", [-24, 24], 1), param("Mix 2", 30, "Mix 2", "%", "Niveau de la deuxième voix.", "Level of second voice.", [0, 100], 1)],
     (a, v1, m1, v2, m2) => harmoniser(a, v1, m1, v2, m2),

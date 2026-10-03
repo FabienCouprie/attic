@@ -77,6 +77,29 @@ export const registre = creerRegistre<TypeValeur, AudioContext>();
   // réfléchir et d'en prendre le complémentaire, toutes opérations qui perdent leur sens dès
   // qu'une attaque est datée. Voir `audio/cercle.ts`.
   registre.enregistrerTypeFlux({ id: "cercle", couleur: "#ffffff", libelle: "Cercle" });
+  // LE PREMIER TYPE QUI SE DISTINGUE PAR SA FORME ET NON PAR SA COULEUR, relevé par Fabien : « les
+  // ports spectrogrammes et les ports sons sont de la même couleur, très proche pour un œil humain
+  // serait plus exact ; nous manquons déjà de couleur, je recommanderais tout simplement de changer
+  // la forme du port ».
+  //
+  // IL AVAIT RAISON, ET C'EST MON INSTRUMENT QUI ME FLATTAIT. J'avais relevé 42,5 ΔE entre ce vert
+  // et le turquoise de l'audio, avec la formule de 1976 — celle qu'emploient les cinq commentaires
+  // ci-dessus. Reprise avec la **CIEDE2000**, qui existe précisément pour corriger la surestimation
+  // des couleurs saturées, la même paire tombe à **19,0**, cinquième paire la plus serrée de toute
+  // la palette. Et les écarts écrits plus haut se resserrent tous : midi/banque passe de 22,3 à
+  // **8,3**, le dépôt ayant donc déjà accepté bien moins qu'il ne le croyait.
+  //
+  // LA COULEUR N'AVAIT DONC PLUS RIEN À DONNER, et la forme, elle, multiplie : treize couleurs par
+  // trois formes au lieu d'une quatorzième teinte à trouver dans ce qui reste. Le point du port est
+  // un carré ; voir `core/typesFlux.ts` et `ui/forme-port.ts`.
+  //
+  // LE VERT RESTE, et sa parenté avec l'audio et l'objet n'est plus un défaut : elle dit ce qu'un
+  // spectrogramme est, du son regardé, et c'est la forme qui dit qu'on ne peut pas l'entendre.
+  //
+  // UN PORT QUI PORTE UNE MATRICE ET SON PARAMÉTRAGE. Sans ce type, chaque composant d'une chaîne
+  // porterait les sept mêmes réglages d'échelle, à accorder à la main d'un bout à l'autre. Voir
+  // `audio/spectrogramme-mel.ts`.
+  registre.enregistrerTypeFlux({ id: "spectrogramme", couleur: "#2f9e44", forme: "carre", libelle: "Spectrogramme" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

@@ -12,7 +12,7 @@
 import { NodeResizer, useNodeConnections, useReactFlow } from "@xyflow/react";
 import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
 import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
-import { morceauxDepuisParametres, type Morceau } from "../audio/montage-morceaux";
+import { morceauxAEcrire, morceauxCompletes, type Morceau } from "../audio/montage-morceaux";
 import type { VueProps } from "./vues";
 
 export function VueMontage({ id, data }: VueProps) {
@@ -43,26 +43,34 @@ export function VueMontage({ id, data }: VueProps) {
     onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
     /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
     morceaux?: Morceau[];
+    /** Les pistes que l'on a vidées : elles ne se redéduisent pas de leurs réglages. */
+    pistesVidees?: number[];
   };
 
   // LA MAQUETTE GARDE SON MODÈLE : une boîte y EST un port, avec sa durée réglée, et rien n'a été
   // demandé pour elle. Les morceaux ne concernent que le montage, où l'on coupe du son.
   const estMaquette = d.ficheId === "maquette";
 
-  // LES MORCEAUX SE DÉDUISENT DES RÉGLAGES TANT QU'IL N'Y EN A PAS, et c'est toute la migration : un
-  // graphe enregistré avant eux s'ouvre avec un morceau par piste branchée, le son entier, donc
-  // exactement ce qu'il montrait. Rien n'est écrit sur le disque tant qu'on ne touche à rien.
+  // LES MORCEAUX SE DÉDUISENT DES RÉGLAGES PISTE PAR PISTE, et non tous ou aucun. Un graphe
+  // enregistré avant eux s'ouvre avec un morceau par piste branchée, donc exactement ce qu'il
+  // montrait ; et une piste branchée APRÈS un premier découpage reçoit le sien, au lieu de rester
+  // invisible. Rien n'est écrit sur le disque tant qu'on ne touche à rien.
   const morceaux = estMaquette ? undefined
-    : (d.morceaux && d.morceaux.length > 0
-      ? d.morceaux
-      : morceauxDepuisParametres(branchees, d.parametres ?? {}));
+    : morceauxCompletes(d.morceaux ?? [], branchees, d.parametres ?? {}, d.pistesVidees ?? []);
 
   // ON ÉCRIT DANS LES DONNÉES DU NŒUD, comme le clavier y écrit ce qu'on vient de jouer. Une vue a le
   // droit de poser ce que L'UTILISATEUR a fait ; ce qu'elle n'a pas le droit de poser, ce sont les
   // canaux d'un run. L'empreinte de cache les regarde, si bien qu'un morceau déplacé fait rejouer.
-  const ecrireMorceaux = (ms: Morceau[]) => setNodes((nds) => nds.map((n) => (
-    n.id === id ? { ...n, data: { ...n.data, morceaux: ms } } : n
-  )));
+  //
+  // ET L'ON N'ÉCRIT QUE LES PISTES TOUCHÉES. La ligne de temps travaille sur la liste complétée, donc
+  // elle la rend complétée : écrire telle quelle ferait de toutes les pistes des pistes découpées au
+  // premier geste sur l'une d'elles, et leurs quatre réglages cesseraient d'agir d'un coup. Voir
+  // `morceauxAEcrire`.
+  const ecrireMorceaux = (ms: Morceau[]) => setNodes((nds) => nds.map((n) => {
+    if (n.id !== id) return n;
+    const ecriture = morceauxAEcrire(ms, branchees, d.parametres ?? {}, d.pistesVidees ?? []);
+    return { ...n, data: { ...n.data, morceaux: ecriture.morceaux, pistesVidees: ecriture.videes } };
+  }));
 
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()}>

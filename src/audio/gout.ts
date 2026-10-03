@@ -114,13 +114,40 @@ export interface MesuresGout {
  * clics ne l'est pas, quel que soit leur nombre.
  */
 export function mesurer(buffer: AudioBuffer): MesuresGout {
-  const n = buffer.length;
-  const sr = buffer.sampleRate;
-  const x = new Float32Array(n);
+  return mesurerVoie(voieMoyenne(buffer), { sampleRate: buffer.sampleRate });
+}
+
+/**
+ * Les canaux rassemblés en une voie : un goût est une propriété du son, non de son image stéréo.
+ *
+ * ELLE EST SÉPARÉE DE LA MESURE pour que la mesure puisse avoir lieu dans un ouvrier, où
+ * `AudioBuffer` n'existe pas. Le mélange, lui, coûte une passe sur les échantillons.
+ */
+export function voieMoyenne(buffer: AudioBuffer): Float32Array {
+  const x = new Float32Array(buffer.length);
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const d = buffer.getChannelData(c);
-    for (let i = 0; i < n; i++) x[i] += d[i] / buffer.numberOfChannels;
+    for (let i = 0; i < buffer.length; i++) x[i] += d[i] / buffer.numberOfChannels;
   }
+  return x;
+}
+
+/** Tout ce qu'une voie demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
+export interface OptionsVoieGout {
+  sampleRate: number;
+}
+
+/**
+ * Les cinq dimensions d'une voie déjà rassemblée.
+ *
+ * CE CŒUR EXISTE POUR QUE LES COMPOSANTS QUI MESURENT UN GOÛT QUITTENT LE FIL DE L'INTERFACE.
+ * Relevé avant, sur trois secondes de son : 248 millisecondes pour « Le goût d'un son », sans
+ * qu'un seul message passe. Le coût est dans le suivi de hauteur et la dissonance des partiels,
+ * une transformée par trame chacun.
+ */
+export function mesurerVoie(x: Float32Array, o: OptionsVoieGout): MesuresGout {
+  const n = x.length;
+  const sr = o.sampleRate;
 
   // ── Enveloppe, par fenêtres de 10 ms ──
   const pas = Math.max(1, Math.round(sr * 0.01));

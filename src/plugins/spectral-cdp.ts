@@ -11,16 +11,49 @@ import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core/hasard";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import {
-  SAUT, TAILLE, analyserPV, arpegerSpectre, cribler, etirerSpectre, filtrerParSpectre, melangerFenetres, parCanal,
-  type Rangs,
+  SAUT, TAILLE, analyserPV, cdpVoie, filtrerParSpectre, melangerFenetres, parCanal, ramenerSousLaCrete,
+  type OptionsCdp, type Rangs,
 } from "../audio/spectral-cdp";
-import { peignes } from "../audio/peigne";
+import { parCanal as parCanalHorsFil } from "./hors-fil";
+import { melangerPeignes, peignesVoie, type OptionsPeigneVoie } from "../audio/peigne";
 import { lireIntervalles } from "./concret";
 
 const en = () => langueCourante() === "en";
 const aucuneEntree = () => (en() ? "No audio input." : "Aucune entrée audio.");
 
 /** Une courbe lue trame par trame : la valeur de la courbe à l'instant de la trame t. */
+/**
+ * Les voies mises en forme HORS DU FIL DE L'INTERFACE, rassemblées en un tampon.
+ *
+ * CE PASSAGE CALCULAIT DANS LE FIL, et les trois composants qui l'empruntent figeaient TOTALEMENT :
+ * relevé sur trois secondes de son, 277 ms pour l'arpège, 265 pour l'étirement et pour le crible,
+ * sans qu'un seul message passe. L'analyse, la mise en forme et la synthèse sont désormais dans
+ * `cdpVoie`, que le worker exécute et que le repli exécute aussi là où il n'y a pas de worker.
+ *
+ * LA NORMALISATION DE CRÊTE EST APPLIQUÉE ICI et non dans la voie : elle compare la crête de
+ * l'entrée entière à celle de la sortie entière, tous canaux confondus, et une voie seule ne peut
+ * pas la faire sans se tromper.
+ */
+async function voiesMisesEnForme(a: AudioBuffer, o: OptionsCdp, ctx: any): Promise<AudioBuffer> {
+  const voies = Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
+  const rendues = await parCanalHorsFil<OptionsCdp, Float32Array>(voies, o, {
+    creerWorker: () => new Worker(new URL("../workers/cdp-worker.ts", import.meta.url), { type: "module" }),
+    calcul: cdpVoie,
+    surProgres: (c, n) => ctx.onProgress?.(en() ? `Channel ${c}/${n}` : `Canal ${c}/${n}`),
+  });
+  const sortie = new AudioBuffer({
+    numberOfChannels: a.numberOfChannels, length: a.length, sampleRate: a.sampleRate,
+  });
+  for (let c = 0; c < a.numberOfChannels; c++) sortie.copyToChannel(new Float32Array(rendues[c]), c);
+  return ramenerSousLaCrete(a, sortie);
+}
+
+/** Une valeur par trame, évaluée d'avance : un worker ne reçoit pas de fonction. */
+function parTrameEnTableau(f: (t: number) => number, longueur: number): Float32Array {
+  const trames = Math.ceil(longueur / SAUT) + 2;
+  return Float32Array.from({ length: trames }, (_, t) => f(t));
+}
+
 function parTrame(courbe: unknown, a: AudioBuffer, defaut: number, forme: Parameters<typeof valeursParametre>[3]): (t: number) => number {
   if (!estCourbe(courbe)) return () => defaut;
   const nTrames = Math.ceil(a.length / SAUT) + TAILLE / SAUT;
@@ -60,7 +93,9 @@ export const fiches: FicheAudio[] = ([
       const k = parTrame(ctx.entree(1), a, ctx.paramNombre("Étirement", 1.3),
         { min: ctx.paramNombre("Étirement min", 1), max: ctx.paramNombre("Étirement max", 1.6) });
       const pivot = ctx.paramNombre("Pivot", 200);
-      return { valeurs: [parCanal(a, (an) => etirerSpectre(an, pivot, k))] };
+      return { valeurs: [await voiesMisesEnForme(a, {
+        mode: "etirer", frequence: a.sampleRate, pivot, facteurs: parTrameEnTableau(k, a.length),
+      }, ctx)] };
     },
   },
   {
@@ -98,7 +133,7 @@ export const fiches: FicheAudio[] = ([
         sens: String(ctx.paramTexte("Sens", "montant")) as "montant" | "descendant" | "aller-retour",
         remanence: ctx.paramNombre("Rémanence", 0),
       };
-      return { valeurs: [parCanal(a, (an) => arpegerSpectre(an, o))] };
+      return { valeurs: [await voiesMisesEnForme(a, { mode: "arpeger", frequence: a.sampleRate, arpege: o }, ctx)] };
     },
   },
   {
@@ -126,8 +161,12 @@ export const fiches: FicheAudio[] = ([
       const tramesParBloc = Math.max(1, Math.round((ctx.paramNombre("Durée des blocs", 50) / 1000) * a.sampleRate / SAUT));
       const porteeBlocs = (ctx.paramNombre("Portée", 1) * a.sampleRate / SAUT) / tramesParBloc;
       const graine = ctx.paramNombre("Graine", 42);
-      // Chaque canal reçoit le même mélange : sans quoi l'image stéréo se déchirerait.
-      return { valeurs: [parCanal(a, (an) => melangerFenetres(an, tramesParBloc, porteeBlocs, creerAleatoire(graine)))] };
+      // Chaque canal reçoit le même mélange : sans quoi l'image stéréo se déchirerait. Le
+      // générateur se construit par voie, à partir de la même graine, exactement comme il se
+      // construisait auparavant à l'intérieur de la boucle des canaux.
+      return { valeurs: [await voiesMisesEnForme(a, {
+        mode: "melanger", frequence: a.sampleRate, tramesParBloc, porteeBlocs, graine,
+      }, ctx)] };
     },
   },
   {
@@ -176,7 +215,10 @@ export const fiches: FicheAudio[] = ([
         : (choix as Rangs);
       const inverse = String(ctx.paramTexte("Mode", "garder")) === "retirer";
       const tol = ctx.paramNombre("Tolérance", 30);
-      return { valeurs: [parCanal(a, (an) => cribler(an, f0, rangs, tol, inverse))] };
+      return { valeurs: [await voiesMisesEnForme(a, {
+        mode: "cribler", frequence: a.sampleRate,
+        fondamentales: parTrameEnTableau(f0, a.length), rangs, tolerance: tol, inverse,
+      }, ctx)] };
     },
   },
   {
@@ -255,7 +297,20 @@ export const fiches: FicheAudio[] = ([
             min: ctx.paramNombre("Fondamentale min", 55), max: ctx.paramNombre("Fondamentale max", 220), ...progressionPour({ unite: "Hz" }),
           }), (f) => f / f0)
         : null;
-      const y = peignes(a, { frequences, t60, amortissement: ctx.paramNombre("Amortissement", 20), mix: ctx.paramNombre("Mix", 100), transpositions });
+      // LE CALCUL SORT DU FIL DE L'INTERFACE. Mesuré avant : 248 millisecondes sur trois secondes
+      // de son, sans qu'un seul message passe. Le mélange et le rattrapage de niveau restent ici :
+      // ils comparent la crête de l'entrée entière à celle de la sortie entière.
+      const voies = Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
+      const humides = await parCanalHorsFil<OptionsPeigneVoie, Float32Array>(
+        voies,
+        { frequences, t60, amortissement: ctx.paramNombre("Amortissement", 20), transpositions, frequence: a.sampleRate },
+        {
+          creerWorker: () => new Worker(new URL("../workers/peigne-worker.ts", import.meta.url), { type: "module" }),
+          calcul: peignesVoie,
+          surProgres: (c, nb) => ctx.onProgress?.(en() ? `Channel ${c}/${nb}` : `Canal ${c}/${nb}`),
+        },
+      );
+      const y = melangerPeignes(a, humides, ctx.paramNombre("Mix", 100));
       return { valeurs: [y], message: `${frequences.length} ${en() ? (frequences.length > 1 ? "combs" : "comb") : (frequences.length > 1 ? "peignes" : "peigne")}` };
     },
   },

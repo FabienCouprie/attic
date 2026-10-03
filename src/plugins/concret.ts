@@ -8,9 +8,10 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { estCourbe, valeursParametre, progressionPour } from "../audio/courbe";
 import {
-  convoluerDeuxSons, rapportsDeVitesse, rapportsResonateurs, resonateurs, vitesseVariable,
-  type StructureResonateurs,
+  convoluerDeuxSons, rapportsDeVitesse, rapportsResonateurs, resonateurs, vitesseVariableVoie,
+  type OptionsVitesse, type StructureResonateurs,
 } from "../audio/concret";
+import { parCanal } from "./hors-fil";
 
 const en = () => langueCourante() === "en";
 const aucuneEntree = () => (en() ? "No audio input." : "Aucune entrée audio.");
@@ -50,7 +51,22 @@ export const fiches: FicheAudio[] = ([
         const rapports = rapportsDeVitesse(a.length, ctx.paramNombre("Transposition", -12), ctx.entree(1), {
           min: ctx.paramNombre("Transposition min", -12), max: ctx.paramNombre("Transposition max", 12),
         });
-        const y = vitesseVariable(a, rapports);
+        // LE CALCUL SORT DU FIL DE L'INTERFACE. Mesuré avant : 516 millisecondes sur trois secondes
+        // de son, sans qu'un seul message passe. La sortie n'a pas la longueur de l'entrée, ce que
+        // le socle rend tel quel : c'est le composant qui fabrique son tampon.
+        const voies = Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
+        const parVoie = await parCanal<OptionsVitesse, Float32Array>(
+          voies, { rapports, frequence: a.sampleRate },
+          {
+            creerWorker: () => new Worker(new URL("../workers/vitesse-worker.ts", import.meta.url), { type: "module" }),
+            calcul: vitesseVariableVoie,
+            surProgres: (c, n) => ctx.onProgress?.(en() ? `Channel ${c}/${n}` : `Canal ${c}/${n}`),
+          },
+        );
+        const y = new AudioBuffer({
+          numberOfChannels: a.numberOfChannels, length: parVoie[0].length, sampleRate: a.sampleRate,
+        });
+        for (let c = 0; c < a.numberOfChannels; c++) y.getChannelData(c).set(parVoie[c]);
         return { valeurs: [y], message: `${a.duration.toFixed(2)} s → ${y.duration.toFixed(2)} s` };
       } catch (e: any) {
         return { valeurs: [null], message: e?.message ?? String(e) };

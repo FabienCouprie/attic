@@ -110,6 +110,8 @@ import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
 import { fiches as f_texte_image } from "./texte-image";
+import { fiches as f_spectrogramme_image } from "./spectrogramme-image";
+import { fiches as f_spectrogramme_operations } from "./spectrogramme-operations";
 import { fiches as f_legende_image } from "./legende-image";
 import { fiches as f_algebre_musicale } from "./algebre-musicale";
 import { fiches as f_coordonnees_sur_carte } from "./coordonnees-sur-carte";
@@ -204,6 +206,7 @@ import { fiches as f_paradoxe_triton } from "./paradoxe-triton";
 import { fiches as f_fondamentale_manquante } from "./fondamentale-manquante";
 import { fiches as f_illusion_octave } from "./illusion-octave";
 import { fiches as f_battements_binauraux } from "./battements-binauraux";
+import { fiches as f_effets_cresson } from "./effets-cresson";
 import { fiches as f_quiz } from "./quiz";
 import { fiches as f_parcours } from "./parcours";
 import { fiches as f_ficheTechnique } from "./fiche-technique";
@@ -349,6 +352,9 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_fondamentale_manquante,
   ...f_illusion_octave,
   ...f_battements_binauraux,
+  ...f_effets_cresson,
+  ...f_spectrogramme_image,
+  ...f_spectrogramme_operations,
   ...f_quiz,
   ...f_parcours,
   ...f_ficheTechnique,

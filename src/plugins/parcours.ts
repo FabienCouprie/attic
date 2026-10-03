@@ -18,9 +18,9 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { mesurerCopie } from "../parcours/mesures";
 import { bulletin, epreuveCourante, feuilleDeRoute, nomChapitre, OPTIONS_CHAPITRE, reglagesDepuis } from "../parcours/seance";
 import { jugerCibles } from "../parcours/mesures";
+import { mesurerCopieHorsFil } from "./mesure-hors-fil";
 import { bilan, titreGagne } from "../parcours/voyage";
 import { CHAPITRES, EXERCICES } from "../parcours/exercices";
 
@@ -55,7 +55,7 @@ export const fiches: FicheAudio[] = ([
       const en = langueCourante() === "en";
       const reglages = reglagesDepuis((nom, defaut) => ctx.paramTexte(nom, defaut));
       const entree = ctx.entree(0);
-      const mesure = entree instanceof AudioBuffer ? mesurerCopie(entree) : null;
+      const mesure = entree instanceof AudioBuffer ? await mesurerCopieHorsFil(entree) : null;
       const epreuve = epreuveCourante(reglages);
       const verdicts = epreuve?.cibles ? jugerCibles(epreuve.cibles, mesure) : [];
       const b = bilan(EXERCICES, CHAPITRES, reglages.accomplis);
