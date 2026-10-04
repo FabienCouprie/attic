@@ -43,29 +43,71 @@ function sources(dossier: string): string[] {
 }
 
 /**
- * Les imports d'un fichier vers `audio/` ou `plugins/`, et s'ils ne portent que des types.
+ * LES RÉPERTOIRES QUI SONT LE DOMAINE AUDIO. Cette liste est la définition de « le domaine » pour
+ * tout ce fichier, et elle a coûté une cécité : le garde ne connaissait que `audio/` et `plugins/`,
+ * si bien que `src/vues-domaine/` — le répertoire que l'isolation venait de créer — lui était
+ * invisible. **Vérifié en plantant** `import { VueMontage } from "../vues-domaine/vues-montage";`
+ * dans `ui/BarreOutils.tsx` : les huit cas passaient au vert.
+ */
+const DOSSIERS_DU_DOMAINE = ["audio", "plugins", "vues-domaine", "workers", "parcours", "quiz"];
+
+/**
+ * Les imports d'un fichier vers le domaine, et s'ils ne portent que des types.
  *
  * LA DISTINCTION COMPTE, et c'est elle qui rend le compte honnête. `import type { FicheAudio }` est
  * un alias de type : il disparaît à la compilation, ne tire aucun code et n'empêche aucun domaine de
  * substituer le sien. Un import de VALEUR, lui, charge du calcul du domaine dans le shell.
+ *
+ * LE CHEMIN N'EST PLUS CELUI DU PARENT SEUL. `(?:\.\.\/)+` exigeait de remonter : un fichier posé à
+ * la racine de `src/`, qui écrirait `"./audio/…"`, passait à côté. Le motif accepte maintenant les
+ * deux formes, et c'est la même faute que celle corrigée trois fois sur l'import des vues.
+ *
+ * ET L'IMPORT D'EFFET DE BORD SE COMPTE, lui qui est le couplage LE PLUS FORT : `import "…/vues";`
+ * ne nomme rien, donc exige tout — il charge et exécute le graphe de modules entier. Le motif
+ * demandait un `from`, de sorte que la forme la plus coûteuse était la seule invisible.
+ * `docs/inventaire-ui.ts` l'écrit, et la liste épinglée le donnait pour délivré. C'est la quatrième
+ * fois que ce fichier manque une forme d'import, et toujours la même leçon : énumérer les formes
+ * qu'on imagine laisse passer celle qu'on n'imagine pas. Un import d'effet de bord n'est jamais un
+ * import de type.
  */
 function importsDomaine(src: string): { cible: string; typeSeul: boolean }[] {
   const out: { cible: string; typeSeul: boolean }[] = [];
-  const motif = /^[ \t]*(?:import|export)[ \t]+(type[ \t]+)?([^;]*?)from[ \t]+"((?:\.\.\/)+(?:audio|plugins)[^"]*)"/gm;
+  const dossiers = DOSSIERS_DU_DOMAINE.join("|");
+  const cible = String.raw`(?:\.{1,2}\/)+(?:${dossiers})(?:\/[^"]*)?`;
+  const motif = new RegExp(
+    String.raw`^[ \t]*(?:import|export)[ \t]+(type[ \t]+)?([^;]*?)from[ \t]+"(${cible})"`,
+    "gm",
+  );
   for (const m of src.matchAll(motif)) {
     const typeSeul = m[1] !== undefined || /^\{[^}]*\}$/.test(m[2].trim())
       && m[2].split(",").every((p) => p.replace(/[{}]/g, "").trim().startsWith("type "));
     out.push({ cible: m[3], typeSeul });
   }
+  const effetDeBord = new RegExp(String.raw`^[ \t]*import[ \t]+"(${cible})";`, "gm");
+  for (const m of src.matchAll(effetDeBord)) out.push({ cible: m[1], typeSeul: false });
   return out;
 }
 
 const chemin = (f: string) => relative(RACINE, f).replace(/\\/g, "/");
 
 /**
- * LES FICHIERS D'UI QUI CHARGENT DU CALCUL DU DOMAINE. Liste épinglée : elle ne doit pas grandir.
+ * Les fichiers du shell posés à la racine de `src/`, racine de composition exclue.
  *
- * Chaque entrée est une dette.
+ * `src/composition.ts` est le seul endroit du dépôt qui a le droit de connaître les deux côtés :
+ * l'exclure n'est pas une exemption mais sa définition.
+ */
+function sourcesRacine(): string[] {
+  return readdirSync(RACINE)
+    .filter((n) => /\.tsx?$/.test(n) && !/\.test\.tsx?$/.test(n) && !/\.d\.ts$/.test(n))
+    .filter((n) => n !== "composition.ts")
+    .map((n) => join(RACINE, n));
+}
+
+/**
+ * LES FICHIERS DU SHELL QUI CHARGENT DU CALCUL DU DOMAINE. Liste épinglée : elle ne doit pas
+ * grandir du fait d'un couplage nouveau.
+ *
+ * Chaque entrée est une dette, sauf les trois générateurs de tables dits plus bas.
  *
  * ÉTAT, ET LA LISTE A FONDU EN TROIS TEMPS :
  *
@@ -75,26 +117,52 @@ const chemin = (f: string) => relative(RACINE, f).replace(/\\/g, "/");
  *   **7**  après que les vues du domaine ont quitté `src/ui/` pour `src/vues-domaine/`. Elles
  *          importent le domaine, et c'est leur métier ; ce qui empêchait la frontière d'avoir un nom,
  *          c'était qu'elles habitaient le même répertoire que le shell.
+ *   **5**  après deux départs sans contrepartie : `SelecteurInstrumentSF2.tsx`, qui est un widget de
+ *          domaine et que seule la racine de composition importait ; et `demo/scenario.ts`, dont le
+ *          seul besoin était `ordreDeLecture` — une fonction de GRAPHE, qui ne connaît que des
+ *          identifiants et des arêtes, et qui a rejoint le cœur où vit déjà le tri topologique.
  *
- * LES SEPT QUI RESTENT, et ce qu'il leur faudrait :
+ * PUIS LE COMPTE EST REMONTÉ À **8**, ET AUCUN COUPLAGE N'EST APPARU. Ce test ne balayait que
+ * `src/ui/`, ne connaissait du domaine que `audio/` et `plugins/`, et exigeait un `from`. Il lui
+ * manquait donc trois répertoires, les fichiers de la racine de `src/`, et la forme d'import la plus
+ * forte. Les trois entrées nouvelles étaient là avant lui. **Un compte qui remonte parce que
+ * l'instrument s'élargit vaut mieux qu'un compte flatteur**, et c'est la seule raison pour laquelle
+ * celui-ci a le droit de remonter.
  *
- *   `App.tsx`                    le graphe embarqué, les métas d'exemple, la banque SoundFont
+ * LES CINQ DETTES QUI RESTENT, et ce qu'il leur faudrait :
+ *
+ *   `App.tsx`                    le graphe embarqué, l'écriture de fichiers, les métas d'exemple
  *   `AtelierNode.tsx`            l'écoute multicanal
  *   `Inspector.tsx`              les courbes
- *   `SelecteurInstrumentSF2.tsx` la banque SoundFont — un widget de domaine, déclaré par la racine
- *   `demo/scenario.ts`           le scénario de démonstration
- *   `hooks/useExecutionGraphe.ts` trois modules d'ORCHESTRATION : lot, boucles de séquences, graphe
- *                                courant. Pas des fonctions sur des valeurs : des fonctionnalités que
- *                                le moteur pilote. Les sortir demande de reprendre sa structure de
- *                                boucle, donc une décision de conception.
+ *   `hooks/useExecutionGraphe.ts` les deux PILOTES de passes : le lot et les boucles de séquences.
+ *                                Pas des fonctions sur des valeurs : des fonctionnalités que le
+ *                                moteur pilote. Les sortir demande de reprendre sa structure de
+ *                                boucle, donc une décision de conception — et d'abord un test qui
+ *                                mène une boucle par voix DANS un lot, emboîtement qu'aucun
+ *                                n'éprouve aujourd'hui.
  *   `ordre-palette.ts`           l'ordre des univers du catalogue
+ *
+ * ET TROIS GÉNÉRATEURS DE TABLES, qui n'étaient pas dans la liste parce que ce test ne balayait pas
+ * leur répertoire. Ce ne sont pas des régressions : ils étaient là avant, et le garde ne les voyait
+ * pas. **La liste grandit donc de trois sans que l'isolation ait reculé d'un pas** — c'est
+ * l'instrument qui s'élargit, et il valait mieux le dire que de garder un compte flatteur.
+ *
+ *   `docs/catalogue-markdown.ts`  l'ordre du catalogue, pour COMPONENTS.md
+ *   `docs/inventaire-ui.ts`       la déclaration des vues, pour INTERFACE.md
+ *   `docs/modulables.ts`          les familles de la palette, pour MODULABLES.md
+ *
+ * CEUX-LÀ SONT LÉGITIMES, et c'est le seul endroit du fichier qui porte un jugement : leur métier
+ * est de DÉCRIRE le domaine. Un générateur de la table des composants audio qui ne connaîtrait pas
+ * l'audio n'aurait rien à écrire. Un autre domaine écrit les siens, ou les paramètre. Ils figurent
+ * ici pour qu'un QUATRIÈME ne s'ajoute pas sans qu'on le remarque.
  */
 const COUPLES_ATTENDUS = [
+  "docs/catalogue-markdown.ts",
+  "docs/inventaire-ui.ts",
+  "docs/modulables.ts",
   "ui/App.tsx",
   "ui/AtelierNode.tsx",
   "ui/Inspector.tsx",
-  "ui/SelecteurInstrumentSF2.tsx",
-  "ui/demo/scenario.ts",
   "ui/hooks/useExecutionGraphe.ts",
   "ui/ordre-palette.ts",
 ];
@@ -129,9 +197,15 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
     // désormais dans `audio/types-domaine.ts`, sous le nom `ValeurAudio`.
     const DETTES_CONNUES: string[] = [];
 
+    // LE VOCABULAIRE COMPTE AUTANT QUE LES TYPES, et je ne le cherchais pas : `PortDef.sousType`
+    // énumérait `"stereo" | "mono"` dans le cœur, et je l'ai trouvé en vérifiant, non en le
+    // cherchant. Un nom de type est facile à nommer ; un mot du métier l'est moins, et la liste
+    // ci-dessous ne vaut que ce qu'elle énumère — elle se complète au fil de ce qu'on trouve.
+    const MOTS_DU_DOMAINE = /\bAudio(Buffer|Context)\b|"(stereo|mono|sf2instrument)"/;
+
     const fautifs = sources(join(RACINE, "core"))
       .map((f) => ({ f: chemin(f), code: sansCommentaires(readFileSync(f, "utf8")) }))
-      .filter((x) => /\bAudio(Buffer|Context)\b/.test(x.code))
+      .filter((x) => MOTS_DU_DOMAINE.test(x.code))
       .map((x) => x.f)
       .filter((f) => !DETTES_CONNUES.includes(f));
 
@@ -162,14 +236,18 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
     }
   });
 
-  it("LA LISTE DES FICHIERS D'UI COUPLÉS AU DOMAINE NE GRANDIT PAS", () => {
-    const couples = sources(join(RACINE, "ui"))
+  it("LA LISTE DES FICHIERS DU SHELL COUPLÉS AU DOMAINE NE GRANDIT PAS", () => {
+    // CE QU'IL BALAYE, ET IL NE BALAYAIT PAS ASSEZ. `src/ui/` seul laissait `src/docs/` dehors, où
+    // trois générateurs de tables importent le domaine depuis toujours, et laissait aussi les
+    // fichiers posés à la racine de `src/`. Le shell n'est pas un répertoire : c'est tout ce qui
+    // n'est ni le cœur, ni le domaine, ni la racine de composition.
+    const couples = [...sources(join(RACINE, "ui")), ...sources(join(RACINE, "docs")), ...sourcesRacine()]
       .filter((f) => importsDomaine(readFileSync(f, "utf8")).some((i) => !i.typeSeul))
       .map(chemin);
 
     const nouveaux = couples.filter((f) => !COUPLES_ATTENDUS.includes(f));
     expect(nouveaux, [
-      "Un fichier d'UI charge du calcul du domaine, et il n'était pas dans la liste.",
+      "Un fichier du shell charge du calcul du domaine, et il n'était pas dans la liste.",
       "Le changement de domaine est un but du projet : chaque couplage le rend plus coûteux.",
       "Si le couplage est inévitable, ajoutez le fichier à COUPLES_ATTENDUS en disant pourquoi.",
     ].join("\n")).toEqual([]);
@@ -184,7 +262,7 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────
-  // LES QUATRE POTEAUX DE LA FRONTIÈRE. C'est par eux que le domaine se fait connaître du shell, et
+  // LES SIX POTEAUX DE LA FRONTIÈRE. C'est par eux que le domaine se fait connaître du shell, et
   // c'est ce qui donne enfin un nom à une limite qui n'en avait aucun : elle ne correspondait à
   // aucun répertoire, si bien qu'aucun geste ne se reconnaissait comme « je viens de la franchir ».
   //
@@ -215,36 +293,46 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
   });
 
   it("AUCUN FICHIER DU SHELL N'IMPORTE LES VUES DU DOMAINE", () => {
-    // `ui/vues.tsx` déclare les quatre-vingt-deux vues de l'audio et importe les trente modules qui
-    // les rendent. Qui l'importe charge donc le domaine entier. Deux seuls ont le droit : la racine
-    // de composition, dont c'est le métier, et le générateur de `INTERFACE.md`, qui décrit
-    // précisément ce que l'audio montre.
+    // `vues-domaine/vues.tsx` déclare tout ce que l'audio montre sous un en-tête, et importe pour
+    // cela les modules qui le rendent. Qui l'importe charge donc le domaine entier. Deux seuls ont le
+    // droit : la racine de composition, dont c'est le métier, et le générateur de `INTERFACE.md`, qui
+    // décrit précisément ce que l'audio montre. Les chiffres sont dans l'en-tête de ce fichier-là,
+    // qui porte la liste : les répéter ici en ferait une seconde liste tenue à la main.
     const AYANTS_DROIT = ["composition.ts", "docs/inventaire-ui.ts"];
-    // DEUX FAUTES DANS LE MÊME MOTIF, et la seconde rendait ce test aveugle.
+    // TROIS FAUTES DANS LE MÊME MOTIF, ET CHACUNE RENDAIT CE TEST AVEUGLE. C'est le seul endroit du
+    // dépôt qui se soit trompé trois fois de la même manière, et la raison est toujours la même : le
+    // motif décrivait un CHEMIN, et un chemin change.
     //
     // La première : il ne cherchait que `from "./vues"`. Or un import d'EFFET DE BORD n'a pas de
     // `from` — `import "./vues";` —, et c'est justement la forme qu'emploie la racine de composition.
     //
-    // La seconde, plus grave : il écrivait `(?:\.\.\/)*`, le chemin vers le PARENT, et jamais `\.\/`,
-    // le répertoire courant. Un import voisin, qui est le cas de tous les fichiers du shell, ne
-    // pouvait donc pas correspondre. Le test passait au vert **parce qu'il ne cherchait rien** — et
-    // c'est la faute que `fiabilite-des-diagnostics` appelle l'instrument qui mesure sa propre
-    // cécité. Les deux ont été trouvées en plantant l'import dans `AtelierNode.tsx`.
-    const importeVues = /^[ \t]*import[ \t]+(?:[^;]*?from[ \t]+)?"(?:\.{1,2}\/)*(?:ui\/)?vues";/m;
+    // La deuxième : il écrivait `(?:\.\.\/)*`, le chemin vers le PARENT, et jamais `\.\/`, le
+    // répertoire courant. Un import voisin, qui est le cas de tous les fichiers du shell, ne pouvait
+    // donc pas correspondre. Le test passait au vert **parce qu'il ne cherchait rien** — et c'est la
+    // faute que `fiabilite-des-diagnostics` appelle l'instrument qui mesure sa propre cécité.
+    //
+    // La troisième, et elle est la leçon : le motif nommait `ui/vues`, l'ancien chemin. Le
+    // déplacement des vues dans `src/vues-domaine/` l'a donc rendu aveugle **le jour même où le test
+    // existait pour surveiller ce déplacement**. Il ne nomme plus aucun répertoire : il demande que
+    // le dernier segment du chemin importé soit `vues`, d'où qu'il vienne. Vérifié en plantant
+    // `import "../vues-domaine/vues";` dans `AtelierNode.tsx` : les huit cas passaient au vert avant,
+    // et celui-ci le nomme après.
+    const importeVues = /^[ \t]*import[ \t]+(?:[^;]*?from[ \t]+)?"(?:[^"]*\/)?vues(?:\.tsx?)?";/m;
     const importeurs = [...sources(join(RACINE, "ui")), ...sources(join(RACINE, "docs")), resolve(RACINE, "composition.ts")]
       .filter((f) => importeVues.test(readFileSync(f, "utf8")))
       .map(chemin)
       .filter((f) => !AYANTS_DROIT.includes(f));
     expect(importeurs, [
-      "Un fichier du shell importe `ui/vues`, donc les trente modules de vues du domaine audio.",
+      "Un fichier du shell importe le fichier de déclaration des vues du domaine audio,",
+      "donc tous les modules de vues qu'il tire avec lui.",
       "Le shell demande au registre `ui/registre-vues.ts` ; c'est le domaine qui s'y déclare.",
     ].join("\n")).toEqual([]);
   });
 
   // CE TEST EST LA PREUVE DU RENVERSEMENT, et son premier chiffre dit tout : **zéro**. Ce fichier
-  // n'importe pas `ui/vues`, donc rien ne s'est déclaré, donc le registre est vide. Avant, le shell
-  // important `vues.tsx` pour sa mécanique, les quatre-vingt-deux entrées de l'audio arrivaient avec,
-  // et aucun graphe de modules ne pouvait s'en passer.
+  // n'importe pas la déclaration des vues, donc rien ne s'est déclaré, donc le registre est vide.
+  // Avant, le shell importait `vues.tsx` pour sa mécanique, et toutes les entrées de l'audio
+  // arrivaient avec : aucun graphe de modules ne pouvait s'en passer.
   it("LE REGISTRE DES VUES EST VIDE TANT QUE LE DOMAINE NE S'EST PAS DÉCLARÉ", async () => {
     const r = await import("../ui/registre-vues");
     // UN REGISTRE DE FICHES EST NÉCESSAIRE, ET C'EST UN FAIT À CONNAÎTRE : la recherche d'une vue
@@ -264,7 +352,7 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
 
     // ET L'AUTRE MOITIÉ : la déclaration du domaine le remplit, par le seul effet de son import.
     await import("../vues-domaine/vues");
-    expect(r.nombreDeVues(), "l'import de `ui/vues` devrait avoir déclaré les vues de l'audio")
+    expect(r.nombreDeVues(), "l'import de `vues-domaine/vues` devrait avoir déclaré les vues de l'audio")
       .toBeGreaterThan(50);
     expect(r.vuesPourNoeud("quiz", "avant").length).toBe(1);
     expect(r.vueAvantPorteLecteur("explorateur-musique")).toBe(true);

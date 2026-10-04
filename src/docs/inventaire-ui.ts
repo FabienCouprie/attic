@@ -6,7 +6,7 @@
 // notice. Rien ne disait comment il est MONTRÉ. Or l'affichage d'un composant ne se décide pas
 // dans son propre fichier : il se décide dans trois tables partagées, loin de lui.
 //
-//   • `ui/vues.tsx` — quelle vue l'habille, et de quel côté du lecteur audio
+//   • `vues-domaine/vues.tsx` — quelle vue l'habille, et de quel côté du lecteur audio
 //   • `ui/tailles-noeuds.ts` — la taille qu'il reçoit à sa création
 //   • `ui/AtelierNode.tsx` — s'il est redimensionnable, et si le lecteur générique lui est laissé
 //
@@ -90,7 +90,7 @@ export function genererInventaireMarkdown(fiches: readonly FicheUI[]): string {
     "",
     "Ce que chaque composant fait est dans [COMPONENTS.md](COMPONENTS.md). Ce fichier-ci dit comment",
     "il est **montré**, ce qui se décide dans des tables partagées et non dans son propre fichier :",
-    "`ui/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.",
+    "`vues-domaine/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.",
     "",
     "Il est versionné pour une seule raison : **rendre visible dans un diff** le composant qu'une",
     "modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un composant à rouvrir.",

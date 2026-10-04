@@ -7,17 +7,17 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1247 files, 211577 lines, of which 145577 are code.**
+**1249 files, 211810 lines, of which 145612 are code.**
 The table lists the 153 files of 200 code lines or more, heaviest first;
-the remaining 1094 account for 148169 lines.
+the remaining 1096 account for 148383 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1397 | 1735 | ! |
-| src/ui/App.tsx | 1079 | 1439 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 728 | 1515 | ! |
+| src/ui/atelier.css | 1399 | 1750 | ! |
+| src/ui/App.tsx | 1077 | 1444 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
@@ -32,7 +32,7 @@ the remaining 1094 account for 148169 lines.
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
-| src/ia.ts | 382 | 466 |  |
+| src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
 | src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |

@@ -163,7 +163,16 @@ export interface PortDef {
   nom: string;
   nomEn?: string;
   type: string;
-  sousType?: "stereo" | "mono";
+  /**
+   * Une précision sur le type, propre au domaine.
+   *
+   * ELLE ÉNUMÉRAIT `"stereo" | "mono"`, et c'était du vocabulaire audio dans le cœur — la dernière
+   * fuite, trouvée en vérifiant plutôt qu'en la cherchant : mon garde interrogeait les noms de types
+   * du domaine, pas son vocabulaire. Le cœur ne lit jamais ce champ ; seules les fiches le déclarent
+   * et la documentation générée l'affiche. Il reste donc une chaîne, que chaque domaine remplit des
+   * précisions qui ont un sens chez lui.
+   */
+  sousType?: string;
   dynamique?: boolean;
   // Port obligatoire ? Défaut: true. Le cœur valide (validerGraphe) que tout
   // port requis est connecté avant d'exécuter le nœud. Un port optionnel
@@ -291,7 +300,8 @@ export interface ParametreDef {
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et
 // son runtime. C'est ce qui empêche un nouveau domaine de se lier silencieusement
-// à l'union audio (cf. TypeValeur ci-dessus).
+// à l'union d'un autre — celle de l'audio est `ValeurAudio`, dans
+// `audio/types-domaine.ts`, et le cœur ne la nomme nulle part.
 export interface PluginDef<TValeur, TRuntime> {
   id: string;
   nom: string;

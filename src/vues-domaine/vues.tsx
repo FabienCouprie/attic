@@ -1,12 +1,18 @@
-// ui/vues.tsx — CE QUE LE DOMAINE AUDIO DÉCLARE AU REGISTRE DES VUES.
+// vues-domaine/vues.tsx — CE QUE LE DOMAINE AUDIO DÉCLARE AU REGISTRE DES VUES.
 //
 // CE FICHIER N'EST PLUS UN MODULE QUE LE SHELL IMPORTE, et c'est le renversement qui nomme la
 // frontière. Il mêlait deux choses : la mécanique d'un registre de vues — ce qu'est une vue, ce que
-// « avant » et « après » veulent dire, comment on en trouve une — et quatre-vingt-deux entrées
-// nommant des identifiants de composants AUDIO, avec les trente modules de vues qui vont avec.
+// « avant » et « après » veulent dire, comment on en trouve une — et la liste ci-dessous, qui nomme
+// des identifiants de composants AUDIO, avec les modules de vues qui vont avec.
+//
+// LE COMPTE SE LIT SUR LE FICHIER, et nulle part ailleurs : **81 entrées**, nommant 85 identifiants
+// de composants — un composant peut porter plusieurs identifiants, par alias —, et **21 modules de
+// vues** importés ci-dessous. Ces chiffres sont ceux de ce fichier-ci : ils ne sont pas recopiés dans
+// une seconde liste, parce qu'une liste recopiée vieillit.
 //
 // Le shell importait ce fichier pour sa mécanique et recevait le domaine avec : `AtelierNode`
-// chargeait trente vues, un domaine d'images aurait hérité d'un registre parlant de clavier SFZ.
+// chargeait les vingt-et-un modules, et un domaine d'images aurait hérité d'un registre parlant de
+// clavier SFZ.
 //
 // La mécanique vit désormais dans `ui/registre-vues.ts`, vide par défaut. Ce fichier-ci ne fait plus
 // qu'une chose : APPELER `declarerVues` avec ce que l'audio a à montrer. Son import a donc un effet

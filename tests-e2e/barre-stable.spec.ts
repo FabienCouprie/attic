@@ -27,11 +27,27 @@ test("la barre d'outils ne bouge pas d'un pixel au changement de langue", async 
   // LES DEUX BARRES, et non la seule du haut : celle des méta-composants portait le même défaut,
   // « Rename » contre « Renommer ». Une règle qui ne vaudrait que pour une barre en laisserait
   // passer une autre.
+  // CE QUI EST HORS DU FLUX EST ÉCARTÉ, ET LE CRITÈRE EST UNE FORME, NON UN NOM.
+  //
+  // `.attic-sf2-check` est une pastille d'état posée en `position: absolute` dans le bouton du
+  // SoundFont : son glyphe passe de « ? » à « ✓ » quand le SoundFont finit de charger, et sa largeur
+  // de 4,047 à 6,750 px. Ce chargement prend une seconde ou deux, c'est-à-dire qu'il tombe presque
+  // toujours entre les deux relevés, et le test accusait le changement de langue d'un écart de
+  // 2,703 px qui ne lui devait rien — il échouait ainsi de façon reproductible, pour une raison
+  // étrangère à son sujet.
+  //
+  // On n'écarte pas cette pastille PAR SON NOM, qui ne dirait rien du prochain indicateur d'état
+  // qu'on ajoutera : on écarte ce qui est SORTI DU FLUX. Un élément en `position: absolute` ou
+  // `fixed` ne pousse aucun voisin ; il ne peut donc pas produire le défaut que ce test existe pour
+  // empêcher, qui est qu'un libellé traduit décale ce qui le suit. Et c'est à cela qu'on a reconnu
+  // que l'écart n'en était pas un : un seul élément bougeait, et rien après lui.
   const releve = () => page.evaluate((): Boite[] =>
-    [...document.querySelectorAll(".attic-barre-outils *, .attic-meta-actions *")].map((e) => {
-      const r = e.getBoundingClientRect();
-      return { x: r.x, y: r.y, w: r.width, h: r.height };
-    }));
+    [...document.querySelectorAll(".attic-barre-outils *, .attic-meta-actions *")]
+      .filter((e) => !["absolute", "fixed"].includes(getComputedStyle(e).position))
+      .map((e) => {
+        const r = e.getBoundingClientRect();
+        return { x: r.x, y: r.y, w: r.width, h: r.height };
+      }));
 
   const basculer = () => page.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
@@ -65,3 +81,61 @@ test("la barre d'outils ne bouge pas d'un pixel au changement de langue", async 
   await basculer();
   await page.waitForTimeout(200);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// ET LA BARRE TIENT DANS LA FENÊTRE, À TOUTES LES LARGEURS PERMISES.
+//
+// POURQUOI CE SECOND CAS. La barre vivait dans la colonne du canevas, c'est-à-dire la fenêtre moins
+// la palette et l'inspecteur : 1060 px à 1600, 860 à 1400, 360 au minimum d'Electron. Son contenu
+// réclame 1134 px, et chaque groupe, chaque séparateur et chaque bouton porte `flex-shrink: 0`.
+// **Elle débordait donc à TOUTES les largeurs** et se peignait par-dessus la colonne de
+// l'inspecteur ; au-dessus de 1394 px de fenêtre le débordement retombait encore dans l'écran, ce
+// qui est tout ce qui masquait le défaut. En dessous, « Lancer » était à x = 1290 pour une fenêtre
+// de 1280 : hors de l'écran, la pile d'éléments en son centre vide. Rien ne le couvrait.
+//
+// CE QUE CE CAS EXIGE. À chaque largeur, la barre tient dans la fenêtre sans déborder, et TOUT ce
+// qu'elle contient y tient aussi. Les deux assertions sont nécessaires : la première seule passe
+// quand le contenu déborde d'une barre qui, elle, a la bonne taille — c'est exactement l'état
+// d'avant, où `scrollWidth` valait 1134 pour un `clientWidth` de 740.
+//
+// LES LARGEURS NE SONT PAS CHOISIES AU HASARD : 1400 est la fenêtre qu'Electron ouvre, 900 est son
+// `minWidth`, et 1280 est celle où le défaut se voyait. Entre les deux, la barre passe à deux
+// rangées plutôt que de sortir de l'écran, ce que `flex-wrap` permet et que le test accepte — il
+// mesure l'absence de débordement, pas un nombre de rangées.
+for (const largeur of [1600, 1400, 1280, 1100, 900]) {
+  test(`la barre d'outils tient dans une fenêtre de ${largeur} px, et « Lancer » s'y clique`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 760 });
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-barre-outils", { timeout: 15000 });
+    await page.waitForTimeout(300);
+
+    const releve = await page.evaluate(() => {
+      const barre = document.querySelector(".attic-barre-outils") as HTMLElement;
+      const dehors = [...barre.querySelectorAll("*")]
+        .map((e) => ({ e: e as HTMLElement, r: (e as HTMLElement).getBoundingClientRect() }))
+        .filter(({ r }) => r.width > 0 && (r.right > window.innerWidth + 0.5 || r.left < -0.5))
+        .map(({ e, r }) => `${typeof e.className === "string" ? e.className.split(" ")[0] : e.tagName} à ${r.left.toFixed(0)}–${r.right.toFixed(0)}`);
+      const b = document.querySelector(".attic-btn-lancer") as HTMLElement;
+      const rb = b.getBoundingClientRect();
+      const dessus = document.elementFromPoint(rb.x + rb.width / 2, rb.y + rb.height / 2);
+      return {
+        debordementDeLaBarre: barre.scrollWidth - barre.clientWidth,
+        debordementDuDocument: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        dehors,
+        lancerDansLaFenetre: rb.left >= -0.5 && rb.right <= window.innerWidth + 0.5
+          && rb.top >= -0.5 && rb.bottom <= window.innerHeight + 0.5,
+        lancerLibre: !!dessus && (dessus === b || b.contains(dessus as Node)),
+      };
+    });
+
+    expect(releve.debordementDeLaBarre, "le contenu de la barre déborde de la barre").toBe(0);
+    expect(releve.dehors, "des éléments de la barre sortent de la fenêtre").toEqual([]);
+    expect(releve.debordementDuDocument, "la page a pris une largeur de défilement").toBe(0);
+    expect(releve.lancerDansLaFenetre, "« Lancer » n'est pas entièrement dans la fenêtre").toBe(true);
+    expect(releve.lancerLibre, "quelque chose couvre « Lancer »").toBe(true);
+    // Et le clic aboutit vraiment : une géométrie correcte que `pointer-events` annulerait ne
+    // vaudrait rien.
+    await page.locator(".attic-btn-lancer").click({ timeout: 5000 });
+  });
+}
+

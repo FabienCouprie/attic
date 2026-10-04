@@ -187,7 +187,8 @@ The Listening Point needs none of them. Add them only if relevant:
   [`src/ui/App.tsx`](src/ui/App.tsx).
 
 - **Custom view** (uploader, waveform, keyboard, preview…) — register a
-  component in the `REGISTRE` registry of [`src/ui/vues.tsx`](src/ui/vues.tsx):
+  component in the view declaration of the audio domain,
+  [`src/vues-domaine/vues.tsx`](src/vues-domaine/vues.tsx):
   `{ correspond: parId("mon-id"), vue: MaVue, position: "avant"|"apres" }`. The view
   receives `{ id, data, def }` and renders above/below the generic player.
   (This is the UI extension point — cf. ARCHITECTURE.md §11.)

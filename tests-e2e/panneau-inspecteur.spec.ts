@@ -56,6 +56,33 @@ async function ouvrir(page: any) {
   await page.waitForSelector(".inspecteur-entete", { timeout: 5000 });
 }
 
+/**
+ * ATTENDRE QUE LA VUE SE POSE, et c'est ce qui manquait au premier cas.
+ *
+ * React Flow cadre le graphe à l'ouverture, et ce cadrage est ANIMÉ : la transformation du canevas
+ * change plusieurs fois dans les premières centaines de millisecondes. Mesuré sans toucher à rien,
+ * à 1600 px : **trois changements en 121 ms, et le nœud dérive de 6,79 px tout seul** — de
+ * `scale(1.55997)` à `scale(1.53571)`, qui est 43/28 exactement, la valeur posée.
+ *
+ * Le cas « tirer la poignée ne déplace pas le canevas » prenait son relevé d'avant PENDANT cette
+ * animation, puis son relevé d'après une fois l'animation finie : il attribuait donc au geste une
+ * dérive qui n'était pas la sienne, et la dérive variait d'un essai à l'autre — 1,24 px, 2,35 px,
+ * 6,79 px — selon l'avancement de l'animation au moment du relevé. C'est le geste qui laissait à
+ * l'animation le temps de finir, non le geste qui déplaçait quoi que ce soit.
+ */
+async function vueStabilisee(page: any): Promise<void> {
+  await page.waitForFunction(() => {
+    const vp = document.querySelector(".react-flow__viewport") as HTMLElement | null;
+    if (!vp) return false;
+    const w = window as any;
+    const t = vp.style.transform;
+    if (w.__transformPrec === t) return (w.__transformStable = (w.__transformStable ?? 0) + 1) >= 3;
+    w.__transformPrec = t;
+    w.__transformStable = 0;
+    return false;
+  }, { timeout: 10000, polling: 50 });
+}
+
 const mesure = (page: any) => page.evaluate(() => ({
   panneau: (document.querySelector(".inspecteur-panneau") as HTMLElement).getBoundingClientRect().width,
   colonne: (document.querySelector(".inspecteur-emplacement") as HTMLElement).getBoundingClientRect().width,
@@ -67,6 +94,7 @@ const mesure = (page: any) => page.evaluate(() => ({
 test.describe("l'inspecteur qu'on tire sur le canevas", () => {
   test("TIRER LA POIGNÉE ÉTEND LE PANNEAU PAR-DESSUS, SANS DÉPLACER LE CANEVAS", async ({ page }) => {
     await ouvrir(page);
+    await vueStabilisee(page);
     const avant = await mesure(page);
     expect(avant.titre).toBe("Montage");
     expect(avant.panneau).toBe(280);
@@ -86,6 +114,8 @@ test.describe("l'inspecteur qu'on tire sur le canevas", () => {
     expect(apres.colonne).toBe(avant.colonne);
     expect(apres.canevas).toBe(avant.canevas);
     // À un demi-pixel près : la transformation CSS de React Flow laisse traîner des 10⁻⁵ de pixel.
+    // LES DEUX RELEVÉS SONT PRIS VUE POSÉE, sans quoi cette ligne mesure la fin du cadrage
+    // d'ouverture et non l'effet du geste — voir `vueStabilisee`.
     expect(Math.abs(apres.noeud - avant.noeud)).toBeLessThan(0.5);
     await page.screenshot({ path: "test-results/inspecteur-deploye.png" });
   });
@@ -121,8 +151,14 @@ test.describe("l'inspecteur qu'on tire sur le canevas", () => {
   });
 
   test("REPLIÉ, LE PANNEAU NE COUVRE PAS LE BOUTON « LANCER », même sur une fenêtre étroite", async ({ page }) => {
-    // Relevé par les tests d'arrêt : à 1280 px, la barre d'outils déborde sous la colonne de
-    // l'inspecteur, et un panneau toujours au premier plan interceptait le clic sur « Lancer ».
+    // RELEVÉ PAR LES TESTS D'ARRÊT, et la cause n'était pas celle qu'on croyait. Ce cas a d'abord
+    // été écrit contre un panneau toujours au premier plan, qui interceptait le clic. Ce panneau a
+    // été réparé, et le cas échouait encore : à 1280 px, « Lancer » était à x = 1290 — ENTIÈREMENT
+    // hors de la fenêtre. La pile d'éléments en son centre était VIDE ; rien ne le couvrait, il
+    // n'était plus là. La barre d'outils vivait dans la colonne du canevas, trop étroite pour son
+    // contenu à toutes les largeurs ; elle prend désormais la largeur de l'application. Le cas
+    // reste ici parce qu'il garde le même sens — « Lancer » se clique » — et `barre-stable.spec.ts`
+    // tient l'invariant sur toute l'étendue des largeurs permises.
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 20000 });

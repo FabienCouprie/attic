@@ -1,42 +1,27 @@
-// core/memoire.ts — Ce qu'une piste coûte en mémoire, et à partir de quand cela compte.
+// core/memoire.ts — Ce qu'un nœud exige de la mémoire, et s'il mérite qu'on retienne son résultat.
 //
-// LA QUESTION NE SE TRAITE PAS DANS L'ABSOLU. Garder une piste en mémoire vive ou la poser sur le
+// LA QUESTION NE SE TRAITE PAS DANS L'ABSOLU. Garder un résultat en mémoire vive ou le poser sur le
 // disque n'a pas une bonne réponse : cela dépend de ce que le nœud exige. Un étirement temporel ne
 // peut rien produire avant d'avoir le signal entier — il lit la fin pour écrire le début. Un gain,
 // lui, n'a jamais besoin que de l'échantillon courant. Les traiter pareil, c'est payer pour le
 // premier le prix du second, ou l'inverse. D'où une DÉCLARATION sur chaque fiche (`memoire`), et
 // non une règle unique appliquée de force à tout le catalogue.
 //
-// CE QUE CELA COÛTE, MESURÉ. Un `AudioBuffer` stocke des flottants 32 bits, hors du tas JavaScript :
-// une heure en stéréo à 44 100 Hz pèse 3600 × 44100 × 2 × 4 = **1,27 Go**. L'aperçu écouté sous le
-// nœud est une seconde copie, à la profondeur d'écriture choisie — **953 Mo** en vingt-quatre bits,
-// qui est le défaut depuis que l'écriture a cessé d'être bloquée en seize, 635 Mo si l'on revient à
-// seize, 1,27 Go en flottant. Allouée d'un bloc par `bufferVersWavBlob`, puis retenue par le Blob.
-// Un nœud qui a tourné sur une heure de son retient donc près de **2,2 Go**, et une chaîne de cinq
-// nœuds en retient onze. C'est ce chiffre-là, et non une intuition, qui fixe le seuil ci-dessous —
-// et monter la profondeur le rend d'autant plus nécessaire.
-//
-// OÙ CET APERÇU EST RETENU, ET CE QUE CELA CHANGE. Pas dans le processus qui calcule : un Blob est
-// détenu par le processus NAVIGATEUR de Chromium. Mesuré dans une seule session, sur une piste de
-// 620 s — construire deux aperçus de 109 Mo fait grossir ce processus de 209 Mo, pendant que les
-// autres ne bougent pas de plus de 4 Mo. Deux conséquences. D'abord, une mesure du tas côté onglet
-// ne voit RIEN de ces octets : c'est pourquoi la comparaison de deux lancements ne prouvait rien,
-// l'écart entre deux exécutions identiques atteignant 206 Mo. Ensuite, Chromium ne pose ces octets
-// sur le disque (`userData/blob_storage`, un dossier par session, effacé en sortant) que si son
-// quota en mémoire est dépassé ; sur une machine de 64 Go ce dossier reste vide, et tout l'aperçu
-// est bel et bien en mémoire vive.
-//
-// DIX MINUTES, ET POURQUOI CE NOMBRE. En deçà, une chaîne ordinaire tient dans la mémoire d'une
-// machine courante : dix minutes en stéréo font 212 Mo de tampon et 159 Mo d'aperçu, soit 370 Mo
-// par nœud — cinq nœuds tiennent sous 1,9 Go. Au-delà, la même chaîne dépasse ce qu'on peut
-// demander sans rien changer. Le seuil n'est donc pas un goût : c'est l'endroit où le comportement
-// d'aujourd'hui cesse d'être tenable.
+// CE QU'UNE VALEUR PÈSE N'EST PLUS DÉCIDÉ ICI, et c'est la dernière chose que le cœur savait d'un
+// domaine. Ce fichier portait l'arithmétique d'un tampon audio — flottants 32 bits, en-tête WAV,
+// 1,27 Go par heure de stéréo — et un seuil de dix minutes qu'elle justifiait. Un domaine d'images
+// ou de données tabulaires n'aurait ni les mêmes tailles ni le même seuil, et aurait hérité de
+// celui-ci. Le calcul et le seuil vivent désormais dans `audio/memoire-audio.ts`, et le moteur
+// demande au domaine « faut-il garder un aperçu de cette valeur » au lieu de le déduire d'une durée.
 //
 // DEUX CHOSES DISTINCTES, QU'IL NE FAUT PAS CONFONDRE. `ModeMemoire` dit ce que le nœud exige
-// PENDANT son calcul — une propriété de l'algorithme, qui ne change jamais. `apercuUtile` dit s'il
-// faut garder une copie écoutable APRÈS — une propriété de la place du nœud dans le graphe, qui
-// change à chaque clic. Un nœud « totale » ne mérite pas plus d'aperçu qu'un autre ; les mêler
-// reviendrait à retenir 953 Mo au motif qu'un étirement lit sa fin avant son début.
+// PENDANT son calcul — une propriété de l'algorithme, qui ne change jamais. La question de l'aperçu
+// porte sur l'APRÈS — une propriété de la place du nœud dans le graphe, qui change à chaque clic. Un
+// nœud « totale » ne mérite pas plus d'aperçu qu'un autre ; les mêler reviendrait à retenir une
+// copie entière au motif qu'un étirement lit sa fin avant son début.
+//
+// CE QUI RESTE ICI EST SANS DOMAINE : ce qu'un nœud exige, s'il est regardé, si son résultat est
+// retenu. Des faits de graphe et d'interface, que tout domaine partage.
 
 /** Ce qu'un nœud exige de la mémoire pendant son calcul. */
 export type ModeMemoire =
@@ -47,51 +32,8 @@ export type ModeMemoire =
    *  mélange, coupe, conversion. Au-delà du seuil, il pourra travailler par blocs. */
   | "flux";
 
-/**
- * Au-delà de cette durée de piste, garder le comportement d'aujourd'hui pour toute une chaîne
- * demande plus de mémoire qu'une machine courante n'en offre (cf. l'en-tête).
- */
-export const DUREE_LONGUE_S = 600;
-
-/** Octets d'un `AudioBuffer` : des flottants 32 bits, hors du tas JavaScript. */
-export function octetsTampon(dureeS: number, canaux = 2, frequence = 44100): number {
-  return Math.round(dureeS * frequence * canaux * 4);
-}
-
-/**
- * Octets de l'aperçu écoutable, à la profondeur d'écriture choisie.
- *
- * LA PROFONDEUR N'EST PLUS FIXE, ET CELA SE PAIE ICI. Le même blob sert d'aperçu et de fichier
- * sauvegardé : porter l'écriture à vingt-quatre bits — ce qu'exige toute livraison sérieuse —
- * augmente d'autant ce que les aperçus retiennent, de moitié en vingt-quatre et du double en
- * trente-deux. Sur une heure de stéréo, l'aperçu passe de 635 Mo à 953 Mo, et c'est très exactement
- * ce que la bascule d'économie de mémoire est là pour rattraper.
- *
- * L'en-tête compte 44 octets en PCM et 56 en virgule flottante, le format hors PCM exigeant deux
- * octets de plus au bloc `fmt ` et un bloc `fact` entier. Cela ne pèse rien à côté des données, et
- * on le compte quand même : une fonction qui annonce une taille l'annonce juste.
- */
-export function octetsApercu(dureeS: number, canaux = 2, frequence = 44100, bits: 16 | 24 | 32 = 24): number {
-  return Math.round(dureeS * frequence * canaux * (bits / 8)) + (bits === 32 ? 56 : 44);
-}
-
-/**
- * Faut-il construire l'aperçu écoutable de ce nœud ?
- *
- * Sur une piste courte, toujours — c'est ce qui permet d'écouter chaque étape, et cela ne coûte
- * rien. Sur une piste longue, seulement pour le nœud que l'on regarde : les intermédiaires
- * retiendraient 953 Mo chacun pour une copie que personne n'ouvre. L'aperçu d'un intermédiaire
- * n'est pas perdu, il est simplement construit au moment où on le demande.
- *
- * `economie` est la bascule de la barre d'outils. Coupée, la durée ne compte plus : chaque nœud
- * reçoit son aperçu, comme avant que ce seuil existe. C'est un choix que l'on peut faire en
- * connaissance de cause sur une machine largement pourvue — voir ui/economie-memoire.ts.
- */
-export function apercuUtile(
-  { dureeS, regarde, economie = true }: { dureeS: number; regarde: boolean; economie?: boolean },
-): boolean {
-  return !economie || dureeS < DUREE_LONGUE_S || regarde;
-}
+// LE SEUIL, LES DEUX FORMULES DE TAILLE ET `apercuUtile` SONT PARTIS DANS LE DOMAINE
+// (`audio/memoire-audio.ts`) : ils ne parlaient que de tampons de flottants et d'en-têtes WAV.
 
 /**
  * Ce nœud est-il regardé ?

@@ -315,9 +315,9 @@ Full-screen mode: collapsed palette, macro controls (knobs), MIDI learn (assign 
 | 1 | **Stable port IDs** (instead of positional indices) — re-indexing breaks edges | High |
 | 2 | **`lienExterne?`** in `PluginDef` ("to go further") + rendered in the notice | Medium |
 | 3 | **File persistence** as base64 in the JSON | Medium |
-| 4 | **Relocate `TypeValeur`** out of the core into the audio domain — still there as of 2026-08-03; now explicitly documented as accepted debt in `PORTING-A-DOMAIN.md` rather than an oversight | Low |
+| 4 | ✅ **Relocate `TypeValeur`** out of the core into the audio domain — done 2026-10-04. The union lives in `audio/types-domaine.ts` as `ValeurAudio`; `src/core/` no longer names a domain type anywhere in its code, not even a browser global, and `src/docs/frontiere-domaine.test.ts` holds it | — |
 | 5 | **Split** `audio/generation.ts` (983 lines, up from 889), `audio/analyse.ts` (980 lines, up from 820) — grew, not shrunk | Low |
-| 6 | **Split** `ui/vues.tsx` into `ui/vues/*.tsx` (one file per view) — now 1,426 lines (up from 952) | Low |
+| 6 | ✅ **Split** `ui/vues.tsx` — done. The file is now `src/vues-domaine/vues.tsx`, 155 lines, and holds nothing but the declaration list; the views themselves are 21 modules beside it | — |
 | 7 | **`compatible` compatibility** for stereo/mono subtyping | Low |
 
 ---

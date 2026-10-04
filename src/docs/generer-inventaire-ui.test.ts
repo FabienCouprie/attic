@@ -13,8 +13,8 @@ import { it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { toutesLesFiches } from "../plugins";
-// Le shell demande son registre au lieu de l'importer : ce test exerce `ui/vues.tsx`, il doit donc
-// en déposer un, comme le fait la racine de composition.
+// Le shell demande son registre au lieu de l'importer : ce test exerce `vues-domaine/vues.tsx`, il
+// doit donc en déposer un, comme le fait la racine de composition.
 import { registre } from "../audio/adaptateur";
 import { configurerRegistreUI, type RegistreUI } from "../ui/registre-actif";
 

@@ -12,6 +12,7 @@ import { bufferVersWavBlobRespirant } from "../audio";
 import { echantillonnerPourApercu, estCourbe } from "../audio/courbe";
 import { ecartNiveau } from "../audio/ecart-niveau";
 import { decrire } from "../audio/metadonnees";
+import { apercuUtileAudio } from "../audio/memoire-audio";
 import { heriterDisposition } from "../audio/multicanal";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 import type { ServicesApercu } from "../ui/services-apercu";
@@ -27,7 +28,9 @@ export const APERCU_AUDIO: ServicesApercu = {
   // par `sansApercuAudio`, et le shell ne demande alors rien.
   valeurRepresentative: (valeurs) => valeurs.find(estTampon),
 
-  dureeSecondes: (valeur) => (estTampon(valeur) ? valeur.duration : 0),
+  // CE QU'UNE VALEUR PÈSE ET À PARTIR DE QUAND CELA COMPTE : tout est dans `audio/memoire-audio.ts`,
+  // seuil compris. Le cœur portait ce seuil, justifié par le poids d'un tampon de flottants.
+  apercuUtile: (valeur, o) => apercuUtileAudio(valeur, o),
 
   blobApercu: async (valeur, o) => {
     if (!estTampon(valeur)) return null;

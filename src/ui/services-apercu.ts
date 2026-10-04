@@ -44,8 +44,19 @@ export interface ServicesApercu {
    */
   valeurRepresentative(valeurs: readonly unknown[]): unknown | undefined;
 
-  /** La durée de cette valeur, en secondes. Elle décide si garder un aperçu vaut sa mémoire. */
-  dureeSecondes(valeur: unknown): number;
+  /**
+   * Garder un aperçu de cette valeur vaut-il ce qu'il coûte en mémoire ?
+   *
+   * LE MOTEUR POSAIT DEUX QUESTIONS, et il n'avait à en poser qu'une. Il demandait la DURÉE de la
+   * valeur, puis la comparait à un seuil que `core/memoire.ts` portait — seuil justifié par le poids
+   * d'un tampon de flottants 32 bits et de son aperçu WAV, c'est-à-dire par de l'arithmétique audio
+   * logée dans le cœur. Ce que pèse une valeur et à partir de quand cela compte relèvent du même
+   * domaine : la question est donc entière.
+   *
+   * `regarde` et `economie` sont des faits du shell — ce nœud est-il sélectionné ou terminal, la
+   * bascule d'économie de mémoire est-elle active — et c'est lui qui les fournit.
+   */
+  apercuUtile(valeur: unknown, o: { regarde: boolean; economie: boolean }): boolean;
 
   /** Un aperçu écoutable et enregistrable de cette valeur. */
   blobApercu(valeur: unknown, o: OptionsApercu): Promise<Blob | null>;
@@ -67,7 +78,8 @@ export interface ServicesApercu {
 
 const NEUTRES: ServicesApercu = {
   valeurRepresentative: () => undefined,
-  dureeSecondes: () => 0,
+  // Sans domaine, aucune valeur ne mérite d'aperçu : il n'y en a aucun à construire.
+  apercuUtile: () => false,
   blobApercu: async () => null,
   apercuCourbe: () => undefined,
   ecartNiveau: () => undefined,

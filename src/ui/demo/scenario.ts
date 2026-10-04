@@ -10,7 +10,7 @@
 // `useRealisateurDemo.tsx`.
 
 import { ordreTopologique } from "../../core/graphe";
-import { ordreDeLecture } from "../../audio/demonstration";
+import { ordreDeLecture } from "../../core";
 
 export interface NoeudScenario { id: string; ficheId: string; label?: string }
 export interface AreteScenario { id: string; source: string; target: string }

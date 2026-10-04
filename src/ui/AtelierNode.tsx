@@ -210,7 +210,7 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
 
 // Renderer GÉNÉRIQUE : en-tête, documentation, ports typés et statut sont communs
 // à tous les nœuds. Les UI spécifiques à certains nœuds sont fournies par le
-// registre de vues (ui/vues.tsx) — aucun couplage au domaine ici.
+// registre de vues (ui/registre-vues.ts) — aucun couplage au domaine ici.
 export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
   const def = getDef(data.ficheId);
   const { t, lang } = useI18n();

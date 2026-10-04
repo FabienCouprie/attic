@@ -23,7 +23,7 @@ type ValeurTransportee = unknown;
 import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-execution";
 import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
-import { apercuUtile, noeudRegarde, resultatRetenu } from "../../core/memoire";
+import { noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { graineDuTour, resoudreGraine } from "../../core/hasard";
@@ -1092,9 +1092,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
         // démonter/remonter le lecteur à chaque run (cache) et empêche le
         // rechargement gris/0:00 sur les nœuds déjà terminés.
-        // Sur une piste longue, un intermédiaire ne reçoit pas d'aperçu : la copie en 16 bits
-        // pèse 635 Mo par heure de son, et personne ne l'ouvre (cf. core/memoire.ts). Elle sera
-        // construite le jour où l'on clique sur ce nœud — le tampon, lui, reste là.
+        // Sur une valeur longue, un intermédiaire ne reçoit pas d'aperçu : personne ne l'ouvre, et
+        // il sera construit le jour où l'on clique sur ce nœud — la valeur, elle, reste là. Ce que
+        // cela pèse et à partir de quand cela compte relèvent du domaine, qui porte son seuil et son
+        // arithmétique (cf. `audio/memoire-audio.ts`).
         // UN MEMBRE DE BULLE REPLIÉE NE RETIENT RIEN : ni aperçu, ni référence au tampon. Le premier
         // ne s'écouterait pas, le second annulerait la libération faite plus haut — un tampon qui
         // reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché.
@@ -1102,9 +1103,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
           economie: economieMemoireRef?.current ?? true,
         });
-        const garderApercu = !audio || (!membreReplie && apercuUtile({
-          // Combien de temps dure cette valeur : au domaine de le dire.
-          dureeS: servicesApercu().dureeSecondes(audio),
+        const garderApercu = !audio || (!membreReplie && servicesApercu().apercuUtile(audio, {
           regarde: noeudRegarde({
             id: n.id, selectionne: !!n.selected, aretes: aretesRef.current,
             dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,

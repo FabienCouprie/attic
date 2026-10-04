@@ -297,8 +297,9 @@ Il tient aussi quatre faits :
   code**, pas même une globale comme `AudioBuffer` ;
 - le cœur fonctionne sans domaine : il traite alors un tampon comme n'importe
   quel objet ;
-- les quatre poteaux n'importent rien du domaine ;
-- aucun fichier du shell n'importe `ui/vues`, la déclaration des vues du domaine.
+- les six poteaux n'importent rien du domaine ;
+- aucun fichier du shell n'importe `vues-domaine/vues`, la déclaration des vues
+  du domaine.
 
 ### 6.b — Ce que le cœur demande au domaine
 
@@ -319,7 +320,9 @@ simples. Côté audio, les réponses sont dans `audio/adaptateur.ts`.
 ### Vues spécifiques à un nœud
 
 Un nœud qui a besoin d'une UI propre (un lecteur, un éditeur, un canevas) ajoute
-une entrée au registre de vues de `src/ui/vues.tsx` :
+une entrée à la déclaration de son domaine. Pour l'audio, c'est
+`src/vues-domaine/vues.tsx` ; un autre domaine écrit la sienne et la fait
+importer par sa racine de composition :
 
 ```ts
 { correspond: parId("image:flou"), vue: VueApercuImage, position: "avant" }

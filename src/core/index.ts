@@ -12,7 +12,7 @@ export {
 export type { PortsBulle } from "./bulles";
 export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";
 export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
-export { ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
+export { ordreDeLecture, ordreTopologique, placerEnDernier, ancetres, descendants, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
 // CE QUE LE CŒUR DEMANDE AU DOMAINE sur ses propres valeurs : empreinte, nom de type, types non

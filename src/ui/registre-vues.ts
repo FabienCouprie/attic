@@ -4,13 +4,14 @@
 // POURQUOI CE MODULE, ET C'EST LA FRONTIÈRE QUI SE DONNE UN NOM.
 //
 // `ui/vues.tsx` mêlait deux choses dans un seul fichier. D'un côté la mécanique : ce qu'est une vue,
-// ce que « avant » et « après » veulent dire, comment on en trouve une pour un nœud. De l'autre
-// QUATRE-VINGT-DEUX ENTRÉES nommant des identifiants de composants audio — `cercle-gamme`,
-// `orchestre-csound`, `reverbe-convolution` — et important les trente modules de vues qui vont avec.
+// ce que « avant » et « après » veulent dire, comment on en trouve une pour un nœud. De l'autre une
+// LISTE D'ENTRÉES nommant des identifiants de composants audio — `cercle-gamme`, `orchestre-csound`,
+// `reverbe-convolution` — et important les modules de vues qui vont avec. Cette liste vit désormais
+// dans `vues-domaine/vues.tsx`, qui en porte le compte ; le répéter ici le ferait vieillir.
 //
 // Le shell importait donc ce fichier pour sa mécanique, et recevait le domaine avec. Un domaine
 // d'images aurait hérité d'un registre parlant de clavier SFZ, et son `AtelierNode` aurait chargé
-// trente vues dont aucune ne le concernait.
+// des vues dont aucune ne le concernait.
 //
 // LA MÉCANIQUE EST ICI, VIDE PAR DÉFAUT ; les entrées sont déclarées par le domaine, et la racine de
 // composition déclenche cette déclaration. La dépendance est renversée : le shell ne connaît plus

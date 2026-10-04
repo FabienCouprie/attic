@@ -1,5 +1,5 @@
 import * as ort from "onnxruntime-web";
-import { fft } from "./audio/fft";
+import { fft } from "./fft";
 
 const TAILLE_TRANCHE = 343980;
 export const CHEVAUCHEMENT = 4410;

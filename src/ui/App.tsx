@@ -1073,9 +1073,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   // ── Glisser-déposer ──
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (!rfInstance || !wrapperRef.current) return;
-    const bounds = wrapperRef.current.getBoundingClientRect();
-    const position = rfInstance.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+    if (!rfInstance) return;
+    // `screenToFlowPosition` ATTEND DES COORDONNÉES CLIENT : elle retire elle-même la position du
+    // canevas à l'écran. Lui retirer d'avance le rectangle de l'enveloppe le comptait donc deux
+    // fois, et le nœud tombait à 240 px à gauche et 118 px au-dessus du pointeur — mesuré à 1600 px
+    // en visant le milieu du canevas. Le correctif enlève la soustraction ; il rend aussi le dépôt
+    // INDÉPENDANT de la mise en page, ce qui compte depuis que la barre d'outils n'est plus dans
+    // l'enveloppe du canevas et que son rectangle ne commence plus au même endroit.
+    const position = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
     const ficheId = e.dataTransfer.getData("application/attic-fiche-id");
     if (ficheId) { ajouterNoeud(ficheId, position); return; }
     // Pas de composant tiré de la palette : peut-être des fichiers venus du système. Ceux dont
@@ -1089,9 +1094,9 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
 
   const onPaneClick = useCallback((e: React.MouseEvent) => {
     const type = pendingAddRef.current;
-    if (type && wrapperRef.current && rfInstanceRef.current) {
-      const bounds = wrapperRef.current.getBoundingClientRect();
-      const position = rfInstanceRef.current.screenToFlowPosition({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+    if (type && rfInstanceRef.current) {
+      // Même correctif qu'au dépôt : des coordonnées client, sans retirer l'enveloppe.
+      const position = rfInstanceRef.current.screenToFlowPosition({ x: e.clientX, y: e.clientY });
       setPendingAdd(null);
       if (type === "comment") {
         creerCommentaire(position);
@@ -1239,6 +1244,72 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
 
   return (
     <div className="attic-app" style={{ gridTemplateColumns: paletteOuverte ? "260px 1fr 280px" : "40px 1fr 280px" }}>
+      <BarreOutils
+        theme={theme} setTheme={setTheme}
+        enExecution={enExecution}
+        repertoire={repertoire}
+        onChoisirDossier={() => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.webkitdirectory = true;
+          input.onchange = (e: any) => {
+            const files = e.target.files;
+            if (files?.length) changerRepertoire(files[0].webkitRelativePath.split("/")[0]);
+          };
+          input.click();
+        }}            
+        onLancer={async () => {
+          await lancer();
+          rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
+        }}
+        onArreter={arreter}
+        onReinitialiser={reinitialiserTout}
+        onRecharger={() => {
+          // Le graphe d'abord, le rechargement ensuite : l'en-cours n'est autrement écrit qu'à
+          // l'enregistrement, et recharger rendrait le graphe du dernier enregistrement.
+          //
+          // PAS DÉSACTIVÉ PENDANT UNE EXÉCUTION, contrairement à la réinitialisation. Recharger
+          // est justement le recours quand une exécution ne rend plus la main, ou quand
+          // l'application s'est mise dans un état qu'aucun autre bouton ne répare ; le griser à
+          // ce moment-là le rendrait inutilisable précisément quand on en a besoin. On demande
+          // seulement confirmation, puisque le calcul en cours sera perdu.
+          if (enExecution && !window.confirm(t("barre.recharger.confirmer"))) return;
+          memoriserEncours();
+          window.location.reload();
+        }}
+        onResumeAudio={resumeAudio}
+        nbPlugins={nbPlugins}
+        sf2Nom={sf2NomState}
+        currentFilePath={currentFilePath}
+        onChargerSF2={async (f) => {
+          try {
+            await chargerSF2Globale(await f.arrayBuffer(), f.name);
+            setSf2NomState(f.name);
+            localStorage.setItem("attic-sf2-nom", f.name);
+            cacheExec.current.clear();
+          } catch (e: any) {
+            console.error("[attic] Échec chargement SF2 :", e);
+            window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
+          }
+        }}
+        onDetacher={() => {
+          if ((window as any).api) { (window as any).api.nouvelleFenetre?.(); }
+          else { window.open(location.href, '_blank', 'width=1400,height=900'); }
+        }}
+        onExporter={exporter}
+        onAjouterCommentaire={ajouterCommentaire}
+        onAjouterCadre={ajouterCadre}
+        onSauvegarder={sauvegarder}
+        onDetacherFichier={detacherFichier}
+        sauvegardeAuto={sauvegardeAutoActive}
+        onBasculerSauvegardeAuto={basculerSauvegardeAuto}
+        economieMemoire={economieMemoire}
+        onBasculerEconomieMemoire={basculerEconomieMemoire}
+        profondeurExport={profondeurExport}
+        onChangerProfondeurExport={changerProfondeurExport}
+        onImporter={importer}
+        onOuvrirExemple={ouvrirExemple}
+      />
       <Palette
         ouverte={paletteOuverte}
         onToggle={togglePalette}
@@ -1255,72 +1326,6 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         }}
       />
       <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown}>
-        <BarreOutils
-          theme={theme} setTheme={setTheme}
-          enExecution={enExecution}
-          repertoire={repertoire}
-          onChoisirDossier={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.webkitdirectory = true;
-            input.onchange = (e: any) => {
-              const files = e.target.files;
-              if (files?.length) changerRepertoire(files[0].webkitRelativePath.split("/")[0]);
-            };
-            input.click();
-          }}            
-          onLancer={async () => {
-            await lancer();
-            rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
-          }}
-          onArreter={arreter}
-          onReinitialiser={reinitialiserTout}
-          onRecharger={() => {
-            // Le graphe d'abord, le rechargement ensuite : l'en-cours n'est autrement écrit qu'à
-            // l'enregistrement, et recharger rendrait le graphe du dernier enregistrement.
-            //
-            // PAS DÉSACTIVÉ PENDANT UNE EXÉCUTION, contrairement à la réinitialisation. Recharger
-            // est justement le recours quand une exécution ne rend plus la main, ou quand
-            // l'application s'est mise dans un état qu'aucun autre bouton ne répare ; le griser à
-            // ce moment-là le rendrait inutilisable précisément quand on en a besoin. On demande
-            // seulement confirmation, puisque le calcul en cours sera perdu.
-            if (enExecution && !window.confirm(t("barre.recharger.confirmer"))) return;
-            memoriserEncours();
-            window.location.reload();
-          }}
-          onResumeAudio={resumeAudio}
-          nbPlugins={nbPlugins}
-          sf2Nom={sf2NomState}
-          currentFilePath={currentFilePath}
-          onChargerSF2={async (f) => {
-            try {
-              await chargerSF2Globale(await f.arrayBuffer(), f.name);
-              setSf2NomState(f.name);
-              localStorage.setItem("attic-sf2-nom", f.name);
-              cacheExec.current.clear();
-            } catch (e: any) {
-              console.error("[attic] Échec chargement SF2 :", e);
-              window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
-            }
-          }}
-          onDetacher={() => {
-            if ((window as any).api) { (window as any).api.nouvelleFenetre?.(); }
-            else { window.open(location.href, '_blank', 'width=1400,height=900'); }
-          }}
-          onExporter={exporter}
-          onAjouterCommentaire={ajouterCommentaire}
-          onAjouterCadre={ajouterCadre}
-          onSauvegarder={sauvegarder}
-          onDetacherFichier={detacherFichier}
-          sauvegardeAuto={sauvegardeAutoActive}
-          onBasculerSauvegardeAuto={basculerSauvegardeAuto}
-          economieMemoire={economieMemoire}
-          onBasculerEconomieMemoire={basculerEconomieMemoire}
-          profondeurExport={profondeurExport}
-          onChangerProfondeurExport={changerProfondeurExport}
-          onImporter={importer}
-          onOuvrirExemple={ouvrirExemple}
-        />
         <div className="attic-onglets">
           <span className="attic-onglet actif">
             <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet("wf-1"); }} title={t("workflow.nouveauTitre")}>✕</button>

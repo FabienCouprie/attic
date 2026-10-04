@@ -29,10 +29,10 @@ import { configurerRegistreUI, type RegistreUI } from "./ui/registre-actif";
 import { FAVORIS_SON } from "./audio/favoris";
 import { configurerFavoris } from "./ui/favoris";
 import { declarerGenresParametre } from "./ui/widgets-parametre";
-import { SelecteurInstrumentSF2 } from "./ui/SelecteurInstrumentSF2";
+import { SelecteurInstrumentSF2 } from "./vues-domaine/SelecteurInstrumentSF2";
 // LES VUES DE NŒUD DU DOMAINE, déclarées par l'effet de bord de cet import. Le shell ne connaît
 // aucune vue : `ui/registre-vues.ts` est vide tant que personne n'a déclaré, et `AtelierNode` ne
-// charge plus les trente modules de vues de l'audio. Un autre domaine importe le sien à la place.
+// charge plus les modules de vues de l'audio. Un autre domaine importe le sien à la place.
 import "./vues-domaine/vues";
 import { APERCU_AUDIO } from "./plugins/apercu-domaine";
 import { configurerServicesApercu } from "./ui/services-apercu";
