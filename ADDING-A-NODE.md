@@ -191,7 +191,7 @@ The Listening Point needs none of them. Add them only if relevant:
   [`src/vues-domaine/vues.tsx`](src/vues-domaine/vues.tsx):
   `{ correspond: parId("mon-id"), vue: MaVue, position: "avant"|"apres" }`. The view
   receives `{ id, data, def }` and renders above/below the generic player.
-  (This is the UI extension point — cf. ARCHITECTURE.md §11.)
+  (This is the UI extension point — cf. PORTING-A-DOMAIN.md §6.)
 
 - **New flow type** (port of a new type) — register it in
   [`src/plugins/typesFlux.ts`](src/plugins/typesFlux.ts):

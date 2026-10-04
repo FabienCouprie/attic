@@ -9,12 +9,22 @@ Ce document décrit les étapes pour brancher un **nouveau domaine** — traitem
 d'images, données tabulaires, simulation, texte, robotique — en réutilisant le
 cœur, la propagation, les métanodes et l'UI, **sans modifier `src/core/`**.
 
-> **Preuve que ça marche.** `src/core/domaine-nombre.test.ts` est un second
-> domaine complet et fonctionnel (`TValeur = number | string`, `TRuntime = null`,
-> 4 micro-plugins, calcule `(4×2)+3 = 11`). Il tourne dans la CI à chaque commit.
-> `src/core/cloisonnement.test.ts` prouve que deux registres coexistent sans
-> se marcher dessus. Lisez ces deux fichiers : ce sont les exemples de référence,
-> et ils sont plus courts que ce guide.
+> **Preuve que ça marche — et jusqu'où elle va exactement.**
+> `src/core/domaine-nombre.test.ts` est un second domaine complet
+> (`TValeur = number | string`, `TRuntime = null`, 4 micro-plugins, calcule
+> `(4×2)+3 = 11`). Il tourne dans la CI à chaque commit, et
+> `src/core/cloisonnement.test.ts` prouve que deux registres coexistent sans se
+> marcher dessus. Lisez ces deux fichiers : ce sont les exemples de référence, et
+> ils sont plus courts que ce guide.
+>
+> **Ce qu'ils prouvent est l'agnosticisme du CŒUR, et rien de plus.** Le test
+> écrit lui-même ce qu'il fait : « réplique minimale de `useExecutionGraphe` sans
+> React ». Il rejoue le moteur plutôt que de l'employer, et **ne touche aucun
+> fichier du shell**. Les six poteaux du §6 sont donc prouvés **vides** — un garde
+> le tient — mais **jamais prouvés remplissables** : rien ne démontre encore qu'un
+> second domaine qui les remplit obtient une interface qui fonctionne. C'est la
+> pièce qui manque à ce document, et la connaître vaut mieux que de la découvrir
+> en portant.
 
 ---
 
@@ -23,10 +33,12 @@ cœur, la propagation, les métanodes et l'UI, **sans modifier `src/core/`**.
 | Couche | Fichiers | Réutilisé tel quel ? |
 |---|---|---|
 | **Cœur** — registre, tri topologique, validation, métanodes, cache | `src/core/**` | ✅ intégralement, sans modification |
-| **Shell** — canevas, palette, inspecteur, exécution, persistance | `src/ui/**` | ✅ il ne nomme aucun domaine ; vous y déposez le vôtre (voir §6) |
+| **Shell** — canevas, palette, inspecteur, exécution, persistance | `src/ui/**` | ⚠️ presque : il demande au lieu d'importer, **sauf cinq fichiers nommés** (voir §6.a) |
+| **Traductions** — les libellés, les notices, les deux langues | `src/i18n.tsx` | ✅ le mécanisme ; vos textes sont à vous (voir §6.c) |
 | **Racine de composition** — ce qui joint les deux | `src/composition.ts` | ❌ vous écrivez la vôtre (≈ 15 lignes) |
 | **Adaptateur** — registre typé, types de flux, câblage | `src/audio/adaptateur.ts` | ❌ vous en écrivez un (≈ 30 lignes) |
 | **Plugins** — les nœuds eux-mêmes | `src/plugins/**` | ❌ vous écrivez les vôtres |
+| **Vues de nœud** — ce qu'un nœud montre sous son en-tête | `src/vues-domaine/**` | ❌ facultatif ; les vôtres, dans votre répertoire |
 
 Le travail réel est donc : **un fichier de types + un adaptateur + une racine de
 composition + vos plugins**.
@@ -34,6 +46,13 @@ composition + vos plugins**.
 Des vues de nœud propres à votre domaine, des liens de barre d'outils et des
 genres de paramètre se déposent de la même façon, et sont **facultatifs** : ce
 que vous ne déposez pas n'existe pas, et rien ne casse.
+
+> **Le shell n'est pas un répertoire, et c'est ce qui a coûté le plus cher.**
+> `src/core/` en est un : y toucher se voit dans un diff. La frontière entre le
+> shell et le domaine n'en était pas une, si bien qu'aucun geste ne se
+> reconnaissait comme la franchissant — et la rupture a été exactement
+> proportionnelle à cette absence de contrôle. C'est pourquoi les vues du domaine
+> ont leur répertoire à elles, et pourquoi un garde compte ce qui reste (§6.a).
 
 ---
 
@@ -219,7 +238,13 @@ Rien de ce qui suit n'est à réécrire.
 
 **Exécution** — `ordreTopologique(ids, aretes)` (tri de Kahn, cycles exclus),
 `ancetres(cible, aretes)` pour n'exécuter que ce dont un nœud dépend (le
-bouton ▶ d'un nœud), `resoudreEntree` / `valeursEntrantes` pour le câblage.
+bouton ▶ d'un nœud), son symétrique `descendants(depart, aretes)` pour savoir ce
+qu'un changement périme, `ordreDeLecture` pour présenter un graphe de l'amont
+vers l'aval, `resoudreEntree` / `valeursEntrantes` pour le câblage.
+
+> **L'asymétrie entre `ancetres` et `descendants` est voulue et documentée à
+> l'endroit du piège** : `ancetres` inclut sa cible, `descendants` l'exclut.
+> C'est au point d'appel de dire lequel des deux modes il veut.
 
 **Cache** — `empreinteParametres(data)` et `empreinteEntrees(nodeId, aretes)`
 donnent une empreinte ; un nœud dont ni les paramètres ni les entrées n'ont
@@ -252,9 +277,9 @@ de la fiche, quel que soit le domaine. La palette et l'inspecteur se
 construisent entièrement à partir des fiches (`univers` / `famille` /
 `parametres`).
 
-**Le shell ne nomme aucun domaine.** Il demande, et c'est le domaine qui vient
-se faire connaître, par quatre poteaux déclarés dans `src/ui/` et **vides par
-défaut** :
+**Le shell demande au lieu d'importer.** C'est le domaine qui vient se faire
+connaître, par **six poteaux** déclarés dans `src/ui/`, chacun **vide par
+défaut** et n'important rien du domaine :
 
 | Poteau | Ce que le domaine y dépose |
 |---|---|
@@ -262,6 +287,16 @@ défaut** :
 | `ui/registre-vues.ts` | ce que chaque nœud montre sous son en-tête |
 | `ui/favoris.ts` | les liens que la barre d'outils propose |
 | `ui/widgets-parametre.ts` | ses genres de paramètre, avec leur saisie |
+| `ui/services-apercu.ts` | ce qu'une valeur produite donne à voir et à entendre |
+| `ui/services-orchestration.ts` | ce que le moteur pose et demande autour d'un run |
+
+> **`FicheUI` est `Omit<PluginDef<unknown, unknown>, "executer">`, et le `Omit`
+> n'est pas cosmétique.** Le shell **lit** une fiche — son nom, ses ports, ses
+> paramètres, sa notice — et ne l'exécute jamais. Or `executer` est une propriété
+> de type fonction : sous `strictFunctionTypes` son paramètre est strictement
+> contravariant, de sorte qu'une fiche concrète ne peut pas entrer dans une fiche
+> générique. Retirer le seul membre que le shell n'emploie pas a fait tomber
+> trente-trois erreurs de compilation à neuf.
 
 Les dépôts ont lieu dans `src/composition.ts`, **le seul fichier qui connaît les
 deux côtés**. Brancher un autre domaine, c'est écrire le vôtre :
@@ -286,20 +321,40 @@ casse, rien ne s'affiche à vide.
 
 ### 6.a — Ce qui reste couplé, et le garde qui le compte
 
-`src/docs/frontiere-domaine.test.ts` est la **source de vérité** : il compte les
-fichiers de `src/ui/` qui chargent du calcul du domaine, refuse que la liste
+`src/docs/frontiere-domaine.test.ts` est la **source de vérité** : il relève les
+fichiers du shell qui chargent du calcul du domaine, refuse que la liste
 grandisse, et exige qu'un fichier délivré en sorte. Ce document ne répète donc
 plus un chiffre qui vieillirait — lisez le test.
 
 Il tient aussi quatre faits :
 
 - `src/core/` n'importe rien du domaine, et **n'en nomme aucun type dans son
-  code**, pas même une globale comme `AudioBuffer` ;
+  code**, pas même une globale comme `AudioBuffer` ou un mot du métier comme
+  `"stereo"` ;
 - le cœur fonctionne sans domaine : il traite alors un tampon comme n'importe
   quel objet ;
 - les six poteaux n'importent rien du domaine ;
-- aucun fichier du shell n'importe `vues-domaine/vues`, la déclaration des vues
-  du domaine.
+- aucun fichier du shell n'importe la déclaration des vues du domaine.
+
+**Les couplages qui restent portent chacun leur raison dans le test**, et le seul
+qui ne soit pas mécanique est `ui/hooks/useExecutionGraphe.ts` : ses deux pilotes
+de passes ne sont pas des fonctions sur des valeurs mais des **fonctionnalités
+que le moteur pilote**. Les sortir demande de reprendre sa structure de boucle.
+
+> **Ce que ce garde ne regarde pas, et vous le saurez avant lui.** Il compte le
+> sens shell → domaine. **Le sens inverse n'est ni mesuré ni épinglé** : dix-sept
+> fichiers du domaine importent le shell, dont quinze hors des six poteaux. La
+> plupart est légitime — une vue de domaine qui emploie un lecteur ou un badge de
+> statut est dans le bon sens de dépendance (§6.c). Quatre le sont moins, dont
+> trois **exécuteurs** qui lisent un état de l'interface : le résultat du
+> composant dépend alors de ce que l'écran affiche.
+>
+> **Et ce garde a été aveugle quatre fois**, chaque fois parce qu'il décrivait un
+> CHEMIN et qu'un chemin change : il ne balayait que `src/ui/`, il ne connaissait
+> du domaine que deux répertoires sur six, son motif nommait l'ancien emplacement
+> des vues, et il exigeait un `from` — de sorte que l'import d'effet de bord, le
+> couplage le plus fort puisqu'il ne nomme rien et charge tout, était le seul
+> invisible. Si vous l'étendez, **plantez la faute** et vérifiez qu'il la nomme.
 
 ### 6.b — Ce que le cœur demande au domaine
 
@@ -316,6 +371,30 @@ neutres par défaut :
 Le cœur connaît de son côté ce qui vient du langage et du navigateur :
 primitifs, `File`, `Blob`, `ArrayBuffer`, tableaux typés, tableaux et objets
 simples. Côté audio, les réponses sont dans `audio/adaptateur.ts`.
+
+### 6.c — Ce que votre domaine a le droit d'importer du shell
+
+La règle n'est pas « le domaine n'importe rien du shell » : ce serait absurde,
+une vue de nœud étant du React qui a besoin des briques de l'interface. La règle
+est **une question de sens**.
+
+**Le domaine peut dépendre du shell. Le shell ne doit pas dépendre du domaine.**
+Un domaine qui disparaît emporte ses vues avec lui et le shell tient encore ; un
+shell qui nomme un domaine ne peut plus en accueillir d'autre. C'est pourquoi le
+garde du §6.a ne compte qu'un seul des deux sens.
+
+Concrètement, une vue de domaine emploie sans scrupule les briques du shell —
+lecteur, badge de statut, bouton de copie, niveau d'écoute. **Ce qui mérite d'y
+regarder à deux fois, c'est un EXÉCUTEUR qui lit l'interface** : le résultat d'un
+composant devient alors fonction de ce que l'écran affiche, ce qui le rend
+difficile à tester et impossible à exécuter sans interface.
+
+**Les traductions sont le quatrième locataire, et ce document les oubliait.**
+`src/i18n.tsx` n'est ni le cœur, ni le shell, ni un domaine : c'est le mécanisme
+des deux langues. **Deux cent soixante-dix-neuf des six cent quatre-vingt-douze
+fichiers du domaine audio l'importent**, soit deux sur cinq, les notices et les
+libellés de paramètres étant bilingues. Votre domaine fera de même. Le mécanisme
+se réutilise tel quel ; les textes sont à vous.
 
 ### Vues spécifiques à un nœud
 
@@ -337,21 +416,29 @@ modifié pour ajouter une vue.
 
 ## 7. Ce qui suppose « un domaine par process »
 
-Trois éléments restent globaux au processus. Ils n'empêchent **pas** de réutiliser
-le framework pour un autre domaine — ils empêchent seulement de faire tourner
-**deux domaines différents dans la même fenêtre**, ce qui n'est pas un cas
-d'usage actuel.
+Ce qui suit n'empêche **pas** de réutiliser le framework pour un autre domaine —
+seulement de faire tourner **deux domaines différents dans la même fenêtre**, ce
+qui n'est pas un cas d'usage actuel.
+
+**Deux obstacles sont tombés**, et cette section les annonçait encore :
+
+- `TypeValeur` ne figure plus dans `core/types.ts`. L'union des valeurs d'un
+  domaine est déclarée **par ce domaine** — pour l'audio, `ValeurAudio` dans
+  `audio/types-domaine.ts`. Le cœur ne la nomme nulle part.
+- `core/metastore.ts` et `core/nodes-installes.ts` n'épinglent plus
+  `PluginDef<TypeValeur, AudioContext>` : ils tiennent des
+  `PluginDef<unknown, unknown>`. **Il n'y a donc plus rien à y substituer.**
+
+**Deux restent, et ils sont de nature différente :**
 
 | Élément | Conséquence |
 |---|---|
-| `TypeValeur` dans `core/types.ts` | union audio, encore référencée par le cœur |
-| `core/metastore.ts`, `core/nodes-installes.ts` | épinglent `PluginDef<TypeValeur, AudioContext>` |
-| `DEFS_CACHE` (`AtelierNode.tsx`) | cache de fiches partagé |
-| Clés `attic-metas`, `attic-nodes-installes` | `localStorage` non namespacé |
+| `DEFS_CACHE` (`ui/AtelierNode.tsx`) | cache de fiches partagé par tout le processus, indexé sur l'identifiant de fiche |
+| Clé `attic-nodes-installes` (`core/nodes-installes.ts`) | `localStorage` non namespacé — deux domaines se reliraient les nœuds l'un de l'autre |
 
-Pour un nouveau domaine mono-process, il suffit de substituer votre union et
-votre runtime dans les deux modules du cœur. Pour une vraie cohabitation, il
-faudrait namespacer les quatre. Voir `ARCHITECTURE.md §14`.
+Pour une vraie cohabitation, il faudrait namespacer ces deux-là. La clé
+`attic-metas` n'est pas dans cette liste : elle appartient au shell
+(`ui/metasLocaux.ts`), le cœur ne persistant rien lui-même.
 
 ---
 
@@ -362,11 +449,19 @@ faudrait namespacer les quatre. Voir `ARCHITECTURE.md §14`.
 3. Un premier plugin source (sans entrée) + un plugin de sortie. Vérifiez que la
    palette les affiche et qu'une arête se connecte.
 4. Posez le contrat d'échec (§4) **dès le premier plugin**, pas après.
-5. Branchez `main.tsx` sur votre adaptateur.
-6. Écrivez le test « baptême » de votre domaine, sur le modèle de
+5. `src/composition.ts` — déposez votre registre sur `ui/registre-actif.ts`, et le
+   reste si vous en avez. **Faites-en le premier import de `main.tsx`** : sans
+   cela l'application meurt sur « Registre UI non configuré » sans peindre une
+   seule fois, les imports s'évaluant avant le corps du module.
+6. Répondez aux trois questions du cœur (§6.b) si vos valeurs ne sont pas
+   sérialisables, sans quoi un cache et une sauvegarde JSON se tromperont en
+   silence.
+7. Écrivez le test « baptême » de votre domaine, sur le modèle de
    `domaine-nombre.test.ts` : un petit graphe, un résultat attendu. C'est ce test
    qui vous dira que le moteur exécute correctement *votre* domaine.
-7. `npx tsc -b && npx vitest run` doivent être verts.
+8. `npx tsc -b && npx vitest run` doivent être verts — puis **lancez
+   l'application et regardez**. Un graphe de modules peut être parfait et une
+   interface vide : c'est un cas qui s'est produit, et aucun test ne l'avait dit.
 
 Un plugin mal typé **doit** échouer à la compilation — si `tsc` passe alors que
 vous avez oublié de paramétrer un contrat, c'est que vous avez écrit `PluginDef`
@@ -376,7 +471,10 @@ nu quelque part. Cherchez-le.
 
 ## Voir aussi
 
-- `ARCHITECTURE.md` — les couches, les règles protégées par mutation, l'état honnête (§14)
-- `ADDING-A-NODE.md` — ajouter un nœud dans le domaine audio existant
-- `src/core/domaine-nombre.test.ts` — un second domaine complet : registre, types de flux, 4 plugins, graphe, validation
+- `src/docs/frontiere-domaine.test.ts` — **la source de vérité** : ce qui reste couplé, et les quatre cécités dont ce garde s'est relevé
+- `src/composition.ts` — la racine de composition du domaine audio, le seul fichier qui connaît les deux côtés
+- `src/core/domaine-nombre.test.ts` — un second domaine complet du côté du cœur : registre, types de flux, 4 plugins, graphe, validation
 - `src/core/cloisonnement.test.ts` — la preuve que deux domaines n'interfèrent pas
+- `ADDING-A-NODE.md` — ajouter un nœud dans le domaine audio existant
+- `AGENTS.md` — l'ordre de vérification, les règles de commit et les quatre contrats du dépôt
+- `ARCHITECTURE.md` — la feuille de route architecture : le diagnostic d'origine et ce qui en a été fait

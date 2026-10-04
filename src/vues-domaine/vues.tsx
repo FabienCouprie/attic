@@ -18,7 +18,7 @@
 // qu'une chose : APPELER `declarerVues` avec ce que l'audio a à montrer. Son import a donc un effet
 // de bord, et c'est la racine de composition (`src/composition.ts`) qui le déclenche.
 //
-// Point d'extension multi-domaines (cf. ARCHITECTURE.md §11) : un autre domaine écrit son propre
+// Point d'extension multi-domaines (cf. PORTING-A-DOMAIN.md §6) : un autre domaine écrit son propre
 // fichier de déclaration et le fait importer par sa racine de composition. Ni `registre-vues.ts` ni
 // `AtelierNode.tsx` ne bougent.
 
