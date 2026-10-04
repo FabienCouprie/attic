@@ -321,7 +321,7 @@ export interface PluginDef<TValeur, TRuntime> {
   // ── Indices pour le moteur ──
   // Agnostiques du domaine : ils décrivent un COMPORTEMENT du nœud, pas son
   // identité. Ils existent pour que le moteur n'ait jamais à tester un id de
-  // plugin en dur (cf. ARCHITECTURE.md §12 : « sans modifier core »).
+  // plugin en dur (cf. PORTING-A-DOMAIN.md : « sans modifier `src/core/` »).
 
   // Ne jamais réutiliser un résultat mis en cache. Pour les nœuds à effet de
   // bord dont le résultat dépend d'un état externe (disque, réseau) que les
