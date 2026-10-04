@@ -1188,6 +1188,14 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   // Elle ne paraît que si le paquet manque vraiment, et elle en donne la taille : de 33 Mo à 1,8 Go.
   "progress.modele.premiere_fois": { fr: "Le modèle ({__VAR_0__}) est récupéré d'abord : la première fois seulement, et cela peut prendre plusieurs minutes.", en: "The model ({__VAR_0__}) is fetched first: on the first run only, and this can take several minutes." },
   "progress.bruitage.generation": { fr: "Génération du son…", en: "Generating the sound..." },
+  // Les sept nœuds Magenta annoncent leur modèle avant de le charger : l'installeur allégé peut ne
+  // pas l'avoir, et l'annonce est ce qui le dit puis propose de le prendre.
+  "msg.progress.magenta.batterie": { fr: "Génération de la batterie…", en: "Generating the drums..." },
+  "msg.progress.magenta.continuation": { fr: "Continuation de la mélodie…", en: "Continuing the melody..." },
+  "msg.progress.magenta.melodie": { fr: "Génération de la mélodie…", en: "Generating the melody..." },
+  "msg.progress.magenta.interpolation": { fr: "Interpolation des deux MIDI…", en: "Interpolating the two MIDI files..." },
+  "msg.progress.magenta.groove": { fr: "Humanisation du groove…", en: "Humanizing the groove..." },
+  "msg.progress.magenta.improvisation": { fr: "Improvisation au piano…", en: "Improvising at the piano..." },
   "progress.debruitage.chargement_modele": { fr: "Chargement du modèle GTCRN…", en: "Loading the GTCRN model..." },
   "progress.debruitage.reechantillonnage": { fr: "Rééchantillonnage à 16 kHz…", en: "Resampling to 16 kHz..." },
   "progress.debruitage.var_0": { fr: "Débruitage {__VAR_0__} %", en: "Denoising {__VAR_0__}%" },

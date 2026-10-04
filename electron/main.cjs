@@ -17,6 +17,7 @@ const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
+const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
 const {
   inventaire: inventaireModeles, avancement: avancementModeles,
   telechargerFichier, poser: poserFichier,
@@ -195,7 +196,7 @@ const CSP = [
   `media-src 'self' blob: data: stream: ${SCHEMA_MEDIA}:`,
   "img-src 'self' blob: data:",
   "worker-src 'self' blob:",
-  "connect-src 'self' https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:",
+  `connect-src 'self' ${SCHEMA_RESSOURCE}: https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:`,
 ].join("; ");
 
 // LE SCHÉMA QUI SERT UN FILM DU DISQUE, déclaré AVANT que l'application soit prête : un schéma
@@ -205,6 +206,17 @@ const CSP = [
 protocol.registerSchemesAsPrivileged([{
   scheme: SCHEMA_MEDIA,
   privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, bypassCSP: false },
+}, {
+  // LE SCHÉMA QUI SERT UNE RESSOURCE LIVRÉE À UN WORKER, déclaré ici pour la même raison que le
+  // précédent. Un Web Worker n'a pas de preload, donc pas d'`api.lireBinaire` ; et dans
+  // l'application empaquetée la page vient de `file://`, où un `fetch` est refusé. Les modèles
+  // Magenta, que la bibliothèque ne sait charger que par URL, passent par là.
+  // `corsEnabled` EST INDISPENSABLE, et c'est ce qui manquait au premier essai : la page vient de
+  // `file://` et le schéma est une AUTRE origine, de sorte qu'un `fetch` y est une requête croisée.
+  // Sans cela Chromium refuse avant même d'appeler le gestionnaire — « Cross origin requests are
+  // only supported for protocol schemes… » — et la CSP n'y est pour rien, elle autorisait déjà.
+  scheme: SCHEMA_RESSOURCE,
+  privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, bypassCSP: false },
 }]);
 
 // GESTIONNAIRE DE PERMISSIONS UNIQUE — liste d'autorisation explicite.
@@ -824,8 +836,13 @@ async function telechargerModeles(file, dire = () => {}) {
           ...avancementModeles({ faits, courant: modele, octetsRecus: modele.octets, file }) });
         const AdmZip = require("adm-zip");
         const zip = new AdmZip(res.temporaire);
-        const dossierOonx = path.join(racine, "oonx");
-        fs.mkdirSync(dossierOonx, { recursive: true });
+        // LA RACINE VIENT DU MANIFESTE, et non plus de `oonx` en dur : les points de contrôle
+        // Magenta vivent sous `magenta/`, et une archive dépliée au mauvais endroit donnerait un
+        // modèle introuvable sans rien dire. Le premier segment du premier fichier la porte.
+        const premier = modele.fichiers?.[0]?.chemin ?? "oonx/";
+        const dossierModele = path.join(racine, premier.split("/")[0]);
+        fs.mkdirSync(dossierModele, { recursive: true });
+        const dossierOonx = dossierModele;
         // Chaque entrée est posée nous-mêmes, jamais `extractAllTo` : c'est la précaution que
         // décrit `extraire-node-zip.cjs`, et elle ne dépend pas de la version d'adm-zip.
         for (const entree of zip.getEntries()) {
@@ -1504,6 +1521,13 @@ app.whenReady().then(() => {
   // LE FILM EST SERVI PAR MORCEAUX, comme le ferait un serveur : l'en-tête « Range » est honoré et
   // la réponse est un flux, jamais un tampon. C'est ce qui permet de se déplacer dans un film de
   // onze minutes sans jamais en tenir plus de quelques centaines de kilo-octets.
+  // LES RESSOURCES LIVRÉES, pour les workers. Le résolveur est celui de tout le dépôt : il regarde
+  // d'abord dans le dossier inscriptible de l'utilisateur, de sorte qu'un modèle téléchargé à la
+  // demande par l'installeur allégé, ou retéléchargé pour réparer une livraison abîmée, l'emporte
+  // sur celui de `resources/`.
+  protocol.handle(SCHEMA_RESSOURCE, (requete) =>
+    servirRessource(requete, (relatif) => resoudreRessource(relatif, contexteRessources())));
+
   protocol.handle(SCHEMA_MEDIA, async (requete) => {
     const chemin = cheminDepuisUrl(requete.url);
     const type = chemin && typeMedia(chemin);

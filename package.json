@@ -48,9 +48,10 @@
     "download:songsee": "node scripts/download-songsee.cjs",
     "lint": "oxlint",
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
-    "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant",
+    "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant && node scripts/download-magenta.cjs --tolerant",
     "download:sherpa-wasm": "node scripts/download-sherpa-wasm.cjs",
     "download:gtcrn": "node scripts/download-gtcrn.cjs",
+    "download:magenta": "node scripts/download-magenta.cjs",
     "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
     "download:kokoro": "node scripts/download-kokoro.cjs",
@@ -76,6 +77,7 @@
     "files": [
       "dist/**/*",
       "!dist/oonx/**/*",
+      "!dist/magenta/**/*",
       "!dist/sf2/**/*",
       "!dist/sfz/**/*",
       "electron/*.cjs",
@@ -104,6 +106,10 @@
           "!stable-audio-3-small-music/**",
           "!kokoro-82m/**"
         ]
+      },
+      {
+        "from": "public/magenta",
+        "to": "magenta"
       },
       {
         "from": "public/sfz",

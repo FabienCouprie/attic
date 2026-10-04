@@ -1,8 +1,13 @@
 // plugins/electronFetch.ts — Patcher fetch pour télécharger les ressources via le main Electron.
-// Utilisé par les nœuds qui chargent des modèles @magenta/music (DDSP, MusicVAE, MusicRNN, Piano Genie)
-// et les images Pollinations.ai.
+// Utilisé par les nœuds qui chargent un modèle TensorFlow.js depuis un hébergeur distant (DDSP) et
+// par les images Pollinations.ai.
 // Le processus principal n’a pas les contraintes CSP/CORS du renderer, donc on route les requêtes
 // distantes (tfhub.dev, storage.googleapis.com, kaggle.com, pollinations.ai…) par lui.
+//
+// LES SEPT NŒUDS MAGENTA NE PASSENT PLUS PAR ICI : leurs points de contrôle sont livrés avec
+// l'application, sous `public/magenta/`, et lus par le schéma `attic-res:`. Ils n'y passaient
+// d'ailleurs jamais vraiment — `getModel` tourne dans le worker Magenta, où `window.api` n'existe
+// pas, de sorte que ce détour retombait silencieusement sur le `fetch` ordinaire.
 
 function isModelDownloadUrl(url: string): boolean {
   return /tfhub\.dev|storage\.googleapis\.com|kagglesdsdata|kaggle\.com|googleusercontent\.com/i.test(url);

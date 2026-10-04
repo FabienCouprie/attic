@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1249 files, 211810 lines, of which 145612 are code.**
-The table lists the 153 files of 200 code lines or more, heaviest first;
-the remaining 1096 account for 148383 lines.
+**1254 files, 213485 lines, of which 146781 are code.**
+The table lists the 157 files of 200 code lines or more, heaviest first;
+the remaining 1097 account for 148497 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -36,10 +36,10 @@ the remaining 1096 account for 148383 lines.
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
 | src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |
+| src/plugins/magenta.ts | 367 | 467 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
 | src/audio/tone-synths.ts | 360 | 494 |  |
 | src/plugins/analyse.ts | 360 | 437 |  |
-| src/plugins/magenta.ts | 359 | 456 |  |
 | src/plugins/pochette-svg.ts | 358 | 401 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/algebre.test.ts | 347 | 421 |  |
@@ -68,8 +68,10 @@ the remaining 1096 account for 148383 lines.
 | src/audio/particules.test.ts | 316 | 416 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
+| src/plugins/effets-cresson.test.ts | 312 | 405 |  |
 | src/quiz/notions.ts | 312 | 337 |  |
 | src/audio/conformite-clavier.ts | 311 | 435 |  |
+| src/plugins/effets-midi.test.ts | 310 | 428 |  |
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
 | src/audio/courbe.ts | 308 | 611 |  |
@@ -93,6 +95,7 @@ the remaining 1096 account for 148383 lines.
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
 | src/plugins/generateurs-sources.ts | 278 | 343 |  |
+| src/plugins/magenta-helpers.ts | 274 | 401 |  |
 | src/audio/csound-formules.ts | 273 | 333 |  |
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
@@ -100,9 +103,9 @@ the remaining 1096 account for 148383 lines.
 | src/vues-domaine/vues-images.tsx | 269 | 381 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
-| src/plugins/magenta-helpers.ts | 264 | 310 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
 | src/audio/io.ts | 257 | 380 |  |
+| src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
@@ -159,6 +162,7 @@ the remaining 1096 account for 148383 lines.
 | src/plugins/multicanal.ts | 209 | 288 |  |
 | src/audio/ecosysteme.ts | 208 | 388 |  |
 | src/audio/spectrogramme-mel.ts | 208 | 333 |  |
+| src/plugins/effets.test.ts | 208 | 302 |  |
 | src/plugins/boucle-creneau.test.ts | 207 | 252 |  |
 | src/plugins/cercle-transformations.test.ts | 206 | 257 |  |
 | src/plugins/effet-parametres-midi.test.ts | 205 | 322 |  |

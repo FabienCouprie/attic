@@ -32,6 +32,12 @@ const { spawnSync } = require("child_process");
 
 const RACINE = path.resolve(__dirname, "..");
 const SOURCE = path.join(RACINE, "public", "oonx");
+
+// LA RACINE PAR DÉFAUT EST `oonx`, ET CE N'EST PLUS LA SEULE. Les points de contrôle Magenta ne
+// sont pas des ONNX et vivent dans `public/magenta/` ; ils entrent au manifeste par le même chemin,
+// avec la même empreinte et la même adresse de publication, en déclarant leur racine.
+const racineDe = (meta) => meta.racine ?? "oonx";
+const dossierDe = (meta) => path.join(RACINE, "public", racineDe(meta));
 const MANIFESTE = path.join(__dirname, "modeles-manifest.json");
 const RELEASE = "assets";
 const BASE_RELEASE = "https://github.com/FabienCouprie/attic/releases/download/assets";
@@ -111,6 +117,40 @@ const CONNUS = {
     licence: { nom: "OpenRAIL++", credit: "IDKiro — SDXS-512-0.9 ; export ONNX par Attic", rediffusable: true,
       note: "La licence et ses restrictions d'usage voyagent avec le modèle : le README de l'archive les porte." },
   },
+
+  // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
+  //
+  // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois
+  // raisons, toutes vérifiées : sans eux, une installation SANS RÉSEAU ne pouvait employer aucun
+  // des sept nœuds Magenta, là où tous les autres nœuds à modèle fonctionnent hors ligne ; rien ne
+  // vérifiait l'intégrité de ce qui arrivait ; et ils venaient d'un tiers, contre la règle du dépôt.
+  //
+  // CINQ POUR SEPT NŒUDS : deux paires partagent leur modèle, et le champ `noeuds` le dit.
+  "drums_2bar_nade_9_q2": {
+    id: "magenta-drums-vae", nom: "Batterie neuronale (MusicVAE)", nomEn: "Neural drums (MusicVAE)",
+    racine: "magenta", noeuds: ["magenta-drums", "magenta-generer-batterie"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google Magenta — MusicVAE drums_2bar_nade_9_q2", rediffusable: true },
+  },
+  "melody_rnn": {
+    id: "magenta-melody-rnn", nom: "Continuation de mélodie (MusicRNN)", nomEn: "Melody continuation (MusicRNN)",
+    racine: "magenta", noeuds: ["magenta-continuation", "magenta-generer-melodie"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google Magenta — MusicRNN melody_rnn", rediffusable: true },
+  },
+  "mel_2bar_small": {
+    id: "magenta-mel-2bar", nom: "Interpolation de mélodies (MusicVAE)", nomEn: "Melody interpolation (MusicVAE)",
+    racine: "magenta", noeuds: ["magenta-interpoler-midi"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google Magenta — MusicVAE mel_2bar_small", rediffusable: true },
+  },
+  "groovae_2bar_humanize": {
+    id: "magenta-groovae", nom: "Humanisation de groove (GrooVAE)", nomEn: "Groove humanization (GrooVAE)",
+    racine: "magenta", noeuds: ["magenta-humaniser-groove"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google Magenta — GrooVAE groovae_2bar_humanize", rediffusable: true },
+  },
+  "piano_genie": {
+    id: "magenta-piano-genie", nom: "Improvisation au piano (Piano Genie)", nomEn: "Piano improvisation (Piano Genie)",
+    racine: "magenta", noeuds: ["magenta-improvisation"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google Magenta — Piano Genie, modèle epiano", rediffusable: true },
+  },
 };
 
 const sha256 = (chemin) => {
@@ -141,7 +181,9 @@ function engendrer() {
 
   const modeles = [];
   for (const [entree, meta] of Object.entries(CONNUS)) {
-    const complet = path.join(SOURCE, entree);
+    const racine = racineDe(meta);
+    const dossier = dossierDe(meta);
+    const complet = path.join(dossier, entree);
     if (!fs.existsSync(complet)) {
       // UN PAQUET ABSENT DU DISQUE EST REPORTÉ, ET NON JETÉ. Relevé par Fabien sur le paquet de
       // bruitage, qui manquait à `CONNUS` ; mais le défaut est plus large que ce paquet-là. Cette
@@ -160,12 +202,12 @@ function engendrer() {
     }
     const estDossier = fs.statSync(complet).isDirectory();
     const relatifs = estDossier
-      ? fichiersDe(SOURCE, entree)
+      ? fichiersDe(dossier, entree)
       : [entree];
     const fichiers = relatifs.map((r) => ({
-      chemin: `oonx/${r}`,
-      octets: fs.statSync(path.join(SOURCE, r)).size,
-      sha256: sha256(path.join(SOURCE, r)),
+      chemin: `${racine}/${r}`,
+      octets: fs.statSync(path.join(dossier, r)).size,
+      sha256: sha256(path.join(dossier, r)),
     }));
     const octets = fichiers.reduce((s, f) => s + f.octets, 0);
 
@@ -246,8 +288,12 @@ function publier(ids = []) {
       const AdmZip = require("adm-zip");
       const zip = new AdmZip();
       for (const f of m.fichiers) {
+        // L'ARCHIVE EST RELATIVE À LA RACINE DU MODÈLE, quelle qu'elle soit. Le premier segment —
+        // `oonx/` hier, `magenta/` aussi aujourd'hui — est retiré, et le dépliage le remet depuis
+        // le manifeste. Le coder en dur ici aurait déplié les points de contrôle Magenta sous
+        // `oonx/magenta/`, où rien ne les cherche.
         zip.addLocalFile(path.join(RACINE, "public", f.chemin),
-          path.dirname(f.chemin.replace(/^oonx\//, "")).replace(/^\.$/, ""));
+          path.dirname(f.chemin.split("/").slice(1).join("/")).replace(/^\.$/, ""));
       }
       nomAsset = `${m.id}.zip`;
       fichier = path.join(tmp, nomAsset);
