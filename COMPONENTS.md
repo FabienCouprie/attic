@@ -9913,7 +9913,7 @@ Six themes, and one of them is not written by hand. Acronyms, concepts, formulas
 
 *Continues a MIDI melody with MusicRNN (melody_rnn).*
 
-Continues a MIDI melody with @magenta/music (MusicRNN melody_rnn). The model downloads on first use (~3-4 MB). Connect a MIDI file to the input; the node appends the requested steps after the input melody. Adjustable temperature, steps and quantization.
+Continues a MIDI melody with @magenta/music (MusicRNN melody_rnn). The model ships with the application (13.9 MB): the node works offline. Connect a MIDI file to the input. The output holds the continuation only, not the input melody: the requested steps are those of the continuation, to be placed after the melody when editing. The continuation keeps the tempo of the input file: continuing a piece at 90 returns a continuation at 90. The step count is the generated duration, not a note count: a continuation contains rests, so it always holds fewer notes than steps. Adjustable temperature, steps and quantization.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9933,7 +9933,7 @@ Continues a MIDI melody with @magenta/music (MusicRNN melody_rnn). The model dow
 
 *Generates a neural drum loop with MusicVAE (2 bars, repeatable).*
 
-Generates a neural drum loop with @magenta/music (MusicVAE drums_2bar_nade_9_q2). The model downloads on first use (~28 MB). MIDI output; connect to a MIDI Output to listen. Temperature, Tempo and Bars parameters control the style and length.
+Generates a neural drum loop with @magenta/music (MusicVAE drums_2bar_nade_9_q2). The model ships with the application (27.6 MB): the node works offline. MIDI output; connect to a MIDI Output to listen. Temperature, Tempo and Bars parameters control the style and length.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9952,7 +9952,7 @@ Generates a neural drum loop with @magenta/music (MusicVAE drums_2bar_nade_9_q2)
 
 *Generates a drum loop with MusicVAE. An optional MIDI seed can guide the style.*
 
-Generates a drum loop with @magenta/music (MusicVAE drums_2bar_nade). The model downloads on first use (~28 MB). Without input, the node generates a random pattern. With a MIDI seed, it produces a variation. Adjustable: temperature, tempo, bars, similarity.
+Generates a drum loop with @magenta/music (MusicVAE drums_2bar_nade). The model ships with the application (27.6 MB): the node works offline. Without input, the node generates a random pattern. With a MIDI seed, it produces a variation. Adjustable: temperature, tempo, bars, similarity.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9973,7 +9973,7 @@ Generates a drum loop with @magenta/music (MusicVAE drums_2bar_nade). The model 
 
 *Generates a melody from a seed MIDI file with MusicRNN (melody_rnn).*
 
-Generates a melody from a seed MIDI file with @magenta/music (MusicRNN melody_rnn). The model downloads on first use (~13 MB). Connect a MIDI to the input; the node appends the requested steps after the seed. Adjustable temperature, steps and quantization.
+Generates a melody from a seed MIDI file with @magenta/music (MusicRNN melody_rnn). The model ships with the application (13.9 MB): the node works offline. Connect a MIDI to the input. The output holds the generated melody only, not the seed: the requested steps are those of the generated melody, to be placed after the seed when editing. It keeps the tempo of the input file. The step count is the generated duration, not a note count. Adjustable temperature, steps and quantization.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9993,7 +9993,7 @@ Generates a melody from a seed MIDI file with @magenta/music (MusicRNN melody_rn
 
 *Humanizes a MIDI drum pattern with GrooVAE (velocity and timing variations).*
 
-Humanizes a MIDI drum pattern with @magenta/music (GrooVAE). The model downloads on first use (~16 MB). Connect a drum MIDI to the input; the node adds velocity and timing variations. Adjustable temperature and quantization.
+Humanizes a MIDI drum pattern with @magenta/music (GrooVAE). The model ships with the application (16.3 MB): the node works offline. Connect a drum MIDI to the input; the node adds velocity and timing variations. The result keeps the tempo of the input file, without which shifting the attacks would mean nothing. Adjustable temperature and quantization.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10012,7 +10012,7 @@ Humanizes a MIDI drum pattern with @magenta/music (GrooVAE). The model downloads
 
 *Generates a piano improvisation with Piano Genie (8 virtual buttons).*
 
-Generates a piano improvisation with @magenta/music (Piano Genie). The model downloads on first use (~100 MB). Eight virtual buttons are driven by a pattern (random, walk, up, down, arpeggio) and mapped to 88 piano keys. MIDI output; connect to a MIDI Output to listen. Adjustable: duration, tempo, temperature, mode and seed.
+Generates a piano improvisation with @magenta/music (Piano Genie). The model ships with the application (1.2 MB): the node works offline. Eight virtual buttons are driven by a pattern (random, walk, up, down, arpeggio) and mapped to 88 piano keys. MIDI output; connect to a MIDI Output to listen. Adjustable: duration, tempo, temperature, mode and seed.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10033,7 +10033,7 @@ Generates a piano improvisation with @magenta/music (Piano Genie). The model dow
 
 *Generates an intermediate MIDI file between two MIDI files with MusicVAE.*
 
-Generates an intermediate MIDI file between two MIDI files with @magenta/music (MusicVAE mel_2bar_small). The model downloads on first use (~18 MB). Connect two MIDI files to inputs A and B; choose the number of interpolations and the position. MIDI output.
+Generates an intermediate MIDI file between two MIDI files with @magenta/music (MusicVAE mel_2bar_small). The model ships with the application (17.7 MB): the node works offline. Connect two MIDI files to inputs A and B; choose the number of interpolations and the position. The result keeps the tempo of file A, the one it starts from. MIDI output.
 
 | Port | Name | Type | |
 |---|---|---|---|

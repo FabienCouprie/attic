@@ -692,6 +692,243 @@
           "sha256": "fc7c97446c6d7d5f2637195df8cb9ffc8e1f9d92446dd04b3f780624e0d09dbb"
         }
       ]
+    },
+    {
+      "id": "magenta-drums-vae",
+      "nom": "Batterie neuronale (MusicVAE)",
+      "nomEn": "Neural drums (MusicVAE)",
+      "noeuds": [
+        "magenta-drums",
+        "magenta-generer-batterie"
+      ],
+      "octets": 27642291,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-drums-vae.zip",
+        "octets": 23829549,
+        "sha256": "78cf1b690322b8e8dd73b1c867f2bcb90c370599469fd3202ee7d1f94fb3e214"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/config.json",
+          "octets": 153,
+          "sha256": "51117f0b57474b2cf296ff080b9b21d275cfaf276cae7f45ee923a38ce2541e8"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard1of7",
+          "octets": 4194304,
+          "sha256": "30c7ed452167895b05f6b22dc6bc533232a4cf5c924d3b0187fdbae00b6f414e"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard2of7",
+          "octets": 4194304,
+          "sha256": "4884db73522a62f7d32a077dda481a1feec267156dfe4b2be0db984cafbd5d62"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard3of7",
+          "octets": 4194304,
+          "sha256": "9055d2a2bbcdb8018c3ed334f599d113e70a903cd8b21a192802022edbbf9211"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard4of7",
+          "octets": 4194304,
+          "sha256": "96da27ce67aab0768f9670193bbed8b3256a16922008da44bbdd713b8edee443"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard5of7",
+          "octets": 4194304,
+          "sha256": "44de3b14143b2fb08d775b844c5c557f558abe91d4926079051f50c69e6343f2"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard6of7",
+          "octets": 4194304,
+          "sha256": "1e510d92217cabaeeea98f380d790f56a1a197eef1b63b308e3b9bec8724a3f7"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/group1-shard7of7",
+          "octets": 2472722,
+          "sha256": "e6f37735bb00a12aa9cdf77d8782e4573f88a45f068c46fd245bfa9eb041e90e"
+        },
+        {
+          "chemin": "magenta/drums_2bar_nade_9_q2/weights_manifest.json",
+          "octets": 3592,
+          "sha256": "1ee9058918a4364d2c4c32a0a7cbbf9cff2a0df0bbaebaafaee025f05254306b"
+        }
+      ]
+    },
+    {
+      "id": "magenta-melody-rnn",
+      "nom": "Continuation de mélodie (MusicRNN)",
+      "nomEn": "Melody continuation (MusicRNN)",
+      "noeuds": [
+        "magenta-continuation",
+        "magenta-generer-melodie"
+      ],
+      "octets": 13931806,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-melody-rnn.zip",
+        "octets": 12973291,
+        "sha256": "5bdd33ea3d7337387162abd32f788eeab3307d38fecb07e71a2bf248cf4d46a6"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/melody_rnn/config.json",
+          "octets": 131,
+          "sha256": "5d8748f85eca7ae3d46f3be7b85ce7c0a016af84fa117cfeee08bf6391fbf46c"
+        },
+        {
+          "chemin": "magenta/melody_rnn/group1-shard1of4",
+          "octets": 4194304,
+          "sha256": "83e7cc6a19866e1961b09d827a527d6558683e69283a1968112a8be991451155"
+        },
+        {
+          "chemin": "magenta/melody_rnn/group1-shard2of4",
+          "octets": 4194304,
+          "sha256": "8be7de00494d31d04e6e00d6bb4233b31740f0d2c04de3205200d9a068ffb232"
+        },
+        {
+          "chemin": "magenta/melody_rnn/group1-shard3of4",
+          "octets": 4194304,
+          "sha256": "c156ae77e9cc62fa703a0f47d89a19c16493c79b24e596a493bc437f78b06802"
+        },
+        {
+          "chemin": "magenta/melody_rnn/group1-shard4of4",
+          "octets": 1348104,
+          "sha256": "63d71902000473d9fe06cd35f18e4126c0c08666bb2a6d8669d46f298e005911"
+        },
+        {
+          "chemin": "magenta/melody_rnn/weights_manifest.json",
+          "octets": 659,
+          "sha256": "9c802c461ffdaf188ad40724a0d5dd9934fb7bf7654dd69be2b8891d27767e8b"
+        }
+      ]
+    },
+    {
+      "id": "magenta-mel-2bar",
+      "nom": "Interpolation de mélodies (MusicVAE)",
+      "nomEn": "Melody interpolation (MusicVAE)",
+      "noeuds": [
+        "magenta-interpoler-midi"
+      ],
+      "octets": 17696892,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-mel-2bar.zip",
+        "octets": 16433686,
+        "sha256": "ca89c22dbde0fd721940d05ef56c72c576a92b7d302515a9849f27bc49d55656"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/mel_2bar_small/config.json",
+          "octets": 168,
+          "sha256": "9d61c1182d4fd99726762bf1bb137ea44fbe224835063818355e5c69180aaf50"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/group1-shard1of5",
+          "octets": 4194304,
+          "sha256": "2ff2d2da62470f9c9e0c8069e5705f4f70400962a771a8d613b0581f72a5985b"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/group1-shard2of5",
+          "octets": 4194304,
+          "sha256": "b692831ad0b72919b36dad17e0740e535c47a3c7c49c6310b0708bf091447d8b"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/group1-shard3of5",
+          "octets": 4194304,
+          "sha256": "c8cc4377fe87301c8246d7d931b408e66529a18d61781782ce9513ad3ee05051"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/group1-shard4of5",
+          "octets": 4194304,
+          "sha256": "cb5a830db4dc46ee32a40cbf44cdf87faad99b345c0bb18b29b57af038db0556"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/group1-shard5of5",
+          "octets": 917864,
+          "sha256": "7f32a9ac0ec69bc980defa41073ac4c2e311cc99d37d98e75d94535dff7cfc59"
+        },
+        {
+          "chemin": "magenta/mel_2bar_small/weights_manifest.json",
+          "octets": 1644,
+          "sha256": "8520ed17fd2406215ac558c34871d184cf651ecffcfc03dff0eb381c3124cb1a"
+        }
+      ]
+    },
+    {
+      "id": "magenta-groovae",
+      "nom": "Humanisation de groove (GrooVAE)",
+      "nomEn": "Groove humanization (GrooVAE)",
+      "noeuds": [
+        "magenta-humaniser-groove"
+      ],
+      "octets": 16341880,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-groovae.zip",
+        "octets": 15137053,
+        "sha256": "d97c5f3c50c590b8d42b0287b49f2dbc9071845dfefe76fdc27684f5250ea75c"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/groovae_2bar_humanize/config.json",
+          "octets": 180,
+          "sha256": "64096919d9452afc6404c441904f95c4b91f4da7e514f0725e858586fca94bc5"
+        },
+        {
+          "chemin": "magenta/groovae_2bar_humanize/group1-shard1of4",
+          "octets": 4194304,
+          "sha256": "1612d3ed51d794229a33d5cc0cd563cf6aedb600d47d68c458147e215d499e3d"
+        },
+        {
+          "chemin": "magenta/groovae_2bar_humanize/group1-shard2of4",
+          "octets": 4194304,
+          "sha256": "080df5f4cef89f2b17147f744e8e2c75b61c71a464094634ac87a20933696f2b"
+        },
+        {
+          "chemin": "magenta/groovae_2bar_humanize/group1-shard3of4",
+          "octets": 4194304,
+          "sha256": "f323d2dec213af7693cd16f94bfe16e5028b6f9a24fc42db2b97baaedcae846f"
+        },
+        {
+          "chemin": "magenta/groovae_2bar_humanize/group1-shard4of4",
+          "octets": 3757164,
+          "sha256": "b99d2e4ce5725bcb895a3699b25e4326a59ebf0a85e09cae3b78e3a8779463df"
+        },
+        {
+          "chemin": "magenta/groovae_2bar_humanize/weights_manifest.json",
+          "octets": 1624,
+          "sha256": "c124d59c9c8338c7722998a8f15301d82ffcce2aeaab3470f983f8f35152674a"
+        }
+      ]
+    },
+    {
+      "id": "magenta-piano-genie",
+      "nom": "Improvisation au piano (Piano Genie)",
+      "nomEn": "Piano improvisation (Piano Genie)",
+      "noeuds": [
+        "magenta-improvisation"
+      ],
+      "octets": 1162452,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-piano-genie.zip",
+        "octets": 1082674,
+        "sha256": "3362e2ed7b7a2f80eb12de40f660f4836b3018a2e40170ad6676f26677fff81b"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/piano_genie/group1-shard1of1",
+          "octets": 1161568,
+          "sha256": "516c74178d85ce6eea34c4a9bb7a5b682ff8686689e4b88f718bd4a4afaf8039"
+        },
+        {
+          "chemin": "magenta/piano_genie/weights_manifest.json",
+          "octets": 884,
+          "sha256": "a018e49e061183c33c0289a0525b452194b5e99b67c88a22196d304c2b3ef7d7"
+        }
+      ]
     }
   ]
 }

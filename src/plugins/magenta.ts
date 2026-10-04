@@ -10,6 +10,10 @@ import { appliquerInstrumentMidi } from "../audio/midi-ecriture";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { hasardDuNoeud } from "../core";
 import { installerGardeWorker } from "./garde-worker";
+// LES SEPT NOEUDS ANNONCENT LEUR MODELE, comme tous les noeuds a modele du depot : les points de
+// controle Magenta sont au manifeste, donc l'installeur allege peut ne pas les avoir, et le
+// composant doit le dire puis proposer de les prendre plutot que d'echouer sans raison lisible.
+import { annoncerModele } from "./message-modele";
 
 let worker: Worker | null = null;
 const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: any }[] = [];
@@ -111,6 +115,7 @@ export const fiches: FicheAudio[] = ([
         const temperature = ctx.paramNombre("Température", 1.0);
         const tempo = ctx.paramNombre("Tempo", 120);
         const bars = ctx.paramNombre("Mesures", 2);
+        await annoncerModele(ctx, "magenta-drums", traduire("msg.progress.magenta.batterie"));
         const file = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "drums", { temperature, bars, tempo }),
           ctx.paramNombre("Instrument", 0),
@@ -165,6 +170,7 @@ export const fiches: FicheAudio[] = ([
         const q = ctx.paramTexte("Quantification", "1/16");
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
+        await annoncerModele(ctx, "magenta-continuation", traduire("msg.progress.magenta.continuation"));
         const out = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "continuation", { file, steps, temperature, spq }),
           ctx.paramNombre("Instrument", 0),
@@ -228,6 +234,7 @@ export const fiches: FicheAudio[] = ([
         const temperature = ctx.paramNombre("Température", 1.0);
         const mode = ctx.paramTexte("Mode", "random");
         const { graine: seed } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+        await annoncerModele(ctx, "magenta-improvisation", traduire("msg.progress.magenta.improvisation"));
         const file = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "improvisation", { duree, tempo, temperature, mode, seed }),
           ctx.paramNombre("Instrument", 0),
@@ -283,6 +290,7 @@ export const fiches: FicheAudio[] = ([
         const q = ctx.paramTexte("Quantification", "1/16");
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
+        await annoncerModele(ctx, "magenta-generer-melodie", traduire("msg.progress.magenta.melodie"));
         const out = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "melody", { file, steps, temperature, spq }),
           ctx.paramNombre("Instrument", 0),
@@ -337,6 +345,7 @@ export const fiches: FicheAudio[] = ([
         const temperature = ctx.paramNombre("Température", 1.0);
         const numInterps = ctx.paramNombre("Interpolations", 5);
         const position = ctx.paramNombre("Position", 0.5);
+        await annoncerModele(ctx, "magenta-interpoler-midi", traduire("msg.progress.magenta.interpolation"));
         const out = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "interpolation", { file1, file2, numInterps, temperature, position }),
           ctx.paramNombre("Instrument", 0),
@@ -395,6 +404,7 @@ export const fiches: FicheAudio[] = ([
         const payload = file instanceof File
           ? { file, temperature, bars, tempo, similarity }
           : { temperature, bars, tempo };
+        await annoncerModele(ctx, "magenta-generer-batterie", traduire("msg.progress.magenta.batterie"));
         const out = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, type, payload),
           ctx.paramNombre("Instrument", 0),
@@ -442,6 +452,7 @@ export const fiches: FicheAudio[] = ([
         const q = ctx.paramTexte("Quantification", "1/16");
         const spqMap: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
         const spq = spqMap[q] ?? 4;
+        await annoncerModele(ctx, "magenta-humaniser-groove", traduire("msg.progress.magenta.groove"));
         const out = await appliquerInstrumentMidi(
           await runMagentaFile(ctx, "humanize", { file, temperature, spq }),
           ctx.paramNombre("Instrument", 0),

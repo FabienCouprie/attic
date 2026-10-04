@@ -17,6 +17,9 @@ vite-out.txt
 # ONNX models (too large for git, distributed via extraResources)
 public/oonx/
 
+# Magenta checkpoints (77 MB, fetched by scripts/download-magenta.cjs, shipped via extraResources)
+public/magenta/
+
 # Piper TTS assets (copied from node_modules by postinstall)
 public/piper-tts/
 
