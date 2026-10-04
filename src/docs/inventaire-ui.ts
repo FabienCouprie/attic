@@ -6,7 +6,7 @@
 // notice. Rien ne disait comment il est MONTRÉ. Or l'affichage d'un composant ne se décide pas
 // dans son propre fichier : il se décide dans trois tables partagées, loin de lui.
 //
-//   • `ui/vues.tsx` — quelle vue l'habille, et de quel côté du lecteur audio
+//   • `vues-domaine/vues.tsx` — quelle vue l'habille, et de quel côté du lecteur audio
 //   • `ui/tailles-noeuds.ts` — la taille qu'il reçoit à sa création
 //   • `ui/AtelierNode.tsx` — s'il est redimensionnable, et si le lecteur générique lui est laissé
 //
@@ -26,9 +26,12 @@
 // répondre toute seule.
 //
 // Régénération : `npm run docs:interface`.
-import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "../ui/vues";
+import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "../ui/registre-vues";
+// LES VUES DU DOMAINE SE DECLARENT PAR UN EFFET DE BORD : ce generateur decrit ce que l audio
+// montre, il doit donc provoquer cette declaration comme le fait la racine de composition.
+import "../vues-domaine/vues";
 import { tailleDefaut } from "../ui/tailles-noeuds";
-import type { FicheAudio } from "../audio/types-domaine";
+import type { FicheUI } from "../ui/registre-actif";
 
 export interface LigneInventaire {
   id: string;
@@ -51,7 +54,7 @@ const VUES_AVEC_REDIMENSIONNEUR = new Set(["VueAttracteurIFS", "VueRenduImage", 
 const nomsDeVues = (ficheId: string, position: "avant" | "apres"): string[] =>
   vuesPourNoeud(ficheId, position).map((v) => v.name || "(anonyme)");
 
-export function inventorier(fiches: readonly FicheAudio[]): LigneInventaire[] {
+export function inventorier(fiches: readonly FicheUI[]): LigneInventaire[] {
   return fiches.map((f) => {
     const avant = nomsDeVues(f.id, "avant");
     const apres = nomsDeVues(f.id, "apres");
@@ -75,7 +78,7 @@ export function inventorier(fiches: readonly FicheAudio[]): LigneInventaire[] {
 
 const oui = (b: boolean) => (b ? "oui" : "non");
 
-export function genererInventaireMarkdown(fiches: readonly FicheAudio[]): string {
+export function genererInventaireMarkdown(fiches: readonly FicheUI[]): string {
   const lignes = inventorier(fiches);
   const habilles = lignes.filter((l) => l.vueAvant !== "—" || l.vueApres !== "—");
   const sansLecteur = lignes.filter((l) => !l.lecteurGenerique);
@@ -87,7 +90,7 @@ export function genererInventaireMarkdown(fiches: readonly FicheAudio[]): string
     "",
     "Ce que chaque composant fait est dans [COMPONENTS.md](COMPONENTS.md). Ce fichier-ci dit comment",
     "il est **montré**, ce qui se décide dans des tables partagées et non dans son propre fichier :",
-    "`ui/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.",
+    "`vues-domaine/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.",
     "",
     "Il est versionné pour une seule raison : **rendre visible dans un diff** le composant qu'une",
     "modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un composant à rouvrir.",
@@ -138,7 +141,7 @@ export interface EntreeBalayage {
   entreeRequiseAutre: boolean;
 }
 
-export function listePourBalayage(fiches: readonly FicheAudio[]): EntreeBalayage[] {
+export function listePourBalayage(fiches: readonly FicheUI[]): EntreeBalayage[] {
   return inventorier(fiches)
     .filter((l) => l.vueAvant !== "—" || l.vueApres !== "—")
     .map((l) => {

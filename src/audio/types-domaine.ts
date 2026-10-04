@@ -13,10 +13,26 @@
 //
 // Fichier FEUILLE : il n'importe que des types du cœur, donc aucun cycle possible
 // avec `audio/index.ts` (que les plugins importent déjà pour le DSP).
-import type { PluginDef, TypeValeur } from "../core";
+import type { PluginDef } from "../core";
 
-/** Ce qui circule sur les arêtes du domaine audio. */
-export type ValeurAudio = TypeValeur;
+/**
+ * Ce qui circule sur les arêtes du domaine audio.
+ *
+ * ELLE ÉTAIT DÉCLARÉE DANS LE CŒUR, sous le nom `TypeValeur`, et c'était la dernière chose que le
+ * cœur savait de l'audio. Elle est ici, où elle a toujours eu sa place : un domaine déclare son
+ * union et la passe en paramètre générique, comme le fait le domaine nombre de
+ * `core/domaine-nombre.test.ts` avec `number | string`.
+ *
+ * `{ debut, duree }` EST UNE ZONE DE SON, en secondes : ce qu'un sélecteur désigne dans un tampon.
+ * Elle circule comme une valeur à part entière, un nœud pouvant la produire sans produire le son.
+ */
+export type ValeurAudio =
+  | AudioBuffer
+  | Float32Array
+  | File
+  | string
+  | { debut: number; duree: number }
+  | null;
 
 /** Runtime passé aux plugins audio (Web Audio). */
 export type RuntimeAudio = AudioContext;

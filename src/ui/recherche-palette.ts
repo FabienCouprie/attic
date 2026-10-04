@@ -1,3 +1,4 @@
+import type { FicheUI } from "./registre-actif";
 // ui/recherche-palette.ts — Filtre de la palette de nœuds.
 //
 // Extrait de Palette.tsx pour être testable sans rendu React, comme
@@ -6,10 +7,9 @@
 // contiennent seules les termes par lesquels on cherche réellement un
 // traitement qu'on ne sait pas nommer — « battement », « irrationnel »,
 // « illusion » ne figurent dans aucun nom ni aucun résumé.
-import type { FicheAudio } from "../audio/types-domaine";
 
 /** Champs d'une fiche balayés par la recherche, du plus au moins spécifique. */
-function champs(p: FicheAudio, familleTraduite: string): (string | undefined)[] {
+function champs(p: FicheUI, familleTraduite: string): (string | undefined)[] {
   return [p.nom, p.resume, p.famille, p.nomEn, p.resumeEn, familleTraduite, p.notice, p.noticeEn];
 }
 
@@ -21,10 +21,10 @@ function champs(p: FicheAudio, familleTraduite: string): (string | undefined)[] 
  *   courante est déjà celle des libellés stockés.
  */
 export function filtrerFiches(
-  plugins: FicheAudio[],
+  plugins: FicheUI[],
   requete: string,
   familleTraduite: (famille: string) => string,
-): FicheAudio[] {
+): FicheUI[] {
   const s = requete.trim().toLowerCase();
   if (!s) return plugins;
   return plugins.filter((p) =>

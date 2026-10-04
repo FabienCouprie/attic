@@ -7,9 +7,14 @@
 // les champs purgés avec leur type, pour affichage à l'utilisateur.
 
 import { CHAMPS_ENREGISTRES, CHAMPS_RECHARGEABLES } from "./saisies";
+import { servicesDomaine } from "./services-domaine";
 
 // Types de champs qui ne survivent pas à JSON.stringify / re-parse.
-const TYPES_NON_SERIALIZABLE = ["File", "Blob", "AudioBuffer", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
+//
+// CEUX-CI VIENNENT DU LANGAGE ET DES API DU NAVIGATEUR, et le cœur a de bonnes raisons de les
+// connaître. Ceux du domaine s'y ajoutent à l'appel, par `servicesDomaine()` : `AudioBuffer`
+// figurait ici en dur, et c'était le domaine audio nommé dans le cœur.
+const TYPES_NON_SERIALIZABLE = ["File", "Blob", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
 
 // Liste blanche : champs conservés par usePersistance.exporter.
 // Liste blanche : ce qu'un projet enregistre. DERIVEE de la table des genres de saisie, dans
@@ -26,7 +31,10 @@ function typeChamp(v: unknown): string {
   if (v === undefined) return "undefined";
   if (typeof File !== "undefined" && v instanceof File) return "File";
   if (typeof Blob !== "undefined" && v instanceof Blob) return "Blob";
-  if (typeof AudioBuffer !== "undefined" && v instanceof AudioBuffer) return "AudioBuffer";
+  // LE DOMAINE NOMME SES PROPRES VALEURS, à la place qu'occupait `instanceof AudioBuffer` : après
+  // `File` et `Blob`, avant `ArrayBuffer`. Le comportement d'avant est donc inchangé.
+  const duDomaine = servicesDomaine().nomDeType(v);
+  if (duDomaine !== null) return duDomaine;
   if (v instanceof ArrayBuffer) return "ArrayBuffer";
   if (ArrayBuffer.isView(v)) return (v.constructor?.name ?? "TypedArray");
   if (typeof v === "string") return "string";
@@ -39,7 +47,9 @@ function typeChamp(v: unknown): string {
 }
 
 function estNonSerializable(v: unknown): boolean {
-  return TYPES_NON_SERIALIZABLE.includes(typeChamp(v));
+  const nom = typeChamp(v);
+  return TYPES_NON_SERIALIZABLE.includes(nom)
+    || servicesDomaine().typesNonSerialisables.includes(nom);
 }
 
 // Analyse un objet `data` de nœud et renvoie la liste des champs purgés.

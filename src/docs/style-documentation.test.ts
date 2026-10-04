@@ -13,7 +13,7 @@
 // Ce test ne dit rien du style démonstratif, qui ne se mesure pas. Il tient le seul symptôme qui
 // se mesure, et c'est déjà ce qui se voit en premier.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 
 /** Ce qui n'existe qu'en capitales : des noms, pas des insistances. */
 const SIGLES = new Set([

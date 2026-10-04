@@ -4,7 +4,7 @@
 
 Ce que chaque composant fait est dans [COMPONENTS.md](COMPONENTS.md). Ce fichier-ci dit comment
 il est **montré**, ce qui se décide dans des tables partagées et non dans son propre fichier :
-`ui/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.
+`vues-domaine/vues.tsx`, `ui/tailles-noeuds.ts`, `ui/AtelierNode.tsx`.
 
 Il est versionné pour une seule raison : **rendre visible dans un diff** le composant qu'une
 modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un composant à rouvrir.

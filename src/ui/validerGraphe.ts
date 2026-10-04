@@ -5,9 +5,9 @@
 
 import type { Connection, Edge } from "@xyflow/react";
 import { estFrontiere } from "../core";
-import { registre } from "../audio/adaptateur";
+import { registreUI } from "./registre-actif";
 
-const trouverDef = (ficheId: string) => registre.trouverDef(ficheId);
+const trouverDef = (ficheId: string) => registreUI().trouverDef(ficheId);
 
 function indexHandle(handle: string | null | undefined): number | null {
   if (!handle) return null;
@@ -31,7 +31,7 @@ export function validerArete(source: any, target: any, edge: Edge | Connection):
   const typeS = defS.sorties[si]?.type;
   const typeT = defT.entrees[ti]?.type;
   if (!typeS || !typeT) return false;
-  return registre.fluxCompatibles(typeS, typeT);
+  return registreUI().fluxCompatibles(typeS, typeT);
 }
 
 export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {

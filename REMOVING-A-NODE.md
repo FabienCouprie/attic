@@ -26,7 +26,7 @@ Delete the entry from `src/plugins/prompt-graphe.ts`:
 
 ### 4. Remove any custom view
 
-If the node has a registered view in `src/ui/vues.tsx`, delete the entry:
+If the node has a registered view in `src/vues-domaine/vues.tsx`, delete the entry:
 
 ```ts
 { correspond: parId("node-id"), vue: VueXxx, position: "avant" },

@@ -11,10 +11,11 @@ import {
   redériverMeta, frontieresPourEdition, renommerMeta,
   type NoeudG, type AreteG,
 } from "../../core";
-import { registre } from "../../audio/adaptateur";
-const trouverDef = (id: string) => registre.trouverDef(id);
+
+const trouverDef = (id: string) => registreUI().trouverDef(id);
 import { idUnique } from "../ids";
 import { useI18n } from "../../i18n";
+import { registreUI } from "../registre-actif";
 
 // Typage souple : le code d'origine castait déjà tout en `unknown`/`any` pour passer
 // entre les nœuds React-Flow et les nœuds « purs » du cœur. On n'y touche pas.

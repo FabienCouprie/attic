@@ -13,11 +13,11 @@
 // la langue de l'interface : c'est ce qui les rend retrouvables à l'œil.
 
 import { comparerUnivers } from "../audio/ordre-catalogue";
-import type { FicheAudio } from "../audio/types-domaine";
+import type { FicheUI } from "./registre-actif";
 
 export interface GroupeFamille {
   famille: string;
-  defs: FicheAudio[];
+  defs: FicheUI[];
 }
 
 export interface GroupeUnivers {
@@ -32,11 +32,11 @@ export interface GroupeUnivers {
  * @param familleAffichee le libellé de la famille tel qu'il est montré.
  */
 export function grouperFiches(
-  fiches: readonly FicheAudio[],
-  nomAffiche: (f: FicheAudio) => string,
+  fiches: readonly FicheUI[],
+  nomAffiche: (f: FicheUI) => string,
   familleAffichee: (famille: string) => string,
 ): GroupeUnivers[] {
-  const map = new Map<string, Map<string, FicheAudio[]>>();
+  const map = new Map<string, Map<string, FicheUI[]>>();
   for (const f of fiches) {
     if (!map.has(f.univers)) map.set(f.univers, new Map());
     const familles = map.get(f.univers)!;

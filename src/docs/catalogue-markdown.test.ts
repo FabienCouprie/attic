@@ -3,7 +3,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { genererCatalogueMarkdown, creerSlugger, cellule, defautChoix } from "./catalogue-markdown";
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import "../audio/adaptateur";
 
 /**

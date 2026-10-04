@@ -9,6 +9,7 @@
 // `demonstration-video.ts`.
 
 import { estCourbe } from "./courbe";
+import { ordreDeLecture } from "../core/graphe";
 import type { ExecutionCourante } from "../plugins/grapheGlobal";
 
 export type Apercu =
@@ -64,42 +65,10 @@ function formaterValeur(v: unknown, anglais: boolean): string {
   return "";
 }
 
-/**
- * L'ordre dans lequel MONTRER les nœuds. Le tri topologique du moteur est valide mais indifférent
- * à la lecture : il calcule volontiers toutes les sources d'abord, puis leurs traitements, si bien
- * qu'un son et le traitement qu'il reçoit se trouvaient séparés par des nœuds sans rapport. On
- * suit ici les chaînes : parmi les nœuds prêts, on prend d'abord un successeur du dernier montré,
- * sinon le premier prêt dans l'ordre du moteur. L'ordre reste topologique.
- */
-export function ordreDeLecture(ordre: string[], aretes: { source: string; target: string }[]): string[] {
-  const dans = new Set(ordre);
-  const aretesUtiles = aretes.filter((a) => dans.has(a.source) && dans.has(a.target) && a.source !== a.target);
-  const restant = new Map(ordre.map((id) => [id, 0]));
-  for (const a of aretesUtiles) restant.set(a.target, (restant.get(a.target) ?? 0) + 1);
-  const rang = new Map(ordre.map((id, i) => [id, i]));
-  const faits = new Set<string>();
-  const sortie: string[] = [];
-  const pile: string[] = [];
-  while (sortie.length < ordre.length) {
-    const prets = ordre.filter((id) => !faits.has(id) && (restant.get(id) ?? 0) === 0);
-    if (!prets.length) { sortie.push(...ordre.filter((id) => !faits.has(id))); break; }
-    let choisi: string | undefined;
-    // Le successeur prêt du nœud le plus récemment montré dont la chaîne n'est pas épuisée.
-    while (pile.length && !choisi) {
-      const dernier = pile[pile.length - 1];
-      choisi = prets
-        .filter((id) => aretesUtiles.some((a) => a.source === dernier && a.target === id))
-        .sort((x, y) => (rang.get(x) ?? 0) - (rang.get(y) ?? 0))[0];
-      if (!choisi) pile.pop();
-    }
-    choisi ??= prets[0];
-    faits.add(choisi);
-    sortie.push(choisi);
-    pile.push(choisi);
-    for (const a of aretesUtiles) if (a.source === choisi) restant.set(a.target, (restant.get(a.target) ?? 0) - 1);
-  }
-  return sortie;
-}
+// L'ORDRE DE LECTURE A REJOINT LE CŒUR, où vit déjà le tri topologique : il ne connaît que des
+// identifiants et des arêtes, et le shell en avait besoin sans avoir à importer ce module.
+// Réexporté ici pour que les appelants du domaine n'aient pas à savoir qu'il a déménagé.
+export { ordreDeLecture } from "../core/graphe";
 
 /**
  * Les étapes d'une exécution, dans l'ordre de lecture (cf. `ordreDeLecture`).

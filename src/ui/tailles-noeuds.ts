@@ -1,3 +1,4 @@
+import type { FicheUI } from "./registre-actif";
 // src/ui/tailles-noeuds.ts — La taille de naissance de chaque composant sur le canevas.
 //
 // EXTRAIT D'`App.tsx` POUR ETRE INVENTORIE. La hauteur qu'un composant recoit a sa creation decide
@@ -5,9 +6,8 @@
 // rien dans un noeud ne de 162 pixels. Ce choix vivait dans `App.tsx`, ou rien ne pouvait le lire ;
 // il est ici pour que `docs/inventaire-ui.ts` le porte dans INTERFACE.md, et qu'un changement de
 // taille se voie dans un diff plutot que de se decouvrir a l'ecran.
-import type { FicheAudio } from "../audio/types-domaine";
 
-export function tailleDefaut(def: FicheAudio): { width: number; height: number } {
+export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
   const nbParams = def.parametres.length;
   let w = 260;

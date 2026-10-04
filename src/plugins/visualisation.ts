@@ -1,6 +1,6 @@
 // plugins/visualisation.ts — Parcours pédagogique « voir le son ».
 // Analyseur de spectre + spectrogramme : passe-plat (audio in → audio out), la
-// représentation est calculée/dessinée par la VUE enregistrée (ui/vues.tsx).
+// représentation est calculée/dessinée par la VUE enregistrée (vues-domaine/vues.tsx).
 // Oscillateur pédagogique : générateur (synthèse additive band-limitée) dont la
 // vue montre l'onde ET son spectre (timbre ↔ harmoniques).
 

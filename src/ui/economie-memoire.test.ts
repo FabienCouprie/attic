@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CLE_ECONOMIE_MEMOIRE, ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
-import { DUREE_LONGUE_S, apercuUtile } from "../core/memoire";
+// LE SEUIL ET LA RÈGLE SONT DANS LE DOMAINE : ce que pèse une valeur et à partir de quand cela
+// compte supposent de savoir ce qu'elle est. Le cœur ne porte plus que le graphe et l'interface.
+import { apercuUtileDuree as apercuUtile, DUREE_LONGUE_S } from "../audio/memoire-audio";
 
 const stockage = (valeur: string | null) => ({ getItem: () => valeur });
 

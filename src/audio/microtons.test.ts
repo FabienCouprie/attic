@@ -39,7 +39,7 @@ import { hauteurDepuisNom, nomNote as nomNoteLlm } from "./abc-edition-llm";
 import { parametresLecture, voixPourNote, type Banque, type Zone } from "./clavier-banque";
 import { transposerParReechantillonnage } from "./reverbes-etendues";
 import { midiVersNotationEasyScore } from "../plugins/vexflow-notation";
-import { disposition, nomNote } from "../ui/clavier-disposition";
+import { disposition, nomNote } from "../vues-domaine/clavier-disposition";
 
 /** L'écart en cents entre deux fréquences : la seule mesure qui dise si un microton a survécu. */
 const cents = (hz: number, reference: number) => 1200 * Math.log2(hz / reference);

@@ -14,10 +14,11 @@
 // échoue. Seuls restent les résultats du run, comme après un « Lancer » ordinaire.
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
-import { registre } from "../../audio/adaptateur";
+
 import { langueCourante, traduire } from "../../i18n";
 import { scenarioDemo, type ActionDemo } from "./scenario";
 import { CHAMPS_RESULTAT } from "../hooks/useExecutionGraphe";
+import { registreUI } from "../registre-actif";
 
 export const EVENEMENT_FILMER = "attic:filmer-demo";
 
@@ -138,7 +139,7 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
       autres.filter((n) => !FICHES_VIDEO.has(String(n.data?.ficheId))).map((n) => ({ id: n.id, ficheId: String(n.data?.ficheId ?? ""), label: n.data?.label })),
       copieAretes.map((a) => ({ id: a.id, source: a.source, target: a.target })),
       (ficheId) => {
-        const def = registre.trouverDef(ficheId);
+        const def = registreUI().trouverDef(ficheId);
         if (!def) return null;
         const en = langueCourante() === "en";
         return {

@@ -4,12 +4,16 @@
 // C'est le test qui était impossible à écrire avec le singleton global.
 import { describe, it, expect } from "vitest";
 import { creerRegistre } from "./registre";
-import type { PluginDef, TypeValeur } from "./types";
+import type { PluginDef } from "./types";
+
+// LE DOMAINE D ESSAI DECLARE SA PROPRE UNION, comme tout domaine. Elle etait prise dans le coeur,
+// sous le nom `TypeValeur`, a l epoque ou le coeur nommait encore les valeurs de l audio.
+type ValeurEssai = AudioBuffer | Float32Array | string | null;
 
 // ── Domaine audio ──
-const audio = creerRegistre<TypeValeur, AudioContext>();
+const audio = creerRegistre<ValeurEssai, AudioContext>();
 audio.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f" });
-const reverb: PluginDef<TypeValeur, AudioContext> = {
+const reverb: PluginDef<ValeurEssai, AudioContext> = {
   id: "reverb",
   nom: "Reverb",
   univers: "Traitement",

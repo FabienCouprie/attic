@@ -14,7 +14,7 @@ import "node-web-audio-api/polyfill.js";
 import { it, expect } from "vitest";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import "../audio/adaptateur";
 import { genererCatalogueMarkdown } from "./catalogue-markdown";
 

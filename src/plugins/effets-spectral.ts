@@ -78,6 +78,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Applique une expression mathématique à chaque échantillon du signal.",
     resumeEn: "Applies a mathematical expression to each sample of the signal.",
+    // L'expression est écrite par l'utilisateur : rien ne borne ce qu'elle rend.
+    sortieHorsPlagePossible: true,
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Volume" },
@@ -135,6 +137,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Modifie le spectre du signal par des expressions mathématiques sur magnitude et phase.",
     resumeEn: "Modifies the signal spectrum by mathematical expressions on magnitude and phase.",
+    // Les expressions sont écrites par l'utilisateur : rien ne borne ce qu'elles rendent.
+    sortieHorsPlagePossible: true,
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [

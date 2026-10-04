@@ -23,11 +23,17 @@ cœur, la propagation, les métanodes et l'UI, **sans modifier `src/core/`**.
 | Couche | Fichiers | Réutilisé tel quel ? |
 |---|---|---|
 | **Cœur** — registre, tri topologique, validation, métanodes, cache | `src/core/**` | ✅ intégralement, sans modification |
-| **UI** — canevas, palette, inspecteur, exécution, persistance | `src/ui/**` | ⚠️ largement, mais couplé à l'audio par des imports (voir §6) |
+| **Shell** — canevas, palette, inspecteur, exécution, persistance | `src/ui/**` | ✅ il ne nomme aucun domaine ; vous y déposez le vôtre (voir §6) |
+| **Racine de composition** — ce qui joint les deux | `src/composition.ts` | ❌ vous écrivez la vôtre (≈ 15 lignes) |
 | **Adaptateur** — registre typé, types de flux, câblage | `src/audio/adaptateur.ts` | ❌ vous en écrivez un (≈ 30 lignes) |
 | **Plugins** — les nœuds eux-mêmes | `src/plugins/**` | ❌ vous écrivez les vôtres |
 
-Le travail réel est donc : **un fichier de types + un adaptateur + vos plugins**.
+Le travail réel est donc : **un fichier de types + un adaptateur + une racine de
+composition + vos plugins**.
+
+Des vues de nœud propres à votre domaine, des liens de barre d'outils et des
+genres de paramètre se déposent de la même façon, et sont **facultatifs** : ce
+que vous ne déposez pas n'existe pas, et rien ne casse.
 
 ---
 
@@ -238,80 +244,85 @@ livrés en `.zip` et installés à chaud.
 
 ---
 
-## 6. Brancher l'UI — le point de friction
+## 6. Brancher l'UI — par la racine de composition
 
-C'est la seule partie qui demande une intervention. Le *renderer* de nœud
-(`AtelierNode.tsx`) est déjà générique : en-tête, documentation, ports colorés
-par type de flux et statut sont dessinés à partir de la fiche, quel que soit le
-domaine. La palette et l'inspecteur se construisent aussi entièrement à partir
-des fiches (`univers` / `famille` / `parametres`).
+Le *renderer* de nœud (`AtelierNode.tsx`) est générique : en-tête,
+documentation, ports colorés par type de flux et statut sont dessinés à partir
+de la fiche, quel que soit le domaine. La palette et l'inspecteur se
+construisent entièrement à partir des fiches (`univers` / `famille` /
+`parametres`).
 
-**Mais** il reste deux couplages distincts, d'ampleur très différente.
+**Le shell ne nomme aucun domaine.** Il demande, et c'est le domaine qui vient
+se faire connaître, par quatre poteaux déclarés dans `src/ui/` et **vides par
+défaut** :
 
-### 6.a — Le registre importé en dur (5 fichiers)
+| Poteau | Ce que le domaine y dépose |
+|---|---|
+| `ui/registre-actif.ts` | son registre de fiches, et le type `FicheUI` que le shell emploie |
+| `ui/registre-vues.ts` | ce que chaque nœud montre sous son en-tête |
+| `ui/favoris.ts` | les liens que la barre d'outils propose |
+| `ui/widgets-parametre.ts` | ses genres de paramètre, avec leur saisie |
+
+Les dépôts ont lieu dans `src/composition.ts`, **le seul fichier qui connaît les
+deux côtés**. Brancher un autre domaine, c'est écrire le vôtre :
 
 ```ts
-import { registre } from "../audio/adaptateur";
+// src/composition.ts
+import { registre } from "./images/adaptateur";
+import { configurerRegistreUI, type RegistreUI } from "./ui/registre-actif";
+
+configurerRegistreUI(registre as unknown as RegistreUI);
+// puis vos vues, vos liens, vos genres de paramètre — ou rien du tout.
 ```
 
-| Fichier | Rôle |
-|---|---|
-| `ui/App.tsx` | catalogue, création de nœuds (+ 2 imports d'effet de bord) |
-| `ui/AtelierNode.tsx` | résolution de fiche, couleur des ports |
-| `ui/hooks/useExecutionGraphe.ts` | résolution de plugin à l'exécution |
-| `ui/hooks/useMetaComposants.ts` | (dés)enregistrement des métas |
-| `ui/metasLocaux.ts` | persistance des métas |
+> **L'ordre des imports est une condition de démarrage.** `ui/App.tsx` fait son
+> démarrage au chargement du module (sauvegarde restaurée, méta-composants
+> relus) et réclame le registre dès cet instant. `./composition` doit donc être
+> le **premier** import de `main.tsx` ; `src/docs/composition.test.ts` le tient.
 
-`Palette.tsx`, `Inspector.tsx` et `vues.tsx` n'importent, eux, que le **type**
-`FicheAudio` : aucun couplage à l'exécution, un simple alias de type les
-substitue. Pour réutiliser l'UI telle quelle, remplacez les 5 imports ci-dessus
-par une **injection unique** configurée par la racine de composition
-(`main.tsx`) :
+Ce qui n'est pas déposé n'existe pas, et le shell le supporte : aucune vue
+déclarée, aucun bouton de favoris, aucun genre de paramètre propre. Rien ne
+casse, rien ne s'affiche à vide.
 
-```ts
-// src/ui/registre-actif.ts
-let actif: Registre<any, any> | null = null;
-export function configurerRegistreUI(r: Registre<any, any>) { actif = r; }
-export function registreUI() {
-  if (!actif) throw new Error("Registre UI non configuré");
-  return actif;
-}
-```
+### 6.a — Ce qui reste couplé, et le garde qui le compte
 
-`main.tsx` appelle alors `configurerRegistreUI(registre)` avec **votre**
-adaptateur, avant le premier rendu. Attention au `DEFS_CACHE` d'`AtelierNode.tsx`
-(un `Map` module-global) : il doit être vidé ou clefé par domaine.
+`src/docs/frontiere-domaine.test.ts` est la **source de vérité** : il compte les
+fichiers de `src/ui/` qui chargent du calcul du domaine, refuse que la liste
+grandisse, et exige qu'un fichier délivré en sorte. Ce document ne répète donc
+plus un chiffre qui vieillirait — lisez le test.
 
-> **Statut honnête :** ce découplage est identifié et planifié (« item 3 » de la
-> table de risques), pas encore fait. En attendant, la voie la plus rapide pour
-> un nouveau domaine est de garder ces imports et de substituer votre adaptateur
-> à `audio/adaptateur.ts`.
+Il tient aussi quatre faits :
 
-### 6.b — Les fonctions audio importées par des composants d'UI
+- `src/core/` n'importe rien du domaine, et **n'en nomme aucun type dans son
+  code**, pas même une globale comme `AudioBuffer` ;
+- le cœur fonctionne sans domaine : il traite alors un tampon comme n'importe
+  quel objet ;
+- les six poteaux n'importent rien du domaine ;
+- aucun fichier du shell n'importe `vues-domaine/vues`, la déclaration des vues
+  du domaine.
 
-Plus profond, et **non résolu par l'injection du registre** : certains fichiers
-d'UI importent des fonctions du module audio.
+### 6.b — Ce que le cœur demande au domaine
 
-| Fichier | Import |
-|---|---|
-| `ui/hooks/useExecutionGraphe.ts` | `bufferVersWavBlob` (export du résultat) |
-| `ui/vues.tsx` | `COULEURS` |
-| `ui/SequenceurBatterie.tsx` | `decoderMotif`, `encoderMotif` |
-| `ui/SequenceurMelodique.tsx` | `decoderMotifMelodique`, `encoderMotifMelodique`, `NB_RANGEES_MELO`, `nomNotePourRangee` |
-| `ui/VuMetre.tsx` | `mesurerNiveau` |
+Trois tâches du cœur ont besoin d'une réponse sur des valeurs qu'il ne connaît
+pas. Il la **demande**, par `core/services-domaine.ts`, et les réponses sont
+neutres par défaut :
 
-Les quatre derniers sont des **widgets spécifiques à des nœuds audio** : leur
-place naturelle est à côté du domaine, pas dans le shell générique. Un autre
-domaine ne les charge simplement pas — ils sont atteints par le registre de vues
-(§6, *Vues spécifiques*), donc inertes si aucune fiche ne les réclame. Seul
-`useExecutionGraphe` pose un vrai problème, puisqu'il est sur le chemin
-d'exécution de tout le monde : l'export du résultat devra passer par un service
-fourni par l'adaptateur.
+| Question | Pourquoi | Défaut |
+|---|---|---|
+| `empreinte(valeur)` | savoir si une entrée a changé, donc si un nœud se recalcule | `null` |
+| `nomDeType(valeur)` + `typesNonSerialisables` | dire ce qu'une sauvegarde JSON va détruire | `null`, `[]` |
+| `globalesInstallees` | ce qu'un node installé à chaud a sous la main | `{}` |
+
+Le cœur connaît de son côté ce qui vient du langage et du navigateur :
+primitifs, `File`, `Blob`, `ArrayBuffer`, tableaux typés, tableaux et objets
+simples. Côté audio, les réponses sont dans `audio/adaptateur.ts`.
 
 ### Vues spécifiques à un nœud
 
 Un nœud qui a besoin d'une UI propre (un lecteur, un éditeur, un canevas) ajoute
-une entrée au registre de vues de `src/ui/vues.tsx` :
+une entrée à la déclaration de son domaine. Pour l'audio, c'est
+`src/vues-domaine/vues.tsx` ; un autre domaine écrit la sienne et la fait
+importer par sa racine de composition :
 
 ```ts
 { correspond: parId("image:flou"), vue: VueApercuImage, position: "avant" }

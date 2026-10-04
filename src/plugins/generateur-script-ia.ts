@@ -6,7 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
-import { langueCourante, type Langue, traduire } from "../i18n";;
+import { langueCourante, type Langue, traduire } from "../i18n";
 
 function decouperEntree(valeur: unknown): string[] {
   if (typeof valeur !== "string" || !valeur.trim()) return [];

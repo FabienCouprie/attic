@@ -1,3 +1,11 @@
+// CET IMPORT EST LE PREMIER, ET L'ORDRE EST LA CONDITION DE DÉMARRAGE. Il branche le domaine sur le
+// shell. `ui/App.tsx` fait son propre démarrage au chargement du module — sauvegarde restaurée,
+// méta-composants relus, nodes installés — et tout cela réclame le registre : il doit donc avoir été
+// déposé avant que `App` soit évalué. Les imports étant évalués dans l'ordre du source, celui-ci
+// passe en tête. `src/docs/composition.test.ts` le tient, un commentaire ne survivant pas au premier
+// trieur d'imports.
+import "./composition";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nProvider } from "./i18n";

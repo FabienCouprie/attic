@@ -123,9 +123,16 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, sans-serif; }
 
+/* DEUX RANGÉES : LA BARRE D'OUTILS, PUIS LES TROIS COLONNES. La barre vivait dans la colonne du
+   canevas, qui ne fait que la largeur de la fenêtre moins la palette et l'inspecteur — 1060 px à
+   1600, 860 à 1400 — là où son contenu réclame 1134. Elle débordait donc À TOUTES LES LARGEURS, et
+   se peignait par-dessus la colonne de l'inspecteur ; sous 1394 px de fenêtre, « Lancer » sortait
+   carrément de l'écran. Une barre d'outils est de l'application et non du canevas : elle prend
+   donc la largeur de l'application. */
 .attic-app {
   display: grid;
   grid-template-columns: 260px 1fr 280px;
+  grid-template-rows: auto 1fr;
   height: 100vh; width: 100vw;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--text-primary);
@@ -223,8 +230,16 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .palette-toggle--repliee { font-size: 20px; padding: 4px 8px; }
 
 /* ── Barre d'outils ── */
+/* ET LE RENVOI À LA LIGNE EST LE FILET, pour les fenêtres trop étroites même sur toute la largeur.
+   Avec un `flex-shrink: 0` sur chaque groupe, chaque séparateur et chaque bouton, rien ne peut
+   céder : sous 1162 px de fenêtre le contenu ne tient toujours pas sur une rangée, et sans
+   `flex-wrap` il repartait hors de l'écran. La fenêtre descendant jusqu'à 900 px (`minWidth`
+   d'Electron), « Lancer » devenait alors inatteignable — rien ne le couvrait, il n'était plus là.
+   Le renvoi à la ligne ne cache rien et ne coûte une rangée de plus que lorsqu'une seule ne suffit
+   plus ; un défilement horizontal, lui, aurait rangé « Lancer » derrière un geste. */
 .attic-barre-outils {
-  display: flex; align-items: center; gap: 4px;
+  grid-column: 1 / -1;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
   padding: 8px 14px; border-bottom: 1px solid var(--border);
   background: var(--bg-toolbar); z-index: 5;
 }

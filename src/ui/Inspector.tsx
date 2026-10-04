@@ -1,9 +1,9 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
-import type { FicheAudio } from "../audio/types-domaine";
+
 import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
-import { SelecteurInstrumentSF2 } from "./SelecteurInstrumentSF2";
 import { SaisieCouleurs } from "./SaisieCouleurs";
+import { genreDomaine } from "./widgets-parametre";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
 import { libelleDefaut, parametreModifie, valeurDefaut } from "./parametre-modifie";
@@ -11,9 +11,10 @@ import { estUniteMultiplicative } from "../audio/courbe";
 import { decrireMeta, estMeta, trouverMeta } from "../core";
 
 import { LecteurAudio } from "./lecteur-audio";
+import type { FicheUI } from "./registre-actif";
 interface Props {
   noeud: { id: string; data: Record<string, unknown> } | null;
-  def: FicheAudio | undefined;
+  def: FicheUI | undefined;
   onChangerParametre: (nom: string, val: number | string) => void;
   onChargerFichier: (key: string, fichier: File) => void;
   onSupprimer: () => void;
@@ -335,11 +336,14 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
                 </select>
               );
             })()
-          ) : p.type === "sf2instrument" ? (
-            <SelecteurInstrumentSF2
-              value={Number(params[p.nom] ?? defautP)}
-              onChange={(v) => onChangerParametre(p.nom, v)}
-            />
+          ) : genreDomaine(p.type) ? (
+            // UN GENRE DÉCLARÉ PAR LE DOMAINE, et l'inspecteur n'a pas à savoir lequel. Il portait
+            // ici une branche nommant `"sf2instrument"` et le composant qui le rend : du domaine
+            // audio dans le shell générique.
+            genreDomaine(p.type)!.rendre({
+              valeur: params[p.nom], defaut: defautP,
+              onChanger: (v) => onChangerParametre(p.nom, v),
+            })
           ) : p.type === "texte" ? (
             <textarea
               value={String(params[p.nom] ?? defautP)}

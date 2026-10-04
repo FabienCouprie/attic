@@ -6,6 +6,7 @@
 // Domaine-neutre : ces fonctions ne connaissent ni l'audio ni React ; elles
 // opèrent sur des ids de nœuds, des arêtes et une table de résultats opaque.
 import type { AreteG } from "./meta";
+import { servicesDomaine } from "./services-domaine";
 
 // Tri topologique (algorithme de Kahn) d'un DAG. Renvoie les ids de nœuds dans
 // un ordre d'exécution valide (une source avant ses cibles). Réplique exacte de
@@ -183,18 +184,67 @@ export function empreinteParametres(data: Record<string, unknown>): string {
   });
 }
 
+/**
+ * L'ordre dans lequel MONTRER les nœuds, par opposition à celui dans lequel les calculer.
+ *
+ * Le tri topologique est valide mais indifférent à la lecture : il calcule volontiers toutes les
+ * sources d'abord, puis leurs traitements, si bien qu'un son et le traitement qu'il reçoit se
+ * trouvaient séparés par des nœuds sans rapport. On suit ici les chaînes : parmi les nœuds prêts, on
+ * prend d'abord un successeur du dernier montré, sinon le premier prêt dans l'ordre du moteur.
+ * L'ordre reste topologique.
+ *
+ * ELLE VIVAIT DANS `audio/demonstration.ts`, ET C'EST UNE FONCTION DE GRAPHE. Elle ne connaît que
+ * des identifiants et des arêtes : aucun tampon, aucune fréquence, rien du son. Elle y était parce
+ * que son premier appelant était la démonstration filmée, et son seul autre appelant — le scénario
+ * de cette démonstration, dans le shell — devait donc importer un module du domaine pour obtenir un
+ * tri de graphe. C'était le dernier couplage du shell à n'avoir aucune raison d'être.
+ */
+export function ordreDeLecture(ordre: string[], aretes: { source: string; target: string }[]): string[] {
+  const dans = new Set(ordre);
+  const aretesUtiles = aretes.filter((a) => dans.has(a.source) && dans.has(a.target) && a.source !== a.target);
+  const restant = new Map(ordre.map((id) => [id, 0]));
+  for (const a of aretesUtiles) restant.set(a.target, (restant.get(a.target) ?? 0) + 1);
+  const rang = new Map(ordre.map((id, i) => [id, i]));
+  const faits = new Set<string>();
+  const sortie: string[] = [];
+  const pile: string[] = [];
+  while (sortie.length < ordre.length) {
+    const prets = ordre.filter((id) => !faits.has(id) && (restant.get(id) ?? 0) === 0);
+    if (!prets.length) { sortie.push(...ordre.filter((id) => !faits.has(id))); break; }
+    let choisi: string | undefined;
+    // Le successeur prêt du nœud le plus récemment montré dont la chaîne n'est pas épuisée.
+    while (pile.length && !choisi) {
+      const dernier = pile[pile.length - 1];
+      choisi = prets
+        .filter((id) => aretesUtiles.some((a) => a.source === dernier && a.target === id))
+        .sort((x, y) => (rang.get(x) ?? 0) - (rang.get(y) ?? 0))[0];
+      if (!choisi) pile.pop();
+    }
+    choisi ??= prets[0];
+    faits.add(choisi);
+    sortie.push(choisi);
+    pile.push(choisi);
+    for (const a of aretesUtiles) if (a.source === choisi) restant.set(a.target, (restant.get(a.target) ?? 0) - 1);
+  }
+  return sortie;
+}
+
 // Empreinte stable d'une valeur individuelle (utilisée pour les entrées).
 // Permet au cache d'invalidation d'être basé sur les valeurs réelles reçues,
-// pas seulement sur les ids des nœuds amont. Traite les types courants du
-// moteur (primitifs, AudioBuffer, File/Blob, tableaux, objets simples).
+// pas seulement sur les ids des nœuds amont. Traite les types que le cœur
+// connaît du LANGAGE : primitifs, File/Blob, tableaux typés, tableaux, objets
+// simples. Les valeurs propres au domaine sont empreintes par le domaine.
+//
+// LE DOMAINE RÉPOND AVANT LES CAS GÉNÉRIQUES, et après les primitifs seulement : une valeur de
+// domaine n'est jamais une chaîne ni un nombre, et la placer là garde le comportement d'avant au
+// caractère près — c'est exactement la position qu'occupait le test `instanceof AudioBuffer`.
 export function empreinteValeur(valeur: unknown): string {
   if (valeur === null) return "null";
   if (valeur === undefined) return "undefined";
   const type = typeof valeur;
   if (type === "string" || type === "number" || type === "boolean") return String(valeur);
-  if (typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer) {
-    return `AudioBuffer(${valeur.length},${valeur.sampleRate},${valeur.numberOfChannels})`;
-  }
+  const duDomaine = servicesDomaine().empreinte(valeur);
+  if (duDomaine !== null) return duDomaine;
   if (valeur instanceof File) return `File(${valeur.name},${valeur.size},${valeur.type})`;
   if (valeur instanceof Blob) return `Blob(${valeur.size},${valeur.type})`;
   if (Array.isArray(valeur)) return `[${valeur.map(empreinteValeur).join(",")}]`;

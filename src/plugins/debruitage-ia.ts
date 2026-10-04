@@ -73,7 +73,7 @@ export const fiches: FicheAudio[] = ([
       const rendreOrigine = ctx.paramTexte("Sortie", "origine") !== "modele";
 
       await annoncerModele(ctx, "debruitage-ia", traduire("progress.debruitage.chargement_modele"));
-      const { preparerSession } = await import("../ia");
+      const { preparerSession } = await import("../audio/ia");
       // Par le processus principal dans l'app, et non par `fetch` : une fois
       // installée, `fetch("oonx/…")` cherche dans `resources/app/dist/oonx/`, où le
       // modèle n'est pas. C'était le défaut de la 3.2.0 — voir modele-embarque.ts.

@@ -1,13 +1,15 @@
 // ui/Palette.tsx — Catalogue des nœuds
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FicheAudio } from "../audio/types-domaine";
+
 import { useI18n } from "../i18n";
-import { registre } from "../audio/adaptateur";
+
+import type { FicheUI } from "./registre-actif";
 import { filtrerFiches } from "./recherche-palette";
 import { grouperFiches } from "./ordre-palette";
 import { nomFiche, resumeFiche } from "./libelles-fiche";
 import { contenuInfobulle, type ContenuInfobulle, type Rectangle } from "./infobulle-fiche";
 import { InfobulleFiche } from "./InfobulleFiche";
+import { registreUI } from "./registre-actif";
 
 // Le survol ouvre après un court délai : parcourir la liste à la souris ne doit pas
 // faire clignoter un panneau à chaque entrée traversée. 120 ms se ressent comme
@@ -22,7 +24,7 @@ const COULEURS: Record<string, string> = {
 };
 
 interface Props {
-  plugins: FicheAudio[];
+  plugins: FicheUI[];
   onSupprimerMeta?: (id: string) => void;
   ouverte?: boolean;
   onToggle?: () => void;
@@ -32,7 +34,7 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
   const [q, setQ] = useState("");
   const { t, lang } = useI18n();
 
-  function nomDef(def: FicheAudio) { return nomFiche(def, lang); }
+  function nomDef(def: FicheUI) { return nomFiche(def, lang); }
 
   // ── Infobulle maison ──
   const [survol, setSurvol] = useState<{ contenu: ContenuInfobulle; cible: Rectangle } | null>(null);
@@ -42,21 +44,21 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
     if (minuterie.current !== null) { window.clearTimeout(minuterie.current); minuterie.current = null; }
   };
   const fermerInfobulle = () => { annulerOuverture(); setSurvol(null); };
-  const ouvrirInfobulle = (def: FicheAudio, el: HTMLElement) => {
+  const ouvrirInfobulle = (def: FicheUI, el: HTMLElement) => {
     annulerOuverture();
     const r = el.getBoundingClientRect();
     const cible = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
     minuterie.current = window.setTimeout(() => {
       setSurvol({
         contenu: contenuInfobulle(def, lang, {
-          couleurFlux: (type) => registre.couleurFlux(type),
-          formeFlux: (type) => registre.formeFlux(type),
+          couleurFlux: (type) => registreUI().couleurFlux(type),
+          formeFlux: (type) => registreUI().formeFlux(type),
           libelleType: (type) => {
             // Le libellé du registre est français ; le dictionnaire traduit ceux qu'il
             // connaît, et un type venu d'un plugin garde le sien plutôt que rien.
             const cle = `typeFlux.${type}`;
             const traduit = t(cle);
-            return traduit === cle ? (registre.typeFlux(type)?.libelle ?? type) : traduit;
+            return traduit === cle ? (registreUI().typeFlux(type)?.libelle ?? type) : traduit;
           },
         }),
         cible,

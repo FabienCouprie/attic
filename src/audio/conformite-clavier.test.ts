@@ -10,7 +10,7 @@ import {
   adapterAuClavier, analyserConformiteClavier, assignerMains, partitionDeuxMains,
   resumeConformite, type NoteJouee,
 } from "./conformite-clavier";
-import { NOTE_MAX, NOTE_MIN } from "../ui/clavier-disposition";
+import { NOTE_MAX, NOTE_MIN } from "../vues-domaine/clavier-disposition";
 
 const n = (note: number, debut: number, fin = debut + 0.5, canal = 0): NoteJouee =>
   ({ note, debut, fin, canal, velocite: 90 });

@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       // ── MDX-Net : chemin renderer WASM (modèle plus léger) ──
-      const { telechargerDepuisUrl, preparerSession, separerAvecSession } = await import("../ia");
+      const { telechargerDepuisUrl, preparerSession, separerAvecSession } = await import("../audio/ia");
       const url = ctx.paramTexte("URL du modèle","");
       let octets: ArrayBuffer | null = null;
       const fichier = ctx.noeud.data.modeleFichier as File | undefined;

@@ -12,8 +12,13 @@ import "node-web-audio-api/polyfill.js";
 import { it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "../plugins/index";
-import "../audio/adaptateur";
+import { toutesLesFiches } from "../plugins";
+// Le shell demande son registre au lieu de l'importer : ce test exerce `vues-domaine/vues.tsx`, il
+// doit donc en déposer un, comme le fait la racine de composition.
+import { registre } from "../audio/adaptateur";
+import { configurerRegistreUI, type RegistreUI } from "../ui/registre-actif";
+
+configurerRegistreUI(registre as unknown as RegistreUI);
 import { genererInventaireMarkdown, inventorier, listePourBalayage } from "./inventaire-ui";
 
 const CHEMIN = join(process.cwd(), "INTERFACE.md");
@@ -94,7 +99,7 @@ const SANS_LECTEUR_GENERIQUE_ET_SORTIE_AUDIO = [
 // LE FILTRE EST CELUI DU CAS VOISIN, la sortie audio du composant, et il n'est pas décoratif : le
 // « Lecteur musique » rend un `<audio>` sans avoir ni entrée ni sortie. Le sien joue un dossier du
 // disque, jamais un résultat, donc aucun lecteur générique ne vient s'y ajouter.
-const UI = join(process.cwd(), "src", "ui");
+const UI = join(process.cwd(), "src", "vues-domaine");
 
 /** Le corps d'une fonction exportée, jusqu'au prochain export. */
 function corpsDe(nom: string, sources: Map<string, string>): string | null {
@@ -150,7 +155,7 @@ it.skipIf(ecrire)("UNE VUE QUI REND SON PROPRE LECTEUR LE DÉCLARE, sinon le nœ
   }
   expect(muets.sort(), [
     "Ces vues rendent leur propre lecteur sans le déclarer : le nœud en montrera DEUX.",
-    "Posez « porteLecteur: true » sur leur entrée du registre, dans src/ui/vues.tsx.",
+    "Posez « porteLecteur: true » sur leur entrée du registre, dans src/vues-domaine/vues.tsx.",
     "Si les deux lecteurs sont voulus — deux sons différents à comparer —, dites-le en commentaire ici.",
   ].join("\n")).toEqual([]);
 });

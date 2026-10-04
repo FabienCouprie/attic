@@ -15,7 +15,11 @@
 // invisible : une bulle oubliée par un filtre se serait glissée dans une rubrique existante. Sous son
 // propre nom, une fuite crée une rubrique qu'on ne peut pas ne pas voir.
 
-import type { AreteG, PluginDef, Registre, TypeValeur } from "../core";
+import type { AreteG, PluginDef } from "../core";
+// LA FICHE D'UNE BULLE EST GÉNÉRIQUE, et elle pouvait l'être depuis toujours : son exécuteur n'est
+// jamais appelé — une bulle est décorative, le moteur l'écarte de son ordre de calcul — et il ne
+// rend que des `null`, qui entrent dans n'importe quel type de valeur.
+import type { RegistreUI } from "./registre-actif";
 import {
   estBulle, estSubstitution, ficheDeBulle, noeudDeFicheBulle, portsDeBulle, type NoeudG,
 } from "../core";
@@ -60,7 +64,7 @@ export function signatureBulles(
 export function synchroniserFichesBulles(
   noeuds: readonly NoeudG[],
   aretes: readonly AreteG[],
-  registre: Registre<TypeValeur, AudioContext>,
+  registre: RegistreUI,
 ): { inscrites: string[]; retirees: string[] } {
   const getDef = (ficheId: string) => registre.trouverDef(ficheId);
   const attendues = new Set<string>();
@@ -76,7 +80,7 @@ export function synchroniserFichesBulles(
     // restait « Bulle » en anglais. La fiche étant refabriquée à chaque changement, c'est elle qui
     // porte les deux noms. Un nom donné à la main, lui, passe devant et ne se traduit pas.
     const propre = typeof n.data.nom === "string" && n.data.nom.trim() ? n.data.nom.trim() : "";
-    const def: PluginDef<TypeValeur, AudioContext> = {
+    const def: PluginDef<unknown, unknown> = {
       id: ficheId,
       nom: propre || "Bulle",
       nomEn: propre || "Bubble",

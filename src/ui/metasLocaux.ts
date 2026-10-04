@@ -3,7 +3,7 @@
 // redémarrages, sans dépendre d'un workflow exporté. Le cœur reste sans stockage
 // (cf. core/metastore : on s'abonne à surChangementMetas pour sauvegarder).
 import { tousLesMetas, enregistrerMeta, type MetaComposant } from "../core";
-import { registre } from "../audio/adaptateur";
+import { registreUI } from "./registre-actif";
 
 const CLE = "attic-metas";
 
@@ -44,7 +44,7 @@ export interface MetaNonRestaure { nom: string; manquants: string[] }
 // restauré que si chacun de ses sous-nœuds référence un plugin connu (ou un autre
 // méta persisté — cas des métas imbriqués). Sinon il est ignoré (mais conservé en
 // stockage, au cas où le plugin reviendrait — ex. le renommage d'un plugin, à
-// réparer via l'ALIAS de core/registre.ts plutôt qu'en resignalant sans cesse le
+// réparer via l'ALIAS de core/registreUI().ts plutôt qu'en resignalant sans cesse le
 // même méta comme perdu). Renvoie les métas non restaurés (tableau vide si tout
 // va bien), pour que l'appelant puisse prévenir l'utilisateur au lieu de laisser
 // des méta-composants disparaître du catalogue sans explication.
@@ -65,7 +65,7 @@ export function chargerMetasLocaux(): MetaNonRestaure[] {
       if (!m?.id || !m?.nom || !Array.isArray(m.sousNoeuds)) continue;
       const invalide = m.sousNoeuds.filter((sn: any) => {
         const fid = sn?.data?.ficheId;
-        const connu = typeof fid === "string" && (!!registre.trouverDef(fid) || idsPersistes.has(fid));
+        const connu = typeof fid === "string" && (!!registreUI().trouverDef(fid) || idsPersistes.has(fid));
         if (!connu) console.warn(`[attic] chargerMetasLocaux: ficheId « ${fid} » non trouvé dans le registre`);
         return !connu;
       });

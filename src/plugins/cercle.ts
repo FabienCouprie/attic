@@ -15,7 +15,7 @@ import {
   motifDuRythme, motifNomme, type Cercle, type Repartition,
 } from "../audio/cercle";
 import { rendreCercles, type BaseDeTemps } from "../audio/cercle-rendu";
-import { lireMotif, nettoyerMotif } from "../ui/cercle-disposition";
+import { lireMotif, nettoyerMotif } from "../vues-domaine/cercle-disposition";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 

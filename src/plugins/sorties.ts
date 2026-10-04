@@ -11,6 +11,9 @@ export const fiches: FicheAudio[] = ([
     id: "sortie-audio", nom: "Sortie audio", nomEn: "Audio output", univers: "Sorties", famille: "Écoute",
     resume: "Point d'écoute final. Joue le signal reçu et permet l'export.",
     resumeEn: "Final output. Plays the received signal and enables export.",
+    // Ce que ce nœud fait entendre est ce que son bouton enregistre : le fichier porte donc son
+    // bloc de métadonnées iXML.
+    apercuEstLeFichier: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Durée", nomEn: "Duration", type: "controle" }],
     parametres: [

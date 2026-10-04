@@ -6,15 +6,16 @@
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
-import { creerRegistre } from "../core";
+import { creerRegistre, type Registre } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
+import { configurerServicesDomaine } from "../core/services-domaine";
 import { configurerRegistreNodes } from "../core/nodes-installes";
 import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { configurerRegistreQuiz } from "../plugins/quiz";
 import { toutesLesFiches } from "../plugins";
-import type { TypeValeur } from "../core";
+import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
 
-export const registre = creerRegistre<TypeValeur, AudioContext>();
+export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
 
 // Types de flux du domaine audio (dans le registre, pas dans un global)
   registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
@@ -106,9 +107,37 @@ for (const fiche of toutesLesFiches) {
   registre.enregistrer(fiche);
 }
 
-// Configurer les modules du cœur avec ce registre
-configurerRegistreMeta(registre);
-configurerRegistreNodes(registre);
+// Configurer les modules du cœur avec ce registre.
+//
+// LES DEUX PREMIERS NE CONNAISSENT PLUS LE DOMAINE, et le transtypage le dit. `metastore` et
+// `nodes-installes` déclaraient `Registre<TypeValeur, AudioContext>` : le cœur nommait donc la
+// valeur ET LE RUNTIME du domaine audio. Ils fabriquent des fiches dérivées — un méta-composant, un
+// node installé — dont les valeurs ne font que passer, si bien que `unknown` leur suffit. Un
+// registre concret n'entre pas dans un registre générique sans qu'on le dise, `Registre` étant
+// invariant en ses deux paramètres ; c'est ce que ce transtypage dit, et il reste du côté du domaine.
+const commeGenerique = registre as unknown as Registre<unknown, unknown>;
+configurerRegistreMeta(commeGenerique);
+configurerRegistreNodes(commeGenerique);
 configurerRegistreGestion(registre);
 configurerRegistreQuiz(registre);
+
+// CE QUE LE DOMAINE AUDIO RÉPOND AU CŒUR SUR SES PROPRES VALEURS.
+//
+// Trois endroits du cœur nommaient `AudioBuffer` en dur : l'empreinte d'une valeur, qui décide si un
+// nœud doit se recalculer ; le nom d'un type, qui dit ce qu'une sauvegarde JSON va détruire ; et les
+// globales prêtées à un node installé à chaud. Aucun n'avait besoin de CONNAÎTRE le domaine : chacun
+// avait besoin d'une RÉPONSE. Elles sont ici.
+configurerServicesDomaine({
+  // Les trois nombres qui font qu'un tampon est celui-là et pas un autre. Deux sons différents de
+  // mêmes dimensions ont la même empreinte, et c'est assumé : le cœur ne lit pas les échantillons.
+  // La remarque est écrite en tête de `core/cache-execution.ts`.
+  empreinte: (v) => (typeof AudioBuffer !== "undefined" && v instanceof AudioBuffer
+    ? `AudioBuffer(${v.length},${v.sampleRate},${v.numberOfChannels})`
+    : null),
+  nomDeType: (v) => (typeof AudioBuffer !== "undefined" && v instanceof AudioBuffer ? "AudioBuffer" : null),
+  // Un tampon ne survit pas à `JSON.stringify` : une sauvegarde doit le dire au lieu de le perdre.
+  typesNonSerialisables: ["AudioBuffer"],
+  // Un node installé à chaud est du code audio : il lui faut de quoi fabriquer un tampon.
+  globalesInstallees: { AudioBuffer: (typeof AudioBuffer !== "undefined" ? AudioBuffer : undefined) },
+});
 

@@ -27,7 +27,8 @@ import { NIVEAU_ECOUTE, ouvrirAuNiveauDEcoute } from "./niveau-ecoute";
  * dont la personne dispose. Un lecteur qui n'a ni l'un ni l'autre est un oubli.
  */
 const REGLE_PAR_UN_PARAMETRE = new Map([
-  ["src\\ui\\vues-lecteur.tsx", "le paramètre « Volume », défaut 80 %, posé par un effet et par son curseur"],
+  // Le chemin a suivi le fichier : les vues de nœud ont quitté `src/ui/` pour `src/vues-domaine/`.
+  ["src\\vues-domaine\\vues-lecteur.tsx", "le paramètre « Volume », défaut 80 %, posé par un effet et par son curseur"],
 ]);
 
 /** Les sources de l'interface, hors tests et hors le module qui porte la norme. */
@@ -46,7 +47,11 @@ function sourcesUI(dossier = join("src", "ui"), out: string[] = []): string[] {
 const sansCommentaires = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
 
-const sources = sourcesUI().map((f) => ({ f, texte: sansCommentaires(readFileSync(f, "utf8")) }));
+// LES DEUX CÔTÉS DE LA FRONTIÈRE SONT BALAYÉS, et il le faut : les vues de nœud ont quitté
+// `src/ui/` pour `src/vues-domaine/`, et c'est justement là que vivent la plupart des lecteurs.
+// Ne garder que le premier aurait vidé ce garde de son objet sans qu'il devienne rouge.
+const sources = [...sourcesUI(), ...sourcesUI(join("src", "vues-domaine"))]
+  .map((f) => ({ f, texte: sansCommentaires(readFileSync(f, "utf8")) }));
 
 describe("le niveau d'écoute d'un composant", () => {
   it("n'est pas la pleine puissance", () => {
@@ -96,7 +101,7 @@ describe("le niveau d'écoute d'un composant", () => {
   it("VAUT AUSSI POUR UNE ÉCOUTE MONTÉE EN DIRECT, qui est un lecteur comme un autre", () => {
     // Le graphe vivant du Montage ne passe pas par un élément audio : sans cette assertion, le seul
     // lecteur du dépôt qui ne soit pas une balise échapperait aux deux cas ci-dessus.
-    const vive = readFileSync(join("src", "ui", "hooks", "useLectureVive.ts"), "utf8");
+    const vive = readFileSync(join("src", "vues-domaine", "hooks", "useLectureVive.ts"), "utf8");
     expect(vive).toContain("NIVEAU_ECOUTE");
     expect(vive, "la sortie des pistes doit passer par le gain d'écoute").toMatch(/gainDEcoute\(/);
   });

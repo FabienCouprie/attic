@@ -35,7 +35,7 @@ export interface LectureMidi {
 export async function lireMidiEnSequence(
   fichier: File, canal = -1, tempoParDefaut = 120,
 ): Promise<LectureMidi> {
-  const { analyserMidi } = await import(".");
+  const { analyserMidi } = await import("./index");
   const { parseMidi } = await import("midi-file");
   const lu = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
   const { notes } = analyserMidi(lu);

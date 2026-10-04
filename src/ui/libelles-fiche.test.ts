@@ -8,7 +8,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins";
 import type { FicheAudio } from "../audio/types-domaine";
 import { enregistrerMeta } from "../core";
 import { registre } from "../audio/adaptateur";

@@ -211,6 +211,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Génère un signal audio à partir d'une expression mathématique.",
     resumeEn: "Generates an audio signal from a mathematical expression.",
+    // L'expression est écrite par l'utilisateur : rien ne borne ce qu'elle rend.
+    sortieHorsPlagePossible: true,
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Formule", nomEn: "Formula", type: "texte", defaut: "sin(t * 2 * pi * 440)",

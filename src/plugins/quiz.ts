@@ -14,7 +14,8 @@
 // on le reprend où on l'avait laissé. C'est aussi ce qui permet au corrigé de compter les points
 // sans que la vue ait à lui transmettre quoi que ce soit — les deux lisent le même champ.
 
-import type { Registre, TypeValeur } from "../core";
+import type { Registre } from "../core";
+import type { ValeurAudio, RuntimeAudio } from "../audio/types-domaine";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -26,8 +27,8 @@ import type { Question } from "../quiz/types";
 // Injection, comme pour « Gestionnaire de nodes » : le thème « Catalogue » est calculé sur le
 // registre vivant, et un plugin ne peut pas importer l'adaptateur qui l'enregistre — ce serait un
 // cycle. L'adaptateur appelle donc ceci au démarrage.
-let registre: Registre<TypeValeur, AudioContext> | null = null;
-export function configurerRegistreQuiz(r: Registre<TypeValeur, AudioContext>): void { registre = r; }
+let registre: Registre<ValeurAudio, RuntimeAudio> | null = null;
+export function configurerRegistreQuiz(r: Registre<ValeurAudio, RuntimeAudio>): void { registre = r; }
 
 /** Les questions du catalogue, ou aucune si le registre n'est pas là (tests, contextes isolés). */
 export function questionsDuCatalogue(): Question[] {

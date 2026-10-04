@@ -3,14 +3,15 @@ import { BaseEdge, getSimpleBezierPath, type EdgeProps, useStore } from "@xyflow
 import { useStatut } from "./statuts";
 import type { StatutNoeud } from "./flux-arete";
 import { useCallback, useState } from "react";
-import { registre } from "../audio/adaptateur";
+
 import { validerArete } from "./validerGraphe";
 import { areteEnFlux } from "./flux-arete";
+import { registreUI } from "./registre-actif";
 
 function libellePort(node: any, handleId: string | null | undefined, kind: "source" | "target") {
   const ficheId = node?.data?.ficheId;
   if (!ficheId || !handleId) return undefined;
-  const def = registre.trouverDef(ficheId);
+  const def = registreUI().trouverDef(ficheId);
   if (!def) return undefined;
   const idx = parseInt(handleId.split(":")[1] ?? "0", 10);
   if (kind === "source") return def.sorties[idx]?.nom;
