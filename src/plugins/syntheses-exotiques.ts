@@ -59,8 +59,9 @@ export const fiches: FicheAudio[] = ([
         defaut: "Pincée", defautEn: "Plucked",
         doc: "La forme donnée à la chaîne au départ. Rien ne l'entretient ensuite : c'est donc elle qui décide de tout le son, comme la façon de pincer une corde. « Frappée » donne une vitesse sans déplacement, « Pincée » un déplacement sans vitesse.",
         docEn: "The shape given to the chain at the start. Nothing sustains it afterwards: it therefore decides the whole sound, like the way a string is plucked. « Struck » gives velocity without displacement, « Plucked » displacement without velocity." },
-      { nom: "Force", nomEn: "Force", type: "nombre", plage: [1, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Amplitude de l'excitation.", docEn: "Excitation amplitude." },
+      { nom: "Sensibilité à la vélocité", nomEn: "Velocity sensitivity", type: "nombre", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
+        doc: "Écart de niveau entre une note jouée doucement et une note jouée fort. À zéro, toutes les notes d'une séquence sortent au même niveau ; à cent, la plus douce est au plus bas. Ce réglage n'agit qu'avec un MIDI branché : sans lui, une seule note est jouée, et le niveau de sortie se règle par « Volume ».",
+        docEn: "Level difference between a note played softly and one played hard. At zero, every note of a sequence comes out at the same level; at a hundred, the softest is at the bottom. This setting only acts with MIDI connected: without it a single note is played, and the output level is set by « Volume »." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.2, 20], pas: 0.1, defaut: 4, unite: "s",
         doc: "Durée produite, quand aucun MIDI n'est branché.", docEn: "Duration produced, when no MIDI is connected." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
@@ -75,8 +76,15 @@ export const fiches: FicheAudio[] = ([
         rappel: ctx.paramNombre("Rappel", 30) / 100,
         amortissement: ctx.paramNombre("Amortissement", 10) / 100,
         excitation: ctx.paramTexte("Excitation", "pincee") as "pincee" | "frappee" | "bruit" | "deux-bosses",
-        force: ctx.paramNombre("Force", 100) / 100,
+        force: 1,
       };
+      // CE QUE LA SENSIBILITÉ FAIT, ET POURQUOI ELLE A REMPLACÉ UNE « FORCE ». Un facteur appliqué
+      // également à toutes les notes se simplifie exactement dans la normalisation du mélange :
+      // une amplitude d'excitation globale ne peut RIEN changer au résultat, et l'ancien réglage
+      // ne changeait rien. Ce qui survit, c'est l'ÉCART entre les notes, et c'est donc lui qu'on
+      // règle : à zéro toutes sortent au même niveau, à cent la plus douce est au plus bas.
+      const sensibilite = Math.max(0, Math.min(1, ctx.paramNombre("Sensibilité à la vélocité", 70) / 100));
+      const niveauDe = (velocite: number) => 1 - sensibilite * (1 - Math.max(0, Math.min(127, velocite)) / 127);
       const { aleatoire } = hasardDuNoeud(1);
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
@@ -97,7 +105,7 @@ export const fiches: FicheAudio[] = ([
           ...commun,
           frequence: frequenceDe(n.note),
           duree: Math.max(0.1, n.fin - n.debut) + 0.1,
-          force: commun.force * (0.4 + 0.6 * (n.velocite / 127)),
+          force: niveauDe(n.velocite),
         }, aleatoire);
         pasTotal += pas;
         melanger(melange, signal, n.debut);
@@ -252,11 +260,20 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine de l'instabilité. 0 = tirée au sort à chaque exécution.",
         docEn: "Seed of the jitter. 0 = drawn at random on every run." },
+      { nom: "Sensibilité à la vélocité", nomEn: "Velocity sensitivity", type: "nombre", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
+        doc: "Écart de niveau entre une note chantée doucement et une note chantée fort. À zéro, toutes les notes d'une séquence sortent au même niveau ; à cent, la plus douce est au plus bas. Ce réglage n'agit qu'avec un MIDI branché : sans lui, une seule note est chantée, et le niveau de sortie se règle par « Volume ».",
+        docEn: "Level difference between a note sung softly and one sung hard. At zero, every note of a sequence comes out at the same level; at a hundred, the softest is at the bottom. This setting only acts with MIDI connected: without it a single note is sung, and the output level is set by « Volume »." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
     async executer(ctx: any) {
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      // LA VOYELLE NE LISAIT PAS LA VÉLOCITÉ : son exécuteur ne la mentionnait nulle part, et une
+      // séquence jouée avec des nuances sortait toute au même niveau. Même traitement que la
+      // synthèse par scanning, et pour la même raison : ce qui survit à la normalisation du
+      // mélange est l'écart entre les notes, non un facteur global.
+      const sensibilite = Math.max(0, Math.min(1, ctx.paramNombre("Sensibilité à la vélocité", 70) / 100));
+      const niveauDe = (velocite: number) => 1 - sensibilite * (1 - Math.max(0, Math.min(127, velocite)) / 127);
       const commun = {
         voyelle: laVoyelle(ctx.paramTexte("Voyelle", "a")),
         frequenceEch: FS,
@@ -284,6 +301,7 @@ export const fiches: FicheAudio[] = ([
       for (const n of notes) {
         const { signal, bouffees } = synthetiserFof({
           ...commun, frequence: frequenceDe(n.note), duree: Math.max(0.08, n.fin - n.debut),
+          niveau: niveauDe(n.velocite),
         }, aleatoire);
         total += bouffees;
         melanger(melange, signal, n.debut);

@@ -5,8 +5,25 @@
 // vue montre l'onde ET son spectre (timbre ↔ harmoniques).
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+
+// LES QUATRE FORMES D'ONDE, DÉCLARÉES UNE SEULE FOIS. Elles l'étaient trois : les libellés
+// français dans `options`, les anglais dans `optionsEn`, et une troisième copie — française — dans
+// l'exécuteur, qui servait à nommer la forme dans le message. C'est cette troisième copie qui
+// faisait annoncer « Sinus · 220 Hz · 1 harmonic(s) » à une interface en anglais. La fiche lit
+// cette table, l'exécuteur la relit, et il n'y a plus d'endroit où les deux puissent diverger.
+const FORMES = [
+  { id: "sine", fr: "Sinus", en: "Sine" },
+  { id: "square", fr: "Carré", en: "Square" },
+  { id: "sawtooth", fr: "Dent de scie", en: "Sawtooth" },
+  { id: "triangle", fr: "Triangle", en: "Triangle" },
+] as const;
+
+const libelleForme = (id: string): string => {
+  const f = FORMES.find((x) => x.id === id);
+  return f ? (langueCourante() === "en" ? f.en : f.fr) : id;
+};
 
 export const fiches: FicheAudio[] = ([
   {
@@ -78,8 +95,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Forme", nomEn: "Waveform", type: "choix",
-        options: ["Sinus", "Carré", "Dent de scie", "Triangle"], optionsEn: ["Sine", "Square", "Sawtooth", "Triangle"],
-        optionIds: ["sine", "square", "sawtooth", "triangle"], defaut: "Sinus",
+        options: FORMES.map((f) => f.fr), optionsEn: FORMES.map((f) => f.en),
+        optionIds: FORMES.map((f) => f.id), defaut: "Sinus",
         doc: "Forme d'onde. Sinus = une seule fréquence. Carré/Triangle = harmoniques impaires. Dent de scie = toutes les harmoniques.",
         docEn: "Waveform. Sine = a single frequency. Square/Triangle = odd harmonics. Sawtooth = all harmonics.", defautEn: "Sine",
      },
@@ -98,7 +115,7 @@ export const fiches: FicheAudio[] = ([
       const len = Math.max(1, Math.floor(sr * duree));
       const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
       const d = buf.getChannelData(0);
-      const labelForme = ({ sine: "Sinus", square: "Carré", sawtooth: "Dent de scie", triangle: "Triangle" } as Record<string, string>)[forme] ?? forme;
+      const labelForme = libelleForme(forme);
 
       // Synthèse ADDITIVE band-limitée : somme d'harmoniques sous Nyquist.
       // Séries de Fourier des ondes idéales — aucun aliasing, spectre exact.
@@ -130,11 +147,21 @@ export const fiches: FicheAudio[] = ([
     univers: "Sorties", famille: "Écoute",
     resume: "Compare deux signaux à niveau égalisé ; bascule l'écoute A/B.",
     resumeEn: "Compares two signals at matched level; toggles A/B listening.",
-    entrees: [{ nom: "A", nomEn: "A", type: "audio" }, { nom: "B", nomEn: "B", type: "audio" }],
+    // UNE SEULE DES DEUX SUFFIT, ET C'EST ICI QUE ÇA SE DÉCLARE. `requis` vaut `true` par défaut :
+    // sans ces deux mentions, le moteur refusait d'exécuter le nœud dès qu'un câble manquait —
+    // « entrée obligatoire « A » non connectée » — alors que son exécuteur a toujours porté un
+    // repli sur l'autre entrée et que son message promet « Connectez A et/ou B ». Trois pièces du
+    // même nœud se contredisaient, et c'étaient les ports qui avaient tort : on peut vouloir poser
+    // le comparateur sur une seule source, l'écouter au niveau aligné, puis brancher la seconde.
+    entrees: [
+      { nom: "A", nomEn: "A", type: "audio", requis: false },
+      { nom: "B", nomEn: "B", type: "audio", requis: false },
+    ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Écoute", nomEn: "Listen", type: "choix", options: ["A", "B"], defaut: "A",
-        doc: "Quelle entrée est envoyée en sortie et écoutée.", docEn: "Which input is sent to the output and heard.", optionsEn: ["A", "B"], defautEn: "A" },
+        doc: "Quelle entrée est envoyée en sortie et écoutée. Si l'entrée choisie n'est pas connectée, l'autre est envoyée en sortie.",
+        docEn: "Which input is sent to the output and heard. If the chosen input is not connected, the other one is sent to the output.", optionsEn: ["A", "B"], defautEn: "A" },
       { nom: "Aligner les niveaux", nomEn: "Match levels", type: "choix", options: ["Oui", "Non"], optionIds: ["yes", "no"], defaut: "Oui",
         doc: "Ramène le signal écouté au même niveau crête, pour une comparaison honnête (le plus fort paraît sinon « meilleur »).",
         docEn: "Brings the heard signal to the same peak level, for a fair comparison (the louder one otherwise seems « better »).", optionsEn: ["Yes", "No"], defautEn: "Yes" },
@@ -146,7 +173,15 @@ export const fiches: FicheAudio[] = ([
       if (!A && !B) return { valeurs: [null], message: traduire("msg.connectez_a_et_ou_b") };
       const sel = ctx.paramTexte("Écoute", "A");
       const align = ctx.paramTexte("Aligner les niveaux", "yes") === "yes";
-      const choisi = sel === "A" ? (A ?? B) : (B ?? A);
+      // CE QUI EST ANNONCÉ EST CE QUI EST ENTENDU. Quand l'entrée demandée est absente, l'autre
+      // prend le relais — c'est voulu, un seul câble suffit pour se servir du nœud — mais le
+      // message annonçait tout de même CELLE QU'ON AVAIT DEMANDÉE : « Écoute A » pendant que B
+      // jouait. Sur un nœud dont tout l'objet est de dire lequel des deux on entend, c'est la
+      // seule chose qu'il ne pouvait pas se permettre de dire faux. Le repli se décide donc ici,
+      // une fois, et le nom qui part dans le message est celui de l'entrée RETENUE. L'un des deux
+      // existe forcément : le cas où aucun n'est branché est sorti juste au-dessus.
+      const entendu = sel === "A" ? (A ? "A" : "B") : (B ? "B" : "A");
+      const choisi = entendu === "A" ? A : B;
       const crete = (buf: AudioBuffer | null) => {
         if (!buf) return 0;
         let m = 0;
@@ -165,7 +200,8 @@ export const fiches: FicheAudio[] = ([
         }
       }
       const dB = (p: number) => (p > 0 ? `${(20 * Math.log10(p)).toFixed(1)} dB` : "−∞");
-      return { valeurs: [out], message: traduire("msg.coute_var_0_a_var_1_b_var_2_var_3", sel, dB(pA), dB(pB), align ? " · égalisés" : "") };
+      const mention = align ? ` · ${traduire("msg.niveaux_egalises")}` : "";
+      return { valeurs: [out], message: traduire("msg.coute_var_0_a_var_1_b_var_2_var_3", entendu, dB(pA), dB(pB), mention) };
    },
  },
   {
