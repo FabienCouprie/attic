@@ -7,8 +7,8 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1264 files, 217474 lines, of which 149577 are code.**
-The table lists the 165 files of 200 code lines or more, heaviest first;
+**1266 files, 218436 lines, of which 150251 are code.**
+The table lists the 167 files of 200 code lines or more, heaviest first;
 the remaining 1099 account for 148956 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
@@ -31,6 +31,7 @@ the remaining 1099 account for 148956 lines.
 | src/ui/BarreOutils.tsx | 419 | 456 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/montage.ts | 390 | 542 |  |
+| src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
@@ -95,6 +96,7 @@ the remaining 1099 account for 148956 lines.
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
+| src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
