@@ -98,8 +98,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Note jouée quand aucun MIDI n'est branché (ex. A3, C4, F#5). Un MIDI l'emporte, et la ligne est jouée note à note.",
         docEn: "Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note." },
       { nom: "Pression", nomEn: "Breath", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
-        doc: "Pression de souffle. Sous 40 %, l'anche de la clarinette ne s'établit pas et il ne sort qu'un bruit ; c'est le comportement d'une vraie anche, pas un défaut. Sur le cuivre, la pression change le timbre autant que le volume.",
-        docEn: "Breath pressure. Below 40 %, the clarinet's reed does not start and only noise comes out; that is a real reed's behaviour, not a defect. On the brass, pressure changes the timbre as much as the volume." },
+        doc: "Pression de souffle. Le réglage couvre la plage où le modèle choisi est juste : il commence à 65 % de pression réelle sur la clarinette, qui ne s'établit pas en dessous, et à 85 % sur la flûte, qui n'y tient pas sa hauteur. Ces deux instruments parlent donc à tout réglage, et la pression y agit sur le timbre : la clarinette s'assombrit quand elle monte. Le cuivre garde l'échelle entière, et c'est le seul à refuser de parler, sous 20 % ; le composant ne rend alors aucun son, et son message le signale. Son timbre s'ouvre franchement quand la pression monte.",
+        docEn: "Breath pressure. The setting spans the range where the chosen model is accurate: it starts at 65 % of real pressure on the clarinet, which does not start below that, and at 85 % on the flute, which does not hold its pitch there. Those two therefore speak at every setting, and pressure acts on their timbre: the clarinet darkens as it rises. The brass keeps the full scale and is the only one that refuses to speak, below 20 %; the node then produces no sound, and its message says so. Its timbre opens up markedly as pressure rises." },
       { nom: "Souffle", nomEn: "Noise", type: "nombre", plage: [0, 100], pas: 1, defaut: 5, unite: "%",
         doc: "Part de bruit de souffle mêlée à la pression. Un peu de bruit rend l'attaque vivante ; beaucoup donne le son d'un joueur essoufflé.",
         docEn: "Amount of breath noise mixed into the pressure. A little makes the attack alive; a lot gives the sound of a winded player." },
@@ -134,7 +134,12 @@ export const fiches: FicheAudio[] = ([
           ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "A3"))), duree,
         }, aleatoire);
         return {
-          valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],
+          // CE QUI NE PARLE PAS NE S'ENTEND PAS. Le modèle produit bien du bruit de souffle sous le
+          // seuil de l'anche ; mais la normalisation le porte au niveau d'une vraie note — mesuré,
+          // il en sortait même PLUS FORT, 0,85 de valeur efficace à 40 % de pression contre 0,53 à
+          // 100 %. Le nœud annonçait donc un échec en donnant à entendre un sifflement plein. Il
+          // rend maintenant le silence qu'il annonce.
+          valeurs: [versBuffer(parle ? signal : new Float32Array(signal.length), ctx.paramNombre("Volume", 80))],
           message: parle
             ? traduire("msg.vent.resultat", 1, duree.toFixed(1))
             : traduire("msg.vent.muet"),
@@ -147,18 +152,28 @@ export const fiches: FicheAudio[] = ([
       let parlantes = 0;
       for (const n of notes) {
         const duree = Math.max(0.08, n.fin - n.debut) + 0.15;
+        // LA VÉLOCITÉ SERT DEUX FOIS, et c'est ce qui fait la nuance d'un vent. Elle règle la
+        // pression, donc le TIMBRE, comme le souffle d'un joueur ; et elle règle le niveau rendu,
+        // sans quoi la normalisation de chaque note effacerait l'écart — mesuré, deux notes jouées
+        // à 127 et à 1 sortaient à 0,7174 et 0,7193 de crête.
+        const nuance = 0.6 + 0.4 * (n.velocite / 127);
         const { signal, parle } = synthetiserVent({
           ...commun,
           frequence: frequenceDe(n.note),
           duree,
-          pression: commun.pression * (0.6 + 0.4 * (n.velocite / 127)),
+          pression: commun.pression * nuance,
+          niveau: nuance,
         }, aleatoire);
-        if (parle) parlantes++;
+        // Une note soufflée trop doucement reste muette : elle n'est ni comptée ni mêlée.
+        if (!parle) continue;
+        parlantes++;
         melanger(melange, signal, n.debut);
       }
       return {
         valeurs: [versBuffer(melange, ctx.paramNombre("Volume", 80))],
-        message: traduire("msg.vent.resultat", parlantes, fin.toFixed(1)),
+        message: parlantes > 0
+          ? traduire("msg.vent.resultat", parlantes, fin.toFixed(1))
+          : traduire("msg.vent.muet"),
       };
     },
   },
@@ -186,8 +201,8 @@ export const fiches: FicheAudio[] = ([
         doc: "La main posée sur la barre : raccourcit toutes les résonances à la fois.",
         docEn: "A hand laid on the bar: shortens every resonance at once." },
       { nom: "Trémolo", nomEn: "Tremolo", type: "nombre", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
-        doc: "Le trémolo du vibraphone, qui vient de ses disques tournants dans les tubes résonateurs. Sans effet sur les autres instruments, mais rien n'interdit d'essayer.",
-        docEn: "The vibraphone's tremolo, which comes from the discs spinning in its resonator tubes. No effect on the other instruments, but nothing stops you trying." },
+        doc: "Profondeur du trémolo, c'est-à-dire de la modulation d'amplitude que produisent les disques tournants dans les tubes résonateurs d'un vibraphone. Le réglage agit sur tous les instruments.",
+        docEn: "Tremolo depth, that is, the amplitude modulation produced by the discs spinning in a vibraphone's resonator tubes. The setting acts on every instrument." },
       { nom: "Fréquence trémolo", nomEn: "Tremolo rate", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 5, unite: "Hz",
         doc: "Vitesse du trémolo. Sans effet tant que Trémolo est à 0.", docEn: "Tremolo speed." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.1, 15], pas: 0.1, defaut: 3, unite: "s",

@@ -90,15 +90,23 @@ export const fiches: FicheAudio[] = ([
         }
       }
       const moyenne = proportions.reduce((x, y) => x + y, 0) / proportions.length;
-      const pires = Array.from({ length: NB_BANDES }, (_, z) => ({
+      // LE COMPTE ANNONCÉ EST CELUI DES BANDES ENFOUIES, et non la longueur de la liste affichée.
+      // Les deux étaient confondus : la liste est tronquée aux six pires, et le message reprenait sa
+      // longueur. Sous le plafond les deux nombres coïncident — une bande, deux, cinq —, ce qui
+      // rendait le défaut invisible à l'usage ; au-dessus, un bruit faible sous un bruit fort enfouit
+      // LES VINGT-QUATRE bandes et le nœud en annonçait six. La liste, elle, reste aux six pires, et
+      // dit désormais qu'elle en est une sélection.
+      const enfouies = Array.from({ length: NB_BANDES }, (_, z) => ({
         z, hz: frequenceDeBande(z), db: comptes[z] > 0 ? cumulEnfoui[z] / comptes[z] : -Infinity,
-      })).filter((x) => x.db > 0).sort((x, y) => y.db - x.db).slice(0, 6);
+      })).filter((x) => x.db > 0).sort((x, y) => y.db - x.db);
+      const pires = enfouies.slice(0, 6);
 
+      const titre = en ? "Most buried bands" : "Bandes les plus enfouies";
       const lignes = [
         `${en ? "Masked energy" : "Énergie masquée"} : ${(moyenne * 100).toFixed(1)} %`,
         "",
         pires.length > 0
-          ? `${en ? "Most buried bands" : "Bandes les plus enfouies"} :`
+          ? `${titre}${pires.length < enfouies.length ? ` (${pires.length} ${en ? "of" : "sur"} ${enfouies.length})` : ""} :`
           : (en ? "Nothing is masked." : "Rien n'est masqué."),
         ...pires.map((x) => `  ${x.hz.toFixed(0).padStart(6)} Hz   ${x.db.toFixed(1)} dB ${en ? "below the threshold" : "sous le seuil"}`),
       ].filter((l) => l !== "");
@@ -107,7 +115,7 @@ export const fiches: FicheAudio[] = ([
           lignes.join("\n"),
           { valeurs: Float32Array.from(proportions), cadence: masque.sampleRate / saut },
         ],
-        message: traduire("msg.masquage.resume", (moyenne * 100).toFixed(1), String(pires.length)),
+        message: traduire("msg.masquage.resume", (moyenne * 100).toFixed(1), String(enfouies.length)),
       };
     },
   },

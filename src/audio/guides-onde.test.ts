@@ -9,7 +9,7 @@
 // qui a demandé deux corrections trouvées par la mesure : le retard du filtre de pertes,
 // et l'amorçage du tuyau qui décide du mode.
 import { describe, expect, it } from "vitest";
-import { SEUILS, synthetiserVent, type Vent } from "./guides-onde";
+import { PLANCHERS, SEUILS, synthetiserVent, type Vent } from "./guides-onde";
 import { fft } from "./fft";
 
 const FS = 44100;
@@ -142,13 +142,37 @@ describe("comportement", () => {
     expect(rms(0, Math.floor(FS * 0.01))).toBeLessThan(rms(Math.floor(FS * 0.5), Math.floor(FS * 0.6)));
   });
 
-  it("reste muet sous le seuil de souffle de la clarinette", () => {
-    // L'anche ne décolle pas : sous 0,4, il ne sort qu'un bruit de souffle sans hauteur.
-    const faible = jouer("clarinette", 220, 0.1);
-    const forte = jouer("clarinette", 220, 0.8);
+  it("refuse de parler sous le seuil, là où le réglage peut encore y descendre", () => {
+    // LE SEUIL N'EST PAS UNE DOCUMENTATION : `parle` le lit. Mesuré sur sept notes de 82 à 587 Hz,
+    // le premier harmonique de la clarinette vaut 0,001 de son niveau établi à 0,50 de pression et
+    // 0,027 encore à 0,55 ; la transition court de 0,57 à 0,63, et c'est à 0,65 que toutes les
+    // notes du registre atteignent 0,96. La valeur annoncée jusqu'ici, 0,4, tombait en plein
+    // régime de souffle.
+    expect(SEUILS.clarinette).toBe(0.65);
+    // ET LE RÉGLAGE COMMENCE AU SEUIL, là où en dessous il ne produirait rien : la clarinette et la
+    // flûte parlent donc à tout réglage, et c'est sur le CUIVRE, qui garde l'échelle entière, que
+    // le refus s'entend désormais. Le modèle, lui, refuse toujours.
+    expect(PLANCHERS.clarinette).toBe(SEUILS.clarinette);
+    expect(PLANCHERS.flute).toBe(0.85);
+    expect(PLANCHERS.cuivre).toBe(0);
+    expect(jouer("cuivre", 220, SEUILS.cuivre - 0.05).parle).toBe(false);
+    expect(jouer("cuivre", 220, SEUILS.cuivre).parle).toBe(true);
     const h1 = (s: Float32Array) => harmonique(s, 220, 1);
-    expect(h1(faible.signal)).toBeLessThan(h1(forte.signal) / 50);
-    expect(SEUILS.clarinette).toBe(0.4);
+    expect(h1(jouer("cuivre", 220, 0.1).signal)).toBeLessThan(h1(jouer("cuivre", 220, 0.8).signal) / 50);
+    for (const instrument of ["clarinette", "flute"] as Vent[]) {
+      expect(jouer(instrument, 220, 0).parle, instrument).toBe(true);
+    }
+    // ET AU BAS DE SON RÉGLAGE, LA CLARINETTE PORTE BIEN SA NOTE : c'est ce que son plancher
+    // achète, et sans quoi il ne servirait qu'à masquer le mutisme au lieu de l'éviter. Un plancher
+    // posé trop bas se verrait exactement ici.
+    expect(h1(jouer("clarinette", 220, 0).signal))
+      .toBeGreaterThan(h1(jouer("clarinette", 220, 1).signal) / 3);
+    // LA FLÛTE N'EN FAIT PAS AUTANT, et c'est un relevé, non un contrat : au bas de son réglage,
+    // son premier harmonique ne vaut qu'un dix-septième de ce qu'il vaut en haut, le modèle ne
+    // s'ouvrant vraiment qu'à 0,88 de pression réelle là où son plancher est à 0,85. Son réglage
+    // est donc utilisable sur toute sa course, mais ses premiers pour cent sont très faibles.
+    // Aucun cas ne grave ce comportement : il est antérieur, et le corriger demanderait de mesurer
+    // ce plancher-là comme celui de la clarinette l'a été.
   });
 
   it("laisse le tuyau résonner après le souffle, puis s'éteint", () => {

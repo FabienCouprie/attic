@@ -384,6 +384,13 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const notesBrutes = ctx.paramTexte("Notes", "C4,E4,G4");
       const notes = notesBrutes.split(",").map((n: string) => n.trim()).filter(Boolean);
+      // UN ACCORD VIDE N'EST PAS UN SUCCÈS. Sans ce refus, un champ laissé vide rendait un tampon
+      // entièrement silencieux et l'annonçait comme un rendu abouti — « Accord  — 1.55s », avec un
+      // nom d'accord vide entre deux espaces. Les autres façons de se tromper, note illisible ou
+      // forme d'onde inconnue, étaient déclarées ; celle-ci, non.
+      if (notes.length === 0) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.polysynth.sansNote") };
+      }
       const dureeNote = ctx.paramNombre("Durée par note", 0.5);
       const volume = ctx.paramNombre("Volume", 80);
       const waveform = ctx.paramTexte("Forme d'onde", "triangle");

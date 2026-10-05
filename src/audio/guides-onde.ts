@@ -13,6 +13,12 @@
 // passe dans le registre supérieur si l'on souffle trop, et la clarinette n'y produit que
 // des harmoniques impairs parce que son tuyau est fermé à un bout. Rien de tout cela n'est
 // programmé comme un effet : cela tombe du modèle.
+//
+// LE REFUS DE PARLER NE S'ENTEND PLUS QUE SUR LE CUIVRE, et c'est un arbitrage assumé. La
+// clarinette, qui ne s'établit pas sous 0,65 de pression, voyait les deux tiers bas de son
+// réglage ne rien produire et tout son timbre écrasé sur le dernier tiers ; son réglage
+// commence donc à son seuil, comme celui de la flûte commence à 0,85. Le modèle, lui, refuse
+// toujours : c'est l'échelle du réglage qui ne descend plus jusque-là.
 
 export type Vent = "clarinette" | "flute" | "cuivre";
 
@@ -33,6 +39,18 @@ export interface ConfigVent {
   /** Durées d'attaque et d'extinction du souffle, en secondes. */
   attaque: number;
   extinction: number;
+  /**
+   * Niveau rendu, de 0 à 1 : la nuance de la note. Défaut 1.
+   *
+   * POURQUOI LE MODÈLE PORTE SON NIVEAU AU LIEU DE L'EFFACER. La boucle d'un guide d'onde a une
+   * amplitude qui ne dépend guère du souffle — l'anche écrête —, de sorte qu'il faut normaliser pour
+   * que l'instrument sonne. Mais normaliser CHAQUE note à la même crête efface la nuance : mesuré,
+   * deux notes d'une même ligne jouées à vélocité 127 et 1 sortaient à 0,7174 et 0,7193, la plus
+   * faible même imperceptiblement plus forte. Le facteur écrit pour la vélocité ne commandait rien.
+   * La normalisation vise donc désormais `0,9 × niveau` et non 0,9, et c'est l'appelant qui dit la
+   * nuance ; le mélange, lui, se normalise une fois, comme `versBuffer` l'énonce.
+   */
+  niveau?: number;
 }
 
 /** Une ligne de retard à longueur fractionnaire, interpolée linéairement. */
@@ -116,6 +134,53 @@ export interface ResultatVent {
 }
 
 /**
+ * La pression sous laquelle chaque modèle ne parle pas encore proprement, mesurée.
+ *
+ * La clarinette est celle qui demande le plus de souffle : sous le seuil, l'anche ne s'établit pas
+ * et il ne sort qu'un bruit. C'est pourquoi la valeur par défaut du nœud est haute.
+ *
+ * CETTE TABLE EST LE SEUIL, et non une documentation du seuil. Elle a longtemps été exportée sans
+ * être lue par personne d'autre que son propre test, pendant que `parle` se contentait de demander
+ * s'il sortait du signal : le bruit de souffle en donne, de sorte que la clarinette se déclarait
+ * parlante dès 0,04.
+ *
+ * ET LA VALEUR DE LA CLARINETTE ÉTAIT FAUSSE, ce que personne ne pouvait voir tant que rien ne la
+ * lisait. Mesuré sur sept notes de 82 à 587 Hz, le premier harmonique rapporté à son niveau établi
+ * vaut 0,001 à 0,50 de pression et 0,027 encore à 0,55 ; la transition court de 0,57 à 0,63, et ce
+ * n'est qu'à partir de 0,65 que TOUTES les notes du registre atteignent 0,96 de leur niveau. Le
+ * seuil annoncé, 0,4, tombait donc en plein régime de souffle. Les deux autres sont confirmés : le
+ * cuivre passe de 0,001 à 0,14 de pression à 0,52 à 0,16, et la flûte, dont la pression est ramenée
+ * dans la plage où le modèle tient sa hauteur, parle à tout réglage.
+ */
+export const SEUILS: Record<Vent, number> = {
+  clarinette: 0.65,
+  flute: 0,
+  cuivre: 0.2,
+};
+
+/**
+ * Ce à quoi la pression 0 du réglage correspond, instrument par instrument.
+ *
+ * LE RÉGLAGE COUVRE LA PLAGE OÙ LE MODÈLE EST JUSTE, et non l'intervalle abstrait de zéro à un.
+ * Sans cela, les deux tiers bas du curseur d'une clarinette ne produisent rien et son timbre se
+ * trouve écrasé sur le dernier tiers, alors qu'il y change : à 220 Hz, le centre de gravité du
+ * spectre descend de 1234 à 968 Hz entre le seuil et la pleine pression, et les harmoniques impairs
+ * culminent au milieu de la plage.
+ *
+ * LE CUIVRE GARDE SON ÉCHELLE, parce qu'il n'y gagnerait rien : son seuil ne lui retire qu'un
+ * cinquième de course, et son timbre s'ouvre du tout au tout sur ce qui reste, de 1473 à 3399 Hz de
+ * centre de gravité. C'est donc chez lui, désormais, que s'entend le refus de parler d'un modèle
+ * trop peu excité.
+ */
+export const PLANCHERS: Record<Vent, number> = {
+  // L'anche ne s'établit pas sous son seuil : le réglage y commence.
+  clarinette: SEUILS.clarinette,
+  // La flûte parle à toute pression, mais ne tient sa hauteur qu'au-dessus de 0,85.
+  flute: 0.85,
+  cuivre: 0,
+};
+
+/**
  * Synthétise une note.
  *
  * Les trois instruments partagent la même boucle — retard, pertes, non-linéarité — et ne
@@ -132,13 +197,17 @@ export function synthetiserVent(config: ConfigVent, aleatoire: () => number): Re
   const signal = new Float32Array(longueur);
   const f = Math.max(20, Math.min(fs / 4, config.frequence));
   const demandee = Math.max(0, Math.min(1, config.pression));
-  // LA FLÛTE, et c'est une limite dite plutôt que tue : son modèle ne tient sa hauteur
-  // qu'au-dessus de 0,85 de pression. En dessous, il s'installe sur le cinquième mode du
-  // tuyau — un la 220 sort à 372 Hz —, et ce n'est PAS l'octaviation d'une vraie flûte,
-  // où souffler plus fort monte le registre : ici c'est souffler moins. C'est donc un
-  // artefact, et la pression demandée est ramenée dans la plage où le modèle est juste.
-  // Le réglage agit alors sur la dynamique, non sur le registre.
-  const pression = config.instrument === "flute" ? 0.85 + 0.15 * demandee : demandee;
+  // LA PRESSION DEMANDÉE EST RAMENÉE DANS LA PLAGE OÙ LE MODÈLE EST JUSTE, par `PLANCHERS`. Deux
+  // raisons distinctes y mènent, et il vaut de les dire séparément.
+  //   LA FLÛTE ne tient sa hauteur qu'au-dessus de 0,85 : en dessous, elle s'installe sur le
+  //   cinquième mode du tuyau — un la 220 sort à 372 Hz —, et ce n'est PAS l'octaviation d'une
+  //   vraie flûte, où souffler plus fort monte le registre ; ici c'est souffler moins. Un artefact,
+  //   donc, et le réglage agit sur la dynamique, non sur le registre.
+  //   LA CLARINETTE, elle, est juste dès qu'elle parle, mais ne parle pas sous 0,65 : les deux
+  //   tiers bas du réglage ne produisaient rien, et tout son timbre était écrasé sur le dernier
+  //   tiers. Le réglage commence donc à son seuil.
+  const plancher = PLANCHERS[config.instrument];
+  const pression = plancher + (1 - plancher) * demandee;
 
   // Le tuyau. La clarinette est fermée à un bout : un aller-retour ne fait qu'une
   // DEMI-période, et la réflexion inverse l'onde. La flûte est ouverte des deux côtés, et
@@ -224,29 +293,21 @@ export function synthetiserVent(config: ConfigVent, aleatoire: () => number): Re
     energie += sortie * sortie;
   }
 
-  // Sous une certaine pression, l'anche ne décolle pas : le modèle reste muet, et c'est
-  // le comportement d'un vrai instrument, non un défaut à corriger.
+  // Sous une certaine pression, l'anche ne décolle pas : le modèle reste muet, et c'est le
+  // comportement d'un vrai instrument, non un défaut à corriger. Le seuil est celui de `SEUILS`,
+  // mesuré par instrument ; la valeur efficace ne sert plus qu'à écarter le cas dégénéré d'une
+  // boucle qui n'a pas démarré du tout, puisque le bruit de souffle, lui, en donne toujours.
+  // LA COMPARAISON PORTE SUR LA PRESSION RAMENÉE, celle que la boucle a réellement reçue, et non
+  // sur le réglage : un instrument dont le réglage commence à son seuil parle donc partout, ce qui
+  // est le propos de `PLANCHERS`. Seul le cuivre, qui garde son échelle, refuse encore de parler.
   const rms = Math.sqrt(energie / longueur);
-  const parle = rms > 0.005;
+  const parle = rms > 0.005 && pression >= SEUILS[config.instrument];
 
   let crete = 0;
   for (let i = 0; i < longueur; i++) crete = Math.max(crete, Math.abs(signal[i]));
   if (crete > 0.001) {
-    const g = 0.9 / crete;
+    const g = (0.9 * Math.max(0, Math.min(1, config.niveau ?? 1))) / crete;
     for (let i = 0; i < longueur; i++) signal[i] *= g;
   }
   return { signal, parle };
 }
-
-/**
- * La pression sous laquelle chaque modèle ne parle pas encore proprement, mesurée.
- *
- * La clarinette est celle qui demande le plus de souffle : sous 0,4 l'anche ne s'établit
- * pas et il ne sort qu'un bruit. C'est le comportement d'une vraie anche, pas un défaut,
- * et c'est pourquoi la valeur par défaut du nœud est haute.
- */
-export const SEUILS: Record<Vent, number> = {
-  clarinette: 0.4,
-  flute: 0,
-  cuivre: 0.2,
-};
