@@ -135,7 +135,15 @@ export async function genererPolySynth(opts: OptionsPolySynth): Promise<AudioBuf
   // Trois voix de Tone.js à pleine échelle s'additionnent sans normalisation : 1,71 mesuré dans le
   // navigateur. Plafonné ici, à la sortie du synthé — et non dans le convertisseur commun, qui sert
   // aussi aux parties d'un mélange qu'on ne doit pas plafonner une à une.
-  return plafonnerCrete(audioBufferDepuisTone(toneBuffer));
+  //
+  // ET LE PLAFOND SUIT LE VOLUME, sans quoi le réglage ne commande plus rien passé la moitié de sa
+  // course. `plafonnerCrete` ne plafonne pas, il NORMALISE : il divise le tampon par sa crête dès
+  // qu'elle dépasse la valeur reçue. Fixé à 0,99, il ramenait au même niveau tout ce qui le
+  // dépassait — crête 0,99000 et valeur efficace 0,079842 identiques à 50, 75 et 100, quand le
+  // réglage agissait encore en dessous. C'est l'algèbre rencontrée ailleurs sur les mêmes réglages :
+  // un gain global ne survit pas à une normalisation par la crête, il faut que la normalisation le
+  // porte.
+  return plafonnerCrete(audioBufferDepuisTone(toneBuffer), 0.99 * velocity);
 }
 
 export interface OptionsModulationSynth {
@@ -488,6 +496,13 @@ export async function genererMetalSynth(opts: OptionsMetalSynth): Promise<AudioB
     sampleRate,
   );
 
-  // 2,44 mesuré dans le navigateur au réglage par défaut. Plafonné à la sortie du synthé.
-  return plafonnerCrete(audioBufferDepuisTone(toneBuffer));
+  // 2,44 mesuré dans le navigateur au réglage par défaut. Plafonné à la sortie du synthé, et le
+  // plafond SUIT LE VOLUME.
+  //
+  // C'EST ICI, ET NON DANS LA VÉLOCITÉ, QUE LE RÉGLAGE AGIT. `MetalSynth` ne suit presque pas la
+  // vélocité qu'on lui passe : mesuré, la valeur efficace allait de 0,004915 à 0,005080 entre les
+  // volumes 10 et 100, trois virgule quatre pour cent sur toute la course. Le reste était effacé par
+  // la normalisation, qui ramenait à 0,99 un son sorti à 2,44 quelle que soit la vélocité. Le
+  // plafond proportionnel rend donc au réglage le seul effet qu'il annonce, le niveau de sortie.
+  return plafonnerCrete(audioBufferDepuisTone(toneBuffer), 0.99 * velocity);
 }

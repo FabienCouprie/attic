@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1264 files, 217474 lines, of which 149577 are code.**
-The table lists the 165 files of 200 code lines or more, heaviest first;
-the remaining 1099 account for 148956 lines.
+**1271 files, 220865 lines, of which 151866 are code.**
+The table lists the 171 files of 200 code lines or more, heaviest first;
+the remaining 1100 account for 149322 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -31,17 +31,21 @@ the remaining 1099 account for 148956 lines.
 | src/ui/BarreOutils.tsx | 419 | 456 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/montage.ts | 390 | 542 |  |
+| src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
+| src/plugins/finitions.test.ts | 384 | 516 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
 | src/plugins/spectrogramme-image.test.ts | 377 | 532 |  |
 | src/plugins/syntheses-exotiques.test.ts | 372 | 542 |  |
+| src/plugins/modeles-physiques.test.ts | 368 | 550 |  |
 | src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |
 | src/plugins/magenta.ts | 367 | 467 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
-| src/audio/tone-synths.ts | 360 | 494 |  |
+| src/audio/tone-synths.ts | 360 | 509 |  |
 | src/plugins/analyse.ts | 360 | 437 |  |
+| src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
 | src/plugins/pochette-svg.ts | 358 | 401 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/algebre.test.ts | 347 | 421 |  |
@@ -58,10 +62,10 @@ the remaining 1099 account for 148956 lines.
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/plugins/effets-spectral.ts | 328 | 432 |  |
+| src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
-| src/plugins/tone-synths.ts | 325 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -75,6 +79,7 @@ the remaining 1099 account for 148956 lines.
 | src/plugins/effets-cresson.test.ts | 312 | 405 |  |
 | src/quiz/notions.ts | 312 | 337 |  |
 | src/audio/conformite-clavier.ts | 311 | 435 |  |
+| src/plugins/tone-synths-generateurs.test.ts | 311 | 459 |  |
 | src/plugins/effets-midi.test.ts | 310 | 428 |  |
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
@@ -95,6 +100,7 @@ the remaining 1099 account for 148956 lines.
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
+| src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |

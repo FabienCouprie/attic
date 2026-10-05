@@ -1149,6 +1149,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_metalsynth_var_0": { fr: "Erreur MetalSynth : {__VAR_0__}", en: "MetalSynth error: {__VAR_0__}" },
   "msg.accord_var_0_var_1_s": { fr: "Accord {__VAR_0__} — {__VAR_1__}s", en: "Chord {__VAR_0__} — {__VAR_1__}s" },
   "msg.erreur_polysynth_var_0": { fr: "Erreur PolySynth : {__VAR_0__}", en: "PolySynth error: {__VAR_0__}" },
+  "msg.polysynth.sansNote": { fr: "Aucune note à jouer : écrivez-en au moins une, séparées par des virgules.", en: "No note to play: write at least one, comma-separated." },
   "msg.var_0_var_1_var_2_s_2": { fr: "{__VAR_0__} {__VAR_1__} — {__VAR_2__}s", en: "{__VAR_0__} {__VAR_1__} — {__VAR_2__}s" },
   "msg.erreur_var_0_synth_var_1": { fr: "Erreur {__VAR_0__}Synth : {__VAR_1__}", en: "Error {__VAR_0__}Synth: {__VAR_1__}" },
   "msg.pluck_var_0_var_1_s": { fr: "Pluck {__VAR_0__} — {__VAR_1__}s", en: "Pluck {__VAR_0__} — {__VAR_1__}s" },
