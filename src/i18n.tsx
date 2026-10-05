@@ -1202,6 +1202,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.progress.magenta.groove": { fr: "Humanisation du groove…", en: "Humanizing the groove..." },
   "msg.progress.magenta.improvisation": { fr: "Improvisation au piano…", en: "Improvising at the piano..." },
   "progress.debruitage.chargement_modele": { fr: "Chargement du modèle GTCRN…", en: "Loading the GTCRN model..." },
+  "progress.asr.chargement_whisper": { fr: "Chargement du modèle Whisper…", en: "Loading the Whisper model..." },
+  "progress.asr.chargement_sherpa": { fr: "Chargement du modèle Sherpa…", en: "Loading the Sherpa model..." },
   "progress.debruitage.reechantillonnage": { fr: "Rééchantillonnage à 16 kHz…", en: "Resampling to 16 kHz..." },
   "progress.debruitage.var_0": { fr: "Débruitage {__VAR_0__} %", en: "Denoising {__VAR_0__}%" },
   "progress.rendu_fm": { fr: "Rendu FM…", en: "Made FM..." },

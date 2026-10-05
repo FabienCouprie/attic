@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1271 files, 220865 lines, of which 151866 are code.**
+**1273 files, 221081 lines, of which 151956 are code.**
 The table lists the 171 files of 200 code lines or more, heaviest first;
-the remaining 1100 account for 149322 lines.
+the remaining 1102 account for 149516 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -87,11 +87,11 @@ the remaining 1100 account for 149322 lines.
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/plugins/prompt-graphe.ts | 300 | 416 |  |
+| src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
 | src/audio/analyse-genre.ts | 297 | 369 |  |
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
-| src/plugins/sherpa-asr.ts | 296 | 411 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |

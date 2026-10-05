@@ -10198,7 +10198,7 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 
 *Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny).*
 
-Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect audio to the green input. Transcribed text is emitted on the blue output. The ONNX model (~100 MB) downloads from HuggingFace on first use. Runs in a dedicated Web Worker.
+Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect audio to the green input. Transcribed text is emitted on the blue output. The ONNX model ships with the application, under `oonx/sherpa-asr-whisper-tiny`, and is not downloaded: the node works without a network. It weighs 99 MB. It runs in a dedicated Web Worker.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10217,7 +10217,7 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 
 *English speech recognition (OpenAI Whisper base).*
 
-English speech recognition using OpenAI Whisper (base). Connect an audio signal (green port), e.g. an « Audio Input » or « Recorder » node. The model transcribes the speech to text and outputs it on the text output (blue port). The model downloads from HuggingFace on first use (~75 MB, cached). Runs in a Web Worker. Audio is automatically mixed to mono and resampled to 16 kHz.
+English speech recognition using OpenAI Whisper (base). Connect an audio signal (green port), e.g. an « Audio Input » or « Recorder » node. The model transcribes the speech to text and outputs it on the text output (blue port). The model ships with the application, under `oonx/whisper-base-en`, and is not downloaded: the node works without a network. It weighs 281 MB, the two single-precision weights being the ones the node loads. Transcription runs in a Web Worker. Audio is automatically mixed to mono and resampled to 16 kHz.
 
 | Port | Name | Type | |
 |---|---|---|---|

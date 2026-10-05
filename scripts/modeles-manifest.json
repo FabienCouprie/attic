@@ -694,6 +694,115 @@
       ]
     },
     {
+      "id": "sherpa-asr-whisper-tiny",
+      "nom": "Reconnaissance vocale (Sherpa)",
+      "nomEn": "Speech recognition (Sherpa)",
+      "noeuds": [
+        "sherpa-asr"
+      ],
+      "octets": 103609903,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/sherpa-asr-whisper-tiny.zip",
+        "octets": 59514667,
+        "sha256": "95a265c0bdd06cfd356a6cb76e1a38426b14be7c95f1799cb59bfdeb1abf8cdd"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/sherpa-asr-whisper-tiny/tiny-decoder.int8.onnx",
+          "octets": 89855401,
+          "sha256": "d2fece8dd42771f1df975c6c0445770d0c292bf7547c2cae04a6c0cc57540925"
+        },
+        {
+          "chemin": "oonx/sherpa-asr-whisper-tiny/tiny-encoder.int8.onnx",
+          "octets": 12937772,
+          "sha256": "d24fb083ae3b1041fc24e97971d60e280c9342201fbb67b0ab428a8b4a51a434"
+        },
+        {
+          "chemin": "oonx/sherpa-asr-whisper-tiny/tiny-tokens.txt",
+          "octets": 816730,
+          "sha256": "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"
+        }
+      ]
+    },
+    {
+      "id": "whisper-base-en",
+      "nom": "Whisper (anglais)",
+      "nomEn": "Whisper (English)",
+      "noeuds": [
+        "whisper-en"
+      ],
+      "octets": 294679137,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/whisper-base-en.zip",
+        "octets": 167978566,
+        "sha256": "3d548287f23bc0d3293832437f53418a51db7612bc64c9693a62e84d741f801d"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/whisper-base-en/added_tokens.json",
+          "octets": 2082,
+          "sha256": "598c98875c01fe7ebd08ba6779f052f1136de6d36d9e7b99e04b432f78ecb28d"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/config.json",
+          "octets": 2202,
+          "sha256": "5c390f2c6ba84ddeb7e362cd8b2123832911407850174e64d7081ccc36df2d64"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/generation_config.json",
+          "octets": 1500,
+          "sha256": "1e57ed56ad1bd7f08a49ece7fe7daada674573805a35f8bdbbe68380aab5b1ee"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/merges.txt",
+          "octets": 456318,
+          "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/normalizer.json",
+          "octets": 52666,
+          "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/onnx/decoder_model_merged.onnx",
+          "octets": 208558935,
+          "sha256": "e2b3d8e71a16e9462c2849ffb79b2966da800997aab299bfb9a754ba3caa54c1"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/onnx/encoder_model.onnx",
+          "octets": 82474863,
+          "sha256": "3af4d8b7515f01f1c313afe0d691768ff084169b8e1ec1cb4d975ce2ac465f6e"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/preprocessor_config.json",
+          "octets": 339,
+          "sha256": "a6a76d28c93edb273669eb9e0b0636a2bddbb1272c3261e47b7ca6dfdbac1b8d"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/special_tokens_map.json",
+          "octets": 1717,
+          "sha256": "7da611d517fe29e77335b8d8384e71795fb7b37cbf95bdc3b5252fa7e09dd1f8"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/tokenizer.json",
+          "octets": 2128494,
+          "sha256": "c6ee8f089220a5b1188f6426456772572671c6141ae007eecb83c6a8349f5deb"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/tokenizer_config.json",
+          "octets": 835,
+          "sha256": "e082c1ad251541bf277967a703252cddd4bb37a71a43737e03d050c22ec08238"
+        },
+        {
+          "chemin": "oonx/whisper-base-en/vocab.json",
+          "octets": 999186,
+          "sha256": "f6bd25a65e4e63ca31360e9fb11c7e4f9a391a78385d640acd814092dd6eee4f"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",

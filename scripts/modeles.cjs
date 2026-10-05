@@ -118,6 +118,25 @@ const CONNUS = {
       note: "La licence et ses restrictions d'usage voyagent avec le modèle : le README de l'archive les porte." },
   },
 
+  // ── LES DEUX MODÈLES DE RECONNAISSANCE VOCALE ──
+  //
+  // Ils venaient de HuggingFace à l'exécution, et c'est le même triple reproche que les points de
+  // contrôle Magenta : une installation SANS RÉSEAU ne pouvait employer ni l'un ni l'autre ; rien
+  // ne vérifiait l'intégrité de ce qui arrivait, puisqu'ils étaient absents de ce manifeste ; et ils
+  // venaient d'un tiers, contre la règle du dépôt.
+  "sherpa-asr-whisper-tiny": {
+    id: "sherpa-asr-whisper-tiny", nom: "Reconnaissance vocale (Sherpa)", nomEn: "Speech recognition (Sherpa)",
+    noeuds: ["sherpa-asr"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "OpenAI — Whisper tiny ; export sherpa-onnx par csukuangfj", rediffusable: true,
+      note: "L'EXPORT NE DÉCLARE AUCUNE LICENCE, ni celui-ci ni les seize autres du même auteur ; les poids dont il dérive, `openai/whisper-tiny`, sont en Apache-2.0. Une conversion de format est une œuvre dérivée des poids : le silence de l'exportateur ne retire pas la concession d'OpenAI, qui autorise la rediffusion avec attribution. D'où le double crédit. Ce n'est pas la situation de `model_genre.onnx`, dont la chaîne amont elle-même avait disparu." },
+  },
+  "whisper-base-en": {
+    id: "whisper-base-en", nom: "Whisper (anglais)", nomEn: "Whisper (English)",
+    noeuds: ["whisper-en"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "OpenAI — Whisper base.en ; export ONNX par Xenova", rediffusable: true,
+      note: "Le paquet porte ce que Transformers.js charge et rien de plus : les deux ONNX en fp32 que le worker demande explicitement, la configuration, le préprocesseur et le tokeniseur. Les variantes quantifiées du dépôt amont ne sont jamais chargées par l'application." },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois
