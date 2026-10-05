@@ -107,6 +107,15 @@ export interface ConfigFof {
   frequenceVibrato: number;
   /** Instabilité de hauteur, de 0 à 1 : ce qui distingue une voix d'un orgue. */
   jitter: number;
+  /**
+   * Niveau de la voix, de 0 à 1. Absent, il vaut un.
+   *
+   * CE CHAMP MANQUAIT, et c'est pourquoi la voyelle chantait tout au même niveau quoi qu'on joue :
+   * la synthèse ramenait sa crête à une valeur fixe, de sorte qu'aucune nuance ne pouvait la
+   * traverser, et le composant n'avait donc rien à quoi confier la vélocité MIDI. Le niveau se
+   * déclare ici, et la normalisation le porte.
+   */
+  niveau?: number;
 }
 
 export interface ResultatFof {
@@ -151,10 +160,15 @@ export function synthetiserFof(config: ConfigFof, aleatoire: () => number): Resu
     position += periode;
   }
 
+  // LA CRÊTE EST RAMENÉE À 0,9 FOIS LE NIVEAU DEMANDÉ, et non à 0,9 tout court : une voix doit
+  // pouvoir chanter plus ou moins fort, et c'est le mélange qui se normalise une fois, non chaque
+  // note. La crête brute dépend du nombre de formants et de leurs largeurs, elle n'est donc pas
+  // utilisable telle quelle ; la ramener à une valeur connue reste nécessaire.
+  const niveau = Math.max(0, Math.min(1, config.niveau ?? 1));
   let crete = 0;
   for (let i = 0; i < longueur; i++) crete = Math.max(crete, Math.abs(signal[i]));
   if (crete > 1e-9) {
-    const g = 0.9 / crete;
+    const g = (0.9 * niveau) / crete;
     for (let i = 0; i < longueur; i++) signal[i] *= g;
   }
   return { signal, bouffees: compte };

@@ -1167,6 +1167,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.var_0_var_1_hz_var_2_harmonique_s": { fr: "{__VAR_0__} · {__VAR_1__} Hz · {__VAR_2__} harmonique(s)", en: "{__VAR_0__} · {__VAR_1__} Hz · {__VAR_2__} harmonic(s)" },
   "msg.connectez_a_et_ou_b": { fr: "Connectez A et/ou B.", en: "Connect A and/or B." },
   "msg.coute_var_0_a_var_1_b_var_2_var_3": { fr: "Écoute {__VAR_0__} · A {__VAR_1__} · B {__VAR_2__}{__VAR_3__}", en: "Listen {__VAR_0__} · A {__VAR_1__} · B {__VAR_2__}{__VAR_3__}" },
+  // La mention que le comparateur A/B ajoute à son message quand il a aligné les niveaux. Elle
+  // était un littéral français passé en argument d'un message traduit, de sorte que l'interface
+  // anglaise lisait « Listen A · A -6.0 dB · B -12.0 dB · égalisés ».
+  "msg.niveaux_egalises": { fr: "égalisés", en: "levels matched" },
   "msg.rms_var_0_db_peak_var_1_db_lufs_var_2": { fr: "RMS {__VAR_0__} dB · Peak {__VAR_1__} dB · LUFS {__VAR_2__}", en: "RMS {__VAR_0__} dB · Peak {__VAR_1__} dB · LUFS {__VAR_2__}" },
   "msg.palette_de_couleurs_g_n_r_e": { fr: "Palette de couleurs générée", en: "Colour palette generated" },
   "progress.extraction_des_caract_ristiques": { fr: "Extraction des caractéristiques…", en: "Extraction of characteristics..." },

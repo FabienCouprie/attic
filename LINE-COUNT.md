@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1254 files, 213485 lines, of which 146781 are code.**
-The table lists the 157 files of 200 code lines or more, heaviest first;
-the remaining 1097 account for 148497 lines.
+**1264 files, 217474 lines, of which 149577 are code.**
+The table lists the 165 files of 200 code lines or more, heaviest first;
+the remaining 1099 account for 148956 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -35,6 +35,8 @@ the remaining 1097 account for 148497 lines.
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
+| src/plugins/spectrogramme-image.test.ts | 377 | 532 |  |
+| src/plugins/syntheses-exotiques.test.ts | 372 | 542 |  |
 | src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |
 | src/plugins/magenta.ts | 367 | 467 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
@@ -50,12 +52,14 @@ the remaining 1097 account for 148497 lines.
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |
 | src/audio/effets-verification.test.ts | 334 | 385 |  |
+| src/plugins/effets-spectral-modulation.test.ts | 334 | 470 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/plugins/effets-spectral.ts | 328 | 432 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
+| src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/tone-synths.ts | 325 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
@@ -79,11 +83,12 @@ the remaining 1097 account for 148497 lines.
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/plugins/prompt-graphe.ts | 300 | 416 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
+| src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
 | src/audio/analyse-genre.ts | 297 | 369 |  |
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
 | src/plugins/sherpa-asr.ts | 296 | 411 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
-| src/plugins/syntheses-exotiques.ts | 293 | 388 |  |
+| src/plugins/csound.test.ts | 294 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
@@ -92,6 +97,8 @@ the remaining 1097 account for 148497 lines.
 | src/audio/csound.ts | 286 | 577 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
+| src/plugins/deplacement.test.ts | 281 | 372 |  |
+| src/plugins/visualisation-ecoute.test.ts | 280 | 413 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
 | src/plugins/generateurs-sources.ts | 278 | 343 |  |
@@ -123,6 +130,7 @@ the remaining 1097 account for 148497 lines.
 | src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
+| src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
 | src/core/cache-execution.test.ts | 239 | 353 |  |

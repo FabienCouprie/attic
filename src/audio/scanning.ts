@@ -33,7 +33,17 @@ export interface ConfigScanning {
   amortissement: number;
   /** Forme de l'excitation initiale. */
   excitation: "pincee" | "frappee" | "bruit" | "deux-bosses";
-  /** Amplitude de l'excitation. */
+  /**
+   * Amplitude de l'excitation, de 0 à 1 — et donc NIVEAU DE SORTIE, parce que la chaîne est
+   * linéaire : excitée deux fois plus fort, elle rend exactement deux fois plus, à la forme près.
+   *
+   * CE CHAMP ÉTAIT MATHÉMATIQUEMENT MORT. La synthèse normalisait sa sortie à une crête fixe,
+   * de sorte que le facteur se simplifiait exactement : mesuré entre 0,01 et 1, l'écart maximal
+   * était de 1,2·10⁻⁷, le bruit de calcul. Le composant qui s'en sert y versait la vélocité MIDI,
+   * et deux notes jouées à 127 et à 15 sortaient au même niveau. La normalisation porte donc
+   * désormais ce facteur au lieu de l'annuler, comme le veut la règle que `versBuffer` énonce :
+   * un modèle ne normalise pas, il rend son niveau, et c'est le mélange qui se normalise une fois.
+   */
   force: number;
 }
 
@@ -154,10 +164,16 @@ export function synthetiserScanning(
     if (phase >= n) phase -= n;
   }
 
+  // LA CRÊTE EST RAMENÉE À 0,9 FOIS LA FORCE, et non à 0,9 tout court : c'est ce qui laisse passer
+  // la dynamique. La chaîne est linéaire, donc son amplitude brute dépend autant de la tension et
+  // de l'amortissement que de l'excitation ; la ramener à une valeur connue est nécessaire pour
+  // que le niveau soit prévisible, mais la ramener à une valeur FIXE effaçait le seul réglage qui
+  // devait s'entendre. Le son ne sature donc toujours pas, et deux notes de vélocités différentes
+  // ne sortent plus au même niveau.
   let crete = 0;
   for (let i = 0; i < longueur; i++) crete = Math.max(crete, Math.abs(signal[i]));
   if (crete > 1e-9) {
-    const g = 0.9 / crete;
+    const g = (0.9 * Math.max(0, Math.min(1, config.force))) / crete;
     for (let i = 0; i < longueur; i++) signal[i] *= g;
   }
   return { signal, formeFinale: etat.position, pas };
