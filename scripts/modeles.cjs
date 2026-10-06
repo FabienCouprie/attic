@@ -118,6 +118,29 @@ const CONNUS = {
       note: "La licence et ses restrictions d'usage voyagent avec le modèle : le README de l'archive les porte." },
   },
 
+  // ── LES DEUX MODÈLES VOSK ──
+  //
+  // Vosk est un troisième moteur de reconnaissance vocale, et non un doublon : il rend les mots
+  // HORODATÉS un à un, avec leur confiance, là où les deux Whisper ne rendent qu'un bloc de texte ;
+  // il accepte un vocabulaire contraint ; et il tient en quarante mégaoctets par langue, contre 99
+  // et 281 pour les deux autres. Deux moteurs qui se trompent différemment valent mieux qu'un seul.
+  //
+  // CES ARCHIVES SONT CONVERTIES, et c'est la seule du dépôt dans ce cas : `vosk-browser` ne déplie
+  // que du `.tar.gz`, alphacephei ne publie que du `.zip`. La conversion a lieu à l'amorçage, et
+  // c'est l'archive convertie qui part sur la release. D'où le type « fichier » et non « archive » :
+  // ce qui est livré est un fichier unique que la bibliothèque déplie elle-même en mémoire, et non
+  // un dossier que notre téléchargeur aurait à déplier.
+  "vosk-model-small-fr-0.22.tar.gz": {
+    id: "vosk-fr", nom: "Vosk français (petit)", nomEn: "Vosk French (small)",
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "dictee-de-graphe"],
+    licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-fr-0.22", rediffusable: true },
+  },
+  "vosk-model-small-en-us-0.15.tar.gz": {
+    id: "vosk-en", nom: "Vosk anglais (petit)", nomEn: "Vosk English (small)",
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "dictee-de-graphe"],
+    licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-en-us-0.15", rediffusable: true },
+  },
+
   // ── LES DEUX MODÈLES DE RECONNAISSANCE VOCALE ──
   //
   // Ils venaient de HuggingFace à l'exécution, et c'est le même triple reproche que les points de

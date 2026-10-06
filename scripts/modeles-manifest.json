@@ -694,6 +694,56 @@
       ]
     },
     {
+      "id": "vosk-fr",
+      "nom": "Vosk français (petit)",
+      "nomEn": "Vosk French (small)",
+      "noeuds": [
+        "vosk-asr",
+        "parole-vers-sequence",
+        "couper-aux-mots",
+        "dictee-de-graphe"
+      ],
+      "octets": 42874105,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/vosk-model-small-fr-0.22.tar.gz",
+        "octets": 42874105,
+        "sha256": "5b4e19aa4087f990d9229d34dedb5f42b05eea5f6ae98a0b1cc878f6d142a606"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/vosk-model-small-fr-0.22.tar.gz",
+          "octets": 42874105,
+          "sha256": "5b4e19aa4087f990d9229d34dedb5f42b05eea5f6ae98a0b1cc878f6d142a606"
+        }
+      ]
+    },
+    {
+      "id": "vosk-en",
+      "nom": "Vosk anglais (petit)",
+      "nomEn": "Vosk English (small)",
+      "noeuds": [
+        "vosk-asr",
+        "parole-vers-sequence",
+        "couper-aux-mots",
+        "dictee-de-graphe"
+      ],
+      "octets": 41706512,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/vosk-model-small-en-us-0.15.tar.gz",
+        "octets": 41706512,
+        "sha256": "b55af5ac77efe6683895b2788306bbae3e48564f39fdd3dc2c5e46a8f0f9edbb"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/vosk-model-small-en-us-0.15.tar.gz",
+          "octets": 41706512,
+          "sha256": "b55af5ac77efe6683895b2788306bbae3e48564f39fdd3dc2c5e46a8f0f9edbb"
+        }
+      ]
+    },
+    {
       "id": "sherpa-asr-whisper-tiny",
       "nom": "Reconnaissance vocale (Sherpa)",
       "nomEn": "Speech recognition (Sherpa)",

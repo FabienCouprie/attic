@@ -25,7 +25,7 @@ async function obtenirRegistre() {
   return registre;
 }
 
-interface SpecNode {
+export interface SpecNode {
   ficheId: string;
   label: string;
 }
@@ -204,6 +204,67 @@ async function construireDictionnaire(): Promise<EntreeDictionnaire[]> {
   return [...parId.values()];
 }
 
+/**
+ * La forme sous laquelle deux mots se comparent ici : minuscules, marques diacritiques retirées.
+ *
+ * Elle était écrite trois fois en clair dans ce fichier, à l'identique. La classe de caractères est
+ * désormais `\p{M}`, qui désigne les marques de combinaison par leur CATÉGORIE Unicode plutôt que
+ * par l'intervalle latin : sur du texte latin décomposé, les deux désignent les mêmes caractères.
+ */
+const sansAccents = (s: string): string => s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+
+/**
+ * Les noms de composants tels qu'on les dicte : minuscules, ponctuation retirée, ACCENTS GARDÉS.
+ *
+ * LES ACCENTS DÉCIDENT DE TOUT, et c'est contraire à ce qu'on attend d'une normalisation. Un moteur
+ * de reconnaissance à vocabulaire fermé ne retient d'une liste que les mots de son lexique, et le
+ * lexique français écrit « réverbération » avec ses accents : la même liste sans accents y est
+ * inconnue, et le moteur recompose alors ce qu'il peut à partir du reste. Relevé sur « entrée audio
+ * réverbération compresseur sortie audio », la liste accentuée rend la phrase exacte, la liste sans
+ * accents rend « entree audio reverb rotation compresseur sortie audio ».
+ *
+ * LES ALIAS MANUELS N'Y SONT PAS, et c'est une affaire de coût. Les ajouter porte la liste de 472 à
+ * 864 entrées, et le temps de reconnaissance de 1,8 à 5,0 secondes sur la même prise, pour le même
+ * texte : la machine d'états se construit à chaque exécution.
+ */
+export async function vocabulaireDeDictee(en = false): Promise<string[]> {
+  const registre = await obtenirRegistre();
+  const noms = registre.tousLesPlugins()
+    .filter((d) => !d.id.startsWith("__") && !d.id.startsWith("frontiere"))
+    .map((d) => ((en && d.nomEn) || d.nom).toLowerCase()
+      .replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  return [...new Set(noms)];
+}
+
+/**
+ * Les composants qu'un texte nomme, sans rien y ajouter.
+ *
+ * `parserPrompt` complète ensuite ce relevé d'une source et d'une sortie pour que le graphe tienne
+ * debout. Ce qui est rendu ici est le relevé seul, dont a besoin qui veut SAVOIR ce qu'un texte a
+ * nommé plutôt que poser un graphe : c'est ce que la dictée de graphe lit.
+ */
+export async function composantsNommes(prompt: string): Promise<SpecNode[]> {
+  return composantsDuTexte(prompt, await construireDictionnaire());
+}
+
+/** Les composants qu'un texte nomme, dictionnaire déjà construit. */
+function composantsDuTexte(prompt: string, dictionnaire: EntreeDictionnaire[]): SpecNode[] {
+  const texte = sansAccents(prompt);
+  const nodes: SpecNode[] = [];
+  const vus = new Set<string>();
+  for (const entry of dictionnaire) {
+    for (const mot of entry.mots) {
+      if (matchMot(texte, sansAccents(mot)) && !vus.has(entry.ficheId)) {
+        vus.add(entry.ficheId);
+        nodes.push({ ficheId: entry.ficheId, label: entry.label });
+        break;
+      }
+    }
+  }
+  return nodes;
+}
+
 // Match un mot-clé dans le prompt. Pour les mots-clés d'un seul mot (<=3 chars),
 // on exige une correspondance de mot entier (boundary). Pour les mots-clés longs,
 // le substring suffit (ex: "réverbération" dans "une réverbération hall").
@@ -216,24 +277,11 @@ function matchMot(texte: string, mot: string): boolean {
 }
 
 async function parserPrompt(prompt: string): Promise<{ nodes: SpecNode[]; edges: SpecEdge[] }> {
-  // Normaliser les accents pour le matching (séquenceur = séquenceur)
-  const texte = prompt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const dictionnaire = await construireDictionnaire();
-  const nodes: SpecNode[] = [];
   const edges: SpecEdge[] = [];
-  const vus = new Set<string>();
 
   // 1. Trouver tous les nodes mentionnés (dans l'ordre du dictionnaire)
-  for (const entry of dictionnaire) {
-    for (const mot of entry.mots) {
-      const motNorm = mot.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (matchMot(texte, motNorm) && !vus.has(entry.ficheId)) {
-        vus.add(entry.ficheId);
-        nodes.push({ ficheId: entry.ficheId, label: entry.label });
-        break;
-      }
-    }
-  }
+  const nodes = composantsDuTexte(prompt, dictionnaire);
 
   // Si rien trouvé, on met au moins une source + une sortie
   if (nodes.length === 0) {

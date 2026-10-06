@@ -86,7 +86,11 @@ export const audioOptimizeDeps: any = {
   // l'optimiseur de dépendances, il empêche l'application de démarrer — la barre d'outils
   // n'apparaît jamais. Le fichier fait deux mégaoctets et demi avec son WebAssembly encodé
   // en base64 à l'intérieur, et l'optimiseur ne s'en sort pas. Exclu, tout charge.
-  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js", "ephone", "@csound/browser"],
+  // vosk-browser est le même cas, et le symptôme est plus sournois : c'est un paquet UMD de
+  // 5,8 Mo qui porte son WebAssembly à l'intérieur et qui s'expose en POSANT `globalThis.Vosk`.
+  // Pré-bundlé, il ne pose plus rien ET n'exporte rien — l'import réussit, le module est vide, et
+  // le nœud échoue sur « n'a pas posé son global ». Mesuré : servi tel quel, le global revient.
+  exclude: ["_audio_backup", "piper-tts-web", "kokoro-js", "ephone", "@csound/browser", "vosk-browser"],
   include: [
     "@tensorflow/tfjs",
     "@tensorflow/tfjs-core",

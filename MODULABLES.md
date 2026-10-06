@@ -12,8 +12,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 49
-- **restent à faire** : 20 composants, 39 couples composant / famille
-- **dont le cœur travaille par trames** : 2
+- **restent à faire** : 21 composants, 40 couples composant / famille
+- **dont le cœur travaille par trames** : 3
 - **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -59,17 +59,18 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération hachée `reverbe-hachee` : Seuil
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
+### hauteur · 4
+
+- Brassage `brassage` : Transposition
+- Granular freeze `granular-freeze` : Pitch
+- Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
+- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
+
 ### frequence · 3
 
 - Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 - Ring modulator `ring-modulator` : Fréquence
 - Vocoder `vocoder` : Q
-
-### hauteur · 3
-
-- Brassage `brassage` : Transposition
-- Granular freeze `granular-freeze` : Pitch
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
 ### niveau · 2
 
