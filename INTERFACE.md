@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**473 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**472 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -234,7 +234,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Déréverbération | `dereverberation` | 240 × 118 |
 | Dessin sonore | `dessin-sonore` | 240 × 140 |
 | Détecteur de tempo | `detecteur-tempo` | 240 × 162 |
-| Dictée de graphe | `dictee-de-graphe` | 240 × 140 |
 | Distance de conduite de voix | `distance-conduite-voix` | 240 × 140 |
 | Distorsion | `distorsion` | 240 × 118 |
 | Documentation du graphe | `documentation-graphe` | 240 × 140 |

@@ -55,6 +55,7 @@ export const OUTILS: OutilBarre[] = [
 
   { id: "commentaire", famille: "edition", cle: "barre.commentaire" },
   { id: "cadre", famille: "edition", cle: "barre.cadre" },
+  { id: "dictee", famille: "edition", cle: "barre.dictee" },
 
   { id: "dossier", famille: "ressources", cle: "barre.dossier" },
   { id: "soundfont", famille: "ressources", cle: "barre.soundfont" },

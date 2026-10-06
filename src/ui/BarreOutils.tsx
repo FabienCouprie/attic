@@ -38,14 +38,38 @@ interface Props {
   onChangerProfondeurExport: (bits: ProfondeurExport) => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
+  /** La dictée : son état, et le geste qui l'ouvre ou la ferme. */
+  dictee: { ecoute: boolean; partiel: string; erreur: string; basculer: () => void };
   nbPlugins: number;
   sf2Nom: string;
   onChargerSF2: (f: File) => void;
   currentFilePath?: string | null;
 }
 
+/**
+ * Un groupe d'outils, annoncé d'un seul nom aux lecteurs d'écran.
+ *
+ * IL EST DÉFINI ICI, ET NON DANS `BarreOutils`. Un composant déclaré dans le corps d'un autre est
+ * un TYPE NEUF à chaque rendu : React ne reconnaît pas l'ancien, démonte tout le sous-arbre et le
+ * remonte. La barre se relève en mémoire toutes les deux secondes sous Electron, donc elle rendait
+ * toutes les deux secondes ; `BoutonModeles`, qui vit dans l'un de ces groupes, repartait à chaque
+ * fois de son état vide et redemandait l'inventaire au processus principal. Constaté par Fabien :
+ * « un processus qui fait vibrer le menu du haut et clignoter le témoin de téléchargement ». Mesuré
+ * dans l'application : sur un seul rendu de la barre, l'élément du groupe lui-même changeait
+ * d'identité, ses enfants avec.
+ */
+function Groupe({ famille, children, t }: {
+  famille: FamilleBarre; children: React.ReactNode; t: (cle: string) => string;
+}) {
+  return (
+    <div className="attic-groupe" role="group" data-famille={famille} aria-label={etiquetteFamille(famille, t)}>
+      {children}
+    </div>
+  );
+}
+
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -137,19 +161,13 @@ export function BarreOutils(props: Props) {
 
   // Étiquette de survol : toujours « verbe et objet — précision (raccourci) ».
   const eti = (id: string, precision?: string) => etiquetteOutil(id, t, precision);
-  // Un groupe : ses outils, annoncés d'un seul nom aux lecteurs d'écran.
-  const Groupe = ({ famille, children }: { famille: FamilleBarre; children: React.ReactNode }) => (
-    <div className="attic-groupe" role="group" data-famille={famille} aria-label={etiquetteFamille(famille, t)}>
-      {children}
-    </div>
-  );
 
   return (
     <div className="attic-barre-outils">
       <span className="attic-titre">{t("app.title")} <span className="attic-nb">({nbPlugins})</span></span>
       <span className="attic-sep" />
 
-      <Groupe famille="fichier">
+      <Groupe famille="fichier" t={t}>
         <button className="attic-btn-icon" title={eti("sauvegarder")} aria-label={eti("sauvegarder")} onClick={() => onSauvegarder()}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h8l2 2v10H3V2z"/><path d="M5 2v4h5V2"/><path d="M5 9h6v5H5z"/></svg>
         </button>
@@ -239,17 +257,26 @@ export function BarreOutils(props: Props) {
       </Groupe>
       <span className="attic-sep" />
 
-      <Groupe famille="edition">
+      <Groupe famille="edition" t={t}>
         <button className="attic-btn-icon" title={eti("commentaire")} aria-label={eti("commentaire")} onClick={onAjouterCommentaire}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 3h8a1 1 0 011 1v7a1 1 0 01-1 1H8l-3 2v-2H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
         </button>
         <button className="attic-btn-icon" title={eti("cadre")} aria-label={eti("cadre")} onClick={onAjouterCadre}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>
         </button>
+        <button className="attic-btn-icon" title={eti("dictee")} aria-label={eti("dictee")}
+          aria-pressed={dictee.ecoute} data-ecoute={dictee.ecoute ? "oui" : undefined}
+          onClick={dictee.basculer}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="6" y="2" width="4" height="7" rx="2"/><path d="M4 7v1a4 4 0 008 0V7M8 12v2"/>
+          </svg>
+        </button>
+        {dictee.ecoute && <span className="attic-chemin">{dictee.partiel || t("dictee.ecoute")}</span>}
+        {dictee.erreur && <span className="attic-chemin">{`${t("dictee.erreur")} ${dictee.erreur}`}</span>}
       </Groupe>
       <span className="attic-sep" />
 
-      <Groupe famille="ressources">
+      <Groupe famille="ressources" t={t}>
         <button className="attic-btn-icon" title={eti("dossier", repertoire || undefined)} aria-label={eti("dossier")} onClick={onChoisirDossier}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>
         </button>
@@ -283,7 +310,7 @@ export function BarreOutils(props: Props) {
       </Groupe>
       <span className="attic-sep" />
 
-      <Groupe famille="affichage">
+      <Groupe famille="affichage" t={t}>
         {/* Un disque à moitié rempli, et non plus un soleil : celui-ci se confondait avec
             l'horloge de la mise à jour, deux cercles de même taille à quelques boutons
             d'écart. Le contraste dit de lui-même qu'il s'agit du thème. */}
@@ -315,7 +342,7 @@ export function BarreOutils(props: Props) {
 
       <span className="attic-spacer" />
 
-      <Groupe famille="application">
+      <Groupe famille="application" t={t}>
         <button className="attic-btn-icon" title={eti("doc")} aria-label={eti("doc")} onClick={async () => { const res = await (window as any).api?.ouvrirDoc?.(); if (!res?.ok) alert(t("msg.docIntrouvable")); }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 2h5a3 3 0 013 3v9a2 2 0 00-2-2H2V2z"/><path d="M14 2h-4a3 3 0 00-3 3v9a2 2 0 012 2h5V2z"/></svg>
         </button>
@@ -384,7 +411,7 @@ export function BarreOutils(props: Props) {
       </Groupe>
       <span className="attic-sep" />
 
-      <Groupe famille="execution">
+      <Groupe famille="execution" t={t}>
       <button
         className="attic-btn-icon"
         title={eti("audio")}

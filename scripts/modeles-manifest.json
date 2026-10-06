@@ -700,8 +700,7 @@
       "noeuds": [
         "vosk-asr",
         "parole-vers-sequence",
-        "couper-aux-mots",
-        "dictee-de-graphe"
+        "couper-aux-mots"
       ],
       "octets": 42874105,
       "source": {
@@ -725,8 +724,7 @@
       "noeuds": [
         "vosk-asr",
         "parole-vers-sequence",
-        "couper-aux-mots",
-        "dictee-de-graphe"
+        "couper-aux-mots"
       ],
       "octets": 41706512,
       "source": {

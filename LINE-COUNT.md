@@ -7,16 +7,16 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1281 files, 223482 lines, of which 153654 are code.**
-The table lists the 175 files of 200 code lines or more, heaviest first;
-the remaining 1106 account for 150383 lines.
+**1288 files, 224104 lines, of which 154023 are code.**
+The table lists the 174 files of 200 code lines or more, heaviest first;
+the remaining 1114 account for 151193 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1399 | 1750 | ! |
-| src/ui/App.tsx | 1077 | 1444 | ! |
+| src/ui/App.tsx | 1141 | 1521 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
@@ -24,11 +24,11 @@ the remaining 1106 account for 150383 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 485 | 497 | ! |
+| src/plugins/index.ts | 483 | 495 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
-| src/ui/BarreOutils.tsx | 419 | 456 | ! |
+| src/ui/BarreOutils.tsx | 433 | 483 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/parole-vers-sequence.test.ts | 391 | 515 |  |
 | src/plugins/montage.ts | 390 | 542 |  |
@@ -67,6 +67,7 @@ the remaining 1106 account for 150383 lines.
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
+| src/plugins/prompt-graphe.ts | 324 | 476 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -75,7 +76,6 @@ the remaining 1106 account for 150383 lines.
 | src/plugins/effets-temporel.ts | 318 | 442 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
-| src/plugins/prompt-graphe.ts | 316 | 464 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
 | src/plugins/effets-cresson.test.ts | 312 | 405 |  |
@@ -144,7 +144,6 @@ the remaining 1106 account for 150383 lines.
 | src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
 | src/vues-domaine/vues-lecteur.tsx | 239 | 283 |  |
-| src/plugins/dictee-de-graphe.test.ts | 238 | 302 |  |
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |

@@ -26,6 +26,10 @@ import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontG
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
+import { planDeGrapheEngendre } from "./graphe-engendre";
+import { useDictee } from "./dictee/useDictee";
+import type { Commande } from "./dictee/commandes-dictee";
+import { dernierDeFiche, noeudCourant, positionSuivante, type NoeudPose } from "./dictee/pose-dictee";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
@@ -485,11 +489,19 @@ function Atelier() {
     pileMetaRef: pileRef,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
     onGrapheGenere: (nodeId, spec) => {
-      setNodes((nds) => {
+      // LE PLAN SE CALCULE HORS DES POSEURS, et les deux updaters qui suivent ne font qu'ajouter.
+      // Créer les arêtes DANS l'updater de `setNodes` les posait deux fois sous `StrictMode`, qui
+      // appelle un updater deux fois pour débusquer exactement cet effet de bord ; voir
+      // `ui/graphe-engendre.ts`, qui porte le calcul et son histoire.
+      {
         const baseX = noeudsRef.current.find((n) => n.id === nodeId)?.position?.x ?? 200;
         const baseY = noeudsRef.current.find((n) => n.id === nodeId)?.position?.y ?? 200;
         const cbs = callbacksNoeud();
-        const idsNouveaux: string[] = [];
+        const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`);
+        for (const c of plan.cycles) {
+          console.warn(`[attic] Prompt → graphe : arête ${c.source} → ${c.target} écartée, elle refermerait un cycle.`);
+        }
+        const idsNouveaux: string[] = plan.ids;
         const nouveauxNodes = spec.nodes.map((specNode, i) => {
           const def = trouverDef(specNode.ficheId);
           const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
@@ -503,10 +515,8 @@ function Atelier() {
 // « Left ») et refusé par l'exécution.
 parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
           }
-          const id = idUnique([...nds, ...idsNouveaux.map((nid) => ({ id: nid }))]);
-          idsNouveaux.push(id);
           return {
-            id, type: "atelier" as const,
+            id: idsNouveaux[i], type: "atelier" as const,
             position: { x: baseX + 250 + i * 260, y: baseY + 40 },
             width, height,
             data: {
@@ -526,39 +536,16 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             },
           };
         });
-        // Créer les edges. L'id embarque un horodatage : dérivé seulement de
-        // nodeId+i, il collisionnait avec les arêtes d'une génération
-        // PRÉCÉDENTE dès que le même nœud source régénérait un graphe
-        // (« Prompt → graphe » relancé, ou import répété d'un audio à graphe
-        // embarqué) — React signalait des clés dupliquées. Même convention
-        // que onConnect ci-dessous (`e-${source}-${target}-${Date.now()}`).
-        const horodatage = Date.now();
-        // UN GRAPHE ÉCRIT PAR UN MODÈLE DE LANGUE PEUT BOUCLER, et rien dans la demande ne l'en
-        // empêche. Les arêtes sont donc posées UNE À UNE, chacune éprouvée contre celles déjà
-        // acceptées : celle qui refermerait un cycle est écartée et dite, le reste du graphe
-        // engendré restant utilisable. Poser le lot d'un coup aurait rendu muettes toutes les
-        // branches prises dans la boucle.
-        const nouveauxEdges: Edge[] = [];
-        for (const [i, e] of spec.edges.entries()) {
-          const srcId = idsNouveaux[e.source];
-          const cibleId = idsNouveaux[e.target];
-          if (fermeraitUnCycle(srcId, cibleId, nouveauxEdges as unknown as AreteG[])) {
-            console.warn(`[attic] Prompt → graphe : arête ${e.source} → ${e.target} écartée, elle refermerait un cycle.`);
-            continue;
-          }
-          nouveauxEdges.push({
-            id: `e-prompt-${nodeId}-${horodatage}-${i}`,
-            source: srcId,
-            target: cibleId,
-            sourceHandle: "out:0",
-            targetHandle: "in:0",
-            type: "arete-personnalisee" as const,
-            style: { stroke: couleurArete(nouveauxNodes, srcId, "out:0"), strokeWidth: 2.5 },
-          });
-        }
+        const nouveauxEdges: Edge[] = plan.aretes.map((a) => ({
+          ...a,
+          sourceHandle: "out:0",
+          targetHandle: "in:0",
+          type: "arete-personnalisee" as const,
+          style: { stroke: couleurArete(nouveauxNodes, a.source, "out:0"), strokeWidth: 2.5 },
+        }));
+        setNodes((nds) => [...nds, ...nouveauxNodes]);
         setEdges((eds) => [...eds, ...nouveauxEdges]);
-        return [...nds, ...nouveauxNodes];
-      });
+      }
     },
     onNodeInstalle: () => {
       setPluginsVersion((v) => v + 1);
@@ -1184,6 +1171,95 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     });
   }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
+  /**
+   * CE QU'UNE DICTÉE FAIT AU CANEVAS.
+   *
+   * LES GESTES S'APPLIQUENT SUR UNE COPIE DE TRAVAIL, et les deux poseurs ne sont appelés qu'une
+   * fois à la fin. `noeudsRef` ne se remplit qu'au rendu suivant : poser trois composants en
+   * enchaînant les appels leur donnerait le même identifiant et la même place, et chacun
+   * s'enchaînerait sur le même courant.
+   *
+   * LES DÉCISIONS, ELLES, SONT DANS `ui/dictee/pose-dictee.ts` : sur quoi on enchaîne, où l'on pose,
+   * et quel nœud un nom désigne. Elles se trompent sans rien lever, et sont éprouvées là-bas.
+   */
+  const dernierDicteRef = useRef<string | null>(null);
+  const appliquerDictee = useCallback((commandes: Commande[]) => {
+    let noeuds = [...noeudsRef.current];
+    const nouveaux: typeof noeuds = [];
+    const aretes: Edge[] = [];
+    let dernier = dernierDicteRef.current;
+
+    const poser = (ficheId: string, parallele: boolean) => {
+      const def = trouverDef(ficheId);
+      if (!def) return;
+      const courant = noeudCourant(noeuds as unknown as NoeudPose[], sel?.id ?? null, dernier);
+      const position = positionSuivante(courant, noeuds as unknown as NoeudPose[], parallele);
+      const parametres: Record<string, number | string> = {};
+      for (const p of def.parametres) {
+        parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+      }
+      const { width, height } = tailleDefaut(def);
+      const id = idUnique(noeuds);
+      const noeud = {
+        id, type: "atelier" as const, position, width, height,
+        data: { ficheId, parametres, statut: "attente", ...callbacksNoeud() },
+      } as unknown as (typeof noeuds)[number];
+      noeuds = [...noeuds, noeud];
+      nouveaux.push(noeud);
+      // ENCHAÎNÉ SUR LE COURANT, sauf « en parallèle » : c'est ce qui dispense de dire le lien.
+      if (courant && !parallele) {
+        aretes.push({
+          id: `e-dictee-${id}-${Date.now()}`, source: courant.id, target: id,
+          sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
+          style: { stroke: couleurArete(noeuds, courant.id, "out:0"), strokeWidth: 2.5 },
+        });
+      }
+      dernier = id;
+    };
+
+    const relier = (deFiche: string, versFiche: string) => {
+      const de = dernierDeFiche(noeuds as unknown as NoeudPose[], deFiche);
+      const vers = dernierDeFiche(noeuds as unknown as NoeudPose[], versFiche);
+      if (!de || !vers || de.id === vers.id) return;
+      // Le même refus qu'à la souris : une arête qui referme un cycle rend muette une branche.
+      const deja = [...aretesRef.current, ...aretes] as unknown as AreteG[];
+      if (fermeraitUnCycle(de.id, vers.id, deja.filter((a) => !estSubstitution(a)))) {
+        console.warn(`[attic] Dictée : ${de.id} → ${vers.id} refermerait un cycle.`);
+        return;
+      }
+      aretes.push({
+        id: `e-dictee-${de.id}-${vers.id}-${Date.now()}`, source: de.id, target: vers.id,
+        sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
+        style: { stroke: couleurArete(noeuds, de.id, "out:0"), strokeWidth: 2.5 },
+      });
+    };
+
+    const verser = () => {
+      if (nouveaux.length === 0 && aretes.length === 0) return;
+      pushHistorique();
+      const n = [...nouveaux]; const a = [...aretes];
+      nouveaux.length = 0; aretes.length = 0;
+      setNodes((nds) => [...nds, ...n]);
+      setEdges((eds) => [...eds, ...a]);
+    };
+
+    for (const c of commandes) {
+      if (c.quoi === "poser") poser(c.ficheId, c.parallele);
+      else if (c.quoi === "relier") relier(c.de, c.vers);
+      else if (c.quoi === "annuler") {
+        // Ce qui est en attente part d'abord : annuler doit défaire l'état visible, pas un autre.
+        verser();
+        undo();
+        noeuds = [...noeudsRef.current];
+        dernier = null;
+      }
+    }
+    verser();
+    dernierDicteRef.current = dernier;
+  }, [sel, lang, trouverDef, callbacksNoeud, pushHistorique, setNodes, setEdges, undo]);
+
+  const dictee = useDictee(lang === "en" ? "en" : "fr", appliquerDictee);
+
   // Export / import du workflow, dans hooks/usePersistance.ts.
   const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
@@ -1299,6 +1375,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         onExporter={exporter}
         onAjouterCommentaire={ajouterCommentaire}
         onAjouterCadre={ajouterCadre}
+        dictee={dictee}
         onSauvegarder={sauvegarder}
         onDetacherFichier={detacherFichier}
         sauvegardeAuto={sauvegardeAutoActive}

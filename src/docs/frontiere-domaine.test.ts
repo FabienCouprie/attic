@@ -156,12 +156,24 @@ function sourcesRacine(): string[] {
  * l'audio n'aurait rien à écrire. Un autre domaine écrit les siens, ou les paramètre. Ils figurent
  * ici pour qu'un QUATRIÈME ne s'ajoute pas sans qu'on le remarque.
  */
+/*
+ * ET LA DICTÉE, ajoutée avec le bouton de la barre.
+ *
+ *   `ui/dictee/useDictee.ts`     le moteur de reconnaissance, et la liste des noms de composants
+ *
+ * LE COUPLAGE EST CELUI DU GESTE, et il ne se contourne pas en déplaçant un import : ce qui écoute
+ * le micro est le shell, et ce qu'il doit reconnaître est le catalogue du domaine. Il est ramassé
+ * en un seul fichier, et la LANGUE de la dictée, elle, n'en sait rien : `ui/dictee/commandes-dictee.ts`
+ * et `ui/dictee/pose-dictee.ts` ne connaissent ni l'audio ni le moteur, et portent l'essentiel des
+ * décisions. Un autre domaine garde donc la dictée entière et ne réécrit que ce fichier-ci.
+ */
 const COUPLES_ATTENDUS = [
   "docs/catalogue-markdown.ts",
   "docs/inventaire-ui.ts",
   "docs/modulables.ts",
   "ui/App.tsx",
   "ui/AtelierNode.tsx",
+  "ui/dictee/useDictee.ts",
   "ui/Inspector.tsx",
   "ui/hooks/useExecutionGraphe.ts",
   "ui/ordre-palette.ts",
