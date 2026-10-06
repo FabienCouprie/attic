@@ -50,6 +50,25 @@ const mo = (octets) => (octets / 1048576).toFixed(1);
 const fichierDe = (m) => path.join(DOSSIER, `${m.nom}.tar.gz`);
 const sha256 = (octets) => crypto.createHash("sha256").update(octets).digest("hex");
 
+/**
+ * Où une entrée d'archive a le droit d'être écrite, ou une erreur.
+ *
+ * ZIP SLIP : une entrée nommée « ../../.bashrc » se résout hors du dossier où l'on déplie, et
+ * l'archive décide alors des fichiers qu'on écrit. ON COMPARE LE CHEMIN RÉSOLU, et non le nom :
+ * c'est ce que font déjà `electron/extraire-node-zip.cjs` et `electron/main.cjs`, et c'est la seule
+ * vérification qui tienne. Un premier jet cherchait « .. » par expression régulière dans le nom ;
+ * CodeQL l'a refusé, et il avait raison : un motif sur le nom laisse passer les formes encodées ou
+ * mixtes, ce que le commentaire de `extraire-node-zip.cjs` disait déjà.
+ */
+function cibleSure(base, nomDEntree) {
+  const racine = path.resolve(base);
+  const cible = path.resolve(racine, String(nomDEntree).replace(/\\/g, "/"));
+  if (cible !== racine && !cible.startsWith(racine + path.sep)) {
+    throw new Error(`entrée refusée dans l'archive amont : ${nomDEntree}`);
+  }
+  return cible;
+}
+
 /** L'entrée du manifeste, qui décide de ce qui est attendu. */
 function entreeDuManifeste(id) {
   const m = JSON.parse(fs.readFileSync(MANIFESTE, "utf8"));
@@ -106,11 +125,8 @@ async function amorcer(modele) {
     const zip = new AdmZip(octets);
     for (const e of zip.getEntries()) {
       if (e.isDirectory) continue;
-      // Une entrée d'archive ne décide pas des chemins qu'on écrit : pas de remontée.
-      if (/(^|[\\/])\.\.([\\/]|$)/.test(e.entryName) || path.isAbsolute(e.entryName)) {
-        throw new Error(`entrée refusée dans l'archive amont : ${e.entryName}`);
-      }
-      const cible = path.join(travail, ...e.entryName.split("/"));
+      // Une entrée d'archive ne décide pas des chemins qu'on écrit : voir `cibleSure`.
+      const cible = cibleSure(travail, e.entryName);
       fs.mkdirSync(path.dirname(cible), { recursive: true });
       fs.writeFileSync(cible, e.getData());
     }
@@ -144,6 +160,6 @@ async function main() {
   if (echec && !tolerant) process.exit(1);
 }
 
-module.exports = { MODELES, fichierDe, present };
+module.exports = { MODELES, cibleSure, fichierDe, present };
 
 if (require.main === module) main();
