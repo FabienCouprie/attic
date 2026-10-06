@@ -38,6 +38,25 @@ export function pointDepuisDegustation(profil: ProfilDegustation): DimensionsGou
 }
 
 /** Le goût qui l'emporte, et sa part du profil. */
+/**
+ * La dégustation ramenée à ses parts, du plus fort au plus faible.
+ *
+ * CE SONT LES PROPORTIONS QUI COMPTENT, et non les valeurs réglées : quatre valeurs de 20 donnent le
+ * même point que quatre valeurs de 80. Les parts somment donc à un, ce qui les rend comparables au
+ * profil mesuré sur la musique rendue, qui somme à un lui aussi. C'est cette comparaison que le
+ * composant existe pour montrer.
+ *
+ * Rend une liste vide quand tout est à zéro : il n'y a alors aucune dégustation, et répartir à parts
+ * égales laisserait croire à un profil que personne n'a donné.
+ */
+export function partsDeDegustation(profil: ProfilDegustation): { gout: Gout; part: number }[] {
+  const total = GOUTS.reduce((s, g) => s + Math.max(0, profil[g]), 0);
+  if (total <= 0) return [];
+  return GOUTS
+    .map((gout) => ({ gout, part: Math.max(0, profil[gout]) / total }))
+    .sort((a, b) => b.part - a.part);
+}
+
 export function goutDominant(profil: ProfilDegustation): { gout: Gout; part: number } | null {
   const total = GOUTS.reduce((s, g) => s + Math.max(0, profil[g]), 0);
   if (total <= 0) return null;

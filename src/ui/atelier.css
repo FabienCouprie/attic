@@ -1741,6 +1741,11 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 .attic-gout-barre > span { display: block; height: 100%; border-radius: 4px; }
 .attic-gout-part { width: 34px; text-align: right; color: var(--text-muted, #6b7079); font-variant-numeric: tabular-nums; flex: none; }
 
+/* Deux profils l'un sous l'autre : la dégustation réglée, puis ce qui a été mesuré sur la musique.
+   C'est l'écart entre les deux que l'accord mets-musique existe pour montrer. */
+.attic-gout-double { display: flex; flex-direction: column; gap: 2px; }
+.attic-gout-titre { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #6b7079); padding: 4px 2px 0 2px; }
+
 /* Le film du cercle : un lecteur, et la ligne d'enregistrement en dessous. Le nœud n'a aucun port,
    c'est donc le seul endroit où le film se voit et d'où il s'écrit. */
 .attic-vue-film-cercle { display: flex; flex-direction: column; gap: 6px; padding: 6px; }

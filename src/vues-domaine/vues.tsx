@@ -41,7 +41,7 @@ import { VueCollections, VueExport } from "./vues-collections";
 import { ClavierMelodie, ClavierSfz, VueApprentissage, VueBanqueSfz, VueOrchestreCsound } from "./vues-claviers";
 import { VueADSR, VueComparateurAB, VueDetecteurAccords, VueEmotions, VueGenerateurScriptIA, VueNomsInstruments, VueOscillo, VueReponseFiltre, VueSequenceurAccords, VueSequenceurBatterieAvance, VueSequenceurMelodique, VueSpectre, VueSpectrogramme, VueStylesMusicaux, VueTessituresVoix } from "./vues-analyse";
 import { VueGestionNodes, VueJuliaProcessor, VuePythonProcessor } from "./vues-code";
-import { VueAnimationSvg, VueAttracteurIFS, VueColorSynth, VueComparaisonEsth, VueCouleurSunoIA, VueEsthetique, VueGalerieExposition, VueGout, VueGravure, VueImageDepuisAudio, VuePochette, VueRenduImage, VueTraceCourbe, VueVexFlow, VueVuMetre } from "./vues-images";
+import { VueAnimationSvg, VueAttracteurIFS, VueColorSynth, VueComparaisonEsth, VueCouleurSunoIA, VueEsthetique, VueAccordMets, VueGalerieExposition, VueGout, VueGravure, VueImageDepuisAudio, VuePochette, VueRenduImage, VueTraceCourbe, VueVexFlow, VueVuMetre } from "./vues-images";
 import { VueDemonstration, VueFilmApplication, VueModifierTexte, VueSortieTexte, VueSourceTexte } from "./vues-texte";
 import { VueCarteSonore, VueCoordonneesSurCarte, VueCourbe } from "./vues-cartes";
 import { declarerVues, parId } from "../ui/registre-vues";
@@ -112,7 +112,11 @@ declarerVues([
   { correspond: parId("cercle-pulsant"), vue: VueAnimationSvg, position: "avant", porteLecteur: true },
   // Le film n'a aucun port : cette vue est le seul endroit où on le voit et d'où on l'écrit.
   { correspond: parId("cercle-film"), vue: VueFilmCercle, position: "avant" },
-  { correspond: (f) => f === "gout-du-son" || f === "parfum-motif" || f === "accord-mets-musique", vue: VueGout, position: "avant" },
+  // L'ACCORD METS-MUSIQUE A SA VUE À LUI, et les deux autres gardent la leur : il est le seul des
+  // trois à porter une dégustation RÉGLÉE, donc le seul qui ait deux profils à montrer. « Goût du
+  // son » et « Parfum » mesurent ce qu'on leur donne, et n'ont rien qui suive un curseur.
+  { correspond: (f) => f === "accord-mets-musique", vue: VueAccordMets, position: "avant" },
+  { correspond: (f) => f === "gout-du-son" || f === "parfum-motif", vue: VueGout, position: "avant" },
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
