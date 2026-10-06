@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1271 files, 220865 lines, of which 151866 are code.**
-The table lists the 171 files of 200 code lines or more, heaviest first;
-the remaining 1100 account for 149322 lines.
+**1281 files, 223482 lines, of which 153654 are code.**
+The table lists the 175 files of 200 code lines or more, heaviest first;
+the remaining 1106 account for 150383 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,12 +24,13 @@ the remaining 1100 account for 149322 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 477 | 489 | ! |
+| src/plugins/index.ts | 485 | 497 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
 | src/ui/BarreOutils.tsx | 419 | 456 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
+| src/plugins/parole-vers-sequence.test.ts | 391 | 515 |  |
 | src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
@@ -74,6 +75,7 @@ the remaining 1100 account for 149322 lines.
 | src/plugins/effets-temporel.ts | 318 | 442 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
+| src/plugins/prompt-graphe.ts | 316 | 464 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
 | src/plugins/effets-cresson.test.ts | 312 | 405 |  |
@@ -84,14 +86,14 @@ the remaining 1100 account for 149322 lines.
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
 | src/audio/courbe.ts | 308 | 611 |  |
+| src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
-| src/plugins/prompt-graphe.ts | 300 | 416 |  |
+| src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
 | src/audio/analyse-genre.ts | 297 | 369 |  |
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
-| src/plugins/sherpa-asr.ts | 296 | 411 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
@@ -142,6 +144,7 @@ the remaining 1100 account for 149322 lines.
 | src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
 | src/vues-domaine/vues-lecteur.tsx | 239 | 283 |  |
+| src/plugins/dictee-de-graphe.test.ts | 238 | 302 |  |
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
@@ -174,6 +177,7 @@ the remaining 1100 account for 149322 lines.
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |
 | src/plugins/multicanal.ts | 209 | 288 |  |
+| src/plugins/vosk-asr.test.ts | 209 | 280 |  |
 | src/audio/ecosysteme.ts | 208 | 388 |  |
 | src/audio/spectrogramme-mel.ts | 208 | 333 |  |
 | src/plugins/effets.test.ts | 208 | 302 |  |

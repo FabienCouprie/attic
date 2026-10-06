@@ -3,11 +3,23 @@
 // L'audio provient d'une entrée audio (port vert) — branchez un node « Entrée audio »
 // ou un enregistrement. Le texte est émis sur la sortie texte (port bleu).
 // La transcription tourne dans un Web Worker.
+//
+// LE MODÈLE EST LIVRÉ AVEC L'APPLICATION, et ne vient plus de HuggingFace. Il s'y chargeait au
+// premier usage — 281 Mo en fp32, et non les 75 Mo que la notice annonçait, qui sont ceux d'une
+// variante quantifiée que ce nœud ne charge pas. Trois conséquences, contre la règle du dépôt : pas
+// d'usage sans réseau, aucune empreinte vérifiée puisqu'il était absent de `modeles-manifest.json`,
+// et un hébergeur tiers libre de déplacer ce qu'il sert.
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
+import { baseModeleLivre } from "./base-modeles";
+import { annoncerModele } from "./message-modele";
+
+/** Le dossier qui CONTIENT le paquet, et le paquet : Transformers.js compose les deux. */
+export const RACINE_MODELES = "oonx";
+export const NOM_MODELE = "whisper-base-en";
 
 let worker: Worker | null = null;
 
@@ -69,6 +81,11 @@ export const fiches: FicheAudio[] = ([
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
+      // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
+      // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier
+      // absent. Le manifeste relie le paquet à cette fiche, et un test refuse qu'un nœud nommé par
+      // lui reste muet.
+      await annoncerModele(ctx, "whisper-en", traduire("progress.asr.chargement_whisper"));
       const w = getWorker();
       return new Promise((resolve) => {
         const requestId = makeRequestId();
@@ -85,7 +102,13 @@ export const fiches: FicheAudio[] = ([
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ audioData: mono, sampleRate: 16000, modelId: "Xenova/whisper-base.en", requestId });
+        // LE MODÈLE EST LIVRÉ, et son dossier se résout dans la page : voir `base-modeles.ts`.
+        // `modelBase` est le dossier qui CONTIENT le paquet, `modelId` le paquet lui-même, parce que
+        // c'est ainsi que Transformers.js compose ses chemins.
+        w.postMessage({
+          audioData: mono, sampleRate: 16000,
+          modelBase: baseModeleLivre(RACINE_MODELES), modelId: NOM_MODELE, requestId,
+        });
       });
     },
   },

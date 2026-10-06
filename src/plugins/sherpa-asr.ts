@@ -1,12 +1,19 @@
 // plugins/sherpa-asr.ts — Nœud « Sherpa ASR » : reconnaissance vocale locale
 // via Sherpa-ONNX (Whisper tiny multilingue) dans un Web Worker classique.
-// Le worker charge les modèles ONNX depuis HuggingFace au premier usage.
+//
+// LE MODÈLE EST LIVRÉ AVEC L'APPLICATION, et ne vient plus de HuggingFace. Il était chargé chez un
+// tiers au premier usage — 98,8 Mo —, ce qui faisait trois choses contre la règle du dépôt : une
+// installation sans réseau ne pouvait pas employer ce nœud, rien ne vérifiait l'intégrité de ce qui
+// arrivait puisqu'il était absent de `modeles-manifest.json`, et l'hébergeur pouvait le déplacer.
+// Il est maintenant sous `public/oonx/sherpa-asr-whisper-tiny/`, au manifeste avec son empreinte, et
+// publié sur la release `assets` d'où l'installeur allégé le prend.
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
+import { baseModeleLivre } from "./base-modeles";
+import { annoncerModele } from "./message-modele";
 
-const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main";
 const MODEL_DIR = "/sherpa-asr-model";
 
 const LANGUES: Record<string, string> = {
@@ -152,11 +159,21 @@ interface SherpaWorkerConfig {
   recognizerConfig: SherpaRecognizerConfig;
 }
 
+/**
+ * Le paquet livré, résolu dans la PAGE et non dans le worker.
+ *
+ * Le worker de ce nœud est un script classique servi depuis `public/` : une adresse relative s'y
+ * résoudrait contre son propre emplacement, et sous `file:` un `fetch` y serait refusé. La page,
+ * elle, sait où elle est ; la base calculée ici voyage avec la configuration.
+ */
+export const DOSSIER_MODELE = "oonx/sherpa-asr-whisper-tiny";
+
 function buildConfig(langCode: string): SherpaWorkerConfig {
+  const base = baseModeleLivre(DOSSIER_MODELE);
   const files: SherpaFileRef[] = [
-    { url: `${MODEL_BASE_URL}/tiny-encoder.int8.onnx`, fsPath: `${MODEL_DIR}/tiny-encoder.int8.onnx` },
-    { url: `${MODEL_BASE_URL}/tiny-decoder.int8.onnx`, fsPath: `${MODEL_DIR}/tiny-decoder.int8.onnx` },
-    { url: `${MODEL_BASE_URL}/tiny-tokens.txt`, fsPath: `${MODEL_DIR}/tiny-tokens.txt` },
+    { url: `${base}/tiny-encoder.int8.onnx`, fsPath: `${MODEL_DIR}/tiny-encoder.int8.onnx` },
+    { url: `${base}/tiny-decoder.int8.onnx`, fsPath: `${MODEL_DIR}/tiny-decoder.int8.onnx` },
+    { url: `${base}/tiny-tokens.txt`, fsPath: `${MODEL_DIR}/tiny-tokens.txt` },
   ];
   return {
     modelDir: MODEL_DIR,
@@ -360,6 +377,11 @@ export const fiches: FicheAudio[] = ([
       if (!(audio instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       }
+      // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
+      // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier
+      // absent. Le manifeste relie le paquet à cette fiche, et un test refuse qu'un nœud nommé par
+      // lui reste muet.
+      await annoncerModele(ctx, "sherpa-asr", traduire("progress.asr.chargement_sherpa"));
       // `paramTexte` renvoie désormais l'id canonique, qui EST le code ISO
       // (« auto » = pas de code). Le repli sur LANGUES couvre les projets
       // enregistrés avant la migration, qui stockent encore le libellé.

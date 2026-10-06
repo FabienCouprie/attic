@@ -58,8 +58,23 @@ describe("le chemin demandé par une URL du schéma", () => {
   // théorique.
   it("UN FICHIER HORS DES DOSSIERS SERVIS EST REFUSÉ, fût-il livré", () => {
     expect(cheminRelatifDepuisUrl(`${SCHEMA}://package.json`)).toBeNull();
-    expect(cheminRelatifDepuisUrl(`${SCHEMA}://oonx/gtcrn.onnx`)).toBeNull();
     expect(cheminRelatifDepuisUrl(`${SCHEMA}://src/plugins/notices.ts`)).toBeNull();
+    // Les autres dossiers de `public/` sont livrés eux aussi, et ne sont pas servis pour autant :
+    // la borne porte sur ce que le schéma DÉCLARE, non sur ce qui se trouve à côté.
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://sf2/banque.sf2`)).toBeNull();
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://piper-tts/voix.onnx`)).toBeNull();
+  });
+
+  it("sert les modèles de `oonx`, qu'il a fallu ouvrir pour la reconnaissance vocale", () => {
+    // Les deux modèles ASR venaient d'un tiers à l'exécution ; livrés comme ceux de Magenta, leurs
+    // workers les lisent par ce schéma, et le dossier a donc rejoint la liste.
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://oonx/whisper-base-en/config.json`))
+      .toBe("oonx/whisper-base-en/config.json");
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://oonx/sherpa-asr-whisper-tiny/tiny-tokens.txt`))
+      .toBe("oonx/sherpa-asr-whisper-tiny/tiny-tokens.txt");
+    // Et les deux contrôles s'y appliquent comme ailleurs.
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://oonx/../package.json`)).toBeNull();
+    expect(cheminRelatifDepuisUrl(`${SCHEMA}://oonx`)).toBeNull();
   });
 
   it("un dossier servi sans fichier ne désigne rien non plus", () => {

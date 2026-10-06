@@ -118,6 +118,48 @@ const CONNUS = {
       note: "La licence et ses restrictions d'usage voyagent avec le modèle : le README de l'archive les porte." },
   },
 
+  // ── LES DEUX MODÈLES VOSK ──
+  //
+  // Vosk est un troisième moteur de reconnaissance vocale, et non un doublon : il rend les mots
+  // HORODATÉS un à un, avec leur confiance, là où les deux Whisper ne rendent qu'un bloc de texte ;
+  // il accepte un vocabulaire contraint ; et il tient en quarante mégaoctets par langue, contre 99
+  // et 281 pour les deux autres. Deux moteurs qui se trompent différemment valent mieux qu'un seul.
+  //
+  // CES ARCHIVES SONT CONVERTIES, et c'est la seule du dépôt dans ce cas : `vosk-browser` ne déplie
+  // que du `.tar.gz`, alphacephei ne publie que du `.zip`. La conversion a lieu à l'amorçage, et
+  // c'est l'archive convertie qui part sur la release. D'où le type « fichier » et non « archive » :
+  // ce qui est livré est un fichier unique que la bibliothèque déplie elle-même en mémoire, et non
+  // un dossier que notre téléchargeur aurait à déplier.
+  "vosk-model-small-fr-0.22.tar.gz": {
+    id: "vosk-fr", nom: "Vosk français (petit)", nomEn: "Vosk French (small)",
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "dictee-de-graphe"],
+    licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-fr-0.22", rediffusable: true },
+  },
+  "vosk-model-small-en-us-0.15.tar.gz": {
+    id: "vosk-en", nom: "Vosk anglais (petit)", nomEn: "Vosk English (small)",
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "dictee-de-graphe"],
+    licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-en-us-0.15", rediffusable: true },
+  },
+
+  // ── LES DEUX MODÈLES DE RECONNAISSANCE VOCALE ──
+  //
+  // Ils venaient de HuggingFace à l'exécution, et c'est le même triple reproche que les points de
+  // contrôle Magenta : une installation SANS RÉSEAU ne pouvait employer ni l'un ni l'autre ; rien
+  // ne vérifiait l'intégrité de ce qui arrivait, puisqu'ils étaient absents de ce manifeste ; et ils
+  // venaient d'un tiers, contre la règle du dépôt.
+  "sherpa-asr-whisper-tiny": {
+    id: "sherpa-asr-whisper-tiny", nom: "Reconnaissance vocale (Sherpa)", nomEn: "Speech recognition (Sherpa)",
+    noeuds: ["sherpa-asr"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "OpenAI — Whisper tiny ; export sherpa-onnx par csukuangfj", rediffusable: true,
+      note: "L'EXPORT NE DÉCLARE AUCUNE LICENCE, ni celui-ci ni les seize autres du même auteur ; les poids dont il dérive, `openai/whisper-tiny`, sont en Apache-2.0. Une conversion de format est une œuvre dérivée des poids : le silence de l'exportateur ne retire pas la concession d'OpenAI, qui autorise la rediffusion avec attribution. D'où le double crédit. Ce n'est pas la situation de `model_genre.onnx`, dont la chaîne amont elle-même avait disparu." },
+  },
+  "whisper-base-en": {
+    id: "whisper-base-en", nom: "Whisper (anglais)", nomEn: "Whisper (English)",
+    noeuds: ["whisper-en"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "OpenAI — Whisper base.en ; export ONNX par Xenova", rediffusable: true,
+      note: "Le paquet porte ce que Transformers.js charge et rien de plus : les deux ONNX en fp32 que le worker demande explicitement, la configuration, le préprocesseur et le tokeniseur. Les variantes quantifiées du dépôt amont ne sont jamais chargées par l'application." },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois

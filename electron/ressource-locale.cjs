@@ -31,8 +31,14 @@ const SCHEMA = "attic-res";
  * Qui pourrait s'en servir ? Aucune page du dehors — un schéma propre n'est pas joignable depuis le
  * web. Mais Attic installe des nœuds à chaud, livrés en `.zip` : du code tiers tourne dans la page.
  * Un schéma qui lit n'importe quel fichier livré lui ouvrirait tout. Il n'ouvre que ceci.
+ *
+ * `oonx` S'Y EST AJOUTÉ POUR LES DEUX MODÈLES DE RECONNAISSANCE VOCALE, qui venaient d'un tiers à
+ * l'exécution. Ils sont désormais livrés comme les points de contrôle Magenta, et leurs workers les
+ * lisent par le même chemin. La liste s'allonge d'un dossier de MODÈLES, pas d'un dossier
+ * quelconque : c'est la même nature de contenu, lue par les mêmes workers, et les deux contrôles
+ * qui suivent — pas de remontée, pas de racine seule — s'y appliquent à l'identique.
  */
-const DOSSIERS_SERVIS = new Set(["magenta"]);
+const DOSSIERS_SERVIS = new Set(["magenta", "oonx"]);
 
 /**
  * Le chemin relatif demandé par une URL du schéma, ou `null` si elle sort des ressources.

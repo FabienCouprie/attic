@@ -1,19 +1,34 @@
 // src/workers/asr-worker.js — Web Worker pour ASR (Whisper, Transformers.js).
-// Transcrit un AudioBuffer en texte. Supporte plusieurs modèles Whisper.
+// Transcrit un AudioBuffer en texte.
+//
+// LE MODÈLE EST LIVRÉ AVEC L'APPLICATION, et ne vient plus de HuggingFace. Transformers.js va le
+// chercher chez son hébergeur par défaut ; on le lui interdit et on lui donne le dossier local.
+// Trois raisons, les mêmes que pour les points de contrôle Magenta : une installation sans réseau
+// doit pouvoir employer le nœud, l'intégrité de ce qui arrive doit être vérifiable — c'est l'affaire
+// de `modeles-manifest.json` —, et un tiers peut déplacer ce qu'il héberge.
+//
+// LA BASE VIENT DE LA PAGE, dans le message : ici `self.location` est l'URL du script du worker,
+// qui ne dit rien de l'endroit d'où la page est servie. Voir `plugins/base-modeles.ts`.
 import { pipeline, env } from "@huggingface/transformers";
 
 env.backends.onnx.wasm.proxy = true;
+env.allowRemoteModels = false;
+env.allowLocalModels = true;
 
 const transcribers = new Map();
 
-async function getTranscriber(modelId, requestId) {
-  if (transcribers.has(modelId)) return transcribers.get(modelId);
+async function getTranscriber(modelId, modelBase, requestId) {
+  const cle = `${modelBase}|${modelId}`;
+  if (transcribers.has(cle)) return transcribers.get(cle);
   self.postMessage({ type: "progress", msg: "Chargement du modèle Whisper…", requestId });
+  // `localModelPath` est le dossier QUI CONTIENT le paquet : Transformers.js y concatène
+  // l'identifiant du modèle, puis le nom de chaque fichier.
+  env.localModelPath = modelBase;
   const transcriber = await pipeline("automatic-speech-recognition", modelId, {
     device: "wasm",
     dtype: { encoder_model: "fp32", decoder_model_merged: "fp32" },
   });
-  transcribers.set(modelId, transcriber);
+  transcribers.set(cle, transcriber);
   return transcriber;
 }
 
@@ -21,9 +36,9 @@ const queue = [];
 let busy = false;
 
 async function processRequest(req) {
-  const { audioData, sampleRate, modelId, language, translate, requestId } = req;
+  const { audioData, sampleRate, modelId, modelBase, language, translate, requestId } = req;
   try {
-    const transcriber = await getTranscriber(modelId, requestId);
+    const transcriber = await getTranscriber(modelId, modelBase, requestId);
     self.postMessage({ type: "progress", msg: "Transcription…", requestId });
     const options = {
       chunk_length_s: 30,
