@@ -227,14 +227,26 @@ const sansAccents = (s: string): string => s.toLowerCase().normalize("NFD").repl
  * 864 entrées, et le temps de reconnaissance de 1,8 à 5,0 secondes sur la même prise, pour le même
  * texte : la machine d'états se construit à chaque exécution.
  */
-export async function vocabulaireDeDictee(en = false): Promise<string[]> {
+export async function nomsDeDictee(en = false): Promise<{ ficheId: string; nom: string }[]> {
   const registre = await obtenirRegistre();
-  const noms = registre.tousLesPlugins()
-    .filter((d) => !d.id.startsWith("__") && !d.id.startsWith("frontiere"))
-    .map((d) => ((en && d.nomEn) || d.nom).toLowerCase()
-      .replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  return [...new Set(noms)];
+  const vus = new Set<string>();
+  const out: { ficheId: string; nom: string }[] = [];
+  for (const d of registre.tousLesPlugins()) {
+    if (d.id.startsWith("__") || d.id.startsWith("frontiere")) continue;
+    const nom = ((en && d.nomEn) || d.nom).toLowerCase()
+      .replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim();
+    // DEUX COMPOSANTS DE MÊME NOM NE SE DISTINGUENT PAS À LA VOIX : le premier l'emporte, et le
+    // second ne vient pas s'ajouter à la liste, où il doublerait un mot sans rien désigner de plus.
+    if (!nom || vus.has(nom)) continue;
+    vus.add(nom);
+    out.push({ ficheId: d.id, nom });
+  }
+  return out;
+}
+
+/** Les seuls noms, ce dont une grammaire de reconnaissance a besoin. */
+export async function vocabulaireDeDictee(en = false): Promise<string[]> {
+  return (await nomsDeDictee(en)).map((x) => x.nom);
 }
 
 /**

@@ -38,6 +38,8 @@ interface Props {
   onChangerProfondeurExport: (bits: ProfondeurExport) => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
+  /** La dictée : son état, et le geste qui l'ouvre ou la ferme. */
+  dictee: { ecoute: boolean; partiel: string; erreur: string; basculer: () => void };
   nbPlugins: number;
   sf2Nom: string;
   onChargerSF2: (f: File) => void;
@@ -45,7 +47,7 @@ interface Props {
 }
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -246,6 +248,15 @@ export function BarreOutils(props: Props) {
         <button className="attic-btn-icon" title={eti("cadre")} aria-label={eti("cadre")} onClick={onAjouterCadre}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>
         </button>
+        <button className="attic-btn-icon" title={eti("dictee")} aria-label={eti("dictee")}
+          aria-pressed={dictee.ecoute} data-ecoute={dictee.ecoute ? "oui" : undefined}
+          onClick={dictee.basculer}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="6" y="2" width="4" height="7" rx="2"/><path d="M4 7v1a4 4 0 008 0V7M8 12v2"/>
+          </svg>
+        </button>
+        {dictee.ecoute && <span className="attic-chemin">{dictee.partiel || t("dictee.ecoute")}</span>}
+        {dictee.erreur && <span className="attic-chemin">{`${t("dictee.erreur")} ${dictee.erreur}`}</span>}
       </Groupe>
       <span className="attic-sep" />
 

@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **473 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **472 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **473 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 86 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (17) · [Theory](#theory) (10) · [Video](#video) (5) |
+| [Other & lab](#other--lab) | 85 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
 
 ## How to read this catalog
 
@@ -10434,7 +10434,6 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | [DistilGPT-2](#distilgpt-2) | Generates text via AI (DistilGPT-2, English). |
 | [Edit Text](#edit-text) | Displays incoming text, lets it be edited by hand, and returns what the area contains. |
 | [Emotions](#emotions) | Outputs a collection of human emotions by category as text. |
-| [Graph Dictation](#graph-dictation) | Transcribes a spoken instruction, recognising nothing in it but node names. |
 | [Graph Documentation](#graph-documentation) | Documents the graph it sits in: every node, its set values, its wiring, and the notice of every component used. |
 | [Instrument Names](#instrument-names) | Outputs a long list of musical instrument names as text. |
 | [Lyrics Generator](#lyrics-generator) | Generates structured song lyrics (verse, chorus, bridge) without AI. |
@@ -10548,26 +10547,6 @@ Outputs a collection of human emotions on its « Text » output (about 160, grou
 |---|---|---|---|---|
 | Category | choice | All | All / Joy/Happiness / Sadness/Melancholy / Anger/Frustration / Fear/Anxiety / Love/Tenderness / Surprise/Wonder / Disgust/Rejection / Mixed/Complex | Filters the list by emotion category. |
 | Format | choice | Comma | Comma / Newline / Bullets | Separator of the produced text. |
-
-#### Graph Dictation
-
-`dictee-de-graphe` · Other & lab → Text
-
-*Transcribes a spoken instruction, recognising nothing in it but node names.*
-
-Transcribes a spoken instruction, restricting what the recognition engine is allowed to return to the names of the installed nodes. The resulting text plugs into the input of the « Prompt → graph » node, which turns it into a graph laid out on the canvas. The « Audio » input takes the spoken recording. It is mixed to mono and resampled to sixteen kilohertz, the rate the engine works at. « Language » selects the recognition model, and the language the node names are given to it in. Both models ship with the application and weigh some forty megabytes each. « Vocabulary » decides what the engine is allowed to return. With the node names, the list is that of the installed catalogue, kept current by itself: a node added becomes dictatable without any setting, and the dictation can be made of catalogue names alone. With a given list, the engine keeps to the « Words » field and returns « [unk] » where it did not understand, which shows. Free, the model's whole vocabulary is used. « Words » carries the names one intends to dictate, separated by commas or line breaks. Accents matter there, the model's lexicon carrying them. The setting acts only in the « Given list » vocabulary. The « Text » output carries the dictation. The « Nodes » output carries the names that dictation designates, one per line, found by the same dictionary « Prompt → graph » uses: it says what the graph will contain before it is laid out. A name whose words are outside the model's lexicon cannot be heard, and the list does not make it hearable: the engine then recomposes what it can from the words the list holds. That is what the « Given list » vocabulary is for, letting the failure to understand show instead of filling it in.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Text | text |  |
-| output | Nodes | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Language | choice | French | French / English | The recognition model used, and the language the node names are given to the engine in. |
-| Vocabulary | choice | Node names | Node names / Given list / Free | What the engine is allowed to return. Node names: the dictation is made of catalogue names, and of nothing else. Given list: only the names in the « Words » field, which lets the engine return « [unk] » where it did not understand instead of a plausible name. Free: the model's whole vocabulary, to be used when the name sought is not one the model knows how to write. |
-| Words | text | — |  | The names one intends to dictate, separated by commas or line breaks. Accents matter, the model's lexicon carrying them. Acts only in the « Given list » vocabulary; left empty in that mode, the model's whole vocabulary is used. |
 
 #### Graph Documentation
 
