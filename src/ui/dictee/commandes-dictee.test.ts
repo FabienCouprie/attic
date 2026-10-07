@@ -6,8 +6,8 @@
 // `src/plugins/dictee-catalogue.test.ts`.
 import { describe, expect, it } from "vitest";
 import {
-  JETON_INCONNU, grammaireDeDictee, interpreterDictee, motsDeCommande, segmenter,
-  type NomDicte,
+  JETON_INCONNU, grammaireDeDictee, interpreterDictee, motsDeCommande, porteursSurs, segmenter,
+  type ApparieurFlou, type NomDicte,
 } from "./commandes-dictee";
 
 const NOMS: NomDicte[] = [
@@ -45,6 +45,110 @@ describe("le découpage d'une dictée", () => {
   it("ne confond pas les langues : un mot anglais n'est pas une commande en français", () => {
     expect(segmenter("undo", NOMS, "fr")[0].sorte).toBe("inconnu");
     expect(segmenter("undo", NOMS, "en")[0]).toMatchObject({ geste: "annuler" });
+  });
+});
+
+describe("la phrase qui porte la consigne", () => {
+  it("UNE PHRASE ORDINAIRE NE POSE QUE CE QU'ELLE NOMME", () => {
+    expect(poses("pose un composant entrée audio sur la palette s'il te plaît"))
+      .toEqual(["entree-audio"]);
+    expect(poses("je voudrais que tu ajoutes une réverbération merci"))
+      .toEqual(["reverberation"]);
+  });
+
+  it("le nom tout seul marche toujours : la phrase n'est pas obligatoire", () => {
+    expect(poses("réverbération")).toEqual(["reverberation"]);
+  });
+
+  it("les mots de portage sont reconnus pour ce qu'ils sont, et ne désignent aucun composant", () => {
+    // « sur » est déjà le mot de liaison de « relier X à Y » : il reste un geste, ce qui ne demande
+    // rien hors d'un « relier ». Ce qui compte est qu'aucun de ces mots ne devienne un composant,
+    // et qu'aucun ne retombe en inconnu, où la ressemblance pourrait ensuite le rapprocher d'un nom.
+    const j = segmenter("pose un composant sur la palette merci", NOMS, "fr");
+    expect(j.map((x) => x.sorte)).not.toContain("composant");
+    expect(j.map((x) => x.sorte)).not.toContain("inconnu");
+    expect(j.filter((x) => x.sorte === "porteur").length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("ILS SONT DANS LA GRAMMAIRE, sans quoi le moteur les fabriquerait avec des noms", () => {
+    // Relevé : vocabulaire fermé aux seuls noms, « canevas merci » ressortait en « gamme
+    // inversée », et posait un composant que personne n'avait demandé.
+    const g = grammaireDeDictee(NOMS, "fr");
+    for (const m of ["pose", "un", "sur", "palette", "canevas", "merci", "après"]) {
+      expect(g, m).toContain(m);
+    }
+  });
+
+  it("ET UN NOM DE COMPOSANT NE PEUT PAS DEVENIR UN MOT DE PORTAGE", () => {
+    // Sans cette soustraction, un composant qui s'appellerait « Palette » deviendrait indicible.
+    const avecCollision = [...NOMS, { ficheId: "palette-a-moi", nom: "palette" }];
+    expect(porteursSurs(avecCollision, "fr")).not.toContain("palette");
+    expect(porteursSurs(NOMS, "fr")).toContain("palette");
+    expect(interpreterDictee("palette", avecCollision, "fr"))
+      .toEqual([{ quoi: "poser", ficheId: "palette-a-moi", nom: "palette", parallele: false }]);
+  });
+
+  it("le portage n'avale pas un geste : « annuler » reste un geste", () => {
+    expect(interpreterDictee("et puis annuler merci", NOMS, "fr")).toEqual([{ quoi: "annuler" }]);
+  });
+
+  it("chaque langue a le sien", () => {
+    expect(poses("please add a reverberation")).toEqual([]);
+    expect(porteursSurs(NOMS, "en")).toContain("please");
+    expect(porteursSurs(NOMS, "en")).not.toContain("merci");
+  });
+});
+
+describe("la ressemblance, quand la reconnaissance a écorché le nom", () => {
+  // UN APPARIEUR POSTICHE, et c'est tout l'intérêt de l'injection : ce qui est tenu ici est la
+  // PLACE de la ressemblance dans le découpage, non la distance d'édition, qui a ses propres cas
+  // dans `plugins/appariement-flou.test.ts`.
+  const postiche: ApparieurFlou = (fenetre) => {
+    const table: Record<string, { ficheId: string; score: number }> = {
+      "spectre gamme": { ficheId: "reverberation", score: 0.85 },
+      "spectre": { ficheId: "reverberation", score: 0.60 },
+      // Le piège de l'annulation : la fenêtre de trois mots vaut mieux que celle de deux, et si
+      // rien ne l'arrête elle avale le geste.
+      "vos codeur": { ficheId: "compresseur", score: 0.78 },
+      "vos codeur annuler": { ficheId: "reverberation", score: 0.99 },
+    };
+    return table[fenetre] ?? null;
+  };
+
+  it("sans apparieur, un nom écorché reste un inconnu : le comportement d'avant ne bouge pas", () => {
+    expect(segmenter("spectre gamme", NOMS, "fr").map((x) => x.sorte)).toEqual(["inconnu", "inconnu"]);
+  });
+
+  it("AVEC L'APPARIEUR, le nom écorché désigne son composant, sur toute sa fenêtre", () => {
+    const j = segmenter("spectre gamme", NOMS, "fr", postiche);
+    expect(j).toHaveLength(1);
+    expect(j[0]).toMatchObject({ sorte: "composant", ficheId: "reverberation", longueur: 2 });
+  });
+
+  it("prend la fenêtre la mieux notée, et non la première qui passe", () => {
+    // « spectre » seul passerait à 0,60 ; « spectre gamme » vaut 0,85 et l'emporte.
+    expect(segmenter("spectre gamme", NOMS, "fr", postiche)[0]).toMatchObject({ longueur: 2 });
+  });
+
+  it("ELLE NE PASSE QU'APRÈS L'EXACT : un nom connu n'est pas rapproché d'un autre", () => {
+    const j = segmenter("compresseur", NOMS, "fr", postiche);
+    expect(j[0]).toMatchObject({ sorte: "composant", ficheId: "compresseur", longueur: 1 });
+  });
+
+  it("ET JAMAIS PAR-DESSUS UNE COMMANDE, sans quoi l'annulation serait avalée", () => {
+    // LE MOT QUI PRÉCÈDE DOIT ÊTRE ÉCORCHÉ, sans quoi l'exact l'attrape et la ressemblance n'est
+    // même pas consultée : le cas ne tenait alors rien, et le défaut planté passait. L'apparieur
+    // postiche offre « vos codeur annuler » à 0,99 contre « vos codeur » à 0,78 : la fenêtre doit
+    // s'arrêter avant le mot de commande.
+    const j = segmenter("vos codeur annuler", NOMS, "fr", postiche);
+    expect(j.map((x) => x.sorte)).toEqual(["composant", "commande"]);
+    expect(j[0]).toMatchObject({ ficheId: "compresseur", longueur: 2 });
+    expect(j[1]).toMatchObject({ geste: "annuler" });
+  });
+
+  it("l'interprète la transmet au découpage", () => {
+    expect(interpreterDictee("spectre gamme", NOMS, "fr", postiche))
+      .toEqual([{ quoi: "poser", ficheId: "reverberation", nom: "réverbération", parallele: false }]);
   });
 });
 

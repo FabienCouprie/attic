@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1288 files, 224220 lines, of which 154089 are code.**
+**1290 files, 224832 lines, of which 154456 are code.**
 The table lists the 174 files of 200 code lines or more, heaviest first;
-the remaining 1114 account for 151250 lines.
+the remaining 1116 account for 151831 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -60,6 +60,7 @@ the remaining 1114 account for 151250 lines.
 | src/plugins/effets-spectral-modulation.test.ts | 334 | 470 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/plugins/prompt-graphe.ts | 332 | 507 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/plugins/effets-spectral.ts | 328 | 432 |  |
@@ -67,7 +68,6 @@ the remaining 1114 account for 151250 lines.
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
-| src/plugins/prompt-graphe.ts | 324 | 476 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |

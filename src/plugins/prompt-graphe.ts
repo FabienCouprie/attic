@@ -11,6 +11,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { apparierFlou } from "./appariement-flou";
 // Import DYNAMIQUE (pas d'`import … from` statique) : audio/adaptateur importe
 // plugins/index qui importe CE fichier (pour enregistrer sa propre fiche) —
 // un import statique créerait un cycle. Il ne mordait jamais en pratique tant
@@ -255,13 +256,36 @@ export async function vocabulaireDeDictee(en = false): Promise<string[]> {
  * `parserPrompt` complète ensuite ce relevé d'une source et d'une sortie pour que le graphe tienne
  * debout. Ce qui est rendu ici est le relevé seul, dont a besoin qui veut SAVOIR ce qu'un texte a
  * nommé plutôt que poser un graphe : c'est ce que la dictée de graphe lit.
+ *
+ * `flou` est à ouvrir quand le texte vient de la PAROLE, et à laisser fermé quand il a été tapé :
+ * voir `composantsDuTexte`, qui porte la mesure des deux cas.
  */
-export async function composantsNommes(prompt: string): Promise<SpecNode[]> {
-  return composantsDuTexte(prompt, await construireDictionnaire());
+export async function composantsNommes(prompt: string, flou = false): Promise<SpecNode[]> {
+  return composantsDuTexte(prompt, await construireDictionnaire(), flou);
 }
 
-/** Les composants qu'un texte nomme, dictionnaire déjà construit. */
-function composantsDuTexte(prompt: string, dictionnaire: EntreeDictionnaire[]): SpecNode[] {
+/**
+ * Les composants qu'un texte nomme, dictionnaire déjà construit.
+ *
+ * `flou` AJOUTE UNE SECONDE PASSE, PAR RESSEMBLANCE, et il est fermé par défaut. Une consigne
+ * DICTÉE arrive écorchée, la reconnaissance vocale ne pouvant rendre que des mots de son lexique.
+ * Relevé sur trois prises : « spectrogramme » rendu « spectre grammes », « vocodeur de phase » rendu
+ * « vos codeur de face », « réverbération à convolution » rendu « réverbération à qu'on volution ».
+ * L'appariement mot à mot n'en retrouvait AUCUN des trois ; la ressemblance les retrouve tous les
+ * trois. Voir `appariement-flou.ts`, qui porte la mesure et ce qui a été essayé avant.
+ *
+ * MAIS UN TEXTE TAPÉ N'EST PAS ÉCORCHÉ, et la ressemblance n'y apporte que du bruit : relevé sur
+ * « delay stéréo avec feedback court sur une réverbération hall puis compresseur et sortie », elle
+ * ajoute quatre composants de trop, `dereverberation` à 0,875 sur la fenêtre « une réverbération »,
+ * `reverbe-hachee` à 0,789 sur « réverbération hall », et deux autres de la même famille. Tous
+ * naissent d'une fenêtre qui CONTIENT un mot déjà apparié exactement. Le flou se demande donc, et
+ * ne s'impose pas.
+ *
+ * LA RESSEMBLANCE NE PORTE QUE SUR LES NOMS, et non sur les alias manuels : ceux-ci sont des
+ * tournures libres, « charger audio », « image en notes », dont la ressemblance à un passage
+ * quelconque n'apprendrait rien de bon.
+ */
+function composantsDuTexte(prompt: string, dictionnaire: EntreeDictionnaire[], flou = false): SpecNode[] {
   const texte = sansAccents(prompt);
   const nodes: SpecNode[] = [];
   const vus = new Set<string>();
@@ -273,6 +297,13 @@ function composantsDuTexte(prompt: string, dictionnaire: EntreeDictionnaire[]): 
         break;
       }
     }
+  }
+  if (!flou) return nodes;
+  const parLabel = new Map(dictionnaire.map((e) => [e.ficheId, e.label]));
+  for (const t of apparierFlou(prompt, dictionnaire.map((e) => ({ id: e.ficheId, nom: e.label })))) {
+    if (vus.has(t.id)) continue;
+    vus.add(t.id);
+    nodes.push({ ficheId: t.id, label: parLabel.get(t.id) ?? t.id });
   }
   return nodes;
 }

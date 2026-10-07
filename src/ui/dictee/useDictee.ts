@@ -13,7 +13,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FREQUENCE_VOSK, MODELES, chargerModele } from "../../plugins/vosk-asr";
 import { nomsDeDictee } from "../../plugins/prompt-graphe";
-import { grammaireDeDictee, interpreterDictee, type Commande, type NomDicte } from "./commandes-dictee";
+import { grammaireDeDictee, interpreterDictee, type ApparieurFlou, type Commande, type NomDicte } from "./commandes-dictee";
+import { apparierFlou } from "../../plugins/appariement-flou";
 
 /** Le code du worklet, posé en blob : il n'a pas de fichier à lui pour ne rien ajouter au paquet. */
 const WORKLET = `
@@ -77,6 +78,20 @@ export function useDictee(
     let rec: Reconnaisseur | null = null;
     try {
       const noms: NomDicte[] = await nomsDeDictee(langue === "en");
+      // LA RESSEMBLANCE EST MONTÉE ICI, et passée au découpage, qui n'en connaît que la forme.
+      //
+      // ELLE NE TIRE QUE RAREMENT À VOCABULAIRE FERMÉ, et il faut le dire. La grammaire ne laissant
+      // sortir que des mots du catalogue, l'appariement exact les prend presque toujours : relevé
+      // sur les trois lectures fermées, la ressemblance ne change aucune des trois, « spectre
+      // gamme » désignant exactement le composant « Gamme » avant qu'elle n'ait son tour. Elle
+      // rattrape ce qui reste, un mot qui n'est qu'un morceau d'un nom plus long, et elle sera à sa
+      // place le jour où le vocabulaire s'ouvrira : c'est là qu'elle est mesurée utile, trois noms
+      // techniques retrouvés sur trois que l'exact perdait.
+      const catalogue = noms.map((n) => ({ id: n.ficheId, nom: n.nom }));
+      const flou: ApparieurFlou = (fenetre) => {
+        const r = apparierFlou(fenetre, catalogue);
+        return r.length > 0 ? { ficheId: r[0].id, score: r[0].score } : null;
+      };
       const modele = await chargerModele((MODELES[langue] ?? MODELES.fr).fichier);
       flux = await navigator.mediaDevices.getUserMedia({ audio: true });
       // LE CONTEXTE EST OUVERT À LA FRÉQUENCE DU MOTEUR : le navigateur rééchantillonne lui-même,
@@ -94,7 +109,7 @@ export function useDictee(
         const texte = (m as { result: { text?: string } }).result.text ?? "";
         setPartiel("");
         if (!texte.trim()) return;
-        const commandes = interpreterDictee(texte, noms, langue);
+        const commandes = interpreterDictee(texte, noms, langue, flou);
         commandesRef.current(commandes);
         // « TERMINÉ » S'ARRÊTE ICI, et non chez l'appelant : c'est l'écoute qu'il ferme, et elle
         // n'appartient qu'à ce module. Les gestes qui le précèdent dans le même résultat ont déjà
