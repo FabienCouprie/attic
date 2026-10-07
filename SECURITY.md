@@ -81,7 +81,7 @@ script, extracting an archive it downloaded from Microsoft's CDN during
 *Re-examine this entry if `adm-zip` publishes a patched release, or if the app
 ever starts calling an adm-zip extraction API.*
 
-### `sprintf-js` — GHSA (moderate, no patch exists)
+### `sprintf-js` — GHSA-hp3w-g68c-fv3c / CVE-2026-97058 (moderate, dismissed as *tolerable risk*)
 
 > sprintf-js vulnerable to denial of service through unbounded precision
 > specifiers
@@ -109,6 +109,10 @@ declares no dependencies at all, but it is a rewrite with a different API, and
 `overrides` would be an untested substitution on a package we do not control.
 The tree already carries both, 1.0.10 under `@tensorflow/tfjs` and 2.0.1 under
 `electron-updater`.
+
+**The alert is dismissed, not ignored.** It is recorded on GitHub as a tolerable
+risk, pointing back to this section, so that the analysis above is what a future
+reviewer finds rather than a silence.
 
 *Re-examine this entry if `sprintf-js` publishes a patched release, if either
 path reaches the production tree, or if any of our own code starts formatting
