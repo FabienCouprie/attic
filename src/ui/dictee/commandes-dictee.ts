@@ -27,9 +27,21 @@ export interface NomDicte {
   nom: string;
 }
 
+/**
+ * Où poser, quand la phrase le dit par rapport à un composant DÉJÀ sur le canevas.
+ *
+ * `refFicheId` DÉSIGNE, IL NE CRÉE PAS, et c'est toute la grammaire du positionnement. Sans elle,
+ * « ajoute un compresseur après la réverbération » posait DEUX composants, la phrase en nommant
+ * deux ; or le second est une adresse, pas une commande.
+ */
+export interface Position {
+  ou: "apres" | "avant";
+  refFicheId: string;
+}
+
 export type Commande =
   /** Poser un composant. Enchaîné sur le courant, sauf si « en parallèle » vient de se dire. */
-  | { quoi: "poser"; ficheId: string; nom: string; parallele: boolean }
+  | { quoi: "poser"; ficheId: string; nom: string; parallele: boolean; position?: Position }
   /** Relier deux composants DÉJÀ posés, nommés par leur fiche. */
   | { quoi: "relier"; de: string; vers: string }
   | { quoi: "annuler" }
@@ -51,6 +63,8 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallèle", "parallele"],
     annuler: ["annuler", "annule", "retour"],
     terminer: ["terminé", "termine", "fin", "stop"],
+    apres: ["après", "apres"],
+    avant: ["avant"],
   },
   en: {
     relier: ["link", "connect", "wire"],
@@ -58,6 +72,8 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallel"],
     annuler: ["undo", "cancel", "back"],
     terminer: ["done", "finished", "stop"],
+    apres: ["after"],
+    avant: ["before"],
   },
 };
 
@@ -87,14 +103,16 @@ export const MOTS_PORTEURS: Record<"fr" | "en", string[]> = {
     "pose", "poses", "poser", "ajoute", "ajoutes", "ajouter", "mets", "met", "mettre",
     "place", "places", "placer", "crée", "créer", "veux", "voudrais", "faut",
     "un", "une", "le", "la", "les", "de", "du", "des", "au", "aux", "ce", "cette",
-    "sur", "dans", "après", "avant", "puis", "ensuite", "et", "en", "à", "avec",
+    // « après » et « avant » ne sont PLUS des mots de portage : ils introduisent une référence,
+    // et la grammaire du positionnement s'en sert. Les jeter ici les rendrait muets.
+    "sur", "dans", "puis", "ensuite", "et", "en", "à", "avec",
     "composant", "composants", "bloc", "blocs", "nœud", "noeud", "palette", "canevas", "graphe",
     "je", "tu", "que", "qu", "il", "te", "s'il", "plaît", "plait", "merci", "stp", "aussi",
   ],
   en: [
     "put", "place", "add", "create", "make", "want", "would", "like", "need",
     "a", "an", "the", "of", "this", "that",
-    "on", "in", "after", "before", "then", "and", "to", "with",
+    "on", "in", "then", "and", "to", "with",
     "node", "nodes", "block", "blocks", "palette", "canvas", "graph",
     "i", "you", "please", "thanks", "also",
   ],
@@ -264,6 +282,29 @@ export function interpreterDictee(
     if (j.sorte === "composant") {
       out.push({ quoi: "poser", ficheId: j.ficheId, nom: j.nom, parallele });
       parallele = false;
+      continue;
+    }
+    // UNE PRÉPOSITION DE LIEU DÉSIGNE, ELLE NE CRÉE PAS. Elle s'attache au composant qu'on vient de
+    // poser, et le nom qui la suit est CONSOMMÉ : sans cela, « ajoute un compresseur après la
+    // réverbération » posait deux composants, la phrase en nommant deux. Dite sans composant devant
+    // elle, ou sans nom derrière, elle ne demande rien : une adresse incomplète n'est pas une
+    // adresse, et deviner serait faire autre chose que ce qui a été dit.
+    if (j.geste === "apres" || j.geste === "avant") {
+      // LE NOM N'EST PAS FORCÉMENT COLLÉ À LA PRÉPOSITION : « après LA réverbération » porte un
+      // article entre les deux, et il a été reconnu comme mot de portage. On saute donc ce qui ne
+      // demande rien jusqu'au nom.
+      let k = i + 1;
+      while (k < jetons.length && jetons[k].sorte === "porteur") k++;
+      const suivant = jetons[k];
+      if (suivant?.sorte !== "composant") continue;
+      // LE NOM EST CONSOMMÉ MÊME QUAND L'ADRESSE NE S'ATTACHE À RIEN. « après la réverbération »
+      // dit tout seul ne demande pas de poser une réverbération : c'est une adresse sans objet, et
+      // la poser ferait autre chose que ce qui a été dit.
+      i = k;
+      const dernier = out[out.length - 1];
+      if (dernier?.quoi === "poser" && !dernier.position) {
+        dernier.position = { ou: j.geste, refFicheId: suivant.ficheId };
+      }
       continue;
     }
     if (j.geste === "parallele") { parallele = true; continue; }

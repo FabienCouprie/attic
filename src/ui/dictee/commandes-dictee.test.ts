@@ -178,6 +178,60 @@ describe("poser et enchaîner", () => {
   });
 });
 
+describe("la grammaire du positionnement", () => {
+  const pose = (texte: string) =>
+    interpreterDictee(texte, NOMS, "fr").filter((c) => c.quoi === "poser");
+
+  it("UNE PRÉPOSITION DE LIEU DÉSIGNE, ELLE NE CRÉE PAS : un seul composant est posé", () => {
+    // Le défaut qui a ouvert ce chantier : la phrase nomme deux composants, mais le second est une
+    // adresse. Elle en posait deux.
+    const c = pose("ajoute un compresseur après la réverbération");
+    expect(c).toHaveLength(1);
+    expect(c[0]).toMatchObject({
+      ficheId: "compresseur", position: { ou: "apres", refFicheId: "reverberation" },
+    });
+  });
+
+  it("« avant » prend la même chose par l'autre bout", () => {
+    expect(pose("mets un compresseur avant la réverbération")[0]).toMatchObject({
+      ficheId: "compresseur", position: { ou: "avant", refFicheId: "reverberation" },
+    });
+  });
+
+  it("sans préposition, rien ne change : le composant se pose comme avant", () => {
+    expect(pose("ajoute un compresseur")[0].position).toBeUndefined();
+  });
+
+  it("une adresse SANS NOM derrière elle ne demande rien", () => {
+    // Une phrase tronquée ne doit pas poser au hasard : mieux vaut un composant sans position
+    // qu'un lien vers ce qu'on n'a pas entendu.
+    expect(pose("ajoute un compresseur après")[0].position).toBeUndefined();
+  });
+
+  it("une adresse SANS COMPOSANT devant elle ne demande rien non plus", () => {
+    expect(interpreterDictee("après la réverbération", NOMS, "fr")).toEqual([]);
+  });
+
+  it("une seule adresse par composant : la seconde ne récrit pas la première", () => {
+    const c = pose("ajoute un compresseur après la réverbération avant entrée audio");
+    expect(c).toHaveLength(1);
+    expect(c[0].position).toEqual({ ou: "apres", refFicheId: "reverberation" });
+  });
+
+  it("ET « APRÈS » N'EST PLUS UN MOT DE PORTAGE, sans quoi il serait jeté avant d'être lu", () => {
+    expect(porteursSurs(NOMS, "fr")).not.toContain("après");
+    expect(porteursSurs(NOMS, "en")).not.toContain("after");
+    // Il reste dans la grammaire donnée au moteur, par l'autre porte.
+    expect(grammaireDeDictee(NOMS, "fr")).toContain("après");
+  });
+
+  it("chaque langue a ses prépositions", () => {
+    expect(interpreterDictee("add a compresseur after réverbération", NOMS, "en")
+      .filter((c) => c.quoi === "poser")[0]?.position)
+      .toEqual({ ou: "apres", refFicheId: "reverberation" });
+  });
+});
+
 describe("relier deux composants", () => {
   it("prend les deux noms qui suivent, le mot de liaison étant facultatif", () => {
     const avec = interpreterDictee("relier réverbération à compresseur", NOMS, "fr");
