@@ -24,7 +24,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 
 | Composant | id | Vue avant | Vue après | Taille | Redim. | Lecteur | Msg masqué |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Accord mets-musique | `accord-mets-musique` | VueGout | — | 240 × 162 | non | oui | non |
+| Accord mets-musique | `accord-mets-musique` | VueAccordMets | — | 240 × 162 | non | oui | non |
 | Analyseur de spectre | `analyseur-spectre` | VueSpectre | — | 420 × 300 | non | oui | non |
 | Arbre rythmique | `arbre-rythmique` | ArbreRythmiqueVue | — | 620 × 280 | non | oui | non |
 | Attracteur / IFS | `attracteur-ifs` | VueAttracteurIFS | — | 320 × 320 | oui | oui | non |

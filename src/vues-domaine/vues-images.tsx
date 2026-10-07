@@ -14,6 +14,8 @@ import { PochetteGen } from "./PochetteGen";
 import { SongseeVue } from "./Songsee";
 import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "../ui/registre-vues";
+import type { DonneesNoeud } from "../ui/AtelierNode";
+import { partsDeDegustation } from "../audio/accord-mets";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
 export function VueCouleurSunoIA({ data }: VueProps) {
@@ -191,13 +193,8 @@ const COULEURS_GOUT: Record<string, string> = {
   "sucré": "#e08bb5", "acide": "#c9d94a", "amer": "#8a6f4a", "salé": "#7fb3d5",
 };
 
-export function VueGout({ data }: VueProps) {
-  const { t } = useI18n();
-  const brut = (data as { _affichage?: { profilGout?: unknown } })._affichage?.profilGout;
-  const parts = Array.isArray(brut) ? (brut as { gout: string; part: number }[]) : [];
-  if (!parts.length) {
-    return <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("export.avantLancer")}</div>;
-  }
+/** Les quatre barres d'un profil, du plus fort au plus faible. */
+function BarresDeGout({ parts }: { parts: { gout: string; part: number }[] }) {
   return (
     <div className="attic-gout">
       {parts.map((p) => (
@@ -209,6 +206,63 @@ export function VueGout({ data }: VueProps) {
           <span className="attic-gout-part">{Math.round(p.part * 100)} %</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+const partsAffichees = (data: DonneesNoeud): { gout: string; part: number }[] => {
+  const brut = (data as { _affichage?: { profilGout?: unknown } })._affichage?.profilGout;
+  return Array.isArray(brut) ? (brut as { gout: string; part: number }[]) : [];
+};
+
+export function VueGout({ data }: VueProps) {
+  const { t } = useI18n();
+  const parts = partsAffichees(data);
+  if (!parts.length) {
+    return <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("export.avantLancer")}</div>;
+  }
+  return <BarresDeGout parts={parts} />;
+}
+
+/**
+ * L'accord mets-musique montre DEUX profils, et c'est l'écart entre eux qui est le sujet.
+ *
+ * LE PREMIER SUIT LES CURSEURS, SANS LANCEMENT. Il se lit dans les réglages, les parts d'une
+ * dégustation n'étant qu'une division : rien n'a besoin d'être rendu pour le connaître. Relevé par
+ * Fabien, « faire varier les paramètres dans l'inspecteur ne modifie pas le graphique du nœud » :
+ * la vue ne montrait que le second, qui vient d'une mesure sur la musique rendue et que tout
+ * changement de réglage efface, à juste titre. Le graphique portait les quatre noms qu'on venait de
+ * régler et ne bougeait pas.
+ *
+ * LE SECOND RESTE CE QU'IL ÉTAIT : le profil de goût MESURÉ sur la musique produite, qui n'existe
+ * qu'après un rendu. Les deux diffèrent nettement, et c'est le propos du composant : relevé sur une
+ * dégustation 70/30/10/0, la musique se mesure à 91 % sucrée. Les afficher ensemble montre ce que
+ * le plan écrit disait déjà en deux tableaux.
+ */
+export function VueAccordMets({ data, def }: VueProps) {
+  const { t } = useI18n();
+  const p = (data.parametres ?? {}) as Record<string, number | string>;
+  // LE DÉFAUT VIENT DE LA FICHE, et non d'un zéro écrit ici. Un projet enregistré avant qu'un
+  // réglage n'existe ne le porte pas, et l'exécuteur prendrait alors le défaut déclaré : lire zéro
+  // montrerait une dégustation que le composant ne jouerait pas.
+  const nombre = (nom: string) => {
+    const brut = p[nom] ?? def?.parametres?.find((x) => x.nom === nom)?.defaut;
+    return Number(brut ?? 0) || 0;
+  };
+  const degustation = partsDeDegustation({
+    "sucré": nombre("Sucré"), acide: nombre("Acide"), amer: nombre("Amer"), "salé": nombre("Salé"),
+  });
+  const mesure = partsAffichees(data);
+  return (
+    <div className="attic-gout-double">
+      <div className="attic-gout-titre">{t("gout.degustation")}</div>
+      {degustation.length
+        ? <BarresDeGout parts={degustation} />
+        : <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("gout.aucune")}</div>}
+      <div className="attic-gout-titre">{t("gout.mesure")}</div>
+      {mesure.length
+        ? <BarresDeGout parts={mesure} />
+        : <div className="attic-node-fichier-nom" style={{ opacity: 0.5 }}>{t("export.avantLancer")}</div>}
     </div>
   );
 }

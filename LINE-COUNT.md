@@ -7,15 +7,15 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1288 files, 224104 lines, of which 154023 are code.**
+**1288 files, 224220 lines, of which 154089 are code.**
 The table lists the 174 files of 200 code lines or more, heaviest first;
-the remaining 1114 account for 151193 lines.
+the remaining 1114 account for 151250 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1399 | 1750 | ! |
+| src/ui/atelier.css | 1401 | 1755 | ! |
 | src/ui/App.tsx | 1141 | 1521 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
@@ -89,6 +89,7 @@ the remaining 1114 account for 151193 lines.
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
+| src/vues-domaine/vues-images.tsx | 301 | 435 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
@@ -115,7 +116,6 @@ the remaining 1114 account for 151193 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
-| src/vues-domaine/vues-images.tsx | 269 | 381 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |

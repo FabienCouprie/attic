@@ -1,7 +1,7 @@
 [
   {
     "id": "accord-mets-musique",
-    "vue": "VueGout",
+    "vue": "VueAccordMets",
     "entreeAudio": false,
     "entreeRequiseAutre": false
   },

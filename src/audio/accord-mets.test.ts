@@ -1,6 +1,6 @@
 // audio/accord-mets.test.ts — Un profil de dégustation tombe-t-il où il doit dans l'espace des goûts ?
 import { describe, expect, it } from "vitest";
-import { goutDominant, instrumentPublie, pointDepuisDegustation, type ProfilDegustation } from "./accord-mets";
+import { goutDominant, instrumentPublie, partsDeDegustation, pointDepuisDegustation, type ProfilDegustation } from "./accord-mets";
 import { REGIONS, profil, type Gout } from "./gout";
 
 const p = (sucre: number, acide: number, amer: number, sale: number): ProfilDegustation =>
@@ -60,6 +60,37 @@ describe("goutDominant", () => {
 
   it("rend null sur un profil vide", () => {
     expect(goutDominant(p(0, 0, 0, 0))).toBeNull();
+  });
+});
+
+describe("partsDeDegustation", () => {
+  it("rend les parts, somme à un, du plus fort au plus faible", () => {
+    const parts = partsDeDegustation(p(70, 30, 10, 0));
+    expect(parts.map((x) => x.gout)).toEqual(["sucré", "acide", "amer", "salé"]);
+    expect(parts.reduce((s, x) => s + x.part, 0)).toBeCloseTo(1, 10);
+    expect(parts[0].part).toBeCloseTo(70 / 110, 10);
+  });
+
+  it("SEULES LES PROPORTIONS COMPTENT : quatre fois vingt vaut quatre fois quatre-vingts", () => {
+    expect(partsDeDegustation(p(20, 20, 20, 20))).toEqual(partsDeDegustation(p(80, 80, 80, 80)));
+  });
+
+  it("rend la même part dominante que `goutDominant`, qui ne donne que celle-là", () => {
+    // Les deux lisent la même division : s'ils divergeaient, le graphique du composant et son plan
+    // écrit annonceraient deux dominants différents pour la même dégustation.
+    for (const d of [p(70, 30, 10, 0), p(1, 2, 3, 4), p(5, 5, 5, 6)]) {
+      expect(partsDeDegustation(d)[0]).toEqual(goutDominant(d));
+    }
+  });
+
+  it("ne répartit pas à parts égales un profil vide : il n'y a pas de dégustation", () => {
+    expect(partsDeDegustation(p(0, 0, 0, 0))).toEqual([]);
+  });
+
+  it("ignore une valeur négative au lieu de la soustraire du total", () => {
+    const parts = partsDeDegustation(p(10, -5, 0, 0));
+    expect(parts[0]).toEqual({ gout: "sucré", part: 1 });
+    expect(parts.reduce((s, x) => s + x.part, 0)).toBeCloseTo(1, 10);
   });
 });
 
