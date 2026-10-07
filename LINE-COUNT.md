@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1288 files, 224220 lines, of which 154089 are code.**
-The table lists the 174 files of 200 code lines or more, heaviest first;
-the remaining 1114 account for 151250 lines.
+**1294 files, 225633 lines, of which 155005 are code.**
+The table lists the 175 files of 200 code lines or more, heaviest first;
+the remaining 1119 account for 152265 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,7 +24,7 @@ the remaining 1114 account for 151250 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 483 | 495 | ! |
+| src/plugins/index.ts | 487 | 499 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
@@ -104,6 +104,7 @@ the remaining 1114 account for 151250 lines.
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
+| src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |

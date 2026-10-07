@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **472 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **475 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 87 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (28) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 230 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (17) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Inputs](#inputs) | 88 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (29) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 232 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (19) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -443,6 +443,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 |---|---|
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
+| [Analogue Oscillator](#analogue-oscillator) | Generates a wave through the four gestures of a voltage-controlled oscillator: width, synchronisation, detuned stack, distorted phase. |
 | [Binaural Beats](#binaural-beats) | Two close pure tones, one per ear, whose heard pulsation is in neither of them. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
@@ -515,6 +516,32 @@ Generates a twelve-note series whose eleven successive intervals are all differe
 | Octave | number | 4 | 1 – 7, step 1 | The octave where the series is placed. |
 | Duration | number | 0.5 s | 0.05 – 4 s, step 0.05 | The length of each note. |
 | Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
+
+#### Analogue Oscillator
+
+`oscillateur-analogique` · Inputs → Generation
+
+*Generates a wave through the four gestures of a voltage-controlled oscillator: width, synchronisation, detuned stack, distorted phase.*
+
+Generates a wave through the four gestures of a voltage-controlled oscillator. « Waveform » chooses the wave computed. « Sawtooth » rises linearly over the cycle then falls back, and carries every harmonic. « Pulse » stays high for the share of the cycle given by « Width », then low for the rest. « Distorted phase » reads a sine at a phase that « Distortion » and « Width » bend. « Frequency » is the frequency of the reset, and it is the pitch heard. « Duration » is the length of the sound produced. « Width » is the share of the cycle spent high: at fifty per cent the pulse is symmetrical and carries only odd harmonics; away from the middle, even harmonics appear and the sound thins out, while the pitch stays put. « Width modulation » sweeps that share and « Modulation rate » gives the number of sweeps per second. The amplitude of the sweep is limited to what the width bounds leave on either side, so that at a hundred per cent it reaches them without crossing them. « Voices » is the number of oscillators computed together, their starting phases spread evenly over the cycle, and the voices are averaged. « Detune » is the total interval between the lowest and the highest voice, spread around the frequency set: the voices drift apart then together, which makes the level beat. « Synchronisation » is the ratio between the frequency of the wave and that of the reset. At one, the reset does not intervene and the wave follows its own period. Above, the wave is cut short at every period of « Frequency »: the pitch stays that of « Frequency », and the ratio moves the peak of the spectrum. « Distortion » places the knee of the distorted phase: at zero the knee sits at the middle of the cycle and the output is a sine; as it rises, the knee moves to « Width » and one half of the sine is squeezed into a shorter part of the cycle. « Volume » is the output level. Three settings do not act on every waveform, and their own documentation says so again. « Width », « Width modulation » and « Modulation rate » have no effect on « Sawtooth », which has no plateau. « Distortion » has no effect on « Sawtooth » or on « Pulse », and none either when « Width » is at fifty, the knee then already sitting at the middle of the cycle. « Detune » has no effect with a single voice, and « Modulation rate » has none when « Width modulation » is at zero. The four gestures produce a spectrum that does not stop at half the sampling rate. The computation therefore places each break at the exact point where it falls inside the sample instead of rounding it to the next one, and it runs at eight times the rate before coming back down through a linear-phase filter, which delays every frequency by the same time. The direct component that a narrow pulse creates is removed. The « Audio » output returns the wave. The message recalls the waveform, the frequency, the number of voices, the synchronisation ratio when it acts, and the direct component removed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Waveform | choice | Sawtooth | Sawtooth / Pulse / Distorted phase | The wave computed. « Sawtooth » rises linearly then falls back, and carries every harmonic. « Pulse » stays high for the share of the cycle given by « Width », then low for the rest. « Distorted phase » reads a sine at a phase that « Distortion » and « Width » bend. |
+| Frequency | number | 220 Hz | 20 – 4000 Hz, step 1 | The frequency of the reset, in hertz: this is the pitch heard, including under synchronisation. |
+| Duration | number | 1.5 s | 0.2 – 5 s, step 0.1 | Duration of the generated tone. |
+| Width | number | 25 % | 1 – 99 %, step 1 | The share of the cycle spent high, for « Pulse ». At fifty the pulse is symmetrical and carries only odd harmonics; away from the middle, even harmonics appear and the sound thins out, while the pitch stays put. For « Distorted phase », the same value is the position « Distortion » gives the knee: at fifty the knee already sits at the middle of the cycle and « Distortion » has nothing to move. On « Sawtooth » this setting has no effect, a sawtooth having no plateau. |
+| Width modulation | number | 0 % | 0 – 100 %, step 1 | Depth of the sweep applied to « Width ». At zero the width stays as set. The amplitude is limited to what the width bounds leave on either side, so that at a hundred the sweep reaches them without crossing them. No effect on « Sawtooth ». |
+| Modulation rate | number | 0.5 Hz | 0.05 – 20 Hz, step 0.05 | Rate of the « Width » sweep, in sweeps per second. No effect when « Width modulation » is at zero, since nothing then sweeps. |
+| Voices | number | 1 | 1 – 9, step 1 | Number of oscillators computed together, their starting phases spread evenly over the cycle. The voices are averaged, so that a stack does not come out louder than a single voice. |
+| Detune | number | 12 cents | 0 – 50 cents, step 1 | Total interval between the lowest and the highest voice of the stack, spread around the frequency set. The voices drift apart then together, which makes the level beat. No effect with a single voice. |
+| Synchronisation | number | 1 | 1 – 8, step 1 | Ratio between the frequency of the wave and that of the reset. At one, the reset does not intervene and the wave follows its own period. Above, the wave is cut short at every period of « Frequency »: the pitch stays that of « Frequency » and the ratio moves the peak of the spectrum, which is set like a timbre. |
+| Distortion | number | 50 % | 0 – 100 %, step 1 | Bend applied to the phase, for « Distorted phase ». At zero the knee sits at the middle of the cycle and the output is a sine. As it rises, the knee moves to « Width » and one half of the sine is squeezed into a shorter part of the cycle, which makes high harmonics without changing the period. This setting therefore has no effect when « Width » is at fifty, the knee already sitting at the middle. No effect either on the other two waveforms. |
+| Volume | number | 80 % | 0 – 100 %, step 1 | Output level, after the peak has been normalised. |
 
 #### Binaural Beats
 
@@ -5646,9 +5673,11 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | [Flutter Echo](#flutter-echo) | The metallic flutter of a sound caught between two parallel walls. |
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
 | [Haas Effect](#haas-effect) | One channel delayed by a few milliseconds: the image moves to the side that arrives first. |
+| [Harmonic Tremolo](#harmonic-tremolo) | Modulates lows and highs in opposition: the colour sways, the level barely moves. |
 | [Lucier Room](#lucier-room) | Feeds the sound back into the same room until only its resonances remain. |
 | [Melody over Chords](#melody-over-chords) | Searches for a melody over a received chord progression, under constraints set one at a time. |
 | [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound; on a grid, or locked to its period. |
+| [Rotary Speaker](#rotary-speaker) | Spins lows and highs on two rotors: the path varies, and with it the pitch and the level. |
 | [Sample Formula](#sample-formula) | Applies a mathematical expression to each sample of the signal. |
 | [Sonic Seasoning](#sonic-seasoning) | Moves a sound toward a taste profile, a share of sweet, sour, bitter and salty, and says how far it moved. |
 | [Statistical Texture](#statistical-texture) | Generates a new texture with the statistics of a given sound (rain, fire, crowd) without copying a single sample of it. |
@@ -5830,6 +5859,26 @@ This node delays one of the two channels by a few milliseconds. After Helmut Haa
 | Delayed side | choice | Right | Right / Left | The channel that arrives second. The image moves to the other. |
 | Delayed level | slider | 100 % | 0 – 100 %, step 1 | The strength of the delayed channel. The image stays on the side that arrives first even when this level exceeds it. |
 
+#### Harmonic Tremolo
+
+`tremolo-harmonique` · Processing → Other effects
+
+*Modulates lows and highs in opposition: the colour sways, the level barely moves.*
+
+Modulates lows and highs in opposition. The sound is first split into two bands by « Crossover », then the level of each band oscillates, the two oscillations running in opposite directions: when the lows are at their highest, the highs are at their lowest. The level of the sum therefore barely moves, and it is the balance of the spectrum that sways. « Rate » is the number of return trips per second between lows and highs. « Depth » is the level difference between the two bands at the peak of the oscillation: at zero, both bands keep their level and the sound comes out unchanged. « Crossover » is the frequency that separates the two bands; low, only the treble sways against the rest, high, it is the bass that stands out. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample. The split is a fourth-order Linkwitz-Riley filter, that is two cascaded Butterworth sections on each side. Its property is that the sum of the two bands has a flat magnitude: at zero depth the sound passes through with no dip at the crossover frequency. The « Audio » output returns the treated sound, with as many channels as the input. The message recalls the rate and the crossover frequency.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Number of return trips per second between lows and highs. |
+| Depth | slider | 70 % | 0 – 100 %, step 1 | Level difference between the two bands at the peak of the oscillation. At zero, both bands keep their level and the sound comes out unchanged. |
+| Crossover | slider | 800 Hz | 100 – 4000 Hz, step 10 | Frequency that separates the two bands. Low, only the treble sways against the rest; high, it is the bass that stands out. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample. |
+
 #### Lucier Room
 
 `piece-lucier` · Processing → Other effects
@@ -5911,6 +5960,29 @@ Synthesises sound grains with a single generator, set in seven species selected 
 | Duration | slider | 4 s | 0.5 – 60 s, step 0.5 | The duration of the sound produced. It does not depend on the connected sound's: granulating two seconds of material for a minute is an ordinary use of the process. |
 | Volume | slider | 60 % | 0 – 100 %, step 1 | Each grain's amplitude. Grains add up: doubling the density moves that much closer to the ceiling, which is why a high density calls for a lower volume. |
 | Seed | slider | 42 | 0 – 999999, step 1 | The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Rotary Speaker
+
+`haut-parleur-rotatif` · Processing → Other effects
+
+*Spins lows and highs on two rotors: the path varies, and with it the pitch and the level.*
+
+Spins lows and highs on two rotors of different sizes and rates. The sound is split into two bands by « Crossover »: the highs go to the horn, the lows to the drum. Each rotor carries the source away and brings it back, which lengthens and shortens the path of the sound. The delay varies, and the pitch with it; the level varies too, the rotor facing the microphone and turning away from it in turn. « Horn rate » and « Drum rate » are the turns per second of each rotor. The horn has the wider radius and gives the larger pitch deviation. Turning the drum slower than the horn is what keeps the two bands from beating together. « Doppler depth » is the share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone; at zero the pitch no longer moves and only the level variation remains. « Amplitude depth » is the level difference between the moment a rotor faces the microphone and the moment it turns away. « Width » is the angle between the two microphones around the axis: at a hundred per cent they are opposite and see the rotors pass half a turn apart, at zero they sit at the same place and the two channels coincide. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample on both channels. The split is a fourth-order Linkwitz-Riley filter, whose two bands sum to a flat magnitude. The « Audio » output is always in stereo, even from a single-channel input: the rotation is what creates it, the two microphones not seeing the rotors pass at the same moment. The message recalls the horn rate and the pitch deviation that results from it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Horn rate | slider | 6.7 tr/s | 0.2 – 12 tr/s, step 0.1 | Turns per second of the treble rotor. It gives the widest pitch deviation, its radius being the larger. |
+| Drum rate | slider | 1.2 tr/s | 0.1 – 8 tr/s, step 0.1 | Turns per second of the bass rotor. Turning it slower than the horn is what keeps the two bands from beating together. |
+| Crossover | slider | 800 Hz | 200 – 2000 Hz, step 10 | Frequency that separates the horn from the drum. |
+| Amplitude depth | slider | 70 % | 0 – 100 %, step 1 | Level difference between the moment a rotor faces the microphone and the moment it turns away. At zero, only the pitch moves. |
+| Doppler depth | slider | 100 % | 0 – 100 %, step 1 | Share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone. At zero the pitch no longer moves and only the level variation remains. |
+| Width | slider | 100 % | 0 – 100 %, step 1 | Angle between the two microphones around the axis. At a hundred per cent they are opposite and see the rotors pass half a turn apart; at zero they sit at the same place and the two channels coincide. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample on both channels. |
 
 #### Sample Formula
 

@@ -12,23 +12,37 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 49
-- **restent à faire** : 21 composants, 40 couples composant / famille
+- **restent à faire** : 23 composants, 46 couples composant / famille
 - **dont le cœur travaille par trames** : 3
 - **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### melange · 9
+### melange · 11
 
 - Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Mix
 - Beat Repeat / Stutter `beat-repeat` : Mix
 - Écho flottant `echo-flottant` : Mélange
 - Granular freeze `granular-freeze` : Mix
+- Haut-parleur rotatif `haut-parleur-rotatif` : Mélange
 - Réverbération hachée `reverbe-hachee` : Mix
 - Réverbération à réseau (FDN) `reverbe-reseau` : Mix
 - Réverbération velours `reverberation-velours` : Mélange
 - Ring modulator `ring-modulator` : Mix
+- Trémolo harmonique `tremolo-harmonique` : Mélange
 - Vocoder `vocoder` : Mix
+
+### espace · 9
+
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
+- Brassage `brassage` : Dispersion
+- Écho flottant `echo-flottant` : Distance
+- Granular freeze `granular-freeze` : Position
+- Haut-parleur rotatif `haut-parleur-rotatif` : Largeur
+- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
+- Trémolo harmonique `tremolo-harmonique` : Profondeur
+- Ubiquité `ubiquite` : Dispersion
+- Vague `vague` : Profondeur, Ouverture
 
 ### temps · 9
 
@@ -42,15 +56,13 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération velours `reverberation-velours` : Chute
 
-### espace · 7
+### frequence · 5
 
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
-- Brassage `brassage` : Dispersion
-- Écho flottant `echo-flottant` : Distance
-- Granular freeze `granular-freeze` : Position
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
-- Ubiquité `ubiquite` : Dispersion
-- Vague `vague` : Profondeur, Ouverture
+- Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
+- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
+- Ring modulator `ring-modulator` : Fréquence
+- Trémolo harmonique `tremolo-harmonique` : Coupure
+- Vocoder `vocoder` : Q
 
 ### dynamique · 4
 
@@ -65,12 +77,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Granular freeze `granular-freeze` : Pitch
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
-
-### frequence · 3
-
-- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
-- Ring modulator `ring-modulator` : Fréquence
-- Vocoder `vocoder` : Q
 
 ### niveau · 2
 

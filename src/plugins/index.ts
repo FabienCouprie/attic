@@ -135,6 +135,8 @@ import { fiches as f_cribles } from "./cribles";
 import { fiches as f_theorie_composition } from "./theorie-composition";
 import { fiches as f_modeles_physiques } from "./modeles-physiques";
 import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
+import { fiches as f_oscillateur_analogique } from "./oscillateur-analogique";
+import { fiches as f_effets_rotatifs } from "./effets-rotatifs";
 import { fiches as f_theorie_avancee } from "./theorie-avancee";
 import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
@@ -487,6 +489,8 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_theorie_composition,
   ...f_modeles_physiques,
   ...f_syntheses_exotiques,
+  ...f_oscillateur_analogique,
+  ...f_effets_rotatifs,
   ...f_theorie_avancee,
   ...f_csound,
 // TOUT COMPOSANT QUI REND UNE SÉQUENCE REÇOIT UNE SORTIE AUDIO, posée ici plutôt que dans
