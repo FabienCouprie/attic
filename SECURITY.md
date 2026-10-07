@@ -81,6 +81,39 @@ script, extracting an archive it downloaded from Microsoft's CDN during
 *Re-examine this entry if `adm-zip` publishes a patched release, or if the app
 ever starts calling an adm-zip extraction API.*
 
+### `sprintf-js` — GHSA (moderate, no patch exists)
+
+> sprintf-js vulnerable to denial of service through unbounded precision
+> specifiers
+
+**No patched version exists.** The advisory covers `<= 1.1.3`, and 1.1.3 is the
+latest published release: there is no version to move to, so an `overrides`
+entry would have nothing to point at.
+
+**It is not in the shipped application.** Verified with `npm ls sprintf-js
+--omit=dev`, which returns an empty tree. It reaches the repository only through
+development dependencies, by two paths: `@huggingface/transformers` →
+`onnxruntime-node` → `global-agent` → `roarr`, and `@tensorflow/tfjs` →
+`argparse`. Dependabot classifies the alert as `development` scope for the same
+reason.
+
+**What the advisory needs is an attacker-controlled format string.** `roarr` is
+a logger and `argparse` formats usage messages; both build their format strings
+from literals in their own source. Nothing in Attic passes user input, file
+content or network data to either as a format.
+
+**We cannot remove the dependency.** Both paths are transitive and start at
+packages we need at build time. `argparse` 2.x did drop `sprintf-js` and
+declares no dependencies at all, but it is a rewrite with a different API, and
+`@tensorflow/tfjs` declares `argparse@1.0.10`: forcing 2.x on it through
+`overrides` would be an untested substitution on a package we do not control.
+The tree already carries both, 1.0.10 under `@tensorflow/tfjs` and 2.0.1 under
+`electron-updater`.
+
+*Re-examine this entry if `sprintf-js` publishes a patched release, if either
+path reaches the production tree, or if any of our own code starts formatting
+with a string it did not write itself.*
+
 ## Acknowledgments
 
 We thank the following people who have responsibly reported security vulnerabilities in Attic:
