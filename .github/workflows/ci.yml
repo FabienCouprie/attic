@@ -32,5 +32,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      # NSIS EST INSTALLÉ POUR QUE `scripts/installeur-compile.test.ts` NE S'IGNORE PAS.
+      #
+      # Ce cas compile `build/installer.nsh` et s'ignore quand `makensis` est absent — un poste de
+      # développement n'a aucune raison d'avoir NSIS. Sans cette étape il s'ignorerait donc ICI
+      # aussi, et le garde serait muet là où il sert le plus.
+      #
+      # CE QU'IL AURAIT ÉVITÉ : la construction de la v5.0.1 est tombée sur makensis, « could not
+      # resolve label », pour un `/SD` écrit avant le texte d'un `MessageBox` au lieu d'après. NSIS
+      # ne tournant que dans le workflow de RELEASE, la faute s'est découverte après le tag. Elle
+      # se découvre maintenant sur la branche, en une trentaine de secondes.
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
       - name: Test
         run: npm run test
