@@ -7,16 +7,16 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1290 files, 225054 lines, of which 154599 are code.**
+**1294 files, 225446 lines, of which 154811 are code.**
 The table lists the 175 files of 200 code lines or more, heaviest first;
-the remaining 1115 account for 151710 lines.
+the remaining 1119 account for 152015 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1401 | 1755 | ! |
-| src/ui/App.tsx | 1176 | 1563 | ! |
+| src/ui/App.tsx | 1189 | 1584 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
@@ -27,8 +27,8 @@ the remaining 1115 account for 151710 lines.
 | src/plugins/index.ts | 483 | 495 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
+| src/ui/BarreOutils.tsx | 441 | 491 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
-| src/ui/BarreOutils.tsx | 435 | 485 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/parole-vers-sequence.test.ts | 391 | 515 |  |
 | src/plugins/montage.ts | 390 | 542 |  |
@@ -58,9 +58,9 @@ the remaining 1115 account for 151710 lines.
 | src/audio/courbe.test.ts | 335 | 422 |  |
 | src/audio/effets-verification.test.ts | 334 | 385 |  |
 | src/plugins/effets-spectral-modulation.test.ts | 334 | 470 |  |
+| src/plugins/prompt-graphe.ts | 334 | 516 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
-| src/plugins/prompt-graphe.ts | 332 | 507 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/plugins/effets-spectral.ts | 328 | 432 |  |
@@ -118,6 +118,7 @@ the remaining 1115 account for 151710 lines.
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
+| src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
 | src/audio/io.ts | 257 | 380 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
@@ -156,7 +157,6 @@ the remaining 1115 account for 151710 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/ui/dictee/commandes-dictee.test.ts | 224 | 299 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/plugins/effets.ts | 221 | 259 |  |
