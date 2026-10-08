@@ -21,14 +21,17 @@
 //   « absente »  le modèle n'a pas encore d'adresse : `--publier` la lui donne.
 //
 // USAGE
-//   node scripts/modeles.cjs --generer    engendre le manifeste depuis public/oonx/
-//   node scripts/modeles.cjs --verifier   compare public/oonx/ au manifeste
-//   node scripts/modeles.cjs --publier    téléverse ce qui n'a pas d'adresse sur la release `assets`
+//   node scripts/modeles.cjs --generer      engendre le manifeste depuis public/oonx/
+//   node scripts/modeles.cjs --verifier     compare public/oonx/ au manifeste
+//   node scripts/modeles.cjs --publier      téléverse ce qui n'a pas d'adresse sur la release
+//   node scripts/modeles.cjs --telecharger  récupère depuis la release ce qui manque dans public/
 
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+// LE TUYAU DE L'APPLICATION, réemployé plutôt que récrit : il ne dépend que de modules natifs.
+const { inventaire, telechargerFichier, poser } = require("../electron/telechargement-modeles.cjs");
 
 const RACINE = path.resolve(__dirname, "..");
 const SOURCE = path.join(RACINE, "public", "oonx");
@@ -54,7 +57,11 @@ const CONNUS = {
   "gtcrn.onnx": {
     id: "gtcrn", nom: "Débruitage IA", nomEn: "AI denoise",
     noeuds: ["debruitage-ia"],
-    url: "https://raw.githubusercontent.com/Xiaobin-Rong/gtcrn/main/stream/onnx_models/gtcrn.onnx",
+    // L'ADRESSE AMONT A ÉTÉ RETIRÉE LE 2026-10-08 : ce modèle était le dernier des vingt à venir
+    // d'ailleurs que de la release. Un tiers déplace, renomme ou retire ce qu'il héberge — c'est
+    // arrivé au classeur de genre, dont le dépôt rend 401 depuis le 2026-09-22 — et une
+    // installation qui n'embarque plus aucun modèle ne peut pas dépendre de cela. Sa licence MIT
+    // autorise la rediffusion, et `--publier gtcrn` l'a posé sur la release comme les autres.
     licence: { nom: "MIT", credit: "Rong Xiaobin — GTCRN", rediffusable: true },
   },
   "audiobox-aesthetics.onnx": {
@@ -63,23 +70,39 @@ const CONNUS = {
     url: `${BASE_RELEASE}/audiobox-aesthetics.onnx`,
     licence: { nom: "CC-BY 4.0", credit: "Meta Platforms — Audiobox Aesthetics (composants WavLM sous MIT, microsoft/unilm)", rediffusable: true },
   },
+  "basic-pitch.onnx": {
+    id: "basic-pitch", nom: "Transcription polyphonique", nomEn: "Polyphonic transcription",
+    noeuds: ["transcripteur-midi"],
+    // IL N'ÉTAIT NI EMBARQUÉ NI AU MANIFESTE : le nœud allait le chercher chez un tiers par un
+    // `fetch` à chaque première transcription, de sorte qu'il ne marchait qu'en ligne et qu'aucun
+    // inventaire ne le voyait. Le fichier est repris tel quel, son empreinte vérifiée contre celle
+    // que la fiche amont publie, et il passe par le même chemin que les autres.
+    licence: { nom: "Apache-2.0", credit: "Spotify — Basic Pitch (Bittner, Bosch, Rubinstein, Meseguer-Brocal, Ewert, ICASSP 2022) ; fichier repris octet pour octet du paquet amont, réhébergé par daserge", rediffusable: true },
+  },
   "htdemucs_6s.onnx": {
     id: "htdemucs-6s", nom: "Séparation 6 pistes", nomEn: "6-stem separation",
     noeuds: ["separateur-ia"],
-    licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs) ; citer Rouard, Massa, Défossez, ICASSP 2023, et MUSDB18-HQ", rediffusable: false,
-      raison: "Le code de Demucs est sous licence MIT, PAS ses poids : « The model weights are not covered by the MIT license, and are provided only for scientific purposes » (adefossez, auteur de Demucs, facebookresearch/demucs#327) — la restriction vient de MUSDB18-HQ, jeu de données à usage éducatif. Attic, libre et non commercial, les EMPLOIE ; les héberger sur notre propre release serait une publication de plus, et cette décision-là n'est pas prise." },
+    // PAS D'`url` ÉCRITE ICI : `--generer` la recopierait telle quelle dans le manifeste, avec la
+    // taille et l'empreinte du fichier local, SANS vérifier que quoi que ce soit est publié à cette
+    // adresse. L'application téléchargerait alors un 404. C'est `--publier` qui donne l'adresse,
+    // après le téléversement, et c'est la seule qui soit vraie.
+    licence: { nom: "usage non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs) ; citer Rouard, Massa, Défossez, ICASSP 2023, et MUSDB18-HQ", rediffusable: true,
+      note: "Le code de Demucs est sous licence MIT, PAS ses poids : « The model weights are not covered by the MIT license, and are provided only for scientific purposes » (adefossez, auteur de Demucs, facebookresearch/demucs#327), la réserve venant de MUSDB18-HQ, jeu de données à usage éducatif. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-10-08 : cette réserve scientifique n'est pas tenue pour déterminante, et seul l'usage commercial est récusé. Attic est libre et non commercial, et rediffuse ces poids à ce titre. Qui les reprend reste tenu par la même limite." },
   },
   "htdemucs_fp16weights.onnx": {
     id: "htdemucs-fp16", nom: "Séparation (poids fp16)", nomEn: "Separation (fp16 weights)",
     noeuds: ["separateur-ia"],
-    licence: { nom: "usage scientifique / non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs), poids fp16", rediffusable: false,
-      raison: "Mêmes poids que htdemucs-6s, même réserve : usage scientifique et non commercial, hébergement par nous non décidé." },
+    licence: { nom: "usage non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs), poids fp16", rediffusable: true,
+      note: "Mêmes poids que htdemucs-6s, même décision : la réserve scientifique n'est pas tenue pour déterminante, seul l'usage commercial est récusé." },
   },
   "model_genre.onnx": {
     id: "genre", nom: "Classement par genre", nomEn: "Genre classifier",
     noeuds: ["classificateur-genre"],
-    licence: { nom: "inconnue", credit: "réglage fin de HuBERT (facebook/hubert-base-ls960, Apache-2.0) sur GTZAN", rediffusable: false,
-      raison: "Aucune licence n'a jamais été déclarée pour ce réglage fin, et son dépôt d'origine a disparu (401 depuis le 2026-09-22). La chaîne de droits ne se documente pas : on ne le rediffuse pas." },
+    // LA SEULE ENTRÉE DE CETTE TABLE QUI SOIT REDIFFUSÉE SANS RIEN POUVOIR CITER. Sa licence
+    // reste « inconnue » parce qu'elle l'est : la changer en autre chose serait inventer une
+    // autorisation. Ce qui a changé n'est pas le droit, c'est la décision.
+    licence: { nom: "inconnue", credit: "réglage fin de HuBERT (facebook/hubert-base-ls960, Apache-2.0) sur GTZAN", rediffusable: true,
+      note: "Aucune licence n'a jamais été déclarée pour ce réglage fin, et son dépôt d'origine a disparu (401 depuis le 2026-09-22) : la chaîne de droits ne se documente pas, et AUCUNE AUTORISATION NE PEUT ÊTRE CITÉE. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-10-08 : le modèle est rediffusé tout de même, aux mêmes conditions non commerciales que le reste. La réserve n'est pas celle de Demucs, dont la licence est connue et dont seul le commercial est exclu ; ici c'est un risque assumé, et il est écrit ici pour qu'il ne se perde pas." },
   },
   "modele-separation.onnx": {
     id: "separation-mdx", nom: "Séparation voix/instrumental", nomEn: "Vocal/instrumental separation",
@@ -299,10 +322,14 @@ function verifier() {
  * encore d'adresse, si l'on n'en nomme aucun.
  *
  * UN MODÈLE NON REDIFFUSABLE N'EST JAMAIS TÉLÉVERSÉ, même nommé explicitement. Héberger un modèle,
- * c'est le republier : cela demande une licence qui l'autorise. Les poids de Demucs sont donnés
- * « pour un usage scientifique seulement », et le classeur de genre n'a jamais eu de licence du
- * tout — la table `CONNUS` porte la raison, et ce garde-fou la fait respecter plutôt que de
- * compter sur la mémoire de celui qui lance la commande.
+ * c'est le republier, et ce garde-fou fait respecter la table `CONNUS` plutôt que de compter sur
+ * la mémoire de celui qui lance la commande.
+ *
+ * LA LISTE QU'IL PROTÈGE EST AUJOURD'HUI VIDE, et le garde reste. Les trois modèles qu'il refusait
+ * — les deux Demucs et le classeur de genre — sont passés rediffusables le 2026-10-08, par décision
+ * écrite dans leur entrée de `CONNUS`. Retirer le garde pour autant serait confondre « personne
+ * n'est refusé aujourd'hui » avec « personne ne peut l'être » : le prochain modèle ajouté au
+ * catalogue arrivera avec sa propre licence, et c'est à ce moment-là qu'il servira.
  */
 function publier(ids = []) {
   const manifeste = JSON.parse(fs.readFileSync(MANIFESTE, "utf8"));
@@ -358,12 +385,97 @@ function publier(ids = []) {
   console.log(`\n${aPublier.length} modèle(s) publié(s), manifeste mis à jour.`);
 }
 
+/**
+ * Récupère depuis la release ce qui manque dans `public/`, et le vérifie.
+ *
+ * POURQUOI CETTE COMMANDE EXISTE. Un `git clone` ne rapporte aucun modèle : ils sont exclus de git
+ * et vivent sur la release `assets`. La suite d'instructions qui reconstitue une installation
+ * complète n'existait nulle part ailleurs que dans le YAML de la CI, où personne ne va la lire et
+ * où rien ne l'éprouve. Elle tient maintenant en un mot.
+ *
+ * LE TUYAU EST CELUI DE L'APPLICATION, et non un second écrit ici : `electron/telechargement-
+ * modeles.cjs` ne dépend que de modules natifs, et c'est lui qui sait suivre une redirection,
+ * calculer l'empreinte au fil de l'eau et ne poser le fichier qu'une fois entier. En écrire un
+ * autre aurait fait deux chemins à éprouver, dont un seul le serait.
+ */
+async function telecharger(ids = []) {
+  const manifeste = JSON.parse(fs.readFileSync(MANIFESTE, "utf8"));
+  const racinePublic = path.join(RACINE, "public");
+  const absolu = (relatif) => path.join(racinePublic, relatif);
+  const inv = inventaire(manifeste, {
+    existe: (r) => fs.existsSync(absolu(r)),
+    taille: (r) => { try { return fs.statSync(absolu(r)).size; } catch { return null; } },
+  });
+
+  const inconnus = ids.filter((id) => !manifeste.modeles.some((m) => m.id === id));
+  for (const id of inconnus) console.error(`INCONNU ${id} : absent du manifeste.`);
+  if (inconnus.length) process.exit(1);
+
+  const voulus = ids.length ? ids : inv.manquants;
+  const file = manifeste.modeles.filter((m) => voulus.includes(m.id) && m.source?.url);
+  if (file.length === 0) {
+    console.log(`Rien à prendre : ${inv.complets}/${inv.total} modèles déjà là.`);
+    return;
+  }
+
+  const tmp = path.join(RACINE, "release");
+  fs.mkdirSync(tmp, { recursive: true });
+  let pris = 0;
+  for (const m of file) {
+    const archive = m.source.type === "archive";
+    const destination = archive ? path.join(tmp, `${m.id}.zip`) : absolu(m.fichiers[0].chemin);
+    process.stdout.write(`  ${m.id} (${mo(m.source.octets ?? m.octets)} Mo)… `);
+    const res = await telechargerFichier(m.source.url, destination);
+    if (!res.ok) { console.error(`ÉCHEC : ${res.erreur}`); process.exit(1); }
+
+    // L'EMPREINTE DÉCIDE D'INSTALLER OU DE JETER, avant que le fichier n'atteigne sa place.
+    if (m.source.sha256 && res.sha256 !== m.source.sha256) {
+      try { fs.unlinkSync(res.temporaire); } catch { /* déjà parti */ }
+      console.error(`EMPREINTE INCORRECTE pour ${m.id} : reçu ${res.sha256}`);
+      process.exit(1);
+    }
+
+    if (archive) {
+      const AdmZip = require("adm-zip");
+      const zip = new AdmZip(res.temporaire);
+      // LA RACINE VIENT DU MANIFESTE : les points de contrôle Magenta vivent sous `magenta/`, et
+      // une archive dépliée au mauvais endroit donnerait un modèle introuvable sans rien dire.
+      const dossier = absolu((m.fichiers?.[0]?.chemin ?? "oonx/").split("/")[0]);
+      fs.mkdirSync(dossier, { recursive: true });
+      // Chaque entrée est posée à la main, jamais `extractAllTo`, et le chemin RÉSOLU est comparé
+      // au dossier : un nom encodé ou mixte ne sort pas de là. Même précaution qu'au déplieur du
+      // processus principal et qu'à celui de l'amorçage.
+      for (const entree of zip.getEntries()) {
+        if (entree.isDirectory) continue;
+        const cible = path.resolve(dossier, entree.entryName);
+        if (!cible.startsWith(path.resolve(dossier) + path.sep)) {
+          throw new Error(`Chemin hors du dossier : ${entree.entryName}`);
+        }
+        fs.mkdirSync(path.dirname(cible), { recursive: true });
+        fs.writeFileSync(cible, entree.getData());
+      }
+      fs.unlinkSync(res.temporaire);
+    } else {
+      poser(res.temporaire, destination);
+    }
+    pris++;
+    console.log("pris.");
+  }
+  console.log(`\n${pris} modèle(s) récupéré(s) dans public/. « npm run modeles:verifier » les relit.`);
+}
+
 const arg = process.argv[2];
 if (arg === "--generer") engendrer();
 else if (arg === "--verifier") verifier();
 else if (arg === "--publier") publier(process.argv.slice(3));
-else {
-  console.log("usage : node scripts/modeles.cjs --generer | --verifier | --publier [id…]");
+else if (arg === "--telecharger") {
+  telecharger(process.argv.slice(3)).catch((e) => {
+    console.error(String(e && e.message ? e.message : e));
+    process.exit(1);
+  });
+} else {
+  console.log("usage : node scripts/modeles.cjs --generer | --verifier | --publier [id…]"
+    + " | --telecharger [id…]");
   process.exitCode = 1;
 }
 

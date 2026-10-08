@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": -1000 },
+      "width": 1300,
+      "height": 820,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN PATCH D'OPENMUSIC\n\nUne pièce écrite entièrement avec les composants de la lignée OpenMusic, du matériau jusqu'à la partition. Quatorze d'entre eux, plus les prises d'écoute et de texte. Rien n'est rendu en son avant la dernière étape : tout circule en séquence, c'est-à-dire en notes datées.\n\nLE MATÉRIAU, à gauche.\n« Série à tous les intervalles » rend une série de douze sons qui contient les onze intervalles, une fois chacun. « Classes de hauteurs » l'analyse : forme normale, forme première, vecteur d'intervalles. « Morphologie » en tire son profil primaire, et ce profil est une courbe.\n\nLE RYTHME, par l'arbre.\n« Arbre rythmique » tire un arbre de quatre mesures. « Simplifier un arbre » le réduit sans déplacer une note. « Rythme sur hauteurs » marie cet arbre à la série : l'arbre donne les durées, la série donne les hauteurs.\n\nLA LIGNE, par le profil et la formule.\n« Profil mélodique » plie la ligne sur la courbe que la morphologie a tirée de la série : le matériau se donne donc sa propre forme. « Formule sur séquence » applique une règle à chaque note, ce qui est la fonction d'ordre supérieur d'OpenMusic écrite plutôt que câblée.\n\nLES TROIS AUTRES COUCHES.\n« Opérations sérielles » reprend la ligne en rétrograde de l'inversion, et « Tempérament » la rejoue en intonation juste, ce qui sort la plupart de ses notes du clavier tempéré. « Harmonie spectrale » égrène les partiels d'une fondamentale virtuelle. « Canon par pavage » construit un canon dont les voix se partagent le temps sans jamais se superposer.\n\nLA MAQUETTE assemble les quatre couches, chacune avec son instant d'entrée et sa transposition. C'est le conteneur temporel d'OpenMusic : les boîtes sont calculées ailleurs, la maquette leur donne leur place.\n\nLE RETOUR À LA PARTITION. « Quantifier » lit la pièce assemblée et en rend l'arbre rythmique noté, ce qui referme le cercle ouvert par « Arbre rythmique ».\n\nCE QUE « SÉPARER LES VOIX » RÉPOND, et pourquoi c'est juste. Il rend une voix, non quatre. Les quatre couches entrent l'une après l'autre et s'entrelacent, mais leurs notes ne tombent presque jamais ensemble : une texture faite d'une seule ligne tressée est une voix, et c'est ce que l'analyse dit. Le canon par pavage donne la même réponse pour une raison plus forte encore, le pavage étant précisément la propriété de ne jamais faire sonner deux voix au même instant.\n\nLA SECONDE MORPHOLOGIE compare la série de départ à la ligne finie, et dit ce qu'il reste de l'une dans l'autre.",
+        "nomEn": "AN OPENMUSIC PATCH\n\nA piece written entirely with the nodes of the OpenMusic lineage, from material to score. Fourteen of them, plus the listening and text taps. Nothing is rendered as sound before the last step: everything travels as a sequence, that is as dated notes.\n\nTHE MATERIAL, on the left.\n« All-Interval Series » returns a twelve-tone row containing the eleven intervals, once each. « Pitch-Class Sets » analyses it: normal form, prime form, interval vector. « Morphology » draws its primary profile, and that profile is a curve.\n\nTHE RHYTHM, through the tree.\n« Rhythm Tree » draws a four-bar tree. « Simplify a Tree » reduces it without moving a note. « Rhythm on Pitches » marries that tree to the row: the tree gives the durations, the row gives the pitches.\n\nTHE LINE, through profile and formula.\n« Melodic Profile » bends the line onto the curve that Morphology drew from the row: the material thus gives itself its own shape. « Formula on Sequence » applies a rule to each note, which is OpenMusic's higher-order function written rather than wired.\n\nTHE THREE OTHER LAYERS.\n« Serial Operations » takes the line up as the retrograde of the inversion, and « Temperament » replays it in just intonation, which takes most of its notes off the tempered keyboard. « Spectral Harmony » lays out the partials of a virtual fundamental. « Tiling Canon » builds a canon whose voices share the time without ever overlapping.\n\nTHE MAQUETTE assembles the four layers, each with its entry instant and its transposition. It is OpenMusic's temporal container: the boxes are computed elsewhere, the maquette gives them their place.\n\nTHE RETURN TO THE SCORE. « Quantize » reads the assembled piece and returns its notated rhythmic tree, closing the circle opened by « Rhythm Tree ».\n\nWHAT « SEPARATE VOICES » ANSWERS, and why it is right. It returns one voice, not four. The four layers enter one after another and interleave, but their notes almost never fall together: a texture made of a single braided line is one voice, and that is what the analysis states. The tiling canon gives the same answer for an even stronger reason, tiling being precisely the property of never sounding two voices at the same instant.\n\nTHE SECOND MORPHOLOGY compares the starting row to the finished line, and states what remains of one in the other."
+      }
+    },
+
+    { "id": "serie", "type": "atelier", "position": { "x": 40, "y": 40 },
+      "data": { "ficheId": "serie-tous-intervalles", "parametres": { "Numéro": 1789, "Note de départ": 2, "Octave": 4, "Durée": 0.45, "Nuance": 88 } } },
+    { "id": "arbre", "type": "atelier", "position": { "x": 40, "y": 520 },
+      "data": { "ficheId": "arbre-rythmique", "parametres": { "Source": "tirage", "Métrique": "4/4", "Mesures": 4, "Profondeur": 3 } } },
+    { "id": "reecrire", "type": "atelier", "position": { "x": 600, "y": 520 },
+      "data": { "ficheId": "reecrire-arbre", "parametres": {} } },
+    { "id": "morpho-profil", "type": "atelier", "position": { "x": 1150, "y": 800 },
+      "data": { "ficheId": "morphologie", "parametres": {} } },
+    { "id": "rythme", "type": "atelier", "position": { "x": 1150, "y": 260 },
+      "data": { "ficheId": "rythme-sur-hauteurs", "parametres": {} } },
+    { "id": "profil", "type": "atelier", "position": { "x": 1700, "y": 260 },
+      "data": { "ficheId": "profil-melodique", "parametres": { "Force": 70, "Grave": 52, "Aigu": 80 } } },
+    { "id": "formule", "type": "atelier", "position": { "x": 2250, "y": 260 },
+      "data": { "ficheId": "formule-sequence", "parametres": {} } },
+    { "id": "rendu1", "type": "atelier", "position": { "x": 2800, "y": 260 },
+      "data": { "ficheId": "rendu-sequence", "parametres": { "Volume": 35 } } },
+    { "id": "serielles", "type": "atelier", "position": { "x": 3350, "y": 260 },
+      "data": { "ficheId": "serie-dodecaphonique", "parametres": { "Forme": "retrograde-inversion", "Registre": "octave", "Note de départ": 55, "Durée d'une note": 0.35 } } },
+    { "id": "temper", "type": "atelier", "position": { "x": 3900, "y": 260 },
+      "data": { "ficheId": "temperament", "parametres": {} } },
+    { "id": "spectrale", "type": "atelier", "position": { "x": 40, "y": 1000 },
+      "data": { "ficheId": "harmonie-spectrale", "parametres": { "Fondamentale": 110, "Partiels": 8 } } },
+    { "id": "canon", "type": "atelier", "position": { "x": 40, "y": 1500 },
+      "data": { "ficheId": "canon-pavage", "parametres": { "Pulsations": 12, "Motif": "0 1 2", "Répétitions": 5, "Hauteurs": "55 60 64 67", "Durée d'un pas": 0.3 } } },
+    { "id": "canon-seq", "type": "atelier", "position": { "x": 600, "y": 1500 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": {} } },
+
+    { "id": "maquette", "type": "atelier", "position": { "x": 4500, "y": 700 },
+      "data": {
+        "ficheId": "maquette",
+        "portsVisibles": 4,
+        "parametres": {
+          "Début 1": 0, "Durée 1": 0, "Transposition 1": 0,
+          "Début 2": 9, "Durée 2": 0, "Transposition 2": -12,
+          "Début 3": 5, "Durée 3": 0, "Transposition 3": 0,
+          "Début 4": 14, "Durée 4": 0, "Transposition 4": 7,
+          "Une voix par boîte": "non"
+        }
+      } },
+
+    { "id": "ecoute", "type": "atelier", "position": { "x": 5100, "y": 300 },
+      "data": { "ficheId": "rendu-sequence", "parametres": { "Volume": 38 } } },
+    { "id": "quantif", "type": "atelier", "position": { "x": 5650, "y": 700 },
+      "data": { "ficheId": "quantifier-rythme", "parametres": {} } },
+    { "id": "separer", "type": "atelier", "position": { "x": 5100, "y": 1000 },
+      "data": { "ficheId": "separer-voix", "parametres": { "Voix au maximum": 4 } } },
+    { "id": "morpho", "type": "atelier", "position": { "x": 5100, "y": 1300 },
+      "data": { "ficheId": "morphologie", "parametres": {} } },
+    { "id": "classes", "type": "atelier", "position": { "x": 5100, "y": 1700 },
+      "data": { "ficheId": "classes-hauteurs", "parametres": {} } },
+
+    { "id": "txt-arbre", "type": "atelier", "position": { "x": 6200, "y": 700 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} } },
+    { "id": "txt-voix", "type": "atelier", "position": { "x": 6200, "y": 1000 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} } },
+    { "id": "txt-morpho", "type": "atelier", "position": { "x": 5650, "y": 1300 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} } },
+    { "id": "txt-classes", "type": "atelier", "position": { "x": 5650, "y": 1700 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} } }
+  ],
+  "edges": [
+    { "id": "e-arbre-reecrire", "source": "arbre", "sourceHandle": "out:0", "target": "reecrire", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-reecrire-rythme", "source": "reecrire", "sourceHandle": "out:0", "target": "rythme", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-serie-rythme", "source": "serie", "sourceHandle": "out:0", "target": "rythme", "targetHandle": "in:2", "type": "arete-personnalisee" },
+    { "id": "e-serie-morphoprofil", "source": "serie", "sourceHandle": "out:0", "target": "morpho-profil", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-morphoprofil-profil", "source": "morpho-profil", "sourceHandle": "out:1", "target": "profil", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-rythme-profil", "source": "rythme", "sourceHandle": "out:0", "target": "profil", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-profil-formule", "source": "profil", "sourceHandle": "out:0", "target": "formule", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-formule-rendu1", "source": "formule", "sourceHandle": "out:0", "target": "rendu1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-rendu1-serielles", "source": "rendu1", "sourceHandle": "out:1", "target": "serielles", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-serielles-temper", "source": "serielles", "sourceHandle": "out:1", "target": "temper", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-canon-seq", "source": "canon", "sourceHandle": "out:1", "target": "canon-seq", "targetHandle": "in:0", "type": "arete-personnalisee" },
+
+    { "id": "e-formule-maq", "source": "formule", "sourceHandle": "out:0", "target": "maquette", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-temper-maq", "source": "temper", "sourceHandle": "out:2", "target": "maquette", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-spectrale-maq", "source": "spectrale", "sourceHandle": "out:0", "target": "maquette", "targetHandle": "in:2", "type": "arete-personnalisee" },
+    { "id": "e-canonseq-maq", "source": "canon-seq", "sourceHandle": "out:0", "target": "maquette", "targetHandle": "in:3", "type": "arete-personnalisee" },
+
+    { "id": "e-maq-ecoute", "source": "maquette", "sourceHandle": "out:0", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-maq-quantif", "source": "maquette", "sourceHandle": "out:0", "target": "quantif", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-maq-separer", "source": "maquette", "sourceHandle": "out:0", "target": "separer", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-quantif-txt", "source": "quantif", "sourceHandle": "out:0", "target": "txt-arbre", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-separer-txt", "source": "separer", "sourceHandle": "out:1", "target": "txt-voix", "targetHandle": "in:0", "type": "arete-personnalisee" },
+
+    { "id": "e-serie-morpho", "source": "serie", "sourceHandle": "out:0", "target": "morpho", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-formule-morpho", "source": "formule", "sourceHandle": "out:0", "target": "morpho", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-morpho-txt", "source": "morpho", "sourceHandle": "out:0", "target": "txt-morpho", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-serie-classes", "source": "serie", "sourceHandle": "out:0", "target": "classes", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-classes-txt", "source": "classes", "sourceHandle": "out:0", "target": "txt-classes", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 40, "y": 1060, "zoom": 0.2 }
+}

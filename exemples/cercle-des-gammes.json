@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "width": 700,
+      "height": 360,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "LE CERCLE DES GAMMES\n\n« Cercle de gamme » pose les degrés d'une gamme nommée sur un cercle. « Cercle à retoucher » montre sur le nœud le cercle qu'il reçoit, et un clic sur une place l'allume ou l'éteint.\n\nEN HAUT, LA FORME D'UNE GAMME. Douze places, et seuls les degrés allumés : le polygone inscrit est le dessin de la gamme, et deux gammes voisines se distinguent d'un coup d'œil. Le cercle passe ensuite dans une rotation, et le second dessin montre ce que la rotation en a fait.\n\nEN BAS, UNE GAMME QUE LE CLAVIER NE SAIT PAS JOUER. Le maqam Rast a sa tierce à mi-chemin entre la majeure et la mineure, et sa sixte de même. Ces degrés se mesurent en cents et non en touches : une place par degré, et la hauteur d'un sommet porte sa virgule. Les noms écrits sur les pastilles disent l'écart, « E4−50 » étant un quart de ton sous le mi.\n\nLE RENDU DONNE LE TEMPS. Un cercle ne porte ni tempo ni durée : c'est le rendu qui le fait tourner, et l'écoute qui le rend audible. L'audio garde les écarts au tempérament ; le MIDI, lui, les arrondit, un clavier n'ayant pas de quart de ton.",
+        "nomEn": "THE CIRCLE OF SCALES\n\n« Scale Circle » lays the degrees of a named scale onto a circle. « Circle Editor » shows on the node the circle it receives, and a click on a position turns it on or off.\n\nAT THE TOP, THE SHAPE OF A SCALE. Twelve positions, and only the degrees lit: the inscribed polygon is the drawing of the scale, and two neighbouring scales can be told apart at a glance. The circle then goes through a rotation, and the second drawing shows what the rotation did to it.\n\nAT THE BOTTOM, A SCALE THE KEYBOARD CANNOT PLAY. Maqam Rast has its third midway between the major and the minor, and its sixth likewise. These degrees are measured in cents and not in keys: one position per degree, and a vertex's pitch carries its decimal part. The names written on the dots state the offset, « E4−50 » being a quarter tone below E.\n\nTHE RENDERING SUPPLIES TIME. A circle carries neither tempo nor duration: the rendering turns it, and the playback makes it audible. The audio keeps the offsets from temperament; the MIDI rounds them, a keyboard having no quarter tone."
+      }
+    },
+    {
+      "id": "forme",
+      "type": "atelier",
+      "position": { "x": 40, "y": 460 },
+      "data": {
+        "ficheId": "cercle-gamme",
+        "parametres": {
+          "Gamme": "mineur-harmonique",
+          "Fondamentale": "60",
+          "Places": "chromatique",
+          "Octave de fermeture": "non"
+        }
+      }
+    },
+    {
+      "id": "voir-forme",
+      "type": "atelier",
+      "position": { "x": 500, "y": 460 },
+      "data": {
+        "ficheId": "cercle-retouche",
+        "parametres": { "Retouche": "" }
+      }
+    },
+    {
+      "id": "tourne",
+      "type": "atelier",
+      "position": { "x": 960, "y": 460 },
+      "data": {
+        "ficheId": "cercle-tourner",
+        "parametres": { "Pas": "3" }
+      }
+    },
+    {
+      "id": "voir-tourne",
+      "type": "atelier",
+      "position": { "x": 1340, "y": 460 },
+      "data": {
+        "ficheId": "cercle-retouche",
+        "parametres": { "Retouche": "" }
+      }
+    },
+    {
+      "id": "rast",
+      "type": "atelier",
+      "position": { "x": 40, "y": 1180 },
+      "data": {
+        "ficheId": "cercle-gamme",
+        "parametres": {
+          "Gamme": "rast",
+          "Fondamentale": "60",
+          "Places": "degre",
+          "Octave de fermeture": "non"
+        }
+      }
+    },
+    {
+      "id": "voir-rast",
+      "type": "atelier",
+      "position": { "x": 500, "y": 1180 },
+      "data": {
+        "ficheId": "cercle-retouche",
+        "parametres": { "Retouche": "" }
+      }
+    },
+    {
+      "id": "rendu",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 780 },
+      "data": {
+        "ficheId": "rendu-cercles",
+        "parametres": {
+          "Tempo": 24,
+          "Base de temps": "cycle",
+          "Tours": 2,
+          "Nuance": 100
+        }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2240, "y": 780 },
+      "data": {
+        "ficheId": "rendu-sequence",
+        "parametres": { "Volume": 80 }
+      }
+    },
+    {
+      "id": "rouleau",
+      "type": "atelier",
+      "position": { "x": 2240, "y": 280 },
+      "data": {
+        "ficheId": "rouleau-sequence",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e-forme-voir", "source": "forme", "target": "voir-forme", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-voir-tourne", "source": "voir-forme", "target": "tourne", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-tourne-voir", "source": "tourne", "target": "voir-tourne", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-rast-voir", "source": "rast", "target": "voir-rast", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-voirtourne-rendu", "source": "voir-tourne", "target": "rendu", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-voirrast-rendu", "source": "voir-rast", "target": "rendu", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-rendu-ecoute", "source": "rendu", "target": "ecoute", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-rendu-rouleau", "source": "rendu", "target": "rouleau", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 20, "y": 20, "zoom": 0.3 }
+}

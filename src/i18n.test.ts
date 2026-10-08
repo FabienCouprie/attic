@@ -10,7 +10,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { CLES_CONNUES } from "./i18n";
+import { CLES_CONNUES, traduireDans } from "./i18n";
 
 function fichiersSource(racine: string): string[] {
   const out: string[] = [];
@@ -46,5 +46,38 @@ describe("couverture i18n", () => {
       }
     }
     expect(manquantes).toEqual([]);
+  });
+});
+
+// UN MODÈLE ABSENT NE S'OBTIENT PLUS EN RÉINSTALLANT, et deux messages le disaient encore.
+//
+// L'installeur ne porte plus aucun modèle depuis le 2026-10-08 : réinstaller l'application ne
+// rapporte donc rien, et ce conseil envoyait télécharger quatre cents méga-octets d'installeur
+// pour revenir au même état. Deux messages l'ont porté des mois — le débruitage et le score
+// esthétique —, chacun écrit au moment où son nœud arrivait, sans que rien ne les relie.
+//
+// LE GARDE CHERCHE LA FORME, ET NON LES DEUX NOMS : tout message qui annonce un modèle absent,
+// présent ou futur, doit dire par où le prendre et ne pas renvoyer à une réinstallation.
+describe("les messages d'un modèle absent", () => {
+  const FORME_FR = /Modèle\b[^.:]*\b(absent|introuvable)/i;
+  const ICONE_FR = "Récupérer les modèles IA";
+  const ICONE_EN = "Fetch the AI models";
+
+  const concernes = [...CLES_CONNUES].filter((cle) => FORME_FR.test(traduireDans("fr", cle)));
+
+  it("le relevé n'est pas vide : sans quoi ce garde ne dirait rien", () => {
+    expect(concernes.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("AUCUN NE DIT DE RÉINSTALLER L'APPLICATION, qui n'embarque plus de modèle", () => {
+    const fautifs = concernes.filter((cle) =>
+      /réinstall/i.test(traduireDans("fr", cle)) || /reinstall/i.test(traduireDans("en", cle)));
+    expect(fautifs, "réinstaller ne rapporte aucun modèle : l'installeur n'en porte plus").toEqual([]);
+  });
+
+  it("et chacun renvoie à l'icône qui les prend, dans les deux langues", () => {
+    const muets = concernes.filter((cle) =>
+      !traduireDans("fr", cle).includes(ICONE_FR) || !traduireDans("en", cle).includes(ICONE_EN));
+    expect(muets, "un modèle absent sans chemin indiqué laisse le nœud muet sans recours").toEqual([]);
   });
 });

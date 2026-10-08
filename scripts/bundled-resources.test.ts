@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { execSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const { verifierSources, verifierPaquet } = require("./verify-bundled-resources.cjs");
@@ -88,9 +89,68 @@ describe("configuration réelle", () => {
   it("le workflow de release récupère la collection et vérifie les ressources avant et après packaging", () => {
     const wf = readFileSync(join(__dirname, "..", ".github/workflows/release.yml"), "utf8").replace(/\r\n/g, "\n");
     expect(wf).toContain("npm run download:music-collection");
-    expect(wf).toContain("npm run download:audiobox-aesthetics");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs\n");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs --paquet release/win-unpacked/resources");
+  });
+
+  it("ET IL NE RAPATRIE PLUS AUCUN MODÈLE, qui ne sont plus embarqués", () => {
+    // Le workflow allait chercher GTCRN et Audiobox avant de construire, parce qu'ils partaient
+    // dans l'installeur depuis `public/oonx`. Ce dossier a quitté `extraResources` le 2026-10-08
+    // et `build.files` exclut `dist/oonx/**/*` : plus rien n'y mène. Les y laisser aurait coûté
+    // quatre cents méga-octets de téléchargement par release, pour un fichier que personne
+    // n'empaquette.
+    const wf = readFileSync(join(__dirname, "..", ".github/workflows/release.yml"), "utf8");
+    expect(wf).not.toContain("run: npm run download:audiobox-aesthetics");
+    expect(wf).not.toContain("run: npm run download:gtcrn");
+    expect(pkg.build.extraResources.map((r: { from: string }) => r.from)).not.toContain("public/oonx");
+    expect(pkg.build.files).toContain("!dist/oonx/**/*");
+  });
+
+  it("TOUT CE QUI EST EMBARQUÉ ET ABSENT DE GIT SE RÉCUPÈRE, sans quoi un clone est muet", () => {
+    // LE DÉFAUT QUE CE CAS EMPÊCHE A DÉJÀ EU LIEU : « music collection » était embarquée et
+    // ignorée par git, absente du checkout, et electron-builder l'a sautée avec un simple
+    // avertissement — les installeurs 3.x sont partis sans elle. La même forme guette toute
+    // ressource qu'on ajoute : si rien ne sait aller la chercher, un clone ne l'a pas.
+    let suivis: Set<string>;
+    try {
+      suivis = new Set(execSync("git ls-files", { cwd: join(__dirname, ".."), encoding: "utf8" })
+        .split("\n").filter(Boolean));
+    } catch {
+      return; // hors dépôt git : le cas ne peut rien dire, et ne prétend rien.
+    }
+    const dansGit = (source: string) => [...suivis].some((f) => f === source || f.startsWith(`${source}/`));
+
+    // Ce que `npm run assets` sait prendre : les racines du manifeste, plus les deux scripts
+    // qu'il enchaîne. La liste se lit dans package.json, elle n'est pas recopiée.
+    const assets = pkg.scripts.assets as string;
+    const racines = new Set(
+      (JSON.parse(readFileSync(join(__dirname, "modeles-manifest.json"), "utf8")) as {
+        modeles: { fichiers: { chemin: string }[] }[];
+      }).modeles.map((m) => `public/${m.fichiers[0].chemin.split("/")[0]}`),
+    );
+    const recuperable = (source: string) =>
+      racines.has(source)
+      || (source === "music collection" && assets.includes("download-music-collection"))
+      || (source === "bin/songsee" && assets.includes("ensure-songsee"));
+
+    // LA SEULE EXCEPTION, NOMMÉE AVEC SA RAISON : le SoundFont n'est pas au manifeste et ne
+    // voyage que dans `assets.zip`. Le README dit comment le prendre en attendant qu'il soit
+    // publié à part. Retirer cette ligne le jour où il le sera est le geste qui ferme la dette.
+    const HORS_ASSETS: Record<string, string> = {
+      "public/sf2": "le SoundFont n'est pas au manifeste : il ne vient que de assets.zip, "
+        + "et le README donne la commande qui l'en tire.",
+    };
+
+    const muets = (pkg.build.extraResources as { from: string }[])
+      .map((r) => r.from)
+      .filter((source) => !dansGit(source) && !recuperable(source) && !HORS_ASSETS[source]);
+    expect(muets, "embarqué, absent de git, et rien ne sait le récupérer").toEqual([]);
+  });
+
+  it("et chaque exception désigne une ressource qui existe encore", () => {
+    // Une exception périmée ferait croire à une dette là où il n'y en a plus.
+    const sources = (pkg.build.extraResources as { from: string }[]).map((r) => r.from);
+    expect(sources).toContain("public/sf2");
   });
 
   it("le manifeste de la collection est bien formé", () => {

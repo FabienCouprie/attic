@@ -7,15 +7,15 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1306 files, 228191 lines, of which 156627 are code.**
+**1306 files, 228426 lines, of which 156739 are code.**
 The table lists the 178 files of 200 code lines or more, heaviest first;
-the remaining 1128 account for 153681 lines.
+the remaining 1128 account for 153895 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1401 | 1755 | ! |
+| src/ui/atelier.css | 1407 | 1767 | ! |
 | src/ui/App.tsx | 1189 | 1584 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
@@ -43,9 +43,9 @@ the remaining 1128 account for 153681 lines.
 | src/plugins/modeles-physiques.test.ts | 368 | 550 |  |
 | src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |
 | src/plugins/magenta.ts | 367 | 467 |  |
+| src/plugins/analyse.ts | 363 | 442 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
 | src/audio/tone-synths.ts | 360 | 509 |  |
-| src/plugins/analyse.ts | 360 | 437 |  |
 | src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
 | src/plugins/pochette-svg.ts | 358 | 401 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
@@ -93,7 +93,6 @@ the remaining 1128 account for 153681 lines.
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
-| src/audio/analyse-genre.ts | 297 | 369 |  |
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
@@ -101,6 +100,7 @@ the remaining 1128 account for 153681 lines.
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
+| src/audio/analyse-genre.ts | 288 | 373 |  |
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |

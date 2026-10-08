@@ -50,6 +50,11 @@ const EXCEPTIONS: Record<string, string> = {
     "PAS UNE DETTE, et c'est écrit sur place : l'adresse amont sert à RECONNAÎTRE les requêtes de "
     + "la bibliothèque pour les détourner vers le miroir local. Le repli vers l'amont est délibéré, "
     + "l'application installée n'ayant pas le miroir.",
+  "favoris.ts":
+    "PAS UN MODÈLE. L'adresse désigne la PAGE d'un jeu de données que l'on propose en favori, et "
+    + "rien n'en est chargé : c'est un lien que l'utilisateur ouvre, au même titre que les autres "
+    + "entrées de cette liste. La règle porte sur les poids qu'un nœud va chercher, pas sur les "
+    + "adresses qu'on cite.",
 };
 
 /**
@@ -61,10 +66,19 @@ const EXCEPTIONS: Record<string, string> = {
  */
 const adressesTierces = (texte: string): string[] => texte.match(HEBERGEURS) ?? [];
 
-/** Les fichiers de composants et de workers, où un chargement de modèle peut se cacher. */
+/**
+ * Les fichiers où un chargement de modèle peut se cacher.
+ *
+ * `audio` EST DANS LA LISTE DEPUIS QU'IL A FALLU L'Y METTRE. Le balayage ne regardait que
+ * `plugins` et `workers`, et deux modèles se chargeaient chez un tiers depuis `audio` sans que
+ * rien ne le dise : le classeur de genre, en repli silencieux vers un dépôt disparu depuis le
+ * 2026-09-22, et Basic Pitch, par un `fetch` à chaque première transcription. La règle existait,
+ * son garde n'allait pas jusque-là — c'est la forme exacte du défaut que ce fichier est censé
+ * empêcher, et il en était la victime.
+ */
 function sources(): { nom: string; chemin: string }[] {
   const out: { nom: string; chemin: string }[] = [];
-  for (const dossier of ["plugins", "workers"]) {
+  for (const dossier of ["plugins", "workers", "audio"]) {
     const d = path.join(RACINE, dossier);
     if (!fs.existsSync(d)) continue;
     for (const nom of fs.readdirSync(d)) {

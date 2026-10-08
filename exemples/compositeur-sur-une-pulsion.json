@@ -1,0 +1,162 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": -720 },
+      "width": 1100,
+      "height": 600,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN COMPOSITEUR QUI PART D'UNE PULSION\n\nCinq épisodes, de gauche à droite. L'entrée est une pulsion, et rien d'autre ; chaque épisode pose une contrainte de plus.\n\nÉPISODE 1, LA PULSION. « Cercle pulsant » en mode Pulsation : un son sourd par frappe, et rien qui porte de hauteur. La graine décide de la phase de la respiration, donc de l'endroit où tombent les blocs de son et de silence.\n\nÉPISODE 2, LES ACCORDS SUR LA PULSION. Un second « Cercle pulsant » avec les MÊMES réglages et la MÊME graine, en mode Accords seuls : il engendre donc exactement la même suite de pulsations, et l'option Frappés pose un accord sur chaque pulsation audible. Changer la graine de l'un demande de changer celle de l'autre, faute de quoi les deux cessent de tomber ensemble.\n\nÉPISODE 3, L'ARBRE DES TEMPS. La pulsion passe en séquence puis dans « Quantifier », qui en rend l'arbre rythmique. Il ne sonne pas : il dit comment les frappes se rangent en mesures et en divisions, et c'est ce qui permet de choisir combien de notes poser par accord.\n\nÉPISODE 4, LA MÉLODIE. « Mélodie sur accords » lit les accords, nomme leur qualité, en déduit la gamme, et cherche une ligne qui satisfait les règles posées : note de l'accord sur l'appui, écart borné, saut compensé, sommet unique. La sortie Rapport nomme la règle qui a fait rebrousser chemin le plus souvent ; c'est par elle qu'on sait laquelle relâcher.\n\nÉPISODE 5, L'IMPRÉVISIBLE. « Déplacement de Cantor » porte les notes tombées dans les trous de la poussière vers ce qui en reste. Aucune note n'est perdue : le compte est conservé, et c'est la place qui change. Régler « Part déplacée » à zéro rend la mélodie telle quelle.\n\nLES NIVEAUX SE RÈGLENT SUR LES COMPOSANTS QUI PRODUISENT LES PISTES, le mélangeur ne faisant qu'additionner. L'amplificateur porte l'harmonie, qui sort naturellement plus bas que le reste.",
+        "nomEn": "A COMPOSER STARTING FROM A PULSE\n\nFive episodes, left to right. The input is a pulse and nothing else; each episode adds one constraint.\n\nEPISODE 1, THE PULSE. « Pulsing Circle » in Pulse mode: one dull tone per strike, and nothing carrying pitch. The seed sets the phase of the breathing, hence where the blocks of sound and silence fall.\n\nEPISODE 2, THE CHORDS ON THE PULSE. A second « Pulsing Circle » with the SAME settings and the SAME seed, in Chords only mode: it therefore generates exactly the same series of pulses, and the Struck option lays a chord on every audible pulse. Changing one seed requires changing the other, otherwise the two stop falling together.\n\nEPISODE 3, THE TREE OF TIME. The pulse goes to a sequence then into « Quantize », which returns its rhythmic tree. It does not sound: it states how the strikes fall into bars and divisions, which is what tells how many notes to lay per chord.\n\nEPISODE 4, THE MELODY. « Melody over Chords » reads the chords, names their quality, derives the scale, and searches for a line that satisfies the rules set: chord tone on the strong beat, bounded interval, answered leap, single peak. The Report output names the rule that most often forced a turn back; that is how one knows which to loosen.\n\nEPISODE 5, THE UNPREDICTABLE. « Cantor Displacement » carries the notes that fell in the holes of the dust into what remains of it. No note is lost: the count is kept, and it is the place that changes. Setting « Share displaced » to zero returns the melody unchanged.\n\nLEVELS ARE SET ON THE NODES THAT PRODUCE THE TRACKS, the mixer only adding them up. The amplifier carries the harmony, which comes out lower than the rest."
+      }
+    },
+    {
+      "id": "pulsion",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "data": {
+        "ficheId": "cercle-pulsant",
+        "parametres": {
+          "Mode": "pulsation",
+          "Durée": 24,
+          "Pulsation initiale": 1.2,
+          "Pulsation finale": 1.8,
+          "Teinte": 210,
+          "Parcours de teinte": 180,
+          "Saturation": 70,
+          "Clarté": 55,
+          "Respiration": 70,
+          "Irrégularité": 12,
+          "Errance": 30,
+          "Seuil de silence": 40,
+          "Graine": 42,
+          "Volume": 50
+        }
+      }
+    },
+    {
+      "id": "accords",
+      "type": "atelier",
+      "position": { "x": 40, "y": 760 },
+      "data": {
+        "ficheId": "cercle-pulsant",
+        "parametres": {
+          "Mode": "accords",
+          "Durée": 24,
+          "Pulsation initiale": 1.2,
+          "Pulsation finale": 1.8,
+          "Teinte": 210,
+          "Parcours de teinte": 180,
+          "Saturation": 70,
+          "Clarté": 55,
+          "Respiration": 70,
+          "Irrégularité": 12,
+          "Errance": 30,
+          "Seuil de silence": 40,
+          "Graine": 42,
+          "Accords": "frappes",
+          "Nuance des accords": 90,
+          "Volume": 100
+        }
+      }
+    },
+    {
+      "id": "seq-pulsion",
+      "type": "atelier",
+      "position": { "x": 700, "y": 40 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": {} }
+    },
+    {
+      "id": "arbre",
+      "type": "atelier",
+      "position": { "x": 1250, "y": 40 },
+      "data": { "ficheId": "quantifier-rythme", "parametres": {} }
+    },
+    {
+      "id": "txt-arbre",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 40 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} }
+    },
+    {
+      "id": "seq-accords",
+      "type": "atelier",
+      "position": { "x": 700, "y": 760 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": {} }
+    },
+    {
+      "id": "melodie",
+      "type": "atelier",
+      "position": { "x": 1250, "y": 760 },
+      "data": {
+        "ficheId": "melodie-sur-accords",
+        "parametres": {
+          "Notes par accord": 2,
+          "Note la plus grave": 67,
+          "Note la plus aiguë": 86,
+          "Écart maximal": 7,
+          "Saut compensé": 4,
+          "Même sens au plus": 4,
+          "Graine": 42
+        }
+      }
+    },
+    {
+      "id": "txt-melodie",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 1260 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} }
+    },
+    {
+      "id": "cantor",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 760 },
+      "data": {
+        "ficheId": "cantor-deplacement",
+        "parametres": {
+          "Profondeur": 2,
+          "Part déplacée": 70,
+          "Où poser": "proche",
+          "Graine": 42
+        }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2350, "y": 760 },
+      "data": { "ficheId": "rendu-sequence", "parametres": { "Volume": 25 } }
+    },
+    {
+      "id": "ampli",
+      "type": "atelier",
+      "position": { "x": 2350, "y": 1260 },
+      "data": { "ficheId": "amplificateur", "parametres": { "Gain": 6 } }
+    },
+    {
+      "id": "mix",
+      "type": "atelier",
+      "position": { "x": 2950, "y": 460 },
+      "data": { "ficheId": "melangeur", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-pulsion-seq", "source": "pulsion", "target": "seq-pulsion", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-seq-arbre", "source": "seq-pulsion", "target": "arbre", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-arbre-txt", "source": "arbre", "target": "txt-arbre", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-accords-seq", "source": "accords", "target": "seq-accords", "sourceHandle": "out:3", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-seq-melodie", "source": "seq-accords", "target": "melodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-melodie-cantor", "source": "melodie", "target": "cantor", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-melodie-txt", "source": "melodie", "target": "txt-melodie", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-cantor-ecoute", "source": "cantor", "target": "ecoute", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-accords-ampli", "source": "accords", "target": "ampli", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-pulsion-mix", "source": "pulsion", "target": "mix", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-ampli-mix", "source": "ampli", "target": "mix", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-ecoute-mix", "source": "ecoute", "target": "mix", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 40, "y": 780, "zoom": 0.3 }
+}

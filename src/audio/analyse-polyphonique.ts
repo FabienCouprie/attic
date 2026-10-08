@@ -5,6 +5,7 @@
 
 import type { NoteEvenement } from "./midi-sequence";
 import Meyda from "meyda";
+import { traduire } from "../i18n";
 
 // ── Basic Pitch (polyphonique) ────────────────────────────────────────────
 // Caractéristiques du modèle, mesurées directement sur le fichier ONNX (et non
@@ -29,7 +30,14 @@ const BP_HOP = BP_FENETRE / BP_TRAMES;   // ≈ 255 échantillons par trame
 const BP_TRAMES_RECOUV = 30;
 const BP_RECOUV = BP_TRAMES_RECOUV * BP_HOP;
 
-const URL_BASIC_PITCH = "https://huggingface.co/daserge/basic-pitch-onnx/resolve/main/nmp.onnx";
+// LE MODÈLE NE SE PREND PLUS CHEZ UN TIERS. Il était récupéré par un `fetch` vers HuggingFace à
+// chaque première transcription, de sorte que le nœud ne marchait qu'en ligne, que son poids
+// n'apparaissait dans aucun inventaire, et que l'adresse pouvait disparaître sans prévenir — ce
+// qui est précisément arrivé au classeur de genre. Il est désormais au manifeste, publié sur la
+// release `assets` comme les autres, et lu depuis le disque par l'appelant.
+//
+// LE GARDE QUI AURAIT DÛ L'ATTRAPER NE REGARDAIT PAS ICI : `plugins/provenance-modeles.test.ts`
+// ne balayait que `src/plugins` et `src/workers`, et ce fichier est dans `src/audio`.
 
 let sessionBasicPitch: unknown = null;
 
@@ -60,13 +68,14 @@ export async function transcrirePolyphonique(
   noteMin: number,
   noteMax: number,
   surProgres?: (pct: number) => void,
+  modeleBuffer?: ArrayBuffer | null,
 ): Promise<NoteEvenement[]> {
   const ort = await import("onnxruntime-web");
   if (!sessionBasicPitch) {
-    const rep = await fetch(URL_BASIC_PITCH);
-    if (!rep.ok) throw new Error(`HTTP ${rep.status} — modèle Basic Pitch introuvable`);
-    const donnees = await rep.arrayBuffer();
-    sessionBasicPitch = await ort.InferenceSession.create(new Uint8Array(donnees), { executionProviders: ["wasm"] });
+    // LE MODÈLE VIENT DU DISQUE, et l'appelant le lit : il ne se télécharge plus chez un tiers à
+    // chaque première transcription. Voir l'en-tête du fichier pour ce que ce `fetch` coûtait.
+    if (!modeleBuffer) throw new Error(traduire("msg.basic_pitch_modele_absent"));
+    sessionBasicPitch = await ort.InferenceSession.create(new Uint8Array(modeleBuffer), { executionProviders: ["wasm"] });
   }
   const session = sessionBasicPitch as import("onnxruntime-web").InferenceSession;
 

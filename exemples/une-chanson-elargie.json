@@ -1,0 +1,64 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -420 },
+      "width": 980,
+      "height": 330,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE CHANSON ÉLARGIE\n\nQuatre composants : on charge une chanson, on l'élargit, et on compare avant et après.\n\nCOMMENCER PAR CHARGER UN FICHIER sur « Entrée audio ». Un projet garde le NOM du fichier chargé, jamais le fichier : celui-ci reste sur le disque et se recharge à l'ouverture. Tant que rien n'est chargé, l'exécution s'arrête là.\n\nLES DEUX SORTIES AUDIO SE COMPARENT. « Avant » joue la chanson telle quelle, « Après » la joue élargie. Écouter l'une puis l'autre est la seule façon de juger un effet de largeur, dont le niveau ne bouge pas.\n\n« AMPLEUR » N'AJOUTE PAS DE RÉVERBÉRATION. Il pose des premières réflexions différentes pour chaque oreille, ce qui décorrèle les deux canaux sans monter le son. « Densité » donne le nombre de réflexions par seconde, « Fenêtre » le temps sur lequel elles se répartissent, « Pré-délai » le silence qui les précède, « Absorption » l'atténuation des aiguës, et « Mix » la part de traité.\n\nLA SORTIE « MESURES » DIT CE QUI A CHANGÉ : la sonie, la corrélation entre les deux canaux, et la somme mono. Sur une chanson dont les deux canaux sont identiques, la corrélation part de 1,000 et descend d'autant que l'effet élargit. La sonie, elle, doit rester à 1,000 : c'est ce qui distingue un élargissement d'une montée de niveau.\n\nSI LA SOMME MONO CHUTE, la largeur se paie sur les enceintes qui replient les deux canaux. Le relevé donne la valeur attendue à côté de la valeur obtenue, de sorte qu'un écart entre les deux se voit.",
+        "nomEn": "A SONG WIDENED\n\nFour nodes: load a song, widen it, and compare before and after.\n\nSTART BY LOADING A FILE on « Audio input ». A project keeps the NAME of the loaded file, never the file: that one stays on disk and is reloaded on opening. Until something is loaded, the run stops there.\n\nTHE TWO AUDIO OUTPUTS ARE FOR COMPARING. « Before » plays the song as it is, « After » plays it widened. Listening to one then the other is the only way to judge a width effect, whose level does not move.\n\n« SPACIOUSNESS » ADDS NO REVERBERATION. It lays down different early reflections for each ear, which decorrelates the two channels without raising the sound. « Density » gives the number of reflections per second, « Window » the time they spread over, « Pre-delay » the silence before them, « Absorption » the damping of the highs, and « Mix » the share of treated signal.\n\nTHE « MEASUREMENTS » OUTPUT STATES WHAT CHANGED: loudness, the correlation between the two channels, and the mono sum. On a song whose two channels are identical, correlation starts at 1.000 and falls as far as the effect widens. Loudness must stay at 1.000: that is what tells widening apart from a level rise.\n\nIF THE MONO SUM DROPS, the width is paid for on speakers that fold the two channels together. The report gives the expected value next to the obtained one, so a gap between them shows."
+      }
+    },
+    {
+      "id": "chanson",
+      "type": "atelier",
+      "position": { "x": 60, "y": 260 },
+      "data": { "ficheId": "entree-audio", "parametres": {} }
+    },
+    {
+      "id": "avant",
+      "type": "atelier",
+      "position": { "x": 640, "y": 40 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    },
+    {
+      "id": "large",
+      "type": "atelier",
+      "position": { "x": 640, "y": 400 },
+      "data": {
+        "ficheId": "ampleur",
+        "parametres": {
+          "Densité": 200,
+          "Fenêtre": 80,
+          "Pré-délai": 12,
+          "Absorption": 50,
+          "Mix": 100
+        }
+      }
+    },
+    {
+      "id": "apres",
+      "type": "atelier",
+      "position": { "x": 1250, "y": 300 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    },
+    {
+      "id": "mesures",
+      "type": "atelier",
+      "position": { "x": 1250, "y": 620 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-chanson-avant", "source": "chanson", "sourceHandle": "out:0", "target": "avant", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-chanson-large", "source": "chanson", "sourceHandle": "out:0", "target": "large", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-large-apres", "source": "large", "sourceHandle": "out:0", "target": "apres", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-large-mesures", "source": "large", "sourceHandle": "out:1", "target": "mesures", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 480, "zoom": 0.6 }
+}

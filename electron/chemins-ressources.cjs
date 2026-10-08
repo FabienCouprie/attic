@@ -54,11 +54,11 @@ function resoudreRessource(chemin, {
   // Les ressources livrées vivent sous `resources/`, c'est-à-dire dans « Program Files » : une
   // application installée ne peut pas y écrire sans droits d'administrateur. Les modèles
   // téléchargés à la demande vont donc dans le dossier de données de l'utilisateur, et c'est là
-  // qu'il faut chercher AVANT — sans quoi la version allégée ne trouverait jamais ce qu'elle vient
-  // de télécharger, et un modèle abîmé dans l'installation ne pourrait pas être réparé.
+  // qu'il faut chercher AVANT — sans quoi l'application ne trouverait jamais ce qu'elle vient de
+  // télécharger, ce qui est le cas de TOUS les modèles depuis que l'installeur n'en porte plus.
   //
-  // Pour la version complète, rien ne change : le dossier de l'utilisateur est vide, et le fichier
-  // est trouvé sous `resources/` comme avant.
+  // L'ordre reste utile pour le reste : la SoundFont, le kit de batterie et les autres ressources
+  // livrées sont absentes du dossier de l'utilisateur, et sont trouvées sous `resources/`.
   if (dossierUtilisateur) {
     const chezUtilisateur = path.join(dossierUtilisateur, chemin);
     if (existe(chezUtilisateur)) return chezUtilisateur;

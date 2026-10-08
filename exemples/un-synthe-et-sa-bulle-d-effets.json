@@ -1,0 +1,73 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -700 },
+      "width": 1280,
+      "height": 600,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN SYNTHÉ, ET SA BULLE D'EFFETS\n\nLa chaîne : le méta-composant « Synthétiseur soustractif », puis un écho ping-pong, un écho, un phaser dont la vitesse suit une courbe logistique, et un point d'écoute. Les trois effets sont repliés dans une bulle ; ouvrez-la pour les régler.\n\nDEUX FAÇONS DE REGROUPER, ET ELLES NE FONT PAS LA MÊME CHOSE.\n\nLA BULLE REPLIE, ELLE N'EXTRAIT PAS. Ses composants restent dans le graphe, à leur place, avec leurs identifiants et leurs arêtes ; elle les cache et se dessine devant eux. Rien n'est renommé, donc les résultats déjà calculés survivent au repli. Rien non plus n'est à définir hors du graphe : une bulle voyage dans le fichier de projet sans y ajouter une ligne, et elle ne sert que dans ce graphe-ci.\n\nPOUR EN FAIRE UNE : sélectionner au moins deux composants, puis « Clarifier » dans la barre d'outils. « Développer » remet ses composants sur le canevas. Un double-clic sur la bulle l'ouvre pour voir et régler ce qu'elle contient, sans la défaire.\n\nLE MÉTA-COMPOSANT EXTRAIT ET CATALOGUE. Il devient une entrée de la palette, réutilisable dans n'importe quel graphe, avec ses ports d'entrée et de sortie déclarés. À l'exécution, son contenu est déplié et chaque composant interne reçoit un identifiant préfixé du nœud qui le porte : les résultats déjà calculés ne se retrouvent donc plus, et le sous-graphe se recalcule.\n\nPOUR EN FAIRE UN : sélectionner au moins deux composants, puis « Grouper en outil ». « Dégrouper » le défait. Il porte un nom qu'on lui donne, et une description que son auteur écrit, la seule que le composant portera jamais.\n\nLEQUEL CHOISIR. La bulle pour ranger un graphe qu'on est en train d'écrire, autant de fois qu'on veut et sans rien payer. Le méta-composant pour un assemblage qu'on veut retrouver ailleurs, et qui mérite un nom.\n\n« SYNTHÉTISEUR SOUSTRACTIF » EST LIVRÉ AVEC L'APPLICATION. Il paraît dans la palette au premier lancement, sans qu'on ait à le fabriquer.\n\nLA COURBE EST « LOGISTIQUE » ET NON « CHAOS LOGISTIQUE ». Deux entrées de la liste portent ce nom et ne désignent pas la même chose : la première est la courbe en S, qui monte de zéro à un une seule fois sur la durée, et que « Centre » et « Pente » règlent ; la seconde est la suite qui porte le chaos, une succession de paliers. Ici la vitesse du phaser monte donc une fois, lentement, du grave vers l'aigu.",
+        "nomEn": "A SYNTH, AND ITS BUBBLE OF EFFECTS\n\nThe chain: the « Subtractive Synthesizer » meta-component, then a ping-pong echo, an echo, a phaser whose rate follows a logistic curve, and a listening point. The three effects are folded into a bubble; open it to set them.\n\nTWO WAYS OF GROUPING, AND THEY DO NOT DO THE SAME THING.\n\nTHE BUBBLE FOLDS, IT DOES NOT EXTRACT. Its nodes stay in the graph, in place, with their identifiers and their edges; it hides them and draws itself in front of them. Nothing is renamed, so results already computed survive the fold. Nothing has to be defined outside the graph either: a bubble travels in the project file without adding a line to it, and serves only in this graph.\n\nTO MAKE ONE: select at least two nodes, then « Clarify » in the toolbar. « Expand » puts its nodes back on the canvas. A double-click on the bubble opens it to see and set what it holds, without undoing it.\n\nTHE META-COMPONENT EXTRACTS AND CATALOGUES. It becomes an entry in the palette, reusable in any graph, with its declared input and output ports. At run time its content is unfolded and each inner node receives an identifier prefixed by the node carrying it: results already computed are therefore no longer found, and the sub-graph recomputes.\n\nTO MAKE ONE: select at least two nodes, then « Group into tool ». « Ungroup » undoes it. It carries a name one gives it, and a description its author writes, the only one the component will ever carry.\n\nWHICH TO CHOOSE. The bubble to tidy a graph one is writing, as often as one likes and at no cost. The meta-component for an assembly one wants to find again elsewhere, and which deserves a name.\n\n« SUBTRACTIVE SYNTHESIZER » SHIPS WITH THE APPLICATION. It appears in the palette at first launch, without having to be built.\n\nTHE CURVE IS « LOGISTIC » AND NOT « LOGISTIC CHAOS ». Two entries in the list carry that name and do not denote the same thing: the first is the S curve, rising from zero to one once over the duration, set by « Centre » and « Steepness »; the second is the sequence that carries chaos, a succession of plateaus. Here the phaser's rate therefore rises once, slowly, from low to high."
+      }
+    },
+    {
+      "id": "synth",
+      "type": "atelier",
+      "position": { "x": 60, "y": 300 },
+      "data": { "ficheId": "meta-synth-soustractif", "parametres": {} }
+    },
+    {
+      "id": "pingpong",
+      "type": "atelier",
+      "position": { "x": 640, "y": 120 },
+      "data": { "ficheId": "echo-ping-pong", "parametres": {}, "bulle": "bulle-effets" }
+    },
+    {
+      "id": "echo",
+      "type": "atelier",
+      "position": { "x": 640, "y": 460 },
+      "data": { "ficheId": "echo", "parametres": {}, "bulle": "bulle-effets" }
+    },
+    {
+      "id": "phase",
+      "type": "atelier",
+      "position": { "x": 640, "y": 800 },
+      "data": { "ficheId": "phaser", "parametres": {}, "bulle": "bulle-effets" }
+    },
+    {
+      "id": "bulle-effets",
+      "type": "atelier",
+      "position": { "x": 900, "y": 300 },
+      "width": 170,
+      "height": 110,
+      "data": { "ficheId": "bulle::bulle-effets", "parametres": {}, "bulleOuverte": false }
+    },
+    {
+      "id": "courbe",
+      "type": "atelier",
+      "position": { "x": 60, "y": 800 },
+      "data": {
+        "ficheId": "generateur-courbe",
+        "parametres": { "Forme": "sigmoide", "Durée": 8, "Centre": 50, "Pente": 10 }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 300 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    }
+  ],
+  "edges": [
+    { "id": "e-synth-pingpong", "source": "synth", "sourceHandle": "out:0", "target": "pingpong", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-pingpong-echo", "source": "pingpong", "sourceHandle": "out:0", "target": "echo", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-echo-phase", "source": "echo", "sourceHandle": "out:0", "target": "phase", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-courbe-phase", "source": "courbe", "sourceHandle": "out:0", "target": "phase", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-phase-ecoute", "source": "phase", "sourceHandle": "out:0", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 760, "zoom": 0.55 }
+}

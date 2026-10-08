@@ -58,6 +58,41 @@ export function sansAdresse(etat: EtatModeles | null, anglais = false): ModeleEt
     .map((m) => ({ ...m, nom: (anglais && m.nomEn) || m.nom }));
 }
 
+/** L'état d'une ligne du panneau, qui décide de sa marque et de ce qu'un clic y fait. */
+export type EtatLigne = "a-prendre" | "muet" | "present";
+
+export interface LigneModele extends ModeleEtat {
+  ligne: EtatLigne;
+}
+
+const RANG: Record<EtatLigne, number> = { "a-prendre": 0, muet: 1, present: 2 };
+
+/**
+ * TOUT L'INVENTAIRE, chaque modèle avec son état, et non plus seulement ce qui manque.
+ *
+ * CE QUE L'ANCIENNE LISTE NE DISAIT PAS. Elle ne montrait que les modèles absents et
+ * téléchargeables ; les présents n'apparaissaient nulle part. Sur une installation complète le
+ * panneau ne contenait donc qu'une phrase, et les vingt modèles n'étaient visibles d'aucun endroit
+ * de l'application : pour savoir si tel modèle était là, il fallait aller regarder un dossier.
+ * Un modèle présent mais abîmé n'avait pas davantage de ligne où le reprendre, de sorte que la
+ * seule issue restait de réinstaller l'application — ce que l'en-tête du bouton promettait
+ * pourtant d'éviter.
+ *
+ * L'ORDRE : d'abord ce qu'il y a à prendre, du plus lourd au plus léger, parce que c'est le poids
+ * qui décide si on le prend maintenant ; puis ce qu'on ne peut pas aller chercher ; puis les
+ * présents par ordre alphabétique, parce qu'on les parcourt pour trouver un nom.
+ */
+export function inventaireAffiche(etat: EtatModeles | null, anglais = false): LigneModele[] {
+  return (etat?.modeles ?? [])
+    .map((m) => ({
+      ...m,
+      nom: (anglais && m.nomEn) || m.nom,
+      ligne: (m.complet ? "present" : m.telechargeable ? "a-prendre" : "muet") as EtatLigne,
+    }))
+    .sort((a, b) => RANG[a.ligne] - RANG[b.ligne]
+      || (a.ligne === "a-prendre" ? b.octets - a.octets : a.nom.localeCompare(b.nom, "fr")));
+}
+
 /** Un message de progression du processus principal. */
 export interface ProgressionModeles {
   phase: "telechargement" | "extraction" | "fini" | "erreur" | "annule";
@@ -141,7 +176,11 @@ export function apparenceModeles(
       return {
         variante: "manquants", badge: "?",
         cle: "modeles.sansAdresse", vars: [etat.sansAdresse.length],
-        actionnable: false, interrompt: false,
+        // UN CLIC OUVRE LA LISTE, il ne lance rien : c'est pour cela qu'il reste permis. Le refuser
+        // — ce que ce cas faisait, pour ne pas promettre un téléchargement impossible — cachait
+        // tout l'inventaire dès qu'UN modèle manquait d'adresse, c'est-à-dire exactement quand on
+        // veut voir lequel. La ligne du modèle sans source est inerte, et elle dit pourquoi.
+        actionnable: true, interrompt: false,
       };
     }
     return {

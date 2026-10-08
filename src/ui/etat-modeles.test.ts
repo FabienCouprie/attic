@@ -5,7 +5,7 @@
 // a échoué, on ne sait pas encore — ne se voient que chez quelqu'un qui vient d'installer la
 // version allégée, c'est-à-dire là où l'on ne peut plus corriger.
 import { describe, expect, it } from "vitest";
-import { apparenceModeles, aPrendre, sansAdresse, formaterOctets, type EtatModeles } from "./etat-modeles";
+import { apparenceModeles, aPrendre, sansAdresse, inventaireAffiche, formaterOctets, type EtatModeles } from "./etat-modeles";
 
 const etat = (o: Partial<Parameters<typeof apparenceModeles>[0] & object> = {}) => ({
   complets: 7, total: 7, octetsAPrendre: 0, manquants: [], sansAdresse: [], ...o,
@@ -53,8 +53,10 @@ describe("quand il en manque", () => {
     expect(a.badge).toBe("?");
     expect(a.cle).toBe("modeles.sansAdresse");
     expect(a.vars).toEqual([2]);
-    // Rien à lancer : le bouton ne doit pas promettre un téléchargement impossible.
-    expect(a.actionnable).toBe(false);
+    // ET LE CLIC RESTE PERMIS. Ce cas exigeait l'inverse, pour ne pas promettre un téléchargement
+    // impossible — mais le clic n'en lance aucun : il ouvre la liste. Le refuser rendait l'icône
+    // morte dès qu'UN modèle manquait d'adresse, cachant les dix-neuf autres.
+    expect(a.actionnable).toBe(true);
   });
 });
 
@@ -162,5 +164,55 @@ describe("aPrendre", () => {
   it("sansAdresse ne retient que ce qui manque ET n'a pas de source", () => {
     const l = sansAdresse(etat([m("muet", 10, { telechargeable: false }), m("a", 10), m("la", 10, { complet: true, telechargeable: false })]));
     expect(l.map((x) => x.id)).toEqual(["muet"]);
+  });
+});
+
+// TOUT L'INVENTAIRE, ET PAS SEULEMENT CE QUI MANQUE. Ce que `aPrendre` écarte — les présents —
+// n'apparaissait nulle part dans l'application : sur une installation complète le panneau ne
+// contenait qu'une phrase, et « ce modèle est-il là ? » n'avait pas de réponse à l'écran.
+describe("inventaireAffiche", () => {
+  const etat = (modeles: unknown[]): EtatModeles => ({
+    complets: 0, total: modeles.length, octetsAPrendre: 0, manquants: [], sansAdresse: [],
+    modeles: modeles as EtatModeles["modeles"],
+  });
+  const m = (id: string, octets: number, o: Record<string, unknown> = {}) =>
+    ({ id, nom: id, octets, complet: false, partiel: false, telechargeable: true, ...o });
+
+  it("NE PERD AUCUN MODÈLE : autant de lignes que l'inventaire en compte", () => {
+    const l = inventaireAffiche(etat([
+      m("absent", 10), m("la", 20, { complet: true }), m("muet", 30, { telechargeable: false }),
+    ]));
+    expect(l).toHaveLength(3);
+    expect(l.map((x) => x.id).sort()).toEqual(["absent", "la", "muet"]);
+  });
+
+  it("étiquette chaque ligne de son état, qui décide de sa marque et de son clic", () => {
+    const l = inventaireAffiche(etat([
+      m("absent", 10), m("la", 20, { complet: true }), m("muet", 30, { telechargeable: false }),
+      // Un modèle présent SANS adresse reste présent : il n'y a rien à y aller chercher.
+      m("la-sans-url", 40, { complet: true, telechargeable: false }),
+    ]));
+    expect(Object.fromEntries(l.map((x) => [x.id, x.ligne]))).toEqual({
+      absent: "a-prendre", la: "present", muet: "muet", "la-sans-url": "present",
+    });
+  });
+
+  it("met d'abord ce qu'il y a à prendre, du plus lourd au plus léger", () => {
+    const l = inventaireAffiche(etat([
+      m("zeta", 5, { complet: true }), m("petit", 10), m("gros", 700_000_000),
+      m("muet", 50, { telechargeable: false }), m("alpha", 5, { complet: true }),
+    ]));
+    // À prendre par poids, puis le sans-adresse, puis les présents par ordre alphabétique :
+    // c'est dans la liste des présents qu'on cherche un nom, et non un poids.
+    expect(l.map((x) => x.id)).toEqual(["gros", "petit", "muet", "alpha", "zeta"]);
+  });
+
+  it("prend le nom anglais quand l'interface est en anglais, présents compris", () => {
+    const l = inventaireAffiche(etat([m("a", 10, { complet: true, nom: "Séparation", nomEn: "Separation" })]), true);
+    expect(l[0].nom).toBe("Separation");
+  });
+
+  it("sans inventaire, aucune ligne plutôt qu'une liste inventée", () => {
+    expect(inventaireAffiche(null)).toEqual([]);
   });
 });

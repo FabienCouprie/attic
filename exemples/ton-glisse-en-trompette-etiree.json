@@ -1,0 +1,67 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -460 },
+      "width": 1120,
+      "height": 370,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN TON QUI GLISSE, DEVIENT TROMPETTE, ET S'ÉTIRE\n\nUne chaîne de quatre traitements sur un son qui tient en un chiffre : 220 hertz.\n\n1. « Générateur de fréquence » rend une sinusoïde de 220 Hz sur quatre secondes.\n\n2. « Glissando de Risset » la fait monter sans fin, en mode « Hauteur seule », une octave par cycle de quatre secondes sur six octaves empilées.\n\n3. « DDSP Tone Transfer » lit la hauteur et l'intensité du signal, puis les rejoue avec un modèle de trompette. Le modèle se télécharge au premier usage, ce qui rend la première exécution plus longue que les suivantes ; il rend du 48 000 Hz en un seul canal.\n\n4. « Paulstretch » étire le résultat quatre fois : les quatre secondes en font seize. L'étirement passe par une randomisation des phases, qui garde le spectre et défait le temps.\n\nDEUX CHOSES À SAVOIR SUR CE QUE CETTE CHAÎNE PRODUIT.\n\nLE TRANSFERT DE TIMBRE SORT TRÈS BAS, une cinquantaine de décibels sous son entrée, parce que le modèle rend une intensité qu'il a estimée et non le niveau reçu. Paulstretch ramène l'ensemble sous son plafond, si bien que le résultat s'écoute sans rien régler ; c'est lui qui porte la différence de niveau.\n\nLA HAUTEUR DE LA TROMPETTE SAUTE D'UNE OCTAVE À L'AUTRE, et c'est la matière qui le veut. Un glissando de Risset empile six octaves pour que l'oreille ne sache plus laquelle elle suit : c'est toute l'illusion. Un suivi de hauteur, lui, doit choisir, et il choisit différemment d'un instant à l'autre. Donner au transfert un son d'octave franche donnerait une ligne de trompette continue.",
+        "nomEn": "A TONE THAT GLIDES, BECOMES A TRUMPET, AND STRETCHES\n\nA chain of four treatments on a sound that fits in one number: 220 hertz.\n\n1. « Frequency Generator » returns a 220 Hz sine over four seconds.\n\n2. « Risset Glissando » makes it rise endlessly, in « Pitch only » mode, one octave per four-second cycle over six stacked octaves.\n\n3. « DDSP Tone Transfer » reads the pitch and intensity of the signal, then replays them with a trumpet model. The model downloads on first use, which makes the first run longer than the following ones; it returns 48,000 Hz in a single channel.\n\n4. « Paulstretch » stretches the result four times: four seconds become sixteen. The stretch works by randomising phases, which keeps the spectrum and undoes time.\n\nTWO THINGS TO KNOW ABOUT WHAT THIS CHAIN PRODUCES.\n\nTHE TONE TRANSFER COMES OUT VERY LOW, some fifty decibels under its input, because the model returns an intensity it estimated and not the level it received. Paulstretch brings the whole back under its ceiling, so the result plays without any adjustment; it is the one that carries the level difference.\n\nTHE TRUMPET'S PITCH JUMPS FROM ONE OCTAVE TO ANOTHER, and the material wants it so. A Risset glissando stacks six octaves so that the ear no longer knows which one it follows: that is the whole illusion. A pitch tracker, however, must choose, and it chooses differently from one instant to the next. Giving the transfer a sound of plain octave would give a continuous trumpet line."
+      }
+    },
+    {
+      "id": "ton",
+      "type": "atelier",
+      "position": { "x": 60, "y": 260 },
+      "data": {
+        "ficheId": "generateur-frequence",
+        "parametres": { "Saisie": "frequency", "Fréquence": 220, "Forme": "Sinus", "Durée": 4, "Volume": 80 }
+      }
+    },
+    {
+      "id": "gliss",
+      "type": "atelier",
+      "position": { "x": 640, "y": 260 },
+      "data": {
+        "ficheId": "glissando-risset",
+        "parametres": { "Sens": "ascendant", "Mode": "hauteur", "Durée": 4, "Cycle": 4 }
+      }
+    },
+    {
+      "id": "ddsp",
+      "type": "atelier",
+      "position": { "x": 1220, "y": 260 },
+      "data": {
+        "ficheId": "ddsp-tone-transfer",
+        "parametres": { "Instrument": "Trompette" }
+      }
+    },
+    {
+      "id": "stretch",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 260 },
+      "data": {
+        "ficheId": "paulstretch",
+        "parametres": { "Stretch": 4, "Fenêtre": 0.25, "Graine": 42 }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2380, "y": 260 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    }
+  ],
+  "edges": [
+    { "id": "e-ton-gliss", "source": "ton", "sourceHandle": "out:0", "target": "gliss", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-gliss-ddsp", "source": "gliss", "sourceHandle": "out:0", "target": "ddsp", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-ddsp-stretch", "source": "ddsp", "sourceHandle": "out:0", "target": "stretch", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-stretch-ecoute", "source": "stretch", "sourceHandle": "out:0", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 520, "zoom": 0.6 }
+}

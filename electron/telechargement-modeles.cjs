@@ -2,9 +2,9 @@
 
 // electron/telechargement-modeles.cjs — Les modèles ONNX, téléchargés à la demande.
 //
-// POURQUOI CE MODULE. L'installeur allégé ne contient aucun modèle : 1,5 Go de moins, et ce qui
-// manque se récupère depuis l'application, sur demande — pas au premier usage d'un nœud, où
-// l'attente arriverait au plus mauvais moment, mais quand l'utilisateur le décide.
+// POURQUOI CE MODULE. L'installeur ne contient aucun modèle, et c'est le seul qu'on publie depuis
+// le 2026-10-08 : tout se récupère depuis l'application, sur demande — pas au premier usage d'un
+// nœud, où l'attente arriverait au plus mauvais moment, mais quand l'utilisateur le décide.
 //
 // CETTE RÈGLE A UNE EXCEPTION DEPUIS LE 25 SEPTEMBRE 2026, à la demande de Fabien : un composant
 // qui vient d'être lancé et dont le paquet manque le prend lui-même, au lieu de renvoyer vers le

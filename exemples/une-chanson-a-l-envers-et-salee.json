@@ -1,0 +1,68 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -540 },
+      "width": 1180,
+      "height": 450,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE CHANSON À L'ENVERS, HACHÉE, ET SALÉE\n\nTrois traitements sur une chanson, dans cet ordre.\n\nCOMMENCER PAR CHARGER UNE PISTE sur « Entrée audio ». Le dossier « music collection » est livré avec l'application et en contient dix-huit. Un projet garde le NOM du fichier chargé, jamais le fichier : celui-ci reste sur le disque et se recharge à l'ouverture, si bien que l'exécution s'arrête sur « Aucun fichier chargé » tant que rien n'est posé.\n\n1. « Lecture inversée » lit la piste de la fin vers le début. À ne pas confondre avec l'inversion de polarité, qui change le signe des échantillons sans toucher à l'ordre du temps.\n\n2. « Découpe aléatoire » coupe la piste en soixante-quatre parts égales, ce qui est le maximum du réglage, et les rejoue dans un ordre tiré au sort. Un fondu enchaîné de cinq millisecondes masque les raccords. La graine est fixée, sans quoi le découpage changerait à chaque exécution. Sur une piste très courte, soixante-quatre parts en font de plus brèves que le fondu, qui ronge alors la matière : le réglage se baisse à mesure que la piste raccourcit.\n\n3. « Assaisonnement sonore » déplace le son vers un profil de goût, ici le salé seul : sa part est à cent, les trois autres à zéro, ce qui vise exactement la région du salé. La dose est à soixante pour cent. Les quatre parts se pèsent les unes contre les autres, de sorte qu'un mélange se vise en en levant plusieurs.\n\nCE QUE LA SORTIE « RAPPORT » DIT, ET QU'IL FAUT LIRE.\n\nLE GOÛT SE MESURE AVANT ET APRÈS, en part du total : sur une piste d'essai, le salé passe de sept à neuf pour cent. Le déplacement est modeste parce qu'un assaisonnement n'impose pas un goût, il pousse dans sa direction ; la dose règle la force de la poussée.\n\nLE RAPPORT DONNE AUSSI LE DÉTAIL DU GESTE : la transposition, le facteur de vitesse, la porte, le désaccord, la coupure et le gain. C'est là qu'on voit ce que le goût a coûté.\n\nLA PIÈCE RACCOURCIT, et c'est une conséquence du geste et non un défaut : le salé passe par une accélération, mesurée à 1,20 fois sur la piste d'essai, si bien que deux minutes trente en font deux minutes cinq. Une chaîne qui doit garder sa durée demande donc un étirement en aval.\n\nLES CINQ DIMENSIONS sont données avant et après : registre, articulation, vitesse, consonance, intensité. Elles disent dans quelle direction le son a bougé, et pas seulement de combien.",
+        "nomEn": "A SONG BACKWARDS, DICED, AND SALTED\n\nThree treatments on a song, in this order.\n\nSTART BY LOADING A TRACK on « Audio input ». The « music collection » folder ships with the application and holds eighteen of them. A project keeps the NAME of the loaded file, never the file: that one stays on disk and is reloaded on opening, so the run stops on « No file loaded » until something is placed.\n\n1. « Reverse Playback » plays the track from end to start. Not to be confused with polarity inversion, which flips the sign of the samples without touching the order of time.\n\n2. « Random Slice » cuts the track into sixty-four equal parts, which is the setting's maximum, and replays them in a drawn order. A five-millisecond crossfade hides the joins. The seed is fixed, without which the slicing would change at every run. On a very short track, sixty-four parts are briefer than the crossfade, which then eats into the material: the setting comes down as the track gets shorter.\n\n3. « Sonic Seasoning » moves the sound towards a taste profile, here salt alone: its share is at one hundred, the three others at zero, which aims exactly at the salty region. The dose is sixty per cent. The four shares weigh against each other, so a mixture is aimed at by raising several of them.\n\nWHAT THE « REPORT » OUTPUT STATES, AND WHICH SHOULD BE READ.\n\nTHE TASTE IS MEASURED BEFORE AND AFTER, as a share of the total: on a test track, salt goes from seven to nine per cent. The move is modest because a seasoning does not impose a taste, it pushes in its direction; the dose sets the strength of the push.\n\nTHE REPORT ALSO GIVES THE DETAIL OF THE GESTURE: transposition, speed factor, gate, detune, cutoff and gain. That is where one sees what the taste cost.\n\nTHE PIECE GETS SHORTER, and that is a consequence of the gesture and not a fault: salt goes through an acceleration, measured at 1.20 times on the test track, so two and a half minutes become two minutes five. A chain that must keep its length therefore calls for a stretch downstream.\n\nTHE FIVE DIMENSIONS are given before and after: register, articulation, speed, consonance, intensity. They state in which direction the sound moved, and not only by how much."
+      }
+    },
+    {
+      "id": "chanson",
+      "type": "atelier",
+      "position": { "x": 60, "y": 260 },
+      "data": { "ficheId": "entree-audio", "parametres": {} }
+    },
+    {
+      "id": "envers",
+      "type": "atelier",
+      "position": { "x": 640, "y": 260 },
+      "data": { "ficheId": "inverseur-audio", "parametres": {} }
+    },
+    {
+      "id": "decoupe",
+      "type": "atelier",
+      "position": { "x": 1220, "y": 260 },
+      "data": {
+        "ficheId": "decoupe-aleatoire",
+        "parametres": { "Parts": 64, "Crossfade": 5, "Mode": "Random", "Graine": 4242 }
+      }
+    },
+    {
+      "id": "sel",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 260 },
+      "data": {
+        "ficheId": "assaisonnement-sonore",
+        "parametres": { "Sucré": 0, "Acide": 0, "Amer": 0, "Salé": 100, "Dose": 60 }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2380, "y": 260 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    },
+    {
+      "id": "rapport",
+      "type": "atelier",
+      "position": { "x": 2380, "y": 580 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-chanson-envers", "source": "chanson", "sourceHandle": "out:0", "target": "envers", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-envers-decoupe", "source": "envers", "sourceHandle": "out:0", "target": "decoupe", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-decoupe-sel", "source": "decoupe", "sourceHandle": "out:0", "target": "sel", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-sel-ecoute", "source": "sel", "sourceHandle": "out:0", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-sel-rapport", "source": "sel", "sourceHandle": "out:1", "target": "rapport", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 600, "zoom": 0.6 }
+}

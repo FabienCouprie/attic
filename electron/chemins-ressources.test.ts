@@ -87,8 +87,9 @@ describe("développement", () => {
 describe("le dossier de l'utilisateur, où vont les modèles téléchargés", () => {
   // POURQUOI IL PASSE AVANT. `resources/` est dans « Program Files » : une application installée
   // n'y écrit pas sans droits d'administrateur. Les modèles téléchargés à la demande vont donc dans
-  // le dossier de données de l'utilisateur, et c'est là qu'il faut chercher d'abord — sinon la
-  // version allégée ne trouverait jamais ce qu'elle vient de télécharger.
+  // le dossier de données de l'utilisateur, et c'est là qu'il faut chercher d'abord — sinon
+  // l'application ne trouverait jamais ce qu'elle vient de télécharger, c'est-à-dire plus aucun
+  // modèle depuis que l'installeur n'en porte plus.
   const UTILISATEUR = join("C:", "Users", "x", "AppData", "Roaming", "Attic");
   const avecUtilisateur = (existe: (c: string) => boolean) =>
     ({ empaquete: true, racineRessources: RESSOURCES, racineProjet: PROJET, dossierUtilisateur: UTILISATEUR, existe });
