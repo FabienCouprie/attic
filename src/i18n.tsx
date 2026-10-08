@@ -100,6 +100,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "gout.mesure": { fr: "Mesuré sur la musique", en: "Measured on the music" },
   "gout.aucune": { fr: "Aucun goût donné.", en: "No taste given." },
   "dictee.ecoute": { fr: "J’écoute…", en: "Listening..." },
+  "dictee.demarrage": { fr: "Démarrage de l’écoute…", en: "Starting to listen..." },
   "dictee.erreur": { fr: "Dictée impossible :", en: "Dictation failed:" },
   "dictee.referenceAbsente": { fr: "Rien n’est posé : le canevas ne porte aucun", en: "Nothing placed: the canvas holds no" },
   "barre.dossier": { fr: "Choisir le dossier de travail", en: "Choose the working folder" },

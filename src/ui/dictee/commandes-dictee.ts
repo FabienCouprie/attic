@@ -46,6 +46,17 @@ export type Commande =
   | { quoi: "relier"; de: string; vers: string }
   | { quoi: "annuler" }
   | { quoi: "terminer" }
+  /**
+   * TROIS GESTES QUI NE TOUCHENT PAS AU GRAPHE, et qui montrent que la dictée n'est pas liée aux
+   * nœuds. « annuler » et « terminer » le montraient déjà ; ceux-là commandent la séance.
+   *
+   * « arreterExecution » N'EST PAS « terminer », et la confusion coûterait cher : le premier
+   * arrête le calcul en cours, le second ferme l'écoute. Leurs mots sont donc disjoints, et
+   * « stop » reste à « terminer », où il était.
+   */
+  | { quoi: "lancer" }
+  | { quoi: "arreterExecution" }
+  | { quoi: "recentrer" }
   /** Un passage que le moteur n'a pas compris, gardé pour qu'on puisse le dire. */
   | { quoi: "inconnu"; mot: string };
 
@@ -63,6 +74,16 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallèle", "parallele"],
     annuler: ["annuler", "annule", "retour"],
     terminer: ["terminé", "termine", "fin", "stop"],
+    // LES MOTS DE LA SÉANCE SONT DES VERBES COURANTS, et c'est ce qui les sépare des noms de
+    // composants : relevé sur le modèle français, les quatorze candidats essayés sont tous au
+    // lexique, là où cent quarante-cinq noms du catalogue n'y sont pas.
+    lancer: ["lance", "lancer", "exécute", "exécuter"],
+    // « ARRÊTER » N'EST PAS « STOP ». Le premier arrête le calcul, le second ferme l'écoute, et
+    // les deux listes ne se touchent pas : un mot commun aurait rendu l'un des deux inatteignable.
+    arreterExecution: ["arrête", "arrêter", "halte"],
+    // « CENTRE » SEUL N'EST PAS RETENU : un composant du catalogue le porte dans son nom, et le
+    // mot de commande le disputerait à un nom qu'on a le droit de dicter.
+    recentrer: ["recentre", "recentrer"],
     apres: ["après", "apres"],
     avant: ["avant"],
   },
@@ -72,6 +93,9 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallel"],
     annuler: ["undo", "cancel", "back"],
     terminer: ["done", "finished", "stop"],
+    lancer: ["run", "execute"],
+    arreterExecution: ["halt", "abort"],
+    recentrer: ["recenter", "refit"],
     apres: ["after"],
     avant: ["before"],
   },
@@ -310,6 +334,9 @@ export function interpreterDictee(
     if (j.geste === "parallele") { parallele = true; continue; }
     if (j.geste === "annuler") { out.push({ quoi: "annuler" }); continue; }
     if (j.geste === "terminer") { out.push({ quoi: "terminer" }); continue; }
+    if (j.geste === "lancer") { out.push({ quoi: "lancer" }); continue; }
+    if (j.geste === "arreterExecution") { out.push({ quoi: "arreterExecution" }); continue; }
+    if (j.geste === "recentrer") { out.push({ quoi: "recentrer" }); continue; }
     if (j.geste === "relier") {
       const suite = jetons.slice(i + 1).filter((x) => x.sorte === "composant");
       if (suite.length >= 2) {

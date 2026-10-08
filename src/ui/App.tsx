@@ -1284,9 +1284,18 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     };
 
     let avis: string | undefined;
+    // LES TROIS GESTES DE SÉANCE SONT RETENUS, NON FAITS SUR-LE-CHAMP : « pose un compresseur et
+    // lance » doit lancer un graphe qui PORTE le compresseur, et celui-ci n'y est qu'une fois
+    // versé. Les faire dans la boucle les ferait porter sur le graphe d'avant.
+    let aLancer = false;
+    let aArreter = false;
+    let aRecentrer = false;
     for (const c of commandes) {
       if (c.quoi === "poser") avis = poser(c.ficheId, c.parallele, c.position) ?? avis;
       else if (c.quoi === "relier") relier(c.de, c.vers);
+      else if (c.quoi === "lancer") aLancer = true;
+      else if (c.quoi === "arreterExecution") aArreter = true;
+      else if (c.quoi === "recentrer") aRecentrer = true;
       else if (c.quoi === "annuler") {
         // Ce qui est en attente part d'abord : annuler doit défaire l'état visible, pas un autre.
         verser();
@@ -1297,8 +1306,20 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     }
     verser();
     dernierDicteRef.current = dernier;
+
+    // L'ARRÊT PASSE DEVANT : si les deux sont dits, c'est le dernier état voulu qui compte, et
+    // relancer après avoir arrêté est ce que la phrase demande dans cet ordre.
+    if (aArreter) arreter();
+    if (aLancer) {
+      // LE LANCEMENT ATTEND LE RENDU. Les nœuds viennent d'être posés par un `setNodes`, et le
+      // moteur lit le graphe rendu : lancer dans le même tour exécuterait celui d'avant.
+      setTimeout(() => { void lancer().then(() => rfInstance?.fitView?.({ duration: 200, padding: 0.2 })); }, 80);
+    } else if (aRecentrer) {
+      rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
+    }
     return avis;
-  }, [sel, lang, trouverDef, callbacksNoeud, pushHistorique, setNodes, setEdges, undo]);
+  }, [sel, lang, trouverDef, callbacksNoeud, pushHistorique, setNodes, setEdges, undo,
+    lancer, arreter, rfInstance]);
 
   const dictee = useDictee(lang === "en" ? "en" : "fr", appliquerDictee);
 

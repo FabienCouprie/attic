@@ -15,10 +15,27 @@ describe("le vocabulaire tiré du catalogue", () => {
     // et le moteur recompose alors ce qu'il peut. Relevé sur une phrase dite, la liste accentuée
     // rend le texte exact, la liste sans accents rend « reverb rotation » pour « réverbération ».
     const v = await vocabulaireDeDictee();
-    expect(v.length).toBeGreaterThan(400);
+    // LE SEUIL EST BAS PARCE QUE LA LISTE EST FILTRÉE : les noms que le modèle ne sait pas
+    // prononcer n'y entrent plus, et ils sont nombreux. Ce qui compte ici est qu'elle porte
+    // bien le catalogue et non une poignée de noms.
+    expect(v.length).toBeGreaterThan(250);
     expect(v).toContain("réverbération");
     expect(v).toContain("entrée audio");
     expect(v.every((m) => m === m.toLowerCase()), "tout en minuscules").toBe(true);
+  });
+
+  it("ET CE QUE LE MOTEUR NE SAIT PAS PRONONCER N'Y EST PAS, relevé par Fabien", async () => {
+    // « La réverbération à convolution ne doit pas être dans le vocabulaire, elle ne ressort pas
+    // à l'oral. » Le moteur le dit lui-même à la construction de la grammaire : « convolution »
+    // n'est pas dans le lexique du modèle français, et le mot est JETÉ. La phrase n'est pas
+    // retirée pour autant, elle reste amputée : « réverbération à » concurrence alors
+    // « réverbération », qui est un composant bien réel.
+    const v = await vocabulaireDeDictee();
+    expect(v).not.toContain("réverbération à convolution");
+    expect(v.filter((m) => m.split(" ").includes("convolution"))).toEqual([]);
+    // ET LES DEUX CÔTÉS DE LA RÈGLE : ce qui se prononce reste, et c'est la majorité.
+    expect(v).toContain("compresseur");
+    expect(v).toContain("sortie audio");
   });
 
   it("donne les noms anglais quand on les demande", async () => {
