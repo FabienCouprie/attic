@@ -80,7 +80,7 @@ npm run verify:resources
 
 `npm run assets` is what closes that gap. It reads `scripts/modeles-manifest.json`, downloads only what is missing or the wrong size, checks every SHA-256 before putting a file in place, and unpacks each archive under the root its manifest entry declares. Run it again at any time: it takes nothing it already has.
 
-**One thing it cannot fetch: the SoundFont** (`public/sf2`, 141.5 MB). It is not in the manifest and travels only inside `assets.zip`. Until it is published on its own, get it with:
+**One thing it cannot fetch: the SoundFont** (`public/sf2`, 141.5 MB). It is not in the manifest, and it is not meant to be: unlike the models, **the SoundFont stays bundled in the installer** — decided on 2026-10-08 — because it is what every MIDI instrument in the catalogue sounds through, and an app that opens silent has nothing to show. From a checkout it travels only inside `assets.zip`, so until that archive is split, get it with:
 
 ```bash
 gh release download assets -p assets.zip --dir . && 7z x assets.zip -y
@@ -183,7 +183,9 @@ electron/
 
 Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workflows/release.yml`), which builds and publishes the Windows installer.
 
-The SoundFont (`public/sf2`, 141.5 MB) is **not stored in Git**. It travels in `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release, which the workflow downloads and extracts before building. The archive still holds the ONNX models too, but the installer no longer takes them: that step now fetches several gigabytes to obtain 141 MB. Publishing `sf2.zip` on its own would end that, and is a publishing decision that has not been made.
+**The SoundFont stays in the installer**, and the move that emptied it of models does not touch it — decided on 2026-10-08. It is not a model one chooses to fetch: it is what every MIDI instrument in the catalogue sounds through, so an installer without it would open silent.
+
+What it does share with the models is that it is **not stored in Git**. It travels in `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release, which the workflow downloads and extracts before building — **2,060,571,648 bytes fetched to obtain 141.5 MB**, the archive still holding the ONNX models the installer no longer takes. Publishing `sf2.zip` on its own would end that **without changing what ships**; the two questions are separate, and that one has not been decided.
 
 If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release. **Nothing checks this**: the workflow extracts whatever `assets.zip` currently holds, so a forgotten upload silently ships an installer with stale models — no warning, no build failure.
 

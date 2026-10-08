@@ -52,10 +52,17 @@ jobs:
 
       # L'installeur ne porte plus aucun modèle : `public/oonx` a quitté `extraResources` le
       # 2026-10-08, et les vingt modèles du manifeste se prennent depuis l'application. Cette
-      # étape ne sert donc plus qu'au SOUNDFONT, `public/sf2`, qui reste embarqué et n'est pas
-      # dans git. Elle rapatrie encore l'archive entière pour l'obtenir : publier `sf2.zip` à
-      # part la ferait tomber de plusieurs giga-octets à cent quarante, et c'est une décision de
-      # publication qui n'a pas été prise.
+      # étape ne sert donc plus qu'au SOUNDFONT, `public/sf2`, et il N'EST PAS CONCERNÉ par ce
+      # mouvement : décidé par Fabien le 2026-10-08, le SoundFont RESTE EMBARQUÉ dans
+      # l'installeur. Ce n'est pas un modèle qu'on choisit de prendre ou non — c'est ce avec quoi
+      # tout instrument MIDI du catalogue sonne, et une application qui s'ouvre muette n'a rien
+      # à offrir à qui l'essaie.
+      #
+      # CE QUI RESTE À PAYER, ET QUI EST D'UN AUTRE ORDRE : il n'est pas dans git et ne voyage
+      # que dans `assets.zip`, soit 2 060 571 648 octets rapatriés ici pour en extraire 141,5 Mo.
+      # Publier `sf2.zip` à part ferait tomber ce téléchargement à cent quarante méga-octets SANS
+      # rien changer à ce qui part dans l'installeur, les deux questions étant distinctes. Cette
+      # publication-là n'a pas été décidée.
       - name: Download the bundled SoundFont
         run: |
           gh release download assets -p assets.zip --dir .
