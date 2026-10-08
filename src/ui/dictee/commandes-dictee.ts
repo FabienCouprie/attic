@@ -27,9 +27,21 @@ export interface NomDicte {
   nom: string;
 }
 
+/**
+ * Où poser, quand la phrase le dit par rapport à un composant DÉJÀ sur le canevas.
+ *
+ * `refFicheId` DÉSIGNE, IL NE CRÉE PAS, et c'est toute la grammaire du positionnement. Sans elle,
+ * « ajoute un compresseur après la réverbération » posait DEUX composants, la phrase en nommant
+ * deux ; or le second est une adresse, pas une commande.
+ */
+export interface Position {
+  ou: "apres" | "avant";
+  refFicheId: string;
+}
+
 export type Commande =
   /** Poser un composant. Enchaîné sur le courant, sauf si « en parallèle » vient de se dire. */
-  | { quoi: "poser"; ficheId: string; nom: string; parallele: boolean }
+  | { quoi: "poser"; ficheId: string; nom: string; parallele: boolean; position?: Position }
   /** Relier deux composants DÉJÀ posés, nommés par leur fiche. */
   | { quoi: "relier"; de: string; vers: string }
   | { quoi: "annuler" }
@@ -51,6 +63,8 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallèle", "parallele"],
     annuler: ["annuler", "annule", "retour"],
     terminer: ["terminé", "termine", "fin", "stop"],
+    apres: ["après", "apres"],
+    avant: ["avant"],
   },
   en: {
     relier: ["link", "connect", "wire"],
@@ -58,8 +72,63 @@ export const MOTS_COMMANDE: Record<"fr" | "en", Record<string, string[]>> = {
     parallele: ["parallel"],
     annuler: ["undo", "cancel", "back"],
     terminer: ["done", "finished", "stop"],
+    apres: ["after"],
+    avant: ["before"],
   },
 };
+
+/**
+ * Les mots qui PORTENT une consigne sans rien désigner : verbes de pose, articles, prépositions,
+ * noms de la scène, politesse.
+ *
+ * POURQUOI ILS SONT DANS LA GRAMMAIRE, et c'est la mesure qui l'a imposé. Un vocabulaire fermé aux
+ * seuls noms de composants ne peut rendre que des noms de composants : les mots de liaison d'une
+ * phrase ordinaire, n'y figurant pas, sont FABRIQUÉS avec ce que la liste contient. Relevé sur
+ * quatre phrases dictées, avant de les ajouter :
+ *
+ *   « s'il te plaît »   rendu « styles delay »
+ *   « que tu poses »    rendu « gel de tempo »
+ *   « canevas merci »   rendu « gamme inversée », qui posait un composant que personne n'a demandé
+ *   « après »           rendu « entrée »
+ *
+ * C'est là qu'était le défaut constaté, « plusieurs composants se chargent à l'énoncé d'un seul » :
+ * le moteur ne pouvait pas dire autre chose. Une fois ces mots dans la grammaire, les deux phrases
+ * du milieu se transcrivent exactement, et la troisième ne pose plus rien.
+ *
+ * ET ILS SONT ÉCARTÉS À LA LECTURE, non pas ignorés : le découpage les reconnaît pour ce qu'ils
+ * sont, de sorte qu'ils ne puissent pas non plus être rapprochés d'un nom par ressemblance.
+ */
+export const MOTS_PORTEURS: Record<"fr" | "en", string[]> = {
+  fr: [
+    "pose", "poses", "poser", "ajoute", "ajoutes", "ajouter", "mets", "met", "mettre",
+    "place", "places", "placer", "crée", "créer", "veux", "voudrais", "faut",
+    "un", "une", "le", "la", "les", "de", "du", "des", "au", "aux", "ce", "cette",
+    // « après » et « avant » ne sont PLUS des mots de portage : ils introduisent une référence,
+    // et la grammaire du positionnement s'en sert. Les jeter ici les rendrait muets.
+    "sur", "dans", "puis", "ensuite", "et", "en", "à", "avec",
+    "composant", "composants", "bloc", "blocs", "nœud", "noeud", "palette", "canevas", "graphe",
+    "je", "tu", "que", "qu", "il", "te", "s'il", "plaît", "plait", "merci", "stp", "aussi",
+  ],
+  en: [
+    "put", "place", "add", "create", "make", "want", "would", "like", "need",
+    "a", "an", "the", "of", "this", "that",
+    "on", "in", "then", "and", "to", "with",
+    "node", "nodes", "block", "blocks", "palette", "canvas", "graph",
+    "i", "you", "please", "thanks", "also",
+  ],
+};
+
+/**
+ * Les mots porteurs d'une langue, moins ceux qu'un composant porte déjà pour nom.
+ *
+ * UN NOM DE COMPOSANT NE PEUT PAS ÊTRE UN MOT DE PORTAGE, sans quoi on ne pourrait plus le dire.
+ * Le catalogue livré n'en porte aucun des deux listes ci-dessus, mais il grandit : la soustraction
+ * est faite à chaque appel plutôt que vérifiée une fois.
+ */
+export function porteursSurs(noms: readonly NomDicte[], langue: "fr" | "en"): string[] {
+  const pris = new Set(noms.map((n) => n.nom.toLowerCase()));
+  return MOTS_PORTEURS[langue].filter((m) => !pris.has(m));
+}
 
 /** Le jeton d'inconnu que le moteur rend là où il n'a reconnu aucun mot de la liste. */
 export const JETON_INCONNU = "[unk]";
@@ -76,13 +145,30 @@ export function motsDeCommande(langue: "fr" | "en"): string[] {
  * de commande ne paraît qu'une fois.
  */
 export function grammaireDeDictee(noms: readonly NomDicte[], langue: "fr" | "en"): string[] {
-  return [...new Set([...noms.map((n) => n.nom), ...motsDeCommande(langue)])];
+  return [...new Set([
+    ...noms.map((n) => n.nom),
+    ...motsDeCommande(langue),
+    ...porteursSurs(noms, langue),
+  ])];
 }
 
 type Jeton =
   | { sorte: "composant"; ficheId: string; nom: string; longueur: number }
   | { sorte: "commande"; geste: string; longueur: number }
+  | { sorte: "porteur"; mot: string; longueur: number }
   | { sorte: "inconnu"; mot: string; longueur: number };
+
+/**
+ * Ce qui sait reconnaître un nom que la reconnaissance a écorché, pour un passage donné.
+ *
+ * IL EST INJECTÉ, ET CE N'EST PAS UNE COQUETTERIE. L'appariement par ressemblance vit dans le
+ * domaine, et ce module n'en connaît rien : lui faire importer `plugins/appariement-flou` ferait
+ * entrer la dictée entière dans la liste des couplages assumés de `frontiere-domaine.test.ts`,
+ * alors que seule sa prise au micro en relève. C'est la forme qu'`audio/abc-edition-llm.ts` donne
+ * déjà à son appel de modèle, et pour la même raison : ce qui se teste sans le domaine se code
+ * sans lui.
+ */
+export type ApparieurFlou = (fenetre: string) => { ficheId: string; score: number } | null;
 
 /**
  * Découpe une dictée en jetons, par la PLUS LONGUE correspondance à chaque position.
@@ -93,13 +179,19 @@ type Jeton =
  * phrase ne donne pas : « relier X à Y » demande de savoir lequel des deux noms est de quel côté.
  */
 export function segmenter(
-  texte: string, noms: readonly NomDicte[], langue: "fr" | "en",
+  texte: string, noms: readonly NomDicte[], langue: "fr" | "en", flou?: ApparieurFlou,
 ): Jeton[] {
   const mots = texte.toLowerCase().split(/\s+/).filter(Boolean);
   const gestes = MOTS_COMMANDE[langue];
+  const estCommande = (m: string) => Object.values(gestes).some((l) => l.includes(m));
+  const porteurs = new Set(porteursSurs(noms, langue));
+  // Une fenêtre de ressemblance s'arrête sur l'un comme sur l'autre : ni le geste ni le portage ne
+  // doivent se retrouver avalés dans un nom de composant.
+  const bloquant = (m: string) => estCommande(m) || porteurs.has(m);
   // Les noms du plus long au plus court : à position égale, le plus long gagne.
   const tries = [...noms].map((n) => ({ ...n, mots: n.nom.split(/\s+/) }))
     .sort((a, b) => b.mots.length - a.mots.length);
+  const parId = new Map(noms.map((n) => [n.ficheId, n.nom]));
   const out: Jeton[] = [];
   let i = 0;
   while (i < mots.length) {
@@ -116,10 +208,50 @@ export function segmenter(
       i += 1;
       continue;
     }
+    // LES MOTS DE PORTAGE PASSENT AVANT LA RESSEMBLANCE, et c'est ce qui les protège : rapprocher
+    // « merci » ou « canevas » d'un nom de composant par ressemblance reviendrait à poser ce que la
+    // politesse fait dire.
+    if (porteurs.has(mots[i])) {
+      out.push({ sorte: "porteur", mot: mots[i], longueur: 1 });
+      i += 1;
+      continue;
+    }
+    // LA RESSEMBLANCE NE PASSE QU'EN DERNIER, et jamais par-dessus un mot de commande. Elle ne
+    // rattrape que ce que l'exact a laissé tomber ; la laisser juger avant ferait d'« annuler » un
+    // nom de composant, et le geste d'annulation deviendrait impossible à dire.
+    const approchant = flou ? meilleurApprochant(mots, i, flou, bloquant) : null;
+    if (approchant) {
+      out.push({
+        sorte: "composant", ficheId: approchant.ficheId,
+        nom: parId.get(approchant.ficheId) ?? approchant.ficheId, longueur: approchant.longueur,
+      });
+      i += approchant.longueur;
+      continue;
+    }
     out.push({ sorte: "inconnu", mot: mots[i], longueur: 1 });
     i += 1;
   }
   return out;
+}
+
+/**
+ * Le composant que les mots suivants désignent le mieux, sur une à quatre places.
+ *
+ * LA FENÊTRE S'ARRÊTE AU PREMIER MOT DE COMMANDE : « réverbération annuler » ne doit pas devenir un
+ * nom de composant de deux mots, sans quoi l'annulation serait avalée par ce qu'elle annule.
+ */
+function meilleurApprochant(
+  mots: string[], depart: number, flou: ApparieurFlou, estCommande: (m: string) => boolean,
+): { ficheId: string; longueur: number } | null {
+  let meilleur: { ficheId: string; longueur: number; score: number } | null = null;
+  for (let longueur = 1; longueur <= 4 && depart + longueur <= mots.length; longueur++) {
+    if (longueur > 1 && estCommande(mots[depart + longueur - 1])) break;
+    const r = flou(mots.slice(depart, depart + longueur).join(" "));
+    if (r && (!meilleur || r.score > meilleur.score)) {
+      meilleur = { ficheId: r.ficheId, longueur, score: r.score };
+    }
+  }
+  return meilleur ? { ficheId: meilleur.ficheId, longueur: meilleur.longueur } : null;
 }
 
 /**
@@ -134,13 +266,15 @@ export function segmenter(
  * qu'un lien à moitié désigné.
  */
 export function interpreterDictee(
-  texte: string, noms: readonly NomDicte[], langue: "fr" | "en",
+  texte: string, noms: readonly NomDicte[], langue: "fr" | "en", flou?: ApparieurFlou,
 ): Commande[] {
-  const jetons = segmenter(texte, noms, langue);
+  const jetons = segmenter(texte, noms, langue, flou);
   const out: Commande[] = [];
   let parallele = false;
   for (let i = 0; i < jetons.length; i++) {
     const j = jetons[i];
+    // Un mot de portage a fait son office en étant reconnu : il ne demande rien.
+    if (j.sorte === "porteur") continue;
     if (j.sorte === "inconnu") {
       if (j.mot === JETON_INCONNU) out.push({ quoi: "inconnu", mot: j.mot });
       continue;
@@ -148,6 +282,29 @@ export function interpreterDictee(
     if (j.sorte === "composant") {
       out.push({ quoi: "poser", ficheId: j.ficheId, nom: j.nom, parallele });
       parallele = false;
+      continue;
+    }
+    // UNE PRÉPOSITION DE LIEU DÉSIGNE, ELLE NE CRÉE PAS. Elle s'attache au composant qu'on vient de
+    // poser, et le nom qui la suit est CONSOMMÉ : sans cela, « ajoute un compresseur après la
+    // réverbération » posait deux composants, la phrase en nommant deux. Dite sans composant devant
+    // elle, ou sans nom derrière, elle ne demande rien : une adresse incomplète n'est pas une
+    // adresse, et deviner serait faire autre chose que ce qui a été dit.
+    if (j.geste === "apres" || j.geste === "avant") {
+      // LE NOM N'EST PAS FORCÉMENT COLLÉ À LA PRÉPOSITION : « après LA réverbération » porte un
+      // article entre les deux, et il a été reconnu comme mot de portage. On saute donc ce qui ne
+      // demande rien jusqu'au nom.
+      let k = i + 1;
+      while (k < jetons.length && jetons[k].sorte === "porteur") k++;
+      const suivant = jetons[k];
+      if (suivant?.sorte !== "composant") continue;
+      // LE NOM EST CONSOMMÉ MÊME QUAND L'ADRESSE NE S'ATTACHE À RIEN. « après la réverbération »
+      // dit tout seul ne demande pas de poser une réverbération : c'est une adresse sans objet, et
+      // la poser ferait autre chose que ce qui a été dit.
+      i = k;
+      const dernier = out[out.length - 1];
+      if (dernier?.quoi === "poser" && !dernier.position) {
+        dernier.position = { ou: j.geste, refFicheId: suivant.ficheId };
+      }
       continue;
     }
     if (j.geste === "parallele") { parallele = true; continue; }

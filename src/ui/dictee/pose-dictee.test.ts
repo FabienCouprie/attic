@@ -1,6 +1,6 @@
 // ui/dictee/pose-dictee.test.ts — Où la dictée pose, et sur quoi elle enchaîne.
 import { describe, expect, it } from "vitest";
-import { PAS_X, PAS_Y, dernierDeFiche, noeudCourant, positionSuivante, type NoeudPose } from "./pose-dictee";
+import { PAS_X, PAS_Y, dernierDeFiche, noeudCourant, planInsertion, positionSuivante, type NoeudPose } from "./pose-dictee";
 
 const n = (id: string, x: number, y: number, ficheId = "f"): NoeudPose =>
   ({ id, position: { x, y }, data: { ficheId } });
@@ -44,6 +44,41 @@ describe("où poser le prochain composant", () => {
 
   it("sur un canevas vide, un coin franc", () => {
     expect(positionSuivante(undefined, [], false)).toEqual({ x: 120, y: 120 });
+  });
+});
+
+describe("insérer, et non dériver", () => {
+  const A = (id: string, source: string, target: string) => ({ id, source, target });
+  // Une chaîne ordinaire : entrée → réverbération → sortie.
+  const CHAINE = [A("e1", "entree", "reverb"), A("e2", "reverb", "sortie")];
+
+  it("APRÈS : ce qui partait de la référence part désormais du nouveau", () => {
+    // C'est ce qui met le compresseur SUR le chemin du son, et non à côté.
+    const p = planInsertion(CHAINE, "reverb", "compresseur", "apres");
+    expect(p.aRediriger).toEqual(["e2"]);
+    expect(p.lien).toEqual({ source: "reverb", target: "compresseur" });
+  });
+
+  it("AVANT : ce qui entrait dans la référence entre désormais dans le nouveau", () => {
+    const p = planInsertion(CHAINE, "reverb", "filtre", "avant");
+    expect(p.aRediriger).toEqual(["e1"]);
+    expect(p.lien).toEqual({ source: "filtre", target: "reverb" });
+  });
+
+  it("une référence sans suite ne détourne rien, et le lien suffit", () => {
+    const p = planInsertion(CHAINE, "sortie", "n", "apres");
+    expect(p.aRediriger).toEqual([]);
+    expect(p.lien).toEqual({ source: "sortie", target: "n" });
+  });
+
+  it("détourne TOUTES les arêtes concernées, et elles seules", () => {
+    const fourche = [...CHAINE, A("e3", "reverb", "analyse"), A("e4", "entree", "autre")];
+    expect(planInsertion(fourche, "reverb", "n", "apres").aRediriger).toEqual(["e2", "e3"]);
+  });
+
+  it("sur un canevas sans arête, il n'y a que le lien à poser", () => {
+    expect(planInsertion([], "reverb", "n", "apres"))
+      .toEqual({ aRediriger: [], lien: { source: "reverb", target: "n" } });
   });
 });
 

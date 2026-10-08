@@ -93,3 +93,44 @@ describe("les composants qu'un texte nomme", () => {
       .toContain("reverberation");
   });
 });
+
+describe("la ressemblance ne s'applique qu'à la parole", () => {
+  // LES TRANSCRIPTIONS SONT DES RELEVÉS, prises dans l'application le 2026-10-07 : ce que Vosk rend
+  // en vocabulaire libre sur des prises dites par la synthèse vocale.
+  const ECORCHEES: [string, string][] = [
+    ["entrée audio granulats de spectre grammes sortie audio", "spectrogramme"],
+    ["entrée audio vos codeur de face puis compresseur", "vocoder"],
+    ["lecture granulés réverbération à qu'on volution export audio", "reverbe-convolution"],
+  ];
+
+  it("FERMÉE, elle laisse perdre le nom écorché, comme avant", async () => {
+    for (const [texte, cible] of ECORCHEES) {
+      expect((await composantsNommes(texte)).map((x) => x.ficheId), texte).not.toContain(cible);
+    }
+  });
+
+  it("OUVERTE, elle le retrouve, sur le catalogue entier", async () => {
+    for (const [texte, cible] of ECORCHEES) {
+      expect((await composantsNommes(texte, true)).map((x) => x.ficheId), texte).toContain(cible);
+    }
+  });
+
+  it("et elle ne désigne rien dans de la parole qui ne nomme aucun composant", async () => {
+    // Le garde qui rend la chose posable : ouverte sur 470 noms, elle doit rester muette.
+    expect(await composantsNommes("je voudrais savoir si le train de huit heures est à l'heure", true))
+      .toEqual([]);
+    expect(await composantsNommes("bonjour comment allez vous depuis la dernière fois", true))
+      .toEqual([]);
+  });
+
+  it("UN TEXTE TAPÉ N'EN REÇOIT PAS, et garde le relevé qu'il avait", async () => {
+    // Relevé : ouverte sur cette invite tapée, la ressemblance ajoute quatre composants de trop,
+    // tous nés d'une fenêtre contenant un mot déjà apparié exactement.
+    const tapee = "delay stéréo avec feedback court sur une réverbération hall puis compresseur et sortie";
+    const ferme = (await composantsNommes(tapee)).map((x) => x.ficheId);
+    const ouvert = (await composantsNommes(tapee, true)).map((x) => x.ficheId);
+    expect(ferme).toContain("delay-stereo");
+    expect(ferme).toContain("reverberation");
+    expect(ouvert.length).toBeGreaterThan(ferme.length);
+  });
+});

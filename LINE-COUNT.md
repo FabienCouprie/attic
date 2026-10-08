@@ -7,16 +7,16 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1288 files, 224220 lines, of which 154089 are code.**
-The table lists the 174 files of 200 code lines or more, heaviest first;
-the remaining 1114 account for 151250 lines.
+**1290 files, 225054 lines, of which 154599 are code.**
+The table lists the 175 files of 200 code lines or more, heaviest first;
+the remaining 1115 account for 151710 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1401 | 1755 | ! |
-| src/ui/App.tsx | 1141 | 1521 | ! |
+| src/ui/App.tsx | 1176 | 1563 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
 | src/ui/Inspector.tsx | 606 | 763 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
@@ -28,7 +28,7 @@ the remaining 1114 account for 151250 lines.
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
-| src/ui/BarreOutils.tsx | 433 | 483 | ! |
+| src/ui/BarreOutils.tsx | 435 | 485 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/parole-vers-sequence.test.ts | 391 | 515 |  |
 | src/plugins/montage.ts | 390 | 542 |  |
@@ -60,6 +60,7 @@ the remaining 1114 account for 151250 lines.
 | src/plugins/effets-spectral-modulation.test.ts | 334 | 470 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/plugins/prompt-graphe.ts | 332 | 507 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/plugins/effets-spectral.ts | 328 | 432 |  |
@@ -67,7 +68,6 @@ the remaining 1114 account for 151250 lines.
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
-| src/plugins/prompt-graphe.ts | 324 | 476 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -156,6 +156,7 @@ the remaining 1114 account for 151250 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
+| src/ui/dictee/commandes-dictee.test.ts | 224 | 299 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/plugins/effets.ts | 221 | 259 |  |
