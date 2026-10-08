@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1294 files, 225633 lines, of which 155005 are code.**
-The table lists the 175 files of 200 code lines or more, heaviest first;
-the remaining 1119 account for 152265 lines.
+**1300 files, 226965 lines, of which 155905 are code.**
+The table lists the 177 files of 200 code lines or more, heaviest first;
+the remaining 1123 account for 152916 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,7 +24,7 @@ the remaining 1119 account for 152265 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 487 | 499 | ! |
+| src/plugins/index.ts | 491 | 503 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
@@ -97,6 +97,7 @@ the remaining 1119 account for 152265 lines.
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
+| src/audio/table-onde.test.ts | 293 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
@@ -148,6 +149,7 @@ the remaining 1119 account for 152265 lines.
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
+| src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
