@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1294 files, 225446 lines, of which 154811 are code.**
-The table lists the 175 files of 200 code lines or more, heaviest first;
-the remaining 1119 account for 152015 lines.
+**1306 files, 228191 lines, of which 156627 are code.**
+The table lists the 178 files of 200 code lines or more, heaviest first;
+the remaining 1128 account for 153681 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,7 +24,7 @@ the remaining 1119 account for 152015 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 483 | 495 | ! |
+| src/plugins/index.ts | 491 | 503 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/ui/BarreOutils.tsx | 441 | 491 | ! |
@@ -97,6 +97,7 @@ the remaining 1119 account for 152015 lines.
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
+| src/audio/table-onde.test.ts | 293 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
@@ -104,6 +105,7 @@ the remaining 1119 account for 152015 lines.
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
+| src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
@@ -148,6 +150,7 @@ the remaining 1119 account for 152015 lines.
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
+| src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |

@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 90 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 182 · transposable tel quel
+- **pur** : 186 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -138,6 +138,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | fdn.ts | pur | — |
 | features-piste.ts | recipient | AudioBuffer |
 | fft.ts | pur | — |
+| fm-operateurs.ts | pur | — |
 | fof.ts | pur | — |
 | fondamentale-manquante.ts | pur | — |
 | formants.ts | recipient | AudioBuffer |
@@ -225,6 +226,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | ondelettes.ts | pur | — |
 | ordre-catalogue.ts | pur | — |
 | ordre-galerie.ts | pur | — |
+| oscillateur-analogique.ts | pur | — |
 | palette-harmonique.ts | recipient | AudioBuffer |
 | paradoxe-triton.ts | pur | — |
 | parfum.ts | pur | — |
@@ -259,6 +261,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | reverb-fractal.ts | rendu | OfflineAudioContext |
 | reverbes-etendues.ts | pur | — |
 | risset.ts | recipient | AudioBuffer |
+| rotatifs.ts | pur | — |
 | rythme-analyse.ts | pur | — |
 | scanning.ts | pur | — |
 | schillinger.ts | pur | — |
@@ -290,6 +293,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | styles-film.ts | pur | — |
 | superforme.ts | pur | — |
 | synthese-features.ts | pur | — |
+| table-onde.ts | pur | — |
 | temperaments.ts | pur | — |
 | tempo-octave.ts | pur | — |
 | terrain-onde.ts | pur | — |

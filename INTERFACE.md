@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**472 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**477 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -273,6 +273,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Flanger | `flanger` | 240 × 140 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | Flou du spectrogramme | `flou-spectrogramme` | 240 × 118 |
+| FM à six opérateurs | `fm-six-operateurs` | 240 × 118 |
 | FM / AM Synth | `fm-synth` | 240 × 118 |
 | Fondamentale manquante | `fondamentale-manquante` | 240 × 140 |
 | Fondu | `fondu` | 240 × 118 |
@@ -304,6 +305,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
+| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 118 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
@@ -361,6 +363,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Octaver | `octaver` | 240 × 140 |
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
+| Oscillateur analogique | `oscillateur-analogique` | 240 × 118 |
+| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 118 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
 | Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
 | Parole vers séquence | `parole-vers-sequence` | 240 × 184 |
@@ -482,6 +486,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Transient Shaper | `transient-shaper` | 240 × 140 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
+| Trémolo harmonique | `tremolo-harmonique` | 240 × 118 |
 | Tresse | `tresse` | 240 × 118 |
 | TTS Français | `tts-francais` | 240 × 118 |
 | Kokoro TTS | `tts-kokoro` | 240 × 118 |
