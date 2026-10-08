@@ -29,7 +29,9 @@ import { idUnique } from "./ids";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
-import { dernierDeFiche, noeudCourant, positionSuivante, type NoeudPose } from "./dictee/pose-dictee";
+import { dernierDeFiche, noeudCourant, planInsertion, positionSuivante,
+  type AreteDeDictee, type NoeudPose } from "./dictee/pose-dictee";
+import type { Position as PositionDictee } from "./dictee/commandes-dictee";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
@@ -1187,12 +1189,24 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     let noeuds = [...noeudsRef.current];
     const nouveaux: typeof noeuds = [];
     const aretes: Edge[] = [];
+    /** Les arêtes DÉJÀ sur le canevas dont une insertion change un bout. */
+    const aDetourner: { id: string; vers: string; ou: "apres" | "avant" }[] = [];
     let dernier = dernierDicteRef.current;
 
-    const poser = (ficheId: string, parallele: boolean) => {
+    const poser = (ficheId: string, parallele: boolean, ou?: PositionDictee): string | undefined => {
       const def = trouverDef(ficheId);
-      if (!def) return;
-      const courant = noeudCourant(noeuds as unknown as NoeudPose[], sel?.id ?? null, dernier);
+      if (!def) return `Composant inconnu : ${ficheId}`;
+      // UNE RÉFÉRENCE DÉSIGNE, ELLE NE CRÉE PAS : si elle ne désigne rien, on ne pose rien et on le
+      // dit. Poser quand même, sans le lien demandé, ferait passer un refus pour une réussite.
+      const reference = ou
+        ? dernierDeFiche(noeuds as unknown as NoeudPose[], ou.refFicheId)
+        : undefined;
+      if (ou && !reference) {
+        const nom = trouverDef(ou.refFicheId)?.nom ?? ou.refFicheId;
+        return `${t("dictee.referenceAbsente")} ${nom}`;
+      }
+      const courant = reference
+        ?? noeudCourant(noeuds as unknown as NoeudPose[], sel?.id ?? null, dernier);
       const position = positionSuivante(courant, noeuds as unknown as NoeudPose[], parallele);
       const parametres: Record<string, number | string> = {};
       for (const p of def.parametres) {
@@ -1206,8 +1220,25 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       } as unknown as (typeof noeuds)[number];
       noeuds = [...noeuds, noeud];
       nouveaux.push(noeud);
-      // ENCHAÎNÉ SUR LE COURANT, sauf « en parallèle » : c'est ce qui dispense de dire le lien.
-      if (courant && !parallele) {
+      if (reference && ou) {
+        // INSÉRER, ET NON DÉRIVER : ce qui partait de la référence part désormais du nouveau nœud,
+        // de sorte que le son y PASSE. Les redirections portent sur les arêtes déjà posées comme
+        // sur celles du canevas, la copie de travail valant pour les deux.
+        const toutes = [...aretesRef.current, ...aretes] as unknown as AreteDeDictee[];
+        const { aRediriger, lien } = planInsertion(toutes, reference.id, id, ou.ou);
+        for (const a of aretes) {
+          if (!aRediriger.includes(a.id)) continue;
+          if (ou.ou === "apres") a.source = id; else a.target = id;
+        }
+        aDetourner.push(...aRediriger.filter((x) => !aretes.some((a) => a.id === x))
+          .map((x) => ({ id: x, vers: id, ou: ou.ou })));
+        aretes.push({
+          id: `e-dictee-${id}-${Date.now()}`, source: lien.source, target: lien.target,
+          sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
+          style: { stroke: couleurArete(noeuds, lien.source, "out:0"), strokeWidth: 2.5 },
+        });
+      } else if (courant && !parallele) {
+        // ENCHAÎNÉ SUR LE COURANT, sauf « en parallèle » : c'est ce qui dispense de dire le lien.
         aretes.push({
           id: `e-dictee-${id}-${Date.now()}`, source: courant.id, target: id,
           sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
@@ -1215,6 +1246,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         });
       }
       dernier = id;
+      return undefined;
     };
 
     const relier = (deFiche: string, versFiche: string) => {
@@ -1235,16 +1267,25 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     };
 
     const verser = () => {
-      if (nouveaux.length === 0 && aretes.length === 0) return;
+      if (nouveaux.length === 0 && aretes.length === 0 && aDetourner.length === 0) return;
       pushHistorique();
-      const n = [...nouveaux]; const a = [...aretes];
-      nouveaux.length = 0; aretes.length = 0;
+      const n = [...nouveaux]; const a = [...aretes]; const d = [...aDetourner];
+      nouveaux.length = 0; aretes.length = 0; aDetourner.length = 0;
       setNodes((nds) => [...nds, ...n]);
-      setEdges((eds) => [...eds, ...a]);
+      setEdges((eds) => [
+        // Les arêtes détournées ne sont ni ajoutées ni retirées : elles changent de bout.
+        ...eds.map((e) => {
+          const det = d.find((x) => x.id === e.id);
+          if (!det) return e;
+          return det.ou === "apres" ? { ...e, source: det.vers } : { ...e, target: det.vers };
+        }),
+        ...a,
+      ]);
     };
 
+    let avis: string | undefined;
     for (const c of commandes) {
-      if (c.quoi === "poser") poser(c.ficheId, c.parallele);
+      if (c.quoi === "poser") avis = poser(c.ficheId, c.parallele, c.position) ?? avis;
       else if (c.quoi === "relier") relier(c.de, c.vers);
       else if (c.quoi === "annuler") {
         // Ce qui est en attente part d'abord : annuler doit défaire l'état visible, pas un autre.
@@ -1256,6 +1297,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     }
     verser();
     dernierDicteRef.current = dernier;
+    return avis;
   }, [sel, lang, trouverDef, callbacksNoeud, pushHistorique, setNodes, setEdges, undo]);
 
   const dictee = useDictee(lang === "en" ? "en" : "fr", appliquerDictee);

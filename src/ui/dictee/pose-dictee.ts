@@ -52,6 +52,40 @@ export function positionSuivante(
   return { x: droite + PAS_X, y: haut };
 }
 
+/** Une arête, réduite à ce que le positionnement a besoin d'en connaître. */
+export interface AreteDeDictee {
+  id: string;
+  source: string;
+  target: string;
+}
+
+/**
+ * Ce qu'il faut recâbler pour INSÉRER un nœud après un autre, et non simplement en dériver.
+ *
+ * « AJOUTE UN COMPRESSEUR APRÈS LA RÉVERBÉRATION » VEUT DIRE QUE LE SON Y PASSE. Si la
+ * réverbération alimente déjà une sortie, le compresseur se met ENTRE les deux : c'est ce qu'on dit
+ * en studio, et c'est ce qui distingue cette grammaire d'un simple lien de plus. Dériver laisserait
+ * la sortie branchée où elle était, et le composant demandé pendrait à côté du chemin du son.
+ *
+ * CE QUI EST RENDU NE TOUCHE À RIEN : les arêtes sortantes de la référence sont nommées, à charge
+ * de l'appelant de les faire partir du nouveau nœud, et le lien de la référence vers lui est donné
+ * à poser. L'appelant tient déjà sa copie de travail et son contrôle de cycle.
+ *
+ * `avant` est la même chose prise par l'autre bout : ce qui ENTRE dans la référence entre désormais
+ * dans le nouveau nœud, qui alimente la référence.
+ */
+export function planInsertion(
+  aretes: readonly AreteDeDictee[], refId: string, nouveauId: string, ou: "apres" | "avant",
+): { aRediriger: string[]; lien: { source: string; target: string } } {
+  const aRediriger = aretes
+    .filter((a) => (ou === "apres" ? a.source === refId : a.target === refId))
+    .map((a) => a.id);
+  const lien = ou === "apres"
+    ? { source: refId, target: nouveauId }
+    : { source: nouveauId, target: refId };
+  return { aRediriger, lien };
+}
+
 /**
  * Le nœud que « relier X à Y » désigne : le DERNIER posé qui porte cette fiche.
  *
