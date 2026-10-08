@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **475 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **477 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 88 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (29) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (5) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 90 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (30) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 232 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (19) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -469,6 +469,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 | [Tritone Paradox](#tritone-paradox) | Two tones half an octave apart, whose direction of movement depends on who is listening. |
+| [Wavetable Oscillator](#wavetable-oscillator) | Reads a bank of cycles and scans it: the timbre travels, the pitch stays put. |
 | [Write a Counterpoint](#write-a-counterpoint) | Searches for a voice that makes a first-species counterpoint with the received cantus firmus. |
 
 #### AI Sound Effect
@@ -1173,6 +1174,30 @@ This node returns pairs of tones a tritone apart, that is half an octave. After 
 | Gap | slider | 0 s | 0 – 1 s, step 0.05 | The silence between the two tones of a pair. |
 | Pause | slider | 1.5 s | 0 – 4 s, step 0.1 | The silence between two pairs, for « All twelve ». It leaves time to note one's answer. |
 | Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
+
+#### Wavetable Oscillator
+
+`oscillateur-table-onde` · Inputs → Generation
+
+*Reads a bank of cycles and scans it: the timbre travels, the pitch stays put.*
+
+Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in an order; « Position » says where the reading happens, and moving from one end to the other bends the timbre continuously while the pitch stays put. Between two slots, the two are blended. « Bank » chooses the series read when no sound is connected. « Sine to sawtooth » adds the harmonics one by one, from the first slot to the last. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next, so that scanning makes a lone partial climb. « Odd towards even » keeps the odd ranks and brings in the even ones. When a sound is connected to the « Audio » input, the bank is taken from it and « Bank » has no effect. The period of the sound is detected, then as many cycles as « Slots » asks for are taken at regular intervals across its whole length; scanning the bank then amounts to travelling through the sound while holding it at a fixed pitch. A sound in which no pitch can be detected yields no bank, and the message says so. « Slots » is the number of places: few slots give a scan in clear steps, many a continuous fade. It has no effect at the two ends of the bank, the first and the last slot being the same whatever their number; at the last slot, « Sine to sawtooth » and « Odd towards even » coincide for the same reason. « Scan » is the depth of the travel of « Position » around its value, and « Scan rate » the number of return trips per second; at zero scan the position stays where it is set and the rate no longer acts. « Frequency » is the pitch of the sound produced, « Duration » its length, « Volume » the output level. The cycles are kept as harmonics and the table is rebuilt for the frequency asked, with no harmonic above half the sampling rate. « Frequency » therefore also decides how many ranks are kept: in the bass the table carries several hundred, in the treble a few. Reading between two points of the table is done by a curve passing through the four neighbouring points. The « Audio » output returns the sound. The message gives the number of slots, the reading frequency, and the detected frequency when the bank comes from a sound.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Bank | choice | Sine to sawtooth | Sine to sawtooth / Sine to square / Sliding harmonic / Odd towards even | The bank read, when no sound is connected. « Sine to sawtooth » adds the harmonics one by one. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next. « Odd towards even » keeps the odd ranks and brings in the even ones. No effect when a sound is connected, the bank then being taken from it. |
+| Slots | slider | 16 | 2 – 64, step 1 | Number of slots in the bank. Few slots give a scan in clear steps, many a continuous fade. On a connected sound, it is also the number of cycles taken from it. This setting has no effect at the two ends of the bank, the first and the last slot being the same whatever their number. |
+| Position | slider | 50 % | 0 – 100 %, step 1 | Where to read in the bank. At zero, the first slot; at a hundred, the last. Between two slots, the two are blended. |
+| Scan | slider | 0 % | 0 – 100 %, step 1 | Depth of the travel of « Position » around its value. At zero, the position stays where it is set. |
+| Scan rate | slider | 0.3 Hz | 0.05 – 20 Hz, step 0.05 | Number of return trips per second through the bank. No effect when « Scan » is at zero, since nothing then travels. |
+| Frequency | slider | 220 Hz | 20 – 4000 Hz, step 1 | Pitch of the sound produced. It also decides how many harmonics are kept: in the bass the table carries several hundred, in the treble a few. |
+| Duration | slider | 1.5 s | 0.2 – 5 s, step 0.1 | Duration of the generated tone. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Output level, after the peak has been normalised. |
 
 #### Write a Counterpoint
 
@@ -1998,6 +2023,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | [Metal Synth](#metal-synth) | Generates a metallic sound (hi-hat, bell, cymbal) with Tone.js. |
 | [Pluck Synth](#pluck-synth) | Generates a plucked string note using Karplus-Strong synthesis. |
 | [Poly Synth](#poly-synth) | Generates a polyphonic chord with an ADSR envelope. |
+| [Six-Operator FM](#six-operator-fm) | Six operators and eight routings: the routing is what makes the timbre. |
 
 #### FM / AM Synth
 
@@ -2115,6 +2141,44 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 | Decay | number | 0.1 s | 0 – 2 s, step 0.01 | Envelope decay time to the sustain level. |
 | Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
 | Release | number | 1 s | 0 – 3 s, step 0.01 | Envelope release time after the note ends. |
+
+#### Six-Operator FM
+
+`fm-six-operateurs` · Inputs → Synthesizers
+
+*Six operators and eight routings: the routing is what makes the timbre.*
+
+Synthesises a note by frequency modulation between six operators. An operator is a sine with a frequency ratio, a level and an envelope. « Routing » says who modulates whom and who is heard, and it is what gives the sound its character: « Stack of six » gives the densest spectrum, a single operator being heard and the other five bending it one after another; « Six carriers » modulates nothing and amounts to a sum of six sines; between the two, the number of carriers and the depth of the stacks decide the rest. The level of an operator does not mean the same thing on both sides. If it is a carrier in the chosen routing, it is an amplitude, and it is heard. If it modulates, it is a modulation index, that is a number of radians added to the phase of the one it modulates: it is not heard itself, it enriches the other. An operator at zero level is silent, which also cuts the stack above it, and its ratio and its decay then have no effect. « Ratio » is the ratio between the frequency of the operator and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. For a modulator of whole ratio, the partials fall on the ranks equal to one plus or minus a multiple of that ratio, and the other ranks stay empty. « Decay » is the decay time: giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. The attack is short and fixed, without which every note would begin with a sharp break. « Feedback » is the share of its own output that the sixth operator sends back to itself. It enriches its spectrum as far as noise, and acts only if it has a level. « Frequency » is the pitch of the note, to which the six ratios apply. « Duration » is the length of the sound, and a decay longer than it will be cut at the end. « Volume » is the output level. Frequency modulation widens the band of the sound along with the index, and whatever passes half the sampling rate would fold back. The computation therefore runs at four times the rate before coming back down through a linear-phase filter. The « Audio » output returns the note. The message recalls the routing, its number of carriers and the pitch.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Routing | choice | Two stacks of three | Stack of six / Two stacks of three / Three pairs / One modulator, five carriers / Two modulators per carrier / Fork / Five modulators on one carrier / Six carriers | Who modulates whom, and who is heard. « Stack of six » gives the densest spectrum, a single operator being heard and the other five bending it one after another. « Six carriers » modulates nothing and amounts to a sum of six sines. Between the two, the number of carriers and the depth of the stacks decide the character. |
+| Frequency | slider | 220 Hz | 20 – 4000 Hz, step 1 | Pitch of the note. The ratios of the six operators apply to it. |
+| Duration | slider | 2 s | 0.2 – 10 s, step 0.1 | Duration of the generated tone. A decay longer than it will be cut short at the end. |
+| Feedback | slider | 0 % | 0 – 100 %, step 1 | Share of its own output that the sixth operator sends back to itself. It enriches its spectrum as far as noise, and acts only if the sixth operator has a level. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | Output level, after the peak has been normalised. |
+| Ratio 1 | slider | 1 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 1 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 1 | slider | 100 % | 0 – 100 %, step 1 | Level of operator 1. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 1 | slider | 1.5 s | 0.05 – 10 s, step 0.05 | Decay time of operator 1. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
+| Ratio 2 | slider | 2 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 2 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 2 | slider | 45 % | 0 – 100 %, step 1 | Level of operator 2. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 2 | slider | 1 s | 0.05 – 10 s, step 0.05 | Decay time of operator 2. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
+| Ratio 3 | slider | 3 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 3 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 3 | slider | 30 % | 0 – 100 %, step 1 | Level of operator 3. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 3 | slider | 0.7 s | 0.05 – 10 s, step 0.05 | Decay time of operator 3. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
+| Ratio 4 | slider | 1 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 4 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 4 | slider | 70 % | 0 – 100 %, step 1 | Level of operator 4. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 4 | slider | 0.5 s | 0.05 – 10 s, step 0.05 | Decay time of operator 4. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
+| Ratio 5 | slider | 2 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 5 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 5 | slider | 40 % | 0 – 100 %, step 1 | Level of operator 5. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 5 | slider | 0.4 s | 0.05 – 10 s, step 0.05 | Decay time of operator 5. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
+| Ratio 6 | slider | 3 | 0.1 – 16, step 0.1 | Ratio between the frequency of operator 6 and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal. |
+| Level 6 | slider | 25 % | 0 – 100 %, step 1 | Level of operator 6. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect. |
+| Decay 6 | slider | 0.3 s | 0.05 – 10 s, step 0.05 | Decay time of operator 6. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves. |
 
 ### Text
 

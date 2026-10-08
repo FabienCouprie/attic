@@ -137,6 +137,8 @@ import { fiches as f_modeles_physiques } from "./modeles-physiques";
 import { fiches as f_syntheses_exotiques } from "./syntheses-exotiques";
 import { fiches as f_oscillateur_analogique } from "./oscillateur-analogique";
 import { fiches as f_effets_rotatifs } from "./effets-rotatifs";
+import { fiches as f_table_onde } from "./table-onde";
+import { fiches as f_fm_operateurs } from "./fm-operateurs";
 import { fiches as f_theorie_avancee } from "./theorie-avancee";
 import { fiches as f_csound } from "./csound";
 import { fiches as f_documentation } from "./documentation";
@@ -491,6 +493,8 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_syntheses_exotiques,
   ...f_oscillateur_analogique,
   ...f_effets_rotatifs,
+  ...f_table_onde,
+  ...f_fm_operateurs,
   ...f_theorie_avancee,
   ...f_csound,
 // TOUT COMPOSANT QUI REND UNE SÉQUENCE REÇOIT UNE SORTIE AUDIO, posée ici plutôt que dans

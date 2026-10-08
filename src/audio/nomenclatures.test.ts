@@ -130,6 +130,8 @@ const DOMAINES: Domaine[] = [
         raison: "des rangs de voix, non des degrés" },
       { motif: /\bnotesBlanches\b/,
         raison: "les touches blanches d'un clavier dessiné : c'est bien la gamme de do, mais comme dessin et non comme choix musical" },
+      { motif: /\bporteuses\s*:/,
+        raison: "des rangs d'opérateurs d'un synthé FM : « porteuses: [0, 1, 2, 3, 4] » dit lesquels des six s'entendent, non des degrés" },
     ],
     remede: "déclarer les degrés dans audio/gammes.ts, et dériver d'elle par `degresDeGamme`",
   },

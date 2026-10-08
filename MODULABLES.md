@@ -12,7 +12,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 49
-- **restent à faire** : 23 composants, 46 couples composant / famille
+- **restent à faire** : 24 composants, 49 couples composant / famille
 - **dont le cœur travaille par trames** : 3
 - **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
@@ -32,13 +32,14 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Trémolo harmonique `tremolo-harmonique` : Mélange
 - Vocoder `vocoder` : Mix
 
-### espace · 9
+### espace · 10
 
 - Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
 - Brassage `brassage` : Dispersion
 - Écho flottant `echo-flottant` : Distance
 - Granular freeze `granular-freeze` : Position
 - Haut-parleur rotatif `haut-parleur-rotatif` : Largeur
+- Oscillateur à table d'onde `oscillateur-table-onde` : Position
 - Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
 - Trémolo harmonique `tremolo-harmonique` : Profondeur
 - Ubiquité `ubiquite` : Dispersion
@@ -56,9 +57,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération velours `reverberation-velours` : Chute
 
-### frequence · 5
+### frequence · 6
 
 - Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
+- Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 - Ring modulator `ring-modulator` : Fréquence
 - Trémolo harmonique `tremolo-harmonique` : Coupure
@@ -78,9 +80,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
-### niveau · 2
+### niveau · 3
 
 - Créneau `creneau` : Niveau
+- Oscillateur à table d'onde `oscillateur-table-onde` : Volume
 - Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 
 ### retroaction · 2
