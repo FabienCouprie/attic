@@ -4,6 +4,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.0.1] — 2026-10-09
+
+**DEUX DÉFAUTS QUE LA 5.0.0 A LIVRÉS, et le second a détruit un dépôt.** La dictée vocale et les quatre composants Vosk ne fonctionnaient pas dans l'application installée — impeccables au serveur de développement, impossibles dans l'exe. Et l'installeur pouvait effacer un arbre de sources sans rien demander. Les deux sont corrigés et tenus par des gardes ; **l'installeur de la 5.0.0 porte encore les deux défauts**.
+
 ### Fixed
 - **LA DICTÉE ÉTAIT IMPOSSIBLE DANS L'APPLICATION INSTALLÉE, et impeccable au serveur de développement — relevé par Fabien après avoir pris tous les modèles.** Le message était « Dictée impossible : vosk-browser n'a pas posé son global ». **Deux pistes écartées par la mesure avant d'arriver à la bonne** : les modèles Vosk sont bien des `.tar.gz` et c'est la forme CORRECTE — `vosk-browser` ne sait déplier que celle-là, le manifeste les déclare en `type: "fichier"`, et `download-vosk-models.cjs` convertit exprès le `.zip` amont ; et le schéma `attic-res:` les sert, rejoué hors d'Electron sur le vrai poste : `attic-res://oonx/vosk-model-small-fr-0.22.tar.gz` résout vers les 42 874 105 octets que le panneau avait téléchargés.
 - **LA CAUSE EST UNE ENVELOPPE UMD QUI CHOISIT SELON CE QU'ELLE TROUVE.** `vosk-browser` pose son API sur `exports` s'il en existe un, et sur `globalThis.Vosk` sinon. Servi tel quel par le serveur de développement — il est dans `optimizeDeps.exclude`, et `build-plugins.ts` écrivait déjà pourquoi — aucun `exports` n'existe, donc le global est posé et tout marchait. **Mais `optimizeDeps.exclude` ne vaut qu'en développement** : la construction de production l'empaquette, Rollup lui fournit un `exports` de synthèse, la première branche est prise, et le global n'est jamais posé. Le chargeur, lui, ne lisait que le global et **jetait ce que l'import rendait**. Il lit maintenant les deux, le module d'abord puisque c'est la forme que livre l'application.
