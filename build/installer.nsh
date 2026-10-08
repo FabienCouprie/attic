@@ -36,7 +36,11 @@
   IfFileExists "$INSTDIR\node_modules\*.*" ${ETIQUETTE}_source
   Goto ${ETIQUETTE}_ok
   ${ETIQUETTE}_source:
-  MessageBox MB_OK|MB_ICONSTOP /SD IDOK "${MESSAGE}"
+  ; `/SD` SE PLACE APRÈS LE TEXTE, et c'est ce qui a fait échouer la construction de la v5.0.1 :
+  ; la syntaxe est `MessageBox style texte [/SD retour] [retour_teste saut]`. Écrit avant le texte,
+  ; NSIS prenait `/SD` POUR le texte, `IDOK` pour une valeur de retour à tester, et le message pour
+  ; l'étiquette où sauter — d'où « could not resolve label "Attic will not uninstall from here. ».
+  MessageBox MB_OK|MB_ICONSTOP "${MESSAGE}" /SD IDOK
   Abort
   ${ETIQUETTE}_ok:
 !macroend
