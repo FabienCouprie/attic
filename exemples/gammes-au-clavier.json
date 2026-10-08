@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "width": 700,
+      "height": 340,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "LES GAMMES AU CLAVIER\n\n« Gamme jouée » parcourt les degrés d'une gamme un à un et les rend en MIDI. Le clavier les montre touche par touche : c'est ce qui permet de voir une gamme autant que de l'entendre.\n\nTOUTES LES GAMMES SONT DANS LA LISTE, les sept modes, les trois mineures, les pentatoniques, le vocabulaire du jazz, les symétriques et les gammes à seconde augmentée. Changer « Gamme » sur l'un des trois nœuds suffit à passer de l'une à l'autre.\n\nET LES DOUZE CLÉS AUSSI. « Clé » déplace tout le parcours sans toucher aux écarts entre degrés : c'est la même gamme, ailleurs. Les deux premiers nœuds le montrent, do majeur et la mineur naturel ayant exactement les mêmes touches et une tonique différente.\n\nLe troisième parcourt une gamme diminuée, huit degrés au lieu de sept : deux notes par temps au lieu d'un rythme boiteux, et c'est sa raison d'être.\n\nLes trois se suivent par les jointures, et le clavier les reçoit à la file.",
+        "nomEn": "SCALES ON THE KEYBOARD\n\n« Scale Run » goes through the degrees of a scale one by one and returns them as MIDI. The keyboard shows them key by key: that is what lets a scale be seen as much as heard.\n\nEVERY SCALE IS IN THE LIST: the seven modes, the three minors, the pentatonics, the jazz vocabulary, the symmetrical scales and the scales with an augmented second. Changing « Scale » on any of the three nodes is enough to move from one to another.\n\nAND THE TWELVE KEYS TOO. « Key » moves the whole run without touching the gaps between degrees: it is the same scale, elsewhere. The first two nodes show it, C major and A natural minor having exactly the same keys and a different tonic.\n\nThe third runs a diminished scale, eight degrees instead of seven: two notes per beat rather than a limping rhythm, and that is its reason for being.\n\nThe three follow one another through the joins, and the keyboard receives them in turn."
+      }
+    },
+    {
+      "id": "do-majeur",
+      "type": "atelier",
+      "position": { "x": 40, "y": 440 },
+      "data": {
+        "ficheId": "gamme-jouee",
+        "parametres": {
+          "Gamme": "majeur",
+          "Clé": "0",
+          "Octave": 4,
+          "Étendue": 1,
+          "Sens": "aller-retour",
+          "Tonique finale": "oui",
+          "Tempo": 110,
+          "Nuance": 90
+        }
+      }
+    },
+    {
+      "id": "la-mineur",
+      "type": "atelier",
+      "position": { "x": 40, "y": 900 },
+      "data": {
+        "ficheId": "gamme-jouee",
+        "parametres": {
+          "Gamme": "mineur",
+          "Clé": "9",
+          "Octave": 3,
+          "Étendue": 1,
+          "Sens": "aller-retour",
+          "Tonique finale": "oui",
+          "Tempo": 110,
+          "Nuance": 90
+        }
+      }
+    },
+    {
+      "id": "diminuee",
+      "type": "atelier",
+      "position": { "x": 40, "y": 1360 },
+      "data": {
+        "ficheId": "gamme-jouee",
+        "parametres": {
+          "Gamme": "diminuee-ton-demi",
+          "Clé": "2",
+          "Octave": 4,
+          "Étendue": 1,
+          "Sens": "montante",
+          "Tonique finale": "oui",
+          "Tempo": 110,
+          "Nuance": 90
+        }
+      }
+    },
+    {
+      "id": "joindre1",
+      "type": "atelier",
+      "position": { "x": 560, "y": 620 },
+      "data": {
+        "ficheId": "jointure-midi",
+        "parametres": { "Chevauchement": 0 }
+      }
+    },
+    {
+      "id": "joindre2",
+      "type": "atelier",
+      "position": { "x": 960, "y": 940 },
+      "data": {
+        "ficheId": "jointure-midi",
+        "parametres": { "Chevauchement": 0 }
+      }
+    },
+    {
+      "id": "clavier",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 700 },
+      "data": {
+        "ficheId": "clavier-apprentissage",
+        "parametres": {
+          "Canal": "auto",
+          "Écart de main": 12,
+          "Adapter": "non",
+          "Anticipation": 3
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e-do-joindre1", "source": "do-majeur", "target": "joindre1", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-la-joindre1", "source": "la-mineur", "target": "joindre1", "sourceHandle": "out:1", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-joindre1-joindre2", "source": "joindre1", "target": "joindre2", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-dim-joindre2", "source": "diminuee", "target": "joindre2", "sourceHandle": "out:1", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-joindre2-clavier", "source": "joindre2", "target": "clavier", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 20, "y": 20, "zoom": 0.3 }
+}

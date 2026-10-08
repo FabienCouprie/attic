@@ -11,6 +11,7 @@ included in Attic.
 |---|---|---|
 | `htdemucs_6s.onnx` | **Code MIT ; weights: scientific / non-commercial use only** (see note below) | Copyright (c) Meta Platforms, Inc. — Demucs v4 (HT-Demucs), 6-stem. ONNX export by StemSplit (`StemSplitio/htdemucs-6s-onnx`) |
 | `htdemucs_fp16weights.onnx` | **Code MIT ; weights: scientific / non-commercial use only** (see note below) | Copyright (c) Meta Platforms, Inc. — Demucs v4 (HT-Demucs), fp16 weights |
+| `basic-pitch.onnx` | Apache-2.0 | Copyright (c) Spotify AB — Basic Pitch (Bittner, Bosch, Rubinstein, Meseguer-Brocal, Ewert, ICASSP 2022), `saved_models/icassp_2022/nmp.onnx`, taken byte-for-byte from the upstream package |
 | `modele-separation.onnx` | MIT | Ultimate Vocal Remover — MDX-Net UVR_MDXNET_9482 |
 | `model_genre.onnx` | **Undeclared** (see note below) | HuBERT fine-tuned for genre classification on GTZAN. Base model: `facebook/hubert-base-ls960` (Apache-2.0). The fine-tune declared no licence, and its repository is no longer reachable |
 | `gtcrn.onnx` | MIT | Copyright (c) 2024 Rong Xiaobin — GTCRN speech enhancement (https://github.com/Xiaobin-Rong/gtcrn), export `stream/onnx_models/gtcrn.onnx` |
@@ -30,6 +31,12 @@ are CC BY-NC-SA.
 Attic is free, open-source and **non-commercial**, which is the basis on which these weights are
 used here. Third-party ONNX exports that re-label these weights "MIT" do not grant rights the
 author did not give, and this file does not repeat that claim.
+
+**Redistribution.** On 2026-10-08 the owner of Attic decided that the scientific reserve is not
+determinative and that only **commercial use** is excluded. These weights are therefore mirrored
+on Attic's own `assets` release, so that an installation without bundled models can fetch them.
+Anyone who takes them from there remains bound by the same limit: **non-commercial use only**, and
+the attributions below.
 
 Required attributions:
 
@@ -70,8 +77,14 @@ ONNX export by lsb (`lsb/stable-audio-3-small-music-onnx`) and bgkb.
 
 This file is a HuBERT fine-tune exported to ONNX. Its upstream repository declared no licence and
 is no longer reachable; the base model (`facebook/hubert-base-ls960`) is Apache-2.0, and the GTZAN
-dataset it was fine-tuned on is a research dataset with no formal licence. Because the chain of
-rights cannot be documented, Attic does not redistribute this file from its own release assets.
+dataset it was fine-tuned on is a research dataset with no formal licence. **The chain of rights
+cannot be documented, and no permission can be cited for it.**
+
+On 2026-10-08 the owner of Attic decided to redistribute it from the `assets` release all the
+same, on the same non-commercial terms as the rest. This is not the Demucs case: there the licence
+is known and only commercial use is excluded, whereas here nothing authorises the redistribution —
+it is a risk knowingly taken, recorded here so that it is not mistaken for a cleared one. Anyone
+who takes this file does so on the same footing.
 
 ### SoundFont
 

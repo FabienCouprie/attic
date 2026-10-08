@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "width": 620,
+      "height": 300,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "DEUX SONS, DEUX RÔLES\n\nUn même matériau harmonique, joué par deux timbres différents : l'un plaque l'accord, l'autre chante la mélodie.\n\n« Harmonie spectrale » rend un accord sous forme de séquence : les partiels d'une fondamentale virtuelle, qui ne tombent pas sur les demi-tons du clavier. « Mélodie sur accords » en tire une ligne, sur les degrés que cet accord autorise. Les deux séquences sont donc de la même famille, et c'est ce qui les fait sonner ensemble.\n\nChaque son est étalé sur les quatre-vingt-huit touches par « Étaler sur le clavier », ce qui en fait une banque d'échantillons. « Jouer une séquence sur une banque » joue la séquence écrite avec ce timbre : la ligne vient du graphe, la couleur vient du son.\n\nL'accord vient de la série harmonique, qui ne tombe pas sur la grille tempérée : trois de ses cinq notes y sont, deux n'y sont pas, à deux et quatorze centièmes de demi-ton. Ce sont la quinte et la tierce majeure naturelles, que le tempérament égal déplace. Ni l'une ni l'autre grille n'est fausse : ce sont deux accords différents.\n\nLe réglage « Hauteurs » tranche, sur les deux joueurs. Ils sont ici sur « Ramenées au demi-ton » : tout sonne comme sur un clavier tempéré, et le message dit combien de notes ont été déplacées et de combien. Passez-les sur « Telles qu'écrites » pour entendre l'accord tel que la série harmonique le donne, une banque jouant par rééchantillonnage et n'étant donc tenue à aucune grille.\n\nLa banque des accords porte une boucle de maintien, pour que l'accord tienne pendant que la mélodie passe. Celle de la mélodie n'en porte pas : chaque note va jusqu'au bout de son échantillon, puis se tait.\n\nPour changer d'instrument, il suffit de changer le son en amont d'une banque : rien d'autre ne bouge.",
+        "nomEn": "TWO SOUNDS, TWO ROLES\n\nOne harmonic material, played by two different timbres: one strikes the chord, the other sings the melody.\n\n« Spectral Harmony » returns a chord as a sequence: the partials of a virtual fundamental, which do not fall on the keyboard's semitones. « Melody over Chords » draws a line from it, on the degrees that chord allows. Both sequences therefore come from the same family, which is what makes them sound together.\n\nEach sound is spread across the eighty-eight keys by « Spread Across Keyboard », which turns it into a sample bank. « Play Sequence on Bank » plays the written sequence with that timbre: the line comes from the graph, the colour from the sound.\n\nThe chord comes from the harmonic series, which does not fall on the tempered grid: three of its five notes do, two do not, by two and fourteen hundredths of a semitone. They are the natural fifth and major third, which equal temperament displaces. Neither grid is wrong: they are two different chords.\n\nThe « Pitches » setting decides, on both players. They are here on « Snapped to semitones »: everything sounds as on a tempered keyboard, and the message says how many notes were moved and by how much. Switch them to « As written » to hear the chord as the harmonic series gives it, a bank playing by resampling and therefore held to no grid.\n\nThe chord bank carries a sustain loop, so the chord holds while the melody passes. The melody bank carries none: each note runs to the end of its sample, then falls silent.\n\nTo change instrument, change the sound upstream of a bank: nothing else moves."
+      }
+    },
+    {
+      "id": "sonAccords",
+      "type": "atelier",
+      "position": { "x": 40, "y": 400 },
+      "data": {
+        "ficheId": "generateur-frequence",
+        "parametres": { "Fréquence": 220, "Forme": "Triangle", "Durée": 2, "Volume": 70 }
+      }
+    },
+    {
+      "id": "banqueAccords",
+      "type": "atelier",
+      "position": { "x": 400, "y": 400 },
+      "data": {
+        "ficheId": "banque-clavier",
+        "parametres": { "Largeur de zone": 6, "Boucle de maintien": "oui", "Longueur de boucle": 1 }
+      }
+    },
+    {
+      "id": "accord",
+      "type": "atelier",
+      "position": { "x": 400, "y": 760 },
+      "data": {
+        "ficheId": "harmonie-spectrale",
+        "parametres": { "Fondamentale": 220, "Partiels": 5 }
+      }
+    },
+    {
+      "id": "jouerAccords",
+      "type": "atelier",
+      "position": { "x": 780, "y": 400 },
+      "data": {
+        "ficheId": "sequence-sur-banque",
+        "parametres": { "Volume": 60, "Relâchement": 400, "Hauteurs": "demi-ton" }
+      }
+    },
+    {
+      "id": "sonMelodie",
+      "type": "atelier",
+      "position": { "x": 40, "y": 1080 },
+      "data": {
+        "ficheId": "barre-modale",
+        "parametres": { "Durée": 1.5, "Volume": 80 }
+      }
+    },
+    {
+      "id": "banqueMelodie",
+      "type": "atelier",
+      "position": { "x": 400, "y": 1080 },
+      "data": {
+        "ficheId": "banque-clavier",
+        "parametres": { "Largeur de zone": 6 }
+      }
+    },
+    {
+      "id": "melodie",
+      "type": "atelier",
+      "position": { "x": 780, "y": 760 },
+      "data": {
+        "ficheId": "melodie-sur-accords",
+        "parametres": { "Notes par accord": 8 }
+      }
+    },
+    {
+      "id": "jouerMelodie",
+      "type": "atelier",
+      "position": { "x": 1140, "y": 1080 },
+      "data": {
+        "ficheId": "sequence-sur-banque",
+        "parametres": { "Volume": 85, "Hauteurs": "demi-ton" }
+      }
+    },
+    {
+      "id": "melange",
+      "type": "atelier",
+      "position": { "x": 1500, "y": 700 },
+      "data": { "ficheId": "melangeur", "parametres": {} }
+    },
+    {
+      "id": "sortie",
+      "type": "atelier",
+      "position": { "x": 1860, "y": 700 },
+      "data": { "ficheId": "sortie-audio", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "a1", "source": "sonAccords", "target": "banqueAccords", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "a2", "source": "accord", "target": "jouerAccords", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "a3", "source": "banqueAccords", "target": "jouerAccords", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "m1", "source": "accord", "target": "melodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "m2", "source": "sonMelodie", "target": "banqueMelodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "m3", "source": "melodie", "target": "jouerMelodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "m4", "source": "banqueMelodie", "target": "jouerMelodie", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "x1", "source": "jouerAccords", "target": "melange", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "x2", "source": "jouerMelodie", "target": "melange", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "x3", "source": "melange", "target": "sortie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ]
+}

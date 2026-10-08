@@ -58,8 +58,15 @@ function removeDirectory(dir) {
   }
 }
 
-/** `--light` construit l'installeur sans les modèles ONNX (voir plus bas). */
-const light = process.argv.includes("--light");
+// IL N'Y A PLUS QU'UN INSTALLEUR, ET IL EST SANS MODÈLES. `--light` existait pour en construire
+// une seconde version qui retirait `public/oonx` des ressources embarquées ; depuis le 2026-10-08
+// c'est la seule, `public/oonx` ayant quitté `build.extraResources` pour de bon et les vingt
+// modèles du manifeste ayant tous une adresse. Le drapeau n'avait donc plus rien à retirer, et son
+// garde-fou — « rien à retirer » — aurait fait échouer toute build qui l'aurait employé.
+//
+// Il n'a d'ailleurs jamais servi en publication : le workflow ne passe pas par ce script, il
+// réimplémente ses étapes en ligne. La seule trace d'un installeur allégé est un fichier local,
+// jamais publié.
 
 function main() {
   originalPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
@@ -70,27 +77,17 @@ function main() {
   const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   pkg.packageManager = "traversal@1.0.0";
 
-  // ── La version allégée ──────────────────────────────────────────────────────────
+  // AUCUN MODÈLE N'EST EMBARQUÉ, et ce n'est plus une option. `public/oonx` a quitté
+  // `build.extraResources` : ce qui reste — le SoundFont, le kit SFZ, les points de contrôle
+  // Magenta, la collection de démonstration, Csound, les exemples — n'est pas de l'ONNX et suit
+  // l'installeur. Les vingt modèles du manifeste se prennent depuis l'application.
   //
-  // `--light` retire les modèles ONNX des ressources embarquées : 1,5 Go de moins, récupérés
-  // depuis l'application par l'icône « Récupérer les modèles IA ». Tout le reste — le SoundFont,
-  // la collection de démonstration, le kit SFZ, Csound — reste embarqué.
-  //
-  // LE RETRAIT SE FAIT DANS package.json, ET NON EN MÉMOIRE, parce que
-  // `verify-bundled-resources.cjs` lit ce fichier : la vérification d'après packaging doit
-  // contrôler la liste ALLÉGÉE, faute de quoi elle réclamerait des modèles qu'on vient de décider
-  // de ne pas embarquer, et ferait échouer une build correcte.
-  if (light) {
-    const avant = pkg.build.extraResources.length;
-    pkg.build.extraResources = pkg.build.extraResources.filter((r) => r.from !== "public/oonx");
-    if (pkg.build.extraResources.length === avant) {
-      console.error("[build] --light : « public/oonx » n'est plus dans extraResources, rien à retirer.");
-      process.exit(1);
-    }
-    // Un nom distinct, sans quoi les deux installeurs se recouvriraient dans `release/` comme sur
-    // la page de publication.
-    pkg.build.nsis = { ...pkg.build.nsis, artifactName: "${productName}-Setup-${version}-light.${ext}" };
-    console.log("[build] version ALLÉGÉE : les modèles ONNX ne sont pas embarqués.");
+  // UN GARDE-FOU REMPLACE LE DRAPEAU : si `public/oonx` revenait dans la liste, l'installeur
+  // reprendrait quatre giga-octets et demi sans que personne l'ait décidé.
+  if (pkg.build.extraResources.some((r) => r.from === "public/oonx")) {
+    console.error("[build] « public/oonx » est revenu dans extraResources : l'installeur ne porte"
+      + " plus de modèles, ils se prennent depuis l'application.");
+    process.exit(1);
   }
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");

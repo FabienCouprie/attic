@@ -1,21 +1,22 @@
 // ui/BoutonModeles.tsx — L'icône qui récupère les modèles IA, à la demande.
 //
-// POURQUOI UNE ICÔNE, ET NON UN TÉLÉCHARGEMENT AU PREMIER USAGE. L'installeur allégé ne contient
-// aucun modèle ONNX : 1,5 Go de moins. Les récupérer quand un nœud en a besoin ferait attendre au
-// pire moment — au milieu d'un travail, sans l'avoir demandé, peut-être sans réseau. Ici c'est
-// l'utilisateur qui décide quand, et il voit ce que ça pèse avant de commencer.
+// POURQUOI UNE ICÔNE, ET NON UN TÉLÉCHARGEMENT AU PREMIER USAGE. L'installeur ne contient aucun
+// modèle ONNX. Les récupérer quand un nœud en a besoin ferait attendre au pire moment — au milieu
+// d'un travail, sans l'avoir demandé, peut-être sans réseau. Ici c'est l'utilisateur qui décide
+// quand, et il voit ce que ça pèse avant de commencer.
 //
-// ELLE SERT AUSSI DANS LA VERSION COMPLÈTE, et ce n'est pas un effet de bord : elle inventorie ce
-// qui est présent et ne prend que le complément. Un modèle abîmé, tronqué par un disque plein ou
-// par un antivirus, se répare donc d'un clic — le fichier retéléchargé va dans le dossier de
-// l'utilisateur, que le résolveur regarde AVANT les ressources livrées.
+// LE PANNEAU MONTRE L'INVENTAIRE ENTIER, et non plus seulement ce qui manque : chaque modèle y a
+// sa ligne, sa marque d'état et son poids. C'est le seul endroit de l'application où l'on peut
+// répondre à « ce modèle est-il là ? », et c'est de là qu'on reprend un modèle abîmé — tronqué par
+// un disque plein ou par un antivirus — au lieu de réinstaller. Le fichier retéléchargé va dans le
+// dossier de l'utilisateur, que le résolveur regarde AVANT les ressources livrées.
 //
 // Tout ce qui se décide — quelle pastille, quelle infobulle, ce qu'un clic déclenche — vit dans
 // `etat-modeles.ts` et s'y éprouve : sur un poste qui a déjà tous les modèles, cinq des six états
 // ne s'affichent jamais.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { traduire } from "../i18n";
-import { apparenceModeles, aPrendre, sansAdresse, formaterOctets, type EtatModeles, type ModeleEtat, type ProgressionModeles } from "./etat-modeles";
+import { apparenceModeles, aPrendre, sansAdresse, inventaireAffiche, formaterOctets, type EtatLigne, type EtatModeles, type LigneModele, type ProgressionModeles } from "./etat-modeles";
 import { langueCourante } from "../i18n";
 
 const COULEURS: Record<string, string | undefined> = {
@@ -26,11 +27,38 @@ const COULEURS: Record<string, string | undefined> = {
   erreur: "#e44",
 };
 
+// La marque qui tient lieu d'état, en tête de ligne : une colonne qu'on parcourt du regard.
+// Elle n'est jamais seule à le dire — l'infobulle de la ligne le dit en mots, et c'est elle que
+// l'étiquette accessible reprend.
+const MARQUES: Record<EtatLigne, string> = { "a-prendre": "↓", muet: "—", present: "✓" };
+const INFOBULLES: Record<EtatLigne, string> = {
+  "a-prendre": "modeles.prendre", muet: "modeles.sansAdresseUn", present: "modeles.reprendre",
+};
+
 export function BoutonModeles({ etiquette }: { etiquette: string }) {
   const [etat, setEtat] = useState<EtatModeles | null>(null);
   const [progression, setProgression] = useState<ProgressionModeles | null>(null);
   const [panneau, setPanneau] = useState(false);
   const enVol = useRef(false);
+  const ancre = useRef<HTMLSpanElement | null>(null);
+  const boite = useRef<HTMLDivElement | null>(null);
+  const [ancrage, setAncrage] = useState<"droite" | "gauche">("droite");
+
+  // DE QUEL CÔTÉ LE PANNEAU TOMBE, mesuré à l'ouverture et non décidé une fois pour toutes.
+  //
+  // CE QUI A ÉTÉ VU DANS L'APPLICATION : le panneau s'ancrait sur le bord DROIT de l'icône. Dans
+  // une fenêtre large, la barre tient sur une ligne et l'icône est à droite : il tombait bien.
+  // Dans une fenêtre de 900 px, la barre passe à deux lignes et l'icône revient à gauche, à 78 px
+  // du bord — le panneau partait alors à −186 px, et les noms des modèles étaient hors de l'écran,
+  // seuls les poids restant lisibles. Trois lignes le cachaient à peine ; vingt le rendent évident.
+  //
+  // La mesure part du conteneur et de la largeur du panneau, jamais de sa position courante : un
+  // calcul fondé sur celle-ci oscillerait d'un bord à l'autre.
+  useLayoutEffect(() => {
+    if (!panneau || !ancre.current || !boite.current) return;
+    const bord = ancre.current.getBoundingClientRect().right;
+    setAncrage(bord - boite.current.offsetWidth < 8 ? "gauche" : "droite");
+  }, [panneau]);
 
   const rafraichir = useCallback(async () => {
     const api = (window as any).api;
@@ -78,8 +106,8 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
     if (!apparence.actionnable || !api) return;
     if (apparence.interrompt) { await api.modelesAnnuler?.(); return; }
     if (enVol.current) return;
-    const liste = aPrendre(etat, langueCourante() === "en");
-    if (liste.length === 0) { setPanneau((v) => !v); return; }
+    // Le panneau s'ouvre dans tous les cas : il montre désormais l'inventaire entier, et il a donc
+    // quelque chose à dire même quand il n'y a rien à prendre.
     setPanneau((v) => !v);
   };
 
@@ -89,9 +117,10 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
   const anglais = langueCourante() === "en";
   const liste = aPrendre(etat, anglais);
   const muets = sansAdresse(etat, anglais);
+  const tout = inventaireAffiche(etat, anglais);
 
   return (
-    <span style={{ position: "relative", display: "inline-flex" }}>
+    <span ref={ancre} style={{ position: "relative", display: "inline-flex" }}>
     <button
       className="attic-btn-icon"
       title={infobulle}
@@ -124,23 +153,51 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
       )}
     </button>
     {panneau && (
-      <div className="attic-modeles-panneau" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={boite}
+        className="attic-modeles-panneau"
+        style={ancrage === "gauche" ? { left: 0, right: "auto" } : { left: "auto", right: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {liste.length > 0 ? (
-          <>
-            <button className="attic-modeles-tout" onClick={() => telecharger()}>
-              {traduire("modeles.tout", liste.length, formaterOctets(liste.reduce((s, m) => s + m.octets, 0)))}
-            </button>
-            {liste.map((m: ModeleEtat) => (
-              <button key={m.id} className="attic-modeles-ligne" onClick={() => telecharger([m.id])}
-                title={traduire(m.partiel ? "modeles.partiel" : "modeles.prendre", m.nom)}>
-                <span className="attic-modeles-nom">{m.nom}</span>
-                <span className="attic-modeles-poids">{formaterOctets(m.octets)}</span>
-              </button>
-            ))}
-          </>
+          <button className="attic-modeles-tout" onClick={() => telecharger()}>
+            {traduire("modeles.tout", liste.length, formaterOctets(liste.reduce((s, m) => s + m.octets, 0)))}
+          </button>
         ) : (
-          <div className="attic-modeles-vide">{traduire("modeles.rienAPrendre")}</div>
+          // LE COMPTE EST CELUI DES PRÉSENTS, et non le total : avec un modèle sans source
+          // publiée, rien n'est à prendre et pourtant tout n'est pas là.
+          <div className="attic-modeles-vide">
+            {traduire("modeles.rienAPrendre", tout.filter((m) => m.ligne === "present").length)}
+          </div>
         )}
+        {tout.map((m: LigneModele) => {
+          // Un modèle sans adresse n'a pas de bouton à offrir : rien n'irait le chercher. Les
+          // autres en ont un, y compris les présents — c'est par là qu'on reprend un fichier
+          // abîmé, le seul geste qui rendait l'installation entière nécessaire jusqu'ici.
+          const mot = traduire(m.partiel ? "modeles.partiel" : INFOBULLES[m.ligne], m.nom);
+          const contenu = (
+            <>
+              <span className="attic-modeles-marque" aria-hidden="true">{MARQUES[m.ligne]}</span>
+              <span className="attic-modeles-nom">{m.nom}</span>
+              <span className="attic-modeles-poids">{formaterOctets(m.octets)}</span>
+            </>
+          );
+          return m.ligne === "muet" ? (
+            <div key={m.id} className="attic-modeles-ligne attic-modeles-ligne-inerte" title={mot} aria-label={mot}>
+              {contenu}
+            </div>
+          ) : (
+            <button
+              key={m.id}
+              className={`attic-modeles-ligne${m.ligne === "present" ? " attic-modeles-ligne-presente" : ""}`}
+              onClick={() => telecharger([m.id])}
+              title={mot}
+              aria-label={mot}
+            >
+              {contenu}
+            </button>
+          );
+        })}
         {muets.length > 0 && (
           <div className="attic-modeles-vide">{traduire("modeles.sansAdresse", muets.length)}</div>
         )}

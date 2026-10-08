@@ -74,11 +74,17 @@ describe("nœud Score esthétique", () => {
     expect(c.progres.length).toBe(3);
   });
 
-  it("dit que le modèle manque, avec la commande pour le récupérer", async () => {
+  it("dit que le modèle manque, ET PAR OÙ LE PRENDRE SANS RÉINSTALLER", async () => {
+    // Le message nommait le fichier et renvoyait à `npm run download:audiobox-aesthetics`, puis,
+    // pour une application installée, à la réinstaller. Aucun des deux ne tient : le modèle n'est
+    // plus dans l'installeur, et l'icône de la barre d'outils le prend. Ce cas tient le renvoi.
     (globalThis as any).window = { api: fausseApi({ absent: true }) };
     const r = await fiche("score-esthetique").executer(ctx([tampon(3)]) as any);
     expect(r.erreur).toBe(true);
-    expect(r.message).toMatch(/audiobox-aesthetics/);
+    expect(r.message).toMatch(/Audiobox Aesthetics/);
+    expect(r.message).toMatch(/Récupérer les modèles IA/);
+    expect(r.message, "un message qui dit de réinstaller envoie refaire 400 Mo pour rien")
+      .not.toMatch(/réinstall/i);
   });
 
   it("refuse de tourner hors de l'application de bureau", async () => {

@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 900, "y": 40 },
+      "width": 640,
+      "height": 320,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE PARTITION POUR DEUX TIMBRES\n\nLa musique s'écrit à un seul endroit, en notation ABC, et le graphe la distribue à deux instruments.\n\nLa partition porte deux voix. « ABC → MIDI » les rend sur des canaux MIDI différents, un par voix. « MIDI → séquence » lit un canal et rend ses notes : deux exemplaires réglés sur deux canaux, et les deux voix se séparent.\n\nChaque voix va ensuite à sa banque. Un son étalé sur les quatre-vingt-huit touches par « Étaler sur le clavier » devient une banque d'échantillons, et « Jouer une séquence sur une banque » joue la voix avec ce timbre.\n\nPour changer d'instrument, changez le son en amont d'une banque : rien d'autre ne bouge. Pour changer la musique, modifiez le texte ABC : la distribution suit.\n\nLes hauteurs venues d'un fichier MIDI sont entières, un numéro de note tenant sur un octet. Par cette route, tout est donc sur la grille tempérée du début à la fin.\n\nLa banque des accords porte une boucle de maintien, pour qu'un accord tienne ses quatre temps. Celle de la mélodie n'en porte pas : chaque note va jusqu'au bout de son échantillon, puis se tait.\n\nLa notation ABC accepte davantage que ces deux voix : accords chiffrés, reprises, changements de mesure et de tonalité. « MIDI → ABC » fait le chemin inverse, pour relire en notation ce qu'on a joué ailleurs.",
+        "nomEn": "ONE SCORE FOR TWO TIMBRES\n\nThe music is written in a single place, in ABC notation, and the graph hands it to two instruments.\n\nThe score carries two voices. « ABC → MIDI » returns them on different MIDI channels, one per voice. « MIDI → Sequence » reads one channel and returns its notes: two copies set to two channels, and the voices part.\n\nEach voice then goes to its bank. A sound spread across the eighty-eight keys by « Spread Across Keyboard » becomes a sample bank, and « Play Sequence on Bank » plays the voice with that timbre.\n\nTo change instrument, change the sound upstream of a bank: nothing else moves. To change the music, edit the ABC text: the distribution follows.\n\nPitches coming from a MIDI file are whole numbers, a note number fitting in one byte. By this route everything therefore sits on the tempered grid from end to end.\n\nThe chord bank carries a sustain loop, so a chord holds its four beats. The melody bank carries none: each note runs to the end of its sample, then falls silent.\n\nABC notation takes more than these two voices: chord symbols, repeats, changes of metre and key. « MIDI → ABC » makes the return trip, to read back in notation what was played elsewhere."
+      }
+    },
+    {
+      "id": "partition",
+      "type": "atelier",
+      "position": { "x": 40, "y": 420 },
+      "width": 520,
+      "height": 420,
+      "data": {
+        "ficheId": "abc-vers-midi",
+        "parametres": {
+          "ABC": "X:1\nT:Deux voix pour deux timbres\nM:4/4\nL:1/4\nK:C\nV:1\nE2 G2 | A2 G2 | F2 E2 | D4 | E2 G2 | c2 B2 | A2 G2 | C4 |\nV:2\n[CEG]4 | [CEG]4 | [DFA]4 | [GBd]4 | [CEG]4 | [Ace]4 | [DFA]4 | [CEG]4 |\n"
+        }
+      }
+    },
+    {
+      "id": "voixMelodie",
+      "type": "atelier",
+      "position": { "x": 620, "y": 300 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": { "Canal": 0 } }
+    },
+    {
+      "id": "voixAccords",
+      "type": "atelier",
+      "position": { "x": 620, "y": 620 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": { "Canal": 1 } }
+    },
+    {
+      "id": "sonMelodie",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "data": { "ficheId": "barre-modale", "parametres": { "Durée": 1.5, "Volume": 80 } }
+    },
+    {
+      "id": "banqueMelodie",
+      "type": "atelier",
+      "position": { "x": 420, "y": 40 },
+      "data": { "ficheId": "banque-clavier", "parametres": { "Largeur de zone": 6 } }
+    },
+    {
+      "id": "sonAccords",
+      "type": "atelier",
+      "position": { "x": 40, "y": 940 },
+      "data": {
+        "ficheId": "generateur-frequence",
+        "parametres": { "Fréquence": 220, "Forme": "Triangle", "Durée": 2, "Volume": 70 }
+      }
+    },
+    {
+      "id": "banqueAccords",
+      "type": "atelier",
+      "position": { "x": 420, "y": 940 },
+      "data": {
+        "ficheId": "banque-clavier",
+        "parametres": { "Largeur de zone": 6, "Boucle de maintien": "oui", "Longueur de boucle": 1 }
+      }
+    },
+    {
+      "id": "jouerMelodie",
+      "type": "atelier",
+      "position": { "x": 1000, "y": 170 },
+      "data": { "ficheId": "sequence-sur-banque", "parametres": { "Volume": 75 } }
+    },
+    {
+      "id": "jouerAccords",
+      "type": "atelier",
+      "position": { "x": 1000, "y": 790 },
+      "data": { "ficheId": "sequence-sur-banque", "parametres": { "Volume": 45, "Relâchement": 300 } }
+    },
+    {
+      "id": "melange",
+      "type": "atelier",
+      "position": { "x": 1380, "y": 480 },
+      "data": { "ficheId": "melangeur", "parametres": {} }
+    },
+    {
+      "id": "sortie",
+      "type": "atelier",
+      "position": { "x": 1740, "y": 480 },
+      "data": { "ficheId": "sortie-audio", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "n1", "source": "partition", "target": "voixMelodie", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "n2", "source": "partition", "target": "voixAccords", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "b1", "source": "sonMelodie", "target": "banqueMelodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "b2", "source": "sonAccords", "target": "banqueAccords", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "j1", "source": "voixMelodie", "target": "jouerMelodie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "j2", "source": "banqueMelodie", "target": "jouerMelodie", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "j3", "source": "voixAccords", "target": "jouerAccords", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "j4", "source": "banqueAccords", "target": "jouerAccords", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "x1", "source": "jouerMelodie", "target": "melange", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "x2", "source": "jouerAccords", "target": "melange", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "x3", "source": "melange", "target": "sortie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ]
+}

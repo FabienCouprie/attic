@@ -60,8 +60,9 @@
     "verify:resources": "node scripts/verify-bundled-resources.cjs",
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",
+    "modeles:telecharger": "node scripts/modeles.cjs --telecharger",
+    "assets": "node scripts/modeles.cjs --telecharger && node scripts/download-music-collection.cjs && node scripts/ensure-songsee.cjs",
     "modeles:publier": "node scripts/modeles.cjs --publier",
-    "build:electron:light": "node scripts/build-electron.cjs --light",
     "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts",
     "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts",
     "docs:lignes": "cross-env ECRIRE_LIGNES=1 vitest run src/docs/generer-compte-lignes.test.ts"
@@ -99,16 +100,6 @@
       "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*"
     ],
     "extraResources": [
-      {
-        "from": "public/oonx",
-        "to": "oonx",
-        "filter": [
-          "**/*",
-          "!sdxs-512-texte-image/**",
-          "!stable-audio-3-small-music/**",
-          "!kokoro-82m/**"
-        ]
-      },
       {
         "from": "public/magenta",
         "to": "magenta"

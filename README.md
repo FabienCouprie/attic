@@ -71,7 +71,19 @@ See [`PORTING-A-DOMAIN.md`](PORTING-A-DOMAIN.md) for the concrete plugin/UI cont
 ### Install
 
 ```bash
-npm install
+npm install          # dependencies, plus the tolerant downloads of `postinstall`
+npm run assets       # the 20 manifest models, the demo collection, Csound — each checked by SHA-256
+npm run verify:resources
+```
+
+`git clone` brings **no model**: they are excluded from git and live on the [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. `npm install` alone leaves a checkout that cannot run most AI nodes — its `postinstall` fetches a few packages in *tolerant* mode, which means a network failure is silent by design.
+
+`npm run assets` is what closes that gap. It reads `scripts/modeles-manifest.json`, downloads only what is missing or the wrong size, checks every SHA-256 before putting a file in place, and unpacks each archive under the root its manifest entry declares. Run it again at any time: it takes nothing it already has.
+
+**One thing it cannot fetch: the SoundFont** (`public/sf2`, 141.5 MB). It is not in the manifest and travels only inside `assets.zip`. Until it is published on its own, get it with:
+
+```bash
+gh release download assets -p assets.zip --dir . && 7z x assets.zip -y
 ```
 
 ### Development
@@ -120,11 +132,16 @@ npm run lint # oxlint
 
 ## ONNX Models
 
-AI models (Demucs, MDX-Net, Stable Audio 3) are distributed via `extraResources` (outside asar). They are excluded from git (too large) and downloaded separately as part of the release build (`assets.zip`, see Releasing below). See `public/oonx/` for model storage.
+**The installer carries no AI model.** Since 2026-10-08, `public/oonx` is no longer in `build.extraResources`, and `build.files` already excluded `dist/oonx/**/*` — so nothing leads a model into the package. The twenty models of `scripts/modeles-manifest.json` are published on the [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release, each with its size and SHA-256, and are fetched on demand:
+
+- **in the app**, through the "Fetch the AI models" toolbar icon. Its panel lists **all twenty models** — each with a state mark (`↓` to fetch, `✓` present, `—` no published source) and its weight, so nothing is downloaded before you have seen what it costs. Clicking a present model takes it again, which is how a file damaged by a full disk or an antivirus is repaired; reinstalling the app would not bring it back, since the installer carries none. Downloads go to `%APPDATA%\Attic\ressources`, outside the install directory, so an update never loses them;
+- **from a checkout**, with `npm run assets` (see Install above).
+
+This is the price of the decision, and it should be said plainly: **an installation with no network cannot run any node that needs a model** until it has been fetched once. The first use of such a node costs a download of 0.2 MB to 1.7 GB depending on the package.
 
 The Sherpa-ONNX ASR node needs five browser WASM files in `public/sherpa-onnx-wasm/`. They are fetched from the `assets` release by `scripts/download-sherpa-wasm.cjs`, run from `postinstall`, and each is checked against a SHA-256 pinned in that script — this is executable WebAssembly, so a file that does not match is refused rather than installed. They used to come from the `@siteed/sherpa-onnx.rn` npm package: 864 MB installed for 12.8 MB actually used, none of its JavaScript ever imported, dragging a React Native toolchain (Metro, Expo) that this Electron app never loads and that carried four unfixable advisories. No upstream replacement exists — the official `sherpa-onnx` package ships only a Node build, and k2-fsa publishes no WASM release assets — so the files are pinned at the version that package shipped.
 
-SDXS-512 (`texte-image` node) is now part of the build-time asset pipeline and bundled with the installer (~680 MB, see the `assets` release). The node still accepts a custom model folder via the "Chemin modèle" / "Model path" parameter.
+SDXS-512 (`texte-image` node) is fetched on demand like every other model (648.9 MB, `sdxs-512` in the manifest). It was never actually bundled: the `extraResources` filter excluded it even while this paragraph claimed otherwise. The node still accepts a custom model folder via the "Chemin modèle" / "Model path" parameter.
 
 **Important**: All Transformers.js models must use `dtype: "fp32"` + `device: "wasm"` + `env.backends.onnx.wasm.proxy = true`. Quantized models (`q8`) cause `DequantizeLinear` errors with onnxruntime-web 1.26+.
 
@@ -166,11 +183,11 @@ electron/
 
 Pushing a `v*.*.*` tag triggers the `Release Electron` workflow (`.github/workflows/release.yml`), which builds and publishes the Windows installer.
 
-The bundled AI models (`public/oonx`) and SoundFont (`public/sf2`) are **not stored in Git**. They are packaged as `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release. The workflow downloads and extracts this archive before building.
+The SoundFont (`public/sf2`, 141.5 MB) is **not stored in Git**. It travels in `assets.zip` on the dedicated [`assets`](https://github.com/FabienCouprie/attic/releases/tag/assets) release, which the workflow downloads and extracts before building. The archive still holds the ONNX models too, but the installer no longer takes them: that step now fetches several gigabytes to obtain 141 MB. Publishing `sf2.zip` on its own would end that, and is a publishing decision that has not been made.
 
 If you update the models or SoundFont, recreate `assets.zip` and re-upload it to the `assets` release. **Nothing checks this**: the workflow extracts whatever `assets.zip` currently holds, so a forgotten upload silently ships an installer with stale models — no warning, no build failure.
 
-The **Audiobox Aesthetics** model used by the Aesthetic Score and Aesthetic Comparison nodes (`audiobox-aesthetics.onnx`, 420 MB) is published on its own on the same release and fetched by `npm run download:audiobox-aesthetics`, which checks its size and SHA-256 before installing it into `public/oonx`. To regenerate it, see `scripts/export-audiobox-aesthetics.py`; a new file means a new expected SHA-256 in the download script.
+The **Audiobox Aesthetics** model used by the Aesthetic Score and Aesthetic Comparison nodes (`audiobox-aesthetics.onnx`, 420 MB) is in the manifest like every other model, so `npm run assets` and the toolbar icon both take it; `npm run download:audiobox-aesthetics` remains as the single-model script and checks its size and SHA-256 before installing it into `public/oonx`. To regenerate it, see `scripts/export-audiobox-aesthetics.py`; a new file means a new expected SHA-256 in both the download script and the manifest.
 
 The demo **`music collection`** — opened by default by the Music player, Sound Map and Music explorer, and used by the training exercises — is not in Git either. It is published as `music-collection.zip` on the same release, and `scripts/music-collection.manifest.json` (versioned) lists the name, size and SHA-256 of every file. `npm run download:music-collection` fetches what is missing and refuses an archive that does not match the manifest; it never overwrites a local file that differs. **If you change the collection**, run `node scripts/download-music-collection.cjs --pack <path>.zip`, which rewrites the manifest and builds the archive, upload the archive with `gh release upload assets <path>.zip --clobber`, and commit the manifest.
 

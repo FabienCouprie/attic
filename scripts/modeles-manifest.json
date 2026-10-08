@@ -11,7 +11,7 @@
       "octets": 352084,
       "source": {
         "type": "fichier",
-        "url": "https://raw.githubusercontent.com/Xiaobin-Rong/gtcrn/main/stream/onnx_models/gtcrn.onnx",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/gtcrn.onnx",
         "octets": 352084,
         "sha256": "f648b02f2d7ff96ebcb0eec2219688a08ed12fe7e3d50f248605a90eba8cad17"
       },
@@ -47,6 +47,28 @@
       ]
     },
     {
+      "id": "basic-pitch",
+      "nom": "Transcription polyphonique",
+      "nomEn": "Polyphonic transcription",
+      "noeuds": [
+        "transcripteur-midi"
+      ],
+      "octets": 230444,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/basic-pitch.onnx",
+        "octets": 230444,
+        "sha256": "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/basic-pitch.onnx",
+          "octets": 230444,
+          "sha256": "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec"
+        }
+      ]
+    },
+    {
       "id": "htdemucs-6s",
       "nom": "Séparation 6 pistes",
       "nomEn": "6-stem separation",
@@ -56,7 +78,9 @@
       "octets": 258159781,
       "source": {
         "type": "fichier",
-        "url": null
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/htdemucs_6s.onnx",
+        "octets": 258159781,
+        "sha256": "48f8e84945579f8ab340e083339e9221e03785dbe733a52c388200b6d3ca779a"
       },
       "fichiers": [
         {
@@ -76,7 +100,9 @@
       "octets": 165612636,
       "source": {
         "type": "fichier",
-        "url": null
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/htdemucs_fp16weights.onnx",
+        "octets": 165612636,
+        "sha256": "d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a"
       },
       "fichiers": [
         {
@@ -96,7 +122,9 @@
       "octets": 94843658,
       "source": {
         "type": "fichier",
-        "url": null
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/model_genre.onnx",
+        "octets": 94843658,
+        "sha256": "a2d9874671664b44b97f103849fc5ba14294c200ae7016b7091d24d2657aff3a"
       },
       "fichiers": [
         {

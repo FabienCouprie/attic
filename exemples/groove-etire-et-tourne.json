@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -520 },
+      "width": 1200,
+      "height": 430,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN GROOVE ÉTIRÉ, PHASÉ, TOURNÉ, ET MIS DANS UNE SALLE\n\nQuatre traitements à la suite sur une boucle de neuf secondes, qui en ressort à soixante-quinze.\n\n1. « Groove Box » engendre la boucle : do majeur, progression I–VI–IV–V, 110 battements par minute, mélodie de réservoir et batterie. Sa graine est fixée à 4242, sans quoi elle en tirerait une au hasard et la pièce changerait à chaque exécution.\n\n2. « Paulstretch » l'étire huit fois, ce qui est son réglage par défaut : neuf secondes en font soixante-douze.\n\n3. « Phaser » y passe ses filtres passe-tout en cascade, modulés à un demi-hertz.\n\n4. « Rotation ambisonique » encode la prise en champ sonore, la fait tourner d'un demi-tour autour de l'auditeur, et la redescend en stéréo.\n\n5. « Réverbération à convolution » l'inscrit dans une salle de deux secondes et demie, ce qui ajoute une queue de près de trois secondes à la fin.\n\nCE QUE LA MESURE MONTRE, ET QUI NE VA PAS DE SOI.\n\nL'ÉTIREMENT FAIT DÉJÀ TOUT L'ÉLARGISSEMENT. La corrélation entre les deux canaux part de 0,951 sur la boucle, c'est-à-dire presque un son mono, et tombe à 0,013 après le Paulstretch. La randomisation des phases travaille chaque canal pour lui-même, et défait donc leur ressemblance au passage.\n\nLA ROTATION AMBISONIQUE N'A PLUS GRAND-CHOSE À DÉCORRÉLER quand elle reçoit ce signal : la corrélation reste à 0,016 avant comme après elle. Ce qu'elle fait entendre ici est un déplacement et une baisse de six décibels, non un élargissement. La placer AVANT l'étirement lui donnerait un signal encore corrélé, et son travail s'entendrait.\n\nLE NIVEAU DESCEND À CHAQUE ÉTAGE, de moins un décibel de crête sur la boucle à moins treize à la sortie. C'est la somme des mélanges à moitié traités et de la baisse de la rotation ; rien n'écrête.",
+        "nomEn": "A GROOVE STRETCHED, PHASED, ROTATED, AND PUT IN A ROOM\n\nFour treatments in a row on a nine-second loop, which comes out at seventy-five.\n\n1. « Groove Box » generates the loop: C major, I–VI–IV–V progression, 110 beats per minute, reservoir melody and drums. Its seed is fixed at 4242, without which it would draw one at random and the piece would change at every run.\n\n2. « Paulstretch » stretches it eight times, which is its default setting: nine seconds become seventy-two.\n\n3. « Phaser » runs its cascaded all-pass filters through it, modulated at half a hertz.\n\n4. « Ambisonic Rotation » encodes the take as a sound field, turns it half a turn around the listener, and brings it back down to stereo.\n\n5. « Convolution Reverb » places it in a two-and-a-half-second room, which adds a tail of nearly three seconds at the end.\n\nWHAT THE MEASUREMENT SHOWS, AND WHICH IS NOT OBVIOUS.\n\nTHE STRETCH ALREADY DOES ALL THE WIDENING. The correlation between the two channels starts at 0.951 on the loop, that is to say nearly a mono sound, and falls to 0.013 after the Paulstretch. Phase randomisation works each channel for itself, and so undoes their likeness along the way.\n\nAMBISONIC ROTATION HAS LITTLE LEFT TO DECORRELATE when it receives this signal: correlation stays at 0.016 before it as after it. What it makes audible here is a displacement and a six-decibel drop, not a widening. Placing it BEFORE the stretch would give it a still-correlated signal, and its work would be heard.\n\nTHE LEVEL FALLS AT EVERY STAGE, from minus one decibel of peak on the loop to minus thirteen at the output. It is the sum of the half-treated mixes and of the rotation's drop; nothing clips."
+      }
+    },
+    {
+      "id": "groove",
+      "type": "atelier",
+      "position": { "x": 60, "y": 260 },
+      "data": { "ficheId": "boite-groove", "parametres": { "Graine": 4242 } }
+    },
+    {
+      "id": "stretch",
+      "type": "atelier",
+      "position": { "x": 640, "y": 260 },
+      "data": { "ficheId": "paulstretch", "parametres": {} }
+    },
+    {
+      "id": "phaser",
+      "type": "atelier",
+      "position": { "x": 1220, "y": 260 },
+      "data": { "ficheId": "phaser", "parametres": {} }
+    },
+    {
+      "id": "ambi",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 260 },
+      "data": { "ficheId": "ambisonique", "parametres": {} }
+    },
+    {
+      "id": "reverb",
+      "type": "atelier",
+      "position": { "x": 2380, "y": 260 },
+      "data": { "ficheId": "reverbe-convolution", "parametres": {} }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2960, "y": 260 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    }
+  ],
+  "edges": [
+    { "id": "e-groove-stretch", "source": "groove", "sourceHandle": "out:0", "target": "stretch", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-stretch-phaser", "source": "stretch", "sourceHandle": "out:0", "target": "phaser", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-phaser-ambi", "source": "phaser", "sourceHandle": "out:0", "target": "ambi", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-ambi-reverb", "source": "ambi", "sourceHandle": "out:0", "target": "reverb", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-reverb-ecoute", "source": "reverb", "sourceHandle": "out:0", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 580, "zoom": 0.55 }
+}

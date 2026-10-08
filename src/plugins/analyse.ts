@@ -5,6 +5,7 @@ import { avecDoc } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
+import { lireModeleEmbarque } from "../modele-embarque";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
@@ -389,8 +390,12 @@ export const fiches: FicheAudio[] = ([
       let notes;
       if (methode === "poly") {
         try {
+          // LE MODÈLE EST LU ICI, et annoncé avant, comme pour les dix autres nœuds à modèle. Il
+          // se téléchargeait auparavant chez un tiers au fond du calcul, sans que rien ne le dise.
+          await annoncerModele(ctx, "transcripteur-midi", traduire("progress.transcription_pourcent_var_0", 0));
+          const modele = await lireModeleEmbarque("oonx/basic-pitch.onnx");
           notes = await transcrirePolyphonique(audio, seuil, noteMin, noteMax, (p) =>
-            ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)));
+            ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)), modele);
         } catch (e: any) {
           // NE PAS retomber silencieusement sur le FFT monophonique : c'est ce
           // que faisait l'ancien code, si bien qu'un modèle indisponible donnait

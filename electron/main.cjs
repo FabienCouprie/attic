@@ -556,16 +556,18 @@ ipcMain.handle("demucs:separer", async (_event, options) => {
       const fichier6s = "htdemucs_6s.onnx";
       const fichier4s = "htdemucs_fp16weights.onnx";
       const cible = modele6s ? fichier6s : fichier4s;
-      const candidats = [
-        path.join(__dirname, "..", "htdemucs", cible),
-        path.join(__dirname, "..", "public", "oonx", cible),
-        path.join(__dirname, "..", "dist", "oonx", cible),
-        path.join(process.resourcesPath || "", "oonx", cible),
-      ];
-      modelePath = candidats.find((p) => p && fs.existsSync(p)) || modelePath;
+      // `resoudreRessource` PLUTÔT QU'UNE LISTE DE CANDIDATS ÉCRITE ICI, et c'est ce qui rend ces
+      // poids atteignables du tout. La liste ne contenait pas le dossier inscriptible où le
+      // téléchargeur pose ce qu'il a pris : les poids de Demucs n'ayant pas d'adresse, personne ne
+      // pouvait les y déposer et le manque ne se voyait pas. Maintenant qu'ils se téléchargent, un
+      // installeur sans modèles les aurait cherchés partout sauf là où ils sont.
+      modelePath = resoudreRessource(path.join("oonx", cible), contexteRessources()) || modelePath;
     }
     if (!modelePath || !fs.existsSync(modelePath)) {
-      return { ok: false, erreur: `Fichier modèle introuvable : ${modelePath}` };
+      // LE CHEMIN CHERCHÉ EST DIT, et non « undefined » : quand aucun candidat n'existait, la
+      // variable était vide et le message affichait le mot. Il ne disait donc ni ce qui manque,
+      // ni où l'on avait regardé.
+      return { ok: false, erreur: `Modèle de séparation introuvable : ${modelePath || `oonx/${modele6s ? fichier6s : fichier4s}`}` };
     }
     const nbStems = modele6s ? 6 : 4;
     const chans = canaux.map((c) => (c instanceof Float32Array ? c : Float32Array.from(c)));
@@ -635,13 +637,10 @@ ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
     const { audio, prompt, generatedSeconds, steps, seed, modelPath: cheminExplicite } = options;
     let modelDir = cheminExplicite;
     if (!modelDir) {
-      const cible = "stable-audio-3-small-music";
-      const candidats = [
-        path.join(__dirname, "..", "public", "oonx", cible),
-        path.join(__dirname, "..", "dist", "oonx", cible),
-        path.join(process.resourcesPath || "", "oonx", cible),
-      ];
-      modelDir = candidats.find((p) => p && fs.existsSync(p)) || null;
+      // MÊME CORRECTION QUE POUR LA GÉNÉRATION, qui l'avait reçue sans que la continuation la
+      // reçoive : la liste de candidats ignorait le dossier inscriptible, de sorte qu'un paquet
+      // pris par la barre d'outils marchait pour l'une et pas pour l'autre.
+      modelDir = resoudreRessource(path.join("oonx", "stable-audio-3-small-music"), contexteRessources());
     } else {
       modelDir = resoudreRessource(modelDir, contexteRessources());
     }
@@ -743,9 +742,9 @@ ipcMain.handle("telecharger:url", async (_event, urlStr) => {
 
 // ─── Les modèles ONNX, téléchargés à la demande ───
 //
-// L'installeur allégé ne les embarque pas ; l'installeur complet les a déjà. Les deux emploient les
-// mêmes gestionnaires : l'inventaire répond simplement « rien à prendre » sur une installation
-// complète, et l'icône y sert alors à réparer un modèle abîmé.
+// L'installeur n'en embarque aucun depuis le 2026-10-08 : tout passe par ces gestionnaires. Sur une
+// installation à jour, l'inventaire répond « rien à prendre » et l'icône sert alors à voir ce qui
+// est là et à reprendre un modèle abîmé.
 
 /** Le manifeste, lu à chaque appel : il est minuscule, et le relire évite un cache à invalider. */
 function lireManifesteModeles() {
@@ -1522,9 +1521,9 @@ app.whenReady().then(() => {
   // la réponse est un flux, jamais un tampon. C'est ce qui permet de se déplacer dans un film de
   // onze minutes sans jamais en tenir plus de quelques centaines de kilo-octets.
   // LES RESSOURCES LIVRÉES, pour les workers. Le résolveur est celui de tout le dépôt : il regarde
-  // d'abord dans le dossier inscriptible de l'utilisateur, de sorte qu'un modèle téléchargé à la
-  // demande par l'installeur allégé, ou retéléchargé pour réparer une livraison abîmée, l'emporte
-  // sur celui de `resources/`.
+  // d'abord dans le dossier inscriptible de l'utilisateur, où tout modèle arrive désormais —
+  // l'installeur n'en embarque plus aucun —, et où va aussi celui qu'on reprend pour réparer un
+  // fichier abîmé, de sorte qu'il l'emporte sur celui de `resources/`.
   protocol.handle(SCHEMA_RESSOURCE, (requete) =>
     servirRessource(requete, (relatif) => resoudreRessource(relatif, contexteRessources())));
 

@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -560 },
+      "width": 1240,
+      "height": 470,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN CRI ÉTALÉ SUR LE CLAVIER\n\nD'une description écrite jusqu'à un instrument jouable, en six étapes.\n\n1. « Bruitage IA » engendre six secondes de son à partir de la description « woman screaming ». La graine est fixée à 4242, sans quoi chaque exécution donnerait un autre cri. Le modèle se télécharge au premier usage.\n\n2. « Paulstretch » est réglé sur un, c'est-à-dire sans étirement : la durée ressort inchangée. Il reste dans la chaîne comme un point de réglage, l'étirement se levant ensuite sans recâbler quoi que ce soit.\n\n3. « Courbe » fabrique un sinus lent, trois dixièmes de hertz sur six secondes, et le branche sur l'entrée « Modulation fréquence » du phaser. La vitesse du phaser suit donc cette courbe au lieu d'être fixe.\n\n4. « Sélecteur multi-zones » sert à choisir l'extrait. Une zone est posée d'avance, de une seconde et demie à trois secondes et demie, et elle est à REDESSINER sur le cri obtenu : un cri a son sommet où il l'a, et changer la graine ou la description le déplace. La zone se trace à la souris sur l'onde du composant.\n\n5. « Extraire zones (sélecteur) » découpe cette zone et la raboute, avec un fondu de cinq millisecondes aux raccords.\n\n6. « Étaler sur le clavier » fait de cet extrait une banque d'échantillons sur les quatre-vingt-huit touches : une zone tous les deux demi-tons autour de la note d'origine, ce qui donne dix-huit zones. « Clavier SFZ » reçoit la banque et se joue.\n\nLA SORTIE « APERÇU » du composant qui étale se branche sur une sortie audio : elle fait entendre la banque sans passer par le clavier.\n\nCE QUE LA PROJECTION SUR LE CLAVIER FAIT D'UN CRI. Chaque touche rejoue l'extrait transposé ; deux demi-tons de part et d'autre de chaque point de référence, c'est la largeur au-delà de laquelle une transposition s'entend comme un artifice plutôt que comme une note.",
+        "nomEn": "A SCREAM SPREAD ACROSS THE KEYBOARD\n\nFrom a written description to a playable instrument, in six steps.\n\n1. « AI Foley » generates six seconds of sound from the description « woman screaming ». The seed is fixed at 4242, without which every run would give another scream. The model downloads on first use.\n\n2. « Paulstretch » is set to one, that is without stretching: the length comes out unchanged. It stays in the chain as a setting point, the stretch being raised later without rewiring anything.\n\n3. « Curve » builds a slow sine, three tenths of a hertz over six seconds, and feeds it to the phaser's « Rate modulation » input. The phaser's rate therefore follows that curve instead of being fixed.\n\n4. « Multi-Zone Selector » is where the extract is chosen. One zone is set in advance, from one and a half to three and a half seconds, and it is TO BE REDRAWN on the scream obtained: a scream has its peak where it has it, and changing the seed or the description moves it. The zone is drawn with the mouse on the node's waveform.\n\n5. « Extract Zones (Selector) » cuts that zone and splices it, with a five-millisecond fade at the joins.\n\n6. « Spread Across Keyboard » makes that extract into a sample bank across the eighty-eight keys: one zone every two semitones around the source note, which gives eighteen zones. « SFZ Keyboard » receives the bank and plays.\n\nTHE « PREVIEW » OUTPUT of the spreading node feeds an audio output: it sounds the bank without going through the keyboard.\n\nWHAT PROJECTING A SCREAM ONTO THE KEYBOARD DOES. Each key replays the extract transposed; two semitones either side of each reference point is the width beyond which a transposition is heard as a contrivance rather than as a note."
+      }
+    },
+    {
+      "id": "cri",
+      "type": "atelier",
+      "position": { "x": 60, "y": 260 },
+      "data": {
+        "ficheId": "bruitage-ia",
+        "parametres": { "Prompt": "woman screaming", "Durée": 6, "Étapes": 8, "Graine": 4242 }
+      }
+    },
+    {
+      "id": "stretch",
+      "type": "atelier",
+      "position": { "x": 640, "y": 260 },
+      "data": { "ficheId": "paulstretch", "parametres": { "Stretch": 1 } }
+    },
+    {
+      "id": "courbe",
+      "type": "atelier",
+      "position": { "x": 640, "y": 640 },
+      "data": {
+        "ficheId": "generateur-courbe",
+        "parametres": { "Forme": "Sinus", "Durée": 6, "Fréquence": 0.3 }
+      }
+    },
+    {
+      "id": "phase",
+      "type": "atelier",
+      "position": { "x": 1220, "y": 260 },
+      "data": { "ficheId": "phaser", "parametres": {} }
+    },
+    {
+      "id": "selecteur",
+      "type": "atelier",
+      "position": { "x": 1800, "y": 260 },
+      "data": {
+        "ficheId": "selecteur-multi-zones",
+        "parametres": {},
+        "zonesSelectionnees": [{ "debut": 1.5, "duree": 2 }]
+      }
+    },
+    {
+      "id": "extrait",
+      "type": "atelier",
+      "position": { "x": 2380, "y": 260 },
+      "data": { "ficheId": "extraire-zones-selecteur", "parametres": { "Fondu": 5 } }
+    },
+    {
+      "id": "clavier",
+      "type": "atelier",
+      "position": { "x": 2960, "y": 260 },
+      "data": { "ficheId": "banque-clavier", "parametres": {} }
+    },
+    {
+      "id": "jouer",
+      "type": "atelier",
+      "position": { "x": 3540, "y": 260 },
+      "data": { "ficheId": "clavier-sfz", "parametres": {} }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 2960, "y": 700 },
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    }
+  ],
+  "edges": [
+    { "id": "e-cri-stretch", "source": "cri", "sourceHandle": "out:0", "target": "stretch", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-stretch-phase", "source": "stretch", "sourceHandle": "out:0", "target": "phase", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-courbe-phase", "source": "courbe", "sourceHandle": "out:0", "target": "phase", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-phase-selecteur", "source": "phase", "sourceHandle": "out:0", "target": "selecteur", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-selecteur-audio", "source": "selecteur", "sourceHandle": "out:0", "target": "extrait", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-selecteur-zones", "source": "selecteur", "sourceHandle": "out:1", "target": "extrait", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-extrait-clavier", "source": "extrait", "sourceHandle": "out:0", "target": "clavier", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-clavier-jouer", "source": "clavier", "sourceHandle": "out:0", "target": "jouer", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-clavier-ecoute", "source": "clavier", "sourceHandle": "out:1", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 620, "zoom": 0.45 }
+}

@@ -62,8 +62,25 @@ const FAUSSE_API = () => {
   };
 };
 
+/** Et un inventaire complet : l'état d'une installation à jour, où le panneau ne listait rien. */
+const FAUSSE_API_COMPLETE = () => {
+  (window as any).__appels = [];
+  (window as any).api = {
+    modelesEtat: async () => ({
+      complets: 2, total: 2, octetsAPrendre: 0, manquants: [], sansAdresse: [],
+      modeles: [
+        { id: "gtcrn", nom: "Debruitage IA", octets: 352084, complet: true, partiel: false, telechargeable: true },
+        { id: "basic-pitch", nom: "Transcription polyphonique", octets: 17000000, complet: true, partiel: false, telechargeable: true },
+      ],
+    }),
+    modelesTelecharger: async (ids: string[] | undefined) => { (window as any).__appels.push(ids ?? "tout"); return { ok: true }; },
+    modelesProgression: () => () => {},
+    modelesAnnuler: async () => ({ ok: true }),
+  };
+};
+
 test.describe("panneau des modèles IA", () => {
-  test("LISTE CE QUI MANQUE, DU PLUS LOURD AU PLUS LÉGER, ET NE PREND QUE CE QU'ON DEMANDE", async ({ page }) => {
+  test("LISTE TOUT L'INVENTAIRE, CE QUI MANQUE D'ABORD, ET NE PREND QUE CE QU'ON DEMANDE", async ({ page }) => {
     test.setTimeout(120000);
     await page.addInitScript(FAUSSE_API);
     await page.goto(devUrl);
@@ -74,16 +91,26 @@ test.describe("panneau des modèles IA", () => {
     await expect(icone).toBeVisible({ timeout: 10000 });
     await icone.click();
 
+    // LES CINQ MODÈLES DE L'INVENTAIRE ONT UNE LIGNE, et non les trois qui manquent : à prendre
+    // du plus lourd au plus léger, puis celui qu'on ne peut pas aller chercher, puis le présent.
     const lignes = page.locator(".attic-modeles-ligne .attic-modeles-nom");
-    await expect(lignes).toHaveCount(3, { timeout: 5000 });
+    await expect(lignes).toHaveCount(5, { timeout: 5000 });
     expect(await lignes.allTextContents()).toEqual([
       "Stable Audio 3 (musique)", "Texte vers image", "Separation voix/instrumental",
+      "Classement par genre", "Debruitage IA",
     ]);
+    // Chaque ligne porte sa marque d'état, et le présent est le seul coché.
+    expect(await page.locator(".attic-modeles-ligne .attic-modeles-marque").allTextContents())
+      .toEqual(["↓", "↓", "↓", "—", "✓"]);
     // Les poids sont dits avant de cliquer, et celui qui n'a pas d'adresse est signalé à part.
     const poids = await page.locator(".attic-modeles-ligne .attic-modeles-poids").allTextContents();
     expect(poids[0]).toMatch(/686 (Mo|MB)/); // le poids est dit avant de cliquer
     await expect(page.locator(".attic-modeles-vide")).toContainText(/1/);
     await expect(page.locator(".attic-modeles-tout")).toContainText(/3/);
+
+    // CELUI QUI N'A PAS D'ADRESSE N'EST PAS UN BOUTON : rien n'irait le chercher.
+    await expect(page.locator(".attic-modeles-ligne-inerte")).toHaveCount(1);
+    await expect(page.locator("button.attic-modeles-ligne")).toHaveCount(4);
 
     // Un clic sur une ligne ne prend QUE ce modèle-là.
     await page.locator(".attic-modeles-ligne").nth(2).click();
@@ -94,5 +121,34 @@ test.describe("panneau des modèles IA", () => {
     await icone.click();
     await page.locator(".attic-modeles-tout").click();
     expect(await page.evaluate(() => (window as any).__appels)).toEqual([["separation-mdx"], "tout"]);
+  });
+
+  test("ET SUR UNE INSTALLATION COMPLÈTE IL MONTRE QUAND MÊME TOUT, reprise d'un fichier comprise", async ({ page }) => {
+    // LE CAS QUI MANQUAIT. Le panneau ne listait que les absents : tout étant là, il ne montrait
+    // qu'une phrase, et aucun endroit de l'application ne disait quels modèles étaient installés
+    // ni ne permettait de reprendre un fichier abîmé autrement qu'en réinstallant.
+    test.setTimeout(120000);
+    await page.addInitScript(FAUSSE_API_COMPLETE);
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 20000 });
+
+    // Tout étant là, l'icône ne porte aucune pastille : on la désigne par son infobulle, dans l'une
+    // ou l'autre langue, et non par le texte d'un badge qui n'existe pas dans cet état.
+    const icone = page.locator(
+      '.attic-barre-outils button[title*="modèles IA"], .attic-barre-outils button[title*="AI models"]',
+    ).first();
+    await expect(icone).toBeVisible({ timeout: 10000 });
+    await icone.click();
+
+    const lignes = page.locator(".attic-modeles-ligne .attic-modeles-nom");
+    await expect(lignes).toHaveCount(2, { timeout: 5000 });
+    expect(await lignes.allTextContents()).toEqual(["Debruitage IA", "Transcription polyphonique"]);
+    // Rien à prendre : pas de bouton « tout prendre », mais le compte est dit.
+    await expect(page.locator(".attic-modeles-tout")).toHaveCount(0);
+    await expect(page.locator(".attic-modeles-vide")).toContainText(/2/);
+
+    // Et un clic sur un modèle présent le redemande : c'est la réparation d'un fichier abîmé.
+    await page.locator(".attic-modeles-ligne").first().click();
+    expect(await page.evaluate(() => (window as any).__appels)).toEqual([["gtcrn"]]);
   });
 });

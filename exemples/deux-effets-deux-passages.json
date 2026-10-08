@@ -1,0 +1,303 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": 70,
+        "y": -203.5
+      },
+      "width": 520,
+      "height": 150,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "DEUX EFFETS SUR DEUX PASSAGES\n\nLes doseurs se chaînent : le second prend en « Sec » la sortie du premier, et en « Traité » cette même sortie passée dans son propre effet. Chaque passage reçoit son traitement, et ce qui n'est dans aucune zone ressort intact.\n\nPasse-bas de 0,5 à 1,5 s, passe-haut de 2,5 à 3,5 s.",
+        "nomEn": "TWO EFFECTS OVER TWO PASSAGES\n\nThe blends chain: the second takes the first one's output as « Dry », and that same output run through its own effect as « Treated ». Each passage gets its own treatment, and whatever lies in no zone comes out untouched.\n\nLow-pass from 0.5 to 1.5 s, high-pass from 2.5 to 3.5 s."
+      }
+    },
+    {
+      "id": "source",
+      "type": "atelier",
+      "position": {
+        "x": -525.8578661424806,
+        "y": 217.36568535430078
+      },
+      "width": 306,
+      "height": 385,
+      "data": {
+        "ficheId": "oscillateur",
+        "parametres": {
+          "Forme": "Dent de scie",
+          "Fréquence": 220,
+          "Durée": 4,
+          "Volume": 80
+        }
+      }
+    },
+    {
+      "id": "zones1",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 560
+      },
+      "data": {
+        "ficheId": "selecteur-multi-zones",
+        "parametres": {},
+        "zonesSelectionnees": [
+          {
+            "debut": 0.5,
+            "duree": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "zones2",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 1000
+      },
+      "data": {
+        "ficheId": "selecteur-multi-zones",
+        "parametres": {},
+        "zonesSelectionnees": [
+          {
+            "debut": 2.5,
+            "duree": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "passe-bas",
+      "type": "atelier",
+      "position": {
+        "x": 339.0161346576496,
+        "y": 79.16578343104112
+      },
+      "width": 306,
+      "height": 399,
+      "data": {
+        "ficheId": "reponse-filtre",
+        "parametres": {
+          "Type": "Passe-bas",
+          "Fréquence de coupure": 300
+        }
+      }
+    },
+    {
+      "id": "dosage1",
+      "type": "atelier",
+      "position": {
+        "x": 840,
+        "y": 360
+      },
+      "width": 236,
+      "height": 286,
+      "data": {
+        "ficheId": "doser-effet",
+        "parametres": {
+          "Dose": 100,
+          "Mode": "Insertion",
+          "Application": "Dans les zones",
+          "Fondu d'entrée": 50,
+          "Fondu de sortie": 50,
+          "Loi du fondu": "Linéaire"
+        }
+      }
+    },
+    {
+      "id": "passe-haut",
+      "type": "atelier",
+      "position": {
+        "x": 1240,
+        "y": 680
+      },
+      "width": 306,
+      "height": 399,
+      "data": {
+        "ficheId": "reponse-filtre",
+        "parametres": {
+          "Type": "Passe-haut",
+          "Fréquence de coupure": 2000
+        }
+      }
+    },
+    {
+      "id": "dosage2",
+      "type": "atelier",
+      "position": {
+        "x": 1640,
+        "y": 360
+      },
+      "width": 236,
+      "height": 286,
+      "data": {
+        "ficheId": "doser-effet",
+        "parametres": {
+          "Dose": 100,
+          "Mode": "Insertion",
+          "Application": "Dans les zones",
+          "Fondu d'entrée": 50,
+          "Fondu de sortie": 50,
+          "Loi du fondu": "Linéaire"
+        }
+      }
+    },
+    {
+      "id": "vue",
+      "type": "atelier",
+      "position": {
+        "x": 2040,
+        "y": 360
+      },
+      "data": {
+        "ficheId": "visualiseur-forme-onde",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-source-zones1",
+      "source": "source",
+      "target": "zones1",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-source-zones2",
+      "source": "source",
+      "target": "zones2",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-source-passe-bas",
+      "source": "source",
+      "target": "passe-bas",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-source-sec1",
+      "source": "source",
+      "target": "dosage1",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-passe-bas-traite1",
+      "source": "passe-bas",
+      "target": "dosage1",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-zones1-dosage1",
+      "source": "zones1",
+      "target": "dosage1",
+      "sourceHandle": "out:1",
+      "targetHandle": "in:2",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#e8590c",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-dosage1-sec2",
+      "source": "dosage1",
+      "target": "dosage2",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-dosage1-passe-haut",
+      "source": "dosage1",
+      "target": "passe-haut",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-passe-haut-traite2",
+      "source": "passe-haut",
+      "target": "dosage2",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-zones2-dosage2",
+      "source": "zones2",
+      "target": "dosage2",
+      "sourceHandle": "out:1",
+      "targetHandle": "in:2",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#e8590c",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-dosage2-vue",
+      "source": "dosage2",
+      "target": "vue",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 443.08361247847796,
+    "y": 185.71722581001097,
+    "zoom": 0.5
+  }
+}

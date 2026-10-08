@@ -7,8 +7,14 @@ import { fft } from "./fft";
 import Meyda from "meyda";
 import { traduire } from "../i18n";
 
-const GENRE_MODELE_URL =
-  "https://huggingface.co/Jeev12/GTZAN_Genre_Classification/resolve/main/model.onnx";
+// LE REPLI VERS HUGGINGFACE A ÉTÉ RETIRÉ, et il était contraire à la règle du dépôt : tous les
+// modèles viennent de la release `assets`, et aucun nœud ne va les chercher chez un tiers. Celui-ci
+// le faisait en silence quand le fichier local manquait, vers un dépôt qui rend 401 depuis le
+// 2026-09-22 — un chemin qui ne pouvait donc plus que rater, sans que personne le sache : l'échec
+// du `fetch` n'était même pas signalé, le nœud retombant sur son heuristique.
+//
+// Le modèle se prend désormais comme les autres, par l'icône « Récupérer les modèles IA », et
+// `modele_genre.onnx` est au manifeste avec son adresse et son empreinte.
 
 
 const ETIQUETTES_GENRE = [
@@ -313,15 +319,10 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   if (trames.length > 0) {
     try {
       const ort = await import("onnxruntime-web");
-      let d: ArrayBuffer;
-      if (modeleBuffer) {
-        d = modeleBuffer;
-      } else {
-        const rep = await fetch(GENRE_MODELE_URL);
-        if (!rep.ok) throw new Error("HTTP " + rep.status);
-        d = await rep.arrayBuffer();
-      }
-      const sess = await ort.InferenceSession.create(new Uint8Array(d), { executionProviders: ["wasm"] });
+      // SANS MODÈLE LOCAL, ON NE CHERCHE PLUS AILLEURS : on le dit et l'on retombe sur
+      // l'heuristique, ce que la suite fait déjà quand la session échoue.
+      if (!modeleBuffer) throw new Error(traduire("msg.classification_modele_absent"));
+      const sess = await ort.InferenceSession.create(new Uint8Array(modeleBuffer), { executionProviders: ["wasm"] });
       const nF = trames.length;
       const td = new Float32Array(nF * nM);
       for (let f = 0; f < nF; f++) td.set(trames[f], f * nM);
@@ -352,7 +353,10 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
     const scTotal = scSorted.reduce((s, v) => s + v.score, 0);
     genres = scSorted.slice(0, 5).map((s) => ({ genre: s.genre, confiance: scTotal > 0 ? s.score / scTotal : 0 }));
     descr.push("");
-    if (modeleBuffer && erreurOnnx) {
+    // LA RAISON SE DIT DANS TOUS LES CAS, et non seulement quand un modèle avait été fourni.
+    // L'ancienne condition taisait précisément le cas le plus fréquent : modèle absent, repli
+    // réseau raté, heuristique rendue sans que rien n'explique pourquoi.
+    if (erreurOnnx) {
       descr.push(traduire("msg.genres_onnx_echou"));
       descr.push(traduire("msg.erreur_var_0", erreurOnnx));
     }
