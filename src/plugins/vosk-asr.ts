@@ -57,6 +57,9 @@ type Reconnaisseur = {
 /** Un modèle chargé, tel que la bibliothèque le rend. Exporté : `parole-vers-sequence` en tient un. */
 export type ModeleVosk = { KaldiRecognizer: new (frequence: number, grammaire?: string) => Reconnaisseur; terminate(): void };
 
+/** Ce que la bibliothèque expose, par son module ou par son global selon la forme qu'elle prend. */
+type ApiVosk = { createModel(url: string): Promise<ModeleVosk> };
+
 /**
  * Les modèles déjà chargés, par fichier.
  *
@@ -70,10 +73,28 @@ export async function chargerModele(fichier: string): Promise<ModeleVosk> {
   const dejaLa = modeles.get(fichier);
   if (dejaLa) return dejaLa;
   const promesse = (async () => {
-    await import("vosk-browser");
-    const global = (globalThis as unknown as { Vosk?: { createModel(url: string): Promise<ModeleVosk> } }).Vosk;
-    if (!global?.createModel) throw new Error("vosk-browser n'a pas posé son global");
-    return global.createModel(`${baseModeleLivre("oonx")}/${fichier}`);
+    // LA BIBLIOTHÈQUE S'EXPOSE À DEUX ENDROITS SELON LA FORME SOUS LAQUELLE ELLE ARRIVE, et ne
+    // lire que le premier rendait la dictée impossible dans l'application installée.
+    //
+    // `vosk-browser` est un paquet UMD. Son enveloppe choisit à l'exécution : s'il existe un
+    // `exports` et un `module`, elle y pose l'API ; sinon elle pose `globalThis.Vosk`. Servi tel
+    // quel par le serveur de développement — il est exclu de l'optimiseur de dépendances, et
+    // `build-plugins.ts` dit pourquoi — aucun des deux n'existe, donc c'est le global qui est posé
+    // et tout marchait. MAIS `optimizeDeps.exclude` NE VAUT QU'EN DÉVELOPPEMENT : une construction
+    // de production l'empaquette, Rollup lui fournit un `exports` de synthèse, la première branche
+    // est prise, et `globalThis.Vosk` n'est JAMAIS posé.
+    //
+    // Mesuré sur le bundle de production, bouton de dictée cliqué : « Dictée impossible :
+    // vosk-browser n'a pas posé son global », et `typeof globalThis.Vosk` vaut `undefined`. Le
+    // défaut était donc invisible au développement et certain dans l'exe — les quatre composants
+    // Vosk le subissaient avec elle.
+    //
+    // On lit les deux, le module d'abord puisque c'est la forme que livre l'application.
+    const module = await import("vosk-browser") as unknown as Partial<ApiVosk>;
+    const global = (globalThis as unknown as { Vosk?: Partial<ApiVosk> }).Vosk;
+    const api = typeof module?.createModel === "function" ? module : global;
+    if (!api?.createModel) throw new Error("vosk-browser n'expose createModel ni par son module ni par son global");
+    return api.createModel(`${baseModeleLivre("oonx")}/${fichier}`);
   })();
   modeles.set(fichier, promesse);
   // Un chargement raté ne doit pas rester en cache : la tentative suivante le reprendrait.
