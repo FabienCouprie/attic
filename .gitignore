@@ -128,18 +128,26 @@ TERMS_OF_USE.md
 # correspond au registre (src/docs/generer-catalogue.test.ts).
 EXERCISE-WORKBOOK.md
 
-# UNE INSTALLATION D'ATTIC DANS LE DOSSIER DES SOURCES.
+# UNE INSTALLATION D'ATTIC DANS LE DOSSIER DES SOURCES — CE QUE CELA A FINI PAR COÛTER.
 #
-# La racine du dépôt contient une application Attic installée — `Attic.exe`, son désinstalleur, les
-# `.pak` et les DLL de Chromium, `locales/`, et un dossier `resources/` de 2,7 Go. Ce n'est pas une
-# sortie de build : c'est l'installeur qui a été pointé sur `E:\attic`.
+# La racine de ce dépôt a porté une application Attic installée : l'installeur avait été pointé sur
+# `E:\attic`. Ces lignes la cachaient de `git status`, pour qu'un `git add -A` distrait ne committe
+# pas `Attic.exe`, et pour que le linter cesse de parcourir les copies de sources de
+# `resources/app/`. La note se terminait par : « cela ne remplace pas de désinstaller l'application
+# d'ici ». Elle n'a pas été suivie.
 #
-# Deux conséquences, et la seconde est la plus sournoise : `git status` mélange ces fichiers avec le
-# travail en cours — un `git add -A` distrait committerait `Attic.exe` —, et le LINTER PARCOURAIT
-# les copies de sources dans `resources/app/`, signalant des défauts à un endroit où les corriger
-# n'aurait servi à rien.
+# LE 2026-10-08, LE DÉPÔT A ÉTÉ EFFACÉ. Installer la v5.0.0 — vers `C:\Program Files\Attic`, pas
+# ici — a lu l'ancien emplacement dans le registre et lancé l'ancien désinstalleur en silence. Un
+# désinstalleur electron-builder fait `RMDir /r "$INSTDIR"`. L'arbre de travail, `.git`, les
+# modèles, la SoundFont, `presets/`, `work/` et les médias de l'utilisateur sont partis d'un coup.
+# Ce qui était commité a survécu sur le distant ; le reste non.
 #
-# Les ignorer évite l'accident. Cela ne remplace pas de désinstaller l'application d'ici.
+# CES LIGNES RESTENT, POUR LE FILET QU'ELLES TENDENT, MAIS ELLES NE SONT PLUS LE REMÈDE : cacher
+# l'installation est précisément ce qui l'a laissée là. Le remède est ailleurs, en deux morceaux
+# exécutables : `build/installer.nsh` refuse désormais d'installer dans un arbre de sources ET d'en
+# désinstaller quoi que ce soit, et `scripts/installeur-arbre-de-sources.test.ts` fait tomber la
+# suite si une application empaquetée est dépliée ici. Un test qui tombe est plus bruyant qu'un
+# `git status` propre.
 resources/
 resources.pak
 Attic.exe

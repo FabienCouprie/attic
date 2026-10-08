@@ -58,11 +58,11 @@ jobs:
       # tout instrument MIDI du catalogue sonne, et une application qui s'ouvre muette n'a rien
       # à offrir à qui l'essaie.
       #
-      # CE QUI RESTE À PAYER, ET QUI EST D'UN AUTRE ORDRE : il n'est pas dans git et ne voyage
-      # que dans `assets.zip`, soit 2 060 571 648 octets rapatriés ici pour en extraire 141,5 Mo.
-      # Publier `sf2.zip` à part ferait tomber ce téléchargement à cent quarante méga-octets SANS
-      # rien changer à ce qui part dans l'installeur, les deux questions étant distinctes. Cette
-      # publication-là n'a pas été décidée.
+      # CE QUI COÛTE ICI NE REGARDE QUE LA CONSTRUCTION, et ne remet pas son statut en jeu : il
+      # n'est pas dans git et ne voyage que dans `assets.zip`, soit 2 060 571 648 octets rapatriés
+      # pour en extraire 148 398 306. Le prix est payé par ce job, une fois par publication, et
+      # rien de ce qui part dans l'installeur n'en dépend. Vérifié dans la v5.0.0 publiée :
+      # `resources\sf2\FluidR3_GM.sf2`, 148 398 306 octets, le plus gros élément qu'elle porte.
       - name: Download the bundled SoundFont
         run: |
           gh release download assets -p assets.zip --dir .

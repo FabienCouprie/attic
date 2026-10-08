@@ -136,10 +136,11 @@ describe("configuration réelle", () => {
     // LA SEULE EXCEPTION, NOMMÉE AVEC SA RAISON : le SoundFont n'est pas au manifeste et ne
     // voyage que dans `assets.zip`, dont le README donne la commande qui l'en tire.
     //
-    // ELLE NE DIT RIEN D'UN DÉPART. Le SoundFont RESTE EMBARQUÉ, décidé par Fabien le
-    // 2026-10-08 : ce n'est pas un modèle qu'on choisit de prendre, c'est ce avec quoi tout
-    // instrument MIDI du catalogue sonne. Cette ligne ne tombera que le jour où `sf2.zip` sera
-    // publié à part, ce qui changerait d'où on le tire et non ce qui part dans l'installeur.
+    // ELLE NE DIT RIEN D'UN DÉPART, et le statut du SoundFont n'est pas en jeu : il RESTE
+    // EMBARQUÉ. Ce n'est pas un modèle qu'on choisit de prendre, c'est ce avec quoi tout
+    // instrument MIDI du catalogue sonne. Vérifié dans la v5.0.0 publiée :
+    // `resources\sf2\FluidR3_GM.sf2`, 148 398 306 octets, le plus gros élément qu'elle porte.
+    // L'exception ne parle que du manifeste, et le cas suivant tient l'embarquement.
     const HORS_ASSETS: Record<string, string> = {
       "public/sf2": "le SoundFont n'est pas au manifeste : il ne vient que de assets.zip, "
         + "et le README donne la commande qui l'en tire.",
