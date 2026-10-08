@@ -15,6 +15,7 @@ import { FREQUENCE_VOSK, MODELES, chargerModele } from "../../plugins/vosk-asr";
 import { nomsDeDictee } from "../../plugins/prompt-graphe";
 import { grammaireDeDictee, interpreterDictee, type ApparieurFlou, type Commande, type NomDicte } from "./commandes-dictee";
 import { apparierFlou } from "../../plugins/appariement-flou";
+import { unSeulALaFois, verrou } from "./un-seul-a-la-fois";
 
 /** Le code du worklet, posé en blob : il n'a pas de fichier à lui pour ne rien ajouter au paquet. */
 const WORKLET = `
@@ -30,6 +31,13 @@ registerProcessor("relais-dictee", RelaisDictee);
 
 export interface EtatDictee {
   ecoute: boolean;
+  /**
+   * L'écoute est en train de se monter : modèle, micro et worklet.
+   *
+   * IL FAUT QUE CELA SE VOIE, sans quoi le bouton paraît inerte pendant quelques secondes et
+   * l'on reclique. Un second clic ne monte plus rien, mais le dire vaut mieux que l'ignorer.
+   */
+  demarrage: boolean;
   /** Ce que le moteur comprend à l'instant, avant d'avoir tranché. */
   partiel: string;
   /** Vide tant que rien ne cloche ; sinon ce qu'il faut dire à l'utilisateur. */
@@ -64,9 +72,14 @@ export function useDictee(
   surCommandes: (commandes: Commande[]) => string | void,
 ): EtatDictee & { basculer: () => void } {
   const [ecoute, setEcoute] = useState(false);
+  const [demarrage, setDemarrage] = useState(false);
   const [partiel, setPartiel] = useState("");
   const [erreur, setErreur] = useState("");
   const [avis, setAvis] = useState("");
+  // LE VERROU EST UN OBJET ET NON UN ÉTAT, parce qu'un état n'est lu qu'au rendu suivant et
+  // que deux clics rapides peuvent tomber avant lui. Voir `un-seul-a-la-fois.ts`, qui porte
+  // le défaut dont il est né.
+  const verrouRef = useRef(verrou());
   const arretRef = useRef<(() => void) | null>(null);
   const commandesRef = useRef(surCommandes);
   commandesRef.current = surCommandes;
@@ -83,7 +96,8 @@ export function useDictee(
   const arreterRef = useRef(arreter);
   arreterRef.current = arreter;
 
-  const demarrer = useCallback(async () => {
+  const demarrer = useCallback(() => unSeulALaFois(verrouRef.current, async () => {
+    setDemarrage(true);
     setErreur("");
     let flux: MediaStream | null = null;
     let ctx: AudioContext | null = null;
@@ -152,8 +166,10 @@ export function useDictee(
       try { rec?.remove(); } catch { /* jamais créé */ }
       setErreur(e instanceof Error ? e.message : String(e));
       setEcoute(false);
+    } finally {
+      setDemarrage(false);
     }
-  }, [langue]);
+  }), [langue]);
 
   const basculer = useCallback(() => {
     if (ecoute) arreter();
@@ -163,5 +179,5 @@ export function useDictee(
   // Le micro ne survit pas à la fenêtre : sans cela, un onglet fermé le laisserait pris.
   useEffect(() => () => { arretRef.current?.(); }, []);
 
-  return { ecoute, partiel, erreur, avis, basculer };
+  return { ecoute, demarrage, partiel, erreur, avis, basculer };
 }

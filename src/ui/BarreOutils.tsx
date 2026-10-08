@@ -39,7 +39,7 @@ interface Props {
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
   /** La dictée : son état, et le geste qui l'ouvre ou la ferme. */
-  dictee: { ecoute: boolean; partiel: string; erreur: string; avis: string; basculer: () => void };
+  dictee: { ecoute: boolean; demarrage: boolean; partiel: string; erreur: string; avis: string; basculer: () => void };
   nbPlugins: number;
   sf2Nom: string;
   onChargerSF2: (f: File) => void;
@@ -272,8 +272,14 @@ export function BarreOutils(props: Props) {
           </svg>
         </button>
         {/* L'AVIS PASSE DEVANT LE PARTIEL : un refus doit se lire, et le partiel repart au mot
-            suivant de toute façon. */}
-        {dictee.ecoute && <span className="attic-chemin">{dictee.avis || dictee.partiel || t("dictee.ecoute")}</span>}
+            suivant de toute façon. ET LE DÉMARRAGE PASSE DEVANT TOUT : monter l'écoute prend
+            quelques secondes, pendant lesquelles le bouton paraissait inerte, de sorte qu'on
+            recliquait et que le même énoncé se posait deux fois. */}
+        {(dictee.ecoute || dictee.demarrage) && (
+          <span className="attic-chemin">
+            {dictee.demarrage ? t("dictee.demarrage") : (dictee.avis || dictee.partiel || t("dictee.ecoute"))}
+          </span>
+        )}
         {dictee.erreur && <span className="attic-chemin">{`${t("dictee.erreur")} ${dictee.erreur}`}</span>}
       </Groupe>
       <span className="attic-sep" />

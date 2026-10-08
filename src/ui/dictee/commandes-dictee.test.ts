@@ -6,7 +6,8 @@
 // `src/plugins/dictee-catalogue.test.ts`.
 import { describe, expect, it } from "vitest";
 import {
-  JETON_INCONNU, grammaireDeDictee, interpreterDictee, motsDeCommande, porteursSurs, segmenter,
+  JETON_INCONNU, MOTS_COMMANDE, grammaireDeDictee, interpreterDictee, motsDeCommande,
+  porteursSurs, segmenter,
   type ApparieurFlou, type NomDicte,
 } from "./commandes-dictee";
 
@@ -294,5 +295,55 @@ describe("la grammaire donnée au moteur", () => {
     expect(motsDeCommande("fr")).toContain("relier");
     expect(motsDeCommande("en")).toContain("link");
     expect(motsDeCommande("en")).not.toContain("relier");
+  });
+});
+
+describe("les gestes de séance, qui ne touchent pas au graphe", () => {
+  const gestes = (texte: string, langue: "fr" | "en" = "fr") =>
+    interpreterDictee(texte, NOMS, langue).map((c) => c.quoi);
+
+  it("LANCER, ARRÊTER ET RECENTRER SE DISENT, et ne posent aucun composant", () => {
+    expect(gestes("lance")).toEqual(["lancer"]);
+    expect(gestes("exécute")).toEqual(["lancer"]);
+    expect(gestes("arrête")).toEqual(["arreterExecution"]);
+    expect(gestes("halte")).toEqual(["arreterExecution"]);
+    expect(gestes("recentre")).toEqual(["recentrer"]);
+  });
+
+  it("et en anglais aussi, avec leurs propres mots", () => {
+    expect(gestes("run", "en")).toEqual(["lancer"]);
+    expect(gestes("halt", "en")).toEqual(["arreterExecution"]);
+    expect(gestes("recenter", "en")).toEqual(["recentrer"]);
+  });
+
+  it("« STOP » FERME TOUJOURS L'ÉCOUTE, et n'arrête pas le calcul", () => {
+    // La confusion coûterait cher dans les deux sens : dire « stop » pour arrêter un calcul
+    // fermerait l'écoute, et dire « arrête » pour fermer l'écoute laisserait le micro ouvert.
+    expect(gestes("stop")).toEqual(["terminer"]);
+    expect(gestes("stop", "en")).toEqual(["terminer"]);
+    expect(gestes("arrête")).not.toContain("terminer");
+  });
+
+  it("AUCUN MOT N'APPARTIENT À DEUX GESTES, ce qui est la forme de cette règle", () => {
+    // Un mot partagé rendrait l'un des deux gestes inatteignable, sans que rien ne le dise.
+    for (const langue of ["fr", "en"] as const) {
+      const vus = new Map<string, string>();
+      for (const [geste, mots] of Object.entries(MOTS_COMMANDE[langue])) {
+        for (const mot of mots) {
+          expect(vus.get(mot), `« ${mot} » est à la fois ${vus.get(mot)} et ${geste}`).toBeUndefined();
+          vus.set(mot, geste);
+        }
+      }
+    }
+  });
+
+  it("un composant et un geste dans la même phrase font les deux, dans l'ordre", () => {
+    expect(gestes("compresseur lance")).toEqual(["poser", "lancer"]);
+    expect(poses("compresseur lance")).toEqual(["compresseur"]);
+  });
+
+  it("et un geste ne mange pas le nom qui le suit", () => {
+    expect(gestes("recentre compresseur")).toEqual(["recentrer", "poser"]);
+    expect(poses("recentre compresseur")).toEqual(["compresseur"]);
   });
 });

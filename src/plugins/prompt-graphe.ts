@@ -12,6 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { apparierFlou } from "./appariement-flou";
+import { estDicible } from "./lexique-vosk";
 // Import DYNAMIQUE (pas d'`import … from` statique) : audio/adaptateur importe
 // plugins/index qui importe CE fichier (pour enregistrer sa propre fiche) —
 // un import statique créerait un cycle. Il ne mordait jamais en pratique tant
@@ -227,6 +228,11 @@ const sansAccents = (s: string): string => s.toLowerCase().normalize("NFD").repl
  * LES ALIAS MANUELS N'Y SONT PAS, et c'est une affaire de coût. Les ajouter porte la liste de 472 à
  * 864 entrées, et le temps de reconnaissance de 1,8 à 5,0 secondes sur la même prise, pour le même
  * texte : la machine d'états se construit à chaque exécution.
+ *
+ * ET LES NOMS QUE LE MOTEUR NE SAIT PAS PRONONCER EN SONT RETIRÉS. Un mot absent du lexique du
+ * modèle n'est pas refusé, il est JETÉ, et la phrase reste dans la grammaire amputée de ce mot :
+ * « réverbération à convolution » y devient « réverbération à », qui concurrence un composant bien
+ * réel. Voir `lexique-vosk.ts`, qui porte la liste mesurée et la façon de la refaire.
  */
 export async function nomsDeDictee(en = false): Promise<{ ficheId: string; nom: string }[]> {
   const registre = await obtenirRegistre();
@@ -239,6 +245,9 @@ export async function nomsDeDictee(en = false): Promise<{ ficheId: string; nom: 
     // DEUX COMPOSANTS DE MÊME NOM NE SE DISTINGUENT PAS À LA VOIX : le premier l'emporte, et le
     // second ne vient pas s'ajouter à la liste, où il doublerait un mot sans rien désigner de plus.
     if (!nom || vus.has(nom)) continue;
+    // ET UN NOM QUE LE MOTEUR NE SAIT PAS PRONONCER N'Y ENTRE PAS DU TOUT : il n'est pas refusé
+    // par la grammaire, il y est amputé du mot manquant, et le reste concurrence un vrai nom.
+    if (!estDicible(nom, en)) continue;
     vus.add(nom);
     out.push({ ficheId: d.id, nom });
   }
