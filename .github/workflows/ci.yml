@@ -43,7 +43,14 @@ jobs:
       # ne tournant que dans le workflow de RELEASE, la faute s'est découverte après le tag. Elle
       # se découvre maintenant sur la branche, en une trentaine de secondes.
       - name: Install NSIS
-        run: choco install nsis -y --no-progress
+        run: |
+          choco install nsis -y --no-progress
+          # ET LE DOSSIER EST AJOUTÉ AU PATH À LA MAIN, parce que choco ne suffit pas ici :
+          # il met à jour le PATH DE LA MACHINE, et le job tourne avec celui qu'il a capturé à son
+          # démarrage. Sans cette ligne, l'installation réussit, `makensis` reste introuvable à
+          # l'étape suivante, et le cas qui compile l'installeur S'IGNORE — c'est exactement ce
+          # qu'on a vu au premier essai, et c'est le second cas du fichier qui l'a dit.
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS' -Encoding utf8
 
       - name: Test
         run: npm run test
