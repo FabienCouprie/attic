@@ -12,13 +12,21 @@
 // renseignements y sont donc écrits en trames standard — titre, logiciel — et le document iXML entier
 // y est recopié dans une trame personnalisée, pour qui voudrait le relire à l'identique.
 //
-// AUCUNE DATE, ET C'EST VOULU. Attic tient à ce que deux rendus du même graphe donnent deux fichiers
-// identiques octet pour octet — c'est pourquoi le bruit de dither est à graine fixe. Une date
-// d'écriture casserait cette propriété à chaque export. L'identifiant du fichier est donc DÉRIVÉ de
-// son contenu : même son, même identifiant ; son différent, identifiant différent.
+// AUCUNE DATE DANS L'iXML, ET C'EST TOUJOURS VOULU. Attic tient à ce que deux rendus du même graphe
+// donnent deux fichiers identiques octet pour octet — c'est pourquoi le bruit de dither est à graine
+// fixe. L'identifiant du fichier est donc DÉRIVÉ de son contenu : même son, même identifiant ; son
+// différent, identifiant différent.
+//
+// LE BLOC `bext`, LUI, PORTE LA VRAIE DATE DEPUIS LE 2026-10-09, décidé par Fabien. C'est un
+// renversement assumé de la propriété ci-dessus, et la raison est que la norme l'exige : un BWF sans
+// date d'origine n'en est pas un, et c'est cette date que lisent les outils de conformation. La
+// propriété reste DISPONIBLE à qui la veut, l'horodatage s'injectant (`ChampsBext.horodatage`) ;
+// elle n'est simplement plus garantie par défaut. Deux rendus successifs diffèrent désormais par
+// dix-huit octets, ceux de la date et de l'heure.
 //
 // Référence : spécification iXML, www.ixml.info (révision 2.10) ; ID3v2.4.0, id3.org.
 
+import type { ChampsBext } from "./bext";
 import { dispositionDe } from "./multicanal";
 
 export interface Provenance {
@@ -152,7 +160,7 @@ export function decrire(
   b: { numberOfChannels: number; sampleRate: number; getChannelData: (c: number) => Float32Array },
   p: Provenance,
   bits?: number,
-): { ixml: string; titre: string } {
+): { ixml: string; titre: string; bext: ChampsBext } {
   const canaux = Array.from({ length: b.numberOfChannels }, (_, c) => b.getChannelData(c));
   const d = dispositionDe(b);
   const noms = d
@@ -165,7 +173,27 @@ export function decrire(
   return {
     ixml: ixmlImplicite(p, { frequence: b.sampleRate, bits, canaux: b.numberOfChannels, nomsDePistes: noms, uid }),
     titre,
+    // LES MÊMES RENSEIGNEMENTS, DANS LE CONTENEUR QUE LISENT LES OUTILS DE MONTAGE. L'iXML les
+    // porte déjà, mais peu d'outils le lisent et tous lisent le `bext`. L'identifiant dérivé du
+    // contenu sert de référence d'origine : deux fichiers de même son la partagent, ce qui est
+    // exactement ce qu'on demande à ce champ.
+    bext: {
+      description: titre || p.noeud,
+      origine: "Attic",
+      referenceOrigine: uid,
+      historique: historiqueDeCodage(b.sampleRate, bits, b.numberOfChannels),
+    } as const,
   };
+}
+
+/**
+ * L'historique de codage, dans la forme que la norme fixe : une ligne par étape, champs séparés
+ * par des virgules. Une seule étape ici, celle qui écrit.
+ */
+function historiqueDeCodage(frequence: number, bits: number | undefined, canaux: number): string {
+  const mode = canaux === 1 ? "mono" : canaux === 2 ? "stereo" : `${canaux}ch`;
+  const largeur = bits ? `,W=${bits}` : "";
+  return `A=PCM,F=${frequence}${largeur},M=${mode},T=Attic\r\n`;
 }
 
 // ── ID3v2.4 ───────────────────────────────────────────────────────────────────────────────────
