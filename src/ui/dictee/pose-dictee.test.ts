@@ -1,6 +1,7 @@
 // ui/dictee/pose-dictee.test.ts — Où la dictée pose, et sur quoi elle enchaîne.
 import { describe, expect, it } from "vitest";
-import { PAS_X, PAS_Y, dernierDeFiche, noeudCourant, planInsertion, positionSuivante, type NoeudPose } from "./pose-dictee";
+import { PAS_X, PAS_Y, dernierDeFiche, noeudCourant, planInsertion, positionSuivante,
+  premierLienCompatible, type NoeudPose } from "./pose-dictee";
 
 const n = (id: string, x: number, y: number, ficheId = "f"): NoeudPose =>
   ({ id, position: { x, y }, data: { ficheId } });
@@ -91,5 +92,57 @@ describe("le nœud qu'un nom désigne", () => {
   it("rien quand aucun nœud ne porte cette fiche", () => {
     expect(dernierDeFiche([n("a", 0, 0, "autre")], "reverb")).toBeUndefined();
     expect(dernierDeFiche([], "reverb")).toBeUndefined();
+  });
+});
+
+// LE PORT QUE LA DICTÉE CHOISIT, et qu'elle ne choisissait pas : elle écrivait `out:0 → in:0` en
+// dur. Relevé par Fabien sur un graphe où une sortie « Cercle » arrivait dans l'entrée audio d'une
+// réverbération — l'arête s'affichait en rouge et n'exécutait rien. La souris ne peut pas faire ce
+// lien, `isValidConnection` le refuse ; la voix ne passait par aucune vérification.
+describe("le premier lien compatible", () => {
+  const p = (...types: string[]) => types.map((type) => ({ type }));
+  // La compatibilité du dépôt, réduite à ce que ces cas en demandent : même type, et rien d'autre.
+  const memeType = (s: string, e: string) => s === e;
+
+  it("PREND LE PORT AUDIO D'UN RENDU DE SÉQUENCE, qui n'est jamais le premier", () => {
+    // C'est le cas qui rendait la chaîne la plus naturelle indictable. `sortie-audio.ts` ajoute
+    // l'audio EN DERNIER à toute fiche qui rend une séquence : sur un rendu de cercles, `out:0`
+    // est la séquence et `out:1` l'audio. « rendu de cercles, point d'écoute » dicté à la voix
+    // branchait donc une séquence sur une entrée audio.
+    const lien = premierLienCompatible(
+      { sorties: p("sequence", "audio"), entrees: [] },
+      { sorties: p("audio"), entrees: p("audio") },
+      memeType,
+    );
+    expect(lien).toEqual({ sortie: 1, entree: 0 });
+  });
+
+  it("garde `out:0 → in:0` chaque fois qu'il convient, le comportement d'avant restant juste", () => {
+    const lien = premierLienCompatible(
+      { sorties: p("audio"), entrees: [] }, { sorties: p("audio"), entrees: p("audio", "courbe") }, memeType,
+    );
+    expect(lien).toEqual({ sortie: 0, entree: 0 });
+  });
+
+  it("et cherche aussi du côté des ENTRÉES, un port modulable pouvant venir après l'audio", () => {
+    const lien = premierLienCompatible(
+      { sorties: p("courbe"), entrees: [] }, { sorties: p("audio"), entrees: p("audio", "courbe") }, memeType,
+    );
+    expect(lien).toEqual({ sortie: 0, entree: 1 });
+  });
+
+  it("RIEN QUAND AUCUN COUPLE NE VA : c'est le cercle dans la réverbération", () => {
+    const lien = premierLienCompatible(
+      { sorties: p("cercle"), entrees: [] }, { sorties: p("audio"), entrees: p("audio") }, memeType,
+    );
+    expect(lien).toBeNull();
+  });
+
+  it("rien non plus quand un nœud n'a pas de ports, ou qu'on ne le trouve pas", () => {
+    const audio = { sorties: p("audio"), entrees: p("audio") };
+    expect(premierLienCompatible(undefined, audio, memeType)).toBeNull();
+    expect(premierLienCompatible(audio, undefined, memeType)).toBeNull();
+    expect(premierLienCompatible({ sorties: [], entrees: [] }, audio, memeType)).toBeNull();
+    expect(premierLienCompatible(audio, { sorties: p("audio"), entrees: [] }, memeType)).toBeNull();
   });
 });
