@@ -14,6 +14,7 @@ const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
+const { etatNeutre, etatVerification, etatApresAttente } = require("./etat-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
@@ -1376,7 +1377,7 @@ ipcMain.handle("songsee:generer", async (_event, { cheminEntree, options }) => {
 });
 
 // ─── Auto-updater : configuration + IPC ───
-let infoMaj = { disponible: false, version: "", notes: "", progression: 0, statut: "" };
+let infoMaj = etatNeutre();
 
 if (autoUpdater) {
   autoUpdater.autoDownload = false;
@@ -1429,16 +1430,16 @@ function envoyerInfoMaj() {
 ipcMain.handle("maj:verifier", async () => {
   if (!autoUpdater) return { disponible: false, statut: "indisponible" };
   try {
-    infoMaj = { disponible: false, version: "", notes: "", progression: 0, statut: "verification" };
+    infoMaj = etatVerification();
     envoyerInfoMaj();
     const result = await autoUpdater.checkForUpdates();
-    // checkForUpdates retourne UpdateCheckResult si update disponible
-    if (result && result.updateInfo) {
-      infoMaj = { disponible: true, version: result.updateInfo.version, notes: "", progression: 0, statut: "disponible" };
-      envoyerInfoMaj();
-      return infoMaj;
-    }
-    infoMaj.statut = "a-jour";
+    // CE SONT LES ÉVÉNEMENTS QUI TRANCHENT, et non ce retour. `checkForUpdates` rend un
+    // `UpdateCheckResult` dès que la vérification ABOUTIT, et son `updateInfo` décrit la dernière
+    // version publiée — même quand c'est celle qui tourne. Conclure de sa seule présence faisait
+    // reparaître le bouton orange après la mise à jour, proposant la version déjà installée ; le
+    // clic suivant appelait un téléchargement qui n'avait rien à prendre, et c'est son échec que
+    // l'utilisateur voyait. Voir `electron/etat-maj.cjs`.
+    infoMaj = etatApresAttente(infoMaj, result);
     envoyerInfoMaj();
     return infoMaj;
   } catch (e) {

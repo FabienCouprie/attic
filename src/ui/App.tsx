@@ -23,14 +23,14 @@ const DELAI_RELANCE_MS = 350;
 const tousLesPlugins = () => registreUI().tousLesPlugins();
 const couleurFlux = (id: string) => registreUI().couleurFlux(id);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
-import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
+import { useI18n, traduire, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
-import { dernierDeFiche, noeudCourant, planInsertion, positionSuivante,
-  type AreteDeDictee, type NoeudPose } from "./dictee/pose-dictee";
+import { dernierDeFiche, noeudCourant, planInsertion, positionSuivante, premierLienCompatible,
+  type AreteDeDictee, type NoeudPose, type PortsDictes } from "./dictee/pose-dictee";
 import type { Position as PositionDictee } from "./dictee/commandes-dictee";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
@@ -139,6 +139,44 @@ function couleurArete(nodes: any[], source: string, sourceHandle: string): strin
   const idx = parseInt(sourceHandle.split(":")[1] ?? "0", 10);
   const type = def?.sorties[idx]?.type ?? "audio";
   return couleurFlux(type);
+}
+
+/**
+ * Les ports d'une fiche, lus sur la définition que le REGISTRE livre — celle qu'il augmente.
+ *
+ * `plugins/sortie-audio.ts` ajoute une sortie « Audio » en dernier à toute fiche qui rend une
+ * séquence : lire la fiche telle qu'elle est écrite dans son plugin ferait croire qu'il n'y a
+ * qu'un port là où il y en a deux, et ferait choisir le mauvais.
+ */
+function portsDeFiche(ficheId: string | undefined): PortsDictes | undefined {
+  const def = ficheId ? trouverDef(ficheId) : undefined;
+  return def ? { sorties: def.sorties ?? [], entrees: def.entrees ?? [] } : undefined;
+}
+
+/** Les ports d'un nœud du canevas, par la fiche qu'il porte. */
+function portsDe(nodes: any[], id: string): PortsDictes | undefined {
+  return portsDeFiche(nodes.find((n) => n.id === id)?.data?.ficheId);
+}
+
+/**
+ * L'arête que la dictée peut vraiment poser entre deux nœuds, ou `null` si aucun port ne s'accorde.
+ *
+ * ELLE REMPLACE QUATRE `out:0 → in:0` ÉCRITS EN DUR. La souris passe par `isValidConnection` et
+ * refuse une liaison dont les types ne vont pas ensemble ; la voix ne passait par rien, et était
+ * donc le seul chemin par lequel une arête impossible entrait dans un graphe.
+ */
+function lienDicte(nodes: any[], source: string, target: string):
+{ sourceHandle: string; targetHandle: string; type: "arete-personnalisee"; style: { stroke: string; strokeWidth: number } } | null {
+  const paire = premierLienCompatible(
+    portsDe(nodes, source), portsDe(nodes, target),
+    (s, e) => registreUI().fluxCompatibles(s, e),
+  );
+  if (!paire) return null;
+  const sourceHandle = `out:${paire.sortie}`;
+  return {
+    sourceHandle, targetHandle: `in:${paire.entree}`, type: "arete-personnalisee",
+    style: { stroke: couleurArete(nodes, source, sourceHandle), strokeWidth: 2.5 },
+  };
 }
 
 // ── Application ──
@@ -499,9 +537,18 @@ function Atelier() {
         const baseX = noeudsRef.current.find((n) => n.id === nodeId)?.position?.x ?? 200;
         const baseY = noeudsRef.current.find((n) => n.id === nodeId)?.position?.y ?? 200;
         const cbs = callbacksNoeud();
-        const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`);
+        const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`,
+          (s, c) => premierLienCompatible(portsDeFiche(s), portsDeFiche(c),
+            (a, b) => registreUI().fluxCompatibles(a, b)));
         for (const c of plan.cycles) {
           console.warn(`[attic] Prompt → graphe : arête ${c.source} → ${c.target} écartée, elle refermerait un cycle.`);
+        }
+        // LE MÊME SORT QU'UN CYCLE, ET POUR LA MÊME RAISON : un modèle de langue peut demander un
+        // lien que les ports refusent. L'arête est écartée plutôt que posée en rouge, et le nom des
+        // deux composants est dit — le reste du graphe reste utilisable.
+        for (const x of plan.incompatibles) {
+          console.warn(`[attic] Prompt → graphe : arête écartée, « ${spec.nodes[x.source]?.ficheId} » `
+            + `et « ${spec.nodes[x.target]?.ficheId} » n'ont aucun couple de ports qui s'accorde.`);
         }
         const idsNouveaux: string[] = plan.ids;
         const nouveauxNodes = spec.nodes.map((specNode, i) => {
@@ -538,12 +585,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             },
           };
         });
-        const nouveauxEdges: Edge[] = plan.aretes.map((a) => ({
+        const nouveauxEdges: Edge[] = plan.aretes.map(({ sortie, entree, ...a }) => ({
           ...a,
-          sourceHandle: "out:0",
-          targetHandle: "in:0",
+          sourceHandle: `out:${sortie}`,
+          targetHandle: `in:${entree}`,
           type: "arete-personnalisee" as const,
-          style: { stroke: couleurArete(nouveauxNodes, a.source, "out:0"), strokeWidth: 2.5 },
+          style: { stroke: couleurArete(nouveauxNodes, a.source, `out:${sortie}`), strokeWidth: 2.5 },
         }));
         setNodes((nds) => [...nds, ...nouveauxNodes]);
         setEdges((eds) => [...eds, ...nouveauxEdges]);
@@ -1193,6 +1240,12 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     const aDetourner: { id: string; vers: string; ou: "apres" | "avant" }[] = [];
     let dernier = dernierDicteRef.current;
 
+    /** Le nom lisible d'une fiche, comme le refus de référence l'écrit déjà juste en dessous. */
+    const nomDeFiche = (ficheId: string) => trouverDef(ficheId)?.nom ?? ficheId;
+    /** « X est posé, mais rien ne le relie à Y » : le nœud reste, le câble non, et on le dit. */
+    const avisSansLien = (pose: string, autre: string) =>
+      traduire("dictee.sansLien", nomDeFiche(pose), nomDeFiche(autre));
+
     const poser = (ficheId: string, parallele: boolean, ou?: PositionDictee): string | undefined => {
       const def = trouverDef(ficheId);
       if (!def) return `Composant inconnu : ${ficheId}`;
@@ -1226,6 +1279,11 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         // sur celles du canevas, la copie de travail valant pour les deux.
         const toutes = [...aretesRef.current, ...aretes] as unknown as AreteDeDictee[];
         const { aRediriger, lien } = planInsertion(toutes, reference.id, id, ou.ou);
+        const ports = lienDicte(noeuds, lien.source, lien.target);
+        // POSÉ SANS ÊTRE RELIÉ, ET DIT. Rediriger ce qui part de la référence vers un nœud qui ne
+        // peut rien en recevoir COUPERAIT la chaîne au lieu de l'allonger : l'insertion entière est
+        // donc abandonnée, redirections comprises, et le nœud reste sur le canevas, libre.
+        if (!ports) { dernier = id; return avisSansLien(ficheId, ou.refFicheId); }
         for (const a of aretes) {
           if (!aRediriger.includes(a.id)) continue;
           if (ou.ou === "apres") a.source = id; else a.target = id;
@@ -1233,37 +1291,38 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         aDetourner.push(...aRediriger.filter((x) => !aretes.some((a) => a.id === x))
           .map((x) => ({ id: x, vers: id, ou: ou.ou })));
         aretes.push({
-          id: `e-dictee-${id}-${Date.now()}`, source: lien.source, target: lien.target,
-          sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
-          style: { stroke: couleurArete(noeuds, lien.source, "out:0"), strokeWidth: 2.5 },
+          id: `e-dictee-${id}-${Date.now()}`, source: lien.source, target: lien.target, ...ports,
         });
       } else if (courant && !parallele) {
         // ENCHAÎNÉ SUR LE COURANT, sauf « en parallèle » : c'est ce qui dispense de dire le lien.
+        const ports = lienDicte(noeuds, courant.id, id);
+        if (!ports) { dernier = id; return avisSansLien(ficheId, courant.data?.ficheId as string); }
         aretes.push({
-          id: `e-dictee-${id}-${Date.now()}`, source: courant.id, target: id,
-          sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
-          style: { stroke: couleurArete(noeuds, courant.id, "out:0"), strokeWidth: 2.5 },
+          id: `e-dictee-${id}-${Date.now()}`, source: courant.id, target: id, ...ports,
         });
       }
       dernier = id;
       return undefined;
     };
 
-    const relier = (deFiche: string, versFiche: string) => {
+    const relier = (deFiche: string, versFiche: string): string | undefined => {
       const de = dernierDeFiche(noeuds as unknown as NoeudPose[], deFiche);
       const vers = dernierDeFiche(noeuds as unknown as NoeudPose[], versFiche);
-      if (!de || !vers || de.id === vers.id) return;
+      if (!de || !vers || de.id === vers.id) return undefined;
       // Le même refus qu'à la souris : une arête qui referme un cycle rend muette une branche.
       const deja = [...aretesRef.current, ...aretes] as unknown as AreteG[];
       if (fermeraitUnCycle(de.id, vers.id, deja.filter((a) => !estSubstitution(a)))) {
         console.warn(`[attic] Dictée : ${de.id} → ${vers.id} refermerait un cycle.`);
-        return;
+        return undefined;
       }
+      // ICI RIEN N'EST POSÉ : « relier X à Y » ne crée aucun nœud, donc le refus porte sur le seul
+      // câble, et il se dit autrement que celui d'un composant posé sans branchement.
+      const ports = lienDicte(noeuds, de.id, vers.id);
+      if (!ports) return traduire("dictee.lienImpossible", nomDeFiche(deFiche), nomDeFiche(versFiche));
       aretes.push({
-        id: `e-dictee-${de.id}-${vers.id}-${Date.now()}`, source: de.id, target: vers.id,
-        sourceHandle: "out:0", targetHandle: "in:0", type: "arete-personnalisee",
-        style: { stroke: couleurArete(noeuds, de.id, "out:0"), strokeWidth: 2.5 },
+        id: `e-dictee-${de.id}-${vers.id}-${Date.now()}`, source: de.id, target: vers.id, ...ports,
       });
+      return undefined;
     };
 
     const verser = () => {
@@ -1292,7 +1351,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     let aRecentrer = false;
     for (const c of commandes) {
       if (c.quoi === "poser") avis = poser(c.ficheId, c.parallele, c.position) ?? avis;
-      else if (c.quoi === "relier") relier(c.de, c.vers);
+      else if (c.quoi === "relier") avis = relier(c.de, c.vers) ?? avis;
       else if (c.quoi === "lancer") aLancer = true;
       else if (c.quoi === "arreterExecution") aArreter = true;
       else if (c.quoi === "recentrer") aRecentrer = true;

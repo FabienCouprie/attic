@@ -86,6 +86,58 @@ export function planInsertion(
   return { aRediriger, lien };
 }
 
+/** Un port, réduit à ce que l'appariement a besoin d'en connaître. */
+export interface PortDicte { type: string }
+
+/**
+ * Les ports d'un nœud, tels que l'appelant les lit dans sa fiche.
+ *
+ * C'EST LA FICHE AUGMENTÉE QU'IL FAUT LIRE, et non celle qui est écrite dans le plugin : le
+ * registre ajoute une sortie « Audio » à la fin de toute fiche qui rend une séquence
+ * (`plugins/sortie-audio.ts`). Sur un rendu de cercles, `out:0` est la séquence et `out:1` l'audio
+ * — lire la fiche littérale ferait croire qu'il n'y a qu'un port, et ferait choisir le mauvais.
+ */
+export interface PortsDictes {
+  sorties: readonly PortDicte[];
+  entrees: readonly PortDicte[];
+}
+
+/**
+ * Le premier couple de ports qui s'accordent entre deux nœuds, ou `null` si aucun ne va.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. La dictée câblait `out:0 → in:0` en dur, aux quatre endroits où
+ * elle pose une arête. La souris, elle, passe par `isValidConnection` et refuse une liaison dont
+ * les types ne s'accordent pas : la voix était donc le seul chemin par lequel une arête impossible
+ * entrait dans un graphe. Relevé par Fabien sur un fichier où une sortie « Cercle » arrivait dans
+ * l'entrée audio d'une réverbération, et où l'arête s'affichait en rouge sans rien exécuter.
+ *
+ * ET LE DÉFAUT NE GUETTAIT PAS UN CAS RARE : tout composant qui rend une séquence porte son audio
+ * en DERNIER, de sorte que « rendu de cercles, point d'écoute » dicté à la voix branchait la
+ * séquence sur une entrée audio. La chaîne la plus naturelle d'un graphe de cercles était
+ * précisément celle qu'on ne pouvait pas dicter.
+ *
+ * L'ORDRE DE RECHERCHE EST CELUI DES PORTS, sortie d'abord : le premier couple qui s'accorde
+ * gagne. `out:0 → in:0` reste donc choisi chaque fois qu'il convient, et le comportement d'avant
+ * est conservé partout où il était juste.
+ *
+ * `compatibles` est INJECTÉE plutôt qu'importée : la langue des commandes ne connaît pas le
+ * domaine, et `src/docs/frontiere-domaine.test.ts` compte les fichiers du shell qui s'y couplent.
+ */
+export function premierLienCompatible(
+  depart: PortsDictes | undefined,
+  arrivee: PortsDictes | undefined,
+  compatibles: (sortie: string, entree: string) => boolean,
+): { sortie: number; entree: number } | null {
+  const sorties = depart?.sorties ?? [];
+  const entrees = arrivee?.entrees ?? [];
+  for (let s = 0; s < sorties.length; s++) {
+    for (let e = 0; e < entrees.length; e++) {
+      if (compatibles(sorties[s].type, entrees[e].type)) return { sortie: s, entree: e };
+    }
+  }
+  return null;
+}
+
 /**
  * Le nœud que « relier X à Y » désigne : le DERNIER posé qui porte cette fiche.
  *

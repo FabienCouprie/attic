@@ -25,10 +25,22 @@ export interface SpecGrapheEngendre {
 export interface PlanGrapheEngendre {
   /** L'identifiant attribué à chaque nœud de la spécification, dans son ordre. */
   ids: string[];
-  aretes: { id: string; source: string; target: string }[];
+  /** Les arêtes à poser, AVEC LE RANG DES PORTS : `out:0 → in:0` n'est pas toujours celui qui va. */
+  aretes: { id: string; source: string; target: string; sortie: number; entree: number }[];
   /** Les arêtes écartées parce qu'elles refermaient un cycle, pour qu'on puisse le dire. */
   cycles: { source: number; target: number }[];
+  /** Celles écartées parce qu'aucun couple de ports ne s'accorde, pour la même raison. */
+  incompatibles: { source: number; target: number }[];
 }
+
+/**
+ * Le couple de ports qui relie deux fiches, ou `null` si aucun ne va.
+ *
+ * INJECTÉE, et non calculée ici : ce module ne connaît pas le domaine, et `frontiere-domaine.test.ts`
+ * compte les fichiers du shell qui s'y couplent. L'appelant la bâtit sur le registre.
+ */
+export type LienEntreFiches = (ficheIdSource: string, ficheIdCible: string)
+=> { sortie: number; entree: number } | null;
 
 /**
  * Les identifiants à attribuer et les arêtes à poser, sans rien de React.
@@ -41,9 +53,17 @@ export interface PlanGrapheEngendre {
  * `marque` distingue une pose de la suivante. Dérivé du seul identifiant du nœud, l'identifiant
  * d'arête entrait en collision avec celui d'une pose PRÉCÉDENTE dès que le même composant
  * engendrait deux fois.
+ *
+ * ET LE MODÈLE PEUT AUSSI DEMANDER UN LIEN QUE LES PORTS REFUSENT, ce qui est le même genre de
+ * demande impossible qu'une boucle. `out:0 → in:0` était écrit en dur par l'appelant : une sortie
+ * « Cercle » arrivait donc dans une entrée audio, l'arête s'affichait en rouge, et rien ne
+ * l'exécutait. Le port se cherche désormais comme le cycle se cherchait, et l'arête qui n'a aucun
+ * couple possible est écartée ET NOMMÉE — le reste du graphe restant utilisable, comme pour les
+ * cycles. Relevé par Fabien sur la dictée, qui portait le même défaut.
  */
 export function planDeGrapheEngendre(
   spec: SpecGrapheEngendre, existants: readonly { id: string }[], marque: string,
+  lien: LienEntreFiches,
 ): PlanGrapheEngendre {
   const ids: string[] = [];
   for (let i = 0; i < spec.nodes.length; i++) {
@@ -51,6 +71,7 @@ export function planDeGrapheEngendre(
   }
   const aretes: PlanGrapheEngendre["aretes"] = [];
   const cycles: PlanGrapheEngendre["cycles"] = [];
+  const incompatibles: PlanGrapheEngendre["incompatibles"] = [];
   spec.edges.forEach((e, i) => {
     const source = ids[e.source];
     const target = ids[e.target];
@@ -59,7 +80,12 @@ export function planDeGrapheEngendre(
       cycles.push({ source: e.source, target: e.target });
       return;
     }
-    aretes.push({ id: `e-prompt-${marque}-${i}`, source, target });
+    const ports = lien(spec.nodes[e.source].ficheId, spec.nodes[e.target].ficheId);
+    if (!ports) {
+      incompatibles.push({ source: e.source, target: e.target });
+      return;
+    }
+    aretes.push({ id: `e-prompt-${marque}-${i}`, source, target, ...ports });
   });
-  return { ids, aretes, cycles };
+  return { ids, aretes, cycles, incompatibles };
 }
