@@ -283,7 +283,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fusionner en stéréo | `fusion-stereo` | 240 × 140 |
 | Gamme jouée | `gamme-jouee` | 240 × 162 |
 | Gammes du monde | `gammes-monde` | 240 × 118 |
-| Gate/Expandeur | `gate-expandeur` | 240 × 118 |
+| Gate/Expandeur | `gate-expandeur` | 240 × 162 |
 | Gel spectral | `gel-spectral` | 240 × 118 |
 | GENDYN (Xenakis) | `gendyn-xenakis` | 240 × 118 |
 | Générateur d'accords | `generateur-accords` | 240 × 118 |
@@ -317,7 +317,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Largeur stéréo / MS | `largeur-stereo` | 240 × 140 |
 | Lecteur d'analyse | `lecteur-analyse` | 380 × 300 |
 | Légende d'image | `legende-image` | 240 × 118 |
-| Limiteur | `limiteur` | 240 × 118 |
+| Limiteur | `limiteur` | 240 × 140 |
 | Magenta Continuation | `magenta-continuation` | 240 × 118 |
 | Magenta Drums | `magenta-drums` | 240 × 118 |
 | Magenta Générer batterie | `magenta-generer-batterie` | 240 × 118 |

@@ -126,6 +126,8 @@ const memes = (a: Float32Array[], b: Float32Array[]): boolean => {
 const CAS: {
   id: string; reglage: string; entrees: () => unknown[];
   noms?: [string, string]; siOffline?: boolean;
+  /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
+  rang?: number;
 }[] = [
   // La famille « mélange ».
   { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)] },
@@ -144,32 +146,51 @@ const CAS: {
   // branche pas, et c'est elle que `undefined` tient.
   { id: "creneau", reglage: "Niveau", entrees: () => [son(37, 2), son(41, 2)], noms: ["Niveau min", "Niveau max"] },
   { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined] },
+  // La famille « temps ». Le gate porte DEUX ports, donc deux entrées dans cette table : chacune
+  // nomme le rang qu'elle éprouve, puisque le dernier port n'est pas celui de l'attaque.
+  { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)] },
+  {
+    id: "gate-expandeur", reglage: "Attaque", entrees: () => [son(47, 2)],
+    noms: ["Attaque min", "Attaque max"], rang: 1,
+  },
+  {
+    id: "gate-expandeur", reglage: "Relâchement", entrees: () => [son(47, 2), undefined],
+    noms: ["Relâchement min", "Relâchement max"], rang: 2,
+  },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien onze fiches à éprouver", () => {
-    expect(CAS).toHaveLength(11);
+  it("il y a bien quatorze ports à éprouver", () => {
+    expect(CAS).toHaveLength(14);
   });
 
   for (const cas of CAS) {
     const [nomMin, nomMax] = cas.noms ?? ["Modulation min", "Modulation max"];
+    /** Le rang du port éprouvé : celui qu'on déclare, ou le dernier de la fiche. */
+    const rangDe = (f: FicheAudio) => cas.rang ?? (f.entrees ?? []).length - 1;
 
-    it(`${cas.id} : le port qui pilote « ${cas.reglage} » est le DERNIER`, () => {
+    it(`${cas.id} : le port qui pilote « ${cas.reglage} » est au rang déclaré`, () => {
       // LE RANG COMPTE AUTANT QUE LA PRÉSENCE : les arêtes enregistrées désignent un port par son
-      // rang, et insérer celui-ci ailleurs qu'en dernier rebrancherait chaque arête d'un cran.
-      const entrees = (fiche(cas.id).entrees ?? []) as any[];
-      const dernier = entrees[entrees.length - 1];
-      expect(dernier?.module, `${cas.id} : le dernier port ne pilote pas ce réglage`).toBe(cas.reglage);
-      expect(dernier?.type, `${cas.id} : le dernier port n'est pas une courbe`).toBe("courbe");
-      const noms = (fiche(cas.id).parametres ?? []).map((p) => p.nom);
+      // rang, et en insérer un ailleurs qu'APRÈS les autres rebrancherait chaque arête d'un cran.
+      const f = fiche(cas.id);
+      const entrees = (f.entrees ?? []) as any[];
+      const port = entrees[rangDe(f)];
+      expect(port?.module, `${cas.id} : le port de rang ${rangDe(f)} ne pilote pas ce réglage`).toBe(cas.reglage);
+      expect(port?.type, `${cas.id} : le port de rang ${rangDe(f)} n'est pas une courbe`).toBe("courbe");
+      // Et aucun port de courbe ne précède une entrée audio : les audio gardent leurs rangs.
+      const premiereCourbe = entrees.findIndex((e) => e.type === "courbe");
+      const derniereAudio = entrees.map((e) => e.type).lastIndexOf("audio");
+      expect(premiereCourbe, `${cas.id} : une courbe est déclarée avant une entrée audio`)
+        .toBeGreaterThan(derniereAudio);
+      const noms = (f.parametres ?? []).map((p) => p.nom);
       expect(noms, `${cas.id} : « ${nomMin} » manque`).toContain(nomMin);
       expect(noms, `${cas.id} : « ${nomMax} » manque`).toContain(nomMax);
     });
 
     const siRendu = cas.siOffline && typeof OfflineAudioContext === "undefined" ? it.skip : it;
-    siRendu(`${cas.id} : une courbe plate commande à la place du réglage`, async () => {
+    siRendu(`${cas.id} : une courbe plate commande à la place de « ${cas.reglage} »`, async () => {
       const entrees = cas.entrees();
-      const rang = (fiche(cas.id).entrees ?? []).length - 1;
+      const rang = rangDe(fiche(cas.id));
       const plate = constante(1, 64);
 
       const fixe = await rendre(cas.id, entrees, { [cas.reglage]: REGLE });

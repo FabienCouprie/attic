@@ -64,6 +64,13 @@ export const ECARTES: Record<string, string> = {
   // famille modulable, « Réduction » et « Q », passent par la même boucle. Écarté sur décision de
   // Fabien, au relevé de la famille « niveau ».
   "reduction-bruit": "traitement par trames de 8192 échantillons par sauts de 4096 : une courbe n'y serait lue que onze fois par seconde, soit par paliers de 93 ms",
+  // DES RÉGLAGES STRUCTURELS, ET NON DES VALEURS QUI COURENT. Les trois qui suivent ont été relevés
+  // au moment de prendre la famille « temps », et écartés sur décision de Fabien. Leur point commun
+  // est que le réglage est lu AVANT qu'un seul échantillon soit écrit, et qu'il décide de la forme
+  // de ce qui va être calculé : une courbe n'y a pas de place où se glisser.
+  "echo-inverse": "le cœur somme des copies décalées du son entier, et « Temps » comme « Feedback » fixent les décalages et la longueur de sortie avant qu'un échantillon soit écrit",
+  "enveloppe-adsr": "ses durées sont les cinq points d'ancrage d'une enveloppe en un coup, calculés avant qu'elle soit tracée ; et son « Maintien » est un niveau, non une durée",
+  "haas": "déplacer la position de lecture transposerait le canal retardé, alors que l'effet tient à ce que l'oreille fusionne un décalage FIXE",
   // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
   // d'une famille modulable, et leur cœur travaille par trames comme les sept ci-dessus.
   "stn-sinus-transitoires-bruit": "traitement par trames : une valeur par bloc, non par échantillon",

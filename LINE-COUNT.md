@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1315 files, 230779 lines, of which 158043 are code.**
+**1316 files, 231018 lines, of which 158166 are code.**
 The table lists the 181 files of 200 code lines or more, heaviest first;
-the remaining 1134 account for 155041 lines.
+the remaining 1135 account for 155221 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -73,6 +73,7 @@ the remaining 1134 account for 155041 lines.
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
+| src/audio/courbe.ts | 318 | 640 |  |
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
@@ -85,7 +86,6 @@ the remaining 1134 account for 155041 lines.
 | src/plugins/effets-midi.test.ts | 310 | 428 |  |
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
-| src/audio/courbe.ts | 308 | 611 |  |
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
@@ -141,6 +141,7 @@ the remaining 1134 account for 155041 lines.
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
+| src/plugins/effets.ts | 241 | 295 |  |
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
@@ -161,7 +162,6 @@ the remaining 1134 account for 155041 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets.ts | 224 | 265 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |

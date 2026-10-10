@@ -75,7 +75,15 @@ export const fiches: FicheAudio[] = ([
     (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain)),
   effet("limiteur", "Limiteur", "Limiter", "Limiteur de crête pour le mastering.", "Peak limiter for mastering.",
     [param("Seuil", -3, "Threshold", "dB", "Niveau au-dessus duquel la limitation s'active.", "Level above which limiting engages.", [-40, 0], 1), param("Relâchement", 50, "Release", "ms", "Temps de retour au gain normal après un pic.", "Time to return to normal gain after a peak.", [1, 1000], 1), param("Plafond", -1, "Ceiling", "dB", "Niveau maximal de sortie.", "Maximum output level.", [-40, 0], 0.5)],
-    (a, seuil, relachement, plafond) => limiter(a, seuil, relachement, plafond)),
+    (a, seuil, relachement, plafond) => limiter(a, seuil, relachement, plafond), undefined,
+    // LA COURSE PAR DÉFAUT N'EST PAS LA PLAGE ENTIÈRE, et l'écho l'avait déjà décidé pour son
+    // « Temps » : une plage de trois décades est là pour que chacun trouve son réglage, non pour
+    // qu'une courbe la parcoure d'un bout à l'autre. De 10 à 200 ms, la course va du relâchement
+    // qui suit la forme d'onde à celui qui tient entre deux frappes.
+    //
+    // ET L'ÉCHELLE RESTE LINÉAIRE. Le dépôt ne passe en logarithmique que pour un RAPPORT, un
+    // facteur d'étirement ou une fréquence ; les bornes de temps de l'écho sont linéaires.
+    { parametre: "Relâchement", parametreEn: "Release", bornes: [1, 1000], defauts: [10, 200], unite: "ms" }),
   effet("compresseur-multibande", "Compresseur multibande", "Multiband Compressor", "Compresseur 3 bandes indépendantes (low/mid/high).", "3-band compressor with independent thresholds/ratios.",
     [
       param("Seuil Low", -20, "Low threshold", "dB", "Seuil du compresseur sur la bande grave.", "Compressor threshold for the low band.", [-60, 0], 1),
@@ -96,7 +104,11 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Gate ou expandeur dynamique (coupe ou atténue le signal sous un seuil).",
     resumeEn: "Dynamic gate or expander (cuts or attenuates signal below a threshold).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      portModulation("Attaque", "Attack"),
+      portModulation("Relâchement", "Release"),
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Gate", "Expandeur"], optionsEn: ["Gate", "Expander"], optionIds: ["gate", "expander"], defaut: "Gate",
@@ -112,6 +124,18 @@ export const fiches: FicheAudio[] = ([
         doc: "Temps de retour quand le signal repasse au-dessus du seuil.", docEn: "Recovery time when signal rises above threshold." },
       { nom: "Atténuation", nomEn: "Attenuation", plage: [0, 80], pas: 1, defaut: 40, unite: "dB",
         doc: "Atténuation maximale du plancher. Gate = niveau de coupure ; Expandeur = limite d'atténuation.", docEn: "Maximum floor attenuation. Gate = cut level; Expander = attenuation limit." },
+      // DEUX RÉGLAGES MODULÉS, DONC DEUX PAIRES DE BORNES, et aucune ne garde « Modulation min ».
+      // La convention réserve ce nom au PREMIER réglage modulé d'une fiche ; ici ils arrivent
+      // ensemble, et deux paires nommées d'après leur réglage se lisent mieux qu'une anonyme et
+      // une nommée. Aucun graphe n'en porte encore, donc rien n'est à préserver.
+      ...bornesModulation({
+        parametre: "Attaque", parametreEn: "Attack", bornes: [0.1, 100], defauts: [0.5, 20], unite: "ms",
+        noms: ["Attaque min", "Attaque max"], nomsEn: ["Attack min", "Attack max"],
+      }),
+      ...bornesModulation({
+        parametre: "Relâchement", parametreEn: "Release", bornes: [1, 1000], defauts: [20, 300], unite: "ms",
+        noms: ["Relâchement min", "Relâchement max"], nomsEn: ["Release min", "Release max"],
+      }),
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
@@ -119,8 +143,14 @@ export const fiches: FicheAudio[] = ([
       const mode = ctx.paramTexte("Mode", "gate");
       const seuil = ctx.paramNombre("Seuil", -40);
       const ratio = ctx.paramNombre("Ratio", 4);
-      const attaque = ctx.paramNombre("Attaque", 1);
-      const relachement = ctx.paramNombre("Relâchement", 100);
+      // LE RENDU EST `pourCent` PARCE QUE CE SONT DES MILLISECONDES, et non une proportion : le nom
+      // de l'option dit « ne divise pas », ce que `gateExpandeur` attend.
+      const attaque = reglageModule(ctx, audio.length, 1, {
+        reglage: "Attaque", defaut: 1, rendu: "pourCent", noms: ["Attaque min", "Attaque max"],
+      });
+      const relachement = reglageModule(ctx, audio.length, 2, {
+        reglage: "Relâchement", defaut: 100, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"],
+      });
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
       return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expander" ? ` · ratio ${ratio}:1` : "") };

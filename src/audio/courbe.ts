@@ -599,6 +599,35 @@ export const valeurA = (v: number | Float32Array, i: number): number =>
   typeof v === "number" ? v : (v[i] ?? v[v.length - 1] ?? 0);
 
 /**
+ * Le coefficient d'un suiveur à constante de temps, constante ou pilotée par une courbe.
+ *
+ * CE QU'UN SUIVEUR EST, ET POURQUOI SON RÉGLAGE NE SE LIT PAS COMME UN GAIN. Un gate, un limiteur
+ * ou un compresseur suivent l'enveloppe du son par un filtre d'ordre un dont le coefficient vaut
+ * `exp(-1 / (τ·sr))` : il ne multiplie pas le son, il décide de la VITESSE à laquelle la mesure
+ * rattrape ce qu'elle mesure. Moduler ce réglage, c'est donc recalculer ce coefficient, et non
+ * mettre à l'échelle quoi que ce soit.
+ *
+ * DEUX CHEMINS, ET C'EST DÉLIBÉRÉ. Un scalaire garde son `exp` UNIQUE, calculé une fois avant la
+ * boucle, exactement comme avant que le réglage s'ouvre : ni un bit déplacé, ni une exponentielle
+ * de plus sur un morceau de trois minutes. Une courbe en paie une par échantillon, ce qui est le
+ * prix de ce qu'elle demande. L'expression est la même des deux côtés, de sorte qu'une courbe
+ * constante rend le coefficient du scalaire de même valeur, au bit près.
+ *
+ * LE PLANCHER DE DIX MICROSECONDES EST CELUI DES CŒURS QUI L'EMPLOIENT, et il est repris ici pour
+ * que la borne basse d'une course ne puisse pas rendre un coefficient infini.
+ */
+export function coefficientSuiveur(
+  ms: number | Float32Array, frequence: number,
+): (i: number) => number {
+  const calcul = (v: number) => Math.exp(-1 / ((Math.max(0.01, v) / 1000) * frequence));
+  if (typeof ms === "number") {
+    const fixe = calcul(ms);
+    return () => fixe;
+  }
+  return (i: number) => calcul(valeurA(ms, i));
+}
+
+/**
  * Applique un gain qui varie, échantillon par échantillon.
  *
  * Existe ici, et non dans le nœud, pour que L'INVARIANT SOIT TESTABLE : un gain constant doit
