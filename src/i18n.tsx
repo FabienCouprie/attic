@@ -103,6 +103,8 @@ const DICO: Record<string, Record<Langue, string>> = {
   "dictee.demarrage": { fr: "Démarrage de l’écoute…", en: "Starting to listen..." },
   "dictee.erreur": { fr: "Dictée impossible :", en: "Dictation failed:" },
   "dictee.referenceAbsente": { fr: "Rien n’est posé : le canevas ne porte aucun", en: "Nothing placed: the canvas holds no" },
+  "dictee.sansLien": { fr: "{__VAR_0__} est posé, mais rien ne le relie à {__VAR_1__} : aucun de leurs ports ne s’accorde.", en: "{__VAR_0__} is placed, but nothing links it to {__VAR_1__}: none of their ports match." },
+  "dictee.lienImpossible": { fr: "{__VAR_0__} ne peut pas se brancher sur {__VAR_1__} : aucun de leurs ports ne s’accorde.", en: "{__VAR_0__} cannot connect to {__VAR_1__}: none of their ports match." },
   "barre.dossier": { fr: "Choisir le dossier de travail", en: "Choose the working folder" },
   "barre.soundfont": { fr: "Charger un SoundFont", en: "Load a SoundFont" },
   "barre.favoris": { fr: "Ouvrir une banque de sons", en: "Open a sound bank" },

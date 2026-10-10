@@ -351,9 +351,24 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 /* Le compteur de mémoire, à droite de la réinitialisation. Chiffres à chasse fixe : sans cela,
    la largeur change à chaque relevé et le bouton « Lancer » tressaute deux fois par seconde. */
+/* LA VEILLE DE MEMOIRE A UNE LARGEUR RESERVEE, et c est ce qui empeche la barre de bouger.
+   Les chiffres etaient deja tabulaires, donc deux valeurs de meme longueur occupaient la meme
+   place ; mais la LONGUEUR change avec le nombre, et la case avec elle. Mesure dans
+   l application, police du systeme a 11 px, bordure et marges internes comprises :
+
+     « 12 Mo » 45,20 px   « 1 234 Mo » 60,08 px   « 123 456 Mo » 71,94 px
+
+   soit 26,74 px de decalage impose a tout ce qui suit — le bouton Lancer en premier — au fil de
+   la consommation. La largeur est donc reservee pour SIX CHIFFRES : 71,94 px mesures, arrondis a
+   72. C est un `min-width` et non une `width` : un septieme chiffre ferait grandir la case
+   plutot que de se faire rogner, ce qui rend le pire cas lisible au lieu de muet.
+
+   Le texte est cale a droite : l unite reste en place et les chiffres poussent vers la gauche,
+   dans la place deja reservee. */
 .attic-memoire {
   font-size: 11px; color: var(--text-tertiary); white-space: nowrap;
   font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+  min-width: 72px; text-align: right;
   padding: 2px 6px; margin: 0 2px; border-radius: 4px;
   background: var(--bg-surface-alt); border: 1px solid var(--border);
   user-select: none; cursor: default;
