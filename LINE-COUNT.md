@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1309 files, 229628 lines, of which 157373 are code.**
-The table lists the 180 files of 200 code lines or more, heaviest first;
-the remaining 1129 account for 154203 lines.
+**1313 files, 230462 lines, of which 157876 are code.**
+The table lists the 181 files of 200 code lines or more, heaviest first;
+the remaining 1132 account for 154740 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -121,8 +121,8 @@ the remaining 1129 account for 154203 lines.
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
+| src/audio/io.ts | 264 | 397 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
-| src/audio/io.ts | 257 | 380 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
@@ -170,6 +170,7 @@ the remaining 1129 account for 154203 lines.
 | src/audio/cercle.ts | 219 | 496 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
 | src/audio/objets-sonores.test.ts | 217 | 262 |  |
+| src/audio/bext.test.ts | 216 | 280 |  |
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |
 | src/plugins/spectral-cdp.ts | 216 | 318 |  |

@@ -31,9 +31,37 @@ const entrees: FicheAudio[] = [
       if (!fichier) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_charg") };
       const buffer = await decoderFichier(fichier, ctx.runtime);
       // Détecter un graphe embarqué dans les métadonnées du fichier
+      let heureBwf = "";
       try {
         const { extraireGrapheWav, extraireGrapheMp3, deserialiserGraphe } = await import("../audio");
         const arrayBuf = await fichier.arrayBuffer();
+        // L'HEURE D'ENREGISTREMENT, QUE LE FICHIER PORTE ET QU'ATTIC JETAIT. Un enregistreur de
+        // terrain écrit un bloc `bext` disant à quel instant de la journée son premier échantillon
+        // a été pris ; c'est ce chiffre qui permet de reposer plusieurs prises les unes par rapport
+        // aux autres sans rien aligner à l'oreille.
+        //
+        // LA FRÉQUENCE EST CELLE DU FICHIER, ET SÛREMENT PAS CELLE DU TAMPON DÉCODÉ.
+        // `TimeReference` compte des échantillons à la cadence du `fmt ` ; `decodeAudioData`
+        // rééchantillonne, de sorte qu'un fichier à 44,1 kHz décodé à 48 donnerait une heure
+        // fausse de huit pour cent — vingt-quatre minutes d'erreur sur une journée.
+        if (fichier.name.toLowerCase().endsWith(".wav")) {
+          const { lireBextWav, secondesDepuisMinuit, horloge } = await import("../audio/bext");
+          const { frequenceDuFichier } = await import("../audio/frequence-source");
+          const bext = lireBextWav(new Uint8Array(arrayBuf));
+          const frequence = frequenceDuFichier(arrayBuf) ?? 0;
+          const secondes = bext ? secondesDepuisMinuit(bext, frequence) : null;
+          // UN DÉPART À ZÉRO N'EST PAS UN DÉPART : la norme fait remplir le champ même quand
+          // l'enregistreur n'a pas d'horloge, et l'immense majorité des fichiers de studio y
+          // laissent zéro. L'annoncer ferait prendre un remplissage pour un renseignement.
+          if (secondes !== null && secondes > 0) {
+            heureBwf = traduire("msg.bwf.depart", horloge(secondes),
+              [bext!.origine, bext!.dateOrigine].filter(Boolean).join(" · ") || "—");
+            // ET L'HEURE VOYAGE AVEC LE SON, sans quoi elle ne serait que dite : c'est elle qui
+            // permet au Montage de replacer deux prises l'une par rapport à l'autre.
+            const { poserDepart } = await import("../audio/depart-bwf");
+            poserDepart(buffer, secondes);
+          }
+        }
         let grapheJson: string | null = null;
         if (fichier.name.toLowerCase().endsWith(".wav")) grapheJson = extraireGrapheWav?.(arrayBuf) ?? null;
         else if (fichier.name.toLowerCase().endsWith(".mp3")) grapheJson = extraireGrapheMp3?.(arrayBuf) ?? null;
@@ -45,12 +73,16 @@ const entrees: FicheAudio[] = [
             return {
               valeurs: [buffer],
               moteur: { grapheTrouve: graphe },
-              message: traduire("msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions", graphe.nodes.length, graphe.edges.length),
+              // LES DEUX SE DISENT, et le graphe passe devant : c'est lui qui appelle un geste.
+              message: [
+                traduire("msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions", graphe.nodes.length, graphe.edges.length),
+                heureBwf,
+              ].filter(Boolean).join(" · "),
             };
           }
         }
       } catch {}
-      return { valeurs: [buffer] };
+      return heureBwf ? { valeurs: [buffer], message: heureBwf } : { valeurs: [buffer] };
     },
   },
   {
