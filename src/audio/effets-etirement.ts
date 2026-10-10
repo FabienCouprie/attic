@@ -4,6 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { etirerDuree } from "./commun";
+import { valeurA } from "./courbe";
 
 export async function appliquerReverbeProgressive(
   entree: AudioBuffer,
@@ -65,10 +66,13 @@ export async function appliquerReverbeProgressive(
 export function ringModulator(
   buffer: AudioBuffer,
   frequence: number,
-  mix: number,
+  // LE MÉLANGE PEUT VARIER AU FIL DU SON, et c'est le seul changement de signature. Un nombre reste
+  // un nombre : `valeurA` rend le scalaire tel quel, de sorte qu'il n'y a pas deux chemins de
+  // calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
+  mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
-  const mixVal = Math.max(0, Math.min(100, mix)) / 100;
+  const borne = (m: number) => Math.max(0, Math.min(100, m)) / 100;
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
     length: buffer.length,
@@ -81,7 +85,8 @@ export function ringModulator(
     for (let i = 0; i < src.length; i++) {
       const t = i / sr;
       const porteuse = Math.sin(2 * Math.PI * frequence * t);
-      dst[i] = src[i] * (1 - mixVal) + src[i] * porteuse * mixVal;
+      const m = borne(valeurA(mix, i));
+      dst[i] = src[i] * (1 - m) + src[i] * porteuse * m;
     }
   }
 

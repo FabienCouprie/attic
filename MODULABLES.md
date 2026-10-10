@@ -11,72 +11,37 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 49
-- **restent à faire** : 24 composants, 49 couples composant / famille
+- **acceptent déjà une courbe** : 60
+- **restent à faire** : 13 composants, 21 couples composant / famille
 - **dont le cœur travaille par trames** : 3
 - **écartés** : 41, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### melange · 11
+### temps · 5
 
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Mix
-- Beat Repeat / Stutter `beat-repeat` : Mix
-- Écho flottant `echo-flottant` : Mélange
-- Granular freeze `granular-freeze` : Mix
-- Haut-parleur rotatif `haut-parleur-rotatif` : Mélange
-- Réverbération hachée `reverbe-hachee` : Mix
-- Réverbération à réseau (FDN) `reverbe-reseau` : Mix
-- Réverbération velours `reverberation-velours` : Mélange
-- Ring modulator `ring-modulator` : Mix
-- Trémolo harmonique `tremolo-harmonique` : Mélange
-- Vocoder `vocoder` : Mix
-
-### espace · 10
-
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
-- Brassage `brassage` : Dispersion
-- Écho flottant `echo-flottant` : Distance
-- Granular freeze `granular-freeze` : Position
-- Haut-parleur rotatif `haut-parleur-rotatif` : Largeur
-- Oscillateur à table d'onde `oscillateur-table-onde` : Position
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
-- Trémolo harmonique `tremolo-harmonique` : Profondeur
-- Ubiquité `ubiquite` : Dispersion
-- Vague `vague` : Profondeur, Ouverture
-
-### temps · 9
-
-- Écho flottant `echo-flottant` : Décroissance
 - Echo inversé `echo-inverse` : Temps
 - Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
 - Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
 - Effet Haas `haas` : Retard
 - Limiteur `limiteur` : Relâchement
-- Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
-- Réverbération à réseau (FDN) `reverbe-reseau` : Queue
-- Réverbération velours `reverberation-velours` : Chute
 
-### frequence · 6
+### espace · 4
 
-- Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
-- Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
-- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
-- Ring modulator `ring-modulator` : Fréquence
-- Trémolo harmonique `tremolo-harmonique` : Coupure
-- Vocoder `vocoder` : Q
+- Brassage `brassage` : Dispersion
+- Oscillateur à table d'onde `oscillateur-table-onde` : Position
+- Ubiquité `ubiquite` : Dispersion
+- Vague `vague` : Profondeur, Ouverture
 
-### dynamique · 4
+### dynamique · 3
 
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
-- Réverbération hachée `reverbe-hachee` : Seuil
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
-### hauteur · 4
+### hauteur · 3
 
 - Brassage `brassage` : Transposition
-- Granular freeze `granular-freeze` : Pitch
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
@@ -86,9 +51,13 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Oscillateur à table d'onde `oscillateur-table-onde` : Volume
 - Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 
-### retroaction · 2
+### frequence · 2
 
-- Beat Repeat / Stutter `beat-repeat` : Feedback
+- Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
+- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
+
+### retroaction · 1
+
 - Echo inversé `echo-inverse` : Feedback
 
 ## Familles écartées en bloc
@@ -138,7 +107,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `ambisonique` : Rotation
 - `ampleur` : Mix
 - `amplificateur` : Gain
+- `arc-en-ciel-acoustique` : Mix
 - `auto-pan` : Fréquence
+- `beat-repeat` : Mix
 - `bitcrusher` : Mix
 - `chopper` : Fréquence
 - `chorus` : Mix
@@ -149,6 +120,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `delay-stereo` : Mix
 - `doser-effet` : Dose
 - `echo` : Temps
+- `echo-flottant` : Mélange
 - `echo-ping-pong` : Temps
 - `etirement-spectre` : Étirement
 - `evolution-melodie` : (non déclarée)
@@ -156,6 +128,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `flanger` : Mix
 - `formule-echantillons` : Volume
 - `glissando-interieur` : Mix
+- `granular-freeze` : Mix
+- `haut-parleur-rotatif` : Mélange
 - `largeur-stereo` : Largeur
 - `matrice-parametres` : (non déclarée)
 - `micromontage` : Transposition
@@ -173,14 +147,20 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `reponse-filtre` : Fréquence de coupure
 - `resonateurs` : Fondamentale
 - `retard-spectral` : Dispersion
+- `reverbe-hachee` : Mix
+- `reverbe-reseau` : Mix
 - `reverberation` : Mix
+- `reverberation-velours` : Mélange
+- `ring-modulator` : Mix
 - `spatialisation-stereo` : Position
 - `spatialiseur` : Azimut
 - `suppression-clics` : Seuil
 - `transfert-enveloppe` : Mix
 - `transient-shaper` : Attaque
 - `tremolo` : Profondeur
+- `tremolo-harmonique` : Mélange
 - `vibrato` : (non déclarée)
 - `visualiseur-courbe` : (non déclarée)
 - `vitesse-variable` : Transposition
+- `vocoder` : Mix
 - `wahwah` : (non déclarée)

@@ -8,7 +8,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
-import { valeursParametre } from "../audio/courbe";
+import { estCourbe, valeursParametre } from "../audio/courbe";
 import { parseMidi } from "midi-file";
 import { appliquerInstrumentMidi, analyserMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -41,10 +41,46 @@ export type FnEffet = (audio: AudioBuffer, ...args: any[]) => Promise<AudioBuffe
  * `echelle` suit la nature de la grandeur : une fréquence se parcourt en multipliant, un mélange en
  * ajoutant.
  */
+/**
+ * Les noms des deux bornes du PREMIER réglage modulé d'une fiche.
+ *
+ * Ils sont la convention du catalogue depuis l'origine, et les graphes enregistrés rangent leurs
+ * valeurs sous ces noms-là : les changer relirait des graphes aux bornes revenues au défaut.
+ */
+export const BORNES_PAR_DEFAUT: readonly [string, string] = ["Modulation min", "Modulation max"];
+
 type ModulationEffet = {
   /** Le nom du réglage piloté, tel qu'il apparaît à l'écran. */
   parametre: string;
-  /** Bornes des réglages « Modulation min » et « Modulation max », dans l'unité de l'écran. */
+  /**
+   * Le même nom dans l'interface anglaise. Par défaut le nom français, ce qui est juste pour
+   * « Mix » ou « Gain » et faux pour « Mélange ».
+   *
+   * LE GARDE D'ANGLAIS A ATTRAPÉ L'OUBLI, et c'est pour cela que le champ existe : la
+   * documentation des deux bornes se fabrique par interpolation, de sorte qu'un nom français
+   * glissé dans `docEn` ressort tel quel à l'écran anglais. `effet()` le remplit tout seul depuis
+   * le `nomEn` du réglage visé, les fiches écrites à la main le portent sur leur constante.
+   */
+  parametreEn?: string;
+  /**
+   * Les noms sous lesquels les deux bornes sont RANGÉES, et non ce qu'elles valent.
+   *
+   * À QUOI CELA SERT, ET C'EST MESURÉ. Une fiche range ses valeurs par NOM : `paramNombre` lit
+   * `noeud.data.parametres[nom]`, et la définition retenue est la PREMIÈRE qui porte ce nom.
+   * `bornesModulation` rendant toujours « Modulation min » et « Modulation max », deux réglages
+   * modulés sur une même fiche recevraient deux paires HOMONYMES : relevé sur un banc, les bornes
+   * du premier posées à 0 → 40 se lisaient aussi pour le second, et une courbe tenue à un y donnait
+   * 40 sur une plage déclarée de 0 à 10 secondes. Rien ne levait d'erreur.
+   *
+   * LA CONVENTION DU CATALOGUE EST DÉJÀ CELLE-CI : le premier réglage modulé d'une fiche garde
+   * « Modulation min / max », les suivants prennent le nom de leur réglage — « Temps min » et
+   * « Feedback min » sur l'écho, « Azimut min » et « Distance min » sur le spatialiseur. Le défaut
+   * reproduit donc l'existant, et les graphes enregistrés se relisent sans rien changer.
+   */
+  noms?: [string, string];
+  /** Les mêmes dans l'interface anglaise. Par défaut, les noms français. */
+  nomsEn?: [string, string];
+  /** Bornes des deux réglages, dans l'unité de l'écran. */
   bornes: [number, number];
   /** Ce que valent le zéro et le un de la courbe. Par défaut, les bornes elles-mêmes. */
   defauts?: [number, number];
@@ -67,6 +103,138 @@ type HorsFilEffet = {
   cles: string[];
 };
 
+/**
+ * Le port d'entrée d'une modulation, tel que toute fiche doit le déclarer.
+ *
+ * EXPORTÉ POUR LES FICHES ÉCRITES À LA MAIN. `effet()` le fabrique pour les effets qu'il bâtit,
+ * mais la moitié du catalogue est écrite fiche par fiche, et chacune le recopierait autrement.
+ * Deux recopies divergent toujours : ici c'est le champ `module` qui relie le port au réglage,
+ * et l'oublier donnerait un port que l'inspecteur ne saurait rattacher à rien.
+ *
+ * LE PORT SE POSE EN DERNIER, toujours. Les ports sont désignés par leur rang, et les graphes déjà
+ * enregistrés pointent dessus : l'insérer ailleurs qu'à la fin rebrancherait chaque arête d'un cran.
+ */
+export const portModulation = (parametre: string, parametreEn = parametre) => {
+  // UN SEUL RÉGLAGE MODULABLE : le port s'appelle « Modulation » tout court, puisqu'il n'y a rien
+  // dont le distinguer. Le nommer d'après son réglage ne se justifie qu'à partir du second.
+  const seul = parametre === "Mélange" || parametre === "Mix";
+  return {
+    nom: seul ? "Modulation" : `Modulation ${parametre.toLowerCase()}`,
+    nomEn: seul ? "Modulation" : `Modulation ${parametreEn.toLowerCase()}`,
+    type: "courbe" as const, requis: false, module: parametre,
+  };
+};
+
+/**
+ * Les deux réglages qui disent ce que zéro et un de la courbe valent chez le consommateur.
+ *
+ * UNE COURBE PORTE TOUJOURS DES VALEURS ENTRE ZÉRO ET UN : c'est l'étage de mise en correspondance
+ * de l'article de Verfaille, Zölzer et Arfib, placé du côté qui connaît ses propres unités. Les
+ * deux bornes sont donc chez l'effet, jamais chez la source, et leur documentation se fabrique
+ * d'un seul endroit pour que cent effets ne la racontent pas de cent façons.
+ */
+export const bornesModulation = (m: ModulationEffet) => {
+  const en = m.parametreEn ?? m.parametre;
+  const [nomMin, nomMax] = m.noms ?? BORNES_PAR_DEFAUT;
+  const [nomMinEn, nomMaxEn] = m.nomsEn ?? m.noms ?? BORNES_PAR_DEFAUT;
+  return [
+    { nom: nomMin, nomEn: nomMinEn, modulationDe: m.parametre,
+      type: "curseur" as const, plage: m.bornes, pas: 1,
+      defaut: m.defauts?.[0] ?? m.bornes[0], unite: m.unite, uniteEn: m.uniteEn,
+      doc: `Valeur de « ${m.parametre} » que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.`,
+      docEn: `Value of « ${en} » that a connected curve's zero means. With no curve, this setting does nothing.` },
+    { nom: nomMax, nomEn: nomMaxEn, modulationDe: m.parametre,
+      type: "curseur" as const, plage: m.bornes, pas: 1,
+      defaut: m.defauts?.[1] ?? m.bornes[1], unite: m.unite, uniteEn: m.uniteEn,
+      doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
+      docEn: `Value of « ${en} » that the curve's one means.` },
+  ];
+};
+
+/**
+ * La modulation d'un mélange sec/mouillé, en pour cent : la même chez tous ceux qui en ont un.
+ *
+ * DEUX CONSTANTES PARCE QUE LE CATALOGUE EMPLOIE DEUX NOMS pour un seul geste, « Mélange » et
+ * « Mix ». Les renommer d'un bloc casserait les graphes enregistrés, qui désignent un réglage par
+ * son nom ; les deux constantes disent donc la même chose sous les deux noms, et c'est la seule
+ * place du dépôt où cette divergence coûte quelque chose.
+ */
+export const MODULATION_MELANGE: ModulationEffet =
+  { parametre: "Mélange", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
+export const MODULATION_MIX: ModulationEffet =
+  { parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
+
+/**
+ * Ce qu'il y a à dire du réglage qu'une courbe vient piloter, dans les deux langues.
+ *
+ * Exportée pour que les fiches écrites à la main l'ajoutent au même endroit de leur phrase, plutôt
+ * que de la reformuler chacune autrement.
+ */
+/**
+ * Les réglages que `melangeModule` lit LUI-MÊME, et que la source de l'exécuteur ne montre donc pas.
+ *
+ * LES GARDES DE PARAMÈTRE MORT S'APPUIENT DESSUS. Ils cherchent le nom de chaque réglage déclaré
+ * dans le texte de l'exécuteur ; ces deux-là sont lus un étage plus bas. Les énumérer ici plutôt
+ * que dans chaque garde fait qu'un réglage ajouté à l'aide se déclare d'un seul endroit.
+ */
+export const REGLAGES_LUS_PAR_MELANGE = BORNES_PAR_DEFAUT;
+
+/**
+ * Vrai si l'exécuteur dont voici la source lit ce réglage, directement ou par une aide partagée.
+ *
+ * LA FORME CHERCHÉE EST « CE RÉGLAGE EST LU », non « ce nom apparaît ici ». C'est la différence qui
+ * compte : un garde qui ne connaît que la seconde oblige chaque fiche à relire ses réglages elle-même
+ * pour le satisfaire, c'est-à-dire à défaire la mise en commun qu'il prétend surveiller.
+ */
+export const luParLExecuteur = (source: string, nom: string): boolean =>
+  source.includes(`"${nom}"`)
+  || (source.includes("melangeModule") && (REGLAGES_LUS_PAR_MELANGE as readonly string[]).includes(nom));
+
+/**
+ * Le mélange d'un effet, modulé ou non.
+ *
+ * SANS COURBE, UN NOMBRE — ET C'EST CE QUI REND L'INVARIANT VRAI SANS EFFORT. Un tableau constant
+ * donnerait le même son, l'arithmétique étant la même ; mais il coûterait une allocation de la
+ * longueur du morceau à chaque effet qui n'est pas modulé, c'est-à-dire presque tous. Le scalaire
+ * est donc rendu tel quel, et `valeurA` le lit sans distinguer les deux cas chez le consommateur.
+ *
+ * LE NOM DU RÉGLAGE EST OBLIGATOIRE, SANS VALEUR PAR DÉFAUT, et ce n'est pas une coquetterie. Les
+ * gardes du dépôt vérifient qu'aucun réglage déclaré n'est mort en cherchant son nom dans la source
+ * de l'exécuteur : un nom caché dans le défaut de cette aide rendrait le garde aveugle sans que
+ * rien ne le signale. Le nommer à l'appel le laisse visible là où le garde regarde.
+ *
+ * L'UNITÉ RENDUE EST DITE, JAMAIS DEVINÉE. Le réglage est en pour cent à l'écran, partout ; mais
+ * les cœurs de calcul du dépôt sont partagés entre ceux qui attendent une proportion de zéro à un
+ * et ceux qui divisent eux-mêmes. Un facteur cent tombé du mauvais côté donne un mélange bloqué à
+ * son maximum, ce qui s'entend à peine sur un effet discret : l'appelant déclare donc ce qu'il veut.
+ */
+export function melangeModule(
+  ctx: any, n: number, rangPort: number,
+  o: {
+    reglage: string; defaut?: number; rendu?: "proportion" | "pourCent";
+    /**
+     * Les noms des deux bornes à lire, quand ce n'est pas le premier réglage modulé de la fiche.
+     *
+     * LES NOMMER À L'APPEL LES REND VISIBLES AU GARDE DE RÉGLAGE MORT, qui cherche le nom de chaque
+     * réglage déclaré dans le texte de l'exécuteur : les deux noms par défaut lui sont connus par
+     * `REGLAGES_LUS_PAR_MELANGE`, et des noms donnés ici apparaissent dans la source.
+     */
+    noms?: readonly [string, string];
+  },
+): number | Float32Array {
+  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT } = o;
+  const facteur = rendu === "pourCent" ? 1 : 100;
+  const fixe = ctx.paramNombre(reglage, defaut);
+  const courbe = ctx.entree(rangPort);
+  if (!estCourbe(courbe)) return fixe / facteur;
+  const valeurs = valeursParametre(courbe, n, fixe, {
+    min: ctx.paramNombre(noms[0], 0),
+    max: ctx.paramNombre(noms[1], 100),
+  });
+  if (facteur !== 1) for (let i = 0; i < valeurs.length; i++) valeurs[i] /= facteur;
+  return valeurs;
+}
+
 export function effet(
   slug: string, nom: string, nomEn: string, resume: string, resumeEn: string,
   parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet, modulation?: ModulationEffet,
@@ -75,18 +243,13 @@ export function effet(
   if (modulation && rangModule < 0) {
     throw new Error(`${slug} : « ${modulation.parametre} » n'est pas un de ses réglages.`);
   }
-  const bornesDe = (m: ModulationEffet) => [
-    { nom: "Modulation min", nomEn: "Modulation min", modulationDe: m.parametre,
-      type: "curseur" as const, plage: m.bornes, pas: 1,
-      defaut: m.defauts?.[0] ?? m.bornes[0], unite: m.unite, uniteEn: m.uniteEn,
-      doc: `Valeur de « ${m.parametre} » que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.`,
-      docEn: `Value of « ${m.parametre} » that a connected curve's zero means. With no curve, this setting does nothing.` },
-    { nom: "Modulation max", nomEn: "Modulation max", modulationDe: m.parametre,
-      type: "curseur" as const, plage: m.bornes, pas: 1,
-      defaut: m.defauts?.[1] ?? m.bornes[1], unite: m.unite, uniteEn: m.uniteEn,
-      doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
-      docEn: `Value of « ${m.parametre} » that the curve's one means.` },
-  ];
+  // LE NOM ANGLAIS DU RÉGLAGE EST PRIS À LA FICHE, non redonné par l'appelant : la fiche le
+  // déclare déjà sur son paramètre, et le redemander ouvrirait la porte à deux noms différents
+  // pour un seul réglage. Un effet dont le réglage n'a pas de `nomEn` montre son nom français
+  // dans les deux langues, ce qui est l'état qu'il avait déjà.
+  const module = modulation && rangModule >= 0
+    ? { ...modulation, parametreEn: modulation.parametreEn ?? parametres[rangModule].nomEn ?? modulation.parametre }
+    : modulation;
 
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
@@ -98,8 +261,16 @@ export function effet(
       : [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      ...parametres.map(p => ({
-        nom: p.nom, nomEn: p.nomEn, defaut: p.defaut, doc: p.doc, docEn: p.docEn,
+      ...parametres.map((p) => ({
+        nom: p.nom, nomEn: p.nomEn, defaut: p.defaut,
+        // CE QU'UNE MODULATION FAIT À CE RÉGLAGE N'EST PAS ÉCRIT ICI. Une première version
+        // l'ajoutait à la documentation du réglage piloté ; l'inspecteur REMPLACE ce réglage par
+        // ses deux bornes dès qu'une courbe arrive, de sorte que la phrase s'affichait à côté des
+        // deux seuls curseurs réglables pour dire que le réglage ne servait à rien. Les deux
+        // phrases, celle de l'annonce et celle de la course, sont dans `i18n` sous
+        // `inspecteur.modulation.*`, et c'est l'inspecteur qui choisit.
+        doc: p.doc,
+        docEn: p.docEn,
         unite: p.unite ?? (p.nom.includes("Mix") || p.nom === "Gain" || p.nom === "Réduction" ? "%" : undefined),
         ...(p.plage ? { plage: p.plage } : {}),
         ...(p.pas ? { pas: p.pas } : {}),
@@ -108,7 +279,7 @@ export function effet(
         // a rattrapé le cas ; tout champ ajouté à `ParamEffet` est à recopier ici.
         ...(p.graine ? { graine: p.graine } : {}),
       })),
-      ...(modulation ? bornesDe(modulation) : []),
+      ...(module ? bornesModulation(module) : []),
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);

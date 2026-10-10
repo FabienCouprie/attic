@@ -18,6 +18,7 @@ import {
   velourVoie, type OptionsVoieVelours, type ProfilDecroissance, type VoieVelours,
 } from "../audio/velours";
 import { parCanal } from "./hors-fil";
+import { MODULATION_MELANGE, bornesModulation, melangeModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -25,7 +26,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Réverbération à queue libre : exponentielle comme une salle, linéaire, en gonflement, ou à deux pentes.",
     resumeEn: "Reverb with a free-form tail: exponential like a room, linear, swelling, or two-sloped.",
-    entrees: [{ nom: "Audio", type: "audio" }],
+    entrees: [{ nom: "Audio", type: "audio" }, portModulation("Mélange")],
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "Réponse", nomEn: "Impulse response", type: "audio" },
@@ -54,11 +55,12 @@ export const fiches: FicheAudio[] = ([
         doc: "Pour les salles couplées seulement : à quel moment de la queue la seconde pente prend le relais.",
         docEn: "For coupled rooms only: at what point in the tail the second slope takes over." },
       { nom: "Mélange", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 35, unite: "%",
-        doc: "Part de son réverbéré dans la sortie.",
-        docEn: "Share of reverberated sound in the output." },
+        doc: "Part de son réverbéré dans la sortie. Quand une courbe la commande, le message donne les bornes de la modulation et non une valeur.",
+        docEn: "Share of reverberated sound in the output. When a curve drives it, the message gives the modulation bounds rather than a value." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine des positions et des signes. Deux graines donnent deux salles de mêmes dimensions.",
         docEn: "Seed of the positions and signs. Two seeds give two rooms of the same dimensions." },
+      ...bornesModulation(MODULATION_MELANGE),
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -68,7 +70,7 @@ export const fiches: FicheAudio[] = ([
       const { sampleRate, numberOfChannels: canaux, length } = entree;
       const profil = ctx.paramTexte("Profil", "exponentielle") as ProfilDecroissance;
       const duree = ctx.paramNombre("Durée", 2);
-      const melange = Math.max(0, Math.min(1, ctx.paramNombre("Mélange", 35) / 100));
+      const melange = melangeModule(ctx, length, 1, { reglage: "Mélange", defaut: 35 });
       const densite = Math.round(ctx.paramNombre("Densité", 1500));
       const o: OptionsVoieVelours = {
         duree, sampleRate, profil, melange, densite,
@@ -92,10 +94,16 @@ export const fiches: FicheAudio[] = ([
         sortie.copyToChannel(new Float32Array(parVoie[c].melangee), c);
         reponses.copyToChannel(new Float32Array(parVoie[c].reponse), c);
       }
+      // LE MESSAGE DIT CE QUE LE RUN A FAIT, et une courbe n'a pas une valeur mais une étendue :
+      // annoncer un seul pour cent de mouillé serait faux dès qu'elle bouge.
       return {
         valeurs: [sortie, reponses],
-        message: traduire("msg.velours.resultat", duree.toFixed(1),
-          String(densite), String(Math.round(melange * 100))),
+        message: typeof melange === "number"
+          ? traduire("msg.velours.resultat", duree.toFixed(1),
+            String(densite), String(Math.round(melange * 100)))
+          : traduire("msg.velours.module", duree.toFixed(1), String(densite),
+            String(Math.round(ctx.paramNombre("Modulation min", 0))),
+            String(Math.round(ctx.paramNombre("Modulation max", 100)))),
       };
     },
   },

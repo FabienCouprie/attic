@@ -27,6 +27,7 @@
 // pi f R sur c. Écrire le retard en mètres plutôt qu'en cents fait que l'écart de hauteur
 // sort du calcul au lieu d'y être posé à la main, et qu'il suit la vitesse comme il le doit.
 
+import { valeurA } from "./courbe";
 import { fft } from "./fft";
 
 /** La vitesse du son dans l'air, en mètres par seconde, à vingt degrés. */
@@ -100,7 +101,7 @@ export interface ReglagesTremoloHarmonique {
   /** Fréquence qui sépare les deux bandes, en hertz. */
   coupure: number;
   /** Part de son traité, de 0 à 1. */
-  melange: number;
+  melange: number | Float32Array;
 }
 
 /**
@@ -113,7 +114,9 @@ export interface ReglagesTremoloHarmonique {
 export function tremoloHarmonique(canaux: Float32Array[], sr: number,
   r: ReglagesTremoloHarmonique): Float32Array[] {
   const d = Math.max(0, Math.min(1, r.profondeur));
-  const m = Math.max(0, Math.min(1, r.melange));
+  // LE MÉLANGE PEUT VARIER AU FIL DU SON. `valeurA` rend un scalaire tel quel : il n'y a donc pas
+  // deux chemins de calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
+  const melangeA = (i: number) => Math.max(0, Math.min(1, valeurA(r.melange, i)));
   return canaux.map((x) => {
     const { grave, aigu } = separerEnDeuxBandes(x, r.coupure, sr);
     const y = new Float32Array(x.length);
@@ -123,6 +126,7 @@ export function tremoloHarmonique(canaux: Float32Array[], sr: number,
       // garantit qu'ils se croisent, et qu'aucun instant ne les trouve tous deux au plus bas.
       const gGrave = 1 - (d * (1 - c)) / 2;
       const gAigu = 1 - (d * (1 + c)) / 2;
+      const m = melangeA(i);
       y[i] = (1 - m) * x[i] + m * (grave[i] * gGrave + aigu[i] * gAigu);
     }
     return y;
@@ -142,7 +146,7 @@ export interface ReglagesRotatif {
   profondeurDoppler: number;
   /** Écart entre les deux micros, de 0 à 1. À zéro ils sont au même endroit. */
   largeur: number;
-  melange: number;
+  melange: number | Float32Array;
 }
 
 /** Un retard fractionnaire, interpolé linéairement entre les deux échantillons voisins. */
@@ -190,7 +194,7 @@ function rotor(x: Float32Array, sr: number, vitesse: number, rayon: number,
  */
 export function hautParleurRotatif(canaux: Float32Array[], sr: number,
   r: ReglagesRotatif): [Float32Array, Float32Array] {
-  const m = Math.max(0, Math.min(1, r.melange));
+  const melangeA = (i: number) => Math.max(0, Math.min(1, valeurA(r.melange, i)));
   const ecart = Math.PI * Math.max(0, Math.min(1, r.largeur));
   const n = canaux[0]?.length ?? 0;
 
@@ -206,7 +210,10 @@ export function hautParleurRotatif(canaux: Float32Array[], sr: number,
     const b = rotor(grave, sr, r.vitesseGrave, RAYON_GRAVE,
       r.profondeurAmplitude, r.profondeurDoppler, dephasage);
     const sec = canaux[Math.min(micro, canaux.length - 1)];
-    for (let i = 0; i < n; i++) sortie[micro][i] = (1 - m) * sec[i] + m * (t[i] + b[i]);
+    for (let i = 0; i < n; i++) {
+      const m = melangeA(i);
+      sortie[micro][i] = (1 - m) * sec[i] + m * (t[i] + b[i]);
+    }
   }
   return sortie;
 }

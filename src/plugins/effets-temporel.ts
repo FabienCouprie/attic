@@ -13,7 +13,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
 import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, appliquerDecoupeAleatoire, griffinLim, picAbsolu } from "../audio";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
-import { effet } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, effet, melangeModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -230,7 +230,7 @@ export const fiches: FicheAudio[] = ([
     id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mix")],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
@@ -244,7 +244,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
         doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide).", docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+        doc: "Équilibre signal original / effet.",
+        docEn: "Dry/wet balance." },
+      ...bornesModulation(MODULATION_MIX),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -256,7 +258,8 @@ export const fiches: FicheAudio[] = ([
         const parts = s.split("/");
         return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
       };
-      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Mix", 100))], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
+      const mix = melangeModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
+      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), mix)], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
     },
   },
   {

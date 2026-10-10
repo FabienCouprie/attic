@@ -29,6 +29,7 @@
 // temps de résonance décroît donc quand la fréquence monte, si bien que la bande qui va le plus loin
 // est aussi celle qui demeure le plus longtemps. Le réglage se donne en secondes sur la bande la
 // plus grave, parce que c'est ce qu'une oreille sait juger.
+import { valeurA } from "./courbe";
 import { picTampon } from "./mixage";
 
 export interface OptionsArcEnCiel {
@@ -51,8 +52,8 @@ export interface OptionsArcEnCiel {
   dispersion: number;
   /** Temps de résonance de la bande la plus grave, en secondes. */
   piegeage: number;
-  /** Part du son trié, de 0 à 100. */
-  mix: number;
+  /** Part du son trié, de 0 à 100. Un tableau le fait varier échantillon par échantillon. */
+  mix: number | Float32Array;
 }
 
 /** Ce qu'une bande du banc devient : où elle sort, quand, et combien de temps elle demeure. */
@@ -182,13 +183,20 @@ export function arcEnCiel(buffer: AudioBuffer, o: OptionsArcEnCiel): AudioBuffer
 
   const pic = picTampon(humide);
   const niveau = pic > 0 ? picTampon(buffer) / pic : 0;
-  const mix = borne(o.mix, 0, 100) / 100;
+  // LE MÉLANGE PEUT VARIER AU FIL DU SON, et `valeurA` rend un scalaire tel quel : il n'y a donc
+  // pas deux chemins de calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
+  // LA SORTIE ÉTANT PLUS LONGUE QUE L'ENTRÉE, la courbe s'arrête avant elle : `valeurA` tient alors
+  // sa dernière valeur, de sorte que la queue de résonance hérite du mélange où le son s'est tu.
+  const mixA = (i: number) => borne(valeurA(o.mix, i), 0, 100) / 100;
   const sortie = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
   for (let c = 0; c < 2; c++) {
     const h = humide.getChannelData(c);
     const s = buffer.getChannelData(Math.min(c, buffer.numberOfChannels - 1));
     const d = sortie.getChannelData(c);
-    for (let i = 0; i < n; i++) d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    for (let i = 0; i < n; i++) {
+      const mix = mixA(i);
+      d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    }
   }
   return sortie;
 }

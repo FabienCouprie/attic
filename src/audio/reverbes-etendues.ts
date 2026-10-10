@@ -21,6 +21,7 @@
 // la première transposée, et ainsi de suite jusqu'à ce que le gain de rebouclage les éteigne. Quatre
 // ou cinq suffisent ; au-delà, tout est sous le plancher d'audition.
 
+import { valeurA } from "./courbe";
 import { changerTonaliteVoie } from "./effets-spectral";
 import { convoluer, reponseVelours, type OptionsVelours } from "./velours";
 
@@ -54,7 +55,9 @@ export interface OptionsHachee {
   maintienSec: number;
   /** Temps de fermeture, en secondes. Court, c'est le couperet ; long, c'est un fondu. */
   chuteSec: number;
-  melange: number;
+  /** Part de réverbération dans la sortie, de 0 à 1. Un tableau la fait varier échantillon par
+   * échantillon ; il traverse l'ouvrier par clonage structuré, comme les voies elles-mêmes. */
+  melange: number | Float32Array;
   frequence: number;
   graine?: number;
   densite?: number;
@@ -131,10 +134,11 @@ export function reverberationHachee(entree: Float32Array, o: OptionsHachee): Res
   const queue = convoluer(x, h).subarray(0, x.length);
   const porte = enveloppePorte(x, o);
 
-  const m = Math.min(1, Math.max(0, o.melange));
   const out = new Float32Array(x.length);
   const hachee = new Float32Array(x.length);
   for (let i = 0; i < x.length; i++) {
+    // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+    const m = Math.min(1, Math.max(0, valeurA(o.melange, i)));
     hachee[i] = queue[i] * porte[i];
     out[i] = x[i] * (1 - m) + (x[i] + hachee[i]) * m;
   }

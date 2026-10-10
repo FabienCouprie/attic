@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
+import { MODULATION_MIX, bornesModulation, melangeModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -14,7 +15,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont le temps de décroissance se règle séparément dans le grave et dans l'aigu, ce que fait toute vraie salle.",
     resumeEn: "A reverb whose decay time is set separately for the low and the high end, as every real room behaves.",
-    entrees: [{ nom: "Audio", type: "audio" }],
+    entrees: [{ nom: "Audio", type: "audio" }, portModulation("Mix")],
     sorties: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Réponse", nomEn: "Impulse response", type: "audio", sousType: "stereo" },
@@ -44,11 +45,12 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart entre les deux voies. À zéro, la réverbération est mono ; les deux voies sont obtenues par des combinaisons de signes différentes des mêmes lignes, ce qui les décorrèle sans rien coûter.",
         docEn: "Difference between the two channels. At zero the reverb is mono; the two channels come from different sign combinations of the same lines, which decorrelates them at no cost." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 35, unite: "%",
-        doc: "Proportion de réverbération. À 0 %, la sortie est le son d'entrée.",
-        docEn: "Proportion of reverb. At 0 %, the output is the input." },
+        doc: "Proportion de réverbération. À 0 %, la sortie est le son d'entrée. La sortie « Réponse » ne dépend pas de ce réglage, elle est toujours rendue en réverbération seule.",
+        docEn: "Proportion of reverb. At 0 %, the output is the input. The « Impulse response » output does not depend on this setting, it is always returned as reverb alone." },
       { nom: "Queue", nomEn: "Tail", type: "curseur", plage: [0.2, 15], pas: 0.1, defaut: 0, unite: "s",
         doc: "Durée ajoutée après le son pour laisser la queue s'éteindre. À zéro, le composant prend le plus long des deux RT60, une réverbération qui s'arrêterait avec le son n'en serait pas une.",
         docEn: "Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one." },
+      ...bornesModulation(MODULATION_MIX),
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -66,7 +68,9 @@ export const fiches: FicheAudio[] = ([
         retardMin: ctx.paramNombre("Retard court", 23),
         retardMax: Math.max(ctx.paramNombre("Retard court", 23) + 5, ctx.paramNombre("Retard long", 79)),
         largeur: ctx.paramNombre("Largeur", 100) / 100,
-        melange: ctx.paramNombre("Mix", 35) / 100,
+        // La courbe est lue sur la longueur de l'entrée ; au-delà, sa dernière valeur tient, ce
+        // qui couvre la queue ajoutée après le son.
+        melange: melangeModule(ctx, length, 1, { reglage: "Mix", defaut: 35 }),
         queue: queueDemandee > 0.2 ? queueDemandee : Math.max(rt60Bas, rt60Haut),
       };
 

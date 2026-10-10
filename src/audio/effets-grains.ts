@@ -147,13 +147,14 @@ export function granularFreeze(
   grainSizeMs: number,
   pitch: number,
   position: number,
-  mix: number,
+  // LE MÉLANGE PEUT VARIER AU FIL DU SON. `valeurA` rend un scalaire tel quel : il n'y a donc pas
+  // deux chemins de calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
+  mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const grainSize = Math.max(1, Math.round(grainSizeMs / 1000 * sr));
   const start = Math.floor(position * Math.max(0, buffer.length - grainSize));
   const ratio = Math.pow(2, pitch / 12);
-  const mixVal = mix / 100;
 
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -163,7 +164,8 @@ export function granularFreeze(
     for (let i = 0; i < buffer.length; i++) {
       const idx = start + (Math.floor(phase) % grainSize);
       const wet = src[idx];
-      dst[i] = src[i] * (1 - mixVal) + wet * mixVal;
+      const m = valeurA(mix, i) / 100;
+      dst[i] = src[i] * (1 - m) + wet * m;
       phase += ratio;
       while (phase >= grainSize) phase -= grainSize;
     }
@@ -181,7 +183,7 @@ export function beatRepeat(
   segmentDiv: number,
   repetitions: number,
   feedback: number,
-  mix: number,
+  mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const len = buffer.length;
@@ -191,12 +193,14 @@ export function beatRepeat(
   const segmentSamples = Math.max(1, Math.round(beatDuration * 4 / segmentDiv * sr));
   const maxRepeatSamples = Math.min(intervalSamples, Math.max(1, repetitions * segmentSamples));
   const decay = Math.max(0, Math.min(1, feedback / 100));
-  const mixWet = Math.max(0, Math.min(1, mix / 100));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const mixA = (i: number) => Math.max(0, Math.min(1, valeurA(mix, i) / 100));
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < len; i++) {
+      const mixWet = mixA(i);
       const posInInterval = i % intervalSamples;
       const intervalStart = i - posInInterval;
       let out: number;

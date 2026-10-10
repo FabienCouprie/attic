@@ -72,7 +72,8 @@ export const fiches: FicheAudio[] = ([
   },
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
     [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
-    (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix)),
+    (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position / 100, mix), undefined,
+    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
   {
     id: "formule-echantillons", nom: "Formule sur échantillons", nomEn: "Sample Formula",
     univers: "Traitement", famille: "Effets",

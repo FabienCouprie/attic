@@ -28,6 +28,7 @@
 // longueur. Ce qu'on garde du velours n'est donc pas son économie mais sa TEXTURE et la liberté
 // de sa décroissance.
 
+import { valeurA } from "./courbe";
 import { fft } from "./fft";
 
 export type ProfilDecroissance = "exponentielle" | "lineaire" | "gonflement" | "couplee";
@@ -193,8 +194,11 @@ export function convoluer(x: Float32Array, h: Float32Array): Float32Array {
 
 /** Tout ce qu'une voie de réverbération demande, en un seul objet sérialisable. */
 export interface OptionsVoieVelours extends OptionsVelours {
-  /** Part de son réverbéré dans la sortie, entre 0 et 1. */
-  melange: number;
+  /**
+   * Part de son réverbéré dans la sortie, entre 0 et 1. Un tableau la fait varier échantillon par
+   * échantillon ; il traverse l'ouvrier par clonage structuré, comme les voies elles-mêmes.
+   */
+  melange: number | Float32Array;
 }
 
 /** Ce qu'une voie rend : le son mélangé, et la réponse qui l'a produit. */
@@ -225,7 +229,11 @@ export function velourVoie(sec: Float32Array, o: OptionsVoieVelours, canal: numb
   for (let i = 0; i < mouille.length; i++) cm = Math.max(cm, Math.abs(mouille[i]));
   const g = cm > 1e-9 ? cs / cm : 0;
   const melangee = new Float32Array(sec.length);
-  for (let i = 0; i < sec.length; i++) melangee[i] = sec[i] * (1 - o.melange) + mouille[i] * g * o.melange;
+  for (let i = 0; i < sec.length; i++) {
+    // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+    const m = Math.max(0, Math.min(1, valeurA(o.melange, i)));
+    melangee[i] = sec[i] * (1 - m) + mouille[i] * g * m;
+  }
   return { melangee, reponse };
 }
 

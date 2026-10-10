@@ -25,6 +25,8 @@
 // un seul son, qu'elle localise du côté arrivé LE PREMIER, même si le retardé est plus fort. Au-delà
 // d'une quarantaine de millisecondes la fusion se défait et l'on entend deux sons.
 
+import { valeurA } from "./courbe";
+
 /** La célérité du son dans l'air à vingt degrés, en mètres par seconde. */
 export const CELERITE = 343;
 
@@ -41,8 +43,15 @@ export interface OptionsFlottant {
   decroissance: number;
   /** La part des aigus que les murs absorbent à chaque tour, de 0 à 1. */
   amortissement: number;
-  /** La part de l'effet dans la sortie, de 0 à 1. */
-  melange: number;
+  /**
+   * La part de l'effet dans la sortie, de 0 à 1. Un tableau la fait varier échantillon par
+   * échantillon.
+   *
+   * LE MÉLANGE EST HORS DE LA BOUCLE, et c'est ce qui le rend modulable exactement : la ligne à
+   * retard reçoit le son d'entrée seul, de sorte que faire varier la part n'altère pas le
+   * battement qui se construit, seulement ce qu'on en entend.
+   */
+  melange: number | Float32Array;
 }
 
 /**
@@ -64,7 +73,8 @@ export function echoFlottant(buffer: AudioBuffer, o: OptionsFlottant): AudioBuff
   const decroissance = Math.max(0.05, o.decroissance);
   const gain = Math.pow(10, (-3 * periode) / decroissance);
   const a = Math.max(0, Math.min(0.99, o.amortissement));
-  const part = Math.max(0, Math.min(1, o.melange));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const partA = (i: number) => Math.max(0, Math.min(1, valeurA(o.melange, i)));
 
   const sortie = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr,
@@ -82,6 +92,7 @@ export function echoFlottant(buffer: AudioBuffer, o: OptionsFlottant): AudioBuff
       const dansLaBoucle = src[i] + bas * gain;
       ligne[ou] = dansLaBoucle;
       ou = ou + 1 >= retard ? 0 : ou + 1;
+      const part = partA(i);
       dst[i] = src[i] * (1 - part) + revenu * part;
     }
   }

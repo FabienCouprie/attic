@@ -3,6 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { valeurA } from "./courbe";
 import { changerTonaliteVoie } from "./effets-spectral";
 
 export interface OptionsHarmoniser {
@@ -97,7 +98,7 @@ export async function vocoder(
   fMin: number,
   fMax: number,
   Q: number,
-  mix: number,
+  mix: number | Float32Array,
 ): Promise<AudioBuffer> {
   const sr = modulateur.sampleRate;
   const length = Math.min(modulateur.length, porteuse.length);
@@ -118,13 +119,17 @@ export async function vocoder(
     }
   }
 
-  const mixVal = mix / 100;
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const mixA = (i: number) => valeurA(mix, i) / 100;
   const sortie = new AudioBuffer({ numberOfChannels: nch, length, sampleRate: sr });
   for (let c = 0; c < nch; c++) {
     const src = modulateur.getChannelData(c);
     const wet = resultat.getChannelData(c);
     const dst = sortie.getChannelData(c);
-    for (let i = 0; i < length; i++) dst[i] = src[i] * (1 - mixVal) + wet[i] * mixVal;
+    for (let i = 0; i < length; i++) {
+      const mixVal = mixA(i);
+      dst[i] = src[i] * (1 - mixVal) + wet[i] * mixVal;
+    }
   }
   return sortie;
 }

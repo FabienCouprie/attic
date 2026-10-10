@@ -142,7 +142,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Analyse émotionnelle | `analyse-emotionnelle` | 240 × 140 |
 | Analyse rythmique | `analyse-rythme` | 240 × 118 |
 | Anneau de Möbius | `anneau-moebius` | 240 × 118 |
-| Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 118 |
+| Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 140 |
 | Arpège flocon de Koch | `arpege-koch` | 240 × 140 |
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
 | Arpégiateur MIDI | `arpegiateur-midi` | 240 × 118 |
@@ -153,7 +153,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
 | Barre modale | `barre-modale` | 240 × 118 |
 | Battements binauraux | `battements-binauraux` | 240 × 140 |
-| Beat Repeat / Stutter | `beat-repeat` | 240 × 118 |
+| Beat Repeat / Stutter | `beat-repeat` | 240 × 140 |
 | Bitcrusher | `bitcrusher` | 240 × 140 |
 | Groove Box | `boite-groove` | 240 × 206 |
 | Boîte à rythmes | `boite-rythmes` | 240 × 140 |
@@ -243,7 +243,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ducking | `ducking` | 240 × 140 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
-| Écho flottant | `echo-flottant` | 240 × 118 |
+| Écho flottant | `echo-flottant` | 240 × 140 |
 | Echo inversé | `echo-inverse` | 240 × 118 |
 | Echo Ping-Pong | `echo-ping-pong` | 240 × 162 |
 | Écosystème (Di Scipio) | `ecosysteme` | 240 × 140 |
@@ -298,14 +298,14 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Glissando de Risset | `glissando-risset` | 240 × 118 |
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
-| Granular freeze | `granular-freeze` | 240 × 118 |
+| Granular freeze | `granular-freeze` | 240 × 140 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
-| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 118 |
+| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 140 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
@@ -417,11 +417,11 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réunir des voix | `reunir-voix` | 240 × 162 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
-| Réverbération hachée | `reverbe-hachee` | 240 × 118 |
+| Réverbération hachée | `reverbe-hachee` | 240 × 140 |
 | Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 140 |
 | Réverbération | `reverberation` | 240 × 140 |
 | Réverbération velours | `reverberation-velours` | 240 × 140 |
-| Ring modulator | `ring-modulator` | 240 × 118 |
+| Ring modulator | `ring-modulator` | 240 × 140 |
 | RMS (Meyda) | `rms-meyda` | 240 × 140 |
 | Rogner les silences | `rogner-silences` | 240 × 118 |
 | Rolloff spectral (Meyda) | `rolloff-spectral-meyda` | 240 × 140 |
@@ -486,7 +486,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Transient Shaper | `transient-shaper` | 240 × 140 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
-| Trémolo harmonique | `tremolo-harmonique` | 240 × 118 |
+| Trémolo harmonique | `tremolo-harmonique` | 240 × 140 |
 | Tresse | `tresse` | 240 × 118 |
 | TTS Français | `tts-francais` | 240 × 118 |
 | Kokoro TTS | `tts-kokoro` | 240 × 118 |
@@ -499,7 +499,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |
-| Vocoder | `vocoder` | 240 × 140 |
+| Vocoder | `vocoder` | 240 × 162 |
 | Voice Changer | `voice-changer` | 240 × 118 |
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |

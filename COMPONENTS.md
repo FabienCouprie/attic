@@ -2921,8 +2921,8 @@ Detects brief clicks and crackles and replaces them with an interpolation of the
 |---|---|---|---|---|
 | Threshold | number | 5 × | 1 – 50 ×, step 1 | Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive. |
 | Window | number | 5 ms |  | Replacement window width. |
-| Modulation min | slider | 1 × | 1 – 50 ×, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Seuil » that the curve's one means. |
+| Modulation min | slider | 1 × | 1 – 50 ×, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Threshold » that the curve's one means. |
 
 #### Declipper
 
@@ -3030,11 +3030,12 @@ Subtracts background noise from the signal using a noise profile captured on a s
 
 *Captures and repeats a short segment at rhythmic intervals (stutter effect).*
 
-Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix.
+Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3045,6 +3046,8 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 | Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Bitcrusher
 
@@ -3280,12 +3283,15 @@ Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Frequency | number | 200 Hz | 1 – 8000 Hz, step 1 | Carrier frequency. Produces sum and difference frequencies (sidebands). |
 | Mix | number | 100 % |  | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Tape Machine
 
@@ -3388,12 +3394,13 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 
 *Filterbank vocoder: modulator + carrier → robot voice effect.*
 
-Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input and a synthesizer (or any harmonic-rich carrier) to the Carrier input. The modulator's spectrum controls the volume of each carrier band, producing the classic robot effect. Settings: • the number of bands • frequency range • Q.
+Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input and a synthesizer (or any harmonic-rich carrier) to the Carrier input. The modulator's spectrum controls the volume of each carrier band, producing the classic robot effect. Settings: • the number of bands • frequency range • Q • Mix, the share of vocoder in the output. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The output stops at the shorter of the two sounds, and the curve is read over that length.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Modulator | audio |  |
 | input | Carrier | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3403,6 +3410,8 @@ Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input an
 | Max freq | number | 8000 Hz | 2000 – 16000 Hz, step 100 | Highest band frequency. |
 | Q | number | 2 | 0.5 – 12, step 0.1 | Bandpass filter quality factor. Higher = narrower bands. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Voice Changer
 
@@ -4614,8 +4623,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Ratio | number | 3 ∶1 | 1 – 10 ∶1, step 0.5 | Sibilance reduction ratio. |
 | Attack | number | 1 ms | 0.1 – 50 ms, step 0.1 | Reaction time (short = precise, long = smooth). |
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
-| Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Seuil » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Seuil » that the curve's one means. |
+| Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
 
 #### Ducking
 
@@ -4862,8 +4871,8 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Sustain | number | 0 dB | -12 – 12 dB, step 0.5 | Gain applied to the sustain body. Positive = more sustain; negative = shorter. |
 | Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged. |
 | Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
-| Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attaque » that the curve's one means. |
+| Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attack » that the curve's one means. |
 
 #### Tuned Combs
 
@@ -5870,11 +5879,12 @@ Extracts a feature from a sound to drive an effect with it. After Vincent Verfai
 
 *The metallic flutter of a sound caught between two parallel walls.*
 
-This node returns the flutter of a sound caught between two parallel reflecting surfaces. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005. The sound travels back and forth between the two walls in twice the distance divided by the speed of sound, then starts again. Frequencies whose half wavelength divides the distance build up on every round trip, the others cancel: what remains is a comb whose teeth are spaced by the speed of sound over twice the distance. The reflections stay discrete and periodic, and it is their regularity that makes the timbre. « Distance » is the gap between the two walls. At three metres the round trip lasts seventeen and a half milliseconds and the comb sounds at fifty-seven hertz; moving the walls apart brings the flutter down. « Decay » is the time the flutter takes to lose sixty decibels. The gain of each round trip follows from it, so the length stays the one asked for whatever the distance. « Damping » is the share of highs the walls absorb at each reflection. The flutter then dulls as it dies away. « Mix » sets the share of the effect in the output. The « Audio » output returns the treated sound. The message gives the round-trip period and the comb frequency.
+This node returns the flutter of a sound caught between two parallel reflecting surfaces. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005. The sound travels back and forth between the two walls in twice the distance divided by the speed of sound, then starts again. Frequencies whose half wavelength divides the distance build up on every round trip, the others cancel: what remains is a comb whose teeth are spaced by the speed of sound over twice the distance. The reflections stay discrete and periodic, and it is their regularity that makes the timbre. « Distance » is the gap between the two walls. At three metres the round trip lasts seventeen and a half milliseconds and the comb sounds at fifty-seven hertz; moving the walls apart brings the flutter down. « Decay » is the time the flutter takes to lose sixty decibels. The gain of each round trip follows from it, so the length stays the one asked for whatever the distance. « Damping » is the share of highs the walls absorb at each reflection. The flutter then dulls as it dies away. « Mix » sets the share of the effect in the output. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The mix is applied after the loop, so that varying it does not touch the flutter being built, only the share of it that is heard. The « Audio » output returns the treated sound. The message gives the round-trip period and the comb frequency.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5883,6 +5893,8 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 | Decay | slider | 1 s | 0.05 – 10 s, step 0.05 | The time the flutter takes to lose sixty decibels. |
 | Damping | slider | 20 % | 0 – 95 %, step 1 | The share of highs the walls absorb at each reflection. The flutter dulls as it dies away. |
 | Mix | slider | 70 % | 0 – 100 %, step 1 | The share of the effect in the output. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Granular Freeze
 
@@ -5895,6 +5907,7 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5903,6 +5916,8 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Pitch | number | 0 st | -24 – 24 st, step 1 | Grain pitch shift in semitones. |
 | Position | number | 0 % | 0 – 100 %, step 1 | Position in the file where the grain is extracted. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Haas Effect
 
@@ -5934,6 +5949,7 @@ Modulates lows and highs in opposition. The sound is first split into two bands 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5942,6 +5958,8 @@ Modulates lows and highs in opposition. The sound is first split into two bands 
 | Depth | slider | 70 % | 0 – 100 %, step 1 | Level difference between the two bands at the peak of the oscillation. At zero, both bands keep their level and the sound comes out unchanged. |
 | Crossover | slider | 800 Hz | 100 – 4000 Hz, step 10 | Frequency that separates the two bands. Low, only the treble sways against the rest; high, it is the bass that stands out. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Lucier Room
 
@@ -6036,6 +6054,7 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6047,6 +6066,8 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | Doppler depth | slider | 100 % | 0 – 100 %, step 1 | Share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone. At zero the pitch no longer moves and only the level variation remains. |
 | Width | slider | 100 % | 0 – 100 %, step 1 | Angle between the two microphones around the axis. At a hundred per cent they are opposite and see the rotors pass half a turn apart; at zero they sit at the same place and the two channels coincide. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample on both channels. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Sample Formula
 
@@ -6453,11 +6474,12 @@ Convolution reverb: generates a synthetic impulse response (IR) from your settin
 
 *A reverb whose decay time is set separately for the low and the high end, as every real room behaves.*
 
-A reverb whose decay time is set separately for the low and the high end. After Jean-Marc Jot and Antoine Chaigne, « Digital delay networks for designing artificial reverberators », AES Convention 90, 1991, the feedback delay network and, above all, the way to control reverberation time explicitly within it; exact RT60 control was taken up and refined by Sebastian J. Schlecht and Emanuel A. P. Habets, DAFx-17. A decay uniform across the spectrum is not what a room does: air and materials absorb the high end far faster than the low, so a real reverb tail darkens as it dies. Method. Eight delay lines looped into one another by a Hadamard matrix, which is unitary; it preserves energy, so the network would never die out by itself. It is the attenuation placed on each line that decides the decay, and separating diffusion from absorption in this way is the paper's idea: RT60 becomes adjustable without touching anything else. The delay lengths are prime, since two delays sharing a divisor would make their echoes coincide periodically, heard as a metallic ringing. The absorption calculation is derived rather than copied: a line of m samples is traversed fs/m times per second, so to lose 60 dB in T seconds each pass must cost 60·m/(T·fs) decibels; a first-order lowpass on each line then suffices to make that cost frequency-dependent, and its two coefficients solve exactly. By the Schroeder integral on the resulting response, band by band: for 2.00 s requested at the low end and 0.50 s at 8 kHz, one reads 1.96 s at 125 Hz, 1.90 at 500 Hz, 1.54 at 2 kHz and 0.58 at 8 kHz; for 1.00 s everywhere, one reads 0.98, 0.98, 1.01, 0.99 and 1.00. The transition between the two is gradual, like a first-order filter's, not a step. The node measures what it produces and announces it: the room obtained beside the room requested. Two precautions. The first: solving the filter at Nyquist is simpler but makes the setting misleading, 0.73 s being read at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to; hence the « High reference » setting. The second: asking for a high end longer than the low can be physically impossible, the loop's magnitude then exceeding unity, and the response reaching 1.2 × 10^13 instead of dying out. A safeguard bounds the absorption. With 0.5 s at the low end and 2 s at the high: the tail stays flat at 0.5 s in every band: the bound eats the inversion. This direction of the setting therefore does almost nothing. One output returns the impulse response itself, as audio. Cost: 20 ms for two seconds of sound at eight lines.
+A reverb whose decay time is set separately for the low and the high end. After Jean-Marc Jot and Antoine Chaigne, « Digital delay networks for designing artificial reverberators », AES Convention 90, 1991, the feedback delay network and, above all, the way to control reverberation time explicitly within it; exact RT60 control was taken up and refined by Sebastian J. Schlecht and Emanuel A. P. Habets, DAFx-17. A decay uniform across the spectrum is not what a room does: air and materials absorb the high end far faster than the low, so a real reverb tail darkens as it dies. Method. Eight delay lines looped into one another by a Hadamard matrix, which is unitary; it preserves energy, so the network would never die out by itself. It is the attenuation placed on each line that decides the decay, and separating diffusion from absorption in this way is the paper's idea: RT60 becomes adjustable without touching anything else. The delay lengths are prime, since two delays sharing a divisor would make their echoes coincide periodically, heard as a metallic ringing. The absorption calculation is derived rather than copied: a line of m samples is traversed fs/m times per second, so to lose 60 dB in T seconds each pass must cost 60·m/(T·fs) decibels; a first-order lowpass on each line then suffices to make that cost frequency-dependent, and its two coefficients solve exactly. By the Schroeder integral on the resulting response, band by band: for 2.00 s requested at the low end and 0.50 s at 8 kHz, one reads 1.96 s at 125 Hz, 1.90 at 500 Hz, 1.54 at 2 kHz and 0.58 at 8 kHz; for 1.00 s everywhere, one reads 0.98, 0.98, 1.01, 0.99 and 1.00. The transition between the two is gradual, like a first-order filter's, not a step. The node measures what it produces and announces it: the room obtained beside the room requested. Two precautions. The first: solving the filter at Nyquist is simpler but makes the setting misleading, 0.73 s being read at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to; hence the « High reference » setting. The second: asking for a high end longer than the low can be physically impossible, the loop's magnitude then exceeding unity, and the response reaching 1.2 × 10^13 instead of dying out. A safeguard bounds the absorption. With 0.5 s at the low end and 2 s at the high: the tail stays flat at 0.5 s in every band: the bound eats the inversion. This direction of the setting therefore does almost nothing. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. It is read over the length of the input, and its last value holds for the tail added after the sound. The « Impulse response » output does not depend on it, it is always returned as reverb alone. One output returns the impulse response itself, as audio. Cost: 20 ms for two seconds of sound at eight lines.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 | output | Impulse response | audio (stereo) |  |
 
@@ -6470,8 +6492,10 @@ A reverb whose decay time is set separately for the low and the high end. After 
 | Shortest delay | slider | 23 ms | 5 – 60 ms, step 1 | Length of the shortest line: this is what gives the apparent size of the place, even before the duration. |
 | Longest delay | slider | 79 ms | 20 – 200 ms, step 1 | Length of the longest line. The gap between the two makes the density of early echoes; narrow it and you hear a corridor, widen it and a cathedral. |
 | Width | slider | 100 % | 0 – 100 %, step 1 | Difference between the two channels. At zero the reverb is mono; the two channels come from different sign combinations of the same lines, which decorrelates them at no cost. |
-| Mix | slider | 35 % | 0 – 100 %, step 1 | Proportion of reverb. At 0 %, the output is the input. |
+| Mix | slider | 35 % | 0 – 100 %, step 1 | Proportion of reverb. At 0 %, the output is the input. The « Impulse response » output does not depend on this setting, it is always returned as reverb alone. |
 | Tail | slider | 0 s | 0.2 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Fractal Reverb
 
@@ -6502,11 +6526,12 @@ Convolution reverb whose impulse response is built from a Cantor dust. Reflectio
 
 *A reverb tail cut dead by a gate driven by the dry sound.*
 
-Reverberates a percussive sound and cuts its tail dead, driven by the dry sound. It is the drum sound of the eighties, and it is not obtained by putting a gate after a reverb: an ordinary gate listens to what it processes: placed after the tail, it closes when the tail falls below its threshold, that is, late and gradually. One hears a decay where a cleaver was wanted. Here the gate is driven by the dry sound. It opens at the attack, holds for a fixed time, then cuts dead, and that brutal silence is the effect. As long as the dry signal comes back above the threshold the countdown restarts: a roll therefore holds the gate open, and the cleaver falls after the last hit. The node reports the trail, what the reverb adds after the dry sound ends, before and after gating: it goes from more than a second to four tenths. The share of energy discarded, eleven per cent, does not say the same thing: a tail is heard long after it weighs nothing. The node calls for drums, or anything percussive: the effect assumes clear attacks, since it is on them that the gate is set.
+Reverberates a percussive sound and cuts its tail dead, driven by the dry sound. It is the drum sound of the eighties, and it is not obtained by putting a gate after a reverb: an ordinary gate listens to what it processes: placed after the tail, it closes when the tail falls below its threshold, that is, late and gradually. One hears a decay where a cleaver was wanted. Here the gate is driven by the dry sound. It opens at the attack, holds for a fixed time, then cuts dead, and that brutal silence is the effect. As long as the dry signal comes back above the threshold the countdown restarts: a roll therefore holds the gate open, and the cleaver falls after the last hit. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The tail and the gate are computed before the mix, so that varying the share changes neither their density nor the moment of closing. The node reports the trail, what the reverb adds after the dry sound ends, before and after gating: it goes from more than a second to four tenths. The share of energy discarded, eleven per cent, does not say the same thing: a tail is heard long after it weighs nothing. The node calls for drums, or anything percussive: the effect assumes clear attacks, since it is on them that the gate is set.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6517,6 +6542,8 @@ Reverberates a percussive sound and cuts its tail dead, driven by the dry sound.
 | Threshold | slider | -40 dB | -60 – -10 dB, step 1 | Dry level above which the gate opens. Too low and it stays open on hiss; too high and soft hits no longer trigger anything. |
 | Mix | slider | 60 % | 0 – 100 %, step 1 | Proportion of reverb added. At 0 %, the output is the input. |
 | Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Progressive Reverb
 
@@ -6590,11 +6617,12 @@ A reverb whose tail rises an octave at each pass, receding as it climbs. The eff
 
 *Reverb with a free-form tail: exponential like a room, linear, swelling, or two-sloped.*
 
-Late reverberation whose tail takes whatever shape one wants. After Vesa Valimaki, Bo Holm-Rasmussen, Benoit Alary and Heidi-Maria Lehtonen, « Late Reverberation Synthesis Using Filtered Velvet Noise », 2017; and for the arbitrary decay, Jon Fagerstrom, Nils Meyer-Kahlen, Sebastian J. Schlecht and Vesa Valimaki, « Dark Velvet Noise », DAFx-22, then « Non-Exponential Reverberation Modeling Using Dark Velvet Noise », 2024. Velvet noise is a sparse noise: one plus-or-minus-one impulse per regular interval, placed at random within that interval, and nothing in between. At fifteen hundred impulses per second the ear no longer hears separate impulses but a wash, and a smoother wash than a Gaussian noise of the same density, because no impulse is louder than another. That is what makes it a good late reverberation, and also why lowering the density below a thousand becomes an effect in itself: the impulses are then heard one by one. What this node adds to the four reverbs already present fits in one phrase: the tail need not be an exponential. Convolution requires an impulse response file; the other three decay exponentially, because that is what a room does. Here the decay is a curve one chooses. Exponential like a room. Linear, falling in a straight line, no room does that. Swelling, where the sound grows and stops dead, otherwise obtainable only by reversing a recording. Or two-sloped, the signature of coupled rooms: a church and its chapel, a stage and its tower, where the small room dies fast and the large one takes over. Darkening makes the treble die before the bass, as every room does: without it the tail stays bright and sounds like a noise wash glued onto the sound rather than a space. The Impulse response output returns the response itself, as audio. Finally, on computation and to be exact: the paper praises a convolution without multiplication, the impulses being plus or minus one, which is decisive in real time. Here the processing is offline and the convolution goes through a Fourier transform, faster still at this length. What is kept from velvet is therefore not its thrift but its texture and the freedom of its decay.
+Late reverberation whose tail takes whatever shape one wants. After Vesa Valimaki, Bo Holm-Rasmussen, Benoit Alary and Heidi-Maria Lehtonen, « Late Reverberation Synthesis Using Filtered Velvet Noise », 2017; and for the arbitrary decay, Jon Fagerstrom, Nils Meyer-Kahlen, Sebastian J. Schlecht and Vesa Valimaki, « Dark Velvet Noise », DAFx-22, then « Non-Exponential Reverberation Modeling Using Dark Velvet Noise », 2024. Velvet noise is a sparse noise: one plus-or-minus-one impulse per regular interval, placed at random within that interval, and nothing in between. At fifteen hundred impulses per second the ear no longer hears separate impulses but a wash, and a smoother wash than a Gaussian noise of the same density, because no impulse is louder than another. That is what makes it a good late reverberation, and also why lowering the density below a thousand becomes an effect in itself: the impulses are then heard one by one. What this node adds to the four reverbs already present fits in one phrase: the tail need not be an exponential. Convolution requires an impulse response file; the other three decay exponentially, because that is what a room does. Here the decay is a curve one chooses. Exponential like a room. Linear, falling in a straight line, no room does that. Swelling, where the sound grows and stops dead, otherwise obtainable only by reversing a recording. Or two-sloped, the signature of coupled rooms: a church and its chapel, a stage and its tower, where the small room dies fast and the large one takes over. Darkening makes the treble die before the bass, as every room does: without it the tail stays bright and sounds like a noise wash glued onto the sound rather than a space. The Impulse response output returns the response itself, as audio. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The response is computed before the mix, so that varying the share touches neither the shape of the tail nor its density. The message then gives the two bounds instead of a value. Finally, on computation and to be exact: the paper praises a convolution without multiplication, the impulses being plus or minus one, which is decisive in real time. Here the processing is offline and the convolution goes through a Fourier transform, faster still at this length. What is kept from velvet is therefore not its thrift but its texture and the freedom of its decay.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio |  |
 | output | Impulse response | audio |  |
 
@@ -6606,8 +6634,10 @@ Late reverberation whose tail takes whatever shape one wants. After Vesa Valimak
 | Density | slider | 1500 /s | 200 – 4000 /s, step 100 | Impulses per second. Above a thousand, the ear no longer hears separate impulses but a smooth wash, smoother than a Gaussian noise of the same density, since no impulse is louder than another. Below, they are heard one by one, which is an effect in itself. |
 | Darkening | slider | 25 % | 1 – 100 %, step 1 | How much the treble dies before the bass. A hundred leaves the tail bright, which sounds like a noise wash glued onto the sound; twenty-five gives an ordinary room. |
 | Knee | slider | 30 % | 5 – 95 %, step 5 | For coupled rooms only: at what point in the tail the second slope takes over. |
-| Mix | slider | 35 % | 0 – 100 %, step 1 | Share of reverberated sound in the output. |
+| Mix | slider | 35 % | 0 – 100 %, step 1 | Share of reverberated sound in the output. When a curve drives it, the message gives the modulation bounds rather than a value. |
 | Seed | number | 1 | 0 – 999999, step 1 | Seed of the positions and signs. Two seeds give two rooms of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 ### Spectrum
 
@@ -7073,11 +7103,12 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 
 *Sorts sound across space by frequency: each band comes from its own direction, arrives at its own time, and dwells where it stops.*
 
-This node lays the frequencies of a sound across stereo space: each band comes out of its own direction, arrives at its own moment, and goes on ringing where it stopped. After rainbow trapping, proposed in optics by Kosmas L. Tsakmakidis, Allan D. Boardman and Ortwin Hess, « 'Trapped rainbow' storage of light in metamaterials », Nature 450, 2007, pp. 397-401, and shown in acoustics by Jie Zhu, Yong Chen, Xuefeng Zhu et al., « Acoustic rainbow trapping », Scientific Reports 3, 2013, 1728. In a graded array of resonators a broadband wave slows down and each band halts where the local resonance catches it: the highs early, the lows far. Noé Jiménez, Vicent Romero-García, Vincent Pagneux and Jean-Philippe Groby, « Rainbow-trapping absorbers », Scientific Reports 7, 2017, 13595, draw a broadband absorber from it. « Bands » is the number of resonators in the array, spread in frequency by equal octaves between « Low » and « High ». Frequencies beyond half the sample rate are dropped. « Direction » says which side the low end comes out of. « Spread » is the share of the stereo field used: at zero, every band comes from the centre and the sorting is heard in time alone. « Curve » gathers the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side and the highs spread out; below, the other way round. « Dispersion » is the travel of the lowest band, the one that goes furthest. Higher bands arrive earlier, in the order of the gradient. At zero they all arrive together and only the sorting in space remains. « Trapping » is the time the lowest band takes to lose 60 dB. The array is constant-Q: the ring time follows the inverse of the frequency, so the band that travels furthest is also the one that dwells longest. This setting commands the sharpness of the sorting in the same gesture, a two-pole resonator having a single command for its width and its length: short, the sound keeps its grain; long, it turns into held bands. « Mix » is the share of the sorted sound. The input is summed to one channel before sorting: this node rebuilds the stereo image from frequency, and keeping the one it receives would hold two images at once on the same output. The output is longer than the input: the longest travel and the longest resonance come after the end of the sound. The level of the sorted sound is brought back to that of the input. The message gives the number of bands kept, the travel difference between the two edges and the ring time of the low end.
+This node lays the frequencies of a sound across stereo space: each band comes out of its own direction, arrives at its own moment, and goes on ringing where it stopped. After rainbow trapping, proposed in optics by Kosmas L. Tsakmakidis, Allan D. Boardman and Ortwin Hess, « 'Trapped rainbow' storage of light in metamaterials », Nature 450, 2007, pp. 397-401, and shown in acoustics by Jie Zhu, Yong Chen, Xuefeng Zhu et al., « Acoustic rainbow trapping », Scientific Reports 3, 2013, 1728. In a graded array of resonators a broadband wave slows down and each band halts where the local resonance catches it: the highs early, the lows far. Noé Jiménez, Vicent Romero-García, Vincent Pagneux and Jean-Philippe Groby, « Rainbow-trapping absorbers », Scientific Reports 7, 2017, 13595, draw a broadband absorber from it. « Bands » is the number of resonators in the array, spread in frequency by equal octaves between « Low » and « High ». Frequencies beyond half the sample rate are dropped. « Direction » says which side the low end comes out of. « Spread » is the share of the stereo field used: at zero, every band comes from the centre and the sorting is heard in time alone. « Curve » gathers the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side and the highs spread out; below, the other way round. « Dispersion » is the travel of the lowest band, the one that goes furthest. Higher bands arrive earlier, in the order of the gradient. At zero they all arrive together and only the sorting in space remains. « Trapping » is the time the lowest band takes to lose 60 dB. The array is constant-Q: the ring time follows the inverse of the frequency, so the band that travels furthest is also the one that dwells longest. This setting commands the sharpness of the sorting in the same gesture, a two-pole resonator having a single command for its width and its length: short, the sound keeps its grain; long, it turns into held bands. « Mix » is the share of the sorted sound. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The curve is read over the length of the input; beyond that, its last value holds for the whole ring-out. The input is summed to one channel before sorting: this node rebuilds the stereo image from frequency, and keeping the one it receives would hold two images at once on the same output. The output is longer than the input: the longest travel and the longest resonance come after the end of the sound. The level of the sorted sound is brought back to that of the input. The message gives the number of bands kept, the travel difference between the two edges and the ring time of the low end.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -7091,6 +7122,8 @@ This node lays the frequencies of a sound across stereo space: each band comes o
 | Dispersion | slider | 0.25 s | 0 – 2 s, step 0.01 | Travel of the lowest band, the one that goes furthest. Higher bands arrive earlier. At zero they all arrive together. |
 | Trapping | slider | 0.3 s | 0.01 – 5 s, step 0.01 | Time the lowest band takes to lose 60 dB. The array being constant-Q, high bands ring proportionally less. This setting commands the sharpness of the sorting in the same gesture: short, the sound keeps its grain; long, it turns into held bands. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the sorted sound. At 0%, the input alone. |
+| Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Ambisonic Rotation
 
@@ -7287,7 +7320,7 @@ Widens a stereo image with decorrelated early reflections, including on a mono s
 | Window | slider | 80 ms | 5 – 120 ms, step 5 | How long the reflections keep arriving. Below some forty milliseconds the ear firmly fuses them with the direct sound; beyond a hundred they start to be heard as separate echoes. Eighty is where decorrelation is clear without anything standing out. |
 | Pre-delay | slider | 12 ms | 0 – 60 ms, step 1 | Silence before the first reflection. This is the cue to the room's size: the sound takes that long to reach the first wall and return. Three milliseconds give a booth, forty a hall. |
 | Absorption | slider | 50 % | 0 – 100 %, step 1 | Damping of the later reflections. At zero they all keep the same strength, a room with bare walls. At maximum they die away fast: curtains, books, people. |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reflections added. At 0 %, the output is the input, unchanged. Loudness does not change at any setting: only the width moves. A curve connected to the Modulation input takes this setting's place, which then serves no purpose. |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reflections added. At 0 %, the output is the input, unchanged. Loudness does not change at any setting: only the width moves. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Mix that a connected curve's zero means. At zero the room vanishes entirely when the curve falls; at twenty, some of it always remains. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Mix that the curve's one means. A ramp from zero to a hundred per cent opens the room from one end of the sound to the other; a sine makes it breathe. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
@@ -7331,8 +7364,8 @@ Stereo width and Mid/Side balance control. Decodes the signal into center (Mid =
 |---|---|---|---|---|
 | Width | number | 100 % | 0 – 200 %, step 1 | Stereo width. 0% = mono, 100% = original, 200% = widened stereo. |
 | Mid | number | 100 % | 0 – 200 %, step 1 | Mid channel gain. |
-| Modulation min | slider | 0 % | 0 – 200 %, step 1 | Value of « Largeur » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Largeur » that the curve's one means. |
+| Modulation min | slider | 0 % | 0 – 200 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Width » that the curve's one means. |
 
 #### Swap Channels
 

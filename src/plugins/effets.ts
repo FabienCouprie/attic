@@ -13,7 +13,7 @@ import { creerAleatoire } from "../core";
 import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
 
-import { effet, param } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, effet, melangeModule, param, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
@@ -144,13 +144,14 @@ export const fiches: FicheAudio[] = ([
   effet("ring-modulator", "Ring modulator", "Ring Modulator", "Modulation en anneau (multiplication par porteuse).", "Ring modulation (carrier multiplication).",
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],
-    (a,freq,mix) => ringModulator(a, freq, mix)),
+    (a,freq,mix) => ringModulator(a, freq, mix), undefined,
+    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
   {
     id: "vocoder", nom: "Vocoder", nomEn: "Vocoder",
     univers: "Traitement", famille: "Effets",
     resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",
     resumeEn: "Filterbank vocoder: modulator + carrier → robot voice effect.",
-    entrees: [{ nom: "Modulateur", nomEn: "Modulator", type: "audio" }, { nom: "Porteuse", nomEn: "Carrier", type: "audio" }],
+    entrees: [{ nom: "Modulateur", nomEn: "Modulator", type: "audio" }, { nom: "Porteuse", nomEn: "Carrier", type: "audio" }, portModulation("Mix")],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Bandes", nomEn: "Bands", type: "nombre", plage: [4, 16], pas: 1, defaut: 8, unite: "",
@@ -162,7 +163,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Q", nomEn: "Q", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 2, unite: "",
         doc: "Facteur de qualité des filtres passe-bande. Plus élevé = bandes plus étroites.", docEn: "Bandpass filter quality factor. Higher = narrower bands." },
       { nom: "Mix", nomEn: "Mix", type: "nombre", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Équilibre modulateur original / vocoder.", docEn: "Dry/wet balance." },
+        doc: "Équilibre modulateur original / vocoder.",
+        docEn: "Dry/wet balance." },
+      ...bornesModulation(MODULATION_MIX),
     ],
     async executer(ctx: any) {
       const modulateur = ctx.entree(0);
@@ -172,7 +175,10 @@ export const fiches: FicheAudio[] = ([
       const fMin = ctx.paramNombre("Fréq min", 100);
       const fMax = ctx.paramNombre("Fréq max", 8000);
       const Q = ctx.paramNombre("Q", 2);
-      const mix = ctx.paramNombre("Mix", 50);
+      // LA SORTIE S'ARRÊTE AU PLUS COURT DES DEUX SONS, et la courbe se lit sur cette longueur :
+      // l'étirer sur le modulateur seul la décalerait dès que la porteuse est plus brève.
+      const mix = melangeModule(ctx, Math.min(modulateur.length, porteuse.length), 2,
+        { reglage: "Mix", defaut: 50, rendu: "pourCent" });
       const out = await vocoder(modulateur, porteuse, bands, fMin, fMax, Q, mix);
       return { valeurs: [out] };
     },

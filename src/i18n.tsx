@@ -92,6 +92,17 @@ const DICO: Record<string, Record<Langue, string>> = {
   "barre.economieMemoire.coupee": { fr: "coupée : chaque composant garde son aperçu, quelle que soit la durée", en: "off: every node keeps its preview, whatever the length" },
   "inspecteur.de": { fr: "de", en: "from" },
   "inspecteur.a": { fr: "à", en: "to" },
+  // CE QU'UNE MODULATION EST SE DIT ICI, ET NULLE PART AILLEURS. La phrase vivait auparavant dans
+  // la documentation de chaque réglage modulable, vingt-quatre fois recopiée, et elle s'y
+  // contredisait : l'inspecteur remplace le réglage par ses deux bornes quand une courbe est
+  // branchée, de sorte que « ce réglage ne sert alors plus à rien » s'affichait à côté des deux
+  // seuls curseurs qu'on pouvait régler. Les deux textes sont désormais rendus par l'inspecteur,
+  // chacun dans l'état où il est vrai.
+  // LE NOM DU PORT EST SUBSTITUÉ : dix composants en portent plusieurs, et ils s'appellent alors
+  // « Modulation coupure », « Modulation azimut », « Modulation feedback ».
+  "inspecteur.modulation.annonce": { fr: "Une courbe branchée sur l'entrée « {__VAR_0__} » remplace ce réglage par la course qu'elle parcourt.", en: "A curve connected to the « {__VAR_0__} » input replaces this setting with the range it travels." },
+  "inspecteur.modulation.port": { fr: "Modulation", en: "Modulation" },
+  "inspecteur.modulation.aide": { fr: "Une courbe commande ce réglage : son zéro vaut « de », son un vaut « à », et elle parcourt la course entre les deux au fil du son. Les deux bornes peuvent se croiser, la course se parcourt alors à l'envers et la flèche descend. Deux bornes égales donnent une course nulle, signalée par un signe égal : la courbe ne commande plus rien.", en: "A curve drives this setting: its zero is « from », its one is « to », and it travels the range between them along the sound. The two bounds may cross, the range is then travelled backwards and the arrow points down. Two equal bounds give an empty range, marked by an equals sign: the curve no longer drives anything." },
   "barre.profondeurExport.titre": { fr: "Profondeur des fichiers écrits — 24 bits pour toute livraison, 32 flottants pour un fichier à retravailler", en: "Bit depth of the files written — 24-bit for any delivery, 32-bit float for a file to be worked on again" },
   "barre.commentaire": { fr: "Ajouter une note", en: "Add a note" },
   "barre.cadre": { fr: "Ajouter un cadre", en: "Add a frame" },
@@ -729,6 +740,9 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.stn.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
   "msg.hauteur.suivi": { fr: "{__VAR_0__} trames · {__VAR_1__} % voisé · médiane {__VAR_2__} Hz", en: "{__VAR_0__} frames · {__VAR_1__} % voiced · median {__VAR_2__} Hz" },
   "msg.velours.resultat": { fr: "queue de {__VAR_0__} s · {__VAR_1__} impulsions/s · {__VAR_2__} % mouillé", en: "{__VAR_0__} s tail · {__VAR_1__} impulses/s · {__VAR_2__} % wet" },
+  // Modulé, le message donne les BORNES et non une valeur : la part de mouillé a changé tout au
+  // long du son, et en annoncer une seule serait faux.
+  "msg.velours.module": { fr: "queue de {__VAR_0__} s · {__VAR_1__} impulsions/s · {__VAR_2__} à {__VAR_3__} % mouillé", en: "{__VAR_0__} s tail · {__VAR_1__} impulses/s · {__VAR_2__} to {__VAR_3__} % wet" },
   "msg.velours.canal": { fr: "canal {__VAR_0__}/{__VAR_1__}", en: "channel {__VAR_0__}/{__VAR_1__}" },
   "msg.sms.resultat": { fr: "{__VAR_0__} partiels suivis · {__VAR_1__}", en: "{__VAR_0__} partials tracked · {__VAR_1__}" },
   "msg.sms.masque": { fr: "découpés dans le son", en: "cut out of the sound" },

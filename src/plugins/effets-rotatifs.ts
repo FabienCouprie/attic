@@ -15,6 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hautParleurRotatif, tremoloHarmonique } from "../audio/rotatifs";
+import { MODULATION_MELANGE, bornesModulation, melangeModule, portModulation } from "./effets-aides";
 
 const canauxDe = (a: AudioBuffer): Float32Array[] =>
   Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
@@ -39,7 +40,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Module le grave et l'aigu en opposition : la couleur oscille, le niveau presque pas.",
     resumeEn: "Modulates lows and highs in opposition: the colour sways, the level barely moves.",
     etiquettes: ["tremolo", "harmonique", "harmonic", "bandes", "brownface"],
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mélange")],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Vitesse", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
@@ -54,6 +55,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mélange", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Part de son traité dans la sortie. À zéro, l'entrée ressort échantillon pour échantillon.",
         docEn: "Share of treated sound in the output. At zero, the input comes out sample for sample." },
+      ...bornesModulation(MODULATION_MELANGE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -66,7 +68,7 @@ export const fiches: FicheAudio[] = ([
         vitesse,
         profondeur: ctx.paramNombre("Profondeur", 70) / 100,
         coupure,
-        melange: ctx.paramNombre("Mélange", 100) / 100,
+        melange: melangeModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });
       return {
         valeurs: [versTampon(canaux, a.sampleRate)],
@@ -82,7 +84,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Fait tourner le grave et l'aigu sur deux rotors : le trajet varie, donc la hauteur et le niveau.",
     resumeEn: "Spins lows and highs on two rotors: the path varies, and with it the pitch and the level.",
     etiquettes: ["rotatif", "rotary", "leslie", "doppler", "cabine", "orgue"],
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mélange")],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Vitesse de la trompe", nomEn: "Horn rate", type: "curseur", plage: [0.2, 12], pas: 0.1, defaut: 6.7, unite: "tr/s",
@@ -106,6 +108,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mélange", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Part de son traité dans la sortie. À zéro, l'entrée ressort échantillon pour échantillon sur les deux canaux.",
         docEn: "Share of treated sound in the output. At zero, the input comes out sample for sample on both channels." },
+      ...bornesModulation(MODULATION_MELANGE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -121,7 +124,7 @@ export const fiches: FicheAudio[] = ([
         profondeurAmplitude: ctx.paramNombre("Profondeur d'amplitude", 70) / 100,
         profondeurDoppler: doppler,
         largeur: ctx.paramNombre("Largeur", 100) / 100,
-        melange: ctx.paramNombre("Mélange", 100) / 100,
+        melange: melangeModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });
       // L'ÉCART DE HAUTEUR EST RENDU PLUTÔT QUE LE RÉGLAGE, parce qu'il ne se règle pas : il
       // sort du rayon et de la vitesse, et c'est lui qu'on entend.
