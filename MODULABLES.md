@@ -22,21 +22,20 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 86, sur 60 composants
-- **réglages restant à faire** : 104, sur 42 composants et 62 couples composant / famille
-- **dont le cœur travaille par trames** : 5
-- **réglages écartés un par un** : 4, sur 4 composants qui gardent les leurs
+- **réglages restant à faire** : 92, sur 34 composants et 51 couples composant / famille
+- **dont le cœur travaille par trames** : 1
+- **réglages écartés un par un** : 16, sur 12 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 15
+### frequence · 14
 
 - Bitcrusher `bitcrusher` : Fréquence
 - Compresseur multibande `compresseur-multibande` : Fréq Low, Fréq High
 - De-esser `de-esser` : Fréquence
 - Exciter / Aural enhancer `exciter` : Fréquence
 - Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
-- Mosaïquage par corpus `mosaiquage` : Poids de la brillance · **⟨trames⟩** decrireGrains (boucle de trames)
 - Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Peignes accordés `peignes-accordes` : Résonance
 - Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
@@ -63,52 +62,42 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Shimmer `shimmer` : Décroissance
 - Transient Shaper `transient-shaper` : Temps attaque, Temps sustain
 
-### dynamique · 11
+### dynamique · 7
 
 - Compresseur `compresseur` : Seuil, Ratio
 - Compresseur multibande `compresseur-multibande` : Seuil Low, Ratio Low, Seuil Mid, Ratio Mid, Seuil High, Ratio High
 - De-esser `de-esser` : Ratio
-- Découpage en objets `decoupage-objets` : Seuil de silence
 - Ducking `ducking` : Seuil
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
-- Ondelettes `ondelettes` : Force du seuil
-- Remplissage de trou `remplissage-trou` : Seuil de silence
-- Restauration d'écrêtage `restauration-ecretage` : Seuil manuel · **⟨trames⟩** declipper (boucle de trames)
 - Réverbération hachée `reverbe-hachee` : Seuil
 
-### espace · 8
+### espace · 5
 
 - Rotation ambisonique `ambisonique` : Ouverture
 - Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
-- Étaler sur le clavier `banque-clavier` : Largeur de zone · **⟨trames⟩** preparerBanque (appelle separerStn), suivreHauteur (nTrames), zoneDuLot (appelle changerTonaliteVoie)
 - Granular freeze `granular-freeze` : Position
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
-- Fin d'instrument `instrument-fin` : Largeur de zone
-- Micromontage `micromontage` : Panoramique, fin
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
 
-### niveau · 6
+### niveau · 5
 
 - Compresseur `compresseur` : Gain
 - Ducking `ducking` : Réduction
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
 - Micromontage `micromontage` : Niveau
 - Montage `montage` : Gain 1, Gain 2, Gain 3, Gain 4, Gain 5, Gain 6, Gain 7, Gain 8, Gain 9, Gain 10, Gain 11, Gain 12, Gain 13, Gain 14, Gain 15, Gain 16
-- Mosaïquage par corpus `mosaiquage` : Poids du niveau · **⟨trames⟩** decrireGrains (boucle de trames)
-
-### hauteur · 4
-
-- Granular freeze `granular-freeze` : Pitch
-- Micromontage `micromontage` : Transposition, fin
-- Shimmer `shimmer` : Transposition
-- Suiveur de hauteur `suiveur-hauteur` : Hauteur min, Hauteur max · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 
 ### retroaction · 3
 
 - Beat Repeat / Stutter `beat-repeat` : Feedback
 - Delay stéréo `delay-stereo` : Feedback
 - Shimmer `shimmer` : Rebouclage
+
+### hauteur · 2
+
+- Granular freeze `granular-freeze` : Pitch
+- Shimmer `shimmer` : Transposition
 
 ### melange · 2
 
@@ -177,6 +166,18 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `echo-flottant/Distance` : elle fixe la période entre les deux murs, donc tous les retards et la fréquence du peigne que le nœud annonce ; une distance qui se déplace est un effet Doppler, non un écho plus loin
 - `haut-parleur-rotatif/Largeur` : c'est le déphasage entre les deux rotors : le faire varier change la vitesse instantanée du rotor droit, la dérivée de la phase s'ajoutant à sa pulsation, et désaccorderait la rotation au lieu d'élargir l'image
 - `micromontage/Panoramique` : le composant porte déjà « Panoramique, fin » et « Panoramique, loi », soit une valeur par fragment ; une courbe y serait lue par fragment, non par échantillon
+- `suiveur-hauteur/Hauteur min` : c'est une borne de la courbe que ce nœud ÉMET, sa documentation disant « ce que le zéro de la courbe veut dire » ; elle décide de l'échelle de sa sortie, non d'une grandeur qui court dans un son
+- `suiveur-hauteur/Hauteur max` : idem, pour le un de la courbe émise
+- `micromontage/Panoramique, fin` : c'est « la seconde borne, pour une rampe ou un tirage », celle de la loi que le composant applique lui-même à chaque fragment
+- `micromontage/Transposition, fin` : idem, seconde borne de la loi par fragment
+- `decoupage-objets/Seuil de silence` : il sert au critère des silences : ce qui passe dessous EST un silence, ce qui est une découpe et non un traitement
+- `remplissage-trou/Seuil de silence` : il décide quel échantillon est tenu pour manquant, en détection automatique : un critère, non une grandeur rendue
+- `restauration-ecretage/Seuil manuel` : il décide quel échantillon est tenu pour écrêté, et ne sert qu'en mode manuel : un critère de détection, dans un seul mode
+- `banque-clavier/Largeur de zone` : elle dit sur combien de demi-tons une zone est rééchantillonnée : c'est la construction de la banque, faite avant le rendu, et elle se compte en demi-tons et non en largeur d'image
+- `instrument-fin/Largeur de zone` : elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu
+- `mosaiquage/Poids du niveau` : c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon
+- `mosaiquage/Poids de la brillance` : idem, l'importance donnée au centre de gravité du spectre dans la même recherche
+- `ondelettes/Force du seuil` : elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt
 
 ## Acceptent déjà une courbe
 
