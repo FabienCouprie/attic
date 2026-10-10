@@ -92,6 +92,16 @@ export const ECARTES: Record<string, string> = {
   // entièrement perdue. Une courbe qui franchirait zéro ne ferait pas varier une transposition,
   // elle basculerait entre deux rendus sans rapport. Son « Seuil » est par ailleurs le seuil
   // d'ANALYSE : il décide quels partiels sont suivis, par trames.
+  // UNE COURBE COMME MATIÈRE, NON COMME MODULATION. Ces six-là portent une entrée « Courbe » qui
+  // est leur SUJET : ils la dessinent, la mesurent, la suivent ou l'écrivent en partition. Le
+  // recensement les comptait comme modulables parce qu'ils acceptent une courbe, ce qui gonflait
+  // cette colonne de composants qui ne modulent rien. Écartés nommément sur décision de Fabien.
+  "visualiseur-courbe": "il DESSINE une courbe au lieu d'en être piloté ; « Largeur » et « Hauteur » sont les dimensions de son image, non des grandeurs du son",
+  "profil-melodique": "la courbe est sa matière : il en tire un profil de hauteurs, il n'en est pas piloté",
+  "evolution-melodie": "la courbe est sa matière : elle décrit l'évolution demandée, elle ne pilote aucun réglage",
+  "matrice-parametres": "la courbe est sa matière : elle alimente la matrice, elle ne pilote aucun réglage",
+  "partition-csound": "la courbe est sa matière : elle devient une partition, elle ne pilote aucun réglage",
+  "partition-aleatoire-csound": "la courbe est sa matière : elle devient une partition, elle ne pilote aucun réglage",
   "parole-vers-sequence": "sa transposition s'applique une fois par MOT, sur un numéro de note MIDI arrondi : quelques valeurs par seconde, et elle n'a de sens qu'au moment où une note se pose",
   "sms-sinusoides-bruit": "une transposition nulle DÉCOUPE les partiels dans le son, une transposition non nulle les REFABRIQUE par addition : à 0,001 demi-ton, le rendu s'écarte déjà de celui à zéro de 113 % de sa valeur efficace, et son « Seuil » décide quels partiels sont suivis, par trames",
   // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
@@ -157,24 +167,56 @@ export interface CibleModulable {
 const estAudio = (f: FicheAudio, cote: "entrees" | "sorties") =>
   ((f as any)[cote] ?? []).some((p: any) => p.type === "audio");
 
-const aCourbe = (f: FicheAudio) =>
-  ((f as any).entrees ?? []).some((p: any) => p.type === "courbe");
+/**
+ * Les réglages qu'une fiche déclare PILOTER par une courbe, par le champ `module` de ses ports.
+ *
+ * UN PORT DE COURBE N'EST PAS TOUJOURS UN PORT DE MODULATION, et c'est la distinction que ce
+ * recensement ne faisait pas. Huit composants portent une entrée de type « courbe » sans déclarer
+ * quel réglage elle pilote, et ils sont de deux espèces. Le wah-wah et le vibrato balaient entre
+ * deux réglages qui valent aussi sans courbe. Les six autres — le visualiseur de courbe, le profil
+ * mélodique, l'évolution de mélodie, la matrice de paramètres et les deux partitions Csound —
+ * CONSOMMENT une courbe comme matière : c'est leur sujet, non un pilotage.
+ *
+ * Les compter comme « modulables » gonflait cette colonne de composants qui ne modulent rien, et
+ * faisait disparaître leurs réglages de la liste à faire. Le champ `module` est la forme qui les
+ * sépare, et c'est lui qu'on lit.
+ */
+const reglagesPilotes = (f: FicheAudio): Set<string> => new Set(
+  ((f as any).entrees ?? [])
+    .filter((p: any) => p.type === "courbe" && p.module)
+    .map((p: any) => p.module as string),
+);
 
 const estContinu = (p: any) =>
   p.type !== "choix" && p.type !== "texte" && p.type !== "dossier" && p.type !== "fichier"
   && p.type !== "couleurs" && p.type !== "sf2instrument";
 
-/** Ce qui reste à faire : un effet audio vers audio, sans entrée courbe, non écarté. */
+/**
+ * Ce qui reste à faire : un RÉGLAGE d'un effet audio vers audio, non piloté, sur une fiche non
+ * écartée.
+ *
+ * LE RECENSEMENT SE FAIT PAR RÉGLAGE ET NON PAR COMPOSANT, et c'est ce qui a changé. Il écartait un
+ * composant dès qu'il portait UN SEUL port de courbe : ses autres réglages quittaient alors la
+ * liste sans avoir été ouverts, et l'écart grandissait à chaque lot du chantier. Relevé au moment
+ * où la liste s'est vidée par composant : trente composants gardaient cinquante-trois réglages de
+ * famille modulable qui n'étaient pas ouverts, la famille « mélange » en comptant cinq à elle
+ * seule alors qu'elle avait été déclarée finie.
+ *
+ * Un réglage sort donc de la liste quand il est PILOTÉ, et non quand son voisin l'est.
+ */
 export function cibles(fiches: readonly FicheAudio[]): CibleModulable[] {
   const out: CibleModulable[] = [];
   const ecartes = idsEcartes();
   for (const f of fiches) {
     if (!estAudio(f, "entrees") || !estAudio(f, "sorties")) continue;
-    if (aCourbe(f)) continue;
     if (ecartes.has(f.id)) continue;
+    const pilotes = reglagesPilotes(f);
     const parFamille = new Map<string, string[]>();
     for (const p of ((f as any).parametres ?? [])) {
       if (!estContinu(p)) continue;
+      // Une BORNE de modulation n'est pas un réglage à moduler : elle sert la courbe d'un autre.
+      if ((p as any).modulationDe) continue;
+      if (pilotes.has(p.nom)) continue;
       for (const [fam, re] of Object.entries(FAMILLES)) {
         if (re.test(p.nom)) {
           (parFamille.get(fam) ?? parFamille.set(fam, []).get(fam)!).push(p.nom);
@@ -189,15 +231,16 @@ export function cibles(fiches: readonly FicheAudio[]): CibleModulable[] {
   return out.sort((a, b) => a.famille.localeCompare(b.famille) || a.id.localeCompare(b.id));
 }
 
-/** Les composants qui acceptent déjà une courbe, et le réglage que chacun pilote. */
+/**
+ * Les réglages qu'une courbe pilote déjà, un par port déclaré.
+ *
+ * IL N'EN RENDAIT QU'UN PAR FICHE, par un `find` sur le premier port : un composant à deux ports
+ * n'en déclarait donc qu'un, et le compte s'en trouvait court de sept. Il les rend tous.
+ */
 export function dejaModulables(fiches: readonly FicheAudio[]): { id: string; cible: string }[] {
   return fiches
-    .filter(aCourbe)
-    .map((f) => {
-      const e = ((f as any).entrees ?? []).find((p: any) => p.type === "courbe");
-      return { id: f.id, cible: e?.module ?? "(non déclarée)" };
-    })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .flatMap((f) => [...reglagesPilotes(f)].map((cible) => ({ id: f.id, cible })))
+    .sort((a, b) => a.id.localeCompare(b.id) || a.cible.localeCompare(b.cible));
 }
 
 /**
@@ -226,33 +269,32 @@ export function recensementEnTexte(
     "",
     "Généré par `npm run docs:modulables`. Ne pas modifier à la main.",
     "",
-    "Le critère est relevé sur les composants qui acceptent déjà une courbe : ils pilotent tous une",
-    "grandeur continue et audible. Un réglage qui décide de la façon de calculer, taille de fenêtre,",
-    "nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur",
-    "raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.",
+    "Le critère est relevé sur les réglages qui pilotent une grandeur continue et audible. Un réglage",
+    "qui décide de la façon de calculer, taille de fenêtre, nombre d'itérations, graine, n'entre pas",
+    "ici. Les composants écartés le sont nommément, avec leur raison.",
     "",
-    ...(composants.size === 0
-      ? [
-        "**La liste est vide : tout composant que ce relevé sait voir est traité**, ouvert à une",
-        "courbe ou écarté avec sa raison. Un composant neuf qui porterait un réglage de l'une de ces",
-        "familles reparaîtrait ici de lui-même, et c'est à cela que ce document sert désormais.",
-        "",
-        "CE QUE CE COMPTE NE DIT PAS. Il se lit PAR COMPOSANT, non par réglage : un composant quitte",
-        "la liste dès qu'il porte UN seul port de courbe, et ses autres réglages cessent alors d'y",
-        "paraître. Relevé au moment où la liste s'est vidée : **trente et un composants gardent ainsi",
-        "cinquante-cinq réglages** de famille modulable qui ne sont pas ouverts. Les faire paraître demande un",
-        "recensement par réglage, qui rallongerait cette liste au lieu de la raccourcir.",
-        "",
-      ]
-      : []),
+    "**CE RECENSEMENT SE FAIT PAR RÉGLAGE, ET NON PAR COMPOSANT.** Il écartait un composant dès qu'il",
+    "portait UN SEUL port de courbe : ses autres réglages quittaient la liste sans avoir été ouverts,",
+    "et l'écart grandissait à chaque lot. Au moment du changement, la liste par composant était vide",
+    "et trente composants gardaient pourtant cinquante-trois réglages non ouverts, dont cinq dans une",
+    "famille déclarée finie. Un réglage sort donc de la liste quand il est PILOTÉ, non quand son",
+    "voisin l'est.",
+    "",
+    "ET UN PORT DE COURBE N'EST PAS TOUJOURS UN PORT DE MODULATION. Ce qui le dit est le champ",
+    "`module`, qui nomme le réglage piloté : un port qui n'en déclare aucun reçoit une courbe comme",
+    "MATIÈRE, non comme pilotage, et ne compte donc pas ici.",
+    "",
     "Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une courbe n'y serait lue",
     "qu'une fois par trame, non par échantillon. La marque est relevée sur la source par",
     "`coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.",
     "",
-    `- **acceptent déjà une courbe** : ${deja.length}`,
-    `- **restent à faire** : ${composants.size} composants, ${restants.length} couples composant / famille`,
+    // LES TROIS COMPTES NE SE LISENT PAS DANS LA MÊME UNITÉ, et chacun le dit : les deux premiers
+    // comptent des RÉGLAGES, le dernier des COMPOSANTS, puisqu'une raison d'écartement porte sur
+    // un composant entier.
+    `- **réglages déjà pilotés par une courbe** : ${deja.length}, sur ${new Set(deja.map((d) => d.id)).size} composants`,
+    `- **réglages restant à faire** : ${restants.reduce((n, c) => n + c.reglages.length, 0)}, sur ${composants.size} composants et ${restants.length} couples composant / famille`,
     `- **dont le cœur travaille par trames** : ${[...composants].filter((id) => parTrames.has(id)).length}`,
-    `- **écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
+    `- **composants écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
     "",
     ...(composants.size === 0
       ? ["## Ce qui reste, par famille", "", "Rien.", ""]

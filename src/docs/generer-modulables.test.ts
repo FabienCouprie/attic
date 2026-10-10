@@ -31,10 +31,17 @@ describe("le recensement des effets à rendre modulables", () => {
     ].join("\n")).toBe(texte);
   });
 
-  it("UN COMPOSANT QUI ACCEPTE DÉJÀ UNE COURBE N'EST PLUS À FAIRE", () => {
-    const restants = new Set(cibles(toutesLesFiches).map((c) => c.id));
+  it("UN RÉGLAGE PILOTÉ N'EST PLUS À FAIRE", () => {
+    // CE CAS DISAIT « UN COMPOSANT QUI ACCEPTE DÉJÀ UNE COURBE N'EST PLUS À FAIRE », et il était
+    // devenu faux par construction : le recensement se fait désormais par RÉGLAGE, de sorte qu'un
+    // composant peut être à la fois ouvert sur l'un et à faire sur un autre. La forme juste est
+    // celle-ci, et elle est plus forte : c'est le réglage PILOTÉ qui sort de la liste, et lui seul.
+    const aFaire = new Set(
+      cibles(toutesLesFiches).flatMap((c) => c.reglages.map((r) => `${c.id}/${r}`)),
+    );
     for (const d of dejaModulables(toutesLesFiches)) {
-      expect(restants.has(d.id), `${d.id} est modulable et figure pourtant à faire`).toBe(false);
+      expect(aFaire.has(`${d.id}/${d.cible}`),
+        `${d.id} : « ${d.cible} » est piloté et figure pourtant à faire`).toBe(false);
     }
   });
 
@@ -86,7 +93,11 @@ describe("le recensement des effets à rendre modulables", () => {
     expect(regardes.size, "le recensement ne range plus personne").toBeGreaterThan(80);
     expect(regardes.size, "le recensement prétend couvrir tout le catalogue")
       .toBeLessThan(toutesLesFiches.length / 2);
-    // Et ce qui reste à faire ne grandit pas : un composant neuf entre modulable ou écarté.
-    expect(aFaire.size, "la liste à faire a grandi").toBeLessThanOrEqual(13);
+    // ET LE PLAFOND EST REBASÉ, parce que le recensement a changé d'unité. Il valait treize quand
+    // la liste comptait des COMPOSANTS ; elle compte des RÉGLAGES, et le passage en a fait
+    // reparaître cinquante-trois sur trente composants, qu'un recensement par composant cachait.
+    // Ce plafond ne dit pas que le chantier avance, il dit qu'un composant neuf ne rouvre pas la
+    // liste en grand sans que personne le remarque.
+    expect(aFaire.size, "la liste à faire a grandi").toBeLessThanOrEqual(40);
   });
 });
