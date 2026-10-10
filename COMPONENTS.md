@@ -4730,11 +4730,13 @@ At each moment, each component of the first sound is multiplied by the weight of
 
 *Dynamic gate or expander (cuts or attenuates signal below a threshold).*
 
-Two dynamic effects in one node. Gate: cuts the signal when it drops below a threshold (useful for removing background noise between phrases, hiss, reverb tails). Expander: gradually attenuates signal below threshold by a ratio (reverse compressor, gentler than a gate). Settings: • the threshold (in dB) • attack • release (transition times) • maximum floor attenuation (cut level in Gate mode, limit in Expander mode) • ratio (Expander mode only). Cleans up a vocal or instrumental recording.
+Two dynamic effects in one node. Gate: cuts the signal when it drops below a threshold (useful for removing background noise between phrases, hiss, reverb tails). Expander: gradually attenuates signal below threshold by a ratio (reverse compressor, gentler than a gate). Settings: • the threshold (in dB) • attack • release (transition times) • maximum floor attenuation (cut level in Gate mode, limit in Expander mode) • ratio (Expander mode only). Cleans up a vocal or instrumental recording. Two modulation inputs, « Modulation attack » and « Modulation release », take the place of the settings of the same name; each has its two bounds, « Attack min / max » and « Release min / max ». Those two settings are the envelope follower's time constants, hence the speed at which the measurement catches up with the sound: varying them changes that speed along the sound, not the threshold or the floor.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation attack | curve |  |
+| input | Modulation release | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4745,6 +4747,10 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 | Attack | number | 1 ms | 0.1 – 100 ms, step 0.1 | Reaction time when signal drops below threshold. |
 | Release | number | 100 ms | 1 – 1000 ms, step 1 | Recovery time when signal rises above threshold. |
 | Attenuation | number | 40 dB | 0 – 80 dB, step 1 | Maximum floor attenuation. Gate = cut level; Expander = attenuation limit. |
+| Attack min | slider | 0.5 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 20 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 20 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 300 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
 
 #### Limiter
 
@@ -4752,11 +4758,12 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 
 *Peak limiter for mastering.*
 
-Peak limiter for mastering: instant attack, adjustable release and output ceiling. Reduces peaks above the threshold with an infinite ratio, then applies makeup gain so the ceiling reaches the target value. Gains loudness without clipping.
+Peak limiter for mastering: instant attack, adjustable release and output ceiling. Reduces peaks above the threshold with an infinite ratio, then applies makeup gain so the ceiling reaches the target value. Gains loudness without clipping. A curve connected to the « Modulation » input takes the place of « Release »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth. Release is the follower's time constant, hence the speed at which gain recovers after a peak; varying it changes that speed along the sound, not the level.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4764,6 +4771,8 @@ Peak limiter for mastering: instant attack, adjustable release and output ceilin
 | Threshold | number | -3 dB | -40 – 0 dB, step 1 | Level above which limiting engages. |
 | Release | number | 50 ms | 1 – 1000 ms, step 1 | Time to return to normal gain after a peak. |
 | Ceiling | number | -1 dB | -40 – 0 dB, step 0.5 | Maximum output level. |
+| Modulation min | slider | 10 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
 
 #### Match Level
 

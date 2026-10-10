@@ -11,26 +11,12 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 62
-- **restent à faire** : 10 composants, 15 couples composant / famille
+- **acceptent déjà une courbe** : 64
+- **restent à faire** : 5 composants, 7 couples composant / famille
 - **dont le cœur travaille par trames** : 2
-- **écartés** : 42, dont 1 famille de la palette écartée en bloc
+- **écartés** : 45, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
-
-### temps · 5
-
-- Echo inversé `echo-inverse` : Temps
-- Enveloppe ADSR `enveloppe-adsr` : Attaque, Maintien, Relâchement
-- Gate/Expandeur `gate-expandeur` : Attaque, Relâchement
-- Effet Haas `haas` : Retard
-- Limiteur `limiteur` : Relâchement
-
-### dynamique · 3
-
-- Gate/Expandeur `gate-expandeur` : Seuil, Ratio
-- Limiteur `limiteur` : Seuil, Plafond
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
 ### espace · 3
 
@@ -44,9 +30,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
-### retroaction · 1
+### dynamique · 1
 
-- Echo inversé `echo-inverse` : Feedback
+- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
 ## Familles écartées en bloc
 
@@ -74,6 +60,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `arpege-spectral` : traitement par trames : une valeur par bloc, non par échantillon
 - `formule-spectrale` : traitement par trames : une valeur par bloc, non par échantillon
 - `reduction-bruit` : traitement par trames de 8192 échantillons par sauts de 4096 : une courbe n'y serait lue que onze fois par seconde, soit par paliers de 93 ms
+- `echo-inverse` : le cœur somme des copies décalées du son entier, et « Temps » comme « Feedback » fixent les décalages et la longueur de sortie avant qu'un échantillon soit écrit
+- `enveloppe-adsr` : ses durées sont les cinq points d'ancrage d'une enveloppe en un coup, calculés avant qu'elle soit tracée ; et son « Maintien » est un niveau, non une durée
+- `haas` : déplacer la position de lecture transposerait le canal retardé, alors que l'effet tient à ce que l'oreille fusionne un décalage FIXE
 - `stn-sinus-transitoires-bruit` : traitement par trames : une valeur par bloc, non par échantillon
 - `dereverberation` : traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon
 - `shift-formants` : traitement par trames : l'enveloppe est estimée par bloc, non par échantillon
@@ -117,10 +106,12 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `exciter` : Mix
 - `flanger` : Mix
 - `formule-echantillons` : Volume
+- `gate-expandeur` : Attaque
 - `glissando-interieur` : Mix
 - `granular-freeze` : Mix
 - `haut-parleur-rotatif` : Mélange
 - `largeur-stereo` : Largeur
+- `limiteur` : Relâchement
 - `matrice-parametres` : (non déclarée)
 - `micromontage` : Transposition
 - `morphing-spectral` : Mélange

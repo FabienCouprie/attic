@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { valeurA } from "./courbe";
+import { coefficientSuiveur, valeurA } from "./courbe";
 
 export async function deEsser(
   buffer: AudioBuffer,
@@ -104,13 +104,14 @@ export function gateExpandeur(
   mode: "gate" | "expandeur",
   seuilDb: number,
   ratio: number,
-  attaqueMs: number,
-  relachementMs: number,
+  attaqueMs: number | Float32Array,
+  relachementMs: number | Float32Array,
   attenuationDb: number,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
-  const attaqueCoeff = Math.exp(-1 / (Math.max(0.01, attaqueMs) / 1000 * sr));
-  const relachementCoeff = Math.exp(-1 / (Math.max(0.01, relachementMs) / 1000 * sr));
+  // Un scalaire garde son exponentielle unique ; une courbe en paie une par échantillon.
+  const attaqueCoeff = coefficientSuiveur(attaqueMs, sr);
+  const relachementCoeff = coefficientSuiveur(relachementMs, sr);
   const nch = buffer.numberOfChannels;
 
   // Gate : le plancher est une attenuation fixe (en dB).
@@ -132,7 +133,7 @@ export function gateExpandeur(
       const a = Math.abs(src[c][i]);
       if (a > niveau) niveau = a;
     }
-    const coeff = niveau > env ? attaqueCoeff : relachementCoeff;
+    const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
     env = coeff * env + (1 - coeff) * niveau;
 
     const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;

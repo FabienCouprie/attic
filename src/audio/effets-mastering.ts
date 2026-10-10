@@ -3,20 +3,21 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { valeurA } from "./courbe";
+import { coefficientSuiveur, valeurA } from "./courbe";
 import { compresser } from "./effets-dynamique";
 import { bitcrusher } from "./effets-sibilance";
 
 export function limiter(
   buffer: AudioBuffer,
   seuilDb: number,
-  relachementMs: number,
+  relachementMs: number | Float32Array,
   plafondDb: number,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const seuil = Math.pow(10, seuilDb / 20);
   const plafond = Math.pow(10, plafondDb / 20);
-  const relachementCoeff = Math.exp(-1 / (Math.max(0.01, relachementMs) / 1000 * sr));
+  // Un scalaire garde son exponentielle unique ; une courbe en paie une par échantillon.
+  const relachementCoeff = coefficientSuiveur(relachementMs, sr);
   const nch = buffer.numberOfChannels;
 
   const resultat = new AudioBuffer({ numberOfChannels: nch, length: buffer.length, sampleRate: sr });
@@ -39,7 +40,8 @@ export function limiter(
     if (gainCible < gain) {
       gain = gainCible; // attaque instantanée
     } else {
-      gain = relachementCoeff * gain + (1 - relachementCoeff) * gainCible;
+      const k = relachementCoeff(i);
+      gain = k * gain + (1 - k) * gainCible;
     }
     for (let c = 0; c < nch; c++) dst[c][i] = src[c][i] * gain * makeup;
   }
