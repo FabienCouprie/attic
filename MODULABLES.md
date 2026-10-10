@@ -22,23 +22,25 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 78, sur 60 composants
-- **réglages restant à faire** : 48, sur 29 composants et 41 couples composant / famille
-- **dont le cœur travaille par trames** : 0
-- **composants écartés** : 54, dont 1 famille de la palette écartée en bloc
+- **réglages restant à faire** : 112, sur 45 composants et 70 couples composant / famille
+- **dont le cœur travaille par trames** : 5
+- **réglages écartés un par un** : 4, sur 4 composants qui gardent les leurs
+- **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### espace · 15
+### espace · 16
 
 - Rotation ambisonique `ambisonique` : Ouverture
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture, Dispersion
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
+- Étaler sur le clavier `banque-clavier` : Largeur de zone · **⟨trames⟩** preparerBanque (appelle separerStn), suivreHauteur (nTrames), zoneDuLot (appelle changerTonaliteVoie)
 - Chorus `chorus` : Profondeur
 - De-esser `de-esser` : Largeur
-- Écho flottant `echo-flottant` : Distance
 - Flanger `flanger` : Profondeur
 - Granular freeze `granular-freeze` : Position
-- Haut-parleur rotatif `haut-parleur-rotatif` : Largeur
-- Micromontage `micromontage` : Panoramique
+- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
+- Fin d'instrument `instrument-fin` : Largeur de zone
+- Micromontage `micromontage` : Panoramique, fin
 - Oscillateur à table d'onde `oscillateur-table-onde` : Position
 - Phaser `phaser` : Profondeur
 - Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
@@ -46,49 +48,80 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Trémolo harmonique `tremolo-harmonique` : Profondeur
 - Wah-wah `wahwah` : Profondeur
 
-### frequence · 11
+### frequence · 15
 
 - Bitcrusher `bitcrusher` : Fréquence
+- Compresseur multibande `compresseur-multibande` : Fréq Low, Fréq High
 - De-esser `de-esser` : Fréquence
 - Exciter / Aural enhancer `exciter` : Fréquence
 - Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
+- Mosaïquage par corpus `mosaiquage` : Poids de la brillance · **⟨trames⟩** decrireGrains (boucle de trames)
 - Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Peignes accordés `peignes-accordes` : Résonance
+- Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
 - Résonateurs `resonateurs` : Résonance, Brillance
+- Réverbération à réseau (FDN) `reverbe-reseau` : Fréquence de l'aigu
 - Ring modulator `ring-modulator` : Fréquence
 - Trémolo harmonique `tremolo-harmonique` : Coupure
-- Vocoder `vocoder` : Q
+- Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
 
-### temps · 7
+### temps · 13
 
 - Ampleur `ampleur` : Pré-délai
+- Compresseur `compresseur` : Attaque, Relâchement
+- Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
 - De-esser `de-esser` : Attaque, Relâchement
+- Delay stéréo `delay-stereo` : Temps G, Temps D
+- Ducking `ducking` : Attaque, Relâchement, Maintien
 - Écho flottant `echo-flottant` : Décroissance
 - Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
-- Réverbération à réseau (FDN) `reverbe-reseau` : Queue
+- Réverbération à réseau (FDN) `reverbe-reseau` : Retard court, Retard long, Queue
 - Réverbération `reverberation` : Decay
 - Réverbération velours `reverberation-velours` : Chute
+- Shimmer `shimmer` : Décroissance
+- Transient Shaper `transient-shaper` : Temps attaque, Temps sustain
 
-### dynamique · 4
+### dynamique · 11
 
+- Compresseur `compresseur` : Seuil, Ratio
+- Compresseur multibande `compresseur-multibande` : Seuil Low, Ratio Low, Seuil Mid, Ratio Mid, Seuil High, Ratio High
 - De-esser `de-esser` : Ratio
+- Découpage en objets `decoupage-objets` : Seuil de silence
+- Ducking `ducking` : Seuil
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
+- Ondelettes `ondelettes` : Force du seuil
+- Remplissage de trou `remplissage-trou` : Seuil de silence
+- Restauration d'écrêtage `restauration-ecretage` : Seuil manuel · **⟨trames⟩** declipper (boucle de trames)
 - Réverbération hachée `reverbe-hachee` : Seuil
 
-### retroaction · 2
+### niveau · 6
+
+- Compresseur `compresseur` : Gain
+- Ducking `ducking` : Réduction
+- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
+- Micromontage `micromontage` : Niveau
+- Montage `montage` : Gain 1, Gain 2, Gain 3, Gain 4, Gain 5, Gain 6, Gain 7, Gain 8, Gain 9, Gain 10, Gain 11, Gain 12, Gain 13, Gain 14, Gain 15, Gain 16
+- Mosaïquage par corpus `mosaiquage` : Poids du niveau · **⟨trames⟩** decrireGrains (boucle de trames)
+
+### hauteur · 4
+
+- Granular freeze `granular-freeze` : Pitch
+- Micromontage `micromontage` : Transposition, fin
+- Shimmer `shimmer` : Transposition
+- Suiveur de hauteur `suiveur-hauteur` : Hauteur min, Hauteur max · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
+
+### retroaction · 3
 
 - Beat Repeat / Stutter `beat-repeat` : Feedback
 - Delay stéréo `delay-stereo` : Feedback
+- Shimmer `shimmer` : Rebouclage
 
-### hauteur · 1
+### melange · 2
 
-- Granular freeze `granular-freeze` : Pitch
-
-### niveau · 1
-
-- Micromontage `micromontage` : Niveau
+- Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
+- Shimmer `shimmer` : Mix
 
 ## Familles écartées en bloc
 
@@ -96,6 +129,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
   - `anneau-moebius`, `bouteille-klein`, `tore`, `ceinture-dirac`, `tresse`, `tonnetz`, `spirale-spatiale`
 
 ## Écartés nommément, et pourquoi
+
+Ces composants sont écartés **en entier** : la raison porte sur le composant.
 
 - `normaliseur` : le niveau et le plafond visent le fichier entier ; les faire varier détruirait la normalisation
 - `recaler-niveau` : le plafond vise le recalage entier, qui est une mesure globale
@@ -140,10 +175,16 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `resonance-audio` : la largeur, la hauteur et la profondeur sont les dimensions de la pièce ; la position de la source passe par une méthode du SDK, non par un AudioParam
 - `doppler` : la distance est la géométrie du passage, dont toute la trajectoire se déduit, et non une valeur lue à chaque instant
 - `mono-grave` : la coupure fixe les coefficients de quatre biquads et sert aussi à la mesure que le nœud rapporte
-- `shimmer` : quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance
-- `compresseur` : trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement
-- `ducking` : trois réglages modulables à la fois : seuil, réduction, attaque et relâchement
-- `compresseur-multibande` : trois seuils et une paire attaque / relâchement : aucune cible unique à piloter
+
+## Réglages écartés un par un, et pourquoi
+
+Ici la raison ne porte que sur **un réglage** : le composant garde les siens, et ils restent
+à faire tant qu'ils ne sont ni pilotés ni écartés à leur tour.
+
+- `arc-en-ciel-acoustique/Dispersion` : elle fixe le retard de chaque bande ET la longueur du rendu, que `dureeArcEnCiel` calcule avant qu'un échantillon soit écrit
+- `echo-flottant/Distance` : elle fixe la période entre les deux murs, donc tous les retards et la fréquence du peigne que le nœud annonce ; une distance qui se déplace est un effet Doppler, non un écho plus loin
+- `haut-parleur-rotatif/Largeur` : c'est le déphasage entre les deux rotors : le faire varier change la vitesse instantanée du rotor droit, la dérivée de la phase s'ajoutant à sa pulsation, et désaccorderait la rotation au lieu d'élargir l'image
+- `micromontage/Panoramique` : le composant porte déjà « Panoramique, fin » et « Panoramique, loi », soit une valeur par fragment ; une courbe y serait lue par fragment, non par échantillon
 
 ## Acceptent déjà une courbe
 
