@@ -71,9 +71,22 @@ describe("le recensement des effets à rendre modulables", () => {
     expect(doubles, "ces exclusions sont déjà couvertes par leur famille").toEqual([]);
   });
 
-  it("le recensement n'est pas vide, et ne couvre pas tout le catalogue", () => {
-    const n = new Set(cibles(toutesLesFiches).map((c) => c.id)).size;
-    expect(n).toBeGreaterThan(10);
-    expect(n).toBeLessThan(toutesLesFiches.length / 2);
+  it("le recensement REGARDE le catalogue, sans prétendre le couvrir en entier", () => {
+    // CE QUE CE CAS TIENT, ET CE QU'IL NE TIENT PLUS. Il exigeait « plus de dix composants restant
+    // à faire », ce qui a fini par mordre sur le chantier lui-même : la famille « niveau » faite,
+    // il en restait dix, et le contrôle tombait en annonçant un succès. Le nombre de composants
+    // qui RESTENT est destiné à descendre jusqu'à zéro ; ce n'est donc pas une mesure de bonne
+    // santé. Ce qui ne descend pas, c'est le nombre de composants que le recensement REGARDE,
+    // c'est-à-dire ceux qu'il range quelque part : à faire, déjà modulables, ou écartés avec leur
+    // raison. Un recensement qui ne range plus personne est cassé ; celui-ci range tout le monde.
+    const aFaire = new Set(cibles(toutesLesFiches).map((c) => c.id));
+    const deja = new Set(dejaModulables(toutesLesFiches).map((d) => d.id));
+    const ecartes = new Set(idsEcartes().keys());
+    const regardes = new Set([...aFaire, ...deja, ...ecartes]);
+    expect(regardes.size, "le recensement ne range plus personne").toBeGreaterThan(80);
+    expect(regardes.size, "le recensement prétend couvrir tout le catalogue")
+      .toBeLessThan(toutesLesFiches.length / 2);
+    // Et ce qui reste à faire ne grandit pas : un composant neuf entre modulable ou écarté.
+    expect(aFaire.size, "la liste à faire a grandi").toBeLessThanOrEqual(13);
   });
 });

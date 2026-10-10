@@ -11,7 +11,7 @@ import { correlationDesCanaux, ubiquite } from "../audio/ubiquite";
 import { vague } from "../audio/vague";
 import { frequenceDeRotation, platine } from "../audio/platine";
 import { enUneVoie, meilleurCreneau, poserDansLeCreneau } from "../audio/creneau";
-import { MODULATION_MELANGE, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MELANGE, bornesModulation, portModulation, reglageModule } from "./effets-aides";
 
 const en = () => langueCourante() === "en";
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
@@ -49,7 +49,7 @@ export const fiches: FicheAudio[] = ([
         distance,
         decroissance: ctx.paramNombre("Décroissance", 1),
         amortissement: ctx.paramNombre("Amortissement", 20) / 100,
-        melange: melangeModule(ctx, a.length, 1, { reglage: "Mélange", defaut: 70 }),
+        melange: reglageModule(ctx, a.length, 1, { reglage: "Mélange", defaut: 70 }),
       });
       return {
         valeurs: [out],
@@ -248,11 +248,12 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Montage",
     resume: "Pose un son à l'instant où le fond lui laisse sa place, en temps et en fréquence.",
     resumeEn: "Places a sound at the moment the background leaves it room, in time and in frequency.",
-    notice: "Ce composant cherche dans un fond l'instant où un son trouve sa place, et l'y pose. D'après Jean-François Augoyard et Henry Torgue, « À l'écoute de l'environnement : répertoire des effets sonores », Parenthèses, 1995, qui définissent le créneau comme l'occurrence d'une émission sonore au moment où le contexte est le plus favorable et ménage une place particulièrement adaptée à son expression, et en font l'un des instruments de l'action sonore.\n\nLa place ne se réduit pas à un creux de niveau. Un fond chargé dans le grave laisse passer un son aigu sans jamais faiblir, et un fond chargé dans l'aigu laisse passer un son grave au même niveau. La recherche se fait donc dans le plan du temps et des fréquences, et le son qu'on veut poser dit lui-même où regarder : son propre profil de bandes sert de poids. Le fond est découpé en douze bandes par un banc de passe-bande, et le son glisse le long du fond jusqu'à l'endroit où ce qui l'occupe est le plus faible.\n\nLe fond n'est ni coupé ni baissé : l'effet décrit une place que le contexte ménage.\n\nL'entrée « Fond » reçoit le contexte. L'entrée « Son » reçoit ce qu'on veut y poser.\n\n« Écoute » choisit ce que la recherche regarde. « Le timbre et le niveau » pèse chaque bande par le profil du son ; « Le niveau seul » pèse toutes les bandes également.\n\n« Fenêtre » est la durée d'une trame d'analyse. « Au plus tôt » interdit de chercher avant un certain instant. « Niveau » règle la force du son posé.\n\nLa sortie « Audio » rend le fond et le son mêlés. La sortie « Rapport » donne l'instant trouvé, ce que le fond y occupe, et ce qu'il occupe en moyenne et au pire. Le message donne l'instant et le rapport entre la place trouvée et la place moyenne.",
-    noticeEn: "This node looks through a background for the moment a sound finds its place, and puts it there. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodefine the niche as the occurrence of a sound emission at the moment the context is most favourable and leaves a place particularly suited to its expression, and make it one of the instruments of sonic action.\n\nRoom is not merely a dip in level. A background loaded in the bass lets a treble sound through without ever weakening, and a background loaded in the treble lets a bass sound through at the same level. The search is therefore made in the plane of time and frequency, and the sound to be placed says itself where to look: its own band profile serves as the weighting. The background is split into twelve bands by a bank of band-pass filters, and the sound slides along the background to the point where what occupies it is weakest.\n\nThe background is neither cut nor lowered: the effect describes a place the context leaves.\n\nThe « Background » input takes the context. The « Sound » input takes what is to be placed in it.\n\n« Listening » chooses what the search looks at. « Timbre and level » weights each band by the sound's profile; « Level only » weights all bands equally.\n\n« Window » is the length of an analysis frame. « No earlier than » forbids searching before a given instant. « Level » sets the strength of the placed sound.\n\nThe « Audio » output returns the background and the sound together. The « Report » output gives the instant found, what the background occupies there, and what it occupies on average and at worst. The message gives the instant and the ratio between the place found and the average.",
+    notice: "Ce composant cherche dans un fond l'instant où un son trouve sa place, et l'y pose. D'après Jean-François Augoyard et Henry Torgue, « À l'écoute de l'environnement : répertoire des effets sonores », Parenthèses, 1995, qui définissent le créneau comme l'occurrence d'une émission sonore au moment où le contexte est le plus favorable et ménage une place particulièrement adaptée à son expression, et en font l'un des instruments de l'action sonore.\n\nLa place ne se réduit pas à un creux de niveau. Un fond chargé dans le grave laisse passer un son aigu sans jamais faiblir, et un fond chargé dans l'aigu laisse passer un son grave au même niveau. La recherche se fait donc dans le plan du temps et des fréquences, et le son qu'on veut poser dit lui-même où regarder : son propre profil de bandes sert de poids. Le fond est découpé en douze bandes par un banc de passe-bande, et le son glisse le long du fond jusqu'à l'endroit où ce qui l'occupe est le plus faible.\n\nLe fond n'est ni coupé ni baissé : l'effet décrit une place que le contexte ménage.\n\nL'entrée « Fond » reçoit le contexte. L'entrée « Son » reçoit ce qu'on veut y poser.\n\n« Écoute » choisit ce que la recherche regarde. « Le timbre et le niveau » pèse chaque bande par le profil du son ; « Le niveau seul » pèse toutes les bandes également.\n\n« Fenêtre » est la durée d'une trame d'analyse. « Au plus tôt » interdit de chercher avant un certain instant. « Niveau » règle la force du son posé ; une courbe branchée sur l'entrée « Modulation niveau » prend sa place, et elle est lue sur la durée du son posé, de sorte que son début coïncide avec celui du son où que le créneau se trouve.\n\nLa sortie « Audio » rend le fond et le son mêlés. La sortie « Rapport » donne l'instant trouvé, ce que le fond y occupe, et ce qu'il occupe en moyenne et au pire. Le message donne l'instant et le rapport entre la place trouvée et la place moyenne.",
+    noticeEn: "This node looks through a background for the moment a sound finds its place, and puts it there. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodefine the niche as the occurrence of a sound emission at the moment the context is most favourable and leaves a place particularly suited to its expression, and make it one of the instruments of sonic action.\n\nRoom is not merely a dip in level. A background loaded in the bass lets a treble sound through without ever weakening, and a background loaded in the treble lets a bass sound through at the same level. The search is therefore made in the plane of time and frequency, and the sound to be placed says itself where to look: its own band profile serves as the weighting. The background is split into twelve bands by a bank of band-pass filters, and the sound slides along the background to the point where what occupies it is weakest.\n\nThe background is neither cut nor lowered: the effect describes a place the context leaves.\n\nThe « Background » input takes the context. The « Sound » input takes what is to be placed in it.\n\n« Listening » chooses what the search looks at. « Timbre and level » weights each band by the sound's profile; « Level only » weights all bands equally.\n\n« Window » is the length of an analysis frame. « No earlier than » forbids searching before a given instant. « Level » sets the strength of the placed sound; a curve connected to the « Modulation level » input takes its place, and it is read over the length of the placed sound, so that its start coincides with the sound's wherever the niche is found.\n\nThe « Audio » output returns the background and the sound together. The « Report » output gives the instant found, what the background occupies there, and what it occupies on average and at worst. The message gives the instant and the ratio between the place found and the average.",
     entrees: [
       { nom: "Fond", nomEn: "Background", type: "audio", sousType: "stereo" },
       { nom: "Son", nomEn: "Sound", type: "audio", sousType: "stereo" },
+      portModulation("Niveau", "Level"),
     ],
     sorties: [
       { nom: "Audio", nomEn: "Audio", type: "audio", sousType: "stereo" },
@@ -272,7 +273,12 @@ export const fiches: FicheAudio[] = ([
         doc: "L'instant avant lequel la recherche ne va pas.",
         docEn: "The instant before which the search does not go." },
       { nom: "Niveau", nomEn: "Level", type: "curseur", plage: [0, 200], pas: 1, defaut: 100, unite: "%",
-        doc: "La force du son posé.", docEn: "The strength of the placed sound." },
+        doc: "La force du son posé. Une courbe la fait varier au fil du son posé, et non du mélange : son début coïncide avec celui du son, où que le créneau se trouve.",
+        docEn: "The strength of the placed sound. A curve varies it along the placed sound, not along the mix: its start coincides with the sound's, wherever the niche is found." },
+      ...bornesModulation({
+        parametre: "Niveau", parametreEn: "Level", bornes: [0, 200], unite: "%",
+        noms: ["Niveau min", "Niveau max"], nomsEn: ["Level min", "Level max"],
+      }),
     ],
     async executer(ctx: any) {
       const fond = ctx.entree(0);
@@ -285,7 +291,11 @@ export const fiches: FicheAudio[] = ([
         auPlusTot: ctx.paramNombre("Au plus tôt", 0),
         parLeTimbre: String(ctx.paramTexte("Écoute", "timbre")) !== "niveau",
       });
-      const out = poserDansLeCreneau(fond, son, c.instant, ctx.paramNombre("Niveau", 100) / 100);
+      // La courbe est lue sur la longueur du SON POSÉ, qui est ce qu'elle commande.
+      const niveau = reglageModule(ctx, son.length, 2, {
+        reglage: "Niveau", defaut: 100, noms: ["Niveau min", "Niveau max"],
+      });
+      const out = poserDansLeCreneau(fond, son, c.instant, niveau);
       const part = c.moyenne > 0 ? c.occupation / c.moyenne : 1;
       const lignes = en() ? [
         `Niche found at ${nb(c.instant, 2)} s, for a sound of ${nb(son.duration, 2)} s.`,

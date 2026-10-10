@@ -11,10 +11,10 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 60
-- **restent à faire** : 13 composants, 21 couples composant / famille
-- **dont le cœur travaille par trames** : 3
-- **écartés** : 41, dont 1 famille de la palette écartée en bloc
+- **acceptent déjà une courbe** : 62
+- **restent à faire** : 10 composants, 15 couples composant / famille
+- **dont le cœur travaille par trames** : 2
+- **écartés** : 42, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
@@ -26,35 +26,23 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Effet Haas `haas` : Retard
 - Limiteur `limiteur` : Relâchement
 
-### espace · 4
-
-- Brassage `brassage` : Dispersion
-- Oscillateur à table d'onde `oscillateur-table-onde` : Position
-- Ubiquité `ubiquite` : Dispersion
-- Vague `vague` : Profondeur, Ouverture
-
 ### dynamique · 3
 
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
+### espace · 3
+
+- Brassage `brassage` : Dispersion
+- Ubiquité `ubiquite` : Dispersion
+- Vague `vague` : Profondeur, Ouverture
+
 ### hauteur · 3
 
 - Brassage `brassage` : Transposition
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
-
-### niveau · 3
-
-- Créneau `creneau` : Niveau
-- Oscillateur à table d'onde `oscillateur-table-onde` : Volume
-- Réduction de bruit `reduction-bruit` : Réduction · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
-
-### frequence · 2
-
-- Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
-- Réduction de bruit `reduction-bruit` : Q · **⟨trames⟩** reduireBruit (boucle de trames), reduireBruitNotches (TAILLE_FFT)
 
 ### retroaction · 1
 
@@ -85,6 +73,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `tracage-spectral` : traitement par trames : une valeur par bloc, non par échantillon
 - `arpege-spectral` : traitement par trames : une valeur par bloc, non par échantillon
 - `formule-spectrale` : traitement par trames : une valeur par bloc, non par échantillon
+- `reduction-bruit` : traitement par trames de 8192 échantillons par sauts de 4096 : une courbe n'y serait lue que onze fois par seconde, soit par paliers de 93 ms
 - `stn-sinus-transitoires-bruit` : traitement par trames : une valeur par bloc, non par échantillon
 - `dereverberation` : traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon
 - `shift-formants` : traitement par trames : l'enveloppe est estimée par bloc, non par échantillon
@@ -114,6 +103,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `chopper` : Fréquence
 - `chorus` : Mix
 - `convolution-deux-sons` : Mix
+- `creneau` : Niveau
 - `crible-harmonique` : Fondamentale
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
@@ -137,6 +127,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `mosaiquage` : Volume
 - `objet-sonore` : Azimut
 - `octaver` : Mix
+- `oscillateur-table-onde` : Volume
 - `partition-aleatoire-csound` : (non déclarée)
 - `partition-csound` : (non déclarée)
 - `paulstretch` : Stretch

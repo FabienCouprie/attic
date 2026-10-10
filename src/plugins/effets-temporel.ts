@@ -13,7 +13,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
 import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, appliquerDecoupeAleatoire, griffinLim, picAbsolu } from "../audio";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
-import { MODULATION_MIX, bornesModulation, effet, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, effet, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -258,7 +258,7 @@ export const fiches: FicheAudio[] = ([
         const parts = s.split("/");
         return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
       };
-      const mix = melangeModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
+      const mix = reglageModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
       return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), mix)], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
     },
   },

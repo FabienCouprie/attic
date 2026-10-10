@@ -79,7 +79,7 @@ const ecart = (x: Float32Array, y: Float32Array): number => {
  * celui d'un 0,8 en double précision mesure le format, non le code. Les comparaisons au bit près
  * se font donc sur des valeurs que le flottant simple tient EXACTEMENT, c'est-à-dire des fractions
  * dyadiques : 0,5 · 0,75 · 40 · 60. Ce n'est pas une faiblesse de l'invariant : en production,
- * `melangeModule` rend un NOMBRE quand aucune courbe n'est branchée, et la question ne se pose pas.
+ * `reglageModule` rend un NOMBRE quand aucune courbe n'est branchée, et la question ne se pose pas.
  */
 const tenue = (valeur: number, n: number) => new Float32Array(n).fill(valeur);
 

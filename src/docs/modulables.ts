@@ -58,6 +58,12 @@ export const ECARTES: Record<string, string> = {
   "tracage-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
   "arpege-spectral": "traitement par trames : une valeur par bloc, non par échantillon",
   "formule-spectrale": "traitement par trames : une valeur par bloc, non par échantillon",
+  // LA TRAME EST MESURÉE ICI, parce que c'est elle qui a emporté la décision. `reduireBruit`
+  // travaille sur 8192 échantillons par sauts de 4096 : à 44,1 kHz, une fenêtre de 185,8 ms qui
+  // avance toutes les 92,9 ms, soit une lecture onze fois par seconde. Ses deux réglages de
+  // famille modulable, « Réduction » et « Q », passent par la même boucle. Écarté sur décision de
+  // Fabien, au relevé de la famille « niveau ».
+  "reduction-bruit": "traitement par trames de 8192 échantillons par sauts de 4096 : une courbe n'y serait lue que onze fois par seconde, soit par paliers de 93 ms",
   // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
   // d'une famille modulable, et leur cœur travaille par trames comme les sept ci-dessus.
   "stn-sinus-transitoires-bruit": "traitement par trames : une valeur par bloc, non par échantillon",

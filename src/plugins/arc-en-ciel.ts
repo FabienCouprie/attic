@@ -6,7 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { arcEnCiel, bandesArcEnCiel } from "../audio/arc-en-ciel";
-import { MODULATION_MIX, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, reglageModule, portModulation } from "./effets-aides";
 
 const en = () => langueCourante() === "en";
 
@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         // LA COURBE EST LUE SUR LA LONGUEUR DE L'ENTRÉE, non sur celle de la sortie, qui la
         // dépasse du plus long trajet et de la plus longue résonance : une courbe étirée sur la
         // queue ne correspondrait plus au son que l'on voit.
-        mix: melangeModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" }),
+        mix: reglageModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" }),
       };
       const y = arcEnCiel(a, o);
       const gardees = bandesArcEnCiel(o).filter((b) => b.frequence < a.sampleRate * 0.49);

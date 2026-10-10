@@ -14,7 +14,7 @@ import {
 import { parCanal } from "./hors-fil";
 import { appliquerRognage, planRognage } from "../audio/silences";
 import { fusionnerStereo } from "../audio/effets-montage";
-import { MODULATION_MIX, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, reglageModule, portModulation } from "./effets-aides";
 
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
@@ -57,7 +57,7 @@ export const fiches: FicheAudio[] = ([
         maintienSec: ctx.paramNombre("Maintien", 0.2),
         chuteSec: ctx.paramNombre("Chute", 0.01),
         seuilDb: ctx.paramNombre("Seuil", -40),
-        melange: melangeModule(ctx, e.length, 1, { reglage: "Mix", defaut: 60 }),
+        melange: reglageModule(ctx, e.length, 1, { reglage: "Mix", defaut: 60 }),
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,
       };

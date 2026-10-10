@@ -15,7 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hautParleurRotatif, tremoloHarmonique } from "../audio/rotatifs";
-import { MODULATION_MELANGE, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MELANGE, bornesModulation, reglageModule, portModulation } from "./effets-aides";
 
 const canauxDe = (a: AudioBuffer): Float32Array[] =>
   Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
@@ -68,7 +68,7 @@ export const fiches: FicheAudio[] = ([
         vitesse,
         profondeur: ctx.paramNombre("Profondeur", 70) / 100,
         coupure,
-        melange: melangeModule(ctx, a.length, 1, { reglage: "Mélange" }),
+        melange: reglageModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });
       return {
         valeurs: [versTampon(canaux, a.sampleRate)],
@@ -124,7 +124,7 @@ export const fiches: FicheAudio[] = ([
         profondeurAmplitude: ctx.paramNombre("Profondeur d'amplitude", 70) / 100,
         profondeurDoppler: doppler,
         largeur: ctx.paramNombre("Largeur", 100) / 100,
-        melange: melangeModule(ctx, a.length, 1, { reglage: "Mélange" }),
+        melange: reglageModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });
       // L'ÉCART DE HAUTEUR EST RENDU PLUTÔT QUE LE RÉGLAGE, parce qu'il ne se règle pas : il
       // sort du rayon et de la vitesse, et c'est lui qu'on entend.

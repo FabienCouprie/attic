@@ -171,13 +171,13 @@ export const MODULATION_MIX: ModulationEffet =
  * que de la reformuler chacune autrement.
  */
 /**
- * Les réglages que `melangeModule` lit LUI-MÊME, et que la source de l'exécuteur ne montre donc pas.
+ * Les réglages que `reglageModule` lit LUI-MÊME, et que la source de l'exécuteur ne montre donc pas.
  *
  * LES GARDES DE PARAMÈTRE MORT S'APPUIENT DESSUS. Ils cherchent le nom de chaque réglage déclaré
  * dans le texte de l'exécuteur ; ces deux-là sont lus un étage plus bas. Les énumérer ici plutôt
  * que dans chaque garde fait qu'un réglage ajouté à l'aide se déclare d'un seul endroit.
  */
-export const REGLAGES_LUS_PAR_MELANGE = BORNES_PAR_DEFAUT;
+export const REGLAGES_LUS_PAR_L_AIDE = BORNES_PAR_DEFAUT;
 
 /**
  * Vrai si l'exécuteur dont voici la source lit ce réglage, directement ou par une aide partagée.
@@ -188,10 +188,15 @@ export const REGLAGES_LUS_PAR_MELANGE = BORNES_PAR_DEFAUT;
  */
 export const luParLExecuteur = (source: string, nom: string): boolean =>
   source.includes(`"${nom}"`)
-  || (source.includes("melangeModule") && (REGLAGES_LUS_PAR_MELANGE as readonly string[]).includes(nom));
+  || (source.includes("reglageModule") && (REGLAGES_LUS_PAR_L_AIDE as readonly string[]).includes(nom));
 
 /**
- * Le mélange d'un effet, modulé ou non.
+ * UN RÉGLAGE EN POUR CENT, modulé ou non.
+ *
+ * ELLE S'EST APPELÉE `melangeModule` TANT QU'ELLE NE SERVAIT QU'À DES MÉLANGES. La famille
+ * « niveau » lui donne un niveau à lire, et le nom aurait menti au premier lecteur venu : rien
+ * dans son calcul ne tient au mélange, elle lit un réglage en pour cent et rend soit une
+ * proportion, soit ce même pour cent.
  *
  * SANS COURBE, UN NOMBRE — ET C'EST CE QUI REND L'INVARIANT VRAI SANS EFFORT. Un tableau constant
  * donnerait le même son, l'arithmétique étant la même ; mais il coûterait une allocation de la
@@ -206,9 +211,10 @@ export const luParLExecuteur = (source: string, nom: string): boolean =>
  * L'UNITÉ RENDUE EST DITE, JAMAIS DEVINÉE. Le réglage est en pour cent à l'écran, partout ; mais
  * les cœurs de calcul du dépôt sont partagés entre ceux qui attendent une proportion de zéro à un
  * et ceux qui divisent eux-mêmes. Un facteur cent tombé du mauvais côté donne un mélange bloqué à
- * son maximum, ce qui s'entend à peine sur un effet discret : l'appelant déclare donc ce qu'il veut.
+ * son maximum, ou un son quarante décibels trop bas — c'est arrivé à trois synthés du catalogue,
+ * et `plugins/niveau-des-synthes.test.ts` en garde la trace. L'appelant déclare donc ce qu'il veut.
  */
-export function melangeModule(
+export function reglageModule(
   ctx: any, n: number, rangPort: number,
   o: {
     reglage: string; defaut?: number; rendu?: "proportion" | "pourCent";
@@ -217,7 +223,7 @@ export function melangeModule(
      *
      * LES NOMMER À L'APPEL LES REND VISIBLES AU GARDE DE RÉGLAGE MORT, qui cherche le nom de chaque
      * réglage déclaré dans le texte de l'exécuteur : les deux noms par défaut lui sont connus par
-     * `REGLAGES_LUS_PAR_MELANGE`, et des noms donnés ici apparaissent dans la source.
+     * `REGLAGES_LUS_PAR_L_AIDE`, et des noms donnés ici apparaissent dans la source.
      */
     noms?: readonly [string, string];
   },

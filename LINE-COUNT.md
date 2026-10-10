@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1313 files, 230462 lines, of which 157876 are code.**
+**1315 files, 230779 lines, of which 158043 are code.**
 The table lists the 181 files of 200 code lines or more, heaviest first;
-the remaining 1132 account for 154740 lines.
+the remaining 1134 account for 155041 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -144,6 +144,7 @@ the remaining 1132 account for 154740 lines.
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
+| src/plugins/effets-cresson.ts | 240 | 326 |  |
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
 | src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |
@@ -154,7 +155,6 @@ the remaining 1132 account for 154740 lines.
 | src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
-| src/plugins/effets-cresson.ts | 232 | 316 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
@@ -195,4 +195,4 @@ the remaining 1132 account for 154740 lines.
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
 | src/audio/ondelettes.ts | 200 | 349 |  |
-| src/plugins/effets-aides.ts | 200 | 417 |  |
+| src/plugins/effets-aides.ts | 200 | 423 |  |
