@@ -49,11 +49,16 @@ function passeTout(x: Float32Array, coefficient: number, sortie: Float32Array): 
   }
 }
 
+import { valeurA } from "./courbe";
+
 export interface OptionsUbiquite {
   /**
    * De −1 pour l'hyperlocalisation à +1 pour l'ubiquité. À zéro, le son sort tel qu'il est entré.
+   *
+   * Un tableau la fait varier au fil du son, et il peut franchir zéro : le calcul passe alors d'un
+   * bord à l'autre échantillon par échantillon.
    */
-  dispersion: number;
+  dispersion: number | Float32Array;
   /** Le nombre de passe-tout en cascade. Plus il y en a, plus la phase se brouille finement. */
   etages: number;
   /** La graine du tirage des coefficients, pour qu'une écoute se refasse à l'identique. */
@@ -83,15 +88,24 @@ export function ubiquite(buffer: AudioBuffer, o: OptionsUbiquite): AudioBuffer {
   const sortie = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: buffer.sampleRate });
   const g = buffer.getChannelData(0);
   const d = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : g;
-  const dispersion = Math.max(-1, Math.min(1, o.dispersion));
+  // LE SIGNE CHOISIT ENTRE DEUX CALCULS, et c'est ce qui rend ce réglage particulier. Au négatif,
+  // les deux canaux glissent vers leur moyenne ; au positif, une chaîne de passe-tout brouille la
+  // phase. Un SCALAIRE négatif saute donc entièrement cette chaîne, et il doit continuer de le
+  // faire : c'est son coût et ce sont ses bits. Une COURBE, elle, peut franchir zéro, et il faut
+  // alors tenir les deux calculs prêts — ce qui n'est payé que lorsqu'elle va vraiment au positif.
+  const dispersionA = (i: number) => Math.max(-1, Math.min(1, valeurA(o.dispersion, i)));
+  const dispersion = dispersionA(0);
+  const jamaisPositif = typeof o.dispersion === "number"
+    ? dispersion <= 0
+    : !o.dispersion.some((v) => v > 0);
 
-  if (dispersion <= 0) {
+  if (jamaisPositif) {
     // Vers l'hyperlocalisation : les deux canaux glissent vers leur moyenne, qui est ce qu'ils ont
     // en commun. À moins un, il ne reste qu'elle.
-    const part = -dispersion;
     const sg = sortie.getChannelData(0);
     const sd = sortie.getChannelData(1);
     for (let i = 0; i < n; i++) {
+      const part = -dispersionA(i);
       const commun = (g[i] + d[i]) / 2;
       sg[i] = g[i] * (1 - part) + commun * part;
       sd[i] = d[i] * (1 - part) + commun * part;
@@ -126,8 +140,18 @@ export function ubiquite(buffer: AudioBuffer, o: OptionsUbiquite): AudioBuffer {
   const sg = sortie.getChannelData(0);
   const sd = sortie.getChannelData(1);
   for (let i = 0; i < n; i++) {
-    sg[i] = g[i] * (1 - dispersion) + tourneG[i] * dispersion;
-    sd[i] = d[i] * (1 - dispersion) + tourneD[i] * dispersion;
+    const v = dispersionA(i);
+    if (v <= 0) {
+      // La courbe est passée du côté négatif : c'est le glissement vers le commun qui s'applique,
+      // avec la même arithmétique que la branche ci-dessus.
+      const part = -v;
+      const commun = (g[i] + d[i]) / 2;
+      sg[i] = g[i] * (1 - part) + commun * part;
+      sd[i] = d[i] * (1 - part) + commun * part;
+    } else {
+      sg[i] = g[i] * (1 - v) + tourneG[i] * v;
+      sd[i] = d[i] * (1 - v) + tourneD[i] * v;
+    }
   }
   return sortie;
 }

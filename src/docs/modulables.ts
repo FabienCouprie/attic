@@ -71,6 +71,11 @@ export const ECARTES: Record<string, string> = {
   "echo-inverse": "le cœur somme des copies décalées du son entier, et « Temps » comme « Feedback » fixent les décalages et la longueur de sortie avant qu'un échantillon soit écrit",
   "enveloppe-adsr": "ses durées sont les cinq points d'ancrage d'une enveloppe en un coup, calculés avant qu'elle soit tracée ; et son « Maintien » est un niveau, non une durée",
   "haas": "déplacer la position de lecture transposerait le canal retardé, alors que l'effet tient à ce que l'oreille fusionne un décalage FIXE",
+  // UNE VALEUR PAR SEGMENT, NON PAR ÉCHANTILLON. « Dispersion » et « Transposition » sont lues dans
+  // la même boucle, une fois au démarrage de chaque grain, à la cadence que fixe « Densité » : de 1
+  // à 400 par seconde, 40 par défaut, soit des paliers de 25 ms. Écarté sur décision de Fabien, au
+  // relevé de la famille « espace ».
+  "brassage": "ses deux réglages sont lus une fois par segment, à la cadence de « Densité » : 40 par seconde au défaut, soit par paliers de 25 ms",
   // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
   // d'une famille modulable, et leur cœur travaille par trames comme les sept ci-dessus.
   "stn-sinus-transitoires-bruit": "traitement par trames : une valeur par bloc, non par échantillon",

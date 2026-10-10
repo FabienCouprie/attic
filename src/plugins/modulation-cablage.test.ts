@@ -157,11 +157,21 @@ const CAS: {
     id: "gate-expandeur", reglage: "Relâchement", entrees: () => [son(47, 2), undefined],
     noms: ["Relâchement min", "Relâchement max"], rang: 2,
   },
+  // La famille « espace ». La vague porte deux ports, comme le gate.
+  { id: "ubiquite", reglage: "Dispersion", entrees: () => [son(53, 2)] },
+  {
+    id: "vague", reglage: "Profondeur", entrees: () => [son(59, 2)],
+    noms: ["Profondeur min", "Profondeur max"], rang: 1,
+  },
+  {
+    id: "vague", reglage: "Ouverture", entrees: () => [son(61, 2), undefined],
+    noms: ["Ouverture min", "Ouverture max"], rang: 2,
+  },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien quatorze ports à éprouver", () => {
-    expect(CAS).toHaveLength(14);
+  it("il y a bien dix-sept ports à éprouver", () => {
+    expect(CAS).toHaveLength(17);
   });
 
   for (const cas of CAS) {

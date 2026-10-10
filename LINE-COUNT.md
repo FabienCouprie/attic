@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1316 files, 231018 lines, of which 158166 are code.**
+**1317 files, 231222 lines, of which 158305 are code.**
 The table lists the 181 files of 200 code lines or more, heaviest first;
-the remaining 1135 account for 155221 lines.
+the remaining 1136 account for 155404 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -123,6 +123,7 @@ the remaining 1135 account for 155221 lines.
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/audio/io.ts | 264 | 397 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
+| src/plugins/effets-cresson.ts | 259 | 347 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
@@ -145,7 +146,6 @@ the remaining 1135 account for 155221 lines.
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
-| src/plugins/effets-cresson.ts | 240 | 326 |  |
 | src/audio/ondelettes.test.ts | 239 | 330 |  |
 | src/core/cache-execution.test.ts | 239 | 353 |  |
 | src/plugins/algebre-musicale.ts | 239 | 346 |  |

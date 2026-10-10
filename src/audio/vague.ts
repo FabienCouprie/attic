@@ -17,6 +17,8 @@
 // qui se forme s'éclaircit en montant et s'assourdit en se retirant : moduler le seul niveau rendrait
 // un son qui va et vient sans jamais s'approcher.
 
+import { valeurA } from "./courbe";
+
 /** Les deux façons dont une vague se brise. */
 export type Rupture = "deferlante" | "progressive";
 
@@ -29,10 +31,10 @@ export interface OptionsVague {
   montee: number;
   /** La façon dont la vague se brise. */
   rupture: Rupture;
-  /** La part du niveau que le creux emporte, de 0 à 1. */
-  profondeur: number;
-  /** La part du timbre qui suit l'intensité, de 0 à 1. */
-  ouverture: number;
+  /** La part du niveau que le creux emporte, de 0 à 1. Un tableau la fait varier au fil du son. */
+  profondeur: number | Float32Array;
+  /** La part du timbre qui suit l'intensité, de 0 à 1. Un tableau la fait varier au fil du son. */
+  ouverture: number | Float32Array;
   /** La graine de l'irrégularité, pour qu'une écoute se refasse. */
   graine: number;
 }
@@ -93,8 +95,11 @@ export function vague(buffer: AudioBuffer, o: OptionsVague): AudioBuffer {
   const sr = buffer.sampleRate;
   const n = buffer.length;
   const durees = dureesDesCycles(o, n / sr);
-  const profondeur = Math.max(0, Math.min(1, o.profondeur));
-  const ouverture = Math.max(0, Math.min(1, o.ouverture));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non. L'ouverture ne
+  // coûte rien de plus à moduler, la coupure étant DÉJÀ recalculée à chaque échantillon parce
+  // qu'elle suit la forme de la vague.
+  const profondeurA = (i: number) => Math.max(0, Math.min(1, valeurA(o.profondeur, i)));
+  const ouvertureA = (i: number) => Math.max(0, Math.min(1, valeurA(o.ouverture, i)));
 
   // La courbe est calculée une fois pour tous les canaux : une vague qui ne tomberait pas au même
   // instant à gauche et à droite ne serait plus une vague mais deux.
@@ -116,9 +121,11 @@ export function vague(buffer: AudioBuffer, o: OptionsVague): AudioBuffer {
       const f = forme[i];
       // La coupure va de trois cents hertz au creux à la moitié de la fréquence d'échantillonnage au
       // sommet, et l'ouverture dit quelle part de ce trajet est parcourue.
+      const ouverture = ouvertureA(i);
       const coupure = 300 + (sr / 2 - 300) * (1 - ouverture + ouverture * f);
       const a = Math.exp((-2 * Math.PI * Math.min(coupure, sr / 2.2)) / sr);
       bas = a * bas + (1 - a) * src[i];
+      const profondeur = profondeurA(i);
       dst[i] = bas * (1 - profondeur + profondeur * f);
     }
   }
