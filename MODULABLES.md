@@ -7,25 +7,28 @@ grandeur continue et audible. Un réglage qui décide de la façon de calculer, 
 nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur
 raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.
 
+**La liste est vide : tout composant que ce relevé sait voir est traité**, ouvert à une
+courbe ou écarté avec sa raison. Un composant neuf qui porterait un réglage de l'une de ces
+familles reparaîtrait ici de lui-même, et c'est à cela que ce document sert désormais.
+
+CE QUE CE COMPTE NE DIT PAS. Il se lit PAR COMPOSANT, non par réglage : un composant quitte
+la liste dès qu'il porte UN seul port de courbe, et ses autres réglages cessent alors d'y
+paraître. Relevé au moment où la liste s'est vidée : **trente et un composants gardent ainsi
+cinquante-cinq réglages** de famille modulable qui ne sont pas ouverts. Les faire paraître demande un
+recensement par réglage, qui rallongerait cette liste au lieu de la raccourcir.
+
 Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une courbe n'y serait lue
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **acceptent déjà une courbe** : 66
-- **restent à faire** : 2 composants, 3 couples composant / famille
-- **dont le cœur travaille par trames** : 2
-- **écartés** : 46, dont 1 famille de la palette écartée en bloc
+- **restent à faire** : 0 composants, 0 couples composant / famille
+- **dont le cœur travaille par trames** : 0
+- **écartés** : 48, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### hauteur · 2
-
-- Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
-
-### dynamique · 1
-
-- Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Seuil · **⟨trames⟩** traiterVoie (appelle analyserSms)
+Rien.
 
 ## Familles écartées en bloc
 
@@ -57,6 +60,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `enveloppe-adsr` : ses durées sont les cinq points d'ancrage d'une enveloppe en un coup, calculés avant qu'elle soit tracée ; et son « Maintien » est un niveau, non une durée
 - `haas` : déplacer la position de lecture transposerait le canal retardé, alors que l'effet tient à ce que l'oreille fusionne un décalage FIXE
 - `brassage` : ses deux réglages sont lus une fois par segment, à la cadence de « Densité » : 40 par seconde au défaut, soit par paliers de 25 ms
+- `parole-vers-sequence` : sa transposition s'applique une fois par MOT, sur un numéro de note MIDI arrondi : quelques valeurs par seconde, et elle n'a de sens qu'au moment où une note se pose
+- `sms-sinusoides-bruit` : une transposition nulle DÉCOUPE les partiels dans le son, une transposition non nulle les REFABRIQUE par addition : à 0,001 demi-ton, le rendu s'écarte déjà de celui à zéro de 113 % de sa valeur efficace, et son « Seuil » décide quels partiels sont suivis, par trames
 - `stn-sinus-transitoires-bruit` : traitement par trames : une valeur par bloc, non par échantillon
 - `dereverberation` : traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon
 - `shift-formants` : traitement par trames : l'enveloppe est estimée par bloc, non par échantillon
