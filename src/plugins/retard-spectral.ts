@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { MODULATION_MIX_NOMMEE, bornesModulation, portModulation, reglageModule } from "./effets-aides";
 import { longueurTraine, retardDeGroupe, retardSpectral } from "../audio/retard-spectral";
 
 export const fiches: FicheAudio[] = ([
@@ -18,6 +19,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Dispersion" },
+      // SOUS UN NOM À ELLE : l'entrée « Modulation » ci-dessus est celle de la dispersion, et deux
+      // ports du même nom ne se distinguent pas à l'écran.
+      portModulation("Mix", "Mix", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -38,6 +42,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Proportion de son traité. À 0 %, la sortie est le son d'entrée, inchangé.",
         docEn: "Proportion of processed sound. At 0 %, the output is the input, unchanged." },
+      ...bornesModulation(MODULATION_MIX_NOMMEE),
       { nom: "Traîne max", nomEn: "Max tail", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 4, unite: "s",
         doc: "Borne de la queue ajoutée après le son. Ce n'est pas un réglage de confort : à forte dispersion, la traîne théorique atteint des dizaines de secondes que le rebouclage répète encore, et le rendu deviendrait interminable. La borne la coupe, et c'est ce qui rend les réglages extrêmes utilisables.",
         docEn: "Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable." },
@@ -60,7 +65,7 @@ export const fiches: FicheAudio[] = ([
       const options = {
         sections, dispersion, versLeGrave,
         reaction: ctx.paramNombre("Réaction", 0) / 100,
-        melange: ctx.paramNombre("Mix", 100) / 100,
+        melange: reglageModule(ctx, length, 2, { reglage: "Mix", noms: ["Mix min", "Mix max"] }),
         courbe: ctx.entree(1),
         plage: {
           min: ctx.paramNombre("Modulation min", 0.2),

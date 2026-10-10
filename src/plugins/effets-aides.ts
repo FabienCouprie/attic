@@ -114,13 +114,26 @@ type HorsFilEffet = {
  * LE PORT SE POSE EN DERNIER, toujours. Les ports sont désignés par leur rang, et les graphes déjà
  * enregistrés pointent dessus : l'insérer ailleurs qu'à la fin rebrancherait chaque arête d'un cran.
  */
-export const portModulation = (parametre: string, parametreEn = parametre) => {
-  // UN SEUL RÉGLAGE MODULABLE : le port s'appelle « Modulation » tout court, puisqu'il n'y a rien
-  // dont le distinguer. Le nommer d'après son réglage ne se justifie qu'à partir du second.
-  const seul = parametre === "Mélange" || parametre === "Mix";
+export const portModulation = (
+  parametre: string,
+  parametreEn = parametre,
+  opts: { court?: boolean } = {},
+) => {
+  // « MODULATION » TOUT COURT N'EST PAS UN NOM LIBRE. C'est celui du port principal d'un
+  // composant, celui qui remplace l'oscillateur ou promène la grandeur même de l'effet, et
+  // plusieurs fiches le portent déjà. Il ne convient au mélange que si la fiche n'a pas d'autre
+  // port de courbe ; dès qu'elle en a un, le port prend le nom de son réglage, comme le vibrato
+  // le fait pour « Modulation profondeur ».
+  //
+  // LE DÉFAUT CI-DESSOUS EST UNE SUPPOSITION, et elle s'est trompée. Déduite du NOM du réglage,
+  // elle ne peut pas voir combien de ports la fiche compte : cinq fiches ont reçu un port
+  // « Modulation » pour leur mélange alors qu'elles en avaient déjà un, dont deux où les deux
+  // ports sortaient homonymes. Une fiche qui a déjà un port de courbe le dit donc par
+  // `court: false`, et le cas d'homonymie de `docs/contrat-reglages.test.ts` arrête l'oubli.
+  const court = opts.court ?? (parametre === "Mélange" || parametre === "Mix");
   return {
-    nom: seul ? "Modulation" : `Modulation ${parametre.toLowerCase()}`,
-    nomEn: seul ? "Modulation" : `Modulation ${parametreEn.toLowerCase()}`,
+    nom: court ? "Modulation" : `Modulation ${parametre.toLowerCase()}`,
+    nomEn: court ? "Modulation" : `Modulation ${parametreEn.toLowerCase()}`,
     type: "courbe" as const, requis: false, module: parametre,
   };
 };
@@ -163,6 +176,21 @@ export const MODULATION_MELANGE: ModulationEffet =
   { parametre: "Mélange", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
 export const MODULATION_MIX: ModulationEffet =
   { parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
+
+/**
+ * Le même mélange, mais sur une fiche qui module déjà autre chose : ses bornes se nomment.
+ *
+ * POURQUOI UNE TROISIÈME CONSTANTE. « Modulation min / max » ne se comprend que s'il n'y a qu'une
+ * modulation. Dès qu'une fiche en a deux, chaque paire de bornes doit dire quel réglage elle
+ * borne, sans quoi l'écran montre « Fréquence min » à côté de « Modulation min » et rien ne dit
+ * que la seconde est celle du mélange. C'est la règle que le catalogue suit déjà partout :
+ * « Fréquence min » sur le phaser, « Fondamentale min » sur les résonateurs, « Temps min » sur
+ * l'écho. Les cinq fiches de cette famille emploient donc celle-ci.
+ */
+export const MODULATION_MIX_NOMMEE: ModulationEffet = {
+  parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%",
+  noms: ["Mix min", "Mix max"], nomsEn: ["Mix min", "Mix max"],
+};
 
 /**
  * Ce qu'il y a à dire du réglage qu'une courbe vient piloter, dans les deux langues.

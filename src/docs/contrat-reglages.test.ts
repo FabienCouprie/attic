@@ -100,6 +100,33 @@ describe("le contrat de réglages", () => {
     expect(fautifs).toEqual([]);
   });
 
+  it("DEUX PORTS D'UNE MÊME FICHE NE PORTENT PAS LE MÊME NOM", () => {
+    // CE QUE L'HOMONYMIE DE PORTS FAIT, ET CE QU'ELLE NE FAIT PAS. Un câble enregistré désigne sa
+    // borne par son RANG, « in:2 », et non par son nom : deux ports homonymes ne cassent donc
+    // aucun patch sauvegardé, et c'est pourquoi rien ne se plaignait. Le dégât est à l'écran.
+    // L'inspecteur annonce un réglage modulable en nommant le port où la courbe doit aller, et la
+    // notice répète ce nom ; avec deux ports du même nom, la phrase ne désigne plus rien, et
+    // l'utilisateur n'a aucun moyen de savoir laquelle des deux bornes il branche.
+    //
+    // LE DÉFAUT QUI A FAIT ÉCRIRE CE CAS. `portModulation` choisissait le nom court « Modulation »
+    // d'après le NOM du réglage piloté, « Mix » ou « Mélange », au motif qu'un réglage seul n'a
+    // rien dont le distinguer. Ce raccourci est faux dès qu'un autre réglage de la même fiche est
+    // déjà piloté : sur le retard spectral, où la dispersion avait son port, celui du mélange est
+    // sorti « Modulation » lui aussi. La forme cherchée ici est donc l'homonymie, et non une liste
+    // de noms à surveiller : un nom ne dit jamais combien ils sont.
+    const fautifs: string[] = [];
+    for (const f of toutesLesFiches) {
+      for (const [cote, ports] of [["entrée", f.entrees], ["sortie", f.sorties]] as const) {
+        const vus = new Map<string, number>();
+        for (const p of ports ?? []) vus.set(p.nom, (vus.get(p.nom) ?? 0) + 1);
+        for (const [nom, n] of vus) {
+          if (n > 1) fautifs.push(`${f.id} : ${cote} « ${nom} » déclarée ${n} fois`);
+        }
+      }
+    }
+    expect(fautifs).toEqual([]);
+  });
+
   it("relève bien assez de réglages pour que l'homonymie ait une chance de s'y voir", () => {
     // Un contrôle qui ne parcourt plus rien passe au vert sans rien tenir.
     const total = toutesLesFiches.reduce((n, f) => n + (f.parametres?.length ?? 0), 0);

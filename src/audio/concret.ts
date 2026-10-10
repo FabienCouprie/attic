@@ -251,7 +251,8 @@ export interface OptionsResonateurs {
   t60: number;
   /** 100 : tous les résonateurs au même niveau ; 0 : le k-ième à 1/k². */
   brillance: number;
-  mix: number;
+  /** Part de son résonné, de 0 à 100. Un tableau la fait varier échantillon par échantillon. */
+  mix: number | Float32Array;
   /** La fondamentale échantillon par échantillon, si une courbe la pilote. */
   fondamentales?: Float32Array | null;
 }
@@ -303,12 +304,18 @@ export function resonateurs(buffer: AudioBuffer, o: OptionsResonateurs): AudioBu
     }
   }
 
+  // LE RECALAGE DE NIVEAU SE FAIT SUR LE SON ENTIER, AVANT LE MÉLANGE : une courbe ne le déplace
+  // donc pas, elle règle ce qui en sort. `valeurA` rend un scalaire tel quel, d'où un seul chemin
+  // de calcul, modulé ou non.
   const niveau = pic(humide) > 0 ? pic(buffer) / pic(humide) : 0;
-  const mix = Math.max(0, Math.min(1, o.mix / 100));
+  const mixA = (i: number) => Math.max(0, Math.min(1, valeurA(o.mix, i) / 100));
   const sortie = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const h = humide.getChannelData(c), s = buffer.getChannelData(c), d = sortie.getChannelData(c);
-    for (let i = 0; i < n; i++) d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    for (let i = 0; i < n; i++) {
+      const mix = mixA(i);
+      d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    }
   }
   return sortie;
 }

@@ -373,11 +373,11 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Partition Csound | `partition-csound` | 240 × 140 |
 | Paulstretch | `paulstretch` | 240 × 140 |
 | PCA neuronale | `pca-neuronale` | 240 × 118 |
-| Peignes accordés | `peignes-accordes` | 240 × 140 |
+| Peignes accordés | `peignes-accordes` | 240 × 162 |
 | Reconstruction de phase (PGHI) | `phase-pghi` | 240 × 118 |
 | Phase Vocoder Tempo | `phase-vocoder-tempo` | 240 × 118 |
 | Phase Vocoder Tonalité | `phase-vocoder-tonalite` | 240 × 118 |
-| Phaser | `phaser` | 240 × 140 |
+| Phaser | `phaser` | 240 × 162 |
 | Pièce de Lucier | `piece-lucier` | 240 × 118 |
 | Tonalité progressive | `pitch-progressif` | 240 × 118 |
 | Pixeltone | `pixeltone` | 240 × 118 |
@@ -410,10 +410,10 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réservoir neuronal | `reservoir-musical` | 240 × 140 |
 | Réservoir textuel | `reservoir-textuel` | 240 × 118 |
 | Resonance Audio | `resonance-audio` | 240 × 118 |
-| Résonateurs | `resonateurs` | 240 × 140 |
+| Résonateurs | `resonateurs` | 240 × 162 |
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
-| Retard spectral | `retard-spectral` | 240 × 140 |
+| Retard spectral | `retard-spectral` | 240 × 162 |
 | Réunir des voix | `reunir-voix` | 240 × 162 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
@@ -504,7 +504,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |
-| Wah-wah | `wahwah` | 240 × 162 |
+| Wah-wah | `wahwah` | 240 × 184 |
 | Wavesets (Wishart) | `wavesets-wishart` | 240 × 118 |
 | Whisper (Anglais) | `whisper-en` | 240 × 118 |
 | ZCR (Meyda) | `zcr-meyda` | 240 × 140 |

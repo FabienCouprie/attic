@@ -30,6 +30,10 @@ import { traiterFdn } from "./fdn";
 import { reverberationHachee } from "./reverbes-etendues";
 import { hautParleurRotatif, tremoloHarmonique } from "./rotatifs";
 import { velourVoie } from "./velours";
+import { phaser, wahwah } from "./effets-balayage";
+import { melangerPeignes } from "./peigne";
+import { resonateurs } from "./concret";
+import { retardSpectral } from "./retard-spectral";
 
 const SR = 44100;
 
@@ -55,6 +59,8 @@ function bruit(n: number, graine = 5): AudioBuffer {
  * peut pas pendre.
  */
 const canal = (b: AudioBuffer, c = 0): Float32Array => Float32Array.from(b.getChannelData(c));
+
+const voieDe = (b: AudioBuffer): Float32Array => canal(b);
 
 const voie = (n: number, graine: number): Float32Array => canal(bruit(n, graine));
 
@@ -342,6 +348,150 @@ describe("le vocoder ouvert à une courbe", () => {
 
   siDispo("et la courbe commande vraiment, ce qu'un port inerte ne ferait pas", async () => {
     expect(ecart(await applique(tenue(0, n)), await applique(tenue(100, n)))).toBeGreaterThan(0.001);
+  });
+});
+
+// LES CINQ QUE LE RECENSEMENT PAR RÉGLAGE A FAIT REPARAÎTRE. Cette famille avait été déclarée
+// close ; elle ne l'était que par composant. Le phaser, le wah-wah, les peignes accordés, les
+// résonateurs et le retard spectral portaient chacun un port de courbe POUR AUTRE CHOSE, ce qui
+// les faisait disparaître du relevé entier, « Mix » compris.
+//
+// LEUR MÉLANGE EST DE LA MÊME FORME QUE LES ONZE PREMIERS : un fondu par échantillon, calculé une
+// fois avant la boucle. Les deux invariants s'y appliquent mot pour mot.
+
+describe("le phaser ouvert à une courbe sur son mélange", () => {
+  const x = bruit(SR / 4, 43);
+  const applique = (mix: number | Float32Array) => canal(phaser(x, 0.5, 80, 4, mix));
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(50), applique(tenue(50, x.length)))).toBe(true);
+  });
+
+  it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, exactement", () => {
+    expect(memes(applique(tenue(0, x.length)), canal(x))).toBe(true);
+  });
+
+  it("une courbe qui monte ne rend NI l'un NI l'autre", () => {
+    const rampe = new Float32Array(x.length);
+    for (let i = 0; i < rampe.length; i++) rampe[i] = (100 * i) / rampe.length;
+    const y = applique(rampe);
+    expect(memes(y, applique(0))).toBe(false);
+    expect(memes(y, applique(100))).toBe(false);
+  });
+});
+
+describe("le wah-wah ouvert à une courbe sur son mélange", () => {
+  const x = bruit(SR / 4, 47);
+  const applique = (mix: number | Float32Array) => canal(wahwah(x, 2, 100, 5, mix));
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(50), applique(tenue(50, x.length)))).toBe(true);
+  });
+
+  it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, exactement", () => {
+    expect(memes(applique(tenue(0, x.length)), canal(x))).toBe(true);
+  });
+
+  it("et la courbe commande vraiment", () => {
+    expect(ecart(applique(tenue(0, x.length)), applique(tenue(100, x.length)))).toBeGreaterThan(0.01);
+  });
+
+  it("une courbe qui monte ne rend NI l'un NI l'autre", () => {
+    // LE SEUL CAS QUI ATTRAPE UNE LECTURE FAITE HORS DE LA BOUCLE, et c'est un défaut planté qui
+    // l'a montré : les trois cas ci-dessus emploient tous une courbe CONSTANTE, qu'une lecture à
+    // l'échantillon zéro rend à l'identique. Le défaut est passé sans être vu, et ce cas a été
+    // écrit pour les quatre blocs qui en manquaient.
+    const rampe = new Float32Array(x.length);
+    for (let i = 0; i < rampe.length; i++) rampe[i] = (100 * i) / rampe.length;
+    const y = applique(rampe);
+    expect(memes(y, applique(0))).toBe(false);
+    expect(memes(y, applique(100))).toBe(false);
+  });
+});
+
+describe("les peignes accordés ouverts à une courbe sur leur mélange", () => {
+  const x = bruit(SR / 4, 53);
+  // LE SON HUMIDE DOIT DIFFÉRER DU SEC, et pas seulement par son niveau : `melangerPeignes` recale
+  // le niveau avant de mélanger, de sorte qu'un humide égal au sec à un facteur près redonne le sec
+  // exactement, et les deux bouts de la course se confondent. Un autre bruit l'évite.
+  const humides = [voie(x.length, 71)];
+  const applique = (mix: number | Float32Array) => canal(melangerPeignes(x, humides, mix));
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(60), applique(tenue(60, x.length)))).toBe(true);
+  });
+
+  it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, exactement", () => {
+    // Le recalage de niveau est calculé avant le mélange : à zéro, il ne touche donc rien.
+    expect(memes(applique(tenue(0, x.length)), canal(x))).toBe(true);
+  });
+
+  it("et la courbe commande vraiment", () => {
+    expect(ecart(applique(tenue(0, x.length)), applique(tenue(100, x.length)))).toBeGreaterThan(0.01);
+  });
+
+  it("une courbe qui monte ne rend NI l'un NI l'autre", () => {
+    const rampe = new Float32Array(x.length);
+    for (let i = 0; i < rampe.length; i++) rampe[i] = (100 * i) / rampe.length;
+    const y = applique(rampe);
+    expect(memes(y, applique(0))).toBe(false);
+    expect(memes(y, applique(100))).toBe(false);
+  });
+});
+
+describe("les résonateurs ouverts à une courbe sur leur mélange", () => {
+  const x = bruit(SR / 8, 59);
+  const o = { fondamentale: 110, rapports: [1, 2, 3], t60: 0.3, brillance: 50 };
+  const applique = (mix: number | Float32Array) => canal(resonateurs(x, { ...o, mix }));
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(60), applique(tenue(60, x.length)))).toBe(true);
+  });
+
+  it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, la queue mise à part", () => {
+    // La sortie est plus longue que l'entrée : les résonateurs continuent après le son.
+    const sec = applique(tenue(0, x.length));
+    expect(memes(sec.subarray(0, x.length), canal(x))).toBe(true);
+    expect(sec.length).toBeGreaterThan(x.length);
+  });
+
+  it("et la courbe commande vraiment", () => {
+    expect(ecart(applique(tenue(0, x.length)), applique(tenue(100, x.length)))).toBeGreaterThan(0.01);
+  });
+
+  it("une courbe qui monte ne rend NI l'un NI l'autre", () => {
+    const rampe = new Float32Array(x.length);
+    for (let i = 0; i < rampe.length; i++) rampe[i] = (100 * i) / rampe.length;
+    const y = applique(rampe);
+    expect(memes(y, applique(0))).toBe(false);
+    expect(memes(y, applique(100))).toBe(false);
+  });
+});
+
+describe("le retard spectral ouvert à une courbe sur son mélange", () => {
+  const x = voieDe(bruit(SR / 8, 61));
+  const o = { sections: 40, dispersion: 0.9, versLeGrave: true };
+  const applique = (melange: number | Float32Array) => retardSpectral(x, { ...o, melange });
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(0.5), applique(tenue(0.5, x.length)))).toBe(true);
+  });
+
+  it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, exactement", () => {
+    expect(memes(applique(tenue(0, x.length)).subarray(0, x.length), x)).toBe(true);
+  });
+
+  it("et la courbe commande vraiment", () => {
+    const sec = applique(tenue(0, x.length)), mouille = applique(tenue(1, x.length));
+    expect(ecart(sec.subarray(0, x.length), mouille.subarray(0, x.length))).toBeGreaterThan(0.01);
+  });
+
+  it("une courbe qui monte ne rend NI l'un NI l'autre", () => {
+    const rampe = new Float32Array(x.length);
+    for (let i = 0; i < rampe.length; i++) rampe[i] = i / rampe.length;
+    const y = applique(rampe);
+    expect(memes(y, applique(0))).toBe(false);
+    expect(memes(y, applique(1))).toBe(false);
   });
 });
 

@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 73, sur 60 composants
-- **réglages restant à faire** : 53, sur 30 composants et 46 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 78, sur 60 composants
+- **réglages restant à faire** : 48, sur 29 composants et 41 couples composant / famille
 - **dont le cœur travaille par trames** : 0
 - **composants écartés** : 54, dont 1 famille de la palette écartée en bloc
 
@@ -69,14 +69,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération à réseau (FDN) `reverbe-reseau` : Queue
 - Réverbération `reverberation` : Decay
 - Réverbération velours `reverberation-velours` : Chute
-
-### melange · 5
-
-- Peignes accordés `peignes-accordes` : Mix
-- Phaser `phaser` : Mix
-- Résonateurs `resonateurs` : Mix
-- Retard spectral `retard-spectral` : Mix
-- Wah-wah `wahwah` : Mix
 
 ### dynamique · 4
 
@@ -199,12 +191,16 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `oscillateur-table-onde` : Volume
 - `paulstretch` : Stretch
 - `peignes-accordes` : Fondamentale
+- `peignes-accordes` : Mix
 - `phaser` : Fréquence
+- `phaser` : Mix
 - `quadrafuzz` : Mix
 - `reponse-filtre` : Fréquence de coupure
 - `reponse-filtre` : Résonance
 - `resonateurs` : Fondamentale
+- `resonateurs` : Mix
 - `retard-spectral` : Dispersion
+- `retard-spectral` : Mix
 - `reverbe-hachee` : Mix
 - `reverbe-reseau` : Mix
 - `reverberation` : Mix
@@ -228,3 +224,4 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `vitesse-variable` : Transposition
 - `vocoder` : Mix
 - `wahwah` : Fréquence
+- `wahwah` : Mix

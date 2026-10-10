@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { MODULATION_MIX_NOMMEE, bornesModulation, portModulation, reglageModule } from "./effets-aides";
 import { estCourbe, valeursParametre, progressionPour } from "../audio/courbe";
 import {
   convoluerDeuxSons, rapportsDeVitesse, rapportsResonateurs, resonateurs, vitesseVariableVoie,
@@ -123,11 +124,14 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // filtres récursifs, état dans deux scalaires par résonateur
     resume: "Un banc de résonateurs accordés, que n'importe quel son fait sonner : un bruit devient un accord, un frottement une cloche.",
     resumeEn: "A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell.",
-    notice: "Ce composant fait passer un son dans un banc de résonateurs accordés. Chaque résonateur ne garde de ce qu'il reçoit que sa propre fréquence, et continue de sonner après qu'on a cessé de l'exciter : le son d'entrée prend l'accord du banc. Un souffle devient un accord tenu, une pluie de clics une harmonie qui scintille, un frottement une cloche. Le principe est celui de l'outil Reson des GRM Tools et des resonators~ de Max.\n\nLe banc ne joue rien de lui-même : c'est le son d'entrée qui le fait sonner, et ce qu'on entend dépend autant de ce son que de l'accord des résonateurs.\n\nLa résonance se règle en secondes, comme on la pense : le temps qu'il faut à un résonateur pour perdre 60 dB après qu'on a cessé de l'exciter. Brève, le son garde son grain et se colore ; longue, il s'efface derrière l'accord qu'il a fait sonner. Une queue de cette durée est ajoutée à la sortie, pour qu'on entende les résonateurs s'éteindre après la fin du son.\n\nLa structure dit où sont les résonateurs au-dessus de la fondamentale : harmonique (1, 2, 3…), impaire (1, 3, 5…, le spectre d'une clarinette ou d'un tuyau fermé), barre (1 ; 2,756 ; 5,404 ; 8,933…, les modes d'une barre libre, inharmoniques, métalliques), ou accord, d'après les intervalles écrits, répétés d'octave en octave.\n\nLa fondamentale se pilote par une courbe : les résonances glissent alors, et le son d'entrée les suit. Le niveau de sortie est ramené à celui de l'entrée.",
-    noticeEn: "This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~.\n\nThe bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned.\n\nResonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends.\n\nThe structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave.\n\nThe fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.",
+    notice: "Ce composant fait passer un son dans un banc de résonateurs accordés. Chaque résonateur ne garde de ce qu'il reçoit que sa propre fréquence, et continue de sonner après qu'on a cessé de l'exciter : le son d'entrée prend l'accord du banc. Un souffle devient un accord tenu, une pluie de clics une harmonie qui scintille, un frottement une cloche. Le principe est celui de l'outil Reson des GRM Tools et des resonators~ de Max.\n\nLe banc ne joue rien de lui-même : c'est le son d'entrée qui le fait sonner, et ce qu'on entend dépend autant de ce son que de l'accord des résonateurs.\n\nLa résonance se règle en secondes, comme on la pense : le temps qu'il faut à un résonateur pour perdre 60 dB après qu'on a cessé de l'exciter. Brève, le son garde son grain et se colore ; longue, il s'efface derrière l'accord qu'il a fait sonner. Une queue de cette durée est ajoutée à la sortie, pour qu'on entende les résonateurs s'éteindre après la fin du son.\n\nLa structure dit où sont les résonateurs au-dessus de la fondamentale : harmonique (1, 2, 3…), impaire (1, 3, 5…, le spectre d'une clarinette ou d'un tuyau fermé), barre (1 ; 2,756 ; 5,404 ; 8,933…, les modes d'une barre libre, inharmoniques, métalliques), ou accord, d'après les intervalles écrits, répétés d'octave en octave.\n\nLa fondamentale se pilote par une courbe : les résonances glissent alors, et le son d'entrée les suit. Le niveau de sortie est ramené à celui de l'entrée.\n\nLe mélange suit une courbe lui aussi : branchée sur l'entrée Modulation mix, elle prend la place du réglage Mix, et les bornes Mix min et Mix max disent ce que valent son zéro et son un.",
+    noticeEn: "This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~.\n\nThe bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned.\n\nResonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends.\n\nThe structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave.\n\nThe fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.\n\nThe mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
       { nom: "Modulation fondamentale", nomEn: "Fundamental modulation", type: "courbe", requis: false, module: "Fondamentale" },
+      // SOUS UN NOM À ELLE : la fiche a déjà « Modulation fondamentale », et « Modulation » tout
+      // court se lirait comme la modulation principale alors qu'elle ne dose que le mélange.
+      portModulation("Mix", "Mix", { court: false }),
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     parametres: [
@@ -156,6 +160,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Fundamental that a connected curve's zero means. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 4000], pas: 1, defaut: 440, unite: "Hz",
         doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
+      ...bornesModulation(MODULATION_MIX_NOMMEE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -177,7 +182,8 @@ export const fiches: FicheAudio[] = ([
       );
       const y = resonateurs(a, {
         fondamentale, rapports, t60, fondamentales,
-        brillance: ctx.paramNombre("Brillance", 50), mix: ctx.paramNombre("Mix", 100),
+        brillance: ctx.paramNombre("Brillance", 50),
+        mix: reglageModule(ctx, a.length, 2, { reglage: "Mix", rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
       });
       const audibles = rapports.filter((r) => fondamentale * r < a.sampleRate * 0.49).length;
       return { valeurs: [y], message: en()
