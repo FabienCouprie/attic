@@ -11,22 +11,15 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **acceptent déjà une courbe** : 64
-- **restent à faire** : 5 composants, 7 couples composant / famille
+- **acceptent déjà une courbe** : 66
+- **restent à faire** : 2 composants, 3 couples composant / famille
 - **dont le cœur travaille par trames** : 2
-- **écartés** : 45, dont 1 famille de la palette écartée en bloc
+- **écartés** : 46, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### espace · 3
+### hauteur · 2
 
-- Brassage `brassage` : Dispersion
-- Ubiquité `ubiquite` : Dispersion
-- Vague `vague` : Profondeur, Ouverture
-
-### hauteur · 3
-
-- Brassage `brassage` : Transposition
 - Parole vers séquence `parole-vers-sequence` : Transposition · **⟨trames⟩** suivreVoie (appelle suivreHauteur)
 - Sinusoïdes + bruit (SMS) `sms-sinusoides-bruit` : Transposition · **⟨trames⟩** traiterVoie (appelle analyserSms)
 
@@ -63,6 +56,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `echo-inverse` : le cœur somme des copies décalées du son entier, et « Temps » comme « Feedback » fixent les décalages et la longueur de sortie avant qu'un échantillon soit écrit
 - `enveloppe-adsr` : ses durées sont les cinq points d'ancrage d'une enveloppe en un coup, calculés avant qu'elle soit tracée ; et son « Maintien » est un niveau, non une durée
 - `haas` : déplacer la position de lecture transposerait le canal retardé, alors que l'effet tient à ce que l'oreille fusionne un décalage FIXE
+- `brassage` : ses deux réglages sont lus une fois par segment, à la cadence de « Densité » : 40 par seconde au défaut, soit par paliers de 25 ms
 - `stn-sinus-transitoires-bruit` : traitement par trames : une valeur par bloc, non par échantillon
 - `dereverberation` : traitement par trames : la réduction est lue une fois par bloc de FFT, non par échantillon
 - `shift-formants` : traitement par trames : l'enveloppe est estimée par bloc, non par échantillon
@@ -141,6 +135,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - `transient-shaper` : Attaque
 - `tremolo` : Profondeur
 - `tremolo-harmonique` : Mélange
+- `ubiquite` : Dispersion
+- `vague` : Profondeur
 - `vibrato` : (non déclarée)
 - `visualiseur-courbe` : (non déclarée)
 - `vitesse-variable` : Transposition

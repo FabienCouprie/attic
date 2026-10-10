@@ -493,8 +493,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | MMS-TTS Multilingue | `tts-mms` | 240 × 118 |
 | Piper TTS | `tts-piper` | 240 × 118 |
 | SpeechT5 TTS | `tts-speecht5` | 240 × 118 |
-| Ubiquité | `ubiquite` | 240 × 118 |
-| Vague | `vague` | 240 × 118 |
+| Ubiquité | `ubiquite` | 240 × 140 |
+| Vague | `vague` | 240 × 162 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |

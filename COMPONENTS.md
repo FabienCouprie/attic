@@ -6177,16 +6177,19 @@ This node adds the faults of a record player to a sound. After Jean-François Au
 
 *A source that can no longer be located, or located better than life.*
 
-This node disperses or tightens where a sound comes from. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whoname ubiquity the effect by which a source becomes impossible to locate, and hyperlocalization its opposite. The ear locates a sound by three cues: the time difference between the two ears, the level difference, and the coherence of the two signals. It is the third that this node moves. Two ears receiving the same wave conclude there is a source; two ears receiving unrelated waves conclude nothing, and the sound spreads out. Dispersion works on phase. Cascaded all-pass sections turn the phase of each channel without touching its spectrum, and the two sides receive opposite turns. The mono fold-down therefore keeps its shape: it loses the three decibels any decorrelation costs, and nothing more. « Dispersion » runs from hyperlocalization to ubiquity. Negative, the two channels slide towards what they have in common until only that is left. At zero the sound comes out as it went in. Positive, the phase scrambles. « Stages » is the number of cascaded all-pass sections. « Seed » fixes the draw of their coefficients. The « Audio » output returns two channels. The message gives the correlation of the two channels before and after.
+This node disperses or tightens where a sound comes from. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whoname ubiquity the effect by which a source becomes impossible to locate, and hyperlocalization its opposite. The ear locates a sound by three cues: the time difference between the two ears, the level difference, and the coherence of the two signals. It is the third that this node moves. Two ears receiving the same wave conclude there is a source; two ears receiving unrelated waves conclude nothing, and the sound spreads out. Dispersion works on phase. Cascaded all-pass sections turn the phase of each channel without touching its spectrum, and the two sides receive opposite turns. The mono fold-down therefore keeps its shape: it loses the three decibels any decorrelation costs, and nothing more. « Dispersion » runs from hyperlocalization to ubiquity. A curve connected to the « Modulation » input takes its place, and it may cross zero: the sound then moves from one side to the other sample by sample, tightened here and dispersed there. Negative, the two channels slide towards what they have in common until only that is left. At zero the sound comes out as it went in. Positive, the phase scrambles. « Stages » is the number of cascaded all-pass sections. « Seed » fixes the draw of their coefficients. The « Audio » output returns two channels. The message gives the correlation of the two channels before and after.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation dispersion | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Dispersion | slider | 80 % | -100 – 100 %, step 1 | From hyperlocalization when negative to ubiquity when positive. At zero the sound comes out as it went in. |
+| Dispersion | slider | 80 % | -100 – 100 %, step 1 | From hyperlocalization when negative to ubiquity when positive. At zero the sound comes out as it went in. A curve may cross zero: the computation then moves from one side to the other sample by sample. |
+| Modulation min | slider | -100 % | -100 – 100 %, step 1 | Value of « Dispersion » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Modulation max | slider | 100 % | -100 – 100 %, step 1 | Value of « Dispersion » that the curve's one means. |
 | Stages | slider | 6 | 1 – 16, step 1 | The number of cascaded all-pass sections. The more there are, the more finely the phase scrambles. |
 | Seed | slider | 3 | 0 – 999999, step 1 | The draw of the coefficients. Changing it gives another dispersion of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
@@ -6196,11 +6199,13 @@ This node disperses or tightens where a sound comes from. After Jean-François A
 
 *Cycles of crescendo, crest and undertow, several seconds apart.*
 
-This node carries a sound through cycles of intensity shaped like a wave. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodescribe it as a crescendo, a maximum point, a fast or gradual break, and a decrescendo, the cycles following one another several seconds apart, regularly or not. The cycle is asymmetric, and that is what makes it recognizable: the wave takes a long time to build and breaks quickly. The repertoire makes it a composite effect, of phase and filtering; the timbre therefore follows the intensity, and the sound brightens as it rises. « Period » is the length of one cycle. « Variation » makes the cycles uneven, from zero for a regular swell to a hundred for a disordered sea. « Rise » is the share of the cycle spent rising. Above one half, the wave breaks. « Break » chooses how it breaks. « Breaker » falls leaving a ridge at the crest; « Gradual » withdraws without one. « Depth » is the share of the level the trough takes away. « Opening » is the share of the timbre that follows the intensity. « Seed » fixes the draw of the variation. The « Audio » output returns the treated sound. The message gives the number of cycles and the mean length of one.
+This node carries a sound through cycles of intensity shaped like a wave. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005, whodescribe it as a crescendo, a maximum point, a fast or gradual break, and a decrescendo, the cycles following one another several seconds apart, regularly or not. The cycle is asymmetric, and that is what makes it recognizable: the wave takes a long time to build and breaks quickly. The repertoire makes it a composite effect, of phase and filtering; the timbre therefore follows the intensity, and the sound brightens as it rises. « Period » is the length of one cycle. « Variation » makes the cycles uneven, from zero for a regular swell to a hundred for a disordered sea. « Rise » is the share of the cycle spent rising. Above one half, the wave breaks. « Break » chooses how it breaks. « Breaker » falls leaving a ridge at the crest; « Gradual » withdraws without one. « Depth » is the share of the level the trough takes away. Two inputs, « Modulation depth » and « Modulation opening », take the place of those two settings, each with its two bounds. « Opening » is the share of the timbre that follows the intensity. « Seed » fixes the draw of the variation. The « Audio » output returns the treated sound. The message gives the number of cycles and the mean length of one.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation depth | curve |  |
+| input | Modulation opening | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6212,6 +6217,10 @@ This node carries a sound through cycles of intensity shaped like a wave. After 
 | Depth | slider | 90 % | 0 – 100 %, step 1 | The share of the level the trough takes away. |
 | Opening | slider | 60 % | 0 – 100 %, step 1 | The share of the timbre that follows the intensity. At zero, only the level moves. |
 | Seed | slider | 5 | 0 – 999999, step 1 | The draw of the variation. With no variation, this setting does nothing. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Opening min | slider | 0 % | 0 – 100 %, step 1 | Value of « Opening » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Opening max | slider | 100 % | 0 – 100 %, step 1 | Value of « Opening » that the curve's one means. |
 
 ### Pitch
 
