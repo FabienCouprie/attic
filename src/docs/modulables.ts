@@ -76,6 +76,24 @@ export const ECARTES: Record<string, string> = {
   // à 400 par seconde, 40 par défaut, soit des paliers de 25 ms. Écarté sur décision de Fabien, au
   // relevé de la famille « espace ».
   "brassage": "ses deux réglages sont lus une fois par segment, à la cadence de « Densité » : 40 par seconde au défaut, soit par paliers de 25 ms",
+  // LES DEUX DERNIERS, écartés sur décision de Fabien au relevé de la famille « hauteur », et pour
+  // deux raisons qui n'ont rien à voir l'une avec l'autre.
+  //
+  // LA PAROLE REND DES NOTES, et sa transposition s'applique une fois par MOT, sur un numéro de
+  // note MIDI arrondi à l'entier. Quelques valeurs par seconde, et la grandeur n'a de sens qu'au
+  // moment où une note se pose.
+  //
+  // LE SMS CHANGE DE SYNTHÈSE EN ZÉRO, ce qui est le fait décisif et il est mesuré. À transposition
+  // nulle, les partiels sont DÉCOUPÉS dans le son d'origine, exacts, phase comprise ; dès qu'elle
+  // n'est pas nulle, ils sont REFABRIQUÉS par addition d'oscillateurs puis recalés en énergie.
+  // Relevé sur un son harmonique d'une seconde : à 0,001 demi-ton, soit un facteur de 1,00006
+  // parfaitement inaudible, le déterministe garde la même valeur efficace, 0,4030, et s'écarte de
+  // celui à zéro de 0,4559 — cent treize pour cent de cette efficace. Même énergie, phase
+  // entièrement perdue. Une courbe qui franchirait zéro ne ferait pas varier une transposition,
+  // elle basculerait entre deux rendus sans rapport. Son « Seuil » est par ailleurs le seuil
+  // d'ANALYSE : il décide quels partiels sont suivis, par trames.
+  "parole-vers-sequence": "sa transposition s'applique une fois par MOT, sur un numéro de note MIDI arrondi : quelques valeurs par seconde, et elle n'a de sens qu'au moment où une note se pose",
+  "sms-sinusoides-bruit": "une transposition nulle DÉCOUPE les partiels dans le son, une transposition non nulle les REFABRIQUE par addition : à 0,001 demi-ton, le rendu s'écarte déjà de celui à zéro de 113 % de sa valeur efficace, et son « Seuil » décide quels partiels sont suivis, par trames",
   // Le recensement lit les noms des réglages, non les cœurs : ces quatre-là portaient un réglage
   // d'une famille modulable, et leur cœur travaille par trames comme les sept ci-dessus.
   "stn-sinus-transitoires-bruit": "traitement par trames : une valeur par bloc, non par échantillon",
@@ -213,6 +231,20 @@ export function recensementEnTexte(
     "nombre d'itérations, graine, n'entre pas ici. Les composants écartés le sont nommément, avec leur",
     "raison, et la liste décroît d'elle-même à mesure que les entrées Modulation sont posées.",
     "",
+    ...(composants.size === 0
+      ? [
+        "**La liste est vide : tout composant que ce relevé sait voir est traité**, ouvert à une",
+        "courbe ou écarté avec sa raison. Un composant neuf qui porterait un réglage de l'une de ces",
+        "familles reparaîtrait ici de lui-même, et c'est à cela que ce document sert désormais.",
+        "",
+        "CE QUE CE COMPTE NE DIT PAS. Il se lit PAR COMPOSANT, non par réglage : un composant quitte",
+        "la liste dès qu'il porte UN seul port de courbe, et ses autres réglages cessent alors d'y",
+        "paraître. Relevé au moment où la liste s'est vidée : **trente et un composants gardent ainsi",
+        "cinquante-cinq réglages** de famille modulable qui ne sont pas ouverts. Les faire paraître demande un",
+        "recensement par réglage, qui rallongerait cette liste au lieu de la raccourcir.",
+        "",
+      ]
+      : []),
     "Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une courbe n'y serait lue",
     "qu'une fois par trame, non par échantillon. La marque est relevée sur la source par",
     "`coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.",
@@ -222,8 +254,9 @@ export function recensementEnTexte(
     `- **dont le cœur travaille par trames** : ${[...composants].filter((id) => parTrames.has(id)).length}`,
     `- **écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
     "",
-    "## Ce qui reste, par famille",
-    "",
+    ...(composants.size === 0
+      ? ["## Ce qui reste, par famille", "", "Rien.", ""]
+      : ["## Ce qui reste, par famille", ""]),
   ];
   const marque = (id: string): string => {
     const v = parTrames.get(id);
