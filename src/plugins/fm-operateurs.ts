@@ -109,7 +109,9 @@ export const fiches: FicheAudio[] = ([
 
       const algo = algorithmeDe(algorithme);
       return {
-        valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80) / 100)],
+        // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent
+        // fois trop bas, soit quarante décibels.
+        valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],
         message: traduire("msg.fm.resultat", langueCourante() === "en" ? algo.en : algo.fr,
           algo.porteuses.length, Math.round(frequence)),
       };

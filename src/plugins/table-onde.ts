@@ -91,7 +91,9 @@ export const fiches: FicheAudio[] = ([
       }, FREQUENCE_ECH);
 
       return {
-        valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80) / 100)],
+        // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent
+        // fois trop bas, soit quarante décibels.
+        valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],
         message: depuis > 0
           ? traduire("msg.table-onde.duSon", cases, Math.round(depuis), Math.round(frequence))
           : traduire("msg.table-onde.engendree", cases, Math.round(frequence)),

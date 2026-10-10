@@ -135,7 +135,9 @@ export const fiches: FicheAudio[] = ([
         distorsion: ctx.paramNombre("Distorsion", 50) / 100,
       }, FREQUENCE_ECH, SUR_ECHANTILLONNAGE);
 
-      const buffer = versBuffer(resultat.signal, ctx.paramNombre("Volume", 80) / 100);
+      // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent
+      // fois trop bas, soit quarante décibels.
+      const buffer = versBuffer(resultat.signal, ctx.paramNombre("Volume", 80));
       return {
         valeurs: [buffer],
         message: traduire("msg.vco.resultat", libelleForme(forme), Math.round(frequence),
