@@ -13,6 +13,7 @@ import { echantillonnerPourApercu, estCourbe } from "../audio/courbe";
 import { ecartNiveau } from "../audio/ecart-niveau";
 import { decrire } from "../audio/metadonnees";
 import { apercuUtileAudio } from "../audio/memoire-audio";
+import { departDe, heriterDepart } from "../audio/depart-bwf";
 import { heriterDisposition } from "../audio/multicanal";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 import type { ServicesApercu } from "../ui/services-apercu";
@@ -40,11 +41,19 @@ export const APERCU_AUDIO: ServicesApercu = {
     const ecrit = tamponPourApercu(valeur);
     // LES MÉTADONNÉES NE SONT CALCULÉES QUE SI LE NŒUD LIVRE SON APERÇU : leur identifiant parcourt
     // le son entier, et un aperçu intermédiaire n'est jamais livré.
-    const ixml = o.nomPourMetadonnees !== undefined
-      ? decrire(ecrit, { noeud: o.nomPourMetadonnees }, o.bits).ixml
+    const description = o.nomPourMetadonnees !== undefined
+      ? decrire(ecrit, { noeud: o.nomPourMetadonnees }, o.bits)
       : undefined;
+    // L'HEURE SE LIT SUR LE TAMPON D'ORIGINE, ET NON SUR CELUI DE L'APERÇU : un multicanal replié
+    // en stéréo est un tampon neuf, qui ne porte plus rien. `TimeReference` compte des échantillons
+    // à la fréquence du fichier écrit, d'où la multiplication ici et non à la pose.
+    const depart = departDe(valeur);
+    const bext = description && {
+      ...description.bext,
+      referenceTemps: depart !== undefined ? Math.round(depart * ecrit.sampleRate) : 0,
+    };
     return bufferVersWavBlobRespirant(
-      ecrit, o.grapheAEmbarquer, o.securiser, { bits: o.bits, ixml }, o.souffle);
+      ecrit, o.grapheAEmbarquer, o.securiser, { bits: o.bits, ixml: description?.ixml, bext }, o.souffle);
   },
 
   // UN APERÇU DE LA COURBE, ET NON LA COURBE. Une courbe de quatre minutes porte quarante-huit mille
@@ -75,5 +84,10 @@ export const APERCU_AUDIO: ServicesApercu = {
   // de canaux qu'une entrée étiquetée hérite.
   heriterDesEntrees: (sorties, entrees) => {
     heriterDisposition([...sorties], [...entrees]);
+    // L'HEURE D'ENREGISTREMENT VOYAGE DE MÊME, mais sous une règle plus stricte : une disposition
+    // suit le nombre de canaux, une heure suit le TEMPS. Un composant qui rogne, étire ou rallonge
+    // déplace le premier échantillon, et transmettre l'heure d'avant la rendrait fausse sans que
+    // rien ne le dise. Voir `audio/depart-bwf.ts` : dans le doute, l'heure est perdue.
+    heriterDepart([...sorties], [...entrees]);
   },
 };

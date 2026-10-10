@@ -17,8 +17,10 @@ import { toutesLesFiches } from "../plugins";
 
 /** Ce qui n'existe qu'en capitales : des noms, pas des insistances. */
 const SIGLES = new Set([
-  // Formats et fichiers
-  "MIDI", "SF2", "SFZ", "WAV", "MP3", "OGG", "FLAC", "AAC", "M4A", "WMA", "PNG", "JPG", "SVG",
+  // Formats et fichiers. BWF — « Broadcast Wave Format », EBU Tech 3285 — est un WAV qui porte en
+  // plus un bloc `bext` disant qui a enregistré, quand, et à quelle heure de la journée commence
+  // le premier échantillon. Il se cite par son sigle comme les autres formats.
+  "MIDI", "SF2", "SFZ", "WAV", "BWF", "MP3", "OGG", "FLAC", "AAC", "M4A", "WMA", "PNG", "JPG", "SVG",
   // Conteneurs vidéo : ceux qu'on lit, et ceux qu'on ne lit pas et qu'il faut pouvoir nommer.
   "MOV", "MKV", "M4V", "WMV", "AVI", "ASF",
   "PDF", "JSON", "CSV", "TXT", "XML", "YAML", "HTML", "CSS", "ZIP", "GIF", "WEBP", "ASCII", "UTF",

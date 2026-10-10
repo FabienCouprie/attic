@@ -1,6 +1,7 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
 import { creerQuantificateur } from "./dither";
 import { dispositionDe } from "./multicanal";
+import { blocBext, type ChampsBext } from "./bext";
 import { blocIxml, etiquetteId3 } from "./metadonnees";
 import { Mp3Encoder } from "./lame";
 import { frequenceDuFichier } from "./frequence-source";
@@ -77,6 +78,15 @@ export interface OptionsWav {
   graine?: number;
   /** Un document iXML à écrire dans le fichier, en bloc « iXML » après les données. */
   ixml?: string;
+  /**
+   * De quoi écrire un bloc `bext`, qui fait du fichier un BWF.
+   *
+   * IL SE PLACE AVANT LES DONNÉES, et c'est la raison pour laquelle l'en-tête se compose plutôt
+   * qu'il ne s'écrit à offsets fixes. iXML vit après `data`, où les outils vont le chercher ; le
+   * `bext`, lui, est attendu en tête, et un outil qui ne lit que le début du fichier ne le
+   * trouverait pas derrière des minutes de son.
+   */
+  bext?: ChampsBext;
 }
 
 /**
@@ -180,7 +190,8 @@ function preparerWav(
   const masque = dispositionDe(buffer)?.masque ?? 0;
   const tailleFmt = etendu ? 40 : flottant ? 18 : 16;
   const tailleFact = flottant ? 12 : 0;
-  const tailleEntete = 12 + 8 + tailleFmt + tailleFact + 8;
+  const bext = options.bext ? blocBext(options.bext) : new Uint8Array(0);
+  const tailleEntete = 12 + 8 + tailleFmt + bext.length + tailleFact + 8;
   // L'OCTET DE BOURRAGE APRÈS DES DONNÉES DE TAILLE IMPAIRE, que RIFF exige et qui manquait. Un
   // 24 bits mono de longueur impaire a des données de taille impaire ; le bloc suivant — le graphe
   // embarqué, désormais aussi l'iXML — était écrit juste derrière, décalé d'un octet, et tout lecteur
@@ -218,6 +229,12 @@ function preparerWav(
     vue.setUint16(tete + 24, 0, true); // cbSize : aucune extension
   }
   tete += 8 + tailleFmt;
+  // LE `bext` VIENT ICI, juste après le format et avant les données : c'est là que les outils de
+  // montage et de conformation le cherchent.
+  if (bext.length) {
+    new Uint8Array(arrayBuffer, tete, bext.length).set(bext);
+    tete += bext.length;
+  }
   if (flottant) {
     ecrireChaine(tete, "fact");
     vue.setUint32(tete + 4, 4, true);
