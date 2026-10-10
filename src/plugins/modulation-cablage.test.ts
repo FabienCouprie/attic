@@ -130,6 +130,15 @@ const memes = (a: Float32Array[], b: Float32Array[]): boolean => {
 const CAS: {
   id: string; reglage: string; entrees: () => unknown[];
   noms?: [string, string]; siOffline?: boolean;
+  /**
+   * Les réglages à poser pour que l'effet FASSE quelque chose, en plus de celui qu'on éprouve.
+   *
+   * UN CAS QUI NE CHANGE RIEN PASSE QUOI QU'ON FASSE, et c'est ainsi que le premier cas du de-esser
+   * est né vide : à son seuil par défaut, rien du signal d'essai ne dépasse, aucune atténuation
+   * n'a lieu, et la sortie est l'entrée quelle que soit la largeur de bande. Le défaut planté ne
+   * le faisait pas tomber. Ouvrir le seuil rend le cas sensible à ce qu'il prétend éprouver.
+   */
+  reglages?: Record<string, number>;
   /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
   rang?: number;
 }[] = [
@@ -201,11 +210,22 @@ const CAS: {
     noms: ["Largeur min", "Largeur max"] },
   { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
     noms: ["Position min", "Position max"] },
+  // LES TROIS PREMIÈRES SECONDES MODULATIONS BÂTIES PAR `effet()`. Ce socle n'en portait qu'une ;
+  // ces trois cas sont le premier emploi de la seconde, et ils tiennent le rang qu'elle occupe.
+  { id: "flanger", reglage: "Profondeur", entrees: () => [son(107, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "chorus", reglage: "Profondeur", entrees: () => [son(109, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "de-esser", reglage: "Largeur", entrees: () => [son(113, 2), undefined],
+    noms: ["Largeur min", "Largeur max"], siOffline: true,
+    // Seuil grand ouvert : sans cela, rien du signal d'essai ne dépasse et la largeur de bande ne
+    // change rien, de sorte que le cas passerait sans rien éprouver.
+    reglages: { Seuil: -60, Ratio: 10 } },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien vingt-sept ports à éprouver", () => {
-    expect(CAS).toHaveLength(27);
+  it("il y a bien trente ports à éprouver", () => {
+    expect(CAS).toHaveLength(30);
   });
 
   for (const cas of CAS) {
@@ -237,8 +257,9 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
       const rang = rangDe(fiche(cas.id));
       const plate = constante(1, 64);
 
-      const fixe = await rendre(cas.id, entrees, { [cas.reglage]: REGLE });
+      const fixe = await rendre(cas.id, entrees, { ...cas.reglages, [cas.reglage]: REGLE });
       const modulee = await rendre(cas.id, [...entrees.slice(0, rang), plate], {
+        ...cas.reglages,
         // LE LEURRE EST LE CŒUR DU CAS : si le port n'est pas lu, c'est lui qui s'applique.
         [cas.reglage]: LEURRE,
         [nomMin]: 0,

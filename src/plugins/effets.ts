@@ -64,12 +64,19 @@ export const fiches: FicheAudio[] = ([
     [param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.5, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 3, "Depth", "ms", "Amplitude du balayage.", "Modulation depth in ms.")],
     (a,mix,v,p) => appliquerFlanger(a, v, p, mix),
     undefined,
-    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
+    [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
+     // LA PROFONDEUR EST EN MILLISECONDES, et sa course ne va pas jusqu'au bout de la ligne à
+     // retard : celle-ci tient 20 ms et le retard de base en occupe 2. Dix suffisent largement au
+     // balayage caractéristique, et laissent la marge qui évite de buter en fond de ligne.
+     { parametre: "Profondeur", bornes: [0, 10], unite: "ms" }]),
   effet("chorus", "Chorus", "Chorus", "Doublement stéréo modulé.", "Modulated stereo doubling.",
     [param("Mix", 40, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.8, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 5, "Depth", "ms", "Amplitude du détimbrage.", "Detuning depth in ms.")],
     (a,mix,v,p) => appliquerChorus(a, v, p, mix),
     undefined,
-    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
+    [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
+     // La ligne à retard tient 50 ms et le retard de base en occupe 25 : vingt restent au
+     // détimbrage sans buter en fond de ligne.
+     { parametre: "Profondeur", bornes: [0, 20], unite: "ms" }]),
   effet("compresseur", "Compresseur", "Compressor", "Compresseur feed-forward.", "Feed-forward compressor.",
     [param("Seuil", -20, "Threshold", "dB", "Niveau au-dessus duquel la compression s'active.", "Level above which compression engages.", [-60, 0], 1), param("Ratio", 4, "Ratio", "∶1", "Taux de compression.", "Compression ratio.", [1, 20], 0.5), param("Attaque", 5, "Attack", "ms", "Temps de réaction du compresseur.", "Compressor attack time.", [0, 200], 1), param("Relâchement", 100, "Release", "ms", "Temps de retour au gain normal.", "Compressor release time.", [5, 1000], 5), param("Gain", 0, "Gain", "dB", "Gain de sortie (make-up gain).", "Output makeup gain.", [-12, 24], 1)],
     (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain)),
@@ -170,7 +177,8 @@ export const fiches: FicheAudio[] = ([
      param("Relâchement", 50, "Release", "ms", "Temps de retour au gain normal.", "Recovery time to normal gain.", [5, 500], 1)],
     (a,freq,largeur,seuil,ratio,att,rel) => deEsser(a, freq, largeur, seuil, ratio, att, rel),
     undefined,
-    { parametre: "Seuil", bornes: [-60, 0], unite: "dB" }),
+    [{ parametre: "Seuil", bornes: [-60, 0], unite: "dB" },
+     { parametre: "Largeur", bornes: [200, 6000], unite: "Hz" }]),
   effet("ring-modulator", "Ring modulator", "Ring Modulator", "Modulation en anneau (multiplication par porteuse).", "Ring modulation (carrier multiplication).",
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],

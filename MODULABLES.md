@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 83, sur 60 composants
-- **réglages restant à faire** : 107, sur 44 composants et 65 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 86, sur 60 composants
+- **réglages restant à faire** : 104, sur 42 composants et 62 couples composant / famille
 - **dont le cœur travaille par trames** : 5
 - **réglages écartés un par un** : 4, sur 4 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -77,14 +77,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Restauration d'écrêtage `restauration-ecretage` : Seuil manuel · **⟨trames⟩** declipper (boucle de trames)
 - Réverbération hachée `reverbe-hachee` : Seuil
 
-### espace · 11
+### espace · 8
 
 - Rotation ambisonique `ambisonique` : Ouverture
 - Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
 - Étaler sur le clavier `banque-clavier` : Largeur de zone · **⟨trames⟩** preparerBanque (appelle separerStn), suivreHauteur (nTrames), zoneDuLot (appelle changerTonaliteVoie)
-- Chorus `chorus` : Profondeur
-- De-esser `de-esser` : Largeur
-- Flanger `flanger` : Profondeur
 - Granular freeze `granular-freeze` : Position
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Fin d'instrument `instrument-fin` : Largeur de zone
@@ -194,9 +191,11 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `chopper` : Fréquence
 - `chopper` : Profondeur
 - `chorus` : Mix
+- `chorus` : Profondeur
 - `convolution-deux-sons` : Mix
 - `creneau` : Niveau
 - `crible-harmonique` : Fondamentale
+- `de-esser` : Largeur
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
 - `delay-stereo` : Mix
@@ -209,6 +208,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `etirement-spectre` : Étirement
 - `exciter` : Mix
 - `flanger` : Mix
+- `flanger` : Profondeur
 - `formule-echantillons` : Volume
 - `gate-expandeur` : Attaque
 - `gate-expandeur` : Relâchement

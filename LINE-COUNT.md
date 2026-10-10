@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 231912 lines, of which 158709 are code.**
+**1317 files, 231974 lines, of which 158733 are code.**
 The table lists the 182 files of 200 code lines or more, heaviest first;
-the remaining 1135 account for 155612 lines.
+the remaining 1135 account for 155640 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -138,11 +138,11 @@ the remaining 1135 account for 155612 lines.
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
+| src/plugins/effets.ts | 244 | 303 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
-| src/plugins/effets.ts | 241 | 295 |  |
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
@@ -162,6 +162,7 @@ the remaining 1135 account for 155612 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
+| src/plugins/effets-aides.ts | 222 | 482 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
@@ -178,7 +179,6 @@ the remaining 1135 account for 155612 lines.
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
-| src/plugins/effets-aides.ts | 211 | 456 |  |
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |

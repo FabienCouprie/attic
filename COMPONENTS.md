@@ -3109,12 +3109,13 @@ Rhythmic gate that chops the sound periodically, stutter/DJ effect. Settings: �
 
 *Modulated stereo doubling.*
 
-Layers slightly detuned, modulated copies of the signal to thicken and widen it in stereo.
+Layers slightly detuned, modulated copies of the signal to thicken and widen it in stereo. A curve connected to the « Modulation » input takes the place of « Mix », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation depth » input likewise takes the place of « Depth », with « Depth min » and « Depth max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3124,6 +3125,8 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Depth | number | 5 ms |  | Detuning depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 ms | 0 – 20 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 20 ms | 0 – 20 ms, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Distortion
 
@@ -3170,12 +3173,13 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 
 *Variable delay modulation.*
 
-Modulates a short variable delay to produce the characteristic jet-plane sweep.
+Modulates a short variable delay to produce the characteristic jet-plane sweep. A curve connected to the « Modulation » input takes the place of « Mix », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation depth » input likewise takes the place of « Depth », with « Depth min » and « Depth max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3185,6 +3189,8 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Depth | number | 3 ms |  | Modulation depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 ms | 0 – 10 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 10 ms | 0 – 10 ms, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Formant Shift
 
@@ -4632,12 +4638,13 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 
 *Dynamic sibilance compression.*
 
-Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition.
+Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation width | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4650,6 +4657,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
 | Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Width min | slider | 200 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Width max | slider | 6000 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that the curve's one means. |
 
 #### Ducking
 

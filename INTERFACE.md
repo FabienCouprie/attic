@@ -192,7 +192,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Changement de tempo | `changement-tempo` | 240 × 118 |
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
 | Chopper | `chopper` | 240 × 162 |
-| Chorus | `chorus` | 240 × 140 |
+| Chorus | `chorus` | 240 × 162 |
 | Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
@@ -220,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
-| De-esser | `de-esser` | 240 × 140 |
+| De-esser | `de-esser` | 240 × 162 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
 | Décalage des bandes | `decalage-bandes` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
@@ -270,7 +270,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
 | Filtre de séquence | `filtre-sequence` | 240 × 162 |
-| Flanger | `flanger` | 240 × 140 |
+| Flanger | `flanger` | 240 × 162 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | Flou du spectrogramme | `flou-spectrogramme` | 240 × 118 |
 | FM à six opérateurs | `fm-six-operateurs` | 240 × 118 |
