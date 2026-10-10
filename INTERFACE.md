@@ -211,7 +211,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
 | Couper aux mots | `couper-aux-mots` | 240 × 162 |
 | Courbe de dissonance | `courbe-dissonance` | 240 × 140 |
-| Créneau | `creneau` | 240 × 140 |
+| Créneau | `creneau` | 240 × 162 |
 | Crible harmonique | `crible-harmonique` | 240 × 140 |
 | Crible (Xenakis) | `crible-xenakis` | 240 × 118 |
 | Csound | `csound` | 240 × 184 |
@@ -364,7 +364,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
 | Oscillateur analogique | `oscillateur-analogique` | 240 × 118 |
-| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 118 |
+| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 140 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
 | Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
 | Parole vers séquence | `parole-vers-sequence` | 240 × 184 |

@@ -18,7 +18,7 @@ import {
   velourVoie, type OptionsVoieVelours, type ProfilDecroissance, type VoieVelours,
 } from "../audio/velours";
 import { parCanal } from "./hors-fil";
-import { MODULATION_MELANGE, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MELANGE, bornesModulation, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -70,7 +70,7 @@ export const fiches: FicheAudio[] = ([
       const { sampleRate, numberOfChannels: canaux, length } = entree;
       const profil = ctx.paramTexte("Profil", "exponentielle") as ProfilDecroissance;
       const duree = ctx.paramNombre("Durée", 2);
-      const melange = melangeModule(ctx, length, 1, { reglage: "Mélange", defaut: 35 });
+      const melange = reglageModule(ctx, length, 1, { reglage: "Mélange", defaut: 35 });
       const densite = Math.round(ctx.paramNombre("Densité", 1500));
       const o: OptionsVoieVelours = {
         duree, sampleRate, profil, melange, densite,

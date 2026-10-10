@@ -13,7 +13,7 @@ import { creerAleatoire } from "../core";
 import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
 
-import { MODULATION_MIX, bornesModulation, effet, melangeModule, param, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, effet, reglageModule, param, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
@@ -177,7 +177,7 @@ export const fiches: FicheAudio[] = ([
       const Q = ctx.paramNombre("Q", 2);
       // LA SORTIE S'ARRÊTE AU PLUS COURT DES DEUX SONS, et la courbe se lit sur cette longueur :
       // l'étirer sur le modulateur seul la décalerait dès que la porteuse est plus brève.
-      const mix = melangeModule(ctx, Math.min(modulateur.length, porteuse.length), 2,
+      const mix = reglageModule(ctx, Math.min(modulateur.length, porteuse.length), 2,
         { reglage: "Mix", defaut: 50, rendu: "pourCent" });
       const out = await vocoder(modulateur, porteuse, bands, fMin, fMax, Q, mix);
       return { valeurs: [out] };

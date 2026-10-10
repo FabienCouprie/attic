@@ -19,6 +19,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FREQUENCE_ECH, versBuffer } from "./instruments-communs";
+import { bornesModulation, portModulation, reglageModule } from "./effets-aides";
 import {
   CASES, FAMILLES, banqueDepuisSon, banqueEngendree, synthetiserTable, type FamilleId,
 } from "../audio/table-onde";
@@ -30,7 +31,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Lit une banque de cycles et la balaie : le timbre voyage, la hauteur ne bouge pas.",
     resumeEn: "Reads a bank of cycles and scans it: the timbre travels, the pitch stays put.",
     etiquettes: ["wavetable", "table", "onde", "banque", "balayage", "ppg", "cycle"],
-    entrees: [{ nom: "Audio", type: "audio", requis: false }],
+    entrees: [{ nom: "Audio", type: "audio", requis: false }, portModulation("Volume")],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -63,8 +64,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.2, 5], pas: 0.1, defaut: 1.5, unite: "s",
         doc: "Durée du son généré.", docEn: "Duration of the generated tone." },
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
-        doc: "Niveau de la sortie, après normalisation de la crête.",
-        docEn: "Output level, after the peak has been normalised." },
+        doc: "Niveau de la sortie, après normalisation de la crête. La normalisation se fait avant, sur le son entier : une courbe ne la déplace donc pas, elle règle ce qui en sort.",
+        docEn: "Output level, after the peak has been normalised. Normalisation happens first, on the whole sound: a curve therefore does not move it, it sets what comes out of it." },
+      ...bornesModulation({ parametre: "Volume", parametreEn: "Volume", bornes: [0, 100], unite: "%" }),
     ],
     async executer(ctx: any) {
       const cases = Math.round(ctx.paramNombre("Cases", CASES));
@@ -92,8 +94,11 @@ export const fiches: FicheAudio[] = ([
 
       return {
         // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent
-        // fois trop bas, soit quarante décibels.
-        valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],
+        // fois trop bas, soit quarante décibels. C'est aussi pourquoi le rendu demandé est
+        // `pourCent` : l'aide ne doit pas diviser non plus.
+        valeurs: [versBuffer(signal, reglageModule(ctx, signal.length, 1, {
+          reglage: "Volume", defaut: 80, rendu: "pourCent",
+        }))],
         message: depuis > 0
           ? traduire("msg.table-onde.duSon", cases, Math.round(depuis), Math.round(frequence))
           : traduire("msg.table-onde.engendree", cases, Math.round(frequence)),

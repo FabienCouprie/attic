@@ -17,6 +17,8 @@
 // qu'un son faible de même timbre, le poids total de la somme l'emportant sur sa répartition. Ce
 // qu'on cherche est la forme du son, non sa force.
 
+import { valeurA } from "./courbe";
+
 /** Le nombre de bandes où le plan temps-fréquence se découpe. */
 export const BANDES = 12;
 
@@ -192,20 +194,26 @@ export function meilleurCreneau(
  * qu'on lui prend : baisser le fond sous le son serait un autre geste, qui porte un autre nom.
  */
 export function poserDansLeCreneau(
-  fond: AudioBuffer, son: AudioBuffer, instant: number, niveau: number,
+  fond: AudioBuffer, son: AudioBuffer, instant: number, niveau: number | Float32Array,
 ): AudioBuffer {
   const sr = fond.sampleRate;
   const canaux = Math.max(fond.numberOfChannels, son.numberOfChannels);
   const depart = Math.max(0, Math.round(instant * sr));
   const longueur = Math.max(fond.length, depart + son.length);
   const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate: sr });
-  const gain = Math.max(0, niveau);
+  // LA COURBE SUIT LE SON POSÉ, NON LA SORTIE, et c'est l'indice `i` qui le dit : il court sur le
+  // son, pas sur le mélange. Lue sur la sortie, elle commencerait à l'instant zéro du fond, de
+  // sorte que son geste ne coïnciderait pas avec le son qu'elle commande — et le décalage
+  // changerait avec le créneau trouvé, qui n'est pas réglé mais cherché.
+  //
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const gainA = (i: number) => Math.max(0, valeurA(niveau, i));
   for (let c = 0; c < canaux; c++) {
     const dst = sortie.getChannelData(c);
     const f = fond.getChannelData(Math.min(c, fond.numberOfChannels - 1));
     for (let i = 0; i < fond.length; i++) dst[i] = f[i];
     const s = son.getChannelData(Math.min(c, son.numberOfChannels - 1));
-    for (let i = 0; i < son.length; i++) dst[depart + i] += s[i] * gain;
+    for (let i = 0; i < son.length; i++) dst[depart + i] += s[i] * gainA(i);
   }
   return sortie;
 }

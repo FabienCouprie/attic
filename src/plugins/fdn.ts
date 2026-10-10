@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
-import { MODULATION_MIX, bornesModulation, melangeModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -70,7 +70,7 @@ export const fiches: FicheAudio[] = ([
         largeur: ctx.paramNombre("Largeur", 100) / 100,
         // La courbe est lue sur la longueur de l'entrée ; au-delà, sa dernière valeur tient, ce
         // qui couvre la queue ajoutée après le son.
-        melange: melangeModule(ctx, length, 1, { reglage: "Mix", defaut: 35 }),
+        melange: reglageModule(ctx, length, 1, { reglage: "Mix", defaut: 35 }),
         queue: queueDemandee > 0.2 ? queueDemandee : Math.max(rt60Bas, rt60Haut),
       };
 
