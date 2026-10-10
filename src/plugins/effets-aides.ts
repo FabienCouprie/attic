@@ -187,10 +187,15 @@ export const MODULATION_MIX: ModulationEffet =
  * « Fréquence min » sur le phaser, « Fondamentale min » sur les résonateurs, « Temps min » sur
  * l'écho. Les cinq fiches de cette famille emploient donc celle-ci.
  */
-export const MODULATION_MIX_NOMMEE: ModulationEffet = {
-  parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%",
-  noms: ["Mix min", "Mix max"], nomsEn: ["Mix min", "Mix max"],
-};
+export const modulationNommee = (
+  parametre: string, parametreEn: string, bornes: [number, number], unite?: string,
+): ModulationEffet => ({
+  parametre, parametreEn, bornes, unite,
+  noms: [`${parametre} min`, `${parametre} max`],
+  nomsEn: [`${parametreEn} min`, `${parametreEn} max`],
+});
+
+export const MODULATION_MIX_NOMMEE = modulationNommee("Mix", "Mix", [0, 100], "%");
 
 /**
  * Ce qu'il y a à dire du réglage qu'une courbe vient piloter, dans les deux langues.

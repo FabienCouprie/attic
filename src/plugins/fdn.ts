@@ -7,7 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
-import { MODULATION_MIX, bornesModulation, reglageModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -15,7 +15,13 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont le temps de décroissance se règle séparément dans le grave et dans l'aigu, ce que fait toute vraie salle.",
     resumeEn: "A reverb whose decay time is set separately for the low and the high end, as every real room behaves.",
-    entrees: [{ nom: "Audio", type: "audio" }, portModulation("Mix")],
+    // LE PORT DU MÉLANGE GARDE SON NOM COURT, et ses bornes aussi : il est en production, et un
+    // graphe enregistré désigne un réglage par son NOM. Seul le port neuf nomme son réglage.
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      portModulation("Mix"),
+      portModulation("Largeur", "Width", { court: false }),
+    ],
     sorties: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Réponse", nomEn: "Impulse response", type: "audio", sousType: "stereo" },
@@ -51,6 +57,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée ajoutée après le son pour laisser la queue s'éteindre. À zéro, le composant prend le plus long des deux RT60, une réverbération qui s'arrêterait avec le son n'en serait pas une.",
         docEn: "Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one." },
       ...bornesModulation(MODULATION_MIX),
+      ...bornesModulation(modulationNommee("Largeur", "Width", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -67,7 +74,9 @@ export const fiches: FicheAudio[] = ([
         lignes: parseInt(ctx.paramTexte("Lignes", "8"), 10) || 8,
         retardMin: ctx.paramNombre("Retard court", 23),
         retardMax: Math.max(ctx.paramNombre("Retard court", 23) + 5, ctx.paramNombre("Retard long", 79)),
-        largeur: ctx.paramNombre("Largeur", 100) / 100,
+        largeur: reglageModule(ctx, length, 2, {
+          reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"],
+        }),
         // La courbe est lue sur la longueur de l'entrée ; au-delà, sa dernière valeur tient, ce
         // qui couvre la queue ajoutée après le son.
         melange: reglageModule(ctx, length, 1, { reglage: "Mix", defaut: 35 }),

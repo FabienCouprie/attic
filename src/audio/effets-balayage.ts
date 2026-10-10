@@ -10,7 +10,7 @@ import { vibrato } from "./effets-modulation";
 export function wahwah(
   buffer: AudioBuffer,
   frequence: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   q: number,
   mix: number | Float32Array,
   courbe?: unknown,
@@ -20,8 +20,8 @@ export function wahwah(
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
-  const depth = profondeur / 100;
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, module ou non.
+  const depthA = (i: number) => valeurA(profondeur, i) / 100;
   const mixA = (i: number) => valeurA(mix, i) / 100;
   const freqMin = bornes?.min ?? 200;
   const freqMax = bornes?.max ?? 2500;
@@ -30,6 +30,9 @@ export function wahwah(
   // dépend pas du canal, et la recalculer deux fois coûterait deux fois pour le même résultat.
   const centres = new Float32Array(buffer.length);
   if (estCourbe(courbe)) {
+    // LA PROFONDEUR N'EST PAS LUE DANS CETTE BRANCHE, et c'est voulu : la courbe de position
+    // parcourt elle-même « Balayage de » à « Balayage à », et il n'y a plus d'amplitude à doser
+    // autour d'un oscillateur qui n'existe plus. La documentation du réglage le dit.
     centres.set(valeursParametre(courbe, buffer.length, freqMin, {
       min: freqMin, max: freqMax, ...progressionPour({ unite: "Hz" }),
     }));
@@ -39,12 +42,12 @@ export function wahwah(
     const u = cyclesAccumules(frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence)!, sr);
     for (let i = 0; i < buffer.length; i++) {
       const lfo = Math.sin(2 * Math.PI * u[i]);
-      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depth) / 2);
+      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depthA(i)) / 2);
     }
   } else {
     for (let i = 0; i < buffer.length; i++) {
       const lfo = Math.sin((2 * Math.PI * frequence * i) / sr);
-      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depth) / 2);
+      centres[i] = freqMin + (freqMax - freqMin) * ((1 + lfo * depthA(i)) / 2);
     }
   }
 
@@ -94,7 +97,7 @@ export function wahwah(
 export function phaser(
   buffer: AudioBuffer,
   frequence: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   etages: number,
   mix: number | Float32Array,
   courbeFrequence?: unknown,
@@ -102,8 +105,8 @@ export function phaser(
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
-  const depth = profondeur / 100;
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, module ou non.
+  const depthA = (i: number) => valeurA(profondeur, i) / 100;
   const mixA = (i: number) => valeurA(mix, i) / 100;
   const nbEtages = Math.max(1, Math.min(8, Math.round(etages)));
   const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
@@ -117,7 +120,7 @@ export function phaser(
     for (let i = 0; i < buffer.length; i++) {
       const t = i / sr;
       const lfo = u ? Math.sin(2 * Math.PI * u[i]) : Math.sin(2 * Math.PI * frequence * t);
-      const fc = 200 + 1800 * (1 + lfo * depth) / 2;
+      const fc = 200 + 1800 * (1 + lfo * depthA(i)) / 2;
       const w0 = 2 * Math.PI * fc / sr;
       const tanW0 = Math.tan(w0 / 2);
       // Coefficient passe-tout du 1er ordre dont la transition de phase (90°)

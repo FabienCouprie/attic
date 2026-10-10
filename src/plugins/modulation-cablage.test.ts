@@ -134,13 +134,13 @@ const CAS: {
   rang?: number;
 }[] = [
   // La famille « mélange ».
-  { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)] },
+  { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)], rang: 1 },
   { id: "haut-parleur-rotatif", reglage: "Mélange", entrees: () => [son(5, 2)] },
   { id: "arc-en-ciel-acoustique", reglage: "Mix", entrees: () => [son(7, 2)] },
   { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)] },
   { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)] },
   { id: "reverbe-hachee", reglage: "Mix", entrees: () => [son(17)] },
-  { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)] },
+  { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)], rang: 1 },
   { id: "reverberation-velours", reglage: "Mélange", entrees: () => [son(23)] },
   // SON BANC DE FILTRES PASSE PAR `OfflineAudioContext` : son cas de rendu ne tourne que là où ce
   // dernier existe, ce qui est dit par une condition écrite plutôt que par un silence.
@@ -149,7 +149,7 @@ const CAS: {
   // nommées d'après leur réglage ; l'oscillateur à table d'onde a une entrée facultative qu'on ne
   // branche pas, et c'est elle que `undefined` tient.
   { id: "creneau", reglage: "Niveau", entrees: () => [son(37, 2), son(41, 2)], noms: ["Niveau min", "Niveau max"] },
-  { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined] },
+  { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined], rang: 1 },
   // La famille « temps ». Le gate porte DEUX ports, donc deux entrées dans cette table : chacune
   // nomme le rang qu'elle éprouve, puisque le dernier port n'est pas celui de l'attaque.
   { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)] },
@@ -176,9 +176,9 @@ const CAS: {
   // aussi pourquoi les cinq portent « Mix min / Mix max » et non les bornes par défaut : sur une
   // fiche qui module déjà autre chose, « Modulation min » ne dit pas de quoi il est la borne.
   { id: "phaser", reglage: "Mix", entrees: () => [son(67, 2), undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 2 },
   { id: "wahwah", reglage: "Mix", entrees: () => [son(71, 2), undefined, undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 3 },
   { id: "peignes-accordes", reglage: "Mix", entrees: () => [son(73), undefined],
     noms: ["Mix min", "Mix max"] },
   { id: "resonateurs", reglage: "Mix", entrees: () => [son(79), undefined],
@@ -187,11 +187,25 @@ const CAS: {
     id: "retard-spectral", reglage: "Mix", entrees: () => [son(83), undefined],
     noms: ["Mix min", "Mix max"],
   },
+  // LA FAMILLE « ESPACE ». Chacune de ces fiches porte DÉJÀ un ou plusieurs ports : le port neuf
+  // vient donc après eux, et les `undefined` tiennent leur place. Les bornes du port neuf portent
+  // le nom de leur réglage ; celles des ports déjà en production gardent le leur, qu'un graphe
+  // enregistré désigne par son nom.
+  { id: "phaser", reglage: "Profondeur", entrees: () => [son(89, 2), undefined, undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "wahwah", reglage: "Profondeur", entrees: () => [son(97, 2), undefined, undefined, undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "tremolo-harmonique", reglage: "Profondeur", entrees: () => [son(101, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "reverbe-reseau", reglage: "Largeur", entrees: () => [son(103), undefined],
+    noms: ["Largeur min", "Largeur max"] },
+  { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
+    noms: ["Position min", "Position max"] },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien vingt-deux ports à éprouver", () => {
-    expect(CAS).toHaveLength(22);
+  it("il y a bien vingt-sept ports à éprouver", () => {
+    expect(CAS).toHaveLength(27);
   });
 
   for (const cas of CAS) {

@@ -14,6 +14,11 @@
 // courbe, elle, peut FRANCHIR zéro, et c'est le cas qu'il faut tenir.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { constante } from "./courbe";
+import { phaser, wahwah } from "./effets-balayage";
+import { traiterFdn } from "./fdn";
+import { tremoloHarmonique } from "./rotatifs";
+import { banqueEngendree, synthetiserTable } from "./table-onde";
 import { ubiquite, correlationDesCanaux } from "./ubiquite";
 import { vague } from "./vague";
 
@@ -132,5 +137,139 @@ describe("la vague ouverte à deux courbes", () => {
 
   it("et l'ouverture commande aussi, elle qui entre dans la coupure", () => {
     expect(memes(applique(0.9, tenue(0, n)), applique(0.9, tenue(1, n)))).toBe(false);
+  });
+});
+
+// LES CINQ RÉGLAGES QUE L'ÉLARGISSEMENT DU RELEVÉ A RENDUS VISIBLES. Trois profondeurs de
+// balayage, une largeur stéréophonique, une position dans une banque de cycles. Chacun était déjà
+// lu DANS la boucle, ou juste au-dessus d'elle : les ouvrir ne coûte qu'une lecture par échantillon.
+
+describe("les deux balayages ouverts à une courbe de profondeur", () => {
+  const x = stereo(SR / 4, 7, 13);
+  const n = x.length;
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(canal(phaser(x, 0.5, 80, 4, 50)), canal(phaser(x, 0.5, tenue(80, n), 4, 50))),
+      "phaser").toBe(true);
+    expect(memes(canal(wahwah(x, 2, 100, 5, 100)), canal(wahwah(x, 2, tenue(100, n), 5, 100))),
+      "wah-wah").toBe(true);
+  });
+
+  it("DEUX PROFONDEURS TENUES DONNENT DEUX SONS, donc le port commande", () => {
+    expect(memes(canal(phaser(x, 0.5, tenue(0, n), 4, 50)), canal(phaser(x, 0.5, tenue(100, n), 4, 50))),
+      "phaser").toBe(false);
+    expect(memes(canal(wahwah(x, 2, tenue(0, n), 5, 100)), canal(wahwah(x, 2, tenue(100, n), 5, 100))),
+      "wah-wah").toBe(false);
+  });
+
+  it("UNE COURBE QUI MONTE NE REND NI L'UN NI L'AUTRE", () => {
+    // Le cas qui attrape une profondeur lue une seule fois, hors de la boucle.
+    const rampe = new Float32Array(n);
+    for (let i = 0; i < n; i++) rampe[i] = (100 * i) / n;
+    const yP = canal(phaser(x, 0.5, rampe, 4, 50));
+    expect(memes(yP, canal(phaser(x, 0.5, 0, 4, 50))), "phaser, bas").toBe(false);
+    expect(memes(yP, canal(phaser(x, 0.5, 100, 4, 50))), "phaser, haut").toBe(false);
+    const yW = canal(wahwah(x, 2, rampe, 5, 100));
+    expect(memes(yW, canal(wahwah(x, 2, 0, 5, 100))), "wah-wah, bas").toBe(false);
+    expect(memes(yW, canal(wahwah(x, 2, 100, 5, 100))), "wah-wah, haut").toBe(false);
+  });
+
+  it("MAIS LA COURBE DE POSITION DU WAH-WAH IGNORE LA PROFONDEUR, et sa doc le dit", () => {
+    // Cette branche-là ne lit pas la profondeur : la courbe parcourt elle-même « Balayage de » à
+    // « Balayage à ». Deux profondeurs opposées doivent donc y rendre le MÊME son, au bit près.
+    const position = constante(0.5, n / SR);
+    expect(memes(
+      canal(wahwah(x, 2, 0, 5, 100, position)),
+      canal(wahwah(x, 2, 100, 5, 100, position)),
+    )).toBe(true);
+  });
+});
+
+describe("le trémolo harmonique ouvert à une courbe de profondeur", () => {
+  const x = stereo(SR / 4, 17, 19);
+  const n = x.length;
+  const canaux = [canal(x, 0), canal(x, 1)];
+  const o = { vitesse: 5, coupure: 800, melange: 1 };
+  const applique = (profondeur: number | Float32Array) =>
+    tremoloHarmonique(canaux, SR, { ...o, profondeur })[0];
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    // 0,75 et non 0,7 : seules les fractions dyadiques se comparent exactement entre un Float32Array
+    // et un nombre, un tableau arrondissant sa valeur en simple précision.
+    expect(memes(applique(0.75), applique(tenue(0.75, n)))).toBe(true);
+  });
+
+  it("DEUX PROFONDEURS TENUES DONNENT DEUX SONS", () => {
+    expect(memes(applique(tenue(0, n)), applique(tenue(1, n)))).toBe(false);
+  });
+
+  it("UNE COURBE QUI MONTE NE REND NI L'UN NI L'AUTRE", () => {
+    const rampe = new Float32Array(n);
+    for (let i = 0; i < n; i++) rampe[i] = i / n;
+    const y = applique(rampe);
+    expect(memes(y, applique(0)), "bas").toBe(false);
+    expect(memes(y, applique(1)), "haut").toBe(false);
+  });
+});
+
+describe("la réverbération à réseau ouverte à une courbe de largeur", () => {
+  const x = bruit(SR / 8, 23);
+  const n = x.length;
+  const o = { sampleRate: SR, melange: 1, queue: 0.1 };
+  const applique = (largeur: number | Float32Array) => traiterFdn(x, { ...o, largeur }).gauche;
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(0.5), applique(tenue(0.5, n)))).toBe(true);
+  });
+
+  it("DEUX LARGEURS TENUES DONNENT DEUX SONS", () => {
+    expect(memes(applique(tenue(0, n)), applique(tenue(1, n)))).toBe(false);
+  });
+
+  it("UNE COURBE QUI MONTE NE REND NI L'UN NI L'AUTRE", () => {
+    const rampe = new Float32Array(n);
+    for (let i = 0; i < n; i++) rampe[i] = i / n;
+    const y = applique(rampe);
+    expect(memes(y, applique(0)), "mono").toBe(false);
+    expect(memes(y, applique(1)), "large").toBe(false);
+  });
+
+  it("ET LA COURBE TIENT SA DERNIÈRE VALEUR SUR LA QUEUE, plus longue que le son", () => {
+    // La sortie dure le son PLUS la queue : au-delà de la fin de la courbe, `valeurA` tient sa
+    // dernière valeur, de sorte qu'une courbe entièrement à un y rend ce que rend un un.
+    expect(applique(tenue(1, n)).length).toBeGreaterThan(n);
+    expect(memes(applique(tenue(1, n)), applique(1))).toBe(true);
+  });
+});
+
+describe("la table d'onde ouverte à une courbe de position", () => {
+  const banque = banqueEngendree("sinus-scie");
+  const r = { frequence: 220, duree: 0.25, modulationPosition: 0, vitesseModulation: 0.3 };
+  const n = Math.round(r.duree * SR);
+  const applique = (position: number | Float32Array) =>
+    synthetiserTable(banque, { ...r, position }, SR);
+
+  it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
+    expect(memes(applique(0.5), applique(tenue(0.5, n)))).toBe(true);
+  });
+
+  it("DEUX POSITIONS TENUES DONNENT DEUX TIMBRES", () => {
+    expect(memes(applique(tenue(0, n)), applique(tenue(1, n)))).toBe(false);
+  });
+
+  it("UNE COURBE QUI MONTE NE REND NI L'UN NI L'AUTRE", () => {
+    const rampe = new Float32Array(n);
+    for (let i = 0; i < n; i++) rampe[i] = i / n;
+    const y = applique(rampe);
+    expect(memes(y, applique(0)), "début de banque").toBe(false);
+    expect(memes(y, applique(1)), "fin de banque").toBe(false);
+  });
+
+  it("ET LE BALAYAGE RESTE PAR-DESSUS : la courbe déplace le CENTRE, elle ne le remplace pas", () => {
+    const rampe = new Float32Array(n);
+    for (let i = 0; i < n; i++) rampe[i] = i / n;
+    const sansBalayage = synthetiserTable(banque, { ...r, position: rampe }, SR);
+    const avecBalayage = synthetiserTable(banque, { ...r, position: rampe, modulationPosition: 0.3 }, SR);
+    expect(memes(sansBalayage, avecBalayage)).toBe(false);
   });
 });

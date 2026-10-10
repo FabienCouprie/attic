@@ -21,32 +21,13 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 78, sur 60 composants
-- **réglages restant à faire** : 112, sur 45 composants et 70 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 83, sur 60 composants
+- **réglages restant à faire** : 107, sur 44 composants et 65 couples composant / famille
 - **dont le cœur travaille par trames** : 5
 - **réglages écartés un par un** : 4, sur 4 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
-
-### espace · 16
-
-- Rotation ambisonique `ambisonique` : Ouverture
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
-- Étaler sur le clavier `banque-clavier` : Largeur de zone · **⟨trames⟩** preparerBanque (appelle separerStn), suivreHauteur (nTrames), zoneDuLot (appelle changerTonaliteVoie)
-- Chorus `chorus` : Profondeur
-- De-esser `de-esser` : Largeur
-- Flanger `flanger` : Profondeur
-- Granular freeze `granular-freeze` : Position
-- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
-- Fin d'instrument `instrument-fin` : Largeur de zone
-- Micromontage `micromontage` : Panoramique, fin
-- Oscillateur à table d'onde `oscillateur-table-onde` : Position
-- Phaser `phaser` : Profondeur
-- Réverbération à réseau (FDN) `reverbe-reseau` : Largeur
-- Spatialisation stéréo `spatialisation-stereo` : Largeur
-- Trémolo harmonique `tremolo-harmonique` : Profondeur
-- Wah-wah `wahwah` : Profondeur
 
 ### frequence · 15
 
@@ -95,6 +76,20 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Remplissage de trou `remplissage-trou` : Seuil de silence
 - Restauration d'écrêtage `restauration-ecretage` : Seuil manuel · **⟨trames⟩** declipper (boucle de trames)
 - Réverbération hachée `reverbe-hachee` : Seuil
+
+### espace · 11
+
+- Rotation ambisonique `ambisonique` : Ouverture
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
+- Étaler sur le clavier `banque-clavier` : Largeur de zone · **⟨trames⟩** preparerBanque (appelle separerStn), suivreHauteur (nTrames), zoneDuLot (appelle changerTonaliteVoie)
+- Chorus `chorus` : Profondeur
+- De-esser `de-esser` : Largeur
+- Flanger `flanger` : Profondeur
+- Granular freeze `granular-freeze` : Position
+- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
+- Fin d'instrument `instrument-fin` : Largeur de zone
+- Micromontage `micromontage` : Panoramique, fin
+- Spatialisation stéréo `spatialisation-stereo` : Largeur
 
 ### niveau · 6
 
@@ -229,12 +224,14 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `objet-sonore` : Distance
 - `objet-sonore` : Élévation
 - `octaver` : Mix
+- `oscillateur-table-onde` : Position
 - `oscillateur-table-onde` : Volume
 - `paulstretch` : Stretch
 - `peignes-accordes` : Fondamentale
 - `peignes-accordes` : Mix
 - `phaser` : Fréquence
 - `phaser` : Mix
+- `phaser` : Profondeur
 - `quadrafuzz` : Mix
 - `reponse-filtre` : Fréquence de coupure
 - `reponse-filtre` : Résonance
@@ -243,6 +240,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `retard-spectral` : Dispersion
 - `retard-spectral` : Mix
 - `reverbe-hachee` : Mix
+- `reverbe-reseau` : Largeur
 - `reverbe-reseau` : Mix
 - `reverberation` : Mix
 - `reverberation-velours` : Mélange
@@ -257,6 +255,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `tremolo` : Fréquence
 - `tremolo` : Profondeur
 - `tremolo-harmonique` : Mélange
+- `tremolo-harmonique` : Profondeur
 - `ubiquite` : Dispersion
 - `vague` : Ouverture
 - `vague` : Profondeur
@@ -266,3 +265,4 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `vocoder` : Mix
 - `wahwah` : Fréquence
 - `wahwah` : Mix
+- `wahwah` : Profondeur

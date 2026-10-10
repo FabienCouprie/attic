@@ -13,7 +13,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
 import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, appliquerDecoupeAleatoire, griffinLim, picAbsolu } from "../audio";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
-import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, effet, reglageModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, effet, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -28,6 +28,7 @@ export const fiches: FicheAudio[] = ([
       // SOUS UN NOM À ELLE : l'entrée « Modulation » de ce composant promène la fréquence centrale
       // au lieu de doser le mélange, et deux ports du même nom ne se distinguent pas à l'écran.
       portModulation("Mix", "Mix", { court: false }),
+      portModulation("Profondeur", "Depth", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -41,7 +42,8 @@ export const fiches: FicheAudio[] = ([
         doc: "L'aigu du balayage. Une courbe branchée le parcourt en multipliant et non en ajoutant, une octave est un doublement, de sorte que le balayage ne se précipite pas dans l'aigu.",
         docEn: "The high end of the sweep. A connected curve travels it by multiplying rather than adding, an octave is a doubling, so the sweep does not rush into the treble." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Amplitude du balayage en fréquence (0% = fixe, 100% = wah complet).", docEn: "Frequency sweep range (0% = static, 100% = full wah)." },
+        doc: "Amplitude du balayage en fréquence (0% = fixe, 100% = wah complet). Sans effet quand une courbe est branchée sur l'entrée Modulation : celle-ci parcourt elle-même « Balayage de » à « Balayage à », et il n'y a plus d'amplitude à doser autour d'un oscillateur qui n'existe plus.",
+        docEn: "Frequency sweep range (0% = static, 100% = full wah). No effect when a curve is connected to the Modulation input: that curve travels « Sweep from » to « Sweep to » itself, and there is no longer any range to set around an oscillator that no longer exists." },
       { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 5, unite: "Q",
         doc: "Résonance du filtre (Q élevé = wah prononcé, Q faible = doux).", docEn: "Filter resonance (high Q = pronounced wah, low Q = gentle)." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
@@ -52,13 +54,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 8, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       ...bornesModulation(MODULATION_MIX_NOMMEE),
+      ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { wahwah } = await import("../audio");
       return { valeurs: [wahwah(
-        a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100),
+        a, ctx.paramNombre("Fréquence", 2),
+        reglageModule(ctx, a.length, 4, { reglage: "Profondeur", defaut: 100, rendu: "pourCent", noms: ["Profondeur min", "Profondeur max"] }),
         ctx.paramNombre("Résonance", 5),
         reglageModule(ctx, a.length, 3, { reglage: "Mix", defaut: 100, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1),
@@ -78,6 +82,7 @@ export const fiches: FicheAudio[] = ([
       // SOUS UN NOM À ELLE : la fiche a déjà un port de courbe, et « Modulation » tout court se
       // lirait comme la modulation principale du composant alors qu'elle ne dose que le mélange.
       portModulation("Mix", "Mix", { court: false }),
+      portModulation("Profondeur", "Depth", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -95,12 +100,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 4, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       ...bornesModulation(MODULATION_MIX_NOMMEE),
+      ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { phaser } = await import("../audio");
-      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4),
+      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5),
+        reglageModule(ctx, a.length, 3, { reglage: "Profondeur", defaut: 80, rendu: "pourCent", noms: ["Profondeur min", "Profondeur max"] }),
+        ctx.paramNombre("Étages", 4),
         reglageModule(ctx, a.length, 2, { reglage: "Mix", defaut: 50, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.1), max: ctx.paramNombre("Fréquence max", 4) })] };
    },
