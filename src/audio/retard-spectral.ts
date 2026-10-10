@@ -28,7 +28,7 @@
 //
 // CE QUE LES COEFFICIENTS VARIABLES AJOUTENT : c'est le second article, et c'est ce que le type
 // `courbe` d'Attic permet sans rien écrire de plus — la dispersion devient elle-même un geste.
-import { estCourbe, valeursParametre, type MiseEnForme } from "./courbe";
+import { estCourbe, valeurA, valeursParametre, type MiseEnForme } from "./courbe";
 
 /** Retard de groupe d'UNE section, en échantillons, à la pulsation ω. */
 export function retardDeGroupe(a: number, omega: number): number {
@@ -46,7 +46,8 @@ export interface OptionsRetardSpectral {
   /** Gain de rebouclage, entre 0 et 1 (exclus). */
   reaction?: number;
   /** Proportion de son traité, entre 0 et 1. */
-  melange?: number;
+  /** Part de son retardé, de 0 à 1. Un tableau la fait varier échantillon par échantillon. */
+  melange?: number | Float32Array;
   /**
    * Dispersion variable dans le temps, une valeur par échantillon (article de 2009 suivi de
    * DAFx-09). Absente, la dispersion est constante — et le résultat est alors exactement celui
@@ -87,7 +88,8 @@ export function retardSpectral(x: Float32Array, o: OptionsRetardSpectral): Float
   const signe = o.versLeGrave ? -1 : 1;
   const dispersionFixe = Math.min(0.999, Math.max(0, o.dispersion));
   const reaction = Math.min(0.99, Math.max(0, o.reaction ?? 0));
-  const melange = Math.min(1, Math.max(0, o.melange ?? 1));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const melangeA = (i: number) => Math.min(1, Math.max(0, valeurA(o.melange ?? 1, i)));
 
   const plage = o.plage ?? { min: 0, max: 0.99 };
   // La traîne se mesure sur la dispersion la PLUS FORTE que le rendu atteindra. Avec une courbe
@@ -123,6 +125,7 @@ export function retardSpectral(x: Float32Array, o: OptionsRetardSpectral): Float
     }
     retour = v;
     const sec = i < x.length ? x[i] : 0;
+    const melange = melangeA(i);
     sortie[i] = melange * v + (1 - melange) * sec;
   }
   return sortie;

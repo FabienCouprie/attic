@@ -8,6 +8,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { MODULATION_MIX_NOMMEE, bornesModulation, portModulation, reglageModule } from "./effets-aides";
 import { creerAleatoire } from "../core/hasard";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import {
@@ -257,11 +258,14 @@ export const fiches: FicheAudio[] = ([
     memoire: "flux", // lignes à retard bornées par la note la plus grave
     resume: "Des filtres en peigne accordés sur une note ou un accord : le son d'entrée résonne comme une corde, à la note et à toutes ses harmoniques.",
     resumeEn: "Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics.",
-    notice: "Un filtre en peigne renvoie le son dans une boucle dont la durée est la période d'une note : ce qui revient en phase se renforce, et le filtre résonne à cette note et à toutes ses harmoniques, comme une corde. Chaque note de l'accord est un peigne ; le son d'entrée les fait vibrer. Un bruit devient une corde frottée, une percussion une corde frappée, une voix un chœur de cordes sympathiques.\n\nLa résonance se règle en secondes : le temps qu'il faut à un peigne pour perdre 60 dB, le même pour une note grave et pour une aiguë. L'amortissement éteint les harmoniques aiguës avant la fondamentale, comme sur une vraie corde : à zéro, le son reste brillant et métallique ; élevé, il s'arrondit. Les peignes restent accordés quel que soit l'amortissement.\n\nL'accord s'écrit en demi-tons au-dessus de la fondamentale : « 0 » pour une seule note, « 0 7 » pour une quinte, « 0 4 7 » pour un accord parfait. La fondamentale peut suivre une courbe : l'accord entier glisse alors, et les cordes avec lui. Une queue de la durée de la résonance laisse les peignes s'éteindre ; le niveau de sortie est ramené à celui de l'entrée.\n\nD'après Julius O. Smith III, « Physical Audio Signal Processing », 2010, et l'accord des cordes de Karplus et Strong par David Jaffe et Julius O. Smith, Computer Music Journal 7(2), 1983.",
-    noticeEn: "A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings.\n\nResonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping.\n\nThe chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input.\n\nAfter Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.",
+    notice: "Un filtre en peigne renvoie le son dans une boucle dont la durée est la période d'une note : ce qui revient en phase se renforce, et le filtre résonne à cette note et à toutes ses harmoniques, comme une corde. Chaque note de l'accord est un peigne ; le son d'entrée les fait vibrer. Un bruit devient une corde frottée, une percussion une corde frappée, une voix un chœur de cordes sympathiques.\n\nLa résonance se règle en secondes : le temps qu'il faut à un peigne pour perdre 60 dB, le même pour une note grave et pour une aiguë. L'amortissement éteint les harmoniques aiguës avant la fondamentale, comme sur une vraie corde : à zéro, le son reste brillant et métallique ; élevé, il s'arrondit. Les peignes restent accordés quel que soit l'amortissement.\n\nL'accord s'écrit en demi-tons au-dessus de la fondamentale : « 0 » pour une seule note, « 0 7 » pour une quinte, « 0 4 7 » pour un accord parfait. La fondamentale peut suivre une courbe : l'accord entier glisse alors, et les cordes avec lui. Une queue de la durée de la résonance laisse les peignes s'éteindre ; le niveau de sortie est ramené à celui de l'entrée.\n\nLe mélange suit une courbe lui aussi : branchée sur l'entrée Modulation mix, elle prend la place du réglage Mix, et les bornes Mix min et Mix max disent ce que valent son zéro et son un.\n\nD'après Julius O. Smith III, « Physical Audio Signal Processing », 2010, et l'accord des cordes de Karplus et Strong par David Jaffe et Julius O. Smith, Computer Music Journal 7(2), 1983.",
+    noticeEn: "A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings.\n\nResonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping.\n\nThe chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input.\n\nThe mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth.\n\nAfter Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
       { nom: "Modulation fondamentale", nomEn: "Fundamental modulation", type: "courbe", requis: false, module: "Fondamentale" },
+      // SOUS UN NOM À ELLE : la fiche a déjà « Modulation fondamentale », et « Modulation » tout
+      // court se lirait comme la modulation principale alors qu'elle ne dose que le mélange.
+      portModulation("Mix", "Mix", { court: false }),
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     parametres: [
@@ -282,6 +286,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing." },
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 2000], pas: 0.5, defaut: 220, unite: "Hz",
         doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
+      ...bornesModulation(MODULATION_MIX_NOMMEE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -310,7 +315,7 @@ export const fiches: FicheAudio[] = ([
           surProgres: (c, nb) => ctx.onProgress?.(en() ? `Channel ${c}/${nb}` : `Canal ${c}/${nb}`),
         },
       );
-      const y = melangerPeignes(a, humides, ctx.paramNombre("Mix", 100));
+      const y = melangerPeignes(a, humides, reglageModule(ctx, a.length, 2, { reglage: "Mix", rendu: "pourCent", noms: ["Mix min", "Mix max"] }));
       return { valeurs: [y], message: `${frequences.length} ${en() ? (frequences.length > 1 ? "combs" : "comb") : (frequences.length > 1 ? "peignes" : "peigne")}` };
     },
   },

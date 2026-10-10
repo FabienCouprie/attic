@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { estCourbe, progressionPour, valeursParametre } from "./courbe";
+import { estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, frequencesModulees, type BornesFrequence } from "./lfo";
 import { vibrato } from "./effets-modulation";
 
@@ -12,7 +12,7 @@ export function wahwah(
   frequence: number,
   profondeur: number,
   q: number,
-  mix: number,
+  mix: number | Float32Array,
   courbe?: unknown,
   bornes?: { min: number; max: number },
   courbeFrequence?: unknown,
@@ -21,7 +21,8 @@ export function wahwah(
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const depth = profondeur / 100;
-  const mixVal = mix / 100;
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, module ou non.
+  const mixA = (i: number) => valeurA(mix, i) / 100;
   const freqMin = bornes?.min ?? 200;
   const freqMax = bornes?.max ?? 2500;
 
@@ -82,6 +83,7 @@ export function wahwah(
       y2 = y1; y1 = y0;
 
       // Mix entre signal filtré et signal original
+      const mixVal = mixA(i);
       dst[i] = src[i] * (1 - mixVal) + y0 * mixVal;
     }
   }
@@ -94,14 +96,15 @@ export function phaser(
   frequence: number,
   profondeur: number,
   etages: number,
-  mix: number,
+  mix: number | Float32Array,
   courbeFrequence?: unknown,
   bornesFrequence: BornesFrequence = { min: 0.1, max: 4 },
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   const depth = profondeur / 100;
-  const mixVal = mix / 100;
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, module ou non.
+  const mixA = (i: number) => valeurA(mix, i) / 100;
   const nbEtages = Math.max(1, Math.min(8, Math.round(etages)));
   const f = frequencesModulees(courbeFrequence, buffer.length, frequence, bornesFrequence);
   const u = f ? cyclesAccumules(f, sr) : null;
@@ -131,6 +134,7 @@ export function phaser(
         st.y1 = y;
         signal = y;
       }
+      const mixVal = mixA(i);
       dst[i] = src[i] * (1 - mixVal) + (src[i] + signal) * mixVal * 0.5;
     }
   }

@@ -13,7 +13,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
 import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, appliquerDecoupeAleatoire, griffinLim, picAbsolu } from "../audio";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
-import { MODULATION_MIX, bornesModulation, effet, reglageModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, effet, reglageModule, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -25,6 +25,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false },
       { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+      // SOUS UN NOM À ELLE : l'entrée « Modulation » de ce composant promène la fréquence centrale
+      // au lieu de doser le mélange, et deux ports du même nom ne se distinguent pas à l'écran.
+      portModulation("Mix", "Mix", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -48,6 +51,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 10], pas: 0.1, defaut: 8, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
+      ...bornesModulation(MODULATION_MIX_NOMMEE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -55,7 +59,8 @@ export const fiches: FicheAudio[] = ([
       const { wahwah } = await import("../audio");
       return { valeurs: [wahwah(
         a, ctx.paramNombre("Fréquence", 2), ctx.paramNombre("Profondeur", 100),
-        ctx.paramNombre("Résonance", 5), ctx.paramNombre("Mix", 100),
+        ctx.paramNombre("Résonance", 5),
+        reglageModule(ctx, a.length, 3, { reglage: "Mix", defaut: 100, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1),
         { min: ctx.paramNombre("Balayage de", 200), max: ctx.paramNombre("Balayage à", 2500) },
         ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) },
@@ -70,6 +75,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
       { nom: "Modulation fréquence", nomEn: "Rate modulation", type: "courbe", requis: false, module: "Fréquence" },
+      // SOUS UN NOM À ELLE : la fiche a déjà un port de courbe, et « Modulation » tout court se
+      // lirait comme la modulation principale du composant alors qu'elle ne dose que le mélange.
+      portModulation("Mix", "Mix", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -86,12 +94,14 @@ export const fiches: FicheAudio[] = ([
         docEn: "Rate that a curve's zero means on the Rate modulation input: the swirl that tightens. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.05, 10], pas: 0.05, defaut: 4, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
+      ...bornesModulation(MODULATION_MIX_NOMMEE),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { phaser } = await import("../audio");
-      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4), ctx.paramNombre("Mix", 50),
+      return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5), ctx.paramNombre("Profondeur", 80), ctx.paramNombre("Étages", 4),
+        reglageModule(ctx, a.length, 2, { reglage: "Mix", defaut: 50, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.1), max: ctx.paramNombre("Fréquence max", 4) })] };
    },
  },

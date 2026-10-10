@@ -8,6 +8,8 @@
 // D'après Julius O. Smith III, « Physical Audio Signal Processing », 2010, chapitre « Feedback Comb
 // Filters » ; l'amortissement dans la boucle est celui de Karplus et Strong (1983).
 
+import { valeurA } from "./courbe";
+
 export interface OptionsPeigne {
   /** Les fréquences des peignes, en hertz. */
   frequences: number[];
@@ -114,16 +116,29 @@ export function peignesVoie(x: Float32Array, o: OptionsPeigneVoie): Float32Array
  * LE NIVEAU SE RAMÈNE SUR LA CRÊTE DE L'ENTRÉE ENTIÈRE, tous canaux confondus : un peigne accordé
  * accumule, et sans ce rattrapage la sortie passerait franchement au-dessus de ce qu'on lui a donné.
  */
-export function melangerPeignes(b: AudioBuffer, humides: Float32Array[], mixPc: number): AudioBuffer {
+/**
+ * Le mélange des peignes avec le son sec, après recalage de niveau.
+ *
+ * LE RECALAGE SE FAIT SUR LE SON ENTIER, AVANT LE MÉLANGE : une courbe ne le déplace donc pas, elle
+ * règle ce qui en sort. C'est ce qui rend ce réglage modulable exactement, le mélange n'étant plus
+ * qu'un gain sur ce qui est déjà calculé.
+ */
+export function melangerPeignes(
+  b: AudioBuffer, humides: Float32Array[], mixPc: number | Float32Array,
+): AudioBuffer {
   const sr = b.sampleRate, n = humides[0]?.length ?? b.length;
   const sortie = new AudioBuffer({ numberOfChannels: b.numberOfChannels, length: n, sampleRate: sr });
   let piqueHumide = 0;
   for (const h of humides) for (let i = 0; i < h.length; i++) piqueHumide = Math.max(piqueHumide, Math.abs(h[i]));
   const niveau = piqueHumide > 0 ? pic(b) / piqueHumide : 0;
-  const mix = Math.max(0, Math.min(1, mixPc / 100));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const mixA = (i: number) => Math.max(0, Math.min(1, valeurA(mixPc, i) / 100));
   for (let c = 0; c < b.numberOfChannels; c++) {
     const h = humides[c], s = b.getChannelData(c), d = sortie.getChannelData(c);
-    for (let i = 0; i < n; i++) d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    for (let i = 0; i < n; i++) {
+      const mix = mixA(i);
+      d[i] = h[i] * niveau * mix + (i < s.length ? s[i] : 0) * (1 - mix);
+    }
   }
   return sortie;
 }

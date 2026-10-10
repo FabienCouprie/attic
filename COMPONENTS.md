@@ -3207,12 +3207,13 @@ Formant shifting via LPC analysis. Separates voice into glottal source (pitch) a
 
 *All-pass filter cascade modulated by LFO (sweeping effect).*
 
-All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving peaks and notches in the spectrum, the "sweeping" effect characteristic of analog synths and guitars (Van Halen, Pink Floyd). Settings: • rate • depth • number of stages (2 to 8, more = stronger) • mix.
+All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving peaks and notches in the spectrum, the "sweeping" effect characteristic of analog synths and guitars (Van Halen, Pink Floyd). Settings: • rate • depth • number of stages (2 to 8, more = stronger) • mix. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Rate modulation | curve |  |
+| input | Modulation mix | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3223,6 +3224,8 @@ All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving pe
 | Mix | slider | 50 % | 0 – 100 %, step 1 | Mix between dry and wet signal. |
 | Rate min | slider | 0.1 Hz | 0.05 – 10 Hz, step 0.05 | Rate that a curve's zero means on the Rate modulation input: the swirl that tightens. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 4 Hz | 0.05 – 10 Hz, step 0.05 | Rate that the curve's one means. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Pitch Follower
 
@@ -3439,13 +3442,14 @@ Transforms a voice with preset effects from a dropdown: Chipmunk (high/cartoon),
 
 *Modulated bandpass filter (wah pedal effect).*
 
-Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards.
+Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
 | input | Rate modulation | curve |  |
+| input | Modulation mix | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3458,6 +3462,8 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
 | Rate min | slider | 0.5 Hz | 0.1 – 10 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 8 Hz | 0.1 – 10 Hz, step 0.1 | Rate that the curve's one means. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 ### Echo
 
@@ -3569,12 +3575,13 @@ Reverse echo: attenuated repetitions build up before the main sound. Principle: 
 
 *Delays the low end more than the high end, or the other way round, without cutting anything: the sound is not filtered, it is spread out.*
 
-Delays the low end more than the high end, or the other way round, without cutting anything. After Vesa Valimaki, Jonathan S. Abel and Julius O. Smith III, « Spectral Delay Filters », Journal of the Audio Engineering Society 57(7-8), 2009, pp. 521-531; feedback and time-varying coefficients come from Jussi Pekonen and Vesa Valimaki, « Spectral Delay Filters with Feedback and Time-Varying Coefficients », DAFx-09. An ordinary delay shifts the whole signal by the same time: it varies the amount, never its distribution across the spectrum. Here the low end can arrive eighty milliseconds after the high end, and yet nothing is filtered: the sound is not cut, it is spread out. Method. A first-order allpass changes no amplitude, hence its name, but delays each frequency by a different time, given by tau(w) = (1 - a^2)/(1 + 2a·cos w + a^2) samples. One section does almost nothing; put two hundred of them and the delays add up. At 44.1 kHz with two hundred sections and a dispersion of 0.9: 85.5 ms of delay at 100 Hz, 73.5 ms at 300 Hz, 30.5 ms at 1 kHz, 2.9 ms at 4 kHz and 0.6 ms at 10 kHz; theory gives 84.6, 74.0, 30.5, 2.9 and 0.6. The direction needs nothing but the sign of the coefficient: the formula swaps its two ends along with it. The two directions are not equals: the delay gathers in a bump that is narrow in frequency, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves, 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature. It is also why the node's message reports the delay at 100 Hz and at 10 kHz rather than at the two mathematical ends of the spectrum: announcing « 86 ms » on the high side would promise an effect the ear will not hear. Feedback returns the output into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. Modulation comes from the second paper: dispersion itself becomes a gesture, driven by a curve, a feature follower, a logistic sequence, a ramp. With no curve connected, the node returns exactly what the setting gives: there is only one computation path. Max tail bounds the output: the tail grows as (1+a)/(1-a), hence without bound as dispersion approaches one, at 0.999 and four hundred sections it is eighteen seconds, which feedback repeats again, and rendering would become endless. The output is longer than the input: the slow end's tail comes out after the sound has finished.
+Delays the low end more than the high end, or the other way round, without cutting anything. After Vesa Valimaki, Jonathan S. Abel and Julius O. Smith III, « Spectral Delay Filters », Journal of the Audio Engineering Society 57(7-8), 2009, pp. 521-531; feedback and time-varying coefficients come from Jussi Pekonen and Vesa Valimaki, « Spectral Delay Filters with Feedback and Time-Varying Coefficients », DAFx-09. An ordinary delay shifts the whole signal by the same time: it varies the amount, never its distribution across the spectrum. Here the low end can arrive eighty milliseconds after the high end, and yet nothing is filtered: the sound is not cut, it is spread out. Method. A first-order allpass changes no amplitude, hence its name, but delays each frequency by a different time, given by tau(w) = (1 - a^2)/(1 + 2a·cos w + a^2) samples. One section does almost nothing; put two hundred of them and the delays add up. At 44.1 kHz with two hundred sections and a dispersion of 0.9: 85.5 ms of delay at 100 Hz, 73.5 ms at 300 Hz, 30.5 ms at 1 kHz, 2.9 ms at 4 kHz and 0.6 ms at 10 kHz; theory gives 84.6, 74.0, 30.5, 2.9 and 0.6. The direction needs nothing but the sign of the coefficient: the formula swaps its two ends along with it. The two directions are not equals: the delay gathers in a bump that is narrow in frequency, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves, 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature. It is also why the node's message reports the delay at 100 Hz and at 10 kHz rather than at the two mathematical ends of the spectrum: announcing « 86 ms » on the high side would promise an effect the ear will not hear. Feedback returns the output into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. Modulation comes from the second paper: dispersion itself becomes a gesture, driven by a curve, a feature follower, a logistic sequence, a ramp. With no curve connected, the node returns exactly what the setting gives: there is only one computation path. Max tail bounds the output: the tail grows as (1+a)/(1-a), hence without bound as dispersion approaches one, at 0.999 and four hundred sections it is eighteen seconds, which feedback repeats again, and rendering would become endless. The output is longer than the input: the slow end's tail comes out after the sound has finished. A curve connected to the « Modulation mix » input takes the place of « Mix », with its bounds « Mix min » and « Mix max »; those of « Modulation » stay with dispersion.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Modulation | curve |  |
+| input | Modulation mix | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3584,6 +3591,8 @@ Delays the low end more than the high end, or the other way round, without cutti
 | Direction | choice | Low end delayed | Low end delayed / High end delayed | Which end of the spectrum arrives last. Nothing else needs changing to reverse the effect: it is the sign of the coefficient, and the group-delay formula swaps its two ends with it. The two directions are not equals, and it is better to know it: the delay gathers in a bump that is narrow in frequency, placed at the low end or at Nyquist depending on the sign. At the low end that bump spans several audible octaves, measured at 44.1 kHz, 200 sections, dispersion 0.9: 86 ms at 100 Hz, still 30 ms at 1 kHz. At the high end it sits in the last fraction of an octave below Nyquist, where there is almost nothing left to delay: 0.3 ms at 10 kHz, 1.4 ms at 16 kHz. « High end delayed » is therefore a subtle effect by nature, not a botched setting. |
 | Feedback | slider | 0 % | 0 – 95 %, step 1 | Feeds the output back into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. This is the addition of the 2009 paper's DAFx-09 sequel. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Max tail | slider | 4 s | 0.5 – 20 s, step 0.5 | Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable. |
 | Modulation min | slider | 0.2 | 0 – 0.99, step 0.01 | Dispersion that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 0.95 | 0 – 0.99, step 0.01 | Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach. |
@@ -4847,12 +4856,13 @@ Adjusts overall gain to bring the signal peak to the target level, without chang
 
 *A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell.*
 
-This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input.
+This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Fundamental modulation | curve |  |
+| input | Modulation mix | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4866,6 +4876,8 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
 | Fundamental min | slider | 55 Hz | 20 – 4000 Hz, step 1 | Fundamental that a connected curve's zero means. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Fundamental max | slider | 440 Hz | 20 – 4000 Hz, step 1 | Fundamental that the curve's one means. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Transient Shaper
 
@@ -4896,12 +4908,13 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 
 *Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics.*
 
-A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings. Resonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping. The chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input. After Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.
+A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings. Resonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping. The chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth. After Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Fundamental modulation | curve |  |
+| input | Modulation mix | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4913,6 +4926,8 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
 | Fundamental max | slider | 220 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that the curve's one means. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 ### Generation
 

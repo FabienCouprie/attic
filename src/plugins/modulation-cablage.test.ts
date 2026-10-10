@@ -38,6 +38,9 @@ import { fiches as fichesFdn } from "./fdn";
 import { fiches as fichesFinitions } from "./finitions";
 import { fiches as fichesTableOnde } from "./table-onde";
 import { fiches as fichesVelours } from "./velours";
+import { fiches as fichesSpectralCdp } from "./spectral-cdp";
+import { fiches as fichesConcret } from "./concret";
+import { fiches as fichesRetardSpectral } from "./retard-spectral";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const SR = 16000;
@@ -52,6 +55,7 @@ const LEURRE = 100;
 const TOUTES = [
   ...fichesArcEnCiel, ...fichesCresson, ...fichesEffets, ...fichesRotatifs,
   ...fichesTemporel, ...fichesFdn, ...fichesFinitions, ...fichesTableOnde, ...fichesVelours,
+  ...fichesSpectralCdp, ...fichesConcret, ...fichesRetardSpectral,
 ] as unknown as FicheAudio[];
 
 const fiche = (id: string): FicheAudio => {
@@ -167,11 +171,27 @@ const CAS: {
     id: "vague", reglage: "Ouverture", entrees: () => [son(61, 2), undefined],
     noms: ["Ouverture min", "Ouverture max"], rang: 2,
   },
+  // LES CINQ « MIX » QUE LE RECENSEMENT PAR RÉGLAGE A FAIT REPARAÎTRE. Chacun portait déjà un port
+  // de courbe POUR AUTRE CHOSE, d'où les `undefined` qui tiennent la place de ces ports-là. C'est
+  // aussi pourquoi les cinq portent « Mix min / Mix max » et non les bornes par défaut : sur une
+  // fiche qui module déjà autre chose, « Modulation min » ne dit pas de quoi il est la borne.
+  { id: "phaser", reglage: "Mix", entrees: () => [son(67, 2), undefined],
+    noms: ["Mix min", "Mix max"] },
+  { id: "wahwah", reglage: "Mix", entrees: () => [son(71, 2), undefined, undefined],
+    noms: ["Mix min", "Mix max"] },
+  { id: "peignes-accordes", reglage: "Mix", entrees: () => [son(73), undefined],
+    noms: ["Mix min", "Mix max"] },
+  { id: "resonateurs", reglage: "Mix", entrees: () => [son(79), undefined],
+    noms: ["Mix min", "Mix max"] },
+  {
+    id: "retard-spectral", reglage: "Mix", entrees: () => [son(83), undefined],
+    noms: ["Mix min", "Mix max"],
+  },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien dix-sept ports à éprouver", () => {
-    expect(CAS).toHaveLength(17);
+  it("il y a bien vingt-deux ports à éprouver", () => {
+    expect(CAS).toHaveLength(22);
   });
 
   for (const cas of CAS) {
