@@ -14,6 +14,7 @@ import {
 import { parCanal } from "./hors-fil";
 import { appliquerRognage, planRognage } from "../audio/silences";
 import { fusionnerStereo } from "../audio/effets-montage";
+import { MODULATION_MIX, bornesModulation, melangeModule, portModulation } from "./effets-aides";
 
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
@@ -23,9 +24,9 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Une queue de réverbération coupée net par une porte commandée par le son sec.",
     resumeEn: "A reverb tail cut dead by a gate driven by the dry sound.",
-    notice: "Réverbère un son percussif et coupe net sa queue, à la commande du son sec. C'est le son de batterie des années quatre-vingt, et il ne s'obtient pas en posant une porte derrière une réverbération : une porte ordinaire écoute ce qu'elle traite : placée après la queue, elle se ferme quand la queue passe sous son seuil, c'est-à-dire tard et progressivement. On entend une extinction, là où l'on voulait un couperet.\n\nIci la porte est commandée par le son sec. Elle s'ouvre à l'attaque, tient un temps fixe, puis coupe net, et c'est ce silence brutal qui fait l'effet. Tant que le sec repasse au-dessus du seuil, le compte à rebours repart : une roulade tient donc la porte ouverte, et le couperet tombe après la dernière frappe.\n\nLe composant annonce la traînée, ce que la réverbération ajoute après la fin du son sec, avant et après hachage : elle passe de plus d'une seconde à quatre dixièmes. La part d'énergie jetée, onze pour cent, ne dit pas la même chose : une queue s'entend longtemps après qu'elle ne pèse plus rien.\n\nLe composant demande une batterie, ou n'importe quoi de percussif : l'effet suppose des attaques nettes, puisque c'est sur elles que la porte se règle.",
-    noticeEn: "Reverberates a percussive sound and cuts its tail dead, driven by the dry sound. It is the drum sound of the eighties, and it is not obtained by putting a gate after a reverb: an ordinary gate listens to what it processes: placed after the tail, it closes when the tail falls below its threshold, that is, late and gradually. One hears a decay where a cleaver was wanted.\n\nHere the gate is driven by the dry sound. It opens at the attack, holds for a fixed time, then cuts dead, and that brutal silence is the effect. As long as the dry signal comes back above the threshold the countdown restarts: a roll therefore holds the gate open, and the cleaver falls after the last hit.\n\nThe node reports the trail, what the reverb adds after the dry sound ends, before and after gating: it goes from more than a second to four tenths. The share of energy discarded, eleven per cent, does not say the same thing: a tail is heard long after it weighs nothing.\n\nThe node calls for drums, or anything percussive: the effect assumes clear attacks, since it is on them that the gate is set.",
-    entrees: [{ nom: "Audio", type: "audio" }],
+    notice: "Réverbère un son percussif et coupe net sa queue, à la commande du son sec. C'est le son de batterie des années quatre-vingt, et il ne s'obtient pas en posant une porte derrière une réverbération : une porte ordinaire écoute ce qu'elle traite : placée après la queue, elle se ferme quand la queue passe sous son seuil, c'est-à-dire tard et progressivement. On entend une extinction, là où l'on voulait un couperet.\n\nIci la porte est commandée par le son sec. Elle s'ouvre à l'attaque, tient un temps fixe, puis coupe net, et c'est ce silence brutal qui fait l'effet. Tant que le sec repasse au-dessus du seuil, le compte à rebours repart : une roulade tient donc la porte ouverte, et le couperet tombe après la dernière frappe.\n\nUne courbe branchée sur l'entrée « Modulation » prend la place de « Mix » : « Modulation min » et « Modulation max » disent alors ce que valent le zéro et le un de cette courbe, et « Mix » cesse d'agir. La queue et la porte se calculent avant le mélange, de sorte que faire varier la part n'en change ni la densité ni l'instant de fermeture.\n\nLe composant annonce la traînée, ce que la réverbération ajoute après la fin du son sec, avant et après hachage : elle passe de plus d'une seconde à quatre dixièmes. La part d'énergie jetée, onze pour cent, ne dit pas la même chose : une queue s'entend longtemps après qu'elle ne pèse plus rien.\n\nLe composant demande une batterie, ou n'importe quoi de percussif : l'effet suppose des attaques nettes, puisque c'est sur elles que la porte se règle.",
+    noticeEn: "Reverberates a percussive sound and cuts its tail dead, driven by the dry sound. It is the drum sound of the eighties, and it is not obtained by putting a gate after a reverb: an ordinary gate listens to what it processes: placed after the tail, it closes when the tail falls below its threshold, that is, late and gradually. One hears a decay where a cleaver was wanted.\n\nHere the gate is driven by the dry sound. It opens at the attack, holds for a fixed time, then cuts dead, and that brutal silence is the effect. As long as the dry signal comes back above the threshold the countdown restarts: a roll therefore holds the gate open, and the cleaver falls after the last hit.\n\nA curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The tail and the gate are computed before the mix, so that varying the share changes neither their density nor the moment of closing.\n\nThe node reports the trail, what the reverb adds after the dry sound ends, before and after gating: it goes from more than a second to four tenths. The share of energy discarded, eleven per cent, does not say the same thing: a tail is heard long after it weighs nothing.\n\nThe node calls for drums, or anything percussive: the effect assumes clear attacks, since it is on them that the gate is set.",
+    entrees: [{ nom: "Audio", type: "audio" }, portModulation("Mix")],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Décroissance", nomEn: "Decay", type: "curseur", plage: [0.2, 4], pas: 0.1, defaut: 1.5, unite: "s",
@@ -46,6 +47,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine de la réponse de la salle. Une même graine rejoue la même pièce.",
         docEn: "Seed of the room's response. The same seed replays the same room." },
+      ...bornesModulation(MODULATION_MIX),
     ],
     async executer(ctx: any) {
       const e = ctx.entree(0);
@@ -55,7 +57,7 @@ export const fiches: FicheAudio[] = ([
         maintienSec: ctx.paramNombre("Maintien", 0.2),
         chuteSec: ctx.paramNombre("Chute", 0.01),
         seuilDb: ctx.paramNombre("Seuil", -40),
-        melange: ctx.paramNombre("Mix", 60) / 100,
+        melange: melangeModule(ctx, e.length, 1, { reglage: "Mix", defaut: 60 }),
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,
       };

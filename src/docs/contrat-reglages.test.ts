@@ -77,6 +77,35 @@ describe("le contrat de réglages", () => {
     expect(fautifs).toEqual([]);
   });
 
+  it("DEUX RÉGLAGES D'UNE MÊME FICHE NE PORTENT PAS LE MÊME NOM", () => {
+    // CE QU'UN HOMONYME FAIT, ET IL NE LÈVE AUCUNE ERREUR. Une fiche range ses valeurs par NOM :
+    // `useExecutionGraphe` lit `noeud.data.parametres[nom]`, et la définition retenue est la
+    // PREMIÈRE qui porte ce nom. Deux réglages homonymes partagent donc une seule valeur, et le
+    // second voit la plage, l'unité et le pas du premier. Mesuré sur un banc avant d'être tenu
+    // ici : deux bornes de modulation posées à 0 → 40 se lisaient aussi pour un second réglage
+    // dont la plage déclarée allait de 0 à 10 secondes, et une courbe tenue à un y donnait 40.
+    //
+    // LA FORME CHERCHÉE EST L'HOMONYMIE, non une liste de noms à surveiller. Le piège qui a fait
+    // écrire ce cas est `bornesModulation`, qui rendait « Modulation min » et « Modulation max »
+    // quel que soit le réglage piloté : deux appels sur une même fiche suffisaient. Il accepte
+    // désormais les noms des bornes, et la convention du catalogue est que le premier réglage
+    // modulé garde « Modulation min / max » tandis que les suivants prennent le nom de leur
+    // réglage, « Temps min » sur l'écho, « Azimut min » sur le spatialiseur.
+    const fautifs: string[] = [];
+    for (const f of toutesLesFiches) {
+      const vus = new Map<string, number>();
+      for (const p of f.parametres ?? []) vus.set(p.nom, (vus.get(p.nom) ?? 0) + 1);
+      for (const [nom, n] of vus) if (n > 1) fautifs.push(`${f.id} : « ${nom} » déclaré ${n} fois`);
+    }
+    expect(fautifs).toEqual([]);
+  });
+
+  it("relève bien assez de réglages pour que l'homonymie ait une chance de s'y voir", () => {
+    // Un contrôle qui ne parcourt plus rien passe au vert sans rien tenir.
+    const total = toutesLesFiches.reduce((n, f) => n + (f.parametres?.length ?? 0), 0);
+    expect(total).toBeGreaterThan(2000);
+  });
+
   it("UN RÉGLAGE NUMÉRIQUE DÉCLARE SES BORNES, sans quoi la glissière n'a pas de course", () => {
     const sansPlage: string[] = [];
     for (const f of toutesLesFiches) {

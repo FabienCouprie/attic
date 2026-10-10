@@ -17,6 +17,7 @@
 import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { fiches } from "./effets-cresson";
+import { luParLExecuteur } from "./effets-aides";
 
 const SR = 16000;
 
@@ -390,14 +391,16 @@ describe("les six fiches déclarent ce qu'elles rendent", () => {
   }
 
   it("TOUT PARAMÈTRE DÉCLARÉ EST LU PAR SON EXÉCUTEUR", () => {
-    // Un paramètre que personne ne lit est un curseur qui ne peut rien changer. Ces six fiches
-    // lisent tout elles-mêmes — aucune ne passe son contexte à une aide partagée —, donc la source
-    // de l'exécuteur suffit.
+    // Un paramètre que personne ne lit est un curseur qui ne peut rien changer. La source de
+    // l'exécuteur suffit à le voir, à une réserve près : les deux bornes d'une modulation sont lues
+    // par l'aide partagée qui en fait un mélange, et `luParLExecuteur` en tient compte. Le nom du
+    // réglage mélangé, lui, reste écrit à l'appel, précisément pour rester sous ce regard.
     for (const id of TOUS) {
       const f = fiche(id);
       const source = f.executer.toString();
       for (const p of f.parametres ?? []) {
-        expect(source, `${id} : le paramètre « ${p.nom} » n'est lu nulle part`).toContain(`"${p.nom}"`);
+        expect(luParLExecuteur(source, p.nom),
+          `${id} : le paramètre « ${p.nom} » n'est lu nulle part`).toBe(true);
       }
     }
   });

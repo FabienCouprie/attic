@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1311 files, 229594 lines, of which 157400 are code.**
-The table lists the 179 files of 200 code lines or more, heaviest first;
-the remaining 1132 account for 154692 lines.
+**1313 files, 230462 lines, of which 157876 are code.**
+The table lists the 181 files of 200 code lines or more, heaviest first;
+the remaining 1132 account for 154740 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -18,7 +18,7 @@ the remaining 1132 account for 154692 lines.
 | src/ui/atelier.css | 1408 | 1782 | ! |
 | src/ui/App.tsx | 1219 | 1643 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 727 | 1514 | ! |
-| src/ui/Inspector.tsx | 606 | 763 | ! |
+| src/ui/Inspector.tsx | 615 | 789 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
@@ -34,7 +34,7 @@ the remaining 1132 account for 154692 lines.
 | src/plugins/montage.ts | 390 | 542 |  |
 | src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
-| src/plugins/finitions.test.ts | 384 | 516 |  |
+| src/plugins/finitions.test.ts | 386 | 521 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
@@ -62,23 +62,23 @@ the remaining 1132 account for 154692 lines.
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
+| src/plugins/effets-spectral.ts | 329 | 433 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
-| src/plugins/effets-spectral.ts | 328 | 432 |  |
 | src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
+| src/plugins/effets-temporel.ts | 320 | 445 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
-| src/plugins/effets-temporel.ts | 318 | 442 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
+| src/plugins/effets-cresson.test.ts | 314 | 408 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
-| src/plugins/effets-cresson.test.ts | 312 | 405 |  |
 | src/quiz/notions.ts | 312 | 337 |  |
 | src/audio/conformite-clavier.ts | 311 | 435 |  |
 | src/plugins/tone-synths-generateurs.test.ts | 311 | 459 |  |
@@ -134,6 +134,7 @@ the remaining 1132 account for 154692 lines.
 | src/audio/multi-reservoir.ts | 248 | 325 |  |
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
+| src/audio/modulation-melange.test.ts | 247 | 356 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
@@ -153,16 +154,16 @@ the remaining 1132 account for 154692 lines.
 | src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
+| src/plugins/effets-cresson.ts | 232 | 316 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
-| src/plugins/effets-cresson.ts | 230 | 313 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
+| src/plugins/effets.ts | 224 | 265 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
-| src/plugins/effets.ts | 221 | 259 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
@@ -194,3 +195,4 @@ the remaining 1132 account for 154692 lines.
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
 | src/audio/ondelettes.ts | 200 | 349 |  |
+| src/plugins/effets-aides.ts | 200 | 417 |  |

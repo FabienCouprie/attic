@@ -37,6 +37,7 @@
 // 0,73 s à 18 kHz pour 0,50 demandé, l'exactitude tombant à une fréquence que personne n'écoute.
 // En résolvant à 8 kHz, le réglage annonce ce qu'on entend. C'est ce que les tests VÉRIFIENT, par
 // l'intégrale de Schroeder sur la réponse obtenue, bande par bande.
+import { valeurA } from "./courbe";
 import { courbeSchroeder } from "./velours";
 
 export interface OptionsFdn {
@@ -56,7 +57,11 @@ export interface OptionsFdn {
   queue?: number;
   /** Largeur stéréo, de 0 (mono) à 1. */
   largeur?: number;
-  melange?: number;
+  /**
+   * Part de réverbération, de 0 à 1. Un tableau la fait varier échantillon par échantillon ;
+   * au-delà de sa fin, sa dernière valeur tient, ce qui couvre la queue ajoutée après le son.
+   */
+  melange?: number | Float32Array;
 }
 
 /** Vrai si n est premier. Sert à choisir des retards sans diviseur commun. */
@@ -167,7 +172,8 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
   const maxEch = Math.max(minEch + 8, Math.round(((o.retardMax ?? 79) * sr) / 1000));
   const rtBas = Math.max(0.05, o.rt60Bas ?? 2);
   const rtHaut = Math.max(0.05, o.rt60Haut ?? 0.7);
-  const melange = Math.min(1, Math.max(0, o.melange ?? 0.35));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const melangeA = (i: number) => Math.min(1, Math.max(0, valeurA(o.melange ?? 0.35, i)));
   const largeur = Math.min(1, Math.max(0, o.largeur ?? 1));
   const queue = Math.max(0.05, o.queue ?? Math.max(rtBas, rtHaut));
   const n = x.length + Math.round(queue * sr);
@@ -209,6 +215,7 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
     const moyenne = (humideG + humideD) / 2;
     const g2 = moyenne + largeur * (humideG - moyenne);
     const d2 = moyenne + largeur * (humideD - moyenne);
+    const melange = melangeA(t);
     gauche[t] = melange * g2 + (1 - melange) * sec;
     droite[t] = melange * d2 + (1 - melange) * sec;
   }

@@ -155,6 +155,12 @@ function ChampChemin({ p, valeur, titre, onChanger }: {
  * vide : il rend une course À L'ENVERS, que la courbe parcourt en descendant. C'est utilisable —
  * un filtre qui se ferme quand le son s'ouvre — et rien n'est donc empêché ; la lecture affiche
  * simplement une flèche descendante, pour qu'on sache que c'est voulu.
+ *
+ * ET DEUX BORNES ÉGALES ONT LEUR PROPRE SIGNE. C'est le seul réglage de cette plage qui rende la
+ * courbe INERTE : elle continue d'arriver, la course qu'elle parcourt ne va nulle part, et le son
+ * ne bouge pas. Relevé à l'écran avant d'être traité, il s'affichait « 0 % → 100 % » puis
+ * « 0 % → 0 % » sans que rien ne distingue les deux. Une flèche promet un trajet ; un signe égal
+ * dit qu'il n'y en a pas, et l'aide de la rangée explique les trois signes.
  */
 function PlageModulation(
   { p, libelle, bornes, params, lang, onChanger }: {
@@ -190,7 +196,7 @@ function PlageModulation(
   return (
     <div className="inspecteur-plage">
       <div className="inspecteur-plage-lecture">
-        {nombre(bas)}{unite ? ` ${unite}` : ""} {haut >= bas ? "→" : "↓"} {nombre(haut)}{unite ? ` ${unite}` : ""}
+        {nombre(bas)}{unite ? ` ${unite}` : ""} {haut > bas ? "→" : haut < bas ? "↓" : "="} {nombre(haut)}{unite ? ` ${unite}` : ""}
       </div>
       {curseur(bornes.min, "min")}
       {curseur(bornes.max, "max")}
@@ -288,7 +294,27 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         if (typeof p.port === "number" && !(portsBranches ?? []).includes(p.port)) return null;
         // Cacher conditionnellement certains paramètres selon la valeur d'un autre
         if (def.id === "gestion-nodes" && p.nom === "Node à exporter" && params["Action"] === "Importer") return null;
-        const docP = lang === "en" && p.docEn ? p.docEn : p.doc;
+        // L'AIDE DIT CE QU'ON REGARDE, ET CELA CHANGE AVEC L'ÉTAT DE LA RANGÉE. Quand une courbe
+        // est branchée, le réglage a cédé la place à ses deux bornes : son aide doit alors parler
+        // de la course, non du curseur disparu. La phrase vivait dans la documentation de chaque
+        // réglage, où elle finissait par « ce réglage ne sert alors plus à rien » — vrai du
+        // curseur, absurde à côté des deux seuls curseurs réglables. Elle est ici, une fois, et
+        // l'inspecteur choisit laquelle des deux il montre.
+        const groupeBornes = bornes.get(p.nom);
+        const moduleMaintenant = !!groupeBornes && (parametresModules ?? []).includes(p.nom);
+        // LE PORT EST NOMMÉ, ET NON SUPPOSÉ. Dix composants du catalogue portent plusieurs entrées
+        // de modulation — trois en ont trois —, et elles ne s'appellent pas « Modulation » mais
+        // « Modulation coupure », « Modulation azimut », « Modulation feedback ». Une phrase qui
+        // dirait « l'entrée Modulation » enverrait le lecteur vers un port qui n'existe pas sur
+        // son nœud. Le port se retrouve par le réglage qu'il déclare piloter.
+        const portModule = (def.entrees as any[] | undefined)?.find((e) => e.module === p.nom);
+        const docFiche = lang === "en" && p.docEn ? p.docEn : p.doc;
+        const annonce = () => t("inspecteur.modulation.annonce")
+          .replace("{__VAR_0__}", portModule ? nomP(portModule) : t("inspecteur.modulation.port"));
+        const docP = groupeBornes
+          ? [docFiche, moduleMaintenant ? t("inspecteur.modulation.aide") : annonce()]
+            .filter(Boolean).join(" ")
+          : docFiche;
         const defautP = defautParametre(p, lang);
         const isOpen = docsOuverts.has(p.nom);
         // Une valeur réglée ne se distinguait pas d'une valeur par défaut : devant un
@@ -356,12 +382,12 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               onChanger={(v) => onChangerParametre(p.nom, v)} />
           ) : p.type === "couleurs" ? (
             <SaisieCouleurs valeur={String(params[p.nom] ?? defautP)} onChange={(v) => onChangerParametre(p.nom, v)} />
-          ) : bornes.get(p.nom) && (parametresModules ?? []).includes(p.nom) ? (
+          ) : moduleMaintenant ? (
             // LE PARAMÈTRE PILOTÉ DEVIENT SA PROPRE PLAGE. Son curseur d'origine ne commande plus
             // rien — la courbe a pris la main —, et l'afficher comme un réglage vivant était le
             // mensonge de l'inspecteur. À sa place, et dans ses unités, les deux bornes que la
             // courbe parcourt réellement.
-            <PlageModulation p={p} libelle={nomP(p)} bornes={bornes.get(p.nom)!} params={params} lang={lang}
+            <PlageModulation p={p} libelle={nomP(p)} bornes={groupeBornes!} params={params} lang={lang}
               onChanger={onChangerParametre} />
           ) : (
             <div className="inspecteur-range">

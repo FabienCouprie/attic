@@ -32,6 +32,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { fiches } from "./finitions";
+import { luParLExecuteur } from "./effets-aides";
 
 const SR = 22050;
 
@@ -475,10 +476,14 @@ describe("ce que les quatre fiches déclarent", () => {
   });
 
   it("TOUT PARAMÈTRE DÉCLARÉ EST LU PAR SON EXÉCUTEUR", () => {
+    // Les deux bornes d'une modulation sont lues par l'aide partagée qui en fait un mélange, non
+    // par l'exécuteur : `luParLExecuteur` en tient compte, le nom du réglage mélangé restant écrit
+    // à l'appel.
     for (const id of QUATRE) {
       const source = fiche(id).executer.toString();
       for (const p of fiche(id).parametres ?? []) {
-        expect(source, `${id} : le paramètre « ${p.nom} » n'est lu nulle part`).toContain(`"${p.nom}"`);
+        expect(luParLExecuteur(source, p.nom),
+          `${id} : le paramètre « ${p.nom} » n'est lu nulle part`).toBe(true);
       }
     }
   });
