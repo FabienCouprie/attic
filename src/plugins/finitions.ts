@@ -55,10 +55,15 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de la réponse de la salle. Une même graine rejoue la même pièce.",
         docEn: "Seed of the room's response. The same seed replays the same room." },
       ...bornesModulation(MODULATION_MIX),
-      ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-80, 0], "dB"), defauts: [-60, -20] }),
-      // LE PAS EST CELUI DU RÉGLAGE BORNÉ, et il manquait : au pas de un, cette borne de 0,005 à
-      // 2 secondes n'offrait que DEUX positions atteignables, et le curseur était inutilisable.
-      ...bornesModulation({ ...modulationNommee("Chute", "Fall", [0.005, 2], "s"), defauts: [0.01, 0.5], pas: 0.002 }),
+      // LES DEUX BORNES TIENNENT DÉSORMAIS DANS LA COURSE DE LEUR RÉGLAGE, et c'est le réglage qui
+      // avait raison des deux côtés. Sa documentation dit du seuil que « trop bas, elle reste
+      // ouverte sur le souffle ; trop haut, les frappes douces ne déclenchent plus rien », et de
+      // la chute qu'« au-delà d'une centaine de millisecondes, on entend un fondu et l'effet
+      // disparaît ». Les bornes allaient de −80 à 0 dB et jusqu'à deux secondes, bien au-delà.
+      ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-60, -10], "dB"), defauts: [-60, -20] }),
+      // LE PAS EST CELUI DU RÉGLAGE BORNÉ, et il manquait : au pas de un, cette borne n'offrait
+      // que DEUX positions atteignables, et le curseur était inutilisable.
+      ...bornesModulation({ ...modulationNommee("Chute", "Fall", [0.002, 0.3], "s"), defauts: [0.01, 0.3], pas: 0.002 }),
     ],
     async executer(ctx: any) {
       const e = ctx.entree(0);
@@ -69,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         // Le repli des bornes est donné : ce sont des secondes et des décibels, non des pour cent.
         chuteSec: reglageModule(ctx, e.length, 3, {
           reglage: "Chute", defaut: 0.01, rendu: "pourCent", noms: ["Chute min", "Chute max"],
-          bornes: [0.01, 0.5] }),
+          bornes: [0.01, 0.3] }),
         seuilDb: reglageModule(ctx, e.length, 2, {
           reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"],
           bornes: [-60, -20] }),

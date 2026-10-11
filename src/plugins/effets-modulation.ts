@@ -162,7 +162,10 @@ export const fiches: FicheAudio[] = ([
         docEn: "Position that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Position que vaut le un de la courbe.", docEn: "Position that the curve's one means." },
-      ...bornesModulation(modulationNommee("Largeur", "Width", [0, 200], "%")),
+      // LA BORNE S'ARRÊTE À CENT, comme le réglage, et c'est le réglage qui avait raison : sa
+      // documentation dit que cent pour cent « emmène le son JUSQU'À la position réglée ». Au-delà
+      // il la dépasserait, ce qui n'est plus une largeur. La borne montait à deux cents.
+      ...bornesModulation(modulationNommee("Largeur", "Width", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -173,7 +176,7 @@ export const fiches: FicheAudio[] = ([
       // que ce composant emploie pour sa position, deux cents points par seconde.
       const larg = reglageModule(ctx, Math.round((a.length / a.sampleRate) * CADENCE), 2, {
         // Le repli des bornes est donné : sa course monte à deux cents pour cent, non à cent.
-        reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"], bornes: [0, 200],
+        reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"], bornes: [0, 100],
       });
       return { valeurs: [await spatialiserStereo(a, pos, larg, ctx.entree(1), {
         min: ctx.paramNombre("Modulation min", -100) / 100,

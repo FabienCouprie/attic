@@ -220,7 +220,12 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-180, 180], pas: 1, defaut: 180, unite: "°",
+      // LA COURSE VA JUSQU'À UN TOUR ENTIER, et c'est ici la BORNE qui avait raison : sa
+      // documentation dit « de zéro à 360°, une rampe fait faire un tour complet à la scène », et
+      // le réglage s'arrêtait à un demi-tour. Une borne ne peut pas demander ce que le réglage ne
+      // sait pas prendre. Posé seul, 360° revient à zéro, ce qui est sans conséquence ; c'est
+      // comme point d'arrivée d'une courbe que cette valeur sert.
+      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-360, 360], pas: 1, defaut: 180, unite: "°",
         doc: "De combien la scène tourne, dans le sens direct. À 180°, la gauche et la droite sont échangées ; à 90°, ce qui était à gauche passe devant. Sur une source mono, cet échange est inaudible, deux canaux identiques échangés restent identiques, et seul le niveau baisse ; c'est à 90° qu'une source mono se déplace, de 9,5 dB. Une courbe branchée sur l'entrée Modulation fait tourner la scène en continu, ce qui s'entend bien mieux qu'un angle fixe.",
         docEn: "How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle." },
       { nom: "Écart des sources", nomEn: "Source spread", type: "curseur", plage: [30, 180], pas: 5, defaut: 90, unite: "°",

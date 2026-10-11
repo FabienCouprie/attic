@@ -76,7 +76,11 @@ export const fiches: FicheAudio[] = ([
     (a, amount, freq, mix) => exciter(a, amount, freq, mix),
     undefined,
     [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
-     { parametre: "Fréquence", bornes: [1000, 12000], defauts: [2000, 9000], unite: "Hz" }]),
+     // LA BORNE NE DÉPASSE PAS LA COURSE DU RÉGLAGE, qui s'arrête à dix mille hertz. Plus ÉTROITE
+     // est légitime, et c'est même voulu ici au grave : une borne dit ce qu'une courbe parcourt,
+     // non toute l'étendue où l'on peut poser le réglage. Plus LARGE est une contradiction, la
+     // courbe demandant alors une valeur que le réglage ne peut pas prendre.
+     { parametre: "Fréquence", bornes: [1000, 10000], defauts: [2000, 9000], unite: "Hz" }]),
   effet("flanger", "Flanger", "Flanger", "Modulation par délai variable.", "Variable delay modulation.",
     [param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.5, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 3, "Depth", "ms", "Amplitude du balayage.", "Modulation depth in ms.")],
     (a,mix,v,p) => appliquerFlanger(a, v, p, mix),

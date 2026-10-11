@@ -102,6 +102,51 @@ describe("les ports de modulation", () => {
     }
   });
 
+  it("UNE BORNE NE DÉPASSE JAMAIS LA COURSE DU RÉGLAGE QU'ELLE BORNE", () => {
+    // UNE BORNE DIT CE QUE VAUT LE ZÉRO OU LE UN D'UNE COURBE, dans l'unité du réglage. Plus
+    // ÉTROITE que son réglage, elle est légitime et c'est même une intention écrite : le limiteur
+    // le dit de son relâchement, « une plage de trois décades est là pour que chacun trouve son
+    // réglage, non pour qu'une courbe la parcoure d'un bout à l'autre ».
+    //
+    // PLUS LARGE, C'EST UNE CONTRADICTION : la courbe demande alors une valeur que le réglage ne
+    // peut pas prendre, et l'écran montre deux courses qui se contredisent. DOUZE bornes sur six
+    // réglages étaient dans ce cas, et chacune a demandé de décider laquelle des deux avait
+    // raison : cinq fois la borne, une fois le réglage. Les raisons sont écrites à côté de chaque
+    // déclaration, et c'est la documentation de chaque réglage qui a tranché.
+    const hors: string[] = [];
+    for (const f of toutesLesFiches as any[]) {
+      for (const b of f.parametres ?? []) {
+        if (!b.modulationDe || !b.plage) continue;
+        const cible = (f.parametres ?? []).find((p: any) => p.nom === b.modulationDe);
+        if (!cible?.plage) continue;
+        if (b.plage[0] < cible.plage[0] || b.plage[1] > cible.plage[1]) {
+          hors.push(`${f.id} · ${b.nom} : borne de ${b.plage[0]} à ${b.plage[1]},`
+            + ` réglage de ${cible.plage[0]} à ${cible.plage[1]}`);
+        }
+      }
+    }
+    expect(hors, hors.length === 0 ? "" :
+      `${hors.length} borne(s) dépassent la course de leur réglage :\n  ${hors.join("\n  ")}`)
+      .toEqual([]);
+  });
+
+  it("ET SES DEUX DÉFAUTS TIENNENT DANS SA PROPRE COURSE", () => {
+    // Un défaut hors course se voit mal : le curseur l'affiche écrêté, et la valeur lue au run
+    // reste celle d'avant jusqu'à ce qu'on y touche.
+    const hors: string[] = [];
+    for (const f of toutesLesFiches as any[]) {
+      for (const b of f.parametres ?? []) {
+        if (!b.modulationDe || !b.plage || typeof b.defaut !== "number") continue;
+        if (b.defaut < b.plage[0] || b.defaut > b.plage[1]) {
+          hors.push(`${f.id} · ${b.nom} : défaut ${b.defaut} hors de ${b.plage[0]}-${b.plage[1]}`);
+        }
+      }
+    }
+    expect(hors, hors.length === 0 ? "" :
+      `${hors.length} borne(s) ont un défaut hors de leur course :\n  ${hors.join("\n  ")}`)
+      .toEqual([]);
+  });
+
   it("UNE BORNE SE RÈGLE : son curseur offre assez de positions pour qu'on l'atteigne", () => {
     // CE QUE CE GARDE CHERCHE, ET POURQUOI IL NE CHERCHE PAS LE PAS. Une borne plus grossière que
     // le réglage qu'elle borne n'est pas fautive en soi : trente-quatre le sont, et la plupart

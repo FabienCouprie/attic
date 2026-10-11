@@ -3176,8 +3176,8 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Mix | number | 30 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
-| Frequency min | slider | 2000 Hz | 1000 – 12000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Frequency max | slider | 9000 Hz | 1000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Frequency min | slider | 2000 Hz | 1000 – 10000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Frequency max | slider | 9000 Hz | 1000 – 10000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
 
 #### Flanger
 
@@ -6710,13 +6710,13 @@ A reverb whose decay time is set separately for the low and the high end. After 
 | Longest delay | slider | 79 ms | 20 – 200 ms, step 1 | Length of the longest line. The gap between the two makes the density of early echoes; narrow it and you hear a corridor, widen it and a cathedral. |
 | Width | slider | 100 % | 0 – 100 %, step 1 | Difference between the two channels. At zero the reverb is mono; the two channels come from different sign combinations of the same lines, which decorrelates them at no cost. |
 | Mix | slider | 35 % | 0 – 100 %, step 1 | Proportion of reverb. At 0 %, the output is the input. The « Impulse response » output does not depend on this setting, it is always returned as reverb alone. |
-| Tail | slider | 0 s | 0.2 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one. |
+| Tail | slider | 0 s | 0 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Width min | slider | 0 % | 0 – 100 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. |
-| Tail min | slider | 0.5 s | 0 – 20 s, step 1 | Value of « Tail » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Tail max | slider | 8 s | 0 – 20 s, step 1 | Value of « Tail » that the curve's one means. |
+| Tail min | slider | 0.5 s | 0 – 15 s, step 1 | Value of « Tail » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Tail max | slider | 8 s | 0 – 15 s, step 1 | Value of « Tail » that the curve's one means. |
 | High reference min | slider | 2000 Hz | 1000 – 16000 Hz, step 1 | Value of « High reference » that a connected curve's zero means. With no curve, this setting does nothing. |
 | High reference max | slider | 12000 Hz | 1000 – 16000 Hz, step 1 | Value of « High reference » that the curve's one means. |
 
@@ -6769,10 +6769,10 @@ Reverberates a percussive sound and cuts its tail dead, driven by the dry sound.
 | Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
-| Threshold min | slider | -60 dB | -80 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -20 dB | -80 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
-| Fall min | slider | 0.01 s | 0.005 – 2 s, step 0.002 | Value of « Fall » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Fall max | slider | 0.5 s | 0.005 – 2 s, step 0.002 | Value of « Fall » that the curve's one means. |
+| Threshold min | slider | -60 dB | -60 – -10 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Threshold max | slider | -20 dB | -60 – -10 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Fall min | slider | 0.01 s | 0.002 – 0.3 s, step 0.002 | Value of « Fall » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Fall max | slider | 0.3 s | 0.002 – 0.3 s, step 0.002 | Value of « Fall » that the curve's one means. |
 
 #### Progressive Reverb
 
@@ -7377,7 +7377,7 @@ After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal o
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Rotation | slider | 180 ° | -180 – 180 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle. |
+| Rotation | slider | 180 ° | -360 – 360 °, step 1 | How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle. |
 | Source spread | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides. Contrary to expectation, wide is not more striking, and at the extreme it is the opposite: the share of the field a rotation can move is the cosine of half this spread on a mono take, 0.71 at 90°, and zero at 180°, where no angle changes anything any more. On a true stereo take, 180° does not turn the image either: a quarter-turn there makes the two channels identical, measured; it crushes the image instead of turning it. Ninety degrees is the setting that really turns. |
 | Decoder width | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre. |
 | Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
@@ -7584,8 +7584,8 @@ Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for re
 | Width | slider | 100 % | 0 – 100 %, step 1 | Extent of the movement around the position: 0% leaves the sound in the centre, 100% takes it all the way to the set position. The sound is first folded to mono; no effect when the position is centred and no curve is connected. |
 | Modulation min | slider | -100 % | -100 – 100 %, step 1 | Position that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | -100 – 100 %, step 1 | Position that the curve's one means. |
-| Width min | slider | 0 % | 0 – 200 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Width max | slider | 200 % | 0 – 200 %, step 1 | Value of « Width » that the curve's one means. |
+| Width min | slider | 0 % | 0 – 100 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. |
 
 #### Stereo Width / MS
 
