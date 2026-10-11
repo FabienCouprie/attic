@@ -178,8 +178,18 @@ const CAS: {
   { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)], rang: 1 },
   { id: "haut-parleur-rotatif", reglage: "Mélange", entrees: () => [son(5, 2)], rang: 1 },
   { id: "arc-en-ciel-acoustique", reglage: "Mix", entrees: () => [son(7, 2)] },
-  { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)] },
-  { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)] },
+  // CES DEUX RANGS SONT DÉSORMAIS ÉCRITS, et ils ne l'étaient pas : un port est arrivé derrière
+  // chacun des deux, et le rang par défaut est LE DERNIER de la fiche. Sans cette ligne, les deux
+  // cas du mélange éprouvaient le port neuf en croyant éprouver le leur.
+  // ET SES DEUX CAS OUVRENT L'EFFET, sans quoi ils ne mesurent rien. Le signal d'essai dure
+  // quatre-vingts millisecondes ; au tempo et à la taille de segment par défaut, un intervalle en
+  // vaut cinq cents et le rang de la répétition ne quitte jamais zéro. Le gain de réinjection, qui
+  // est ce rang en exposant, vaut alors un quoi qu'on demande, et le segment répété est l'original
+  // à la même place : la sortie égale l'entrée, et les DEUX cas passaient défaut planté. Un tempo
+  // de 240 et des segments au trente-deuxième font tenir trois répétitions dans l'essai.
+  { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)], rang: 1,
+    reglages: { Tempo: 240, Intervalle: "1/8", Taille: "1/32" } },
+  { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)], rang: 1 },
   { id: "reverbe-hachee", reglage: "Mix", entrees: () => [son(17)], rang: 1 },
   { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)], rang: 1 },
   { id: "reverberation-velours", reglage: "Mélange", entrees: () => [son(23)] },
@@ -335,11 +345,28 @@ const CAS: {
     noms: ["Queue min", "Queue max"], rang: 3, regle: 2, leurre: 8 },
   { id: "reverbe-reseau", reglage: "Fréquence de l'aigu", entrees: () => [son(283), undefined, undefined, undefined],
     noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], regle: 2000, leurre: 12000 },
+  // LES FAMILLES « TEMPS » ET « RÉTROACTION ». Le delay stéréo porte quatre ports, et son mélange
+  // entre ici bien qu'il ne soit pas neuf : trois ports arrivent derrière lui, et rien ne
+  // vérifiait jusqu'à présent qu'il reste lu au rang un.
+  { id: "delay-stereo", reglage: "Mix", entrees: () => [son(373, 2)], rang: 1 },
+  { id: "delay-stereo", reglage: "Temps G", entrees: () => [son(379, 2), undefined],
+    noms: ["Temps G min", "Temps G max"], rang: 2, regle: 250, leurre: 1000 },
+  { id: "delay-stereo", reglage: "Temps D", entrees: () => [son(383, 2), undefined, undefined],
+    noms: ["Temps D min", "Temps D max"], rang: 3, regle: 375, leurre: 1000 },
+  { id: "delay-stereo", reglage: "Feedback", entrees: () => [son(389, 2), undefined, undefined, undefined],
+    noms: ["Feedback min", "Feedback max"], regle: 64, leurre: 16 },
+  // La décroissance de l'écho flottant se compte en SECONDES : un quart de seconde contre quatre,
+  // deux fractions dyadiques, donc exactes des deux côtés.
+  { id: "echo-flottant", reglage: "Décroissance", entrees: () => [son(397, 2), undefined],
+    noms: ["Décroissance min", "Décroissance max"], regle: 0.25, leurre: 4 },
+  { id: "beat-repeat", reglage: "Feedback", entrees: () => [son(401, 2), undefined],
+    noms: ["Feedback min", "Feedback max"], regle: 64, leurre: 16,
+    reglages: { Tempo: 240, Intervalle: "1/8", Taille: "1/32" } },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien soixante-dix ports à éprouver", () => {
-    expect(CAS).toHaveLength(70);
+  it("il y a bien soixante-seize ports à éprouver", () => {
+    expect(CAS).toHaveLength(76);
   });
 
   for (const cas of CAS) {

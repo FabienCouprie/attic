@@ -153,7 +153,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
 | Barre modale | `barre-modale` | 240 × 118 |
 | Battements binauraux | `battements-binauraux` | 240 × 140 |
-| Beat Repeat / Stutter | `beat-repeat` | 240 × 140 |
+| Beat Repeat / Stutter | `beat-repeat` | 240 × 162 |
 | Bitcrusher | `bitcrusher` | 240 × 140 |
 | Groove Box | `boite-groove` | 240 × 206 |
 | Boîte à rythmes | `boite-rythmes` | 240 × 140 |
@@ -229,7 +229,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Décomposition atomique | `decomposition-atomique` | 240 × 184 |
 | Découpage en objets | `decoupage-objets` | 240 × 162 |
 | Découpe aléatoire | `decoupe-aleatoire` | 240 × 118 |
-| Delay stéréo | `delay-stereo` | 240 × 140 |
+| Delay stéréo | `delay-stereo` | 240 × 206 |
 | Déphasage de Reich | `dephasage-reich` | 240 × 118 |
 | Déréverbération | `dereverberation` | 240 × 118 |
 | Dessin sonore | `dessin-sonore` | 240 × 140 |
@@ -243,7 +243,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ducking | `ducking` | 240 × 228 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
-| Écho flottant | `echo-flottant` | 240 × 140 |
+| Écho flottant | `echo-flottant` | 240 × 162 |
 | Echo inversé | `echo-inverse` | 240 × 118 |
 | Echo Ping-Pong | `echo-ping-pong` | 240 × 162 |
 | Écosystème (Di Scipio) | `ecosysteme` | 240 × 140 |

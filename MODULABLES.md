@@ -21,10 +21,10 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 126, sur 64 composants
-- **réglages restant à faire** : 26, sur 18 composants et 19 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 131, sur 64 composants
+- **réglages restant à faire** : 20, sur 14 composants et 14 couples composant / famille
 - **dont le cœur travaille par trames** : 1
-- **réglages écartés un par un** : 42, sur 19 composants qui gardent les leurs
+- **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -41,17 +41,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Trémolo harmonique `tremolo-harmonique` : Coupure
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
-
-### temps · 3
-
-- Ampleur `ampleur` : Pré-délai
-- Delay stéréo `delay-stereo` : Temps G, Temps D
-- Écho flottant `echo-flottant` : Décroissance
-
-### retroaction · 2
-
-- Beat Repeat / Stutter `beat-repeat` : Feedback
-- Delay stéréo `delay-stereo` : Feedback
 
 ### espace · 1
 
@@ -146,6 +135,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `shimmer/Décroissance` : idem, la durée de la réponse que chaque génération convolue
 - `reverberation/Decay` : idem, le facteur de décroissance de la réponse impulsionnelle bâtie avant le rendu
 - `reverberation-velours/Chute` : idem, le temps de chute de la réponse de velours, bâtie avant le rendu
+- `ampleur/Pré-délai` : idem, il décale la suite de réflexions de velours, dont les positions sont tirées une fois avant le rendu : la faire bouger au fil du son demanderait de retirer la suite entière à chaque échantillon
 - `reverbe-reseau/Retard court` : elle fixe la plus courte des huit lignes à retard, allouées avant la boucle ; la faire varier demanderait de réallouer le réseau à chaque échantillon
 - `reverbe-reseau/Retard long` : idem, la plus longue des huit lignes
 - `shimmer/Rebouclage` : il multiplie le gain d'un tour au suivant, `gain *= rebouclage`, soit une poignée de lectures pour tout un morceau
@@ -179,6 +169,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `arc-en-ciel-acoustique` : Mix
 - `auto-pan` : Fréquence
 - `auto-pan` : Profondeur
+- `beat-repeat` : Feedback
 - `beat-repeat` : Mix
 - `bitcrusher` : Mix
 - `chopper` : Fréquence
@@ -210,7 +201,10 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `de-esser` : Relâchement
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
+- `delay-stereo` : Feedback
 - `delay-stereo` : Mix
+- `delay-stereo` : Temps D
+- `delay-stereo` : Temps G
 - `doser-effet` : Dose
 - `ducking` : Attaque
 - `ducking` : Réduction
@@ -218,6 +212,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `ducking` : Seuil
 - `echo` : Feedback
 - `echo` : Temps
+- `echo-flottant` : Décroissance
 - `echo-flottant` : Mélange
 - `echo-ping-pong` : Feedback
 - `echo-ping-pong` : Temps

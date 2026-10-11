@@ -253,6 +253,8 @@ export const ECARTES_REGLAGE: Record<string, string> = {
     "idem, le facteur de décroissance de la réponse impulsionnelle bâtie avant le rendu",
   "reverberation-velours/Chute":
     "idem, le temps de chute de la réponse de velours, bâtie avant le rendu",
+  "ampleur/Pré-délai":
+    "idem, il décale la suite de réflexions de velours, dont les positions sont tirées une fois avant le rendu : la faire bouger au fil du son demanderait de retirer la suite entière à chaque échantillon",
 
   // LES LIGNES À RETARD SONT ALLOUÉES AVANT LA BOUCLE, `retards.map((m) => new Float64Array(m))` :
   // leur longueur est une structure de mémoire, non une valeur qui se lit.

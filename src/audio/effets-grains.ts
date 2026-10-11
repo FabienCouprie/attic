@@ -190,7 +190,7 @@ export function beatRepeat(
   intervalDiv: number,
   segmentDiv: number,
   repetitions: number,
-  feedback: number,
+  feedback: number | Float32Array,
   mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
@@ -200,8 +200,12 @@ export function beatRepeat(
   const intervalSamples = Math.max(1, Math.round(beatDuration * 4 / intervalDiv * sr));
   const segmentSamples = Math.max(1, Math.round(beatDuration * 4 / segmentDiv * sr));
   const maxRepeatSamples = Math.min(intervalSamples, Math.max(1, repetitions * segmentSamples));
-  const decay = Math.max(0, Math.min(1, feedback / 100));
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  //
+  // LA RÉINJECTION NE COÛTE RIEN DE PLUS À MODULER : son `pow` est DÉJÀ dans la boucle, puisque
+  // l'exposant est le rang de la répétition et change à chaque échantillon. Le gain lu une fois
+  // devient un gain lu à chaque tour, et le nombre d'exponentielles ne bouge pas.
+  const decayA = (i: number) => Math.max(0, Math.min(1, valeurA(feedback, i) / 100));
   const mixA = (i: number) => Math.max(0, Math.min(1, valeurA(mix, i) / 100));
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -216,7 +220,7 @@ export function beatRepeat(
         const repeatIndex = Math.floor(posInInterval / segmentSamples);
         const segPos = posInInterval % segmentSamples;
         const srcIdx = Math.min(len - 1, Math.max(0, intervalStart + segPos));
-        const gain = Math.pow(decay, repeatIndex);
+        const gain = Math.pow(decayA(i), repeatIndex);
         const wet = src[srcIdx] * gain;
         out = src[i] * (1 - mixWet) + wet * mixWet;
       } else {
