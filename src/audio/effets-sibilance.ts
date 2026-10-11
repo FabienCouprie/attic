@@ -8,7 +8,7 @@ import { coefficientSuiveur, valeurA } from "./courbe";
 
 export async function deEsser(
   buffer: AudioBuffer,
-  frequenceCentrale: number,
+  frequenceCentrale: number | Float32Array,
   largeur: number | Float32Array,
   seuilDb: number | Float32Array,
   ratio: number,
@@ -26,11 +26,22 @@ export async function deEsser(
   source.buffer = buffer;
   const bp = ctx.createBiquadFilter();
   bp.type = "bandpass";
-  bp.frequency.value = Math.max(500, Math.min(16000, frequenceCentrale));
-  // LA LARGEUR ACCEPTE UNE COURBE, et c'est le Q du passe-bande qu'elle déplace : la bande cible
-  // s'ouvre et se resserre au fil du son. `poserParam` pose un nombre comme avant, au bit près.
-  poserParam(bp.Q, largeur, buffer.length / sr,
-    (x) => Math.max(0.1, frequenceCentrale / Math.max(10, x)));
+  const duree = buffer.length / sr;
+  poserParam(bp.frequency, frequenceCentrale, duree,
+    (v) => Math.max(500, Math.min(16000, v)));
+  // LE Q DÉPEND DES DEUX RÉGLAGES À LA FOIS, `fréquence / largeur`, et `poserParam` ne transforme
+  // qu'une valeur. Le quotient est donc calculé ici, point par point quand l'un des deux est une
+  // courbe, une seule fois quand les deux sont des nombres : c'est le même partage que partout
+  // ailleurs, et le chemin du nombre ne bouge pas d'un bit.
+  const qFixe = (f: number, l: number) => Math.max(0.1, f / Math.max(10, l));
+  const n = Math.max(
+    typeof frequenceCentrale === "number" ? 0 : frequenceCentrale.length,
+    typeof largeur === "number" ? 0 : largeur.length,
+  );
+  const q = n === 0
+    ? qFixe(frequenceCentrale as number, largeur as number)
+    : Float32Array.from({ length: n }, (_, i) => qFixe(valeurA(frequenceCentrale, i), valeurA(largeur, i)));
+  poserParam(bp.Q, q, duree);
   source.connect(bp);
   bp.connect(ctx.destination);
   source.start(0);

@@ -265,8 +265,14 @@ const CAS: {
     noms: ["Attaque min", "Attaque max"], rang: 3, siOffline: true,
     reglages: { Seuil: -60, Ratio: 10 } },
   { id: "de-esser", reglage: "Relâchement", entrees: () => [son(151, 2), undefined, undefined, undefined],
-    noms: ["Relâchement min", "Relâchement max"], siOffline: true,
+    noms: ["Relâchement min", "Relâchement max"], siOffline: true, rang: 4,
     reglages: { Seuil: -60, Ratio: 10 } },
+  { id: "de-esser", reglage: "Fréquence", entrees: () => [son(293, 2), undefined, undefined, undefined, undefined],
+    noms: ["Fréquence min", "Fréquence max"], siOffline: true, regle: 4000, leurre: 12000,
+    reglages: { Seuil: -60, Ratio: 10 } },
+  { id: "exciter", reglage: "Fréquence", entrees: () => [son(307, 2), undefined],
+    noms: ["Fréquence min", "Fréquence max"], siOffline: true, regle: 2000, leurre: 10000 },
+  ...multibande("Fréq Low", 9, 100, 800), ...multibande("Fréq High", 10, 2000, 10000),
   // LE DUCKING PORTE DEUX ENTRÉES AUDIO AVANT SES QUATRE PORTS, et ses unités ne sont pas des
   // pour-cent : chaque cas choisit donc sa valeur et son leurre, en fractions dyadiques.
   { id: "ducking", reglage: "Seuil", entrees: () => [son(197), son(199)],
@@ -306,8 +312,8 @@ const CAS: {
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien cinquante-six ports à éprouver", () => {
-    expect(CAS).toHaveLength(56);
+  it("il y a bien soixante ports à éprouver", () => {
+    expect(CAS).toHaveLength(60);
   });
 
   for (const cas of CAS) {

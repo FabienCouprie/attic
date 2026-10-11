@@ -198,7 +198,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
 | Color Looper | `color-looper` | 240 × 140 |
 | Compresseur | `compresseur` | 240 × 228 |
-| Compresseur multibande | `compresseur-multibande` | 240 × 294 |
+| Compresseur multibande | `compresseur-multibande` | 240 × 338 |
 | Continuation AR | `continuation-spectrale-ar` | 240 × 118 |
 | Continuation LSTM | `continuation-spectrale-lstm` | 240 × 118 |
 | Continuation Stable Audio 3 | `continuation-stable-audio-3` | 240 × 140 |
@@ -220,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
-| De-esser | `de-esser` | 240 × 206 |
+| De-esser | `de-esser` | 240 × 228 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
 | Décalage des bandes | `decalage-bandes` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
@@ -256,7 +256,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étirement glissant | `etirement-glissant` | 240 × 118 |
 | Étirement du spectre | `etirement-spectre` | 240 × 140 |
 | Faire évoluer une mélodie | `evolution-melodie` | 240 × 162 |
-| Exciter / Aural enhancer | `exciter` | 240 × 140 |
+| Exciter / Aural enhancer | `exciter` | 240 × 162 |
 | Export image | `export-image` | 240 × 118 |
 | Export SFZ | `export-sfz` | 240 × 118 |
 | Export SVG | `export-svg` | 240 × 118 |

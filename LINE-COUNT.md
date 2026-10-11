@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232346 lines, of which 158919 are code.**
+**1317 files, 232371 lines, of which 158939 are code.**
 The table lists the 184 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155080 lines.
+the remaining 1133 account for 155095 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -119,8 +119,8 @@ the remaining 1133 account for 155080 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
+| src/plugins/effets.ts | 270 | 342 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
-| src/plugins/effets.ts | 266 | 338 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/audio/io.ts | 264 | 397 |  |
@@ -153,13 +153,13 @@ the remaining 1133 account for 155080 lines.
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
+| src/plugins/modulation-cablage.test.ts | 235 | 363 |  |
 | src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
-| src/plugins/modulation-cablage.test.ts | 229 | 357 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
