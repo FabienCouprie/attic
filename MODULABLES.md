@@ -21,9 +21,9 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 140, sur 64 composants
-- **réglages restant à faire** : 11, sur 6 composants et 6 couples composant / famille
-- **dont le cœur travaille par trames** : 1
+- **réglages déjà pilotés par une courbe** : 145, sur 65 composants
+- **réglages restant à faire** : 6, sur 2 composants et 2 couples composant / famille
+- **dont le cœur travaille par trames** : 0
 - **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
@@ -33,22 +33,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 
 - Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
-
-### espace · 1
-
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
-
-### hauteur · 1
-
-- Granular freeze `granular-freeze` : Pitch
-
-### melange · 1
-
-- Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
-
-### niveau · 1
-
-- Micromontage `micromontage` : Niveau
 
 ## Familles écartées en bloc
 
@@ -159,6 +143,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `ampleur` : Mix
 - `amplificateur` : Gain
 - `arc-en-ciel-acoustique` : Mix
+- `arc-en-ciel-acoustique` : Ouverture
 - `auto-pan` : Fréquence
 - `auto-pan` : Profondeur
 - `beat-repeat` : Feedback
@@ -221,7 +206,10 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `gate-expandeur` : Seuil
 - `glissando-interieur` : Mix
 - `granular-freeze` : Mix
+- `granular-freeze` : Pitch
 - `granular-freeze` : Position
+- `harmonizer` : Mix 1
+- `harmonizer` : Mix 2
 - `haut-parleur-rotatif` : Coupure
 - `haut-parleur-rotatif` : Mélange
 - `haut-parleur-rotatif` : Profondeur d'amplitude
@@ -230,6 +218,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `limiteur` : Plafond
 - `limiteur` : Relâchement
 - `limiteur` : Seuil
+- `micromontage` : Niveau
 - `micromontage` : Transposition
 - `morphing-spectral` : Mélange
 - `mosaiquage` : Volume

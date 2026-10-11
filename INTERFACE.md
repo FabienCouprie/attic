@@ -142,7 +142,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Analyse émotionnelle | `analyse-emotionnelle` | 240 × 140 |
 | Analyse rythmique | `analyse-rythme` | 240 × 118 |
 | Anneau de Möbius | `anneau-moebius` | 240 × 118 |
-| Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 140 |
+| Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 162 |
 | Arpège flocon de Koch | `arpege-koch` | 240 × 140 |
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
 | Arpégiateur MIDI | `arpegiateur-midi` | 240 × 118 |
@@ -298,13 +298,13 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Glissando de Risset | `glissando-risset` | 240 × 118 |
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
-| Granular freeze | `granular-freeze` | 240 × 162 |
+| Granular freeze | `granular-freeze` | 240 × 184 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
-| Harmonizer / Octaver | `harmonizer` | 240 × 118 |
+| Harmonizer / Octaver | `harmonizer` | 240 × 162 |
 | Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 206 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
@@ -339,7 +339,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Membrane Synth | `membrane-synth` | 240 × 118 |
 | Metal Synth | `metal-synth` | 240 × 118 |
 | Métronome | `metronome` | 240 × 118 |
-| Micromontage | `micromontage` | 240 × 206 |
+| Micromontage | `micromontage` | 240 × 228 |
 | MIDI → ABC | `midi-vers-abc` | 240 × 140 |
 | MIDI → séquence | `midi-vers-sequence` | 240 × 162 |
 | Miroir d'inversion | `miroir-inversion` | 240 × 118 |

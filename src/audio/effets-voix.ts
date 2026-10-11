@@ -3,14 +3,23 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurMax } from "./courbe";
 import { changerTonaliteVoie } from "./effets-spectral";
 
 export interface OptionsHarmoniser {
   interval1: number;
-  mix1: number;
+  /**
+   * Le niveau de la première voix, en pour cent. Un tableau le fait varier échantillon par
+   * échantillon.
+   *
+   * LA MARQUE « TRAMES » DE CE COMPOSANT NE PORTE PAS SUR LUI. Le décalage de hauteur travaille par
+   * blocs, et c'est pour cela que la fiche est marquée ; mais le mélange est un GAIN appliqué
+   * après, échantillon par échantillon, de sorte qu'une courbe y est lue sans perdre de résolution.
+   */
+  mix1: number | Float32Array;
   interval2: number;
-  mix2: number;
+  /** Le niveau de la seconde voix, en pour cent. Un tableau le fait varier. */
+  mix2: number | Float32Array;
 }
 
 /**
@@ -23,11 +32,14 @@ export interface OptionsHarmoniser {
  */
 export function harmoniserVoie(x: Float32Array, o: OptionsHarmoniser): Float32Array {
   const out = Float32Array.from(x);
-  const ajouterVoix = (interval: number, gainRel: number): void => {
-    if (gainRel <= 0 || interval === 0) return;
+  const ajouterVoix = (interval: number, gainRel: number | Float32Array): void => {
+    // LA SORTIE ANTICIPÉE SE DÉCIDE SUR LE MAXIMUM, et non sur la valeur du moment : une courbe qui
+    // monte quelque part demande la voix, et la sauter reviendrait à ne jamais l'entendre. Une
+    // courbe nulle partout la saute, ce qui épargne tout le décalage de hauteur.
+    if (valeurMax(gainRel) <= 0 || interval === 0) return;
     const voix = changerTonaliteVoie(x, interval);
-    const gain = gainRel / 100;
-    for (let i = 0; i < x.length; i++) out[i] += voix[i] * gain;
+    // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+    for (let i = 0; i < x.length; i++) out[i] += voix[i] * (valeurA(gainRel, i) / 100);
   };
   ajouterVoix(o.interval1, o.mix1);
   ajouterVoix(o.interval2, o.mix2);
@@ -37,9 +49,9 @@ export function harmoniserVoie(x: Float32Array, o: OptionsHarmoniser): Float32Ar
 export function harmoniser(
   buffer: AudioBuffer,
   interval1: number,
-  mix1: number,
+  mix1: number | Float32Array,
   interval2: number,
-  mix2: number,
+  mix2: number | Float32Array,
 ): AudioBuffer {
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });
   const o = { interval1, mix1, interval2, mix2 };

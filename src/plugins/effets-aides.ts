@@ -105,7 +105,7 @@ type ModulationEffet = {
  */
 type HorsFilEffet = {
   creerWorker: () => Worker;
-  voix: (x: Float32Array, o: Record<string, number>) => Float32Array;
+  voix: (x: Float32Array, o: Record<string, number | Float32Array>) => Float32Array;
   /** Les noms sous lesquels les réglages voyagent, dans l'ordre des paramètres de la fiche. */
   cles: string[];
 };
@@ -400,7 +400,11 @@ export function effet(
         );
       });
       if (hors) {
-        const reglages: Record<string, number> = {};
+        // LES RÉGLAGES PEUVENT PORTER UN TABLEAU, et c'est ce qui a changé. Un réglage modulé arrive
+        // ici en `Float32Array` ; le dialogue du worker le laisse passer tel quel, et il voyage UNE
+        // fois pour tous les canaux. Typé sur le nombre seul, ce canal fermait la modulation à tout
+        // composant qui quitte le fil de l'interface.
+        const reglages: Record<string, number | Float32Array> = {};
         hors.cles.forEach((cle, i) => { reglages[cle] = args[i]; });
         // LA FRÉQUENCE D'ÉCHANTILLONNAGE VOYAGE TOUJOURS, sous `sr`. Un tableau de nombres ne la
         // porte pas, et un calcul qui en a besoin — tout ce qui compte en secondes plutôt qu'en
@@ -408,7 +412,7 @@ export function effet(
         // besoin reçoit une clé de plus et l'ignore.
         reglages.sr = audio.sampleRate;
         const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
-        const parVoie = await parCanal<Record<string, number>, Float32Array>(voies, reglages, {
+        const parVoie = await parCanal<Record<string, number | Float32Array>, Float32Array>(voies, reglages, {
           creerWorker: hors.creerWorker, calcul: hors.voix,
         });
         const out = new AudioBuffer({

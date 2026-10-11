@@ -181,3 +181,32 @@ describe("les deux résonances, et la brillance", () => {
       .toBe(peignesVoie(x, { ...base, t60: 2 }).length);
   });
 });
+
+describe("une courbe qui VARIE, et non seulement une courbe plate", () => {
+  // CE QU'UNE COURBE PLATE NE PEUT PAS DIRE. Le banc de câblage éprouve deux choses : qu'un réglage
+  // non modulé ne bouge pas d'un bit, et qu'une courbe plate rende ce que rend le nombre qu'elle
+  // vaut. Ces deux cas attrapent un port mal rangé, un réglage ignoré, une mise en forme fausse.
+  //
+  // ILS N'ATTRAPENT PAS UN CŒUR QUI NE LIRAIT QUE LE PREMIER POINT de la courbe : sur une courbe
+  // plate, lire l'indice zéro ou l'indice i donne le même chiffre. Le défaut planté à cet endroit
+  // laissait passer les deux cas du granular freeze, et c'est ce qui a fait écrire celui-ci.
+  //
+  // IL NE VAUT QUE LÀ OÙ LE GESTE EST DE FAIRE GLISSER : une transposition qui monte au fil du son
+  // est précisément ce que le port promet, et une sortie identique à celle d'une courbe tenue au
+  // départ prouverait que rien ne glisse.
+  it("LA TRANSPOSITION DU GRANULAR FREEZE GLISSE, et ne reste pas à son premier point", async () => {
+    const { granularFreeze } = await import("./effets-grains");
+    const n = 8000;
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const x = b.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.sin((2 * Math.PI * 300 * i) / SR) * 0.5;
+    const monte = Float32Array.from({ length: n }, (_, i) => (12 * i) / (n - 1));
+    const tenue = new Float32Array(n).fill(0);
+    const avecMontee = granularFreeze(b, 50, monte, 0, 100).getChannelData(0);
+    const auDepart = granularFreeze(b, 50, tenue, 0, 100).getChannelData(0);
+    let differents = 0;
+    for (let i = 0; i < n; i++) if (avecMontee[i] !== auDepart[i]) differents++;
+    expect(differents, "la transposition ne glisse pas : seul son premier point agirait")
+      .toBeGreaterThan(n / 4);
+  });
+});

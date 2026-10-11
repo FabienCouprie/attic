@@ -347,7 +347,10 @@ export const fiches: FicheAudio[] = ([
     (a,d) => changerTonalite(a, d),
     {
       creerWorker: () => new Worker(new URL("../workers/tonalite-worker.ts", import.meta.url), { type: "module" }),
-      voix: (x, o) => changerTonaliteVoie(x, o.demiTons),
+      // `valeurA` plutôt qu'une conversion : ce réglage n'est pas modulé, donc le tableau n'arrive
+      // jamais ; s'il arrivait un jour, c'est la valeur du début qui serait prise, là où un
+      // `Number()` rendrait NaN sans que rien ne le signale.
+      voix: (x, o) => changerTonaliteVoie(x, valeurA(o.demiTons, 0)),
       cles: ["demiTons"],
     }),
   effet("glissando-tonalite", "Glissando de tonalité", "Pitch Glissando", "Pitch-shift glissant d'une tonalité à une autre.", "Pitch glissando from one pitch to another.",
@@ -366,5 +369,13 @@ export const fiches: FicheAudio[] = ([
       creerWorker: () => new Worker(new URL("../workers/harmoniser-worker.ts", import.meta.url), { type: "module" }),
       voix: (x, o) => harmoniserVoie(x, o as unknown as OptionsHarmoniser),
       cles: ["interval1", "mix1", "interval2", "mix2"],
-    }),
+    },
+    // LA MARQUE « TRAMES » DE CE COMPOSANT NE PORTE PAS SUR SES DEUX MÉLANGES, et le relevé l'a
+    // démenti. Le décalage de hauteur travaille par blocs, ce qui est la raison de la marque ; mais
+    // chaque mélange est un GAIN appliqué après, échantillon par échantillon. Une courbe y est donc
+    // lue sans perdre de résolution, et son maximum décide seul de calculer la voix ou non.
+    // LES DEUX SE NOMMENT, parce qu'ils naissent le même jour : c'est le précédent du gate. Voir
+    // des bornes « Modulation min » à côté de « Mix 2 min » ne dirait pas laquelle borne quoi.
+    [modulationNommee("Mix 1", "Mix 1", [0, 100], "%"),
+     modulationNommee("Mix 2", "Mix 2", [0, 100], "%")]),
 ] as FicheAudio[]).map(avecDoc);

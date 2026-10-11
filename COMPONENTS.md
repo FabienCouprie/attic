@@ -4051,7 +4051,7 @@ Lays the received sequences on a timeline and returns them as one. Each box has 
 
 *Assembles a sound from thousands of fragments, each cut and laid at its own place.*
 
-Assembles a sound from short fragments cut out of the received sources, each with its own instant of cutting, instant of laying, length, level, place in the image and pitch offset. The instant of cutting and the instant of laying are independent of one another: that is what separates montage from playback. After Curtis Roads, « Microsound », MIT Press, 2001, chapter 6, and the practice of Horacio Vaggione. Each quantity is set by three controls: its value, its second bound, and its law. « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. « Fragments » gives their number, up to 4000. « Source » states which one each is cut from, counting from one. A number with no connected input falls back to the first. « Cut » is the place of the cut inside the source, from zero at the start to one at the end. « Lay » is the instant at which the fragment falls in the result, in seconds. It is this quantity that makes the form: a ramp spreads the cloud, a draw scatters it. « Length » is that of the laid fragment, in seconds. Below fifty milliseconds the pitch of the fragment stops being heard and it is the grain that speaks. « Level » is its level. « Pan » its place, from minus one at the left to one at the right, at constant power. « Transposition » its pitch offset in semitones: it reads more or less source without changing the laid length. Transposition can be driven by a curve. Each fragment reads there the value matching its instant of laying: the cloud falls then rises, and a gesture is heard where a draw gives only a texture. The two modulation bounds state what the curve's zero and one mean; with no curve connected they do nothing. « Window » decides the shape of each fragment. The Gaussian is the reference of the book; the trapezoid keeps a plateau, hence body; the expodec decays after a brief attack, the rexpodec rises then cuts. The last two give a direction to time inside the fragment. « Seed » governs the draws. At equal seed, the same score. « Level out » sets the output; density does not affect it, the sum being brought back to the square root of the mean overlap. The « Audio » output carries the montage, always in two channels since each fragment carries its place. The « Analysis » output gives the number of fragments laid, those that fell outside their source, the length, the density in fragments per second and the greatest number sounding together.
+Assembles a sound from short fragments cut out of the received sources, each with its own instant of cutting, instant of laying, length, level, place in the image and pitch offset. The instant of cutting and the instant of laying are independent of one another: that is what separates montage from playback. After Curtis Roads, « Microsound », MIT Press, 2001, chapter 6, and the practice of Horacio Vaggione. Each quantity is set by three controls: its value, its second bound, and its law. « Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order. « Fragments » gives their number, up to 4000. « Source » states which one each is cut from, counting from one. A number with no connected input falls back to the first. « Cut » is the place of the cut inside the source, from zero at the start to one at the end. « Lay » is the instant at which the fragment falls in the result, in seconds. It is this quantity that makes the form: a ramp spreads the cloud, a draw scatters it. « Length » is that of the laid fragment, in seconds. Below fifty milliseconds the pitch of the fragment stops being heard and it is the grain that speaks. « Level » is its level. « Pan » its place, from minus one at the left to one at the right, at constant power. « Transposition » its pitch offset in semitones: it reads more or less source without changing the laid length. Transposition can be driven by a curve. Each fragment reads there the value matching its instant of laying: the cloud falls then rises, and a gesture is heard where a draw gives only a texture. The two modulation bounds state what the curve's zero and one mean; with no curve connected they do nothing. « Window » decides the shape of each fragment. The Gaussian is the reference of the book; the trapezoid keeps a plateau, hence body; the expodec decays after a brief attack, the rexpodec rises then cuts. The last two give a direction to time inside the fragment. « Seed » governs the draws. At equal seed, the same score. « Level out » sets the output; density does not affect it, the sum being brought back to the square root of the mean overlap. The « Audio » output carries the montage, always in two channels since each fragment carries its place. The « Analysis » output gives the number of fragments laid, those that fell outside their source, the length, the density in fragments per second and the greatest number sounding together. A curve connected to the « Modulation level out » input takes the place of « Level out », with « Level out min » and « Level out max ». It is read after the fragments are laid: it therefore sets what comes out of the montage, and moves neither the fragments nor the overlap the sum is brought back to.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4060,6 +4060,7 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 | input | Source 3 | audio |  |
 | input | Source 4 | audio |  |
 | input | Transposition modulation | curve |  |
+| input | Modulation level out | curve |  |
 | output | Audio | audio (stereo) |  |
 | output | Analysis | text |  |
 
@@ -4092,6 +4093,8 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 | Window | choice | Gaussian | Gaussian / Trapezoid / Expodec / Rexpodec | The shape of each fragment. The two exponentials give a direction to time inside the fragment. |
 | Seed | slider | 1 | 0 – 999999, step 1 | The number of the draw. At equal seed, the same score. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Level out | slider | 80 % | 0 – 100 %, step 1 | The level of the montage. Density does not affect it: the sum is already brought back to the square root of the mean overlap. |
+| Level out min | slider | 0 % | 0 – 100 %, step 1 | Value of « Level out » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Level out max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level out » that the curve's one means. |
 
 #### MIDI Join
 
@@ -6077,13 +6080,14 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 
 *Loops a grain with size and pitch control.*
 
-Extracts a small grain at the chosen position and loops it across the whole duration. Control grain size, pitch transposition and mix. Useful for creating drone textures, freeze effects or abstract granular sounds. The mix accepts a curve through the « Modulation » input, the position through « Modulation position », with « Position min » and « Position max ». A curve on the position moves the grain's origin along the sound: what comes out is then a sweep of the source, not a freeze.
+Extracts a small grain at the chosen position and loops it across the whole duration. Control grain size, pitch transposition and mix. Useful for creating drone textures, freeze effects or abstract granular sounds. The mix accepts a curve through the « Modulation » input, the position through « Modulation position », with « Position min » and « Position max ». A curve on the position moves the grain's origin along the sound: what comes out is then a sweep of the source, not a freeze. A curve on the « Modulation pitch » input takes the place of « Pitch », with « Pitch min » and « Pitch max »: the grain's pitch then glides while it loops, and it follows the semitones asked for at each instant, the reading phase being integrated.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
 | input | Modulation position | curve |  |
+| input | Modulation pitch | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6096,6 +6100,8 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
+| Pitch min | slider | -12 st | -24 – 24 st, step 1 | Value of « Pitch » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Pitch max | slider | 12 st | -24 – 24 st, step 1 | Value of « Pitch » that the curve's one means. |
 
 #### Haas Effect
 
@@ -6421,11 +6427,13 @@ This node carries a sound through cycles of intensity shaped like a wave. After 
 
 *Adds pitch-shifted voices (octave, fifth…) under the original.*
 
-Adds up to two pitch-shifted voices under the original signal. Settings: each voice's interval in semitones (12 = octave up, -12 = octave down, 7 = fifth) and its mix level. Thickens a guitar or forms simple harmonies.
+Adds up to two pitch-shifted voices under the original signal. Settings: each voice's interval in semitones (12 = octave up, -12 = octave down, 7 = fifth) and its mix level. Thickens a guitar or forms simple harmonies. Both levels accept a curve, through the « Modulation mix 1 » and « Modulation mix 2 » inputs, each with its two bounds: each voice comes in and goes out along the sound. The pitch shift works in blocks, but the level is applied after it, sample by sample. A voice whose curve stays at zero throughout is not computed.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation mix 1 | curve |  |
+| input | Modulation mix 2 | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6434,6 +6442,10 @@ Adds up to two pitch-shifted voices under the original signal. Settings: each vo
 | Mix 1 | number | 30 % | 0 – 100 %, step 1 | Level of first voice. |
 | Voice 2 | number | -12 st | -24 – 24 st, step 1 | Interval of second voice in semitones. |
 | Mix 2 | number | 30 % | 0 – 100 %, step 1 | Level of second voice. |
+| Mix 1 min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix 1 » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix 1 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 1 » that the curve's one means. |
+| Mix 2 min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix 2 » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix 2 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 2 » that the curve's one means. |
 
 #### MIDI Transposer/Quantizer
 
@@ -7323,12 +7335,13 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 
 *Sorts sound across space by frequency: each band comes from its own direction, arrives at its own time, and dwells where it stops.*
 
-This node lays the frequencies of a sound across stereo space: each band comes out of its own direction, arrives at its own moment, and goes on ringing where it stopped. After rainbow trapping, proposed in optics by Kosmas L. Tsakmakidis, Allan D. Boardman and Ortwin Hess, « 'Trapped rainbow' storage of light in metamaterials », Nature 450, 2007, pp. 397-401, and shown in acoustics by Jie Zhu, Yong Chen, Xuefeng Zhu et al., « Acoustic rainbow trapping », Scientific Reports 3, 2013, 1728. In a graded array of resonators a broadband wave slows down and each band halts where the local resonance catches it: the highs early, the lows far. Noé Jiménez, Vicent Romero-García, Vincent Pagneux and Jean-Philippe Groby, « Rainbow-trapping absorbers », Scientific Reports 7, 2017, 13595, draw a broadband absorber from it. « Bands » is the number of resonators in the array, spread in frequency by equal octaves between « Low » and « High ». Frequencies beyond half the sample rate are dropped. « Direction » says which side the low end comes out of. « Spread » is the share of the stereo field used: at zero, every band comes from the centre and the sorting is heard in time alone. « Curve » gathers the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side and the highs spread out; below, the other way round. « Dispersion » is the travel of the lowest band, the one that goes furthest. Higher bands arrive earlier, in the order of the gradient. At zero they all arrive together and only the sorting in space remains. « Trapping » is the time the lowest band takes to lose 60 dB. The array is constant-Q: the ring time follows the inverse of the frequency, so the band that travels furthest is also the one that dwells longest. This setting commands the sharpness of the sorting in the same gesture, a two-pole resonator having a single command for its width and its length: short, the sound keeps its grain; long, it turns into held bands. « Mix » is the share of the sorted sound. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The curve is read over the length of the input; beyond that, its last value holds for the whole ring-out. The input is summed to one channel before sorting: this node rebuilds the stereo image from frequency, and keeping the one it receives would hold two images at once on the same output. The output is longer than the input: the longest travel and the longest resonance come after the end of the sound. The level of the sorted sound is brought back to that of the input. The message gives the number of bands kept, the travel difference between the two edges and the ring time of the low end.
+This node lays the frequencies of a sound across stereo space: each band comes out of its own direction, arrives at its own moment, and goes on ringing where it stopped. After rainbow trapping, proposed in optics by Kosmas L. Tsakmakidis, Allan D. Boardman and Ortwin Hess, « 'Trapped rainbow' storage of light in metamaterials », Nature 450, 2007, pp. 397-401, and shown in acoustics by Jie Zhu, Yong Chen, Xuefeng Zhu et al., « Acoustic rainbow trapping », Scientific Reports 3, 2013, 1728. In a graded array of resonators a broadband wave slows down and each band halts where the local resonance catches it: the highs early, the lows far. Noé Jiménez, Vicent Romero-García, Vincent Pagneux and Jean-Philippe Groby, « Rainbow-trapping absorbers », Scientific Reports 7, 2017, 13595, draw a broadband absorber from it. « Bands » is the number of resonators in the array, spread in frequency by equal octaves between « Low » and « High ». Frequencies beyond half the sample rate are dropped. « Direction » says which side the low end comes out of. « Spread » is the share of the stereo field used: at zero, every band comes from the centre and the sorting is heard in time alone. « Curve » gathers the gradient towards one edge. At zero the position follows the rank of the band; above, the lows gather on one side and the highs spread out; below, the other way round. « Dispersion » is the travel of the lowest band, the one that goes furthest. Higher bands arrive earlier, in the order of the gradient. At zero they all arrive together and only the sorting in space remains. « Trapping » is the time the lowest band takes to lose 60 dB. The array is constant-Q: the ring time follows the inverse of the frequency, so the band that travels furthest is also the one that dwells longest. This setting commands the sharpness of the sorting in the same gesture, a two-pole resonator having a single command for its width and its length: short, the sound keeps its grain; long, it turns into held bands. « Mix » is the share of the sorted sound. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The curve is read over the length of the input; beyond that, its last value holds for the whole ring-out. The input is summed to one channel before sorting: this node rebuilds the stereo image from frequency, and keeping the one it receives would hold two images at once on the same output. The output is longer than the input: the longest travel and the longest resonance come after the end of the sound. The level of the sorted sound is brought back to that of the input. The message gives the number of bands kept, the travel difference between the two edges and the ring time of the low end. « Spread » accepts a curve through the « Modulation spread » input, with « Spread min » and « Spread max »: the arc tightens or widens while it sounds, each band keeping its place in the gradient. The spread reported in the band table is the one at the start of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Modulation | curve |  |
+| input | Modulation spread | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -7344,6 +7357,8 @@ This node lays the frequencies of a sound across stereo space: each band comes o
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the sorted sound. At 0%, the input alone. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Spread min | slider | 0 % | 0 – 100 %, step 1 | Value of « Spread » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Spread max | slider | 100 % | 0 – 100 %, step 1 | Value of « Spread » that the curve's one means. |
 
 #### Ambisonic Rotation
 

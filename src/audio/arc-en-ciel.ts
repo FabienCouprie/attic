@@ -42,7 +42,11 @@ export interface OptionsArcEnCiel {
   /** Le grave sort-il à gauche ou à droite ? */
   sens: "grave-gauche" | "grave-droite";
   /** Part de l'étendue stéréo employée, de 0 (tout au centre) à 100. */
-  ouverture: number;
+  /**
+   * L'ouverture de l'image stéréo, de 0 à 100. Un tableau la fait varier échantillon par échantillon :
+   * l'arc se resserre ou s'écarte pendant qu'il sonne.
+   */
+  ouverture: number | Float32Array;
   /**
    * Courbure du gradient, de −100 à 100. À zéro, la position suit le rang de la bande ; au-dessus,
    * les graves se resserrent d'un côté ; en dessous, ce sont les aigus.
@@ -66,6 +70,14 @@ export interface BandeArcEnCiel {
   t60: number;
   /** Position stéréo, de −1 à gauche à +1 à droite. */
   position: number;
+  /**
+   * La place de la bande dans le gradient, de 0 au grave à 1 à l'aigu.
+   *
+   * EXPOSÉE POUR QUE L'OUVERTURE PUISSE VARIER : la position s'en déduit en la multipliant par
+   * l'étendue, et le rendu refait ce produit quand une courbe commande l'ouverture. La retrouver
+   * depuis `position` demanderait de diviser par l'étendue, ce qui serait impossible à zéro.
+   */
+  gradient: number;
 }
 
 const borne = (v: number, bas: number, haut: number) => Math.max(bas, Math.min(haut, v));
@@ -95,7 +107,9 @@ export function bandesArcEnCiel(o: OptionsArcEnCiel): BandeArcEnCiel[] {
   const n = Math.max(2, Math.round(o.bandes));
   const grave = Math.max(1, Math.min(o.grave, o.aigu));
   const aigu = Math.max(grave * 1.01, Math.max(o.grave, o.aigu));
-  const etendue = borne(o.ouverture, 0, 100) / 100;
+  // La table décrit l'ouverture du DÉBUT du son : c'est elle que l'inspecteur et les cas de test
+  // lisent, et le rendu refait le produit par échantillon quand une courbe commande.
+  const etendue = borne(valeurA(o.ouverture, 0), 0, 100) / 100;
   // L'exposant du gradient : un à plat, plus grand quand on resserre vers le grave.
   const gamma = Math.pow(4, borne(o.courbure, -100, 100) / 100);
   const dispersion = Math.max(0, o.dispersion);
@@ -110,7 +124,10 @@ export function bandesArcEnCiel(o: OptionsArcEnCiel): BandeArcEnCiel[] {
     // À Q CONSTANT, le temps de résonance suit l'inverse de la fréquence.
     const t60 = piegeage * (grave / frequence);
     const place = (g * 2 - 1) * etendue;
-    return { frequence, retard, t60, position: o.sens === "grave-droite" ? -place : place };
+    return {
+      frequence, retard, t60, gradient: g,
+      position: o.sens === "grave-droite" ? -place : place,
+    };
   });
 }
 
@@ -163,13 +180,24 @@ export function arcEnCiel(buffer: AudioBuffer, o: OptionsArcEnCiel): AudioBuffer
     const r2 = r * r;
     const gain = (1 - r2) / 2;
     // Loi de panoramique à puissance constante : la somme des carrés vaut un sur toute l'étendue.
-    const angle = ((b.position + 1) * Math.PI) / 4;
-    const gG = Math.cos(angle);
-    const gD = Math.sin(angle);
+    //
+    // LES DEUX GAINS NE SE REFONT QUE SI L'ÉTENDUE A BOUGÉ, et c'est ce qui garde à l'ouverture
+    // fixe son calcul unique par bande, comme avant. Sous une courbe, c'est un cosinus et un
+    // sinus par échantillon ET PAR BANDE : à vingt-quatre bandes, quarante-huit par échantillon.
+    let etenduePose = NaN;
+    let gG = 0, gD = 0;
+    const poserGains = (e: number) => {
+      const place = (b.gradient * 2 - 1) * e;
+      const angle = (((o.sens === "grave-droite" ? -place : place) + 1) * Math.PI) / 4;
+      gG = Math.cos(angle);
+      gD = Math.sin(angle);
+    };
     const retard = Math.round(b.retard * sr);
     let ux1 = 0, ux2 = 0, uy1 = 0, uy2 = 0;
     let vx1 = 0, vx2 = 0, vy1 = 0, vy2 = 0;
     for (let i = 0; i < n; i++) {
+      const e = borne(valeurA(o.ouverture, i), 0, 100) / 100;
+      if (e !== etenduePose) { etenduePose = e; poserGains(e); }
       const j = i - retard;
       const u = j >= 0 && j < mono.length ? mono[j] : 0;
       const s = gain * (u - ux2) + coefB * uy1 - r2 * uy2;

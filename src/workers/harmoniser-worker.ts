@@ -6,6 +6,6 @@
 import { harmoniserVoie, type OptionsHarmoniser } from "../audio/effets-voix";
 import { servirParCanal } from "./servir-par-canal";
 
-servirParCanal<Record<string, number>, Float32Array>(
+servirParCanal<Record<string, number | Float32Array>, Float32Array>(
   (x, o) => harmoniserVoie(x, o as unknown as OptionsHarmoniser),
 );
