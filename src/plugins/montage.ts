@@ -419,12 +419,14 @@ export const fiches: FicheAudio[] = ([
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",
     resume: "Place deux pistes l'une après l'autre avec un fondu enchaîné.",
     resumeEn: "Places two tracks one after the other with a crossfade.",
-    notice: "Met bout à bout deux pistes. La première se ferme en fondu pendant que la seconde s'ouvre, sur une durée de chevauchement réglable. Un chevauchement nul donne une simple concaténation.",
-    noticeEn: "Puts two tracks end to end. The first fades out while the second fades in over an adjustable overlap. Zero overlap gives a plain concatenation.",
+    notice: "Met bout à bout deux pistes. La première se ferme en fondu pendant que la seconde s'ouvre, sur la durée que « Chevauchement » donne. Un chevauchement nul donne une simple concaténation, et la durée de sortie vaut alors la somme des deux.\n\nLes deux rampes sont linéaires et complémentaires : à chaque instant du recouvrement, ce qui sort de la première et ce qui entre dans la seconde font un, de sorte que deux signaux identiques gardent leur niveau au raccord.\n\nUn chevauchement plus long que la plus courte des deux pistes est ramené à cette durée : on ne recouvre pas plus de son qu'il n'y en a. La durée de sortie ne descend donc jamais sous celle de la plus longue des deux.",
+    noticeEn: "Puts two tracks end to end. The first fades out while the second fades in, over the duration « Overlap » gives. A zero overlap gives a plain concatenation, and the output duration is then the sum of the two.\n\nThe two ramps are linear and complementary: at each instant of the overlap, what leaves the first and what enters the second make one, so that two identical signals keep their level at the join.\n\nAn overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is. The output duration therefore never falls below that of the longer of the two.",
     entrees: [{ nom: "Piste 1", nomEn: "Track 1", type: "audio" }, { nom: "Piste 2", nomEn: "Track 2", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Chevauchement", nomEn: "Overlap", plage: [0,30], pas: 0.1, defaut: 2, unite: "s", doc: "Durée du fondu enchaîné entre la fin de la piste 1 et le début de la piste 2.", docEn: "Crossfade duration between the end of track 1 and the start of track 2." },
+      { nom: "Chevauchement", nomEn: "Overlap", plage: [0, 600], pas: 0.1, defaut: 2, unite: "s",
+        doc: "Durée du fondu enchaîné entre la fin de la piste 1 et le début de la piste 2. Un chevauchement plus long que la plus courte des deux pistes est ramené à cette durée : on ne recouvre pas plus de son qu'il n'y en a.",
+        docEn: "Crossfade duration between the end of track 1 and the start of track 2. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is." },
     ],
     async executer(ctx: any) {
       const p1 = ctx.entree(0), p2 = ctx.entree(1);

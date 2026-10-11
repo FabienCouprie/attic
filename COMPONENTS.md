@@ -3843,7 +3843,7 @@ Adds silence at the beginning and/or end of the audio track. Independently set t
 
 *Places two tracks one after the other with a crossfade.*
 
-Puts two tracks end to end. The first fades out while the second fades in over an adjustable overlap. Zero overlap gives a plain concatenation.
+Puts two tracks end to end. The first fades out while the second fades in, over the duration « Overlap » gives. A zero overlap gives a plain concatenation, and the output duration is then the sum of the two. The two ramps are linear and complementary: at each instant of the overlap, what leaves the first and what enters the second make one, so that two identical signals keep their level at the join. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is. The output duration therefore never falls below that of the longer of the two.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3853,7 +3853,7 @@ Puts two tracks end to end. The first fades out while the second fades in over a
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Overlap | number | 2 s | 0 – 30 s, step 0.1 | Crossfade duration between the end of track 1 and the start of track 2. |
+| Overlap | number | 2 s | 0 – 600 s, step 0.1 | Crossfade duration between the end of track 1 and the start of track 2. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is. |
 
 #### Cut at Words
 
