@@ -27,7 +27,7 @@
 // pi f R sur c. Écrire le retard en mètres plutôt qu'en cents fait que l'écart de hauteur
 // sort du calcul au lieu d'y être posé à la main, et qu'il suit la vitesse comme il le doit.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurTransformee } from "./courbe";
 import { fft } from "./fft";
 
 /** La vitesse du son dans l'air, en mètres par seconde, à vingt degrés. */
@@ -142,9 +142,9 @@ export interface ReglagesRotatif {
   /** Fréquence qui sépare la trompe du tambour, en hertz. */
   coupure: number;
   /** Part de la variation de niveau, de 0 à 1. */
-  profondeurAmplitude: number;
+  profondeurAmplitude: number | Float32Array;
   /** Part du trajet parcouru, de 0 à 1 : c'est elle qui décide de l'écart de hauteur. */
-  profondeurDoppler: number;
+  profondeurDoppler: number | Float32Array;
   /** Écart entre les deux micros, de 0 à 1. À zéro ils sont au même endroit. */
   largeur: number;
   melange: number | Float32Array;
@@ -167,13 +167,17 @@ const lire = (x: Float32Array, position: number): number => {
  * arriver à un demi-tour d'intervalle, et c'est de là que vient la largeur du son.
  */
 function rotor(x: Float32Array, sr: number, vitesse: number, rayon: number,
-  profondeurAmplitude: number, profondeurDoppler: number, dephasage: number): Float32Array {
+  profondeurAmplitude: number | Float32Array, profondeurDoppler: number | Float32Array,
+  dephasage: number): Float32Array {
   const y = new Float32Array(x.length);
-  const retardMax = (rayon / VITESSE_SON) * sr * profondeurDoppler;
+  // `valeurTransformee` ne calcule qu'une fois ce qui ne bouge pas : un nombre garde son produit
+  // unique, exactement comme avant que ces deux réglages s'ouvrent.
+  const retardMaxA = valeurTransformee(profondeurDoppler, (v) => (rayon / VITESSE_SON) * sr * v);
   for (let i = 0; i < x.length; i++) {
     const phase = (2 * Math.PI * vitesse * i) / sr + dephasage;
     const c = Math.cos(phase);
-    y[i] = lire(x, i - retardMax * (1 - c)) * (1 - (profondeurAmplitude * (1 - c)) / 2);
+    y[i] = lire(x, i - retardMaxA(i) * (1 - c))
+      * (1 - (valeurA(profondeurAmplitude, i) * (1 - c)) / 2);
   }
   return y;
 }

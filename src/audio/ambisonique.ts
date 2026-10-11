@@ -29,6 +29,7 @@ export interface ChampB {
   Y: Float32Array;
   Z: Float32Array;
 }
+import { valeurA } from "./courbe";
 
 const RACINE2 = Math.SQRT2;
 
@@ -104,11 +105,25 @@ export function partDirectionnelle(champ: ChampB): number {
 }
 
 /** Un microphone virtuel cardioïde pointé dans la direction `theta`. */
-export function microphoneVirtuel(champ: ChampB, theta: number): Float32Array {
+export function microphoneVirtuel(
+  champ: ChampB, theta: number | Float32Array, transforme: (v: number) => number = (v) => v,
+): Float32Array {
   const n = champ.W.length;
   const out = new Float32Array(n);
-  const c = Math.cos(theta), s = Math.sin(theta);
+  // DEUX CHEMINS, ET C'EST LE PRIX DE CE QU'ON DEMANDE. Un angle fixe garde son cosinus et son
+  // sinus UNIQUES, calculés une fois avant la boucle, donc pas un bit déplacé ; un angle qui se
+  // déplace en paie un couple par échantillon, et le décodage en appelle deux, un par micro.
+  //
+  // LA TRANSFORMATION SE FAIT ICI, ET NON CHEZ L'APPELANT, parce qu'un tableau est en simple
+  // précision : convertir des degrés en radians AVANT de les y ranger tronquerait ce que le
+  // chemin du nombre garde en double, et l'invariant de la courbe plate tomberait sur ce seul
+  // arrondi. L'appelant passe donc ses degrés tels quels, et la conversion reste en double.
+  const fixe = typeof theta === "number";
+  const a0 = fixe ? transforme(theta) : 0;
+  const c0 = fixe ? Math.cos(a0) : 0, s0 = fixe ? Math.sin(a0) : 0;
   for (let i = 0; i < n; i++) {
+    const a = fixe ? 0 : transforme(valeurA(theta, i));
+    const c = fixe ? c0 : Math.cos(a), s = fixe ? s0 : Math.sin(a);
     out[i] = champ.W[i] / RACINE2 + (champ.X[i] * c + champ.Y[i] * s) / 2;
   }
   return out;
@@ -120,8 +135,14 @@ export function microphoneVirtuel(champ: ChampB, theta: number): Float32Array {
  * Une ouverture faible rend une image étroite mais cohérente ; une ouverture large sépare
  * davantage, au prix d'un creux au centre. Quatre-vingt-dix degrés est le compromis habituel.
  */
-export function decoderStereo(champ: ChampB, ouverture: number): [Float32Array, Float32Array] {
-  return [microphoneVirtuel(champ, ouverture / 2), microphoneVirtuel(champ, -ouverture / 2)];
+export function decoderStereo(
+  champ: ChampB, ouverture: number | Float32Array,
+  enRadians: (v: number) => number = (v) => v,
+): [Float32Array, Float32Array] {
+  return [
+    microphoneVirtuel(champ, ouverture, (v) => enRadians(v) / 2),
+    microphoneVirtuel(champ, ouverture, (v) => -enRadians(v) / 2),
+  ];
 }
 
 /**

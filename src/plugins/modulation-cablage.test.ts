@@ -39,9 +39,11 @@ import { fiches as fichesFinitions } from "./finitions";
 import { fiches as fichesTableOnde } from "./table-onde";
 import { fiches as fichesVelours } from "./velours";
 import { fiches as fichesSpectralCdp } from "./spectral-cdp";
+import { fiches as fichesEffetsSpectral } from "./effets-spectral";
 import { fiches as fichesConcret } from "./concret";
 import { fiches as fichesRetardSpectral } from "./retard-spectral";
 import { fiches as fichesDeplacement } from "./deplacement";
+import { fiches as fichesModulation } from "./effets-modulation";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const SR = 16000;
@@ -56,7 +58,7 @@ const LEURRE = 100;
 const TOUTES = [
   ...fichesArcEnCiel, ...fichesCresson, ...fichesEffets, ...fichesRotatifs,
   ...fichesTemporel, ...fichesFdn, ...fichesFinitions, ...fichesTableOnde, ...fichesVelours,
-  ...fichesSpectralCdp, ...fichesConcret, ...fichesRetardSpectral, ...fichesDeplacement,
+  ...fichesSpectralCdp, ...fichesConcret, ...fichesRetardSpectral, ...fichesDeplacement, ...fichesModulation, ...fichesEffetsSpectral,
 ] as unknown as FicheAudio[];
 
 const fiche = (id: string): FicheAudio => {
@@ -174,7 +176,7 @@ const CAS: {
 }[] = [
   // La famille « mélange ».
   { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)], rang: 1 },
-  { id: "haut-parleur-rotatif", reglage: "Mélange", entrees: () => [son(5, 2)] },
+  { id: "haut-parleur-rotatif", reglage: "Mélange", entrees: () => [son(5, 2)], rang: 1 },
   { id: "arc-en-ciel-acoustique", reglage: "Mix", entrees: () => [son(7, 2)] },
   { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)] },
   { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)] },
@@ -286,6 +288,17 @@ const CAS: {
   { id: "de-esser", reglage: "Ratio", entrees: () => [son(337, 2), undefined, undefined, undefined, undefined, undefined],
     noms: ["Ratio min", "Ratio max"], siOffline: true, regle: 8, leurre: 1,
     reglages: { Seuil: -60 } },
+  // LE RESTE DE LA FAMILLE « ESPACE ».
+  { id: "haut-parleur-rotatif", reglage: "Profondeur d'amplitude", entrees: () => [son(347, 2), undefined],
+    noms: ["Profondeur d'amplitude min", "Profondeur d'amplitude max"], rang: 2 },
+  { id: "haut-parleur-rotatif", reglage: "Profondeur du Doppler", entrees: () => [son(349, 2), undefined, undefined],
+    noms: ["Profondeur du Doppler min", "Profondeur du Doppler max"] },
+  { id: "ambisonique", reglage: "Ouverture", entrees: () => [son(353, 2), undefined],
+    noms: ["Ouverture min", "Ouverture max"], regle: 60, leurre: 180 },
+  { id: "spatialisation-stereo", reglage: "Largeur", entrees: () => [son(359, 2), undefined],
+    noms: ["Largeur min", "Largeur max"], siOffline: true },
+  { id: "granular-freeze", reglage: "Position", entrees: () => [son(367, 2), undefined],
+    noms: ["Position min", "Position max"] },
   // LE DUCKING PORTE DEUX ENTRÉES AUDIO AVANT SES QUATRE PORTS, et ses unités ne sont pas des
   // pour-cent : chaque cas choisit donc sa valeur et son leurre, en fractions dyadiques.
   { id: "ducking", reglage: "Seuil", entrees: () => [son(197), son(199)],
@@ -325,8 +338,8 @@ const CAS: {
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien soixante-cinq ports à éprouver", () => {
-    expect(CAS).toHaveLength(65);
+  it("il y a bien soixante-dix ports à éprouver", () => {
+    expect(CAS).toHaveLength(70);
   });
 
   for (const cas of CAS) {

@@ -135,7 +135,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ajouter silence | `ajouter-silence` | 240 × 118 |
 | Similarité audio | `alignement-dtw` | 240 × 140 |
 | Aligneur de piste | `aligneur-piste` | 240 × 140 |
-| Rotation ambisonique | `ambisonique` | 240 × 140 |
+| Rotation ambisonique | `ambisonique` | 240 × 162 |
 | Ampleur | `ampleur` | 240 × 140 |
 | Amplificateur | `amplificateur` | 240 × 140 |
 | Analyse audio | `analyse-audio` | 240 × 140 |
@@ -298,14 +298,14 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Glissando de Risset | `glissando-risset` | 240 × 118 |
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
-| Granular freeze | `granular-freeze` | 240 × 140 |
+| Granular freeze | `granular-freeze` | 240 × 162 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
-| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 140 |
+| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 184 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
@@ -452,7 +452,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | SoundTouch Vitesse | `soundtouch-rate` | 240 × 118 |
 | SoundTouch Tempo | `soundtouch-tempo` | 240 × 118 |
 | SoundTouch Tonalité | `soundtouch-tonalite` | 240 × 118 |
-| Spatialisation stéréo | `spatialisation-stereo` | 240 × 140 |
+| Spatialisation stéréo | `spatialisation-stereo` | 240 × 162 |
 | Spatialiseur | `spatialiseur` | 240 × 184 |
 | Spectre visible | `spectre-visible` | 240 × 140 |
 | Spectrogramme fractal | `spectrogramme-fractal` | 240 × 140 |
