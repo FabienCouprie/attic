@@ -12,13 +12,14 @@ export async function deEsser(
   largeur: number | Float32Array,
   seuilDb: number | Float32Array,
   ratio: number,
-  attaqueMs: number,
-  relachementMs: number,
+  attaqueMs: number | Float32Array,
+  relachementMs: number | Float32Array,
 ): Promise<AudioBuffer> {
   const sr = buffer.sampleRate;
   const nch = buffer.numberOfChannels;
-  const attaqueCoeff = Math.exp(-1 / (Math.max(0.01, attaqueMs) / 1000 * sr));
-  const relachementCoeff = Math.exp(-1 / (Math.max(0.01, relachementMs) / 1000 * sr));
+  // Même aide que le gate, plus bas dans ce fichier : un nombre garde son exponentielle unique.
+  const attaqueCoeff = coefficientSuiveur(attaqueMs, sr);
+  const relachementCoeff = coefficientSuiveur(relachementMs, sr);
 
   const ctx = new OfflineAudioContext(nch, buffer.length, sr);
   const source = ctx.createBufferSource();
@@ -43,7 +44,7 @@ export async function deEsser(
     let env = 0;
     for (let i = 0; i < buffer.length; i++) {
       const niveau = Math.abs(bande[i]);
-      const coeff = niveau > env ? attaqueCoeff : relachementCoeff;
+      const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
       env = coeff * env + (1 - coeff) * niveau;
       const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
       const seuil = valeurA(seuilDb, i);

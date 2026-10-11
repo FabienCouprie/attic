@@ -4,6 +4,8 @@
 // de calcul n'a ete retouchee au passage.
 
 
+import { coefficientSuiveur } from "./courbe";
+
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
   let pic = 0;
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -64,13 +66,17 @@ export function compresser(
   buffer: AudioBuffer,
   seuilDb: number,
   ratio: number,
-  attaqueMs: number,
-  relachementMs: number,
+  attaqueMs: number | Float32Array,
+  relachementMs: number | Float32Array,
   compensationDb: number
 ): AudioBuffer {
   const sr = buffer.sampleRate;
-  const attaqueCoeff = Math.exp(-1 / (Math.max(0.01, attaqueMs) / 1000 * sr));
-  const relachementCoeff = Math.exp(-1 / (Math.max(0.01, relachementMs) / 1000 * sr));
+  // UNE CONSTANTE DE TEMPS NE SE LIT PAS COMME UN GAIN : elle décide de la VITESSE à laquelle
+  // l'enveloppe rattrape le signal. `coefficientSuiveur` garde deux chemins : un nombre conserve
+  // son exponentielle unique, calculée une fois, donc pas un bit déplacé ; une courbe en paie une
+  // par échantillon, ce qui est le prix de ce qu'elle demande.
+  const attaqueCoeff = coefficientSuiveur(attaqueMs, sr);
+  const relachementCoeff = coefficientSuiveur(relachementMs, sr);
   const compensation = Math.pow(10, compensationDb / 20);
   const ratioSafe = Math.max(1, ratio);
   const nch = buffer.numberOfChannels;
@@ -90,7 +96,7 @@ export function compresser(
       const a = Math.abs(src[c][i]);
       if (a > niveau) niveau = a;
     }
-    const coeff = niveau > env ? attaqueCoeff : relachementCoeff;
+    const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
     env = coeff * env + (1 - coeff) * niveau;
 
     const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;

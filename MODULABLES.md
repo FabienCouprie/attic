@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 86, sur 60 composants
-- **réglages restant à faire** : 76, sur 33 composants et 50 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 92, sur 61 composants
+- **réglages restant à faire** : 70, sur 32 composants et 47 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 32, sur 13 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -46,12 +46,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
 
-### temps · 13
+### temps · 10
 
 - Ampleur `ampleur` : Pré-délai
-- Compresseur `compresseur` : Attaque, Relâchement
 - Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
-- De-esser `de-esser` : Attaque, Relâchement
 - Delay stéréo `delay-stereo` : Temps G, Temps D
 - Ducking `ducking` : Attaque, Relâchement, Maintien
 - Écho flottant `echo-flottant` : Décroissance
@@ -60,7 +58,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération `reverberation` : Decay
 - Réverbération velours `reverberation-velours` : Chute
 - Shimmer `shimmer` : Décroissance
-- Transient Shaper `transient-shaper` : Temps attaque, Temps sustain
 
 ### dynamique · 7
 
@@ -208,10 +205,14 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `chopper` : Profondeur
 - `chorus` : Mix
 - `chorus` : Profondeur
+- `compresseur` : Attaque
+- `compresseur` : Relâchement
 - `convolution-deux-sons` : Mix
 - `creneau` : Niveau
 - `crible-harmonique` : Fondamentale
+- `de-esser` : Attaque
 - `de-esser` : Largeur
+- `de-esser` : Relâchement
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
 - `delay-stereo` : Mix
@@ -268,6 +269,8 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `suppression-clics` : Seuil
 - `transfert-enveloppe` : Mix
 - `transient-shaper` : Attaque
+- `transient-shaper` : Temps attaque
+- `transient-shaper` : Temps sustain
 - `tremolo` : Fréquence
 - `tremolo` : Profondeur
 - `tremolo-harmonique` : Mélange

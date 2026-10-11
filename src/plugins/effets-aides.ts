@@ -301,9 +301,14 @@ export function effet(
   // enregistré désigne un réglage par son NOM. Renommer « Modulation min » en « Seuil min »
   // orphelinerait les valeurs déjà sauvegardées. Un port, lui, se renomme sans risque, puisqu'un
   // câble le désigne par son rang ; il reste court par symétrie avec ses deux bornes.
+  // ET LA PREMIÈRE SE NOMME AUSSI SI L'APPELANT LUI DONNE SES BORNES. Deux modulations qui
+  // arrivent ENSEMBLE sur une fiche neuve n'ont aucune raison d'en voir une s'appeler « Modulation
+  // » et l'autre « Modulation relâchement » : c'est le précédent du gate, dont les deux ports sont
+  // nommés parce qu'ils sont nés le même jour. Le nom court et les bornes par défaut vont donc de
+  // pair, et des `noms` donnés à la première valent décision de la nommer.
   const modules = mods.map((m, i) => {
     const en = m.parametreEn ?? parametres[rangs[i]].nomEn ?? m.parametre;
-    if (i === 0) return { ...m, parametreEn: en };
+    if (i === 0 && !m.noms) return { ...m, parametreEn: en };
     return {
       ...m, parametreEn: en,
       noms: m.noms ?? ([`${m.parametre} min`, `${m.parametre} max`] as [string, string]),

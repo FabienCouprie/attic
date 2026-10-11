@@ -197,7 +197,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
 | Color Looper | `color-looper` | 240 × 140 |
-| Compresseur | `compresseur` | 240 × 118 |
+| Compresseur | `compresseur` | 240 × 162 |
 | Compresseur multibande | `compresseur-multibande` | 240 × 118 |
 | Continuation AR | `continuation-spectrale-ar` | 240 × 118 |
 | Continuation LSTM | `continuation-spectrale-lstm` | 240 × 118 |
@@ -220,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
-| De-esser | `de-esser` | 240 × 162 |
+| De-esser | `de-esser` | 240 × 206 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
 | Décalage des bandes | `decalage-bandes` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
@@ -483,7 +483,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Traçage spectral | `tracage-spectral` | 240 × 118 |
 | Traduction OPUS-MT | `traduction-opus` | 240 × 118 |
 | Transfert d'enveloppe | `transfert-enveloppe` | 240 × 162 |
-| Transient Shaper | `transient-shaper` | 240 × 140 |
+| Transient Shaper | `transient-shaper` | 240 × 184 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
 | Trémolo harmonique | `tremolo-harmonique` | 240 × 162 |

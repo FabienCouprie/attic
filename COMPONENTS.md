@@ -4617,11 +4617,13 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 
 *Feed-forward compressor.*
 
-Reduces dynamics by attenuating passages above the threshold, according to the chosen ratio, attack and release.
+Reduces dynamics by attenuating passages above the threshold, according to the chosen ratio, attack and release. Both time constants accept a curve: « Modulation attack » takes the place of « Attack », with « Attack min » and « Attack max »; « Modulation release » takes that of « Release », with « Release min » and « Release max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation | curve |  |
+| input | Modulation release | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4631,6 +4633,10 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 | Attack | number | 5 ms | 0 – 200 ms, step 1 | Compressor attack time. |
 | Release | number | 100 ms | 5 – 1000 ms, step 5 | Compressor release time. |
 | Gain | number | 0 dB | -12 – 24 dB, step 1 | Output makeup gain. |
+| Attack min | slider | 0.5 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
 
 #### De-esser
 
@@ -4638,13 +4644,15 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 
 *Dynamic sibilance compression.*
 
-Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ».
+Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ». Both time constants accept one too, « Modulation attack » and « Modulation release », with their bounds named after their setting.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
 | input | Modulation width | curve |  |
+| input | Modulation attack | curve |  |
+| input | Modulation release | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4659,6 +4667,10 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
 | Width min | slider | 200 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Width max | slider | 6000 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that the curve's one means. |
+| Attack min | slider | 0.5 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
 
 #### Ducking
 
@@ -4903,12 +4915,14 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 
 *Independent attack and sustain control.*
 
-Independent control of a sound's attack and sustain. Two envelope detectors (fast for attacks, slow for the body) let you boost or cut transients and sustain separately. Essential for adding punch to drums or shortening an overly long snare.
+Independent control of a sound's attack and sustain. Two envelope detectors (fast for attacks, slow for the body) let you boost or cut transients and sustain separately. Essential for adding punch to drums or shortening an overly long snare. A curve connected to the « Modulation » input takes the place of « Attack », with « Modulation min » and « Modulation max ». Both time constants accept one too: « Modulation attack time » and « Modulation sustain time », with their bounds named after their setting.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation attack time | curve |  |
+| input | Modulation sustain time | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4919,6 +4933,10 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
 | Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attack » that the curve's one means. |
+| Attack time min | slider | 1 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack time max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that the curve's one means. |
+| Sustain time min | slider | 50 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Sustain time max | slider | 300 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that the curve's one means. |
 
 #### Tuned Combs
 
