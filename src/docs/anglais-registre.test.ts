@@ -53,7 +53,10 @@ import "../audio/adaptateur";
 // ET LE « TRAITÉ DES OBJETS MUSICAUX » RELÈVE DU MÊME CAS QUE LE TITRE DE CANTOR. L'ouvrage de
 // Schaeffer de 1966 se cite sous son titre français dans la littérature anglophone, faute de
 // traduction établie ; le franciser à moitié ou le traduire le rendrait introuvable.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité)(?![a-zà-ÿ])/gi;
+// ET « HEIKKILÄ » RELÈVE DU MÊME CAS QUE « de Cheveigné » : Ville-Matias Heikkilä signe ainsi son
+// article d'arXiv, en anglais, et retirer son tréma ne serait pas une traduction mais une faute sur
+// un nom.
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä)(?![a-zà-ÿ])/gi;
 
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 

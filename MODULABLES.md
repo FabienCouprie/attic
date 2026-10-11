@@ -21,7 +21,7 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 165, sur 68 composants
+- **réglages déjà pilotés par une courbe** : 169, sur 70 composants
 - **réglages restant à faire** : 2, sur 1 composants et 2 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 44, sur 21 composants qui gardent les leurs
@@ -154,6 +154,8 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `beat-repeat` : Mix
 - `bitcrusher` : Fréquence
 - `bitcrusher` : Mix
+- `bytebeat` : Cadence
+- `bytebeat` : Volume
 - `chopper` : Fréquence
 - `chopper` : Profondeur
 - `chorus` : Mix
@@ -279,6 +281,8 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `spatialiseur` : Azimut
 - `spatialiseur` : Distance
 - `spatialiseur` : Élévation
+- `suites-entieres` : Tempo
+- `suites-entieres` : Volume
 - `suppression-clics` : Seuil
 - `transfert-enveloppe` : Mix
 - `transient-shaper` : Attaque
