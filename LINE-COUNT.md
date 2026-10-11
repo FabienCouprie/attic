@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232769 lines, of which 159143 are code.**
+**1318 files, 232943 lines, of which 159239 are code.**
 The table lists the 185 files of 200 code lines or more, heaviest first;
-the remaining 1132 account for 155065 lines.
+the remaining 1133 account for 155232 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -99,19 +99,19 @@ the remaining 1132 account for 155065 lines.
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/audio/table-onde.test.ts | 293 | 383 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
+| src/plugins/effets.ts | 290 | 371 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
 | src/audio/analyse-genre.ts | 288 | 373 |  |
-| src/plugins/effets.ts | 288 | 369 |  |
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
+| src/plugins/modulation-cablage.test.ts | 285 | 435 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
-| src/plugins/modulation-cablage.test.ts | 280 | 430 |  |
 | src/plugins/visualisation-ecoute.test.ts | 280 | 413 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |

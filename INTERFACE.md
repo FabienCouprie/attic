@@ -364,7 +364,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
 | Oscillateur analogique | `oscillateur-analogique` | 240 × 118 |
-| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 162 |
+| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 184 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
 | Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
 | Parole vers séquence | `parole-vers-sequence` | 240 × 184 |
@@ -421,7 +421,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 206 |
 | Réverbération | `reverberation` | 240 × 140 |
 | Réverbération velours | `reverberation-velours` | 240 × 140 |
-| Ring modulator | `ring-modulator` | 240 × 140 |
+| Ring modulator | `ring-modulator` | 240 × 162 |
 | RMS (Meyda) | `rms-meyda` | 240 × 140 |
 | Rogner les silences | `rogner-silences` | 240 × 118 |
 | Rolloff spectral (Meyda) | `rolloff-spectral-meyda` | 240 × 140 |
