@@ -48,6 +48,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", sousType: "stereo" },
       portModulation("Mélange"),
       portModulation("Profondeur", "Depth", { court: false }),
+      portModulation("Coupure", "Crossover", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -65,13 +66,21 @@ export const fiches: FicheAudio[] = ([
         docEn: "Share of treated sound in the output. At zero, the input comes out sample for sample." },
       ...bornesModulation(MODULATION_MELANGE),
       ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
+      ...bornesModulation({
+        ...modulationNommee("Coupure", "Crossover", [100, 4000], "Hz"), defauts: [200, 3000],
+        pas: 10,
+      }),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       }
-      const coupure = ctx.paramNombre("Coupure", 800);
+      const coupure = reglageModule(ctx, a.length, 3, {
+        reglage: "Coupure", defaut: 800, rendu: "pourCent",
+        noms: ["Coupure min", "Coupure max"], bornes: [200, 3000],
+        echelle: "logarithmique",
+      });
       const vitesse = ctx.paramNombre("Vitesse", 5);
       const canaux = tremoloHarmonique(canauxDe(a), a.sampleRate, {
         vitesse,
@@ -83,7 +92,10 @@ export const fiches: FicheAudio[] = ([
       });
       return {
         valeurs: [versTampon(canaux, a.sampleRate)],
-        message: traduire("msg.tremolo-harmonique.resultat", vitesse, Math.round(coupure)),
+        // LA COUPURE ANNONCÉE EST CELLE DU DÉBUT DU SON quand une courbe la commande. Le message
+        // rend UN chiffre ; une frontière qui se déplace en vaudrait autant qu'il y a d'instants,
+        // et en choisir un est plus honnête que d'en moyenner plusieurs sous un seul nombre.
+        message: traduire("msg.tremolo-harmonique.resultat", vitesse, Math.round(valeurA(coupure, 0))),
       };
     },
   },
@@ -100,6 +112,7 @@ export const fiches: FicheAudio[] = ([
       portModulation("Mélange"),
       portModulation("Profondeur d'amplitude", "Amplitude depth", { court: false }),
       portModulation("Profondeur du Doppler", "Doppler depth", { court: false }),
+      portModulation("Coupure", "Crossover", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -127,6 +140,10 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation(MODULATION_MELANGE),
       ...bornesModulation(modulationNommee("Profondeur d'amplitude", "Amplitude depth", [0, 100], "%")),
       ...bornesModulation(modulationNommee("Profondeur du Doppler", "Doppler depth", [0, 100], "%")),
+      ...bornesModulation({
+        ...modulationNommee("Coupure", "Crossover", [200, 2000], "Hz"), defauts: [300, 1600],
+        pas: 10,
+      }),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -141,7 +158,11 @@ export const fiches: FicheAudio[] = ([
       const canaux = hautParleurRotatif(canauxDe(a), a.sampleRate, {
         vitesseAigu,
         vitesseGrave: ctx.paramNombre("Vitesse du tambour", 1.2),
-        coupure: ctx.paramNombre("Coupure", 800),
+        coupure: reglageModule(ctx, a.length, 4, {
+          reglage: "Coupure", defaut: 800, rendu: "pourCent",
+          noms: ["Coupure min", "Coupure max"], bornes: [300, 1600],
+          echelle: "logarithmique",
+        }),
         profondeurAmplitude: reglageModule(ctx, a.length, 2, {
           reglage: "Profondeur d'amplitude", defaut: 70,
           noms: ["Profondeur d'amplitude min", "Profondeur d'amplitude max"],

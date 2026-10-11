@@ -11,7 +11,14 @@ export function wahwah(
   buffer: AudioBuffer,
   frequence: number,
   profondeur: number | Float32Array,
-  q: number,
+  /**
+   * Le facteur de qualité du passe-bande. Un tableau le fait varier échantillon par échantillon.
+   *
+   * IL NE COÛTE RIEN À MODULER, et c'est ce qui le distingue : les coefficients du biquad sont
+   * DÉJÀ refaits à chaque échantillon, la fréquence centrale balayant. Il n'entre que dans
+   * `alpha`, et le lire par échantillon n'ajoute pas un calcul.
+   */
+  q: number | Float32Array,
   mix: number | Float32Array,
   courbe?: unknown,
   bornes?: { min: number; max: number },
@@ -23,6 +30,7 @@ export function wahwah(
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, module ou non.
   const depthA = (i: number) => valeurA(profondeur, i) / 100;
   const mixA = (i: number) => valeurA(mix, i) / 100;
+  const qA = (i: number) => valeurA(q, i);
   const freqMin = bornes?.min ?? 200;
   const freqMax = bornes?.max ?? 2500;
 
@@ -62,7 +70,7 @@ export function wahwah(
       const w0 = 2 * Math.PI * fc / sr;
       const cosW0 = Math.cos(w0);
       const sinW0 = Math.sin(w0);
-      const alpha = sinW0 / (2 * q);
+      const alpha = sinW0 / (2 * qA(i));
 
       // Coefficients passe-bande (constant 0 dB peak gain)
       const b0 = alpha;

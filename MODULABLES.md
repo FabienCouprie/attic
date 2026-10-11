@@ -21,26 +21,22 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 131, sur 64 composants
-- **réglages restant à faire** : 20, sur 14 composants et 14 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 135, sur 64 composants
+- **réglages restant à faire** : 16, sur 10 composants et 10 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 10
+### frequence · 6
 
-- Bitcrusher `bitcrusher` : Fréquence
-- Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
 - Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Peignes accordés `peignes-accordes` : Résonance
 - Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
 - Résonateurs `resonateurs` : Résonance, Brillance
 - Ring modulator `ring-modulator` : Fréquence
-- Trémolo harmonique `tremolo-harmonique` : Coupure
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
-- Wah-wah `wahwah` : Résonance
 
 ### espace · 1
 
@@ -171,6 +167,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `auto-pan` : Profondeur
 - `beat-repeat` : Feedback
 - `beat-repeat` : Mix
+- `bitcrusher` : Fréquence
 - `bitcrusher` : Mix
 - `chopper` : Fréquence
 - `chopper` : Profondeur
@@ -229,6 +226,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `glissando-interieur` : Mix
 - `granular-freeze` : Mix
 - `granular-freeze` : Position
+- `haut-parleur-rotatif` : Coupure
 - `haut-parleur-rotatif` : Mélange
 - `haut-parleur-rotatif` : Profondeur d'amplitude
 - `haut-parleur-rotatif` : Profondeur du Doppler
@@ -281,6 +279,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `transient-shaper` : Temps sustain
 - `tremolo` : Fréquence
 - `tremolo` : Profondeur
+- `tremolo-harmonique` : Coupure
 - `tremolo-harmonique` : Mélange
 - `tremolo-harmonique` : Profondeur
 - `ubiquite` : Dispersion
@@ -293,3 +292,4 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `wahwah` : Fréquence
 - `wahwah` : Mix
 - `wahwah` : Profondeur
+- `wahwah` : Résonance

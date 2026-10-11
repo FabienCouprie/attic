@@ -55,6 +55,55 @@ const section = (fc: number, sr: number, haut: boolean): Biquad => {
 export const passeBas = (fc: number, sr: number): Biquad => section(fc, sr, false);
 export const passeHaut = (fc: number, sr: number): Biquad => section(fc, sr, true);
 
+/**
+ * Le coefficient d'une section, constant ou refait à chaque échantillon.
+ *
+ * C'EST `valeurTransformee` APPLIQUÉE À UN BIQUAD, et non à un nombre : le calcul rend cinq
+ * coefficients à la fois, là où l'aide partagée est typée sur un seul nombre. La règle est la même
+ * des deux côtés, un calcul unique au scalaire et un par échantillon à la courbe.
+ */
+const coefficientSection = (
+  fc: number | Float32Array, sr: number, haut: boolean,
+): ((i: number) => Biquad) => {
+  if (typeof fc === "number") {
+    const fixe = section(fc, sr, haut);
+    return () => fixe;
+  }
+  return (i: number) => section(valeurA(fc, i), sr, haut);
+};
+
+/**
+ * Deux sections identiques en cascade, en UNE SEULE passe.
+ *
+ * POURQUOI FUSIONNER CE QUI ÉTAIT DEUX PASSES. Avec une coupure qui varie, le coefficient dépend
+ * de l'échantillon : deux passes successives le demanderaient DEUX FOIS pour le même indice, soit
+ * un cosinus et un sinus de plus par échantillon et par bande. Fusionnées, les deux sections
+ * lisent le même coefficient une fois.
+ *
+ * LA PASSE INTERMÉDIAIRE ÉTAIT RANGÉE DANS UN `Float32Array`, et c'est le piège de cette fusion :
+ * la seconde section lisait donc une valeur TRONQUÉE en simple précision, tandis que les deux
+ * valeurs précédentes de chaque section restaient en double. La garder en double ici changerait ce
+ * que rend un composant non modulé ; `Math.fround` remet la troncature où elle était, et le cas de
+ * `rotatifs.test.ts` compare les deux formes au bit.
+ */
+function cascadeDeux(x: Float32Array, coef: (i: number) => Biquad): Float32Array {
+  const y = new Float32Array(x.length);
+  let ax1 = 0, ax2 = 0, ay1 = 0, ay2 = 0;
+  let bx1 = 0, bx2 = 0, by1 = 0, by2 = 0;
+  for (let i = 0; i < x.length; i++) {
+    const b = coef(i);
+    const u = b.b0 * x[i] + b.b1 * ax1 + b.b2 * ax2 - b.a1 * ay1 - b.a2 * ay2;
+    ax2 = ax1; ax1 = x[i];
+    ay2 = ay1; ay1 = u;
+    const uf = Math.fround(u);
+    const v = b.b0 * uf + b.b1 * bx1 + b.b2 * bx2 - b.a1 * by1 - b.a2 * by2;
+    bx2 = bx1; bx1 = uf;
+    by2 = by1; by1 = v;
+    y[i] = v;
+  }
+  return y;
+}
+
 /** Une section de biquad, forme directe I, appliquée hors place. */
 export function filtrer(x: Float32Array, b: Biquad): Float32Array {
   const y = new Float32Array(x.length);
@@ -75,11 +124,12 @@ export function filtrer(x: Float32Array, b: Biquad): Float32Array {
  * vingt-quatre décibels par octave et, surtout, ce qui met les deux bandes en phase à la
  * coupure, de sorte que leur somme ne creuse pas.
  */
-export function separerEnDeuxBandes(x: Float32Array, fc: number, sr: number):
+export function separerEnDeuxBandes(x: Float32Array, fc: number | Float32Array, sr: number):
 { grave: Float32Array; aigu: Float32Array } {
-  const pb = passeBas(fc, sr);
-  const ph = passeHaut(fc, sr);
-  return { grave: filtrer(filtrer(x, pb), pb), aigu: filtrer(filtrer(x, ph), ph) };
+  return {
+    grave: cascadeDeux(x, coefficientSection(fc, sr, false)),
+    aigu: cascadeDeux(x, coefficientSection(fc, sr, true)),
+  };
 }
 
 /** Le module du spectre, pour les mesures de platitude. */
@@ -98,8 +148,12 @@ export interface ReglagesTremoloHarmonique {
   vitesse: number;
   /** Profondeur, de 0 à 1. Un tableau la fait varier échantillon par échantillon. */
   profondeur: number | Float32Array;
-  /** Fréquence qui sépare les deux bandes, en hertz. */
-  coupure: number;
+  /**
+   * Fréquence qui sépare les deux bandes, en hertz. Un tableau la fait varier échantillon par
+   * échantillon : la frontière se déplace, et ce qui monte et descend en opposition n'est plus la
+   * même part du spectre d'un instant à l'autre.
+   */
+  coupure: number | Float32Array;
   /** Part de son traité, de 0 à 1. */
   melange: number | Float32Array;
 }
@@ -139,8 +193,11 @@ export interface ReglagesRotatif {
   vitesseAigu: number;
   /** Vitesse du rotor grave, en tours par seconde. */
   vitesseGrave: number;
-  /** Fréquence qui sépare la trompe du tambour, en hertz. */
-  coupure: number;
+  /**
+   * Fréquence qui sépare la trompe du tambour, en hertz. Un tableau la fait varier échantillon par
+   * échantillon : la part du son confiée au rotor large se déplace pendant qu'il tourne.
+   */
+  coupure: number | Float32Array;
   /** Part de la variation de niveau, de 0 à 1. */
   profondeurAmplitude: number | Float32Array;
   /** Part du trajet parcouru, de 0 à 1 : c'est elle qui décide de l'écart de hauteur. */

@@ -8,7 +8,7 @@
 // du rayon et de la vitesse par la dérivée du retard, et il doit se retrouver en cents.
 import { describe, expect, it } from "vitest";
 import {
-  RAYON_AIGU, VITESSE_SON, hautParleurRotatif, moduleSpectre, passeBas, passeHaut,
+  RAYON_AIGU, VITESSE_SON, filtrer, hautParleurRotatif, moduleSpectre, passeBas, passeHaut,
   separerEnDeuxBandes, tremoloHarmonique,
 } from "./rotatifs";
 
@@ -45,6 +45,34 @@ function frequencesInstantanees(x: Float32Array): number[] {
 }
 
 describe("la séparation en deux bandes", () => {
+  // CE CAS TIENT LA FUSION DES DEUX PASSES. La séparation appliquait `filtrer` deux fois de suite,
+  // ce qui demandait le coefficient DEUX FOIS par échantillon dès qu'une coupure varie. Les deux
+  // sections sont désormais dans une seule boucle, et ce cas vérifie que l'arithmétique n'a pas
+  // bougé d'un bit : la passe intermédiaire transitait par un `Float32Array`, de sorte que la
+  // seconde section lisait une valeur tronquée en simple précision.
+  it("LES DEUX SECTIONS FUSIONNÉES RENDENT CE QUE RENDAIENT DEUX PASSES, au bit près", () => {
+    const x = melange(sinus(200, N), sinus(3000, N));
+    for (const fc of [120, 800, 5000]) {
+      const { grave, aigu } = separerEnDeuxBandes(x, fc, SR);
+      const pb = passeBas(fc, SR);
+      const ph = passeHaut(fc, SR);
+      const graveDeuxPasses = filtrer(filtrer(x, pb), pb);
+      const aiguDeuxPasses = filtrer(filtrer(x, ph), ph);
+      expect(Array.from(grave), `le grave diffère à ${fc} Hz`).toEqual(Array.from(graveDeuxPasses));
+      expect(Array.from(aigu), `l'aigu diffère à ${fc} Hz`).toEqual(Array.from(aiguDeuxPasses));
+    }
+  });
+
+  it("UNE COURBE PLATE SÉPARE COMME LE NOMBRE QU'ELLE VAUT", () => {
+    // Deux cent cinquante-six est une puissance de deux : le flottant simple du tableau le tient
+    // exactement, et la comparaison mesure le câblage et non le format.
+    const x = melange(sinus(200, N), sinus(3000, N));
+    const fixe = separerEnDeuxBandes(x, 256, SR);
+    const plate = separerEnDeuxBandes(x, new Float32Array(N).fill(256), SR);
+    expect(Array.from(plate.grave)).toEqual(Array.from(fixe.grave));
+    expect(Array.from(plate.aigu)).toEqual(Array.from(fixe.aigu));
+  });
+
   it("LA SOMME DES DEUX BANDES EST PLATE, ce qui est toute la raison du Linkwitz-Riley", () => {
     // Deux sections en cascade de chaque côté mettent les bandes en phase à la coupure. Une
     // seule section de chaque côté laisserait un creux que l'oreille prendrait pour la

@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232604 lines, of which 159056 are code.**
-The table lists the 184 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155208 lines.
+**1317 files, 232769 lines, of which 159143 are code.**
+The table lists the 185 files of 200 code lines or more, heaviest first;
+the remaining 1132 account for 155065 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -50,10 +50,10 @@ the remaining 1133 account for 155208 lines.
 | src/plugins/pochette-svg.ts | 358 | 401 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/modulation-melange.test.ts | 355 | 506 |  |
+| src/plugins/effets-temporel.ts | 348 | 478 |  |
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
-| src/plugins/effets-temporel.ts | 341 | 471 |  |
 | src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
@@ -102,15 +102,16 @@ the remaining 1133 account for 155208 lines.
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
 | src/audio/analyse-genre.ts | 288 | 373 |  |
+| src/plugins/effets.ts | 288 | 369 |  |
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
-| src/plugins/effets.ts | 286 | 367 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
+| src/plugins/modulation-cablage.test.ts | 280 | 430 |  |
 | src/plugins/visualisation-ecoute.test.ts | 280 | 413 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
@@ -118,7 +119,6 @@ the remaining 1133 account for 155208 lines.
 | src/plugins/magenta-helpers.ts | 274 | 401 |  |
 | src/audio/csound-formules.ts | 273 | 333 |  |
 | src/audio/multicanal.test.ts | 273 | 333 |  |
-| src/plugins/modulation-cablage.test.ts | 271 | 416 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
@@ -163,7 +163,7 @@ the remaining 1133 account for 155208 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets-aides.ts | 224 | 509 |  |
+| src/plugins/effets-aides.ts | 226 | 520 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
@@ -177,6 +177,7 @@ the remaining 1133 account for 155208 lines.
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
+| src/audio/rotatifs.test.ts | 214 | 274 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |

@@ -4,7 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { poserParam } from "./automation";
-import { coefficientSuiveur, valeurA } from "./courbe";
+import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
 
 export async function deEsser(
   buffer: AudioBuffer,
@@ -78,13 +78,24 @@ export async function deEsser(
 export function bitcrusher(
   buffer: AudioBuffer,
   bits: number,
-  frequenceEch: number,
+  /**
+   * La fréquence d'échantillonnage simulée, en hertz. Un tableau la fait varier.
+   *
+   * ELLE NE SE LIT PAS PAR ÉCHANTILLON MAIS PAR PALIER, et c'est ce qui la rend exacte : elle fixe
+   * la longueur d'un maintien, et c'est au moment de prendre un nouvel échantillon qu'on demande
+   * combien de temps le garder. Un son de trois minutes à vingt-deux kilohertz ne paie donc pas
+   * une division par échantillon, mais une par palier.
+   */
+  frequenceEch: number | Float32Array,
   mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const niveauBits = Math.max(1, Math.min(16, Math.round(bits)));
   const niveaux = Math.pow(2, niveauBits) - 1;
-  const pas = Math.max(1, Math.round(sr / Math.max(1000, frequenceEch)));
+  // `valeurTransformee` garde UN SEUL calcul au scalaire. Le pas reste un nombre ENTIER d'échantillons
+  // des deux côtés, ce qui est la condition de l'exactitude : une phase accumulée en fraction
+  // dériverait, et le palier tomberait un échantillon plus loin qu'avant sur un son non modulé.
+  const pasA = valeurTransformee(frequenceEch, (f) => Math.max(1, Math.round(sr / Math.max(1000, f))));
 
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
@@ -96,9 +107,15 @@ export function bitcrusher(
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
     let dernierEch = 0;
+    // LE PROCHAIN PALIER EST COMPTÉ, et non déduit d'un modulo. Avec un pas constant les deux
+    // disent la même chose, aux mêmes indices : zéro, le pas, deux fois le pas. Avec un pas qui
+    // change, le modulo déplacerait tous les paliers d'un coup, alors que le compte garde ceux
+    // déjà pris et n'applique le nouveau pas qu'au suivant.
+    let prochain = 0;
 
     for (let i = 0; i < src.length; i++) {
-      if (i % pas === 0) {
+      if (i >= prochain) {
+        prochain = i + pasA(i);
         const quantifie = Math.round(src[i] * niveaux) / niveaux;
         dernierEch = Math.max(-1, Math.min(1, quantifie));
       }
