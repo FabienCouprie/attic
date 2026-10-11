@@ -244,6 +244,28 @@ export const ECARTES_REGLAGE: Record<string, string> = {
   // UN SEUIL QUI VAUT POUR UNE DÉCOMPOSITION ENTIÈRE.
   "ondelettes/Force du seuil":
     "elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt",
+
+  // LES SEIZE NIVEAUX DU MONTAGE, écartés en bloc et pour trois raisons qui tiennent ensemble.
+  // Décision de Fabien, au vu du relevé.
+  //
+  // CE SONT DE VRAIS NIVEAUX, et c'est pourquoi ils entrent légitimement dans le relevé : le
+  // critère ne se trompe pas en les voyant. Ce qui les écarte n'est pas leur nature mais la forme
+  // du composant qui les porte.
+  //
+  // 1. UN NIVEAU PAR PISTE, ET LE NOMBRE DE PISTES N'EST PAS FIXE. Le montage porte une entrée
+  //    audio par piste et s'allonge d'une piste à la demande : ouvrir « Gain k » demanderait un
+  //    port de courbe par piste, donc un nombre de ports qui bouge avec le composant.
+  // 2. IL PORTE DÉJÀ DE QUOI FAIRE BOUGER LE NIVEAU D'UNE PISTE : « Fondu entrée » et « Fondu
+  //    sortie » le façonnent dans le temps, le gain étant ce qu'ils font monter et descendre.
+  // 3. ET CE QU'UNE COURBE FERAIT ICI SE FAIT EN AMONT, sur le son avant qu'il entre dans le
+  //    montage, qui assemble des sons plutôt qu'il ne les traite.
+  //
+  // Les seize clés sont écrites d'un coup plutôt qu'à la main : la raison est la même pour toutes,
+  // et le cas des exemptions orphelines attrape le jour où le compte de pistes changerait.
+  ...Object.fromEntries(Array.from({ length: 16 }, (_, k) => [
+    `montage/Gain ${k + 1}`,
+    "c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps",
+  ])),
 };
 
 /** Les identifiants écartés, nommément ou par leur famille de palette. */

@@ -22,9 +22,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 86, sur 60 composants
-- **réglages restant à faire** : 92, sur 34 composants et 51 couples composant / famille
+- **réglages restant à faire** : 76, sur 33 composants et 50 couples composant / famille
 - **dont le cœur travaille par trames** : 1
-- **réglages écartés un par un** : 16, sur 12 composants qui gardent les leurs
+- **réglages écartés un par un** : 32, sur 13 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -80,13 +80,12 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
 
-### niveau · 5
+### niveau · 4
 
 - Compresseur `compresseur` : Gain
 - Ducking `ducking` : Réduction
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
 - Micromontage `micromontage` : Niveau
-- Montage `montage` : Gain 1, Gain 2, Gain 3, Gain 4, Gain 5, Gain 6, Gain 7, Gain 8, Gain 9, Gain 10, Gain 11, Gain 12, Gain 13, Gain 14, Gain 15, Gain 16
 
 ### retroaction · 3
 
@@ -178,6 +177,22 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `mosaiquage/Poids du niveau` : c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon
 - `mosaiquage/Poids de la brillance` : idem, l'importance donnée au centre de gravité du spectre dans la même recherche
 - `ondelettes/Force du seuil` : elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt
+- `montage/Gain 1` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 2` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 3` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 4` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 5` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 6` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 7` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 8` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 9` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 10` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 11` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 12` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 13` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 14` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 15` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `montage/Gain 16` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
 
 ## Acceptent déjà une courbe
 
