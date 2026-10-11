@@ -21,18 +21,15 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 145, sur 65 composants
-- **réglages restant à faire** : 6, sur 2 composants et 2 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 151, sur 65 composants
+- **réglages restant à faire** : 0, sur 0 composants et 0 couples composant / famille
 - **dont le cœur travaille par trames** : 0
 - **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 2
-
-- Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
-- Vocoder `vocoder` : Fréq min, Fréq max, Q
+Rien.
 
 ## Familles écartées en bloc
 
@@ -236,6 +233,9 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `phaser` : Fréquence
 - `phaser` : Mix
 - `phaser` : Profondeur
+- `quadrafuzz` : Coupure 1
+- `quadrafuzz` : Coupure 2
+- `quadrafuzz` : Coupure 3
 - `quadrafuzz` : Mix
 - `reponse-filtre` : Fréquence de coupure
 - `reponse-filtre` : Résonance
@@ -278,7 +278,10 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `vibrato` : Fréquence
 - `vibrato` : Profondeur
 - `vitesse-variable` : Transposition
+- `vocoder` : Fréq max
+- `vocoder` : Fréq min
 - `vocoder` : Mix
+- `vocoder` : Q
 - `wahwah` : Fréquence
 - `wahwah` : Mix
 - `wahwah` : Profondeur

@@ -393,7 +393,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
 | Pulsation | `pulsation` | 240 × 162 |
-| Quadrafuzz | `quadrafuzz` | 240 × 140 |
+| Quadrafuzz | `quadrafuzz` | 240 × 206 |
 | Quantifier | `quantifier-rythme` | 240 × 184 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
@@ -499,7 +499,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |
-| Vocoder | `vocoder` | 240 × 162 |
+| Vocoder | `vocoder` | 240 × 228 |
 | Voice Changer | `voice-changer` | 240 × 118 |
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |

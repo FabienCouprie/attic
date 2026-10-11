@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1318 files, 233219 lines, of which 159393 are code.**
+**1318 files, 233382 lines, of which 159494 are code.**
 The table lists the 186 files of 200 code lines or more, heaviest first;
-the remaining 1132 account for 155091 lines.
+the remaining 1132 account for 155198 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -71,6 +71,7 @@ the remaining 1132 account for 155091 lines.
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
+| src/plugins/effets.ts | 323 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -78,6 +79,7 @@ the remaining 1132 account for 155091 lines.
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
+| src/plugins/modulation-cablage.test.ts | 315 | 478 |  |
 | src/plugins/effets-cresson.test.ts | 314 | 408 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
@@ -90,7 +92,6 @@ the remaining 1132 account for 155091 lines.
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
-| src/plugins/modulation-cablage.test.ts | 303 | 460 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
@@ -99,7 +100,6 @@ the remaining 1132 account for 155091 lines.
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/audio/table-onde.test.ts | 293 | 383 |  |
-| src/plugins/effets.ts | 292 | 382 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |

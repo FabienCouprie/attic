@@ -70,7 +70,17 @@ export const fiches: FicheAudio[] = ([
     (a, graves, basMediums, hautsMediums, aigus, f1, f2, f3, mix, sortie) =>
       quadrafuzz(a, { graves, basMediums, hautsMediums, aigus, f1, f2, f3, mix, sortie }),
     undefined,
-    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
+    // LES TROIS COUPURES SONT TRIÉES PUIS COMBINÉES DEUX À DEUX, et c'est ce qui les avait mises
+    // de côté. La combinaison se fait sur les tableaux, point par point, avant d'être remise aux
+    // paramètres audio des quatre filtres : une courbe peut donc croiser les coupures sans que
+    // l'ordre des bandes s'inverse, le tri se refaisant à chaque point.
+    [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
+     { ...modulationNommee("Coupure 1", "Crossover 1", [40, 800], "Hz"), defauts: [80, 500],
+       pas: 10, echelle: "logarithmique" },
+     { ...modulationNommee("Coupure 2", "Crossover 2", [200, 4000], "Hz"), defauts: [400, 2500],
+       pas: 50, echelle: "logarithmique" },
+     { ...modulationNommee("Coupure 3", "Crossover 3", [1000, 12000], "Hz"), defauts: [2000, 9000],
+       pas: 100, echelle: "logarithmique" }]),
   effet("exciter", "Exciter / Aural enhancer", "Exciter / Aural Enhancer", "Ajoute de la présence par distorsion harmonique dans les hauts médiums.", "Adds presence via harmonic distortion in the high mids.",
     [param("Amount", 50, "Amount", "%", "Intensité de la distorsion asymétrique.", "Intensity of the asymmetrical distortion.", [0, 100], 1), param("Fréquence", 3000, "Frequency", "Hz", "Fréquence de coupure du passe-haut après distorsion.", "High-pass cutoff after distortion.", [500, 10000], 100), param("Mix", 30, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, amount, freq, mix) => exciter(a, amount, freq, mix),
@@ -257,7 +267,11 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",
     resumeEn: "Filterbank vocoder: modulator + carrier → robot voice effect.",
-    entrees: [{ nom: "Modulateur", nomEn: "Modulator", type: "audio" }, { nom: "Porteuse", nomEn: "Carrier", type: "audio" }, portModulation("Mix")],
+    entrees: [{ nom: "Modulateur", nomEn: "Modulator", type: "audio" }, { nom: "Porteuse", nomEn: "Carrier", type: "audio" },
+      portModulation("Mix"),
+      portModulation("Fréq min", "Min freq", { court: false }),
+      portModulation("Fréq max", "Max freq", { court: false }),
+      portModulation("Q", "Q", { court: false })],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Bandes", nomEn: "Bands", type: "nombre", plage: [4, 16], pas: 1, defaut: 8, unite: "",
@@ -272,15 +286,39 @@ export const fiches: FicheAudio[] = ([
         doc: "Équilibre modulateur original / vocoder.",
         docEn: "Dry/wet balance." },
       ...bornesModulation(MODULATION_MIX),
+      ...bornesModulation({
+        ...modulationNommee("Fréq min", "Min freq", [80, 1000], "Hz"), defauts: [100, 600],
+        pas: 10, echelle: "logarithmique",
+      }),
+      ...bornesModulation({
+        ...modulationNommee("Fréq max", "Max freq", [2000, 16000], "Hz"), defauts: [3000, 12000],
+        pas: 100, echelle: "logarithmique",
+      }),
+      ...bornesModulation({
+        ...modulationNommee("Q", "Q", [0.5, 12], ""), defauts: [1, 8], pas: 0.1,
+      }),
     ],
     async executer(ctx: any) {
       const modulateur = ctx.entree(0);
       const porteuse = ctx.entree(1);
       if (!(modulateur instanceof AudioBuffer) || !(porteuse instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const bands = ctx.paramNombre("Bandes", 8);
-      const fMin = ctx.paramNombre("Fréq min", 100);
-      const fMax = ctx.paramNombre("Fréq max", 8000);
-      const Q = ctx.paramNombre("Q", 2);
+      const n = Math.min(modulateur.length, porteuse.length);
+      // LES DEUX BORNES ET LE Q ACCEPTENT UNE COURBE. Les deux bornes ne servent pas directement :
+      // la fréquence de chaque bande est leur moyenne géométrique pondérée, et c'est le cœur qui
+      // refait ce produit point par point avant de le remettre au filtre.
+      const fMin = reglageModule(ctx, n, 3, {
+        reglage: "Fréq min", defaut: 100, rendu: "pourCent",
+        noms: ["Fréq min min", "Fréq min max"], bornes: [100, 600], echelle: "logarithmique",
+      });
+      const fMax = reglageModule(ctx, n, 4, {
+        reglage: "Fréq max", defaut: 8000, rendu: "pourCent",
+        noms: ["Fréq max min", "Fréq max max"], bornes: [3000, 12000], echelle: "logarithmique",
+      });
+      const Q = reglageModule(ctx, n, 5, {
+        reglage: "Q", defaut: 2, rendu: "pourCent",
+        noms: ["Q min", "Q max"], bornes: [1, 8],
+      });
       // LA SORTIE S'ARRÊTE AU PLUS COURT DES DEUX SONS, et la courbe se lit sur cette longueur :
       // l'étirer sur le modulateur seul la décalerait dès que la porteuse est plus brève.
       const mix = reglageModule(ctx, Math.min(modulateur.length, porteuse.length), 2,
