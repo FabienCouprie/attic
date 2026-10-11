@@ -11,7 +11,7 @@ export async function deEsser(
   frequenceCentrale: number | Float32Array,
   largeur: number | Float32Array,
   seuilDb: number | Float32Array,
-  ratio: number,
+  ratio: number | Float32Array,
   attaqueMs: number | Float32Array,
   relachementMs: number | Float32Array,
 ): Promise<AudioBuffer> {
@@ -60,7 +60,7 @@ export async function deEsser(
       const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
       const seuil = valeurA(seuilDb, i);
       let gainDb = 0;
-      if (envDb > seuil) gainDb = (seuil - envDb) * (1 - 1 / Math.max(1, ratio));
+      if (envDb > seuil) gainDb = (seuil - envDb) * (1 - 1 / Math.max(1, valeurA(ratio, i)));
       dst[i] = src[i] * Math.pow(10, gainDb / 20);
     }
   }
@@ -112,14 +112,14 @@ export function bitcrusher(
 
 // --- Gate / Expandeur : traitement dynamique dans le domaine temporel -------
 // Gate : coupe le signal sous le seuil (attenue vers le plancher).
-// Expandeur : réduit渐进ment le signal sous le seuil selon le ratio.
+// Expandeur : réduit progressivement le signal sous le seuil selon le ratio.
 // Les deux partagent le même moteur de suivi d'enveloppe que le compresseur.
 
 export function gateExpandeur(
   buffer: AudioBuffer,
   mode: "gate" | "expandeur",
-  seuilDb: number,
-  ratio: number,
+  seuilDb: number | Float32Array,
+  ratio: number | Float32Array,
   attaqueMs: number | Float32Array,
   relachementMs: number | Float32Array,
   attenuationDb: number,
@@ -131,7 +131,7 @@ export function gateExpandeur(
   const nch = buffer.numberOfChannels;
 
   // Gate : le plancher est une attenuation fixe (en dB).
-  // Expandeur : le ratio atténue渐进ment sous le seuil (comme un compresseur inversé).
+  // Expandeur : le ratio atténue progressivement sous le seuil (comme un compresseur inversé).
   const plancherLin = Math.pow(10, -Math.max(0, attenuationDb) / 20);
 
   const resultat = new AudioBuffer({ numberOfChannels: nch, length: buffer.length, sampleRate: sr });
@@ -155,9 +155,11 @@ export function gateExpandeur(
     const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
 
     let gain: number;
+    // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+    const seuil = valeurA(seuilDb, i);
     if (mode === "gate") {
       // Gate : si le signal est sous le seuil, atténuer vers le plancher.
-      if (envDb < seuilDb) {
+      if (envDb < seuil) {
         gain = plancherLin;
       } else {
         gain = 1;
@@ -165,9 +167,9 @@ export function gateExpandeur(
     } else {
       // Expandeur : sous le seuil, atténuer selon le ratio.
       // gainDb = (seuilDb - envDb) * (1 - ratio) — ratio > 1 = expansion.
-      const ratioSafe = Math.max(1, ratio);
-      if (envDb < seuilDb) {
-        const gainDb = (seuilDb - envDb) * (1 - 1 / ratioSafe);
+      const ratioSafe = Math.max(1, valeurA(ratio, i));
+      if (envDb < seuil) {
+        const gainDb = (seuil - envDb) * (1 - 1 / ratioSafe);
         // Limiter l'atténuation maximale au plancher
         const gainDbLimite = Math.max(gainDb, -attenuationDb);
         gain = Math.pow(10, gainDbLimite / 20);

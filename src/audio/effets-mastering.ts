@@ -4,19 +4,21 @@
 // de calcul n'a ete retouchee au passage.
 
 import { poserParam } from "./automation";
-import { coefficientSuiveur, valeurA } from "./courbe";
+import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
 import { compresser } from "./effets-dynamique";
 import { bitcrusher } from "./effets-sibilance";
 
 export function limiter(
   buffer: AudioBuffer,
-  seuilDb: number,
+  seuilDb: number | Float32Array,
   relachementMs: number | Float32Array,
-  plafondDb: number,
+  plafondDb: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
-  const seuil = Math.pow(10, seuilDb / 20);
-  const plafond = Math.pow(10, plafondDb / 20);
+  // `valeurTransformee` ne calcule qu'une fois ce qui ne bouge pas : deux valeurs fixes gardent
+  // leurs deux `pow` uniques, exactement comme avant que ces réglages s'ouvrent.
+  const seuilA = valeurTransformee(seuilDb, (v) => Math.pow(10, v / 20));
+  const plafondA = valeurTransformee(plafondDb, (v) => Math.pow(10, v / 20));
   // Un scalaire garde son exponentielle unique ; une courbe en paie une par échantillon.
   const relachementCoeff = coefficientSuiveur(relachementMs, sr);
   const nch = buffer.numberOfChannels;
@@ -30,8 +32,12 @@ export function limiter(
   }
 
   let gain = 1;
-  const makeup = seuil > 0 ? plafond / seuil : 1;
   for (let i = 0; i < buffer.length; i++) {
+    const seuil = seuilA(i);
+    // LE RATTRAPAGE SUIT LES DEUX RÉGLAGES, donc il se recalcule avec eux : c'est le rapport du
+    // plafond au seuil, et le laisser hors de la boucle figerait la sortie sur leurs valeurs de
+    // départ pendant que la courbe commande.
+    const makeup = seuil > 0 ? plafondA(i) / seuil : 1;
     let pic = 0;
     for (let c = 0; c < nch; c++) {
       const a = Math.abs(src[c][i]);
