@@ -90,7 +90,12 @@ export const fiches: FicheAudio[] = ([
     [{ parametre: "Attaque", bornes: [0.1, 50], defauts: [0.5, 20], unite: "ms",
        noms: ["Attaque min", "Attaque max"], nomsEn: ["Attack min", "Attack max"] },
      { parametre: "Relâchement", bornes: [5, 500], defauts: [20, 300], unite: "ms",
-       noms: ["Relâchement min", "Relâchement max"], nomsEn: ["Release min", "Release max"] }]),
+       noms: ["Relâchement min", "Relâchement max"], nomsEn: ["Release min", "Release max"] },
+     // LES TROIS AUTRES VIENNENT APRÈS, donc à des rangs plus hauts : les deux premiers ports sont
+     // en production depuis le lot des constantes de temps, et leurs rangs ne bougent pas.
+     { parametre: "Seuil", bornes: [-60, 0], defauts: [-40, -10], unite: "dB" },
+     { parametre: "Ratio", bornes: [1, 20], defauts: [1, 10], unite: "∶1" },
+     { parametre: "Gain", bornes: [0, 24], defauts: [0, 12], unite: "dB" }]),
   effet("limiteur", "Limiteur", "Limiter", "Limiteur de crête pour le mastering.", "Peak limiter for mastering.",
     [param("Seuil", -3, "Threshold", "dB", "Niveau au-dessus duquel la limitation s'active.", "Level above which limiting engages.", [-40, 0], 1), param("Relâchement", 50, "Release", "ms", "Temps de retour au gain normal après un pic.", "Time to return to normal gain after a peak.", [1, 1000], 1), param("Plafond", -1, "Ceiling", "dB", "Niveau maximal de sortie.", "Maximum output level.", [-40, 0], 0.5)],
     (a, seuil, relachement, plafond) => limiter(a, seuil, relachement, plafond), undefined,
@@ -115,7 +120,22 @@ export const fiches: FicheAudio[] = ([
       param("Fréq Low", 250, "Low freq", "Hz", "Fréquence de coupure entre les bandes low et mid.", "Crossover between low and mid bands.", [40, 1000], 10),
       param("Fréq High", 4000, "High freq", "Hz", "Fréquence de coupure entre les bandes mid et high.", "Crossover between mid and high bands.", [1000, 12000], 100),
     ],
-    (a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh) => compresserMultiBande(a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh)),
+    (a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh) => compresserMultiBande(a, seuilLow, ratioLow, seuilMid, ratioMid, seuilHigh, ratioHigh, attaque, relachement, freqLow, freqHigh),
+    undefined,
+    // HUIT PORTS SUR UNE SEULE FICHE, décision de Fabien. Les trois bandes se règlent chacune, et
+    // la paire attaque / relâchement leur est commune : ce sont huit gestes distincts, et les
+    // rassembler sous un seul port reviendrait à choisir à la place de celui qui s'en sert.
+    // LA PREMIÈRE PORTE SES NOMS COMME LES SEPT AUTRES : elles arrivent ensemble, et laisser
+    // « Modulation min » à la bande grave seule n'aurait aucun sens à côté de « Ratio Low min ».
+    [{ parametre: "Seuil Low", bornes: [-60, 0], defauts: [-40, -10], unite: "dB",
+       noms: ["Seuil Low min", "Seuil Low max"], nomsEn: ["Low threshold min", "Low threshold max"] },
+     { parametre: "Ratio Low", bornes: [1, 20], defauts: [1, 10], unite: "∶1" },
+     { parametre: "Seuil Mid", bornes: [-60, 0], defauts: [-40, -10], unite: "dB" },
+     { parametre: "Ratio Mid", bornes: [1, 20], defauts: [1, 10], unite: "∶1" },
+     { parametre: "Seuil High", bornes: [-60, 0], defauts: [-40, -10], unite: "dB" },
+     { parametre: "Ratio High", bornes: [1, 20], defauts: [1, 10], unite: "∶1" },
+     { parametre: "Attaque", bornes: [0, 200], defauts: [1, 50], unite: "ms" },
+     { parametre: "Relâchement", bornes: [5, 1000], defauts: [20, 400], unite: "ms" }]),
   {
     id: "gate-expandeur", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
     memoire: "flux", // enveloppe recursive, un seul scalaire

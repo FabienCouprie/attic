@@ -197,8 +197,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
 | Color Looper | `color-looper` | 240 × 140 |
-| Compresseur | `compresseur` | 240 × 162 |
-| Compresseur multibande | `compresseur-multibande` | 240 × 118 |
+| Compresseur | `compresseur` | 240 × 228 |
+| Compresseur multibande | `compresseur-multibande` | 240 × 294 |
 | Continuation AR | `continuation-spectrale-ar` | 240 × 118 |
 | Continuation LSTM | `continuation-spectrale-lstm` | 240 × 118 |
 | Continuation Stable Audio 3 | `continuation-stable-audio-3` | 240 × 140 |

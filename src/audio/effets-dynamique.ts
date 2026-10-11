@@ -4,7 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 
-import { coefficientSuiveur } from "./courbe";
+import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
 
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
   let pic = 0;
@@ -64,11 +64,11 @@ export function amplifier(buffer: AudioBuffer, gainDb: number): AudioBuffer {
 
 export function compresser(
   buffer: AudioBuffer,
-  seuilDb: number,
-  ratio: number,
+  seuilDb: number | Float32Array,
+  ratio: number | Float32Array,
   attaqueMs: number | Float32Array,
   relachementMs: number | Float32Array,
-  compensationDb: number
+  compensationDb: number | Float32Array
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   // UNE CONSTANTE DE TEMPS NE SE LIT PAS COMME UN GAIN : elle décide de la VITESSE à laquelle
@@ -77,8 +77,11 @@ export function compresser(
   // par échantillon, ce qui est le prix de ce qu'elle demande.
   const attaqueCoeff = coefficientSuiveur(attaqueMs, sr);
   const relachementCoeff = coefficientSuiveur(relachementMs, sr);
-  const compensation = Math.pow(10, compensationDb / 20);
-  const ratioSafe = Math.max(1, ratio);
+  // MÊME RÈGLE POUR LES TROIS AUTRES : `valeurTransformee` ne calcule qu'une fois ce qui ne bouge
+  // pas. La pente `1 − 1/r` était jusqu'ici recalculée à chaque échantillon sous le seuil ; elle
+  // ne l'est plus quand le ratio est un nombre.
+  const compensationA = valeurTransformee(compensationDb, (v) => Math.pow(10, v / 20));
+  const penteA = valeurTransformee(ratio, (v) => 1 - 1 / Math.max(1, v));
   const nch = buffer.numberOfChannels;
 
   const resultat = new AudioBuffer({ numberOfChannels: nch, length: buffer.length, sampleRate: sr });
@@ -101,8 +104,9 @@ export function compresser(
 
     const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
     let gainDb = 0;
-    if (envDb > seuilDb) gainDb = (seuilDb - envDb) * (1 - 1 / ratioSafe);
-    const gain = Math.pow(10, gainDb / 20) * compensation;
+    const seuil = valeurA(seuilDb, i);
+    if (envDb > seuil) gainDb = (seuil - envDb) * penteA(i);
+    const gain = Math.pow(10, gainDb / 20) * compensationA(i);
 
     for (let c = 0; c < nch; c++) dst[c][i] = src[c][i] * gain;
   }

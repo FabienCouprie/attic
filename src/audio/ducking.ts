@@ -14,7 +14,7 @@
 // que le déclencheur est retombé, si bien qu'une phrase parlée creuse un seul trou plutôt que
 // douze.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurTransformee } from "./courbe";
 
 export interface OptionsDucking {
   /** Niveau du déclencheur, en dB, au-dessus duquel l'atténuation s'engage. */
@@ -51,16 +51,17 @@ export function enveloppeDeclencheur(d: Float32Array, frequence: number, tempsSe
  */
 export function gainsDucking(declencheur: Float32Array, n: number, o: OptionsDucking): Float32Array {
   const env = enveloppeDeclencheur(declencheur, o.frequence);
-  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
-  const seuilA = (i: number) => Math.pow(10, valeurA(o.seuilDb, i) / 20);
-  const plancherA = (i: number) => Math.pow(10, -Math.abs(valeurA(o.reductionDb, i)) / 20);
+  // `valeurTransformee` garde deux chemins : un scalaire ne paie qu'un seul `pow`, calculé avant
+  // la boucle, exactement comme avant que ces deux réglages s'ouvrent.
+  const seuilA = valeurTransformee(o.seuilDb, (v) => Math.pow(10, v / 20));
+  const plancherA = valeurTransformee(o.reductionDb, (v) => Math.pow(10, -Math.abs(v) / 20));
   // LES DEUX COEFFICIENTS GARDENT LEUR PROPRE ÉCRITURE, et ce n'est pas une recopie par paresse.
   // `coefficientSuiveur` compte en MILLISECONDES et plancherait à 0,01 ; ces deux-ci comptent en
   // SECONDES et planchent à un échantillon. Les deux formules coïncident partout au-dessus d'une
   // milliseconde, donc sur toute la course réglable, mais y passer demanderait de multiplier par
   // mille, et je n'ai pas mesuré qu'une telle multiplication ne déplace aucun bit.
-  const cA = (i: number) => Math.exp(-1 / Math.max(1, valeurA(o.attaqueSec, i) * o.frequence));
-  const cR = (i: number) => Math.exp(-1 / Math.max(1, valeurA(o.relachementSec, i) * o.frequence));
+  const cA = valeurTransformee(o.attaqueSec, (v) => Math.exp(-1 / Math.max(1, v * o.frequence)));
+  const cR = valeurTransformee(o.relachementSec, (v) => Math.exp(-1 / Math.max(1, v * o.frequence)));
   const maintien = Math.max(0, Math.round(o.maintienSec * o.frequence));
 
   const gains = new Float32Array(n);

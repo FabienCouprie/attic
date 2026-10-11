@@ -323,7 +323,11 @@ export function effet(
     // arête d'un cran. Une modulation neuve se met donc EN DERNIER dans le tableau de l'appel.
     entrees: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
-      ...modules.map((m, i) => (i === 0
+      // LE PORT SUIT SES BORNES, et la condition est la même que celle des noms plus haut : des
+      // `noms` donnés à la première modulation valent décision de la nommer, port compris. Les
+      // séparer donnerait un port « Modulation » au-dessus de bornes « Seuil Low min », ce qui
+      // est précisément l'incohérence que cette règle existe pour empêcher.
+      ...modules.map((m, i) => (i === 0 && !mods[0].noms
         ? { nom: "Modulation", nomEn: "Modulation", type: "courbe" as const, requis: false, module: m.parametre }
         : portModulation(m.parametre, m.parametreEn, { court: false }))),
     ],

@@ -128,6 +128,23 @@ const memes = (a: Float32Array[], b: Float32Array[]): boolean => {
  * `noms` donne les bornes quand ce n'est pas le premier réglage modulé de la fiche, qui seul garde
  * « Modulation min » et « Modulation max ».
  */
+/**
+ * Les huit ports du multibande, qui ne diffèrent que par leur rang et par ce qu'ils éprouvent.
+ *
+ * LES TROIS BANDES SONT OUVERTES DANS LES RÉGLAGES COMMUNS, sans quoi un seuil éprouvé sur la
+ * bande grave ne changerait rien, les deux autres ne comprimant pas. C'est la leçon du de-esser :
+ * un cas qui ne change rien passe quoi qu'on fasse.
+ */
+const multibande = (reglage: string, rang: number, regle: number, leurre: number) => [{
+  id: "compresseur-multibande", reglage, rang, regle, leurre, siOffline: true,
+  noms: [`${reglage} min`, `${reglage} max`] as [string, string],
+  entrees: () => [son(263, 2), ...Array.from({ length: rang - 1 }, () => undefined)],
+  reglages: {
+    "Seuil Low": -40, "Ratio Low": 10, "Seuil Mid": -40, "Ratio Mid": 10,
+    "Seuil High": -40, "Ratio High": 10,
+  },
+}];
+
 const CAS: {
   id: string; reglage: string; entrees: () => unknown[];
   noms?: [string, string]; siOffline?: boolean;
@@ -239,7 +256,7 @@ const CAS: {
   { id: "compresseur", reglage: "Attaque", entrees: () => [son(127, 2)],
     noms: ["Attaque min", "Attaque max"], rang: 1, reglages: { Seuil: -60, Ratio: 10 } },
   { id: "compresseur", reglage: "Relâchement", entrees: () => [son(131, 2), undefined],
-    noms: ["Relâchement min", "Relâchement max"], reglages: { Seuil: -60, Ratio: 10 } },
+    noms: ["Relâchement min", "Relâchement max"], rang: 2, reglages: { Seuil: -60, Ratio: 10 } },
   { id: "transient-shaper", reglage: "Temps attaque", entrees: () => [son(137, 2), undefined],
     noms: ["Temps attaque min", "Temps attaque max"], rang: 2, reglages: { Attaque: 12, Sustain: -12 } },
   { id: "transient-shaper", reglage: "Temps sustain", entrees: () => [son(139, 2), undefined, undefined],
@@ -262,11 +279,24 @@ const CAS: {
   { id: "ducking", reglage: "Relâchement", entrees: () => [son(233), son(239), undefined, undefined, undefined],
     noms: ["Relâchement min", "Relâchement max"], regle: 0.25, leurre: 2,
     reglages: { Seuil: -40, Réduction: 24 } },
+  // LE COMPRESSEUR ET LE MULTIBANDE, qui partagent la même boucle : le second n'est que trois
+  // appels au premier, un par bande. Un ratio de un ne comprime rien, et c'est le leurre naturel
+  // d'un ratio ; un seuil à zéro décibel n'est franchi par rien, et c'est celui d'un seuil.
+  { id: "compresseur", reglage: "Seuil", entrees: () => [son(241, 2), undefined, undefined],
+    rang: 3, regle: -24, leurre: 0, noms: ["Seuil min", "Seuil max"], reglages: { Ratio: 10 } },
+  { id: "compresseur", reglage: "Ratio", entrees: () => [son(251, 2), undefined, undefined, undefined],
+    rang: 4, regle: 8, leurre: 1, noms: ["Ratio min", "Ratio max"], reglages: { Seuil: -40 } },
+  { id: "compresseur", reglage: "Gain", entrees: () => [son(257, 2), undefined, undefined, undefined, undefined],
+    regle: 12, leurre: 0, noms: ["Gain min", "Gain max"] },
+  ...multibande("Seuil Low", 1, -24, 0), ...multibande("Ratio Low", 2, 8, 1),
+  ...multibande("Seuil Mid", 3, -24, 0), ...multibande("Ratio Mid", 4, 8, 1),
+  ...multibande("Seuil High", 5, -24, 0), ...multibande("Ratio High", 6, 8, 1),
+  ...multibande("Attaque", 7, 25, 100), ...multibande("Relâchement", 8, 25, 100),
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien quarante ports à éprouver", () => {
-    expect(CAS).toHaveLength(40);
+  it("il y a bien cinquante et un ports à éprouver", () => {
+    expect(CAS).toHaveLength(51);
   });
 
   for (const cas of CAS) {
