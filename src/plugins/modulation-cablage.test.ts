@@ -205,6 +205,16 @@ const CAS: {
    * se compare exactement entre le flottant simple d'un tableau et le double d'un nombre.
    */
   regle?: number; leurre?: number;
+  /**
+   * Ce que vaut la borne BASSE, quand zéro n'a pas de sens pour ce réglage.
+   *
+   * ZÉRO EST LE PLANCHER NATUREL D'UNE BORNE BASSE : il éteint l'effet, ce qui est le repère le
+   * plus sûr. Mais la fréquence basse du vocodeur est un DÉNOMINATEUR, la fréquence de chaque bande
+   * valant `fMin · (fMax/fMin)^k` : à zéro, le quotient part à l'infini et le banc de filtres ne
+   * rend plus rien du tout, identiquement pour toute courbe. Un réglage qui divise demande donc un
+   * plancher qui ne soit pas zéro.
+   */
+  bas?: number;
   /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
   rang?: number;
 }[] = [
@@ -229,7 +239,7 @@ const CAS: {
   { id: "reverberation-velours", reglage: "Mélange", entrees: () => [son(23)] },
   // SON BANC DE FILTRES PASSE PAR `OfflineAudioContext` : son cas de rendu ne tourne que là où ce
   // dernier existe, ce qui est dit par une condition écrite plutôt que par un silence.
-  { id: "vocoder", reglage: "Mix", entrees: () => [son(29), son(31)], siOffline: true },
+  { id: "vocoder", reglage: "Mix", entrees: () => [son(29), son(31)], siOffline: true, rang: 2 },
   // La famille « niveau ». Le créneau porte DEUX entrées audio avant son port, et ses bornes sont
   // nommées d'après leur réglage ; l'oscillateur à table d'onde a une entrée facultative qu'on ne
   // branche pas, et c'est elle que `undefined` tient.
@@ -452,11 +462,32 @@ const CAS: {
     noms: ["Mix 1 min", "Mix 1 max"], rang: 1 },
   { id: "harmonizer", reglage: "Mix 2", entrees: () => [son(491, 2), undefined],
     noms: ["Mix 2 min", "Mix 2 max"] },
+  // LES COMBINAISONS À DEUX VARIABLES, le dernier obstacle du chantier. Les trois coupures du
+  // quadrafuzz sont triées puis combinées deux à deux ; les deux bornes du vocodeur bornent un banc
+  // entier. Dans les deux cas la combinaison se fait sur les tableaux avant le paramètre audio, et
+  // les deux chemins passent par le MÊME calcul : c'est ce que ces cas éprouvent.
+  //
+  // LES DEUX FICHES RENDENT PAR `OfflineAudioContext`, d'où la condition écrite.
+  { id: "quadrafuzz", reglage: "Coupure 1", entrees: () => [son(499, 2), undefined],
+    noms: ["Coupure 1 min", "Coupure 1 max"], rang: 2, regle: 256, leurre: 64, siOffline: true },
+  { id: "quadrafuzz", reglage: "Coupure 2", entrees: () => [son(503, 2), undefined, undefined],
+    noms: ["Coupure 2 min", "Coupure 2 max"], rang: 3, regle: 1024, leurre: 2048, siOffline: true },
+  { id: "quadrafuzz", reglage: "Coupure 3", entrees: () => [son(509, 2), undefined, undefined, undefined],
+    noms: ["Coupure 3 min", "Coupure 3 max"], regle: 4096, leurre: 8192, siOffline: true },
+  { id: "vocoder", reglage: "Fréq min", entrees: () => [son(521), son(523), undefined],
+    // SON PLANCHER N'EST PAS ZÉRO : cette borne est un dénominateur, et à zéro le banc de filtres
+    // ne rend plus rien, identiquement pour toute courbe.
+    noms: ["Fréq min min", "Fréq min max"], rang: 3, regle: 128, leurre: 512, bas: 64,
+    siOffline: true },
+  { id: "vocoder", reglage: "Fréq max", entrees: () => [son(541), son(547), undefined, undefined],
+    noms: ["Fréq max min", "Fréq max max"], rang: 4, regle: 4096, leurre: 8192, siOffline: true },
+  { id: "vocoder", reglage: "Q", entrees: () => [son(557), son(563), undefined, undefined, undefined],
+    noms: ["Q min", "Q max"], regle: 4, leurre: 1, siOffline: true },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien quatre-vingt-douze ports à éprouver", () => {
-    expect(CAS).toHaveLength(92);
+  it("il y a bien quatre-vingt-dix-huit ports à éprouver", () => {
+    expect(CAS).toHaveLength(98);
   });
 
   for (const cas of CAS) {
@@ -494,7 +525,7 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
         ...cas.reglages,
         // LE LEURRE EST LE CŒUR DU CAS : si le port n'est pas lu, c'est lui qui s'applique.
         [cas.reglage]: cas.leurre ?? LEURRE,
-        [nomMin]: 0,
+        [nomMin]: cas.bas ?? 0,
         [nomMax]: regle,
       });
 
@@ -515,7 +546,7 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
       const entrees = cas.entrees();
       const rang = rangDe(fiche(cas.id));
       const regle = cas.regle ?? REGLE;
-      const bornes = { ...cas.reglages, [cas.reglage]: cas.leurre ?? LEURRE, [nomMin]: 0, [nomMax]: regle };
+      const bornes = { ...cas.reglages, [cas.reglage]: cas.leurre ?? LEURRE, [nomMin]: cas.bas ?? 0, [nomMax]: regle };
 
       const tenue = await rendre(cas.id, [...entrees.slice(0, rang), constante(0, 64)], bornes);
       const montante = await rendre(cas.id, [...entrees.slice(0, rang), rampe(64)], bornes);

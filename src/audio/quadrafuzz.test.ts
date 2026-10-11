@@ -154,3 +154,40 @@ describe("saturation par bande", () => {
     expect(out.sampleRate).toBe(SR);
   });
 });
+
+describe("les trois coupures sous une courbe", () => {
+  // CE QUE LE TRI PAR POINT ACHÈTE, et pourquoi ce cas existe. Les trois coupures sont remises
+  // dans l'ordre avant d'être combinées, de sorte que les désigner dans n'importe quel ordre donne
+  // le même banc. Sous des courbes, cette propriété ne tient que si le tri est refait À CHAQUE
+  // POINT : trié une fois sur la valeur de départ, un croisement en cours de route inverserait
+  // deux bandes, et permuter les trois courbes ne rendrait plus la même chose.
+  const son = sinus(300, 0.2);
+  const n = son.length;
+  const rampe = (de: number, a: number) =>
+    Float32Array.from({ length: n }, (_, i) => de + ((a - de) * i) / (n - 1));
+
+  it("LES DÉSIGNER DANS UN AUTRE ORDRE NE CHANGE RIEN, courbes comprises", async () => {
+    // Deux courbes qui SE CROISENT : la première monte de 200 à 6000 hertz, la troisième descend
+    // de 6000 à 200. Elles échangent donc leurs rôles à mi-chemin.
+    const monte = rampe(200, 6000);
+    const descend = rampe(6000, 200);
+    const fixe = new Float32Array(n).fill(1000);
+    const [a1] = await separerEnBandes(son, monte, fixe, descend);
+    const [a2] = await separerEnBandes(son, descend, fixe, monte);
+    expect(Array.from(a2.getChannelData(0))).toEqual(Array.from(a1.getChannelData(0)));
+  });
+
+  it("ET UNE COURBE PLATE REND LE NOMBRE QU'ELLE VAUT", async () => {
+    // Les trois valeurs sont des puissances de deux : le flottant simple du tableau les tient
+    // exactement, et la comparaison mesure le câblage et non le format.
+    const bandesFixes = await separerEnBandes(son, 256, 1024, 4096);
+    const bandesPlates = await separerEnBandes(
+      son, new Float32Array(n).fill(256), new Float32Array(n).fill(1024),
+      new Float32Array(n).fill(4096),
+    );
+    for (let k = 0; k < 4; k++) {
+      expect(Array.from(bandesPlates[k].getChannelData(0)), `la bande ${k} diffère`)
+        .toEqual(Array.from(bandesFixes[k].getChannelData(0)));
+    }
+  });
+});

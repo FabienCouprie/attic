@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1319 files, 233490 lines, of which 159525 are code.**
+**1319 files, 233666 lines, of which 159628 are code.**
 The table lists the 186 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155281 lines.
+the remaining 1133 account for 155388 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -54,6 +54,7 @@ the remaining 1133 account for 155281 lines.
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
 | src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
@@ -70,7 +71,7 @@ the remaining 1133 account for 155281 lines.
 | src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
-| src/plugins/modulation-cablage.test.ts | 327 | 528 |  |
+| src/plugins/effets.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
@@ -96,7 +97,6 @@ the remaining 1133 account for 155281 lines.
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
 | src/vues-domaine/vues-claviers.tsx | 297 | 382 |  |
-| src/plugins/effets.ts | 296 | 393 |  |
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/audio/table-onde.test.ts | 293 | 383 |  |
