@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**478 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**479 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -299,6 +299,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Glissando de tonalité | `glissando-tonalite` | 240 × 118 |
 | DistilGPT-2 | `gpt2-paroles` | 240 × 118 |
 | Granular freeze | `granular-freeze` | 240 × 184 |
+| Granulation écologique | `granulation-ecologique` | 240 × 228 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
 | Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |

@@ -740,6 +740,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.retardGranulaire.rendu": { fr: "{__VAR_0__} grains · recouvrement {__VAR_1__} · ligne {__VAR_2__} ms · compensation {__VAR_3__} dB{__VAR_4__}", en: "{__VAR_0__} grains · overlap {__VAR_1__} · line {__VAR_2__} ms · compensation {__VAR_3__} dB{__VAR_4__}" },
   "msg.retardGranulaire.bornes": { fr: " · {__VAR_0__} grains bornés par leur course", en: " · {__VAR_0__} grains bounded by their run" },
   "msg.retardGranulaire.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
+  "msg.granulationEcologique.rendu": { fr: "{__VAR_0__} grains · {__VAR_1__} instants · fin {__VAR_2__} s · {__VAR_3__} vers {__VAR_4__} ms · rapport {__VAR_5__}", en: "{__VAR_0__} grains · {__VAR_1__} instants · ends {__VAR_2__} s · {__VAR_3__} to {__VAR_4__} ms · ratio {__VAR_5__}" },
   "msg.stn.parts": { fr: "Sinus {__VAR_0__} % · transitoires {__VAR_1__} % · bruit {__VAR_2__} %", en: "Sines {__VAR_0__} % · transients {__VAR_1__} % · noise {__VAR_2__} %" },
   "msg.stn.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
   "msg.hauteur.suivi": { fr: "{__VAR_0__} trames · {__VAR_1__} % voisé · médiane {__VAR_2__} Hz", en: "{__VAR_0__} frames · {__VAR_1__} % voiced · median {__VAR_2__} Hz" },

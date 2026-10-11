@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **478 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **479 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 90 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (30) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 233 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -3687,6 +3687,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Add Silence](#add-silence) | Adds silence at the beginning and/or end of the track. |
 | [Audio Join](#audio-join) | Places two tracks one after the other with a crossfade. |
 | [Cut at Words](#cut-at-words) | Edits a take at the boundaries of the recognised words, and not at a level threshold. |
+| [Ecological Granulation](#ecological-granulation) | Lays a sound's grains along a physical event model: a bounce, a flow or a scrape. |
 | [Effect Blend](#effect-blend) | Blends a sound and its treated version in a proportion that varies over time, to apply an effect over one portion only. |
 | [Extract duration](#extract-duration) | Measures track duration and passes it along. |
 | [Extract Zone](#extract-zone) | Extracts a portion with fade and returns the Zone object. |
@@ -3780,6 +3781,49 @@ Edits a take by keeping only the intervals where a word was recognised. The spee
 | Action | choice | Keep these words | Keep these words / Remove these words | What the « Words » list designates. Without effect when it is empty, since it then designates nothing. |
 | Scope | choice | Edges | Edges / Everywhere | At the edges, only the start and the end fall: what happened between the first and the last kept word is left as it is, breaths included. Everywhere, the intervals between the kept words fall too. |
 | Margin | slider | 50 ms | 0 – 500 ms, step 5 | What is given back on either side of each word. A word boundary falls on the consonant's attack, and cutting there removes its beginning. The margin also joins neighbouring words: two words less than two margins apart form a single piece. |
+
+#### Ecological Granulation
+
+`granulation-ecologique` · Processing → Editing
+
+*Lays a sound's grains along a physical event model: a bounce, a flow or a scrape.*
+
+Cuts a grain out of the received sound and lays it again along a physical event model, a bounce, a flow or a scrape. After Damián Keller and Barry Truax, « Ecologically-based granular synthesis », International Computer Music Conference, Ann Arbor, 1998. What the paper adds to a granulation is to constrain time by an event of the everyday world, rather than laying the grains on a timeline where the composer decides everything. The scale it aims at runs from ten milliseconds to several seconds. « Model » decides the control function, that is the instants at which the grains fall. « Bounce » follows the recurrence of a bouncing body: each interval is the damping times the sum of the two before it. The intervals therefore close up, and their sum converges, so the bounce stops by itself. When the rate enters the audible range a pitch is heard and rises, with no transposition anywhere: it is the rate's own. « Flow » launches several streams of drops whose instants do not fall in step. As « Grain size » grows, the grains overlap and fill the silences: the same generator passes continuously from the countable drop to the fused flow. « Scrape » lays the grains at a regular interval and draws their content from somewhere else in the source each time. At zero roughness they all come from the same place and the rate's pitch is heard; at full roughness they come from everywhere and noise is heard. « Interval » is the time between two grains: the first interval for the bounce, the mean interval for the flow, the period for the scrape. « Grain size » is the length of one grain, « Cut » the place in the source it is taken from, « Duration » the rendered length. « Damping » is the factor of the bounce's recurrence, and acts on that model only. At one half the intervals stop closing up and the bounce never stops, which bounds the setting; the stronger it is, the longer the event stretches, and the fewer impacts it carries. « Roughness » is the share of chance in the cutting place, and acts on the scrape only. « Streams » is the number of parallel streams. « Phase » states whether they share their instants or each has its own, and means nothing on a single stream. Streams that share their instants pile their grains at the same moment, which the paper uses for a dense wind; independent streams spread them, which it uses for water. « Window » decides the shape of each grain. The expodec decays after a brief attack, which suits an impact; the trapezoid keeps a plateau, hence body; the Gaussian leaves matter only at the centre; the rexpodec rises then cuts. « Seed » governs the draws, and at equal seed the render is the same. « Level » sets the output. The sum is brought back to the sum of the active windows, so neither the density nor the number of streams raises the level. The « Modulation interval », « Modulation grain size », « Modulation cut », « Modulation roughness » and « Modulation level » inputs take the place of their setting when a curve is connected, each with its two bounds; with no curve those bounds do nothing. The first four are read at the instant each grain is launched; the level is read after the grains are laid, so it sets what comes out without moving them. The « Audio » output carries the render. The message gives the number of grains, the number of distinct instants, the instant of the last grain and the intervals of the first and the last impact.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Modulation interval | curve |  |
+| input | Modulation grain size | curve |  |
+| input | Modulation cut | curve |  |
+| input | Modulation roughness | curve |  |
+| input | Modulation level | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Model | choice | Bounce | Bounce / Flow / Scrape | The control function, that is the instants at which the grains fall. The bounce closes up its intervals and stops by itself, the flow launches streams that do not fall in step, the scrape lays at a regular interval and draws its content elsewhere. |
+| Duration | slider | 4 s | 0.2 – 30 s, step 0.1 | The rendered length. A bounce shorter than its own event is cut before it ends. |
+| Interval | slider | 30 ms | 1 – 1000 ms, step 1 | The time between two grains: the first interval for the bounce, the mean interval for the flow, the period for the scrape. |
+| Grain size | slider | 20 ms | 1 – 500 ms, step 1 | The length of one grain. It is what moves the flow from the countable drop to the fused stream, the overlap filling the silences. |
+| Cut | slider | 0 % | 0 – 100 %, step 1 | The place in the source the grain is cut from, from zero at the start to a hundred at the end. |
+| Damping | slider | 45 % | 10 – 49.9 %, step 0.1 | The factor of the bounce's recurrence, and it acts on that model only. Each interval is that factor times the sum of the two before it: the asymptotic ratio is the positive root of r² = d(r + 1), that is 0.93 at forty-five percent and 0.999 at 49.9. At fifty, that ratio is one and the bounce never stops, which bounds the setting from above. The stronger it is, the longer the event stretches, and the fewer impacts it carries. The step is a tenth because it is near fifty that the ratio moves fastest, and there that the rate crosses the audible range slowly enough for a pitch to be heard rising: at a step of one, that region held a single position. |
+| Roughness | slider | 0 % | 0 – 100 %, step 1 | The share of chance in the cutting place, and it acts on the scrape only. At zero every grain comes from the same place and the rate's pitch is heard; at a hundred they come from everywhere and noise is heard. |
+| Streams | slider | 1 | 1 – 8, step 1 | The number of parallel streams. The paper makes it one of the two axes of its classification, the other being their phase relation. |
+| Phase | choice | Independent | Independent / Shared | Whether the streams share their instants or each has its own. This setting means nothing on a single stream. Shared, the grains pile up at the same moment, which the paper uses for a dense wind; independent, they spread out, which it uses for water. |
+| Window | choice | Expodec | Gaussian / Trapezoid / Expodec / Rexpodec | The shape of each grain. The expodec is the default because it decays after a brief attack, which is the shape of an impact, and two of the three models rest on impacts. |
+| Level | slider | 80 % | 0 – 100 %, step 1 | The output level. Neither the density nor the number of streams affects it, the sum being brought back to the sum of the active windows. |
+| Seed | slider | 1 | 0 – 999999, step 1 | The number of the draws: the drops' jitter, the streams' phase and the cutting place. At equal seed, the same render. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Interval min | slider | 5 ms | 1 – 1000 ms, step 1 | Value of « Interval » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Interval max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Interval » that the curve's one means. |
+| Grain size min | slider | 2 ms | 1 – 500 ms, step 1 | Value of « Grain size » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Grain size max | slider | 120 ms | 1 – 500 ms, step 1 | Value of « Grain size » that the curve's one means. |
+| Cut min | slider | 0 % | 0 – 100 %, step 1 | Value of « Cut » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Cut max | slider | 100 % | 0 – 100 %, step 1 | Value of « Cut » that the curve's one means. |
+| Roughness min | slider | 0 % | 0 – 100 %, step 1 | Value of « Roughness » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Roughness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Roughness » that the curve's one means. |
+| Level min | slider | 0 % | 0 – 100 %, step 1 | Value of « Level » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Level max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level » that the curve's one means. |
 
 #### Effect Blend
 

@@ -21,7 +21,7 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 156, sur 66 composants
+- **réglages déjà pilotés par une courbe** : 161, sur 67 composants
 - **réglages restant à faire** : 0, sur 0 composants et 0 couples composant / famille
 - **dont le cœur travaille par trames** : 0
 - **réglages écartés un par un** : 44, sur 21 composants qui gardent les leurs
@@ -206,6 +206,11 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `granular-freeze` : Mix
 - `granular-freeze` : Pitch
 - `granular-freeze` : Position
+- `granulation-ecologique` : Intervalle
+- `granulation-ecologique` : Niveau
+- `granulation-ecologique` : Prise
+- `granulation-ecologique` : Rugosité
+- `granulation-ecologique` : Taille de grain
 - `harmonizer` : Mix 1
 - `harmonizer` : Mix 2
 - `haut-parleur-rotatif` : Coupure
