@@ -636,6 +636,26 @@ export function coefficientSuiveur(
  * résultat était juste au bit près, et c'est bien le piège : rien ne tombe, seul le temps de rendu
  * s'allonge.
  */
+/**
+ * La plus forte valeur qu'un réglage atteindra, pour ce qui doit être décidé AVANT la boucle.
+ *
+ * UNE LONGUEUR DE SORTIE NE PEUT PAS SE LIRE À CHAQUE ÉCHANTILLON : le tampon est alloué avant
+ * qu'un échantillon soit écrit. Un réglage qui la décide, la queue d'une réverbération ou le
+ * maintien d'une porte, se mesure donc sur la valeur la plus forte que le rendu atteindra. C'est
+ * le choix déjà fait par le retard spectral pour sa traîne, et pour la même raison : calculer la
+ * longueur sur le réglage pendant que la courbe commande donnerait deux longueurs différentes
+ * pour un même effet, et l'invariant de la courbe plate tomberait sur cette seule différence.
+ *
+ * Un scalaire est son propre maximum, de sorte qu'une courbe constante rend la longueur du
+ * réglage de même valeur.
+ */
+export function valeurMax(v: number | Float32Array): number {
+  if (typeof v === "number") return v;
+  let m = -Infinity;
+  for (let i = 0; i < v.length; i++) if (v[i] > m) m = v[i];
+  return m === -Infinity ? 0 : m;
+}
+
 export function valeurTransformee(
   v: number | Float32Array, calcul: (x: number) => number,
 ): (i: number) => number {

@@ -178,7 +178,7 @@ const CAS: {
   { id: "arc-en-ciel-acoustique", reglage: "Mix", entrees: () => [son(7, 2)] },
   { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)] },
   { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)] },
-  { id: "reverbe-hachee", reglage: "Mix", entrees: () => [son(17)] },
+  { id: "reverbe-hachee", reglage: "Mix", entrees: () => [son(17)], rang: 1 },
   { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)], rang: 1 },
   { id: "reverberation-velours", reglage: "Mélange", entrees: () => [son(23)] },
   // SON BANC DE FILTRES PASSE PAR `OfflineAudioContext` : son cas de rendu ne tourne que là où ce
@@ -237,7 +237,7 @@ const CAS: {
   { id: "tremolo-harmonique", reglage: "Profondeur", entrees: () => [son(101, 2), undefined],
     noms: ["Profondeur min", "Profondeur max"] },
   { id: "reverbe-reseau", reglage: "Largeur", entrees: () => [son(103), undefined],
-    noms: ["Largeur min", "Largeur max"] },
+    noms: ["Largeur min", "Largeur max"], rang: 2 },
   { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
     noms: ["Position min", "Position max"] },
   // LES TROIS PREMIÈRES SECONDES MODULATIONS BÂTIES PAR `effet()`. Ce socle n'en portait qu'une ;
@@ -292,11 +292,22 @@ const CAS: {
   ...multibande("Seuil Mid", 3, -24, 0), ...multibande("Ratio Mid", 4, 8, 1),
   ...multibande("Seuil High", 5, -24, 0), ...multibande("Ratio High", 6, 8, 1),
   ...multibande("Attaque", 7, 25, 100), ...multibande("Relâchement", 8, 25, 100),
+  // LES RÉVERBÉRATIONS. Les unités ne sont ni des pour-cent ni des décibels partout : chaque cas
+  // choisit sa valeur et son leurre, en fractions dyadiques ou en entiers.
+  { id: "reverbe-hachee", reglage: "Seuil", entrees: () => [son(269), undefined],
+    noms: ["Seuil min", "Seuil max"], rang: 2, regle: -24, leurre: 0 },
+  { id: "reverbe-hachee", reglage: "Chute", entrees: () => [son(271), undefined, undefined],
+    noms: ["Chute min", "Chute max"], regle: 0.25, leurre: 2 },
+  { id: "shimmer", reglage: "Mix", entrees: () => [son(277)] },
+  { id: "reverbe-reseau", reglage: "Queue", entrees: () => [son(281), undefined, undefined],
+    noms: ["Queue min", "Queue max"], rang: 3, regle: 2, leurre: 8 },
+  { id: "reverbe-reseau", reglage: "Fréquence de l'aigu", entrees: () => [son(283), undefined, undefined, undefined],
+    noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], regle: 2000, leurre: 12000 },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien cinquante et un ports à éprouver", () => {
-    expect(CAS).toHaveLength(51);
+  it("il y a bien cinquante-six ports à éprouver", () => {
+    expect(CAS).toHaveLength(56);
   });
 
   for (const cas of CAS) {

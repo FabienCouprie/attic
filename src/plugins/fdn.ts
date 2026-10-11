@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
+import { valeurA, valeurMax } from "../audio/courbe";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -21,6 +22,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio" },
       portModulation("Mix"),
       portModulation("Largeur", "Width", { court: false }),
+      portModulation("Queue", "Tail", { court: false }),
+      portModulation("Fréquence de l'aigu", "High reference", { court: false }),
     ],
     sorties: [
       { nom: "Audio", type: "audio", sousType: "stereo" },
@@ -58,6 +61,11 @@ export const fiches: FicheAudio[] = ([
         docEn: "Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one." },
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation(modulationNommee("Largeur", "Width", [0, 100], "%")),
+      ...bornesModulation({ ...modulationNommee("Queue", "Tail", [0, 20], "s"), defauts: [0.5, 8] }),
+      ...bornesModulation({
+        ...modulationNommee("Fréquence de l'aigu", "High reference", [1000, 16000], "Hz"),
+        defauts: [2000, 12000],
+      }),
     ],
     async executer(ctx: any) {
       const entree = ctx.entree(0);
@@ -67,8 +75,15 @@ export const fiches: FicheAudio[] = ([
       const { numberOfChannels: canaux, length, sampleRate } = entree;
       const rt60Bas = ctx.paramNombre("RT60 grave", 2);
       const rt60Haut = ctx.paramNombre("RT60 aigu", 0.7);
-      const freqRef = ctx.paramNombre("Fréquence de l'aigu", 8000);
-      const queueDemandee = ctx.paramNombre("Queue", 0);
+      const freqRef = reglageModule(ctx, length, 4, {
+        reglage: "Fréquence de l'aigu", defaut: 8000, rendu: "pourCent",
+        noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"],
+      });
+      // LA QUEUE RESTE UN NOMBRE TANT QU'ELLE VAUT ZÉRO : à zéro, le composant la déduit des deux
+      // temps de réverbération, et c'est ce qu'il faut garder. Une courbe branchée la commande.
+      const queueDemandee = reglageModule(ctx, length, 3, {
+        reglage: "Queue", defaut: 0, rendu: "pourCent", noms: ["Queue min", "Queue max"],
+      });
       const options = {
         sampleRate, rt60Bas, rt60Haut, freqRef,
         lignes: parseInt(ctx.paramTexte("Lignes", "8"), 10) || 8,
@@ -80,7 +95,9 @@ export const fiches: FicheAudio[] = ([
         // La courbe est lue sur la longueur de l'entrée ; au-delà, sa dernière valeur tient, ce
         // qui couvre la queue ajoutée après le son.
         melange: reglageModule(ctx, length, 1, { reglage: "Mix", defaut: 35 }),
-        queue: queueDemandee > 0.2 ? queueDemandee : Math.max(rt60Bas, rt60Haut),
+        // « Zéro » veut dire « déduis-la des deux temps » : avec une courbe, c'est sa plus forte
+        // valeur qui décide, puisque c'est elle qui décidera de la longueur du rendu.
+        queue: valeurMax(queueDemandee) > 0.2 ? queueDemandee : Math.max(rt60Bas, rt60Haut),
       };
 
       // Le son est traité en passant DANS le réseau, et non par convolution : c'est la structure
@@ -105,7 +122,11 @@ export const fiches: FicheAudio[] = ([
       // une bande grave et une bande à la fréquence de référence. C'est la seule façon de savoir si
       // la salle demandée est la salle obtenue, sans avoir à la mesurer soi-même.
       const mesureBas = rt60Mesure(filtrerBande(ri.gauche, sampleRate, 150, 8), sampleRate);
-      const mesureHaut = rt60Mesure(filtrerBande(ri.gauche, sampleRate, freqRef, 8), sampleRate);
+      // LA MESURE SE PREND AU DÉBUT DU SON quand une courbe commande la fréquence de référence.
+      // Le nœud rend UN chiffre, le temps de réverbération obtenu dans une bande ; une fréquence
+      // qui se déplace en vaudrait autant qu'il y a d'instants, et en choisir un est plus honnête
+      // que d'en moyenner plusieurs sous un seul nombre. Sans courbe, c'est le réglage lui-même.
+      const mesureHaut = rt60Mesure(filtrerBande(ri.gauche, sampleRate, valeurA(freqRef, 0), 8), sampleRate);
       void length;
       return {
         valeurs: [sortie, reponse],
