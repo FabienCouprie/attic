@@ -19,7 +19,7 @@
 // rien, et un composant qui l'offrirait mentirait.
 
 import { nomNoteRond } from "./nom-note";
-import { mulberry32 } from "./reservoir";
+import { creerAleatoire } from "../core/hasard";
 
 /**
  * Le nombre de positions au plus.
@@ -167,7 +167,7 @@ export function cercleAleatoire(
 ): Cercle {
   const n = Math.max(1, Math.min(POSITIONS_MAX, Math.round(positions)));
   const k = Math.max(0, Math.min(n, Math.round(combien)));
-  const hasard = mulberry32(graine);
+  const hasard = creerAleatoire(graine);
   const places = Array.from({ length: n }, (_, i) => i);
   for (let i = 0; i < k; i++) {
     const j = i + Math.floor(hasard() * (n - i));
@@ -201,7 +201,7 @@ export function inverserOrdre(c: Cercle): Cercle {
  */
 export function permuterEtiquettes(c: Cercle, graine: number): Cercle {
   const n = normaliser(c);
-  const hasard = mulberry32(graine);
+  const hasard = creerAleatoire(graine);
   const valeurs = n.sommets.map((s) => s.valeur);
   for (let i = valeurs.length - 1; i > 0; i--) {
     const j = Math.floor(hasard() * (i + 1));

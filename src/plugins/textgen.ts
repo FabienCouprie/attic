@@ -8,7 +8,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
-import { mulberry32 } from "../audio";
+import { creerAleatoire } from "../core/hasard";
 
 let worker: Worker | null = null;
 
@@ -174,7 +174,7 @@ function genererTexteReservoir(
   alphabet: string,
   seedWord: string,
 ): string {
-  const rng = mulberry32(graine > 0 ? graine : Math.floor(Math.random() * 99999) + 1);
+  const rng = creerAleatoire(graine > 0 ? graine : Math.floor(Math.random() * 99999) + 1);
   // « MÉMOIRE » DISAIT L'INVERSE DE CE QU'ELLE FAISAIT, et à zéro elle tuait le réservoir. Le
   // nombre passé ici est le taux de FUITE : à un, l'état est entièrement renouvelé à chaque pas,
   // donc sans mémoire ; à zéro, il ne bouge plus jamais, et comme il part de zéro il y reste.

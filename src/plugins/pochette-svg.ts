@@ -3,7 +3,8 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { PALETTES_PRESET, clamp, cleanBorder, cleanFont, cleanPreset, cleanStyle, mulberry32, paletteDepuisPrompt, pick, randInt, randRange, shapeOpacity } from "./pochette-palettes";
+import { PALETTES_PRESET, clamp, cleanBorder, cleanFont, cleanPreset, cleanStyle, paletteDepuisPrompt, pick, randInt, randRange, shapeOpacity } from "./pochette-palettes";
+import { creerAleatoire } from "../core/hasard";
 
 function polygonPoints(cx: number, cy: number, r: number, sides: number, rng: () => number): string {
   const points: string[] = [];
@@ -329,7 +330,7 @@ export function genererPochetteSVG(options: PochetteOptions): string {
   } = options;
 
   const seed = graine === 0 ? Math.floor(Math.random() * 99999) + 1 : graine;
-  const rng = mulberry32(seed);
+  const rng = creerAleatoire(seed);
 
   const W = clamp(largeur, 128, 2048);
   const H = clamp(hauteur, 128, 2048);

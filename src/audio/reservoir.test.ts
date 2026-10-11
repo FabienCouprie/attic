@@ -6,7 +6,8 @@
 // ±0,1. Résultat mesuré : 4 hauteurs en tout et 88 % de notes déjà répétées, si bien que
 // le paramètre « Répétition » paraissait sans effet. Rien ne le signalait.
 import { describe, expect, it } from "vitest";
-import { creerReservoir, genererReservoirMusical, mulberry32, rayonSpectral, type ConfigReservoir } from "./reservoir";
+import { creerReservoir, genererReservoirMusical, rayonSpectral, type ConfigReservoir } from "./reservoir";
+import { creerAleatoire } from "../core/hasard";
 
 const BASE: ConfigReservoir = {
   taille: 15, connectivite: 0.3, leaking: 0.3, gain: 1.5, spectre: 0.9,
@@ -55,7 +56,7 @@ describe("mise à l'échelle du réseau", () => {
   it.each([
     [15, 0.3, 0.9], [15, 0.3, 1.5], [40, 0.3, 0.9], [40, 1.0, 1.2], [5, 0.5, 0.5],
   ])("réseau de %i neurones, connectivité %f : le rayon obtenu est le rayon demandé (%f)", (taille, connectivite, spectre) => {
-    const res = creerReservoir({ ...BASE, taille, connectivite, spectre }, mulberry32(7));
+    const res = creerReservoir({ ...BASE, taille, connectivite, spectre }, creerAleatoire(7));
     expect(rayonSpectral(res.poidsRes, taille)).toBeCloseTo(spectre, 2);
   });
 });

@@ -12,6 +12,7 @@
 
 import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
+import { creerAleatoire } from "../core/hasard";
 
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
@@ -38,18 +39,6 @@ export interface ConfigReservoir {
 // orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-// PRNG déterministe (mulberry32) — pour reproductibilité avec graine.
-export function mulberry32(graine: number): () => number {
-  let a = graine | 0;
-  return () => {
-    a = (a + 0x6D2B79F5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export interface Reservoir {
   n: number;
@@ -236,7 +225,7 @@ export interface NoteGeneree {
 
 export function genererReservoirMusical(config: ConfigReservoir): { notes: NoteGeneree[]; graineUtilisee: number } {
   const graine = config.graine > 0 ? config.graine : Math.floor(Math.random() * 99999) + 1;
-  const rng = mulberry32(graine);
+  const rng = creerAleatoire(graine);
 
   const res = creerReservoir(config, rng);
 

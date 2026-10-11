@@ -9,7 +9,8 @@
 // page HTML autonome dans le dossier de sortie.
 
 
-import { mulberry32, polarToCartesian } from "./carte-sonore-formes";
+import { polarToCartesian } from "./carte-sonore-formes";
+import { creerAleatoire } from "../core/hasard";
 import type { BatimentVille, DecorationCarte, Esthetique, Palette } from "./carte-sonore-formes";
 
 export function escapeHtml(str: string): string {
@@ -29,7 +30,7 @@ export function polygonPath(poly: { x: number; y: number }[]): string {
 }
 
 function buildingVariant(x: number, y: number, max: number): number {
-  return Math.floor(mulberry32(Math.floor(x * 1000) + Math.floor(y * 1000) * 137 + max * 7)() * max);
+  return Math.floor(creerAleatoire(Math.floor(x * 1000) + Math.floor(y * 1000) * 137 + max * 7)() * max);
 }
 
 export function renderBatimentGrid(b: BatimentVille, esthetique: Esthetique): string {

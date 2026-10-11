@@ -2,18 +2,9 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { calculerProfilBruit, reduireBruit, reduireBruitNotches } from "./effets-bruit";
+import { creerAleatoire } from "../core/hasard";
 
-function mulberry32(seed: number): () => number {
-  let a = seed | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const rngTest = mulberry32(20260805);
+const rngTest = creerAleatoire(20260805);
 
 function bruitBlanc(dureeS: number, sr = 44100, channels = 1): AudioBuffer {
   const len = Math.round(dureeS * sr);

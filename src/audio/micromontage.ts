@@ -17,7 +17,7 @@
 // l'identique ne se travaillerait pas : on l'écoute, on change un champ, on réécoute, et il faut
 // que seul ce champ ait bougé.
 
-import { mulberry32 } from "./reservoir";
+import { creerAleatoire } from "../core/hasard";
 
 /** Ce qu'un fragment porte. Les instants sont en secondes, la prise en part de la source. */
 export interface Fragment {
@@ -152,7 +152,7 @@ export function partition(champs: {
 }
 
 /** Un générateur reproductible, pour que la même graine rende la même partition. */
-export const tirage = (graine: number) => mulberry32(Math.max(1, Math.round(graine)));
+export const tirage = (graine: number) => creerAleatoire(Math.max(1, Math.round(graine)));
 
 /**
  * Les fragments posés, en deux voies.

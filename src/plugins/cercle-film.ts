@@ -21,7 +21,8 @@ import {
 import { dessinerImage, etatALInstant, OPTIONS_FILM, type OptionsFilm } from "../audio/cercle-film";
 import { FIGURES, NOMS_FIGURES, NOMS_FIGURES_EN } from "../audio/superforme";
 import { NOMS_STYLES } from "../audio/styles-film";
-import { mulberry32, paletteDepuisPrompt } from "./pochette-palettes";
+import { paletteDepuisPrompt } from "./pochette-palettes";
+import { creerAleatoire } from "../core/hasard";
 import { encoderFilm, nombreDImages } from "../audio/video-rendu";
 
 const en = () => langueCourante() === "en";
@@ -149,7 +150,7 @@ export const fiches: FicheAudio[] = ([
         style: ctx.paramTexte("Style", "Style 5"),
         // LA PALETTE VIENT DU GÉNÉRATEUR DE POCHETTE, reprise telle quelle : quelques mots suffisent
         // à changer de monde, et le vocabulaire existe déjà dans l'application.
-        palette: invite ? paletteDepuisPrompt(invite, mulberry32(o.graine || 1)) : [],
+        palette: invite ? paletteDepuisPrompt(invite, creerAleatoire(o.graine || 1)) : [],
       };
       const def = DEFINITIONS[ctx.paramTexte("Définition", "1280 × 720")] ?? DEFINITIONS["1280 × 720"];
       const cadence = Math.round(ctx.paramNombre("Cadence", 30));

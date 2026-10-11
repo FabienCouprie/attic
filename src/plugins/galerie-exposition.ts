@@ -6,12 +6,12 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { lirePoints, ordonnerParCoordonnees, type SensOrdre } from "../audio/ordre-galerie";
+import { creerAleatoire } from "../core/hasard";
 
 // Couleurs déduites du nom de piste (même logique que le générateur de pochette)
 function palettePiste(nom: string, graine: number): string[] {
   const texte = nom.toLowerCase();
-  let r = graine | 0;
-  const rng = () => { r = (r + 0x6D2B79F5) | 0; let t = r; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const rng = creerAleatoire(graine);
 
   const palettes: { mots: string[]; couleurs: string[] }[] = [
     { mots: ["rock", "metal", "feu", "rouge", "energie"], couleurs: ["#e63946", "#f4a261", "#1a1a2e"] },
@@ -35,8 +35,7 @@ function pochetteSVG(nom: string, index: number, graine: number): string {
   const [c1, c2, c3] = palettePiste(nom, graine + index);
   const styles = ["degrade", "cercles", "bauhaus", "grille", "vagues"];
   const style = styles[(graine + index) % styles.length];
-  let r = graine | 0;
-  const rng = () => { r = (r + 0x6D2B79F5) | 0; let t = r; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const rng = creerAleatoire(graine);
 
   let corps = "";
   if (style === "degrade") {

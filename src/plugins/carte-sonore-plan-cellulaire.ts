@@ -9,7 +9,8 @@
 // page HTML autonome dans le dossier de sortie.
 
 
-import { batimentPath, centroidPolygon, circlePath, clamp, clipPolygon, edgeKey, inWater, mulberry32, polarToCartesian, randomPointInPolygon, sampleQuadraticBezier, sectorArcPath, sectorPoints, shoelaceArea, shrinkPolygon, wiggleRadialLine, wiggleRing } from "./carte-sonore-formes";
+import { batimentPath, centroidPolygon, circlePath, clamp, clipPolygon, edgeKey, inWater, polarToCartesian, randomPointInPolygon, sampleQuadraticBezier, sectorArcPath, sectorPoints, shoelaceArea, shrinkPolygon, wiggleRadialLine, wiggleRing } from "./carte-sonore-formes";
+import { creerAleatoire } from "../core/hasard";
 import type { BatimentVille, CarteSonore, DecorationCarte, EauVille, EspaceVertVille, Esthetique, QuartierVille, RouteVille } from "./carte-sonore-formes";
 import { MARGE, NOMS_AVENUES, NOMS_BOU, NOMS_RUES, palettePour, pickNom, placerPoi, placerPoints } from "./carte-sonore-decor";
 
@@ -20,7 +21,7 @@ export function genererCarteConcentrique(
   points: { nom: string; chemin: string }[] = [],
   esthetique: Esthetique = "classique",
 ): CarteSonore {
-  const rng = mulberry32(seed);
+  const rng = creerAleatoire(seed);
   const palette = palettePour(esthetique);
   const routes: RouteVille[] = [];
   const quartiers: QuartierVille[] = [];
@@ -176,7 +177,7 @@ function genererCarteCellulaire(
   esthetique: Esthetique,
   style: "organique" | "voronoi",
 ): CarteSonore {
-  const rng = mulberry32(seed);
+  const rng = creerAleatoire(seed);
   const palette = palettePour(esthetique);
   const routes: RouteVille[] = [];
   const quartiers: QuartierVille[] = [];
@@ -258,7 +259,7 @@ function genererCarteCellulaire(
       const my = (edge.a.y + edge.b.y) / 2;
       const nx = -dy / len;
       const ny = dx / len;
-      const hash = mulberry32(Math.floor(mx * 1000) + Math.floor(my * 1000) * 137 + Math.floor(len));
+      const hash = creerAleatoire(Math.floor(mx * 1000) + Math.floor(my * 1000) * 137 + Math.floor(len));
       const sign = hash() < 0.5 ? -1 : 1;
       const amp = (0.03 + hash() * 0.06) * len;
       edge.curve = { x: clamp(mx + nx * amp * sign, 2, width - 2), y: clamp(my + ny * amp * sign, 2, height - 2) };
