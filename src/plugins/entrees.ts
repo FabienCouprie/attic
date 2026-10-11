@@ -134,7 +134,7 @@ const entrees: FicheAudio[] = [
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
-      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
+      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal] };
     },
   },

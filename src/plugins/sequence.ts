@@ -108,7 +108,7 @@ export const fiches: FicheAudio[] = ([
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const volume = ctx.paramNombre("Volume", 80);
       const tempo = ctx.paramNombre("Tempo", 120);
-      const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
+      const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" =
         mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
 
