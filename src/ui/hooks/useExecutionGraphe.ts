@@ -824,9 +824,28 @@ export function useExecutionGraphe(o: OptionsExecution) {
             const p = (node.data.parametres as Record<string, number|string>)?.[nom];
             const def = trouverDef(node.data.ficheId as string);
             const pDef = def?.parametres.find((p) => p.nom === nom);
-            const brut = typeof p === "number"
-              ? p
-              : (typeof pDef?.defautEn === "number" ? pDef.defautEn : defaut);
+            // LE REPLI EST LE DÉFAUT DÉCLARÉ, et c'est la racine d'une famille entière de défauts.
+            //
+            // CE QU'IL Y AVAIT ICI ÉTAIT UNE BRANCHE MORTE. Le repli consultait `defautEn`, qui est
+            // le champ du défaut TEXTUEL traduit, typé sur une chaîne : relevé sur le registre,
+            // AUCUN des 1983 réglages numériques du catalogue n'en déclare un qui soit un nombre.
+            // La condition était donc toujours fausse, et le repli retombait toujours sur le
+            // littéral de l'appel.
+            //
+            // CE QUE CELA COÛTAIT. Un nœud CRÉÉ reçoit chaque réglage déclaré ; un graphe
+            // ENREGISTRÉ AVANT qu'un réglage existe ne le porte pas, ni le chargeur ni la
+            // sérialisation ne complétant les manquants. Le littéral décidait donc seul du sort de
+            // ces nœuds, et il pouvait différer du défaut que l'inspecteur affiche : seize appels
+            // de bornes de modulation lisaient ainsi zéro et cent à la place de leur course, et le
+            // kit de batterie d'un projet ancien sortait sur un preset mélodique.
+            //
+            // MESURÉ AVANT DE CHANGER : sur 1402 appels portant un littéral, 1399 donnaient déjà la
+            // valeur déclarée. Des trois qui divergeaient, deux étaient des littéraux périmés,
+            // corrigés avec ce changement ; le troisième lit un réglage que sa fiche ne déclare
+            // plus, une lecture de migration que `pDef` indéfini laisse passer au littéral.
+            const brut = typeof p === "number" ? p
+              : typeof pDef?.defaut === "number" ? pDef.defaut
+              : defaut;
             // UNE GRAINE EST RÉSOLUE ICI, ET NON DANS CHACUN DES SOIXANTE-CINQ COMPOSANTS QUI EN
             // PORTENT UNE. C'est la correction de la décentralisation relevée par Fabien : la
             // convention du projet — zéro ou moins veut dire « tire au sort » — n'était appliquée

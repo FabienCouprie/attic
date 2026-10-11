@@ -54,7 +54,7 @@ export const fiches: FicheAudio[] = ([
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(fichier, modeRendu, volume, instrument, banque);
-      const midiFinal = await appliquerInstrumentMidi(fichier, ctx.paramNombre("Instrument", 0));
+      const midiFinal = await appliquerInstrumentMidi(fichier, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal, { debut: 0, duree: buffer.duration }] };
    },
   },
@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", -1));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
-      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
+      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal] };
    },
   },
@@ -108,7 +108,7 @@ export const fiches: FicheAudio[] = ([
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       console.log(`[attic] Point d'écoute MIDI : mode=${mode}, modeRendu=${modeRendu}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}`);
       const buffer = await rendreMidi(midi, modeRendu, volume, instrument, banque);
-      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", 0));
+      const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", -1));
       console.log(`[attic] Point d'écoute MIDI : buffer rendu, durée=${buffer.duration}`);
       return { valeurs: [buffer, midiFinal] };
    },
