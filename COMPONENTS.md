@@ -4261,7 +4261,7 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 
 *Places two MIDI files one after another with an overlap.*
 
-Concatenates two MIDI files end-to-end. The second file starts at the end of the first (overlap = 0) or before (overlap > 0), superimposing the notes. Events from each file are preserved, including program/instrument changes. The joined file is output on the MIDI port.
+Concatenates two MIDI files end-to-end. The second file starts at the end of the first (overlap = 0) or before (overlap > 0), superimposing the notes. Only the second file moves, and it cannot go back before the start: an overlap longer than the first file is brought back to its duration, the two then starting together. Events from each file are preserved, including program/instrument changes. The joined file is output on the MIDI port.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4271,7 +4271,7 @@ Concatenates two MIDI files end-to-end. The second file starts at the end of the
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Overlap | number | 0 s | 0 – 30 s, step 0.1 | Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. |
+| Overlap | number | 0 s | 0 – 600 s, step 0.1 | Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. An overlap longer than the first file is brought back to its duration, the two then starting together: only the second one moves, and it cannot go back before the start. |
 
 #### MIDI Loop
 

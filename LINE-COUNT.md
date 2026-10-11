@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1346 files, 240833 lines, of which 163530 are code.**
-The table lists the 191 files of 200 code lines or more, heaviest first;
-the remaining 1155 account for 159897 lines.
+**1346 files, 240893 lines, of which 163568 are code.**
+The table lists the 192 files of 200 code lines or more, heaviest first;
+the remaining 1154 account for 159664 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -164,6 +164,7 @@ the remaining 1155 account for 159897 lines.
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
+| src/audio/midi.test.ts | 228 | 293 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |

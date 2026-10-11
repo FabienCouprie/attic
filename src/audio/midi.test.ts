@@ -75,6 +75,66 @@ describe("joindreMidi", () => {
     expect(n2!.fin).toBeCloseTo(1.5, 3);
   });
 
+  it("LE CHEVAUCHEMENT EST RAMENÉ À LA LONGUEUR DU PREMIER FICHIER, et c'est la seule borne", () => {
+    // C'EST LE CAS QUI REMPLACE LE PLAFOND DE LA FICHE, laquelle s'arrêtait à trente secondes sans
+    // raison. Seul le SECOND fichier se déplace, et il ne peut pas reculer avant le début : le
+    // chevauchement maximal est donc la longueur du premier, où les deux partent ensemble.
+    //
+    // ET CE CAS PORTE SUR LA PLACE DU PREMIER FICHIER ET SUR LA DURÉE TOTALE, non sur celle du
+    // second. Une première écriture n'assertait que le début du second, et elle passait SANS la
+    // borne : le décalage devient alors négatif, et l'écriture renormalise la ligne du temps, de
+    // sorte que le second se retrouve bien à zéro. Ce qui bouge est le PREMIER, repoussé d'autant.
+    // Relevé sans la borne, sur deux fichiers d'une seconde : à trente secondes de chevauchement, le
+    // premier fichier part à 29 s et la sortie fait trente secondes ; à trois cents, elle en fait
+    // trois cents. Deux fichiers d'une seconde donnaient cinq minutes de silence.
+    return Promise.all([30, 100, 300, 3600].map(async (chev) => {
+      const f1 = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 1 }]);
+      const f2 = createMidiFile([{ note: 67, velocity: 100, start: 0, end: 1 }]);
+      const joined = await joindreMidi(f1, f2, chev);
+      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await joined.arrayBuffer())));
+      const dit = `chevauchement demandé ${chev} s : `
+        + notes.map((n) => `${n.note} à ${n.debut.toFixed(3)} s`).join(", ")
+        + `, durée totale ${dureeTotale.toFixed(3)} s`;
+      const n1 = notes.find((n) => n.note === 60);
+      const n2 = notes.find((n) => n.note === 67);
+      expect(n1, dit).toBeDefined();
+      expect(n2, dit).toBeDefined();
+      // Les deux partent ensemble, et la sortie ne dure que le premier fichier.
+      expect(n1!.debut, dit).toBeCloseTo(0, 2);
+      expect(n2!.debut, dit).toBeCloseTo(0, 2);
+      expect(dureeTotale, dit).toBeCloseTo(1, 1);
+    }));
+  });
+
+  it("ET IL N'EST PAS RAMENÉ AU PLUS COURT DES DEUX, contrairement à une jointure audio", async () => {
+    // LES DEUX BORNES DIFFÈRENT POUR UNE RAISON, et uniformiser les deux nœuds serait une faute.
+    // Une jointure AUDIO fond les deux pistes l'une dans l'autre : recouvrir plus que la plus courte
+    // n'a pas de sens, le fondu porterait sur un son qui s'est terminé. Une jointure MIDI ne fond
+    // rien, elle DÉPLACE des notes : un second fichier plus court que le chevauchement sonne
+    // simplement tout entier pendant le premier, ce qui est un résultat légitime.
+    const f1 = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 4 }]);
+    const f2 = createMidiFile([{ note: 67, velocity: 100, start: 0, end: 0.5 }]);
+    const joined = await joindreMidi(f1, f2, 3);
+    const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await joined.arrayBuffer())));
+    const n2 = notes.find((n) => n.note === 67);
+    const dit = `second fichier de 0,5 s, chevauchement de 3 s : début ${n2?.debut.toFixed(3)} s,`
+      + ` durée totale ${dureeTotale.toFixed(3)} s`;
+    // Le chevauchement de 3 s dépasse les 0,5 s du second fichier, et il est quand même appliqué.
+    expect(n2!.debut, dit).toBeCloseTo(1, 2);
+    expect(n2!.fin, dit).toBeCloseTo(1.5, 2);
+    // Le premier fichier faisant 4 s, la durée totale reste la sienne.
+    expect(dureeTotale, dit).toBeCloseTo(4, 1);
+  });
+
+  it("ET UN CHEVAUCHEMENT NÉGATIF VAUT ZÉRO", async () => {
+    const f1 = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 1 }]);
+    const f2 = createMidiFile([{ note: 67, velocity: 100, start: 0, end: 1 }]);
+    const joined = await joindreMidi(f1, f2, -10);
+    const { notes } = analyserMidi(parseMidi(new Uint8Array(await joined.arrayBuffer())));
+    const n2 = notes.find((n) => n.note === 67);
+    expect(n2!.debut, `second fichier à ${n2!.debut.toFixed(3)} s`).toBeCloseTo(1, 2);
+  });
+
   it("conserve les changements de programme", async () => {
     const f1 = createMidiFile([{ note: 60, velocity: 100, start: 0, end: 0.5 }], { programChange: 5 });
     const f2 = createMidiFile([{ note: 64, velocity: 100, start: 0, end: 0.5 }], { programChange: 10 });
