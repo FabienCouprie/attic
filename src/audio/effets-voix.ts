@@ -4,6 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { valeurA, valeurMax } from "./courbe";
+import { POINTS_AUTOMATION, poserParam } from "./automation";
 import { changerTonaliteVoie } from "./effets-spectral";
 
 export interface OptionsHarmoniser {
@@ -68,16 +69,17 @@ export function harmoniser(
 async function filtreBiquadSpectral(
   buffer: AudioBuffer,
   type: BiquadFilterType,
-  frequency: number,
-  Q = 0.707,
+  frequency: number | Float32Array,
+  Q: number | Float32Array = 0.707,
 ): Promise<AudioBuffer> {
   const ctx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
   const source = ctx.createBufferSource();
   source.buffer = buffer;
   const filter = ctx.createBiquadFilter();
   filter.type = type;
-  filter.frequency.value = frequency;
-  filter.Q.value = Q;
+  // `poserParam` pose un nombre comme avant, par `value`, et une courbe par automation.
+  poserParam(filter.frequency, frequency, buffer.duration);
+  poserParam(filter.Q, Q, buffer.duration);
   source.connect(filter);
   filter.connect(ctx.destination);
   source.start();
@@ -107,9 +109,17 @@ export async function vocoder(
   modulateur: AudioBuffer,
   porteuse: AudioBuffer,
   bands: number,
-  fMin: number,
-  fMax: number,
-  Q: number,
+  /**
+   * Les deux bornes du banc et le facteur de qualité des filtres. Un tableau les fait varier.
+   *
+   * LES DEUX BORNES NE SERVENT PAS DIRECTEMENT, et c'est ce qui les avait mises de côté : la
+   * fréquence de la bande `i` est leur moyenne géométrique pondérée, `fMin · (fMax/fMin)^(i/(n−1))`.
+   * La combinaison se fait donc sur les tableaux, point par point, avant d'être remise au
+   * paramètre audio du filtre.
+   */
+  fMin: number | Float32Array,
+  fMax: number | Float32Array,
+  Q: number | Float32Array,
   mix: number | Float32Array,
 ): Promise<AudioBuffer> {
   const sr = modulateur.sampleRate;
@@ -118,8 +128,28 @@ export async function vocoder(
   const resultat = new AudioBuffer({ numberOfChannels: nch, length, sampleRate: sr });
   for (let c = 0; c < nch; c++) resultat.getChannelData(c).fill(0);
 
+  // LA COMBINAISON SE FAIT À LA RÉSOLUTION DE L'AUTOMATION, et non à celle du signal : `poserParam`
+  // ne programme que deux mille quarante-huit points de toute façon, et un tableau par bande à la
+  // longueur du son pèserait des centaines de mégaoctets pour un résultat identique.
+  const nBornes = Math.max(
+    typeof fMin === "number" ? 0 : fMin.length,
+    typeof fMax === "number" ? 0 : fMax.length,
+  );
+  /** La fréquence de la bande `i` : un nombre si les deux bornes en sont, un tableau sinon. */
+  const frequenceBande = (i: number): number | Float32Array => {
+    const puissance = i / Math.max(1, bands - 1);
+    const calcul = (k: number) =>
+      valeurA(fMin, k) * Math.pow(valeurA(fMax, k) / valeurA(fMin, k), puissance);
+    if (nBornes === 0) return calcul(0);
+    const out = new Float32Array(POINTS_AUTOMATION);
+    for (let k = 0; k < POINTS_AUTOMATION; k++) {
+      out[k] = calcul(Math.round((k * (nBornes - 1)) / (POINTS_AUTOMATION - 1)));
+    }
+    return out;
+  };
+
   for (let i = 0; i < bands; i++) {
-    const freq = fMin * Math.pow(fMax / fMin, i / Math.max(1, bands - 1));
+    const freq = frequenceBande(i);
     const modBand = await filtreBiquadSpectral(modulateur, "bandpass", freq, Q);
     const carBand = await filtreBiquadSpectral(porteuse, "bandpass", freq, Q);
     const envs = detecterEnveloppe(modBand, 1, 20);

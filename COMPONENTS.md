@@ -3280,12 +3280,15 @@ Follows a sound's pitch instant by instant and returns it as a modulation curve.
 
 *Four-band distortion: each register saturates independently.*
 
-Four-band distortion. An ordinary distortion crushes the whole spectrum together: the low end, which carries the most energy, saturates first and smothers the rest, which is why a bass through a fuzz turns to mush. Here the signal is split into four registers by three adjustable crossover frequencies, each is saturated separately, then everything is summed. The mids can therefore bite while the bass stays clean, and the low end can be given grit without the cymbals turning harsh. Saturating the highs fully moves an 80 Hz tone by six thousandths, while saturating the lows multiplies its third harmonic by seventy: the four bands are independent. « High » is deliberately low by default: it is the band that makes a fuzz shrill. « Output » sits at -6 dB, because saturation raises the level and it has to be brought back. At « Mix » 0%, the original signal comes out untouched. A note on the split: it uses real filters (one lowpass, two bandpass, one highpass) so the sum of the four bands does not exactly reproduce the input, even with no saturation. A subtractive split would reconstruct perfectly but separate poorly, and separation is what is wanted here.
+Four-band distortion. An ordinary distortion crushes the whole spectrum together: the low end, which carries the most energy, saturates first and smothers the rest, which is why a bass through a fuzz turns to mush. Here the signal is split into four registers by three adjustable crossover frequencies, each is saturated separately, then everything is summed. The mids can therefore bite while the bass stays clean, and the low end can be given grit without the cymbals turning harsh. Saturating the highs fully moves an 80 Hz tone by six thousandths, while saturating the lows multiplies its third harmonic by seventy: the four bands are independent. « High » is deliberately low by default: it is the band that makes a fuzz shrill. « Output » sits at -6 dB, because saturation raises the level and it has to be brought back. At « Mix » 0%, the original signal comes out untouched. A note on the split: it uses real filters (one lowpass, two bandpass, one highpass) so the sum of the four bands does not exactly reproduce the input, even with no saturation. A subtractive split would reconstruct perfectly but separate poorly, and separation is what is wanted here. The three crossovers accept a curve, through the « Modulation crossover 1 », « Modulation crossover 2 » and « Modulation crossover 3 » inputs, each with its two bounds. Their travel is multiplicative, an octave being a doubling. They are put back in order before being combined, and that is done at every point of the curves: two curves may therefore cross without the bands swapping, and naming them in any order gives the same array.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation crossover 1 | curve |  |
+| input | Modulation crossover 2 | curve |  |
+| input | Modulation crossover 3 | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3301,6 +3304,12 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Output | number | -6 dB | -24 – 12 dB, step 0.5 | Output gain. Saturation raises the level: this brings it back. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Crossover 1 min | slider | 80 Hz | 40 – 800 Hz, step 10 | Value of « Crossover 1 » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Crossover 1 max | slider | 500 Hz | 40 – 800 Hz, step 10 | Value of « Crossover 1 » that the curve's one means. |
+| Crossover 2 min | slider | 400 Hz | 200 – 4000 Hz, step 50 | Value of « Crossover 2 » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Crossover 2 max | slider | 2500 Hz | 200 – 4000 Hz, step 50 | Value of « Crossover 2 » that the curve's one means. |
+| Crossover 3 min | slider | 2000 Hz | 1000 – 12000 Hz, step 100 | Value of « Crossover 3 » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Crossover 3 max | slider | 9000 Hz | 1000 – 12000 Hz, step 100 | Value of « Crossover 3 » that the curve's one means. |
 
 #### Ring Modulator
 
@@ -3427,13 +3436,16 @@ Pitch modulation by LFO: the note oscillates around its original pitch. Differen
 
 *Filterbank vocoder: modulator + carrier → robot voice effect.*
 
-Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input and a synthesizer (or any harmonic-rich carrier) to the Carrier input. The modulator's spectrum controls the volume of each carrier band, producing the classic robot effect. Settings: • the number of bands • frequency range • Q • Mix, the share of vocoder in the output. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The output stops at the shorter of the two sounds, and the curve is read over that length.
+Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input and a synthesizer (or any harmonic-rich carrier) to the Carrier input. The modulator's spectrum controls the volume of each carrier band, producing the classic robot effect. Settings: • the number of bands • frequency range • Q • Mix, the share of vocoder in the output. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The output stops at the shorter of the two sounds, and the curve is read over that length. « Min freq », « Max freq » and « Q » accept one too, through the « Modulation min freq », « Modulation max freq » and « Modulation q » inputs, each with its two bounds. The two bounds do not act directly: each band's frequency is their weighted geometric mean, and the core redoes that product at every point of the curves. The travel of both is multiplicative, an octave being a doubling.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Modulator | audio |  |
 | input | Carrier | audio |  |
 | input | Modulation | curve |  |
+| input | Modulation min freq | curve |  |
+| input | Modulation max freq | curve |  |
+| input | Modulation q | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3445,6 +3457,12 @@ Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input an
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Min freq min | slider | 100 Hz | 80 – 1000 Hz, step 10 | Value of « Min freq » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Min freq max | slider | 600 Hz | 80 – 1000 Hz, step 10 | Value of « Min freq » that the curve's one means. |
+| Max freq min | slider | 3000 Hz | 2000 – 16000 Hz, step 100 | Value of « Max freq » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Max freq max | slider | 12000 Hz | 2000 – 16000 Hz, step 100 | Value of « Max freq » that the curve's one means. |
+| Q min | slider | 1 | 0.5 – 12, step 0.1 | Value of « Q » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Q max | slider | 8 | 0.5 – 12, step 0.1 | Value of « Q » that the curve's one means. |
 
 #### Voice Changer
 

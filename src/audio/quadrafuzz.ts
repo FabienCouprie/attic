@@ -13,6 +13,7 @@
 // elle l'emporte sur la reconstruction parfaite.
 import { plafonnerCrete } from "./commun";
 import { valeurA } from "./courbe";
+import { POINTS_AUTOMATION, poserParam } from "./automation";
 
 /**
  * Courbe de saturation, pour un waveshaper.
@@ -49,10 +50,16 @@ export interface ReglagesQuadrafuzz {
   basMediums: number;
   hautsMediums: number;
   aigus: number;
-  /** Fréquences de coupure entre les bandes, en hertz. */
-  f1: number;
-  f2: number;
-  f3: number;
+  /**
+   * Fréquences de coupure entre les bandes, en hertz. Un tableau les fait varier.
+   *
+   * ELLES NE SERVENT PAS DIRECTEMENT, ET C'EST CE QUI LES AVAIT MISES DE CÔTÉ. Elles sont triées,
+   * puis combinées DEUX À DEUX en moyennes géométriques et en facteurs de qualité. La combinaison
+   * se fait donc sur les tableaux, point par point, avant d'être remise au paramètre audio.
+   */
+  f1: number | Float32Array;
+  f2: number | Float32Array;
+  f3: number | Float32Array;
   /** Équilibre signal d'origine / signal traité, de 0 à 100. Une courbe le pilote au fil du son. */
   mix: number | Float32Array;
   /** Gain de sortie, en décibels. */
@@ -62,8 +69,8 @@ export interface ReglagesQuadrafuzz {
 async function filtrer(
   buffer: AudioBuffer,
   type: BiquadFilterType,
-  frequence: number,
-  q: number,
+  frequence: number | Float32Array,
+  q: number | Float32Array,
 ): Promise<AudioBuffer> {
   const nyquist = buffer.sampleRate / 2;
   const ctx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
@@ -71,8 +78,10 @@ async function filtrer(
   source.buffer = buffer;
   const filtre = ctx.createBiquadFilter();
   filtre.type = type;
-  filtre.frequency.value = Math.max(20, Math.min(nyquist - 100, frequence));
-  filtre.Q.value = q;
+  // `poserParam` pose un nombre comme avant, par `value`, et une courbe par automation.
+  poserParam(filtre.frequency, frequence, buffer.duration,
+    (f) => Math.max(20, Math.min(nyquist - 100, f)));
+  poserParam(filtre.Q, q, buffer.duration);
   source.connect(filtre).connect(ctx.destination);
   source.start();
   return ctx.startRendering();
@@ -88,18 +97,42 @@ async function filtrer(
  */
 export async function separerEnBandes(
   buffer: AudioBuffer,
-  f1: number,
-  f2: number,
-  f3: number,
+  f1: number | Float32Array,
+  f2: number | Float32Array,
+  f3: number | Float32Array,
 ): Promise<AudioBuffer[]> {
-  const [a, b, c] = [f1, f2, f3].sort((x, y) => x - y);
   const centre = (x: number, y: number) => Math.sqrt(x * y);
   const qualite = (x: number, y: number) => Math.max(0.3, Math.sqrt(x * y) / Math.max(1, y - x));
+
+  // LA COMBINAISON SE FAIT À LA RÉSOLUTION DE L'AUTOMATION, et non à celle du signal : `poserParam`
+  // ne programme que deux mille quarante-huit points de toute façon, et six tableaux à la longueur
+  // du son pèseraient deux cents mégaoctets sur trois minutes pour un résultat identique.
+  const longueurs = [f1, f2, f3].map((v) => (typeof v === "number" ? 0 : v.length));
+  const n = Math.max(...longueurs);
+  /**
+   * Une grandeur dérivée des trois coupures triées : un nombre si les trois en sont, un tableau
+   * sinon. UN SEUL CHEMIN de calcul, donc, et le chemin du nombre rend ce qu'il rendait au bit près.
+   */
+  const derivee = (calcul: (a: number, b: number, c: number) => number): number | Float32Array => {
+    const triees = (i: number) =>
+      [valeurA(f1, i), valeurA(f2, i), valeurA(f3, i)].sort((x, y) => x - y);
+    if (n === 0) {
+      const [a, b, c] = triees(0);
+      return calcul(a, b, c);
+    }
+    const out = new Float32Array(POINTS_AUTOMATION);
+    for (let k = 0; k < POINTS_AUTOMATION; k++) {
+      const [a, b, c] = triees(Math.round((k * (n - 1)) / (POINTS_AUTOMATION - 1)));
+      out[k] = calcul(a, b, c);
+    }
+    return out;
+  };
+
   return Promise.all([
-    filtrer(buffer, "lowpass", a, 0.707),
-    filtrer(buffer, "bandpass", centre(a, b), qualite(a, b)),
-    filtrer(buffer, "bandpass", centre(b, c), qualite(b, c)),
-    filtrer(buffer, "highpass", c, 0.707),
+    filtrer(buffer, "lowpass", derivee((a) => a), 0.707),
+    filtrer(buffer, "bandpass", derivee((a, b) => centre(a, b)), derivee((a, b) => qualite(a, b))),
+    filtrer(buffer, "bandpass", derivee((_a, b, c) => centre(b, c)), derivee((_a, b, c) => qualite(b, c))),
+    filtrer(buffer, "highpass", derivee((_a, _b, c) => c), 0.707),
   ]);
 }
 

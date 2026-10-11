@@ -38,7 +38,14 @@ describe("les ports de modulation", () => {
       const bornes = fiche.parametres.filter((p: any) => p.modulationDe === port.module);
       expect(bornes.length, `${fiche.id} · ${port.module}`).toBe(2);
       // Un minimum et un maximum, pas deux fois le même.
-      const min = bornes.filter((b: any) => /min/i.test(b.nom));
+      //
+      // LE SUFFIXE, ET NON LA SOUS-CHAÎNE. La recherche portait sur « min » n'importe où dans le
+      // nom ; or un réglage peut S'APPELER « Fréq min », et ses deux bornes « Fréq min min » et
+      // « Fréq min max » contiennent alors toutes les deux « min ». Le garde comptait donc deux
+      // minimums là où il y en a un, et tombait sur un composant juste. La convention du catalogue
+      // est un SUFFIXE, « ⟨réglage⟩ min » et « ⟨réglage⟩ max », et c'est lui qu'il faut chercher :
+      // deux bornes réellement nommées « min » le restent, et le défaut visé est toujours attrapé.
+      const min = bornes.filter((b: any) => / min$/i.test(b.nom));
       expect(min.length, `${fiche.id} · ${port.module}`).toBe(1);
     }
   });
