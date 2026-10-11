@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 116, sur 64 composants
-- **réglages restant à faire** : 36, sur 23 composants et 27 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 121, sur 64 composants
+- **réglages restant à faire** : 31, sur 20 composants et 24 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 42, sur 19 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -49,12 +49,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Granular freeze `granular-freeze` : Position
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
-
-### dynamique · 3
-
-- De-esser `de-esser` : Ratio
-- Gate/Expandeur `gate-expandeur` : Seuil, Ratio
-- Limiteur `limiteur` : Seuil, Plafond
 
 ### temps · 3
 
@@ -216,6 +210,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `de-esser` : Attaque
 - `de-esser` : Fréquence
 - `de-esser` : Largeur
+- `de-esser` : Ratio
 - `de-esser` : Relâchement
 - `de-esser` : Seuil
 - `decaleur-frequence` : Mélange
@@ -237,12 +232,16 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `flanger` : Profondeur
 - `formule-echantillons` : Volume
 - `gate-expandeur` : Attaque
+- `gate-expandeur` : Ratio
 - `gate-expandeur` : Relâchement
+- `gate-expandeur` : Seuil
 - `glissando-interieur` : Mix
 - `granular-freeze` : Mix
 - `haut-parleur-rotatif` : Mélange
 - `largeur-stereo` : Largeur
+- `limiteur` : Plafond
 - `limiteur` : Relâchement
+- `limiteur` : Seuil
 - `micromontage` : Transposition
 - `morphing-spectral` : Mélange
 - `mosaiquage` : Volume

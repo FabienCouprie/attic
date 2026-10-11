@@ -13,7 +13,8 @@ import { creerAleatoire } from "../core";
 import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
 
-import { MODULATION_MIX, bornesModulation, effet, reglageModule, param, portModulation } from "./effets-aides";
+import { valeurA } from "../audio/courbe";
+import { MODULATION_MIX, bornesModulation, effet, modulationNommee, reglageModule, param, portModulation } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
@@ -107,7 +108,9 @@ export const fiches: FicheAudio[] = ([
     //
     // ET L'ÉCHELLE RESTE LINÉAIRE. Le dépôt ne passe en logarithmique que pour un RAPPORT, un
     // facteur d'étirement ou une fréquence ; les bornes de temps de l'écho sont linéaires.
-    { parametre: "Relâchement", parametreEn: "Release", bornes: [1, 1000], defauts: [10, 200], unite: "ms" }),
+    [{ parametre: "Relâchement", parametreEn: "Release", bornes: [1, 1000], defauts: [10, 200], unite: "ms" },
+     { parametre: "Seuil", bornes: [-40, 0], defauts: [-20, -1], unite: "dB" },
+     { parametre: "Plafond", bornes: [-20, 0], defauts: [-6, -0.3], unite: "dB" }]),
   effet("compresseur-multibande", "Compresseur multibande", "Multiband Compressor", "Compresseur 3 bandes indépendantes (low/mid/high).", "3-band compressor with independent thresholds/ratios.",
     [
       param("Seuil Low", -20, "Low threshold", "dB", "Seuil du compresseur sur la bande grave.", "Compressor threshold for the low band.", [-60, 0], 1),
@@ -149,6 +152,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", sousType: "stereo" },
       portModulation("Attaque", "Attack"),
       portModulation("Relâchement", "Release"),
+      portModulation("Seuil", "Threshold"),
+      portModulation("Ratio", "Ratio"),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -177,13 +182,17 @@ export const fiches: FicheAudio[] = ([
         parametre: "Relâchement", parametreEn: "Release", bornes: [1, 1000], defauts: [20, 300], unite: "ms",
         noms: ["Relâchement min", "Relâchement max"], nomsEn: ["Release min", "Release max"],
       }),
+      ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-80, 0], "dB"), defauts: [-60, -20] }),
+      ...bornesModulation({ ...modulationNommee("Ratio", "Ratio", [1, 20], "∶1"), defauts: [1, 10] }),
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const mode = ctx.paramTexte("Mode", "gate");
-      const seuil = ctx.paramNombre("Seuil", -40);
-      const ratio = ctx.paramNombre("Ratio", 4);
+      const seuil = reglageModule(ctx, audio.length, 3, {
+        reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] });
+      const ratio = reglageModule(ctx, audio.length, 4, {
+        reglage: "Ratio", defaut: 4, rendu: "pourCent", noms: ["Ratio min", "Ratio max"] });
       // LE RENDU EST `pourCent` PARCE QUE CE SONT DES MILLISECONDES, et non une proportion : le nom
       // de l'option dit « ne divise pas », ce que `gateExpandeur` attend.
       const attaque = reglageModule(ctx, audio.length, 1, {
@@ -194,7 +203,9 @@ export const fiches: FicheAudio[] = ([
       });
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
-      return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", seuil, mode === "expander" ? ` · ratio ${ratio}:1` : "") };
+      // LE MESSAGE ANNONCE LES VALEURS DU DÉBUT DU SON quand une courbe commande : il rend un
+      // chiffre, et une valeur qui se déplace en vaudrait autant qu'il y a d'instants.
+      return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", valeurA(seuil, 0), mode === "expander" ? ` · ratio ${valeurA(ratio, 0)}:1` : "") };
    },
   },
   effet("transient-shaper", "Transient Shaper", "Transient Shaper", "Contrôle indépendant de l'attaque et du sustain.", "Independent attack and sustain control.",
@@ -217,7 +228,8 @@ export const fiches: FicheAudio[] = ([
      { parametre: "Largeur", bornes: [200, 6000], unite: "Hz" },
      { parametre: "Attaque", bornes: [0.1, 50], defauts: [0.5, 20], unite: "ms" },
      { parametre: "Relâchement", bornes: [5, 500], defauts: [20, 300], unite: "ms" },
-     { parametre: "Fréquence", bornes: [2000, 12000], defauts: [4000, 10000], unite: "Hz" }]),
+     { parametre: "Fréquence", bornes: [2000, 12000], defauts: [4000, 10000], unite: "Hz" },
+     { parametre: "Ratio", bornes: [1, 10], defauts: [1, 8], unite: "∶1" }]),
   effet("ring-modulator", "Ring modulator", "Ring Modulator", "Modulation en anneau (multiplication par porteuse).", "Ring modulation (carrier multiplication).",
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],

@@ -156,7 +156,7 @@ const CAS: {
    * n'a lieu, et la sortie est l'entrée quelle que soit la largeur de bande. Le défaut planté ne
    * le faisait pas tomber. Ouvrir le seuil rend le cas sensible à ce qu'il prétend éprouver.
    */
-  reglages?: Record<string, number>;
+  reglages?: Record<string, number | string>;
   /**
    * La valeur éprouvée et le leurre, quand 25 et 100 ne veulent rien dire dans l'unité du réglage.
    *
@@ -191,7 +191,7 @@ const CAS: {
   { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined], rang: 1 },
   // La famille « temps ». Le gate porte DEUX ports, donc deux entrées dans cette table : chacune
   // nomme le rang qu'elle éprouve, puisque le dernier port n'est pas celui de l'attaque.
-  { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)] },
+  { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)], rang: 1 },
   {
     id: "gate-expandeur", reglage: "Attaque", entrees: () => [son(47, 2)],
     noms: ["Attaque min", "Attaque max"], rang: 1,
@@ -268,11 +268,24 @@ const CAS: {
     noms: ["Relâchement min", "Relâchement max"], siOffline: true, rang: 4,
     reglages: { Seuil: -60, Ratio: 10 } },
   { id: "de-esser", reglage: "Fréquence", entrees: () => [son(293, 2), undefined, undefined, undefined, undefined],
-    noms: ["Fréquence min", "Fréquence max"], siOffline: true, regle: 4000, leurre: 12000,
+    noms: ["Fréquence min", "Fréquence max"], siOffline: true, rang: 5, regle: 4000, leurre: 12000,
     reglages: { Seuil: -60, Ratio: 10 } },
   { id: "exciter", reglage: "Fréquence", entrees: () => [son(307, 2), undefined],
     noms: ["Fréquence min", "Fréquence max"], siOffline: true, regle: 2000, leurre: 10000 },
   ...multibande("Fréq Low", 9, 100, 800), ...multibande("Fréq High", 10, 2000, 10000),
+  // LA FAMILLE « DYNAMIQUE ». Un ratio de un ne comprime rien, un seuil a zero decibel n'est
+  // franchi par rien : ce sont les leurres naturels de ces deux formes.
+  { id: "gate-expandeur", reglage: "Seuil", entrees: () => [son(311, 2), undefined, undefined],
+    noms: ["Seuil min", "Seuil max"], rang: 3, regle: -24, leurre: 0 },
+  { id: "gate-expandeur", reglage: "Ratio", entrees: () => [son(313, 2), undefined, undefined, undefined],
+    noms: ["Ratio min", "Ratio max"], regle: 8, leurre: 1, reglages: { Mode: "Expandeur", Seuil: -20 } },
+  { id: "limiteur", reglage: "Seuil", entrees: () => [son(317, 2), undefined],
+    noms: ["Seuil min", "Seuil max"], rang: 2, regle: -24, leurre: 0 },
+  { id: "limiteur", reglage: "Plafond", entrees: () => [son(331, 2), undefined, undefined],
+    noms: ["Plafond min", "Plafond max"], regle: -12, leurre: 0, reglages: { Seuil: -30 } },
+  { id: "de-esser", reglage: "Ratio", entrees: () => [son(337, 2), undefined, undefined, undefined, undefined, undefined],
+    noms: ["Ratio min", "Ratio max"], siOffline: true, regle: 8, leurre: 1,
+    reglages: { Seuil: -60 } },
   // LE DUCKING PORTE DEUX ENTRÉES AUDIO AVANT SES QUATRE PORTS, et ses unités ne sont pas des
   // pour-cent : chaque cas choisit donc sa valeur et son leurre, en fractions dyadiques.
   { id: "ducking", reglage: "Seuil", entrees: () => [son(197), son(199)],
@@ -312,8 +325,8 @@ const CAS: {
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien soixante ports à éprouver", () => {
-    expect(CAS).toHaveLength(60);
+  it("il y a bien soixante-cinq ports à éprouver", () => {
+    expect(CAS).toHaveLength(65);
   });
 
   for (const cas of CAS) {

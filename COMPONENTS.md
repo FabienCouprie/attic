@@ -4656,7 +4656,7 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 
 *Dynamic sibilance compression.*
 
-Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ». Both time constants accept one too, « Modulation attack » and « Modulation release », with their bounds named after their setting. The centre frequency accepts one too, through « Modulation frequency »: the target band then moves, and its Q follows, since it is the frequency divided by the width.
+Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ». Both time constants accept one too, « Modulation attack » and « Modulation release », with their bounds named after their setting. The centre frequency accepts one too, through « Modulation frequency »: the target band then moves, and its Q follows, since it is the frequency divided by the width. The ratio accepts one too, through « Modulation ratio ».
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4666,6 +4666,7 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | input | Modulation attack | curve |  |
 | input | Modulation release | curve |  |
 | input | Modulation frequency | curve |  |
+| input | Modulation ratio | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4686,6 +4687,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
 | Frequency min | slider | 4000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Frequency max | slider | 10000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Ratio min | slider | 1 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Ratio max | slider | 8 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
 
 #### Ducking
 
@@ -4796,13 +4799,15 @@ At each moment, each component of the first sound is multiplied by the weight of
 
 *Dynamic gate or expander (cuts or attenuates signal below a threshold).*
 
-Two dynamic effects in one node. Gate: cuts the signal when it drops below a threshold (useful for removing background noise between phrases, hiss, reverb tails). Expander: gradually attenuates signal below threshold by a ratio (reverse compressor, gentler than a gate). Settings: • the threshold (in dB) • attack • release (transition times) • maximum floor attenuation (cut level in Gate mode, limit in Expander mode) • ratio (Expander mode only). Cleans up a vocal or instrumental recording. Two modulation inputs, « Modulation attack » and « Modulation release », take the place of the settings of the same name; each has its two bounds, « Attack min / max » and « Release min / max ». Those two settings are the envelope follower's time constants, hence the speed at which the measurement catches up with the sound: varying them changes that speed along the sound, not the threshold or the floor.
+Two dynamic effects in one node. Gate: cuts the signal when it drops below a threshold (useful for removing background noise between phrases, hiss, reverb tails). Expander: gradually attenuates signal below threshold by a ratio (reverse compressor, gentler than a gate). Settings: • the threshold (in dB) • attack • release (transition times) • maximum floor attenuation (cut level in Gate mode, limit in Expander mode) • ratio (Expander mode only). Cleans up a vocal or instrumental recording. Two modulation inputs, « Modulation attack » and « Modulation release », take the place of the settings of the same name; each has its two bounds, « Attack min / max » and « Release min / max ». Those two settings are the envelope follower's time constants, hence the speed at which the measurement catches up with the sound: varying them changes that speed along the sound. The threshold and the ratio accept a curve in turn, through « Modulation threshold » and « Modulation ratio », each with its two bounds; the attenuation does not. The message reports the values at the start of the sound when a curve commands.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation attack | curve |  |
 | input | Modulation release | curve |  |
+| input | Modulation threshold | curve |  |
+| input | Modulation ratio | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4817,6 +4822,10 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 | Attack max | slider | 20 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that the curve's one means. |
 | Release min | slider | 20 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Release max | slider | 300 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Threshold min | slider | -60 dB | -80 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Threshold max | slider | -20 dB | -80 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
 
 #### Limiter
 
@@ -4824,12 +4833,14 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 
 *Peak limiter for mastering.*
 
-Peak limiter for mastering: instant attack, adjustable release and output ceiling. Reduces peaks above the threshold with an infinite ratio, then applies makeup gain so the ceiling reaches the target value. Gains loudness without clipping. A curve connected to the « Modulation » input takes the place of « Release »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth. Release is the follower's time constant, hence the speed at which gain recovers after a peak; varying it changes that speed along the sound, not the level.
+Peak limiter for mastering: instant attack, adjustable release and output ceiling. Reduces peaks above the threshold with an infinite ratio, then applies makeup gain so the ceiling reaches the target value. Gains loudness without clipping. A curve connected to the « Modulation » input takes the place of « Release »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth. Release is the follower's time constant, hence the speed at which gain recovers after a peak; varying it changes that speed along the sound. The threshold and the ceiling accept a curve in turn, through « Modulation threshold » and « Modulation ceiling »: the make-up gain, which is the ratio of ceiling to threshold, then follows both.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation threshold | curve |  |
+| input | Modulation ceiling | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4839,6 +4850,10 @@ Peak limiter for mastering: instant attack, adjustable release and output ceilin
 | Ceiling | number | -1 dB | -40 – 0 dB, step 0.5 | Maximum output level. |
 | Modulation min | slider | 10 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Threshold min | slider | -20 dB | -40 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Threshold max | slider | -1 dB | -40 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Ceiling min | slider | -6 dB | -20 – 0 dB, step 1 | Value of « Ceiling » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Ceiling max | slider | -0.3 dB | -20 – 0 dB, step 1 | Value of « Ceiling » that the curve's one means. |
 
 #### Match Level
 

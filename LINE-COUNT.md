@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232371 lines, of which 158939 are code.**
+**1317 files, 232404 lines, of which 158962 are code.**
 The table lists the 184 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155095 lines.
+the remaining 1133 account for 155103 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -110,6 +110,7 @@ the remaining 1133 account for 155095 lines.
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
+| src/plugins/effets.ts | 280 | 354 |  |
 | src/plugins/visualisation-ecoute.test.ts | 280 | 413 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
@@ -119,7 +120,6 @@ the remaining 1133 account for 155095 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
-| src/plugins/effets.ts | 270 | 342 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
@@ -138,6 +138,7 @@ the remaining 1133 account for 155095 lines.
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
+| src/plugins/modulation-cablage.test.ts | 246 | 376 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
@@ -153,7 +154,6 @@ the remaining 1133 account for 155095 lines.
 | src/vues-domaine/vues-analyse.tsx | 237 | 281 |  |
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
-| src/plugins/modulation-cablage.test.ts | 235 | 363 |  |
 | src/audio/fm-operateurs.test.ts | 233 | 294 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
