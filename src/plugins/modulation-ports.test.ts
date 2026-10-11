@@ -101,4 +101,33 @@ describe("les ports de modulation", () => {
       expect(avant.some((e: any) => e.type === "audio" || e.type === "courbe"), fiche.id).toBe(true);
     }
   });
+
+  it("UNE BORNE SE RÈGLE : son curseur offre assez de positions pour qu'on l'atteigne", () => {
+    // CE QUE CE GARDE CHERCHE, ET POURQUOI IL NE CHERCHE PAS LE PAS. Une borne plus grossière que
+    // le réglage qu'elle borne n'est pas fautive en soi : trente-quatre le sont, et la plupart
+    // offrent de dix à deux cents positions, ce qui se règle très bien. Ce qui est fautif, c'est
+    // le NOMBRE DE POSITIONS qu'un curseur de borne laisse atteindre, et c'est lui qu'on compte.
+    //
+    // LE SEUIL EST MESURÉ, NON CHOISI. Relevé sur les deux cent quatre-vingt-dix bornes du
+    // catalogue, l'écart est franc : six d'entre elles n'offraient qu'UNE ou DEUX positions, et la
+    // suivante en offre DIX. Huit tombe donc dans le vide entre les deux. Les six étaient les
+    // bornes en secondes de l'attaque et du relâchement du ducking et de la chute de la
+    // réverbération hachée : `bornesModulation` pose un pas de un par défaut, ce qui convient à un
+    // pour cent et à rien qui se compte en millièmes de seconde.
+    const MINIMUM = 8;
+    const pauvres: string[] = [];
+    for (const f of toutesLesFiches as any[]) {
+      for (const b of f.parametres ?? []) {
+        if (!b.modulationDe || !b.plage) continue;
+        const pas = b.pas ?? 1;
+        const positions = Math.floor((b.plage[1] - b.plage[0]) / pas) + 1;
+        if (positions < MINIMUM) {
+          pauvres.push(`${f.id} · ${b.nom} : ${positions} position(s)`
+            + ` sur une plage de ${b.plage[0]} à ${b.plage[1]} au pas de ${pas}`);
+        }
+      }
+    }
+    expect(pauvres, pauvres.length === 0 ? "" :
+      `${pauvres.length} borne(s) ne se règlent pas :\n  ${pauvres.join("\n  ")}`).toEqual([]);
+  });
 });

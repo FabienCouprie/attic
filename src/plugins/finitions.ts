@@ -56,7 +56,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Seed of the room's response. The same seed replays the same room." },
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-80, 0], "dB"), defauts: [-60, -20] }),
-      ...bornesModulation({ ...modulationNommee("Chute", "Fall", [0.005, 2], "s"), defauts: [0.01, 0.5] }),
+      // LE PAS EST CELUI DU RÉGLAGE BORNÉ, et il manquait : au pas de un, cette borne de 0,005 à
+      // 2 secondes n'offrait que DEUX positions atteignables, et le curseur était inutilisable.
+      ...bornesModulation({ ...modulationNommee("Chute", "Fall", [0.005, 2], "s"), defauts: [0.01, 0.5], pas: 0.002 }),
     ],
     async executer(ctx: any) {
       const e = ctx.entree(0);

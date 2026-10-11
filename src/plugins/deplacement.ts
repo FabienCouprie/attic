@@ -167,8 +167,12 @@ export const fiches: FicheAudio[] = ([
       // réglage, non pour qu'une courbe la parcoure d'un bout à l'autre.
       ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-60, 0], "dB"), defauts: [-45, -15] }),
       ...bornesModulation({ ...modulationNommee("Réduction", "Reduction", [0, 40], "dB"), defauts: [0, 24] }),
-      ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2] }),
-      ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1] }),
+      // LE PAS EST CELUI DU RÉGLAGE BORNÉ, et il manquait. `bornesModulation` en pose un par défaut,
+      // ce qui convient à un pour cent ou à un décibel et à rien qui se compte en secondes : une
+      // borne de 0,001 à 0,5 seconde au pas de un n'offrait qu'UNE position atteignable, et celle
+      // du relâchement deux. Le curseur était donc inutilisable, sans que rien ne le dise.
+      ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2], pas: 0.001 }),
+      ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1], pas: 0.01 }),
     ],
     async executer(ctx: any) {
       const cible = ctx.entree(0);

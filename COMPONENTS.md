@@ -4746,10 +4746,10 @@ All listen to the signal they treat: they lower a sound when that sound is loud.
 | Threshold max | slider | -15 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
 | Reduction min | slider | 0 dB | 0 – 40 dB, step 1 | Value of « Reduction » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Reduction max | slider | 24 dB | 0 – 40 dB, step 1 | Value of « Reduction » that the curve's one means. |
-| Attack min | slider | 0.005 s | 0.001 – 0.5 s, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 0.2 s | 0.001 – 0.5 s, step 1 | Value of « Attack » that the curve's one means. |
-| Release min | slider | 0.05 s | 0.01 – 2 s, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 1 s | 0.01 – 2 s, step 1 | Value of « Release » that the curve's one means. |
+| Attack min | slider | 0.005 s | 0.001 – 0.5 s, step 0.001 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 0.2 s | 0.001 – 0.5 s, step 0.001 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 0.05 s | 0.01 – 2 s, step 0.01 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Release » that the curve's one means. |
 
 #### Equalizer
 
@@ -6771,8 +6771,8 @@ Reverberates a percussive sound and cuts its tail dead, driven by the dry sound.
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Threshold min | slider | -60 dB | -80 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Threshold max | slider | -20 dB | -80 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
-| Fall min | slider | 0.01 s | 0.005 – 2 s, step 1 | Value of « Fall » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Fall max | slider | 0.5 s | 0.005 – 2 s, step 1 | Value of « Fall » that the curve's one means. |
+| Fall min | slider | 0.01 s | 0.005 – 2 s, step 0.002 | Value of « Fall » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Fall max | slider | 0.5 s | 0.005 – 2 s, step 0.002 | Value of « Fall » that the curve's one means. |
 
 #### Progressive Reverb
 
