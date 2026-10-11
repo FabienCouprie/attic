@@ -86,7 +86,11 @@ export const fiches: FicheAudio[] = ([
     (a, amount, freq, mix) => exciter(a, amount, freq, mix),
     undefined,
     [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
-     { parametre: "Fréquence", bornes: [1000, 12000], defauts: [2000, 9000], unite: "Hz" }]),
+     // LA BORNE NE DÉPASSE PAS LA COURSE DU RÉGLAGE, qui s'arrête à dix mille hertz. Plus ÉTROITE
+     // est légitime, et c'est même voulu ici au grave : une borne dit ce qu'une courbe parcourt,
+     // non toute l'étendue où l'on peut poser le réglage. Plus LARGE est une contradiction, la
+     // courbe demandant alors une valeur que le réglage ne peut pas prendre.
+     { parametre: "Fréquence", bornes: [1000, 10000], defauts: [2000, 9000], unite: "Hz" }]),
   effet("flanger", "Flanger", "Flanger", "Modulation par délai variable.", "Variable delay modulation.",
     [param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance."), param("Vitesse", 0.5, "Speed", "Hz", "Vitesse de modulation LFO.", "LFO modulation speed."), param("Profondeur", 3, "Depth", "ms", "Amplitude du balayage.", "Modulation depth in ms.")],
     (a,mix,v,p) => appliquerFlanger(a, v, p, mix),
@@ -214,17 +218,24 @@ export const fiches: FicheAudio[] = ([
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const mode = ctx.paramTexte("Mode", "gate");
+      // LE REPLI DES BORNES EST DONNÉ, et il manquait sur les quatre. Aucune n'est en pour cent :
+      // sans lui, un graphe enregistré avant que ces bornes existent les lirait de zéro à cent,
+      // soit des décibels et des millisecondes pris pour des pour cent.
       const seuil = reglageModule(ctx, audio.length, 3, {
-        reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] });
+        reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"],
+        bornes: [-60, -20] });
       const ratio = reglageModule(ctx, audio.length, 4, {
-        reglage: "Ratio", defaut: 4, rendu: "pourCent", noms: ["Ratio min", "Ratio max"] });
+        reglage: "Ratio", defaut: 4, rendu: "pourCent", noms: ["Ratio min", "Ratio max"],
+        bornes: [1, 10] });
       // LE RENDU EST `pourCent` PARCE QUE CE SONT DES MILLISECONDES, et non une proportion : le nom
       // de l'option dit « ne divise pas », ce que `gateExpandeur` attend.
       const attaque = reglageModule(ctx, audio.length, 1, {
         reglage: "Attaque", defaut: 1, rendu: "pourCent", noms: ["Attaque min", "Attaque max"],
+        bornes: [0.5, 20],
       });
       const relachement = reglageModule(ctx, audio.length, 2, {
         reglage: "Relâchement", defaut: 100, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"],
+        bornes: [20, 300],
       });
       const attenuation = ctx.paramNombre("Atténuation", 40);
       const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);

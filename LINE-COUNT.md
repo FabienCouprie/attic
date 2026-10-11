@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1318 files, 233382 lines, of which 159494 are code.**
+**1319 files, 233666 lines, of which 159628 are code.**
 The table lists the 186 files of 200 code lines or more, heaviest first;
-the remaining 1132 account for 155198 lines.
+the remaining 1133 account for 155388 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -54,6 +54,7 @@ the remaining 1132 account for 155198 lines.
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
 | src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
@@ -70,8 +71,8 @@ the remaining 1132 account for 155198 lines.
 | src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
+| src/plugins/effets.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
-| src/plugins/effets.ts | 323 | 420 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -79,7 +80,6 @@ the remaining 1132 account for 155198 lines.
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
-| src/plugins/modulation-cablage.test.ts | 315 | 478 |  |
 | src/plugins/effets-cresson.test.ts | 314 | 408 |  |
 | src/vues-domaine/MontageVideo.tsx | 314 | 407 |  |
 | src/audio/effets-montage.ts | 313 | 414 |  |
@@ -121,8 +121,8 @@ the remaining 1132 account for 155198 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
+| src/plugins/effets-cresson.ts | 267 | 359 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
-| src/plugins/effets-cresson.ts | 266 | 357 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/audio/io.ts | 264 | 397 |  |

@@ -28,7 +28,7 @@
 // du câblage. Les fractions dyadiques sont la seule monnaie d'une comparaison au bit.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { constante } from "../audio/courbe";
+import { CADENCE, constante, type Courbe } from "../audio/courbe";
 import { fiches as fichesArcEnCiel } from "./arc-en-ciel";
 import { fiches as fichesCresson } from "./effets-cresson";
 import { fiches as fichesEffets } from "./effets";
@@ -63,6 +63,17 @@ const TOUTES = [
   ...fichesMicromontage,
 ] as unknown as FicheAudio[];
 
+/**
+ * Une courbe qui monte de zéro à un, à la même cadence qu'une constante.
+ *
+ * ELLE PART DU MÊME POINT QU'UNE CONSTANTE À ZÉRO, et c'est ce qui la rend utile : comparer les
+ * deux rend visible un cœur qui ne lirait que le premier point de sa courbe.
+ */
+const rampe = (dureeSec: number, cadence = CADENCE): Courbe => {
+  const n = Math.max(2, Math.round(dureeSec * cadence));
+  return { valeurs: Float32Array.from({ length: n }, (_, i) => i / (n - 1)), cadence };
+};
+
 const fiche = (id: string): FicheAudio => {
   const f = TOUTES.find((x) => x.id === id);
   if (!f) throw new Error(`fiche introuvable : ${id}`);
@@ -77,6 +88,27 @@ function son(graine: number, canaux = 1): AudioBuffer {
     const x = new Float32Array(new ArrayBuffer(n * 4));
     for (let i = 0; i < n; i++) { e = (e * 1664525 + 1013904223) >>> 0; x[i] = 0.4 * (e / 4294967296 * 2 - 1); }
     b.copyToChannel(x, c);
+  }
+  return b;
+}
+
+/**
+ * Le même bruit, mais en salve : silence, fort, silence.
+ *
+ * UN BRUIT STATIONNAIRE NE PEUT PAS ÉPROUVER UNE CONSTANTE DE TEMPS, et c'est ce que le cas de la
+ * courbe qui varie a révélé. Une attaque et un relâchement décident de la VITESSE à laquelle une
+ * mesure rattrape ce qu'elle mesure ; sur un signal dont l'enveloppe ne bouge pas, il n'y a rien à
+ * rattraper, et le réglage ne change pas un échantillon. Les cas concernés passaient donc défaut
+ * planté, exactement comme le premier cas du de-esser.
+ *
+ * TROIS TIERS PLUTÔT QU'UNE RAMPE : le bord est ce qui compte, et deux bords valent mieux qu'un.
+ */
+function salve(graine: number, canaux = 1): AudioBuffer {
+  const b = son(graine, canaux);
+  const n = b.length;
+  for (let c = 0; c < canaux; c++) {
+    const x = b.getChannelData(c);
+    for (let i = 0; i < n; i++) if (i < n / 3 || i >= (2 * n) / 3) x[i] = 0;
   }
   return b;
 }
@@ -173,6 +205,16 @@ const CAS: {
    * se compare exactement entre le flottant simple d'un tableau et le double d'un nombre.
    */
   regle?: number; leurre?: number;
+  /**
+   * Ce que vaut la borne BASSE, quand zéro n'a pas de sens pour ce réglage.
+   *
+   * ZÉRO EST LE PLANCHER NATUREL D'UNE BORNE BASSE : il éteint l'effet, ce qui est le repère le
+   * plus sûr. Mais la fréquence basse du vocodeur est un DÉNOMINATEUR, la fréquence de chaque bande
+   * valant `fMin · (fMax/fMin)^k` : à zéro, le quotient part à l'infini et le banc de filtres ne
+   * rend plus rien du tout, identiquement pour toute courbe. Un réglage qui divise demande donc un
+   * plancher qui ne soit pas zéro.
+   */
+  bas?: number;
   /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
   rang?: number;
 }[] = [
@@ -205,10 +247,16 @@ const CAS: {
   { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined], rang: 1 },
   // La famille « temps ». Le gate porte DEUX ports, donc deux entrées dans cette table : chacune
   // nomme le rang qu'elle éprouve, puisque le dernier port n'est pas celui de l'attaque.
-  { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)], rang: 1 },
+  // UNE SALVE ET UN SEUIL OUVERT : le seuil du limiteur est à −3 dB par défaut et le signal
+  // d'essai culmine à −8 dB, de sorte qu'il ne s'activait JAMAIS et que son relâchement ne
+  // pouvait rien changer. Le cas passait donc défaut planté.
+  { id: "limiteur", reglage: "Relâchement", entrees: () => [salve(43, 2)], rang: 1,
+    reglages: { Seuil: -24 } },
+  // UNE SALVE POUR LE GATE : son attaque décide de la vitesse à laquelle il s'ouvre, et sur un
+  // bruit stationnaire il reste du même côté du seuil du début à la fin, sans jamais s'ouvrir.
   {
-    id: "gate-expandeur", reglage: "Attaque", entrees: () => [son(47, 2)],
-    noms: ["Attaque min", "Attaque max"], rang: 1,
+    id: "gate-expandeur", reglage: "Attaque", entrees: () => [salve(47, 2)],
+    noms: ["Attaque min", "Attaque max"], rang: 1, reglages: { Seuil: -24 },
   },
   {
     id: "gate-expandeur", reglage: "Relâchement", entrees: () => [son(47, 2), undefined],
@@ -295,7 +343,8 @@ const CAS: {
   // franchi par rien : ce sont les leurres naturels de ces deux formes.
   { id: "gate-expandeur", reglage: "Seuil", entrees: () => [son(311, 2), undefined, undefined],
     noms: ["Seuil min", "Seuil max"], rang: 3, regle: -24, leurre: 0 },
-  { id: "gate-expandeur", reglage: "Ratio", entrees: () => [son(313, 2), undefined, undefined, undefined],
+  { id: "gate-expandeur", reglage: "Ratio", entrees: () => [salve(313, 2), undefined, undefined, undefined],
+    // UNE SALVE : un expandeur agit SOUS son seuil, et un bruit stationnaire reste du même côté.
     noms: ["Ratio min", "Ratio max"], regle: 8, leurre: 1, reglages: { Mode: "Expandeur", Seuil: -20 } },
   { id: "limiteur", reglage: "Seuil", entrees: () => [son(317, 2), undefined],
     noms: ["Seuil min", "Seuil max"], rang: 2, regle: -24, leurre: 0 },
@@ -311,8 +360,11 @@ const CAS: {
     noms: ["Profondeur du Doppler min", "Profondeur du Doppler max"], rang: 3 },
   { id: "ambisonique", reglage: "Ouverture", entrees: () => [son(353, 2), undefined],
     noms: ["Ouverture min", "Ouverture max"], regle: 60, leurre: 180 },
+  // LA POSITION EST SORTIE DU CENTRE, sans quoi ce cas ne peut rien éprouver : la trajectoire vaut
+  // position × largeur, et la position par défaut est zéro. La largeur multipliait donc zéro, et
+  // le cas passait défaut planté quelle que soit la courbe.
   { id: "spatialisation-stereo", reglage: "Largeur", entrees: () => [son(359, 2), undefined],
-    noms: ["Largeur min", "Largeur max"], siOffline: true },
+    noms: ["Largeur min", "Largeur max"], siOffline: true, reglages: { Position: 100 } },
   { id: "granular-freeze", reglage: "Position", entrees: () => [son(367, 2), undefined],
     noms: ["Position min", "Position max"], rang: 2 },
   // LE DUCKING PORTE DEUX ENTRÉES AUDIO AVANT SES QUATRE PORTS, et ses unités ne sont pas des
@@ -324,9 +376,13 @@ const CAS: {
   { id: "ducking", reglage: "Attaque", entrees: () => [son(227), son(229), undefined, undefined],
     noms: ["Attaque min", "Attaque max"], rang: 4, regle: 0.0625, leurre: 0.5,
     reglages: { Seuil: -40, Réduction: 24 } },
-  { id: "ducking", reglage: "Relâchement", entrees: () => [son(233), son(239), undefined, undefined, undefined],
+  // UNE SALVE SUR LE DÉCLENCHEUR, ET LE MAINTIEN À ZÉRO. Le relâchement décide de la vitesse à
+  // laquelle le niveau remonte quand le déclencheur se tait : un déclencheur stationnaire ne se
+  // tait jamais, et le maintien par défaut dure cent millisecondes, soit plus que les
+  // quatre-vingts du signal d'essai, de sorte que le relâchement ne commençait jamais.
+  { id: "ducking", reglage: "Relâchement", entrees: () => [son(233), salve(239), undefined, undefined, undefined],
     noms: ["Relâchement min", "Relâchement max"], regle: 0.25, leurre: 2,
-    reglages: { Seuil: -40, Réduction: 24 } },
+    reglages: { Seuil: -40, Réduction: 24, Maintien: 0 } },
   // LE COMPRESSEUR ET LE MULTIBANDE, qui partagent la même boucle : le second n'est que trois
   // appels au premier, un par bande. Un ratio de un ne comprime rien, et c'est le leurre naturel
   // d'un ratio ; un seuil à zéro décibel n'est franchi par rien, et c'est celui d'un seuil.
@@ -348,7 +404,7 @@ const CAS: {
     noms: ["Chute min", "Chute max"], regle: 0.25, leurre: 2 },
   { id: "shimmer", reglage: "Mix", entrees: () => [son(277)] },
   { id: "reverbe-reseau", reglage: "Queue", entrees: () => [son(281), undefined, undefined],
-    noms: ["Queue min", "Queue max"], rang: 3, regle: 2, leurre: 8 },
+    noms: ["Queue min", "Queue max"], rang: 3, regle: 8, leurre: 0 },
   { id: "reverbe-reseau", reglage: "Fréquence de l'aigu", entrees: () => [son(283), undefined, undefined, undefined],
     noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], regle: 2000, leurre: 12000 },
   // LES FAMILLES « TEMPS » ET « RÉTROACTION ». Le delay stéréo porte quatre ports, et son mélange
@@ -419,7 +475,10 @@ const CAS: {
   { id: "quadrafuzz", reglage: "Coupure 3", entrees: () => [son(509, 2), undefined, undefined, undefined],
     noms: ["Coupure 3 min", "Coupure 3 max"], regle: 4096, leurre: 8192, siOffline: true },
   { id: "vocoder", reglage: "Fréq min", entrees: () => [son(521), son(523), undefined],
-    noms: ["Fréq min min", "Fréq min max"], rang: 3, regle: 128, leurre: 512, siOffline: true },
+    // SON PLANCHER N'EST PAS ZÉRO : cette borne est un dénominateur, et à zéro le banc de filtres
+    // ne rend plus rien, identiquement pour toute courbe.
+    noms: ["Fréq min min", "Fréq min max"], rang: 3, regle: 128, leurre: 512, bas: 64,
+    siOffline: true },
   { id: "vocoder", reglage: "Fréq max", entrees: () => [son(541), son(547), undefined, undefined],
     noms: ["Fréq max min", "Fréq max max"], rang: 4, regle: 4096, leurre: 8192, siOffline: true },
   { id: "vocoder", reglage: "Q", entrees: () => [son(557), son(563), undefined, undefined, undefined],
@@ -466,12 +525,34 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
         ...cas.reglages,
         // LE LEURRE EST LE CŒUR DU CAS : si le port n'est pas lu, c'est lui qui s'applique.
         [cas.reglage]: cas.leurre ?? LEURRE,
-        [nomMin]: 0,
+        [nomMin]: cas.bas ?? 0,
         [nomMax]: regle,
       });
 
       expect(memes(fixe, modulee),
         `${cas.id} : la courbe plate ne rend pas ce que rend le réglage`).toBe(true);
+    });
+
+    siRendu(`${cas.id} : une courbe QUI VARIE ne reste pas à son premier point sur « ${cas.reglage} »`, async () => {
+      // CE QU'UNE COURBE PLATE NE PEUT PAS DIRE. Les deux cas ci-dessus attrapent un port mal
+      // rangé, un réglage ignoré, une mise en forme fausse. Ils n'attrapent PAS un cœur qui ne
+      // lirait que le PREMIER POINT de la courbe : sur une courbe plate, lire l'indice zéro ou
+      // l'indice i donne le même chiffre, et le défaut planté à cet endroit a traversé deux cas
+      // du granular freeze sans les faire tomber.
+      //
+      // LES DEUX COURBES PARTENT DU MÊME POINT, et c'est tout le montage. L'une reste à zéro,
+      // l'autre monte jusqu'à un ; un cœur qui ne lit que l'indice zéro rend donc deux fois la
+      // même chose, et un cœur qui lit par échantillon rend deux sons différents.
+      const entrees = cas.entrees();
+      const rang = rangDe(fiche(cas.id));
+      const regle = cas.regle ?? REGLE;
+      const bornes = { ...cas.reglages, [cas.reglage]: cas.leurre ?? LEURRE, [nomMin]: cas.bas ?? 0, [nomMax]: regle };
+
+      const tenue = await rendre(cas.id, [...entrees.slice(0, rang), constante(0, 64)], bornes);
+      const montante = await rendre(cas.id, [...entrees.slice(0, rang), rampe(64)], bornes);
+
+      expect(memes(tenue, montante),
+        `${cas.id} : « ${cas.reglage} » ne lit que le premier point de sa courbe`).toBe(false);
     });
   }
 });

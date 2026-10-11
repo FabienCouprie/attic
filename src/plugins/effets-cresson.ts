@@ -136,7 +136,9 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
       const out = ubiquite(a, {
-        dispersion: reglageModule(ctx, a.length, 1, { reglage: "Dispersion", defaut: 80 }),
+        // Le repli des bornes est donné : sa course va de moins cent à cent, non de zéro à cent.
+        dispersion: reglageModule(ctx, a.length, 1, {
+          reglage: "Dispersion", defaut: 80, bornes: [-100, 100] }),
         etages: ctx.paramNombre("Étages", 6),
         graine: ctx.paramNombre("Graine", 3),
       });
@@ -324,7 +326,7 @@ export const fiches: FicheAudio[] = ([
       });
       // La courbe est lue sur la longueur du SON POSÉ, qui est ce qu'elle commande.
       const niveau = reglageModule(ctx, son.length, 2, {
-        reglage: "Niveau", defaut: 100, noms: ["Niveau min", "Niveau max"],
+        reglage: "Niveau", defaut: 100, noms: ["Niveau min", "Niveau max"], bornes: [0, 200],
       });
       const out = poserDansLeCreneau(fond, son, c.instant, niveau);
       const part = c.moyenne > 0 ? c.occupation / c.moyenne : 1;

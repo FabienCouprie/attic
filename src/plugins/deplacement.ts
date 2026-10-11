@@ -167,22 +167,33 @@ export const fiches: FicheAudio[] = ([
       // réglage, non pour qu'une courbe la parcoure d'un bout à l'autre.
       ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-60, 0], "dB"), defauts: [-45, -15] }),
       ...bornesModulation({ ...modulationNommee("Réduction", "Reduction", [0, 40], "dB"), defauts: [0, 24] }),
-      ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2] }),
-      ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1] }),
+      // LE PAS EST CELUI DU RÉGLAGE BORNÉ, et il manquait. `bornesModulation` en pose un par défaut,
+      // ce qui convient à un pour cent ou à un décibel et à rien qui se compte en secondes : une
+      // borne de 0,001 à 0,5 seconde au pas de un n'offrait qu'UNE position atteignable, et celle
+      // du relâchement deux. Le curseur était donc inutilisable, sans que rien ne le dise.
+      ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2], pas: 0.001 }),
+      ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1], pas: 0.01 }),
     ],
     async executer(ctx: any) {
       const cible = ctx.entree(0);
       const declencheur = ctx.entree(1);
       if (!(cible instanceof AudioBuffer) || !(declencheur instanceof AudioBuffer)) return sansEntree();
       const o = {
+        // LE REPLI DES BORNES EST DONNÉ, et il manquait. Aucune de ces quatre n'est en pour cent :
+        // sans lui, un graphe enregistré avant que ces bornes existent les lirait de zéro à cent,
+        // soit des décibels pris pour des pour cent et des secondes pour des centaines.
         seuilDb: reglageModule(ctx, cible.length, 2, {
-          reglage: "Seuil", defaut: -30, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] }),
+          reglage: "Seuil", defaut: -30, rendu: "pourCent", noms: ["Seuil min", "Seuil max"],
+          bornes: [-45, -15] }),
         reductionDb: reglageModule(ctx, cible.length, 3, {
-          reglage: "Réduction", defaut: 12, rendu: "pourCent", noms: ["Réduction min", "Réduction max"] }),
+          reglage: "Réduction", defaut: 12, rendu: "pourCent", noms: ["Réduction min", "Réduction max"],
+          bornes: [0, 24] }),
         attaqueSec: reglageModule(ctx, cible.length, 4, {
-          reglage: "Attaque", defaut: 0.01, rendu: "pourCent", noms: ["Attaque min", "Attaque max"] }),
+          reglage: "Attaque", defaut: 0.01, rendu: "pourCent", noms: ["Attaque min", "Attaque max"],
+          bornes: [0.005, 0.2] }),
         relachementSec: reglageModule(ctx, cible.length, 5, {
-          reglage: "Relâchement", defaut: 0.25, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"] }),
+          reglage: "Relâchement", defaut: 0.25, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"],
+          bornes: [0.05, 1] }),
         maintienSec: ctx.paramNombre("Maintien", 0.1),
         frequence: cible.sampleRate,
       };
@@ -209,7 +220,12 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-180, 180], pas: 1, defaut: 180, unite: "°",
+      // LA COURSE VA JUSQU'À UN TOUR ENTIER, et c'est ici la BORNE qui avait raison : sa
+      // documentation dit « de zéro à 360°, une rampe fait faire un tour complet à la scène », et
+      // le réglage s'arrêtait à un demi-tour. Une borne ne peut pas demander ce que le réglage ne
+      // sait pas prendre. Posé seul, 360° revient à zéro, ce qui est sans conséquence ; c'est
+      // comme point d'arrivée d'une courbe que cette valeur sert.
+      { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-360, 360], pas: 1, defaut: 180, unite: "°",
         doc: "De combien la scène tourne, dans le sens direct. À 180°, la gauche et la droite sont échangées ; à 90°, ce qui était à gauche passe devant. Sur une source mono, cet échange est inaudible, deux canaux identiques échangés restent identiques, et seul le niveau baisse ; c'est à 90° qu'une source mono se déplace, de 9,5 dB. Une courbe branchée sur l'entrée Modulation fait tourner la scène en continu, ce qui s'entend bien mieux qu'un angle fixe.",
         docEn: "How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle." },
       { nom: "Écart des sources", nomEn: "Source spread", type: "curseur", plage: [30, 180], pas: 5, defaut: 90, unite: "°",
@@ -240,7 +256,7 @@ export const fiches: FicheAudio[] = ([
       // fait donc point par point quand c'est une courbe, et une seule fois quand c'est un nombre.
       const ouverture = reglageModule(ctx, champ.W.length, 2, {
         reglage: "Ouverture", defaut: 90, rendu: "pourCent",
-        noms: ["Ouverture min", "Ouverture max"],
+        noms: ["Ouverture min", "Ouverture max"], bornes: [60, 150],
       });
       const [g, d] = decoderStereo(tourner(champ, angles), ouverture, rad);
       const out = new AudioBuffer({ numberOfChannels: 2, length: e.length, sampleRate: e.sampleRate });

@@ -56,12 +56,17 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 35, unite: "%",
         doc: "Proportion de réverbération. À 0 %, la sortie est le son d'entrée. La sortie « Réponse » ne dépend pas de ce réglage, elle est toujours rendue en réverbération seule.",
         docEn: "Proportion of reverb. At 0 %, the output is the input. The « Impulse response » output does not depend on this setting, it is always returned as reverb alone." },
-      { nom: "Queue", nomEn: "Tail", type: "curseur", plage: [0.2, 15], pas: 0.1, defaut: 0, unite: "s",
+      // LA COURSE PART DE ZÉRO, et c'était le réglage qui avait tort : sa documentation dit « à
+      // zéro, le composant prend le plus long des deux RT60 », son défaut EST zéro, et son curseur
+      // commençait à 0,2 seconde. Il ne pouvait donc jamais revenir à la déduction qu'il annonce,
+      // une fois le curseur touché. Le cœur déduit sous 0,2 seconde, ce que cette course couvre.
+      { nom: "Queue", nomEn: "Tail", type: "curseur", plage: [0, 15], pas: 0.1, defaut: 0, unite: "s",
         doc: "Durée ajoutée après le son pour laisser la queue s'éteindre. À zéro, le composant prend le plus long des deux RT60, une réverbération qui s'arrêterait avec le son n'en serait pas une.",
         docEn: "Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one." },
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation(modulationNommee("Largeur", "Width", [0, 100], "%")),
-      ...bornesModulation({ ...modulationNommee("Queue", "Tail", [0, 20], "s"), defauts: [0.5, 8] }),
+      // Et la borne s'arrête où s'arrête le réglage, quinze secondes, non vingt.
+      ...bornesModulation({ ...modulationNommee("Queue", "Tail", [0, 15], "s"), defauts: [0.5, 8] }),
       ...bornesModulation({
         ...modulationNommee("Fréquence de l'aigu", "High reference", [1000, 16000], "Hz"),
         defauts: [2000, 12000],
@@ -77,12 +82,18 @@ export const fiches: FicheAudio[] = ([
       const rt60Haut = ctx.paramNombre("RT60 aigu", 0.7);
       const freqRef = reglageModule(ctx, length, 4, {
         reglage: "Fréquence de l'aigu", defaut: 8000, rendu: "pourCent",
-        noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"],
+        // Le repli des bornes est donné : ce sont des hertz, non des pour cent.
+        noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], bornes: [2000, 12000],
+        // ET LA COURSE SE PARCOURT EN MULTIPLIANT, une octave étant un doublement. Parcourue en
+        // ajoutant, une course de mille à seize mille hertz passe les deux tiers de son temps
+        // au-dessus de six mille, là où l'oreille entend des intervalles.
+        echelle: "logarithmique",
       });
       // LA QUEUE RESTE UN NOMBRE TANT QU'ELLE VAUT ZÉRO : à zéro, le composant la déduit des deux
       // temps de réverbération, et c'est ce qu'il faut garder. Une courbe branchée la commande.
       const queueDemandee = reglageModule(ctx, length, 3, {
         reglage: "Queue", defaut: 0, rendu: "pourCent", noms: ["Queue min", "Queue max"],
+        bornes: [0.5, 8],
       });
       const options = {
         sampleRate, rt60Bas, rt60Haut, freqRef,
