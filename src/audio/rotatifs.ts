@@ -96,8 +96,8 @@ export function moduleSpectre(x: Float32Array, debut: number, n: number): Float6
 export interface ReglagesTremoloHarmonique {
   /** Vitesse de l'oscillation, en hertz. */
   vitesse: number;
-  /** Profondeur, de 0 à 1. */
-  profondeur: number;
+  /** Profondeur, de 0 à 1. Un tableau la fait varier échantillon par échantillon. */
+  profondeur: number | Float32Array;
   /** Fréquence qui sépare les deux bandes, en hertz. */
   coupure: number;
   /** Part de son traité, de 0 à 1. */
@@ -113,7 +113,7 @@ export interface ReglagesTremoloHarmonique {
  */
 export function tremoloHarmonique(canaux: Float32Array[], sr: number,
   r: ReglagesTremoloHarmonique): Float32Array[] {
-  const d = Math.max(0, Math.min(1, r.profondeur));
+  const dA = (i: number) => Math.max(0, Math.min(1, valeurA(r.profondeur, i)));
   // LE MÉLANGE PEUT VARIER AU FIL DU SON. `valeurA` rend un scalaire tel quel : il n'y a donc pas
   // deux chemins de calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
   const melangeA = (i: number) => Math.max(0, Math.min(1, valeurA(r.melange, i)));
@@ -124,6 +124,7 @@ export function tremoloHarmonique(canaux: Float32Array[], sr: number,
       const c = Math.cos((2 * Math.PI * r.vitesse * i) / sr);
       // Les deux gains sont bâtis sur le MÊME cosinus et de signes opposés : c'est ce qui
       // garantit qu'ils se croisent, et qu'aucun instant ne les trouve tous deux au plus bas.
+      const d = dA(i);
       const gGrave = 1 - (d * (1 - c)) / 2;
       const gAigu = 1 - (d * (1 + c)) / 2;
       const m = melangeA(i);

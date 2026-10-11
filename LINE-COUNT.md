@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 231588 lines, of which 158493 are code.**
-The table lists the 181 files of 200 code lines or more, heaviest first;
-the remaining 1136 account for 155577 lines.
+**1317 files, 231974 lines, of which 158733 are code.**
+The table lists the 182 files of 200 code lines or more, heaviest first;
+the remaining 1135 account for 155640 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -62,6 +62,7 @@ the remaining 1136 account for 155577 lines.
 | src/plugins/prompt-graphe.ts | 334 | 516 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/plugins/effets-temporel.ts | 333 | 463 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/plugins/effets-spectral.ts | 329 | 433 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
@@ -69,7 +70,6 @@ the remaining 1136 account for 155577 lines.
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
-| src/plugins/effets-temporel.ts | 326 | 455 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
@@ -138,11 +138,11 @@ the remaining 1136 account for 155577 lines.
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
+| src/plugins/effets.ts | 244 | 303 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
-| src/plugins/effets.ts | 241 | 295 |  |
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
 | src/core/cache.test.ts | 240 | 310 |  |
@@ -162,6 +162,7 @@ the remaining 1136 account for 155577 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
+| src/plugins/effets-aides.ts | 222 | 482 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
@@ -185,12 +186,12 @@ the remaining 1136 account for 155577 lines.
 | src/plugins/vosk-asr.test.ts | 209 | 280 |  |
 | src/audio/ecosysteme.ts | 208 | 388 |  |
 | src/audio/spectrogramme-mel.ts | 208 | 333 |  |
-| src/plugins/effets-aides.ts | 208 | 451 |  |
 | src/plugins/effets.test.ts | 208 | 302 |  |
 | src/plugins/boucle-creneau.test.ts | 207 | 252 |  |
 | src/plugins/cercle-transformations.test.ts | 206 | 257 |  |
 | src/plugins/effet-parametres-midi.test.ts | 205 | 322 |  |
 | src/plugins/tonal.ts | 205 | 283 |  |
+| src/audio/modulation-espace.test.ts | 204 | 276 |  |
 | src/audio/musicxml-arbre.ts | 203 | 314 |  |
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |

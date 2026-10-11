@@ -130,17 +130,26 @@ const memes = (a: Float32Array[], b: Float32Array[]): boolean => {
 const CAS: {
   id: string; reglage: string; entrees: () => unknown[];
   noms?: [string, string]; siOffline?: boolean;
+  /**
+   * Les réglages à poser pour que l'effet FASSE quelque chose, en plus de celui qu'on éprouve.
+   *
+   * UN CAS QUI NE CHANGE RIEN PASSE QUOI QU'ON FASSE, et c'est ainsi que le premier cas du de-esser
+   * est né vide : à son seuil par défaut, rien du signal d'essai ne dépasse, aucune atténuation
+   * n'a lieu, et la sortie est l'entrée quelle que soit la largeur de bande. Le défaut planté ne
+   * le faisait pas tomber. Ouvrir le seuil rend le cas sensible à ce qu'il prétend éprouver.
+   */
+  reglages?: Record<string, number>;
   /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
   rang?: number;
 }[] = [
   // La famille « mélange ».
-  { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)] },
+  { id: "tremolo-harmonique", reglage: "Mélange", entrees: () => [son(3, 2)], rang: 1 },
   { id: "haut-parleur-rotatif", reglage: "Mélange", entrees: () => [son(5, 2)] },
   { id: "arc-en-ciel-acoustique", reglage: "Mix", entrees: () => [son(7, 2)] },
   { id: "beat-repeat", reglage: "Mix", entrees: () => [son(11, 2)] },
   { id: "echo-flottant", reglage: "Mélange", entrees: () => [son(13, 2)] },
   { id: "reverbe-hachee", reglage: "Mix", entrees: () => [son(17)] },
-  { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)] },
+  { id: "reverbe-reseau", reglage: "Mix", entrees: () => [son(19)], rang: 1 },
   { id: "reverberation-velours", reglage: "Mélange", entrees: () => [son(23)] },
   // SON BANC DE FILTRES PASSE PAR `OfflineAudioContext` : son cas de rendu ne tourne que là où ce
   // dernier existe, ce qui est dit par une condition écrite plutôt que par un silence.
@@ -149,7 +158,7 @@ const CAS: {
   // nommées d'après leur réglage ; l'oscillateur à table d'onde a une entrée facultative qu'on ne
   // branche pas, et c'est elle que `undefined` tient.
   { id: "creneau", reglage: "Niveau", entrees: () => [son(37, 2), son(41, 2)], noms: ["Niveau min", "Niveau max"] },
-  { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined] },
+  { id: "oscillateur-table-onde", reglage: "Volume", entrees: () => [undefined], rang: 1 },
   // La famille « temps ». Le gate porte DEUX ports, donc deux entrées dans cette table : chacune
   // nomme le rang qu'elle éprouve, puisque le dernier port n'est pas celui de l'attaque.
   { id: "limiteur", reglage: "Relâchement", entrees: () => [son(43, 2)] },
@@ -176,9 +185,9 @@ const CAS: {
   // aussi pourquoi les cinq portent « Mix min / Mix max » et non les bornes par défaut : sur une
   // fiche qui module déjà autre chose, « Modulation min » ne dit pas de quoi il est la borne.
   { id: "phaser", reglage: "Mix", entrees: () => [son(67, 2), undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 2 },
   { id: "wahwah", reglage: "Mix", entrees: () => [son(71, 2), undefined, undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 3 },
   { id: "peignes-accordes", reglage: "Mix", entrees: () => [son(73), undefined],
     noms: ["Mix min", "Mix max"] },
   { id: "resonateurs", reglage: "Mix", entrees: () => [son(79), undefined],
@@ -187,11 +196,36 @@ const CAS: {
     id: "retard-spectral", reglage: "Mix", entrees: () => [son(83), undefined],
     noms: ["Mix min", "Mix max"],
   },
+  // LA FAMILLE « ESPACE ». Chacune de ces fiches porte DÉJÀ un ou plusieurs ports : le port neuf
+  // vient donc après eux, et les `undefined` tiennent leur place. Les bornes du port neuf portent
+  // le nom de leur réglage ; celles des ports déjà en production gardent le leur, qu'un graphe
+  // enregistré désigne par son nom.
+  { id: "phaser", reglage: "Profondeur", entrees: () => [son(89, 2), undefined, undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "wahwah", reglage: "Profondeur", entrees: () => [son(97, 2), undefined, undefined, undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "tremolo-harmonique", reglage: "Profondeur", entrees: () => [son(101, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "reverbe-reseau", reglage: "Largeur", entrees: () => [son(103), undefined],
+    noms: ["Largeur min", "Largeur max"] },
+  { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
+    noms: ["Position min", "Position max"] },
+  // LES TROIS PREMIÈRES SECONDES MODULATIONS BÂTIES PAR `effet()`. Ce socle n'en portait qu'une ;
+  // ces trois cas sont le premier emploi de la seconde, et ils tiennent le rang qu'elle occupe.
+  { id: "flanger", reglage: "Profondeur", entrees: () => [son(107, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "chorus", reglage: "Profondeur", entrees: () => [son(109, 2), undefined],
+    noms: ["Profondeur min", "Profondeur max"] },
+  { id: "de-esser", reglage: "Largeur", entrees: () => [son(113, 2), undefined],
+    noms: ["Largeur min", "Largeur max"], siOffline: true,
+    // Seuil grand ouvert : sans cela, rien du signal d'essai ne dépasse et la largeur de bande ne
+    // change rien, de sorte que le cas passerait sans rien éprouver.
+    reglages: { Seuil: -60, Ratio: 10 } },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien vingt-deux ports à éprouver", () => {
-    expect(CAS).toHaveLength(22);
+  it("il y a bien trente ports à éprouver", () => {
+    expect(CAS).toHaveLength(30);
   });
 
   for (const cas of CAS) {
@@ -223,8 +257,9 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
       const rang = rangDe(fiche(cas.id));
       const plate = constante(1, 64);
 
-      const fixe = await rendre(cas.id, entrees, { [cas.reglage]: REGLE });
+      const fixe = await rendre(cas.id, entrees, { ...cas.reglages, [cas.reglage]: REGLE });
       const modulee = await rendre(cas.id, [...entrees.slice(0, rang), plate], {
+        ...cas.reglages,
         // LE LEURRE EST LE CŒUR DU CAS : si le port n'est pas lu, c'est lui qui s'applique.
         [cas.reglage]: LEURRE,
         [nomMin]: 0,

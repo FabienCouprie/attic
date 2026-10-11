@@ -192,7 +192,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Changement de tempo | `changement-tempo` | 240 × 118 |
 | Changement de tonalité | `changement-tonalite` | 240 × 118 |
 | Chopper | `chopper` | 240 × 162 |
-| Chorus | `chorus` | 240 × 140 |
+| Chorus | `chorus` | 240 × 162 |
 | Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
@@ -220,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
-| De-esser | `de-esser` | 240 × 140 |
+| De-esser | `de-esser` | 240 × 162 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |
 | Décalage des bandes | `decalage-bandes` | 240 × 118 |
 | Décaleur de fréquence | `decaleur-frequence` | 240 × 140 |
@@ -270,7 +270,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
 | Filtre de séquence | `filtre-sequence` | 240 × 162 |
-| Flanger | `flanger` | 240 × 140 |
+| Flanger | `flanger` | 240 × 162 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | Flou du spectrogramme | `flou-spectrogramme` | 240 × 118 |
 | FM à six opérateurs | `fm-six-operateurs` | 240 × 118 |
@@ -364,7 +364,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | LLM Ollama | `ollama-llm` | 240 × 118 |
 | Ondelettes | `ondelettes` | 240 × 162 |
 | Oscillateur analogique | `oscillateur-analogique` | 240 × 118 |
-| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 140 |
+| Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 162 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
 | Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
 | Parole vers séquence | `parole-vers-sequence` | 240 × 184 |
@@ -377,7 +377,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Reconstruction de phase (PGHI) | `phase-pghi` | 240 × 118 |
 | Phase Vocoder Tempo | `phase-vocoder-tempo` | 240 × 118 |
 | Phase Vocoder Tonalité | `phase-vocoder-tonalite` | 240 × 118 |
-| Phaser | `phaser` | 240 × 162 |
+| Phaser | `phaser` | 240 × 184 |
 | Pièce de Lucier | `piece-lucier` | 240 × 118 |
 | Tonalité progressive | `pitch-progressif` | 240 × 118 |
 | Pixeltone | `pixeltone` | 240 × 118 |
@@ -418,7 +418,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
 | Réverbération hachée | `reverbe-hachee` | 240 × 140 |
-| Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 140 |
+| Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 162 |
 | Réverbération | `reverberation` | 240 × 140 |
 | Réverbération velours | `reverberation-velours` | 240 × 140 |
 | Ring modulator | `ring-modulator` | 240 × 140 |
@@ -486,7 +486,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Transient Shaper | `transient-shaper` | 240 × 140 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
-| Trémolo harmonique | `tremolo-harmonique` | 240 × 140 |
+| Trémolo harmonique | `tremolo-harmonique` | 240 × 162 |
 | Tresse | `tresse` | 240 × 118 |
 | TTS Français | `tts-francais` | 240 × 118 |
 | Kokoro TTS | `tts-kokoro` | 240 × 118 |
@@ -504,7 +504,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |
-| Wah-wah | `wahwah` | 240 × 184 |
+| Wah-wah | `wahwah` | 240 × 206 |
 | Wavesets (Wishart) | `wavesets-wishart` | 240 × 118 |
 | Whisper (Anglais) | `whisper-en` | 240 × 118 |
 | ZCR (Meyda) | `zcr-meyda` | 240 × 140 |

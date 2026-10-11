@@ -17,17 +17,46 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { FAMILLES_EFFETS } from "../plugins/familles-palette";
 
-/** Les huit familles de grandeurs continues, telles que les composants déjà modulables les pilotent. */
-export const FAMILLES: Record<string, RegExp> = {
-  melange: /^(mix|m[ée]lange|wet|dry|proportion)$/i,
-  niveau: /^(gain|volume|niveau|r[ée]duction|amplitude|intensit[ée])$/i,
-  frequence: /^(fr[ée]quence|fr[ée]quence de coupure|coupure|fondamentale|q|r[ée]sonance|brillance)$/i,
-  hauteur: /^(transposition|d[ée]saccord|d[ée]tune|hauteur|pitch)$/i,
-  temps: /^(temps|retard|pr[ée]-d[ée]lai|decay|d[ée]croissance|attaque|rel[âa]chement|maintien|queue|chute)$/i,
-  espace: /^(profondeur|largeur|position|azimut|distance|rotation|[ée]tirement|dispersion|panoramique|ouverture)$/i,
-  dynamique: /^(seuil|ratio|plafond|compression)$/i,
-  retroaction: /^(feedback|rebouclage|r[ée]injection|damping)$/i,
+/**
+ * Les huit familles de grandeurs continues, telles que les composants déjà modulables les pilotent.
+ *
+ * UN NOM SE LIT MOT À MOT, et c'est ce qui a changé. Les familles étaient des motifs ANCRÉS :
+ * `/^(seuil|ratio|…)$/` reconnaissait « Seuil » et pas « Seuil Low ». Tout réglage dont le nom
+ * porte un qualificatif échappait donc au recensement, en silence et sans qu'aucun compte le dise.
+ * Le compresseur multibande l'a montré le jour de sa réouverture : il entrait dans la liste avec
+ * « Attaque » et « Relâchement » seulement, alors qu'il porte six seuils et ratios et deux
+ * fréquences de coupure. Les seize gains du montage, les deux temps du delay stéréo, les trois
+ * coupures du quadrafuzz et les deux retards de la réverbération à réseau étaient dans le même cas.
+ *
+ * CHERCHER LE MOT, ET NON LA SOUS-CHAÎNE. Une recherche par sous-chaîne rendrait « Qualité » pour
+ * `q` et « Saturation » pour `ratio` : le nom est donc découpé en mots, accents retirés, et chaque
+ * mot est comparé en entier. C'est la forme qui sépare « Seuil Low » de « Saturation ».
+ */
+export const FAMILLES: Record<string, readonly string[]> = {
+  melange: ["mix", "melange", "wet", "dry", "proportion"],
+  niveau: ["gain", "volume", "niveau", "reduction", "amplitude", "intensite"],
+  frequence: ["frequence", "freq", "coupure", "fondamentale", "q", "resonance", "brillance"],
+  hauteur: ["transposition", "desaccord", "detune", "hauteur", "pitch"],
+  temps: ["temps", "retard", "delai", "decay", "decroissance", "attaque", "relachement",
+    "maintien", "queue", "chute"],
+  espace: ["profondeur", "largeur", "position", "azimut", "distance", "rotation", "etirement",
+    "dispersion", "panoramique", "ouverture"],
+  dynamique: ["seuil", "ratio", "plafond", "compression"],
+  retroaction: ["feedback", "rebouclage", "reinjection", "damping"],
 };
+
+/** Les mots d'un nom de réglage, accents retirés : « Pré-délai » rend `["pre", "delai"]`. */
+export const motsDuNom = (nom: string): string[] =>
+  nom.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+
+/** La famille d'un réglage, d'après les mots de son nom, ou `undefined` s'il n'en porte aucune. */
+export function familleDe(nom: string): string | undefined {
+  const mots = new Set(motsDuNom(nom));
+  for (const [famille, cles] of Object.entries(FAMILLES)) {
+    if (cles.some((c) => mots.has(c))) return famille;
+  }
+  return undefined;
+}
 
 /**
  * Les composants écartés, et pourquoi.
@@ -127,12 +156,13 @@ export const ECARTES: Record<string, string> = {
   "doppler": "la distance est la géométrie du passage, dont toute la trajectoire se déduit, et non une valeur lue à chaque instant",
   "mono-grave": "la coupure fixe les coefficients de quatre biquads et sert aussi à la mesure que le nœud rapporte",
 
-  // PLUSIEURS CIBLES À LA FOIS. Une seule entrée Modulation ne peut en piloter qu'une, et choisir
-  // laquelle serait décider à la place de celui qui s'en sert. Écartés sur décision de Fabien.
-  "shimmer": "quatre réglages modulables à la fois : transposition, mélange, rebouclage, décroissance",
-  "compresseur": "trois réglages modulables à la fois : seuil et ratio, gain, attaque et relâchement",
-  "ducking": "trois réglages modulables à la fois : seuil, réduction, attaque et relâchement",
-  "compresseur-multibande": "trois seuils et une paire attaque / relâchement : aucune cible unique à piloter",
+  // QUATRE COMPOSANTS ONT ÉTÉ RETIRÉS D'ICI, et la raison vaut d'être écrite plutôt que effacée.
+  // Le shimmer, le compresseur, le ducking et le compresseur multibande y figuraient sous le motif
+  // « plusieurs cibles à la fois : une seule entrée Modulation ne peut en piloter qu'une, et
+  // choisir laquelle serait décider à la place de celui qui s'en sert ». La prémisse est tombée :
+  // une fiche porte aujourd'hui PLUSIEURS ports de modulation, le gate en a deux depuis la famille
+  // « temps » et le wah-wah trois. Les quatre sont donc rouverts, sur décision de Fabien ; ce qui
+  // les écartera, s'il y a lieu, sera une raison qui tient réglage par réglage.
 };
 
 /**
@@ -145,6 +175,35 @@ export const ECARTES: Record<string, string> = {
  */
 export const CATEGORIES_ECARTEES: Record<string, string> = {
   "Topologie": "la famille entière est écartée : le son y est promené sur une surface refermée sur elle-même, dont la géométrie est le sujet du nœud et non un réglage à faire varier",
+};
+
+/**
+ * Les RÉGLAGES écartés un par un, sous la clé « identifiant/Réglage ».
+ *
+ * POURQUOI UNE SECONDE LISTE. `ECARTES` écarte un composant ENTIER, ce qui convient quand la
+ * raison porte sur le composant : un interpréteur externe, un cœur qui travaille par trames. Mais
+ * depuis que le recensement se fait par réglage, une raison porte souvent sur UN SEUL d'entre eux,
+ * et écarter le composant emporterait les autres sans qu'ils aient été jugés. Trois des quatre
+ * entrées ci-dessous sont dans ce cas : l'écho flottant garde sa décroissance, le haut-parleur
+ * rotatif sa coupure, le micromontage son niveau.
+ *
+ * Chaque entrée porte sa raison, et la liste ne s'allonge que sur décision.
+ */
+export const ECARTES_REGLAGE: Record<string, string> = {
+  // LA VALEUR DÉCIDE DE LA LONGUEUR DU RENDU, calculée avant qu'un échantillon soit écrit. C'est la
+  // raison qui avait déjà écarté l'écho inversé.
+  "arc-en-ciel-acoustique/Dispersion":
+    "elle fixe le retard de chaque bande ET la longueur du rendu, que `dureeArcEnCiel` calcule avant qu'un échantillon soit écrit",
+  "echo-flottant/Distance":
+    "elle fixe la période entre les deux murs, donc tous les retards et la fréquence du peigne que le nœud annonce ; une distance qui se déplace est un effet Doppler, non un écho plus loin",
+
+  // LA VALEUR N'EST PAS UN GAIN MAIS UNE PHASE, et la faire varier change une fréquence.
+  "haut-parleur-rotatif/Largeur":
+    "c'est le déphasage entre les deux rotors : le faire varier change la vitesse instantanée du rotor droit, la dérivée de la phase s'ajoutant à sa pulsation, et désaccorderait la rotation au lieu d'élargir l'image",
+
+  // LE COMPOSANT PORTE DÉJÀ SA PROPRE VARIATION, et elle est son sujet.
+  "micromontage/Panoramique":
+    "le composant porte déjà « Panoramique, fin » et « Panoramique, loi », soit une valeur par fragment ; une courbe y serait lue par fragment, non par échantillon",
 };
 
 /** Les identifiants écartés, nommément ou par leur famille de palette. */
@@ -217,12 +276,10 @@ export function cibles(fiches: readonly FicheAudio[]): CibleModulable[] {
       // Une BORNE de modulation n'est pas un réglage à moduler : elle sert la courbe d'un autre.
       if ((p as any).modulationDe) continue;
       if (pilotes.has(p.nom)) continue;
-      for (const [fam, re] of Object.entries(FAMILLES)) {
-        if (re.test(p.nom)) {
-          (parFamille.get(fam) ?? parFamille.set(fam, []).get(fam)!).push(p.nom);
-          break;
-        }
-      }
+      // Un réglage écarté nommément sort de la liste sans emporter ses voisins.
+      if (ECARTES_REGLAGE[`${f.id}/${p.nom}`]) continue;
+      const fam = familleDe(p.nom);
+      if (fam) (parFamille.get(fam) ?? parFamille.set(fam, []).get(fam)!).push(p.nom);
     }
     for (const [famille, reglages] of parFamille) {
       out.push({ id: f.id, nom: f.nom, famille, reglages: [...new Set(reglages)] });
@@ -288,12 +345,15 @@ export function recensementEnTexte(
     "qu'une fois par trame, non par échantillon. La marque est relevée sur la source par",
     "`coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.",
     "",
-    // LES TROIS COMPTES NE SE LISENT PAS DANS LA MÊME UNITÉ, et chacun le dit : les deux premiers
-    // comptent des RÉGLAGES, le dernier des COMPOSANTS, puisqu'une raison d'écartement porte sur
-    // un composant entier.
+    // LES COMPTES NE SE LISENT PAS DANS LA MÊME UNITÉ, et chacun le dit. Les deux premiers comptent
+    // des RÉGLAGES. Le troisième compte des COMPOSANTS, une raison pouvant porter sur un composant
+    // entier ; le dernier compte des RÉGLAGES écartés un par un, quand la raison ne porte que sur
+    // l'un d'eux et que le composant garde les siens. Additionner les deux derniers n'aurait aucun
+    // sens : ils ne comptent pas la même chose.
     `- **réglages déjà pilotés par une courbe** : ${deja.length}, sur ${new Set(deja.map((d) => d.id)).size} composants`,
     `- **réglages restant à faire** : ${restants.reduce((n, c) => n + c.reglages.length, 0)}, sur ${composants.size} composants et ${restants.length} couples composant / famille`,
     `- **dont le cœur travaille par trames** : ${[...composants].filter((id) => parTrames.has(id)).length}`,
+    `- **réglages écartés un par un** : ${Object.keys(ECARTES_REGLAGE).length}, sur ${new Set(Object.keys(ECARTES_REGLAGE).map((c) => c.split("/")[0])).size} composants qui gardent les leurs`,
     `- **composants écartés** : ${idsEcartes().size}, dont ${nFamilles} ${nFamilles > 1 ? "familles" : "famille"} de la palette ${nFamilles > 1 ? "écartées" : "écartée"} en bloc`,
     "",
     ...(composants.size === 0
@@ -315,7 +375,15 @@ export function recensementEnTexte(
     lignes.push(`  - ${(FAMILLES_EFFETS[famille] ?? []).map((id) => `\`${id}\``).join(", ")}`);
   }
   lignes.push("", "## Écartés nommément, et pourquoi", "");
+  lignes.push("Ces composants sont écartés **en entier** : la raison porte sur le composant.", "");
   for (const [id, raison] of Object.entries(ECARTES)) lignes.push(`- \`${id}\` : ${raison}`);
+  lignes.push("", "## Réglages écartés un par un, et pourquoi", "");
+  lignes.push(
+    "Ici la raison ne porte que sur **un réglage** : le composant garde les siens, et ils restent",
+    "à faire tant qu'ils ne sont ni pilotés ni écartés à leur tour.",
+    "",
+  );
+  for (const [cle, raison] of Object.entries(ECARTES_REGLAGE)) lignes.push(`- \`${cle}\` : ${raison}`);
   lignes.push("", "## Acceptent déjà une courbe", "");
   for (const d of deja) lignes.push(`- \`${d.id}\` : ${d.cible}`);
   lignes.push("");

@@ -102,7 +102,7 @@ export function appliquerFondu(buffer: AudioBuffer, type: string, dureeSec: numb
 export async function appliquerFlanger(
   entree: AudioBuffer,
   vitesse: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   mixPct: number | Float32Array
 ): Promise<AudioBuffer> {
   // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
@@ -121,7 +121,10 @@ export async function appliquerFlanger(
   const lfo = ctx.createOscillator();
   lfo.frequency.value = vitesse;
   const lfoGain = ctx.createGain();
-  lfoGain.gain.value = Math.max(0.0001, profondeur / 1000);
+  // La profondeur accepte une courbe : c'est un `AudioParam`, et `poserParam` pose un nombre comme
+  // avant, au bit près. Le plancher évite un gain nul, que le balayage ne distinguerait pas d'un
+  // effet débranché.
+  poserParam(lfoGain.gain, profondeur, duree, (x) => Math.max(0.0001, x / 1000));
   lfo.connect(lfoGain);
   lfoGain.connect(delai.delayTime);
   source.connect(sec);
@@ -139,7 +142,7 @@ export async function appliquerFlanger(
 export async function appliquerChorus(
   entree: AudioBuffer,
   vitesse: number,
-  profondeur: number,
+  profondeur: number | Float32Array,
   mixPct: number | Float32Array,
 ): Promise<AudioBuffer> {
   // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
@@ -157,7 +160,6 @@ export async function appliquerChorus(
   secGain.connect(ctx.destination);
 
   const baseDelay = 0.025;
-  const profSec = profondeur / 1000;
 
   for (let ch = 0; ch < nCh; ch++) {
     const delai = ctx.createDelay(0.05);
@@ -165,7 +167,8 @@ export async function appliquerChorus(
     const lfo = ctx.createOscillator();
     lfo.frequency.value = vitesse * (1 + ch * 0.15);
     const lfoGain = ctx.createGain();
-    lfoGain.gain.value = profSec;
+    // La profondeur accepte une courbe : un `AudioParam` par voie, la même courbe sur les deux.
+    poserParam(lfoGain.gain, profondeur, duree, (x) => x / 1000);
     lfo.connect(lfoGain);
     lfoGain.connect(delai.delayTime);
     const wetGain = ctx.createGain();

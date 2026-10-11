@@ -55,8 +55,8 @@ export interface OptionsFdn {
   freqRef?: number;
   /** Queue ajoutée après le son, en secondes. Absente : le RT60 le plus long. */
   queue?: number;
-  /** Largeur stéréo, de 0 (mono) à 1. */
-  largeur?: number;
+  /** Largeur stéréo, de 0 (mono) à 1. Un tableau la fait varier échantillon par échantillon. */
+  largeur?: number | Float32Array;
   /**
    * Part de réverbération, de 0 à 1. Un tableau la fait varier échantillon par échantillon ;
    * au-delà de sa fin, sa dernière valeur tient, ce qui couvre la queue ajoutée après le son.
@@ -174,7 +174,7 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
   const rtHaut = Math.max(0.05, o.rt60Haut ?? 0.7);
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
   const melangeA = (i: number) => Math.min(1, Math.max(0, valeurA(o.melange ?? 0.35, i)));
-  const largeur = Math.min(1, Math.max(0, o.largeur ?? 1));
+  const largeurA = (i: number) => Math.min(1, Math.max(0, valeurA(o.largeur ?? 1, i)));
   const queue = Math.max(0.05, o.queue ?? Math.max(rtBas, rtHaut));
   const n = x.length + Math.round(queue * sr);
 
@@ -213,6 +213,7 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
     }
     // La largeur mélange les deux voies : à zéro, les deux sont identiques.
     const moyenne = (humideG + humideD) / 2;
+    const largeur = largeurA(t);
     const g2 = moyenne + largeur * (humideG - moyenne);
     const d2 = moyenne + largeur * (humideD - moyenne);
     const melange = melangeA(t);

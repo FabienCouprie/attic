@@ -15,7 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hautParleurRotatif, tremoloHarmonique } from "../audio/rotatifs";
-import { MODULATION_MELANGE, bornesModulation, reglageModule, portModulation } from "./effets-aides";
+import { MODULATION_MELANGE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
 const canauxDe = (a: AudioBuffer): Float32Array[] =>
   Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
@@ -40,7 +40,14 @@ export const fiches: FicheAudio[] = ([
     resume: "Module le grave et l'aigu en opposition : la couleur oscille, le niveau presque pas.",
     resumeEn: "Modulates lows and highs in opposition: the colour sways, the level barely moves.",
     etiquettes: ["tremolo", "harmonique", "harmonic", "bandes", "brownface"],
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mélange")],
+    // LE PORT DU MÉLANGE GARDE SON NOM COURT, et ses bornes aussi. Il est en production, et un
+    // graphe enregistré désigne un réglage par son NOM : renommer « Modulation min » orphelinerait
+    // les valeurs déjà sauvegardées. Seul le port neuf porte le nom de son réglage.
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      portModulation("Mélange"),
+      portModulation("Profondeur", "Depth", { court: false }),
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Vitesse", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
@@ -56,6 +63,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Part de son traité dans la sortie. À zéro, l'entrée ressort échantillon pour échantillon.",
         docEn: "Share of treated sound in the output. At zero, the input comes out sample for sample." },
       ...bornesModulation(MODULATION_MELANGE),
+      ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -66,7 +74,9 @@ export const fiches: FicheAudio[] = ([
       const vitesse = ctx.paramNombre("Vitesse", 5);
       const canaux = tremoloHarmonique(canauxDe(a), a.sampleRate, {
         vitesse,
-        profondeur: ctx.paramNombre("Profondeur", 70) / 100,
+        profondeur: reglageModule(ctx, a.length, 2, {
+          reglage: "Profondeur", defaut: 70, noms: ["Profondeur min", "Profondeur max"],
+        }),
         coupure,
         melange: reglageModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });

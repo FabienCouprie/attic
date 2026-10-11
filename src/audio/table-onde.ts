@@ -23,6 +23,7 @@
 // Gardés en amplitudes et en phases, les bornes sont un simple rang à ne pas dépasser, et la
 // table se refait par une transformée inverse.
 
+import { valeurA } from "./courbe";
 import { fft } from "./fft";
 import { suivreHauteur } from "./hauteur";
 
@@ -201,8 +202,8 @@ export function lireTable(table: Float32Array, position: number): number {
 export interface ReglagesTable {
   frequence: number;
   duree: number;
-  /** Où lire dans la banque, de 0 à 1. */
-  position: number;
+  /** Où lire dans la banque, de 0 à 1. Un tableau la fait varier échantillon par échantillon. */
+  position: number | Float32Array;
   /** Profondeur du balayage de position, de 0 à 1. */
   modulationPosition: number;
   /** Vitesse du balayage, en hertz. */
@@ -224,12 +225,14 @@ export function synthetiserTable(banque: Banque, r: ReglagesTable,
   const pas = (TAILLE_TABLE * r.frequence) / echantillonnage;
   const pasLfo = r.vitesseModulation / echantillonnage;
   const ampleur = Math.max(0, Math.min(1, r.modulationPosition));
-  const base = Math.max(0, Math.min(1, r.position));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non. Le balayage
+  // reste par-dessus : la courbe déplace le CENTRE autour duquel l'oscillateur promène la lecture.
+  const baseA = (i: number) => Math.max(0, Math.min(1, valeurA(r.position, i)));
   let phase = 0;
   let lfo = 0;
 
   for (let i = 0; i < total; i++) {
-    const p = Math.max(0, Math.min(1, base + ampleur * Math.sin(2 * Math.PI * lfo)));
+    const p = Math.max(0, Math.min(1, baseA(i) + ampleur * Math.sin(2 * Math.PI * lfo)));
     lfo += pasLfo;
     if (lfo >= 1) lfo -= Math.floor(lfo);
 

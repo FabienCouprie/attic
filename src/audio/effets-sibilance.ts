@@ -3,12 +3,13 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { poserParam } from "./automation";
 import { coefficientSuiveur, valeurA } from "./courbe";
 
 export async function deEsser(
   buffer: AudioBuffer,
   frequenceCentrale: number,
-  largeur: number,
+  largeur: number | Float32Array,
   seuilDb: number | Float32Array,
   ratio: number,
   attaqueMs: number,
@@ -25,7 +26,10 @@ export async function deEsser(
   const bp = ctx.createBiquadFilter();
   bp.type = "bandpass";
   bp.frequency.value = Math.max(500, Math.min(16000, frequenceCentrale));
-  bp.Q.value = Math.max(0.1, frequenceCentrale / Math.max(10, largeur));
+  // LA LARGEUR ACCEPTE UNE COURBE, et c'est le Q du passe-bande qu'elle déplace : la bande cible
+  // s'ouvre et se resserre au fil du son. `poserParam` pose un nombre comme avant, au bit près.
+  poserParam(bp.Q, largeur, buffer.length / sr,
+    (x) => Math.max(0.1, frequenceCentrale / Math.max(10, x)));
   source.connect(bp);
   bp.connect(ctx.destination);
   source.start(0);

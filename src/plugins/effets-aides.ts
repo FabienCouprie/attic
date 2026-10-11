@@ -187,10 +187,15 @@ export const MODULATION_MIX: ModulationEffet =
  * « Fréquence min » sur le phaser, « Fondamentale min » sur les résonateurs, « Temps min » sur
  * l'écho. Les cinq fiches de cette famille emploient donc celle-ci.
  */
-export const MODULATION_MIX_NOMMEE: ModulationEffet = {
-  parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%",
-  noms: ["Mix min", "Mix max"], nomsEn: ["Mix min", "Mix max"],
-};
+export const modulationNommee = (
+  parametre: string, parametreEn: string, bornes: [number, number], unite?: string,
+): ModulationEffet => ({
+  parametre, parametreEn, bornes, unite,
+  noms: [`${parametre} min`, `${parametre} max`],
+  nomsEn: [`${parametreEn} min`, `${parametreEn} max`],
+});
+
+export const MODULATION_MIX_NOMMEE = modulationNommee("Mix", "Mix", [0, 100], "%");
 
 /**
  * Ce qu'il y a à dire du réglage qu'une courbe vient piloter, dans les deux langues.
@@ -271,28 +276,52 @@ export function reglageModule(
 
 export function effet(
   slug: string, nom: string, nomEn: string, resume: string, resumeEn: string,
-  parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet, modulation?: ModulationEffet,
+  parametres: ParamEffet[], fn: FnEffet, hors?: HorsFilEffet,
+  modulation?: ModulationEffet | readonly ModulationEffet[],
 ): FicheAudio {
-  const rangModule = modulation ? parametres.findIndex((p) => p.nom === modulation.parametre) : -1;
-  if (modulation && rangModule < 0) {
-    throw new Error(`${slug} : « ${modulation.parametre} » n'est pas un de ses réglages.`);
-  }
+  // PLUSIEURS MODULATIONS SUR UNE MÊME FICHE, et c'est ce qui a changé. Ce socle n'en portait
+  // qu'une : douze fiches qu'il bâtit avaient donc épuisé leur unique place, et trente-sept
+  // réglages du catalogue restaient fermés pour cette seule raison. L'appelant passe désormais un
+  // tableau, et un objet seul continue de signifier exactement ce qu'il signifiait.
+  const mods: readonly ModulationEffet[] = modulation
+    ? (Array.isArray(modulation) ? modulation : [modulation as ModulationEffet])
+    : [];
+  const rangs = mods.map((m) => {
+    const r = parametres.findIndex((p) => p.nom === m.parametre);
+    if (r < 0) throw new Error(`${slug} : « ${m.parametre} » n'est pas un de ses réglages.`);
+    return r;
+  });
   // LE NOM ANGLAIS DU RÉGLAGE EST PRIS À LA FICHE, non redonné par l'appelant : la fiche le
   // déclare déjà sur son paramètre, et le redemander ouvrirait la porte à deux noms différents
   // pour un seul réglage. Un effet dont le réglage n'a pas de `nomEn` montre son nom français
   // dans les deux langues, ce qui est l'état qu'il avait déjà.
-  const module = modulation && rangModule >= 0
-    ? { ...modulation, parametreEn: modulation.parametreEn ?? parametres[rangModule].nomEn ?? modulation.parametre }
-    : modulation;
+  //
+  // LA PREMIÈRE GARDE SON PORT ET SES BORNES COURTS, les suivantes nomment leur réglage. Ce n'est
+  // pas une inconséquence : les fiches à une seule modulation sont en production, et un graphe
+  // enregistré désigne un réglage par son NOM. Renommer « Modulation min » en « Seuil min »
+  // orphelinerait les valeurs déjà sauvegardées. Un port, lui, se renomme sans risque, puisqu'un
+  // câble le désigne par son rang ; il reste court par symétrie avec ses deux bornes.
+  const modules = mods.map((m, i) => {
+    const en = m.parametreEn ?? parametres[rangs[i]].nomEn ?? m.parametre;
+    if (i === 0) return { ...m, parametreEn: en };
+    return {
+      ...m, parametreEn: en,
+      noms: m.noms ?? ([`${m.parametre} min`, `${m.parametre} max`] as [string, string]),
+      nomsEn: m.nomsEn ?? ([`${en} min`, `${en} max`] as [string, string]),
+    };
+  });
 
   return {
     id: slug, nom, nomEn, univers: "Traitement", famille: "Effets", resume, resumeEn,
-    entrees: modulation
-      ? [
-        { nom: "Audio", type: "audio", sousType: "stereo" },
-        { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: modulation.parametre },
-      ]
-      : [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    // LES PORTS VIENNENT DANS L'ORDRE DES MODULATIONS, et cet ordre ne se réarrange pas : un câble
+    // enregistré désigne sa borne par son RANG, et intercaler une modulation rebrancherait chaque
+    // arête d'un cran. Une modulation neuve se met donc EN DERNIER dans le tableau de l'appel.
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      ...modules.map((m, i) => (i === 0
+        ? { nom: "Modulation", nomEn: "Modulation", type: "courbe" as const, requis: false, module: m.parametre }
+        : portModulation(m.parametre, m.parametreEn, { court: false }))),
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       ...parametres.map((p) => ({
@@ -313,23 +342,25 @@ export function effet(
         // a rattrapé le cas ; tout champ ajouté à `ParamEffet` est à recopier ici.
         ...(p.graine ? { graine: p.graine } : {}),
       })),
-      ...(module ? bornesModulation(module) : []),
+      ...modules.flatMap((m) => bornesModulation(m)),
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const args: any[] = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
-      if (modulation) {
-        // UN SEUL CHEMIN, modulé ou non : sans courbe, une constante à la valeur du réglage.
-        args[rangModule] = valeursParametre(
-          ctx.entree(1), audio.length, args[rangModule] as number,
+      // UN SEUL CHEMIN, modulé ou non : sans courbe, une constante à la valeur du réglage. Le port
+      // de la modulation `i` est à l'entrée `1 + i`, dans l'ordre où les entrées sont déclarées.
+      modules.forEach((m, i) => {
+        const [nomMin, nomMax] = m.noms ?? BORNES_PAR_DEFAUT;
+        args[rangs[i]] = valeursParametre(
+          ctx.entree(1 + i), audio.length, args[rangs[i]] as number,
           {
-            min: ctx.paramNombre("Modulation min", modulation.defauts?.[0] ?? modulation.bornes[0]),
-            max: ctx.paramNombre("Modulation max", modulation.defauts?.[1] ?? modulation.bornes[1]),
-            echelle: modulation.echelle,
+            min: ctx.paramNombre(nomMin, m.defauts?.[0] ?? m.bornes[0]),
+            max: ctx.paramNombre(nomMax, m.defauts?.[1] ?? m.bornes[1]),
+            echelle: m.echelle,
           },
         );
-      }
+      });
       if (hors) {
         const reglages: Record<string, number> = {};
         hors.cles.forEach((cle, i) => { reglages[cle] = args[i]; });

@@ -19,7 +19,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FREQUENCE_ECH, versBuffer } from "./instruments-communs";
-import { bornesModulation, portModulation, reglageModule } from "./effets-aides";
+import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import {
   CASES, FAMILLES, banqueDepuisSon, banqueEngendree, synthetiserTable, type FamilleId,
 } from "../audio/table-onde";
@@ -31,7 +31,11 @@ export const fiches: FicheAudio[] = ([
     resume: "Lit une banque de cycles et la balaie : le timbre voyage, la hauteur ne bouge pas.",
     resumeEn: "Reads a bank of cycles and scans it: the timbre travels, the pitch stays put.",
     etiquettes: ["wavetable", "table", "onde", "banque", "balayage", "ppg", "cycle"],
-    entrees: [{ nom: "Audio", type: "audio", requis: false }, portModulation("Volume")],
+    entrees: [
+      { nom: "Audio", type: "audio", requis: false },
+      portModulation("Volume"),
+      portModulation("Position", "Position", { court: false }),
+    ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -67,6 +71,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau de la sortie, après normalisation de la crête. La normalisation se fait avant, sur le son entier : une courbe ne la déplace donc pas, elle règle ce qui en sort.",
         docEn: "Output level, after the peak has been normalised. Normalisation happens first, on the whole sound: a curve therefore does not move it, it sets what comes out of it." },
       ...bornesModulation({ parametre: "Volume", parametreEn: "Volume", bornes: [0, 100], unite: "%" }),
+      ...bornesModulation(modulationNommee("Position", "Position", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const cases = Math.round(ctx.paramNombre("Cases", CASES));
@@ -87,7 +92,9 @@ export const fiches: FicheAudio[] = ([
       const signal = synthetiserTable(banque, {
         frequence,
         duree: ctx.paramNombre("Durée", 1.5),
-        position: ctx.paramNombre("Position", 0) / 100,
+        position: reglageModule(ctx, Math.round(ctx.paramNombre("Durée", 1.5) * FREQUENCE_ECH), 2, {
+          reglage: "Position", defaut: 0, noms: ["Position min", "Position max"],
+        }),
         modulationPosition: ctx.paramNombre("Balayage", 0) / 100,
         vitesseModulation: ctx.paramNombre("Vitesse de balayage", 0.3),
       }, FREQUENCE_ECH);

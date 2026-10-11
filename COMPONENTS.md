@@ -1181,12 +1181,13 @@ This node returns pairs of tones a tritone apart, that is half an octave. After 
 
 *Reads a bank of cycles and scans it: the timbre travels, the pitch stays put.*
 
-Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in an order; « Position » says where the reading happens, and moving from one end to the other bends the timbre continuously while the pitch stays put. Between two slots, the two are blended. « Bank » chooses the series read when no sound is connected. « Sine to sawtooth » adds the harmonics one by one, from the first slot to the last. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next, so that scanning makes a lone partial climb. « Odd towards even » keeps the odd ranks and brings in the even ones. When a sound is connected to the « Audio » input, the bank is taken from it and « Bank » has no effect. The period of the sound is detected, then as many cycles as « Slots » asks for are taken at regular intervals across its whole length; scanning the bank then amounts to travelling through the sound while holding it at a fixed pitch. A sound in which no pitch can be detected yields no bank, and the message says so. « Slots » is the number of places: few slots give a scan in clear steps, many a continuous fade. It has no effect at the two ends of the bank, the first and the last slot being the same whatever their number; at the last slot, « Sine to sawtooth » and « Odd towards even » coincide for the same reason. « Scan » is the depth of the travel of « Position » around its value, and « Scan rate » the number of return trips per second; at zero scan the position stays where it is set and the rate no longer acts. « Frequency » is the pitch of the sound produced, « Duration » its length, « Volume » the output level. A curve connected to the « Modulation volume » input takes the place of « Volume »; peak normalisation happens before it, on the whole sound, so that a curve sets what comes out of the normalisation and does not move it. The cycles are kept as harmonics and the table is rebuilt for the frequency asked, with no harmonic above half the sampling rate. « Frequency » therefore also decides how many ranks are kept: in the bass the table carries several hundred, in the treble a few. Reading between two points of the table is done by a curve passing through the four neighbouring points. The « Audio » output returns the sound. The message gives the number of slots, the reading frequency, and the detected frequency when the bank comes from a sound.
+Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in an order; « Position » says where the reading happens, and moving from one end to the other bends the timbre continuously while the pitch stays put. Between two slots, the two are blended. « Bank » chooses the series read when no sound is connected. « Sine to sawtooth » adds the harmonics one by one, from the first slot to the last. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next, so that scanning makes a lone partial climb. « Odd towards even » keeps the odd ranks and brings in the even ones. When a sound is connected to the « Audio » input, the bank is taken from it and « Bank » has no effect. The period of the sound is detected, then as many cycles as « Slots » asks for are taken at regular intervals across its whole length; scanning the bank then amounts to travelling through the sound while holding it at a fixed pitch. A sound in which no pitch can be detected yields no bank, and the message says so. « Slots » is the number of places: few slots give a scan in clear steps, many a continuous fade. It has no effect at the two ends of the bank, the first and the last slot being the same whatever their number; at the last slot, « Sine to sawtooth » and « Odd towards even » coincide for the same reason. « Scan » is the depth of the travel of « Position » around its value, and « Scan rate » the number of return trips per second; at zero scan the position stays where it is set and the rate no longer acts. « Frequency » is the pitch of the sound produced, « Duration » its length, « Volume » the output level. A curve connected to the « Modulation volume » input takes the place of « Volume »; peak normalisation happens before it, on the whole sound, so that a curve sets what comes out of the normalisation and does not move it. The cycles are kept as harmonics and the table is rebuilt for the frequency asked, with no harmonic above half the sampling rate. « Frequency » therefore also decides how many ranks are kept: in the bass the table carries several hundred, in the treble a few. Reading between two points of the table is done by a curve passing through the four neighbouring points. The « Audio » output returns the sound. The message gives the number of slots, the reading frequency, and the detected frequency when the bank comes from a sound. A curve connected to the « Modulation position » input takes the place of « Position »: « Position min » and « Position max » then say what its zero and its one are worth. The sweep stays on top of it: the curve moves the centre around which « Sweep » walks the reading.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Modulation volume | curve |  |
+| input | Modulation position | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -1201,6 +1202,8 @@ Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Output level, after the peak has been normalised. Normalisation happens first, on the whole sound: a curve therefore does not move it, it sets what comes out of it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
+| Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
 
 #### Write a Counterpoint
 
@@ -3106,12 +3109,13 @@ Rhythmic gate that chops the sound periodically, stutter/DJ effect. Settings: �
 
 *Modulated stereo doubling.*
 
-Layers slightly detuned, modulated copies of the signal to thicken and widen it in stereo.
+Layers slightly detuned, modulated copies of the signal to thicken and widen it in stereo. A curve connected to the « Modulation » input takes the place of « Mix », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation depth » input likewise takes the place of « Depth », with « Depth min » and « Depth max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3121,6 +3125,8 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Depth | number | 5 ms |  | Detuning depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 ms | 0 – 20 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 20 ms | 0 – 20 ms, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Distortion
 
@@ -3167,12 +3173,13 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 
 *Variable delay modulation.*
 
-Modulates a short variable delay to produce the characteristic jet-plane sweep.
+Modulates a short variable delay to produce the characteristic jet-plane sweep. A curve connected to the « Modulation » input takes the place of « Mix », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation depth » input likewise takes the place of « Depth », with « Depth min » and « Depth max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3182,6 +3189,8 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep.
 | Depth | number | 3 ms |  | Modulation depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 ms | 0 – 10 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 10 ms | 0 – 10 ms, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Formant Shift
 
@@ -3207,13 +3216,14 @@ Formant shifting via LPC analysis. Separates voice into glottal source (pitch) a
 
 *All-pass filter cascade modulated by LFO (sweeping effect).*
 
-All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving peaks and notches in the spectrum, the "sweeping" effect characteristic of analog synths and guitars (Van Halen, Pink Floyd). Settings: • rate • depth • number of stages (2 to 8, more = stronger) • mix. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth.
+All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving peaks and notches in the spectrum, the "sweeping" effect characteristic of analog synths and guitars (Van Halen, Pink Floyd). Settings: • rate • depth • number of stages (2 to 8, more = stronger) • mix. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth. A curve on the « Modulation depth » input likewise takes the place of « Depth », with its bounds « Depth min » and « Depth max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Rate modulation | curve |  |
 | input | Modulation mix | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3226,6 +3236,8 @@ All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving pe
 | Rate max | slider | 4 Hz | 0.05 – 10 Hz, step 0.05 | Rate that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Pitch Follower
 
@@ -3442,7 +3454,7 @@ Transforms a voice with preset effects from a dropdown: Chipmunk (high/cartoon),
 
 *Modulated bandpass filter (wah pedal effect).*
 
-Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth.
+Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth. A curve on the « Modulation depth » input likewise takes the place of « Depth », with its bounds « Depth min » and « Depth max »; it has no effect while a curve is connected to the « Modulation » input, which travels « Sweep from » to « Sweep to » itself.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3450,6 +3462,7 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | input | Modulation | curve |  |
 | input | Rate modulation | curve |  |
 | input | Modulation mix | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3457,13 +3470,15 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | Rate | slider | 2 Hz | 0.1 – 10 Hz, step 0.1 | Modulation speed (sweeps per second). No effect when a curve is connected to the Modulation input: it then walks the centre frequency, and the sweep's rhythm is its own. |
 | Sweep from | slider | 200 Hz | 50 – 5000 Hz, step 10 | The low end of the sweep. These two bounds were hard-wired at 200 and 2500 Hz, invisible and unsettable; they hold with or without a curve, since the wah sweeps between them either way. |
 | Sweep to | slider | 2500 Hz | 50 – 8000 Hz, step 10 | The high end of the sweep. A connected curve travels it by multiplying rather than adding, an octave is a doubling, so the sweep does not rush into the treble. |
-| Depth | slider | 100 % | 0 – 100 %, step 1 | Frequency sweep range (0% = static, 100% = full wah). |
+| Depth | slider | 100 % | 0 – 100 %, step 1 | Frequency sweep range (0% = static, 100% = full wah). No effect when a curve is connected to the Modulation input: that curve travels « Sweep from » to « Sweep to » itself, and there is no longer any range to set around an oscillator that no longer exists. |
 | Resonance | slider | 5 Q | 0.5 – 20 Q, step 0.5 | Filter resonance (high Q = pronounced wah, low Q = gentle). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Mix between dry and wet signal (100% = wah only). |
 | Rate min | slider | 0.5 Hz | 0.1 – 10 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 8 Hz | 0.1 – 10 Hz, step 0.1 | Rate that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
 
 ### Echo
 
@@ -4623,12 +4638,13 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 
 *Dynamic sibilance compression.*
 
-Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition.
+Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation width | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4641,6 +4657,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
 | Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Width min | slider | 200 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Width max | slider | 6000 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that the curve's one means. |
 
 #### Ducking
 
@@ -5975,12 +5993,13 @@ This node delays one of the two channels by a few milliseconds. After Helmut Haa
 
 *Modulates lows and highs in opposition: the colour sways, the level barely moves.*
 
-Modulates lows and highs in opposition. The sound is first split into two bands by « Crossover », then the level of each band oscillates, the two oscillations running in opposite directions: when the lows are at their highest, the highs are at their lowest. The level of the sum therefore barely moves, and it is the balance of the spectrum that sways. « Rate » is the number of return trips per second between lows and highs. « Depth » is the level difference between the two bands at the peak of the oscillation: at zero, both bands keep their level and the sound comes out unchanged. « Crossover » is the frequency that separates the two bands; low, only the treble sways against the rest, high, it is the bass that stands out. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample. The split is a fourth-order Linkwitz-Riley filter, that is two cascaded Butterworth sections on each side. Its property is that the sum of the two bands has a flat magnitude: at zero depth the sound passes through with no dip at the crossover frequency. The « Audio » output returns the treated sound, with as many channels as the input. The message recalls the rate and the crossover frequency.
+Modulates lows and highs in opposition. The sound is first split into two bands by « Crossover », then the level of each band oscillates, the two oscillations running in opposite directions: when the lows are at their highest, the highs are at their lowest. The level of the sum therefore barely moves, and it is the balance of the spectrum that sways. « Rate » is the number of return trips per second between lows and highs. « Depth » is the level difference between the two bands at the peak of the oscillation: at zero, both bands keep their level and the sound comes out unchanged. « Crossover » is the frequency that separates the two bands; low, only the treble sways against the rest, high, it is the bass that stands out. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample. The split is a fourth-order Linkwitz-Riley filter, that is two cascaded Butterworth sections on each side. Its property is that the sum of the two bands has a flat magnitude: at zero depth the sound passes through with no dip at the crossover frequency. The « Audio » output returns the treated sound, with as many channels as the input. The message recalls the rate and the crossover frequency. A curve connected to the « Modulation depth » input takes the place of « Depth »: « Depth min » and « Depth max » then say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5991,6 +6010,8 @@ Modulates lows and highs in opposition. The sound is first split into two bands 
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
 
 #### Lucier Room
 
@@ -6514,12 +6535,13 @@ Convolution reverb: generates a synthetic impulse response (IR) from your settin
 
 *A reverb whose decay time is set separately for the low and the high end, as every real room behaves.*
 
-A reverb whose decay time is set separately for the low and the high end. After Jean-Marc Jot and Antoine Chaigne, « Digital delay networks for designing artificial reverberators », AES Convention 90, 1991, the feedback delay network and, above all, the way to control reverberation time explicitly within it; exact RT60 control was taken up and refined by Sebastian J. Schlecht and Emanuel A. P. Habets, DAFx-17. A decay uniform across the spectrum is not what a room does: air and materials absorb the high end far faster than the low, so a real reverb tail darkens as it dies. Method. Eight delay lines looped into one another by a Hadamard matrix, which is unitary; it preserves energy, so the network would never die out by itself. It is the attenuation placed on each line that decides the decay, and separating diffusion from absorption in this way is the paper's idea: RT60 becomes adjustable without touching anything else. The delay lengths are prime, since two delays sharing a divisor would make their echoes coincide periodically, heard as a metallic ringing. The absorption calculation is derived rather than copied: a line of m samples is traversed fs/m times per second, so to lose 60 dB in T seconds each pass must cost 60·m/(T·fs) decibels; a first-order lowpass on each line then suffices to make that cost frequency-dependent, and its two coefficients solve exactly. By the Schroeder integral on the resulting response, band by band: for 2.00 s requested at the low end and 0.50 s at 8 kHz, one reads 1.96 s at 125 Hz, 1.90 at 500 Hz, 1.54 at 2 kHz and 0.58 at 8 kHz; for 1.00 s everywhere, one reads 0.98, 0.98, 1.01, 0.99 and 1.00. The transition between the two is gradual, like a first-order filter's, not a step. The node measures what it produces and announces it: the room obtained beside the room requested. Two precautions. The first: solving the filter at Nyquist is simpler but makes the setting misleading, 0.73 s being read at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to; hence the « High reference » setting. The second: asking for a high end longer than the low can be physically impossible, the loop's magnitude then exceeding unity, and the response reaching 1.2 × 10^13 instead of dying out. A safeguard bounds the absorption. With 0.5 s at the low end and 2 s at the high: the tail stays flat at 0.5 s in every band: the bound eats the inversion. This direction of the setting therefore does almost nothing. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. It is read over the length of the input, and its last value holds for the tail added after the sound. The « Impulse response » output does not depend on it, it is always returned as reverb alone. One output returns the impulse response itself, as audio. Cost: 20 ms for two seconds of sound at eight lines.
+A reverb whose decay time is set separately for the low and the high end. After Jean-Marc Jot and Antoine Chaigne, « Digital delay networks for designing artificial reverberators », AES Convention 90, 1991, the feedback delay network and, above all, the way to control reverberation time explicitly within it; exact RT60 control was taken up and refined by Sebastian J. Schlecht and Emanuel A. P. Habets, DAFx-17. A decay uniform across the spectrum is not what a room does: air and materials absorb the high end far faster than the low, so a real reverb tail darkens as it dies. Method. Eight delay lines looped into one another by a Hadamard matrix, which is unitary; it preserves energy, so the network would never die out by itself. It is the attenuation placed on each line that decides the decay, and separating diffusion from absorption in this way is the paper's idea: RT60 becomes adjustable without touching anything else. The delay lengths are prime, since two delays sharing a divisor would make their echoes coincide periodically, heard as a metallic ringing. The absorption calculation is derived rather than copied: a line of m samples is traversed fs/m times per second, so to lose 60 dB in T seconds each pass must cost 60·m/(T·fs) decibels; a first-order lowpass on each line then suffices to make that cost frequency-dependent, and its two coefficients solve exactly. By the Schroeder integral on the resulting response, band by band: for 2.00 s requested at the low end and 0.50 s at 8 kHz, one reads 1.96 s at 125 Hz, 1.90 at 500 Hz, 1.54 at 2 kHz and 0.58 at 8 kHz; for 1.00 s everywhere, one reads 0.98, 0.98, 1.01, 0.99 and 1.00. The transition between the two is gradual, like a first-order filter's, not a step. The node measures what it produces and announces it: the room obtained beside the room requested. Two precautions. The first: solving the filter at Nyquist is simpler but makes the setting misleading, 0.73 s being read at 18 kHz for 0.50 requested, exactness falling at a frequency nobody listens to; hence the « High reference » setting. The second: asking for a high end longer than the low can be physically impossible, the loop's magnitude then exceeding unity, and the response reaching 1.2 × 10^13 instead of dying out. A safeguard bounds the absorption. With 0.5 s at the low end and 2 s at the high: the tail stays flat at 0.5 s in every band: the bound eats the inversion. This direction of the setting therefore does almost nothing. A curve connected to the « Modulation » input takes the place of « Mix »: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. It is read over the length of the input, and its last value holds for the tail added after the sound. The « Impulse response » output does not depend on it, it is always returned as reverb alone. One output returns the impulse response itself, as audio. Cost: 20 ms for two seconds of sound at eight lines. A curve connected to the « Modulation width » input takes the place of « Width »: « Width min » and « Width max » then say what its zero and its one are worth.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Modulation | curve |  |
+| input | Modulation width | curve |  |
 | output | Audio | audio (stereo) |  |
 | output | Impulse response | audio (stereo) |  |
 
@@ -6536,6 +6558,8 @@ A reverb whose decay time is set separately for the low and the high end. After 
 | Tail | slider | 0 s | 0.2 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Width min | slider | 0 % | 0 – 100 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. |
 
 #### Fractal Reverb
 
