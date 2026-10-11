@@ -4512,7 +4512,7 @@ Puts a processed zone back at its original position in the full track, with a cr
 
 *Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.*
 
-This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness or length. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
+This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness, length, mass, attack or allure. Three of these orders come from Pierre Schaeffer's Traité des objets musicaux, 1966. « Mass » follows his scale, from pure sound to white noise by way of the tonic, the group and the nodal. « Allure » follows its own, from mechanical undulation to disorder, and an object that does not undulate sorts to the end. « Attack » is the quantity that orders the dynamic shape, from the most biting to the most gradual, a shape not sorting by itself: « crescendo » comes neither before nor after « impulse ». An allure needs at least four undulations to be observed, that is about one second: shorter objects carry none. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4522,7 +4522,7 @@ This node chains a sound's objects in the order of a descriptor: loudness, brigh
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Order | choice | Brightness | Original / Loudness / Brightness / Noise / Length / Random | The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades. |
+| Order | choice | Brightness | Original / Loudness / Brightness / Noise / Length / Mass / Attack / Allure / Random | The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades. |
 | Direction | choice | Ascending | Ascending / Descending | Ascending: from lowest to highest on the chosen descriptor. No effect at random. |
 | Spacing | slider | 0 ms | -2000 – 5000 ms, step 10 | Silence between two objects; negative, they overlap by that much. |
 | Fade | slider | 10 ms | 0 – 500 ms, step 1 | Fade in and out of each object. |
@@ -4645,8 +4645,8 @@ This node finds the sound objects of a recording - sounds each perceived as a wh
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Criterion | choice | Attacks | Attacks / Silences / Change of timbre | What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. |
-| Sensitivity | slider | 50 % | 0 – 100 %, step 1 | Higher, more objects: smaller attacks or smaller changes of timbre are enough to make a boundary. No effect on the silence criterion, which its threshold sets. |
+| Criterion | choice | Attacks | Attacks / Silences / Change of timbre / Change of mass | What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. Change of mass: where the sound occupies the field of pitches differently, a note becoming a chord or a noise. A change of level alone is not a change of mass. |
+| Sensitivity | slider | 50 % | 0 – 100 %, step 1 | Higher, more objects: smaller attacks or smaller changes of timbre or of mass are enough to make a boundary. A change must also pass an absolute floor, which the sensitivity does not lower: a sound that does not change stays a single object at any sensitivity. No effect on the silence criterion, which its threshold sets. |
 | Min length | slider | 80 ms | 20 – 5000 ms, step 10 | A shorter object is dropped, and two boundaries closer than this make only one - the sharper. It is the setting that keeps a drum roll from being cut note by note, if one wants it whole. |
 | Silence threshold | slider | -40 dB | -90 – -10 dB, step 1 | For the silence criterion: what falls below this level is a silence. No effect on the other criteria. |
 

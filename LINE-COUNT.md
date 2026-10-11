@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1345 files, 240237 lines, of which 163181 are code.**
+**1345 files, 240568 lines, of which 163375 are code.**
 The table lists the 191 files of 200 code lines or more, heaviest first;
-the remaining 1154 account for 159699 lines.
+the remaining 1154 account for 159706 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -51,6 +51,7 @@ the remaining 1154 account for 159699 lines.
 | src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/modulation-melange.test.ts | 355 | 506 |  |
+| src/audio/objets-sonores.test.ts | 349 | 441 |  |
 | src/plugins/effets-temporel.ts | 348 | 478 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
@@ -91,6 +92,7 @@ the remaining 1154 account for 159699 lines.
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
+| src/audio/objets-sonores.ts | 307 | 493 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
@@ -110,8 +112,8 @@ the remaining 1154 account for 159699 lines.
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
+| src/audio/criteres-schaefferiens.ts | 285 | 636 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
-| src/audio/criteres-schaefferiens.ts | 283 | 624 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
@@ -134,7 +136,6 @@ the remaining 1154 account for 159699 lines.
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
-| src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
 | src/audio/cercle-pulsant.ts | 249 | 543 |  |
 | src/audio/multi-reservoir.ts | 249 | 326 |  |
@@ -178,7 +179,6 @@ the remaining 1154 account for 159699 lines.
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
-| src/audio/objets-sonores.test.ts | 217 | 262 |  |
 | src/audio/bext.test.ts | 216 | 280 |  |
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |

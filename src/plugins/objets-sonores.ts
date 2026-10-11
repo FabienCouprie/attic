@@ -22,9 +22,15 @@ const PISTES = 16;
 /** Le rapport lisible d'un découpage : un objet par ligne, ses bornes et ce qu'on en entend. */
 export function rapportObjets(objets: ObjetSonore[], anglais: boolean): string {
   const v = (x: number, d = 2) => (anglais ? x.toFixed(d) : x.toFixed(d).replace(".", ","));
-  const tete = anglais ? "  #   start     length   loudness  brightness  noise" : "  n°  début     durée    sonie     brillance   bruit";
+  // LES TROIS CRITÈRES DU TRAITÉ SONT DANS LE RAPPORT, et c'est ce qui les rend lisibles : ils sont
+  // relevés par objet, et sans eux il faudrait rebrancher chaque objet sur un nœud d'analyse.
+  const tete = anglais
+    ? "  #   start     length   loudness  brightness  noise   mass      shape         attack   allure"
+    : "  n°  début     durée    sonie     brillance   bruit   masse     forme         attaque  allure";
   return [tete, ...objets.map((o, k) =>
-    `${String(k + 1).padStart(3)}  ${v(o.debut).padStart(6)} s  ${v(o.duree).padStart(6)} s  ${v(o.sonie, 1).padStart(6)} dB  ${String(Math.round(o.brillance)).padStart(6)} Hz  ${v(o.bruit)}`)].join("\n");
+    `${String(k + 1).padStart(3)}  ${v(o.debut).padStart(6)} s  ${v(o.duree).padStart(6)} s`
+    + `  ${v(o.sonie, 1).padStart(6)} dB  ${String(Math.round(o.brillance)).padStart(6)} Hz  ${v(o.bruit)}`
+    + `   ${o.masse.padEnd(8)}  ${o.forme.padEnd(12)}  ${v(o.attaqueMs, 0).padStart(5)} ms  ${o.allure}`)].join("\n");
 }
 
 export const fiches: FicheAudio[] = ([
@@ -43,13 +49,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rapport", nomEn: "Report", type: "texte" },
     ],
     parametres: [
-      { nom: "Critère", nomEn: "Criterion", type: "choix", options: ["Attaques", "Silences", "Changement de timbre"],
-        optionsEn: ["Attacks", "Silences", "Change of timbre"], optionIds: ["attaques", "silences", "timbre"], defaut: "Attaques", defautEn: "Attacks",
-        doc: "Ce qui sépare deux objets. Attaques : ce qui est frappé ou pincé. Silences : des événements séparés, un enregistrement de terrain. Changement de timbre : un flux continu, sans attaque ni silence.",
-        docEn: "What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence." },
+      { nom: "Critère", nomEn: "Criterion", type: "choix", options: ["Attaques", "Silences", "Changement de timbre", "Changement de masse"],
+        optionsEn: ["Attacks", "Silences", "Change of timbre", "Change of mass"], optionIds: ["attaques", "silences", "timbre", "masse"], defaut: "Attaques", defautEn: "Attacks",
+        doc: "Ce qui sépare deux objets. Attaques : ce qui est frappé ou pincé. Silences : des événements séparés, un enregistrement de terrain. Changement de timbre : un flux continu, sans attaque ni silence. Changement de masse : là où le son occupe le champ des hauteurs autrement, une note qui devient un accord ou un bruit. Un changement de niveau seul n'est pas un changement de masse.",
+        docEn: "What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. Change of mass: where the sound occupies the field of pitches differently, a note becoming a chord or a noise. A change of level alone is not a change of mass." },
       { nom: "Sensibilité", nomEn: "Sensitivity", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Plus haute, plus d'objets : de plus petites attaques ou de plus petits changements de timbre suffisent à faire une frontière. Sans effet sur le critère des silences, que règle son seuil.",
-        docEn: "Higher, more objects: smaller attacks or smaller changes of timbre are enough to make a boundary. No effect on the silence criterion, which its threshold sets." },
+        doc: "Plus haute, plus d'objets : de plus petites attaques ou de plus petits changements de timbre ou de masse suffisent à faire une frontière. Un changement doit en outre passer un plancher absolu, que la sensibilité ne descend pas : un son qui ne change pas reste un seul objet à toute sensibilité. Sans effet sur le critère des silences, que règle son seuil.",
+        docEn: "Higher, more objects: smaller attacks or smaller changes of timbre or of mass are enough to make a boundary. A change must also pass an absolute floor, which the sensitivity does not lower: a sound that does not change stays a single object at any sensitivity. No effect on the silence criterion, which its threshold sets." },
       { nom: "Durée min", nomEn: "Min length", type: "curseur", plage: [20, 5000], pas: 10, defaut: 80, unite: "ms",
         doc: "Un objet plus court est écarté, et deux frontières plus proches n'en font qu'une, la plus nette. C'est le réglage qui empêche un roulement d'être découpé note par note, si l'on veut le garder entier.",
         docEn: "A shorter object is dropped, and two boundaries closer than this make only one - the sharper. It is the setting that keeps a drum roll from being cut note by note, if one wants it whole." },
@@ -75,16 +81,17 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Montage",
     resume: "Enchaîne les objets d'un son dans l'ordre d'un descripteur : du plus sombre au plus brillant, du plus calme au plus fort.",
     resumeEn: "Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.",
-    notice: "Ce composant enchaîne les objets d'un son dans l'ordre d'un descripteur : sonie, brillance, part de bruit ou durée. Une pluie de fragments rangés du plus sombre au plus brillant devient une montée ; rangés du plus bruité au plus tonique, un son qui se clarifie ; du plus long au plus court, une accélération. Le principe est celui de la navigation de CataRT, réduite à un axe.\n\nLes zones peuvent arriver déjà décrites, ou ne porter que leurs bornes, une sélection faite à la main : le composant les décrit alors lui-même, et elles se trient de la même façon.\n\nChaque objet reçoit un fondu d'entrée et de sortie, pour qu'aucune coupe ne claque. L'espace entre deux objets peut être négatif : ils se chevauchent alors, et l'enchaînement devient une texture. Au hasard, l'ordre est tiré avec une graine : à graine égale, le même ordre.",
-    noticeEn: "This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness or length. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis.\n\nThe zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way.\n\nEach object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.",
+    notice: "Ce composant enchaîne les objets d'un son dans l'ordre d'un descripteur : sonie, brillance, part de bruit, durée, masse, attaque ou allure.\n\nTrois de ces ordres viennent du Traité des objets musicaux de Pierre Schaeffer, 1966. « Masse » suit son échelle, du son pur au bruit blanc en passant par le tonique, le groupe et le nodal. « Allure » suit la sienne, de l'ondulation mécanique au désordre, et un objet qui n'ondule pas se range au bout. « Attaque » est la grandeur qui ordonne la forme dynamique, du plus mordant au plus progressif, une forme ne se rangeant pas d'elle-même : « crescendo » ne vient ni avant ni après « impulsion ».\n\nUne allure demande au moins quatre ondulations pour s'observer, soit environ une seconde : des objets plus brefs n'en portent pas. Une pluie de fragments rangés du plus sombre au plus brillant devient une montée ; rangés du plus bruité au plus tonique, un son qui se clarifie ; du plus long au plus court, une accélération. Le principe est celui de la navigation de CataRT, réduite à un axe.\n\nLes zones peuvent arriver déjà décrites, ou ne porter que leurs bornes, une sélection faite à la main : le composant les décrit alors lui-même, et elles se trient de la même façon.\n\nChaque objet reçoit un fondu d'entrée et de sortie, pour qu'aucune coupe ne claque. L'espace entre deux objets peut être négatif : ils se chevauchent alors, et l'enchaînement devient une texture. Au hasard, l'ordre est tiré avec une graine : à graine égale, le même ordre.",
+    noticeEn: "This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness, length, mass, attack or allure.\n\nThree of these orders come from Pierre Schaeffer's Traité des objets musicaux, 1966. « Mass » follows his scale, from pure sound to white noise by way of the tonic, the group and the nodal. « Allure » follows its own, from mechanical undulation to disorder, and an object that does not undulate sorts to the end. « Attack » is the quantity that orders the dynamic shape, from the most biting to the most gradual, a shape not sorting by itself: « crescendo » comes neither before nor after « impulse ».\n\nAn allure needs at least four undulations to be observed, that is about one second: shorter objects carry none. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis.\n\nThe zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way.\n\nEach object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
       { nom: "Zones", nomEn: "Zones", type: "controle" },
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Origine", "Sonie", "Brillance", "Bruit", "Durée", "Hasard"],
-        optionsEn: ["Original", "Loudness", "Brightness", "Noise", "Length", "Random"], optionIds: ["origine", "sonie", "brillance", "bruit", "duree", "hasard"],
+      { nom: "Ordre", nomEn: "Order", type: "choix", options: ["Origine", "Sonie", "Brillance", "Bruit", "Durée", "Masse", "Attaque", "Allure", "Hasard"],
+        optionsEn: ["Original", "Loudness", "Brightness", "Noise", "Length", "Mass", "Attack", "Allure", "Random"],
+        optionIds: ["origine", "sonie", "brillance", "bruit", "duree", "masse", "attaque", "allure", "hasard"],
         defaut: "Brillance", defautEn: "Brightness",
         doc: "Le descripteur qui range les objets. Origine : l'ordre du son, pour n'appliquer que l'espace et les fondus.",
         docEn: "The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades." },

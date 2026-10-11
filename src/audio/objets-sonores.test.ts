@@ -4,7 +4,7 @@
 // instants écrits, des silences de longueurs écrites, un changement de timbre à un instant écrit.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { decouperEnObjets, monter, reordonnerObjets } from "./objets-sonores";
+import { decouperEnObjets, decrireZones, monter, reordonnerObjets } from "./objets-sonores";
 import { creerAleatoire } from "../core/hasard";
 
 const SR = 44100;
@@ -82,6 +82,103 @@ describe("découper en objets", () => {
     expect(Math.abs(note.sonie - aigu.sonie - 12)).toBeLessThan(1.5);
   });
 
+  it("PAR LA MASSE : un bruit qui devient une note se coupe au changement", () => {
+    // La masse au sens du Traité est la part du champ des hauteurs que le son occupe. Un bruit
+    // l'occupe tout entier, une note n'en occupe qu'un point : c'est le plus grand écart de masse
+    // que l'échelle du Traité porte, du bruit blanc au son tonique.
+    const h = hasard(4);
+    const son = tampon(2 * SR, (i) => (i < SR ? 0.3 * h() : 0.42 * Math.sin((2 * Math.PI * 440 * i) / SR)));
+    const objets = decouperEnObjets(son, { critere: "masse", ...OPTS, sensibilite: 40 });
+    expect(objets.length, `${objets.length} objet(s) : ${objets.map((z) => z.debut.toFixed(2)).join(" ")}`).toBe(2);
+    expect(Math.abs(objets[1].debut - 1), `frontière à ${objets[1].debut.toFixed(3)} s`).toBeLessThan(0.05);
+    // ET LES DEUX OBJETS PORTENT LES DEUX MASSES, ce qui est le même critère lu par objet.
+    expect(objets[0].masse).toBe("blanc");
+    expect(objets[1].masse).toBe("pur");
+  });
+
+  it("LE CONTRÔLE : UN SAUT DE NIVEAU SEUL NE DÉPLACE PAS LA MASSE, et le timbre l'y voit", () => {
+    // SANS CE CAS, LE CRITÈRE DE MASSE POURRAIT N'ÊTRE QUE CELUI DU TIMBRE RENOMMÉ, et c'est la
+    // faute que ce dépôt a déjà payée deux fois, le passe-bas déguisé des ondelettes et le
+    // compresseur de Di Scipio.
+    //
+    // LE NIVEAU EST L'AXE OÙ LES DEUX DIFFÈRENT PAR CONSTRUCTION : le timbre le compte parmi ses
+    // trois descripteurs, l'occupation du champ ne le voit pas, son plancher étant relatif au sommet
+    // de chaque trame. Un son qui gagne six décibels sans rien changer d'autre est donc une
+    // frontière de timbre et PAS une frontière de masse. C'est aussi ce que dirait le Traité : un
+    // changement de niveau relève de la dynamique, non de la matière.
+    //
+    // LA MARCHE EST LISSÉE SUR CENT MILLISECONDES, et il a fallu le relever : une marche brutale est
+    // un CLIC, dont le spectre large remplit le champ pendant quelques trames. La masse y voyait donc
+    // une frontière, et elle avait raison — c'était le témoin qui était faux.
+    const son = tampon(3 * SR, (i) => {
+      const t = i / SR;
+      let v = 0;
+      for (let h = 1; h <= 4; h++) v += (0.2 / h) * Math.sin(2 * Math.PI * 330 * h * t);
+      return v * (t < 1.45 ? 1 : t > 1.55 ? 2 : 1 + (t - 1.45) * 10);
+    });
+    const parMasse = decouperEnObjets(son, { critere: "masse", ...OPTS, sensibilite: 40 });
+    const parTimbre = decouperEnObjets(son, { critere: "timbre", ...OPTS, sensibilite: 40 });
+    const dit = `masse : ${parMasse.length} objet(s) ; timbre : ${parTimbre.length}`
+      + ` à ${parTimbre.map((z) => z.debut.toFixed(2)).join(" ")}`;
+    expect(parMasse.length, dit).toBe(1);
+    expect(parTimbre.length, dit).toBe(2);
+    expect(Math.abs(parTimbre[1].debut - 1.5), dit).toBeLessThan(0.1);
+  });
+
+  it("LE TÉMOIN NÉGATIF : UN SON TENU NE SE COUPE PAS, et les deux critères l'inventaient", () => {
+    // DÉFAUT PRÉEXISTANT, trouvé en écrivant le critère de masse et corrigé pour les deux. La
+    // nouveauté divisait chaque descripteur par son écart type sur le son entier : sur un son qui NE
+    // CHANGE PAS, cet écart type est presque nul, de sorte que la moindre ondulation de mesure
+    // ressortait à plusieurs écarts types. Relevé sur cette tenue harmonique de deux secondes, qui
+    // ne change pas d'un bout à l'autre : le timbre y trouvait ONZE objets et la masse DOUZE.
+    //
+    // Chaque descripteur porte désormais l'écart qu'on ENTEND sur lui, et une frontière doit passer
+    // un plancher absolu. `pics` ne pouvait pas le faire : il ne juge que des rapports au maximum de
+    // la courbe, donc un son sans frontière voyait ses plus grosses ondulations devenir des sommets.
+    const son = tampon(2 * SR, (i) => {
+      const t = i / SR;
+      let v = 0;
+      for (let h = 1; h <= 3; h++) v += (0.3 / h) * Math.sin(2 * Math.PI * 330 * h * t);
+      return v;
+    });
+    for (const critere of ["masse", "timbre"] as const) {
+      const objets = decouperEnObjets(son, { critere, ...OPTS, sensibilite: 40 });
+      expect(objets.length, `${critere} : ${objets.length} objet(s) sur un son qui ne change pas`).toBe(1);
+    }
+    // ET À TOUTE SENSIBILITÉ, le plancher étant absolu là où la sensibilité est un rapport.
+    for (const sensibilite of [0, 20, 60, 100]) {
+      for (const critere of ["masse", "timbre"] as const) {
+        const n = decouperEnObjets(son, { critere, ...OPTS, sensibilite }).length;
+        expect(n, `${critere} à sensibilité ${sensibilite} : ${n} objet(s)`).toBe(1);
+      }
+    }
+  });
+
+  it("LES TROIS CRITÈRES DU TRAITÉ SONT RELEVÉS PAR OBJET, et un objet trop court le dit", () => {
+    const h = hasard(11);
+    const son = tampon(5 * SR, (i) => {
+      const t = i / SR;
+      // Une tenue harmonique de deux secondes, un silence, puis un bruit blanc de deux secondes.
+      if (t < 2) {
+        let v = 0;
+        for (let k = 1; k <= 4; k++) v += (0.3 / k) * Math.sin(2 * Math.PI * 330 * k * t);
+        return v;
+      }
+      return t > 2.5 ? 0.3 * h() : 0;
+    });
+    const [tenue, bruit] = decouperEnObjets(son, { critere: "silences", ...OPTS, seuilSilenceDb: -50 });
+    const dit = `tenue : ${tenue.masse}/${tenue.forme}/${tenue.allure} ;`
+      + ` bruit : ${bruit.masse}/${bruit.forme}/${bruit.allure}`;
+    expect(tenue.masse, dit).toBe("tonique");
+    expect(bruit.masse, dit).toBe("blanc");
+    expect(tenue.degreMasse, dit).toBeLessThan(bruit.degreMasse);
+    // Ni l'un ni l'autre n'ondule : tous deux reçoivent « aucune », et leur irrégularité est nulle.
+    expect(tenue.allure, dit).toBe("aucune");
+    expect(tenue.irregularite, dit).toBeNull();
+    // Et la forme dynamique de la tenue est bien une tenue, celle du bruit aussi.
+    expect(tenue.forme, dit).toBe("tenue");
+  });
+
   it("la sensibilité décide du nombre d'objets", () => {
     const son = frappes([0.2, 0.5, 0.8, 1.1, 1.4, 1.7], 2.2, (k) => 300 * (1 + (k % 2)));
     const peu = decouperEnObjets(son, { critere: "attaques", ...OPTS, sensibilite: 0 }).length;
@@ -121,6 +218,88 @@ describe("réordonner les objets", () => {
     const y = reordonnerObjets(son, objets, { critere: "origine", decroissant: false, espaceMs: 0, fonduMs: 10 }).getChannelData(0);
     expect(y[0]).toBe(0);
     expect(Math.abs(y[SR - 1])).toBeLessThan(1e-3);
+  });
+
+  it("PAR MASSE CROISSANTE : du son pur au bruit blanc, dans l'ordre de l'échelle du Traité", () => {
+    // L'ÉCHELLE DU TRAITÉ EST ORDONNÉE, et c'est elle qui ordonne : du plus tonique au plus
+    // complexe. Les quatre objets sont mis dans le son à contre-ordre, et le tri les remet.
+    const h = hasard(21);
+    const son = tampon(4 * SR, (i) => {
+      const t = i / SR;
+      if (t < 1) return 0.3 * h();
+      if (t < 2) {
+        let v = 0;
+        for (let k = 1; k <= 3; k++) v += (0.25 / k) * Math.sin(2 * Math.PI * 220 * k * t) + (0.25 / k) * Math.sin(2 * Math.PI * 311 * k * t);
+        return v;
+      }
+      if (t < 3) {
+        let v = 0;
+        for (let k = 1; k <= 4; k++) v += (0.3 / k) * Math.sin(2 * Math.PI * 330 * k * t);
+        return v;
+      }
+      return 0.4 * Math.sin(2 * Math.PI * 440 * t);
+    });
+    const objets = decrireZones(son, [0, 1, 2, 3].map((d) => ({ debut: d + 0.02, duree: 0.9 })));
+    const vus = objets.map((o) => o.masse);
+    expect(vus, `relevé : ${vus.join(" ")}`).toEqual(["blanc", "groupe", "tonique", "pur"]);
+    const range = reordonnerObjets(son, objets, { critere: "masse", decroissant: false, espaceMs: 0, fonduMs: 0 });
+    const apres = decrireZones(range, [0, 1, 2, 3].map((d) => ({ debut: d + 0.02, duree: 0.85 })));
+    expect(apres.map((o) => o.masse), `après tri : ${apres.map((o) => o.masse).join(" ")}`)
+      .toEqual(["pur", "tonique", "groupe", "blanc"]);
+  });
+
+  it("PAR ATTAQUE : du plus mordant au plus progressif, et c'est la grandeur qui ordonne la dynamique", () => {
+    // UNE FORME DYNAMIQUE NE SE TRIE PAS : « crescendo » ne vient ni avant ni après « impulsion ».
+    // La grandeur qui l'ordonne est l'attaque, du dixième aux neuf dixièmes du sommet.
+    const son = tampon(3 * SR, (i) => {
+      const t = i / SR;
+      const dans = t % 1;
+      // Trois objets d'une seconde : attaque lente, immédiate, moyenne.
+      const montee = [0.8, 0.002, 0.25][Math.floor(t)];
+      const g = Math.min(1, dans / montee);
+      return 0.4 * g * Math.sin(2 * Math.PI * 440 * t);
+    });
+    const objets = decrireZones(son, [0, 1, 2].map((d) => ({ debut: d, duree: 0.98 })));
+    const attaques = objets.map((o) => o.attaqueMs);
+    expect(attaques[1], `attaques : ${attaques.map((a) => a.toFixed(0)).join(" ")} ms`).toBeLessThan(attaques[2]);
+    expect(attaques[2], `attaques : ${attaques.map((a) => a.toFixed(0)).join(" ")} ms`).toBeLessThan(attaques[0]);
+    const range = reordonnerObjets(son, objets, { critere: "attaque", decroissant: false, espaceMs: 0, fonduMs: 0 });
+    const apres = decrireZones(range, [0, 1, 2].map((d) => ({ debut: d, duree: 0.95 })));
+    const triees = apres.map((o) => o.attaqueMs);
+    expect(triees[0], `après tri : ${triees.map((a) => a.toFixed(0)).join(" ")} ms`).toBeLessThan(triees[1]);
+    expect(triees[1], `après tri : ${triees.map((a) => a.toFixed(0)).join(" ")} ms`).toBeLessThan(triees[2]);
+  });
+
+  it("PAR ALLURE : de la machine au désordre, et un objet sans allure se range d'un seul côté", () => {
+    // Trois objets de deux secondes, assez longs pour qu'une allure s'y observe : une ondulation de
+    // période immuable, une dont la cadence s'écarte de vingt pour cent, et une tenue qui n'ondule
+    // pas du tout. L'ordre attendu est celui de l'échelle, et la tenue va au bout.
+    const porteuse = (t: number) => {
+      let v = 0;
+      for (let h = 1; h <= 3; h++) v += (0.3 / h) * Math.sin(2 * Math.PI * 440 * h * t);
+      return v;
+    };
+    const son = tampon(6 * SR, (i) => {
+      const t = i / SR, dans = t % 2;
+      if (t < 2) return porteuse(t);
+      if (t < 4) {
+        // La cadence s'écarte de vingt pour cent : une allure désordonnée.
+        const phase = 5 * dans + ((0.2 * 5) / (2 * Math.PI * 0.6)) * Math.sin(2 * Math.PI * 0.6 * dans);
+        return (0.7 + 0.3 * (0.5 + 0.5 * Math.sin(2 * Math.PI * phase))) * porteuse(t);
+      }
+      return (0.7 + 0.3 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 5 * dans))) * porteuse(t);
+    });
+    const objets = decrireZones(son, [0, 2, 4].map((d) => ({ debut: d + 0.01, duree: 1.95 })));
+    const vus = objets.map((o) => `${o.allure}/${o.irregularite === null ? "—" : o.irregularite.toFixed(3)}`);
+    expect(objets[0].allure, `relevé : ${vus.join(" ")}`).toBe("aucune");
+    expect(objets[0].irregularite, `relevé : ${vus.join(" ")}`).toBeNull();
+    expect(objets[2].allure, `relevé : ${vus.join(" ")}`).toBe("mecanique");
+    expect(objets[1].allure, `relevé : ${vus.join(" ")}`).toBe("desordonnee");
+    // LE TRI MET LA MACHINE EN TÊTE ET LA TENUE AU BOUT : une irrégularité absente vaut l'infini.
+    const range = reordonnerObjets(son, objets, { critere: "allure", decroissant: false, espaceMs: 0, fonduMs: 0 });
+    const apres = decrireZones(range, [0, 2, 4].map((d) => ({ debut: d + 0.01, duree: 1.9 })));
+    expect(apres.map((o) => o.allure), `après tri : ${apres.map((o) => o.allure).join(" ")}`)
+      .toEqual(["mecanique", "desordonnee", "aucune"]);
   });
 
   it("au hasard, à graine égale, le même ordre", () => {

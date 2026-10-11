@@ -40,6 +40,18 @@ import { fft } from "./fft";
 export const MASSES = ["pur", "tonique", "groupe", "nodal", "blanc", "aucune"] as const;
 export type EspeceMasse = (typeof MASSES)[number];
 
+/**
+ * Le degré d'une masse sur l'échelle, de 0 pour le son pur à 4 pour le bruit blanc.
+ *
+ * L'ÉCHELLE DU TRAITÉ EST ORDONNÉE, et c'est ce qui permet de ranger des objets par leur masse : du
+ * plus tonique au plus complexe est un geste de composition, non une commodité de tri. « aucune »
+ * n'est pas un degré, et reçoit un rang au-delà des cinq pour se ranger d'un seul côté.
+ */
+export const degreDeMasse = (espece: EspeceMasse): number => MASSES.indexOf(espece);
+
+/** Le degré d'une allure, de 0 pour la mécanique à 2 pour la désordonnée. */
+export const degreDAllure = (espece: EspeceAllure): number => ALLURES.indexOf(espece);
+
 export interface Masse {
   /** Le degré de l'échelle. « aucune » pour un son trop faible ou trop court. */
   espece: EspeceMasse;
