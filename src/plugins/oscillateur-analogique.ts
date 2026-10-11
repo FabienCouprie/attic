@@ -126,7 +126,9 @@ export const fiches: FicheAudio[] = ([
         forme,
         frequence,
         duree: ctx.paramNombre("Durée", 1.5),
-        largeur: ctx.paramNombre("Largeur", 50) / 100,
+        // Le repli est le défaut déclaré, vingt-cinq : il portait cinquante, la valeur d'avant que
+        // le créneau au quart soit retenu, et un graphe ancien sortait donc symétrique.
+        largeur: ctx.paramNombre("Largeur", 25) / 100,
         modulationLargeur: ctx.paramNombre("Modulation de largeur", 0) / 100,
         vitesseModulation: ctx.paramNombre("Vitesse de modulation", 0.5),
         voix,

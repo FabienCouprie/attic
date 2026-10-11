@@ -18,7 +18,7 @@
 //
 // LES FICHES BÂTIES PAR `effet()` NE SONT PAS CONCERNÉES : ce socle lit les bornes lui-même, et
 // passe déjà `m.defauts ?? m.bornes` en repli.
-import { readFileSync, readdirSync } from "node:fs";
+import { appelsDeReglage } from "../docs/appels-de-reglage";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { toutesLesFiches } from "./index";
@@ -38,30 +38,20 @@ function coursesDesBornes(): Map<string, [number, number]> {
 describe("le repli des bornes d'un réglage modulé", () => {
   it("UN APPEL SUR UNE BORNE QUI N'EST PAS DE ZÉRO À CENT DONNE SON REPLI", () => {
     const courses = coursesDesBornes();
-    const racine = join(process.cwd(), "src", "plugins");
+    // LE BLOC D'UN APPEL SE LIT JUSQU'À SA FERMETURE, et non sur un nombre de lignes. Ce contrôle
+    // lisait une fenêtre de six lignes : un appel qui porte trois lignes de commentaire la dépasse,
+    // et le garde annonçait alors un argument manquant qui était écrit deux lignes plus bas.
+    // `docs/appels-de-reglage.ts` compte les accolades, et les deux contrats y passent.
     const exposes: string[] = [];
     let examines = 0;
-
-    for (const nom of readdirSync(racine)) {
-      if (!/\.ts$/.test(nom) || /\.test\./.test(nom)) continue;
-      const lignes = readFileSync(join(racine, nom), "utf-8").split(/\r?\n/);
-      let fiche = "";
-      for (let i = 0; i < lignes.length; i++) {
-        const mId = /id: "([a-z0-9-]+)"/.exec(lignes[i]) ?? /effet\("([a-z0-9-]+)"/.exec(lignes[i]);
-        if (mId) fiche = mId[1];
-        if (!/reglageModule\(/.test(lignes[i])) continue;
-        // L'objet d'options tient sur l'appel et les quelques lignes qui le suivent.
-        const bloc = lignes.slice(i, i + 6).join(" ");
-        const r = /reglage: "([^"]+)"/.exec(bloc);
-        if (!r) continue;
-        examines++;
-        if (/bornes:/.test(bloc)) continue;
-        const course = courses.get(`${fiche}|${r[1]}`);
-        if (!course) continue;
-        if (course[0] === 0 && course[1] === 100) continue;
-        exposes.push(`${nom}:${i + 1} · ${fiche} · « ${r[1]} » : borne de ${course[0]}`
-          + ` à ${course[1]}, repli laissé à 0-100`);
-      }
+    for (const a of appelsDeReglage(join(process.cwd(), "src"))) {
+      examines++;
+      if (/bornes:/.test(a.bloc)) continue;
+      const course = courses.get(`${a.fiche}|${a.reglage}`);
+      if (!course) continue;
+      if (course[0] === 0 && course[1] === 100) continue;
+      exposes.push(`${a.fichier}:${a.ligne} · ${a.fiche} · « ${a.reglage} » :`
+        + ` borne de ${course[0]} à ${course[1]}, repli laissé à 0-100`);
     }
 
     // Le contrôle n'a de sens que s'il voit les appels : trente-huit en novembre 2026.

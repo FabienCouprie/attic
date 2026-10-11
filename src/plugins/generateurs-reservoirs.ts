@@ -225,7 +225,7 @@ export const fiches: FicheAudio[] = ([
         melodieInstrument: ctx.paramNombre("Instrument mélodie", -1),
         basseInstrument: ctx.paramNombre("Instrument basse", -1),
         harmonieInstrument: ctx.paramNombre("Instrument harmonie", -1),
-        rythmeInstrument: ctx.paramNombre("Kit de batterie", 0),
+        rythmeInstrument: ctx.paramNombre("Kit de batterie", 16384),
         rythmeTranspose: ctx.paramNombre("Transpose batterie", 0),
         influence: ctx.paramNombre("Influence", 50) / 100,
       };
