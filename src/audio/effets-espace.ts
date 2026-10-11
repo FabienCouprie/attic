@@ -10,20 +10,24 @@ export function trajectoirePanoramique(
   courbe: unknown,
   nPoints: number,
   position: number,
-  largeur: number,
+  largeur: number | Float32Array,
   plage: { min: number; max: number },
 ): Float32Array {
   const n = Math.max(2, Math.round(nPoints));
   const positions = valeursParametre(courbe, n, position, plage);
+  // LA LARGEUR SE LIT À LA CADENCE DE LA TRAJECTOIRE, deux cents points par seconde, et non par
+  // échantillon : c'est déjà la cadence que ce composant emploie pour sa position, et demander
+  // quarante-quatre mille points pour un déplacement que l'oreille suit en gros n'apporterait rien.
+  //
   // × 5 : l'unité du `PannerNode` est une distance, et cinq mètres de part et d'autre placent la
   // source assez loin pour que les deux oreilles entendent vraiment autre chose.
-  return Float32Array.from(positions, (p) => p * largeur * 5);
+  return Float32Array.from(positions, (p, i) => p * valeurA(largeur, i) * 5);
 }
 
 export async function spatialiserStereo(
   buffer: AudioBuffer,
   positionX: number,
-  largeur: number,
+  largeur: number | Float32Array,
   courbe?: unknown,
   plage: { min: number; max: number } = { min: -1, max: 1 },
 ): Promise<AudioBuffer> {

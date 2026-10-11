@@ -146,14 +146,22 @@ export function granularFreeze(
   buffer: AudioBuffer,
   grainSizeMs: number,
   pitch: number,
-  position: number,
+  // LA POSITION EST EN POUR CENT, comme à l'écran, et non en fraction : la division se fait donc
+  // ICI, en double précision. La faire chez l'appelant obligerait à ranger le quotient dans un
+  // tableau en simple précision, et une courbe plate ne rendrait plus ce que rend le réglage.
+  positionPourCent: number | Float32Array,
   // LE MÉLANGE PEUT VARIER AU FIL DU SON. `valeurA` rend un scalaire tel quel : il n'y a donc pas
   // deux chemins de calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
   mix: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const grainSize = Math.max(1, Math.round(grainSizeMs / 1000 * sr));
-  const start = Math.floor(position * Math.max(0, buffer.length - grainSize));
+  // LE GEL SE MET À GLISSER, et c'est admis : décision de Fabien. Sans courbe, l'origine du grain
+  // est calculée une fois et le composant gèle ; avec une courbe, elle se déplace au fil du son,
+  // et ce qui sort est un balayage de la source plutôt qu'un gel. C'est un autre geste, et le port
+  // est là pour qu'on le demande explicitement.
+  const startA = (i: number) =>
+    Math.floor((valeurA(positionPourCent, i) / 100) * Math.max(0, buffer.length - grainSize));
   const ratio = Math.pow(2, pitch / 12);
 
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
@@ -162,7 +170,7 @@ export function granularFreeze(
     const dst = resultat.getChannelData(c);
     let phase = 0;
     for (let i = 0; i < buffer.length; i++) {
-      const idx = start + (Math.floor(phase) % grainSize);
+      const idx = startA(i) + (Math.floor(phase) % grainSize);
       const wet = src[idx];
       const m = valeurA(mix, i) / 100;
       dst[i] = src[i] * (1 - m) + wet * m;

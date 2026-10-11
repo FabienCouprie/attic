@@ -10,7 +10,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { valeursParametre } from "../audio/courbe";
 
-import { effet } from "./effets-aides";
+import { CADENCE } from "../audio/courbe";
+import { bornesModulation, effet, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -147,6 +148,7 @@ export const fiches: FicheAudio[] = ([
       // Ajoutée EN DERNIER : les prises sont identifiées par leur rang, l'insérer avant l'audio
       // aurait déplacé les branchements de tous les graphes enregistrés.
       { nom: "Modulation", nomEn: "Modulation", type: "courbe", requis: false, module: "Position" },
+      portModulation("Largeur", "Width", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -160,13 +162,18 @@ export const fiches: FicheAudio[] = ([
         docEn: "Position that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Position", type: "curseur", plage: [-100, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Position que vaut le un de la courbe.", docEn: "Position that the curve's one means." },
+      ...bornesModulation(modulationNommee("Largeur", "Width", [0, 200], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
       if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       const { spatialiserStereo } = await import("../audio");
       const pos = ctx.paramNombre("Position", 0) / 100;
-      const larg = ctx.paramNombre("Largeur", 100) / 100;
+      // LA LARGEUR SE LIT À LA CADENCE DE LA TRAJECTOIRE, non par échantillon : c'est déjà celle
+      // que ce composant emploie pour sa position, deux cents points par seconde.
+      const larg = reglageModule(ctx, Math.round((a.length / a.sampleRate) * CADENCE), 2, {
+        reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"],
+      });
       return { valeurs: [await spatialiserStereo(a, pos, larg, ctx.entree(1), {
         min: ctx.paramNombre("Modulation min", -100) / 100,
         max: ctx.paramNombre("Modulation max", 100) / 100,

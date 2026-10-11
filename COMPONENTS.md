@@ -6041,12 +6041,13 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 
 *Loops a grain with size and pitch control.*
 
-Extracts a small grain at the chosen position and loops it across the whole duration. Control grain size, pitch transposition and mix. Useful for creating drone textures, freeze effects or abstract granular sounds.
+Extracts a small grain at the chosen position and loops it across the whole duration. Control grain size, pitch transposition and mix. Useful for creating drone textures, freeze effects or abstract granular sounds. The mix accepts a curve through the « Modulation » input, the position through « Modulation position », with « Position min » and « Position max ». A curve on the position moves the grain's origin along the sound: what comes out is then a sweep of the source, not a freeze.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation position | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6057,6 +6058,8 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
 
 #### Haas Effect
 
@@ -6191,12 +6194,14 @@ Synthesises sound grains with a single generator, set in seven species selected 
 
 *Spins lows and highs on two rotors: the path varies, and with it the pitch and the level.*
 
-Spins lows and highs on two rotors of different sizes and rates. The sound is split into two bands by « Crossover »: the highs go to the horn, the lows to the drum. Each rotor carries the source away and brings it back, which lengthens and shortens the path of the sound. The delay varies, and the pitch with it; the level varies too, the rotor facing the microphone and turning away from it in turn. « Horn rate » and « Drum rate » are the turns per second of each rotor. The horn has the wider radius and gives the larger pitch deviation. Turning the drum slower than the horn is what keeps the two bands from beating together. « Doppler depth » is the share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone; at zero the pitch no longer moves and only the level variation remains. « Amplitude depth » is the level difference between the moment a rotor faces the microphone and the moment it turns away. « Width » is the angle between the two microphones around the axis: at a hundred per cent they are opposite and see the rotors pass half a turn apart, at zero they sit at the same place and the two channels coincide. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample on both channels. The split is a fourth-order Linkwitz-Riley filter, whose two bands sum to a flat magnitude. The « Audio » output is always in stereo, even from a single-channel input: the rotation is what creates it, the two microphones not seeing the rotors pass at the same moment. The message recalls the horn rate and the pitch deviation that results from it.
+Spins lows and highs on two rotors of different sizes and rates. The sound is split into two bands by « Crossover »: the highs go to the horn, the lows to the drum. Each rotor carries the source away and brings it back, which lengthens and shortens the path of the sound. The delay varies, and the pitch with it; the level varies too, the rotor facing the microphone and turning away from it in turn. « Horn rate » and « Drum rate » are the turns per second of each rotor. The horn has the wider radius and gives the larger pitch deviation. Turning the drum slower than the horn is what keeps the two bands from beating together. « Doppler depth » is the share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone; at zero the pitch no longer moves and only the level variation remains. « Amplitude depth » is the level difference between the moment a rotor faces the microphone and the moment it turns away. « Width » is the angle between the two microphones around the axis: at a hundred per cent they are opposite and see the rotors pass half a turn apart, at zero they sit at the same place and the two channels coincide. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample on both channels. The split is a fourth-order Linkwitz-Riley filter, whose two bands sum to a flat magnitude. The « Audio » output is always in stereo, even from a single-channel input: the rotation is what creates it, the two microphones not seeing the rotors pass at the same moment. The message recalls the horn rate and the pitch deviation that results from it. Both depths accept a curve, through « Modulation amplitude depth » and « Modulation doppler depth », each with its two bounds. The pitch deviation reported is then the one at the start of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation amplitude depth | curve |  |
+| input | Modulation doppler depth | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6210,6 +6215,10 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample on both channels. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Amplitude depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Amplitude depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that the curve's one means. |
+| Doppler depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Doppler depth » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Doppler depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Doppler depth » that the curve's one means. |
 
 #### Sample Formula
 
@@ -7300,12 +7309,13 @@ This node lays the frequencies of a sound across stereo space: each band comes o
 
 *Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo.*
 
-After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention. A panner places a source; it cannot take a whole recording and turn it around the listener. That is what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly. Pressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being. What this node does not claim to do: recover the original scene. It reconstitutes a plausible one, two sources at the usual listening angles, and treats it as a field. With no rotation it renders the two channels in the right order, the image narrowed by the decoding and the level multiplied by 1.5, that is 3.5 dB more: encoding followed by decoding is not unity gain, and this node does not normalise, failing which the rotation would only be heard as a level change. A mono take has no scene to turn. Two identical channels give a field whose left-right component is L−R, hence zero: only one direction remains, and turning it moves the source to one side instead of turning anything. On a frequency generator: at 90°, 9.5 dB between the channels, a plain pan, which is audible; at 180°, strictly nothing, since swapping two identical channels leaves them identical, only the level dropping. The node therefore shows the directional share of the field it received: at zero, no angle will change its output. The rotation is heard on an image that already exists (two panned sources, a widening upstream) driven by a curve on the Modulation input.
+After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal of the Audio Engineering Society 21(1), 1973, and the Ambisonic system's B-format convention. A panner places a source; it cannot take a whole recording and turn it around the listener. That is what ambisonics brings: the sound field is represented by four quantities independent of any loudspeaker, and a rotation there is a simple rotation of two of them. Turning a stereo scene otherwise would require separating the sources, which nobody can do cleanly. Pressure and height do not turn: one has no direction, the other is the axis of rotation. Turning a scene therefore costs two multiplications per sample, and that is the format's reason for being. What this node does not claim to do: recover the original scene. It reconstitutes a plausible one, two sources at the usual listening angles, and treats it as a field. With no rotation it renders the two channels in the right order, the image narrowed by the decoding and the level multiplied by 1.5, that is 3.5 dB more: encoding followed by decoding is not unity gain, and this node does not normalise, failing which the rotation would only be heard as a level change. A mono take has no scene to turn. Two identical channels give a field whose left-right component is L−R, hence zero: only one direction remains, and turning it moves the source to one side instead of turning anything. On a frequency generator: at 90°, 9.5 dB between the channels, a plain pan, which is audible; at 180°, strictly nothing, since swapping two identical channels leaves them identical, only the level dropping. The node therefore shows the directional share of the field it received: at zero, no angle will change its output. The rotation is heard on an image that already exists (two panned sources, a widening upstream) driven by a curve on the Modulation input. The decoder width accepts a curve in turn, through the « Modulation opening » input, with « Opening min » and « Opening max »: the two virtual microphones spread apart or close in along the sound. A fixed angle keeps its single cosine and sine; an angle that moves pays a pair per sample, and the decoding calls for two.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation opening | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -7315,6 +7325,8 @@ After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal o
 | Decoder width | slider | 90 ° | 30 – 180 °, step 5 | Angle between the two virtual microphones of the decoding. Narrow, the image is tight but coherent; wide, it separates further at the cost of a dip in the centre. |
 | Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 360 ° | -360 – 360 °, step 5 | Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle. |
+| Decoder width min | slider | 60 ° | 30 – 180 °, step 1 | Value of « Decoder width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Decoder width max | slider | 150 ° | 30 – 180 °, step 1 | Value of « Decoder width » that the curve's one means. |
 
 #### Auto-pan
 
@@ -7500,12 +7512,13 @@ Widens a stereo image with decorrelated early reflections, including on a mono s
 
 *Positions the sound in stereo space (left/right).*
 
-Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for realistic binaural spatialization. Position (-100% to 100%) controls left/right, Width (0% to 100%) controls the effect range. Useful for placing an instrument in a mix or creating a spatial movement effect.
+Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for realistic binaural spatialization. Position (-100% to 100%) controls left/right, Width (0% to 100%) controls the effect range. Useful for placing an instrument in a mix or creating a spatial movement effect. The width accepts a curve, through « Modulation width », with « Width min » and « Width max ». It is read there at the trajectory's rate, two hundred points per second, which is already the one used for the position.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation width | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -7514,6 +7527,8 @@ Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for re
 | Width | slider | 100 % | 0 – 100 %, step 1 | Extent of the movement around the position: 0% leaves the sound in the centre, 100% takes it all the way to the set position. The sound is first folded to mono; no effect when the position is centred and no curve is connected. |
 | Modulation min | slider | -100 % | -100 – 100 %, step 1 | Position that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | -100 – 100 %, step 1 | Position that the curve's one means. |
+| Width min | slider | 0 % | 0 – 200 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Width max | slider | 200 % | 0 – 200 %, step 1 | Value of « Width » that the curve's one means. |
 
 #### Stereo Width / MS
 

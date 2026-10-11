@@ -15,6 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hautParleurRotatif, tremoloHarmonique } from "../audio/rotatifs";
+import { valeurA } from "../audio/courbe";
 import { MODULATION_MELANGE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
 const canauxDe = (a: AudioBuffer): Float32Array[] =>
@@ -94,7 +95,12 @@ export const fiches: FicheAudio[] = ([
     resume: "Fait tourner le grave et l'aigu sur deux rotors : le trajet varie, donc la hauteur et le niveau.",
     resumeEn: "Spins lows and highs on two rotors: the path varies, and with it the pitch and the level.",
     etiquettes: ["rotatif", "rotary", "leslie", "doppler", "cabine", "orgue"],
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mélange")],
+    entrees: [
+      { nom: "Audio", type: "audio", sousType: "stereo" },
+      portModulation("Mélange"),
+      portModulation("Profondeur d'amplitude", "Amplitude depth", { court: false }),
+      portModulation("Profondeur du Doppler", "Doppler depth", { court: false }),
+    ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Vitesse de la trompe", nomEn: "Horn rate", type: "curseur", plage: [0.2, 12], pas: 0.1, defaut: 6.7, unite: "tr/s",
@@ -119,6 +125,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Part de son traité dans la sortie. À zéro, l'entrée ressort échantillon pour échantillon sur les deux canaux.",
         docEn: "Share of treated sound in the output. At zero, the input comes out sample for sample on both channels." },
       ...bornesModulation(MODULATION_MELANGE),
+      ...bornesModulation(modulationNommee("Profondeur d'amplitude", "Amplitude depth", [0, 100], "%")),
+      ...bornesModulation(modulationNommee("Profondeur du Doppler", "Doppler depth", [0, 100], "%")),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -126,19 +134,27 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
       }
       const vitesseAigu = ctx.paramNombre("Vitesse de la trompe", 6.7);
-      const doppler = ctx.paramNombre("Profondeur du Doppler", 100) / 100;
+      const doppler = reglageModule(ctx, a.length, 3, {
+        reglage: "Profondeur du Doppler", defaut: 100,
+        noms: ["Profondeur du Doppler min", "Profondeur du Doppler max"],
+      });
       const canaux = hautParleurRotatif(canauxDe(a), a.sampleRate, {
         vitesseAigu,
         vitesseGrave: ctx.paramNombre("Vitesse du tambour", 1.2),
         coupure: ctx.paramNombre("Coupure", 800),
-        profondeurAmplitude: ctx.paramNombre("Profondeur d'amplitude", 70) / 100,
+        profondeurAmplitude: reglageModule(ctx, a.length, 2, {
+          reglage: "Profondeur d'amplitude", defaut: 70,
+          noms: ["Profondeur d'amplitude min", "Profondeur d'amplitude max"],
+        }),
         profondeurDoppler: doppler,
         largeur: ctx.paramNombre("Largeur", 100) / 100,
         melange: reglageModule(ctx, a.length, 1, { reglage: "Mélange" }),
       });
       // L'ÉCART DE HAUTEUR EST RENDU PLUTÔT QUE LE RÉGLAGE, parce qu'il ne se règle pas : il
       // sort du rayon et de la vitesse, et c'est lui qu'on entend.
-      const cents = 1200 * Math.log2(1 + (2 * Math.PI * vitesseAigu * 0.17 * doppler) / 343);
+      // Avec une courbe, l'écart annoncé est celui du DÉBUT du son : le message rend un chiffre,
+      // et une profondeur qui se déplace en vaudrait autant qu'il y a d'instants.
+      const cents = 1200 * Math.log2(1 + (2 * Math.PI * vitesseAigu * 0.17 * valeurA(doppler, 0)) / 343);
       return {
         valeurs: [versTampon(canaux, a.sampleRate)],
         message: traduire("msg.rotatif.resultat", vitesseAigu.toFixed(1), cents.toFixed(1)),

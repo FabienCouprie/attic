@@ -116,13 +116,13 @@ describe("le gel granulaire ouvert à une courbe", () => {
 
   it("SANS COURBE, LE SON EST IDENTIQUE AU BIT PRÈS", () => {
     expect(memes(
-      canal(granularFreeze(x, 50, 0, 0.25, 40)),
-      canal(granularFreeze(x, 50, 0, 0.25, tenue(40, x.length))),
+      canal(granularFreeze(x, 50, 0, 25, 40)),
+      canal(granularFreeze(x, 50, 0, 25, tenue(40, x.length))),
     )).toBe(true);
   });
 
   it("ET UNE COURBE TENUE À ZÉRO REND L'ENTRÉE, exactement", () => {
-    expect(memes(canal(granularFreeze(x, 50, 0, 0.25, tenue(0, x.length))), x.getChannelData(0))).toBe(true);
+    expect(memes(canal(granularFreeze(x, 50, 0, 25, tenue(0, x.length))), x.getChannelData(0))).toBe(true);
   });
 
   it("une courbe qui monte de zéro à un ne rend NI l'un NI l'autre", () => {
@@ -130,9 +130,9 @@ describe("le gel granulaire ouvert à une courbe", () => {
     // alors le son de sa première valeur, donc l'entrée telle quelle.
     const rampe = new Float32Array(x.length);
     for (let i = 0; i < rampe.length; i++) rampe[i] = (100 * i) / rampe.length;
-    const y = canal(granularFreeze(x, 50, 0, 0.25, rampe));
+    const y = canal(granularFreeze(x, 50, 0, 25, rampe));
     expect(memes(y, x.getChannelData(0))).toBe(false);
-    expect(memes(y, canal(granularFreeze(x, 50, 0, 0.25, 100)))).toBe(false);
+    expect(memes(y, canal(granularFreeze(x, 50, 0, 25, 100)))).toBe(false);
   });
 });
 

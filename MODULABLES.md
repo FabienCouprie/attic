@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 121, sur 64 composants
-- **réglages restant à faire** : 31, sur 20 composants et 24 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 126, sur 64 composants
+- **réglages restant à faire** : 26, sur 18 composants et 19 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 42, sur 19 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -42,29 +42,20 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
 
-### espace · 5
-
-- Rotation ambisonique `ambisonique` : Ouverture
-- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
-- Granular freeze `granular-freeze` : Position
-- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
-- Spatialisation stéréo `spatialisation-stereo` : Largeur
-
 ### temps · 3
 
 - Ampleur `ampleur` : Pré-délai
 - Delay stéréo `delay-stereo` : Temps G, Temps D
 - Écho flottant `echo-flottant` : Décroissance
 
-### niveau · 2
-
-- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
-- Micromontage `micromontage` : Niveau
-
 ### retroaction · 2
 
 - Beat Repeat / Stutter `beat-repeat` : Feedback
 - Delay stéréo `delay-stereo` : Feedback
+
+### espace · 1
+
+- Arc-en-ciel acoustique `arc-en-ciel-acoustique` : Ouverture
 
 ### hauteur · 1
 
@@ -73,6 +64,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 ### melange · 1
 
 - Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
+
+### niveau · 1
+
+- Micromontage `micromontage` : Niveau
 
 ## Familles écartées en bloc
 
@@ -177,6 +172,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 
 ## Acceptent déjà une courbe
 
+- `ambisonique` : Ouverture
 - `ambisonique` : Rotation
 - `ampleur` : Mix
 - `amplificateur` : Gain
@@ -237,7 +233,10 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `gate-expandeur` : Seuil
 - `glissando-interieur` : Mix
 - `granular-freeze` : Mix
+- `granular-freeze` : Position
 - `haut-parleur-rotatif` : Mélange
+- `haut-parleur-rotatif` : Profondeur d'amplitude
+- `haut-parleur-rotatif` : Profondeur du Doppler
 - `largeur-stereo` : Largeur
 - `limiteur` : Plafond
 - `limiteur` : Relâchement
@@ -275,6 +274,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `reverberation-velours` : Mélange
 - `ring-modulator` : Mix
 - `shimmer` : Mix
+- `spatialisation-stereo` : Largeur
 - `spatialisation-stereo` : Position
 - `spatialiseur` : Azimut
 - `spatialiseur` : Distance

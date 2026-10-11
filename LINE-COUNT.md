@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232404 lines, of which 158962 are code.**
+**1317 files, 232489 lines, of which 159016 are code.**
 The table lists the 184 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155103 lines.
+the remaining 1133 account for 155171 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -64,7 +64,7 @@ the remaining 1133 account for 155103 lines.
 | src/audio/generation-patrons.ts | 333 | 344 |  |
 | src/plugins/effets-temporel.ts | 333 | 463 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
-| src/plugins/effets-spectral.ts | 329 | 433 |  |
+| src/plugins/effets-spectral.ts | 330 | 437 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/audio/courbe.ts | 328 | 679 |  |
 | src/plugins/tone-synths.ts | 328 | 427 |  |
@@ -126,6 +126,7 @@ the remaining 1133 account for 155103 lines.
 | src/audio/io.ts | 264 | 397 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
 | src/plugins/effets-cresson.ts | 259 | 347 |  |
+| src/plugins/modulation-cablage.test.ts | 258 | 389 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
@@ -138,7 +139,6 @@ the remaining 1133 account for 155103 lines.
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
-| src/plugins/modulation-cablage.test.ts | 246 | 376 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
