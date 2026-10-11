@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **482 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **483 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 92 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 93 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 43 | [Analysis](#analysis-1) (19) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -454,6 +454,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
 | [Frequency Generator](#frequency-generator) | Generates a pure tone at a given frequency (Hz) or note. |
 | [Harmonic Glissando](#harmonic-glissando) | Slides a whole chord into another, each voice joining its own without ever settling. |
+| [Integer Sequences](#integer-sequences) | Plays an integer sequence note by note, and measures the period of what comes out. |
 | [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
 | [Missing Fundamental](#missing-fundamental) | A run of harmonics without its fundamental, which is nonetheless heard at the pitch of that absent fundamental. |
@@ -811,6 +812,40 @@ Sounds a chord, slides it into a second one, and holds that one. No note is ever
 | Closing hold | slider | 1 s | 0 – 10 s, step 0.1 | The time the arrival chord is held after the journey. |
 | Richness | slider | 4  partials | 1 – 12  partials, step 1 | The number of harmonic partials per voice. One gives a sine. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | The peak level. It accounts for the number of voices and partials. |
+
+#### Integer Sequences
+
+`suites-entieres` · Inputs → Generation
+
+*Plays an integer sequence note by note, and measures the period of what comes out.*
+
+Plays an integer sequence by turning each term into a note, and returns the period found in the sequence of notes. The convention followed is that of the On-Line Encyclopedia of Integer Sequences player, whose page publishes the settings: a pitch modulus and offset, a duration modulus and offset, a tempo and a cutoff on the number of terms. The formula leading from a term to a note does not appear there; the one kept here is the only one that respects both published bounds, that is the offset added to the remainder of the term by the modulus. « Sequence » chooses among seven, each with its Encyclopedia reference. Fibonacci, A000045, where each term is the sum of the two before it. The digits of pi, A000796, computed by Machin's formula in exact integers. Collatz, A070165, where an even term is halved and an odd one tripled and increased by one, until it reaches one. The prime numbers, A000040. Thue-Morse, A010060, which gives the parity of the number of one bits of each rank. Recamán, A005132, which steps back by its rank when it can and forward otherwise. And Per Nørgård's infinity series, A004718, which the catalogue already computes elsewhere and which serves here as a point of comparison. « Start » is the first term of Collatz, and acts on it only: the other sequences begin at their first term and have no starting point to choose. Collatz stops by itself on reaching one, so its number of notes is a result and not a setting; from 27 it takes 111 steps and peaks at 9232. « Terms » is the number of terms played, and the bound on Collatz when it does not stop. « Pitch modulus » and « Pitch offset » bring each term onto the keyboard. A modulus of 88 with an offset of 21 covers exactly the eighty-eight keys of a piano. Changing the modulus changes what one hears of a sequence, and not only its transposition: Fibonacci reduced modulo ten is periodic with period sixty, modulo 128 with period 192. That is a quality of the method, and the message gives the period found so it can be read. « Duration modulus » and « Duration offset » do the same for the length of the notes: at one, every note lasts the same; beyond, the term decides its length too. The terms are computed in exact integers. Fibonacci leaves the ordinary precision of floating-point numbers at its seventy-ninth rank, and the remainder would then be taken on a wrong value with nothing to signal it. « Tempo » gives the length of a quarter note, « Volume » the level of the render. « Synthesis » and « Instrument » decide the engine and the timbre. The « Modulation tempo » and « Modulation volume » inputs take the place of their setting when a curve is connected, each with its two bounds; with no curve those bounds do nothing. The « Audio » output carries the render, the « MIDI » output the sequence as a file, and the « Analysis » output the terms, the period found, the number of pitches used and the smallest and largest term.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Modulation tempo | curve |  |
+| input | Modulation volume | curve |  |
+| output | Audio | audio |  |
+| output | MIDI | MIDI |  |
+| output | Analysis | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Sequence | choice | Fibonacci | Fibonacci / Digits of pi / Collatz / Prime numbers / Thue-Morse / Recamán / Infinity series | The sequence played, among seven, each with its reference in the On-Line Encyclopedia of Integer Sequences. |
+| Start | slider | 27 | 1 – 100000, step 1 | The first term of Collatz, and it acts on it only: the other sequences begin at their first term. From 27, the trajectory takes 111 steps and peaks at 9232. |
+| Terms | slider | 128 | 2 – 2048, step 1 | The number of terms played, and the bound on Collatz when it does not stop by itself. |
+| Pitch modulus | slider | 88 | 1 – 128, step 1 | The remainder by which each term is brought onto the keyboard. It decides what one hears of a sequence, and not only its transposition: Fibonacci reduced modulo ten is periodic with period sixty, modulo 128 with period 192. |
+| Pitch offset | slider | 21 | 0 – 128, step 1 | The lowest reachable note. With a modulus of 88, an offset of 21 covers exactly the eighty-eight keys of a piano. The published convention requires the sum of the two to stay below 129, and the node respects it by bounding the note. |
+| Duration modulus | slider | 1 | 1 – 5, step 1 | The remainder by which the term also decides the length of its note. At one, every note lasts the same. |
+| Duration offset | slider | 1 | 0 – 5, step 1 | The shortest length, in quarter-note steps. |
+| Tempo | slider | 120 BPM | 20 – 480 BPM, step 1 | The length of a quarter note, and the tempo written into the produced MIDI file. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto uses the SoundFont if an SF2 file is loaded, else FM synthesis. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The level of the audio render. The MIDI file does not depend on it. |
+| Tempo min | slider | 40 BPM | 20 – 480 BPM, step 1 | Value of « Tempo » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Tempo max | slider | 240 BPM | 20 – 480 BPM, step 1 | Value of « Tempo » that the curve's one means. |
+| Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
 
 #### Logarithmic Spiral
 

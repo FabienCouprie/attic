@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**482 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**483 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -468,6 +468,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | SSP (Koenig) | `ssp-koenig` | 240 × 140 |
 | Stable Audio 3 | `stable-audio-3` | 240 × 118 |
 | Sinus + transitoires + bruit (STN) | `stn-sinus-transitoires-bruit` | 240 × 162 |
+| Suites d'entiers | `suites-entieres` | 240 × 162 |
 | Suiveur de hauteur | `suiveur-hauteur` | 240 × 162 |
 | Suppression de clics | `suppression-clics` | 240 × 140 |
 | Synthèse par caractéristiques | `synthese-features` | 240 × 140 |
