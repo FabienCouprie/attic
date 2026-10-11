@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**480 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**481 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -171,6 +171,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |
 | Brassage | `brassage` | 240 × 118 |
 | Bruitage IA | `bruitage-ia` | 240 × 118 |
+| Bytebeat | `bytebeat` | 240 × 140 |
 | Caler les coupes | `caler-coupes` | 240 × 140 |
 | Canon de tempo (Nancarrow) | `canon-nancarrow` | 240 × 118 |
 | Canon par pavage | `canon-pavage` | 240 × 162 |

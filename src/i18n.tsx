@@ -742,6 +742,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.retardGranulaire.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
   "msg.granulationEcologique.rendu": { fr: "{__VAR_0__} grains · {__VAR_1__} instants · fin {__VAR_2__} s · {__VAR_3__} vers {__VAR_4__} ms · rapport {__VAR_5__}", en: "{__VAR_0__} grains · {__VAR_1__} instants · ends {__VAR_2__} s · {__VAR_3__} to {__VAR_4__} ms · ratio {__VAR_5__}" },
   "msg.vosim.rendu": { fr: "{__VAR_0__} evenements · {__VAR_1__} impulsions · {__VAR_2__} jetees · {__VAR_3__} % de silence exact · continu {__VAR_4__} · plafond {__VAR_5__}", en: "{__VAR_0__} events · {__VAR_1__} pulses · {__VAR_2__} dropped · {__VAR_3__} % exact silence · steady {__VAR_4__} · cap {__VAR_5__}" },
+  "msg.bytebeat.rendu": { fr: "{__VAR_0__} octets · {__VAR_1__} valeurs sur 256 · {__VAR_2__} % au milieu de la course", en: "{__VAR_0__} bytes · {__VAR_1__} values of 256 · {__VAR_2__} % mid-range" },
+  "msg.bytebeat.refusee": { fr: "Formule refusee : {__VAR_0__}", en: "Formula refused: {__VAR_0__}" },
   "msg.stn.parts": { fr: "Sinus {__VAR_0__} % · transitoires {__VAR_1__} % · bruit {__VAR_2__} %", en: "Sines {__VAR_0__} % · transients {__VAR_1__} % · noise {__VAR_2__} %" },
   "msg.stn.canal": { fr: "Canal {__VAR_0__}/{__VAR_1__}…", en: "Channel {__VAR_0__}/{__VAR_1__}…" },
   "msg.hauteur.suivi": { fr: "{__VAR_0__} trames · {__VAR_1__} % voisé · médiane {__VAR_2__} Hz", en: "{__VAR_0__} frames · {__VAR_1__} % voiced · median {__VAR_2__} Hz" },

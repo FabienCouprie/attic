@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **480 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **481 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 91 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (31) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 92 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -445,6 +445,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
 | [Analogue Oscillator](#analogue-oscillator) | Generates a wave through the four gestures of a voltage-controlled oscillator: width, synchronisation, detuned stack, distorted phase. |
 | [Binaural Beats](#binaural-beats) | Two close pure tones, one per ear, whose heard pulsation is in neither of them. |
+| [Bytebeat](#bytebeat) | Computes one byte per sample from an integer formula on the time counter. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
 | [Chord Run](#chord-run) | Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion. |
@@ -567,6 +568,32 @@ This node returns two pure tones of close frequencies, one per ear. A slow pulsa
 | Length | slider | 30 s | 1 – 300 s, step 1 | The length of the sound. The pulsation takes a few seconds to settle. |
 | Fade | slider | 200 ms | 0 – 2000 ms, step 10 | The opening and closing of the sound. Without them, the first and last samples are clicks. |
 | Volume | slider | 60 % | 0 – 100 %, step 1 | Output level. |
+
+#### Bytebeat
+
+`bytebeat` · Inputs → Generation
+
+*Computes one byte per sample from an integer formula on the time counter.*
+
+Generates a sound by computing one byte per sample, from an integer formula whose only variable is the time counter. After Ville-Matias Heikkilä, known as Viznut, « Algorithmic symphonies from one line of code, how and why? », countercomplex blog, 2 October 2011; and his analysis, « Discovering novel computer music techniques by exploring the space of short computer programs », arXiv 1112.1368, 6 December 2011. The original form is a one-line C program that writes one byte per sample to the audio output. « Formula » is the expression computed for each value of « t », which counts the bytes from the start, beginning at zero. The operators are those of C and they have its precedence: « t*5 & t>>7 » therefore reads as the product first, the shift next, and the bitwise and last. Recognised are the and, the or, the exclusive or, both shifts, the bitwise not, the four operations, the remainder, the six comparisons and the three-term choice. A formula carrying anything else is refused, and the message says what was not read rather than returning silence. « Rate » is the number of bytes per second. Eight thousand is the original value, and it is not a musical choice: it was the default setting of the command-line audio outputs the method was born on. It is no less a part of the sound for that, since it decides where the components folded back by sampling land: changing it does not transpose, it moves the intervals. The formula's result is folded onto eight bits, that is brought between zero and 255, and not limited to that range. This folding makes the sound: it turns a growing value into a sawtooth, whose eight square waves, one per bit, are what the ear hears. « Byte » states how that byte is read, unsigned from zero to 255 as in the original, or signed from minus 128 to 127 as in other players; the two give two different waveforms. Each byte is held until the next one, with no smoothing. That staircase hold is the sound of the method and not a shortcut: it is what carries the folding to which the author's analysis attributes the intervals. « Duration » is the rendered length, « Volume » the output level. The « Modulation rate » and « Modulation volume » inputs take the place of their setting when a curve is connected, each with its two bounds; with no curve those bounds do nothing. The rate is traversed by multiplying, an octave being a doubling. The « Audio » output carries the sound. The message gives the number of bytes computed, how many distinct values they took out of the 256 possible, and the share of the render that falls in the middle of the range.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Modulation rate | curve |  |
+| input | Modulation volume | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Formula | text | `t*(((t>>12)\|(t>>8))&(63&(t>>4)))` |  | The expression computed for each value of « t », which counts the bytes from the start. The operators are those of C and they have its precedence. A formula carrying anything other than integer arithmetic is refused, and the message says what was not read. |
+| Rate | slider | 8000 Hz | 1000 – 48000 Hz, step 100 | The number of bytes per second. Eight thousand is the original value. Changing it does not transpose the sound: it moves the intervals, the place of the components folded back by sampling depending on it. |
+| Byte | choice | Unsigned | Unsigned / Signed | How the byte is read: unsigned from zero to 255 as in the original, or signed from minus 128 to 127 as in other players. The two give two different waveforms from the same formula. |
+| Duration | slider | 8 s | 0.1 – 60 s, step 0.1 | The rendered length. A formula often takes several seconds to unfold its structure, the counter having to reach the bit ranks the shifts look at. |
+| Volume | slider | 50 % | 0 – 100 %, step 1 | The output level. The eight-bit folding carries jumps of full amplitude, and the resulting sawtooth is dense. |
+| Rate min | slider | 2000 Hz | 1000 – 48000 Hz, step 100 | Value of « Rate » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Rate max | slider | 24000 Hz | 1000 – 48000 Hz, step 100 | Value of « Rate » that the curve's one means. |
+| Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
 
 #### Cellular automaton
 
@@ -815,7 +842,7 @@ Synthesises a spectrum whose partials are in geometric progression, and makes it
 
 *Generates an audio signal from a mathematical expression.*
 
-Generates an audio signal from scratch using a mathematical expression. Variables: t (time in s), i (sample index), c (channel), ch (channel count), sr (sample rate). For example, sin(t * 2 * pi * 440) generates a 440 Hz sine. The output is clamped to [-1, 1] to avoid out-of-range signals, then scaled by the Volume parameter. Be careful with your system volume before listening to high-intensity results.
+Generates an audio signal from scratch using a mathematical expression. Variables: t (time in s), i (sample index), c (channel), ch (channel count), sr (sample rate). For example, sin(t * 2 * pi * 440) generates a 440 Hz sine. The output is clamped to [-1, 1] to avoid out-of-range signals, then scaled by the Volume parameter. Be careful with your system volume before listening to high-intensity results. The bitwise operators are available: and is written &, or |, the shifts >> and &lt;&lt;. The exclusive or, however, is written ^| or bitXor(a, b): the ^ sign alone is exponentiation. An expression using ^ while meaning the exclusive or is therefore computed as a power, and it still returns sound. Time is counted in seconds in t and in samples in i: an expression written elsewhere for a sample counter transcribes with i. And the result is limited to [-1, 1] and not folded: a value that goes beyond is brought back to the edge, it does not come round the other side.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -6414,7 +6441,7 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 
 *Applies a mathematical expression to each sample of the signal.*
 
-Applies a mathematical expression to each sample of the signal. Variables: x (current value), t (time in s), i (index), c (channel), ch (channel count), sr (sample rate). For example, y = x * 0.5 halves the volume; y = sin(t * 2 * pi * 440) + x adds a 440 Hz sine. The output is clamped to [-1, 1] to avoid out-of-range signals, then scaled by the Volume parameter. Be careful with your system volume before listening to high-intensity results.
+Applies a mathematical expression to each sample of the signal. Variables: x (current value), t (time in s), i (index), c (channel), ch (channel count), sr (sample rate). For example, y = x * 0.5 halves the volume; y = sin(t * 2 * pi * 440) + x adds a 440 Hz sine. The output is clamped to [-1, 1] to avoid out-of-range signals, then scaled by the Volume parameter. Be careful with your system volume before listening to high-intensity results. The bitwise operators are available: and is written &, or |, the shifts >> and &lt;&lt;. The exclusive or, however, is written ^| or bitXor(a, b): the ^ sign alone is exponentiation. An expression using ^ while meaning the exclusive or is therefore computed as a power, and it still returns sound. Time is counted in seconds in t and in samples in i: an expression written elsewhere for a sample counter transcribes with i. And the result is limited to [-1, 1] and not folded: a value that goes beyond is brought back to the edge, it does not come round the other side.
 
 | Port | Name | Type | |
 |---|---|---|---|
