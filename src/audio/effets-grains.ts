@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurTransformee } from "./courbe";
 import { fft } from "./fft";
 import { normaliser } from "./effets-dynamique";
 import { tailleFenetreSuivante } from "./effets-temporel";
@@ -145,7 +145,14 @@ export async function appliquerPaulstretch(
 export function granularFreeze(
   buffer: AudioBuffer,
   grainSizeMs: number,
-  pitch: number,
+  /**
+   * La transposition du grain, en demi-tons. Un tableau la fait varier échantillon par échantillon.
+   *
+   * LA PHASE EST DÉJÀ ACCUMULÉE ICI, de sorte qu'un pas qui varie y est exact : la hauteur suit les
+   * demi-tons demandés à chaque instant, et non une dérive qui croîtrait avec le temps.
+   * `valeurTransformee` garde au scalaire son unique puissance de deux.
+   */
+  pitch: number | Float32Array,
   // LA POSITION EST EN POUR CENT, comme à l'écran, et non en fraction : la division se fait donc
   // ICI, en double précision. La faire chez l'appelant obligerait à ranger le quotient dans un
   // tableau en simple précision, et une courbe plate ne rendrait plus ce que rend le réglage.
@@ -162,7 +169,7 @@ export function granularFreeze(
   // est là pour qu'on le demande explicitement.
   const startA = (i: number) =>
     Math.floor((valeurA(positionPourCent, i) / 100) * Math.max(0, buffer.length - grainSize));
-  const ratio = Math.pow(2, pitch / 12);
+  const ratioA = valeurTransformee(pitch, (p) => Math.pow(2, p / 12));
 
   const resultat = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: sr });
   for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -174,7 +181,7 @@ export function granularFreeze(
       const wet = src[idx];
       const m = valeurA(mix, i) / 100;
       dst[i] = src[i] * (1 - m) + wet * m;
-      phase += ratio;
+      phase += ratioA(i);
       while (phase >= grainSize) phase -= grainSize;
     }
   }

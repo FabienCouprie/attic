@@ -18,6 +18,8 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { ringModulator } from "./effets-etirement";
 import { banqueEngendree, synthetiserTable } from "./table-onde";
+import { resonateurs } from "./concret";
+import { peignesVoie } from "./peigne";
 import { fft } from "./fft";
 
 const SR = 16000;
@@ -119,5 +121,92 @@ describe("la fréquence de l'oscillateur à table d'onde", () => {
       .toBeGreaterThan(200);
     expect(borneSurSommet, "le palier n'est pas borné sur le sommet de la courbe")
       .toBeLessThan(scalaireGrave * 0.7);
+  });
+});
+
+describe("les deux résonances, et la brillance", () => {
+  // CES TROIS RÉGLAGES SE DÉDUISENT EN GAIN DE BOUCLE, et non en échelle : un T60 donne le rayon
+  // du pôle par `10^(−3/(T60·sr))`, une brillance donne l'exposant qui pèse les rangs. Les deux
+  // invariants restent les mêmes : sans courbe pas un bit ne bouge, et une courbe plate rend
+  // exactement ce que rend le nombre qu'elle vaut.
+  //
+  // LES VALEURS SONT DYADIQUES, un quart et deux secondes : seule une fraction dyadique se compare
+  // exactement entre le flottant simple d'un tableau et le double d'un nombre.
+  const sonDEssai = (n: number): AudioBuffer => {
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const x = b.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.sin((2 * Math.PI * 300 * i) / SR) * 0.5;
+    return b;
+  };
+
+  it("LE T60 DES RÉSONATEURS : une courbe plate rend le nombre, au bit", () => {
+    const base = { fondamentale: 220, rapports: [1, 2, 3, 4], brillance: 50, mix: 100 };
+    const a = resonateurs(sonDEssai(4000), { ...base, t60: 0.25 });
+    const b = resonateurs(sonDEssai(4000), { ...base, t60: new Float32Array(4000).fill(0.25) });
+    expect(b.length, "la queue ne suit pas le maximum de la courbe").toBe(a.length);
+    expect(Array.from(b.getChannelData(0))).toEqual(Array.from(a.getChannelData(0)));
+  });
+
+  it("ET LA QUEUE SE MESURE SUR LE MAXIMUM, non sur la valeur du moment", () => {
+    const base = { fondamentale: 220, rapports: [1, 2, 3, 4], brillance: 50, mix: 100 };
+    const monte = Float32Array.from({ length: 4000 }, (_, i) => 0.25 + (1.75 * i) / 3999);
+    const rampe = resonateurs(sonDEssai(4000), { ...base, t60: monte });
+    const auSommet = resonateurs(sonDEssai(4000), { ...base, t60: 2 });
+    const auPlancher = resonateurs(sonDEssai(4000), { ...base, t60: 0.25 });
+    expect(rampe.length, "la rampe n'a pas la longueur de son sommet").toBe(auSommet.length);
+    expect(rampe.length).toBeGreaterThan(auPlancher.length);
+  });
+
+  it("LA BRILLANCE DES RÉSONATEURS : une courbe plate rend le nombre, au bit", () => {
+    const base = { fondamentale: 220, rapports: [1, 2, 3, 4], t60: 0.25, mix: 100 };
+    const a = resonateurs(sonDEssai(4000), { ...base, brillance: 25 });
+    const b = resonateurs(sonDEssai(4000), { ...base, brillance: new Float32Array(4000).fill(25) });
+    expect(Array.from(b.getChannelData(0))).toEqual(Array.from(a.getChannelData(0)));
+  });
+
+  it("LE T60 DES PEIGNES ACCORDÉS : une courbe plate rend le nombre, au bit", () => {
+    const base = { frequences: [110, 165, 220], amortissement: 20, frequence: SR };
+    const x = sonDEssai(4000).getChannelData(0);
+    const a = peignesVoie(x, { ...base, t60: 0.25 });
+    const b = peignesVoie(x, { ...base, t60: new Float32Array(4000).fill(0.25) });
+    expect(b.length, "la traîne ne suit pas le maximum de la courbe").toBe(a.length);
+    expect(Array.from(b)).toEqual(Array.from(a));
+  });
+
+  it("ET LEUR TRAÎNE SE MESURE SUR LE MAXIMUM", () => {
+    const base = { frequences: [110, 165, 220], amortissement: 20, frequence: SR };
+    const x = sonDEssai(4000).getChannelData(0);
+    const monte = Float32Array.from({ length: 4000 }, (_, i) => 0.25 + (1.75 * i) / 3999);
+    expect(peignesVoie(x, { ...base, t60: monte }).length)
+      .toBe(peignesVoie(x, { ...base, t60: 2 }).length);
+  });
+});
+
+describe("une courbe qui VARIE, et non seulement une courbe plate", () => {
+  // CE QU'UNE COURBE PLATE NE PEUT PAS DIRE. Le banc de câblage éprouve deux choses : qu'un réglage
+  // non modulé ne bouge pas d'un bit, et qu'une courbe plate rende ce que rend le nombre qu'elle
+  // vaut. Ces deux cas attrapent un port mal rangé, un réglage ignoré, une mise en forme fausse.
+  //
+  // ILS N'ATTRAPENT PAS UN CŒUR QUI NE LIRAIT QUE LE PREMIER POINT de la courbe : sur une courbe
+  // plate, lire l'indice zéro ou l'indice i donne le même chiffre. Le défaut planté à cet endroit
+  // laissait passer les deux cas du granular freeze, et c'est ce qui a fait écrire celui-ci.
+  //
+  // IL NE VAUT QUE LÀ OÙ LE GESTE EST DE FAIRE GLISSER : une transposition qui monte au fil du son
+  // est précisément ce que le port promet, et une sortie identique à celle d'une courbe tenue au
+  // départ prouverait que rien ne glisse.
+  it("LA TRANSPOSITION DU GRANULAR FREEZE GLISSE, et ne reste pas à son premier point", async () => {
+    const { granularFreeze } = await import("./effets-grains");
+    const n = 8000;
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const x = b.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.sin((2 * Math.PI * 300 * i) / SR) * 0.5;
+    const monte = Float32Array.from({ length: n }, (_, i) => (12 * i) / (n - 1));
+    const tenue = new Float32Array(n).fill(0);
+    const avecMontee = granularFreeze(b, 50, monte, 0, 100).getChannelData(0);
+    const auDepart = granularFreeze(b, 50, tenue, 0, 100).getChannelData(0);
+    let differents = 0;
+    for (let i = 0; i < n; i++) if (avecMontee[i] !== auDepart[i]) differents++;
+    expect(differents, "la transposition ne glisse pas : seul son premier point agirait")
+      .toBeGreaterThan(n / 4);
   });
 });

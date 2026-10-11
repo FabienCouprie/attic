@@ -6,7 +6,7 @@
 // autre, on accorde un bruit. Aucun ne suppose de modèle — ni note, ni instrument, ni hauteur
 // écrite : chacun prend un son tel qu'il est et le transforme en un autre son.
 
-import { estCourbe, valeurA, valeursParametre } from "./courbe";
+import { estCourbe, valeurA, valeurMax, valeurTransformee, valeursParametre } from "./courbe";
 import { intervallesDaccord } from "./qualites-accords";
 
 // ── Vitesse variable ─────────────────────────────────────────────────────────────────────────
@@ -247,10 +247,17 @@ export function rapportsResonateurs(
 export interface OptionsResonateurs {
   fondamentale: number;
   rapports: number[];
-  /** Temps de décroissance de 60 dB, en secondes. */
-  t60: number;
-  /** 100 : tous les résonateurs au même niveau ; 0 : le k-ième à 1/k². */
-  brillance: number;
+  /**
+   * Temps de décroissance de 60 dB, en secondes. Un tableau le fait varier échantillon par
+   * échantillon : les résonateurs se resserrent ou s'étalent pendant qu'ils sonnent, sans que leur
+   * accord change.
+   */
+  t60: number | Float32Array;
+  /**
+   * 100 : tous les résonateurs au même niveau ; 0 : le k-ième à 1/k². Un tableau la fait varier,
+   * et déplace alors l'équilibre entre les rangs au fil du son.
+   */
+  brillance: number | Float32Array;
   /** Part de son résonné, de 0 à 100. Un tableau la fait varier échantillon par échantillon. */
   mix: number | Float32Array;
   /** La fondamentale échantillon par échantillon, si une courbe la pilote. */
@@ -270,33 +277,67 @@ export interface OptionsResonateurs {
  */
 export function resonateurs(buffer: AudioBuffer, o: OptionsResonateurs): AudioBuffer {
   const sr = buffer.sampleRate, nyquist = sr / 2;
-  const t60 = Math.max(0.01, o.t60);
-  const queue = Math.round(Math.min(20, t60) * sr);
+  // LA QUEUE SE MESURE SUR LA PLUS LONGUE RÉSONANCE QUE LA COURBE DEMANDE : le tampon est alloué
+  // avant qu'un échantillon soit écrit. `valeurMax` rend un scalaire tel quel.
+  const queue = Math.round(Math.min(20, Math.max(0.01, valeurMax(o.t60))) * sr);
   const n = buffer.length + queue;
-  const r = Math.pow(10, -3 / (t60 * sr));
-  const exposant = 2 * (1 - Math.max(0, Math.min(100, o.brillance)) / 100);
-  const poids = o.rapports.map((_, k) => Math.pow(1 / (k + 1), exposant));
+  // Le rayon du pôle se déduit du T60 : une exponentielle, unique au scalaire.
+  const rA = valeurTransformee(o.t60, (t) => Math.pow(10, -3 / (Math.max(0.01, t) * sr)));
+  const exposantA = valeurTransformee(
+    o.brillance, (b) => 2 * (1 - Math.max(0, Math.min(100, b)) / 100),
+  );
+  const m = o.rapports.length;
+  // LES POIDS NE SE REFONT QUE SI L'EXPOSANT A BOUGÉ, et c'est ce qui garde au scalaire son calcul
+  // unique : douze `pow` une fois pour toutes, là où les recalculer par échantillon en coûterait
+  // huit millions de plus sur trois minutes sans qu'aucun chiffre change.
+  const poids = new Float64Array(m);
+  let exposantPose = NaN;
   const humide = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: n, sampleRate: sr });
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const x = buffer.getChannelData(c), y = humide.getChannelData(c);
-    const y1 = new Float64Array(o.rapports.length), y2 = new Float64Array(o.rapports.length);
-    // Coefficients fixes sans courbe ; recalculés à chaque échantillon avec une.
-    const coef = (f0: number) => o.rapports.map((q) => {
+    const y1 = new Float64Array(m), y2 = new Float64Array(m);
+    // LES DEUX COSINUS NE DÉPENDENT QUE DE LA FONDAMENTALE, le rayon que du T60 : les séparer est
+    // ce qui rend la décroissance abordable. Une courbe de T60 ne refait alors que les racines,
+    // et non les cosinus ; une courbe de fondamentale paie ce qu'elle payait déjà.
+    const trigo = (f0: number) => o.rapports.map((q) => {
       const f = f0 * q;
       if (f <= 0 || f >= nyquist * 0.98) return null;
       const w = (2 * Math.PI * f) / sr;
-      return { b: 2 * r * Math.cos(w), g: (1 - r) * Math.sqrt(1 - 2 * r * Math.cos(2 * w) + r * r) };
+      return { cos: Math.cos(w), cos2: Math.cos(2 * w) };
     });
-    const fixes = o.fondamentales ? null : coef(o.fondamentale);
+    const trigoFixe = o.fondamentales ? null : trigo(o.fondamentale);
+    const bs = new Float64Array(m), gs = new Float64Array(m);
+    const vivant = new Uint8Array(m);
+    const poser = (ts: ({ cos: number; cos2: number } | null)[], r: number) => {
+      for (let k = 0; k < m; k++) {
+        const t = ts[k];
+        if (!t) { vivant[k] = 0; continue; }
+        vivant[k] = 1;
+        bs[k] = 2 * r * t.cos;
+        gs[k] = (1 - r) * Math.sqrt(1 - 2 * r * t.cos2 + r * r);
+      }
+    };
+    let rPose = NaN;
     for (let i = 0; i < n; i++) {
-      const cs = fixes ?? coef(o.fondamentales![Math.min(i, o.fondamentales!.length - 1)]);
+      const r = rA(i);
+      // Coefficients refaits quand le rayon bouge ; une seule fois si le T60 est un nombre.
+      if (trigoFixe) {
+        if (r !== rPose) { poser(trigoFixe, r); rPose = r; }
+      } else {
+        poser(trigo(o.fondamentales![Math.min(i, o.fondamentales!.length - 1)]), r);
+      }
+      const e = exposantA(i);
+      if (e !== exposantPose) {
+        exposantPose = e;
+        for (let k = 0; k < m; k++) poids[k] = Math.pow(1 / (k + 1), e);
+      }
+      const rr = r * r;
       const entree = i < x.length ? x[i] : 0;
       let s = 0;
-      for (let k = 0; k < cs.length; k++) {
-        const ck = cs[k];
-        if (!ck) continue;
-        const v = ck.g * entree + ck.b * y1[k] - r * r * y2[k];
+      for (let k = 0; k < m; k++) {
+        if (!vivant[k]) continue;
+        const v = gs[k] * entree + bs[k] * y1[k] - rr * y2[k];
         y2[k] = y1[k]; y1[k] = v;
         s += v * poids[k];
       }

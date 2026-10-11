@@ -77,7 +77,10 @@ export const fiches: FicheAudio[] = ([
     // Fabien. L'origine du grain se déplace alors au fil du son, et ce qui sort est un balayage de
     // la source plutôt qu'un gel. Le port est là pour qu'on le demande explicitement.
     [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
-     { parametre: "Position", bornes: [0, 100], unite: "%" }]),
+     { parametre: "Position", bornes: [0, 100], unite: "%" },
+     // LA PHASE DU GRAIN EST DÉJÀ ACCUMULÉE : une transposition qui varie y est donc exacte, et la
+     // hauteur suit les demi-tons demandés à chaque instant.
+     { parametre: "Pitch", bornes: [-24, 24], defauts: [-12, 12], unite: "st" }]),
   {
     id: "formule-echantillons", nom: "Formule sur échantillons", nomEn: "Sample Formula",
     univers: "Traitement", famille: "Effets",

@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1318 files, 232943 lines, of which 159239 are code.**
-The table lists the 185 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155232 lines.
+**1318 files, 233219 lines, of which 159393 are code.**
+The table lists the 186 files of 200 code lines or more, heaviest first;
+the remaining 1132 account for 155091 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -63,8 +63,8 @@ the remaining 1133 account for 155232 lines.
 | src/plugins/prompt-graphe.ts | 334 | 516 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/plugins/effets-spectral.ts | 331 | 440 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
-| src/plugins/effets-spectral.ts | 330 | 437 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
 | src/audio/courbe.ts | 328 | 679 |  |
 | src/plugins/tone-synths.ts | 328 | 427 |  |
@@ -90,6 +90,7 @@ the remaining 1133 account for 155232 lines.
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
+| src/plugins/modulation-cablage.test.ts | 303 | 460 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
@@ -98,8 +99,8 @@ the remaining 1133 account for 155232 lines.
 | src/plugins/theorie-composition.ts | 296 | 392 |  |
 | src/plugins/csound.test.ts | 294 | 383 |  |
 | src/audio/table-onde.test.ts | 293 | 383 |  |
+| src/plugins/effets.ts | 292 | 382 |  |
 | src/core/domaine-nombre.test.ts | 291 | 389 |  |
-| src/plugins/effets.ts | 290 | 371 |  |
 | src/audio/groove-box.ts | 289 | 377 |  |
 | src/audio/multicanal.ts | 289 | 490 |  |
 | src/audio/analyse-genre.ts | 288 | 373 |  |
@@ -108,7 +109,6 @@ the remaining 1133 account for 155232 lines.
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
-| src/plugins/modulation-cablage.test.ts | 285 | 435 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
@@ -163,14 +163,15 @@ the remaining 1133 account for 155232 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets-aides.ts | 226 | 520 |  |
+| src/plugins/spectral-cdp.ts | 227 | 334 |  |
+| src/plugins/effets-aides.ts | 226 | 524 |  |
+| src/audio/concret.ts | 222 | 363 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
-| src/plugins/spectral-cdp.ts | 219 | 323 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
 | src/audio/objets-sonores.test.ts | 217 | 262 |  |
 | src/audio/bext.test.ts | 216 | 280 |  |
