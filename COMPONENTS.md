@@ -3036,12 +3036,13 @@ Subtracts background noise from the signal using a noise profile captured on a s
 
 *Captures and repeats a short segment at rhythmic intervals (stutter effect).*
 
-Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth.
+Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth. « Feedback » is the attenuation of each repeat, and a curve connected to the « Modulation feedback » input takes its place, « Feedback min » and « Feedback max » saying what its zero and its one are worth. The repeats of one capture then die away faster or slower depending on where in the sound they fall. The first repeat of each capture keeps its level whatever is asked, the attenuation counting from the second.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation feedback | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3054,6 +3055,8 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
 
 #### Bitcrusher
 
@@ -3621,22 +3624,31 @@ Delays the low end more than the high end, or the other way round, without cutti
 
 *Independent left/right delay.*
 
-Repeats the signal with an independently adjustable left/right delay, creating a stereo echo. Feedback sets the number of repeats.
+Repeats the signal with an independently adjustable left/right delay, creating a stereo echo. Feedback sets the number of repeats. « Time L » and « Time R » are the two delays, in milliseconds. Setting them apart is what separates the repeats of one channel from those of the other. « Feedback » is the share of each repeat fed back into the delay line, and « Mix » the share of the effect in the output. Both times, the feedback and the mix accept a curve, through « Modulation time l », « Modulation time r », « Modulation feedback » and « Modulation », each with its two bounds. Moving a delay time makes the repeats glide in pitch while they sound, the read head travelling along the delay line as it reads. The tail added after the sound is measured on the longest delay and the strongest feedback the curve asks for, its length being fixed before the first sample is written.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation time l | curve |  |
+| input | Modulation time r | curve |  |
+| input | Modulation feedback | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Time L | number | 250 ms |  | Left channel delay. |
-| Time R | number | 375 ms |  | Right channel delay. |
-| Feedback | number | 40 % |  | Amount of signal fed back. |
+| Time L | number | 250 ms | 10 – 2000 ms | Left channel delay. |
+| Time R | number | 375 ms | 10 – 2000 ms | Right channel delay. |
+| Feedback | number | 40 % | 0 – 95 % | Amount of signal fed back. |
 | Mix | number | 35 % |  | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Time L min | slider | 100 ms | 10 – 2000 ms, step 1 | Value of « Time L » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Time L max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time L » that the curve's one means. |
+| Time R min | slider | 100 ms | 10 – 2000 ms, step 1 | Value of « Time R » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Time R max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time R » that the curve's one means. |
+| Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
 
 ### Editing
 
@@ -6018,12 +6030,13 @@ Extracts a feature from a sound to drive an effect with it. After Vincent Verfai
 
 *The metallic flutter of a sound caught between two parallel walls.*
 
-This node returns the flutter of a sound caught between two parallel reflecting surfaces. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005. The sound travels back and forth between the two walls in twice the distance divided by the speed of sound, then starts again. Frequencies whose half wavelength divides the distance build up on every round trip, the others cancel: what remains is a comb whose teeth are spaced by the speed of sound over twice the distance. The reflections stay discrete and periodic, and it is their regularity that makes the timbre. « Distance » is the gap between the two walls. At three metres the round trip lasts seventeen and a half milliseconds and the comb sounds at fifty-seven hertz; moving the walls apart brings the flutter down. « Decay » is the time the flutter takes to lose sixty decibels. The gain of each round trip follows from it, so the length stays the one asked for whatever the distance. « Damping » is the share of highs the walls absorb at each reflection. The flutter then dulls as it dies away. « Mix » sets the share of the effect in the output. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The mix is applied after the loop, so that varying it does not touch the flutter being built, only the share of it that is heard. The « Audio » output returns the treated sound. The message gives the round-trip period and the comb frequency.
+This node returns the flutter of a sound caught between two parallel reflecting surfaces. After Jean-François Augoyard and Henry Torgue, « Sonic Experience: A Guide to Everyday Sounds », McGill-Queen's University Press, 2005. The sound travels back and forth between the two walls in twice the distance divided by the speed of sound, then starts again. Frequencies whose half wavelength divides the distance build up on every round trip, the others cancel: what remains is a comb whose teeth are spaced by the speed of sound over twice the distance. The reflections stay discrete and periodic, and it is their regularity that makes the timbre. « Distance » is the gap between the two walls. At three metres the round trip lasts seventeen and a half milliseconds and the comb sounds at fifty-seven hertz; moving the walls apart brings the flutter down. « Decay » is the time the flutter takes to lose sixty decibels. The gain of each round trip follows from it, so the length stays the one asked for whatever the distance. A curve connected to the « Modulation decay » input takes its place: « Decay min » and « Decay max » then say what the zero and the one of that curve are worth. The flutter tightens or spreads out while it sounds, and the round-trip period does not move, since it is the absorption of the walls that varies and not their spacing. « Damping » is the share of highs the walls absorb at each reflection. The flutter then dulls as it dies away. « Mix » sets the share of the effect in the output. A curve connected to the « Modulation » input takes its place: « Modulation min » and « Modulation max » then say what the zero and the one of that curve are worth, and « Mix » stops acting. The mix is applied after the loop, so that varying it does not touch the flutter being built, only the share of it that is heard. The « Audio » output returns the treated sound. The message gives the round-trip period and the comb frequency.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation decay | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6034,6 +6047,8 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 | Mix | slider | 70 % | 0 – 100 %, step 1 | The share of the effect in the output. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Decay min | slider | 0.2 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Decay max | slider | 4 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that the curve's one means. |
 
 #### Granular Freeze
 

@@ -25,7 +25,7 @@
 // un seul son, qu'elle localise du côté arrivé LE PREMIER, même si le retardé est plus fort. Au-delà
 // d'une quarantaine de millisecondes la fusion se défait et l'on entend deux sons.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurTransformee } from "./courbe";
 
 /** La célérité du son dans l'air à vingt degrés, en mètres par seconde. */
 export const CELERITE = 343;
@@ -39,8 +39,14 @@ export const frequenceDuPeigne = (d: number): number => 1 / periodeEntreMurs(d);
 export interface OptionsFlottant {
   /** La distance entre les deux murs, en mètres. */
   distance: number;
-  /** Le temps que met le battement à perdre soixante décibels, en secondes. */
-  decroissance: number;
+  /**
+   * Le temps que met le battement à perdre soixante décibels, en secondes.
+   *
+   * Un tableau le fait varier échantillon par échantillon : le battement se resserre ou s'étale
+   * pendant qu'il sonne, sans que la période de l'aller-retour change. C'est l'absorption des murs
+   * qu'on fait bouger, et non leur écartement.
+   */
+  decroissance: number | Float32Array;
   /** La part des aigus que les murs absorbent à chaque tour, de 0 à 1. */
   amortissement: number;
   /**
@@ -70,8 +76,12 @@ export function echoFlottant(buffer: AudioBuffer, o: OptionsFlottant): AudioBuff
   const sr = buffer.sampleRate;
   const periode = periodeEntreMurs(o.distance);
   const retard = Math.max(1, Math.round(periode * sr));
-  const decroissance = Math.max(0.05, o.decroissance);
-  const gain = Math.pow(10, (-3 * periode) / decroissance);
+  // `valeurTransformee` garde UNE SEULE exponentielle au scalaire, et n'en paie une par échantillon
+  // que si une courbe est branchée : le gain de boucle se déduit de la décroissance par un `pow`,
+  // qu'un calcul posé dans la boucle ferait payer huit millions de fois sur trois minutes de son.
+  const gainDeBoucle = valeurTransformee(
+    o.decroissance, (d) => Math.pow(10, (-3 * periode) / Math.max(0.05, d)),
+  );
   const a = Math.max(0, Math.min(0.99, o.amortissement));
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
   const partA = (i: number) => Math.max(0, Math.min(1, valeurA(o.melange, i)));
@@ -89,7 +99,7 @@ export function echoFlottant(buffer: AudioBuffer, o: OptionsFlottant): AudioBuff
       const revenu = ligne[ou];
       // Le passe-bas d'ordre un tient l'assourdissement d'un tour à l'autre.
       bas = a * bas + (1 - a) * revenu;
-      const dansLaBoucle = src[i] + bas * gain;
+      const dansLaBoucle = src[i] + bas * gainDeBoucle(i);
       ligne[ou] = dansLaBoucle;
       ou = ou + 1 >= retard ? 0 : ou + 1;
       const part = partA(i);

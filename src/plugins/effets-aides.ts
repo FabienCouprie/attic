@@ -84,6 +84,13 @@ type ModulationEffet = {
   bornes: [number, number];
   /** Ce que valent le zéro et le un de la courbe. Par défaut, les bornes elles-mêmes. */
   defauts?: [number, number];
+  /**
+   * Le pas des deux curseurs de bornes. Un par défaut, ce qui convient à un pour cent ou à un
+   * décibel et À RIEN QUI SE COMPTE EN SECONDES : une borne de 0,05 à 10 secondes au pas de un
+   * n'offre que deux positions atteignables. Le réglage piloté porte déjà son propre pas ; celui-ci
+   * est à lui donner la même finesse.
+   */
+  pas?: number;
   echelle?: "lineaire" | "logarithmique";
   unite?: string;
   uniteEn?: string;
@@ -152,12 +159,12 @@ export const bornesModulation = (m: ModulationEffet) => {
   const [nomMinEn, nomMaxEn] = m.nomsEn ?? m.noms ?? BORNES_PAR_DEFAUT;
   return [
     { nom: nomMin, nomEn: nomMinEn, modulationDe: m.parametre,
-      type: "curseur" as const, plage: m.bornes, pas: 1,
+      type: "curseur" as const, plage: m.bornes, pas: m.pas ?? 1,
       defaut: m.defauts?.[0] ?? m.bornes[0], unite: m.unite, uniteEn: m.uniteEn,
       doc: `Valeur de « ${m.parametre} » que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.`,
       docEn: `Value of « ${en} » that a connected curve's zero means. With no curve, this setting does nothing.` },
     { nom: nomMax, nomEn: nomMaxEn, modulationDe: m.parametre,
-      type: "curseur" as const, plage: m.bornes, pas: 1,
+      type: "curseur" as const, plage: m.bornes, pas: m.pas ?? 1,
       defaut: m.defauts?.[1] ?? m.bornes[1], unite: m.unite, uniteEn: m.uniteEn,
       doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
       docEn: `Value of « ${en} » that the curve's one means.` },
@@ -259,16 +266,27 @@ export function reglageModule(
      * `REGLAGES_LUS_PAR_L_AIDE`, et des noms donnés ici apparaissent dans la source.
      */
     noms?: readonly [string, string];
+    /**
+     * Ce que valent les deux bornes QUAND LE NŒUD NE LES PORTE PAS ENCORE.
+     *
+     * `paramNombre` rend la valeur enregistrée sur le nœud ; à défaut, le repli donné ici. Un nœud
+     * CRÉÉ reçoit chaque réglage déclaré, bornes comprises, mais un graphe ENREGISTRÉ AVANT que la
+     * borne existe ne la porte pas : ni le chargeur ni la sérialisation ne complètent les réglages
+     * manquants. Sans ce champ le repli vaut zéro et cent, ce qui ne veut rien dire d'un seuil en
+     * décibels ou d'un temps en secondes — une courbe branchée sur un tel nœud balaierait alors
+     * zéro à cent secondes au lieu de la course du réglage.
+     */
+    bornes?: readonly [number, number];
   },
 ): number | Float32Array {
-  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT } = o;
+  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT, bornes = [0, 100] } = o;
   const facteur = rendu === "pourCent" ? 1 : 100;
   const fixe = ctx.paramNombre(reglage, defaut);
   const courbe = ctx.entree(rangPort);
   if (!estCourbe(courbe)) return fixe / facteur;
   const valeurs = valeursParametre(courbe, n, fixe, {
-    min: ctx.paramNombre(noms[0], 0),
-    max: ctx.paramNombre(noms[1], 100),
+    min: ctx.paramNombre(noms[0], bornes[0]),
+    max: ctx.paramNombre(noms[1], bornes[1]),
   });
   if (facteur !== 1) for (let i = 0; i < valeurs.length; i++) valeurs[i] /= facteur;
   return valeurs;

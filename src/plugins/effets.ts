@@ -18,10 +18,23 @@ import { MODULATION_MIX, bornesModulation, effet, modulationNommee, reglageModul
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
-    [param("Temps G", 250, "Time L", "ms", "Délai canal gauche.", "Left channel delay."), param("Temps D", 375, "Time R", "ms", "Délai canal droit.", "Right channel delay."), param("Feedback", 40, "Feedback", "%", "Quantité de signal réinjecté.", "Amount of signal fed back."), param("Mix", 35, "Mix", "%", "Équilibre signal original / delay.", "Dry/wet balance.")],
+    // LES TROIS COURSES SONT DÉCLARÉES, et elles ne l'étaient pas. Un réglage sans `plage` est
+    // montré de zéro à cent par l'inspecteur : les deux temps s'affichaient donc sur une course de
+    // cent millisecondes alors qu'ils valent deux cent cinquante et trois cent soixante-quinze par
+    // défaut. Les nommer était de toute façon nécessaire ici, puisqu'une borne de modulation doit
+    // dire ce que vaut le zéro de la courbe DANS la course du réglage.
+    [param("Temps G", 250, "Time L", "ms", "Délai canal gauche.", "Left channel delay.", [10, 2000]),
+     param("Temps D", 375, "Time R", "ms", "Délai canal droit.", "Right channel delay.", [10, 2000]),
+     param("Feedback", 40, "Feedback", "%", "Quantité de signal réinjecté.", "Amount of signal fed back.", [0, 95]),
+     param("Mix", 35, "Mix", "%", "Équilibre signal original / delay.", "Dry/wet balance.")],
     (a,tg,td,fb,mix) => appliquerDelay(a, tg, td, fb, mix),
     undefined,
-    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
+    // LE MÉLANGE RESTE EN PREMIER, et garde donc son port et ses bornes courts : il est en
+    // production, et un graphe enregistré désigne un réglage par son nom.
+    [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
+     { ...modulationNommee("Temps G", "Time L", [10, 2000], "ms"), defauts: [100, 800] },
+     { ...modulationNommee("Temps D", "Time R", [10, 2000], "ms"), defauts: [100, 800] },
+     { ...modulationNommee("Feedback", "Feedback", [0, 95], "%"), defauts: [0, 80] }]),
   effet("reverberation", "Réverbération", "Reverb", "Réverbération à convolution.", "Convolution reverb.",
     [param("Taille", 50, "Size", "%", "Taille de la pièce simulée.", "Simulated room size."), param("Decay", 2, "Decay", "s", "Temps de déclin de la réverbération.", "Reverb decay time."), param("Mix", 50, "Mix", "%", "Équilibre son direct / réverbération.", "Dry/wet balance."), { ...param("Graine", 42, "Seed", "", "Graine du bruit de la réponse impulsionnelle. Valeur par défaut fixe : une réverbération qui change de pièce à chaque exécution serait un défaut. La changer donne une autre pièce, de mêmes dimensions.", "Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions.", [0, 999999], 1), graine: true }],
     (a, taille, decay, mix, graine) => appliquerReverberation(a, taille, decay, mix, creerAleatoire(graine)),

@@ -4,6 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { poserParam } from "./automation";
+import { valeurMax } from "./courbe";
 
 const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
 
@@ -57,19 +58,38 @@ export function bouclerAudio(
 
 
 
+/**
+ * Un delay stéréo dont les deux temps et la réinjection acceptent une courbe.
+ *
+ * LES TROIS FIXENT LA LONGUEUR DE SORTIE, et c'est ce qui demandait une décision. La queue ajoutée
+ * après le son se déduit du retard le plus long et du nombre de tours que la réinjection laisse
+ * passer, et elle est calculée AVANT qu'un échantillon soit écrit : un contexte hors ligne a sa
+ * durée au moment où on le crée. Une courbe est donc lue DEUX FOIS, pour deux usages différents —
+ * son maximum décide de la longueur, et toute sa course commande le paramètre audio. C'est le
+ * précédent de l'écho ping-pong, dont la queue « se calcule sur le pire cas ».
+ *
+ * FAIRE BOUGER UN TEMPS DE RETARD FAIT GLISSER LA HAUTEUR des répétitions, comme un écho à bande
+ * dont on touche la vitesse. C'est le son attendu de ce geste, et non un défaut : la tête de
+ * lecture se déplace dans la ligne à retard pendant qu'elle lit.
+ */
 export async function appliquerDelay(
   entree: AudioBuffer,
-  tempsGaucheMs: number,
-  tempsDroitMs: number,
-  feedbackPct: number,
+  tempsGaucheMs: number | Float32Array,
+  tempsDroitMs: number | Float32Array,
+  feedbackPct: number | Float32Array,
   mixPct: number | Float32Array
 ): Promise<AudioBuffer> {
-  const tl = Math.max(0.001, tempsGaucheMs) / 1000;
-  const tr = Math.max(0.001, tempsDroitMs) / 1000;
-  const feedback = Math.max(0, feedbackPct / 100);
+  // Les trois transformations restent CELLES D'AVANT, appliquées par `poserParam` au nombre comme
+  // à chaque point de la courbe : sans courbe, le graphe est exactement celui d'hier, au bit près.
+  // Aucun plafond n'est ajouté à la réinjection — la course du réglage et celle de ses bornes
+  // s'arrêtent où il faut, et en poser un ici changerait ce que rend un nœud déjà enregistré.
+  const versSec = (ms: number) => Math.max(0.001, ms) / 1000;
+  const versFeedback = (p: number) => Math.max(0, p / 100);
   // Le mélange accepte une courbe ; `poserParam` pose un nombre comme avant, au bit près.
   const versGain = (x: number) => Math.max(0, Math.min(1, x / 100));
-  const dMax = Math.max(tl, tr);
+  // `valeurMax` rend un scalaire tel quel : la longueur calculée ici est celle d'avant, inchangée.
+  const dMax = Math.max(versSec(valeurMax(tempsGaucheMs)), versSec(valeurMax(tempsDroitMs)));
+  const feedback = versFeedback(valeurMax(feedbackPct));
   const rep = feedback > 0.001 && feedback < 0.999 ? Math.ceil(Math.log(1e-4) / Math.log(feedback)) : feedback >= 0.999 ? 40 : 0;
   const coda = Math.max(3, dMax * Math.min(rep, 40));
   const duree = entree.duration + coda;
@@ -86,10 +106,13 @@ export async function appliquerDelay(
   const merger = offline.createChannelMerger(2);
   source.connect(splitter);
 
-  function faireCanal(chan: number, dt: number) {
+  function faireCanal(chan: number, tempsMs: number | Float32Array) {
+    // LA LIGNE À RETARD EST DIMENSIONNÉE SUR LE PIRE CAS, et non sur la valeur du moment : sa
+    // longueur se fixe à la construction, et une courbe qui monterait au-delà verrait son retard
+    // écrêté en silence.
     const delai = offline.createDelay(dMax + 1);
-    delai.delayTime.value = dt;
-    const fb = offline.createGain(); fb.gain.value = feedback;
+    poserParam(delai.delayTime, tempsMs, duree, versSec);
+    const fb = offline.createGain(); poserParam(fb.gain, feedbackPct, duree, versFeedback);
     const flt = offline.createBiquadFilter(); flt.type = "lowpass"; flt.frequency.value = 8000;
     const wet = offline.createGain(); poserParam(wet.gain, mixPct, duree, versGain);
     splitter.connect(delai, chan, 0);
@@ -97,8 +120,8 @@ export async function appliquerDelay(
     flt.connect(wet).connect(merger, 0, chan);
   }
 
-  faireCanal(0, tl);
-  faireCanal(1, tr);
+  faireCanal(0, tempsGaucheMs);
+  faireCanal(1, tempsDroitMs);
 
   merger.connect(offline.destination);
   source.start(0);

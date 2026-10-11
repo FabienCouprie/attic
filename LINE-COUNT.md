@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232489 lines, of which 159016 are code.**
+**1317 files, 232604 lines, of which 159056 are code.**
 The table lists the 184 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155171 lines.
+the remaining 1133 account for 155208 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -53,6 +53,7 @@ the remaining 1133 account for 155171 lines.
 | src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
+| src/plugins/effets-temporel.ts | 341 | 471 |  |
 | src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
@@ -62,7 +63,6 @@ the remaining 1133 account for 155171 lines.
 | src/plugins/prompt-graphe.ts | 334 | 516 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
-| src/plugins/effets-temporel.ts | 333 | 463 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/plugins/effets-spectral.ts | 330 | 437 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
@@ -105,12 +105,12 @@ the remaining 1133 account for 155171 lines.
 | src/quiz/formules.ts | 288 | 310 |  |
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
+| src/plugins/effets.ts | 286 | 367 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |
-| src/plugins/effets.ts | 280 | 354 |  |
 | src/plugins/visualisation-ecoute.test.ts | 280 | 413 |  |
 | src/parcours/exercices.ts | 279 | 401 |  |
 | src/plugins/tone-synths-fm.ts | 279 | 358 |  |
@@ -118,15 +118,15 @@ the remaining 1133 account for 155171 lines.
 | src/plugins/magenta-helpers.ts | 274 | 401 |  |
 | src/audio/csound-formules.ts | 273 | 333 |  |
 | src/audio/multicanal.test.ts | 273 | 333 |  |
+| src/plugins/modulation-cablage.test.ts | 271 | 416 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
+| src/plugins/effets-cresson.ts | 266 | 357 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/audio/io.ts | 264 | 397 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
-| src/plugins/effets-cresson.ts | 259 | 347 |  |
-| src/plugins/modulation-cablage.test.ts | 258 | 389 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
@@ -163,7 +163,7 @@ the remaining 1133 account for 155171 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets-aides.ts | 222 | 491 |  |
+| src/plugins/effets-aides.ts | 224 | 509 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
@@ -180,10 +180,10 @@ the remaining 1133 account for 155171 lines.
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
+| src/docs/modulables.ts | 211 | 494 |  |
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |
-| src/docs/modulables.ts | 209 | 492 |  |
 | src/plugins/multicanal.ts | 209 | 288 |  |
 | src/plugins/vosk-asr.test.ts | 209 | 280 |  |
 | src/audio/ecosysteme.ts | 208 | 388 |  |

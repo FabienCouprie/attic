@@ -248,7 +248,8 @@ export const fiches: FicheAudio[] = ([
     id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
-    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mix")],
+    entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mix"),
+      portModulation("Feedback", "Feedback", { court: false })],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
@@ -265,6 +266,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Équilibre signal original / effet.",
         docEn: "Dry/wet balance." },
       ...bornesModulation(MODULATION_MIX),
+      ...bornesModulation({
+        ...modulationNommee("Feedback", "Feedback", [0, 95], "%"), defauts: [0, 80],
+      }),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -277,7 +281,11 @@ export const fiches: FicheAudio[] = ([
         return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
       };
       const mix = reglageModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
-      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), ctx.paramNombre("Feedback", 40), mix)], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
+      const feedback = reglageModule(ctx, a.length, 2, {
+        reglage: "Feedback", defaut: 40, rendu: "pourCent",
+        noms: ["Feedback min", "Feedback max"], bornes: [0, 80],
+      });
+      return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), feedback, mix)], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
     },
   },
   {
