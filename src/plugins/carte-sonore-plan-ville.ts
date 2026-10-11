@@ -9,7 +9,8 @@
 // page HTML autonome dans le dossier de sortie.
 
 
-import { clamp, inWater, mulberry32, polarToCartesian, wiggleHorizontalLine, wiggleVerticalLine } from "./carte-sonore-formes";
+import { clamp, inWater, polarToCartesian, wiggleHorizontalLine, wiggleVerticalLine } from "./carte-sonore-formes";
+import { creerAleatoire } from "../core/hasard";
 import type { BatimentVille, CarteSonore, DecorationCarte, EauVille, EspaceVertVille, Esthetique, QuartierVille, RouteVille } from "./carte-sonore-formes";
 import { MARGE, NOMS_AVENUES, NOMS_BOU, NOMS_RUES, palettePour, pickNom, placerPoi, placerPoints } from "./carte-sonore-decor";
 
@@ -20,7 +21,7 @@ export function genererCarteVille(
   points: { nom: string; chemin: string }[] = [],
   esthetique: Esthetique = "classique",
 ): CarteSonore {
-  const rng = mulberry32(seed);
+  const rng = creerAleatoire(seed);
   const palette = palettePour(esthetique);
   const routes: RouteVille[] = [];
   const quartiers: QuartierVille[] = [];

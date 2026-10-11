@@ -4,6 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 
+import { creerAleatoire } from "../core/hasard";
 export const PALETTES_PRESET: Record<string, string[]> = {
   auto: [],
   chaud: ["#1a1a2e", "#e63946", "#f4a261"],
@@ -21,17 +22,6 @@ export const PALETTES_PRESET: Record<string, string[]> = {
   magma: ["#1a0505", "#ff4d00", "#ffcc00"],
   givre: ["#e0f7fa", "#80deea", "#00838f"],
 };
-
-export function mulberry32(graine: number): () => number {
-  let a = graine | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export function paletteDepuisPrompt(prompt: string, rng: () => number): string[] {
   const texte = prompt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");

@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { calculerPCA, standardiser, kmeans, indiceCalinskiHarabasz, kmeansAuto } from "./algebre";
 import { calculerDTW } from "./algebre-alignement";
 import { gmm } from "./algebre-melanges";
+import { creerAleatoire } from "../core/hasard";
 
 function dot(a: number[], b: number[]): number {
   return a.reduce((s, x, i) => s + x * b[i], 0);
@@ -364,19 +365,8 @@ describe("calculerDTW", () => {
       return { chemin, distanceNormalisee, similarite: Math.max(0, Math.min(1, 1 - distanceNormalisee)) };
     }
 
-    function mulberry32(graine: number): () => number {
-      let a = graine | 0;
-      return () => {
-        a = (a + 0x6d2b79f5) | 0;
-        let t = a;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
     function sequenceAleatoire(longueur: number, d: number, graine: number): number[][] {
-      const rng = mulberry32(graine);
+      const rng = creerAleatoire(graine);
       return Array.from({ length: longueur }, () => Array.from({ length: d }, () => rng()));
     }
 

@@ -12,7 +12,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
-import { mulberry32, shuffle } from "./carte-sonore-formes";
+import { shuffle } from "./carte-sonore-formes";
+import { creerAleatoire } from "../core/hasard";
 import type { Esthetique, StyleCarte } from "./carte-sonore-formes";
 import { genererCarteVille } from "./carte-sonore-plan-ville";
 import { genererCarteConcentrique, genererCarteOrganique, genererCarteVoronoi } from "./carte-sonore-plan-cellulaire";
@@ -74,7 +75,7 @@ export const fiches: FicheAudio[] = ([
       if (fichiers.length === 0) return { valeurs: [], message: traduire("msg.aucun_fichier_audio_dans_var_0", chemin) };
 
       const maxPoints = Math.min(400, fichiers.length);
-      const selection = shuffle(fichiers, mulberry32(graine)).slice(0, maxPoints);
+      const selection = shuffle(fichiers, creerAleatoire(graine)).slice(0, maxPoints);
       const pointInputs = selection.map((f) => ({ nom: f.nom, chemin: f.chemin }));
       const carte = style === "concentrique"
         ? genererCarteConcentrique(graine, 1920, 1080, pointInputs, esthetique)

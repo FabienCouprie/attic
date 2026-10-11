@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1322 files, 233920 lines, of which 159751 are code.**
-The table lists the 186 files of 200 code lines or more, heaviest first;
-the remaining 1136 account for 155614 lines.
+**1327 files, 234819 lines, of which 160245 are code.**
+The table lists the 187 files of 200 code lines or more, heaviest first;
+the remaining 1140 account for 156306 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,7 +24,7 @@ the remaining 1136 account for 155614 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 491 | 503 | ! |
+| src/plugins/index.ts | 493 | 505 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/ui/BarreOutils.tsx | 441 | 491 | ! |
@@ -36,8 +36,8 @@ the remaining 1136 account for 155614 lines.
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/plugins/finitions.test.ts | 386 | 521 |  |
 | src/audio/ia.ts | 382 | 466 |  |
+| src/plugins/carte-sonore-plan-cellulaire.ts | 382 | 436 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
-| src/plugins/carte-sonore-plan-cellulaire.ts | 381 | 435 |  |
 | src/plugins/spectrogramme-image.test.ts | 377 | 532 |  |
 | src/plugins/syntheses-exotiques.test.ts | 372 | 542 |  |
 | src/plugins/modeles-physiques.test.ts | 368 | 550 |  |
@@ -46,15 +46,14 @@ the remaining 1136 account for 155614 lines.
 | src/plugins/analyse.ts | 363 | 442 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
 | src/audio/tone-synths.ts | 360 | 509 |  |
+| src/plugins/pochette-svg.ts | 359 | 402 |  |
 | src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
-| src/plugins/pochette-svg.ts | 358 | 401 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/modulation-melange.test.ts | 355 | 506 |  |
 | src/plugins/effets-temporel.ts | 348 | 478 |  |
-| src/audio/algebre.test.ts | 347 | 421 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
-| src/plugins/carte-sonore-formes.ts | 341 | 386 |  |
 | src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
+| src/audio/algebre.test.ts | 338 | 411 |  |
 | src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
@@ -64,6 +63,7 @@ the remaining 1136 account for 155614 lines.
 | src/plugins/prompt-graphe.ts | 334 | 516 |  |
 | src/plugins/theorie-avancee.ts | 334 | 424 |  |
 | src/audio/generation-patrons.ts | 333 | 344 |  |
+| src/plugins/carte-sonore-formes.ts | 332 | 377 |  |
 | src/plugins/effets-spectral.ts | 331 | 440 |  |
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
@@ -134,15 +134,14 @@ the remaining 1136 account for 155614 lines.
 | src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
 | src/audio/cercle-pulsant.ts | 249 | 543 |  |
+| src/audio/multi-reservoir.ts | 249 | 326 |  |
 | src/audio/effets-spectral.test.ts | 248 | 301 |  |
-| src/audio/multi-reservoir.ts | 248 | 325 |  |
 | src/audio/abc.test.ts | 247 | 306 |  |
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
-| src/audio/reservoir.ts | 242 | 371 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
 | src/plugins/generateurs-fractals.ts | 241 | 274 |  |
 | src/plugins/visualisation.test.ts | 241 | 369 |  |
@@ -155,6 +154,7 @@ the remaining 1136 account for 155614 lines.
 | src/plugins/integration.test.ts | 236 | 274 |  |
 | src/audio/algebre.ts | 235 | 332 |  |
 | src/audio/fm-operateurs.test.ts | 233 | 294 |  |
+| src/audio/reservoir.ts | 233 | 360 |  |
 | src/parcours/exercices-composition.ts | 233 | 319 |  |
 | src/audio/risset.test.ts | 232 | 298 |  |
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
@@ -180,9 +180,9 @@ the remaining 1136 account for 155614 lines.
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/rotatifs.test.ts | 214 | 274 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
+| src/docs/modulables.ts | 213 | 496 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
-| src/docs/modulables.ts | 211 | 494 |  |
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |
@@ -201,3 +201,4 @@ the remaining 1136 account for 155614 lines.
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
 | src/audio/ondelettes.ts | 200 | 349 |  |
+| src/plugins/carte-sonore-plan-ville.ts | 200 | 230 |  |

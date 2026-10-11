@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { classifierPistes, calculerMoyennesParGroupe, type PisteVectorisee } from "./classification-pistes";
 import { extraireVecteurFeatures } from "./features-piste";
+import { creerAleatoire } from "../core/hasard";
 
 class AudioBufferPolyfill {
   numberOfChannels: number;
@@ -30,26 +31,14 @@ function sinus(freq: number, dureeS: number): AudioBuffer {
   return b;
 }
 
-// PRNG seedé (pas Math.random()) : un bruit blanc reproductible d'un run à
-// l'autre, sinon le test est intrinsèquement flaky — un tirage de bruit
-// suffisamment proche des pistes tonales par hasard peut faire fusionner ce
-// groupe avec un autre au clustering.
-function mulberry32(graine: number): () => number {
-  let a = graine | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
+// LE HASARD EST SEEDÉ, et non `Math.random` : un bruit blanc reproductible d'un run à l'autre,
+// sinon le test est intrinsèquement instable — un tirage de bruit suffisamment proche des pistes
+// tonales par hasard peut faire fusionner ce groupe avec un autre au clustering.
 function bruitBlanc(dureeS: number, graine = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
   const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
-  const rng = mulberry32(graine);
+  const rng = creerAleatoire(graine);
   for (let i = 0; i < n; i++) d[i] = rng() * 2 - 1;
   return b;
 }

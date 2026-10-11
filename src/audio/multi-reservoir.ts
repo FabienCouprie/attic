@@ -6,7 +6,8 @@
 // Inspiré d'Allendia/EVY : aucun entraînement, aucun dataset. Les motifs
 // émergent de l'interaction entre réseaux aléatoires.
 
-import { genererReservoirMusical, mulberry32, type ConfigReservoir, type NoteGeneree } from "./reservoir";
+import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
+import { creerAleatoire } from "../core/hasard";
 import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { formeOndeDepuisTimbre } from "./timbres";
@@ -260,7 +261,7 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
   const gmDrums = {
     kick: 36, snare: 38, clap: 39, closedHat: 42, pedalHat: 44, lowTom: 45, openHat: 46, crash: 49, highTom: 50,
   };
-  const rngDrums = mulberry32(graineBase + 100);
+  const rngDrums = creerAleatoire(graineBase + 100);
   const pasParMesure = config.pasParBeat * 4;
   const halfStep = Math.floor(config.pasParBeat / 2);
   const rythmeGM = rythmeFinale.map((n) => {

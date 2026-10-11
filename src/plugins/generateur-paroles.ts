@@ -5,19 +5,8 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
+import { creerAleatoire } from "../core/hasard";
 import { avecDoc } from "./notices";
-
-// PRNG déterministe
-function mulberry32(graine: number): () => number {
-  let a = graine | 0;
-  return () => {
-    a = (a + 0x6D2B79F5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function piocher<T>(arr: T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)];
@@ -86,7 +75,7 @@ function genererParoles(
   graine: number,
   nbLignesParSection: number,
 ): string {
-  const rng = mulberry32(graine > 0 ? graine : Math.floor(Math.random() * 99999) + 1);
+  const rng = creerAleatoire(graine > 0 ? graine : Math.floor(Math.random() * 99999) + 1);
   const d = MOTS[langue] ?? MOTS.fr;
   const structure = piocher(STRUCTURES, rng);
 

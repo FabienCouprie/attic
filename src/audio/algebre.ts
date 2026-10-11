@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { mulberry32 } from "./reservoir";
+import { creerAleatoire } from "../core/hasard";
 
 export function jacobiEigen(matrice: number[][], maxIter = 100, tol = 1e-12): { valeursPropres: number[]; vecteursPropres: number[][] } {
   const n = matrice.length;
@@ -206,7 +206,7 @@ export function kmeans(donnees: number[][], k: number, graine = 1, maxIter = 100
   if (n === 0) throw new Error("kmeans : aucune donnée fournie");
   const d = donnees[0].length;
   const kEff = Math.max(1, Math.min(k, n));
-  const rng = mulberry32(graine);
+  const rng = creerAleatoire(graine);
 
   let centres = initialiserCentresPlusPlus(donnees, kEff, rng);
   const assignations = new Array(n).fill(-1);

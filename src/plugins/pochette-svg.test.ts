@@ -1,7 +1,8 @@
 // plugins/pochette-svg.test.ts
 import { describe, it, expect } from "vitest";
 import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG } from "./pochette-svg";
-import { mulberry32, paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-palettes";
+import { paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-palettes";
+import { creerAleatoire } from "../core/hasard";
 import { registre } from "../audio/adaptateur";
 
 function ctx(params: Record<string, string | number> = {}) {
@@ -38,7 +39,7 @@ describe("pochette-svg", () => {
   });
 
   it("produit une palette auto depuis les mots-clés", () => {
-    const palette = paletteDepuisPrompt("red fire rock", mulberry32(1));
+    const palette = paletteDepuisPrompt("red fire rock", creerAleatoire(1));
     expect(palette).toHaveLength(3);
   });
 
