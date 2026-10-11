@@ -3,6 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { poserParam } from "./automation";
 import { coefficientSuiveur, valeurA } from "./courbe";
 import { compresser } from "./effets-dynamique";
 import { bitcrusher } from "./effets-sibilance";
@@ -150,7 +151,10 @@ export function ajusterLargeurStereo(
 async function filtreBiquadDynamique(
   buffer: AudioBuffer,
   type: BiquadFilterType,
-  frequency: number,
+  // LA FRÉQUENCE DE COUPURE EST UN `AudioParam`, et c'est tout ce qu'il faut : `poserParam` pose un
+  // nombre comme avant, au bit près, et une courbe comme une automation. Le filtre lui-même ne
+  // change pas d'un cas à l'autre.
+  frequency: number | Float32Array,
   Q = 0.707,
 ): Promise<AudioBuffer> {
   const ctx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
@@ -158,7 +162,7 @@ async function filtreBiquadDynamique(
   source.buffer = buffer;
   const filter = ctx.createBiquadFilter();
   filter.type = type;
-  filter.frequency.value = frequency;
+  poserParam(filter.frequency, frequency, buffer.length / buffer.sampleRate);
   filter.Q.value = Q;
   source.connect(filter);
   filter.connect(ctx.destination);
@@ -195,8 +199,8 @@ export async function compresserMultiBande(
   ratioHigh: number | Float32Array,
   attaqueMs: number | Float32Array,
   relachementMs: number | Float32Array,
-  freqLow: number,
-  freqHigh: number,
+  freqLow: number | Float32Array,
+  freqHigh: number | Float32Array,
 ): Promise<AudioBuffer> {
   const low = await filtreBiquadDynamique(buffer, "lowpass", freqLow);
   const high = await filtreBiquadDynamique(buffer, "highpass", freqHigh);
@@ -229,7 +233,7 @@ export async function compresserMultiBande(
 export async function exciter(
   buffer: AudioBuffer,
   amount: number,
-  frequency: number,
+  frequency: number | Float32Array,
   mix: number | Float32Array,
 ): Promise<AudioBuffer> {
   const dist = new AudioBuffer({ numberOfChannels: buffer.numberOfChannels, length: buffer.length, sampleRate: buffer.sampleRate });

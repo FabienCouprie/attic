@@ -21,20 +21,17 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 112, sur 64 composants
-- **réglages restant à faire** : 40, sur 25 composants et 30 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 116, sur 64 composants
+- **réglages restant à faire** : 36, sur 23 composants et 27 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 42, sur 19 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 13
+### frequence · 10
 
 - Bitcrusher `bitcrusher` : Fréquence
-- Compresseur multibande `compresseur-multibande` : Fréq Low, Fréq High
-- De-esser `de-esser` : Fréquence
-- Exciter / Aural enhancer `exciter` : Fréquence
 - Haut-parleur rotatif `haut-parleur-rotatif` : Coupure
 - Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Peignes accordés `peignes-accordes` : Résonance
@@ -204,6 +201,8 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `compresseur` : Relâchement
 - `compresseur` : Seuil
 - `compresseur-multibande` : Attaque
+- `compresseur-multibande` : Fréq High
+- `compresseur-multibande` : Fréq Low
 - `compresseur-multibande` : Ratio High
 - `compresseur-multibande` : Ratio Low
 - `compresseur-multibande` : Ratio Mid
@@ -215,6 +214,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `creneau` : Niveau
 - `crible-harmonique` : Fondamentale
 - `de-esser` : Attaque
+- `de-esser` : Fréquence
 - `de-esser` : Largeur
 - `de-esser` : Relâchement
 - `de-esser` : Seuil
@@ -231,6 +231,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `echo-ping-pong` : Feedback
 - `echo-ping-pong` : Temps
 - `etirement-spectre` : Étirement
+- `exciter` : Fréquence
 - `exciter` : Mix
 - `flanger` : Mix
 - `flanger` : Profondeur

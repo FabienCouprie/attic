@@ -3151,12 +3151,13 @@ Saturates the signal to add harmonics and grit, from light overdrive to full dis
 
 *Adds presence via harmonic distortion in the high mids.*
 
-Adds presence and brightness via asymmetrical harmonic distortion in the high frequencies. Useful for bringing out a vocal, guitar or a master lacking definition. Amount controls saturation intensity, Frequency sets the high-pass cutoff, and Mix controls the dry/wet balance.
+Adds presence and brightness via asymmetrical harmonic distortion in the high frequencies. Useful for bringing out a vocal, guitar or a master lacking definition. Amount controls saturation intensity, Frequency sets the high-pass cutoff, and Mix controls the dry/wet balance. Both accept a curve: « Modulation » takes the place of « Mix », « Modulation frequency » that of « Frequency », with « Frequency min » and « Frequency max ».
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation frequency | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3166,6 +3167,8 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Mix | number | 30 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Frequency min | slider | 2000 Hz | 1000 – 12000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Frequency max | slider | 9000 Hz | 1000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
 
 #### Flanger
 
@@ -4653,7 +4656,7 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 
 *Dynamic sibilance compression.*
 
-Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ». Both time constants accept one too, « Modulation attack » and « Modulation release », with their bounds named after their setting.
+Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a vocal recording. Works like a compressor targeted at a narrow frequency band (typically 5-9 kHz): a bandpass filter extracts the target band's energy, and when it exceeds the threshold, a reducing gain is applied to the full signal. Settings: • the center frequency • band width • threshold (activation level) • ratio (reduction strength) • attack • release. Short attack = precise reaction to transients; medium release = natural transition. A curve connected to the « Modulation » input takes the place of « Threshold », with its bounds « Modulation min » and « Modulation max ». A curve on the « Modulation width » input likewise takes the place of « Width », with « Width min » and « Width max ». Both time constants accept one too, « Modulation attack » and « Modulation release », with their bounds named after their setting. The centre frequency accepts one too, through « Modulation frequency »: the target band then moves, and its Q follows, since it is the frequency divided by the width.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4662,6 +4665,7 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | input | Modulation width | curve |  |
 | input | Modulation attack | curve |  |
 | input | Modulation release | curve |  |
+| input | Modulation frequency | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4680,6 +4684,8 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
 | Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
+| Frequency min | slider | 4000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Frequency max | slider | 10000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
 
 #### Ducking
 
@@ -4861,7 +4867,7 @@ Aligns the level of one sound with another. The « Reference » input gives the 
 
 *3-band compressor with independent thresholds/ratios.*
 
-Compressor split into three bands (low, mid, high). Each band is isolated by a crossover and compressed with its own threshold and ratio. Controls lows without affecting highs, or adds punch to the mids without squashing the bass. The eight processing settings accept a curve, each through its own input: the three thresholds, the three ratios, then the attack and the release, which are common to all three bands. The two crossover frequencies do not.
+Compressor split into three bands (low, mid, high). Each band is isolated by a crossover and compressed with its own threshold and ratio. Controls lows without affecting highs, or adds punch to the mids without squashing the bass. The eight processing settings accept a curve, each through its own input: the three thresholds, the three ratios, then the attack and the release, which are common to all three bands. The two crossover frequencies accept one too, through « Modulation low freq » and « Modulation high freq »: they then move the edges of the three bands along the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4874,6 +4880,8 @@ Compressor split into three bands (low, mid, high). Each band is isolated by a c
 | input | Modulation high ratio | curve |  |
 | input | Modulation attack | curve |  |
 | input | Modulation release | curve |  |
+| input | Modulation low freq | curve |  |
+| input | Modulation high freq | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4904,6 +4912,10 @@ Compressor split into three bands (low, mid, high). Each band is isolated by a c
 | Attack max | slider | 50 ms | 0 – 200 ms, step 1 | Value of « Attack » that the curve's one means. |
 | Release min | slider | 20 ms | 5 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Release max | slider | 400 ms | 5 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Low freq min | slider | 80 Hz | 40 – 1000 Hz, step 1 | Value of « Low freq » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Low freq max | slider | 600 Hz | 40 – 1000 Hz, step 1 | Value of « Low freq » that the curve's one means. |
+| High freq min | slider | 2000 Hz | 1000 – 12000 Hz, step 1 | Value of « High freq » that a connected curve's zero means. With no curve, this setting does nothing. |
+| High freq max | slider | 8000 Hz | 1000 – 12000 Hz, step 1 | Value of « High freq » that the curve's one means. |
 
 #### Normalizer
 
