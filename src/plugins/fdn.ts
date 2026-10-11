@@ -77,12 +77,14 @@ export const fiches: FicheAudio[] = ([
       const rt60Haut = ctx.paramNombre("RT60 aigu", 0.7);
       const freqRef = reglageModule(ctx, length, 4, {
         reglage: "Fréquence de l'aigu", defaut: 8000, rendu: "pourCent",
-        noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"],
+        // Le repli des bornes est donné : ce sont des hertz, non des pour cent.
+        noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], bornes: [2000, 12000],
       });
       // LA QUEUE RESTE UN NOMBRE TANT QU'ELLE VAUT ZÉRO : à zéro, le composant la déduit des deux
       // temps de réverbération, et c'est ce qu'il faut garder. Une courbe branchée la commande.
       const queueDemandee = reglageModule(ctx, length, 3, {
         reglage: "Queue", defaut: 0, rendu: "pourCent", noms: ["Queue min", "Queue max"],
+        bornes: [0.5, 8],
       });
       const options = {
         sampleRate, rt60Bas, rt60Haut, freqRef,

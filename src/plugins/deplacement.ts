@@ -179,14 +179,21 @@ export const fiches: FicheAudio[] = ([
       const declencheur = ctx.entree(1);
       if (!(cible instanceof AudioBuffer) || !(declencheur instanceof AudioBuffer)) return sansEntree();
       const o = {
+        // LE REPLI DES BORNES EST DONNÉ, et il manquait. Aucune de ces quatre n'est en pour cent :
+        // sans lui, un graphe enregistré avant que ces bornes existent les lirait de zéro à cent,
+        // soit des décibels pris pour des pour cent et des secondes pour des centaines.
         seuilDb: reglageModule(ctx, cible.length, 2, {
-          reglage: "Seuil", defaut: -30, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] }),
+          reglage: "Seuil", defaut: -30, rendu: "pourCent", noms: ["Seuil min", "Seuil max"],
+          bornes: [-45, -15] }),
         reductionDb: reglageModule(ctx, cible.length, 3, {
-          reglage: "Réduction", defaut: 12, rendu: "pourCent", noms: ["Réduction min", "Réduction max"] }),
+          reglage: "Réduction", defaut: 12, rendu: "pourCent", noms: ["Réduction min", "Réduction max"],
+          bornes: [0, 24] }),
         attaqueSec: reglageModule(ctx, cible.length, 4, {
-          reglage: "Attaque", defaut: 0.01, rendu: "pourCent", noms: ["Attaque min", "Attaque max"] }),
+          reglage: "Attaque", defaut: 0.01, rendu: "pourCent", noms: ["Attaque min", "Attaque max"],
+          bornes: [0.005, 0.2] }),
         relachementSec: reglageModule(ctx, cible.length, 5, {
-          reglage: "Relâchement", defaut: 0.25, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"] }),
+          reglage: "Relâchement", defaut: 0.25, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"],
+          bornes: [0.05, 1] }),
         maintienSec: ctx.paramNombre("Maintien", 0.1),
         frequence: cible.sampleRate,
       };
@@ -244,7 +251,7 @@ export const fiches: FicheAudio[] = ([
       // fait donc point par point quand c'est une courbe, et une seule fois quand c'est un nombre.
       const ouverture = reglageModule(ctx, champ.W.length, 2, {
         reglage: "Ouverture", defaut: 90, rendu: "pourCent",
-        noms: ["Ouverture min", "Ouverture max"],
+        noms: ["Ouverture min", "Ouverture max"], bornes: [60, 150],
       });
       const [g, d] = decoderStereo(tourner(champ, angles), ouverture, rad);
       const out = new AudioBuffer({ numberOfChannels: 2, length: e.length, sampleRate: e.sampleRate });

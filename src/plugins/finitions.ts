@@ -66,10 +66,13 @@ export const fiches: FicheAudio[] = ([
       const o: OptionsHachee = {
         decroissanceSec: ctx.paramNombre("Décroissance", 1.5),
         maintienSec: ctx.paramNombre("Maintien", 0.2),
+        // Le repli des bornes est donné : ce sont des secondes et des décibels, non des pour cent.
         chuteSec: reglageModule(ctx, e.length, 3, {
-          reglage: "Chute", defaut: 0.01, rendu: "pourCent", noms: ["Chute min", "Chute max"] }),
+          reglage: "Chute", defaut: 0.01, rendu: "pourCent", noms: ["Chute min", "Chute max"],
+          bornes: [0.01, 0.5] }),
         seuilDb: reglageModule(ctx, e.length, 2, {
-          reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] }),
+          reglage: "Seuil", defaut: -40, rendu: "pourCent", noms: ["Seuil min", "Seuil max"],
+          bornes: [-60, -20] }),
         melange: reglageModule(ctx, e.length, 1, { reglage: "Mix", defaut: 60 }),
         graine: Math.round(ctx.paramNombre("Graine", 1)),
         frequence: e.sampleRate,

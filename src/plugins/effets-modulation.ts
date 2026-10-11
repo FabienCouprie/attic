@@ -172,7 +172,8 @@ export const fiches: FicheAudio[] = ([
       // LA LARGEUR SE LIT À LA CADENCE DE LA TRAJECTOIRE, non par échantillon : c'est déjà celle
       // que ce composant emploie pour sa position, deux cents points par seconde.
       const larg = reglageModule(ctx, Math.round((a.length / a.sampleRate) * CADENCE), 2, {
-        reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"],
+        // Le repli des bornes est donné : sa course monte à deux cents pour cent, non à cent.
+        reglage: "Largeur", defaut: 100, noms: ["Largeur min", "Largeur max"], bornes: [0, 200],
       });
       return { valeurs: [await spatialiserStereo(a, pos, larg, ctx.entree(1), {
         min: ctx.paramNombre("Modulation min", -100) / 100,
