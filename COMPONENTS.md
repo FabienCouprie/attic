@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **477 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **478 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 90 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (30) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 232 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (19) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 233 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (36) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5937,6 +5937,7 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | [Ecosystem (Di Scipio)](#ecosystem-di-scipio) | A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling. |
 | [Feature Follower](#feature-follower) | Extracts a feature from a sound (energy, brightness, flatness, flux) to drive an effect with it. |
 | [Flutter Echo](#flutter-echo) | The metallic flutter of a sound caught between two parallel walls. |
+| [Granular Delay](#granular-delay) | Delays the sound and returns it as grains; what comes out goes back into the line and is granulated again. |
 | [Granular Freeze](#granular-freeze) | Loops a grain with size and pitch control. |
 | [Haas Effect](#haas-effect) | One channel delayed by a few milliseconds: the image moves to the side that arrives first. |
 | [Harmonic Tremolo](#harmonic-tremolo) | Modulates lows and highs in opposition: the colour sways, the level barely moves. |
@@ -6091,6 +6092,48 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Decay min | slider | 0.2 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Decay max | slider | 4 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that the curve's one means. |
+
+#### Granular Delay
+
+`retard-granulaire` · Processing → Other effects
+
+*Delays the sound and returns it as grains; what comes out goes back into the line and is granulated again.*
+
+Delays the sound and returns it as grains, each read from the delay line at its own place and its own speed. « Time » is the central delay, the one the grains read at. « Scatter » spreads their delays either side of it: at zero they all read the same place and the output is the delayed sound; beyond, each reads elsewhere and the sound thickens. « Grain size » is the length of one grain, « Density » the number of grains launched per second. Their product gives the overlap, that is how many grains sound together, and the message states it. The sum is brought back to the sum of the active windows, so density does not raise the level; grains reading different places then come out lower than grains reading the same one, and the message gives the compensation applied. « Transposition » is a grain's pitch offset in semitones. It is read at the instant the grain is launched and does not change while it plays, so a grain's pitch is the one it states. « Feedback » sends what comes out of the grains back into the line. What returns is granulated again, hence transposed once more: the pitch rises or falls in steps, one per round, and the ratio from one step to the next is that of « Transposition ». A grain transposed upward reads the line faster than time passes, and reaches the writing head after a run worth the delay divided by the excess speed. Its length is bounded there, which shortens grains at short delays; the message says how many were. « Freeze » stops feeding the line as soon as it has been filled once. The grains then read only what it holds, which loops, and « Feedback » has no purchase since nothing enters any more. « Window » decides the shape of each grain. The trapezoid keeps a plateau, so the grains sum flat and a delayed sound comes out at its own level; the Gaussian leaves matter only at the centre, which modulates the output at the grain rate; the expodec decays after a brief attack and the rexpodec rises then cuts, the two of them giving a direction to time inside the grain. « Mix » is the proportion of granulated sound: at 0 %, the output is the input. « Seed » governs the draw of the delays, and at equal seed the render is the same. « Max tail » bounds what is added after the end of the sound to let the rounds die away. What is added is the number of rounds still audible, which « Feedback » decides, times the delay; under « Freeze » the line never empties, and the tail is then everything this setting allows. The « Modulation time », « Modulation scatter », « Modulation transposition », « Modulation feedback » and « Modulation mix » inputs take the place of their setting when a curve is connected, each with its two bounds; with no curve those bounds do nothing. « Time max » and « Scatter max » together set the length of the line, hence the longest delay the render will reach, and « Feedback max » the number of rounds the tail lets through.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| input | Modulation time | curve |  |
+| input | Modulation scatter | curve |  |
+| input | Modulation transposition | curve |  |
+| input | Modulation feedback | curve |  |
+| input | Modulation mix | curve |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Time | slider | 0.25 s | 0.01 – 2 s, step 0.01 | The central delay, the one the grains read at in the line. |
+| Scatter | slider | 0.05 s | 0 – 1 s, step 0.01 | The spread of the delays either side of the central delay. At zero, every grain reads the same place and the output is the delayed sound. |
+| Grain size | slider | 80 ms | 5 – 500 ms, step 1 | The length of one grain. Below fifty milliseconds its own pitch stops being heard and it is the matter that speaks. |
+| Density | slider | 25 /s | 1 – 200 /s, step 1 | The number of grains launched per second. Multiplied by the grain size, it gives the overlap. |
+| Transposition | slider | 0 semitones | -24 – 24 semitones, step 1 | A grain's pitch offset, read at the instant it is launched. With feedback, it applies once more on each round. |
+| Feedback | slider | 40 % | 0 – 95 %, step 1 | The share of what comes out of the grains that goes back into the line, to be granulated again. |
+| Freeze | choice | No | No / Yes | Stops feeding the line as soon as it has been filled once. The grains then read only what it holds, which loops. |
+| Window | choice | Trapezoid | Gaussian / Trapezoid / Expodec / Rexpodec | The shape of each grain. The trapezoid is the default because its plateau makes the grains sum flat: at overlap two, a sound delayed with no scatter and no transposition comes out at its own level, where the Gaussian, which leaves matter only at the centre, loses 1.9 dB of it and modulates the output at the grain rate. The two exponentials give a direction to time inside the grain. |
+| Mix | slider | 50 % | 0 – 100 %, step 1 | The proportion of granulated sound. At 0 %, the output is the input. |
+| Seed | slider | 1 | 0 – 999999, step 1 | The number of the delay draw. At equal seed, the same render. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Max tail | slider | 3 s | 0 – 10 s, step 0.5 | Bound on what is added after the end of the sound to let the rounds die away. At high feedback the audible rounds run into the dozens, and without this bound the render would lengthen accordingly. |
+| Time min | slider | 0.05 s | 0.01 – 2 s, step 0.01 | Value of « Time » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Time max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Time » that the curve's one means. |
+| Scatter min | slider | 0 s | 0 – 1 s, step 0.01 | Value of « Scatter » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Scatter max | slider | 0.5 s | 0 – 1 s, step 0.01 | Value of « Scatter » that the curve's one means. |
+| Transposition min | slider | -12 semitones | -24 – 24 semitones, step 1 | Value of « Transposition » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Transposition max | slider | 12 semitones | -24 – 24 semitones, step 1 | Value of « Transposition » that the curve's one means. |
+| Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
+| Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 
 #### Granular Freeze
 

@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1319 files, 233666 lines, of which 159628 are code.**
+**1323 files, 234526 lines, of which 160121 are code.**
 The table lists the 186 files of 200 code lines or more, heaviest first;
-the remaining 1133 account for 155388 lines.
+the remaining 1137 account for 156244 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -24,7 +24,7 @@ the remaining 1133 account for 155388 lines.
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
-| src/plugins/index.ts | 491 | 503 | ! |
+| src/plugins/index.ts | 493 | 505 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
 | src/ui/BarreOutils.tsx | 441 | 491 | ! |
@@ -180,9 +180,9 @@ the remaining 1133 account for 155388 lines.
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/rotatifs.test.ts | 214 | 274 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
+| src/docs/modulables.ts | 213 | 496 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
-| src/docs/modulables.ts | 211 | 494 |  |
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |

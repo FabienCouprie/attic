@@ -234,6 +234,8 @@ export const ECARTES_REGLAGE: Record<string, string> = {
     "elle dit sur combien de demi-tons une zone est rééchantillonnée : c'est la construction de la banque, faite avant le rendu, et elle se compte en demi-tons et non en largeur d'image",
   "instrument-fin/Largeur de zone":
     "elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu",
+  "retard-granulaire/Queue max":
+    "elle borne la LONGUEUR de ce qui est rendu, fixée avant le premier échantillon : une courbe devrait la connaître pour être construite, ce qui est circulaire",
 
   // UN POIDS DANS UNE RECHERCHE N'EST PAS UNE GRANDEUR DU SON.
   "mosaiquage/Poids du niveau":

@@ -21,10 +21,10 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 151, sur 65 composants
+- **réglages déjà pilotés par une courbe** : 156, sur 66 composants
 - **réglages restant à faire** : 0, sur 0 composants et 0 couples composant / famille
 - **dont le cœur travaille par trames** : 0
-- **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
+- **réglages écartés un par un** : 44, sur 21 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -102,6 +102,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `restauration-ecretage/Seuil manuel` : il décide quel échantillon est tenu pour écrêté, et ne sert qu'en mode manuel : un critère de détection, dans un seul mode
 - `banque-clavier/Largeur de zone` : elle dit sur combien de demi-tons une zone est rééchantillonnée : c'est la construction de la banque, faite avant le rendu, et elle se compte en demi-tons et non en largeur d'image
 - `instrument-fin/Largeur de zone` : elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu
+- `retard-granulaire/Queue max` : elle borne la LONGUEUR de ce qui est rendu, fixée avant le premier échantillon : une courbe devrait la connaître pour être construite, ce qui est circulaire
 - `mosaiquage/Poids du niveau` : c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon
 - `mosaiquage/Poids de la brillance` : idem, l'importance donnée au centre de gravité du spectre dans la même recherche
 - `reverbe-hachee/Décroissance` : elle est la durée de la réponse impulsionnelle que le composant convolue, bâtie une fois avant le rendu
@@ -243,6 +244,11 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `resonateurs` : Fondamentale
 - `resonateurs` : Mix
 - `resonateurs` : Résonance
+- `retard-granulaire` : Dispersion
+- `retard-granulaire` : Mélange
+- `retard-granulaire` : Réinjection
+- `retard-granulaire` : Temps
+- `retard-granulaire` : Transposition
 - `retard-spectral` : Dispersion
 - `retard-spectral` : Mix
 - `reverbe-hachee` : Chute
