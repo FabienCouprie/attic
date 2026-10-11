@@ -240,7 +240,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Doppler | `doppler` | 240 × 118 |
 | Doser un effet | `doser-effet` | 240 × 184 |
 | Batterie synthétique | `drum-synth` | 240 × 140 |
-| Ducking | `ducking` | 240 × 140 |
+| Ducking | `ducking` | 240 × 228 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
 | Écho flottant | `echo-flottant` | 240 × 140 |

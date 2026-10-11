@@ -41,6 +41,7 @@ import { fiches as fichesVelours } from "./velours";
 import { fiches as fichesSpectralCdp } from "./spectral-cdp";
 import { fiches as fichesConcret } from "./concret";
 import { fiches as fichesRetardSpectral } from "./retard-spectral";
+import { fiches as fichesDeplacement } from "./deplacement";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const SR = 16000;
@@ -55,7 +56,7 @@ const LEURRE = 100;
 const TOUTES = [
   ...fichesArcEnCiel, ...fichesCresson, ...fichesEffets, ...fichesRotatifs,
   ...fichesTemporel, ...fichesFdn, ...fichesFinitions, ...fichesTableOnde, ...fichesVelours,
-  ...fichesSpectralCdp, ...fichesConcret, ...fichesRetardSpectral,
+  ...fichesSpectralCdp, ...fichesConcret, ...fichesRetardSpectral, ...fichesDeplacement,
 ] as unknown as FicheAudio[];
 
 const fiche = (id: string): FicheAudio => {
@@ -139,6 +140,18 @@ const CAS: {
    * le faisait pas tomber. Ouvrir le seuil rend le cas sensible à ce qu'il prétend éprouver.
    */
   reglages?: Record<string, number>;
+  /**
+   * La valeur éprouvée et le leurre, quand 25 et 100 ne veulent rien dire dans l'unité du réglage.
+   *
+   * LES DEUX VALEURS PAR DÉFAUT SONT DES POUR-CENT. Sur un seuil en décibels, 25 dB est au-dessus
+   * de tout ce qu'un signal d'essai atteint : rien ne déclenche, la sortie est l'entrée, et le cas
+   * passerait sans rien éprouver. Sur une attaque en secondes, 25 et 100 sont tous deux assez longs
+   * pour que l'enveloppe ne bouge pas du tout, et les deux rendraient la même chose.
+   *
+   * ELLES SE CHOISISSENT DYADIQUES, un seizième plutôt qu'un centième : seule une fraction dyadique
+   * se compare exactement entre le flottant simple d'un tableau et le double d'un nombre.
+   */
+  regle?: number; leurre?: number;
   /** Le rang du port à éprouver, quand la fiche en porte plusieurs. Par défaut, le dernier. */
   rang?: number;
 }[] = [
@@ -237,11 +250,23 @@ const CAS: {
   { id: "de-esser", reglage: "Relâchement", entrees: () => [son(151, 2), undefined, undefined, undefined],
     noms: ["Relâchement min", "Relâchement max"], siOffline: true,
     reglages: { Seuil: -60, Ratio: 10 } },
+  // LE DUCKING PORTE DEUX ENTRÉES AUDIO AVANT SES QUATRE PORTS, et ses unités ne sont pas des
+  // pour-cent : chaque cas choisit donc sa valeur et son leurre, en fractions dyadiques.
+  { id: "ducking", reglage: "Seuil", entrees: () => [son(197), son(199)],
+    noms: ["Seuil min", "Seuil max"], rang: 2, regle: -24, leurre: 0 },
+  { id: "ducking", reglage: "Réduction", entrees: () => [son(211), son(223), undefined],
+    noms: ["Réduction min", "Réduction max"], rang: 3, regle: 24, leurre: 0 },
+  { id: "ducking", reglage: "Attaque", entrees: () => [son(227), son(229), undefined, undefined],
+    noms: ["Attaque min", "Attaque max"], rang: 4, regle: 0.0625, leurre: 0.5,
+    reglages: { Seuil: -40, Réduction: 24 } },
+  { id: "ducking", reglage: "Relâchement", entrees: () => [son(233), son(239), undefined, undefined, undefined],
+    noms: ["Relâchement min", "Relâchement max"], regle: 0.25, leurre: 2,
+    reglages: { Seuil: -40, Réduction: 24 } },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien trente-six ports à éprouver", () => {
-    expect(CAS).toHaveLength(36);
+  it("il y a bien quarante ports à éprouver", () => {
+    expect(CAS).toHaveLength(40);
   });
 
   for (const cas of CAS) {
@@ -273,13 +298,14 @@ describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
       const rang = rangDe(fiche(cas.id));
       const plate = constante(1, 64);
 
-      const fixe = await rendre(cas.id, entrees, { ...cas.reglages, [cas.reglage]: REGLE });
+      const regle = cas.regle ?? REGLE;
+      const fixe = await rendre(cas.id, entrees, { ...cas.reglages, [cas.reglage]: regle });
       const modulee = await rendre(cas.id, [...entrees.slice(0, rang), plate], {
         ...cas.reglages,
         // LE LEURRE EST LE CŒUR DU CAS : si le port n'est pas lu, c'est lui qui s'applique.
-        [cas.reglage]: LEURRE,
+        [cas.reglage]: cas.leurre ?? LEURRE,
         [nomMin]: 0,
-        [nomMax]: REGLE,
+        [nomMax]: regle,
       });
 
       expect(memes(fixe, modulee),

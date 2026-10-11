@@ -14,15 +14,17 @@
 // que le déclencheur est retombé, si bien qu'une phrase parlée creuse un seul trou plutôt que
 // douze.
 
+import { valeurA } from "./courbe";
+
 export interface OptionsDucking {
   /** Niveau du déclencheur, en dB, au-dessus duquel l'atténuation s'engage. */
-  seuilDb: number;
+  seuilDb: number | Float32Array;
   /** Atténuation maximale, en dB. */
-  reductionDb: number;
+  reductionDb: number | Float32Array;
   /** Temps de descente, en secondes. */
-  attaqueSec: number;
+  attaqueSec: number | Float32Array;
   /** Temps de remontée, en secondes. */
-  relachementSec: number;
+  relachementSec: number | Float32Array;
   /** Temps pendant lequel l'atténuation est gardée après le retour sous le seuil, en secondes. */
   maintienSec: number;
   frequence: number;
@@ -49,10 +51,16 @@ export function enveloppeDeclencheur(d: Float32Array, frequence: number, tempsSe
  */
 export function gainsDucking(declencheur: Float32Array, n: number, o: OptionsDucking): Float32Array {
   const env = enveloppeDeclencheur(declencheur, o.frequence);
-  const seuil = Math.pow(10, o.seuilDb / 20);
-  const plancher = Math.pow(10, -Math.abs(o.reductionDb) / 20);
-  const cA = Math.exp(-1 / Math.max(1, o.attaqueSec * o.frequence));
-  const cR = Math.exp(-1 / Math.max(1, o.relachementSec * o.frequence));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const seuilA = (i: number) => Math.pow(10, valeurA(o.seuilDb, i) / 20);
+  const plancherA = (i: number) => Math.pow(10, -Math.abs(valeurA(o.reductionDb, i)) / 20);
+  // LES DEUX COEFFICIENTS GARDENT LEUR PROPRE ÉCRITURE, et ce n'est pas une recopie par paresse.
+  // `coefficientSuiveur` compte en MILLISECONDES et plancherait à 0,01 ; ces deux-ci comptent en
+  // SECONDES et planchent à un échantillon. Les deux formules coïncident partout au-dessus d'une
+  // milliseconde, donc sur toute la course réglable, mais y passer demanderait de multiplier par
+  // mille, et je n'ai pas mesuré qu'une telle multiplication ne déplace aucun bit.
+  const cA = (i: number) => Math.exp(-1 / Math.max(1, valeurA(o.attaqueSec, i) * o.frequence));
+  const cR = (i: number) => Math.exp(-1 / Math.max(1, valeurA(o.relachementSec, i) * o.frequence));
   const maintien = Math.max(0, Math.round(o.maintienSec * o.frequence));
 
   const gains = new Float32Array(n);
@@ -61,10 +69,11 @@ export function gainsDucking(declencheur: Float32Array, n: number, o: OptionsDuc
   for (let i = 0; i < n; i++) {
     // Le déclencheur peut être plus court que la cible : au-delà, il est tenu pour silencieux.
     const niveau = i < env.length ? env[i] : 0;
+    const seuil = seuilA(i);
     if (niveau > seuil) reste = maintien;
     else if (reste > 0) reste--;
-    const cible = niveau > seuil || reste > 0 ? plancher : 1;
-    const c = cible < gain ? cA : cR;
+    const cible = niveau > seuil || reste > 0 ? plancherA(i) : 1;
+    const c = cible < gain ? cA(i) : cR(i);
     gain = c * gain + (1 - c) * cible;
     gains[i] = gain;
   }
