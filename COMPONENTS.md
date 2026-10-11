@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **483 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **484 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **483 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 93 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 43 | [Analysis](#analysis-1) (19) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -8312,6 +8312,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Morphology](#morphology) | Reports the shape of a sequence, its recurring figures, and what it shares with another. |
 | [Multitrack Viewer](#multitrack-viewer) | Draws up to six sounds one under another, on a shared time axis. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
+| [Schaefferian Criteria](#schaefferian-criteria) | Reads a sound's mass, dynamic form and allure, in the species of the Traité des objets musicaux. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Sequence Roll](#sequence-roll) | Draws the notes of a sequence on a continuous pitch axis, voice by voice. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
@@ -8522,6 +8523,34 @@ Shows a MIDI file played on an eighty-eight-key keyboard, one colour per hand, w
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Schaefferian Criteria
+
+`criteres-schaefferiens` · Visualization → Analysis
+
+*Reads a sound's mass, dynamic form and allure, in the species of the Traité des objets musicaux.*
+
+Reads three of the received sound's seven morphological criteria and gives their species, without touching the sound, which comes out unchanged. After Pierre Schaeffer, « Traité des objets musicaux », Seuil, 1966; and Michel Chion, « Guide des objets sonores: Pierre Schaeffer et la recherche musicale », INA-GRM and Buchet-Chastel, 1983, entries masse page 141, dynamique page 83 and allure page 40. The seven criteria fall into three families: matter carries mass, harmonic timbre and grain; form carries dynamics and allure; variation carries melodic profile and mass profile. This component reads one from each family. The « Mass » states how the sound occupies the field of pitches, on the scale of the Traité, from the most tonic to the most complex: - « pure », a single partial, hence no timbre; - « tonic », one definite pitch and its timbre; - « group », several pitches one can tell apart; - « nodal », a zone of the field occupied without a definite pitch; - « white », the whole field occupied. Two quantities decide it. The « Occupancy » is the share of the field carrying energy, and « White noise threshold » is the share beyond which the mass occupies the whole field. The count of « Pitches » sorts the first three degrees, and « Pure sound occupancy » separates a lone partial from a narrow band, which has a single line too. The mass is called « varied » when the pitch moves by more than « Varied range » over the sound. The « Dynamics » is the shape of the level in time, and it is by it that the facture is read: - « impulse », an attack and nothing behind; - « held », a plateau; - « crescendo », the level rises throughout; - « decrescendo », it falls; - « delta », it rises then falls. « Impulse sustain » is the duration above half the peak below which the sound is an impulse. « Bulge threshold » decides the delta shape, and « Slope threshold » the crescendo and the decrescendo. The « Attack » is given in milliseconds, from a tenth to nine tenths of the peak. The « Allure » is the slow undulation of the sustain, in three species: - « mechanical », of unchanging period; - « living », whose period breathes, like a player's; - « disordered », whose period cannot be foreseen. « Rate min » and « Rate max » bound the band the undulation is searched in; its upper bound is where the grain's band begins. « Undulation threshold » is the depth below which there is no allure. « Mechanical irregularity » and « Living irregularity » are the two boundaries between the species, set on the relative spread of successive periods. This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same mass, and it is from there that he draws reduced listening. The species describe what is perceived, not what produced it. A sound too faint or too short for a criterion to be observed in it receives the species « none » for that criterion, which is preferable to a species drawn at random. The « Audio » output returns the sound unchanged. The « Criteria » output gives the three species and their quantities as text.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Criteria | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| White noise threshold | slider | 0.95 | 0.2 – 0.99, step 0.01 | The share of the field of pitches beyond which the mass is white noise rather than a nodal zone. The scale is continuous, a band closing in little by little on white noise: three hundred hertz wide occupy about half the field, one thousand five hundred occupy nine tenths, and white noise the whole of it. |
+| Pure sound occupancy | slider | 0.02 | 0.002 – 0.2, step 0.002 | The share of the field below which a single-line mass is a pure sound. Above it, it is tonic: a narrow band has a single line too, and a pure sound occupies a point of the field where a band occupies an interval. A sine stays under 0.01, a thirty hertz band sits near 0.07. |
+| Varied range | slider | 2 semitones | 0.5 – 12 semitones, step 0.5 | The pitch range beyond which the mass is called varied. It is taken on the deciles of the tracked pitch, so that an isolated reading does not trigger it and a glissando gives four fifths of its written range. |
+| Impulse sustain | slider | 120 ms | 10 – 500 ms, step 10 | The duration above half the peak below which the dynamic shape is an impulse. It is what separates an impulse from a decrescendo, both having the same slope: an impulse has no sustain at all. |
+| Bulge threshold | slider | 0.12 | 0.02 – 0.6, step 0.02 | By how much the middle third must exceed the mean of the two ends for the shape to be a delta. It comes before the slope threshold: a delta shape rises as much as it falls, so its overall slope is null like a held sound's. |
+| Slope threshold | slider | 0.15 | 0.02 – 0.6, step 0.02 | By how much the last third must depart from the first for the shape to be a crescendo or a decrescendo. Below it, it is a held sound: a plateau always has a small slope, which the reading must not take for a rise. |
+| Rate min | slider | 0.5 Hz | 0.2 – 4 Hz, step 0.1 | The slowest undulation rate searched for. Below it, one would no longer be reading an undulation of the sustain but the shape of the whole sound, which is the dynamics. The sound's duration bounds it too, an undulation being unable to be slower than it. |
+| Rate max | slider | 20 Hz | 5 – 60 Hz, step 1 | The fastest. Its default value is where fluctuation strength yields to roughness, after Zwicker and Fastl, « Psychoacoustics: Facts and Models », 3rd edition, Springer, 2007: beyond it, a modulation can no longer be followed and becomes a texture, that is, a grain. |
+| Undulation threshold | slider | 0.06 | 0.01 – 0.4, step 0.01 | The undulation depth below which there is no allure. A hold without undulation stays under a thousandth, a fifteen per cent undulation passes a tenth. |
+| Mechanical irregularity | slider | 0.02 | 0.005 – 0.2, step 0.005 | The relative spread of successive periods below which the allure is mechanical. A tremolo of unchanging period stays under 0.008 at every rate of the band, and a five per cent rate departure gives 0.035. |
+| Living irregularity | slider | 0.12 | 0.05 – 0.6, step 0.01 | The spread beyond which the allure is disordered rather than living. A ten per cent rate departure gives 0.070, a twenty per cent one 0.141, and an undulation whose every period is drawn at random from 0.18 to 0.23. |
 
 #### Self-Similarity Matrix
 

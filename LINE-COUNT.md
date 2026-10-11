@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1342 files, 238823 lines, of which 162438 are code.**
-The table lists the 189 files of 200 code lines or more, heaviest first;
-the remaining 1153 account for 159475 lines.
+**1345 files, 240237 lines, of which 163181 are code.**
+The table lists the 191 files of 200 code lines or more, heaviest first;
+the remaining 1154 account for 159699 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -23,7 +23,7 @@ the remaining 1153 account for 159475 lines.
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
-| src/plugins/index.ts | 503 | 515 | ! |
+| src/plugins/index.ts | 505 | 517 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
@@ -35,6 +35,7 @@ the remaining 1153 account for 159475 lines.
 | src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/plugins/finitions.test.ts | 386 | 521 |  |
+| src/audio/criteres-schaefferiens.test.ts | 384 | 564 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 382 | 436 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
@@ -110,6 +111,7 @@ the remaining 1153 account for 159475 lines.
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
+| src/audio/criteres-schaefferiens.ts | 283 | 624 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
 | src/plugins/deplacement.test.ts | 281 | 372 |  |

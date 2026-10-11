@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**483 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**484 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -215,6 +215,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Créneau | `creneau` | 240 × 162 |
 | Crible harmonique | `crible-harmonique` | 240 × 140 |
 | Crible (Xenakis) | `crible-xenakis` | 240 × 118 |
+| Critères schaefferiens | `criteres-schaefferiens` | 240 × 140 |
 | Csound | `csound` | 240 × 184 |
 | Effet Csound | `csound-effet` | 240 × 162 |
 | Instrument Csound | `csound-instrument` | 240 × 140 |
