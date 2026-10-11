@@ -230,10 +230,12 @@ const CAS: {
     noms: ["Mix min", "Mix max"], rang: 2 },
   { id: "wahwah", reglage: "Mix", entrees: () => [son(71, 2), undefined, undefined],
     noms: ["Mix min", "Mix max"], rang: 3 },
+  // CES DEUX RANGS SONT ÉCRITS pour la même raison que les autres : des ports de résonance et de
+  // brillance sont arrivés derrière eux, et le rang par défaut est LE DERNIER de la fiche.
   { id: "peignes-accordes", reglage: "Mix", entrees: () => [son(73), undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 2 },
   { id: "resonateurs", reglage: "Mix", entrees: () => [son(79), undefined],
-    noms: ["Mix min", "Mix max"] },
+    noms: ["Mix min", "Mix max"], rang: 2 },
   {
     id: "retard-spectral", reglage: "Mix", entrees: () => [son(83), undefined],
     noms: ["Mix min", "Mix max"],
@@ -381,11 +383,19 @@ const CAS: {
     noms: ["Fréquence min", "Fréquence max"], regle: 1024, leurre: 64 },
   { id: "oscillateur-table-onde", reglage: "Fréquence", entrees: () => [undefined, undefined, undefined],
     noms: ["Fréquence min", "Fréquence max"], regle: 256, leurre: 1024 },
+  // LES DEUX RÉSONANCES ET LA BRILLANCE. Un T60 se compte en secondes : un quart contre deux, deux
+  // fractions dyadiques. La brillance voyage en pour cent, et vingt-cinq y est exact.
+  { id: "peignes-accordes", reglage: "Résonance", entrees: () => [son(449), undefined, undefined],
+    noms: ["Résonance min", "Résonance max"], regle: 0.25, leurre: 2 },
+  { id: "resonateurs", reglage: "Résonance", entrees: () => [son(457), undefined, undefined],
+    noms: ["Résonance min", "Résonance max"], rang: 3, regle: 0.25, leurre: 2 },
+  { id: "resonateurs", reglage: "Brillance", entrees: () => [son(461), undefined, undefined, undefined],
+    noms: ["Brillance min", "Brillance max"], regle: 25, leurre: 100 },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien quatre-vingt-quatre ports à éprouver", () => {
-    expect(CAS).toHaveLength(84);
+  it("il y a bien quatre-vingt-sept ports à éprouver", () => {
+    expect(CAS).toHaveLength(87);
   });
 
   for (const cas of CAS) {

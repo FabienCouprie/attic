@@ -8,13 +8,19 @@
 // D'après Julius O. Smith III, « Physical Audio Signal Processing », 2010, chapitre « Feedback Comb
 // Filters » ; l'amortissement dans la boucle est celui de Karplus et Strong (1983).
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurMax } from "./courbe";
 
 export interface OptionsPeigne {
   /** Les fréquences des peignes, en hertz. */
   frequences: number[];
-  /** Temps de décroissance de 60 dB de la résonance, en secondes. */
-  t60: number;
+  /**
+   * Temps de décroissance de 60 dB de la résonance, en secondes.
+   *
+   * UN TABLEAU LE FAIT VARIER SANS RIEN COÛTER DE PLUS : le gain de réinjection s'en déduit par un
+   * `pow` qui est DÉJÀ dans la double boucle, l'exposant dépendant du retard de chaque peigne.
+   * Le lire par échantillon ne change pas le nombre d'exponentielles.
+   */
+  t60: number | Float32Array;
   /** 0 à 100 : la perte des aigus à chaque passage dans la boucle. */
   amortissement: number;
   mix: number;
@@ -63,8 +69,12 @@ export const longueurAvecTraine = (longueur: number, t60: number, frequence: num
  */
 export function peignesVoie(x: Float32Array, o: OptionsPeigneVoie): Float32Array {
   const sr = o.frequence;
-  const t60 = Math.max(0.01, o.t60);
-  const n = longueurAvecTraine(x.length, t60, sr);
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
+  const t60A = (i: number) => Math.max(0.01, valeurA(o.t60, i));
+  // LA TRAÎNE SE MESURE SUR LA PLUS LONGUE RÉSONANCE QUE LA COURBE DEMANDE, le tampon étant alloué
+  // avant qu'un échantillon soit écrit. `valeurMax` rend un scalaire tel quel, de sorte que la
+  // longueur d'un composant non modulé ne bouge pas.
+  const n = longueurAvecTraine(x.length, valeurMax(o.t60), sr);
   const freqs = o.frequences.filter((f) => f >= 20 && f < sr / 2);
   const amort = Math.max(0, Math.min(0.99, o.amortissement / 100));
   const y = new Float32Array(n);
@@ -89,7 +99,7 @@ export function peignesVoie(x: Float32Array, o: OptionsPeigneVoie): Float32Array
         const w = (2 * Math.PI * freqs[k] * tr) / sr;
         const retardPB = amort > 0 ? Math.atan2(amort * Math.sin(w), 1 - amort * Math.cos(w)) / w : 0;
         const D = Math.min(taille - 3, Math.max(2, sr / (freqs[k] * tr) - retardPB));
-        const g = Math.pow(10, (-3 * D) / (sr * t60));
+        const g = Math.pow(10, (-3 * D) / (sr * t60A(i)));
         // Partie entière et fraction dans [0,1 ; 1,1[ : la plage où le passe-tout reste bien conditionné.
         const entier = Math.floor(D - 0.1), eta = D - entier;
         const C = (1 - eta) / (1 + eta);
