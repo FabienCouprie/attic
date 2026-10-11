@@ -58,6 +58,9 @@ const SIGLES = new Set([
   // GRAIN : le nom d'une famille de programmes du Composers Desktop Project, ecrit ainsi dans sa
   // documentation. Ce n'est pas le mot « grain » mais le nom du logiciel qui les regroupe.
   "GRAIN",
+  // VOSIM : le nom du systeme de synthese de Kaegi et Tempelaars, ecrit ainsi dans le titre de
+  // leur article de 1978. C'est un sigle, non un mot ordinaire : la notice le cite.
+  "VOSIM",
 ]);
 
 /**

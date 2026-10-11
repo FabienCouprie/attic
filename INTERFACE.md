@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**479 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**480 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -504,6 +504,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Vocoder | `vocoder` | 240 × 228 |
 | Voice Changer | `voice-changer` | 240 × 118 |
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
+| VOSIM | `vosim` | 240 × 184 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |
 | Wah-wah | `wahwah` | 240 × 228 |

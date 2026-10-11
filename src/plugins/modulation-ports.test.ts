@@ -99,13 +99,26 @@ describe("les ports de modulation", () => {
     for (const e of filtre.entrees.filter((x: any) => x.module)) expect(e.requis).toBe(false);
   });
 
-  it("L'AUDIO RESTE LE PREMIER PORT — les ports se désignent par leur rang", () => {
-    // Insérer un port de modulation ailleurs qu'en fin de liste débrancherait l'audio de tous les
-    // graphes déjà enregistrés, en silence.
-    for (const { fiche, rang } of portsDeModulation()) {
-      expect(rang, `${fiche.id}`).toBeGreaterThan(0);
-      const avant = fiche.entrees.slice(0, rang);
-      expect(avant.some((e: any) => e.type === "audio" || e.type === "courbe"), fiche.id).toBe(true);
+  it("LES PORTS DE MODULATION SONT EN FIN DE LISTE — les ports se désignent par leur rang", () => {
+    // Insérer un port de modulation ailleurs qu'en fin de liste débrancherait les prises de tous
+    // les graphes déjà enregistrés, en silence.
+    //
+    // CE GARDE EXIGEAIT « UN RANG SUPÉRIEUR À ZÉRO », ET C'ÉTAIT UN SUBSTITUT. La propriété qui
+    // compte est que les ports de modulation forment le SUFFIXE de la liste ; « pas en rang zéro »
+    // en était une conséquence tant que toute fiche portait une entrée audio en premier. VOSIM est
+    // un générateur : il n'a pas d'entrée audio, et son premier port de courbe est au rang zéro
+    // sans qu'aucun graphe enregistré en souffre, puisqu'il n'y avait rien avant. Le substitut
+    // tombait sur une fiche juste, et la propriété, elle, est plus forte que lui : elle refuse
+    // aussi un port de modulation glissé au MILIEU, que l'ancienne formulation acceptait.
+    for (const f of toutesLesFiches as any[]) {
+      const entrees: any[] = f.entrees ?? [];
+      const rangs = entrees.map((e, i) => (e.module ? i : -1)).filter((i) => i >= 0);
+      if (rangs.length === 0) continue;
+      expect(rangs[rangs.length - 1], `${f.id} : le dernier port doit être une modulation`)
+        .toBe(entrees.length - 1);
+      for (let k = 1; k < rangs.length; k++) {
+        expect(rangs[k], `${f.id} : les ports de modulation doivent se suivre`).toBe(rangs[k - 1] + 1);
+      }
     }
   });
 
