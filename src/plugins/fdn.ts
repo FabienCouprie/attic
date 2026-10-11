@@ -79,6 +79,10 @@ export const fiches: FicheAudio[] = ([
         reglage: "Fréquence de l'aigu", defaut: 8000, rendu: "pourCent",
         // Le repli des bornes est donné : ce sont des hertz, non des pour cent.
         noms: ["Fréquence de l'aigu min", "Fréquence de l'aigu max"], bornes: [2000, 12000],
+        // ET LA COURSE SE PARCOURT EN MULTIPLIANT, une octave étant un doublement. Parcourue en
+        // ajoutant, une course de mille à seize mille hertz passe les deux tiers de son temps
+        // au-dessus de six mille, là où l'oreille entend des intervalles.
+        echelle: "logarithmique",
       });
       // LA QUEUE RESTE UN NOMBRE TANT QU'ELLE VAUT ZÉRO : à zéro, le composant la déduit des deux
       // temps de réverbération, et c'est ce qu'il faut garder. Une courbe branchée la commande.
